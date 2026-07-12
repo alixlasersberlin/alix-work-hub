@@ -15,17 +15,15 @@ import { useEmployees } from '@/hooks/esc/useEmployees';
 import { DEFAULT_LOCATIONS, DEFAULT_BOOKING_SETTINGS, generateSlots, nextAvailableDays, customerBookingsToday } from '@/lib/esc/booking-settings';
 import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
 import { confirmUrl } from '@/lib/esc/public-url';
 import { supabase } from '@/integrations/supabase/client';
 import type { EscDepartment } from '@/lib/esc/types';
 import type { EscAppointmentKind } from '@/lib/esc/appointment-kinds';
+import { useBookingT } from '@/i18n/booking';
 
 type StepId = 'department' | 'service' | 'location' | 'time' | 'contact' | 'summary';
 const STEPS: StepId[] = ['department', 'service', 'location', 'time', 'contact', 'summary'];
-const STEP_LABEL: Record<StepId, string> = {
-  department: 'Leistung', service: 'Terminart', location: 'Standort', time: 'Zeit', contact: 'Kontakt', summary: 'Übersicht',
-};
+
 
 export default function BookingPortal() {
   const { department: deptParam, service: serviceParam } = useParams();
@@ -33,6 +31,10 @@ export default function BookingPortal() {
   const { departments } = useDepartments();
   const { employees } = useEmployees();
   const { appointments, createAppointment } = useAppointments();
+  const { t } = useBookingT();
+  const de = t.dateLocale;
+  const STEP_LABEL = t.step;
+
 
   // Public departments: fetched directly from Supabase so anonymous visitors on /book
   // see the real, admin-managed list instead of local mock seed data.
@@ -134,7 +136,7 @@ export default function BookingPortal() {
   const submit = async () => {
     if (!dept || !state.slotIso) return;
     if (customerBookingsToday(state.email, appointments, new Date(state.slotIso)) >= DEFAULT_BOOKING_SETTINGS.maxPerCustomerPerDay) {
-      toast.error('Maximale Buchungen für diesen Tag erreicht.');
+      toast.error(t.errors.max_per_day);
       return;
     }
     const start = new Date(state.slotIso);
@@ -173,18 +175,18 @@ export default function BookingPortal() {
             <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-2">
               <CheckCircle2 className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-[18px]">Vielen Dank!</CardTitle>
+            <CardTitle className="text-[18px]">{t.thanks.title}</CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-3 text-[13.5px]">
-            <p>Ihre Buchungsanfrage ist bei uns eingegangen. Sie erhalten in Kürze eine Bestätigungs-E-Mail.</p>
+            <p>{t.thanks.text}</p>
             <div className="inline-flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-1.5 text-[12px]">
-              <span className="text-muted-foreground">Buchungsnummer</span>
+              <span className="text-muted-foreground">{t.thanks.number_label}</span>
               <span className="font-mono font-semibold">{sent.bookingNumber}</span>
             </div>
             <div className="pt-2">
               <a href={confirmUrl(sent.token)} className="text-primary hover:underline text-[12px] break-all">{confirmUrl(sent.token)}</a>
             </div>
-            <Button variant="outline" onClick={() => { setSent(null); setStep('department'); setState({ ...state, departmentId: '', service: '', locationId: '', dayIso: '', slotIso: '' }); }}>Weitere Buchung</Button>
+            <Button variant="outline" onClick={() => { setSent(null); setStep('department'); setState({ ...state, departmentId: '', service: '', locationId: '', dayIso: '', slotIso: '' }); }}>{t.thanks.again}</Button>
           </CardContent>
         </Card>
       </BookingLayout>
@@ -216,19 +218,19 @@ export default function BookingPortal() {
             </div>
             <div className="flex-1">
               <div className="font-semibold text-[14px] flex items-center gap-2">
-                <span>Mein persönliches Angebot</span>
+                <span>{t.cards.offer_title}</span>
                 {showAngebotBubble && (
                   <span
                     style={{ transformOrigin: 'left center' }}
                     className="relative inline-flex items-center rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-[11px] font-medium shadow-md animate-fade-in -translate-y-2 -rotate-6
                       before:content-[''] before:absolute before:-left-1.5 before:top-1/2 before:-translate-y-1/2 before:border-y-[5px] before:border-y-transparent before:border-r-[6px] before:border-r-primary"
                   >
-                    Angebot
+                    {t.cards.offer_badge}
                   </span>
                 )}
               </div>
               <div className="text-[12px] text-muted-foreground mt-0.5">
-                Unterschrift, Angebot, Finanzierung, Kataloge, Setpreise, Vermietung – individuell für Sie.
+                {t.cards.offer_desc}
               </div>
             </div>
             <ChevronDown className={`w-4 h-4 text-muted-foreground mt-1 shrink-0 transition-transform ${salesOpen ? 'rotate-180' : ''}`} />
@@ -237,7 +239,7 @@ export default function BookingPortal() {
             <div className="rounded-xl border bg-card p-4">
               <div className="grid grid-cols-1 gap-3">
                 {[
-                  { label: 'Mein persönliches Angebot erstellen lassen', icon: FileText },
+                  { label: t.cards.offer_create, icon: FileText },
                 ].map((item) => (
                   <a
                     key={item.label}
@@ -253,8 +255,9 @@ export default function BookingPortal() {
               </div>
               <div className="mt-3 flex justify-end">
                 <a href="/beratung" className="inline-flex items-center gap-1 text-[12.5px] text-primary hover:underline">
-                  Zur Verkaufsberatung <ArrowRight className="w-3.5 h-3.5" />
+                  {t.cards.offer_more} <ArrowRight className="w-3.5 h-3.5" />
                 </a>
+
               </div>
             </div>
           )}
@@ -273,9 +276,9 @@ export default function BookingPortal() {
               <Mail className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <div className="font-semibold text-[14px]">Anfragen und Rückruf schnell erledigt</div>
+              <div className="font-semibold text-[14px]">{t.cards.inquiry_title}</div>
               <div className="text-[12px] text-muted-foreground mt-0.5">
-                Wählen Sie eine Leistung – Sie erhalten direkt eine Bestätigung per E-Mail.
+                {t.cards.inquiry_desc}
               </div>
             </div>
             <ChevronDown className={`w-4 h-4 text-muted-foreground mt-1 shrink-0 transition-transform ${deptOpen ? 'rotate-180' : ''}`} />
@@ -298,7 +301,7 @@ export default function BookingPortal() {
                   </button>
                 ))}
               </div>
-              {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground py-6 text-center">Aktuell sind keine Leistungen öffentlich buchbar.</div>}
+              {publicDepts.length === 0 && <div className="text-[13px] text-muted-foreground py-6 text-center">{t.cards.no_public}</div>}
             </div>
           )}
         </div>
@@ -313,9 +316,9 @@ export default function BookingPortal() {
             <PackageSearch className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-[14px]">Mein Bestellstatus abfragen</div>
+            <div className="font-semibold text-[14px]">{t.cards.orderstatus_title}</div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
-              Sie haben bereits bestellt? Prüfen Sie den aktuellen Bearbeitungsstand Ihrer Bestellung mit Auftragsnummer, PLZ und E-Mail.
+              {t.cards.orderstatus_desc}
             </div>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
@@ -331,9 +334,9 @@ export default function BookingPortal() {
             <PackageSearch className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-[14px]">Mein Medi Paket beantragen</div>
+            <div className="font-semibold text-[14px]">{t.cards.medipaket_title}</div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
-              Übermitteln Sie uns alle Informationen, Dateien und Wünsche für Ihre Webseite, Flyer und Social-Media-Vorlagen.
+              {t.cards.medipaket_desc}
             </div>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
@@ -352,19 +355,19 @@ export default function BookingPortal() {
           </div>
           <div className="flex-1">
             <div className="font-semibold text-[14px] flex items-center gap-2">
-              <span>Anmeldung und Registrierung nach NISV</span>
+              <span>{t.cards.nisv_title}</span>
               {showAngebotBubble && (
                 <span
                   style={{ transformOrigin: 'left center' }}
                   className="relative inline-flex items-center rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-[11px] font-medium shadow-md animate-fade-in -translate-y-2 -rotate-6
                     before:content-[''] before:absolute before:-left-1.5 before:top-1/2 before:-translate-y-1/2 before:border-y-[5px] before:border-y-transparent before:border-r-[6px] before:border-r-primary"
                 >
-                  PFLICHT!
+                  {t.cards.nisv_badge}
                 </span>
               )}
             </div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
-              Die virtuelle Verwaltung Ihres Alix Gerätes: amtliche Dokumente, Tickets, Anleitungen und Ratgeber.
+              {t.cards.nisv_desc}
             </div>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
@@ -382,9 +385,9 @@ export default function BookingPortal() {
             <Cpu className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-[14px]">Alix Smart - Anamnese Online - Termine alles auf Ihren Laser</div>
+            <div className="font-semibold text-[14px]">{t.cards.anamnese_title}</div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
-              Alle Daten aus Ihrem Laser, Anamnese Online, Reservierungen, Kundendaten, Termine und viele Tools mehr – Alix Interaktiv.
+              {t.cards.anamnese_desc}
             </div>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
@@ -395,15 +398,15 @@ export default function BookingPortal() {
       {step === 'service' && dept && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-[16px]">Terminart wählen</CardTitle>
-            <p className="text-[12.5px] text-muted-foreground">Für <b>{dept.name}</b>.</p>
+            <CardTitle className="text-[16px]">{t.service.title}</CardTitle>
+            <p className="text-[12.5px] text-muted-foreground">{t.service.for} <b>{dept.name}</b>.</p>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {(() => {
               const kindsForDept = remoteKinds.filter((k) => k.departmentIds.length === 0 || k.departmentIds.includes(dept.id));
               const list = kindsForDept.length
                 ? kindsForDept.map((k) => ({ name: k.name, description: k.description, color: k.color, duration: k.defaultDurationMinutes || duration }))
-                : ['Beratung', 'Online Demo', 'Vorführung', 'Geräteeinweisung', 'Produktschulung'].map((n) => ({ name: n, description: undefined as string | undefined, color: undefined as string | undefined, duration }));
+                : t.service.fallback.map((n) => ({ name: n, description: undefined as string | undefined, color: undefined as string | undefined, duration }));
               return list.map((s) => (
                 <button
                   key={s.name}
@@ -415,7 +418,8 @@ export default function BookingPortal() {
                     <div className="font-semibold text-[14px]">{s.name}</div>
                   </div>
                   {s.description && <div className="text-[11.5px] text-muted-foreground mt-1 line-clamp-2">{s.description}</div>}
-                  <div className="text-[11.5px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> ca. {s.duration} min</div>
+                  <div className="text-[11.5px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> ~ {s.duration} {t.duration_min}</div>
+
                 </button>
               ));
             })()}
@@ -425,7 +429,7 @@ export default function BookingPortal() {
 
       {step === 'location' && (
         <Card>
-          <CardHeader><CardTitle className="text-[16px]">Standort auswählen</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-[16px]">{t.location.title}</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {DEFAULT_LOCATIONS.map((l) => (
               <button
@@ -446,8 +450,8 @@ export default function BookingPortal() {
       {step === 'time' && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-[16px]">Freien Termin wählen</CardTitle>
-            <p className="text-[12.5px] text-muted-foreground">Nur tatsächlich verfügbare Zeiten werden angezeigt.</p>
+            <CardTitle className="text-[16px]">{t.time.title}</CardTitle>
+            <p className="text-[12.5px] text-muted-foreground">{t.time.subtitle}</p>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
@@ -471,8 +475,8 @@ export default function BookingPortal() {
               <>
                 {slotsForDay.length === 0 ? (
                   <div className="rounded-md border p-4 text-center bg-muted/30">
-                    <div className="text-[13px] mb-2">Für den gewählten Tag sind keine Zeiten verfügbar.</div>
-                    <Button variant="outline" size="sm" onClick={() => setWaitlistOpen(true)}><Users className="w-4 h-4 mr-1" />Auf Warteliste setzen</Button>
+                    <div className="text-[13px] mb-2">{t.time.none}</div>
+                    <Button variant="outline" size="sm" onClick={() => setWaitlistOpen(true)}><Users className="w-4 h-4 mr-1" />{t.time.waitlist_btn}</Button>
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
@@ -495,11 +499,11 @@ export default function BookingPortal() {
 
             {waitlistOpen && (
               <div className="rounded-md border p-3 bg-muted/20 text-[12.5px]">
-                <div className="font-medium mb-1">Warteliste</div>
-                <p className="text-muted-foreground mb-2">Wir informieren Sie per E-Mail, sobald ein passender Termin frei wird.</p>
+                <div className="font-medium mb-1">{t.time.waitlist_title}</div>
+                <p className="text-muted-foreground mb-2">{t.time.waitlist_hint}</p>
                 <div className="flex gap-2">
-                  <Input placeholder="Ihre E-Mail" value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} className="h-9" />
-                  <Button size="sm" onClick={() => { toast.success('Auf Warteliste gesetzt.'); setWaitlistOpen(false); }}>Eintragen</Button>
+                  <Input placeholder={t.time.email_ph} value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} className="h-9" />
+                  <Button size="sm" onClick={() => { toast.success(t.time.waitlist_added); setWaitlistOpen(false); }}>{t.time.waitlist_add}</Button>
                 </div>
               </div>
             )}
@@ -509,20 +513,20 @@ export default function BookingPortal() {
 
       {step === 'contact' && (
         <Card>
-          <CardHeader><CardTitle className="text-[16px]">Ihre Kontaktdaten</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-[16px]">{t.contact.title}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div><Label>Vorname *</Label><Input value={state.firstName} onChange={(e) => setState({ ...state, firstName: e.target.value })} /></div>
-              <div><Label>Nachname *</Label><Input value={state.lastName} onChange={(e) => setState({ ...state, lastName: e.target.value })} /></div>
-              <div><Label>Firma *</Label><Input value={state.company} onChange={(e) => setState({ ...state, company: e.target.value })} /></div>
-              <div><Label>Webseite</Label><Input value={state.website} onChange={(e) => setState({ ...state, website: e.target.value })} placeholder="https://" /></div>
-              <div><Label>E-Mail *</Label><Input type="email" value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} /></div>
-              <div><Label>Telefon *</Label><Input value={state.phone} onChange={(e) => setState({ ...state, phone: e.target.value })} /></div>
+              <div><Label>{t.contact.first_name} *</Label><Input value={state.firstName} onChange={(e) => setState({ ...state, firstName: e.target.value })} /></div>
+              <div><Label>{t.contact.last_name} *</Label><Input value={state.lastName} onChange={(e) => setState({ ...state, lastName: e.target.value })} /></div>
+              <div><Label>{t.contact.company} *</Label><Input value={state.company} onChange={(e) => setState({ ...state, company: e.target.value })} /></div>
+              <div><Label>{t.contact.website}</Label><Input value={state.website} onChange={(e) => setState({ ...state, website: e.target.value })} placeholder="https://" /></div>
+              <div><Label>{t.contact.email} *</Label><Input type="email" value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} /></div>
+              <div><Label>{t.contact.phone} *</Label><Input value={state.phone} onChange={(e) => setState({ ...state, phone: e.target.value })} /></div>
               {bookableEmployees.length > 0 && (
                 <div className="md:col-span-2">
-                  <Label>Gewünschter Ansprechpartner (optional)</Label>
+                  <Label>{t.contact.contact_person}</Label>
                   <div className="flex flex-wrap gap-1.5 mt-1">
-                    <button type="button" onClick={() => setState({ ...state, contactPersonId: '' })} className={`text-[12px] rounded-full border px-3 py-1 ${!state.contactPersonId ? 'border-primary bg-primary/10' : ''}`}>Egal</button>
+                    <button type="button" onClick={() => setState({ ...state, contactPersonId: '' })} className={`text-[12px] rounded-full border px-3 py-1 ${!state.contactPersonId ? 'border-primary bg-primary/10' : ''}`}>{t.contact.any}</button>
                     {bookableEmployees.map((e) => (
                       <button key={e.id} type="button" onClick={() => setState({ ...state, contactPersonId: e.id })} className={`text-[12px] rounded-full border px-3 py-1 ${state.contactPersonId === e.id ? 'border-primary bg-primary/10' : ''}`}>{e.name}</button>
                     ))}
@@ -530,26 +534,27 @@ export default function BookingPortal() {
                 </div>
               )}
               <div className="md:col-span-2">
-                <Label>Nachricht</Label>
+                <Label>{t.contact.message}</Label>
                 <Textarea rows={3} value={state.message} onChange={(e) => setState({ ...state, message: e.target.value })} />
               </div>
             </div>
             <div className="space-y-2 pt-2 border-t">
               <label className="flex items-start gap-2 text-[12.5px]">
                 <Checkbox checked={state.consentPrivacy} onCheckedChange={(v) => setState({ ...state, consentPrivacy: !!v })} className="mt-0.5" />
-                <span>Ich habe die <a href="https://alixworks.de/datenschutz" target="_blank" rel="noreferrer" className="text-primary hover:underline">Datenschutzerklärung</a> gelesen und akzeptiere sie. *</span>
+                <span>{t.contact.consent_privacy_pre} <a href="https://alixworks.de/datenschutz" target="_blank" rel="noreferrer" className="text-primary hover:underline">{t.contact.consent_privacy_link}</a> {t.contact.consent_privacy_post} *</span>
               </label>
               <label className="flex items-start gap-2 text-[12.5px]">
                 <Checkbox checked={state.consentEmail} onCheckedChange={(v) => setState({ ...state, consentEmail: !!v })} className="mt-0.5" />
-                <span>Ich willige in den Empfang von E-Mails zu diesem Termin ein. *</span>
+                <span>{t.contact.consent_email} *</span>
               </label>
               <label className="flex items-start gap-2 text-[12.5px]">
                 <Checkbox checked={state.consentMarketing} onCheckedChange={(v) => setState({ ...state, consentMarketing: !!v })} className="mt-0.5" />
-                <span>Optional: Ich möchte weitere Angebote per E-Mail erhalten.</span>
+                <span>{t.contact.consent_marketing}</span>
               </label>
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground pt-1">
-                <ShieldCheck className="w-3.5 h-3.5" /> Geschützt vor Spam · CAPTCHA (Cloudflare Turnstile) wird aktiviert.
+                <ShieldCheck className="w-3.5 h-3.5" /> {t.contact.captcha}
               </div>
+
             </div>
           </CardContent>
         </Card>
@@ -558,21 +563,21 @@ export default function BookingPortal() {
       {step === 'summary' && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-[16px]">Zusammenfassung</CardTitle>
-            <p className="text-[12.5px] text-muted-foreground">Bitte prüfen Sie Ihre Angaben.</p>
+            <CardTitle className="text-[16px]">{t.summary.title}</CardTitle>
+            <p className="text-[12.5px] text-muted-foreground">{t.summary.subtitle}</p>
           </CardHeader>
           <CardContent className="space-y-3 text-[13px]">
-            <SumRow label="Leistung" value={dept?.name} />
-            <SumRow label="Terminart" value={state.service} />
-            <SumRow label="Standort" value={DEFAULT_LOCATIONS.find((l) => l.id === state.locationId)?.label} />
-            <SumRow label="Datum" value={state.slotIso ? format(new Date(state.slotIso), 'EEEE, dd. MMMM yyyy', { locale: de }) : ''} />
-            <SumRow label="Uhrzeit" value={state.slotIso ? `${format(new Date(state.slotIso), 'HH:mm')} · ca. ${duration} min` : ''} />
-            {state.contactPersonId && <SumRow label="Ansprechpartner" value={bookableEmployees.find((e) => e.id === state.contactPersonId)?.name} />}
+            <SumRow label={t.summary.service_label} value={dept?.name} />
+            <SumRow label={t.summary.kind_label} value={state.service} />
+            <SumRow label={t.summary.location_label} value={DEFAULT_LOCATIONS.find((l) => l.id === state.locationId)?.label} />
+            <SumRow label={t.summary.date_label} value={state.slotIso ? format(new Date(state.slotIso), 'EEEE, dd MMMM yyyy', { locale: de }) : ''} />
+            <SumRow label={t.summary.time_label} value={state.slotIso ? `${format(new Date(state.slotIso), 'HH:mm')} · ~ ${duration} ${t.summary.min_short}` : ''} />
+            {state.contactPersonId && <SumRow label={t.summary.contact_person_label} value={bookableEmployees.find((e) => e.id === state.contactPersonId)?.name} />}
             <div className="border-t pt-2 space-y-1">
-              <SumRow label="Kontakt" value={`${state.firstName} ${state.lastName}`} />
-              <SumRow label="Firma" value={state.company} />
-              <SumRow label="E-Mail" value={state.email} />
-              <SumRow label="Telefon" value={state.phone} />
+              <SumRow label={t.summary.contact_label} value={`${state.firstName} ${state.lastName}`} />
+              <SumRow label={t.summary.company_label} value={state.company} />
+              <SumRow label={t.summary.email_label} value={state.email} />
+              <SumRow label={t.summary.phone_label} value={state.phone} />
             </div>
             {state.message && <div className="text-[12px] text-muted-foreground italic">„{state.message}"</div>}
           </CardContent>
@@ -581,21 +586,21 @@ export default function BookingPortal() {
 
       <div className="flex items-center justify-between">
         <Button variant="outline" onClick={() => (stepIndex > 0 ? goto(STEPS[stepIndex - 1]) : null)} disabled={stepIndex === 0}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Zurück
+          <ArrowLeft className="w-4 h-4 mr-1" /> {t.nav.back}
         </Button>
         {step === 'summary' ? (
           <Button size="lg" onClick={submit} disabled={!canGoNext}>
-            <CalendarCheck className="w-4 h-4 mr-1" /> Buchung absenden
+            <CalendarCheck className="w-4 h-4 mr-1" /> {t.nav.submit}
           </Button>
         ) : (
           <Button onClick={() => goto(STEPS[stepIndex + 1])} disabled={!canGoNext}>
-            Weiter <ArrowRight className="w-4 h-4 ml-1" />
+            {t.nav.next} <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         )}
       </div>
 
       <div className="text-center pt-2">
-        <Badge variant="outline" className="text-[10.5px]">alixworks.de · Sichere Verbindung</Badge>
+        <Badge variant="outline" className="text-[10.5px]">{t.footer_badge}</Badge>
       </div>
     </BookingLayout>
   );
