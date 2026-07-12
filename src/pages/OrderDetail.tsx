@@ -155,7 +155,17 @@ export default function OrderDetail() {
       supabase.from('order_additional_deposits' as any).select('*').eq('order_id', id!).order('booking_date', { ascending: true }),
     ]);
     setOrder(oRes.data);
-    setCustomer(oRes.data?.customers);
+    const baseCust = oRes.data?.customers as any;
+    if (baseCust?.id) {
+      const { data: bd } = await supabase
+        .from('customer_bank_details')
+        .select('iban, bic, bank_name')
+        .eq('customer_id', baseCust.id)
+        .maybeSingle();
+      setCustomer({ ...baseCust, ...(bd ?? { iban: null, bic: null, bank_name: null }) });
+    } else {
+      setCustomer(baseCust);
+    }
     setNotes(nRes.data ?? []);
     setItems(iRes.data ?? []);
     setHistory(hRes.data ?? []);
