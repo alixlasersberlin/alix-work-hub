@@ -1103,6 +1103,7 @@ function AppRoutes() {
         <Route path="/repair-quote/:token" element={<PublicRepairQuoteDecision />} />
         <Route path="/bewertung/danke" element={<ReviewThanks />} />
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
+        <Route path="/csat/:token" element={<TicketCsat />} />
         <Route path="/portal" element={<PortalLookup />} />
         <Route path="/portal/status" element={<PortalStatus />} />
         <Route path="/sign/:token" element={<AlixSignPublic />} />
