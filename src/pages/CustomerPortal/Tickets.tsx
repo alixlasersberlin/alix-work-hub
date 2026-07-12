@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { MessageSquare, Loader2, Send, Paperclip, X } from 'lucide-react';
+import { MessageSquare, Loader2, Send, Paperclip, X, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { PortalTicketDetail } from '@/components/CustomerPortal/PortalTicketDetail';
 
 type Ctx = { customerId: string };
 
