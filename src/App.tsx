@@ -1158,6 +1158,7 @@ function AppRoutes() {
           <Route path="bewertungen" element={<CustomerPortalReviews />} />
           <Route path="verlauf" element={<CustomerPortalTimeline />} />
           <Route path="geraete" element={<CustomerPortalDevices />} />
+          <Route path="bestellungen" element={<CustomerPortalOrders />} />
           <Route path="wartungen" element={<CustomerPortalMaintenance />} />
           <Route path="garantien" element={<CustomerPortalWarranty />} />
           <Route path="tickets" element={<CustomerPortalTickets />} />
