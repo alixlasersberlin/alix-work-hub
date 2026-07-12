@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   addMonths, addWeeks, subMonths, subWeeks,
   startOfMonth, endOfMonth, startOfWeek, endOfWeek,
@@ -13,7 +15,7 @@ import {
 import { de } from 'date-fns/locale';
 import {
   ChevronLeft, ChevronRight, CalendarDays, Filter, RefreshCw,
-  ExternalLink, Mail, Phone, User2, Clock, AlertCircle,
+  ExternalLink, Mail, Phone, User2, Clock, AlertCircle, Download, UserCircle2,
 } from 'lucide-react';
 
 type TicketEvent = {
