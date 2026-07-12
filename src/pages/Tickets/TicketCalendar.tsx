@@ -402,13 +402,33 @@ export default function TicketCalendar() {
                   </Row>
                 )}
 
-                {selected.ticket_id && (
-                  <Button asChild className="w-full mt-4">
-                    <Link to={`/tickets/${selected.ticket_id}`}>
-                      Ticket öffnen <ExternalLink className="w-4 h-4 ml-2" />
-                    </Link>
+                <Row icon={UserCircle2} label="Zugewiesen an">
+                  <Select
+                    value={selected.assigned_user_id ?? 'none'}
+                    onValueChange={(v) => assignUser(selected.id, v === 'none' ? null : v)}
+                  >
+                    <SelectTrigger className="h-8 text-[12px]"><SelectValue placeholder="Nicht zugewiesen" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nicht zugewiesen</SelectItem>
+                      {users.map(u => (
+                        <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Row>
+
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" className="flex-1" onClick={() => downloadIcs(selected)}>
+                    <Download className="w-4 h-4 mr-2" /> ICS
                   </Button>
-                )}
+                  {selected.ticket_id && (
+                    <Button asChild className="flex-1">
+                      <Link to={`/tickets/${selected.ticket_id}`}>
+                        Ticket öffnen <ExternalLink className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  )}
+                </div>
               </div>
             </>
           )}
