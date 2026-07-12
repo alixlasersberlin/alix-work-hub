@@ -31,9 +31,9 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
         onClick={() => setOpen(o => !o)}
         className={cn(
           'flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition',
-          variant === 'dark'
-            ? 'border-white/15 bg-white/5 text-white backdrop-blur-md hover:bg-white/10'
-            : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+          variant === 'dark' && 'border-white/15 bg-white/5 text-white backdrop-blur-md hover:bg-white/10',
+          variant === 'light' && 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+          variant === 'transparent' && 'border-foreground/15 bg-transparent text-foreground hover:bg-foreground/5 backdrop-blur-sm',
         )}
         aria-label="Sprache wählen / Choose language"
       >
