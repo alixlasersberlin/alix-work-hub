@@ -14211,6 +14211,173 @@ export type Database = {
         }
         Relationships: []
       }
+      role_audit_log: {
+        Row: {
+          actor_user_id: string | null
+          approved_by: string | null
+          change_type: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          new_value: Json | null
+          old_value: Json | null
+          reason: string | null
+          request_id: string | null
+          role_id: string | null
+          role_name: string | null
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          approved_by?: string | null
+          change_type: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          request_id?: string | null
+          role_id?: string | null
+          role_name?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          approved_by?: string | null
+          change_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          request_id?: string | null
+          role_id?: string | null
+          role_name?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
+      role_change_requests: {
+        Row: {
+          action: string
+          applied_at: string | null
+          created_at: string
+          id: string
+          reason: string
+          requested_by: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          role_id: string | null
+          role_name: string | null
+          status: string
+          target_user_id: string
+          updated_at: string
+          urgency: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          action: string
+          applied_at?: string | null
+          created_at?: string
+          id?: string
+          reason: string
+          requested_by: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role_id?: string | null
+          role_name?: string | null
+          status?: string
+          target_user_id: string
+          updated_at?: string
+          urgency?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          action?: string
+          applied_at?: string | null
+          created_at?: string
+          id?: string
+          reason?: string
+          requested_by?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          role_id?: string | null
+          role_name?: string | null
+          status?: string
+          target_user_id?: string
+          updated_at?: string
+          urgency?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      role_temporary_grants: {
+        Row: {
+          auto_revoked_at: string | null
+          created_at: string
+          granted_by: string
+          id: string
+          reason: string
+          request_id: string | null
+          role_id: string
+          role_name: string | null
+          status: string
+          user_id: string
+          valid_from: string
+          valid_until: string
+        }
+        Insert: {
+          auto_revoked_at?: string | null
+          created_at?: string
+          granted_by: string
+          id?: string
+          reason: string
+          request_id?: string | null
+          role_id: string
+          role_name?: string | null
+          status?: string
+          user_id: string
+          valid_from?: string
+          valid_until: string
+        }
+        Update: {
+          auto_revoked_at?: string | null
+          created_at?: string
+          granted_by?: string
+          id?: string
+          reason?: string
+          request_id?: string | null
+          role_id?: string
+          role_name?: string | null
+          status?: string
+          user_id?: string
+          valid_from?: string
+          valid_until?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_temporary_grants_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "role_change_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roles: {
         Row: {
           created_at: string
@@ -18713,6 +18880,7 @@ export type Database = {
         }[]
       }
       esc_user_department_ids: { Args: { _user_id: string }; Returns: string[] }
+      expire_temporary_role_grants: { Args: never; Returns: number }
       finance_deposit_book: {
         Args: {
           p_amount: number
@@ -18763,6 +18931,16 @@ export type Database = {
           bank_name: string
           bic: string
           iban: string
+        }[]
+      }
+      get_effective_roles: {
+        Args: { _user_id: string }
+        Returns: {
+          granted_by: string
+          role_id: string
+          role_name: string
+          source: string
+          valid_until: string
         }[]
       }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
