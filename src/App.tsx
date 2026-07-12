@@ -976,6 +976,17 @@ function AppRoutes() {
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
           <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
           <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
+          <Route path="/security-center" element={<ProtectedRoute requiredRoles={['Super Admin']}><SecurityCenterLayout /></ProtectedRoute>}>
+            <Route index element={<SecurityCenterOverview />} />
+            <Route path="inventory" element={<SecurityInventory />} />
+            <Route path="roles" element={<SecurityRoles />} />
+            <Route path="permissions" element={<SecurityPermissions />} />
+            <Route path="policies" element={<SecurityPolicies />} />
+            <Route path="storage" element={<SecurityStorage />} />
+            <Route path="findings" element={<SecurityFindings />} />
+            <Route path="simulate" element={<SecuritySimulate />} />
+            <Route path="plan" element={<SecurityPlan />} />
+          </Route>
           <Route path="/auftragsverwaltung/bestellungen" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><BestellwesenOverview /></ProtectedRoute>} />
           <Route path="/order" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrders /></ProtectedRoute>} />
           <Route path="/order/freigabe" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrderApprovalQueue /></ProtectedRoute>} />
