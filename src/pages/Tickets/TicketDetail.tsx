@@ -244,12 +244,13 @@ export default function TicketDetail() {
 
   async function addMessage() {
     if (!ticket || !newMsg.trim()) return;
+    const messageText = newMsg.trim();
     const { data, error } = await supabase.from('ticket_messages').insert({
       ticket_id: ticket.id,
       sender_type: 'agent',
       sender_name: user?.email || 'Mitarbeiter',
       sender_email: user?.email || null,
-      message: newMsg.trim(),
+      message: messageText,
       is_internal: msgInternal,
       source_system: 'alixwork',
     }).select('id').single();
@@ -259,6 +260,55 @@ export default function TicketDetail() {
     // Only sync public messages to AlixSmart (source_system === 'alixsmart')
     if (!msgInternal && ticket.external_ticket_id && ticket.source_system === 'alixsmart' && data?.id) {
       syncToAlixSmart('new_public_message', data.id);
+    }
+    // Für interne Tickets (nicht AlixSmart): öffentliche Antwort per E-Mail an Kunde senden
+    if (!msgInternal && ticket.source_system !== 'alixsmart' && ticket.customer_email) {
+      try {
+        const dept = String(ticket.department || '').toLowerCase();
+        const fromEmail =
+          dept.includes('finance') ? 'finance@alixwork.de' :
+          dept.includes('vertrieb') || dept.includes('sales') ? 'vertrieb@alixwork.de' :
+          'service@alixwork.de';
+        const ticketRef = ticket.ticket_number || ticket.external_ticket_id || ticket.id.slice(0, 8);
+        const subject = `Antwort zu Ticket ${ticketRef}: ${ticket.title || ''}`.trim();
+        const safeMsg = messageText
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/\n/g, '<br/>');
+        const bodyHtml = `
+          <p>Guten Tag ${ticket.customer_name || ''},</p>
+          <p>Sie haben eine neue Antwort zu Ihrem Ticket <strong>${ticketRef}</strong> erhalten:</p>
+          <blockquote style="border-left:3px solid #d4af37;padding:8px 12px;margin:12px 0;background:#faf7ee;color:#111;">${safeMsg}</blockquote>
+          <p>Antworten Sie einfach auf diese E-Mail, um Ihre Rückmeldung an unser Team zu senden.</p>
+          <p style="color:#666;font-size:12px;margin-top:24px;">Ticket-Referenz: ${ticketRef}</p>
+        `;
+        const { error: mailErr } = await supabase.functions.invoke('send-mail', {
+          body: {
+            to_email: ticket.customer_email,
+            to_name: ticket.customer_name || null,
+            from_email: fromEmail,
+            from_name: 'Alix Kundenservice',
+            subject,
+            body_html: bodyHtml,
+            body_text: messageText,
+            ticket_id: ticket.id,
+          },
+        });
+        if (mailErr) {
+          console.error('send-mail failed', mailErr);
+          toast.error('E-Mail an Kunde konnte nicht gesendet werden');
+        } else {
+          toast.success('E-Mail an Kunde gesendet');
+          await supabase.from('ticket_history').insert({
+            ticket_id: ticket.id,
+            action: 'email_sent',
+            actor_id: user?.id || null,
+            actor_name: user?.email || null,
+            meta: { to: ticket.customer_email, from: fromEmail, subject },
+          } as any);
+        }
+      } catch (e: any) {
+        console.error('send-mail exception', e);
+      }
     }
     load();
   }
