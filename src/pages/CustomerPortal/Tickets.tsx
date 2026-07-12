@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { MessageSquare, Loader2, Send, Paperclip, X, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { PortalTicketDetail } from '@/components/CustomerPortal/PortalTicketDetail';
+import { validateTicketAttachment, TICKET_ATTACHMENT_ACCEPT } from '@/lib/ticketAttachments';
 
 type Ctx = { customerId: string };
 
