@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, ShieldCheck, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, CalendarDays, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star, Lock, Globe, Wrench, Ticket,
+  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, ShieldCheck, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, CalendarDays, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star, Lock, Globe, Wrench, Ticket, User, Flame,
   PenSquare, Send, FileEdit, MessageSquare, MessageCircle, Sparkles, FileCheck2, Files, Phone, PhoneCall, CheckSquare, CalendarClock, Megaphone, Activity, MailX, HeartPulse, TestTube2, Rocket, Database, Upload, FileDown, BadgeCheck, GraduationCap, Brain, AlertOctagon, LineChart, ListChecks, Cog, Boxes, Repeat, Wallet, Hash
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -83,6 +83,25 @@ const navItems: NavItem[] = [
       { path: '/esc/buchungen',      label: 'Buchungsportal', icon: Globe,           roles: null },
       { path: '/esc/bestaetigungen', label: 'Bestätigungen',  icon: CheckCircle2,    roles: null },
       { path: '/esc/einstellungen',  label: 'Einstellungen',  icon: Settings,        roles: ['Admin', 'Super Admin'] },
+    ],
+  },
+  {
+    path: '/tickets/dashboard', label: 'TICKETS', icon: Ticket,
+    roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'],
+    children: [
+      { path: '/tickets/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
+      { path: '/tickets', label: 'Alle Tickets', icon: Ticket, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
+      { path: '/tickets?new=1', label: 'Neues Ticket', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
+      { path: '/tickets/kalender', label: 'Ticket-Kalender', icon: CalendarDays, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
+      { path: '/tickets?mine=1', label: 'Meine Tickets', icon: User, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
+      { path: '/tickets?status=Neu', label: 'Neue (Eingang)', icon: Inbox, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/tickets?due=overdue', label: 'Überfällig', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/tickets?status=Eskaliert', label: 'Eskaliert', icon: Flame, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/tickets?status=Warten%20auf%20Kunde', label: 'Warten auf Kunde', icon: Pause, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/esc/buchungen', label: 'Öffentliche Buchungen', icon: CalendarClock, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Serviceleitung', 'Service'] },
+      { path: '/operation/ticket-abteilungen', label: 'Abteilungen (Routing)', icon: FolderTree, roles: ['Super Admin'] },
+      { path: '/tickets/sync', label: 'Sync-Monitor', icon: Activity, roles: ['Super Admin', 'Admin'] },
+      { path: '/tickets/api-sync', label: 'API-Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
     ],
   },
   {
