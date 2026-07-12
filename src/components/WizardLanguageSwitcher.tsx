@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils';
 
 interface Props {
   className?: string;
-  /** "dark" = glassmorph dunkles Overlay (für /beratung). "light" = neutrales Light-Pill. */
-  variant?: 'dark' | 'light';
+  /** "dark" = glassmorph dunkles Overlay. "light" = neutrales Light-Pill. "transparent" = transparenter Hintergrund, adaptiv zur Umgebung. */
+  variant?: 'dark' | 'light' | 'transparent';
 }
 
 export default function WizardLanguageSwitcher({ className, variant = 'dark' }: Props) {
