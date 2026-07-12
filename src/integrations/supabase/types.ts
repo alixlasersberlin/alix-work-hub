@@ -14583,6 +14583,254 @@ export type Database = {
           },
         ]
       }
+      security_audit_findings: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          category: string
+          created_at: string
+          detail: string | null
+          id: string
+          recommendation: string | null
+          severity: string
+          status: string
+          target: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          category: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          recommendation?: string | null
+          severity: string
+          status?: string
+          target: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          recommendation?: string | null
+          severity?: string
+          status?: string
+          target?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      security_data_classification: {
+        Row: {
+          category: string | null
+          classification: number
+          created_at: string
+          id: string
+          notes: string | null
+          schema_name: string
+          table_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          classification: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          schema_name?: string
+          table_name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          classification?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          schema_name?: string
+          table_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      security_permissions: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          key: string
+          module: string
+          risk_level: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key: string
+          module: string
+          risk_level?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          key?: string
+          module?: string
+          risk_level?: string
+        }
+        Relationships: []
+      }
+      security_role_permissions: {
+        Row: {
+          allowed: boolean
+          conditions: Json
+          created_at: string
+          id: string
+          permission_id: string
+          role_id: string
+          updated_at: string
+        }
+        Insert: {
+          allowed?: boolean
+          conditions?: Json
+          created_at?: string
+          id?: string
+          permission_id: string
+          role_id: string
+          updated_at?: string
+        }
+        Update: {
+          allowed?: boolean
+          conditions?: Json
+          created_at?: string
+          id?: string
+          permission_id?: string
+          role_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "security_permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "security_role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "security_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      security_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          hierarchy_level: number
+          id: string
+          is_active: boolean
+          is_system_role: boolean
+          key: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          hierarchy_level?: number
+          id?: string
+          is_active?: boolean
+          is_system_role?: boolean
+          key: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          hierarchy_level?: number
+          id?: string
+          is_active?: boolean
+          is_system_role?: boolean
+          key?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      security_user_roles: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          department_id: string | null
+          id: string
+          is_active: boolean
+          location_id: string | null
+          role_id: string
+          tenant_id: string | null
+          updated_at: string
+          user_id: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          role_id: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          department_id?: string | null
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          role_id?: string
+          tenant_id?: string | null
+          updated_at?: string
+          user_id?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "security_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_ai_analyses: {
         Row: {
           arbeitszeit: Json | null
@@ -17926,6 +18174,38 @@ export type Database = {
           },
         ]
       }
+      security_policy_details: {
+        Row: {
+          check_expr: string | null
+          cmd: string | null
+          policy_name: unknown
+          roles: string | null
+          schema_name: unknown
+          table_name: unknown
+          using_expr: string | null
+        }
+        Relationships: []
+      }
+      security_table_inventory: {
+        Row: {
+          anon_access: boolean | null
+          classification: number | null
+          classification_category: string | null
+          delete_policies: number | null
+          has_customer_id: boolean | null
+          has_department_id: boolean | null
+          has_tenant_id: boolean | null
+          has_user_id: boolean | null
+          insert_policies: number | null
+          policy_count: number | null
+          rls_enabled: boolean | null
+          schema_name: unknown
+          select_policies: number | null
+          table_name: unknown
+          update_policies: number | null
+        }
+        Relationships: []
+      }
       spare_part_stock_overview: {
         Row: {
           brand: string | null
@@ -18267,6 +18547,10 @@ export type Database = {
       rotate_finance_stakeholder_token: {
         Args: { p_id: string }
         Returns: string
+      }
+      security_has_permission: {
+        Args: { _permission_key: string; _user_id: string }
+        Returns: boolean
       }
       session_requires_reauth: { Args: never; Returns: boolean }
       set_factory_invoice_payment_ok: {

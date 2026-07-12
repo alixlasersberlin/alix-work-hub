@@ -285,6 +285,16 @@ const PublicReviewForm = lazy(() => import("./pages/PublicReview/ReviewForm"));
 const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
 const PortalLookup = lazy(() => import("./pages/Portal/Lookup"));
 const TicketCsat = lazy(() => import("./pages/Public/TicketCsat"));
+const SecurityCenterLayout = lazy(() => import("./pages/SecurityCenter/Layout").then(m => ({ default: m.default })));
+const SecurityCenterOverview = lazy(() => import("./pages/SecurityCenter/Layout").then(m => ({ default: m.SecurityCenterOverview })));
+const SecurityInventory = lazy(() => import("./pages/SecurityCenter/Inventory"));
+const SecurityRoles = lazy(() => import("./pages/SecurityCenter/Roles"));
+const SecurityPermissions = lazy(() => import("./pages/SecurityCenter/Permissions"));
+const SecurityPolicies = lazy(() => import("./pages/SecurityCenter/Policies"));
+const SecurityStorage = lazy(() => import("./pages/SecurityCenter/Storage"));
+const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
+const SecuritySimulate = lazy(() => import("./pages/SecurityCenter/Simulate"));
+const SecurityPlan = lazy(() => import("./pages/SecurityCenter/Plan"));
 const PortalStatus = lazy(() => import("./pages/Portal/Status"));
 const PortalAdmin = lazy(() => import("./pages/PortalAdmin"));
 const MailCenterLayout = lazy(() => import("./pages/MailCenter/Layout"));
@@ -966,6 +976,17 @@ function AppRoutes() {
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
           <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
           <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
+          <Route path="/security-center" element={<ProtectedRoute requiredRoles={['Super Admin']}><SecurityCenterLayout /></ProtectedRoute>}>
+            <Route index element={<SecurityCenterOverview />} />
+            <Route path="inventory" element={<SecurityInventory />} />
+            <Route path="roles" element={<SecurityRoles />} />
+            <Route path="permissions" element={<SecurityPermissions />} />
+            <Route path="policies" element={<SecurityPolicies />} />
+            <Route path="storage" element={<SecurityStorage />} />
+            <Route path="findings" element={<SecurityFindings />} />
+            <Route path="simulate" element={<SecuritySimulate />} />
+            <Route path="plan" element={<SecurityPlan />} />
+          </Route>
           <Route path="/auftragsverwaltung/bestellungen" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><BestellwesenOverview /></ProtectedRoute>} />
           <Route path="/order" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrders /></ProtectedRoute>} />
           <Route path="/order/freigabe" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrderApprovalQueue /></ProtectedRoute>} />
