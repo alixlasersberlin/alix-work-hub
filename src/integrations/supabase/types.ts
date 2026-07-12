@@ -4259,6 +4259,20 @@ export type Database = {
             foreignKeyName: "esc_events_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "esc_events_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "esc_events_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
             referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
@@ -13265,6 +13279,20 @@ export type Database = {
             foreignKeyName: "repair_invoice_proposals_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "repair_invoice_proposals_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "repair_invoice_proposals_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
             referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
@@ -13434,6 +13462,20 @@ export type Database = {
           work_order_pdf_path?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "repair_orders_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "repair_orders_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
           {
             foreignKeyName: "repair_orders_ticket_id_fkey"
             columns: ["ticket_id"]
@@ -13794,6 +13836,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "repair_orders"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repair_spare_parts_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "repair_spare_parts_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
           },
           {
             foreignKeyName: "repair_spare_parts_ticket_id_fkey"
@@ -15425,6 +15481,20 @@ export type Database = {
             foreignKeyName: "ticket_attachments_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "ticket_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "ticket_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
             referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
@@ -15456,6 +15526,70 @@ export type Database = {
           priority_override?: string | null
         }
         Relationships: []
+      }
+      ticket_csat_surveys: {
+        Row: {
+          assigned_to: string | null
+          comment: string | null
+          created_at: string
+          customer_email: string | null
+          expires_at: string
+          id: string
+          rating: number | null
+          responded_at: string | null
+          sent_at: string
+          ticket_id: string
+          token: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_email?: string | null
+          expires_at?: string
+          id?: string
+          rating?: number | null
+          responded_at?: string | null
+          sent_at?: string
+          ticket_id: string
+          token?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_email?: string | null
+          expires_at?: string
+          id?: string
+          rating?: number | null
+          responded_at?: string | null
+          sent_at?: string
+          ticket_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_csat_surveys_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "ticket_csat_surveys_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "ticket_csat_surveys_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket_departments: {
         Row: {
@@ -15550,6 +15684,20 @@ export type Database = {
             foreignKeyName: "ticket_history_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "ticket_history_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "ticket_history_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
             referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
@@ -15593,6 +15741,20 @@ export type Database = {
           ticket_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
           {
             foreignKeyName: "ticket_messages_ticket_id_fkey"
             columns: ["ticket_id"]
@@ -15647,6 +15809,20 @@ export type Database = {
             foreignKeyName: "ticket_notifications_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "ticket_notifications_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "ticket_notifications_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
             referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
@@ -15697,6 +15873,20 @@ export type Database = {
             foreignKeyName: "ticket_outbound_sync_logs_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "ticket_outbound_sync_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "ticket_outbound_sync_logs_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
             referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
@@ -15735,10 +15925,54 @@ export type Database = {
             foreignKeyName: "ticket_participants_ticket_id_fkey"
             columns: ["ticket_id"]
             isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "ticket_participants_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "ticket_participants_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
             referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
         ]
+      }
+      ticket_sla_settings: {
+        Row: {
+          created_at: string
+          escalation_after_hours: number
+          first_response_hours: number
+          id: string
+          priority: string
+          resolution_hours: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          escalation_after_hours?: number
+          first_response_hours?: number
+          id?: string
+          priority: string
+          resolution_hours?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          escalation_after_hours?: number
+          first_response_hours?: number
+          id?: string
+          priority?: string
+          resolution_hours?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       ticket_sync_alerts: {
         Row: {
@@ -15865,6 +16099,8 @@ export type Database = {
           escalated_at: string | null
           escalation_count: number
           external_ticket_id: string | null
+          first_response_at: string | null
+          first_response_due_at: string | null
           follow_up_at: string | null
           id: string
           internal_note: string | null
@@ -15872,11 +16108,14 @@ export type Database = {
           last_customer_reply_at: string | null
           last_outbound_sync_at: string | null
           last_synced_at: string | null
+          merged_into_ticket_id: string | null
           next_customer_reminder_at: string | null
           order_id: string | null
           order_number: string | null
           priority: string
           repair_order_id: string | null
+          resolution_due_at: string | null
+          resolved_at: string | null
           routing_note: string | null
           serial_number: string | null
           sla_last_check: string | null
@@ -15919,6 +16158,8 @@ export type Database = {
           escalated_at?: string | null
           escalation_count?: number
           external_ticket_id?: string | null
+          first_response_at?: string | null
+          first_response_due_at?: string | null
           follow_up_at?: string | null
           id?: string
           internal_note?: string | null
@@ -15926,11 +16167,14 @@ export type Database = {
           last_customer_reply_at?: string | null
           last_outbound_sync_at?: string | null
           last_synced_at?: string | null
+          merged_into_ticket_id?: string | null
           next_customer_reminder_at?: string | null
           order_id?: string | null
           order_number?: string | null
           priority?: string
           repair_order_id?: string | null
+          resolution_due_at?: string | null
+          resolved_at?: string | null
           routing_note?: string | null
           serial_number?: string | null
           sla_last_check?: string | null
@@ -15973,6 +16217,8 @@ export type Database = {
           escalated_at?: string | null
           escalation_count?: number
           external_ticket_id?: string | null
+          first_response_at?: string | null
+          first_response_due_at?: string | null
           follow_up_at?: string | null
           id?: string
           internal_note?: string | null
@@ -15980,11 +16226,14 @@ export type Database = {
           last_customer_reply_at?: string | null
           last_outbound_sync_at?: string | null
           last_synced_at?: string | null
+          merged_into_ticket_id?: string | null
           next_customer_reminder_at?: string | null
           order_id?: string | null
           order_number?: string | null
           priority?: string
           repair_order_id?: string | null
+          resolution_due_at?: string | null
+          resolved_at?: string | null
           routing_note?: string | null
           serial_number?: string | null
           sla_last_check?: string | null
@@ -16000,6 +16249,27 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tickets_merged_into_ticket_id_fkey"
+            columns: ["merged_into_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "tickets_merged_into_ticket_id_fkey"
+            columns: ["merged_into_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "tickets_merged_into_ticket_id_fkey"
+            columns: ["merged_into_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tickets_repair_order_id_fkey"
             columns: ["repair_order_id"]
@@ -16716,6 +16986,20 @@ export type Database = {
             foreignKeyName: "whatsapp_sc_conversations_linked_ticket_id_fkey"
             columns: ["linked_ticket_id"]
             isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "whatsapp_sc_conversations_linked_ticket_id_fkey"
+            columns: ["linked_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
+          },
+          {
+            foreignKeyName: "whatsapp_sc_conversations_linked_ticket_id_fkey"
+            columns: ["linked_ticket_id"]
+            isOneToOne: false
             referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
@@ -16777,6 +17061,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "whatsapp_sc_conversations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_sc_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["duplicate_of_id"]
+          },
+          {
+            foreignKeyName: "whatsapp_sc_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_potential_duplicates"
+            referencedColumns: ["ticket_id"]
           },
           {
             foreignKeyName: "whatsapp_sc_messages_ticket_id_fkey"
@@ -17708,6 +18006,18 @@ export type Database = {
           },
         ]
       }
+      ticket_potential_duplicates: {
+        Row: {
+          created_at: string | null
+          customer_email: string | null
+          duplicate_of_created_at: string | null
+          duplicate_of_id: string | null
+          duplicate_of_number: string | null
+          ticket_id: string | null
+          ticket_number: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       as_force_close_case: {
@@ -17973,6 +18283,11 @@ export type Database = {
       }
       tenant_id_for_source: { Args: { _source: string }; Returns: string }
       ticket_auto_close_stale: { Args: never; Returns: Json }
+      ticket_merge: {
+        Args: { _source_id: string; _target_id: string }
+        Returns: Json
+      }
+      ticket_sla_check_and_escalate: { Args: never; Returns: Json }
       user_has_tenant: { Args: { _tenant_id: string }; Returns: boolean }
       user_mailboxes: { Args: never; Returns: string[] }
     }
