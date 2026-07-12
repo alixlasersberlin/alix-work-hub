@@ -25,6 +25,7 @@ import { template as orderConfirmation } from './order-confirmation.tsx'
 import { template as salesLeadInternalNotification } from './sales-lead-internal-notification.tsx'
 import { template as anzahlungMahnung } from './anzahlung-mahnung.tsx'
 import { template as asCustomerReminder } from './as-customer-reminder.tsx'
+import { template as ticketCsat } from './ticket-csat.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -43,4 +44,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'sales-lead-internal-notification': salesLeadInternalNotification,
   'anzahlung-mahnung': anzahlungMahnung,
   'as-customer-reminder': asCustomerReminder,
+  'ticket-csat': ticketCsat,
 }

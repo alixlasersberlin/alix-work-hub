@@ -284,6 +284,7 @@ const ReviewsFrontendPreview = lazy(() => import("./pages/Reviews/FrontendPrevie
 const PublicReviewForm = lazy(() => import("./pages/PublicReview/ReviewForm"));
 const ReviewThanks = lazy(() => import("./pages/PublicReview/ReviewThanks"));
 const PortalLookup = lazy(() => import("./pages/Portal/Lookup"));
+const TicketCsat = lazy(() => import("./pages/Public/TicketCsat"));
 const PortalStatus = lazy(() => import("./pages/Portal/Status"));
 const PortalAdmin = lazy(() => import("./pages/PortalAdmin"));
 const MailCenterLayout = lazy(() => import("./pages/MailCenter/Layout"));
@@ -1103,6 +1104,7 @@ function AppRoutes() {
         <Route path="/repair-quote/:token" element={<PublicRepairQuoteDecision />} />
         <Route path="/bewertung/danke" element={<ReviewThanks />} />
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
+        <Route path="/csat/:token" element={<TicketCsat />} />
         <Route path="/portal" element={<PortalLookup />} />
         <Route path="/portal/status" element={<PortalStatus />} />
         <Route path="/sign/:token" element={<AlixSignPublic />} />

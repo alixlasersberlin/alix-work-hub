@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { validateTicketAttachment } from '@/lib/ticketAttachments';
+import { validateTicketAttachment, TICKET_ATTACHMENT_ACCEPT } from '@/lib/ticketAttachments';
 import { ArrowLeft, Loader2, MessageSquare, Paperclip, Save, Send, Wrench, Truck, Banknote, ClipboardList, RefreshCw, History, CheckCircle2, AlertCircle, Lock, Unlock, Upload, UserPlus, Flag, Activity } from 'lucide-react';
 import { sbRepair } from '@/lib/repair/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -20,6 +20,7 @@ import { TicketHistoryTimeline } from '@/components/tickets/TicketHistoryTimelin
 import { TicketParticipants } from '@/components/tickets/TicketParticipants';
 import { TicketHandoverDialog } from '@/components/tickets/TicketHandoverDialog';
 import { PhoneNoteDialog } from '@/components/tickets/PhoneNoteDialog';
+import { TicketDuplicateAlert } from './TicketDuplicateAlert';
 import { ArrowRightLeft } from 'lucide-react';
 
 interface Ticket {
@@ -56,6 +57,11 @@ interface Ticket {
   last_customer_reply_at?: string | null;
   last_agent_reply_at?: string | null;
   next_customer_reminder_at?: string | null;
+  first_response_due_at?: string | null;
+  resolution_due_at?: string | null;
+  first_response_at?: string | null;
+  merged_into_ticket_id?: string | null;
+  ticket_number?: string | null;
 }
 interface LinkedRepair {
   id: string;
@@ -528,12 +534,17 @@ export default function TicketDetail() {
               Prio Hoch (Auto)
             </Badge>
           )}
-          {ticket.sla_status && ticket.sla_status !== 'ok' && (
-            <Badge variant="outline" className={ticket.sla_status === 'breach'
+          {ticket.sla_status && ticket.sla_status !== 'ok' && (() => {
+            const s = ticket.sla_status;
+            const label = s === 'breached' || s === 'breach' ? 'SLA verletzt'
+              : s === 'warning' ? 'SLA fast fällig' : `SLA: ${s}`;
+            const cls = (s === 'breached' || s === 'breach')
               ? 'bg-red-500/15 text-red-300 border-red-500/40'
-              : 'bg-amber-500/15 text-amber-300 border-amber-500/40'}>
-              SLA: {ticket.sla_status}
-            </Badge>
+              : 'bg-amber-500/15 text-amber-300 border-amber-500/40';
+            return <Badge variant="outline" className={cls} title={ticket.resolution_due_at ? `Lösung bis ${new Date(ticket.resolution_due_at).toLocaleString('de-DE')}` : undefined}>{label}</Badge>;
+          })()}
+          {ticket.merged_into_ticket_id && (
+            <Badge variant="outline" className="bg-muted text-muted-foreground border-border">Zusammengeführt</Badge>
           )}
           {ticket.comm_status && ticket.comm_status !== 'none' && (() => {
             const map: Record<string, { label: string; cls: string }> = {
@@ -647,6 +658,7 @@ export default function TicketDetail() {
             <input
               type="file"
               className="hidden"
+              accept={TICKET_ATTACHMENT_ACCEPT}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); e.currentTarget.value = ''; }}
             />
             <span className={`inline-flex items-center h-9 px-3 rounded-md text-sm cursor-pointer border border-input bg-background hover:bg-muted/40 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -669,6 +681,14 @@ export default function TicketDetail() {
           )}
         </div>
       )}
+
+      <TicketDuplicateAlert
+        ticketId={ticket.id}
+        customerEmail={ticket.customer_email}
+        onMerged={() => load()}
+      />
+
+
 
 
       <div className="grid lg:grid-cols-3 gap-6">
