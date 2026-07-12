@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Loader2, FilePlus, ShieldCheck, Ban, Clock, AlertTriangle } from 'lucide-react';
+import { Loader2, FilePlus, ShieldCheck, Ban, Clock, AlertTriangle, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -105,10 +105,22 @@ export default function Requests() {
     load();
   };
 
+  const apply = async (id: string) => {
+    const req = requests.find(r => r.id === id);
+    if (!req) return;
+    if (req.requested_by === user?.id) { toast.error('Antragsteller darf eigenen Antrag nicht anwenden.'); return; }
+    const { error } = await (supabase as any).rpc('apply_role_change_request', { _request_id: id });
+    if (error) { toast.error(error.message); return; }
+    toast.success('Antrag angewendet — Rolle wurde vergeben/entzogen.');
+    load();
+  };
+
   if (loading) return <div className="flex items-center gap-2 text-muted-foreground p-8"><Loader2 className="w-4 h-4 animate-spin" /> Lade…</div>;
 
   const open_ = requests.filter(r => r.status === 'open');
-  const done = requests.filter(r => r.status !== 'open');
+  const approved = requests.filter(r => r.status === 'approved');
+  const done = requests.filter(r => !['open', 'approved'].includes(r.status));
+
 
   return (
     <div className="space-y-4">
