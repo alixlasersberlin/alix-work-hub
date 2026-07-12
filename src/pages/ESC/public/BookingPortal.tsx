@@ -499,11 +499,11 @@ export default function BookingPortal() {
 
             {waitlistOpen && (
               <div className="rounded-md border p-3 bg-muted/20 text-[12.5px]">
-                <div className="font-medium mb-1">Warteliste</div>
-                <p className="text-muted-foreground mb-2">Wir informieren Sie per E-Mail, sobald ein passender Termin frei wird.</p>
+                <div className="font-medium mb-1">{t.time.waitlist_title}</div>
+                <p className="text-muted-foreground mb-2">{t.time.waitlist_hint}</p>
                 <div className="flex gap-2">
-                  <Input placeholder="Ihre E-Mail" value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} className="h-9" />
-                  <Button size="sm" onClick={() => { toast.success('Auf Warteliste gesetzt.'); setWaitlistOpen(false); }}>Eintragen</Button>
+                  <Input placeholder={t.time.email_ph} value={state.email} onChange={(e) => setState({ ...state, email: e.target.value })} className="h-9" />
+                  <Button size="sm" onClick={() => { toast.success(t.time.waitlist_added); setWaitlistOpen(false); }}>{t.time.waitlist_add}</Button>
                 </div>
               </div>
             )}
