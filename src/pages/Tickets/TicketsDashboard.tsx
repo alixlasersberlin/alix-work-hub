@@ -61,8 +61,8 @@ export default function TicketsDashboard() {
     const end = endOfDay(now).toISOString();
     const c = (q: any) => q.then((r: any) => r.count ?? 0);
 
-    const [neu, meine, heute, ueberfaellig, termine_heute, warten_kunde, eskaliert, total_offen] = await Promise.all([
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).eq("status", "Neu")),
+    const [neu, meine, heute, ueberfaellig, termine_heute, warten_kunde, eskaliert, total_offen, sla_warning, sla_breach] = await Promise.all([
+      c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("status", ["open", "offen", "Neu"])),
       c(supabase.from("tickets").select("id", { count: "exact", head: true })
         .eq("assigned_to", user?.id ?? "").in("status", OPEN_STATUS)),
       c(supabase.from("tickets").select("id", { count: "exact", head: true })
@@ -71,11 +71,13 @@ export default function TicketsDashboard() {
         .lt("due_at", now.toISOString()).in("status", OPEN_STATUS)),
       c(supabase.from("tickets").select("id", { count: "exact", head: true })
         .gte("appointment_at", start).lt("appointment_at", end)),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).eq("status", "Warten auf Kunde")),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).eq("status", "Eskaliert")),
+      c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("status", ["wartet_kunde", "wartet_Kunde", "Warten auf Kunde"])),
+      c(supabase.from("tickets").select("id", { count: "exact", head: true }).gt("escalation_count", 0).in("status", OPEN_STATUS)),
       c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("status", OPEN_STATUS)),
+      c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("sla_status", ["warning", "warn_response", "warn_progress"]).in("status", OPEN_STATUS)),
+      c(supabase.from("tickets").select("id", { count: "exact", head: true }).eq("sla_status", "breach").in("status", OPEN_STATUS)),
     ]);
-    setCounts({ neu, meine, heute, ueberfaellig, termine_heute, warten_kunde, eskaliert, total_offen });
+    setCounts({ neu, meine, heute, ueberfaellig, termine_heute, warten_kunde, eskaliert, total_offen, sla_warning, sla_breach });
 
     // Priority breakdown (offene Tickets)
     const { data: prio } = await supabase
