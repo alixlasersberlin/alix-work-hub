@@ -50,6 +50,7 @@ export default function ConfirmAppointment() {
   }
 
   const dept = departments.find((d) => d.id === appointment.departmentId);
+  const isTicket = /^Ticket-Anfrage/i.test(appointment.externalNote || '') || appointment.title?.toLowerCase().includes('ticket');
 
   const act = async (kind: 'confirmed' | 'cancelled') => {
     await updateAppointment(appointment.id, { status: kind === 'confirmed' ? 'bestaetigt' : 'storniert' });
@@ -57,6 +58,39 @@ export default function ConfirmAppointment() {
     setDone(kind);
     toast.success('Danke für Ihre Rückmeldung!');
   };
+
+  if (isTicket) {
+    return (
+      <BookingLayout narrow>
+        <Card className="border-primary/20">
+          <CardHeader>
+            <div className="flex items-center gap-2 mb-1">
+              <DepartmentBadge dept={dept} size="md" />
+            </div>
+            <CardTitle className="text-[17px]">Ihre Anfrage ist eingegangen</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-[13.5px]">
+            <div className="rounded-md border p-4 bg-primary/5">
+              <div className="text-[14px] font-medium mb-1">Vielen Dank!</div>
+              <div className="text-[12.5px] text-muted-foreground">
+                Wir haben Ihre Anfrage erhalten und melden uns zeitnah per E-Mail bei Ihnen.
+                Ein Termin ist für diese Anfrage nicht erforderlich.
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <Row icon={CalendarCheck} label="Anfrage" value={appointment.title || 'Ticket-Anfrage'} />
+              <Row icon={CalendarClock} label="Status" value={appointment.status} />
+            </div>
+            {appointment.externalNote && (
+              <div className="rounded-md border p-3 bg-muted/30 text-[12.5px] whitespace-pre-line">
+                {appointment.externalNote.replace(/^Ticket-Anfrage\s*\n?/i, '')}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </BookingLayout>
+    );
+  }
 
   return (
     <BookingLayout narrow>
