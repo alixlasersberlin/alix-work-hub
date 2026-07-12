@@ -3,7 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Loader2, User, Shield, AlertTriangle, Building2, Mail } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, User, Shield, Building2, Mail, Pencil } from 'lucide-react';
+import { toast } from 'sonner';
 import { CRITICAL_ROLE_NAMES, levelClasses, levelLabel, scoreForUser } from './lib';
 
 export default function EmployeesCards() {
@@ -17,25 +21,34 @@ export default function EmployeesCards() {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<'all' | 'critical' | 'inactive' | 'noRole'>('all');
 
-  useEffect(() => {
-    (async () => {
-      const [u, r, ur, t, ua, d] = await Promise.all([
-        supabase.from('user_profiles').select('id, full_name, email, is_active, account_status, department_id'),
-        supabase.from('roles').select('id, name'),
-        supabase.from('user_roles').select('user_id, role_id'),
-        supabase.from('tenants').select('id, code, name, country'),
-        supabase.from('user_tenant_access').select('user_id, tenant_id'),
-        supabase.from('departments').select('id, name'),
-      ]);
-      setUsers(u.data ?? []); setRoles(r.data ?? []); setUserRoles(ur.data ?? []);
-      setTenants(t.data ?? []); setUta(ua.data ?? []); setDepartments(d.data ?? []);
-      setLoading(false);
-    })();
-  }, []);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [editRoleIds, setEditRoleIds] = useState<string[]>([]);
+  const [editTenantIds, setEditTenantIds] = useState<string[]>([]);
+  const [editActive, setEditActive] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const [u, r, ur, t, ua, d] = await Promise.all([
+      supabase.from('user_profiles').select('id, full_name, email, is_active, account_status, department_id'),
+      supabase.from('roles').select('id, name'),
+      supabase.from('user_roles').select('user_id, role_id'),
+      supabase.from('tenants').select('id, code, name, country'),
+      supabase.from('user_tenant_access').select('user_id, tenant_id'),
+      supabase.from('departments').select('id, name'),
+    ]);
+    setUsers(u.data ?? []); setRoles(r.data ?? []); setUserRoles(ur.data ?? []);
+    setTenants(t.data ?? []); setUta(ua.data ?? []); setDepartments(d.data ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
 
   const enriched = useMemo(() => users.map(u => {
-    const myRoles = userRoles.filter(x => x.user_id === u.id).map(x => roles.find(r => r.id === x.role_id)?.name).filter(Boolean);
-    const myTenants = uta.filter(x => x.user_id === u.id).map(x => tenants.find(t => t.id === x.tenant_id)).filter(Boolean);
+    const myRoleIds = userRoles.filter(x => x.user_id === u.id).map(x => x.role_id);
+    const myRoles = myRoleIds.map(id => roles.find(r => r.id === id)?.name).filter(Boolean);
+    const myTenantIds = uta.filter(x => x.user_id === u.id).map(x => x.tenant_id);
+    const myTenants = myTenantIds.map(id => tenants.find(t => t.id === id)).filter(Boolean);
     const hasCritical = myRoles.some((n: string) => CRITICAL_ROLE_NAMES.has(n));
     const score = scoreForUser({
       isActive: u.is_active,
@@ -45,7 +58,7 @@ export default function EmployeesCards() {
       hasTenant: myTenants.length > 0,
     });
     const dept = departments.find(d => d.id === u.department_id)?.name;
-    return { ...u, myRoles, myTenants, hasCritical, score, dept };
+    return { ...u, myRoleIds, myRoles, myTenantIds, myTenants, hasCritical, score, dept };
   }), [users, userRoles, roles, uta, tenants, departments]);
 
   const filtered = useMemo(() => {
@@ -59,6 +72,58 @@ export default function EmployeesCards() {
     }
     return list;
   }, [enriched, filter, q]);
+
+  const openEdit = (u: any) => {
+    setEditing(u);
+    setEditRoleIds([...u.myRoleIds]);
+    setEditTenantIds([...u.myTenantIds]);
+    setEditActive(!!u.is_active);
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    try {
+      // Roles: diff
+      const before = new Set<string>(editing.myRoleIds);
+      const after = new Set<string>(editRoleIds);
+      const toAddRoles = editRoleIds.filter(id => !before.has(id));
+      const toRemoveRoles = [...before].filter(id => !after.has(id));
+      if (toRemoveRoles.length) {
+        const { error } = await supabase.from('user_roles').delete().eq('user_id', editing.id).in('role_id', toRemoveRoles);
+        if (error) throw error;
+      }
+      if (toAddRoles.length) {
+        const { error } = await supabase.from('user_roles').insert(toAddRoles.map(rid => ({ user_id: editing.id, role_id: rid })));
+        if (error) throw error;
+      }
+      // Tenants: diff
+      const tBefore = new Set<string>(editing.myTenantIds);
+      const tAfter = new Set<string>(editTenantIds);
+      const toAddTen = editTenantIds.filter(id => !tBefore.has(id));
+      const toRemoveTen = [...tBefore].filter(id => !tAfter.has(id));
+      if (toRemoveTen.length) {
+        const { error } = await supabase.from('user_tenant_access').delete().eq('user_id', editing.id).in('tenant_id', toRemoveTen);
+        if (error) throw error;
+      }
+      if (toAddTen.length) {
+        const { error } = await supabase.from('user_tenant_access').insert(toAddTen.map(tid => ({ user_id: editing.id, tenant_id: tid })));
+        if (error) throw error;
+      }
+      // Active
+      if (editActive !== !!editing.is_active) {
+        const { error } = await supabase.from('user_profiles').update({ is_active: editActive }).eq('id', editing.id);
+        if (error) throw error;
+      }
+      toast.success('Änderungen gespeichert');
+      setEditing(null);
+      await load();
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message ?? String(e)));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) return <div className="flex items-center gap-2 text-muted-foreground p-8"><Loader2 className="w-4 h-4 animate-spin" /> Lade Mitarbeiter…</div>;
 
@@ -97,6 +162,9 @@ export default function EmployeesCards() {
                 <div className="text-xs text-muted-foreground truncate flex items-center gap-1"><Mail className="w-3 h-3" />{u.email}</div>
                 {u.dept && <div className="text-xs text-muted-foreground mt-0.5">{u.dept}</div>}
               </div>
+              <Button size="sm" variant="outline" className="h-7 px-2 gap-1" onClick={() => openEdit(u)}>
+                <Pencil className="w-3 h-3" /> Bearbeiten
+              </Button>
             </div>
 
             <div className="space-y-2">
@@ -141,6 +209,64 @@ export default function EmployeesCards() {
         ))}
         {filtered.length === 0 && <div className="col-span-full text-center py-8 text-muted-foreground">Keine Treffer</div>}
       </div>
+
+      <Dialog open={!!editing} onOpenChange={o => !o && setEditing(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing?.full_name || editing?.email} bearbeiten</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Checkbox id="active" checked={editActive} onCheckedChange={v => setEditActive(!!v)} />
+                <label htmlFor="active" className="text-sm">Aktiv</label>
+              </div>
+
+              <div>
+                <div className="text-xs font-medium uppercase text-muted-foreground mb-2">Rollen</div>
+                <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto p-2 border rounded-md">
+                  {roles.map(r => {
+                    const checked = editRoleIds.includes(r.id);
+                    return (
+                      <label key={r.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={v => setEditRoleIds(prev => v ? [...prev, r.id] : prev.filter(x => x !== r.id))}
+                        />
+                        <span className={CRITICAL_ROLE_NAMES.has(r.name) ? 'text-amber-500' : ''}>{r.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-medium uppercase text-muted-foreground mb-2">Niederlassungen</div>
+                <div className="grid grid-cols-2 gap-2 p-2 border rounded-md">
+                  {tenants.map(t => {
+                    const checked = editTenantIds.includes(t.id);
+                    return (
+                      <label key={t.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={v => setEditTenantIds(prev => v ? [...prev, t.id] : prev.filter(x => x !== t.id))}
+                        />
+                        <span>{t.name}{t.country ? ` · ${t.country}` : ''}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)} disabled={saving}>Abbrechen</Button>
+            <Button onClick={saveEdit} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
