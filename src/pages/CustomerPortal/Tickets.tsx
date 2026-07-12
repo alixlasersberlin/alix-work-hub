@@ -119,8 +119,10 @@ export default function CustomerPortalTickets() {
   const addFiles = (fs: FileList | null) => {
     if (!fs) return;
     const list = Array.from(fs).slice(0, 10 - files.length);
-    const oversized = list.find(f => f.size > 20 * 1024 * 1024);
-    if (oversized) return toast.error(`Datei "${oversized.name}" ist größer als 20 MB.`);
+    for (const f of list) {
+      const v = validateTicketAttachment(f);
+      if (!v.ok) { toast.error(v.reason); return; }
+    }
     setFiles(prev => [...prev, ...list].slice(0, 10));
   };
   const removeFile = (i: number) => setFiles(prev => prev.filter((_, idx) => idx !== i));
