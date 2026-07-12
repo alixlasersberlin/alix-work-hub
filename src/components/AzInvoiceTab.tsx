@@ -557,7 +557,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function sendByEmail() {
-    if (blockIfDuplicate()) return;
+    // Versand ist idempotent (PDF-Reprint + E-Mail) und darf auch nach bereits gestellter Rechnung genutzt werden.
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart.');
       return;
