@@ -450,8 +450,8 @@ export default function BookingPortal() {
       {step === 'time' && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-[16px]">Freien Termin wählen</CardTitle>
-            <p className="text-[12.5px] text-muted-foreground">Nur tatsächlich verfügbare Zeiten werden angezeigt.</p>
+            <CardTitle className="text-[16px]">{t.time.title}</CardTitle>
+            <p className="text-[12.5px] text-muted-foreground">{t.time.subtitle}</p>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
