@@ -217,8 +217,12 @@ export default function EmployeesCards() {
         {filtered.length === 0 && <div className="col-span-full text-center py-8 text-muted-foreground">Keine Treffer</div>}
       </div>
 
-      <Dialog open={!!editing} onOpenChange={o => !o && setEditing(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <Dialog open={!!editing} onOpenChange={o => { if (!o) setEditing(null); }}>
+        <DialogContent
+          className="max-w-2xl max-h-[85vh] overflow-y-auto"
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>{editing?.full_name || editing?.email} bearbeiten</DialogTitle>
             <DialogDescription>Rollen, Niederlassungen und Aktiv-Status verwalten.</DialogDescription>
