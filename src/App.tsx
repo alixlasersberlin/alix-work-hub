@@ -235,6 +235,8 @@ const MobileSignatur = lazy(() => import("./pages/Mobile/Signatur"));
 const MobileChecklist = lazy(() => import("./pages/Mobile/Checkliste"));
 const MobileSync = lazy(() => import("./pages/Mobile/Sync"));
 const MobileProfil = lazy(() => import("./pages/Mobile/Profil"));
+const MobileSprachnotiz = lazy(() => import("./pages/Mobile/Sprachnotiz"));
+const AdminAuditLog = lazy(() => import("./pages/Admin/AuditLog"));
 const AlixSmartMigration = lazy(() => import("./pages/AlixSmartMigration"));
 const AlixSmartKonfliktaufloesung = lazy(() => import("./pages/AlixSmartKonfliktaufloesung"));
 const Geraeteakte = lazy(() => import("./pages/Geraeteakte"));
@@ -1176,7 +1178,11 @@ function AppRoutes() {
           <Route path="einsatz/:id/fotos" element={<MobileFotos />} />
           <Route path="einsatz/:id/signatur" element={<MobileSignatur />} />
           <Route path="einsatz/:id/checkliste" element={<MobileChecklist />} />
+          <Route path="einsatz/:id/sprachnotiz" element={<MobileSprachnotiz />} />
+          <Route path="sprachnotiz" element={<MobileSprachnotiz />} />
         </Route>
+
+
 
         {/* EMP – Enterprise Mobile Platform (rollenbasierte mobile Oberfläche) */}
         <Route path="/emp" element={<ProtectedRoute><EmpLayout /></ProtectedRoute>}>
