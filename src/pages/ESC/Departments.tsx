@@ -101,6 +101,7 @@ export default function EscDepartments() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-20">Reihenfolge</TableHead>
               <TableHead>Abteilung</TableHead>
               <TableHead>Beschreibung</TableHead>
               <TableHead>Dauer</TableHead>
@@ -112,6 +113,7 @@ export default function EscDepartments() {
           <TableBody>
             {departments.map((d) => (
               <TableRow key={d.id}>
+                <TableCell className="text-[12px] tabular-nums text-muted-foreground">{d.sortOrder ?? '—'}</TableCell>
                 <TableCell><DepartmentBadge dept={d} size="md" /></TableCell>
                 <TableCell className="text-muted-foreground text-[12px]">{d.description}</TableCell>
                 <TableCell className="text-[12px]">{d.defaultDurationMinutes} min</TableCell>
