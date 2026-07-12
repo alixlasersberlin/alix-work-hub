@@ -61,12 +61,6 @@ export function SidebarInfoBar() {
           <Thermometer className="w-3 h-3 text-primary/80" />
           {temp !== null ? `${Math.round(temp)}°` : '—'} Berlin
         </span>
-        <span className="inline-flex items-center gap-1">
-          <Globe2 className="w-3 h-3 text-primary/80" /> Peking {timePeking}
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <Globe2 className="w-3 h-3 text-primary/80" /> Miami {timeMiami}
-        </span>
       </div>
     </div>
   );
