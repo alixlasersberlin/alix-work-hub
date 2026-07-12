@@ -175,18 +175,18 @@ export default function BookingPortal() {
             <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-2">
               <CheckCircle2 className="w-8 h-8 text-primary" />
             </div>
-            <CardTitle className="text-[18px]">Vielen Dank!</CardTitle>
+            <CardTitle className="text-[18px]">{t.thanks.title}</CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-3 text-[13.5px]">
-            <p>Ihre Buchungsanfrage ist bei uns eingegangen. Sie erhalten in Kürze eine Bestätigungs-E-Mail.</p>
+            <p>{t.thanks.text}</p>
             <div className="inline-flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-1.5 text-[12px]">
-              <span className="text-muted-foreground">Buchungsnummer</span>
+              <span className="text-muted-foreground">{t.thanks.number_label}</span>
               <span className="font-mono font-semibold">{sent.bookingNumber}</span>
             </div>
             <div className="pt-2">
               <a href={confirmUrl(sent.token)} className="text-primary hover:underline text-[12px] break-all">{confirmUrl(sent.token)}</a>
             </div>
-            <Button variant="outline" onClick={() => { setSent(null); setStep('department'); setState({ ...state, departmentId: '', service: '', locationId: '', dayIso: '', slotIso: '' }); }}>Weitere Buchung</Button>
+            <Button variant="outline" onClick={() => { setSent(null); setStep('department'); setState({ ...state, departmentId: '', service: '', locationId: '', dayIso: '', slotIso: '' }); }}>{t.thanks.again}</Button>
           </CardContent>
         </Card>
       </BookingLayout>
