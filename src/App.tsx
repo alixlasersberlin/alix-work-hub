@@ -223,6 +223,8 @@ const KundenportalKonfiguration = lazy(() => import("./pages/Operation/Kundenpor
 const Datensicherung = lazy(() => import("./pages/operation/Datensicherung"));
 const FortKnox = lazy(() => import("./pages/operation/FortKnox"));
 const Mandanten = lazy(() => import("./pages/Mandanten"));
+const TicketDepartments = lazy(() => import("./pages/Operation/TicketDepartments"));
+const AppointmentAction = lazy(() => import("./pages/PublicAppointment/AppointmentAction"));
 const KonzernDashboard = lazy(() => import("./pages/KonzernDashboard"));
 const MobileLayout = lazy(() => import("./pages/Mobile/Layout"));
 const MobileHome = lazy(() => import("./pages/Mobile/Home"));
@@ -706,6 +708,9 @@ function AppRoutes() {
         <Route path="/termin-bestaetigen/:token" element={<EscConfirmAppointment />} />
         <Route path="/checkin/:token" element={<EscCheckin />} />
         <Route path="/esc/checkin/:token" element={<EscCheckin />} />
+        <Route path="/termin/bestaetigen/:token" element={<AppointmentAction action="confirm" />} />
+        <Route path="/termin/verschieben/:token" element={<AppointmentAction action="reschedule" />} />
+        <Route path="/termin/ablehnen/:token" element={<AppointmentAction action="cancel" />} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
@@ -809,6 +814,7 @@ function AppRoutes() {
           <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
           <Route path="/operation/health-check" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><HealthCheck /></ProtectedRoute>} />
           <Route path="/operation/nummernkreise" element={<ProtectedRoute requiredRoles={['Super Admin']}><Nummernkreise /></ProtectedRoute>} />
+          <Route path="/operation/ticket-abteilungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketDepartments /></ProtectedRoute>} />
           <Route path="/operation/angebotskalender-config" element={<ProtectedRoute requiredRoles={['Super Admin']}><AngebotsKalenderConfig /></ProtectedRoute>} />
           <Route path="/operation/sms-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><SmsKonfiguration /></ProtectedRoute>} />
           <Route path="/operation/alix-copilot" element={<ProtectedRoute requiredRoles={['Super Admin']}><AlixCopilotKonfiguration /></ProtectedRoute>} />
