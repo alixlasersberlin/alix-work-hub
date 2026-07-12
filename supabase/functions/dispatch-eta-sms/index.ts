@@ -3,6 +3,9 @@
 // den Versand in customer_communication_log. Aufruf durch Techniker aus /m/einsatz.
 //
 // Body: { route_plan_id: string, eta_minutes: number }
+// Template geladen aus app_settings key = 'sms.eta.template'
+//   { de: string, at: string, sender?: string }
+// Platzhalter: {{eta}} {{name}} {{sender}} {{city}}
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { z } from 'https://esm.sh/zod@3.23.8';
@@ -19,6 +22,12 @@ const Body = z.object({
 });
 
 const GATEWAY_URL = 'https://connector-gateway.lovable.dev/twilio';
+const SETTING_KEY = 'sms.eta.template';
+
+const DEFAULT_TEMPLATES = {
+  de: 'Hallo {{name}}, Ihr Techniker ist unterwegs und wird gegen {{eta}} Uhr eintreffen. – {{sender}}',
+  at: 'Hallo {{name}}, Ihr Techniker ist unterwegs und wird gegen {{eta}} Uhr bei Ihnen eintreffen. – {{sender}}',
+};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -44,7 +53,7 @@ Deno.serve(async (req) => {
     const { route_plan_id, eta_minutes } = parsed.data;
 
     const { data: rp } = await supa.from('route_plans')
-      .select('id, customer_id, contact_name, contact_phone, address_line, zip, city')
+      .select('id, customer_id, order_id, contact_name, contact_phone, address_line, zip, city')
       .eq('id', route_plan_id).maybeSingle();
     if (!rp) return json({ error: 'route_plan not found' }, 404);
     if (!rp.contact_phone) {
@@ -54,9 +63,39 @@ Deno.serve(async (req) => {
     const to = normalizePhone(rp.contact_phone);
     if (!to) return json({ error: `Ungültige Telefonnummer: ${rp.contact_phone}` }, 422);
 
+    // Land bestimmen: order.source_system → 'zoho_eu_2' = AT, sonst DE
+    let variant: 'de' | 'at' = 'de';
+    if (rp.order_id) {
+      const { data: ord } = await supa.from('orders')
+        .select('source_system').eq('id', rp.order_id).maybeSingle();
+      if (ord?.source_system === 'zoho_eu_2') variant = 'at';
+    }
+
+    // Template laden
+    const { data: cfgRow } = await supa.from('app_settings')
+      .select('value').eq('key', SETTING_KEY).maybeSingle();
+    let tpl = { ...DEFAULT_TEMPLATES, sender: 'AlixLasers' } as {
+      de: string; at: string; sender: string;
+    };
+    if (cfgRow?.value) {
+      try {
+        const parsedCfg = typeof cfgRow.value === 'string' ? JSON.parse(cfgRow.value) : cfgRow.value;
+        tpl = {
+          de: parsedCfg?.de || DEFAULT_TEMPLATES.de,
+          at: parsedCfg?.at || DEFAULT_TEMPLATES.at,
+          sender: parsedCfg?.sender || 'AlixLasers',
+        };
+      } catch { /* keep defaults */ }
+    }
+
     const etaAt = new Date(Date.now() + eta_minutes * 60_000);
     const etaLocal = etaAt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' });
-    const message = `Ihr Techniker ist unterwegs und wird gegen ${etaLocal} Uhr eintreffen. – Alix Lasers`;
+    const rawTpl = variant === 'at' ? tpl.at : tpl.de;
+    const message = rawTpl
+      .replaceAll('{{eta}}', etaLocal)
+      .replaceAll('{{name}}', rp.contact_name || 'Kunde')
+      .replaceAll('{{sender}}', tpl.sender)
+      .replaceAll('{{city}}', rp.city || '');
 
     const twilioRes = await fetch(`${GATEWAY_URL}/Messages.json`, {
       method: 'POST',
@@ -87,6 +126,7 @@ Deno.serve(async (req) => {
           eta_at: etaAt.toISOString(),
           to,
           from: TWILIO_FROM,
+          variant,
           twilio_sid: twilioJson?.sid ?? null,
           twilio_status: twilioJson?.status ?? null,
           twilio_error: twilioJson?.message ?? (ok ? null : twilioBody.slice(0, 500)),
@@ -98,7 +138,7 @@ Deno.serve(async (req) => {
     if (!ok) {
       return json({ error: 'Twilio-Versand fehlgeschlagen', status: twilioRes.status, details: twilioJson || twilioBody }, 502);
     }
-    return json({ ok: true, sid: twilioJson.sid, eta_at: etaAt.toISOString(), to });
+    return json({ ok: true, sid: twilioJson.sid, eta_at: etaAt.toISOString(), to, variant });
   } catch (e: any) {
     return json({ error: e?.message || String(e) }, 500);
   }
@@ -108,8 +148,6 @@ function json(d: unknown, s = 200) {
   return new Response(JSON.stringify(d), { status: s, headers: { ...cors, 'Content-Type': 'application/json' } });
 }
 
-// Normalisiert DE/AT-Nummern zu E.164. Nimmt bereits E.164 an, wandelt 0-prefixed
-// Nummern in +49 um (Default DE); wählbar mit country-Präfix.
 function normalizePhone(raw: string, defaultCountry = '49'): string | null {
   const cleaned = raw.replace(/[^\d+]/g, '');
   if (/^\+[1-9]\d{6,14}$/.test(cleaned)) return cleaned;
