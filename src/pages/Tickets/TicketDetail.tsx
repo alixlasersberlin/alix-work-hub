@@ -95,7 +95,8 @@ export default function TicketDetail() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newMsg, setNewMsg] = useState('');
-  const [msgInternal, setMsgInternal] = useState(true);
+  const [msgInternal, setMsgInternal] = useState(false);
+  const [myProfile, setMyProfile] = useState<{ full_name: string | null; job_title: string | null; avatar_url: string | null } | null>(null);
   const [outboundLogs, setOutboundLogs] = useState<OutboundLog[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -214,7 +215,41 @@ export default function TicketDetail() {
     await patch({ status: isClosed ? 'offen' : 'geschlossen' });
   }
 
-  useEffect(() => { load(); loadOutboundLogs(); loadUsers(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+  useEffect(() => { load(); loadOutboundLogs(); loadUsers(); loadMyProfile(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+
+  async function loadMyProfile() {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from('user_profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (data) setMyProfile({ full_name: (data as any).full_name || null, job_title: null, avatar_url: null });
+  }
+
+  function departmentDisplayName(dept: string | null): string {
+    const key = String(dept || '').toLowerCase();
+    const map: Record<string, string> = {
+      service: 'Alix Lasers Service',
+      technik: 'Alix Lasers Technik',
+      kundenservice: 'Alix Lasers Kundenservice',
+      reparaturannahme: 'Alix Lasers Reparaturannahme',
+      serviceleitung: 'Alix Lasers Serviceleitung',
+      lieferung: 'Alix Lasers Lieferung',
+      tourenplanung: 'Alix Lasers Lieferung',
+      schulung: 'Alix Lasers Schulung',
+      nisv: 'Alix Lasers NiSV',
+      mediapaket: 'Alix Lasers Mediapaket',
+      marketing: 'Alix Lasers Mediapaket',
+      finance: 'Alix Lasers Buchhaltung',
+      buchhaltung: 'Alix Lasers Buchhaltung',
+      vertrieb: 'Alix Lasers Vertrieb',
+      sales: 'Alix Lasers Vertrieb',
+      auftragsverwaltung: 'Alix Lasers Auftragsverwaltung',
+      order: 'Alix Lasers Auftragsverwaltung',
+    };
+    return map[key] || `Alix Lasers ${dept || 'Service'}`;
+  }
 
   async function patch(updates: Partial<Ticket>) {
     if (!ticket) return;
@@ -245,18 +280,26 @@ export default function TicketDetail() {
   async function addMessage() {
     if (!ticket || !newMsg.trim()) return;
     const messageText = newMsg.trim();
+    // Absender-Identität: bei zugewiesenem Ticket = persönlich (Name), sonst = Abteilung
+    const hasAssignee = !!ticket.assigned_to;
+    const publicName = hasAssignee
+      ? (myProfile?.full_name || user?.email || 'Mitarbeiter')
+      : departmentDisplayName(ticket.department);
+    const displayName = msgInternal
+      ? (myProfile?.full_name || user?.email || 'Mitarbeiter')
+      : publicName;
     const { data, error } = await supabase.from('ticket_messages').insert({
       ticket_id: ticket.id,
-      sender_type: 'agent',
-      sender_name: user?.email || 'Mitarbeiter',
-      sender_email: user?.email || null,
+      sender_type: msgInternal ? 'agent' : (hasAssignee ? 'agent' : 'department'),
+      sender_name: displayName,
+      sender_email: msgInternal ? (user?.email || null) : null,
       message: messageText,
       is_internal: msgInternal,
       source_system: 'alixwork',
     }).select('id').single();
     if (error) { toast.error(error.message); return; }
     setNewMsg('');
-    toast.success(msgInternal ? 'Interne Notiz hinzugefügt' : 'Nachricht hinzugefügt');
+    toast.success(msgInternal ? 'Interne Notiz gespeichert' : 'Antwort an Kunde gesendet');
     // Only sync public messages to AlixSmart (source_system === 'alixsmart')
     if (!msgInternal && ticket.external_ticket_id && ticket.source_system === 'alixsmart' && data?.id) {
       syncToAlixSmart('new_public_message', data.id);
@@ -286,7 +329,7 @@ export default function TicketDetail() {
             to_email: ticket.customer_email,
             to_name: ticket.customer_name || null,
             from_email: fromEmail,
-            from_name: 'Alix Kundenservice',
+            from_name: publicName,
             subject,
             body_html: bodyHtml,
             body_text: messageText,
@@ -600,16 +643,53 @@ export default function TicketDetail() {
                   <p className="text-sm whitespace-pre-wrap">{m.message}</p>
                 </div>
               ))}
-              {canEdit && (
-                <div className="rounded-lg border border-border bg-background p-3 space-y-2">
-                  <Textarea id="ticket-new-message" value={newMsg} onChange={e => setNewMsg(e.target.value)} placeholder="Nachricht oder interne Notiz..." rows={3} />
+              {canEdit && ticket && (
+                <div className={`rounded-lg border p-3 space-y-2 ${msgInternal ? 'border-amber-500/40 bg-amber-500/5' : 'border-emerald-500/40 bg-emerald-500/5'}`}>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setMsgInternal(false)}
+                      className={`flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors ${!msgInternal ? 'border-emerald-500 bg-emerald-500 text-white font-medium' : 'border-border bg-background text-muted-foreground hover:bg-muted'}`}
+                    >
+                      <Send className="w-3.5 h-3.5 inline mr-1" /> An Kunden senden
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMsgInternal(true)}
+                      className={`flex-1 px-3 py-1.5 text-xs rounded-md border transition-colors ${msgInternal ? 'border-amber-500 bg-amber-500 text-white font-medium' : 'border-border bg-background text-muted-foreground hover:bg-muted'}`}
+                    >
+                      <Lock className="w-3.5 h-3.5 inline mr-1" /> Interne Notiz
+                    </button>
+                  </div>
+                  <Textarea
+                    id="ticket-new-message"
+                    value={newMsg}
+                    onChange={e => setNewMsg(e.target.value)}
+                    placeholder={msgInternal ? 'Interne Notiz – nur für das Team sichtbar…' : 'Antwort an den Kunden – erscheint im Kundenportal & wird per E-Mail versendet…'}
+                    rows={3}
+                  />
                   <div className="flex items-center justify-between gap-2">
-                    <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <input type="checkbox" checked={msgInternal} onChange={e => setMsgInternal(e.target.checked)} />
-                      Als interne Notiz speichern
-                    </label>
-                    <Button size="sm" onClick={addMessage} disabled={!newMsg.trim()}>
-                      <Send className="w-4 h-4 mr-1" /> Senden
+                    <div className="text-xs text-muted-foreground">
+                      {msgInternal ? (
+                        <>🔒 Nicht für Kunde sichtbar</>
+                      ) : (
+                        <>
+                          Absender: <span className="font-medium text-foreground">
+                            {ticket.assigned_to
+                              ? (myProfile?.full_name || user?.email || 'Mitarbeiter')
+                              : departmentDisplayName(ticket.department)}
+                          </span>
+                          {!ticket.assigned_to && <span className="ml-1">(Abteilung, kein persönlicher Ansprechpartner zugewiesen)</span>}
+                        </>
+                      )}
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={addMessage}
+                      disabled={!newMsg.trim()}
+                      className={msgInternal ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'}
+                    >
+                      <Send className="w-4 h-4 mr-1" /> {msgInternal ? 'Notiz speichern' : 'An Kunden senden'}
                     </Button>
                   </div>
                 </div>
