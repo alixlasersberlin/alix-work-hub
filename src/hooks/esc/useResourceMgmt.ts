@@ -30,6 +30,8 @@ export function useResourceMgmt() {
   const removeDemoDevice = useCallback((id: string)            => { void demoDevicesS.remove(id); }, [demoDevicesS]);
   const upsertAbsence    = useCallback((a: RmAbsence)          => { void absencesS.upsert(a); }, [absencesS]);
   const removeAbsence    = useCallback((id: string)            => { void absencesS.remove(id); }, [absencesS]);
+  const upsertLocation   = useCallback((l: RmLocation)         => { void locationsS.upsert(l); }, [locationsS]);
+  const removeLocation   = useCallback((id: string)            => { void locationsS.remove(id); }, [locationsS]);
 
   return {
     employees: employeesS.items,
@@ -45,5 +47,6 @@ export function useResourceMgmt() {
     upsertRoom, removeRoom,
     upsertDemoDevice, removeDemoDevice,
     upsertAbsence, removeAbsence,
+    upsertLocation, removeLocation,
   };
 }
