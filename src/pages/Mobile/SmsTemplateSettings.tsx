@@ -25,10 +25,10 @@ const DEFAULTS: Tpl = {
 
 function preview(tpl: string, sender: string) {
   return tpl
-    .replaceAll('{{eta}}', '14:30')
-    .replaceAll('{{name}}', 'Frau Mustermann')
-    .replaceAll('{{sender}}', sender)
-    .replaceAll('{{city}}', 'Berlin');
+    .replace(/\{\{eta\}\}/g, '14:30')
+    .replace(/\{\{name\}\}/g, 'Frau Mustermann')
+    .replace(/\{\{sender\}\}/g, sender)
+    .replace(/\{\{city\}\}/g, 'Berlin');
 }
 
 export default function SmsTemplateSettings() {
