@@ -69,6 +69,17 @@ export async function updateAttempt(id: number, err?: string) {
   if (!cur) return;
   cur.attempts = (cur.attempts || 0) + 1;
   cur.last_error = err;
+  cur.next_retry_at = Date.now() + backoffMs(cur.attempts);
+  await db.put(STORE, cur);
+}
+
+export async function retryNow(id: number) {
+  const db = await getDb();
+  const cur = (await db.get(STORE, id)) as OutboxItem | undefined;
+  if (!cur) return;
+  cur.next_retry_at = 0;
+  cur.attempts = Math.min(cur.attempts, MAX_ATTEMPTS - 1);
+  cur.last_error = undefined;
   await db.put(STORE, cur);
 }
 
