@@ -63,17 +63,30 @@ serve(async (req) => {
       `Wiedervorlage: ${new Date(followUpAt).toLocaleString("de-DE")}`,
     ].filter(Boolean).join("\n");
 
+    // Ticket-Abteilung auflösen (falls Name mitgegeben)
+    let ticketDepartmentId: string | null = null;
+    if (department) {
+      const { data: dept } = await supabase
+        .from("ticket_departments")
+        .select("id")
+        .ilike("name", department)
+        .maybeSingle();
+      ticketDepartmentId = (dept as any)?.id ?? null;
+    }
+
     const { data: ticket, error } = await supabase
       .from("tickets")
       .insert({
         source_system: "booking_portal",
+        source: "kundenportal",
         external_ticket_id: bookingNumber || null,
         department: department || "Service",
-        status: "offen",
+        ticket_department_id: ticketDepartmentId,
+        category: service || null,
+        status: "Neu",
         priority: "Normal",
         customer_visible_status: "Ticket eingegangen",
         title,
-        
         description: message || null,
         customer_email: email,
         customer_name: `${firstName} ${lastName}`.trim(),
