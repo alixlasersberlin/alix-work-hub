@@ -21,6 +21,8 @@ type Row = {
   routing_strategy: "manual" | "round_robin" | "region" | "product" | "account_manager" | "least_load";
   mailbox_email: string | null;
   description: string | null;
+  sla_hours: number;
+  reminder_after_days: number;
 };
 
 const STRATEGIES: Row["routing_strategy"][] = [
