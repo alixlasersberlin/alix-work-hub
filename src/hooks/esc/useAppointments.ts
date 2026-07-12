@@ -38,6 +38,12 @@ export function useAppointments() {
 
   const deleteAppointment = useCallback(async (id: string) => {
     const before = items.find((a) => a.id === id);
+    // Frontend-Guard: nur Super Admin darf löschen (RLS erzwingt es zusätzlich serverseitig).
+    const { data: isSuper } = await (supabase as any).rpc('has_role', { check_role: 'Super Admin' });
+    if (!isSuper) {
+      toast.error('Löschen nicht erlaubt – Termine dürfen ausschließlich von Super Admin gelöscht werden. Nutze stattdessen "Stornieren".');
+      return;
+    }
     await remove(id);
     await logEscAudit({ entity: 'appointment', entityId: id, action: 'delete', before, source: 'internal' });
   }, [items, remove]);
