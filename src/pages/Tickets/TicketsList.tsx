@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -35,6 +35,8 @@ interface TicketRow {
   created_at: string;
   sla_status: string | null;
   escalation_count: number | null;
+  assigned_to: string | null;
+  due_at: string | null;
 }
 
 function slaBadge(s: string | null) {
@@ -95,13 +97,19 @@ export default function TicketsList() {
     priority: 'normal', department: 'service',
   });
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('tickets')
-        .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count')
+        .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at')
         .order('created_at', { ascending: false })
         .limit(500);
       if (!cancelled) {
@@ -123,19 +131,49 @@ export default function TicketsList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // URL-basierte Filter (aus Dashboard verlinkt)
+  const urlSla = searchParams.get('sla'); // warning | breach
+  const urlEscalated = searchParams.get('escalated') === '1';
+  const urlMine = searchParams.get('mine') === '1';
+  const urlDue = searchParams.get('due'); // today | overdue
+  const hasUrlFilters = !!(urlSla || urlEscalated || urlMine || urlDue);
+
+  const clearUrlFilters = () => {
+    const next = new URLSearchParams(searchParams);
+    ['sla', 'escalated', 'mine', 'due'].forEach(k => next.delete(k));
+    setSearchParams(next, { replace: true });
+  };
+  const removeUrlFilter = (key: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.delete(key);
+    setSearchParams(next, { replace: true });
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
     return rows.filter(r => {
       if (statusF !== 'all' && r.status !== statusF) return false;
       if (prioF !== 'all' && r.priority !== prioF) return false;
       if (deptF !== 'all' && r.department !== deptF) return false;
       if (sourceF !== 'all' && r.source_system !== sourceF) return false;
+      if (urlSla === 'warning' && !(r.sla_status && r.sla_status.startsWith('warn'))) return false;
+      if (urlSla === 'breach' && r.sla_status !== 'breach') return false;
+      if (urlEscalated && (r.escalation_count || 0) <= 0) return false;
+      if (urlMine && (!currentUserId || r.assigned_to !== currentUserId)) return false;
+      if (urlDue) {
+        if (!r.due_at) return false;
+        const t = new Date(r.due_at).getTime();
+        if (urlDue === 'today' && !(t >= now - 24*3600_000 && t <= endOfToday.getTime())) return false;
+        if (urlDue === 'overdue' && !(t < now)) return false;
+      }
       if (!q) return true;
       const hay = [r.customer_name, r.company_name, r.order_number, r.device_name, r.serial_number, r.title, r.external_ticket_id]
         .filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [rows, search, statusF, prioF, deptF, sourceF]);
+  }, [rows, search, statusF, prioF, deptF, sourceF, urlSla, urlEscalated, urlMine, urlDue, currentUserId]);
 
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
   const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status)), [filtered]);
@@ -242,6 +280,45 @@ export default function TicketsList() {
           </SelectContent>
         </Select>
       </div>
+
+      {hasUrlFilters && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-muted-foreground">Aktive Filter:</span>
+          {urlSla === 'warning' && (
+            <button onClick={() => removeUrlFilter('sla')} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20">
+              SLA-Warnung <X className="w-3 h-3" />
+            </button>
+          )}
+          {urlSla === 'breach' && (
+            <button onClick={() => removeUrlFilter('sla')} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20">
+              SLA-Verletzung <X className="w-3 h-3" />
+            </button>
+          )}
+          {urlEscalated && (
+            <button onClick={() => removeUrlFilter('escalated')} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-orange-500/40 bg-orange-500/10 text-orange-300 hover:bg-orange-500/20">
+              Eskaliert <X className="w-3 h-3" />
+            </button>
+          )}
+          {urlMine && (
+            <button onClick={() => removeUrlFilter('mine')} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20">
+              Mir zugewiesen <X className="w-3 h-3" />
+            </button>
+          )}
+          {urlDue === 'today' && (
+            <button onClick={() => removeUrlFilter('due')} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-blue-500/40 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20">
+              Fällig heute <X className="w-3 h-3" />
+            </button>
+          )}
+          {urlDue === 'overdue' && (
+            <button onClick={() => removeUrlFilter('due')} className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20">
+              Überfällig <X className="w-3 h-3" />
+            </button>
+          )}
+          <button onClick={clearUrlFilters} className="ml-1 text-muted-foreground hover:text-foreground underline">Alle löschen</button>
+        </div>
+      )}
+
+
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as 'open' | 'closed')}>
         <TabsList className="mb-3">
