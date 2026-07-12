@@ -292,25 +292,33 @@ export default function CustomerPortalTickets() {
                   <Badge variant={t.status === 'offen' ? 'default' : 'outline'}>{t.status}</Badge>
                 </div>
               ))}
-              {external.map((t) => (
-                <button
-                  key={`e-${t.id}`}
-                  type="button"
-                  onClick={() => setDetailId(t.id)}
-                  className="w-full flex items-center justify-between p-3 border border-border rounded-md text-left hover:bg-muted/40 transition"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{t.subject ?? t.title ?? t.ticket_number}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {t.category ?? ''} {t.device_name ? `· ${t.device_name}` : ''}{t.serial_number ? ` · ${t.serial_number}` : ''} · {new Date(t.created_at).toLocaleDateString('de-DE')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant="outline">{t.status ?? '—'}</Badge>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                </button>
-              ))}
+              {external.map((t) => {
+                const u = unread[t.id] ?? 0;
+                return (
+                  <button
+                    key={`e-${t.id}`}
+                    type="button"
+                    onClick={() => setDetailId(t.id)}
+                    className={`w-full flex items-center justify-between p-3 border rounded-md text-left transition ${u > 0 ? 'border-primary/40 bg-primary/5 hover:bg-primary/10' : 'border-border hover:bg-muted/40'}`}
+                  >
+                    <div className="min-w-0">
+                      <p className={`truncate ${u > 0 ? 'font-semibold' : 'font-medium'}`}>
+                        {t.subject ?? t.title ?? t.ticket_number}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {t.category ?? ''} {t.device_name ? `· ${t.device_name}` : ''}{t.serial_number ? ` · ${t.serial_number}` : ''} · {new Date(t.created_at).toLocaleDateString('de-DE')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {u > 0 && (
+                        <Badge className="bg-primary text-primary-foreground">{u} neu</Badge>
+                      )}
+                      <Badge variant="outline">{t.status ?? '—'}</Badge>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -318,6 +326,7 @@ export default function CustomerPortalTickets() {
 
       <PortalTicketDetail
         ticketId={detailId}
+        customerId={ctx.customerId}
         customerName={cust?.contact_name ?? null}
         customerEmail={cust?.email ?? null}
         onClose={() => { setDetailId(null); load(); }}
