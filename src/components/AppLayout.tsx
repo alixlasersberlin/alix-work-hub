@@ -1626,6 +1626,14 @@ export default function AppLayout() {
               <TenantSwitcher />
             </div>
             <Link
+              to="/tickets"
+              title="Ticketliste"
+              aria-label="Ticketliste"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <Ticket className="w-5 h-5" />
+            </Link>
+            <Link
               to="/mailcenter/telefonnotizen"
               title="Telefonnotizen"
               aria-label="Telefonnotizen"
