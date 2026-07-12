@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Wrench, Loader2 } from 'lucide-react';
+import { Wrench, Loader2, Image as ImageIcon } from 'lucide-react';
 
 type Ctx = { customerId: string };
 
@@ -14,10 +14,53 @@ function StatusTimeline({ current }: { current: string | null }) {
   return (
     <div className="flex flex-wrap gap-1 mt-2">
       {statusOrder.map((s, i) => (
-        <Badge key={s} variant={i <= idx ? 'default' : 'outline'} className="text-[10px]">
-          {s}
-        </Badge>
+        <Badge key={s} variant={i <= idx ? 'default' : 'outline'} className="text-[10px]">{s}</Badge>
       ))}
+    </div>
+  );
+}
+
+function PhotoFeed({ repairId }: { repairId: string }) {
+  const [urls, setUrls] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data: rps } = await supabase.from('route_plans').select('id').eq('repair_order_id', repairId).limit(50);
+      const rpIds = (rps ?? []).map((r: any) => r.id);
+      if (!rpIds.length) return setUrls([]);
+      const { data: atts } = await supabase
+        .from('dispatch_attachments')
+        .select('storage_path, attachment_kind, created_at')
+        .in('route_plan_id', rpIds)
+        .order('created_at', { ascending: false })
+        .limit(24);
+      const signed = await Promise.all((atts ?? []).map(async (a: any) => {
+        const { data } = await supabase.storage.from('dispatch-mobile').createSignedUrl(a.storage_path, 3600);
+        return data?.signedUrl;
+      }));
+      setUrls(signed.filter(Boolean) as string[]);
+    })();
+  }, [open, repairId]);
+
+  return (
+    <div className="mt-3">
+      <button onClick={() => setOpen(!open)} className="text-xs text-primary hover:underline inline-flex items-center gap-1">
+        <ImageIcon className="w-3 h-3" /> {open ? 'Fotos ausblenden' : 'Fotos vom Techniker anzeigen'}
+      </button>
+      {open && (
+        urls.length === 0 ? (
+          <p className="text-xs text-muted-foreground mt-2">Noch keine Fotos hochgeladen.</p>
+        ) : (
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mt-2">
+            {urls.map((u, i) => (
+              <a key={i} href={u} target="_blank" rel="noreferrer" className="block aspect-square rounded overflow-hidden bg-muted">
+                <img src={u} alt="" className="w-full h-full object-cover" loading="lazy" />
+              </a>
+            ))}
+          </div>
+        )
+      )}
     </div>
   );
 }
@@ -62,6 +105,7 @@ export default function CustomerPortalRepairs() {
             {(r as any).problem_description && (
               <p className="text-sm mt-3"><span className="text-muted-foreground">Fehlerbeschreibung: </span>{(r as any).problem_description}</p>
             )}
+            <PhotoFeed repairId={r.id} />
           </div>
         ))}
       </CardContent>
