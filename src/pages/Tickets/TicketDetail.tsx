@@ -49,6 +49,11 @@ interface Ticket {
   auto_priority?: string | null;
   suggested_technician_id?: string | null;
   sla_status?: string | null;
+  comm_status?: string | null;
+  comm_status_since?: string | null;
+  last_customer_reply_at?: string | null;
+  last_agent_reply_at?: string | null;
+  next_customer_reminder_at?: string | null;
 }
 interface LinkedRepair {
   id: string;
