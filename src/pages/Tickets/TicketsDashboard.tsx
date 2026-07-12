@@ -19,15 +19,17 @@ import { de } from "date-fns/locale";
 type Counts = {
   neu: number; meine: number; heute: number; ueberfaellig: number;
   termine_heute: number; warten_kunde: number; eskaliert: number; total_offen: number;
+  sla_warning: number; sla_breach: number;
 };
 
-const OPEN_STATUS = ["Neu", "Zugewiesen", "In Bearbeitung", "offen", "in_bearbeitung", "Wiedervorlage fällig"];
+const OPEN_STATUS = ["open", "offen", "in-progress", "in_bearbeitung", "wartet_kunde", "wartet_Kunde", "Neu", "Zugewiesen", "In Bearbeitung"];
+const CLOSED_STATUS = ["geschlossen", "closed", "gelöst", "Geschlossen", "Erledigt"];
 const PRIO_COLORS: Record<string, string> = {
-  Kritisch: "hsl(0 84% 60%)",
-  Dringend: "hsl(14 90% 55%)",
-  Hoch: "hsl(38 92% 55%)",
-  Normal: "hsl(217 91% 60%)",
-  Niedrig: "hsl(215 15% 55%)",
+  kritisch: "hsl(0 84% 60%)",
+  dringend: "hsl(14 90% 55%)",
+  hoch: "hsl(38 92% 55%)",
+  normal: "hsl(217 91% 60%)",
+  niedrig: "hsl(215 15% 55%)",
 };
 const DEPT_PALETTE = [
   "hsl(217 91% 60%)", "hsl(160 84% 45%)", "hsl(280 70% 60%)", "hsl(38 92% 55%)",
@@ -59,8 +61,8 @@ export default function TicketsDashboard() {
     const end = endOfDay(now).toISOString();
     const c = (q: any) => q.then((r: any) => r.count ?? 0);
 
-    const [neu, meine, heute, ueberfaellig, termine_heute, warten_kunde, eskaliert, total_offen] = await Promise.all([
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).eq("status", "Neu")),
+    const [neu, meine, heute, ueberfaellig, termine_heute, warten_kunde, eskaliert, total_offen, sla_warning, sla_breach] = await Promise.all([
+      c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("status", ["open", "offen", "Neu"])),
       c(supabase.from("tickets").select("id", { count: "exact", head: true })
         .eq("assigned_to", user?.id ?? "").in("status", OPEN_STATUS)),
       c(supabase.from("tickets").select("id", { count: "exact", head: true })
@@ -69,11 +71,13 @@ export default function TicketsDashboard() {
         .lt("due_at", now.toISOString()).in("status", OPEN_STATUS)),
       c(supabase.from("tickets").select("id", { count: "exact", head: true })
         .gte("appointment_at", start).lt("appointment_at", end)),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).eq("status", "Warten auf Kunde")),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).eq("status", "Eskaliert")),
+      c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("status", ["wartet_kunde", "wartet_Kunde", "Warten auf Kunde"])),
+      c(supabase.from("tickets").select("id", { count: "exact", head: true }).gt("escalation_count", 0).in("status", OPEN_STATUS)),
       c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("status", OPEN_STATUS)),
+      c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("sla_status", ["warning", "warn_response", "warn_progress"]).in("status", OPEN_STATUS)),
+      c(supabase.from("tickets").select("id", { count: "exact", head: true }).eq("sla_status", "breach").in("status", OPEN_STATUS)),
     ]);
-    setCounts({ neu, meine, heute, ueberfaellig, termine_heute, warten_kunde, eskaliert, total_offen });
+    setCounts({ neu, meine, heute, ueberfaellig, termine_heute, warten_kunde, eskaliert, total_offen, sla_warning, sla_breach });
 
     // Priority breakdown (offene Tickets)
     const { data: prio } = await supabase
@@ -85,7 +89,7 @@ export default function TicketsDashboard() {
     });
     setPrioData(Object.entries(prioAgg)
       .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ name, value, color: PRIO_COLORS[name] ?? "hsl(215 15% 55%)" })));
+      .map(([name, value]) => ({ name, value, color: PRIO_COLORS[name?.toLowerCase()] ?? "hsl(215 15% 55%)" })));
 
     // Department breakdown
     const { data: dept } = await supabase
@@ -104,7 +108,7 @@ export default function TicketsDashboard() {
     const from14 = subDays(startOfDay(now), 13);
     const [{ data: created }, { data: closed }] = await Promise.all([
       supabase.from("tickets").select("created_at").gte("created_at", from14.toISOString()).limit(2000),
-      supabase.from("tickets").select("updated_at").gte("updated_at", from14.toISOString()).in("status", ["Geschlossen", "Erledigt"]).limit(2000),
+      supabase.from("tickets").select("updated_at").gte("updated_at", from14.toISOString()).in("status", CLOSED_STATUS).limit(2000),
     ]);
     const days: Record<string, { neu: number; geschlossen: number }> = {};
     for (let i = 0; i < 14; i++) {
@@ -151,6 +155,8 @@ export default function TicketsDashboard() {
 
   const actionLabel = useMemo(() => ({
     auto_escalated: "Automatisch eskaliert",
+    sla_breach: "SLA überschritten",
+    phone_call_logged: "Telefonat dokumentiert",
     followup_due: "Wiedervorlage fällig",
     appointment_created: "Termin erstellt",
     appointment_email_sent: "Terminmail gesendet",
@@ -187,14 +193,16 @@ export default function TicketsDashboard() {
       </div>
 
       {/* KPI Tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {tile("Neue Tickets", counts.neu, Inbox, "/tickets?status=Neu")}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {tile("Neue Tickets", counts.neu, Inbox, "/tickets?status=open")}
         {tile("Meine offenen", counts.meine, User, "/tickets?mine=1")}
         {tile("Heute fällig", counts.heute, Clock, "/tickets?due=today", counts.heute > 0 ? "text-amber-500" : undefined)}
         {tile("Überfällig", counts.ueberfaellig, AlertTriangle, "/tickets?due=overdue", counts.ueberfaellig > 0 ? "text-destructive" : undefined)}
+        {tile("SLA-Warnung", counts.sla_warning, Clock, "/tickets?sla=warning", counts.sla_warning > 0 ? "text-amber-500" : undefined)}
+        {tile("SLA-Breach", counts.sla_breach, AlertTriangle, "/tickets?sla=breach", counts.sla_breach > 0 ? "text-destructive" : undefined)}
         {tile("Termine heute", counts.termine_heute, CalendarDays, "/tickets/kalender")}
-        {tile("Warten auf Kunde", counts.warten_kunde, PauseCircle, "/tickets?status=Warten%20auf%20Kunde")}
-        {tile("Eskaliert", counts.eskaliert, Flame, "/tickets?status=Eskaliert", counts.eskaliert > 0 ? "text-destructive" : undefined)}
+        {tile("Warten auf Kunde", counts.warten_kunde, PauseCircle, "/tickets?status=wartet_kunde")}
+        {tile("Eskaliert", counts.eskaliert, Flame, "/tickets?escalated=1", counts.eskaliert > 0 ? "text-destructive" : undefined)}
         {tile("Offen gesamt", counts.total_offen, Gauge, "/tickets")}
       </div>
 
