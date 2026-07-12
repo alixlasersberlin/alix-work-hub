@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { MessageSquare, Loader2, Send, Paperclip, X } from 'lucide-react';
+import { MessageSquare, Loader2, Send, Paperclip, X, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { PortalTicketDetail } from '@/components/CustomerPortal/PortalTicketDetail';
 
 type Ctx = { customerId: string };
 
@@ -39,6 +40,7 @@ export default function CustomerPortalTickets() {
   const ctx = useOutletContext<Ctx>();
   const [own, setOwn] = useState<any[]>([]);
   const [external, setExternal] = useState<any[]>([]);
+  const [cust, setCust] = useState<{ email: string | null; contact_name: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string>('reparatur');
   const [subject, setSubject] = useState('');
@@ -47,12 +49,13 @@ export default function CustomerPortalTickets() {
   const [body, setBody] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const anl = ANLIEGEN.find(a => a.key === selected) ?? ANLIEGEN[0];
 
   const load = async () => {
     setLoading(true);
-    const [a, b] = await Promise.all([
+    const [a, b, c] = await Promise.all([
       supabase.from('customer_portal_tickets')
         .select('id, subject, category, status, priority, created_at, closed_at')
         .eq('customer_id', ctx.customerId)
@@ -61,9 +64,13 @@ export default function CustomerPortalTickets() {
         .select('id, title, subject, status, priority, comm_status, created_at, device_name, serial_number, ticket_number, category')
         .order('created_at', { ascending: false })
         .limit(50),
+      supabase.from('customers')
+        .select('email, contact_name')
+        .eq('id', ctx.customerId).maybeSingle(),
     ]);
     setOwn(a.data ?? []);
     setExternal(b.data ?? []);
+    setCust(c.data ?? null);
     setLoading(false);
   };
 
@@ -246,20 +253,35 @@ export default function CustomerPortalTickets() {
                 </div>
               ))}
               {external.map((t) => (
-                <div key={`e-${t.id}`} className="flex items-center justify-between p-3 border border-border rounded-md">
-                  <div>
-                    <p className="font-medium">{t.subject ?? t.title ?? t.ticket_number}</p>
-                    <p className="text-xs text-muted-foreground">
+                <button
+                  key={`e-${t.id}`}
+                  type="button"
+                  onClick={() => setDetailId(t.id)}
+                  className="w-full flex items-center justify-between p-3 border border-border rounded-md text-left hover:bg-muted/40 transition"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{t.subject ?? t.title ?? t.ticket_number}</p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {t.category ?? ''} {t.device_name ? `· ${t.device_name}` : ''}{t.serial_number ? ` · ${t.serial_number}` : ''} · {new Date(t.created_at).toLocaleDateString('de-DE')}
                     </p>
                   </div>
-                  <Badge variant="outline">{t.status ?? '—'}</Badge>
-                </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline">{t.status ?? '—'}</Badge>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </button>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <PortalTicketDetail
+        ticketId={detailId}
+        customerName={cust?.contact_name ?? null}
+        customerEmail={cust?.email ?? null}
+        onClose={() => { setDetailId(null); load(); }}
+      />
     </div>
   );
 }
