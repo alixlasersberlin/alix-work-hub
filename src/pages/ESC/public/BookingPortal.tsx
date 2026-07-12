@@ -92,6 +92,7 @@ export default function BookingPortal() {
   });
   const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [deptOpen, setDeptOpen] = useState(false);
+  const [salesOpen, setSalesOpen] = useState(false);
   const [sent, setSent] = useState<{ bookingNumber: string; token: string } | null>(null);
 
   // Pre-fill from URL
