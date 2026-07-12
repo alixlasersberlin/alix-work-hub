@@ -174,6 +174,42 @@ export default function Requests() {
         </div>
       )}
 
+      {approved.length > 0 && (
+        <div>
+          <h3 className="text-xs uppercase text-muted-foreground mb-2 mt-6">Freigegeben — bereit zur Anwendung ({approved.length})</h3>
+          <div className="space-y-2">
+            {approved.map(r => (
+              <Card key={r.id} className="p-4 border-emerald-500/30 bg-emerald-500/5">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/40 text-emerald-500">APPROVED · {r.action.toUpperCase()}</Badge>
+                      <span className="font-medium">{r.role_name}</span>
+                      <span className="text-xs text-muted-foreground">für</span>
+                      <span className="font-medium">{userName(r.target_user_id)}</span>
+                    </div>
+                    <div className="text-sm mt-2">{r.reason}</div>
+                    <div className="text-[10px] text-muted-foreground mt-1">
+                      geprüft von {r.reviewed_by ? userName(r.reviewed_by) : '—'} · {r.reviewed_at && new Date(r.reviewed_at).toLocaleString('de-DE')}
+                      {r.valid_until && <> · gültig bis {new Date(r.valid_until).toLocaleString('de-DE')}</>}
+                    </div>
+                  </div>
+                  {r.requested_by === user?.id ? (
+                    <Badge variant="outline" className="bg-muted flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Vier-Augen: nicht durch Antragsteller</Badge>
+                  ) : (
+                    <Button size="sm" onClick={() => apply(r.id)}>
+                      <Zap className="w-3 h-3 mr-1" /> Jetzt anwenden
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+
+
       {done.length > 0 && (
         <div>
           <h3 className="text-xs uppercase text-muted-foreground mb-2 mt-6">Historie</h3>
