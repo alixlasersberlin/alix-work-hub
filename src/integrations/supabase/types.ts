@@ -15462,6 +15462,53 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_history: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_label: string | null
+          created_at: string
+          field: string | null
+          id: string
+          meta: Json | null
+          new_value: string | null
+          old_value: string | null
+          ticket_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_label?: string | null
+          created_at?: string
+          field?: string | null
+          id?: string
+          meta?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_label?: string | null
+          created_at?: string
+          field?: string | null
+          id?: string
+          meta?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_history_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_messages: {
         Row: {
           created_at: string
@@ -15657,10 +15704,12 @@ export type Database = {
       }
       tickets: {
         Row: {
+          appointment_at: string | null
           assigned_to: string | null
           auto_category: string | null
           auto_notify_customer: boolean | null
           auto_priority: string | null
+          category: string | null
           classified_at: string | null
           company_name: string | null
           created_at: string
@@ -15671,32 +15720,42 @@ export type Database = {
           customer_visible_status: string
           department: string
           description: string | null
+          desired_appointment_at: string | null
+          desired_response: string | null
+          device_id: string | null
           device_name: string | null
+          due_at: string | null
           external_ticket_id: string | null
           follow_up_at: string | null
           id: string
           internal_note: string | null
           last_outbound_sync_at: string | null
           last_synced_at: string | null
+          order_id: string | null
           order_number: string | null
           priority: string
           repair_order_id: string | null
+          routing_note: string | null
           serial_number: string | null
           sla_last_check: string | null
           sla_status: string | null
+          source: string | null
           source_system: string
           status: string
           subject: string | null
           suggested_technician_id: string | null
+          ticket_department_id: string | null
           ticket_number: string | null
           title: string | null
           updated_at: string
         }
         Insert: {
+          appointment_at?: string | null
           assigned_to?: string | null
           auto_category?: string | null
           auto_notify_customer?: boolean | null
           auto_priority?: string | null
+          category?: string | null
           classified_at?: string | null
           company_name?: string | null
           created_at?: string
@@ -15707,32 +15766,42 @@ export type Database = {
           customer_visible_status?: string
           department?: string
           description?: string | null
+          desired_appointment_at?: string | null
+          desired_response?: string | null
+          device_id?: string | null
           device_name?: string | null
+          due_at?: string | null
           external_ticket_id?: string | null
           follow_up_at?: string | null
           id?: string
           internal_note?: string | null
           last_outbound_sync_at?: string | null
           last_synced_at?: string | null
+          order_id?: string | null
           order_number?: string | null
           priority?: string
           repair_order_id?: string | null
+          routing_note?: string | null
           serial_number?: string | null
           sla_last_check?: string | null
           sla_status?: string | null
+          source?: string | null
           source_system?: string
           status?: string
           subject?: string | null
           suggested_technician_id?: string | null
+          ticket_department_id?: string | null
           ticket_number?: string | null
           title?: string | null
           updated_at?: string
         }
         Update: {
+          appointment_at?: string | null
           assigned_to?: string | null
           auto_category?: string | null
           auto_notify_customer?: boolean | null
           auto_priority?: string | null
+          category?: string | null
           classified_at?: string | null
           company_name?: string | null
           created_at?: string
@@ -15743,23 +15812,31 @@ export type Database = {
           customer_visible_status?: string
           department?: string
           description?: string | null
+          desired_appointment_at?: string | null
+          desired_response?: string | null
+          device_id?: string | null
           device_name?: string | null
+          due_at?: string | null
           external_ticket_id?: string | null
           follow_up_at?: string | null
           id?: string
           internal_note?: string | null
           last_outbound_sync_at?: string | null
           last_synced_at?: string | null
+          order_id?: string | null
           order_number?: string | null
           priority?: string
           repair_order_id?: string | null
+          routing_note?: string | null
           serial_number?: string | null
           sla_last_check?: string | null
           sla_status?: string | null
+          source?: string | null
           source_system?: string
           status?: string
           subject?: string | null
           suggested_technician_id?: string | null
+          ticket_department_id?: string | null
           ticket_number?: string | null
           title?: string | null
           updated_at?: string
@@ -15770,6 +15847,13 @@ export type Database = {
             columns: ["repair_order_id"]
             isOneToOne: false
             referencedRelation: "repair_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_ticket_department_id_fkey"
+            columns: ["ticket_department_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_departments"
             referencedColumns: ["id"]
           },
         ]
