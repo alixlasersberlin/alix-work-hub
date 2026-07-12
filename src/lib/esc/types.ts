@@ -36,6 +36,7 @@ export interface EscDepartment {
   responsibleEmployeeIds: string[];
   internalVisible: boolean;
   externallyBookable: boolean;
+  sortOrder?: number;
 }
 
 export interface EscEmployee {
