@@ -40,6 +40,7 @@ export default function CustomerPortalTickets() {
   const ctx = useOutletContext<Ctx>();
   const [own, setOwn] = useState<any[]>([]);
   const [external, setExternal] = useState<any[]>([]);
+  const [cust, setCust] = useState<{ email: string | null; contact_name: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string>('reparatur');
   const [subject, setSubject] = useState('');
@@ -48,6 +49,7 @@ export default function CustomerPortalTickets() {
   const [body, setBody] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const anl = ANLIEGEN.find(a => a.key === selected) ?? ANLIEGEN[0];
 
