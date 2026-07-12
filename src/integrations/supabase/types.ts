@@ -3366,7 +3366,7 @@ export type Database = {
           action: string
           changed_at: string
           changed_by: string | null
-          entity_id: string
+          entity_id: string | null
           entity_type: string
           id: string
           ip_address: string | null
@@ -3379,7 +3379,7 @@ export type Database = {
           action: string
           changed_at?: string
           changed_by?: string | null
-          entity_id: string
+          entity_id?: string | null
           entity_type: string
           id?: string
           ip_address?: string | null
@@ -3392,7 +3392,7 @@ export type Database = {
           action?: string
           changed_at?: string
           changed_by?: string | null
-          entity_id?: string
+          entity_id?: string | null
           entity_type?: string
           id?: string
           ip_address?: string | null
