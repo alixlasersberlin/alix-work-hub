@@ -14550,6 +14550,60 @@ export type Database = {
           },
         ]
       }
+      role_sod_rules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          role_a_id: string
+          role_b_id: string
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          role_a_id: string
+          role_b_id: string
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          role_a_id?: string
+          role_b_id?: string
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_sod_rules_role_a_id_fkey"
+            columns: ["role_a_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_sod_rules_role_b_id_fkey"
+            columns: ["role_b_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_template_items: {
         Row: {
           id: string
@@ -19406,6 +19460,17 @@ export type Database = {
       set_order_lawyer: {
         Args: { _order_id: string; _reason: string }
         Returns: undefined
+      }
+      sod_conflict_report: {
+        Args: never
+        Returns: {
+          role_a_name: string
+          role_b_name: string
+          rule_id: string
+          rule_name: string
+          severity: string
+          user_id: string
+        }[]
       }
       start_recertification_campaign: {
         Args: { _description: string; _name: string; _period_end: string }
