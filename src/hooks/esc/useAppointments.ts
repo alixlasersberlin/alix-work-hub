@@ -1,8 +1,10 @@
 import { useCallback } from 'react';
+import { toast } from 'sonner';
 import { MOCK_APPOINTMENTS } from '@/lib/esc/mock-data';
 import type { EscAppointment } from '@/lib/esc/types';
 import { logEscAudit } from '@/lib/esc/audit';
 import { useEscStore } from '@/lib/esc/store/kvStore';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useAppointments() {
   const { items, upsert, remove } = useEscStore<EscAppointment>({
