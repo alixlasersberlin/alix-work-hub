@@ -52,7 +52,7 @@ function hslOrHexToHex(v: string): string {
 const emptyForm: Omit<EscDepartment, 'id'> = {
   name: '', color: '#3b82f6', icon: 'Circle', description: '', active: true, publicBookable: false,
   defaultDurationMinutes: 60, defaultEmailTemplate: '', responsibleEmployeeIds: [], internalVisible: true, externallyBookable: false,
-  sortOrder: 100,
+  sortOrder: 1,
 };
 
 export default function EscDepartments() {
@@ -64,7 +64,12 @@ export default function EscDepartments() {
   const [editing, setEditing] = useState<EscDepartment | null>(null);
   const [form, setForm] = useState<Omit<EscDepartment, 'id'>>(emptyForm);
 
-  const openNew = () => { setEditing(null); setForm({ ...emptyForm }); setOpen(true); };
+  const openNew = () => {
+    const nextOrder = departments.length ? Math.max(...departments.map((d) => d.sortOrder ?? 0)) + 1 : 1;
+    setEditing(null);
+    setForm({ ...emptyForm, sortOrder: nextOrder });
+    setOpen(true);
+  };
   const openEdit = (d: EscDepartment) => {
     const { id, ...rest } = d;
     setEditing(d);
@@ -90,11 +95,23 @@ export default function EscDepartments() {
     setOpen(false);
   };
 
+  const renumber = async () => {
+    for (let i = 0; i < departments.length; i++) {
+      const d = departments[i];
+      const target = i + 1;
+      if (d.sortOrder !== target) await updateDepartment(d.id, { sortOrder: target });
+    }
+    toast.success('Reihenfolge neu nummeriert (ab 1)');
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Abteilungen</h1>
-        <Button size="sm" onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Neue Abteilung</Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={renumber}>Neu nummerieren (ab 1)</Button>
+          <Button size="sm" onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Neue Abteilung</Button>
+        </div>
       </div>
 
       <div className="rounded-lg border bg-card">
