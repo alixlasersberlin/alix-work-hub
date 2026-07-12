@@ -52,7 +52,7 @@ function hslOrHexToHex(v: string): string {
 const emptyForm: Omit<EscDepartment, 'id'> = {
   name: '', color: '#3b82f6', icon: 'Circle', description: '', active: true, publicBookable: false,
   defaultDurationMinutes: 60, defaultEmailTemplate: '', responsibleEmployeeIds: [], internalVisible: true, externallyBookable: false,
-  sortOrder: 100,
+  sortOrder: 1,
 };
 
 export default function EscDepartments() {
