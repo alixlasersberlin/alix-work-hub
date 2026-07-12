@@ -1625,6 +1625,30 @@ export default function AppLayout() {
             <div className="hidden lg:block flex-shrink-0">
               <TenantSwitcher />
             </div>
+            <Link
+              to="/mailcenter/telefonnotizen"
+              title="Telefonnotizen"
+              aria-label="Telefonnotizen"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <Phone className="w-5 h-5" />
+            </Link>
+            <Link
+              to="/mailcenter/intern"
+              title="Interne Nachrichten"
+              aria-label="Interne Nachrichten"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <MessageSquare className="w-5 h-5" />
+            </Link>
+            <Link
+              to="/mailcenter/dokumente"
+              title="Dokumente"
+              aria-label="Dokumente"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            >
+              <Files className="w-5 h-5" />
+            </Link>
             <TicketNotificationBell />
             <div className="flex items-center gap-2 text-sm flex-shrink-0">
               <span className="font-display font-bold gold-text">AlixWork</span>
