@@ -44,8 +44,6 @@ export function SidebarInfoBar() {
   const kw = getISOWeek(now);
   const date = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const time = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-  const timePeking = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Shanghai' });
-  const timeMiami = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' });
 
   return (
     <div className="px-3 py-2 border-b border-border bg-sidebar-accent/30 text-[11px] text-muted-foreground">
@@ -62,12 +60,6 @@ export function SidebarInfoBar() {
         <span className="inline-flex items-center gap-1">
           <Thermometer className="w-3 h-3 text-primary/80" />
           {temp !== null ? `${Math.round(temp)}°` : '—'} Berlin
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <Globe2 className="w-3 h-3 text-primary/80" /> Peking {timePeking}
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <Globe2 className="w-3 h-3 text-primary/80" /> Miami {timeMiami}
         </span>
       </div>
     </div>
