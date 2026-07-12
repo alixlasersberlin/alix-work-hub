@@ -84,7 +84,7 @@ export default function PortalLookup() {
             </div>
 
             {error && (
-              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-md p-3">
+              <div className="text-sm font-medium text-destructive-foreground bg-destructive/90 border border-destructive rounded-md p-3 shadow-sm">
                 {error}
               </div>
             )}
