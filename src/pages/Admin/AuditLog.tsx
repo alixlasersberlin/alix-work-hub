@@ -50,11 +50,11 @@ export default function AdminAuditLog() {
     const header = ['created_at', 'user', 'module', 'action', 'ip', 'details'];
     const lines = filtered.map((r) => [
       r.created_at,
-      (r.user_profiles?.full_name || r.user_profiles?.email || r.user_id || '').replaceAll('"', "'"),
+      (r.user_profiles?.full_name || r.user_profiles?.email || r.user_id || '').split('"').join("'"),
       r.module ?? '',
       r.action ?? '',
       r.ip_address ?? '',
-      JSON.stringify(r.details ?? {}).replaceAll('"', "'"),
+      JSON.stringify(r.details ?? {}).split('"').join("'"),
     ].map((v) => `"${v}"`).join(','));
     const blob = new Blob([[header.join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
