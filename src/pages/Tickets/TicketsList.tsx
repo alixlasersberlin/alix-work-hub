@@ -33,6 +33,20 @@ interface TicketRow {
   department: string;
   last_synced_at: string | null;
   created_at: string;
+  sla_status: string | null;
+  escalation_count: number | null;
+}
+
+function slaBadge(s: string | null) {
+  if (!s || s === 'ok') return null;
+  const map: Record<string, string> = {
+    warning: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    warn_response: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    warn_progress: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+    breach: 'bg-red-500/15 text-red-400 border-red-500/30',
+  };
+  const label = s === 'breach' ? 'SLA ⚠' : 'SLA ⏱';
+  return <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded border ${map[s] || ''}`}>{label}</span>;
 }
 
 const STATUS_OPTIONS = ['open', 'in-progress', 'wartet_Kunde', 'offen', 'in_bearbeitung', 'wartet_kunde', 'gelöst', 'geschlossen'];
@@ -87,7 +101,7 @@ export default function TicketsList() {
       setLoading(true);
       const { data, error } = await supabase
         .from('tickets')
-        .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, title, status, priority, department, last_synced_at, created_at')
+        .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count')
         .order('created_at', { ascending: false })
         .limit(500);
       if (!cancelled) {
@@ -275,7 +289,13 @@ export default function TicketsList() {
                           className="cursor-pointer hover:bg-muted/40"
                         >
                           <TableCell>
-                            <div className="font-medium text-foreground">{r.title || r.external_ticket_id || r.id.slice(0, 8)}</div>
+                            <div className="font-medium text-foreground">
+                              {r.title || r.external_ticket_id || r.id.slice(0, 8)}
+                              {slaBadge(r.sla_status)}
+                              {(r.escalation_count || 0) > 0 && (
+                                <span className="ml-1 text-[10px] text-red-400">·{r.escalation_count}×esk.</span>
+                              )}
+                            </div>
                             <div className="text-xs text-muted-foreground">{r.external_ticket_id || r.source_system}</div>
                           </TableCell>
                           <TableCell>

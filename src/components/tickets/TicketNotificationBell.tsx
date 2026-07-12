@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Bell, AtSign, ArrowRightLeft, MessageSquare, UserPlus, CheckCheck } from "lucide-react";
+import { Bell, AtSign, ArrowRightLeft, MessageSquare, UserPlus, CheckCheck, Clock, AlertTriangle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 
@@ -24,6 +24,8 @@ const ICONS: Record<string, any> = {
   handover: ArrowRightLeft,
   participant_added: UserPlus,
   new_message: MessageSquare,
+  sla_warning: Clock,
+  sla_breach: AlertTriangle,
 };
 
 export function TicketNotificationBell() {
