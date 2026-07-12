@@ -225,7 +225,7 @@ export default function BookingPortal() {
             <div className="rounded-xl border bg-card p-4">
               <div className="grid grid-cols-1 gap-3">
                 {[
-                  { label: 'Angebot', icon: FileText },
+                  { label: 'Mein persönliches Angebot erstellen lassen', icon: FileText },
                 ].map((item) => (
                   <a
                     key={item.label}
