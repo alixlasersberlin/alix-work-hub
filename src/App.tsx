@@ -76,6 +76,7 @@ const AiCenter = lazy(() => import("./pages/AiCenter"));
 const RoutePlanDetail = lazy(() => import("./pages/RoutePlanDetail"));
 const RoutePlanForm = lazy(() => import("./pages/RoutePlanForm"));
 const RoutePlanningSettings = lazy(() => import("./pages/RoutePlanningSettings"));
+const SmsTemplateSettings = lazy(() => import("./pages/Mobile/SmsTemplateSettings"));
 const TourenKalender = lazy(() => import("./pages/Tourenplanung/Kalender"));
 const TourenKarte = lazy(() => import("./pages/Tourenplanung/Karte"));
 const TourenDashboard = lazy(() => import("./pages/Tourenplanung/Dashboard"));
