@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import alixLogo from '@/assets/alix-logo-gold.png';
 import { ALIXWORKS_PUBLIC_BASE } from '@/lib/esc/public-url';
-import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
+
 import { useBookingT } from '@/i18n/booking';
 
 interface Props {
@@ -38,7 +38,7 @@ export function BookingLayout({ children, step, totalSteps, narrow, hideLegalLin
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-normal tracking-tight truncate">{t.brand_line}</div>
           </div>
-          <WizardLanguageSwitcher variant="transparent" />
+          
         </div>
 
         {step && totalSteps && (
