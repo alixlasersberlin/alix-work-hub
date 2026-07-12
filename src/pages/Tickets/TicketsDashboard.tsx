@@ -155,6 +155,8 @@ export default function TicketsDashboard() {
 
   const actionLabel = useMemo(() => ({
     auto_escalated: "Automatisch eskaliert",
+    sla_breach: "SLA überschritten",
+    phone_call_logged: "Telefonat dokumentiert",
     followup_due: "Wiedervorlage fällig",
     appointment_created: "Termin erstellt",
     appointment_email_sent: "Terminmail gesendet",
