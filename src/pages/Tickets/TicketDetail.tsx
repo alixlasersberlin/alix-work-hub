@@ -345,7 +345,7 @@ export default function TicketDetail() {
             ticket_id: ticket.id,
             action: 'email_sent',
             actor_id: user?.id || null,
-            actor_name: user?.email || null,
+            actor_label: user?.email || null,
             meta: { to: ticket.customer_email, from: fromEmail, subject },
           } as any);
         }
