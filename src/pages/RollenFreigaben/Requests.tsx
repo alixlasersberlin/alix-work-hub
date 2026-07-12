@@ -297,7 +297,7 @@ export default function Requests() {
             <Card className="p-3 bg-amber-500/5 border-amber-500/30 text-xs">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div>Dieser Antrag muss von einem <b>anderen</b> Super Admin geprüft werden. Sie können Ihren eigenen Antrag nicht freigeben. Die Freigabe wendet die Rolle noch nicht automatisch an — der Prüfer entscheidet.</div>
+                <div>Dieser Antrag muss von einem <b>anderen</b> Super Admin geprüft werden. Nach der Freigabe erscheint der Antrag im Bereich „Freigegeben" und kann dort mit einem Klick angewendet werden (Vier-Augen-Prinzip).</div>
               </div>
             </Card>
           </div>
