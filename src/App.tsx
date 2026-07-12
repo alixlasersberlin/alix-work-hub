@@ -1014,6 +1014,18 @@ function AppRoutes() {
             <Route path="simulate" element={<SecuritySimulate />} />
             <Route path="plan" element={<SecurityPlan />} />
           </Route>
+          <Route path="/admin/rollen-freigaben" element={<ProtectedRoute requiredRoles={['Super Admin']}><RfLayout /></ProtectedRoute>}>
+            <Route index element={<RfOverview />} />
+            <Route path="matrix" element={<RfMatrix />} />
+            <Route path="rollen" element={<RfRoles />} />
+            <Route path="mitarbeiter" element={<RfEmployees />} />
+            <Route path="effektiv" element={<RfEffective />} />
+            <Route path="vergleich" element={<RfCompare />} />
+            <Route path="antraege" element={<RfRequests />} />
+            <Route path="pruefung" element={<RfAudit />} />
+            <Route path="protokoll" element={<RfLog />} />
+          </Route>
+
           <Route path="/auftragsverwaltung/bestellungen" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><BestellwesenOverview /></ProtectedRoute>} />
           <Route path="/order" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrders /></ProtectedRoute>} />
           <Route path="/order/freigabe" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrderApprovalQueue /></ProtectedRoute>} />
