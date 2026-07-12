@@ -86,6 +86,25 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    path: '/tickets/dashboard', label: 'TICKETS', icon: Ticket,
+    roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'],
+    children: [
+      { path: '/tickets/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
+      { path: '/tickets', label: 'Alle Tickets', icon: Ticket, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
+      { path: '/tickets?new=1', label: 'Neues Ticket', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
+      { path: '/tickets/kalender', label: 'Ticket-Kalender', icon: CalendarDays, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
+      { path: '/tickets?mine=1', label: 'Meine Tickets', icon: User, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
+      { path: '/tickets?status=Neu', label: 'Neue (Eingang)', icon: Inbox, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/tickets?due=overdue', label: 'Überfällig', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/tickets?status=Eskaliert', label: 'Eskaliert', icon: Flame, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/tickets?status=Warten%20auf%20Kunde', label: 'Warten auf Kunde', icon: Pause, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+      { path: '/esc/buchungen', label: 'Öffentliche Buchungen', icon: CalendarClock, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Serviceleitung', 'Service'] },
+      { path: '/operation/ticket-abteilungen', label: 'Abteilungen (Routing)', icon: FolderTree, roles: ['Super Admin'] },
+      { path: '/tickets/sync', label: 'Sync-Monitor', icon: Activity, roles: ['Super Admin', 'Admin'] },
+      { path: '/tickets/api-sync', label: 'API-Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
+    ],
+  },
+  {
     path: '/mailcenter', label: 'CUSTOMER SERVICE', icon: HelpCircle,
     roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Tourenplanung', 'Bestellwesen', 'Order', 'Auftragsverwaltung', 'QM', 'Read Only', 'Read Only Audit', 'Österreich', 'SACHBEARBEITUNG'],
     children: [
