@@ -221,10 +221,34 @@ export default function TicketDetail() {
     if (!user?.id) return;
     const { data } = await supabase
       .from('user_profiles')
-      .select('full_name, job_title, avatar_url')
+      .select('full_name')
       .eq('id', user.id)
       .maybeSingle();
-    if (data) setMyProfile(data as any);
+    if (data) setMyProfile({ full_name: (data as any).full_name || null, job_title: null, avatar_url: null });
+  }
+
+  function departmentDisplayName(dept: string | null): string {
+    const key = String(dept || '').toLowerCase();
+    const map: Record<string, string> = {
+      service: 'Alix Lasers Service',
+      technik: 'Alix Lasers Technik',
+      kundenservice: 'Alix Lasers Kundenservice',
+      reparaturannahme: 'Alix Lasers Reparaturannahme',
+      serviceleitung: 'Alix Lasers Serviceleitung',
+      lieferung: 'Alix Lasers Lieferung',
+      tourenplanung: 'Alix Lasers Lieferung',
+      schulung: 'Alix Lasers Schulung',
+      nisv: 'Alix Lasers NiSV',
+      mediapaket: 'Alix Lasers Mediapaket',
+      marketing: 'Alix Lasers Mediapaket',
+      finance: 'Alix Lasers Buchhaltung',
+      buchhaltung: 'Alix Lasers Buchhaltung',
+      vertrieb: 'Alix Lasers Vertrieb',
+      sales: 'Alix Lasers Vertrieb',
+      auftragsverwaltung: 'Alix Lasers Auftragsverwaltung',
+      order: 'Alix Lasers Auftragsverwaltung',
+    };
+    return map[key] || `Alix Lasers ${dept || 'Service'}`;
   }
 
   async function patch(updates: Partial<Ticket>) {
