@@ -223,14 +223,9 @@ export default function BookingPortal() {
           </button>
           {salesOpen && (
             <div className="rounded-xl border bg-card p-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 {[
-                  { label: 'Unterschrift', icon: PenLine },
                   { label: 'Angebot', icon: FileText },
-                  { label: 'Finanzierung', icon: Banknote },
-                  { label: 'Kataloge', icon: BookOpen },
-                  { label: 'Setpreise', icon: Tag },
-                  { label: 'Vermietung', icon: KeyRound },
                 ].map((item) => (
                   <a
                     key={item.label}
