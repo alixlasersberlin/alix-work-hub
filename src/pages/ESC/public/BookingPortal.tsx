@@ -31,6 +31,10 @@ export default function BookingPortal() {
   const { departments } = useDepartments();
   const { employees } = useEmployees();
   const { appointments, createAppointment } = useAppointments();
+  const { t } = useBookingT();
+  const de = t.dateLocale;
+  const STEP_LABEL = t.step;
+
 
   // Public departments: fetched directly from Supabase so anonymous visitors on /book
   // see the real, admin-managed list instead of local mock seed data.
