@@ -317,6 +317,7 @@ const RfBulk = lazy(() => import("./pages/RollenFreigaben/BulkImportExport"));
 const RfRecert = lazy(() => import("./pages/RollenFreigaben/Recertification"));
 const RfTemplates = lazy(() => import("./pages/RollenFreigaben/TemplatesOnboarding"));
 const RfAnalytics = lazy(() => import("./pages/RollenFreigaben/Analytics"));
+const RfBreakGlass = lazy(() => import("./pages/RollenFreigaben/BreakGlass"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
 const SecurityPentest = lazy(() => import("./pages/SecurityCenter/Pentest"));
@@ -1039,6 +1040,7 @@ function AppRoutes() {
             <Route path="rezertifizierung" element={<RfRecert />} />
             <Route path="vorlagen" element={<RfTemplates />} />
             <Route path="analytics" element={<RfAnalytics />} />
+            <Route path="break-glass" element={<RfBreakGlass />} />
             <Route path="protokoll" element={<RfLog />} />
           </Route>
 
