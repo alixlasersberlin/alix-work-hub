@@ -88,7 +88,7 @@ async function notifyStaff(opts: {
         <p><strong>${studioLabel}</strong>${cust?.email ? ` &lt;${cust.email}&gt;` : ''}</p>
         ${opts.innerHtml}
         <p style="margin: 24px 0">
-          <a href="${orderLink}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
+          <a href="${orderLink}" style="background:#f97316;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
             Media Paket öffnen
           </a>
         </p>
@@ -268,7 +268,7 @@ Deno.serve(async (req) => {
           <p>Hallo ${(cust.contact_name || cust.company_name) || ''},</p>
           <p>${introMessage.replace(/\n/g, '<br>')}</p>
           <p style="margin: 24px 0">
-            <a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
+            <a href="${link}" style="background:#f97316;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
               Media Paket öffnen
             </a>
           </p>
@@ -333,7 +333,7 @@ Deno.serve(async (req) => {
           <p>zu Ihrem Media Paket haben wir folgende Rückfrage:</p>
           <blockquote style="border-left:3px solid #d4af37;padding:8px 12px;background:#faf7ee;margin:16px 0;white-space:pre-wrap">${String(comment.comment).replace(/</g,'&lt;')}</blockquote>
           <p style="margin: 24px 0">
-            <a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
+            <a href="${link}" style="background:#f97316;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block;font-weight:600">
               Jetzt beantworten
             </a>
           </p>
@@ -397,7 +397,7 @@ Deno.serve(async (req) => {
             <h2>Neue Nachricht zu Ihrem Media Paket</h2>
             <p>Hallo ${(cust.contact_name || cust.company_name) || ''},</p>
             <blockquote style="border-left:3px solid #d4af37;padding:8px 12px;background:#faf7ee;margin:16px 0;white-space:pre-wrap">${message.replace(/</g,'&lt;')}</blockquote>
-            <p style="margin:24px 0"><a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Portal öffnen &amp; antworten</a></p>
+            <p style="margin:24px 0"><a href="${link}" style="background:#f97316;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Portal öffnen &amp; antworten</a></p>
           </div>`;
           await userClient.functions.invoke('send-mail', {
             body: {
@@ -439,7 +439,7 @@ Deno.serve(async (req) => {
         <h2>Ihr Media Paket ${label}</h2>
         <p>Hallo ${(cust.contact_name || cust.company_name) || ''},</p>
         <p>Statusaktualisierung: Ihr Mediapaket <strong>${label}</strong>.</p>
-        <p style="margin:24px 0"><a href="${link}" style="background:#000;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Vorschau öffnen</a></p>
+        <p style="margin:24px 0"><a href="${link}" style="background:#f97316;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">Vorschau öffnen</a></p>
       </div>`;
       await fetch(`${SUPABASE_URL}/functions/v1/send-mail`, {
         method: 'POST',
