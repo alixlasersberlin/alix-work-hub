@@ -354,7 +354,7 @@ export default function BookingPortal() {
             <Cpu className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-[14px]">Meine Gerätedaten</div>
+            <div className="font-semibold text-[14px]">Anmeldung und Registrierung nach NISV</div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
               Die virtuelle Verwaltung Ihres Alix Gerätes: amtliche Dokumente, Tickets, Anleitungen und Ratgeber.
             </div>
