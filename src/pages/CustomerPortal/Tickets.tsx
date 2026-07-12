@@ -55,7 +55,7 @@ export default function CustomerPortalTickets() {
 
   const load = async () => {
     setLoading(true);
-    const [a, b] = await Promise.all([
+    const [a, b, c] = await Promise.all([
       supabase.from('customer_portal_tickets')
         .select('id, subject, category, status, priority, created_at, closed_at')
         .eq('customer_id', ctx.customerId)
@@ -64,9 +64,13 @@ export default function CustomerPortalTickets() {
         .select('id, title, subject, status, priority, comm_status, created_at, device_name, serial_number, ticket_number, category')
         .order('created_at', { ascending: false })
         .limit(50),
+      supabase.from('customers')
+        .select('email, contact_name')
+        .eq('id', ctx.customerId).maybeSingle(),
     ]);
     setOwn(a.data ?? []);
     setExternal(b.data ?? []);
+    setCust(c.data ?? null);
     setLoading(false);
   };
 
