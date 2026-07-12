@@ -237,7 +237,7 @@ export default function TicketDetail() {
     } else if ('customer_visible_status' in updates && updates.customer_visible_status !== ticket.customer_visible_status) {
       action = 'customer_status_change';
     }
-    if (action && merged.external_ticket_id) {
+    if (action && merged.external_ticket_id && merged.source_system === 'alixsmart') {
       syncToAlixSmart(action);
     }
   }
