@@ -18174,6 +18174,48 @@ export type Database = {
           },
         ]
       }
+      security_findings_overview: {
+        Row: {
+          age_days: number | null
+          category: string | null
+          created_at: string | null
+          detail: string | null
+          id: string | null
+          recommendation: string | null
+          severity: string | null
+          status: string | null
+          target: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          age_days?: never
+          category?: string | null
+          created_at?: string | null
+          detail?: string | null
+          id?: string | null
+          recommendation?: string | null
+          severity?: string | null
+          status?: string | null
+          target?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          age_days?: never
+          category?: string | null
+          created_at?: string | null
+          detail?: string | null
+          id?: string | null
+          recommendation?: string | null
+          severity?: string | null
+          status?: string | null
+          target?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       security_policy_details: {
         Row: {
           check_expr: string | null
