@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutDashboard, Mail, FileText, Receipt, FileCheck2, Wrench,
   LifeBuoy, Star, History, LogOut, Loader2,
-  Cpu, ShieldCheck, MessageSquare, Calendar, Activity,
+  Cpu, ShieldCheck, MessageSquare, Calendar, Activity, Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
