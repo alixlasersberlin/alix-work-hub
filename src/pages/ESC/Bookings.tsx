@@ -11,6 +11,7 @@ import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { bookingUrl } from '@/lib/esc/public-url';
 import { ExternalLink, Mail, Phone, CalendarCheck, CalendarClock, CalendarX, Inbox } from 'lucide-react';
+import { TicketAppointmentsPanel } from '@/components/esc/TicketAppointmentsPanel';
 
 export default function EscBookings() {
   const { appointments, updateAppointment } = useAppointments();
@@ -88,6 +89,8 @@ export default function EscBookings() {
           </Table>
         </CardContent>
       </Card>
+
+      <TicketAppointmentsPanel />
     </div>
   );
 }

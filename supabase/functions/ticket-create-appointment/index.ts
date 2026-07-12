@@ -104,7 +104,50 @@ serve(async (req) => {
       cancel: `${PUBLIC_BASE}/termin/ablehnen/${token}`,
     };
 
-    return j({ success: true, event_id: (ev as any).id, token, links });
+    // E-Mail an Kunde senden (nur wenn Bestätigung nötig und E-Mail vorhanden)
+    let emailStatus: "sent" | "skipped" | "failed" = "skipped";
+    let emailError: string | null = null;
+    if (requires_confirmation && ticket.customer_email) {
+      try {
+        const dateStr = start.toLocaleString("de-DE", {
+          timeZone: "Europe/Berlin", dateStyle: "full", timeStyle: "short",
+        });
+        const subject = `Terminvorschlag zu ${ticket.ticket_number ?? "Ihrem Ticket"} – bitte bestätigen`;
+        const html = `
+          <div style="font-family:Inter,Arial,sans-serif;font-size:14px;color:#111;line-height:1.55;max-width:560px">
+            <p>Guten Tag${ticket.customer_name ? " " + ticket.customer_name : ""},</p>
+            <p>zu Ihrer Anfrage <strong>${ticket.ticket_number ?? ""}</strong>
+               ${ticket.title ? "„" + ticket.title + "\"" : ""} schlagen wir folgenden Termin vor:</p>
+            <p style="font-size:16px;font-weight:600;margin:16px 0">${dateStr}</p>
+            <p>Bitte wählen Sie eine Option:</p>
+            <p style="margin:20px 0">
+              <a href="${links.confirm}" style="background:#16a34a;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;margin-right:6px">Termin bestätigen</a>
+              <a href="${links.reschedule}" style="background:#f59e0b;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;margin-right:6px">Verschieben</a>
+              <a href="${links.cancel}" style="background:#dc2626;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;display:inline-block">Ablehnen</a>
+            </p>
+            <p style="color:#6b7280;font-size:12px;margin-top:24px">
+              Die Links sind 30 Tage gültig. Bei Fragen antworten Sie einfach auf diese E-Mail.
+            </p>
+          </div>`;
+        const fromEmail = event_kind === "kundentermin" || event_kind === "beratung"
+          ? "service@alixwork.de" : "service@alixwork.de";
+        const resp = await supabase.functions.invoke("send-mail", {
+          body: { to: ticket.customer_email, subject, html, from: fromEmail },
+        });
+        if (resp.error) throw resp.error;
+        emailStatus = "sent";
+        await supabase.from("ticket_history").insert({
+          ticket_id, action: "appointment_email_sent", field: "customer_email",
+          new_value: ticket.customer_email, meta: { event_id: (ev as any).id, links },
+        });
+      } catch (mailErr) {
+        emailStatus = "failed";
+        emailError = String((mailErr as Error)?.message ?? mailErr);
+        console.error("appointment email failed", emailError);
+      }
+    }
+
+    return j({ success: true, event_id: (ev as any).id, token, links, email: { status: emailStatus, error: emailError } });
   } catch (err) {
     console.error("ticket-create-appointment error", err);
     return j({ error: String((err as Error)?.message ?? err) }, 500);
