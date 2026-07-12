@@ -14,7 +14,7 @@ export default function PublicBeratung() {
   }
 
   return (
-    <BookingLayout>
+    <BookingLayout hideLegalLinks>
       <SalesWizard publicMode={false} />
     </BookingLayout>
   );
