@@ -5,8 +5,11 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
   Camera, FileSignature, ClipboardCheck, Phone, MapPin, ArrowLeft, Loader2,
-  Play, Square, Navigation, CheckCircle2,
+  Play, Square, Navigation, CheckCircle2, Mic, Clock,
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 export default function MobileEinsatz() {
@@ -14,6 +17,8 @@ export default function MobileEinsatz() {
   const [t, setT] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [etaMin, setEtaMin] = useState<number | ''>('');
+  const [etaOpen, setEtaOpen] = useState(false);
 
   const load = async () => {
     const { data } = await supabase.from('route_plans').select('*').eq('id', id).maybeSingle();
@@ -98,6 +103,15 @@ export default function MobileEinsatz() {
         )}
       </Card>
 
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="outline" className="h-12" onClick={() => setEtaOpen(true)} disabled={done}>
+          <Clock className="w-4 h-4 mr-2" /> ETA an Kunde
+        </Button>
+        <Button asChild variant="outline" className="h-12">
+          <Link to={`/m/einsatz/${id}/sprachnotiz`}><Mic className="w-4 h-4 mr-2" /> Sprachnotiz</Link>
+        </Button>
+      </div>
+
       <div className="grid grid-cols-3 gap-2">
         <Button asChild variant="outline" className="h-16 flex-col gap-1">
           <Link to={`/m/einsatz/${id}/fotos`}><Camera className="w-5 h-5" /><span className="text-xs">Fotos</span></Link>
@@ -109,6 +123,60 @@ export default function MobileEinsatz() {
           <Link to={`/m/einsatz/${id}/signatur`}><FileSignature className="w-5 h-5" /><span className="text-xs">Signatur</span></Link>
         </Button>
       </div>
+
+      <Dialog open={etaOpen} onOpenChange={setEtaOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Ankunftszeit an Kunde senden</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Wir informieren <b>{t.contact_name || 'den Kunden'}</b> per SMS über deine voraussichtliche Ankunftszeit.
+            </p>
+            <div>
+              <Label>In wie vielen Minuten bist du dort?</Label>
+              <Input type="number" min={5} max={480} value={etaMin}
+                onChange={(e) => setEtaMin(e.target.value ? Number(e.target.value) : '')}
+                placeholder="z. B. 30" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEtaOpen(false)}>Abbrechen</Button>
+            <Button
+              className="gold-gradient"
+              disabled={!etaMin || busy}
+              onClick={async () => {
+                if (!etaMin) return;
+                setBusy(true);
+                try {
+                  const etaAt = new Date(Date.now() + Number(etaMin) * 60_000).toISOString();
+                  const etaLocal = new Date(etaAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                  const msg = `Ihr Techniker ist unterwegs und wird gegen ${etaLocal} Uhr eintreffen. – Alix Lasers`;
+                  await supabase.from('route_plans').update({ eta_at: etaAt } as any).eq('id', id);
+                  if (t.customer_id) {
+                    await supabase.from('customer_communication_log').insert({
+                      customer_id: t.customer_id,
+                      channel: 'sms',
+                      direction: 'outbound',
+                      subject: 'ETA-Benachrichtigung Techniker',
+                      body: msg,
+                      status: t.contact_phone ? 'queued' : 'skipped_no_phone',
+                      metadata: { source: 'mobile_eta', route_plan_id: id, eta_at: etaAt, phone: t.contact_phone ?? null },
+                    } as any);
+                  }
+                  toast.success(`ETA ${etaLocal} Uhr gemeldet.`);
+                  setEtaOpen(false);
+                  setEtaMin('');
+                  load();
+                } catch (e: any) {
+                  toast.error(e?.message || 'ETA konnte nicht gesendet werden');
+                } finally { setBusy(false); }
+              }}
+            >
+              {busy && <Loader2 className="w-4 h-4 mr-1 animate-spin" />} Senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       {t.planning_notes && (
         <Card className="p-3 text-sm">
