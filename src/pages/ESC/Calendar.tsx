@@ -43,7 +43,7 @@ export default function EscCalendar() {
   const [presetMode, setPresetMode] = useState<'intern' | 'extern' | undefined>();
   const [filters, setFilters] = useState<EscFilterState>(EMPTY_FILTER);
 
-  const { appointments, createAppointment, updateAppointment, deleteAppointment } = useAppointments();
+  const { appointments, createAppointment, updateAppointment } = useAppointments();
   const { departments } = useDepartments();
   const { employees } = useEmployees();
   const { resources } = useResources();
