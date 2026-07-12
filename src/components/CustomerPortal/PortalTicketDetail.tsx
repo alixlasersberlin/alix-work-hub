@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 type Props = {
   ticketId: string | null;
+  customerId?: string | null;
   customerName?: string | null;
   customerEmail?: string | null;
   onClose: () => void;
