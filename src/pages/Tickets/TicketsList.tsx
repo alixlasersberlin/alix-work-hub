@@ -35,6 +35,8 @@ interface TicketRow {
   created_at: string;
   sla_status: string | null;
   escalation_count: number | null;
+  assigned_to: string | null;
+  due_at: string | null;
 }
 
 function slaBadge(s: string | null) {
