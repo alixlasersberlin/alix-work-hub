@@ -83,10 +83,12 @@ export default function SecurityFindings() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-base">Auto-Review — {visible.length} / {rows.length}</CardTitle>
-        <div className="flex gap-1 items-center">
+        <div className="flex gap-1 items-center flex-wrap">
           <Button size="sm" variant="secondary" onClick={runScan} disabled={scanning}>
             {scanning ? 'Scan läuft…' : 'Jetzt scannen'}
           </Button>
+          <Button size="sm" variant="secondary" onClick={sendAlerts}>Alert senden</Button>
+          <Button size="sm" variant="secondary" onClick={cleanupSessions}>Sessions bereinigen</Button>
           <div className="w-2" />
           <Button size="sm" variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>Alle ({rows.length})</Button>
           <Button size="sm" variant={filter === 'open' ? 'default' : 'outline'} onClick={() => setFilter('open')}>Offen ({counts.open})</Button>
@@ -120,6 +122,11 @@ export default function SecurityFindings() {
               <div className="font-medium">{f.title}</div>
               {f.detail && <div className="text-xs text-muted-foreground">{f.detail}</div>}
               {f.recommendation && <div className="text-xs"><span className="text-muted-foreground">Empfehlung:</span> {f.recommendation}</div>}
+              {f.status !== 'resolved' && (
+                <div className="flex justify-end pt-1">
+                  <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => resolveFinding(f.id)}>Als behoben markieren</Button>
+                </div>
+              )}
             </div>
           ))}
           {!visible.length && <div className="text-sm text-muted-foreground">Keine Findings.</div>}
