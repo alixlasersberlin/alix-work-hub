@@ -18,12 +18,27 @@ const SEV: Record<string, string> = {
 
 export default function SecurityFindings() {
   const [rows, setRows] = useState<Finding[]>([]);
-  const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('all');
+  const [filter, setFilter] = useState<'all' | 'open' | 'resolved'>('open');
+  const [scanning, setScanning] = useState(false);
   const load = async () => {
     const { data } = await (supabase as any).from('security_findings_overview').select('*').order('severity').order('created_at', { ascending: false });
     setRows((data ?? []) as Finding[]);
   };
   useEffect(() => { load(); }, []);
+
+  const runScan = async () => {
+    setScanning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('security-auto-scan');
+      if (error) throw error;
+      toast.success(`Scan ok – ${(data as any)?.count ?? 0} potentielle Findings`);
+      await load();
+    } catch (e: any) {
+      toast.error(e.message ?? 'Scan fehlgeschlagen');
+    } finally {
+      setScanning(false);
+    }
+  };
 
   const setStatus = async (id: string, status: string) => {
     const { error } = await (supabase as any).from('security_audit_findings').update({ status }).eq('id', id);
@@ -42,7 +57,11 @@ export default function SecurityFindings() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-base">Auto-Review — {visible.length} / {rows.length}</CardTitle>
-        <div className="flex gap-1">
+        <div className="flex gap-1 items-center">
+          <Button size="sm" variant="secondary" onClick={runScan} disabled={scanning}>
+            {scanning ? 'Scan läuft…' : 'Jetzt scannen'}
+          </Button>
+          <div className="w-2" />
           <Button size="sm" variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>Alle ({rows.length})</Button>
           <Button size="sm" variant={filter === 'open' ? 'default' : 'outline'} onClick={() => setFilter('open')}>Offen ({counts.open})</Button>
           <Button size="sm" variant={filter === 'resolved' ? 'default' : 'outline'} onClick={() => setFilter('resolved')}>Behoben ({counts.resolved})</Button>
