@@ -32,8 +32,14 @@ export default function MobileSync() {
     setBusy(true);
     const r = await flush();
     await reload();
-    toast.success(`${r.ok} ok · ${r.failed} offen`);
+    toast.success(`${r.ok} ok · ${r.failed} fehlgeschlagen · ${r.deferred} später`);
     setBusy(false);
+  };
+
+  const onRetry = async (id: number) => {
+    await retryNow(id);
+    await reload();
+    toast.info('Wird beim nächsten Sync erneut versucht.');
   };
 
   const failed = items.filter(i => i.attempts > 0).length;
