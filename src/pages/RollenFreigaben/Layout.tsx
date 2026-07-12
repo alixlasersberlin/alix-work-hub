@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   LayoutDashboard, Grid3x3, Users2, ShieldCheck, ClipboardCheck,
   UserCog, FileClock, GitCompare, Eye, Shield, Clock, Database,
-  Bell, Upload, Package,
+  Bell, Upload, Package, BarChart3,
 } from 'lucide-react';
 
 const NAV = [
@@ -21,6 +21,7 @@ const NAV = [
   { to: '/admin/rollen-freigaben/antraege', label: 'Freigabeanträge', icon: UserCog },
   { to: '/admin/rollen-freigaben/befristet', label: 'Befristete Rechte', icon: Clock },
   { to: '/admin/rollen-freigaben/datenklassen', label: 'Datenklassen', icon: Database },
+  { to: '/admin/rollen-freigaben/analytics', label: 'Analytics & Berichte', icon: BarChart3 },
   { to: '/admin/rollen-freigaben/pruefung', label: 'Sicherheitsprüfung', icon: ClipboardCheck },
   { to: '/admin/rollen-freigaben/protokoll', label: 'Änderungsprotokoll', icon: FileClock },
 ];
