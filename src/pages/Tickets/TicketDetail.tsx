@@ -658,6 +658,7 @@ export default function TicketDetail() {
             <input
               type="file"
               className="hidden"
+              accept={TICKET_ATTACHMENT_ACCEPT}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadAttachment(f); e.currentTarget.value = ''; }}
             />
             <span className={`inline-flex items-center h-9 px-3 rounded-md text-sm cursor-pointer border border-input bg-background hover:bg-muted/40 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
