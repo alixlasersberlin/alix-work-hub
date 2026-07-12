@@ -49,7 +49,7 @@ interface Ticket {
   auto_priority?: string | null;
   suggested_technician_id?: string | null;
   sla_status?: string | null;
-  comm_status?: string | null;
+  comm_status?: 'none' | 'awaiting_customer' | 'awaiting_agent' | 'awaiting_internal' | 'awaiting_appointment_confirm' | 'customer_unreachable' | 'customer_replied' | 'closed' | null;
   comm_status_since?: string | null;
   last_customer_reply_at?: string | null;
   last_agent_reply_at?: string | null;
