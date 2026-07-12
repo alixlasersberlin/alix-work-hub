@@ -360,6 +360,24 @@ export default function BookingPortal() {
       )}
 
       {step === 'department' && (
+        <button
+          onClick={() => navigate('/portal')}
+          className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
+        >
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <LifeBuoy className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold text-[14px]">Ticket erstellen</div>
+            <div className="text-[12px] text-muted-foreground mt-0.5">
+              Anfragen, Probleme, Erstellen Sie ein Ticket und haben sofort Kontakt
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground mt-1 shrink-0" />
+        </button>
+      )}
+
+      {step === 'department' && (
         <a
           href="/book/mediapaket"
           className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
