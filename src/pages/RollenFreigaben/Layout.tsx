@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import {
   LayoutDashboard, Grid3x3, Users2, ShieldCheck, ClipboardCheck,
   UserCog, FileClock, GitCompare, Eye, Shield, Clock, Database,
-  Bell, Upload, Package, BarChart3, Flame, Globe, GitFork,
+  Bell, Upload, Package, BarChart3, Flame, Globe, GitFork, KeyRound,
+  CalendarClock, GaugeCircle, Workflow, FileDown,
 } from 'lucide-react';
 
 const NAV = [
