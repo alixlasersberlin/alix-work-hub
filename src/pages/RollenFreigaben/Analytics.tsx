@@ -237,8 +237,7 @@ export default function Analytics() {
                 <div className="text-xs text-muted-foreground mt-1 truncate">{k.label}</div>
               </div>
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                k.tone === 'critical' ? 'bg-red-500/10 text-red-500'
-                : k.tone === 'warn' ? 'bg-amber-500/10 text-amber-500'
+                k.tone === 'warn' ? 'bg-amber-500/10 text-amber-500'
                 : k.tone === 'good' ? 'bg-emerald-500/10 text-emerald-500'
                 : 'bg-primary/10 text-primary'
               }`}>
@@ -275,7 +274,7 @@ export default function Analytics() {
             {tenantDistribution.length ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={tenantDistribution} dataKey="count" nameKey="name" outerRadius={90} label={(e) => `${e.name}: ${e.count}`}>
+                  <Pie data={tenantDistribution} dataKey="count" nameKey="name" outerRadius={90} label={(e: any) => `${e.name}: ${e.count}`}>
                     {tenantDistribution.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
                   <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
