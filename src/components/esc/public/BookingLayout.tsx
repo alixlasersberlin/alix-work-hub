@@ -32,7 +32,7 @@ export function BookingLayout({ children, step, totalSteps, narrow, hideLegalLin
 
   return (
     <div dir={t.dir} className="min-h-dvh flex flex-col bg-gradient-to-b from-background via-background to-muted/30 text-foreground">
-      <header className="border-b bg-card/70 backdrop-blur sticky top-0 z-10">
+      <header className="border-b bg-card/70 backdrop-blur sticky top-0 z-50">
         <div className="max-w-5xl mx-auto flex items-center gap-3 px-4 py-3">
           <img src={alixLogo} alt="Alix Smart" className="h-9 w-auto" />
           <div className="flex-1 min-w-0">
