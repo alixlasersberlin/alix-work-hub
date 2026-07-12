@@ -4056,6 +4056,7 @@ export type Database = {
         Row: {
           address: string | null
           all_day: boolean
+          appointment_status: string
           assigned_user_id: string | null
           confirmation_status: string
           confirmation_token: string | null
@@ -4072,6 +4073,7 @@ export type Database = {
           description: string | null
           device_id: string | null
           end_at: string
+          event_kind: string | null
           event_type_id: string | null
           external_note: string | null
           ics_uid: string | null
@@ -4090,6 +4092,7 @@ export type Database = {
           source: string
           start_at: string
           status: string
+          ticket_id: string | null
           timezone: string
           title: string
           updated_at: string
@@ -4099,6 +4102,7 @@ export type Database = {
         Insert: {
           address?: string | null
           all_day?: boolean
+          appointment_status?: string
           assigned_user_id?: string | null
           confirmation_status?: string
           confirmation_token?: string | null
@@ -4115,6 +4119,7 @@ export type Database = {
           description?: string | null
           device_id?: string | null
           end_at: string
+          event_kind?: string | null
           event_type_id?: string | null
           external_note?: string | null
           ics_uid?: string | null
@@ -4133,6 +4138,7 @@ export type Database = {
           source?: string
           start_at: string
           status?: string
+          ticket_id?: string | null
           timezone?: string
           title: string
           updated_at?: string
@@ -4142,6 +4148,7 @@ export type Database = {
         Update: {
           address?: string | null
           all_day?: boolean
+          appointment_status?: string
           assigned_user_id?: string | null
           confirmation_status?: string
           confirmation_token?: string | null
@@ -4158,6 +4165,7 @@ export type Database = {
           description?: string | null
           device_id?: string | null
           end_at?: string
+          event_kind?: string | null
           event_type_id?: string | null
           external_note?: string | null
           ics_uid?: string | null
@@ -4176,6 +4184,7 @@ export type Database = {
           source?: string
           start_at?: string
           status?: string
+          ticket_id?: string | null
           timezone?: string
           title?: string
           updated_at?: string
@@ -4244,6 +4253,13 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "esc_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_events_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
           {
