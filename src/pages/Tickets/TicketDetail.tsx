@@ -331,7 +331,7 @@ export default function TicketDetail() {
             to_email: ticket.customer_email,
             to_name: ticket.customer_name || null,
             from_email: fromEmail,
-            from_name: 'Alix Kundenservice',
+            from_name: publicName,
             subject,
             body_html: bodyHtml,
             body_text: messageText,
