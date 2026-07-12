@@ -532,9 +532,6 @@ export default function BookingPortal() {
                   <Label>{t.contact.contact_person}</Label>
                   <div className="flex flex-wrap gap-1.5 mt-1">
                     <button type="button" onClick={() => setState({ ...state, contactPersonId: '' })} className={`text-[12px] rounded-full border px-3 py-1 ${!state.contactPersonId ? 'border-primary bg-primary/10' : ''}`}>{t.contact.any}</button>
-                    {bookableEmployees.map((e) => (
-                      <button key={e.id} type="button" onClick={() => setState({ ...state, contactPersonId: e.id })} className={`text-[12px] rounded-full border px-3 py-1 ${state.contactPersonId === e.id ? 'border-primary bg-primary/10' : ''}`}>{e.name}</button>
-                    ))}
                   </div>
                 </div>
               )}
