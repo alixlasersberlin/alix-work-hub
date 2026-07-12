@@ -18368,6 +18368,7 @@ export type Database = {
       can_manage_warranty: { Args: never; Returns: boolean }
       can_manage_whatsapp_automation: { Args: never; Returns: boolean }
       can_read_media_packages: { Args: never; Returns: boolean }
+      can_read_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       can_run_ai_service: { Args: never; Returns: boolean }
       can_send_customer_sms: { Args: never; Returns: boolean }
       can_send_whatsapp: { Args: never; Returns: boolean }
