@@ -136,7 +136,7 @@ export default function BookingPortal() {
   const submit = async () => {
     if (!dept || !state.slotIso) return;
     if (customerBookingsToday(state.email, appointments, new Date(state.slotIso)) >= DEFAULT_BOOKING_SETTINGS.maxPerCustomerPerDay) {
-      toast.error('Maximale Buchungen für diesen Tag erreicht.');
+      toast.error(t.errors.max_per_day);
       return;
     }
     const start = new Date(state.slotIso);
