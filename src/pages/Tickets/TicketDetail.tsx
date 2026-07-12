@@ -108,6 +108,7 @@ export default function TicketDetail() {
   const [uploading, setUploading] = useState(false);
   const [internalNoteDraft, setInternalNoteDraft] = useState('');
   const [savingInternalNote, setSavingInternalNote] = useState(false);
+  const [handoverOpen, setHandoverOpen] = useState(false);
 
   async function loadLinkedRepair(repairId: string | null) {
     if (!repairId) { setLinkedRepair(null); return; }
