@@ -50,8 +50,33 @@ export default function CustomerPortalTickets() {
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [unread, setUnread] = useState<Record<string, number>>({});
 
   const anl = ANLIEGEN.find(a => a.key === selected) ?? ANLIEGEN[0];
+
+  const computeUnread = async (ticketIds: string[]) => {
+    if (!ticketIds.length) return setUnread({});
+    const { data: reads } = await supabase
+      .from('portal_ticket_reads')
+      .select('ticket_id, last_viewed_at')
+      .in('ticket_id', ticketIds);
+    const readMap = new Map<string, string>((reads ?? []).map((r: any) => [r.ticket_id, r.last_viewed_at]));
+    const { data: msgs } = await supabase
+      .from('ticket_messages')
+      .select('ticket_id, created_at, sender_type')
+      .in('ticket_id', ticketIds)
+      .eq('is_internal', false)
+      .neq('sender_type', 'customer')
+      .order('created_at', { ascending: false });
+    const counts: Record<string, number> = {};
+    (msgs ?? []).forEach((m: any) => {
+      const seen = readMap.get(m.ticket_id);
+      if (!seen || new Date(m.created_at) > new Date(seen)) {
+        counts[m.ticket_id] = (counts[m.ticket_id] ?? 0) + 1;
+      }
+    });
+    setUnread(counts);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -72,9 +97,24 @@ export default function CustomerPortalTickets() {
     setExternal(b.data ?? []);
     setCust(c.data ?? null);
     setLoading(false);
+    await computeUnread((b.data ?? []).map((t: any) => t.id));
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ctx.customerId]);
+  useEffect(() => {
+    load();
+    // Realtime: neue Team-Nachrichten aktualisieren die Ungelesen-Zähler
+    const ch = supabase
+      .channel(`portal-tickets-${ctx.customerId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ticket_messages' }, () => {
+        setExternal((prev) => {
+          computeUnread(prev.map((t: any) => t.id));
+          return prev;
+        });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx.customerId]);
 
   const addFiles = (fs: FileList | null) => {
     if (!fs) return;
