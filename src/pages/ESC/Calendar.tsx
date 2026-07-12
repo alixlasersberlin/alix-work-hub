@@ -162,7 +162,6 @@ export default function EscCalendar() {
         open={modalOpen}
         onClose={() => { setModalOpen(false); setEditing(null); }}
         onSubmit={handleSubmit}
-        onDelete={async (id) => { await deleteAppointment(id); toast.success('Termin gelöscht'); }}
         onCancelAppointment={async (id) => { await updateAppointment(id, { status: 'storniert' }); toast.success('Termin storniert'); }}
         onComplete={async (id) => { await updateAppointment(id, { status: 'abgeschlossen' }); toast.success('Termin abgeschlossen'); }}
         departments={departments}
