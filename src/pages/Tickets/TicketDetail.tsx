@@ -281,9 +281,7 @@ export default function TicketDetail() {
     if (!ticket || !newMsg.trim()) return;
     const messageText = newMsg.trim();
     // Absender-Identität: bei zugewiesenem Ticket = persönlich (Name), sonst = Abteilung
-    const isAssignedToMe = !!ticket.assigned_to && ticket.assigned_to === user?.id;
     const hasAssignee = !!ticket.assigned_to;
-    const senderIsPersonal = !msgInternal ? (hasAssignee && isAssignedToMe) : true;
     const publicName = hasAssignee
       ? (myProfile?.full_name || user?.email || 'Mitarbeiter')
       : departmentDisplayName(ticket.department);
