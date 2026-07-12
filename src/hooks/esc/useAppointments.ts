@@ -1,8 +1,10 @@
 import { useCallback } from 'react';
+import { toast } from 'sonner';
 import { MOCK_APPOINTMENTS } from '@/lib/esc/mock-data';
 import type { EscAppointment } from '@/lib/esc/types';
 import { logEscAudit } from '@/lib/esc/audit';
 import { useEscStore } from '@/lib/esc/store/kvStore';
+import { supabase } from '@/integrations/supabase/client';
 
 export function useAppointments() {
   const { items, upsert, remove } = useEscStore<EscAppointment>({
@@ -36,6 +38,12 @@ export function useAppointments() {
 
   const deleteAppointment = useCallback(async (id: string) => {
     const before = items.find((a) => a.id === id);
+    // Frontend-Guard: nur Super Admin darf löschen (RLS erzwingt es zusätzlich serverseitig).
+    const { data: isSuper } = await (supabase as any).rpc('has_role', { check_role: 'Super Admin' });
+    if (!isSuper) {
+      toast.error('Löschen nicht erlaubt – Termine dürfen ausschließlich von Super Admin gelöscht werden. Nutze stattdessen "Stornieren".');
+      return;
+    }
     await remove(id);
     await logEscAudit({ entity: 'appointment', entityId: id, action: 'delete', before, source: 'internal' });
   }, [items, remove]);
