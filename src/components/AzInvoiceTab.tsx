@@ -729,7 +729,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           <Button
             variant="outline"
             onClick={generate}
-            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !!existingInvoice || checkingExisting}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || checkingExisting}
+            title={existingInvoice ? 'Rechnung bereits gestellt – PDF kann neu erzeugt werden (kein neuer Buchungssatz).' : undefined}
           >
             {generating
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
