@@ -761,8 +761,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           <Button
             variant="outline"
             onClick={sendByEmail}
-            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !customer?.email || !!existingInvoice || checkingExisting}
-            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : undefined}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !customer?.email || checkingExisting}
+            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : (existingInvoice ? 'Rechnung bereits gestellt – wird als E-Mail erneut versendet (kein neuer Buchungssatz).' : undefined)}
           >
             {sending
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
