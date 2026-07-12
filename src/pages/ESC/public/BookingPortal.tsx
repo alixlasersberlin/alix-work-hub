@@ -398,15 +398,15 @@ export default function BookingPortal() {
       {step === 'service' && dept && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-[16px]">Terminart wählen</CardTitle>
-            <p className="text-[12.5px] text-muted-foreground">Für <b>{dept.name}</b>.</p>
+            <CardTitle className="text-[16px]">{t.service.title}</CardTitle>
+            <p className="text-[12.5px] text-muted-foreground">{t.service.for} <b>{dept.name}</b>.</p>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {(() => {
               const kindsForDept = remoteKinds.filter((k) => k.departmentIds.length === 0 || k.departmentIds.includes(dept.id));
               const list = kindsForDept.length
                 ? kindsForDept.map((k) => ({ name: k.name, description: k.description, color: k.color, duration: k.defaultDurationMinutes || duration }))
-                : ['Beratung', 'Online Demo', 'Vorführung', 'Geräteeinweisung', 'Produktschulung'].map((n) => ({ name: n, description: undefined as string | undefined, color: undefined as string | undefined, duration }));
+                : t.service.fallback.map((n) => ({ name: n, description: undefined as string | undefined, color: undefined as string | undefined, duration }));
               return list.map((s) => (
                 <button
                   key={s.name}
@@ -418,7 +418,8 @@ export default function BookingPortal() {
                     <div className="font-semibold text-[14px]">{s.name}</div>
                   </div>
                   {s.description && <div className="text-[11.5px] text-muted-foreground mt-1 line-clamp-2">{s.description}</div>}
-                  <div className="text-[11.5px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> ca. {s.duration} min</div>
+                  <div className="text-[11.5px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> ~ {s.duration} {t.duration_min}</div>
+
                 </button>
               ));
             })()}
