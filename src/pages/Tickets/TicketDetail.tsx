@@ -56,6 +56,11 @@ interface Ticket {
   last_customer_reply_at?: string | null;
   last_agent_reply_at?: string | null;
   next_customer_reminder_at?: string | null;
+  first_response_due_at?: string | null;
+  resolution_due_at?: string | null;
+  first_response_at?: string | null;
+  merged_into_ticket_id?: string | null;
+  ticket_number?: string | null;
 }
 interface LinkedRepair {
   id: string;
