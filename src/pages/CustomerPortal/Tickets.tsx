@@ -253,20 +253,35 @@ export default function CustomerPortalTickets() {
                 </div>
               ))}
               {external.map((t) => (
-                <div key={`e-${t.id}`} className="flex items-center justify-between p-3 border border-border rounded-md">
-                  <div>
-                    <p className="font-medium">{t.subject ?? t.title ?? t.ticket_number}</p>
-                    <p className="text-xs text-muted-foreground">
+                <button
+                  key={`e-${t.id}`}
+                  type="button"
+                  onClick={() => setDetailId(t.id)}
+                  className="w-full flex items-center justify-between p-3 border border-border rounded-md text-left hover:bg-muted/40 transition"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{t.subject ?? t.title ?? t.ticket_number}</p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {t.category ?? ''} {t.device_name ? `· ${t.device_name}` : ''}{t.serial_number ? ` · ${t.serial_number}` : ''} · {new Date(t.created_at).toLocaleDateString('de-DE')}
                     </p>
                   </div>
-                  <Badge variant="outline">{t.status ?? '—'}</Badge>
-                </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline">{t.status ?? '—'}</Badge>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </button>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <PortalTicketDetail
+        ticketId={detailId}
+        customerName={cust?.contact_name ?? null}
+        customerEmail={cust?.email ?? null}
+        onClose={() => { setDetailId(null); load(); }}
+      />
     </div>
   );
 }
