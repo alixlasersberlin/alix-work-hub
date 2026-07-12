@@ -101,20 +101,91 @@ export default function TicketCalendar() {
       ? endOfWeek(range.to, { weekStartsOn: 1 })
       : range.to;
 
-    const [{ data: evData }, { data: dData }] = await Promise.all([
+    const [{ data: evData }, { data: dData }, { data: uData }] = await Promise.all([
       supabase.from('esc_events')
-        .select('id, ticket_id, title, description, start_at, end_at, event_kind, appointment_status, confirmation_status, customer_name, customer_email, customer_phone, priority, department_id, tickets:ticket_id(ticket_number, status, priority, department)')
+        .select('id, ticket_id, title, description, start_at, end_at, event_kind, appointment_status, confirmation_status, customer_name, customer_email, customer_phone, priority, department_id, assigned_user_id, location, tickets:ticket_id(ticket_number, status, priority, department)')
         .eq('source', 'ticket')
         .gte('start_at', gridFrom.toISOString())
         .lte('start_at', gridTo.toISOString())
         .order('start_at', { ascending: true })
         .limit(500),
       supabase.from('esc_departments').select('id, name, color'),
+      supabase.from('user_profiles').select('id, full_name, email, is_active').eq('is_active', true).order('full_name'),
     ]);
     setEvents((evData as any) ?? []);
     setDepts((dData as any) ?? []);
+    setUsers((uData as any) ?? []);
     setLoading(false);
   };
+
+  const userById = useMemo(() => Object.fromEntries(users.map(u => [u.id, u])), [users]);
+
+  // Drag & Drop: Termin auf anderen Tag verschieben (Uhrzeit bleibt gleich)
+  const onDropOnDay = async (targetKey: string, ev: React.DragEvent) => {
+    ev.preventDefault();
+    setDragOverKey(null);
+    const eventId = ev.dataTransfer.getData('text/event-id');
+    if (!eventId) return;
+    const src = events.find(e => e.id === eventId);
+    if (!src) return;
+    const targetDay = new Date(targetKey + 'T00:00:00');
+    const srcStart = new Date(src.start_at);
+    if (isSameDay(targetDay, srcStart)) return;
+    const newStart = new Date(targetDay);
+    newStart.setHours(srcStart.getHours(), srcStart.getMinutes(), 0, 0);
+    let newEndIso: string | null = null;
+    if (src.end_at) {
+      const diff = new Date(src.end_at).getTime() - srcStart.getTime();
+      newEndIso = new Date(newStart.getTime() + diff).toISOString();
+    }
+    // Optimistic
+    setEvents(list => list.map(e => e.id === eventId ? { ...e, start_at: newStart.toISOString(), end_at: newEndIso } : e));
+    const { error } = await supabase.from('esc_events')
+      .update({ start_at: newStart.toISOString(), end_at: newEndIso })
+      .eq('id', eventId);
+    if (error) { toast.error('Verschieben fehlgeschlagen: ' + error.message); load(); }
+    else toast.success(`Verschoben auf ${format(newStart, 'dd.MM. HH:mm', { locale: de })}`);
+  };
+
+  const assignUser = async (eventId: string, userId: string | null) => {
+    setEvents(list => list.map(e => e.id === eventId ? { ...e, assigned_user_id: userId } : e));
+    setSelected(s => s && s.id === eventId ? { ...s, assigned_user_id: userId } : s);
+    const { error } = await supabase.from('esc_events').update({ assigned_user_id: userId }).eq('id', eventId);
+    if (error) { toast.error('Zuweisung fehlgeschlagen'); load(); }
+    else toast.success(userId ? 'Zugewiesen' : 'Zuweisung entfernt');
+  };
+
+  const downloadIcs = (e: TicketEvent) => {
+    const dt = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const end = e.end_at ?? new Date(new Date(e.start_at).getTime() + 60 * 60_000).toISOString();
+    const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//AlixWork//Ticket-Kalender//DE',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:ticket-${e.id}@alixwork`,
+      `DTSTAMP:${dt(new Date().toISOString())}`,
+      `DTSTART:${dt(e.start_at)}`,
+      `DTEND:${dt(end)}`,
+      `SUMMARY:${esc(e.title || 'Ticket-Termin')}`,
+      e.description ? `DESCRIPTION:${esc(e.description)}` : '',
+      e.location ? `LOCATION:${esc(e.location)}` : '',
+      e.customer_email ? `ATTENDEE;CN=${esc(e.customer_name || '')}:mailto:${e.customer_email}` : '',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].filter(Boolean).join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ticket-${(e.tickets?.ticket_number || e.id.slice(0, 8))}.ics`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [cursor, view]);
 
