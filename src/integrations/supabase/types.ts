@@ -18689,6 +18689,7 @@ export type Database = {
         Args: { p_id: string }
         Returns: string
       }
+      security_deactivate_stale_sessions: { Args: never; Returns: number }
       security_has_permission: {
         Args: { _permission_key: string; _user_id: string }
         Returns: boolean
