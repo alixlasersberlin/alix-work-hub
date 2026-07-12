@@ -25,6 +25,13 @@ export interface OutboxItem {
   created_at: number;
   attempts: number;
   last_error?: string;
+  next_retry_at?: number;
+}
+
+export const MAX_ATTEMPTS = 8;
+// Exponential backoff up to ~10 minutes.
+function backoffMs(attempts: number): number {
+  return Math.min(600_000, 5_000 * Math.pow(2, Math.max(0, attempts - 1)));
 }
 
 let dbPromise: Promise<IDBPDatabase> | null = null;
