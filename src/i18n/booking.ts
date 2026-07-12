@@ -3,6 +3,7 @@
 // DB, Ansprechpartner-Namen) werden in ihrer gepflegten Sprache belassen.
 import { useMemo } from 'react';
 import { useWizardLang, type Lang } from '@/i18n/wizard';
+import type { Locale } from 'date-fns';
 import { de as deLocale, enUS, ru as ruLocale, arSA, fr as frLocale, it as itLocale, es as esLocale, nl as nlLocale, vi as viLocale } from 'date-fns/locale';
 
 export type BookingDict = {
