@@ -29,8 +29,9 @@ import { canEditForeignAppointments } from '@/lib/esc/permissions';
 type ViewValue = EscView | 'timeline';
 
 export default function EscCalendar() {
-  const { roles } = useAuth();
+  const { roles, hasRole } = useAuth();
   const canOverride = canEditForeignAppointments(roles);
+  const canCreate = hasRole('Super Admin');
   const canSeeInternal = roles.length > 0; // adjust as needed
 
   const [view, setView] = useState<ViewValue>('week');
