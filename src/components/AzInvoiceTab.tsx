@@ -516,7 +516,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function generate() {
-    if (blockIfDuplicate()) return;
+    // Hinweis: PDF-Erstellung ist idempotent und darf auch nach bereits gestellter Rechnung erfolgen (Reprint).
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart – es wird keine Anzahlungsrechnung erstellt.');
       return;
@@ -525,7 +525,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     try {
       await buildPdf('download');
       await recordNoteAndOrderDeposit();
-      toast.success('Anzahlungsrechnung erstellt und im Auftrag vermerkt.');
+      toast.success(existingInvoice
+        ? `PDF neu erzeugt (${invoiceNumber}). Es wurde keine zweite Rechnung angelegt.`
+        : 'Anzahlungsrechnung erstellt und im Auftrag vermerkt.');
       onReload?.();
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
@@ -555,7 +557,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function sendByEmail() {
-    if (blockIfDuplicate()) return;
+    // Versand ist idempotent (PDF-Reprint + E-Mail) und darf auch nach bereits gestellter Rechnung genutzt werden.
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart.');
       return;
@@ -727,7 +729,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           <Button
             variant="outline"
             onClick={generate}
-            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !!existingInvoice || checkingExisting}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || checkingExisting}
+            title={existingInvoice ? 'Rechnung bereits gestellt – PDF kann neu erzeugt werden (kein neuer Buchungssatz).' : undefined}
           >
             {generating
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -758,8 +761,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           <Button
             variant="outline"
             onClick={sendByEmail}
-            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !customer?.email || !!existingInvoice || checkingExisting}
-            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : undefined}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !customer?.email || checkingExisting}
+            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : (existingInvoice ? 'Rechnung bereits gestellt – wird als E-Mail erneut versendet (kein neuer Buchungssatz).' : undefined)}
           >
             {sending
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
