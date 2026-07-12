@@ -234,15 +234,15 @@ const navItems: NavItem[] = [
           { path: '/mediapaket/admin', label: 'Mediapaket-Konfigurator', icon: PackageIcon, roles: ['Super Admin'] },
         ],
       },
-    ],
-  },
-  {
-    path: '/crm/after-sales', label: 'AFTER SALES', icon: HeartPulse,
-    roles: ['Admin', 'Super Admin', 'After Sales', 'Vertrieb', 'Marketing', 'Service', 'Geschäftsführung', 'Order', 'SACHBEARBEITUNG', 'Kundenservice', 'Auftragsverwaltung'],
-    children: [
-      { path: '/crm/after-sales', label: 'After Sales', icon: HeartPulse, roles: ['Admin','Super Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung'] },
-      { path: '/crm/after-sales/erledigt', label: 'Erledigte Fälle', icon: CheckCircle2, roles: ['Admin','Super Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung'] },
-      { path: '/crm/after-sales/reports', label: 'Reports & Export', icon: BarChart3, roles: ['Admin','Super Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung'] },
+      {
+        path: '/crm/after-sales', label: 'AFTER SALES', icon: HeartPulse,
+        roles: ['Admin', 'Super Admin', 'After Sales', 'Vertrieb', 'Marketing', 'Service', 'Geschäftsführung', 'Order', 'SACHBEARBEITUNG', 'Kundenservice', 'Auftragsverwaltung'],
+        children: [
+          { path: '/crm/after-sales', label: 'After Sales', icon: HeartPulse, roles: ['Admin','Super Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung'] },
+          { path: '/crm/after-sales/erledigt', label: 'Erledigte Fälle', icon: CheckCircle2, roles: ['Admin','Super Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung'] },
+          { path: '/crm/after-sales/reports', label: 'Reports & Export', icon: BarChart3, roles: ['Admin','Super Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung'] },
+        ],
+      },
     ],
   },
   {
