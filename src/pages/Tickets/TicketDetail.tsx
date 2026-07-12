@@ -16,6 +16,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AiAnalysisPanel } from '@/components/ai-service/AiAnalysisPanel';
 import { CreateAppointmentFromTicket } from '@/components/tickets/CreateAppointmentFromTicket';
 import { TicketHistoryTimeline } from '@/components/tickets/TicketHistoryTimeline';
+import { TicketParticipants } from '@/components/tickets/TicketParticipants';
+import { TicketHandoverDialog } from '@/components/tickets/TicketHandoverDialog';
+import { ArrowRightLeft } from 'lucide-react';
 
 interface Ticket {
   id: string;
