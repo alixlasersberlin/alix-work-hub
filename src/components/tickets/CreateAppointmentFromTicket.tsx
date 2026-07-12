@@ -9,15 +9,20 @@ import { CalendarPlus, Loader2, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 const KINDS = [
-  { v: "kundentermin", l: "Kundentermin" },
-  { v: "rueckruf", l: "Rückruf" },
-  { v: "vor_ort", l: "Vor-Ort-Termin" },
-  { v: "reparatur", l: "Reparaturtermin" },
-  { v: "lieferung", l: "Liefertermin" },
-  { v: "schulung", l: "Schulungstermin" },
-  { v: "frist", l: "Interne Frist" },
+  { v: "anruf",         l: "Anruf" },
+  { v: "video",         l: "Video-Termin" },
+  { v: "vor_ort",       l: "Vor-Ort-Termin" },
+  { v: "reparatur",     l: "Reparaturtermin" },
+  { v: "lieferung",     l: "Liefertermin" },
+  { v: "aufbau",        l: "Aufbau / Installation" },
+  { v: "schulung",      l: "Schulung" },
+  { v: "nisv",          l: "NiSV-Nachweis" },
+  { v: "review",        l: "Review / Nachgespräch" },
+  { v: "frist",         l: "Deadline / Frist" },
   { v: "wiedervorlage", l: "Wiedervorlage" },
-  { v: "eskalation", l: "Eskalation" },
+  { v: "eskalation",    l: "Eskalation" },
+  { v: "kundentermin",  l: "Sonstiger Kundentermin" },
+  { v: "rueckruf",      l: "Rückruf" },
 ];
 
 export function CreateAppointmentFromTicket({ ticketId, ticketNumber }: { ticketId: string; ticketNumber?: string | null }) {
