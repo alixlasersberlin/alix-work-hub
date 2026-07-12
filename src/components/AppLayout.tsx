@@ -1617,6 +1617,7 @@ export default function AppLayout() {
             <div className="hidden lg:block flex-shrink-0">
               <TenantSwitcher />
             </div>
+            <TicketNotificationBell />
             <div className="flex items-center gap-2 text-sm flex-shrink-0">
               <span className="font-display font-bold gold-text">AlixWork</span>
               <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
