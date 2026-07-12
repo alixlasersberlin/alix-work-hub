@@ -1033,6 +1033,10 @@ function AppRoutes() {
             <Route path="ansicht-als" element={<RfViewAs />} />
             <Route path="befristet" element={<RfTempGrants />} />
             <Route path="datenklassen" element={<RfDataClasses />} />
+            <Route path="benachrichtigungen" element={<RfNotifications />} />
+            <Route path="bulk" element={<RfBulk />} />
+            <Route path="rezertifizierung" element={<RfRecert />} />
+            <Route path="vorlagen" element={<RfTemplates />} />
             <Route path="protokoll" element={<RfLog />} />
           </Route>
 

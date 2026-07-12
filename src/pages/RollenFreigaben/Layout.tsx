@@ -3,16 +3,21 @@ import { Badge } from '@/components/ui/badge';
 import {
   LayoutDashboard, Grid3x3, Users2, ShieldCheck, ClipboardCheck,
   UserCog, FileClock, GitCompare, Eye, Shield, Clock, Database,
+  Bell, Upload, Package,
 } from 'lucide-react';
 
 const NAV = [
   { to: '/admin/rollen-freigaben', end: true, label: 'Übersicht', icon: LayoutDashboard },
+  { to: '/admin/rollen-freigaben/benachrichtigungen', label: 'Benachrichtigungen', icon: Bell },
   { to: '/admin/rollen-freigaben/matrix', label: 'Rollenmatrix', icon: Grid3x3 },
   { to: '/admin/rollen-freigaben/rollen', label: 'Rollen', icon: ShieldCheck },
   { to: '/admin/rollen-freigaben/mitarbeiter', label: 'Mitarbeiter', icon: Users2 },
   { to: '/admin/rollen-freigaben/effektiv', label: 'Effektiver Zugriff', icon: Eye },
   { to: '/admin/rollen-freigaben/ansicht-als', label: 'Ansicht als (Simulation)', icon: Eye },
   { to: '/admin/rollen-freigaben/vergleich', label: 'Rollen-Vergleich', icon: GitCompare },
+  { to: '/admin/rollen-freigaben/vorlagen', label: 'Vorlagen & Onboarding', icon: Package },
+  { to: '/admin/rollen-freigaben/bulk', label: 'Bulk & Import/Export', icon: Upload },
+  { to: '/admin/rollen-freigaben/rezertifizierung', label: 'Rezertifizierung', icon: ClipboardCheck },
   { to: '/admin/rollen-freigaben/antraege', label: 'Freigabeanträge', icon: UserCog },
   { to: '/admin/rollen-freigaben/befristet', label: 'Befristete Rechte', icon: Clock },
   { to: '/admin/rollen-freigaben/datenklassen', label: 'Datenklassen', icon: Database },
