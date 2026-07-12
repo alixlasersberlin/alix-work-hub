@@ -191,14 +191,16 @@ export default function TicketsDashboard() {
       </div>
 
       {/* KPI Tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {tile("Neue Tickets", counts.neu, Inbox, "/tickets?status=Neu")}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        {tile("Neue Tickets", counts.neu, Inbox, "/tickets?status=open")}
         {tile("Meine offenen", counts.meine, User, "/tickets?mine=1")}
         {tile("Heute fällig", counts.heute, Clock, "/tickets?due=today", counts.heute > 0 ? "text-amber-500" : undefined)}
         {tile("Überfällig", counts.ueberfaellig, AlertTriangle, "/tickets?due=overdue", counts.ueberfaellig > 0 ? "text-destructive" : undefined)}
+        {tile("SLA-Warnung", counts.sla_warning, Clock, "/tickets?sla=warning", counts.sla_warning > 0 ? "text-amber-500" : undefined)}
+        {tile("SLA-Breach", counts.sla_breach, AlertTriangle, "/tickets?sla=breach", counts.sla_breach > 0 ? "text-destructive" : undefined)}
         {tile("Termine heute", counts.termine_heute, CalendarDays, "/tickets/kalender")}
-        {tile("Warten auf Kunde", counts.warten_kunde, PauseCircle, "/tickets?status=Warten%20auf%20Kunde")}
-        {tile("Eskaliert", counts.eskaliert, Flame, "/tickets?status=Eskaliert", counts.eskaliert > 0 ? "text-destructive" : undefined)}
+        {tile("Warten auf Kunde", counts.warten_kunde, PauseCircle, "/tickets?status=wartet_kunde")}
+        {tile("Eskaliert", counts.eskaliert, Flame, "/tickets?escalated=1", counts.eskaliert > 0 ? "text-destructive" : undefined)}
         {tile("Offen gesamt", counts.total_offen, Gauge, "/tickets")}
       </div>
 
