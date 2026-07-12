@@ -166,7 +166,7 @@ export default function BookingPortal() {
 
   if (sent) {
     return (
-      <BookingLayout narrow>
+      <BookingLayout narrow hideLegalLinks>
         <Card className="border-primary/30">
           <CardHeader className="text-center">
             <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-2">
@@ -191,7 +191,7 @@ export default function BookingPortal() {
   }
 
   return (
-    <BookingLayout step={stepIndex + 1} totalSteps={STEPS.length}>
+    <BookingLayout step={stepIndex + 1} totalSteps={STEPS.length} hideLegalLinks>
       <div className="hidden md:flex items-center gap-2 text-[11.5px] text-muted-foreground">
         {STEPS.map((s, i) => (
           <div key={s} className={`flex items-center gap-1 ${i === stepIndex ? 'text-primary font-medium' : ''}`}>
