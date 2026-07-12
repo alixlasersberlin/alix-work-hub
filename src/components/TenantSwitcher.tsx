@@ -20,7 +20,7 @@ export default function TenantSwitcher() {
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="__all__">
-          <span className="inline-flex items-center gap-2"><Globe className="w-4 h-4" /> Alle Mandanten</span>
+          <span className="inline-flex items-center gap-2"><Globe className="w-4 h-4" /> Alix World</span>
         </SelectItem>
         {allowedTenants.map(t => (
           <SelectItem key={t.code} value={t.code}>
