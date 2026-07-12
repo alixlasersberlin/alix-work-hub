@@ -869,6 +869,7 @@ function AppRoutes() {
           <Route path="/geraetetypen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DeviceStatistics /></ProtectedRoute>} />
           <Route path="/tourenplanung" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanning /></ProtectedRoute>} />
           <Route path="/tourenplanung/einstellungen" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanningSettings /></ProtectedRoute>} />
+          <Route path="/tourenplanung/sms-vorlage" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><SmsTemplateSettings /></ProtectedRoute>} />
           <Route path="/reparaturannahme" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><Reparaturannahme /></ProtectedRoute>} />
           <Route path="/tourenplanung/reparaturannahme" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><Reparaturannahme /></ProtectedRoute>} />
           <Route path="/reparatur" element={<ProtectedRoute><ReparaturLayout /></ProtectedRoute>}>
