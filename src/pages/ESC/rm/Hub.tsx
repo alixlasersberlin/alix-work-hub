@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Truck, Cpu, DoorOpen, Map, Gauge, ArrowRight, ListChecks } from 'lucide-react';
+import { Users, Truck, Cpu, DoorOpen, Map, Gauge, ArrowRight, ListChecks, MapPin } from 'lucide-react';
 import { LiveAvailability } from '@/components/esc/resources/LiveAvailability';
 import { RmQuickActions } from '@/components/esc/resources/RmQuickActions';
 
@@ -12,6 +12,7 @@ const TILES = [
   { to: '/esc/rm/aussendienst', label: 'Außendienst', icon: Map, desc: 'Kartenansicht Kunden/Techniker/Lieferungen' },
   { to: '/esc/rm/kapazitaeten', label: 'Kapazitäten', icon: Gauge, desc: 'Heatmap, Woche/Monat/Quartal, Live-Auslastung' },
   { to: '/esc/rm/einsatzplanung', label: 'Einsatzplanung', icon: ListChecks, desc: 'Drag & Drop Disposition, Konfliktprüfung' },
+  { to: '/esc/rm/standorte',   label: 'Standorte',   icon: MapPin, desc: 'Standorte anlegen, bearbeiten, löschen (systemweit)' },
 ];
 
 export default function RmHub() {
