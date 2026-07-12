@@ -15417,6 +15417,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_departments: {
+        Row: {
+          allow_customer_pick_person: boolean
+          color: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          mailbox_email: string | null
+          name: string
+          routing_strategy: Database["public"]["Enums"]["ticket_routing_strategy"]
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          allow_customer_pick_person?: boolean
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          mailbox_email?: string | null
+          name: string
+          routing_strategy?: Database["public"]["Enums"]["ticket_routing_strategy"]
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          allow_customer_pick_person?: boolean
+          color?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          mailbox_email?: string | null
+          name?: string
+          routing_strategy?: Database["public"]["Enums"]["ticket_routing_strategy"]
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ticket_messages: {
         Row: {
           created_at: string
@@ -17738,6 +17783,13 @@ export type Database = {
         | "customer_correction"
         | "approval_pending"
         | "completed"
+      ticket_routing_strategy:
+        | "manual"
+        | "round_robin"
+        | "region"
+        | "product"
+        | "account_manager"
+        | "least_load"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -17918,6 +17970,14 @@ export const Constants = {
         "customer_correction",
         "approval_pending",
         "completed",
+      ],
+      ticket_routing_strategy: [
+        "manual",
+        "round_robin",
+        "region",
+        "product",
+        "account_manager",
+        "least_load",
       ],
     },
   },
