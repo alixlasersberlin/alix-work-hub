@@ -531,8 +531,26 @@ export default function TicketDetail() {
               SLA: {ticket.sla_status}
             </Badge>
           )}
+          {ticket.comm_status && ticket.comm_status !== 'none' && (() => {
+            const map: Record<string, { label: string; cls: string }> = {
+              awaiting_customer: { label: 'Wartet auf Kunde', cls: 'bg-amber-500/15 text-amber-300 border-amber-500/40' },
+              awaiting_agent: { label: 'Wartet auf Bearbeiter', cls: 'bg-blue-500/15 text-blue-300 border-blue-500/40' },
+              awaiting_internal: { label: 'Wartet auf interne Abteilung', cls: 'bg-purple-500/15 text-purple-300 border-purple-500/40' },
+              awaiting_appointment_confirm: { label: 'Wartet auf Terminbestätigung', cls: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40' },
+              customer_unreachable: { label: 'Kunde nicht erreichbar', cls: 'bg-red-500/15 text-red-300 border-red-500/40' },
+              customer_replied: { label: 'Kunde hat geantwortet', cls: 'bg-green-500/15 text-green-300 border-green-500/40' },
+              closed: { label: 'Geschlossen', cls: 'bg-muted text-muted-foreground border-border' },
+            };
+            const m = map[ticket.comm_status as string];
+            return m ? <Badge variant="outline" className={m.cls}>{m.label}</Badge> : null;
+          })()}
         </div>
         <div className="flex items-center gap-3">
+          {ticket.comm_status && ['awaiting_customer','customer_replied'].includes(ticket.comm_status) && (
+            <Button size="sm" variant="outline" onClick={() => patch({ comm_status: 'customer_unreachable' } as any)}>
+              Kunde nicht erreichbar
+            </Button>
+          )}
           <AiAnalysisPanel sourceKind="ticket" recordId={ticket.id} />
           <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
             <div>Letzter Inbound-Sync: {ticket.last_synced_at ? new Date(ticket.last_synced_at).toLocaleString('de-DE') : '—'}</div>
