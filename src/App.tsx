@@ -299,6 +299,17 @@ const SecurityPermissions = lazy(() => import("./pages/SecurityCenter/Permission
 const SecurityPolicies = lazy(() => import("./pages/SecurityCenter/Policies"));
 const SecurityStorage = lazy(() => import("./pages/SecurityCenter/Storage"));
 const SecurityMfa = lazy(() => import("./pages/SecurityCenter/Mfa"));
+const RfLayout = lazy(() => import("./pages/RollenFreigaben/Layout"));
+const RfOverview = lazy(() => import("./pages/RollenFreigaben/Overview"));
+const RfMatrix = lazy(() => import("./pages/RollenFreigaben/Matrix"));
+const RfRoles = lazy(() => import("./pages/RollenFreigaben/RolesCards"));
+const RfEmployees = lazy(() => import("./pages/RollenFreigaben/EmployeesCards"));
+const RfEffective = lazy(() => import("./pages/RollenFreigaben/EffectiveAccess"));
+const RfCompare = lazy(() => import("./pages/RollenFreigaben/RoleCompare"));
+const RfRequests = lazy(() => import("./pages/RollenFreigaben/Requests"));
+const RfAudit = lazy(() => import("./pages/RollenFreigaben/SecurityAudit"));
+const RfLog = lazy(() => import("./pages/RollenFreigaben/AuditLog"));
+
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
 const SecurityPentest = lazy(() => import("./pages/SecurityCenter/Pentest"));
 const SecurityCompliance = lazy(() => import("./pages/SecurityCenter/Compliance"));
