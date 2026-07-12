@@ -33,10 +33,13 @@ type TicketEvent = {
   customer_phone: string | null;
   priority: string | null;
   department_id: string | null;
+  assigned_user_id: string | null;
+  location?: string | null;
   tickets?: { ticket_number: string | null; status: string | null; priority: string | null; department: string | null } | null;
 };
 
 type Dept = { id: string; name: string; color: string | null };
+type UserRow = { id: string; full_name: string | null; email: string | null; is_active: boolean | null };
 
 const KIND_LABEL: Record<string, string> = {
   kundentermin: 'Kundentermin',
