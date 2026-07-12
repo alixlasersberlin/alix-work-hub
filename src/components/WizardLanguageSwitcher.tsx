@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { LANGS, useWizardLang, type Lang } from '@/i18n/wizard';
 import { Globe, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,6 +14,8 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
   const { lang, setLang } = useWizardLang();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -22,11 +25,33 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
     return () => document.removeEventListener('mousedown', onClick);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    const updatePosition = () => {
+      const rect = buttonRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const menuWidth = 240;
+      const padding = 12;
+      setMenuPosition({
+        top: rect.bottom + 8,
+        left: Math.max(padding, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - padding)),
+      });
+    };
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [open]);
+
   const current = LANGS.find(l => l.code === lang) || LANGS[0];
 
   return (
     <div ref={ref} className={cn('relative', className)}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen(o => !o)}
         className={cn(
@@ -42,13 +67,15 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
         <span className="hidden sm:inline">{current.code.toUpperCase()}</span>
         <ChevronDown className={cn('h-3.5 w-3.5 opacity-70 transition', open && 'rotate-180')} />
       </button>
-      {open && (
+      {open && createPortal(
         <div className={cn(
-          'absolute right-0 mt-2 w-48 rounded-xl border p-1 shadow-2xl z-50',
-          variant === 'dark' && 'border-white/15 bg-[#0b1228]/95 text-white backdrop-blur-xl',
+          'fixed w-60 max-h-[min(28rem,calc(100dvh-5rem))] overflow-y-auto rounded-xl border p-1 shadow-2xl z-[9999]',
+          variant === 'dark' && 'border-white/15 bg-popover text-popover-foreground backdrop-blur-xl',
           variant === 'light' && 'border-slate-200 bg-white text-slate-800',
           variant === 'transparent' && 'border-foreground/15 bg-popover/90 text-popover-foreground backdrop-blur-xl',
-        )}>
+        )}
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+        >
           {LANGS.map(l => (
             <button
               key={l.code}
@@ -66,7 +93,7 @@ export default function WizardLanguageSwitcher({ className, variant = 'dark' }: 
             </button>
           ))}
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }
