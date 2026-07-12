@@ -14384,6 +14384,50 @@ export type Database = {
         }
         Relationships: []
       }
+      role_context_policies: {
+        Row: {
+          config: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          policy_type: string
+          role_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          policy_type: string
+          role_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          policy_type?: string
+          role_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "role_context_policies_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_notifications: {
         Row: {
           body: string | null
@@ -19198,6 +19242,15 @@ export type Database = {
         }[]
       }
       esc_user_department_ids: { Args: { _user_id: string }; Returns: string[] }
+      evaluate_role_context: {
+        Args: { _at?: string; _ip?: string; _role_id: string; _tz?: string }
+        Returns: {
+          passed: boolean
+          policy_id: string
+          policy_type: string
+          reason: string
+        }[]
+      }
       expire_break_glass_sessions: { Args: never; Returns: number }
       expire_temporary_role_grants: { Args: never; Returns: number }
       finance_deposit_book: {
