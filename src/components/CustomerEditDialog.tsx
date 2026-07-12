@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { VipBadge } from '@/components/VipBadge';
 import { ensureCaseNumber, nextNumber } from '@/lib/number-ranges';
+import { useAuth } from '@/hooks/useAuth';
+
 
 interface Props {
   customer: any;
