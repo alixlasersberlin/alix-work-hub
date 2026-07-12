@@ -218,19 +218,19 @@ export default function BookingPortal() {
             </div>
             <div className="flex-1">
               <div className="font-semibold text-[14px] flex items-center gap-2">
-                <span>Mein persönliches Angebot</span>
+                <span>{t.cards.offer_title}</span>
                 {showAngebotBubble && (
                   <span
                     style={{ transformOrigin: 'left center' }}
                     className="relative inline-flex items-center rounded-full bg-primary text-primary-foreground px-2.5 py-0.5 text-[11px] font-medium shadow-md animate-fade-in -translate-y-2 -rotate-6
                       before:content-[''] before:absolute before:-left-1.5 before:top-1/2 before:-translate-y-1/2 before:border-y-[5px] before:border-y-transparent before:border-r-[6px] before:border-r-primary"
                   >
-                    Angebot
+                    {t.cards.offer_badge}
                   </span>
                 )}
               </div>
               <div className="text-[12px] text-muted-foreground mt-0.5">
-                Unterschrift, Angebot, Finanzierung, Kataloge, Setpreise, Vermietung – individuell für Sie.
+                {t.cards.offer_desc}
               </div>
             </div>
             <ChevronDown className={`w-4 h-4 text-muted-foreground mt-1 shrink-0 transition-transform ${salesOpen ? 'rotate-180' : ''}`} />
@@ -239,7 +239,7 @@ export default function BookingPortal() {
             <div className="rounded-xl border bg-card p-4">
               <div className="grid grid-cols-1 gap-3">
                 {[
-                  { label: 'Mein persönliches Angebot erstellen lassen', icon: FileText },
+                  { label: t.cards.offer_create, icon: FileText },
                 ].map((item) => (
                   <a
                     key={item.label}
@@ -255,8 +255,9 @@ export default function BookingPortal() {
               </div>
               <div className="mt-3 flex justify-end">
                 <a href="/beratung" className="inline-flex items-center gap-1 text-[12.5px] text-primary hover:underline">
-                  Zur Verkaufsberatung <ArrowRight className="w-3.5 h-3.5" />
+                  {t.cards.offer_more} <ArrowRight className="w-3.5 h-3.5" />
                 </a>
+
               </div>
             </div>
           )}
