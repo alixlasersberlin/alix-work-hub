@@ -1049,6 +1049,10 @@ function AppRoutes() {
             <Route path="protokoll" element={<RfLog />} />
           </Route>
 
+          <Route path="/self-service/rollen" element={<ProtectedRoute><SelfServiceRoles /></ProtectedRoute>} />
+
+
+
           <Route path="/auftragsverwaltung/bestellungen" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><BestellwesenOverview /></ProtectedRoute>} />
           <Route path="/order" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrders /></ProtectedRoute>} />
           <Route path="/order/freigabe" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrderApprovalQueue /></ProtectedRoute>} />
