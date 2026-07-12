@@ -200,7 +200,7 @@ export default function TicketDetail() {
       if (insErr) throw insErr;
       toast.success('Anhang hochgeladen');
       load();
-      if (ticket.external_ticket_id) syncToAlixSmart('manual');
+      if (ticket.external_ticket_id && ticket.source_system === 'alixsmart') syncToAlixSmart('manual');
     } catch (e: any) {
       toast.error('Upload fehlgeschlagen: ' + (e?.message || e));
     } finally {
