@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     const audit = async (act: string, target: string, meta: any) => {
       await admin.from('audit_logs').insert({
         user_id: user.id, action: `security_remediate:${act}`,
-        entity_type: 'security', entity_id: target, metadata: meta,
+        module: 'security', record_id: target, details: meta,
       });
     };
 

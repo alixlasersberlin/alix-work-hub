@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
     const cutoff = new Date(Date.now() - COOLDOWN_HOURS * 3600_000).toISOString();
     const { data: recentLogs } = await admin
       .from('audit_logs')
-      .select('entity_id')
+      .select('record_id')
       .eq('action', 'security_alert_sent')
       .gte('created_at', cutoff);
     const alreadySent = new Set((recentLogs ?? []).map((r: any) => r.entity_id));
@@ -99,8 +99,8 @@ Deno.serve(async (req) => {
     // Log cooldown
     await admin.from('audit_logs').insert(fresh.map((f: any) => ({
       user_id: null, action: 'security_alert_sent',
-      entity_type: 'security_finding', entity_id: f.id,
-      metadata: { severity: f.severity, recipients: recipients.length },
+      module: 'security', record_id: f.id,
+      details: { severity: f.severity, recipients: recipients.length },
     })));
 
     return json({ ok: true, sent: fresh.length, recipients: recipients.length });
