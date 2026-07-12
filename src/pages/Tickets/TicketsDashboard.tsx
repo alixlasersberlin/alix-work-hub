@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { de } from "date-fns/locale";
+import { CsatWidget } from "./CsatWidget";
 
 type Counts = {
   neu: number; meine: number; heute: number; ueberfaellig: number;
