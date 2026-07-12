@@ -21,6 +21,8 @@ type Row = {
   routing_strategy: "manual" | "round_robin" | "region" | "product" | "account_manager" | "least_load";
   mailbox_email: string | null;
   description: string | null;
+  sla_hours: number;
+  reminder_after_days: number;
 };
 
 const STRATEGIES: Row["routing_strategy"][] = [
@@ -64,6 +66,8 @@ export default function TicketDepartments() {
       routing_strategy: r.routing_strategy,
       mailbox_email: r.mailbox_email,
       description: r.description,
+      sla_hours: r.sla_hours,
+      reminder_after_days: r.reminder_after_days,
     }).eq("id", r.id);
     setSaving(null);
     if (error) return toast.error(error.message);
@@ -154,6 +158,14 @@ export default function TicketDepartments() {
                 <div>
                   <Label>Postfach-E-Mail</Label>
                   <Input value={r.mailbox_email ?? ""} onChange={e => patch(r.id, { mailbox_email: e.target.value })} />
+                </div>
+                <div>
+                  <Label>SLA (Stunden bis Reaktion)</Label>
+                  <Input type="number" min={1} value={r.sla_hours ?? 24} onChange={e => patch(r.id, { sla_hours: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <Label>Kunden-Reminder (Tage)</Label>
+                  <Input type="number" min={1} value={r.reminder_after_days ?? 3} onChange={e => patch(r.id, { reminder_after_days: Number(e.target.value) })} />
                 </div>
                 <div>
                   <Label>Sortierung</Label>

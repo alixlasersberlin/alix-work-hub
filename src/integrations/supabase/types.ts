@@ -15443,7 +15443,9 @@ export type Database = {
           is_active: boolean
           mailbox_email: string | null
           name: string
+          reminder_after_days: number
           routing_strategy: Database["public"]["Enums"]["ticket_routing_strategy"]
+          sla_hours: number
           slug: string
           sort_order: number
           updated_at: string
@@ -15457,7 +15459,9 @@ export type Database = {
           is_active?: boolean
           mailbox_email?: string | null
           name: string
+          reminder_after_days?: number
           routing_strategy?: Database["public"]["Enums"]["ticket_routing_strategy"]
+          sla_hours?: number
           slug: string
           sort_order?: number
           updated_at?: string
@@ -15471,7 +15475,9 @@ export type Database = {
           is_active?: boolean
           mailbox_email?: string | null
           name?: string
+          reminder_after_days?: number
           routing_strategy?: Database["public"]["Enums"]["ticket_routing_strategy"]
+          sla_hours?: number
           slug?: string
           sort_order?: number
           updated_at?: string
@@ -15815,12 +15821,15 @@ export type Database = {
           auto_priority: string | null
           category: string | null
           classified_at: string | null
+          comm_status: Database["public"]["Enums"]["ticket_comm_status"]
+          comm_status_since: string
           company_name: string | null
           created_at: string
           customer_address: string | null
           customer_email: string | null
           customer_name: string | null
           customer_phone: string | null
+          customer_reminder_count: number
           customer_visible_status: string
           department: string
           description: string | null
@@ -15835,8 +15844,11 @@ export type Database = {
           follow_up_at: string | null
           id: string
           internal_note: string | null
+          last_agent_reply_at: string | null
+          last_customer_reply_at: string | null
           last_outbound_sync_at: string | null
           last_synced_at: string | null
+          next_customer_reminder_at: string | null
           order_id: string | null
           order_number: string | null
           priority: string
@@ -15863,12 +15875,15 @@ export type Database = {
           auto_priority?: string | null
           category?: string | null
           classified_at?: string | null
+          comm_status?: Database["public"]["Enums"]["ticket_comm_status"]
+          comm_status_since?: string
           company_name?: string | null
           created_at?: string
           customer_address?: string | null
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          customer_reminder_count?: number
           customer_visible_status?: string
           department?: string
           description?: string | null
@@ -15883,8 +15898,11 @@ export type Database = {
           follow_up_at?: string | null
           id?: string
           internal_note?: string | null
+          last_agent_reply_at?: string | null
+          last_customer_reply_at?: string | null
           last_outbound_sync_at?: string | null
           last_synced_at?: string | null
+          next_customer_reminder_at?: string | null
           order_id?: string | null
           order_number?: string | null
           priority?: string
@@ -15911,12 +15929,15 @@ export type Database = {
           auto_priority?: string | null
           category?: string | null
           classified_at?: string | null
+          comm_status?: Database["public"]["Enums"]["ticket_comm_status"]
+          comm_status_since?: string
           company_name?: string | null
           created_at?: string
           customer_address?: string | null
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          customer_reminder_count?: number
           customer_visible_status?: string
           department?: string
           description?: string | null
@@ -15931,8 +15952,11 @@ export type Database = {
           follow_up_at?: string | null
           id?: string
           internal_note?: string | null
+          last_agent_reply_at?: string | null
+          last_customer_reply_at?: string | null
           last_outbound_sync_at?: string | null
           last_synced_at?: string | null
+          next_customer_reminder_at?: string | null
           order_id?: string | null
           order_number?: string | null
           priority?: string
@@ -17977,6 +18001,15 @@ export type Database = {
         | "customer_correction"
         | "approval_pending"
         | "completed"
+      ticket_comm_status:
+        | "none"
+        | "awaiting_customer"
+        | "awaiting_agent"
+        | "awaiting_internal"
+        | "awaiting_appointment_confirm"
+        | "customer_unreachable"
+        | "customer_replied"
+        | "closed"
       ticket_routing_strategy:
         | "manual"
         | "round_robin"
@@ -18164,6 +18197,16 @@ export const Constants = {
         "customer_correction",
         "approval_pending",
         "completed",
+      ],
+      ticket_comm_status: [
+        "none",
+        "awaiting_customer",
+        "awaiting_agent",
+        "awaiting_internal",
+        "awaiting_appointment_confirm",
+        "customer_unreachable",
+        "customer_replied",
+        "closed",
       ],
       ticket_routing_strategy: [
         "manual",
