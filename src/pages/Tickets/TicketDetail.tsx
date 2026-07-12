@@ -191,6 +191,8 @@ export default function TicketDetail() {
 
   async function uploadAttachment(file: File) {
     if (!ticket || !file) return;
+    const v = validateTicketAttachment(file);
+    if (v.ok === false) { toast.error(v.reason); return; }
     setUploading(true);
     try {
       const safeName = file.name.replace(/[^\w.\-]+/g, '_');
