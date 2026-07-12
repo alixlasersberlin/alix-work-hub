@@ -334,7 +334,7 @@ export default function BookingPortal() {
             <PackageSearch className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
-            <div className="font-semibold text-[14px]">Mein Media Paket</div>
+            <div className="font-semibold text-[14px]">Mein Medi Paket beantragen</div>
             <div className="text-[12px] text-muted-foreground mt-0.5">
               Übermitteln Sie uns alle Informationen, Dateien und Wünsche für Ihre Webseite, Flyer und Social-Media-Vorlagen.
             </div>
