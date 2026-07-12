@@ -29,8 +29,9 @@ import { canEditForeignAppointments } from '@/lib/esc/permissions';
 type ViewValue = EscView | 'timeline';
 
 export default function EscCalendar() {
-  const { roles } = useAuth();
+  const { roles, hasRole } = useAuth();
   const canOverride = canEditForeignAppointments(roles);
+  const canCreate = hasRole('Super Admin');
   const canSeeInternal = roles.length > 0; // adjust as needed
 
   const [view, setView] = useState<ViewValue>('week');
@@ -42,7 +43,7 @@ export default function EscCalendar() {
   const [presetMode, setPresetMode] = useState<'intern' | 'extern' | undefined>();
   const [filters, setFilters] = useState<EscFilterState>(EMPTY_FILTER);
 
-  const { appointments, createAppointment, updateAppointment, deleteAppointment } = useAppointments();
+  const { appointments, createAppointment, updateAppointment } = useAppointments();
   const { departments } = useDepartments();
   const { employees } = useEmployees();
   const { resources } = useResources();
@@ -66,9 +67,11 @@ export default function EscCalendar() {
   };
 
   const openNew = (start?: Date, mode: 'intern' | 'extern' = 'intern') => {
+    if (!canCreate) { toast.error('Neue Termine dürfen ausschließlich vom Super Admin angelegt werden.'); return; }
     setEditing(null); setDefaultStart(start); setPresetKind(undefined); setPresetMode(mode); setModalOpen(true);
   };
   const openNewKind = (kind: 'Erinnerung' | 'Wiedervorlage') => {
+    if (!canCreate) { toast.error('Neue Termine dürfen ausschließlich vom Super Admin angelegt werden.'); return; }
     setEditing(null); setDefaultStart(undefined); setPresetKind(kind); setPresetMode(undefined); setModalOpen(true);
   };
   const openEdit = (a: EscAppointment) => {
@@ -125,18 +128,22 @@ export default function EscCalendar() {
         <div className="text-[13px] font-medium">{title}</div>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
           <ViewSwitcher value={view} onChange={setView} />
-          <Button size="sm" variant="outline" onClick={() => openNewKind('Erinnerung')} title="Interne Erinnerung anlegen">
-            <Bell className="w-4 h-4 mr-1" /> Erinnerung
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => openNewKind('Wiedervorlage')} title="Interne Wiedervorlage anlegen">
-            <ClipboardList className="w-4 h-4 mr-1" /> Wiedervorlage
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => openNew(undefined, 'intern')} title="Interner Termin (nur Team)">
-            <Plus className="w-4 h-4 mr-1" /> Neuer Termin (intern)
-          </Button>
-          <Button size="sm" onClick={() => openNew(undefined, 'extern')} title="Externer Termin mit Kunde/Partner">
-            <Plus className="w-4 h-4 mr-1" /> Neuer Termin (extern)
-          </Button>
+          {canCreate && (
+            <>
+              <Button size="sm" variant="outline" onClick={() => openNewKind('Erinnerung')} title="Interne Erinnerung anlegen">
+                <Bell className="w-4 h-4 mr-1" /> Erinnerung
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => openNewKind('Wiedervorlage')} title="Interne Wiedervorlage anlegen">
+                <ClipboardList className="w-4 h-4 mr-1" /> Wiedervorlage
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => openNew(undefined, 'intern')} title="Interner Termin (nur Team)">
+                <Plus className="w-4 h-4 mr-1" /> Neuer Termin (intern)
+              </Button>
+              <Button size="sm" onClick={() => openNew(undefined, 'extern')} title="Externer Termin mit Kunde/Partner">
+                <Plus className="w-4 h-4 mr-1" /> Neuer Termin (extern)
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -155,7 +162,6 @@ export default function EscCalendar() {
         open={modalOpen}
         onClose={() => { setModalOpen(false); setEditing(null); }}
         onSubmit={handleSubmit}
-        onDelete={async (id) => { await deleteAppointment(id); toast.success('Termin gelöscht'); }}
         onCancelAppointment={async (id) => { await updateAppointment(id, { status: 'storniert' }); toast.success('Termin storniert'); }}
         onComplete={async (id) => { await updateAppointment(id, { status: 'abgeschlossen' }); toast.success('Termin abgeschlossen'); }}
         departments={departments}
