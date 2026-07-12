@@ -43,7 +43,7 @@ export default function EscCalendar() {
   const [presetMode, setPresetMode] = useState<'intern' | 'extern' | undefined>();
   const [filters, setFilters] = useState<EscFilterState>(EMPTY_FILTER);
 
-  const { appointments, createAppointment, updateAppointment } = useAppointments();
+  const { appointments, createAppointment, updateAppointment, deleteAppointment } = useAppointments();
   const { departments } = useDepartments();
   const { employees } = useEmployees();
   const { resources } = useResources();
@@ -164,6 +164,7 @@ export default function EscCalendar() {
         onSubmit={handleSubmit}
         onCancelAppointment={async (id) => { await updateAppointment(id, { status: 'storniert' }); toast.success('Termin storniert'); }}
         onComplete={async (id) => { await updateAppointment(id, { status: 'abgeschlossen' }); toast.success('Termin abgeschlossen'); }}
+        onDelete={async (id) => { if (!confirm('Termin wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return; await deleteAppointment(id); }}
         departments={departments}
         employees={employees}
         resources={resources}
