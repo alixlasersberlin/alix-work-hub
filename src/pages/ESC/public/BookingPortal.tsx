@@ -63,7 +63,9 @@ export default function BookingPortal() {
 
   const sourceDepts = remoteDepts && remoteDepts.length ? remoteDepts : departments;
   const publicDepts = useMemo(
-    () => sourceDepts.filter((d) => d.active && d.publicBookable && d.externallyBookable),
+    () => sourceDepts
+      .filter((d) => d.active && d.publicBookable && d.externallyBookable)
+      .sort((a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name)),
     [sourceDepts],
   );
 
