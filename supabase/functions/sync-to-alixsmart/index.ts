@@ -73,6 +73,12 @@ Deno.serve(async (req) => {
       return json({ ok: false, skipped: "no external_ticket_id" });
     }
 
+    // Nur AlixSmart-Tickets syncen – Portal/Booking-Tickets haben keine externe UUID.
+    if (ticket.source_system && ticket.source_system !== "alixsmart") {
+      await logSync(supabase, body.ticket_id, ticket.external_ticket_id, action, "skipped", `source_system=${ticket.source_system}`, null);
+      return json({ ok: false, skipped: `source_system=${ticket.source_system}` });
+    }
+
     // optional message (only public)
     let msg: any = null;
     if (body.message_id) {
