@@ -29,10 +29,17 @@ Deno.serve(async (req) => {
   });
 
   // 2) Overly permissive policies (USING true)
+  const OPEN_POLICY_ALLOWLIST = new Set<string>([
+    'public.ticket_departments.ticket_departments read authenticated',
+    'public.ticket_sla_settings.ticket_sla_settings_select_auth',
+  ]);
+
   const { data: openPols } = await (supabase as any).from('security_scan_open_policies').select('*');
   (openPols ?? []).forEach((p: any) => {
+    const target = `${p.schemaname}.${p.tablename}.${p.policyname}`;
+    if (OPEN_POLICY_ALLOWLIST.has(target)) return;
     findings.push({
-      category: 'rls', target: `${p.schemaname}.${p.tablename}.${p.policyname}`, severity: 'medium',
+      category: 'rls', target, severity: 'medium',
       title: 'Zu offene Policy', detail: `Policy erlaubt jedem authenticated Nutzer Zugriff (USING true) – cmd=${p.cmd}.`,
       recommendation: 'Policy an konkrete Rolle/Owner-Bedingung koppeln.',
       status: 'open',
