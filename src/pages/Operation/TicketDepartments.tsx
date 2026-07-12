@@ -160,6 +160,14 @@ export default function TicketDepartments() {
                   <Input value={r.mailbox_email ?? ""} onChange={e => patch(r.id, { mailbox_email: e.target.value })} />
                 </div>
                 <div>
+                  <Label>SLA (Stunden bis Reaktion)</Label>
+                  <Input type="number" min={1} value={r.sla_hours ?? 24} onChange={e => patch(r.id, { sla_hours: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <Label>Kunden-Reminder (Tage)</Label>
+                  <Input type="number" min={1} value={r.reminder_after_days ?? 3} onChange={e => patch(r.id, { reminder_after_days: Number(e.target.value) })} />
+                </div>
+                <div>
                   <Label>Sortierung</Label>
                   <Input type="number" value={r.sort_order} onChange={e => patch(r.id, { sort_order: Number(e.target.value) })} />
                 </div>
