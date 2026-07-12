@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Camera, ArrowLeft, Upload, Loader2, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { enqueue, flush } from '@/lib/mobile/outbox';
+import { compressImage } from '@/lib/mobile/image';
 import { toast } from 'sonner';
 
 const CATEGORIES = ['vorher', 'nachher', 'schaden', 'ersatzteil', 'installation', 'sonstiges'];
@@ -26,7 +27,8 @@ export default function MobileFotos() {
     if (!files || !id || !user) return;
     setBusy(true);
     const newPreviews: Preview[] = [];
-    for (const f of Array.from(files)) {
+    for (const raw of Array.from(files)) {
+      const f = await compressImage(raw, { maxEdge: 1920, quality: 0.82 });
       const ts = Date.now();
       const path = `${id}/${cat}/${ts}-${f.name}`;
       await enqueue({
@@ -38,6 +40,8 @@ export default function MobileFotos() {
           attachment_kind: cat,
           file_name: f.name,
           uploaded_by: user.id,
+          original_size: raw.size,
+          compressed_size: f.size,
         },
       });
       newPreviews.push({ url: URL.createObjectURL(f), name: f.name, cat });

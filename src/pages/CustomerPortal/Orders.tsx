@@ -4,7 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, Loader2, RotateCw, ChevronDown, ChevronRight } from 'lucide-react';
+import { Package, Loader2, RotateCw, ChevronDown, ChevronRight, CalendarClock } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 type Ctx = { customerId: string; companyName: string | null };
@@ -19,6 +23,7 @@ export default function CustomerPortalOrders() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [dateDlg, setDateDlg] = useState<{ order: any; date: string; note: string } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -133,7 +138,14 @@ export default function CustomerPortalOrders() {
                       </table>
                     </div>
                   )}
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setDateDlg({ order: o, date: '', note: '' })}
+                    >
+                      <CalendarClock className="w-4 h-4 mr-1" /> Wunsch-Liefertermin
+                    </Button>
                     <Button
                       size="sm"
                       onClick={() => reorder(o)}
@@ -150,6 +162,60 @@ export default function CustomerPortalOrders() {
           );
         })}
       </CardContent>
+
+      <Dialog open={!!dateDlg} onOpenChange={(o) => !o && setDateDlg(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Wunsch-Liefertermin angeben</DialogTitle></DialogHeader>
+          {dateDlg && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Auftrag <b>{dateDlg.order.order_number}</b>. Wir prüfen die Verfügbarkeit und melden uns zurück.
+              </p>
+              <div>
+                <Label>Wunschtermin</Label>
+                <Input type="date" value={dateDlg.date} min={new Date(Date.now() + 86400e3).toISOString().slice(0, 10)}
+                  onChange={(e) => setDateDlg({ ...dateDlg, date: e.target.value })} />
+              </div>
+              <div>
+                <Label>Anmerkung (optional)</Label>
+                <Textarea value={dateDlg.note} onChange={(e) => setDateDlg({ ...dateDlg, note: e.target.value })}
+                  placeholder="z. B. bevorzugte Uhrzeit, Zugangshinweise …" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDateDlg(null)}>Abbrechen</Button>
+            <Button
+              disabled={!dateDlg?.date || busy === 'date'}
+              onClick={async () => {
+                if (!dateDlg?.date) return;
+                setBusy('date');
+                try {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  const { error } = await supabase.from('customer_portal_tickets').insert({
+                    customer_id: ctx.customerId,
+                    created_by: user?.id ?? null,
+                    subject: `Wunsch-Liefertermin ${dateDlg.order.order_number}: ${new Date(dateDlg.date).toLocaleDateString('de-DE')}`,
+                    category: 'delivery_date',
+                    priority: 'normal',
+                    status: 'open',
+                    message: `Kunde ${ctx.companyName ?? ''} wünscht Lieferung von Auftrag ${dateDlg.order.order_number} am ${new Date(dateDlg.date).toLocaleDateString('de-DE')}.\n\nAnmerkung: ${dateDlg.note || '—'}`,
+                  } as any);
+                  if (error) throw error;
+                  toast.success('Wunsch-Liefertermin übermittelt.');
+                  setDateDlg(null);
+                } catch (e: any) {
+                  toast.error(e?.message || 'Konnte nicht übermittelt werden');
+                } finally { setBusy(null); }
+              }}
+              className="gold-gradient"
+            >
+              {busy === 'date' && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+              Senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
