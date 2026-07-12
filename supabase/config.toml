@@ -199,3 +199,12 @@ verify_jwt = false
 
 [functions.ticket-auto-close]
 verify_jwt = false
+
+[functions.ticket-sla-check]
+verify_jwt = false
+
+[functions.ticket-csat-dispatch]
+verify_jwt = false
+
+[functions.ticket-csat-submit]
+verify_jwt = false
