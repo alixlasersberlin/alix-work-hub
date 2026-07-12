@@ -97,13 +97,19 @@ export default function TicketsList() {
     priority: 'normal', department: 'service',
   });
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('tickets')
-        .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count')
+        .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at')
         .order('created_at', { ascending: false })
         .limit(500);
       if (!cancelled) {
@@ -125,19 +131,49 @@ export default function TicketsList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // URL-basierte Filter (aus Dashboard verlinkt)
+  const urlSla = searchParams.get('sla'); // warning | breach
+  const urlEscalated = searchParams.get('escalated') === '1';
+  const urlMine = searchParams.get('mine') === '1';
+  const urlDue = searchParams.get('due'); // today | overdue
+  const hasUrlFilters = !!(urlSla || urlEscalated || urlMine || urlDue);
+
+  const clearUrlFilters = () => {
+    const next = new URLSearchParams(searchParams);
+    ['sla', 'escalated', 'mine', 'due'].forEach(k => next.delete(k));
+    setSearchParams(next, { replace: true });
+  };
+  const removeUrlFilter = (key: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.delete(key);
+    setSearchParams(next, { replace: true });
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const now = Date.now();
+    const endOfToday = new Date(); endOfToday.setHours(23, 59, 59, 999);
     return rows.filter(r => {
       if (statusF !== 'all' && r.status !== statusF) return false;
       if (prioF !== 'all' && r.priority !== prioF) return false;
       if (deptF !== 'all' && r.department !== deptF) return false;
       if (sourceF !== 'all' && r.source_system !== sourceF) return false;
+      if (urlSla === 'warning' && !(r.sla_status && r.sla_status.startsWith('warn'))) return false;
+      if (urlSla === 'breach' && r.sla_status !== 'breach') return false;
+      if (urlEscalated && (r.escalation_count || 0) <= 0) return false;
+      if (urlMine && (!currentUserId || r.assigned_to !== currentUserId)) return false;
+      if (urlDue) {
+        if (!r.due_at) return false;
+        const t = new Date(r.due_at).getTime();
+        if (urlDue === 'today' && !(t >= now - 24*3600_000 && t <= endOfToday.getTime())) return false;
+        if (urlDue === 'overdue' && !(t < now)) return false;
+      }
       if (!q) return true;
       const hay = [r.customer_name, r.company_name, r.order_number, r.device_name, r.serial_number, r.title, r.external_ticket_id]
         .filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [rows, search, statusF, prioF, deptF, sourceF]);
+  }, [rows, search, statusF, prioF, deptF, sourceF, urlSla, urlEscalated, urlMine, urlDue, currentUserId]);
 
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
   const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status)), [filtered]);
