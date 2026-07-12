@@ -1026,6 +1026,9 @@ function AppRoutes() {
             <Route path="vergleich" element={<RfCompare />} />
             <Route path="antraege" element={<RfRequests />} />
             <Route path="pruefung" element={<RfAudit />} />
+            <Route path="ansicht-als" element={<RfViewAs />} />
+            <Route path="befristet" element={<RfTempGrants />} />
+            <Route path="datenklassen" element={<RfDataClasses />} />
             <Route path="protokoll" element={<RfLog />} />
           </Route>
 
