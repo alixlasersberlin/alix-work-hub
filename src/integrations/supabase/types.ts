@@ -15780,32 +15780,6 @@ export type Database = {
           },
         ]
       }
-      user_mfa_secrets: {
-        Row: {
-          recovery_codes_hash: string[]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          recovery_codes_hash?: string[]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          recovery_codes_hash?: string[]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_mfa_secrets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_profiles: {
         Row: {
           account_status: string
@@ -15818,6 +15792,7 @@ export type Database = {
           is_active: boolean
           last_otp_verified_at: string | null
           mfa_enrolled_at: string | null
+          mfa_recovery_codes_hash: string[]
           otp_channel: string
           password_reset_required: boolean
           phone_number: string | null
@@ -15835,6 +15810,7 @@ export type Database = {
           is_active?: boolean
           last_otp_verified_at?: string | null
           mfa_enrolled_at?: string | null
+          mfa_recovery_codes_hash?: string[]
           otp_channel?: string
           password_reset_required?: boolean
           phone_number?: string | null
@@ -15852,6 +15828,7 @@ export type Database = {
           is_active?: boolean
           last_otp_verified_at?: string | null
           mfa_enrolled_at?: string | null
+          mfa_recovery_codes_hash?: string[]
           otp_channel?: string
           password_reset_required?: boolean
           phone_number?: string | null

@@ -40,14 +40,12 @@ Deno.serve(async (req) => {
   const hashes = await Promise.all(codes.map(sha256));
 
   const admin = createClient(supabaseUrl, serviceKey);
-  const { error: secretErr } = await admin
-    .from("user_mfa_secrets")
-    .upsert({ user_id: userData.user.id, recovery_codes_hash: hashes, updated_at: new Date().toISOString() });
-  if (secretErr) return json({ error: secretErr.message }, 500);
-
   const { error: upErr } = await admin
     .from("user_profiles")
-    .update({ mfa_enrolled_at: new Date().toISOString() })
+    .update({
+      mfa_recovery_codes_hash: hashes,
+      mfa_enrolled_at: new Date().toISOString(),
+    })
     .eq("id", userData.user.id);
   if (upErr) return json({ error: upErr.message }, 500);
 

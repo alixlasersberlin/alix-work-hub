@@ -37,17 +37,16 @@ Deno.serve(async (req) => {
   const userId = userData.user.id;
 
   const admin = createClient(supabaseUrl, serviceKey);
-  const { data: secret, error: pErr } = await admin
-    .from("user_mfa_secrets")
-    .select("recovery_codes_hash")
-    .eq("user_id", userId)
+  const { data: profile, error: pErr } = await admin
+    .from("user_profiles")
+    .select("mfa_recovery_codes_hash")
+    .eq("id", userId)
     .maybeSingle();
-  if (pErr) return json({ error: "Profil nicht gefunden" }, 404);
+  if (pErr || !profile) return json({ error: "Profil nicht gefunden" }, 404);
 
   const hash = await sha256(code);
-  const current: string[] = secret?.recovery_codes_hash ?? [];
-  const remaining: string[] = current.filter((h: string) => h !== hash);
-  if (remaining.length === current.length) {
+  const remaining: string[] = (profile.mfa_recovery_codes_hash ?? []).filter((h: string) => h !== hash);
+  if (remaining.length === (profile.mfa_recovery_codes_hash ?? []).length) {
     return json({ error: "Recovery-Code ungültig oder bereits verwendet" }, 401);
   }
 
@@ -58,12 +57,11 @@ Deno.serve(async (req) => {
   }
 
   await admin
-    .from("user_mfa_secrets")
-    .upsert({ user_id: userId, recovery_codes_hash: remaining, updated_at: new Date().toISOString() });
-
-  await admin
     .from("user_profiles")
-    .update({ mfa_enrolled_at: null })
+    .update({
+      mfa_recovery_codes_hash: remaining,
+      mfa_enrolled_at: null,
+    })
     .eq("id", userId);
 
   return json({ success: true });

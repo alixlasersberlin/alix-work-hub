@@ -45,12 +45,11 @@ Deno.serve(async (req) => {
   }
 
   await admin
-    .from("user_mfa_secrets")
-    .upsert({ user_id: targetUserId, recovery_codes_hash: [], updated_at: new Date().toISOString() });
-
-  await admin
     .from("user_profiles")
-    .update({ mfa_enrolled_at: null })
+    .update({
+      mfa_recovery_codes_hash: [],
+      mfa_enrolled_at: null,
+    })
     .eq("id", targetUserId);
 
   return json({ success: true, factors_removed: factors?.factors?.length ?? 0 });
