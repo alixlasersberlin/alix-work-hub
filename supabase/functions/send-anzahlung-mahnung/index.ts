@@ -112,9 +112,14 @@ Deno.serve(async (req) => {
 
     const { data: cust } = await admin
       .from('customers')
-      .select('id, company_name, contact_name, email, phone, iban, bic, bank_name')
+      .select('id, company_name, contact_name, email, phone')
       .eq('id', order.customer_id).maybeSingle();
     if (!cust) return json({ error: 'Kunde nicht gefunden' }, 404);
+    const { data: custBank } = await admin
+      .from('customer_bank_details')
+      .select('iban, bic, bank_name')
+      .eq('customer_id', order.customer_id)
+      .maybeSingle();
 
     const customerName = cust.company_name || cust.contact_name || '';
     const orderNumber = order.order_number ?? '';
@@ -124,9 +129,10 @@ Deno.serve(async (req) => {
     // Bankverbindung: Kundendaten überschreiben Konfig (falls beim Kunden gepflegt), sonst aus Konfig,
     // als letzten Fallback die feste Alix Lasers GmbH Bankverbindung.
     const DEFAULT_BANK = { name: 'Deutsche Bank', iban: 'DE07100701000142660000', bic: 'DEUTDEBB101' };
-    const iban = (cust.iban ?? '') || (cfg?.bank.iban ?? '') || DEFAULT_BANK.iban;
-    const bic = (cust.bic ?? '') || (cfg?.bank.bic ?? '') || DEFAULT_BANK.bic;
-    const bankName = (cust.bank_name ?? '') || (cfg?.bank.bank_name ?? '') || DEFAULT_BANK.name;
+    const iban = (custBank?.iban ?? '') || (cfg?.bank.iban ?? '') || DEFAULT_BANK.iban;
+    const bic = (custBank?.bic ?? '') || (cfg?.bank.bic ?? '') || DEFAULT_BANK.bic;
+    const bankName = (custBank?.bank_name ?? '') || (cfg?.bank.bank_name ?? '') || DEFAULT_BANK.name;
+
     const senderName = order.salesperson_name || cfg?.sender.email_from_name || 'Alix Lasers';
 
     const vars: Record<string, string> = {

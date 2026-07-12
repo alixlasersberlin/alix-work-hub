@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { VipBadge } from '@/components/VipBadge';
 import { ensureCaseNumber, nextNumber } from '@/lib/number-ranges';
+import { useAuth } from '@/hooks/useAuth';
+
 
 interface Props {
   customer: any;
@@ -19,6 +21,8 @@ interface Props {
 }
 
 export default function CustomerEditDialog({ customer, open, onClose, onSaved }: Props) {
+  const { hasRole, isAdmin } = useAuth();
+  const canEditBank = isAdmin || hasRole('Finance') || hasRole('Finanzierungen');
   const [form, setForm] = useState({
     company_name: customer?.company_name || '',
     contact_name: customer?.contact_name || '',
@@ -53,6 +57,27 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
       setTenants(data || []);
     })();
   }, []);
+
+  // Bank-Daten separat aus `customer_bank_details` laden (Finance-only via RLS).
+  useEffect(() => {
+    if (!customer?.id || !canEditBank) return;
+    (async () => {
+      const { data } = await supabase
+        .from('customer_bank_details')
+        .select('iban, bic, bank_name')
+        .eq('customer_id', customer.id)
+        .maybeSingle();
+      if (data) {
+        setForm(f => ({
+          ...f,
+          iban: (data as any).iban || '',
+          bic: (data as any).bic || '',
+          bank_name: (data as any).bank_name || '',
+        }));
+      }
+    })();
+  }, [customer?.id, canEditBank]);
+
 
   // Auto-detect bank from IBAN
   function handleIbanChange(val: string) {
@@ -112,9 +137,6 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
         city: form.shipping_city,
         country: form.shipping_country,
       },
-      iban: form.iban || null,
-      bic: form.bic || null,
-      bank_name: form.bank_name || null,
       birth_date: form.birth_date || null,
       is_vip: form.is_vip,
       contact_tenant_id: form.contact_tenant_id || null,
@@ -133,15 +155,32 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
         { caseNumber: cn },
       );
     }
-    const { error } = isNew
-      ? await supabase.from('customers').insert(payload)
-      : await supabase.from('customers').update(payload).eq('id', customer.id);
+    const saveRes = isNew
+      ? await supabase.from('customers').insert(payload).select('id').maybeSingle()
+      : await supabase.from('customers').update(payload).eq('id', customer.id).select('id').maybeSingle();
+    if (saveRes.error) { setSaving(false); toast.error('Fehler beim Speichern: ' + saveRes.error.message); return; }
+    const savedId = (saveRes.data as any)?.id ?? customer?.id;
+
+    // Bank-Daten sind Finance-only und liegen in einer separaten Tabelle.
+    if (canEditBank && savedId) {
+      const bankPayload = {
+        customer_id: savedId,
+        iban: form.iban || null,
+        bic: form.bic || null,
+        bank_name: form.bank_name || null,
+      };
+      const { error: bErr } = await supabase
+        .from('customer_bank_details')
+        .upsert(bankPayload, { onConflict: 'customer_id' });
+      if (bErr) { setSaving(false); toast.error('Bankdaten konnten nicht gespeichert werden: ' + bErr.message); return; }
+    }
+
     setSaving(false);
-    if (error) { toast.error('Fehler beim Speichern: ' + error.message); return; }
     toast.success(isNew ? 'Kunde angelegt' : 'Kundendaten aktualisiert');
     onSaved();
     onClose();
   }
+
 
 
   const Field = ({ label, field }: { label: string; field: string }) => (
@@ -238,20 +277,25 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
             <Field label="Land" field="billing_country" />
           </div>
 
-          <h3 className="text-sm font-medium text-foreground pt-2">Bankdaten</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <Label className="text-xs text-muted-foreground">IBAN</Label>
-              <Input
-                value={form.iban}
-                onChange={e => handleIbanChange(e.target.value)}
-                className="bg-secondary border-border mt-1"
-                placeholder="DE89 3704 0044 0532 0130 00"
-              />
-            </div>
-            <Field label="BIC" field="bic" />
-            <Field label="Bank" field="bank_name" />
-          </div>
+          {canEditBank && (
+            <>
+              <h3 className="text-sm font-medium text-foreground pt-2">Bankdaten <span className="text-xs text-muted-foreground font-normal">(nur Finance)</span></h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <Label className="text-xs text-muted-foreground">IBAN</Label>
+                  <Input
+                    value={form.iban}
+                    onChange={e => handleIbanChange(e.target.value)}
+                    className="bg-secondary border-border mt-1"
+                    placeholder="DE89 3704 0044 0532 0130 00"
+                  />
+                </div>
+                <Field label="BIC" field="bic" />
+                <Field label="Bank" field="bank_name" />
+              </div>
+            </>
+          )}
+
 
           <h3 className="text-sm font-medium text-foreground pt-2">Lieferadresse</h3>
           <div className="grid grid-cols-2 gap-3">

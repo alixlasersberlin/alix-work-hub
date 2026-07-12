@@ -2256,6 +2256,41 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_bank_details: {
+        Row: {
+          bank_name: string | null
+          bic: string | null
+          created_at: string
+          customer_id: string
+          iban: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_name?: string | null
+          bic?: string | null
+          created_at?: string
+          customer_id: string
+          iban?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_name?: string | null
+          bic?: string | null
+          created_at?: string
+          customer_id?: string
+          iban?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_bank_details_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_communication_log: {
         Row: {
           channel: string
@@ -2687,8 +2722,6 @@ export type Database = {
       }
       customers: {
         Row: {
-          bank_name: string | null
-          bic: string | null
           billing_address: Json | null
           birth_date: string | null
           company_name: string | null
@@ -2698,7 +2731,6 @@ export type Database = {
           created_by: string | null
           email: string | null
           external_customer_id: string | null
-          iban: string | null
           id: string
           is_vip: boolean
           phone: string | null
@@ -2710,8 +2742,6 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          bank_name?: string | null
-          bic?: string | null
           billing_address?: Json | null
           birth_date?: string | null
           company_name?: string | null
@@ -2721,7 +2751,6 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           external_customer_id?: string | null
-          iban?: string | null
           id?: string
           is_vip?: boolean
           phone?: string | null
@@ -2733,8 +2762,6 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          bank_name?: string | null
-          bic?: string | null
           billing_address?: Json | null
           birth_date?: string | null
           company_name?: string | null
@@ -2744,7 +2771,6 @@ export type Database = {
           created_by?: string | null
           email?: string | null
           external_customer_id?: string | null
-          iban?: string | null
           id?: string
           is_vip?: boolean
           phone?: string | null

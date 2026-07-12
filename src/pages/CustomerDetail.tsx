@@ -29,14 +29,17 @@ export default function CustomerDetail() {
 
   async function loadCustomer() {
     setLoading(true);
-    const [cRes, oRes] = await Promise.all([
+    const [cRes, oRes, bRes] = await Promise.all([
       supabase.from('customers').select('*').eq('id', id!).maybeSingle(),
       supabase.from('orders').select('*').eq('customer_id', id!).order('created_at', { ascending: false }),
+      // Bankdaten sind Finance-only; für andere Rollen liefert RLS ein leeres Ergebnis.
+      supabase.from('customer_bank_details').select('iban, bic, bank_name').eq('customer_id', id!).maybeSingle(),
     ]);
-    setCustomer(cRes.data);
+    setCustomer(cRes.data ? { ...cRes.data, ...(bRes.data ?? { iban: null, bic: null, bank_name: null }) } : null);
     setOrders(oRes.data ?? []);
     setLoading(false);
   }
+
 
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!customer) return <div className="p-8 text-center text-muted-foreground">Kunde nicht gefunden.</div>;

@@ -36,7 +36,7 @@ const RESOURCES: Record<string, Resource> = {
   customers: {
     table: "customers",
     columns:
-      "id, external_customer_id, source_system, company_name, contact_name, email, phone, billing_address, shipping_address, is_vip, iban, bic, bank_name, created_at, updated_at",
+      "id, external_customer_id, source_system, company_name, contact_name, email, phone, billing_address, shipping_address, is_vip, created_at, updated_at",
     orderBy: "updated_at",
   },
   devices: {
