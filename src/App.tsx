@@ -254,6 +254,8 @@ const BugCapaReklamationen = lazy(() => import("./pages/BugCapa/Reklamationen"))
 const BugCapaAudit = lazy(() => import("./pages/BugCapa/AuditFindings"));
 const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
 const BugCapaBerichte = lazy(() => import("./pages/BugCapa/Berichte"));
+const BugCapaAnalytics = lazy(() => import("./pages/BugCapa/Analytics"));
+const BugCapaIsoReport = lazy(() => import("./pages/BugCapa/IsoReport"));
 const IsoLayoutLazy = lazy(() => import("./pages/Iso/_shared").then(m => ({ default: m.IsoLayout })));
 const IsoDashboard = lazy(() => import("./pages/Iso/Dashboard"));
 const IsoAudits = lazy(() => import("./pages/Iso/Audits"));
@@ -1030,6 +1032,8 @@ function AppRoutes() {
             <Route path="audit" element={<BugCapaAudit />} />
             <Route path="massnahmen" element={<BugCapaMassnahmen />} />
             <Route path="berichte" element={<BugCapaBerichte />} />
+            <Route path="analytics" element={<BugCapaAnalytics />} />
+            <Route path="iso-report" element={<BugCapaIsoReport />} />
           </Route>
 
           <Route path="/iso" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin', 'QM']}><IsoLayoutLazy /></ProtectedRoute>}>

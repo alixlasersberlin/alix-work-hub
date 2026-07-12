@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Bug, ClipboardCheck, AlertOctagon, FileSearch, ListChecks, BarChart3, LayoutDashboard, Shield } from 'lucide-react';
+import { Bug, ClipboardCheck, AlertOctagon, FileSearch, ListChecks, BarChart3, LayoutDashboard, Shield, TrendingUp, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const QM_ROLES = ['Admin', 'Super Admin', 'QM'];
@@ -20,12 +20,14 @@ export const FINDING_TYPES = ['beobachtung', 'abweichung_minor', 'abweichung_maj
 
 const tabs = [
   { to: '/bug-capa', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/bug-capa/analytics', label: 'Analytics', icon: TrendingUp },
   { to: '/bug-capa/bugs', label: 'Bugs', icon: Bug },
   { to: '/bug-capa/capa', label: 'CAPA', icon: ClipboardCheck },
   { to: '/bug-capa/reklamationen', label: 'Reklamationen', icon: AlertOctagon },
   { to: '/bug-capa/audit', label: 'Audit-Feststellungen', icon: FileSearch },
   { to: '/bug-capa/massnahmen', label: 'Maßnahmen', icon: ListChecks },
   { to: '/bug-capa/berichte', label: 'Berichte', icon: BarChart3 },
+  { to: '/bug-capa/iso-report', label: 'ISO-Bericht', icon: FileText },
 ];
 
 export function BugCapaLayout() {
