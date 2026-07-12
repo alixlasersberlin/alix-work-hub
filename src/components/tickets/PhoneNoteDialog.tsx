@@ -54,7 +54,7 @@ export function PhoneNoteDialog({
         ticket_id: ticketId,
         action: "phone_call_logged",
         actor_label: actorName || "Mitarbeiter",
-        details: { direction, reached, duration_min: durationMin, next_step: nextStep || null },
+        details: { direction, reached, duration_min: durationMin, next_step: nextStep || null } as any,
       });
 
       // Wenn Kunde nicht erreicht → comm_status setzen
