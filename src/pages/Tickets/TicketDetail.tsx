@@ -577,6 +577,9 @@ export default function TicketDetail() {
                 </a>
               ))}
             </TabsContent>
+            <TabsContent value="history" className="pt-3">
+              <TicketHistoryTimeline ticketId={ticket.id} />
+            </TabsContent>
           </Tabs>
         </div>
 
