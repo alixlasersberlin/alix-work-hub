@@ -27,6 +27,8 @@ serve(async (req) => {
       message = "",
       consentMarketing = false,
       bookingNumber = "",
+      priority = "Normal",
+      attachments = [],
     } = body || {};
 
     if (!email || !firstName) {
@@ -84,7 +86,7 @@ serve(async (req) => {
         ticket_department_id: ticketDepartmentId,
         category: service || null,
         status: "Neu",
-        priority: "Normal",
+        priority: priority || "Normal",
         customer_visible_status: "Ticket eingegangen",
         title,
         description: message || null,
@@ -114,6 +116,26 @@ serve(async (req) => {
         console.warn("ticket-router invoke failed (non-fatal)", e);
       }
     }
+
+    // Optional: Datei-Anhänge persistieren (bereits in Storage hochgeladen)
+    if (ticket?.id && Array.isArray(attachments) && attachments.length > 0) {
+      const rows = attachments
+        .filter((a: any) => a && typeof a.file_url === "string" && typeof a.file_name === "string")
+        .slice(0, 10)
+        .map((a: any) => ({
+          ticket_id: ticket.id,
+          file_url: a.file_url,
+          file_name: a.file_name,
+          file_type: a.file_type ?? null,
+          file_size: typeof a.file_size === "number" ? a.file_size : null,
+          source_system: "kundenportal",
+        }));
+      if (rows.length) {
+        const { error: attErr } = await supabase.from("ticket_attachments").insert(rows);
+        if (attErr) console.warn("ticket_attachments insert failed", attErr);
+      }
+    }
+
 
 
     return new Response(
