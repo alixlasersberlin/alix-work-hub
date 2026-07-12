@@ -320,6 +320,7 @@ const RfAnalytics = lazy(() => import("./pages/RollenFreigaben/Analytics"));
 const RfBreakGlass = lazy(() => import("./pages/RollenFreigaben/BreakGlass"));
 const RfContext = lazy(() => import("./pages/RollenFreigaben/ContextPolicies"));
 const RfSoD = lazy(() => import("./pages/RollenFreigaben/SoD"));
+const SelfServiceRoles = lazy(() => import("./pages/SelfService/Roles"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
 const SecurityPentest = lazy(() => import("./pages/SecurityCenter/Pentest"));
