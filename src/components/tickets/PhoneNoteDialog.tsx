@@ -59,7 +59,7 @@ export function PhoneNoteDialog({
 
       // Wenn Kunde nicht erreicht → comm_status setzen
       if (reached === "not_reached") {
-        await supabase.from("tickets").update({
+        await (supabase.from("tickets") as any).update({
           comm_status: "customer_unreachable",
           comm_status_since: new Date().toISOString(),
         }).eq("id", ticketId);
