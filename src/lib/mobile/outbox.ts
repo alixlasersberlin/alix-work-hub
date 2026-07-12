@@ -122,10 +122,13 @@ async function processOne(item: OutboxItem) {
   throw new Error('Unbekannter Outbox-Typ');
 }
 
-export async function flush(): Promise<{ ok: number; failed: number }> {
+export async function flush(): Promise<{ ok: number; failed: number; deferred: number }> {
   const items = await list();
-  let ok = 0, failed = 0;
+  const now = Date.now();
+  let ok = 0, failed = 0, deferred = 0;
   for (const it of items) {
+    if (it.attempts >= MAX_ATTEMPTS) { deferred++; continue; }
+    if (it.next_retry_at && it.next_retry_at > now) { deferred++; continue; }
     try {
       await processOne(it);
       if (it.id != null) await remove(it.id);
@@ -135,7 +138,7 @@ export async function flush(): Promise<{ ok: number; failed: number }> {
       if (it.id != null) await updateAttempt(it.id, err?.message || String(err));
     }
   }
-  return { ok, failed };
+  return { ok, failed, deferred };
 }
 
 let listening = false;
