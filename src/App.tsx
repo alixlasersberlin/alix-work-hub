@@ -708,6 +708,9 @@ function AppRoutes() {
         <Route path="/termin-bestaetigen/:token" element={<EscConfirmAppointment />} />
         <Route path="/checkin/:token" element={<EscCheckin />} />
         <Route path="/esc/checkin/:token" element={<EscCheckin />} />
+        <Route path="/termin/bestaetigen/:token" element={<AppointmentAction action="confirm" />} />
+        <Route path="/termin/verschieben/:token" element={<AppointmentAction action="reschedule" />} />
+        <Route path="/termin/ablehnen/:token" element={<AppointmentAction action="cancel" />} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
