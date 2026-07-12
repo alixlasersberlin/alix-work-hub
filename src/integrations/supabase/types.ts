@@ -1319,6 +1319,13 @@ export type Database = {
             foreignKeyName: "audit_findings_capa_id_fkey"
             columns: ["capa_id"]
             isOneToOne: false
+            referencedRelation: "capa_overdue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_findings_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
             referencedRelation: "capas"
             referencedColumns: ["id"]
           },
@@ -1739,7 +1746,21 @@ export type Database = {
             foreignKeyName: "capa_actions_bug_id_fkey"
             columns: ["bug_id"]
             isOneToOne: false
+            referencedRelation: "bug_overdue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capa_actions_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
             referencedRelation: "bugs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capa_actions_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capa_overdue"
             referencedColumns: ["id"]
           },
           {
@@ -1830,6 +1851,13 @@ export type Database = {
             columns: ["audit_finding_id"]
             isOneToOne: false
             referencedRelation: "audit_findings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capas_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "bug_overdue"
             referencedColumns: ["id"]
           },
           {
@@ -17967,6 +17995,91 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bug_capa_trend_30d: {
+        Row: {
+          cnt: number | null
+          day: string | null
+          kind: string | null
+        }
+        Relationships: []
+      }
+      bug_overdue: {
+        Row: {
+          assignee_id: string | null
+          criticality: string | null
+          due_date: string | null
+          id: string | null
+          overdue_days: number | null
+          priority: string | null
+          status: string | null
+          ticket_number: string | null
+          title: string | null
+        }
+        Insert: {
+          assignee_id?: string | null
+          criticality?: string | null
+          due_date?: string | null
+          id?: string | null
+          overdue_days?: never
+          priority?: string | null
+          status?: string | null
+          ticket_number?: string | null
+          title?: string | null
+        }
+        Update: {
+          assignee_id?: string | null
+          criticality?: string | null
+          due_date?: string | null
+          id?: string | null
+          overdue_days?: never
+          priority?: string | null
+          status?: string | null
+          ticket_number?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      capa_mttr_stats: {
+        Row: {
+          closed_total: number | null
+          effective_count: number | null
+          ineffective_count: number | null
+          mttr_days_90d: number | null
+          mttr_days_all: number | null
+          open_total: number | null
+        }
+        Relationships: []
+      }
+      capa_overdue: {
+        Row: {
+          capa_number: string | null
+          due_date: string | null
+          id: string | null
+          overdue_days: number | null
+          responsible_id: string | null
+          status: string | null
+          title: string | null
+        }
+        Insert: {
+          capa_number?: string | null
+          due_date?: string | null
+          id?: string | null
+          overdue_days?: never
+          responsible_id?: string | null
+          status?: string | null
+          title?: string | null
+        }
+        Update: {
+          capa_number?: string | null
+          due_date?: string | null
+          id?: string | null
+          overdue_days?: never
+          responsible_id?: string | null
+          status?: string | null
+          title?: string | null
+        }
+        Relationships: []
       }
       esc_departments_public: {
         Row: {
