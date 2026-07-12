@@ -120,7 +120,8 @@ export default function OffeneAnzahlungen() {
       .from('finance_deposits')
       .select('*')
       .neq('status', 'gebucht')
-      .order('due_date', { ascending: true, nullsFirst: false })
+      .order('issue_date', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false })
       .limit(2000);
     if (error) toast.error('Laden fehlgeschlagen: ' + error.message);
     setRows((data ?? []) as any);
