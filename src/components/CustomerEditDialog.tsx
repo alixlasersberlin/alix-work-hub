@@ -21,6 +21,8 @@ interface Props {
 }
 
 export default function CustomerEditDialog({ customer, open, onClose, onSaved }: Props) {
+  const { hasRole, isAdmin } = useAuth();
+  const canEditBank = isAdmin || hasRole('Finance') || hasRole('Finanzierungen');
   const [form, setForm] = useState({
     company_name: customer?.company_name || '',
     contact_name: customer?.contact_name || '',
@@ -55,6 +57,27 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
       setTenants(data || []);
     })();
   }, []);
+
+  // Bank-Daten separat aus `customer_bank_details` laden (Finance-only via RLS).
+  useEffect(() => {
+    if (!customer?.id || !canEditBank) return;
+    (async () => {
+      const { data } = await supabase
+        .from('customer_bank_details')
+        .select('iban, bic, bank_name')
+        .eq('customer_id', customer.id)
+        .maybeSingle();
+      if (data) {
+        setForm(f => ({
+          ...f,
+          iban: (data as any).iban || '',
+          bic: (data as any).bic || '',
+          bank_name: (data as any).bank_name || '',
+        }));
+      }
+    })();
+  }, [customer?.id, canEditBank]);
+
 
   // Auto-detect bank from IBAN
   function handleIbanChange(val: string) {
