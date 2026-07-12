@@ -320,6 +320,11 @@ const RfAnalytics = lazy(() => import("./pages/RollenFreigaben/Analytics"));
 const RfBreakGlass = lazy(() => import("./pages/RollenFreigaben/BreakGlass"));
 const RfContext = lazy(() => import("./pages/RollenFreigaben/ContextPolicies"));
 const RfSoD = lazy(() => import("./pages/RollenFreigaben/SoD"));
+const RfSSO = lazy(() => import("./pages/RollenFreigaben/SSO"));
+const RfScheduled = lazy(() => import("./pages/RollenFreigaben/ScheduledGrants"));
+const RfChains = lazy(() => import("./pages/RollenFreigaben/ApprovalChains"));
+const RfLifecycle = lazy(() => import("./pages/RollenFreigaben/LifecycleDashboard"));
+const RfAuditExport = lazy(() => import("./pages/RollenFreigaben/AuditExport"));
 const SelfServiceRoles = lazy(() => import("./pages/SelfService/Roles"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
