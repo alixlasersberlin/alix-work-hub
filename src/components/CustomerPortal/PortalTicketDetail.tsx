@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 type Props = {
   ticketId: string | null;
+  customerId?: string | null;
   customerName?: string | null;
   customerEmail?: string | null;
   onClose: () => void;
@@ -48,7 +49,7 @@ function fmtSize(n?: number | null) {
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export function PortalTicketDetail({ ticketId, customerName, customerEmail, onClose }: Props) {
+export function PortalTicketDetail({ ticketId, customerId, customerName, customerEmail, onClose }: Props) {
   const [ticket, setTicket] = useState<any>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
@@ -81,7 +82,25 @@ export function PortalTicketDetail({ ticketId, customerName, customerEmail, onCl
     setLoading(false);
   };
 
-  useEffect(() => { if (ticketId) load(); /* eslint-disable-next-line */ }, [ticketId]);
+  const markRead = async () => {
+    if (!ticketId || !customerId) return;
+    await supabase.from('portal_ticket_reads')
+      .upsert({ customer_id: customerId, ticket_id: ticketId, last_viewed_at: new Date().toISOString() },
+              { onConflict: 'customer_id,ticket_id' });
+  };
+
+  useEffect(() => {
+    if (!ticketId) return;
+    load();
+    markRead();
+    const ch = supabase
+      .channel(`portal-ticket-${ticketId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ticket_messages', filter: `ticket_id=eq.${ticketId}` }, () => { load(); markRead(); })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ticket_attachments', filter: `ticket_id=eq.${ticketId}` }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line
+  }, [ticketId, customerId]);
 
   const download = async (att: Att) => {
     // If file_url is already a full URL, open directly. Otherwise treat as storage path.

@@ -50,8 +50,33 @@ export default function CustomerPortalTickets() {
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [unread, setUnread] = useState<Record<string, number>>({});
 
   const anl = ANLIEGEN.find(a => a.key === selected) ?? ANLIEGEN[0];
+
+  const computeUnread = async (ticketIds: string[]) => {
+    if (!ticketIds.length) return setUnread({});
+    const { data: reads } = await supabase
+      .from('portal_ticket_reads')
+      .select('ticket_id, last_viewed_at')
+      .in('ticket_id', ticketIds);
+    const readMap = new Map<string, string>((reads ?? []).map((r: any) => [r.ticket_id, r.last_viewed_at]));
+    const { data: msgs } = await supabase
+      .from('ticket_messages')
+      .select('ticket_id, created_at, sender_type')
+      .in('ticket_id', ticketIds)
+      .eq('is_internal', false)
+      .neq('sender_type', 'customer')
+      .order('created_at', { ascending: false });
+    const counts: Record<string, number> = {};
+    (msgs ?? []).forEach((m: any) => {
+      const seen = readMap.get(m.ticket_id);
+      if (!seen || new Date(m.created_at) > new Date(seen)) {
+        counts[m.ticket_id] = (counts[m.ticket_id] ?? 0) + 1;
+      }
+    });
+    setUnread(counts);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -72,9 +97,24 @@ export default function CustomerPortalTickets() {
     setExternal(b.data ?? []);
     setCust(c.data ?? null);
     setLoading(false);
+    await computeUnread((b.data ?? []).map((t: any) => t.id));
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ctx.customerId]);
+  useEffect(() => {
+    load();
+    // Realtime: neue Team-Nachrichten aktualisieren die Ungelesen-Zähler
+    const ch = supabase
+      .channel(`portal-tickets-${ctx.customerId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ticket_messages' }, () => {
+        setExternal((prev) => {
+          computeUnread(prev.map((t: any) => t.id));
+          return prev;
+        });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx.customerId]);
 
   const addFiles = (fs: FileList | null) => {
     if (!fs) return;
@@ -252,25 +292,33 @@ export default function CustomerPortalTickets() {
                   <Badge variant={t.status === 'offen' ? 'default' : 'outline'}>{t.status}</Badge>
                 </div>
               ))}
-              {external.map((t) => (
-                <button
-                  key={`e-${t.id}`}
-                  type="button"
-                  onClick={() => setDetailId(t.id)}
-                  className="w-full flex items-center justify-between p-3 border border-border rounded-md text-left hover:bg-muted/40 transition"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{t.subject ?? t.title ?? t.ticket_number}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {t.category ?? ''} {t.device_name ? `· ${t.device_name}` : ''}{t.serial_number ? ` · ${t.serial_number}` : ''} · {new Date(t.created_at).toLocaleDateString('de-DE')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Badge variant="outline">{t.status ?? '—'}</Badge>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                </button>
-              ))}
+              {external.map((t) => {
+                const u = unread[t.id] ?? 0;
+                return (
+                  <button
+                    key={`e-${t.id}`}
+                    type="button"
+                    onClick={() => setDetailId(t.id)}
+                    className={`w-full flex items-center justify-between p-3 border rounded-md text-left transition ${u > 0 ? 'border-primary/40 bg-primary/5 hover:bg-primary/10' : 'border-border hover:bg-muted/40'}`}
+                  >
+                    <div className="min-w-0">
+                      <p className={`truncate ${u > 0 ? 'font-semibold' : 'font-medium'}`}>
+                        {t.subject ?? t.title ?? t.ticket_number}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {t.category ?? ''} {t.device_name ? `· ${t.device_name}` : ''}{t.serial_number ? ` · ${t.serial_number}` : ''} · {new Date(t.created_at).toLocaleDateString('de-DE')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {u > 0 && (
+                        <Badge className="bg-primary text-primary-foreground">{u} neu</Badge>
+                      )}
+                      <Badge variant="outline">{t.status ?? '—'}</Badge>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -278,6 +326,7 @@ export default function CustomerPortalTickets() {
 
       <PortalTicketDetail
         ticketId={detailId}
+        customerId={ctx.customerId}
         customerName={cust?.contact_name ?? null}
         customerEmail={cust?.email ?? null}
         onClose={() => { setDetailId(null); load(); }}

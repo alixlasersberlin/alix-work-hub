@@ -12666,6 +12666,30 @@ export type Database = {
           },
         ]
       }
+      portal_ticket_reads: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          last_viewed_at: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          last_viewed_at?: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          last_viewed_at?: string
+          ticket_id?: string
+        }
+        Relationships: []
+      }
       product_categories: {
         Row: {
           color: string | null
