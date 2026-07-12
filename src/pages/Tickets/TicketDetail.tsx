@@ -200,7 +200,7 @@ export default function TicketDetail() {
       if (insErr) throw insErr;
       toast.success('Anhang hochgeladen');
       load();
-      if (ticket.external_ticket_id) syncToAlixSmart('manual');
+      if (ticket.external_ticket_id && ticket.source_system === 'alixsmart') syncToAlixSmart('manual');
     } catch (e: any) {
       toast.error('Upload fehlgeschlagen: ' + (e?.message || e));
     } finally {
@@ -237,7 +237,7 @@ export default function TicketDetail() {
     } else if ('customer_visible_status' in updates && updates.customer_visible_status !== ticket.customer_visible_status) {
       action = 'customer_status_change';
     }
-    if (action && merged.external_ticket_id) {
+    if (action && merged.external_ticket_id && merged.source_system === 'alixsmart') {
       syncToAlixSmart(action);
     }
   }
@@ -256,8 +256,8 @@ export default function TicketDetail() {
     if (error) { toast.error(error.message); return; }
     setNewMsg('');
     toast.success(msgInternal ? 'Interne Notiz hinzugefügt' : 'Nachricht hinzugefügt');
-    // Only sync public messages to AlixSmart
-    if (!msgInternal && ticket.external_ticket_id && data?.id) {
+    // Only sync public messages to AlixSmart (source_system === 'alixsmart')
+    if (!msgInternal && ticket.external_ticket_id && ticket.source_system === 'alixsmart' && data?.id) {
       syncToAlixSmart('new_public_message', data.id);
     }
     load();
