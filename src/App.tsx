@@ -733,6 +733,7 @@ function AppRoutes() {
             <Route path="rm/aussendienst" element={<RmField />} />
             <Route path="rm/kapazitaeten" element={<RmCapacity />} />
             <Route path="rm/einsatzplanung" element={<RmDispatch />} />
+            <Route path="rm/standorte" element={<RmLocations />} />
           </Route>
           <Route path="/esc/ai" element={<ProtectedRoute><AiLayout /></ProtectedRoute>}>
             <Route index element={<AiDashboard />} />
