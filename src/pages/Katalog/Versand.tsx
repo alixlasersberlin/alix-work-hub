@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Copy, Ban, Info, Mail, MessageCircle, Link as LinkIcon, Eye, Clock, XCircle, TrendingUp } from 'lucide-react';
+import { Plus, Copy, Ban, Info, Mail, MessageCircle, MessageSquare, Link as LinkIcon, Eye, Clock, XCircle, TrendingUp } from 'lucide-react';
 
 interface Item { id: string; sku: string; name: string; }
 interface Country { id: string; iso_code: string; name: string; }
