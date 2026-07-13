@@ -34,6 +34,13 @@ interface BundleItem {
   sort_order: number;
   is_optional: boolean;
 }
+interface PriceTier {
+  id: string;
+  bundle_id: string;
+  min_quantity: number;
+  discount_pct: number;
+  note: string | null;
+}
 
 export default function KatalogBundles() {
   const c = supabase as any;
