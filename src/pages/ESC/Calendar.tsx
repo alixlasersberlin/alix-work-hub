@@ -128,6 +128,33 @@ export default function EscCalendar() {
         </div>
         <div className="text-[13px] font-medium">{title}</div>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
+          <Select
+            value={filters.employeeIds[0] ?? '__all'}
+            onValueChange={(v) =>
+              setFilters((f) => ({ ...f, employeeIds: v === '__all' ? [] : [v] }))
+            }
+          >
+            <SelectTrigger className="h-8 w-[220px] text-xs">
+              <Users className="w-3.5 h-3.5 mr-1.5 opacity-70" />
+              <SelectValue placeholder="Mitarbeiter" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[320px]">
+              <SelectItem value="__all">
+                Alle Mitarbeiter ({appointments.length})
+              </SelectItem>
+              {employees
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((e) => {
+                  const count = appointments.filter((a) => a.employeeIds?.includes(e.id)).length;
+                  return (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.name} ({count})
+                    </SelectItem>
+                  );
+                })}
+            </SelectContent>
+          </Select>
           <ViewSwitcher value={view} onChange={setView} />
           {canCreate && (
             <>
