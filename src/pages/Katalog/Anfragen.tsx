@@ -25,6 +25,9 @@ interface InquiryItem {
 }
 
 const STATUS = ['neu', 'in_bearbeitung', 'angebot_erstellt', 'abgeschlossen', 'abgelehnt'];
+const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  neu: 'default', in_bearbeitung: 'secondary', angebot_erstellt: 'outline', abgeschlossen: 'outline', abgelehnt: 'destructive',
+};
 
 export default function KatalogAnfragen() {
   const c = supabase as any;
@@ -153,10 +156,15 @@ export default function KatalogAnfragen() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <MessageSquare className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">Sammelanfragen aus Portal</h2>
         <Badge variant="outline" className="ml-2 text-xs">{rows.length}</Badge>
+        {STATUS.map(s => {
+          const n = rows.filter(r => r.status === s).length;
+          if (!n) return null;
+          return <Badge key={s} variant={STATUS_VARIANT[s] ?? 'outline'} className="text-[10px]">{s}: {n}</Badge>;
+        })}
         <div className="ml-auto flex items-center gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
@@ -191,7 +199,7 @@ export default function KatalogAnfragen() {
                   <TableRow key={r.id} className={`cursor-pointer ${selected?.id === r.id ? 'bg-primary/5' : ''}`} onClick={() => setSelected(r)}>
                     <TableCell className="font-mono text-xs">{r.inquiry_number}</TableCell>
                     <TableCell className="text-sm">{customerMap[r.portal_user_id] ?? '—'}</TableCell>
-                    <TableCell><Badge variant="outline" className="text-[10px]">{r.status}</Badge></TableCell>
+                    <TableCell><Badge variant={STATUS_VARIANT[r.status] ?? 'outline'} className="text-[10px]">{r.status}</Badge></TableCell>
                     <TableCell className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString('de-DE')}</TableCell>
                     <TableCell><ChevronRight className="h-4 w-4 text-muted-foreground" /></TableCell>
                   </TableRow>

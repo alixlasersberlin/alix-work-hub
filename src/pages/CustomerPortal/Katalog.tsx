@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,9 @@ export default function CustomerPortalKatalog() {
   const [images, setImages] = useState<Record<string, string>>({});
   const [countries, setCountries] = useState<Country[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [itemCategories, setItemCategories] = useState<Record<string, string[]>>({});
+  const [category, setCategory] = useState<string>('all');
   const [country, setCountry] = useState<string>('');
   const [language, setLanguage] = useState('de');
   const [q, setQ] = useState('');
@@ -33,21 +36,37 @@ export default function CustomerPortalKatalog() {
   const [askItem, setAskItem] = useState<Item | null>(null);
   const [askText, setAskText] = useState('');
   const [asking, setAsking] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: cs }, { data: ls }, { data: its }] = await Promise.all([
+      const [{ data: cs }, { data: ls }, { data: its }, { data: cats }, { data: assigns }] = await Promise.all([
         client.from('catalog_countries').select('id, iso_code, name').order('iso_code'),
         client.from('catalog_languages').select('code, name').eq('is_active', true).order('code'),
         client.from('catalog_items').select('id, sku, name, brand, model').in('status', ['freigegeben', 'aktiv']).order('name').limit(500),
+        client.from('catalog_categories').select('id, name').order('name'),
+        client.from('item_category_assignments').select('item_id, category_id'),
       ]);
       setCountries(cs ?? []);
       setLanguages(ls ?? []);
       setItems((its ?? []) as Item[]);
+      setCategories(cats ?? []);
+      const im: Record<string, string[]> = {};
+      (assigns ?? []).forEach((a: any) => { (im[a.item_id] ||= []).push(a.category_id); });
+      setItemCategories(im);
       const de = (cs ?? []).find((c: any) => c.iso_code === 'DE');
       setCountry(de?.id ?? cs?.[0]?.id ?? '');
       setLoading(false);
+      // Warenkorb-Zähler laden
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: pu } = await client.from('customer_portal_users').select('id').eq('user_id', user.id).eq('status', 'active').maybeSingle();
+        if (pu) {
+          const { count } = await client.from('catalog_portal_cart_items').select('*', { count: 'exact', head: true }).eq('portal_user_id', pu.id);
+          setCartCount(count ?? 0);
+        }
+      }
     })();
   }, [client]);
 
@@ -76,9 +95,12 @@ export default function CustomerPortalKatalog() {
       i.name.toLowerCase().includes(n) || i.sku.toLowerCase().includes(n) ||
       (i.brand ?? '').toLowerCase().includes(n) || (i.model ?? '').toLowerCase().includes(n)
     ) : items;
-    // Nur Artikel mit freigegebenem Preis im gewählten Land
-    return base.filter((i) => prices[i.id]);
-  }, [items, q, prices]);
+    return base.filter((i) => {
+      if (!prices[i.id]) return false;
+      if (category !== 'all' && !(itemCategories[i.id] ?? []).includes(category)) return false;
+      return true;
+    });
+  }, [items, q, prices, category, itemCategories]);
 
   const submitInquiry = async () => {
     if (!askItem || !askText.trim()) return;
@@ -104,14 +126,24 @@ export default function CustomerPortalKatalog() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <BookOpen className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">Katalog</h2>
         <Badge variant="outline" className="ml-2 text-xs">Nur freigegebene Preise</Badge>
+        <div className="ml-auto">
+          <Button asChild size="sm" variant="outline" className="relative">
+            <Link to="/portal/warenkorb">
+              <ShoppingCart className="h-4 w-4 mr-1" /> Warenkorb
+              {cartCount > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] min-w-[18px] h-[18px] px-1">{cartCount}</span>
+              )}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
-        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
             <label className="text-xs text-muted-foreground">Land</label>
             <Select value={country} onValueChange={setCountry}>
@@ -127,6 +159,16 @@ export default function CustomerPortalKatalog() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {languages.map((l) => <SelectItem key={l.code} value={l.code}>{l.code.toUpperCase()} · {l.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Kategorie</label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Kategorien</SelectItem>
+                {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -185,7 +227,7 @@ export default function CustomerPortalKatalog() {
                     portal_user_id: pu.id, item_id: i.id, quantity: 1,
                     country_iso: countryObj?.iso_code ?? null, language_code: language,
                   });
-                  if (error) toast.error(error.message); else toast.success(`${i.name} zum Warenkorb hinzugefügt`);
+                  if (error) toast.error(error.message); else { toast.success(`${i.name} zum Warenkorb hinzugefügt`); setCartCount((n) => n + 1); }
                 }}>
                   <ShoppingCart className="h-4 w-4 mr-1" /> In den Warenkorb
                 </Button>
