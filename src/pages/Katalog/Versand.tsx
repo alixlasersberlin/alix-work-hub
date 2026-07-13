@@ -290,6 +290,7 @@ export default function KatalogVersand() {
           </DialogContent>
         </Dialog>
       </div>
+      </div>
 
       <Card>
         <Table>
