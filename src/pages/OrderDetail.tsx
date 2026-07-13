@@ -45,6 +45,7 @@ import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
 import MediapaketOrderTab from '@/components/MediapaketOrderTab';
+import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -858,6 +859,14 @@ export default function OrderDetail() {
             </div>
           )}
         </div>
+      )}
+
+      {activeTab === 'items' && (
+        <CatalogSnapshotsPanel
+          usedInType="order"
+          usedInIds={[order?.id, order?.order_number, order?.zoho_salesorder_id]}
+          className="mt-4"
+        />
       )}
 
       {/* Seriennummer Tab */}
