@@ -370,6 +370,58 @@ export default function KatalogArtikelDetail() {
           </CardContent></Card>
         </TabsContent>
 
+        <TabsContent value="kategorien">
+          <Card><CardContent className="pt-6 space-y-3">
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              <FolderTree className="h-4 w-4" /> Zuordnung zu Katalog-Kategorien. Änderungen werden sofort gespeichert.
+            </div>
+            {categories.length === 0 && <p className="text-sm text-muted-foreground">Noch keine Kategorien angelegt.</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {categories.map((c: any) => {
+                const checked = assignedCatIds.includes(c.id);
+                return (
+                  <label key={c.id} className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={async (v) => {
+                        if (v) {
+                          const { error } = await client.from('item_category_assignments').insert({ item_id: id, category_id: c.id });
+                          if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+                          setAssignedCatIds([...assignedCatIds, c.id]);
+                        } else {
+                          const { error } = await client.from('item_category_assignments').delete().eq('item_id', id).eq('category_id', c.id);
+                          if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+                          setAssignedCatIds(assignedCatIds.filter((x) => x !== c.id));
+                        }
+                      }}
+                    />
+                    <span className="text-sm">{c.names?.de ?? c.slug}</span>
+                    <span className="text-xs font-mono text-muted-foreground ml-auto">{c.slug}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="verwendung">
+          <Card><CardContent className="pt-6 space-y-2">
+            <div className="text-sm text-muted-foreground flex items-center gap-2 mb-3">
+              <Link2 className="h-4 w-4" /> Snapshots zeigen, wo dieser Artikel in Angeboten und Aufträgen verwendet wurde.
+            </div>
+            {usage.length === 0 && <p className="text-sm text-muted-foreground">Noch nicht in Angeboten oder Aufträgen verwendet.</p>}
+            {usage.map((u: any) => (
+              <div key={u.id} className="text-xs border-b py-2 flex justify-between items-center">
+                <div>
+                  <Badge variant="secondary" className="mr-2">{u.used_in_type}</Badge>
+                  <span className="font-mono">{u.used_in_id ? String(u.used_in_id).slice(0, 8) : '— (Entwurf)'}</span>
+                </div>
+                <span className="text-muted-foreground">{new Date(u.created_at).toLocaleString('de-DE')}</span>
+              </div>
+            ))}
+          </CardContent></Card>
+        </TabsContent>
+
         <TabsContent value="verlauf">
           <Card><CardContent className="pt-6 space-y-2">
             {changeLog.length === 0 && <p className="text-sm text-muted-foreground">Noch keine Einträge.</p>}
