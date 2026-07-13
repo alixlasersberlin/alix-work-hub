@@ -21,6 +21,7 @@ interface Inquiry {
 interface InquiryItem {
   id: string; sku: string | null; name: string | null; quantity: number; note: string | null;
   price_gross: number | null; price_net: number | null; tax_rate: number | null; currency: string | null;
+  item_id?: string | null; snapshot_id?: string | null;
 }
 
 const STATUS = ['neu', 'in_bearbeitung', 'angebot_erstellt', 'abgeschlossen', 'abgelehnt'];
@@ -89,22 +90,58 @@ export default function KatalogAnfragen() {
 
   const createOffer = async (r: Inquiry) => {
     if (!items.length) { toast.error('Keine Positionen vorhanden'); return; }
+    const { data: userRes } = await supabase.auth.getUser();
+    const userId = userRes?.user?.id ?? null;
+
+    // Snapshots pro Position mit item_id einfrieren, damit Preis-/Textstand
+    // dauerhaft dem späteren Angebot zugeordnet werden kann.
+    const snapshotIds: string[] = [];
+    const lines: any[] = [];
+    for (const i of items) {
+      const gross = Number(i.price_gross ?? 0);
+      const tax = Number(i.tax_rate ?? 19);
+      const net = i.price_net != null ? Number(i.price_net) : (tax > 0 ? gross / (1 + tax / 100) : gross);
+      let snapId: string | null = i.snapshot_id ?? null;
+      if (!snapId && i.item_id) {
+        try {
+          const { data: snap } = await c.from('catalog_item_snapshots').insert({
+            item_id: i.item_id,
+            snapshot: {
+              item: { id: i.item_id, sku: i.sku, name: i.name },
+              price: { gross, net, tax_rate: tax, currency: i.currency ?? 'EUR' },
+              description: { text: i.note ?? '' },
+              country: r.country_iso ? { iso: r.country_iso } : null,
+              language: r.language_code ?? null,
+              source: { type: 'portal_inquiry', inquiry_id: r.id, inquiry_number: r.inquiry_number },
+              captured_at: new Date().toISOString(),
+            },
+            used_in_type: 'draft',
+            used_in_id: null,
+            language_code: r.language_code ?? null,
+            country_iso: r.country_iso ?? null,
+            created_by: userId,
+          }).select('id').maybeSingle();
+          snapId = snap?.id ?? null;
+        } catch { /* nicht blockierend */ }
+      }
+      if (snapId) snapshotIds.push(snapId);
+      lines.push({
+        item_id: i.item_id ?? null,
+        snapshot_id: snapId,
+        name: i.name ?? '',
+        description: i.note ?? '',
+        sku: i.sku ?? '',
+        quantity: Number(i.quantity ?? 1),
+        rate: Number(net.toFixed(2)),
+        tax_percentage: tax,
+      });
+    }
+
     const handoff = {
       customer_id: customerIdMap[r.portal_user_id] ?? null,
       notes: `Aus Portal-Anfrage ${r.inquiry_number}${r.message ? `\n${r.message}` : ''}`,
-      lines: items.map((i) => {
-        const gross = Number(i.price_gross ?? 0);
-        const tax = Number(i.tax_rate ?? 19);
-        const net = i.price_net != null ? Number(i.price_net) : (tax > 0 ? gross / (1 + tax / 100) : gross);
-        return {
-          name: i.name ?? '',
-          description: i.note ?? '',
-          sku: i.sku ?? '',
-          quantity: Number(i.quantity ?? 1),
-          rate: Number(net.toFixed(2)),
-          tax_percentage: tax,
-        };
-      }),
+      lines,
+      snapshot_ids: snapshotIds,
     };
     sessionStorage.setItem('portal_inquiry_handoff_v1', JSON.stringify(handoff));
     await setStatus(r, 'angebot_erstellt');
