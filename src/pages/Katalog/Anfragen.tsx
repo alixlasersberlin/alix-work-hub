@@ -194,7 +194,7 @@ export default function KatalogAnfragen() {
                   <TableRow key={r.id} className={`cursor-pointer ${selected?.id === r.id ? 'bg-primary/5' : ''}`} onClick={() => setSelected(r)}>
                     <TableCell className="font-mono text-xs">{r.inquiry_number}</TableCell>
                     <TableCell className="text-sm">{customerMap[r.portal_user_id] ?? '—'}</TableCell>
-                    <TableCell><Badge variant="outline" className="text-[10px]">{r.status}</Badge></TableCell>
+                    <TableCell><Badge variant={STATUS_VARIANT[r.status] ?? 'outline'} className="text-[10px]">{r.status}</Badge></TableCell>
                     <TableCell className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString('de-DE')}</TableCell>
                     <TableCell><ChevronRight className="h-4 w-4 text-muted-foreground" /></TableCell>
                   </TableRow>
