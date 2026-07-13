@@ -366,11 +366,22 @@ export default function KatalogExport() {
         </label>
       </Card>
 
-      <Card className="p-4 flex flex-wrap gap-3">
+      <Card className="p-4 flex flex-wrap gap-3 items-center">
         <Button onClick={exportXlsx} disabled={busy !== null}>
           {busy === 'xlsx' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />}
           Excel exportieren
         </Button>
+        <Button onClick={exportCsv} disabled={busy !== null} variant="outline">
+          {busy === 'csv' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />}
+          CSV exportieren
+        </Button>
+        <Select value={csvSep} onValueChange={(v) => setCsvSep(v as ';' | ',')}>
+          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value=";">Trenner: Semikolon (;)</SelectItem>
+            <SelectItem value=",">Trenner: Komma (,)</SelectItem>
+          </SelectContent>
+        </Select>
         <Button onClick={exportPdf} disabled={busy !== null} variant="secondary">
           {busy === 'pdf' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
           Preisliste-PDF exportieren
