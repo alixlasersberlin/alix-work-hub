@@ -17,6 +17,8 @@ export interface KatalogPickResult {
   sku: string;
   name: string;
   description: string;
+  long_text?: string;
+  image_url?: string;
   rate: number; // brutto wenn tax>0, sonst netto
   tax_percentage: number;
   quantity: number;
