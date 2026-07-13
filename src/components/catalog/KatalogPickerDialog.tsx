@@ -91,7 +91,7 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
     setBusy(true);
     try {
       const c = supabase as any;
-      const [{ data: prices }, { data: descs }] = await Promise.all([
+      const [{ data: prices }, { data: descs }, { data: imgs }] = await Promise.all([
         c.from('catalog_item_prices')
           .select('item_id, uvp_net, uvp_gross, sale_net, sale_gross, tax_rate, price_status')
           .in('item_id', ids)
@@ -101,12 +101,18 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
           .select('item_id, short_text, long_text')
           .in('item_id', ids)
           .eq('language_code', language),
+        c.from('catalog_item_images')
+          .select('item_id, url')
+          .in('item_id', ids)
+          .eq('is_primary', true),
       ]);
 
       const priceByItem: Record<string, any> = {};
       (prices ?? []).forEach((p: any) => { priceByItem[p.item_id] = p; });
       const descByItem: Record<string, any> = {};
       (descs ?? []).forEach((d: any) => { descByItem[d.item_id] = d; });
+      const imgByItem: Record<string, string> = {};
+      (imgs ?? []).forEach((i: any) => { imgByItem[i.item_id] = i.url; });
 
       const countryObj = countries.find((x) => x.id === country);
       const { data: userRes } = await supabase.auth.getUser();
