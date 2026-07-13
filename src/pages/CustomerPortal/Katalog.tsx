@@ -26,6 +26,9 @@ export default function CustomerPortalKatalog() {
   const [images, setImages] = useState<Record<string, string>>({});
   const [countries, setCountries] = useState<Country[]>([]);
   const [languages, setLanguages] = useState<Language[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [itemCategories, setItemCategories] = useState<Record<string, string[]>>({});
+  const [category, setCategory] = useState<string>('all');
   const [country, setCountry] = useState<string>('');
   const [language, setLanguage] = useState('de');
   const [q, setQ] = useState('');
@@ -33,6 +36,7 @@ export default function CustomerPortalKatalog() {
   const [askItem, setAskItem] = useState<Item | null>(null);
   const [askText, setAskText] = useState('');
   const [asking, setAsking] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     (async () => {
