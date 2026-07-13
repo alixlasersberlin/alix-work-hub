@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -185,6 +185,12 @@ export default function TicketsList() {
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
 
+  const openCreateDialog = () => {
+    // Öffnen nach dem aktuellen Klick-Event, damit Radix den auslösenden Klick
+    // nicht sofort als Outside-Interaction wertet und den Dialog wieder schließt.
+    window.setTimeout(() => setCreateOpen(true), 0);
+  };
+
 
 
   async function createTicket() {
@@ -240,7 +246,7 @@ export default function TicketsList() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/tickets/sync"><RefreshCw className="w-4 h-4 mr-2" />Synchronisation</Link>
             </Button>
-            <Button size="sm" onClick={() => setCreateOpen(true)} className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
+            <Button size="sm" onClick={openCreateDialog} className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
               <Plus className="w-4 h-4 mr-1" /> Neues Ticket
             </Button>
           </>
@@ -343,7 +349,7 @@ export default function TicketsList() {
                       icon={Inbox}
                       title={key === 'open' ? 'Keine offenen Tickets' : 'Keine geschlossenen Tickets'}
                       description="Passe die Filter an oder erstelle ein neues Ticket."
-                      action={key === 'open' ? { label: 'Neues Ticket', icon: Plus, onClick: () => setCreateOpen(true) } : undefined}
+                      action={key === 'open' ? { label: 'Neues Ticket', icon: Plus, onClick: openCreateDialog } : undefined}
                     />
                   </div>
                 ) : (
@@ -418,6 +424,9 @@ export default function TicketsList() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Neues Ticket erstellen</DialogTitle>
+            <DialogDescription className="sr-only">
+              Formular zum manuellen Erfassen eines neuen Service-, Technik- oder Finance-Tickets.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 md:grid-cols-2">
             <div className="md:col-span-2">
