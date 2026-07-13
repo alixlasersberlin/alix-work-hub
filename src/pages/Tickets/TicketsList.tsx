@@ -454,28 +454,6 @@ export default function TicketsList() {
                           </TableCell>
                           <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="inline-flex items-center gap-1">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button size="sm" variant="outline" title="Kategorie zuweisen">
-                                    <Tag className="w-3 h-3 mr-1" /> Kategorie
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-56 p-2" align="end">
-                                  <div className="text-xs text-muted-foreground mb-2 px-1">Kategorie wählen</div>
-                                  <div className="grid gap-1 max-h-64 overflow-auto">
-                                    {CATEGORY_OPTIONS.map(c => (
-                                      <button
-                                        key={c}
-                                        type="button"
-                                        onClick={() => updateCategory(r.id, c)}
-                                        className={`text-left text-sm px-2 py-1.5 rounded hover:bg-muted ${r.category === c ? 'bg-muted font-medium' : ''}`}
-                                      >
-                                        {c}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
                               <Button size="sm" variant="outline" asChild>
                                 <Link to={`/tickets/${r.id}`}>Details <ArrowRight className="w-3 h-3 ml-1" /></Link>
                               </Button>
