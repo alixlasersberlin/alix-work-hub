@@ -23,6 +23,7 @@ export interface KatalogPickResult {
   rate: number; // brutto wenn tax>0, sonst netto
   tax_percentage: number;
   quantity: number;
+  discount_pct?: number;
   snapshot_id?: string;
 }
 
