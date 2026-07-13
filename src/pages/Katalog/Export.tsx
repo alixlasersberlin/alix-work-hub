@@ -33,7 +33,8 @@ export default function KatalogExport() {
   const [statusOnly, setStatusOnly] = useState(true);
   const [withImages, setWithImages] = useState(true);
   const [groupByCategory, setGroupByCategory] = useState(true);
-  const [busy, setBusy] = useState<'xlsx' | 'pdf' | null>(null);
+  const [busy, setBusy] = useState<'xlsx' | 'pdf' | 'csv' | null>(null);
+  const [csvSep, setCsvSep] = useState<';' | ','>(';');
 
   useEffect(() => {
     (async () => {
