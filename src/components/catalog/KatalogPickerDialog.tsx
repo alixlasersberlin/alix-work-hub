@@ -91,15 +91,36 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
     })();
   }, [open]);
 
+  const bestTierPct = (bundleId: string, count: number): number => {
+    const tiers = bundleTiersMap[bundleId] ?? [];
+    let best = 0;
+    for (const t of tiers) if (count >= t.min_quantity && t.discount_pct > best) best = t.discount_pct;
+    return best;
+  };
+
   const applyBundle = (bundleId: string) => {
     const rows = bundleItemsMap[bundleId] ?? [];
+    const count = Math.max(1, Number(bundleCounts[bundleId] ?? 1));
+    const bundle = bundles.find(b => b.id === bundleId);
+    const tierPct = bestTierPct(bundleId, count);
+    const baseDisc = Number(bundle?.default_discount_pct ?? 0);
+    const effective = tierPct > 0 ? tierPct : baseDisc; // Staffel ersetzt Basisrabatt
+    const nonOpt = rows.filter(r => !r.is_optional);
     setSelected((s) => {
       const n = { ...s };
-      rows.filter(r => !r.is_optional).forEach(r => { n[r.item_id] = (n[r.item_id] ?? 0) + (r.quantity || 1); });
+      nonOpt.forEach(r => { n[r.item_id] = (n[r.item_id] ?? 0) + (r.quantity || 1) * count; });
+      return n;
+    });
+    setSelectedDiscount((d) => {
+      const n = { ...d };
+      nonOpt.forEach(r => {
+        const perItem = Math.max(Number(r.discount_pct ?? 0), effective);
+        n[r.item_id] = Math.max(n[r.item_id] ?? 0, perItem);
+      });
       return n;
     });
     setTab('items');
-    toast({ title: `${rows.filter(r => !r.is_optional).length} Positionen aus Bundle übernommen` });
+    toast({ title: `${nonOpt.length} Positionen × ${count} übernommen`, description: effective > 0 ? `Rabatt ${effective}% angewendet` : undefined });
   };
 
   const filteredBundles = useMemo(() => {
