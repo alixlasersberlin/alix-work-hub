@@ -1152,6 +1152,25 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           Speichern + an Zulieferer senden
         </Button>
       </div>
+
+      <KatalogPickerDialog
+        open={katalogPickerOpen}
+        onOpenChange={setKatalogPickerOpen}
+        usedInType="production_order_draft"
+        onPicked={(picked: KatalogPickResult[]) => {
+          setManualItems(arr => [
+            ...arr,
+            ...picked.map(p => ({
+              item_name: p.name,
+              description: p.description || '',
+              sku: p.sku,
+              quantity: String(p.quantity || 1),
+              unit: '',
+            })),
+          ]);
+          toast.success(`${picked.length} Position(en) aus Katalog übernommen`);
+        }}
+      />
     </div>
   );
 }
