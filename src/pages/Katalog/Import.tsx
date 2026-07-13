@@ -66,8 +66,9 @@ export default function KatalogImport() {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<{ inserted: number; updated: number; skipped: number; errors: string[] } | null>(null);
 
-  // Airtable-State
-  const [atToken, setAtToken] = useState('');
+  // Airtable-State (via Connector Gateway – kein Token im Browser)
+  const [atBases, setAtBases] = useState<{ id: string; name: string }[]>([]);
+  const [atTables, setAtTables] = useState<{ id: string; name: string }[]>([]);
   const [atBase, setAtBase] = useState('');
   const [atTable, setAtTable] = useState('');
   const [atLoading, setAtLoading] = useState(false);
@@ -85,27 +86,59 @@ export default function KatalogImport() {
     setMapping(autoMap(hdrs));
   };
 
+  const callAt = async (action: string, extra: Record<string, any> = {}) => {
+    const { data, error } = await supabase.functions.invoke('catalog-import-airtable', {
+      body: { action, ...extra },
+    });
+    if (error) throw new Error(error.message);
+    if ((data as any)?.error) throw new Error((data as any).error);
+    return data as any;
+  };
+
+  const loadBases = async () => {
+    setAtLoading(true);
+    try {
+      const d = await callAt('list_bases');
+      setAtBases(d.bases ?? []);
+      toast({ title: `${(d.bases ?? []).length} Bases geladen` });
+    } catch (e: any) {
+      toast({ title: 'Airtable-Fehler', description: e.message, variant: 'destructive' });
+    } finally { setAtLoading(false); }
+  };
+
+  const loadTables = async (baseId: string) => {
+    setAtBase(baseId);
+    setAtTable('');
+    setAtTables([]);
+    if (!baseId) return;
+    setAtLoading(true);
+    try {
+      const d = await callAt('list_tables', { baseId });
+      setAtTables(d.tables ?? []);
+    } catch (e: any) {
+      toast({ title: 'Airtable-Fehler', description: e.message, variant: 'destructive' });
+    } finally { setAtLoading(false); }
+  };
+
   const loadAirtable = async () => {
-    if (!atToken || !atBase || !atTable) {
-      toast({ title: 'Bitte Token, Base-ID und Tabelle angeben', variant: 'destructive' });
+    if (!atBase || !atTable) {
+      toast({ title: 'Bitte Base und Tabelle wählen', variant: 'destructive' });
       return;
     }
     setAtLoading(true);
     setResult(null);
     try {
-      const url = `https://api.airtable.com/v0/${encodeURIComponent(atBase)}/${encodeURIComponent(atTable)}?pageSize=100`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${atToken}` } });
-      if (!res.ok) throw new Error(`Airtable HTTP ${res.status}`);
-      const j = await res.json();
-      const recs: Row[] = (j.records ?? []).map((r: any) => r.fields ?? {});
+      const d = await callAt('preview', { baseId: atBase, tableId: atTable });
+      const recs: Row[] = (d.records ?? []).map((r: any) => r.fields ?? {});
       const hdrSet = new Set<string>();
       recs.forEach((r) => Object.keys(r).forEach((k) => hdrSet.add(k)));
       const hdrs = Array.from(hdrSet);
-      setFileName(`Airtable: ${atTable}`);
+      const tableName = atTables.find((t) => t.id === atTable)?.name ?? atTable;
+      setFileName(`Airtable: ${tableName}`);
       setHeaders(hdrs);
       setRows(recs);
       setMapping(autoMap(hdrs));
-      toast({ title: `${recs.length} Datensätze geladen` });
+      toast({ title: `${recs.length} Datensätze geladen (Vorschau)` });
     } catch (e: any) {
       toast({ title: 'Airtable-Fehler', description: e.message, variant: 'destructive' });
     } finally {
@@ -244,26 +277,41 @@ export default function KatalogImport() {
 
         <TabsContent value="airtable" className="space-y-3">
           <Card className="p-4 grid gap-3 sm:grid-cols-3">
-            <div>
-              <Label>Personal Access Token</Label>
-              <Input type="password" value={atToken} onChange={(e) => setAtToken(e.target.value)} placeholder="patXXXXXXXXXXXXXX" />
-            </div>
-            <div>
-              <Label>Base-ID</Label>
-              <Input value={atBase} onChange={(e) => setAtBase(e.target.value)} placeholder="appXXXXXXXXXXXX" />
-            </div>
-            <div>
-              <Label>Tabellenname</Label>
-              <Input value={atTable} onChange={(e) => setAtTable(e.target.value)} placeholder="Products" />
-            </div>
             <div className="sm:col-span-3">
-              <Button onClick={loadAirtable} disabled={atLoading}>
-                {atLoading ? 'Lade…' : 'Aus Airtable laden'}
+              <Button onClick={loadBases} disabled={atLoading} variant="outline">
+                {atLoading ? 'Lade…' : (atBases.length ? 'Bases neu laden' : 'Bases laden')}
               </Button>
               <p className="text-xs text-muted-foreground mt-2">
-                Der Token wird nur im Browser für diesen Ladevorgang verwendet und nicht gespeichert.
+                Nutzt den verbundenen Airtable-Connector – kein Token nötig.
               </p>
             </div>
+            {atBases.length > 0 && (
+              <>
+                <div>
+                  <Label>Base</Label>
+                  <Select value={atBase} onValueChange={loadTables}>
+                    <SelectTrigger><SelectValue placeholder="Base wählen" /></SelectTrigger>
+                    <SelectContent>
+                      {atBases.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Tabelle</Label>
+                  <Select value={atTable} onValueChange={setAtTable} disabled={!atTables.length}>
+                    <SelectTrigger><SelectValue placeholder="Tabelle wählen" /></SelectTrigger>
+                    <SelectContent>
+                      {atTables.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={loadAirtable} disabled={atLoading || !atBase || !atTable}>
+                    {atLoading ? 'Lade…' : 'Aus Airtable laden'}
+                  </Button>
+                </div>
+              </>
+            )}
           </Card>
         </TabsContent>
       </Tabs>
