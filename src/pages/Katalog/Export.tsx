@@ -126,6 +126,7 @@ export default function KatalogExport() {
       toast({ title: `${rows.length} Artikel exportiert` });
     } catch (e: any) {
       toast({ title: 'Export fehlgeschlagen', description: e.message, variant: 'destructive' });
+    } finally { setBusy(null); }
   };
 
   const exportCsv = async () => {
