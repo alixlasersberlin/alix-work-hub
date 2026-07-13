@@ -88,7 +88,14 @@ export default function KatalogFreigabe() {
   }, [canApprove, user?.id]);
 
   const eligibleItems = useMemo(() => items.filter((i) => i.last_edited_by !== user?.id), [items, user]);
-  const eligiblePrices = useMemo(() => prices.filter((p) => p.last_edited_by !== user?.id), [prices, user]);
+  const eligiblePrices = useMemo(
+    () => prices.filter((p) => p.last_edited_by !== user?.id && p.reviewed_at && p.reviewed_by !== user?.id),
+    [prices, user],
+  );
+  const reviewablePrices = useMemo(
+    () => prices.filter((p) => p.last_edited_by !== user?.id && !p.reviewed_at),
+    [prices, user],
+  );
 
   const approveItems = async () => {
     const ids = Object.entries(selItems).filter(([, v]) => v).map(([k]) => k);
