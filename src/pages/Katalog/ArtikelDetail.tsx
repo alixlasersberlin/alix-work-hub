@@ -34,6 +34,9 @@ export default function KatalogArtikelDetail() {
   const [images, setImages] = useState<any[]>([]);
   const [prices, setPrices] = useState<any[]>([]);
   const [changeLog, setChangeLog] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [assignedCatIds, setAssignedCatIds] = useState<string[]>([]);
+  const [usage, setUsage] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [activeLang, setActiveLang] = useState<string>('de');
 
