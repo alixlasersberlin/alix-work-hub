@@ -280,6 +280,29 @@ export default function AngebotErstellen() {
           if (h.notes) setNotes(h.notes);
         }
       } catch { /* ignore */ }
+
+      // Handoff aus Katalog → Portal-Anfragen ("Angebot erstellen")
+      try {
+        const raw = sessionStorage.getItem('portal_inquiry_handoff_v1');
+        if (raw) {
+          const h = JSON.parse(raw);
+          sessionStorage.removeItem('portal_inquiry_handoff_v1');
+          if (h.customer_id) setCustomerId(h.customer_id);
+          if (h.notes) setNotes((prev) => prev ? `${prev}\n${h.notes}` : h.notes);
+          if (Array.isArray(h.lines) && h.lines.length) {
+            setLines(h.lines.map((l: any) => ({
+              id: crypto.randomUUID(),
+              item_id: l.item_id,
+              name: l.name ?? '',
+              description: l.description ?? '',
+              sku: l.sku ?? '',
+              quantity: Number(l.quantity ?? 1),
+              rate: Number(l.rate ?? 0),
+              tax_percentage: Number(l.tax_percentage ?? 19),
+            })));
+          }
+        }
+      } catch { /* ignore */ }
     }
     load();
   }, []);

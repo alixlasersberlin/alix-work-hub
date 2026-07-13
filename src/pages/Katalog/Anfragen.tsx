@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { MessageSquare, Search, ChevronRight } from 'lucide-react';
+import { MessageSquare, Search, ChevronRight, FileText } from 'lucide-react';
 
 interface Inquiry {
   id: string; inquiry_number: string; status: string; message: string | null;
@@ -26,12 +27,14 @@ const STATUS = ['neu', 'in_bearbeitung', 'angebot_erstellt', 'abgeschlossen', 'a
 
 export default function KatalogAnfragen() {
   const c = supabase as any;
+  const navigate = useNavigate();
   const [rows, setRows] = useState<Inquiry[]>([]);
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selected, setSelected] = useState<Inquiry | null>(null);
   const [items, setItems] = useState<InquiryItem[]>([]);
   const [customerMap, setCustomerMap] = useState<Record<string, string>>({});
+  const [customerIdMap, setCustomerIdMap] = useState<Record<string, string>>({});
 
   const load = async () => {
     const { data } = await c.from('catalog_portal_inquiries').select('*').order('created_at', { ascending: false }).limit(500);
@@ -40,10 +43,15 @@ export default function KatalogAnfragen() {
     // Map portal users -> customer companies
     const puIds = Array.from(new Set(list.map(x => x.portal_user_id)));
     if (puIds.length) {
-      const { data: pus } = await c.from('customer_portal_users').select('id, customers:customer_id(company_name)').in('id', puIds);
+      const { data: pus } = await c.from('customer_portal_users').select('id, customer_id, customers:customer_id(company_name)').in('id', puIds);
       const m: Record<string, string> = {};
-      (pus ?? []).forEach((p: any) => { m[p.id] = p.customers?.company_name ?? '—'; });
+      const cm: Record<string, string> = {};
+      (pus ?? []).forEach((p: any) => {
+        m[p.id] = p.customers?.company_name ?? '—';
+        if (p.customer_id) cm[p.id] = p.customer_id;
+      });
       setCustomerMap(m);
+      setCustomerIdMap(cm);
     }
   };
 
@@ -77,6 +85,30 @@ export default function KatalogAnfragen() {
     const { error } = await c.from('catalog_portal_inquiries').update({ internal_notes: notes }).eq('id', r.id);
     if (error) { toast.error(error.message); return; }
     toast.success('Notizen gespeichert');
+  };
+
+  const createOffer = async (r: Inquiry) => {
+    if (!items.length) { toast.error('Keine Positionen vorhanden'); return; }
+    const handoff = {
+      customer_id: customerIdMap[r.portal_user_id] ?? null,
+      notes: `Aus Portal-Anfrage ${r.inquiry_number}${r.message ? `\n${r.message}` : ''}`,
+      lines: items.map((i) => {
+        const gross = Number(i.price_gross ?? 0);
+        const tax = Number(i.tax_rate ?? 19);
+        const net = i.price_net != null ? Number(i.price_net) : (tax > 0 ? gross / (1 + tax / 100) : gross);
+        return {
+          name: i.name ?? '',
+          description: i.note ?? '',
+          sku: i.sku ?? '',
+          quantity: Number(i.quantity ?? 1),
+          rate: Number(net.toFixed(2)),
+          tax_percentage: tax,
+        };
+      }),
+    };
+    sessionStorage.setItem('portal_inquiry_handoff_v1', JSON.stringify(handoff));
+    await setStatus(r, 'angebot_erstellt');
+    navigate('/verkauf/angebot/neu');
   };
 
   const total = items.reduce((s, i) => s + Number(i.price_gross ?? 0) * Number(i.quantity), 0);
@@ -196,6 +228,11 @@ export default function KatalogAnfragen() {
                 </Table>
                 <div className="text-right text-sm font-semibold">
                   Summe: {total.toLocaleString('de-DE', { minimumFractionDigits: 2 })} {currency}
+                </div>
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={() => createOffer(selected)} disabled={items.length === 0}>
+                    <FileText className="h-4 w-4 mr-2" /> Angebot erstellen
+                  </Button>
                 </div>
                 <div>
                   <Label className="text-xs">Interne Notizen</Label>
