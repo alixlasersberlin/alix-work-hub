@@ -819,9 +819,14 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
                   {selectedOrder ? 'Positionen, die nicht im Auftrag enthalten sind' : 'Mindestens eine Position erforderlich'}
                 </p>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={addManualItem}>
-                <Plus className="w-4 h-4 mr-1" /> Hinzufügen
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setKatalogPickerOpen(true)}>
+                  <BookOpen className="w-4 h-4 mr-1" /> Aus Katalog
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addManualItem}>
+                  <Plus className="w-4 h-4 mr-1" /> Hinzufügen
+                </Button>
+              </div>
             </div>
             {manualItems.length === 0 ? (
               <p className="text-xs text-muted-foreground italic">Noch keine manuellen Positionen.</p>
