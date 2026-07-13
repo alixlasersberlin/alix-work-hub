@@ -2304,6 +2304,9 @@ export type Database = {
           pricelist_label: string | null
           promo_gross: number | null
           promo_net: number | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           rounding: number | null
           rule_id: string | null
           standard_gross: number | null
@@ -2331,6 +2334,9 @@ export type Database = {
           pricelist_label?: string | null
           promo_gross?: number | null
           promo_net?: number | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           rounding?: number | null
           rule_id?: string | null
           standard_gross?: number | null
@@ -2358,6 +2364,9 @@ export type Database = {
           pricelist_label?: string | null
           promo_gross?: number | null
           promo_net?: number | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           rounding?: number | null
           rule_id?: string | null
           standard_gross?: number | null
