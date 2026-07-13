@@ -9,13 +9,15 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Tag, Trash2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 
 
 interface TicketRow {
@@ -101,6 +103,23 @@ export default function TicketsList() {
   });
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { isSuperAdmin } = useFinancePermissions();
+
+  async function updateCategory(id: string, category: string) {
+    const { error } = await supabase.from('tickets').update({ category }).eq('id', id);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.map(r => r.id === id ? { ...r, category } : r));
+    toast.success('Kategorie aktualisiert');
+  }
+
+  async function deleteTicket(id: string) {
+    if (!isSuperAdmin) { toast.error('Nur Super Admin darf Tickets löschen'); return; }
+    if (!window.confirm('Ticket wirklich unwiderruflich löschen?')) return;
+    const { error } = await supabase.from('tickets').delete().eq('id', id);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.filter(r => r.id !== id));
+    toast.success('Ticket gelöscht');
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
@@ -411,9 +430,44 @@ export default function TicketsList() {
                             {r.last_synced_at ? new Date(r.last_synced_at).toLocaleString('de-DE') : '—'}
                           </TableCell>
                           <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                            <Button size="sm" variant="outline" asChild>
-                              <Link to={`/tickets/${r.id}`}>Details <ArrowRight className="w-3 h-3 ml-1" /></Link>
-                            </Button>
+                            <div className="inline-flex items-center gap-1">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button size="sm" variant="outline" title="Kategorie zuweisen">
+                                    <Tag className="w-3 h-3 mr-1" /> Kategorie
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-56 p-2" align="end">
+                                  <div className="text-xs text-muted-foreground mb-2 px-1">Kategorie wählen</div>
+                                  <div className="grid gap-1 max-h-64 overflow-auto">
+                                    {CATEGORY_OPTIONS.map(c => (
+                                      <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => updateCategory(r.id, c)}
+                                        className={`text-left text-sm px-2 py-1.5 rounded hover:bg-muted ${r.category === c ? 'bg-muted font-medium' : ''}`}
+                                      >
+                                        {c}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                              <Button size="sm" variant="outline" asChild>
+                                <Link to={`/tickets/${r.id}`}>Details <ArrowRight className="w-3 h-3 ml-1" /></Link>
+                              </Button>
+                              {isSuperAdmin && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-400 border-red-500/40 hover:bg-red-500/10"
+                                  onClick={() => deleteTicket(r.id)}
+                                  title="Ticket löschen (Super Admin)"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
