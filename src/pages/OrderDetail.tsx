@@ -45,6 +45,7 @@ import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
 import MediapaketOrderTab from '@/components/MediapaketOrderTab';
+import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
