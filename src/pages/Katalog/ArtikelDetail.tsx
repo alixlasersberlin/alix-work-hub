@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Save, Upload, Trash2, Star } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { ArrowLeft, Save, Upload, Trash2, Star, CheckCircle2, ShieldCheck } from 'lucide-react';
 
 const ITEM_STATUSES = ['entwurf','zur_pruefung','korrektur','freigegeben','gesperrt','archiviert','aktiv','inaktiv','ausverkauft','vorbestellung','nur_auf_anfrage','nicht_lieferbar'];
 const PRICE_STATUSES = ['entwurf','zur_freigabe','freigegeben','abgelehnt','abgelaufen'];
