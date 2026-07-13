@@ -303,6 +303,62 @@ export default function KatalogBundles() {
                     )}
                   </TableBody>
                 </Table>
+
+                <div className="mt-6 border-t pt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-semibold">Staffelpreise (Mengenrabatt pro Bundle)</div>
+                    <div className="text-xs text-muted-foreground">{tiers.length} Staffeln</div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Ab welcher Anzahl an Bundle-Einheiten greift welcher zusätzlicher Rabatt? Der Basisrabatt ({selected.default_discount_pct}%) bleibt erhalten; die passende Staffel ersetzt ihn.
+                  </p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-32">ab Menge</TableHead>
+                        <TableHead className="w-32">Rabatt %</TableHead>
+                        <TableHead>Notiz</TableHead>
+                        <TableHead className="w-12"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tiers.map(t => (
+                        <TableRow key={t.id}>
+                          <TableCell>
+                            <Input type="number" min={1} defaultValue={t.min_quantity}
+                              onBlur={(e) => updateTier(t, { min_quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                              className="h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Input type="number" min={0} max={100} step="0.5" defaultValue={t.discount_pct}
+                              onBlur={(e) => updateTier(t, { discount_pct: Number(e.target.value) })}
+                              className="h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Input defaultValue={t.note ?? ''} onBlur={(e) => updateTier(t, { note: e.target.value || null })} className="h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => removeTier(t)}><X className="h-4 w-4" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {tiers.length === 0 && (
+                        <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-4 text-xs">Noch keine Staffeln definiert.</TableCell></TableRow>
+                      )}
+                      <TableRow>
+                        <TableCell>
+                          <Input type="number" min={1} value={newTierQty} onChange={(e) => setNewTierQty(parseInt(e.target.value) || 1)} className="h-8" />
+                        </TableCell>
+                        <TableCell>
+                          <Input type="number" min={0} max={100} step="0.5" value={newTierPct} onChange={(e) => setNewTierPct(Number(e.target.value))} className="h-8" />
+                        </TableCell>
+                        <TableCell colSpan={2}>
+                          <Button size="sm" variant="outline" onClick={addTier}><Plus className="h-4 w-4 mr-1" />Staffel hinzufügen</Button>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
               </>
             )}
           </CardContent>
