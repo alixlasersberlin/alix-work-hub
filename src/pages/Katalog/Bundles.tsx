@@ -51,6 +51,9 @@ export default function KatalogBundles() {
   const [showOnlyActive, setShowOnlyActive] = useState(false);
   const [selected, setSelected] = useState<Bundle | null>(null);
   const [bundleItems, setBundleItems] = useState<BundleItem[]>([]);
+  const [tiers, setTiers] = useState<PriceTier[]>([]);
+  const [newTierQty, setNewTierQty] = useState<number>(2);
+  const [newTierPct, setNewTierPct] = useState<number>(5);
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Bundle> | null>(null);
   const [addItemOpen, setAddItemOpen] = useState(false);
@@ -69,8 +72,9 @@ export default function KatalogBundles() {
   }, []);
 
   useEffect(() => {
-    if (!selected) { setBundleItems([]); return; }
+    if (!selected) { setBundleItems([]); setTiers([]); return; }
     c.from('catalog_bundle_items').select('*').eq('bundle_id', selected.id).order('sort_order').then(({ data }: any) => setBundleItems(data ?? []));
+    c.from('catalog_bundle_price_tiers').select('*').eq('bundle_id', selected.id).order('min_quantity').then(({ data }: any) => setTiers(data ?? []));
   }, [selected]);
 
   const filtered = useMemo(() => {
