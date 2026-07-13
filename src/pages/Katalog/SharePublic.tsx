@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Loader2, Package, X, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
+import { Loader2, Package, X, ChevronLeft, ChevronRight, Printer, Lock } from 'lucide-react';
 
 const SUPA = import.meta.env.VITE_SUPABASE_URL;
 
@@ -21,19 +23,24 @@ export default function CatalogSharePublic() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [password, setPassword] = useState('');
+  const [pwSubmitting, setPwSubmitting] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch(`${SUPA}/functions/v1/catalog-share-resolve?token=${encodeURIComponent(token ?? '')}`);
-        const j = await res.json();
-        if (!res.ok) { setError(j.error ?? 'error'); return; }
-        setData(j);
-      } catch {
-        setError('network');
-      } finally { setLoading(false); }
-    })();
-  }, [token]);
+  const fetchShare = async (pw: string) => {
+    setLoading(true); setError(null);
+    try {
+      const qs = new URLSearchParams({ token: token ?? '' });
+      if (pw) qs.set('pw', pw);
+      const res = await fetch(`${SUPA}/functions/v1/catalog-share-resolve?${qs.toString()}`);
+      const j = await res.json();
+      if (!res.ok) { setError(j.error ?? 'error'); return; }
+      setData(j);
+    } catch {
+      setError('network');
+    } finally { setLoading(false); setPwSubmitting(false); }
+  };
+
+  useEffect(() => { fetchShare(''); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [token]);
 
   useEffect(() => {
     if (lightbox === null || !data) return;
@@ -49,9 +56,36 @@ export default function CatalogSharePublic() {
   if (loading) {
     return <div className="min-h-screen grid place-items-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
+
+  if (error === 'password_required' || error === 'password_wrong') {
+    return (
+      <div className="min-h-screen grid place-items-center bg-background p-6">
+        <Card className="p-8 max-w-md w-full space-y-4">
+          <div className="flex items-center gap-3">
+            <Lock className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-semibold">Passwort erforderlich</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">Dieser Katalog-Link ist passwortgeschützt. Bitte gib das Passwort ein, das dir dein Ansprechpartner mitgeteilt hat.</p>
+          <div className="space-y-2">
+            <Label>Passwort</Label>
+            <Input type="password" autoFocus value={password} onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter' && password) { setPwSubmitting(true); fetchShare(password); } }} />
+            {error === 'password_wrong' && <p className="text-xs text-destructive">Passwort ungültig.</p>}
+          </div>
+          <Button className="w-full" disabled={!password || pwSubmitting}
+            onClick={() => { setPwSubmitting(true); fetchShare(password); }}>
+            {pwSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+            Öffnen
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   if (error || !data) {
     const msg = error === 'expired' ? 'Dieser Link ist abgelaufen.'
       : error === 'revoked' ? 'Dieser Link wurde widerrufen.'
+      : error === 'max_views' ? 'Die maximale Aufrufzahl dieses Links ist erreicht.'
       : error === 'not_found' ? 'Link nicht gefunden.'
       : 'Artikel nicht verfügbar.';
     return (
@@ -64,6 +98,7 @@ export default function CatalogSharePublic() {
       </div>
     );
   }
+
 
   const { item, description, images, price } = data;
 
