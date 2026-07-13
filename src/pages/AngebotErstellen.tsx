@@ -301,6 +301,9 @@ export default function AngebotErstellen() {
               tax_percentage: Number(l.tax_percentage ?? 19),
             })));
           }
+          if (Array.isArray(h.snapshot_ids) && h.snapshot_ids.length) {
+            setPendingSnapshotIds((prev) => Array.from(new Set([...(prev ?? []), ...h.snapshot_ids])));
+          }
         }
       } catch { /* ignore */ }
     }
