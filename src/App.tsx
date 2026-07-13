@@ -282,6 +282,8 @@ const KatalogExport = lazy(() => import("./pages/Katalog/Export"));
 const KatalogVersand = lazy(() => import("./pages/Katalog/Versand"));
 const KatalogSharePublic = lazy(() => import("./pages/Katalog/SharePublic"));
 const KatalogBulkUebersetzung = lazy(() => import("./pages/Katalog/BulkUebersetzung"));
+const KatalogAnalytics = lazy(() => import("./pages/Katalog/Analytics"));
+const CustomerPortalKatalog = lazy(() => import("./pages/CustomerPortal/Katalog"));
 const AicLayout = lazy(() => import("./pages/AIC/Layout"));
 const AicDashboard = lazy(() => import("./pages/AIC/Dashboard"));
 const AicUnternehmen = lazy(() => import("./pages/AIC/Unternehmen"));
@@ -1133,6 +1135,7 @@ function AppRoutes() {
             <Route path="versand" element={<KatalogVersand />} />
             <Route path="freigabe" element={<KatalogFreigabe />} />
             <Route path="uebersetzung" element={<KatalogBulkUebersetzung />} />
+            <Route path="analytics" element={<KatalogAnalytics />} />
           </Route>
 
 
@@ -1262,6 +1265,7 @@ function AppRoutes() {
           <Route path="tickets" element={<CustomerPortalTickets />} />
           <Route path="termine" element={<CustomerPortalAppointments />} />
           <Route path="gesundheit" element={<CustomerPortalHealth />} />
+          <Route path="katalog" element={<CustomerPortalKatalog />} />
         </Route>
 
         {/* Mobile Techniker-App – eigenes Layout (kein AppLayout) */}
