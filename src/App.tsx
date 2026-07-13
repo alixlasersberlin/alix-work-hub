@@ -1129,6 +1129,7 @@ function AppRoutes() {
             <Route path="import" element={<KatalogImport />} />
             <Route path="export" element={<KatalogExport />} />
             <Route path="versand" element={<KatalogVersand />} />
+          </Route>
 
 
           <Route path="/iso" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin', 'QM']}><IsoLayoutLazy /></ProtectedRoute>}>
