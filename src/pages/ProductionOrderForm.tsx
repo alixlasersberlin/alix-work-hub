@@ -530,6 +530,16 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       const itemRows = [...fromOrder, ...fromManual];
       if (itemRows.length) await supabase.from('production_order_items').insert(itemRows);
     }
+    // Katalog-Snapshots mit finaler Bestellung verknüpfen
+    if (poId && pendingSnapshotIds.length > 0) {
+      try {
+        await (supabase as any)
+          .from('catalog_item_snapshots')
+          .update({ used_in_type: 'production_order', used_in_id: poId })
+          .in('id', pendingSnapshotIds);
+        setPendingSnapshotIds([]);
+      } catch { /* nicht blockierend */ }
+    }
     savingRef.current = false;
     setSaving(false);
     return poId || null;
