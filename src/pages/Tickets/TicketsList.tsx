@@ -56,6 +56,7 @@ function slaBadge(s: string | null) {
 const STATUS_OPTIONS = ['open', 'in-progress', 'wartet_Kunde', 'offen', 'in_bearbeitung', 'wartet_kunde', 'gelöst', 'geschlossen'];
 const PRIORITY_OPTIONS = ['niedrig', 'normal', 'hoch', 'kritisch'];
 const DEPARTMENT_OPTIONS = ['service', 'technik', 'finance', 'tourenplanung', 'lieferung', 'abholung', 'austausch'];
+const CATEGORY_OPTIONS = ['Reklamation', 'Reparatur', 'Wartung', 'Installation', 'Schulung', 'Beratung', 'Ersatzteil', 'Rückgabe', 'Finance', 'Sonstiges'];
 
 function statusColor(s: string) {
   switch (s) {
@@ -96,7 +97,7 @@ export default function TicketsList() {
     title: '', description: '', customer_name: '', company_name: '',
     customer_email: '', customer_phone: '', order_number: '',
     device_name: '', serial_number: '',
-    priority: 'normal', department: 'service',
+    priority: 'normal', department: 'service', category: '',
   });
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -219,7 +220,7 @@ export default function TicketsList() {
     if (error) { toast.error(error.message); return; }
     toast.success('Ticket erstellt');
     setCreateOpen(false);
-    setNt({ title: '', description: '', customer_name: '', company_name: '', customer_email: '', customer_phone: '', order_number: '', device_name: '', serial_number: '', priority: 'normal', department: 'service' });
+    setNt({ title: '', description: '', customer_name: '', company_name: '', customer_email: '', customer_phone: '', order_number: '', device_name: '', serial_number: '', priority: 'normal', department: 'service', category: '' });
     if (data?.id) navigate(`/tickets/${data.id}`);
   }
 
@@ -470,6 +471,16 @@ export default function TicketsList() {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {PRIORITY_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="md:col-span-2">
+              <Label className="text-xs">Kategorie</Label>
+              <Select value={nt.category || '__none'} onValueChange={(v) => setNt({ ...nt, category: v === '__none' ? '' : v })}>
+                <SelectTrigger><SelectValue placeholder="Kategorie wählen" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">— keine —</SelectItem>
+                  {CATEGORY_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
