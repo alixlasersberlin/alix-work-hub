@@ -28,6 +28,9 @@ interface PricePending {
   price_status: string;
   submitted_at: string | null;
   last_edited_by: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
   item?: { sku: string; name: string };
   country?: { iso2: string; name: string };
 }
@@ -50,7 +53,7 @@ export default function KatalogFreigabe() {
     const [{ data: it }, { data: pr }] = await Promise.all([
       client.from('catalog_items').select('id, sku, name, status, submitted_at, submitted_by, last_edited_by')
         .eq('status', 'zur_pruefung').is('approved_at', null).order('submitted_at', { ascending: true }),
-      client.from('catalog_item_prices').select('id, item_id, currency_code, standard_gross, price_status, submitted_at, last_edited_by, item:catalog_items(sku,name), country:catalog_countries(iso2,name)')
+      client.from('catalog_item_prices').select('id, item_id, currency_code, standard_gross, price_status, submitted_at, last_edited_by, reviewed_by, reviewed_at, review_note, item:catalog_items(sku,name), country:catalog_countries(iso2,name)')
         .eq('price_status', 'zur_freigabe').is('approved_at', null).order('submitted_at', { ascending: true }),
     ]);
     setItems((it ?? []) as ItemPending[]);
@@ -85,7 +88,14 @@ export default function KatalogFreigabe() {
   }, [canApprove, user?.id]);
 
   const eligibleItems = useMemo(() => items.filter((i) => i.last_edited_by !== user?.id), [items, user]);
-  const eligiblePrices = useMemo(() => prices.filter((p) => p.last_edited_by !== user?.id), [prices, user]);
+  const eligiblePrices = useMemo(
+    () => prices.filter((p) => p.last_edited_by !== user?.id && p.reviewed_at && p.reviewed_by !== user?.id),
+    [prices, user],
+  );
+  const reviewablePrices = useMemo(
+    () => prices.filter((p) => p.last_edited_by !== user?.id && !p.reviewed_at),
+    [prices, user],
+  );
 
   const approveItems = async () => {
     const ids = Object.entries(selItems).filter(([, v]) => v).map(([k]) => k);
@@ -117,17 +127,34 @@ export default function KatalogFreigabe() {
     load();
   };
 
+  const reviewPrices = async () => {
+    const ids = Object.entries(selPrices).filter(([, v]) => v).map(([k]) => k);
+    const target = ids.filter((id) => reviewablePrices.some((p) => p.id === id));
+    if (target.length === 0) return toast({ title: 'Nichts zu prüfen', description: 'Nur ungeprüfte, fremde Preise können geprüft werden.' });
+    const note = window.prompt(`Prüfnotiz für ${target.length} Preis(e) (optional):`, '') ?? '';
+    setBusy(true);
+    const { error } = await client.from('catalog_item_prices').update({
+      reviewed_at: new Date().toISOString(), reviewed_by: user?.id, review_note: note || null,
+    }).in('id', target);
+    setBusy(false);
+    if (error) return toast({ title: 'Prüfung fehlgeschlagen', description: error.message, variant: 'destructive' });
+    toast({ title: `${target.length} Preise als geprüft markiert` });
+    setSelPrices({});
+    load();
+  };
+
   const approvePrices = async () => {
     const ids = Object.entries(selPrices).filter(([, v]) => v).map(([k]) => k);
-    if (ids.length === 0) return;
+    const target = ids.filter((id) => eligiblePrices.some((p) => p.id === id));
+    if (target.length === 0) return toast({ title: 'Freigabe nicht möglich', description: 'Nur von jemand anderem geprüfte Preise können freigegeben werden (4-Augen-Prinzip).' });
     setBusy(true);
     const now = new Date().toISOString();
     const { error } = await client.from('catalog_item_prices').update({
       price_status: 'freigegeben', approved_at: now, approved_by: user?.id,
-    }).in('id', ids);
+    }).in('id', target);
     setBusy(false);
     if (error) return toast({ title: 'Freigabe fehlgeschlagen', description: error.message, variant: 'destructive' });
-    toast({ title: `${ids.length} Preise freigegeben` });
+    toast({ title: `${target.length} Preise freigegeben` });
     setSelPrices({});
     load();
   };
@@ -243,10 +270,13 @@ export default function KatalogFreigabe() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Preise zur Freigabe</CardTitle>
+          <CardTitle className="text-base">Preise zur Freigabe <span className="text-xs font-normal text-muted-foreground ml-2">(4-Augen-Prinzip: Prüfer ≠ Freigeber)</span></CardTitle>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={rejectPrices} disabled={busy || Object.values(selPrices).filter(Boolean).length === 0}>
               <XCircle className="h-4 w-4 mr-1" />Ablehnen
+            </Button>
+            <Button size="sm" variant="secondary" onClick={reviewPrices} disabled={busy || Object.values(selPrices).filter(Boolean).length === 0}>
+              <Eye className="h-4 w-4 mr-1" />Prüfen
             </Button>
             <Button size="sm" onClick={approvePrices} disabled={busy || Object.values(selPrices).filter(Boolean).length === 0}>
               <CheckCircle2 className="h-4 w-4 mr-1" />Freigeben
@@ -259,7 +289,7 @@ export default function KatalogFreigabe() {
               <TableRow>
                 <TableHead className="w-10">
                   <Checkbox
-                    checked={eligiblePrices.length > 0 && eligiblePrices.every((p) => selPrices[p.id])}
+                    checked={prices.length > 0 && prices.filter((p) => p.last_edited_by !== user?.id).every((p) => selPrices[p.id])}
                     onCheckedChange={(v) => selectAll(prices, setSelPrices, !!v)}
                   />
                 </TableHead>
@@ -267,15 +297,17 @@ export default function KatalogFreigabe() {
                 <TableHead>Artikel</TableHead>
                 <TableHead>Land</TableHead>
                 <TableHead className="text-right">Preis</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Eingereicht</TableHead>
                 <TableHead className="w-16"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Lade…</TableCell></TableRow>}
-              {!loading && prices.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Keine Preise zur Freigabe.</TableCell></TableRow>}
+              {loading && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Lade…</TableCell></TableRow>}
+              {!loading && prices.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Keine Preise zur Freigabe.</TableCell></TableRow>}
               {prices.map((p) => {
                 const own = p.last_edited_by === user?.id;
+                const reviewedByMe = p.reviewed_by === user?.id;
                 return (
                   <TableRow key={p.id} className={own ? 'opacity-60' : ''}>
                     <TableCell>
@@ -285,6 +317,15 @@ export default function KatalogFreigabe() {
                     <TableCell>{p.item?.name ?? '—'}</TableCell>
                     <TableCell className="text-xs">{p.country?.iso2 ?? '—'}</TableCell>
                     <TableCell className="text-right">{p.standard_gross != null ? `${Number(p.standard_gross).toFixed(2)} ${p.currency_code ?? ''}` : '—'}</TableCell>
+                    <TableCell>
+                      {p.reviewed_at ? (
+                        <Badge variant={reviewedByMe ? 'secondary' : 'default'} className="text-[10px]" title={p.review_note ?? ''}>
+                          geprüft {reviewedByMe ? '(von dir)' : ''}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px]">ungeprüft</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{p.submitted_at ? new Date(p.submitted_at).toLocaleString('de-DE') : '—'}</TableCell>
                     <TableCell>
                       <Button asChild variant="ghost" size="sm">
