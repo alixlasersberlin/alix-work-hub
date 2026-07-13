@@ -353,6 +353,7 @@ export default function TicketsList() {
                         <TableHead>Kunde</TableHead>
                         <TableHead>Gerät</TableHead>
                         <TableHead>Seriennr.</TableHead>
+                        <TableHead>Kategorie</TableHead>
                         <TableHead>Abteilung</TableHead>
                         <TableHead>Priorität</TableHead>
                         <TableHead>Status</TableHead>
