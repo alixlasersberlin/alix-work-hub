@@ -2299,6 +2299,7 @@ export type Database = {
           currency_code: string
           id: string
           item_id: string
+          last_edited_by: string | null
           price_status: Database["public"]["Enums"]["catalog_price_status"]
           pricelist_label: string | null
           promo_gross: number | null
@@ -2307,6 +2308,8 @@ export type Database = {
           rule_id: string | null
           standard_gross: number | null
           standard_net: number | null
+          submitted_at: string | null
+          submitted_by: string | null
           tax_rate: number | null
           updated_at: string
           uvp_gross: number | null
@@ -2323,6 +2326,7 @@ export type Database = {
           currency_code: string
           id?: string
           item_id: string
+          last_edited_by?: string | null
           price_status?: Database["public"]["Enums"]["catalog_price_status"]
           pricelist_label?: string | null
           promo_gross?: number | null
@@ -2331,6 +2335,8 @@ export type Database = {
           rule_id?: string | null
           standard_gross?: number | null
           standard_net?: number | null
+          submitted_at?: string | null
+          submitted_by?: string | null
           tax_rate?: number | null
           updated_at?: string
           uvp_gross?: number | null
@@ -2347,6 +2353,7 @@ export type Database = {
           currency_code?: string
           id?: string
           item_id?: string
+          last_edited_by?: string | null
           price_status?: Database["public"]["Enums"]["catalog_price_status"]
           pricelist_label?: string | null
           promo_gross?: number | null
@@ -2355,6 +2362,8 @@ export type Database = {
           rule_id?: string | null
           standard_gross?: number | null
           standard_net?: number | null
+          submitted_at?: string | null
+          submitted_by?: string | null
           tax_rate?: number | null
           updated_at?: string
           uvp_gross?: number | null
@@ -2445,6 +2454,8 @@ export type Database = {
       }
       catalog_items: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           brand: string | null
           category_id: string | null
           created_at: string
@@ -2455,6 +2466,7 @@ export type Database = {
           id: string
           internal_number: string | null
           item_type: string | null
+          last_edited_by: string | null
           manufacturer: string | null
           model: string | null
           name: string
@@ -2465,12 +2477,16 @@ export type Database = {
           source_ref: string | null
           source_system: string | null
           status: Database["public"]["Enums"]["catalog_item_status"]
+          submitted_at: string | null
+          submitted_by: string | null
           tags: string[]
           updated_at: string
           updated_by: string | null
           variant: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           brand?: string | null
           category_id?: string | null
           created_at?: string
@@ -2481,6 +2497,7 @@ export type Database = {
           id?: string
           internal_number?: string | null
           item_type?: string | null
+          last_edited_by?: string | null
           manufacturer?: string | null
           model?: string | null
           name: string
@@ -2491,12 +2508,16 @@ export type Database = {
           source_ref?: string | null
           source_system?: string | null
           status?: Database["public"]["Enums"]["catalog_item_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
           tags?: string[]
           updated_at?: string
           updated_by?: string | null
           variant?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           brand?: string | null
           category_id?: string | null
           created_at?: string
@@ -2507,6 +2528,7 @@ export type Database = {
           id?: string
           internal_number?: string | null
           item_type?: string | null
+          last_edited_by?: string | null
           manufacturer?: string | null
           model?: string | null
           name?: string
@@ -2517,6 +2539,8 @@ export type Database = {
           source_ref?: string | null
           source_system?: string | null
           status?: Database["public"]["Enums"]["catalog_item_status"]
+          submitted_at?: string | null
+          submitted_by?: string | null
           tags?: string[]
           updated_at?: string
           updated_by?: string | null
