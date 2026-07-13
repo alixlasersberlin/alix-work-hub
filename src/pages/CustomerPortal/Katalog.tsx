@@ -41,17 +41,32 @@ export default function CustomerPortalKatalog() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: cs }, { data: ls }, { data: its }] = await Promise.all([
+      const [{ data: cs }, { data: ls }, { data: its }, { data: cats }, { data: assigns }] = await Promise.all([
         client.from('catalog_countries').select('id, iso_code, name').order('iso_code'),
         client.from('catalog_languages').select('code, name').eq('is_active', true).order('code'),
         client.from('catalog_items').select('id, sku, name, brand, model').in('status', ['freigegeben', 'aktiv']).order('name').limit(500),
+        client.from('catalog_categories').select('id, name').order('name'),
+        client.from('item_category_assignments').select('item_id, category_id'),
       ]);
       setCountries(cs ?? []);
       setLanguages(ls ?? []);
       setItems((its ?? []) as Item[]);
+      setCategories(cats ?? []);
+      const im: Record<string, string[]> = {};
+      (assigns ?? []).forEach((a: any) => { (im[a.item_id] ||= []).push(a.category_id); });
+      setItemCategories(im);
       const de = (cs ?? []).find((c: any) => c.iso_code === 'DE');
       setCountry(de?.id ?? cs?.[0]?.id ?? '');
       setLoading(false);
+      // Warenkorb-Zähler laden
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: pu } = await client.from('customer_portal_users').select('id').eq('user_id', user.id).eq('status', 'active').maybeSingle();
+        if (pu) {
+          const { count } = await client.from('catalog_portal_cart_items').select('*', { count: 'exact', head: true }).eq('portal_user_id', pu.id);
+          setCartCount(count ?? 0);
+        }
+      }
     })();
   }, [client]);
 
