@@ -1169,6 +1169,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         onOpenChange={setKatalogPickerOpen}
         usedInType="production_order_draft"
         onPicked={(picked: KatalogPickResult[]) => {
+          const newSnapIds = picked.map(p => p.snapshot_id).filter(Boolean) as string[];
+          if (newSnapIds.length) setPendingSnapshotIds(prev => [...prev, ...newSnapIds]);
           setManualItems(arr => [
             ...arr,
             ...picked.map(p => ({
