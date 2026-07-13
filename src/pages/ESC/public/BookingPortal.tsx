@@ -299,7 +299,7 @@ export default function BookingPortal() {
       )}
 
       {step === 'department' && (
-        <div className="space-y-3">
+        <div id="dept-picker" className="space-y-3">
           <button
             type="button"
             onClick={() => setDeptOpen((v) => !v)}
