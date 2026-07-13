@@ -751,6 +751,8 @@ function HomeRoute() {
 function AppRoutes() {
   const { user, loading } = useAuth();
   useSyncRevenueMaskGlobal();
+  useRadixBodyPointerEventsFix();
+
 
   if (loading) return <FullscreenLoader />;
 
