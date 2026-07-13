@@ -1022,6 +1022,16 @@ export default function AngebotErstellen() {
         if (idx >= 0) list[idx] = snap; else list.unshift(snap);
         localStorage.setItem(KEY, JSON.stringify(list));
       } catch {}
+      // Snapshots aus Katalog-Picker mit finaler Angebotsnummer verknüpfen
+      if (pendingSnapshotIds.length > 0) {
+        try {
+          await (supabase as any)
+            .from('catalog_item_snapshots')
+            .update({ used_in_type: 'offer', used_in_id: effectiveOfferNumber })
+            .in('id', pendingSnapshotIds);
+          setPendingSnapshotIds([]);
+        } catch { /* nicht blockierend */ }
+      }
       if (!silent) toast.success('Angebot gespeichert. Zu finden unter Sales Management → Angebote.');
       return true;
     } catch (e: any) {
