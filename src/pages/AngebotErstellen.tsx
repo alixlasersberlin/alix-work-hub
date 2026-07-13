@@ -33,6 +33,9 @@ type LineItem = {
   quantity: number;
   rate: number;
   tax_percentage: number;
+  snapshot_id?: string;
+  long_text?: string;
+  image_url?: string;
 };
 
 const newLine = (): LineItem => ({
