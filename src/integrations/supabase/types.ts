@@ -2963,6 +2963,41 @@ export type Database = {
           },
         ]
       }
+      catalog_share_access_log: {
+        Row: {
+          accessed_at: string
+          id: string
+          ip_hash: string | null
+          link_id: string
+          outcome: string
+          user_agent: string | null
+        }
+        Insert: {
+          accessed_at?: string
+          id?: string
+          ip_hash?: string | null
+          link_id: string
+          outcome?: string
+          user_agent?: string | null
+        }
+        Update: {
+          accessed_at?: string
+          id?: string
+          ip_hash?: string | null
+          link_id?: string
+          outcome?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_share_access_log_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_share_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_share_links: {
         Row: {
           channel: string
@@ -2974,6 +3009,8 @@ export type Database = {
           item_id: string
           language_code: string
           last_viewed_at: string | null
+          max_views: number | null
+          password_hash: string | null
           recipient_email: string | null
           recipient_name: string | null
           recipient_phone: string | null
@@ -2992,6 +3029,8 @@ export type Database = {
           item_id: string
           language_code?: string
           last_viewed_at?: string | null
+          max_views?: number | null
+          password_hash?: string | null
           recipient_email?: string | null
           recipient_name?: string | null
           recipient_phone?: string | null
@@ -3010,6 +3049,8 @@ export type Database = {
           item_id?: string
           language_code?: string
           last_viewed_at?: string | null
+          max_views?: number | null
+          password_hash?: string | null
           recipient_email?: string | null
           recipient_name?: string | null
           recipient_phone?: string | null

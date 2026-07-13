@@ -208,3 +208,7 @@ verify_jwt = false
 
 [functions.ticket-csat-submit]
 verify_jwt = false
+
+[functions.catalog-share-resolve]
+verify_jwt = false
+
