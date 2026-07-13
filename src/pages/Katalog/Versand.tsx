@@ -61,6 +61,34 @@ export default function KatalogVersand() {
   };
   useEffect(() => { load(); }, []);
 
+  // Realtime: live-Update bei neuen Aufrufen / Widerruf / neuen Links
+  useEffect(() => {
+    const c = supabase as any;
+    const channel = c
+      .channel('catalog_share_links_rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catalog_share_links' }, (payload: any) => {
+        setLinks((prev) => {
+          if (payload.eventType === 'INSERT') {
+            if (prev.find((l) => l.id === payload.new.id)) return prev;
+            return [payload.new as Link, ...prev];
+          }
+          if (payload.eventType === 'DELETE') {
+            return prev.filter((l) => l.id !== payload.old.id);
+          }
+          return prev.map((l) => (l.id === payload.new.id ? { ...l, ...payload.new } : l));
+        });
+        if (payload.eventType === 'UPDATE'
+          && payload.new?.view_count != null
+          && payload.old?.view_count != null
+          && payload.new.view_count > payload.old.view_count) {
+          toast({ title: 'Neuer Aufruf', description: `Link ${String(payload.new.token).slice(0, 8)}… wurde geöffnet` });
+        }
+      })
+      .subscribe();
+    return () => { c.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const create = async () => {
     if (!form.item_id) { toast({ title: 'Artikel wählen', variant: 'destructive' }); return; }
     setSaving(true);
