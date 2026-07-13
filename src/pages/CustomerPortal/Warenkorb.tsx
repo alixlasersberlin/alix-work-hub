@@ -141,6 +141,25 @@ export default function CustomerPortalWarenkorb() {
       }));
       const { error: e2 } = await c.from('catalog_portal_inquiry_items').insert(positions);
       if (e2) throw e2;
+
+      // Strukturierter Checkout-Datensatz
+      const address = (addrStreet || addrZip || addrCity || addrCountry) ? {
+        street: addrStreet || null, zip: addrZip || null, city: addrCity || null, country: addrCountry || null,
+      } : null;
+      await c.from('catalog_portal_checkouts').insert({
+        inquiry_id: inq.id,
+        customer_id: ctx?.customerId ?? null,
+        portal_user_id: portalUserId,
+        contact_name: contactName || ctx?.companyName || null,
+        contact_email: contactEmail || null,
+        contact_phone: contactPhone || null,
+        customer_reference: customerReference || null,
+        desired_date: deliveryDate || null,
+        delivery_address: address,
+        notes: message.trim() || null,
+        status: 'submitted',
+      });
+
       // clear cart
       await c.from('catalog_portal_cart_items').delete().eq('portal_user_id', portalUserId);
       toast.success(`Sammelanfrage ${inq.inquiry_number} gesendet.`);
