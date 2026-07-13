@@ -381,11 +381,11 @@ export default function TicketsList() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Kategorie</TableHead>
                         <TableHead>Ticket</TableHead>
                         <TableHead>Kunde</TableHead>
                         <TableHead>Gerät</TableHead>
                         <TableHead>Seriennr.</TableHead>
-                        <TableHead>Kategorie</TableHead>
                         <TableHead>Abteilung</TableHead>
                         <TableHead>Priorität</TableHead>
                         <TableHead>Status</TableHead>
