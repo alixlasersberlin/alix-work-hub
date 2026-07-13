@@ -33,7 +33,8 @@ export default function KatalogExport() {
   const [statusOnly, setStatusOnly] = useState(true);
   const [withImages, setWithImages] = useState(true);
   const [groupByCategory, setGroupByCategory] = useState(true);
-  const [busy, setBusy] = useState<'xlsx' | 'pdf' | null>(null);
+  const [busy, setBusy] = useState<'xlsx' | 'pdf' | 'csv' | null>(null);
+  const [csvSep, setCsvSep] = useState<';' | ','>(';');
 
   useEffect(() => {
     (async () => {
@@ -125,6 +126,49 @@ export default function KatalogExport() {
       toast({ title: `${rows.length} Artikel exportiert` });
     } catch (e: any) {
       toast({ title: 'Export fehlgeschlagen', description: e.message, variant: 'destructive' });
+    } finally { setBusy(null); }
+  };
+
+  const exportCsv = async () => {
+    setBusy('csv');
+    try {
+      const { items, prices, descs } = await loadData();
+      const priceByItem: Record<string, any> = {};
+      prices.forEach((p: any) => { priceByItem[p.item_id] = p; });
+      const descByItem: Record<string, any> = {};
+      descs.forEach((d: any) => { descByItem[d.item_id] = d; });
+
+      const headers = ['SKU','Name','Marke','Modell','Status','Kurztext','Langtext','UVP netto','UVP brutto','VK netto','VK brutto','Waehrung','Steuersatz','Preisstatus'];
+      const escape = (v: any) => {
+        const s = v == null ? '' : String(v);
+        if (s.includes(csvSep) || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+          return `"${s.replace(/"/g, '""')}"`;
+        }
+        return s;
+      };
+      const lines = [headers.join(csvSep)];
+      for (const i of items as any[]) {
+        const p = priceByItem[i.id] ?? {};
+        const d = descByItem[i.id] ?? {};
+        lines.push([
+          i.sku, i.name, i.brand ?? '', i.model ?? '', i.status,
+          d.short_description ?? '', d.long_description ?? '',
+          p.uvp_net ?? '', p.uvp_gross ?? p.standard_gross ?? '',
+          p.sale_net ?? '', p.sale_gross ?? '',
+          p.currency_code ?? '', p.tax_rate ?? '', p.price_status ?? '',
+        ].map(escape).join(csvSep));
+      }
+      // BOM für Excel-Kompatibilität mit Umlauten
+      const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `katalog_export_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: `${items.length} Artikel als CSV exportiert` });
+    } catch (e: any) {
+      toast({ title: 'CSV-Export fehlgeschlagen', description: e.message, variant: 'destructive' });
     } finally { setBusy(null); }
   };
 
@@ -323,11 +367,22 @@ export default function KatalogExport() {
         </label>
       </Card>
 
-      <Card className="p-4 flex flex-wrap gap-3">
+      <Card className="p-4 flex flex-wrap gap-3 items-center">
         <Button onClick={exportXlsx} disabled={busy !== null}>
           {busy === 'xlsx' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />}
           Excel exportieren
         </Button>
+        <Button onClick={exportCsv} disabled={busy !== null} variant="outline">
+          {busy === 'csv' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileSpreadsheet className="h-4 w-4 mr-2" />}
+          CSV exportieren
+        </Button>
+        <Select value={csvSep} onValueChange={(v) => setCsvSep(v as ';' | ',')}>
+          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value=";">Trenner: Semikolon (;)</SelectItem>
+            <SelectItem value=",">Trenner: Komma (,)</SelectItem>
+          </SelectContent>
+        </Select>
         <Button onClick={exportPdf} disabled={busy !== null} variant="secondary">
           {busy === 'pdf' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
           Preisliste-PDF exportieren
