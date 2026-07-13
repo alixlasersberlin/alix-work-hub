@@ -1157,6 +1157,34 @@ function AppRoutes() {
             <Route path="import-managed" element={<KatalogImportManaged />} />
           </Route>
 
+          {/* Alias-Routen unter /catalog (intern) – spiegeln /katalog 1:1 */}
+          <Route path="/catalog" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Katalog','Katalog Preise','Vertrieb','Vertriebsleitung','Marketing','Service','Geschäftsführung']}><KatalogLayoutLazy /></ProtectedRoute>}>
+            <Route index element={<KatalogDashboard />} />
+            <Route path="artikel" element={<KatalogArtikel />} />
+            <Route path="artikel/:id" element={<KatalogArtikelDetail />} />
+            <Route path="kategorien" element={<KatalogKategorien />} />
+            <Route path="laender" element={<KatalogLaender />} />
+            <Route path="niederlassungen" element={<KatalogNiederlassungen />} />
+            <Route path="preisregeln" element={<KatalogPreisregeln />} />
+            <Route path="protokolle" element={<KatalogProtokolle />} />
+            <Route path="import" element={<KatalogImport />} />
+            <Route path="export" element={<KatalogExport />} />
+            <Route path="versand" element={<KatalogVersand />} />
+            <Route path="freigabe" element={<KatalogFreigabe />} />
+            <Route path="uebersetzung" element={<KatalogBulkUebersetzung />} />
+            <Route path="analytics" element={<KatalogAnalytics />} />
+            <Route path="preishistorie" element={<KatalogPreishistorie />} />
+            <Route path="bundles" element={<KatalogBundles />} />
+            <Route path="anfragen" element={<KatalogAnfragen />} />
+            <Route path="import-csv" element={<KatalogImportCsv />} />
+            <Route path="preisgruppen" element={<KatalogPreisgruppen />} />
+            <Route path="checkouts" element={<KatalogCheckouts />} />
+            <Route path="reminders" element={<KatalogReminders />} />
+            <Route path="pdf-templates" element={<KatalogPdfTemplates />} />
+            <Route path="import-managed" element={<KatalogImportManaged />} />
+          </Route>
+
+
 
           <Route path="/iso" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin', 'QM']}><IsoLayoutLazy /></ProtectedRoute>}>
             <Route index element={<IsoDashboard />} />
@@ -1264,6 +1292,8 @@ function AppRoutes() {
         <Route path="/sign/pdf/:signatureId" element={<AlixSignPdfDownload />} />
         <Route path="/d/:token" element={<OrderDocDownload />} />
         <Route path="/catalog/share/:token" element={<KatalogSharePublic />} />
+        <Route path="/catalog/portal" element={<Navigate to="/kunde/katalog" replace />} />
+
         <Route path="/beratung" element={<PublicBeratung />} />
         <Route path="/angebot" element={<PublicBeratung />} />
         <Route path="/kunde/login" element={<CustomerPortalLogin />} />
