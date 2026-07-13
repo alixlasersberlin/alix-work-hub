@@ -145,9 +145,21 @@ export default function CatalogSharePublic() {
           <Card className="p-6">
             <h2 className="font-semibold mb-3">Preis</h2>
             <div className="grid grid-cols-2 gap-3 text-sm">
-              {price.uvp_net != null && <div><div className="text-muted-foreground">UVP netto</div><div className="text-lg font-semibold">{Number(price.uvp_net).toFixed(2)}</div></div>}
-              {price.uvp_gross != null && <div><div className="text-muted-foreground">UVP brutto</div><div className="text-lg font-semibold">{Number(price.uvp_gross).toFixed(2)}</div></div>}
+              {price.uvp_net != null && <div><div className="text-muted-foreground">UVP netto</div><div className="text-lg font-semibold">{fmtMoney(Number(price.uvp_net), price.currency_code ?? 'EUR')}</div></div>}
+              {price.uvp_gross != null && <div><div className="text-muted-foreground">UVP brutto</div><div className="text-lg font-semibold">{fmtMoney(Number(price.uvp_gross), price.currency_code ?? 'EUR')}</div></div>}
+              {price.sale_net != null && <div><div className="text-muted-foreground">Aktion netto</div><div className="text-lg font-semibold text-primary">{fmtMoney(Number(price.sale_net), price.currency_code ?? 'EUR')}</div></div>}
+              {price.sale_gross != null && <div><div className="text-muted-foreground">Aktion brutto</div><div className="text-lg font-semibold text-primary">{fmtMoney(Number(price.sale_gross), price.currency_code ?? 'EUR')}</div></div>}
               {price.tax_rate != null && <div className="col-span-2 text-xs text-muted-foreground">inkl. {Number(price.tax_rate)}% MwSt</div>}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2 print:hidden">
+              <Button size="sm" onClick={() => {
+                const to = data.contact?.email ?? 'info@alixwork.de';
+                const subj = encodeURIComponent(`Anfrage zu ${item.name} (${item.sku})`);
+                const body = encodeURIComponent(`Guten Tag,\n\nich interessiere mich für den Artikel ${item.name} (SKU ${item.sku}) und bitte um ein Angebot.\n\nMenge: \nGewünschter Liefertermin: \n\nVielen Dank.`);
+                window.location.href = `mailto:${to}?subject=${subj}&body=${body}`;
+              }}>
+                <MessageSquarePlus className="h-4 w-4 mr-1" /> Anfrage per E-Mail
+              </Button>
             </div>
           </Card>
         )}
