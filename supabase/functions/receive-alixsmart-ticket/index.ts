@@ -148,6 +148,7 @@ Deno.serve(async (req) => {
     status: mappedStatus,
     priority: body.priority || 'normal',
     department: body.department || 'service',
+    category: (body.category ?? body.kategorie ?? body.service ?? null) || null,
     customer_visible_status: body.customer_visible_status || 'Ticket eingegangen',
     internal_note: body.internal_note ?? null,
     last_synced_at: now,
