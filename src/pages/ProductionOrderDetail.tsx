@@ -9,6 +9,7 @@ import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
 
 export default function ProductionOrderDetail() {
   const { id } = useParams();
@@ -195,6 +196,11 @@ export default function ProductionOrderDetail() {
           </table>
         )}
       </Card>
+
+      <CatalogSnapshotsPanel
+        usedInType="production_order"
+        usedInIds={[data?.id, data?.production_order_number, data?.order_id].filter(Boolean)}
+      />
     </div>
   );
 }
