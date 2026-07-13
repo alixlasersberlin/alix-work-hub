@@ -500,6 +500,7 @@ const navItems: NavItem[] = [
       { path: '/katalog/laender', label: 'Länder & Währungen', icon: Globe, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise'] },
       { path: '/katalog/niederlassungen', label: 'Niederlassungen', icon: Building2, roles: ['Super Admin', 'Admin', 'Katalog'] },
       { path: '/katalog/preisregeln', label: 'Preisregeln', icon: ListChecks, roles: ['Super Admin', 'Admin', 'Katalog Preise'] },
+      { path: '/katalog/import', label: 'Import', icon: Upload, roles: ['Super Admin', 'Admin', 'Katalog'] },
       { path: '/katalog/protokolle', label: 'Änderungsprotokoll', icon: ScrollText, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise'] },
     ],
   },
