@@ -276,6 +276,7 @@ const KatalogLaender = lazy(() => import("./pages/Katalog/Laender"));
 const KatalogNiederlassungen = lazy(() => import("./pages/Katalog/Niederlassungen"));
 const KatalogPreisregeln = lazy(() => import("./pages/Katalog/Preisregeln"));
 const KatalogProtokolle = lazy(() => import("./pages/Katalog/Protokolle"));
+const KatalogFreigabe = lazy(() => import("./pages/Katalog/Freigabe"));
 const KatalogImport = lazy(() => import("./pages/Katalog/Import"));
 const KatalogExport = lazy(() => import("./pages/Katalog/Export"));
 const KatalogVersand = lazy(() => import("./pages/Katalog/Versand"));
