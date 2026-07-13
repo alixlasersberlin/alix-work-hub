@@ -430,9 +430,44 @@ export default function TicketsList() {
                             {r.last_synced_at ? new Date(r.last_synced_at).toLocaleString('de-DE') : '—'}
                           </TableCell>
                           <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                            <Button size="sm" variant="outline" asChild>
-                              <Link to={`/tickets/${r.id}`}>Details <ArrowRight className="w-3 h-3 ml-1" /></Link>
-                            </Button>
+                            <div className="inline-flex items-center gap-1">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button size="sm" variant="outline" title="Kategorie zuweisen">
+                                    <Tag className="w-3 h-3 mr-1" /> Kategorie
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-56 p-2" align="end">
+                                  <div className="text-xs text-muted-foreground mb-2 px-1">Kategorie wählen</div>
+                                  <div className="grid gap-1 max-h-64 overflow-auto">
+                                    {CATEGORY_OPTIONS.map(c => (
+                                      <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => updateCategory(r.id, c)}
+                                        className={`text-left text-sm px-2 py-1.5 rounded hover:bg-muted ${r.category === c ? 'bg-muted font-medium' : ''}`}
+                                      >
+                                        {c}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                              <Button size="sm" variant="outline" asChild>
+                                <Link to={`/tickets/${r.id}`}>Details <ArrowRight className="w-3 h-3 ml-1" /></Link>
+                              </Button>
+                              {isSuperAdmin && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-red-400 border-red-500/40 hover:bg-red-500/10"
+                                  onClick={() => deleteTicket(r.id)}
+                                  title="Ticket löschen (Super Admin)"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
