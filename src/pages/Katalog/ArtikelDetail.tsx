@@ -211,6 +211,8 @@ export default function KatalogArtikelDetail() {
           <TabsTrigger value="beschreibungen">Beschreibungen</TabsTrigger>
           <TabsTrigger value="bilder">Bilder</TabsTrigger>
           <TabsTrigger value="preise">Länderpreise</TabsTrigger>
+          <TabsTrigger value="kategorien">Kategorien</TabsTrigger>
+          <TabsTrigger value="verwendung">Verwendung</TabsTrigger>
           <TabsTrigger value="verlauf">Änderungsverlauf</TabsTrigger>
         </TabsList>
 
