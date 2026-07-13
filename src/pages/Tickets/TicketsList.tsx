@@ -400,6 +400,13 @@ export default function TicketsList() {
                           onClick={() => navigate(`/tickets/${r.id}`)}
                           className="cursor-pointer hover:bg-muted/40"
                         >
+                          <TableCell className="text-sm">
+                            {r.category ? (
+                              <Badge variant="outline">{r.category}</Badge>
+                            ) : r.auto_category ? (
+                              <Badge variant="outline" className="opacity-70">{r.auto_category}</Badge>
+                            ) : '—'}
+                          </TableCell>
                           <TableCell>
                             <div className="font-medium text-foreground">
                               {r.title || r.external_ticket_id || r.id.slice(0, 8)}
@@ -416,13 +423,6 @@ export default function TicketsList() {
                           </TableCell>
                           <TableCell className="text-sm">{r.device_name || '—'}</TableCell>
                           <TableCell className="text-sm font-mono">{r.serial_number || '—'}</TableCell>
-                          <TableCell className="text-sm">
-                            {r.category ? (
-                              <Badge variant="outline">{r.category}</Badge>
-                            ) : r.auto_category ? (
-                              <Badge variant="outline" className="opacity-70">{r.auto_category}</Badge>
-                            ) : '—'}
-                          </TableCell>
                           <TableCell><Badge variant="outline">{r.department}</Badge></TableCell>
                           <TableCell><Badge variant="outline" className={priorityColor(r.priority)}>{r.priority}</Badge></TableCell>
                           <TableCell><Badge variant="outline" className={statusColor(r.status)}>{r.status}</Badge></TableCell>
