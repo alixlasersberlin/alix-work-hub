@@ -2642,6 +2642,78 @@ export type Database = {
           },
         ]
       }
+      catalog_share_links: {
+        Row: {
+          channel: string
+          country_id: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          item_id: string
+          language_code: string
+          last_viewed_at: string | null
+          recipient_email: string | null
+          recipient_name: string | null
+          recipient_phone: string | null
+          revoked_at: string | null
+          token: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          channel?: string
+          country_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          item_id: string
+          language_code?: string
+          last_viewed_at?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          revoked_at?: string | null
+          token: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          channel?: string
+          country_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          item_id?: string
+          language_code?: string
+          last_viewed_at?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          recipient_phone?: string | null
+          revoked_at?: string | null
+          token?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_share_links_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_share_links_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       copilot_audit_log: {
         Row: {
           action: string

@@ -278,6 +278,8 @@ const KatalogPreisregeln = lazy(() => import("./pages/Katalog/Preisregeln"));
 const KatalogProtokolle = lazy(() => import("./pages/Katalog/Protokolle"));
 const KatalogImport = lazy(() => import("./pages/Katalog/Import"));
 const KatalogExport = lazy(() => import("./pages/Katalog/Export"));
+const KatalogVersand = lazy(() => import("./pages/Katalog/Versand"));
+const KatalogSharePublic = lazy(() => import("./pages/Katalog/SharePublic"));
 const AicLayout = lazy(() => import("./pages/AIC/Layout"));
 const AicDashboard = lazy(() => import("./pages/AIC/Dashboard"));
 const AicUnternehmen = lazy(() => import("./pages/AIC/Unternehmen"));
@@ -1126,6 +1128,7 @@ function AppRoutes() {
             <Route path="protokolle" element={<KatalogProtokolle />} />
             <Route path="import" element={<KatalogImport />} />
             <Route path="export" element={<KatalogExport />} />
+            <Route path="versand" element={<KatalogVersand />} />
           </Route>
 
 
@@ -1234,6 +1237,7 @@ function AppRoutes() {
         <Route path="/sign/:token" element={<AlixSignPublic />} />
         <Route path="/sign/pdf/:signatureId" element={<AlixSignPdfDownload />} />
         <Route path="/d/:token" element={<OrderDocDownload />} />
+        <Route path="/catalog/share/:token" element={<KatalogSharePublic />} />
         <Route path="/beratung" element={<PublicBeratung />} />
         <Route path="/angebot" element={<PublicBeratung />} />
         <Route path="/kunde/login" element={<CustomerPortalLogin />} />
