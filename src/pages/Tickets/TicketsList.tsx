@@ -495,7 +495,7 @@ export default function TicketsList() {
             aria-modal="true"
             aria-labelledby="create-ticket-title"
             aria-describedby="create-ticket-description"
-            className="relative my-auto grid w-[calc(100dvw-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] gap-4 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg"
+            className="relative my-auto grid w-[calc(100dvw-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] gap-4 overflow-y-auto rounded-md border bg-background p-6 shadow-lg"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <button
