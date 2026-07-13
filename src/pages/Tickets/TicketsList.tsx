@@ -474,6 +474,16 @@ export default function TicketsList() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="md:col-span-2">
+              <Label className="text-xs">Kategorie</Label>
+              <Select value={nt.category || '__none'} onValueChange={(v) => setNt({ ...nt, category: v === '__none' ? '' : v })}>
+                <SelectTrigger><SelectValue placeholder="Kategorie wählen" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none">— keine —</SelectItem>
+                  {CATEGORY_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Abbrechen</Button>
