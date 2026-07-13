@@ -3,8 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save, Trash2, Plus, X } from 'lucide-react';
+import { Loader2, Save, Trash2, Plus, X, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
+import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalog/KatalogPickerDialog';
 
 interface Props {
   orderId: string;
@@ -31,6 +32,7 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [note, setNote] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -76,6 +78,24 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
       item_order: (prev[prev.length - 1]?.item_order ?? prev.length) + 1,
       _isNew: true,
     }]);
+  };
+
+  const addFromCatalog = (picked: KatalogPickResult[]) => {
+    setItems(prev => {
+      const startOrder = (prev[prev.length - 1]?.item_order ?? prev.length) + 1;
+      const additions: Item[] = picked.map((p, i) => ({
+        id: `new-${crypto.randomUUID()}`,
+        item_name: p.name,
+        sku: p.sku,
+        quantity: p.quantity,
+        rate: p.rate,
+        amount: p.quantity * p.rate,
+        item_order: startOrder + i,
+        _isNew: true,
+      }));
+      return [...prev, ...additions];
+    });
+    toast.success(`${picked.length} Artikel aus Katalog übernommen`);
   };
 
   const newTotal = items.reduce((s, it) => s + (Number(it.amount) || 0), 0);
@@ -266,9 +286,14 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
             </div>
 
             <div className="flex items-center justify-between">
-              <Button variant="outline" size="sm" onClick={addItem} className="gap-1.5">
-                <Plus className="w-3.5 h-3.5" /> Position hinzufügen
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={addItem} className="gap-1.5">
+                  <Plus className="w-3.5 h-3.5" /> Position hinzufügen
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)} className="gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5" /> Aus Katalog
+                </Button>
+              </div>
               <span className="text-xs text-muted-foreground">
                 {removedIds.length > 0 && `${removedIds.length} zu löschen · `}
                 {items.filter(i => i._isNew).length > 0 && `${items.filter(i => i._isNew).length} neu`}
@@ -295,6 +320,13 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
           </div>
         )}
       </div>
+      <KatalogPickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onPicked={addFromCatalog}
+        usedInType="order"
+        usedInId={orderId}
+      />
     </div>
   );
 }
