@@ -84,6 +84,7 @@ export default function AngebotErstellen() {
   const [includeAppendix, setIncludeAppendix] = useState(true);
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
   const [katalogPickerOpen, setKatalogPickerOpen] = useState(false);
+  const [pendingSnapshotIds, setPendingSnapshotIds] = useState<string[]>([]);
 
   // Zahlungsberechnung
   const [payType, setPayType] = useState<'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex' | 'Alix Smart Impulse'>('Direktkauf');
