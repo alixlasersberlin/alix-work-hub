@@ -486,7 +486,7 @@ export default function TicketsList() {
 
       {createOpen && createPortal(
         <div
-          className="fixed inset-0 z-[2147483646] flex items-center justify-center overflow-y-auto bg-background/85 p-4 backdrop-blur-sm sm:p-6"
+          className="fixed inset-0 z-[9000] flex items-center justify-center overflow-y-auto bg-background/85 p-4 backdrop-blur-sm sm:p-6"
           role="presentation"
           onMouseDown={closeCreateDialog}
         >
