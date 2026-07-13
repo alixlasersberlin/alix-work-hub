@@ -45,6 +45,7 @@ export default function KatalogVersand() {
   });
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'revoked'>('all');
   const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     const c = supabase as any;
