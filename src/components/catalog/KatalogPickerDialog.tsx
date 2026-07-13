@@ -126,11 +126,14 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
         const tax = Number(p.tax_rate ?? countryObj?.default_tax_rate ?? 19);
         const rate = Number(p.sale_gross ?? p.uvp_gross ?? p.sale_net ?? p.uvp_net ?? 0);
 
+        const imageUrl = imgByItem[id];
+
         // Snapshot einfrieren
         const snapshotPayload = {
           item: { id: item.id, sku: item.sku, name: item.name, brand: item.brand, model: item.model },
           price: p,
           description: d,
+          image_url: imageUrl ?? null,
           country: countryObj ? { id: countryObj.id, iso: countryObj.iso_code } : null,
           language,
           captured_at: new Date().toISOString(),
@@ -150,6 +153,8 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
           sku: item.sku,
           name: item.name,
           description: d.short_text ?? d.long_text ?? '',
+          long_text: d.long_text ?? undefined,
+          image_url: imageUrl,
           rate,
           tax_percentage: tax,
           quantity: selected[id] || 1,
