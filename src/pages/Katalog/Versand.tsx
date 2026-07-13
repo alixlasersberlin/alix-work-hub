@@ -45,6 +45,7 @@ export default function KatalogVersand() {
   });
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'revoked'>('all');
   const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const load = async () => {
     const c = supabase as any;
@@ -60,6 +61,34 @@ export default function KatalogVersand() {
     setLinks(ls ?? []);
   };
   useEffect(() => { load(); }, []);
+
+  // Realtime: live-Update bei neuen Aufrufen / Widerruf / neuen Links
+  useEffect(() => {
+    const c = supabase as any;
+    const channel = c
+      .channel('catalog_share_links_rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catalog_share_links' }, (payload: any) => {
+        setLinks((prev) => {
+          if (payload.eventType === 'INSERT') {
+            if (prev.find((l) => l.id === payload.new.id)) return prev;
+            return [payload.new as Link, ...prev];
+          }
+          if (payload.eventType === 'DELETE') {
+            return prev.filter((l) => l.id !== payload.old.id);
+          }
+          return prev.map((l) => (l.id === payload.new.id ? { ...l, ...payload.new } : l));
+        });
+        if (payload.eventType === 'UPDATE'
+          && payload.new?.view_count != null
+          && payload.old?.view_count != null
+          && payload.new.view_count > payload.old.view_count) {
+          toast({ title: 'Neuer Aufruf', description: `Link ${String(payload.new.token).slice(0, 8)}… wurde geöffnet` });
+        }
+      })
+      .subscribe();
+    return () => { c.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const create = async () => {
     if (!form.item_id) { toast({ title: 'Artikel wählen', variant: 'destructive' }); return; }
@@ -148,6 +177,24 @@ export default function KatalogVersand() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [links, statusFilter, search, items]);
 
+  const soonMs = 3 * 86400000;
+  const expiringSoon = useMemo(() => links.filter((l) =>
+    !l.revoked_at && l.expires_at
+    && new Date(l.expires_at).getTime() >= now.getTime()
+    && new Date(l.expires_at).getTime() - now.getTime() < soonMs
+  ).length, [links, now.getTime()]);
+
+  const revokeMany = async () => {
+    const ids = Object.keys(selected).filter((id) => selected[id]);
+    if (ids.length === 0) return;
+    if (!confirm(`${ids.length} Link(s) widerrufen?`)) return;
+    const { error } = await (supabase as any).from('catalog_share_links')
+      .update({ revoked_at: new Date().toISOString() }).in('id', ids);
+    if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    toast({ title: `${ids.length} widerrufen` });
+    setSelected({});
+  };
+
   return (
     <div className="space-y-4">
       <Card className="p-4 flex gap-3 items-start">
@@ -157,7 +204,7 @@ export default function KatalogVersand() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <Card><CardContent className="pt-6 flex items-center justify-between">
           <div><div className="text-2xl font-bold">{kpis.active}</div><div className="text-xs text-muted-foreground">Aktive Links</div></div>
           <LinkIcon className="h-6 w-6 text-emerald-500" />
@@ -165,6 +212,10 @@ export default function KatalogVersand() {
         <Card><CardContent className="pt-6 flex items-center justify-between">
           <div><div className="text-2xl font-bold">{kpis.totalViews}</div><div className="text-xs text-muted-foreground">Aufrufe gesamt</div></div>
           <Eye className="h-6 w-6 text-primary" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{expiringSoon}</div><div className="text-xs text-muted-foreground">Läuft &lt; 3 Tage</div></div>
+          <Clock className="h-6 w-6 text-orange-500" />
         </CardContent></Card>
         <Card><CardContent className="pt-6 flex items-center justify-between">
           <div><div className="text-2xl font-bold">{kpis.expired}</div><div className="text-xs text-muted-foreground">Abgelaufen</div></div>
@@ -175,6 +226,7 @@ export default function KatalogVersand() {
           <XCircle className="h-6 w-6 text-red-500" />
         </CardContent></Card>
       </div>
+
 
       {kpis.top.length > 0 && kpis.top[0].view_count > 0 && (
         <Card className="p-4">
@@ -213,6 +265,12 @@ export default function KatalogVersand() {
             <Label className="text-xs">Suche</Label>
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="SKU, Name, Empfänger…" className="w-64" />
           </div>
+          {Object.values(selected).some(Boolean) && (
+            <Button variant="destructive" size="sm" onClick={revokeMany}>
+              <Ban className="h-4 w-4 mr-1" />
+              {Object.values(selected).filter(Boolean).length} widerrufen
+            </Button>
+          )}
         </div>
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
@@ -296,6 +354,18 @@ export default function KatalogVersand() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8">
+                <input
+                  type="checkbox"
+                  aria-label="Alle auswählen"
+                  checked={filteredLinks.length > 0 && filteredLinks.every((l) => selected[l.id])}
+                  onChange={(e) => {
+                    const next: Record<string, boolean> = { ...selected };
+                    filteredLinks.forEach((l) => { next[l.id] = e.target.checked; });
+                    setSelected(next);
+                  }}
+                />
+              </TableHead>
               <TableHead>Artikel</TableHead>
               <TableHead>Empfänger</TableHead>
               <TableHead>Kanal</TableHead>
@@ -307,13 +377,21 @@ export default function KatalogVersand() {
           </TableHeader>
           <TableBody>
             {filteredLinks.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Keine Links passen zum Filter</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Keine Links passen zum Filter</TableCell></TableRow>
             )}
             {filteredLinks.map((l) => {
               const item = items.find((i) => i.id === l.item_id);
               const expired = l.expires_at && new Date(l.expires_at) < new Date();
               return (
-                <TableRow key={l.id}>
+                <TableRow key={l.id} className={selected[l.id] ? 'bg-primary/5' : ''}>
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      aria-label="Zeile auswählen"
+                      checked={!!selected[l.id]}
+                      onChange={(e) => setSelected((s) => ({ ...s, [l.id]: e.target.checked }))}
+                    />
+                  </TableCell>
                   <TableCell className="text-sm">{item ? `${item.sku} · ${item.name}` : l.item_id.slice(0, 8)}</TableCell>
                   <TableCell className="text-xs">
                     {l.recipient_name ?? '—'}
