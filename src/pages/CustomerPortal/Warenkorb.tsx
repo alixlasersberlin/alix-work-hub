@@ -41,6 +41,11 @@ export default function CustomerPortalWarenkorb() {
   const [contactEmail, setContactEmail] = useState(ctx?.email ?? '');
   const [contactPhone, setContactPhone] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
+  const [customerReference, setCustomerReference] = useState('');
+  const [addrStreet, setAddrStreet] = useState('');
+  const [addrZip, setAddrZip] = useState('');
+  const [addrCity, setAddrCity] = useState('');
+  const [addrCountry, setAddrCountry] = useState('');
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
@@ -136,6 +141,25 @@ export default function CustomerPortalWarenkorb() {
       }));
       const { error: e2 } = await c.from('catalog_portal_inquiry_items').insert(positions);
       if (e2) throw e2;
+
+      // Strukturierter Checkout-Datensatz
+      const address = (addrStreet || addrZip || addrCity || addrCountry) ? {
+        street: addrStreet || null, zip: addrZip || null, city: addrCity || null, country: addrCountry || null,
+      } : null;
+      await c.from('catalog_portal_checkouts').insert({
+        inquiry_id: inq.id,
+        customer_id: ctx?.customerId ?? null,
+        portal_user_id: portalUserId,
+        contact_name: contactName || ctx?.companyName || null,
+        contact_email: contactEmail || null,
+        contact_phone: contactPhone || null,
+        customer_reference: customerReference || null,
+        desired_date: deliveryDate || null,
+        delivery_address: address,
+        notes: message.trim() || null,
+        status: 'submitted',
+      });
+
       // clear cart
       await c.from('catalog_portal_cart_items').delete().eq('portal_user_id', portalUserId);
       toast.success(`Sammelanfrage ${inq.inquiry_number} gesendet.`);
@@ -218,6 +242,12 @@ export default function CustomerPortalWarenkorb() {
               <div><Label>E-Mail</Label><Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} /></div>
               <div><Label>Telefon</Label><Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} /></div>
               <div><Label>Gewünschter Liefertermin</Label><Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} /></div>
+              <div><Label>Ihre Referenz / Bestellnummer</Label><Input value={customerReference} onChange={(e) => setCustomerReference(e.target.value)} placeholder="z. B. PO-2026-0123" /></div>
+              <div className="md:col-span-2 border-t pt-3 mt-1"><Label className="text-xs font-semibold uppercase text-muted-foreground">Lieferadresse (optional)</Label></div>
+              <div><Label>Straße & Nr.</Label><Input value={addrStreet} onChange={(e) => setAddrStreet(e.target.value)} /></div>
+              <div><Label>PLZ</Label><Input value={addrZip} onChange={(e) => setAddrZip(e.target.value)} /></div>
+              <div><Label>Ort</Label><Input value={addrCity} onChange={(e) => setAddrCity(e.target.value)} /></div>
+              <div><Label>Land</Label><Input value={addrCountry} onChange={(e) => setAddrCountry(e.target.value)} placeholder="DE" /></div>
               <div className="md:col-span-2">
                 <Label>Nachricht an unser Team</Label>
                 <Textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)}

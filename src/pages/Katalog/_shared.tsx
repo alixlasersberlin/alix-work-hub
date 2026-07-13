@@ -16,6 +16,8 @@ const tabs = [
   { to: '/katalog/versand', label: 'Freigabelinks' },
   { to: '/katalog/freigabe', label: 'Freigabe-Center', pendingBadge: true as const },
   { to: '/katalog/anfragen', label: 'Portal-Anfragen' },
+  { to: '/katalog/checkouts', label: 'Checkouts' },
+  { to: '/katalog/preisgruppen', label: 'Preisgruppen' },
   { to: '/katalog/uebersetzung', label: 'KI-Übersetzung' },
   { to: '/katalog/analytics', label: 'Analytics' },
   { to: '/katalog/preishistorie', label: 'Preishistorie' },

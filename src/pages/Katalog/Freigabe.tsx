@@ -43,6 +43,7 @@ export default function KatalogFreigabe() {
 
   const [items, setItems] = useState<ItemPending[]>([]);
   const [prices, setPrices] = useState<PricePending[]>([]);
+  const [pendingChanges, setPendingChanges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selItems, setSelItems] = useState<Record<string, boolean>>({});
   const [selPrices, setSelPrices] = useState<Record<string, boolean>>({});
@@ -50,14 +51,16 @@ export default function KatalogFreigabe() {
 
   const load = async () => {
     setLoading(true);
-    const [{ data: it }, { data: pr }] = await Promise.all([
+    const [{ data: it }, { data: pr }, { data: pc }] = await Promise.all([
       client.from('catalog_items').select('id, sku, name, status, submitted_at, submitted_by, last_edited_by')
         .eq('status', 'zur_pruefung').is('approved_at', null).order('submitted_at', { ascending: true }),
       client.from('catalog_item_prices').select('id, item_id, currency_code, standard_gross, price_status, submitted_at, last_edited_by, reviewed_by, reviewed_at, review_note, item:catalog_items(sku,name), country:catalog_countries(iso2,name)')
         .eq('price_status', 'zur_freigabe').is('approved_at', null).order('submitted_at', { ascending: true }),
+      client.from('catalog_pending_changes').select('*').eq('status', 'pending').order('created_at', { ascending: true }),
     ]);
     setItems((it ?? []) as ItemPending[]);
     setPrices((pr ?? []) as PricePending[]);
+    setPendingChanges(pc ?? []);
     setLoading(false);
   };
 
@@ -170,6 +173,43 @@ export default function KatalogFreigabe() {
     toast({ title: `${ids.length} Preise abgelehnt` });
     setSelPrices({});
     load();
+  };
+
+  const applyPendingChange = async (pc: any) => {
+    if (pc.requested_by === user?.id) { toast({ title: 'Vier-Augen-Prinzip', description: 'Eigene Änderungen können nicht freigegeben werden.', variant: 'destructive' }); return; }
+    setBusy(true);
+    try {
+      const patch = pc.new_value ?? {};
+      let error: any = null;
+      if (pc.entity_type === 'item_description') {
+        ({ error } = await client.from('catalog_item_descriptions').update(patch).eq('id', pc.entity_id));
+      } else if (pc.entity_type === 'item_price') {
+        ({ error } = await client.from('catalog_item_prices').update(patch).eq('id', pc.entity_id));
+      } else if (pc.entity_type === 'item') {
+        ({ error } = await client.from('catalog_items').update(patch).eq('id', pc.entity_id));
+      } else if (pc.entity_type === 'bundle') {
+        ({ error } = await client.from('catalog_bundles').update(patch).eq('id', pc.entity_id));
+      } else {
+        toast({ title: 'Nicht anwendbar', description: `Unbekannter Typ: ${pc.entity_type}`, variant: 'destructive' });
+        setBusy(false); return;
+      }
+      if (error) throw error;
+      await client.from('catalog_pending_changes').update({ status: 'applied', approved_by: user?.id, applied_at: new Date().toISOString() }).eq('id', pc.id);
+      await client.from('catalog_change_approvals').insert({ pending_id: pc.id, decision: 'approve', decided_by: user?.id });
+      toast({ title: 'Freigegeben & angewendet' });
+      load();
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e.message, variant: 'destructive' });
+    } finally { setBusy(false); }
+  };
+
+  const rejectPendingChange = async (pc: any) => {
+    const reason = window.prompt('Ablehnungsgrund:', '') ?? '';
+    if (reason === null) return;
+    setBusy(true);
+    await client.from('catalog_pending_changes').update({ status: 'rejected', approved_by: user?.id, rejection_reason: reason || null }).eq('id', pc.id);
+    await client.from('catalog_change_approvals').insert({ pending_id: pc.id, decision: 'reject', comment: reason || null, decided_by: user?.id });
+    setBusy(false); toast({ title: 'Abgelehnt' }); load();
   };
 
   if (!canApprove) {
@@ -331,6 +371,58 @@ export default function KatalogFreigabe() {
                       <Button asChild variant="ghost" size="sm">
                         <Link to={`/katalog/artikel/${p.item_id}`}><Eye className="h-4 w-4" /></Link>
                       </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Ausstehende Änderungen (Vier-Augen)
+            <span className="text-xs font-normal text-muted-foreground ml-2">Preis-/Textänderungen werden erst nach Zweit-Freigabe wirksam</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Typ</TableHead>
+                <TableHead>Feld</TableHead>
+                <TableHead>Alt → Neu</TableHead>
+                <TableHead>Grund</TableHead>
+                <TableHead>Eingereicht</TableHead>
+                <TableHead className="w-40 text-right">Aktion</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pendingChanges.length === 0 && (
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Keine ausstehenden Änderungen.</TableCell></TableRow>
+              )}
+              {pendingChanges.map((pc) => {
+                const own = pc.requested_by === user?.id;
+                return (
+                  <TableRow key={pc.id} className={own ? 'opacity-60' : ''}>
+                    <TableCell className="text-xs uppercase text-muted-foreground">{pc.entity_type}</TableCell>
+                    <TableCell className="text-xs">{pc.field_scope ?? '—'}</TableCell>
+                    <TableCell className="text-xs max-w-md">
+                      <div className="text-muted-foreground line-through truncate">{pc.old_value ? JSON.stringify(pc.old_value) : '—'}</div>
+                      <div className="font-mono truncate">{JSON.stringify(pc.new_value)}</div>
+                    </TableCell>
+                    <TableCell className="text-xs">{pc.reason ?? '—'}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{new Date(pc.created_at).toLocaleString('de-DE')}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" variant="outline" disabled={busy || own} onClick={() => rejectPendingChange(pc)}>
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" disabled={busy || own} onClick={() => applyPendingChange(pc)}>
+                          <CheckCircle2 className="h-4 w-4 mr-1" />Freigeben
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
