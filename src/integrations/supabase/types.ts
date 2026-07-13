@@ -2017,6 +2017,44 @@ export type Database = {
           },
         ]
       }
+      catalog_bundle_price_tiers: {
+        Row: {
+          bundle_id: string
+          created_at: string
+          discount_pct: number
+          id: string
+          min_quantity: number
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          bundle_id: string
+          created_at?: string
+          discount_pct?: number
+          id?: string
+          min_quantity: number
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bundle_id?: string
+          created_at?: string
+          discount_pct?: number
+          id?: string
+          min_quantity?: number
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_bundle_price_tiers_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_bundles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_bundles: {
         Row: {
           category: string | null
