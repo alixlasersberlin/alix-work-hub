@@ -80,6 +80,24 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
     }]);
   };
 
+  const addFromCatalog = (picked: KatalogPickResult[]) => {
+    setItems(prev => {
+      const startOrder = (prev[prev.length - 1]?.item_order ?? prev.length) + 1;
+      const additions: Item[] = picked.map((p, i) => ({
+        id: `new-${crypto.randomUUID()}`,
+        item_name: p.name,
+        sku: p.sku,
+        quantity: p.quantity,
+        rate: p.rate,
+        amount: p.quantity * p.rate,
+        item_order: startOrder + i,
+        _isNew: true,
+      }));
+      return [...prev, ...additions];
+    });
+    toast.success(`${picked.length} Artikel aus Katalog übernommen`);
+  };
+
   const newTotal = items.reduce((s, it) => s + (Number(it.amount) || 0), 0);
 
   async function handleSave() {
