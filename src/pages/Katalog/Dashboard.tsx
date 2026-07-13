@@ -47,7 +47,7 @@ export default function KatalogDashboard() {
         client.from('catalog_item_descriptions').select('item_id, translation_status'),
         client.from('catalog_item_prices').select('id', { count: 'exact', head: true }).eq('price_status', 'zur_freigabe').is('approved_at', null),
         client.from('catalog_items').select('id', { count: 'exact', head: true }).eq('status', 'zur_pruefung').is('approved_at', null),
-        client.from('catalog_change_log').select('id, entity_type, entity_id, action, performed_at, performed_by, change_summary').order('performed_at', { ascending: false }).limit(15),
+        client.from('catalog_change_log').select('id, entity_type, entity_id, action, performed_at, performed_by, field_name, note').order('performed_at', { ascending: false }).limit(15),
         client.from('catalog_items').select('id, sku, name, submitted_at').eq('status', 'zur_pruefung').is('approved_at', null).order('submitted_at', { ascending: true }).limit(5),
       ]);
       const total = items.count ?? 0;
