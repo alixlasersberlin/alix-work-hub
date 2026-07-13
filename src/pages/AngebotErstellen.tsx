@@ -758,6 +758,83 @@ export default function AngebotErstellen() {
       doc.text(wrapped, LEFT, py);
     }
 
+    // Katalog-Snapshot Anhang: Bild + Langbeschreibung pro Position mit snapshot_id
+    const snapshotLines = validLines.filter(l => (l as any).snapshot_id);
+    if (snapshotLines.length > 0) {
+      const urlToDataUrl = async (url: string): Promise<string | null> => {
+        try {
+          const r = await fetch(url);
+          const b = await r.blob();
+          return await new Promise((res, rej) => {
+            const fr = new FileReader();
+            fr.onload = () => res(fr.result as string);
+            fr.onerror = rej;
+            fr.readAsDataURL(b);
+          });
+        } catch { return null; }
+      };
+
+      doc.addPage();
+      drawTemplate();
+      let ay = TOP_CONTENT;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(20, 60, 110);
+      doc.text('Artikel-Details (Katalog-Snapshot)', LEFT, ay);
+      ay += 8;
+
+      for (const l of snapshotLines as any[]) {
+        const img = l.image_url ? await urlToDataUrl(l.image_url) : null;
+        const longText = sanitizeDescription(l.long_text || l.description || '');
+        const blockTop = ay;
+        const IMG_W = 40;
+        const IMG_H = 28;
+        const textX = img ? LEFT + IMG_W + 4 : LEFT;
+        const textW = img ? CONTENT_W - IMG_W - 4 : CONTENT_W;
+
+        // Header (name + sku + price)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(20, 60, 110);
+        doc.text(`${l.name}${l.sku ? ` (${l.sku})` : ''}`, textX, ay + 4);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(90, 90, 90);
+        doc.text(
+          `${fmtMoney(l.rate)} · ${l.tax_percentage}% MwSt · Menge ${l.quantity}`,
+          textX, ay + 9,
+        );
+
+        // Body
+        doc.setFontSize(9);
+        doc.setTextColor(50, 50, 50);
+        const wrapped = doc.splitTextToSize(longText || '—', textW);
+        doc.text(wrapped, textX, ay + 15);
+        const textH = 15 + wrapped.length * 4.2;
+
+        if (img) {
+          try {
+            const fmt = img.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+            doc.addImage(img, fmt, LEFT, ay, IMG_W, IMG_H, undefined, 'FAST');
+          } catch { /* ignore */ }
+        }
+
+        const blockH = Math.max(IMG_H, textH) + 6;
+        ay = blockTop + blockH;
+
+        // Trennlinie
+        doc.setDrawColor(220, 220, 220);
+        doc.line(LEFT, ay - 2, RIGHT, ay - 2);
+
+        if (ay > BOTTOM_LIMIT - 30) {
+          doc.addPage();
+          drawTemplate();
+          ay = TOP_CONTENT;
+        }
+      }
+    }
+
+
     // Optional appendix (marketing + Bonitäts-Hinweis)
     if (includeAppendix) {
       doc.addPage();
