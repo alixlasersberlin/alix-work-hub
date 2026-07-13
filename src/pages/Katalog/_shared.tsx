@@ -15,6 +15,7 @@ const tabs = [
   { to: '/katalog/versand', label: 'Freigabelinks' },
   { to: '/katalog/freigabe', label: 'Freigabe-Center', pendingBadge: true as const },
   { to: '/katalog/uebersetzung', label: 'KI-Übersetzung' },
+  { to: '/katalog/analytics', label: 'Analytics' },
   { to: '/katalog/protokolle', label: 'Änderungsprotokoll' },
 ];
 
