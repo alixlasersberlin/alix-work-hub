@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -8,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Tag, Trash2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -209,6 +209,10 @@ export default function TicketsList() {
     setCreateOpen(true);
   };
 
+  const closeCreateDialog = () => {
+    if (!creating) setCreateOpen(false);
+  };
+
 
 
   async function createTicket() {
@@ -249,7 +253,7 @@ export default function TicketsList() {
   }
 
   return (
-    <Dialog open={createOpen} onOpenChange={(o) => !creating && setCreateOpen(o)}>
+    <>
     <div className="p-6 lg:p-8 animate-fade-in">
       <PageHeader
         title="Tickets"
@@ -480,14 +484,38 @@ export default function TicketsList() {
         })}
       </Tabs>
 
-      <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Neues Ticket erstellen</DialogTitle>
-            <DialogDescription className="sr-only">
-              Formular zum manuellen Erfassen eines neuen Service-, Technik- oder Finance-Tickets.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-3 md:grid-cols-2">
+      {createOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[2147483646] flex items-center justify-center overflow-y-auto bg-background/85 p-4 backdrop-blur-sm sm:p-6"
+          role="presentation"
+          onMouseDown={closeCreateDialog}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-ticket-title"
+            aria-describedby="create-ticket-description"
+            className="relative my-auto grid w-[calc(100dvw-2rem)] max-w-2xl max-h-[calc(100dvh-2rem)] gap-4 overflow-y-auto rounded-lg border bg-background p-6 shadow-lg"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label="Schließen"
+              onClick={closeCreateDialog}
+              disabled={creating}
+              className="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="flex flex-col space-y-1.5 text-center sm:text-left">
+              <h2 id="create-ticket-title" className="text-lg font-semibold leading-none tracking-tight">
+                Neues Ticket erstellen
+              </h2>
+              <p id="create-ticket-description" className="sr-only">
+                Formular zum manuellen Erfassen eines neuen Service-, Technik- oder Finance-Tickets.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
             <div className="md:col-span-2">
               <Label className="text-xs">Titel *</Label>
               <Input value={nt.title} onChange={e => setNt({ ...nt, title: e.target.value })} placeholder="Kurze Zusammenfassung" />
@@ -552,17 +580,20 @@ export default function TicketsList() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Abbrechen</Button>
+            </div>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={closeCreateDialog} disabled={creating}>Abbrechen</Button>
             <Button onClick={createTicket} disabled={creating}>
               {creating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Plus className="w-4 h-4 mr-1" />}
               Ticket erstellen
             </Button>
-          </DialogFooter>
-      </DialogContent>
+            </div>
+          </section>
+        </div>,
+        document.body
+      )}
 
     </div>
-    </Dialog>
+    </>
   );
 }
