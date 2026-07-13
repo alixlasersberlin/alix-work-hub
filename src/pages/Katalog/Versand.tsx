@@ -1,0 +1,259 @@
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, Copy, Ban, Info, Mail, MessageCircle, Link as LinkIcon } from 'lucide-react';
+
+interface Item { id: string; sku: string; name: string; }
+interface Country { id: string; iso_code: string; name: string; }
+interface Language { code: string; name: string; }
+interface Link {
+  id: string; token: string; item_id: string; language_code: string; country_id: string | null;
+  recipient_name: string | null; recipient_email: string | null; recipient_phone: string | null;
+  channel: string; expires_at: string | null; view_count: number; revoked_at: string | null; created_at: string;
+}
+
+function baseUrl() {
+  return `${window.location.origin}/catalog/share/`;
+}
+
+function randomToken() {
+  const arr = new Uint8Array(18);
+  crypto.getRandomValues(arr);
+  return btoa(String.fromCharCode(...arr)).replace(/[+/=]/g, '').slice(0, 22);
+}
+
+export default function KatalogVersand() {
+  const { toast } = useToast();
+  const [items, setItems] = useState<Item[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [languages, setLanguages] = useState<Language[]>([]);
+  const [links, setLinks] = useState<Link[]>([]);
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    item_id: '', language_code: 'de', country_id: '__none__',
+    recipient_name: '', recipient_email: '', recipient_phone: '',
+    channel: 'link', expires_days: 30,
+  });
+
+  const load = async () => {
+    const c = supabase as any;
+    const [{ data: it }, { data: cc }, { data: ll }, { data: ls }] = await Promise.all([
+      c.from('catalog_items').select('id, sku, name').in('status', ['freigegeben', 'aktiv']).order('sku').limit(500),
+      c.from('catalog_countries').select('id, iso_code, name').order('iso_code'),
+      c.from('catalog_languages').select('code, name').order('code'),
+      c.from('catalog_share_links').select('*').order('created_at', { ascending: false }).limit(200),
+    ]);
+    setItems(it ?? []);
+    setCountries(cc ?? []);
+    setLanguages(ll ?? []);
+    setLinks(ls ?? []);
+  };
+  useEffect(() => { load(); }, []);
+
+  const create = async () => {
+    if (!form.item_id) { toast({ title: 'Artikel wählen', variant: 'destructive' }); return; }
+    setSaving(true);
+    const token = randomToken();
+    const expires = form.expires_days > 0
+      ? new Date(Date.now() + form.expires_days * 86400000).toISOString()
+      : null;
+    const c = supabase as any;
+    const { data: userRes } = await supabase.auth.getUser();
+    const { error } = await c.from('catalog_share_links').insert({
+      token,
+      item_id: form.item_id,
+      language_code: form.language_code,
+      country_id: form.country_id === '__none__' ? null : form.country_id,
+      recipient_name: form.recipient_name || null,
+      recipient_email: form.recipient_email || null,
+      recipient_phone: form.recipient_phone || null,
+      channel: form.channel,
+      expires_at: expires,
+      created_by: userRes?.user?.id ?? null,
+    });
+    setSaving(false);
+    if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    toast({ title: 'Link erstellt', description: `${baseUrl()}${token}` });
+    setOpen(false);
+    setForm({ ...form, item_id: '', recipient_name: '', recipient_email: '', recipient_phone: '' });
+    load();
+  };
+
+  const copy = async (token: string) => {
+    await navigator.clipboard.writeText(baseUrl() + token);
+    toast({ title: 'Link kopiert' });
+  };
+
+  const revoke = async (id: string) => {
+    if (!confirm('Link widerrufen?')) return;
+    const { error } = await (supabase as any).from('catalog_share_links')
+      .update({ revoked_at: new Date().toISOString() }).eq('id', id);
+    if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    toast({ title: 'Widerrufen' });
+    load();
+  };
+
+  const openMail = (l: Link) => {
+    const url = baseUrl() + l.token;
+    const item = items.find((i) => i.id === l.item_id);
+    const subj = `Artikelinformation: ${item?.name ?? l.item_id}`;
+    const body = `Guten Tag${l.recipient_name ? ' ' + l.recipient_name : ''},\n\nanbei der Link zum Artikel:\n${url}\n\nMit freundlichen Grüßen\nAlixWork`;
+    window.location.href = `mailto:${l.recipient_email ?? ''}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const openWhats = (l: Link) => {
+    const url = baseUrl() + l.token;
+    const item = items.find((i) => i.id === l.item_id);
+    const text = `Artikel: ${item?.name ?? ''}\n${url}`;
+    const phone = (l.recipient_phone ?? '').replace(/[^\d]/g, '');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-4 flex gap-3 items-start">
+        <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+        <div className="text-sm text-muted-foreground">
+          Erzeuge sichere Freigabelinks für einzelne Katalog-Artikel und versende sie per E-Mail oder WhatsApp. Links laufen automatisch ab und können jederzeit widerrufen werden.
+        </div>
+      </Card>
+
+      <div className="flex justify-end">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Neuer Freigabelink</Button></DialogTrigger>
+          <DialogContent className="max-w-lg">
+            <DialogHeader><DialogTitle>Freigabelink erstellen</DialogTitle></DialogHeader>
+            <div className="grid gap-3">
+              <div>
+                <Label>Artikel *</Label>
+                <Select value={form.item_id} onValueChange={(v) => setForm({ ...form, item_id: v })}>
+                  <SelectTrigger><SelectValue placeholder="Artikel wählen" /></SelectTrigger>
+                  <SelectContent>
+                    {items.map((i) => <SelectItem key={i.id} value={i.id}>{i.sku} · {i.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Sprache</Label>
+                  <Select value={form.language_code} onValueChange={(v) => setForm({ ...form, language_code: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {languages.map((l) => <SelectItem key={l.code} value={l.code}>{l.code.toUpperCase()}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Land (Preis)</Label>
+                  <Select value={form.country_id} onValueChange={(v) => setForm({ ...form, country_id: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">— kein Preis —</SelectItem>
+                      {countries.map((c) => <SelectItem key={c.id} value={c.id}>{c.iso_code}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label>Empfängername</Label>
+                <Input value={form.recipient_name} onChange={(e) => setForm({ ...form, recipient_name: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>E-Mail</Label>
+                  <Input type="email" value={form.recipient_email} onChange={(e) => setForm({ ...form, recipient_email: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Telefon (WhatsApp)</Label>
+                  <Input value={form.recipient_phone} onChange={(e) => setForm({ ...form, recipient_phone: e.target.value })} placeholder="+49…" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Kanal</Label>
+                  <Select value={form.channel} onValueChange={(v) => setForm({ ...form, channel: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="link">Nur Link</SelectItem>
+                      <SelectItem value="email">E-Mail</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                      <SelectItem value="sms">SMS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Gültig für (Tage)</Label>
+                  <Input type="number" min={0} value={form.expires_days} onChange={(e) => setForm({ ...form, expires_days: parseInt(e.target.value) || 0 })} />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
+              <Button onClick={create} disabled={saving}>{saving ? 'Speichere…' : 'Link erstellen'}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Artikel</TableHead>
+              <TableHead>Empfänger</TableHead>
+              <TableHead>Kanal</TableHead>
+              <TableHead>Aufrufe</TableHead>
+              <TableHead>Gültig bis</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-56"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {links.length === 0 && (
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Noch keine Freigabelinks</TableCell></TableRow>
+            )}
+            {links.map((l) => {
+              const item = items.find((i) => i.id === l.item_id);
+              const expired = l.expires_at && new Date(l.expires_at) < new Date();
+              return (
+                <TableRow key={l.id}>
+                  <TableCell className="text-sm">{item ? `${item.sku} · ${item.name}` : l.item_id.slice(0, 8)}</TableCell>
+                  <TableCell className="text-xs">
+                    {l.recipient_name ?? '—'}
+                    {l.recipient_email && <div className="text-muted-foreground">{l.recipient_email}</div>}
+                  </TableCell>
+                  <TableCell><Badge variant="outline">{l.channel}</Badge></TableCell>
+                  <TableCell>{l.view_count}</TableCell>
+                  <TableCell className="text-xs">{l.expires_at ? new Date(l.expires_at).toLocaleDateString('de-DE') : '∞'}</TableCell>
+                  <TableCell>
+                    {l.revoked_at ? <Badge variant="destructive">widerrufen</Badge>
+                      : expired ? <Badge variant="secondary">abgelaufen</Badge>
+                      : <Badge className="bg-emerald-500/15 text-emerald-500">aktiv</Badge>}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => copy(l.token)} title="Link kopieren"><Copy className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => window.open(baseUrl() + l.token, '_blank')} title="Öffnen"><LinkIcon className="h-4 w-4" /></Button>
+                      {l.recipient_email && <Button size="sm" variant="ghost" onClick={() => openMail(l)} title="E-Mail"><Mail className="h-4 w-4" /></Button>}
+                      {l.recipient_phone && <Button size="sm" variant="ghost" onClick={() => openWhats(l)} title="WhatsApp"><MessageCircle className="h-4 w-4" /></Button>}
+                      {!l.revoked_at && <Button size="sm" variant="ghost" onClick={() => revoke(l.id)} title="Widerrufen"><Ban className="h-4 w-4 text-red-500" /></Button>}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </Card>
+    </div>
+  );
+}
