@@ -1607,6 +1607,8 @@ export default function AngebotErstellen() {
           onOpenChange={setKatalogPickerOpen}
           usedInType="offer_draft"
           onPicked={(picked: KatalogPickResult[]) => {
+            const newSnapIds = picked.map(p => p.snapshot_id).filter(Boolean) as string[];
+            if (newSnapIds.length) setPendingSnapshotIds(prev => [...prev, ...newSnapIds]);
             setLines(prev => [
               ...prev.filter(l => l.name || l.sku || l.rate),
               ...picked.map(p => ({
