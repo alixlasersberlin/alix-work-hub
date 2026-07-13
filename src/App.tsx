@@ -276,6 +276,7 @@ const KatalogLaender = lazy(() => import("./pages/Katalog/Laender"));
 const KatalogNiederlassungen = lazy(() => import("./pages/Katalog/Niederlassungen"));
 const KatalogPreisregeln = lazy(() => import("./pages/Katalog/Preisregeln"));
 const KatalogProtokolle = lazy(() => import("./pages/Katalog/Protokolle"));
+const KatalogImport = lazy(() => import("./pages/Katalog/Import"));
 const AicLayout = lazy(() => import("./pages/AIC/Layout"));
 const AicDashboard = lazy(() => import("./pages/AIC/Dashboard"));
 const AicUnternehmen = lazy(() => import("./pages/AIC/Unternehmen"));
