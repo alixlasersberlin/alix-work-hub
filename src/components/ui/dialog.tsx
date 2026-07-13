@@ -19,7 +19,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-[2147483645] bg-background/85 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-[2147483645] bg-background/85 backdrop-blur-sm data-[state=closed]:pointer-events-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className,
     )}
     {...props}
@@ -45,7 +45,7 @@ const DialogContent = React.forwardRef<
           if (!event.defaultPrevented) event.preventDefault();
         }}
         className={cn(
-          "relative pointer-events-auto z-[2147483647] my-auto grid w-[calc(100dvw-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] gap-4 overflow-y-auto border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
+          "relative pointer-events-auto z-[2147483647] my-auto grid w-[calc(100dvw-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] gap-4 overflow-y-auto border bg-background p-6 shadow-lg duration-200 data-[state=closed]:pointer-events-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
           className,
         )}
         {...props}

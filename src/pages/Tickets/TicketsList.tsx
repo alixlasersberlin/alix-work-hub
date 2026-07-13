@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -185,7 +185,10 @@ export default function TicketsList() {
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
 
-  const openCreateDialog = () => setCreateOpen(true);
+  const openCreateDialog = () => {
+    document.body.style.removeProperty('pointer-events');
+    setCreateOpen(true);
+  };
 
 
 
@@ -227,6 +230,7 @@ export default function TicketsList() {
   }
 
   return (
+    <Dialog open={createOpen} onOpenChange={(o) => !creating && setCreateOpen(o)}>
     <div className="p-6 lg:p-8 animate-fade-in">
       <PageHeader
         title="Tickets"
@@ -242,23 +246,15 @@ export default function TicketsList() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/tickets/sync"><RefreshCw className="w-4 h-4 mr-2" />Synchronisation</Link>
             </Button>
-            <Button
-              size="sm"
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                openCreateDialog();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  openCreateDialog();
-                }
-              }}
-              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0"
-            >
-              <Plus className="w-4 h-4 mr-1" /> Neues Ticket
-            </Button>
+            <DialogTrigger asChild>
+              <Button
+                size="sm"
+                type="button"
+                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Neues Ticket
+              </Button>
+            </DialogTrigger>
           </>
         }
       />
@@ -430,8 +426,7 @@ export default function TicketsList() {
         })}
       </Tabs>
 
-      <Dialog open={createOpen} onOpenChange={(o) => !creating && setCreateOpen(o)}>
-        <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Neues Ticket erstellen</DialogTitle>
             <DialogDescription className="sr-only">
@@ -511,9 +506,9 @@ export default function TicketsList() {
               Ticket erstellen
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </DialogContent>
 
     </div>
+    </Dialog>
   );
 }

@@ -17,7 +17,11 @@ export function useRadixBodyPointerEventsFix() {
 
     const hasOpenRadixOverlay = () =>
       !!document.querySelector(
-        '[data-state="open"][role="dialog"], [data-radix-popper-content-wrapper]'
+        [
+          '[data-state="open"][role="dialog"]',
+          '[data-state="open"][role="alertdialog"]',
+          '[data-radix-popper-content-wrapper] [data-state="open"]',
+        ].join(', ')
       );
 
     const reset = () => {
@@ -36,15 +40,20 @@ export function useRadixBodyPointerEventsFix() {
     window.addEventListener("pagehide", onVisible);
     window.addEventListener("focus", onVisible);
     document.addEventListener("visibilitychange", onVisible);
+    document.addEventListener("pointerdown", onVisible, true);
+    document.addEventListener("click", onVisible, true);
 
     // Sicherheitsnetz: alle 1s prüfen (sehr billig).
     const interval = window.setInterval(reset, 1000);
+    reset();
 
     return () => {
       observer.disconnect();
       window.removeEventListener("pagehide", onVisible);
       window.removeEventListener("focus", onVisible);
       document.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener("pointerdown", onVisible, true);
+      document.removeEventListener("click", onVisible, true);
       window.clearInterval(interval);
     };
   }, []);
