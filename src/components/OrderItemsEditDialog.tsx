@@ -3,8 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save, Trash2, Plus, X } from 'lucide-react';
+import { Loader2, Save, Trash2, Plus, X, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
+import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalog/KatalogPickerDialog';
 
 interface Props {
   orderId: string;
