@@ -126,14 +126,24 @@ export default function CustomerPortalKatalog() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <BookOpen className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">Katalog</h2>
         <Badge variant="outline" className="ml-2 text-xs">Nur freigegebene Preise</Badge>
+        <div className="ml-auto">
+          <Button asChild size="sm" variant="outline" className="relative">
+            <Link to="/portal/warenkorb">
+              <ShoppingCart className="h-4 w-4 mr-1" /> Warenkorb
+              {cartCount > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] min-w-[18px] h-[18px] px-1">{cartCount}</span>
+              )}
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
-        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
             <label className="text-xs text-muted-foreground">Land</label>
             <Select value={country} onValueChange={setCountry}>
@@ -149,6 +159,16 @@ export default function CustomerPortalKatalog() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {languages.map((l) => <SelectItem key={l.code} value={l.code}>{l.code.toUpperCase()} · {l.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground">Kategorie</label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Kategorien</SelectItem>
+                {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
