@@ -18381,7 +18381,7 @@ export type Database = {
         Row: {
           action: string
           actor_id: string | null
-          actor_label: string | null
+          actor_name: string | null
           created_at: string
           field: string | null
           id: string
@@ -18393,7 +18393,7 @@ export type Database = {
         Insert: {
           action: string
           actor_id?: string | null
-          actor_label?: string | null
+          actor_name?: string | null
           created_at?: string
           field?: string | null
           id?: string
@@ -18405,7 +18405,7 @@ export type Database = {
         Update: {
           action?: string
           actor_id?: string | null
-          actor_label?: string | null
+          actor_name?: string | null
           created_at?: string
           field?: string | null
           id?: string
