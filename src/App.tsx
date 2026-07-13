@@ -1139,6 +1139,7 @@ function AppRoutes() {
             <Route path="uebersetzung" element={<KatalogBulkUebersetzung />} />
             <Route path="analytics" element={<KatalogAnalytics />} />
             <Route path="preishistorie" element={<KatalogPreishistorie />} />
+            <Route path="bundles" element={<KatalogBundles />} />
           </Route>
 
 
