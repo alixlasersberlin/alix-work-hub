@@ -320,6 +320,13 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
           </div>
         )}
       </div>
+      <KatalogPickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onPicked={addFromCatalog}
+        usedInType="order"
+        usedInId={orderId}
+      />
     </div>
   );
 }
