@@ -10,6 +10,7 @@ const tabs = [
   { to: '/katalog/niederlassungen', label: 'Niederlassungen' },
   { to: '/katalog/preisregeln', label: 'Preisregeln' },
   { to: '/katalog/import', label: 'Import' },
+  { to: '/katalog/export', label: 'Export' },
   { to: '/katalog/protokolle', label: 'Änderungsprotokoll' },
 ];
 
