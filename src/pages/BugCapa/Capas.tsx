@@ -156,22 +156,24 @@ export default function Capas() {
         </Button>
       }
     >
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="flex h-auto max-h-[calc(100dvh-2rem)] w-[min(720px,calc(100dvw-2rem))] max-w-none flex-col gap-0 overflow-hidden p-0 sm:rounded-lg">
-          <DialogHeader className="flex-shrink-0 border-b border-border px-5 py-4 pr-12">
-            <DialogTitle>Neue CAPA anlegen</DialogTitle>
-            <DialogDescription>Erfasst eine neue Korrektur- und Vorbeugemaßnahme.</DialogDescription>
-          </DialogHeader>
-          <div className="grid min-h-0 flex-1 content-start gap-3 overflow-y-auto px-5 py-4">
+      {open && (
+        <div className="mb-4 rounded-md border border-border bg-card">
+          <div className="border-b border-border px-5 py-4">
+            <h2 className="text-lg font-semibold">Neue CAPA anlegen</h2>
+            <p className="text-sm text-muted-foreground">Erfasst eine neue Korrektur- und Vorbeugemaßnahme.</p>
+          </div>
+          <div className="grid gap-3 px-5 py-4">
             <div><Label htmlFor="new-capa-title">Titel *</Label><Input id="new-capa-title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} autoFocus /></div>
             <div>
               <Label htmlFor="new-capa-trigger">Auslöser</Label>
-              <Select value={form.trigger_type} onValueChange={v => setForm({ ...form, trigger_type: v })}>
-                <SelectTrigger id="new-capa-trigger"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {['bug', 'reklamation', 'audit', 'sonstiges'].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <select
+                id="new-capa-trigger"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={form.trigger_type}
+                onChange={e => setForm({ ...form, trigger_type: e.target.value })}
+              >
+                {['bug', 'reklamation', 'audit', 'sonstiges'].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
             </div>
             <div><Label htmlFor="new-capa-root-cause">Ursachenanalyse</Label><Textarea id="new-capa-root-cause" rows={3} value={form.root_cause} onChange={e => setForm({ ...form, root_cause: e.target.value })} /></div>
             <div><Label htmlFor="new-capa-immediate-action">Sofortmaßnahme</Label><Textarea id="new-capa-immediate-action" rows={2} value={form.immediate_action} onChange={e => setForm({ ...form, immediate_action: e.target.value })} /></div>
@@ -179,12 +181,12 @@ export default function Capas() {
             <div><Label htmlFor="new-capa-preventive-action">Vorbeugemaßnahme</Label><Textarea id="new-capa-preventive-action" rows={2} value={form.preventive_action} onChange={e => setForm({ ...form, preventive_action: e.target.value })} /></div>
             <div><Label htmlFor="new-capa-due-date">Frist</Label><Input id="new-capa-due-date" type="date" value={form.due_date} onChange={e => setForm({ ...form, due_date: e.target.value })} /></div>
           </div>
-          <DialogFooter className="flex-shrink-0 border-t border-border px-5 py-4">
+          <div className="flex justify-end gap-2 border-t border-border px-5 py-4">
             <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
             <Button onClick={create}>Speichern</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
       <div className="rounded-md border border-border">
         <Table>
           <TableHeader>
