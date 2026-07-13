@@ -144,12 +144,15 @@ Deno.serve(async (req) => {
 
     // Audit-Log in customer_communication_log (falls Empfänger bekannt)
     try {
+      const preview = (customBody ?? (channel === "email" ? defaultTextBody : shortText)).slice(0, 500);
       await admin.from("customer_communication_log").insert({
         channel: channel === "email" ? "email" : channel,
         direction: "outbound",
         subject: customSubject ?? defaultSubject,
-        content: customBody ?? (channel === "email" ? defaultTextBody : shortText),
-        metadata: { source: "catalog_share", link_id: linkId, item_id: link.item_id, url },
+        preview,
+        reference_table: "catalog_share_links",
+        reference_id: linkId,
+        metadata: { source: "catalog_share", link_id: linkId, item_id: link.item_id, url, recipient_email: link.recipient_email, recipient_phone: link.recipient_phone },
         created_by: userId,
       });
     } catch (_e) { /* ignore */ }
