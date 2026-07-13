@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Copy, Ban, Info, Mail, MessageCircle, Link as LinkIcon } from 'lucide-react';
+import { Plus, Copy, Ban, Info, Mail, MessageCircle, Link as LinkIcon, Eye, Clock, XCircle, TrendingUp } from 'lucide-react';
 
 interface Item { id: string; sku: string; name: string; }
 interface Country { id: string; iso_code: string; name: string; }
@@ -43,6 +43,8 @@ export default function KatalogVersand() {
     recipient_name: '', recipient_email: '', recipient_phone: '',
     channel: 'link', expires_days: 30,
   });
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'revoked'>('all');
+  const [search, setSearch] = useState('');
 
   const load = async () => {
     const c = supabase as any;
@@ -118,6 +120,34 @@ export default function KatalogVersand() {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
+  const now = new Date();
+  const kpis = useMemo(() => {
+    const active = links.filter((l) => !l.revoked_at && (!l.expires_at || new Date(l.expires_at) >= now)).length;
+    const expired = links.filter((l) => !l.revoked_at && l.expires_at && new Date(l.expires_at) < now).length;
+    const revoked = links.filter((l) => !!l.revoked_at).length;
+    const totalViews = links.reduce((s, l) => s + (l.view_count ?? 0), 0);
+    const top = [...links].sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0)).slice(0, 3);
+    return { active, expired, revoked, totalViews, top };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [links]);
+
+  const filteredLinks = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return links.filter((l) => {
+      const exp = l.expires_at && new Date(l.expires_at) < now;
+      if (statusFilter === 'active' && (l.revoked_at || exp)) return false;
+      if (statusFilter === 'expired' && (!exp || l.revoked_at)) return false;
+      if (statusFilter === 'revoked' && !l.revoked_at) return false;
+      if (q) {
+        const item = items.find((i) => i.id === l.item_id);
+        const hay = `${item?.sku ?? ''} ${item?.name ?? ''} ${l.recipient_name ?? ''} ${l.recipient_email ?? ''} ${l.token}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [links, statusFilter, search, items]);
+
   return (
     <div className="space-y-4">
       <Card className="p-4 flex gap-3 items-start">
@@ -127,6 +157,63 @@ export default function KatalogVersand() {
         </div>
       </Card>
 
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.active}</div><div className="text-xs text-muted-foreground">Aktive Links</div></div>
+          <LinkIcon className="h-6 w-6 text-emerald-500" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.totalViews}</div><div className="text-xs text-muted-foreground">Aufrufe gesamt</div></div>
+          <Eye className="h-6 w-6 text-primary" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.expired}</div><div className="text-xs text-muted-foreground">Abgelaufen</div></div>
+          <Clock className="h-6 w-6 text-amber-500" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.revoked}</div><div className="text-xs text-muted-foreground">Widerrufen</div></div>
+          <XCircle className="h-6 w-6 text-red-500" />
+        </CardContent></Card>
+      </div>
+
+      {kpis.top.length > 0 && kpis.top[0].view_count > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-2 text-sm font-medium">
+            <TrendingUp className="h-4 w-4 text-primary" /> Top-Aufrufe
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {kpis.top.map((l) => {
+              const item = items.find((i) => i.id === l.item_id);
+              return (
+                <div key={l.id} className="text-xs p-2 rounded-md bg-muted/40 flex justify-between items-center">
+                  <span className="truncate">{item ? `${item.sku} · ${item.name}` : l.token}</span>
+                  <Badge variant="secondary">{l.view_count}×</Badge>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      <div className="flex flex-wrap gap-2 items-end justify-between">
+        <div className="flex flex-wrap gap-2 items-end">
+          <div>
+            <Label className="text-xs">Status</Label>
+            <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="active">Aktiv</SelectItem>
+                <SelectItem value="expired">Abgelaufen</SelectItem>
+                <SelectItem value="revoked">Widerrufen</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Suche</Label>
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="SKU, Name, Empfänger…" className="w-64" />
+          </div>
+        </div>
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Neuer Freigabelink</Button></DialogTrigger>
@@ -203,6 +290,7 @@ export default function KatalogVersand() {
           </DialogContent>
         </Dialog>
       </div>
+      </div>
 
       <Card>
         <Table>
@@ -218,10 +306,10 @@ export default function KatalogVersand() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {links.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Noch keine Freigabelinks</TableCell></TableRow>
+            {filteredLinks.length === 0 && (
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Keine Links passen zum Filter</TableCell></TableRow>
             )}
-            {links.map((l) => {
+            {filteredLinks.map((l) => {
               const item = items.find((i) => i.id === l.item_id);
               const expired = l.expires_at && new Date(l.expires_at) < new Date();
               return (
