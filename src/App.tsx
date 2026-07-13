@@ -1113,6 +1113,18 @@ function AppRoutes() {
             <Route path="iso-report" element={<BugCapaIsoReport />} />
           </Route>
 
+          <Route path="/katalog" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Katalog','Katalog Preise','Vertrieb','Vertriebsleitung','Marketing','Service','Geschäftsführung']}><KatalogLayoutLazy /></ProtectedRoute>}>
+            <Route index element={<KatalogDashboard />} />
+            <Route path="artikel" element={<KatalogArtikel />} />
+            <Route path="artikel/:id" element={<KatalogArtikelDetail />} />
+            <Route path="kategorien" element={<KatalogKategorien />} />
+            <Route path="laender" element={<KatalogLaender />} />
+            <Route path="niederlassungen" element={<KatalogNiederlassungen />} />
+            <Route path="preisregeln" element={<KatalogPreisregeln />} />
+            <Route path="protokolle" element={<KatalogProtokolle />} />
+          </Route>
+
+
           <Route path="/iso" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin', 'QM']}><IsoLayoutLazy /></ProtectedRoute>}>
             <Route index element={<IsoDashboard />} />
             <Route path="audits" element={<IsoAudits />} />
