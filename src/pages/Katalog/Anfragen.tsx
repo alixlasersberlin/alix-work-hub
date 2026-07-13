@@ -87,6 +87,30 @@ export default function KatalogAnfragen() {
     toast.success('Notizen gespeichert');
   };
 
+  const createOffer = async (r: Inquiry) => {
+    if (!items.length) { toast.error('Keine Positionen vorhanden'); return; }
+    const handoff = {
+      customer_id: customerIdMap[r.portal_user_id] ?? null,
+      notes: `Aus Portal-Anfrage ${r.inquiry_number}${r.message ? `\n${r.message}` : ''}`,
+      lines: items.map((i) => {
+        const gross = Number(i.price_gross ?? 0);
+        const tax = Number(i.tax_rate ?? 19);
+        const net = i.price_net != null ? Number(i.price_net) : (tax > 0 ? gross / (1 + tax / 100) : gross);
+        return {
+          name: i.name ?? '',
+          description: i.note ?? '',
+          sku: i.sku ?? '',
+          quantity: Number(i.quantity ?? 1),
+          rate: Number(net.toFixed(2)),
+          tax_percentage: tax,
+        };
+      }),
+    };
+    sessionStorage.setItem('portal_inquiry_handoff_v1', JSON.stringify(handoff));
+    await setStatus(r, 'angebot_erstellt');
+    navigate('/verkauf/angebot/neu');
+  };
+
   const total = items.reduce((s, i) => s + Number(i.price_gross ?? 0) * Number(i.quantity), 0);
   const currency = items[0]?.currency ?? 'EUR';
 
