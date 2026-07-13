@@ -57,19 +57,44 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
     if (!open) return;
     (async () => {
       const c = supabase as any;
-      const [{ data: it }, { data: cc }, { data: ll }] = await Promise.all([
+      const [{ data: it }, { data: cc }, { data: ll }, { data: bs }, { data: bis }] = await Promise.all([
         c.from('catalog_items').select('id, sku, name, brand, model, status').in('status', ['freigegeben', 'aktiv']).order('sku').limit(1000),
         c.from('catalog_countries').select('id, iso_code, name, default_tax_rate').order('iso_code'),
         c.from('catalog_languages').select('code, name').order('code'),
+        c.from('catalog_bundles').select('id, name, category, default_discount_pct').eq('is_active', true).order('sort_order').order('name'),
+        c.from('catalog_bundle_items').select('bundle_id, item_id, quantity, is_optional'),
       ]);
       setItems(it ?? []);
       setCountries(cc ?? []);
       setLanguages(ll ?? []);
-      // Default DE wenn vorhanden
+      setBundles(bs ?? []);
+      const m: Record<string, Array<{ item_id: string; quantity: number; is_optional: boolean }>> = {};
+      (bis ?? []).forEach((b: any) => {
+        if (!m[b.bundle_id]) m[b.bundle_id] = [];
+        m[b.bundle_id].push({ item_id: b.item_id, quantity: Number(b.quantity), is_optional: !!b.is_optional });
+      });
+      setBundleItemsMap(m);
       const de = (cc ?? []).find((x: any) => x.iso_code === 'DE');
       if (de && !country) setCountry(de.id);
     })();
   }, [open]);
+
+  const applyBundle = (bundleId: string) => {
+    const rows = bundleItemsMap[bundleId] ?? [];
+    setSelected((s) => {
+      const n = { ...s };
+      rows.filter(r => !r.is_optional).forEach(r => { n[r.item_id] = (n[r.item_id] ?? 0) + (r.quantity || 1); });
+      return n;
+    });
+    setTab('items');
+    toast({ title: `${rows.filter(r => !r.is_optional).length} Positionen aus Bundle übernommen` });
+  };
+
+  const filteredBundles = useMemo(() => {
+    const n = bundleQ.trim().toLowerCase();
+    if (!n) return bundles;
+    return bundles.filter(b => b.name.toLowerCase().includes(n) || (b.category ?? '').toLowerCase().includes(n));
+  }, [bundles, bundleQ]);
 
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
