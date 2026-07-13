@@ -175,6 +175,43 @@ export default function KatalogFreigabe() {
     load();
   };
 
+  const applyPendingChange = async (pc: any) => {
+    if (pc.requested_by === user?.id) { toast({ title: 'Vier-Augen-Prinzip', description: 'Eigene Änderungen können nicht freigegeben werden.', variant: 'destructive' }); return; }
+    setBusy(true);
+    try {
+      const patch = pc.new_value ?? {};
+      let error: any = null;
+      if (pc.entity_type === 'item_description') {
+        ({ error } = await client.from('catalog_item_descriptions').update(patch).eq('id', pc.entity_id));
+      } else if (pc.entity_type === 'item_price') {
+        ({ error } = await client.from('catalog_item_prices').update(patch).eq('id', pc.entity_id));
+      } else if (pc.entity_type === 'item') {
+        ({ error } = await client.from('catalog_items').update(patch).eq('id', pc.entity_id));
+      } else if (pc.entity_type === 'bundle') {
+        ({ error } = await client.from('catalog_bundles').update(patch).eq('id', pc.entity_id));
+      } else {
+        toast({ title: 'Nicht anwendbar', description: `Unbekannter Typ: ${pc.entity_type}`, variant: 'destructive' });
+        setBusy(false); return;
+      }
+      if (error) throw error;
+      await client.from('catalog_pending_changes').update({ status: 'applied', approved_by: user?.id, applied_at: new Date().toISOString() }).eq('id', pc.id);
+      await client.from('catalog_change_approvals').insert({ pending_id: pc.id, decision: 'approve', decided_by: user?.id });
+      toast({ title: 'Freigegeben & angewendet' });
+      load();
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e.message, variant: 'destructive' });
+    } finally { setBusy(false); }
+  };
+
+  const rejectPendingChange = async (pc: any) => {
+    const reason = window.prompt('Ablehnungsgrund:', '') ?? '';
+    if (reason === null) return;
+    setBusy(true);
+    await client.from('catalog_pending_changes').update({ status: 'rejected', approved_by: user?.id, rejection_reason: reason || null }).eq('id', pc.id);
+    await client.from('catalog_change_approvals').insert({ pending_id: pc.id, decision: 'reject', comment: reason || null, decided_by: user?.id });
+    setBusy(false); toast({ title: 'Abgelehnt' }); load();
+  };
+
   if (!canApprove) {
     return (
       <Card><CardContent className="pt-6 flex items-center gap-3 text-muted-foreground">
