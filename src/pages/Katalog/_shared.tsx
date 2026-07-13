@@ -12,6 +12,7 @@ const tabs = [
   { to: '/katalog/import', label: 'Import' },
   { to: '/katalog/export', label: 'Export' },
   { to: '/katalog/versand', label: 'Freigabelinks' },
+  { to: '/katalog/freigabe', label: 'Freigabe-Center' },
   { to: '/katalog/protokolle', label: 'Änderungsprotokoll' },
 ];
 
