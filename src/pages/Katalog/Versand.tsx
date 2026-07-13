@@ -348,6 +348,16 @@ export default function KatalogVersand() {
                   <Input type="number" min={0} value={form.expires_days} onChange={(e) => setForm({ ...form, expires_days: parseInt(e.target.value) || 0 })} />
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Passwort (optional)</Label>
+                  <Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="leer = kein Passwort" />
+                </div>
+                <div>
+                  <Label>Max. Aufrufe (0 = unbegrenzt)</Label>
+                  <Input type="number" min={0} value={form.max_views} onChange={(e) => setForm({ ...form, max_views: parseInt(e.target.value) || 0 })} />
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
