@@ -288,14 +288,15 @@ export default function KatalogArtikelDetail() {
                     </div>
                     <div>
                       <Label className="text-xs">Niederlassung</Label>
-                      <Select value={p.branch_id ?? ''} onValueChange={(v) => updatePrice(p.id, { branch_id: v || null })}>
+                      <Select value={p.branch_id ?? '__none'} onValueChange={(v) => updatePrice(p.id, { branch_id: v === '__none' ? null : v })}>
                         <SelectTrigger><SelectValue placeholder={branch?.name ?? '—'} /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">—</SelectItem>
+                          <SelectItem value="__none">— (alle)</SelectItem>
                           {branches.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
+
                     <div>
                       <Label className="text-xs">Währung</Label>
                       <Select value={p.currency_code} onValueChange={(v) => updatePrice(p.id, { currency_code: v })}>
