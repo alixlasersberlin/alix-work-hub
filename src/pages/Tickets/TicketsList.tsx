@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,14 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Tag, Trash2 } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 
 
@@ -86,6 +85,7 @@ function priorityColor(p: string) {
 export default function TicketsList() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const pageRef = useRef<HTMLDivElement | null>(null);
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -105,7 +105,7 @@ export default function TicketsList() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const { isSuperAdmin } = useFinancePermissions();
 
-  async function updateCategory(id: string, category: string) {
+  async function updateCategory(id: string, category: string | null) {
     const { error } = await supabase.from('tickets').update({ category }).eq('id', id);
     if (error) { toast.error(error.message); return; }
     setRows(prev => prev.map(r => r.id === id ? { ...r, category } : r));
@@ -204,8 +204,10 @@ export default function TicketsList() {
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
 
+  const getFrameBody = () => pageRef.current?.ownerDocument?.body ?? document.body;
+
   const openCreateDialog = () => {
-    document.body.style.removeProperty('pointer-events');
+    getFrameBody().style.removeProperty('pointer-events');
     setCreateOpen(true);
   };
 
@@ -254,7 +256,7 @@ export default function TicketsList() {
 
   return (
     <>
-    <div className="p-6 lg:p-8 animate-fade-in">
+      <div ref={pageRef} className="p-6 lg:p-8 animate-fade-in">
       <PageHeader
         title="Tickets"
         subtitle="Service-, Technik- und Finance-Tickets aus allen Quellen"
@@ -272,6 +274,7 @@ export default function TicketsList() {
             <Button
               size="sm"
               type="button"
+              onPointerDownCapture={openCreateDialog}
               onClick={openCreateDialog}
               className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0"
             >
@@ -404,34 +407,19 @@ export default function TicketsList() {
                           className="cursor-pointer hover:bg-muted/40"
                         >
                           <TableCell className="text-sm" onClick={(e) => e.stopPropagation()}>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" title="Kategorie zuweisen">
-                                  {r.category ? (
-                                    <Badge variant="outline">{r.category}</Badge>
-                                  ) : r.auto_category ? (
-                                    <Badge variant="outline" className="opacity-70">{r.auto_category}</Badge>
-                                  ) : (
-                                    <Badge variant="outline" className="border-dashed text-muted-foreground"><Tag className="w-3 h-3 mr-1" />Kategorie</Badge>
-                                  )}
-                                </button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-56 p-2" align="start">
-                                <div className="text-xs text-muted-foreground mb-2 px-1">Kategorie wählen</div>
-                                <div className="grid gap-1 max-h-64 overflow-auto">
-                                  {CATEGORY_OPTIONS.map(c => (
-                                    <button
-                                      key={c}
-                                      type="button"
-                                      onClick={() => updateCategory(r.id, c)}
-                                      className={`text-left text-sm px-2 py-1.5 rounded hover:bg-muted ${r.category === c ? 'bg-muted font-medium' : ''}`}
-                                    >
-                                      {c}
-                                    </button>
-                                  ))}
-                                </div>
-                              </PopoverContent>
-                            </Popover>
+                            <div className="relative min-w-40">
+                              <select
+                                value={r.category || ''}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => updateCategory(r.id, e.target.value || null)}
+                                className="h-8 w-full rounded-md border border-input bg-background px-2 pr-7 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+                                title="Kategorie zuweisen"
+                              >
+                                <option value="">{r.auto_category ? `Auto: ${r.auto_category}` : 'Kategorie wählen'}</option>
+                                {CATEGORY_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+                              </select>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div className="font-medium text-foreground">
@@ -517,6 +505,17 @@ export default function TicketsList() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
             <div className="md:col-span-2">
+              <Label className="text-xs">Kategorie</Label>
+              <select
+                value={nt.category}
+                onChange={e => setNt({ ...nt, category: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="">— keine —</option>
+                {CATEGORY_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="md:col-span-2">
               <Label className="text-xs">Titel *</Label>
               <Input value={nt.title} onChange={e => setNt({ ...nt, title: e.target.value })} placeholder="Kurze Zusammenfassung" />
             </div>
@@ -554,31 +553,23 @@ export default function TicketsList() {
             </div>
             <div>
               <Label className="text-xs">Abteilung</Label>
-              <Select value={nt.department} onValueChange={(v) => setNt({ ...nt, department: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {DEPARTMENT_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <select
+                value={nt.department}
+                onChange={e => setNt({ ...nt, department: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {DEPARTMENT_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
             <div>
               <Label className="text-xs">Priorität</Label>
-              <Select value={nt.priority} onValueChange={(v) => setNt({ ...nt, priority: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PRIORITY_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="md:col-span-2">
-              <Label className="text-xs">Kategorie</Label>
-              <Select value={nt.category || '__none'} onValueChange={(v) => setNt({ ...nt, category: v === '__none' ? '' : v })}>
-                <SelectTrigger><SelectValue placeholder="Kategorie wählen" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none">— keine —</SelectItem>
-                  {CATEGORY_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <select
+                value={nt.priority}
+                onChange={e => setNt({ ...nt, priority: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {PRIORITY_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
             </div>
             </div>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -590,7 +581,7 @@ export default function TicketsList() {
             </div>
           </section>
         </div>,
-        document.body
+        getFrameBody()
       )}
 
     </div>
