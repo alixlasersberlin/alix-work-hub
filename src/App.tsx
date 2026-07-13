@@ -1135,6 +1135,7 @@ function AppRoutes() {
             <Route path="versand" element={<KatalogVersand />} />
             <Route path="freigabe" element={<KatalogFreigabe />} />
             <Route path="uebersetzung" element={<KatalogBulkUebersetzung />} />
+            <Route path="analytics" element={<KatalogAnalytics />} />
           </Route>
 
 
