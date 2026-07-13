@@ -238,41 +238,87 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
           </div>
         </div>
 
-        <ScrollArea className="h-96 border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10"></TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Marke / Modell</TableHead>
-                <TableHead className="w-24">Menge</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((i) => (
-                <TableRow key={i.id} className={selected[i.id] ? 'bg-primary/5' : ''}>
-                  <TableCell><Checkbox checked={!!selected[i.id]} onCheckedChange={() => toggle(i.id)} /></TableCell>
-                  <TableCell className="font-mono text-xs">{i.sku}</TableCell>
-                  <TableCell>{i.name}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{[i.brand, i.model].filter(Boolean).join(' · ')}</TableCell>
-                  <TableCell>
-                    <Input
-                      type="number" min={1}
-                      value={selected[i.id] ?? ''}
-                      onChange={(e) => setSelected((s) => ({ ...s, [i.id]: Math.max(1, parseInt(e.target.value) || 1) }))}
-                      disabled={!selected[i.id]}
-                      className="h-8 w-20"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Keine Artikel</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </ScrollArea>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+          <TabsList>
+            <TabsTrigger value="items"><BookOpen className="h-4 w-4 mr-1" />Artikel</TabsTrigger>
+            <TabsTrigger value="bundles"><Package className="h-4 w-4 mr-1" />Bundles ({bundles.length})</TabsTrigger>
+          </TabsList>
+          <TabsContent value="items">
+            <ScrollArea className="h-96 border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10"></TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Marke / Modell</TableHead>
+                    <TableHead className="w-24">Menge</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((i) => (
+                    <TableRow key={i.id} className={selected[i.id] ? 'bg-primary/5' : ''}>
+                      <TableCell><Checkbox checked={!!selected[i.id]} onCheckedChange={() => toggle(i.id)} /></TableCell>
+                      <TableCell className="font-mono text-xs">{i.sku}</TableCell>
+                      <TableCell>{i.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{[i.brand, i.model].filter(Boolean).join(' · ')}</TableCell>
+                      <TableCell>
+                        <Input
+                          type="number" min={1}
+                          value={selected[i.id] ?? ''}
+                          onChange={(e) => setSelected((s) => ({ ...s, [i.id]: Math.max(1, parseInt(e.target.value) || 1) }))}
+                          disabled={!selected[i.id]}
+                          className="h-8 w-20"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {filtered.length === 0 && (
+                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Keine Artikel</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </TabsContent>
+          <TabsContent value="bundles">
+            <div className="relative mb-2">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input className="pl-8" value={bundleQ} onChange={(e) => setBundleQ(e.target.value)} placeholder="Bundle filtern…" />
+            </div>
+            <ScrollArea className="h-80 border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Kategorie</TableHead>
+                    <TableHead className="w-24 text-right">Positionen</TableHead>
+                    <TableHead className="w-32"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredBundles.map(b => {
+                    const count = (bundleItemsMap[b.id] ?? []).filter(x => !x.is_optional).length;
+                    return (
+                      <TableRow key={b.id}>
+                        <TableCell className="font-medium">{b.name}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{b.category ?? '—'}</TableCell>
+                        <TableCell className="text-right text-xs">{count}</TableCell>
+                        <TableCell>
+                          <Button size="sm" variant="outline" onClick={() => applyBundle(b.id)}>Übernehmen</Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {filteredBundles.length === 0 && (
+                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Keine Bundles verfügbar</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+            <p className="text-xs text-muted-foreground mt-2">Bundle-Positionen werden zur Artikel-Auswahl hinzugefügt. Optionale Artikel manuell im Tab „Artikel" ergänzen.</p>
+          </TabsContent>
+        </Tabs>
+
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Badge variant="outline">{Object.keys(selected).length} ausgewählt</Badge>
