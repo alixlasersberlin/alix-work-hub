@@ -861,6 +861,14 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {activeTab === 'items' && (
+        <CatalogSnapshotsPanel
+          usedInType="order"
+          usedInIds={[order?.id, order?.order_number, order?.zoho_salesorder_id]}
+          className="mt-4"
+        />
+      )}
+
       {/* Seriennummer Tab */}
       {activeTab === 'serials' && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
