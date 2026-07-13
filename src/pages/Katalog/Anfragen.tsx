@@ -43,10 +43,15 @@ export default function KatalogAnfragen() {
     // Map portal users -> customer companies
     const puIds = Array.from(new Set(list.map(x => x.portal_user_id)));
     if (puIds.length) {
-      const { data: pus } = await c.from('customer_portal_users').select('id, customers:customer_id(company_name)').in('id', puIds);
+      const { data: pus } = await c.from('customer_portal_users').select('id, customer_id, customers:customer_id(company_name)').in('id', puIds);
       const m: Record<string, string> = {};
-      (pus ?? []).forEach((p: any) => { m[p.id] = p.customers?.company_name ?? '—'; });
+      const cm: Record<string, string> = {};
+      (pus ?? []).forEach((p: any) => {
+        m[p.id] = p.customers?.company_name ?? '—';
+        if (p.customer_id) cm[p.id] = p.customer_id;
+      });
       setCustomerMap(m);
+      setCustomerIdMap(cm);
     }
   };
 
