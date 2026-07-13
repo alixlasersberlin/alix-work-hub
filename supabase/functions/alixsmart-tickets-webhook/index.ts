@@ -26,6 +26,9 @@ interface Payload {
   status?: string;
   priority?: string;
   department?: string;
+  category?: string;
+  kategorie?: string;
+  service?: string;
   customer_visible_status?: string;
   internal_note?: string;
   messages?: Array<{
