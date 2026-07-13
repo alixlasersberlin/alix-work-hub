@@ -227,7 +227,7 @@ export default function CustomerPortalKatalog() {
                     portal_user_id: pu.id, item_id: i.id, quantity: 1,
                     country_iso: countryObj?.iso_code ?? null, language_code: language,
                   });
-                  if (error) toast.error(error.message); else toast.success(`${i.name} zum Warenkorb hinzugefügt`);
+                  if (error) toast.error(error.message); else { toast.success(`${i.name} zum Warenkorb hinzugefügt`); setCartCount((n) => n + 1); }
                 }}>
                   <ShoppingCart className="h-4 w-4 mr-1" /> In den Warenkorb
                 </Button>
