@@ -46,6 +46,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [manualItems, setManualItems] = useState<Array<{ item_name: string; description: string; sku: string; quantity: string; unit: string }>>([]);
+  const [katalogPickerOpen, setKatalogPickerOpen] = useState(false);
 
   // Modus: Auftrag oder nur Kunde
   const [mainMode, setMainMode] = useState<'order' | 'customer'>('order');
