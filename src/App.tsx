@@ -1125,6 +1125,7 @@ function AppRoutes() {
             <Route path="preisregeln" element={<KatalogPreisregeln />} />
             <Route path="protokolle" element={<KatalogProtokolle />} />
             <Route path="import" element={<KatalogImport />} />
+            <Route path="export" element={<KatalogExport />} />
           </Route>
 
 
