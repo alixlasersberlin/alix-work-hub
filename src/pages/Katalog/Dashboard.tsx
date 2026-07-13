@@ -27,6 +27,8 @@ interface LogEntry {
   performed_at: string;
   performed_by: string | null;
   change_summary: string | null;
+  field_name?: string | null;
+  note?: string | null;
 }
 
 export default function KatalogDashboard() {
