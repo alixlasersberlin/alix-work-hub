@@ -306,10 +306,10 @@ export default function KatalogVersand() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {links.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Noch keine Freigabelinks</TableCell></TableRow>
+            {filteredLinks.length === 0 && (
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Keine Links passen zum Filter</TableCell></TableRow>
             )}
-            {links.map((l) => {
+            {filteredLinks.map((l) => {
               const item = items.find((i) => i.id === l.item_id);
               const expired = l.expires_at && new Date(l.expires_at) < new Date();
               return (
