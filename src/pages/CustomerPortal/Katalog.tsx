@@ -95,9 +95,12 @@ export default function CustomerPortalKatalog() {
       i.name.toLowerCase().includes(n) || i.sku.toLowerCase().includes(n) ||
       (i.brand ?? '').toLowerCase().includes(n) || (i.model ?? '').toLowerCase().includes(n)
     ) : items;
-    // Nur Artikel mit freigegebenem Preis im gewählten Land
-    return base.filter((i) => prices[i.id]);
-  }, [items, q, prices]);
+    return base.filter((i) => {
+      if (!prices[i.id]) return false;
+      if (category !== 'all' && !(itemCategories[i.id] ?? []).includes(category)) return false;
+      return true;
+    });
+  }, [items, q, prices, category, itemCategories]);
 
   const submitInquiry = async () => {
     if (!askItem || !askText.trim()) return;
