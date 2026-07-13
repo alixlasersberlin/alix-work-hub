@@ -9,6 +9,7 @@ import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
 
 export default function ProductionOrderDetail() {
   const { id } = useParams();
