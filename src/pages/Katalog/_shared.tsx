@@ -9,6 +9,7 @@ const tabs = [
   { to: '/katalog/laender', label: 'Länder & Währungen' },
   { to: '/katalog/niederlassungen', label: 'Niederlassungen' },
   { to: '/katalog/preisregeln', label: 'Preisregeln' },
+  { to: '/katalog/import', label: 'Import' },
   { to: '/katalog/protokolle', label: 'Änderungsprotokoll' },
 ];
 
