@@ -245,8 +245,8 @@ export default function TicketsList() {
             <Button
               size="sm"
               type="button"
-              onPointerDown={(e) => {
-                e.preventDefault();
+              onClick={(e) => {
+                e.stopPropagation();
                 openCreateDialog();
               }}
               onKeyDown={(e) => {
