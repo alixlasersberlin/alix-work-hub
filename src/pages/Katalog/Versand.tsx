@@ -120,6 +120,34 @@ export default function KatalogVersand() {
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
+  const now = new Date();
+  const kpis = useMemo(() => {
+    const active = links.filter((l) => !l.revoked_at && (!l.expires_at || new Date(l.expires_at) >= now)).length;
+    const expired = links.filter((l) => !l.revoked_at && l.expires_at && new Date(l.expires_at) < now).length;
+    const revoked = links.filter((l) => !!l.revoked_at).length;
+    const totalViews = links.reduce((s, l) => s + (l.view_count ?? 0), 0);
+    const top = [...links].sort((a, b) => (b.view_count ?? 0) - (a.view_count ?? 0)).slice(0, 3);
+    return { active, expired, revoked, totalViews, top };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [links]);
+
+  const filteredLinks = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return links.filter((l) => {
+      const exp = l.expires_at && new Date(l.expires_at) < now;
+      if (statusFilter === 'active' && (l.revoked_at || exp)) return false;
+      if (statusFilter === 'expired' && (!exp || l.revoked_at)) return false;
+      if (statusFilter === 'revoked' && !l.revoked_at) return false;
+      if (q) {
+        const item = items.find((i) => i.id === l.item_id);
+        const hay = `${item?.sku ?? ''} ${item?.name ?? ''} ${l.recipient_name ?? ''} ${l.recipient_email ?? ''} ${l.token}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [links, statusFilter, search, items]);
+
   return (
     <div className="space-y-4">
       <Card className="p-4 flex gap-3 items-start">
@@ -128,6 +156,44 @@ export default function KatalogVersand() {
           Erzeuge sichere Freigabelinks für einzelne Katalog-Artikel und versende sie per E-Mail oder WhatsApp. Links laufen automatisch ab und können jederzeit widerrufen werden.
         </div>
       </Card>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.active}</div><div className="text-xs text-muted-foreground">Aktive Links</div></div>
+          <LinkIcon className="h-6 w-6 text-emerald-500" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.totalViews}</div><div className="text-xs text-muted-foreground">Aufrufe gesamt</div></div>
+          <Eye className="h-6 w-6 text-primary" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.expired}</div><div className="text-xs text-muted-foreground">Abgelaufen</div></div>
+          <Clock className="h-6 w-6 text-amber-500" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.revoked}</div><div className="text-xs text-muted-foreground">Widerrufen</div></div>
+          <XCircle className="h-6 w-6 text-red-500" />
+        </CardContent></Card>
+      </div>
+
+      {kpis.top.length > 0 && kpis.top[0].view_count > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center gap-2 mb-2 text-sm font-medium">
+            <TrendingUp className="h-4 w-4 text-primary" /> Top-Aufrufe
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            {kpis.top.map((l) => {
+              const item = items.find((i) => i.id === l.item_id);
+              return (
+                <div key={l.id} className="text-xs p-2 rounded-md bg-muted/40 flex justify-between items-center">
+                  <span className="truncate">{item ? `${item.sku} · ${item.name}` : l.token}</span>
+                  <Badge variant="secondary">{l.view_count}×</Badge>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
