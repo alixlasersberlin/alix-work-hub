@@ -48,6 +48,10 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
   const [q, setQ] = useState('');
   const [selected, setSelected] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<'items' | 'bundles'>('items');
+  const [bundles, setBundles] = useState<Array<{ id: string; name: string; category: string | null; default_discount_pct: number }>>([]);
+  const [bundleItemsMap, setBundleItemsMap] = useState<Record<string, Array<{ item_id: string; quantity: number; is_optional: boolean }>>>({});
+  const [bundleQ, setBundleQ] = useState('');
 
   useEffect(() => {
     if (!open) return;
