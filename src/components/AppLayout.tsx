@@ -502,6 +502,7 @@ const navItems: NavItem[] = [
       { path: '/katalog/preisregeln', label: 'Preisregeln', icon: ListChecks, roles: ['Super Admin', 'Admin', 'Katalog Preise'] },
       { path: '/katalog/import', label: 'Import', icon: Upload, roles: ['Super Admin', 'Admin', 'Katalog'] },
       { path: '/katalog/export', label: 'Export', icon: FileDown, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing'] },
+      { path: '/katalog/versand', label: 'Freigabelinks', icon: Send, roles: ['Super Admin', 'Admin', 'Katalog', 'Vertrieb', 'Vertriebsleitung'] },
       { path: '/katalog/protokolle', label: 'Änderungsprotokoll', icon: ScrollText, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise'] },
     ],
   },
