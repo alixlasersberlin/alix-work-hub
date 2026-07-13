@@ -221,12 +221,15 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
           rate,
           tax_percentage: tax,
           quantity: selected[id] || 1,
+          discount_pct: selectedDiscount[id] || undefined,
           snapshot_id: snap?.id,
         });
       }
 
       onPicked(result);
       setSelected({});
+      setSelectedDiscount({});
+      setBundleCounts({});
       setQ('');
       onOpenChange(false);
       toast({ title: `${result.length} Artikel übernommen` });
