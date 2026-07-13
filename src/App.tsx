@@ -279,6 +279,9 @@ const KatalogProtokolle = lazy(() => import("./pages/Katalog/Protokolle"));
 const KatalogFreigabe = lazy(() => import("./pages/Katalog/Freigabe"));
 const KatalogPreisgruppen = lazy(() => import("./pages/Katalog/Preisgruppen"));
 const KatalogCheckouts = lazy(() => import("./pages/Katalog/Checkouts"));
+const KatalogReminders = lazy(() => import("./pages/Katalog/Reminders"));
+const KatalogPdfTemplates = lazy(() => import("./pages/Katalog/PdfTemplates"));
+const KatalogImportManaged = lazy(() => import("./pages/Katalog/ImportManaged"));
 const KatalogImport = lazy(() => import("./pages/Katalog/Import"));
 const KatalogExport = lazy(() => import("./pages/Katalog/Export"));
 const KatalogVersand = lazy(() => import("./pages/Katalog/Versand"));
@@ -1149,6 +1152,9 @@ function AppRoutes() {
             <Route path="import-csv" element={<KatalogImportCsv />} />
             <Route path="preisgruppen" element={<KatalogPreisgruppen />} />
             <Route path="checkouts" element={<KatalogCheckouts />} />
+            <Route path="reminders" element={<KatalogReminders />} />
+            <Route path="pdf-templates" element={<KatalogPdfTemplates />} />
+            <Route path="import-managed" element={<KatalogImportManaged />} />
           </Route>
 
 

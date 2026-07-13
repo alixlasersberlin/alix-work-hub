@@ -2331,6 +2331,89 @@ export type Database = {
           },
         ]
       }
+      catalog_import_jobs_v2: {
+        Row: {
+          finished_at: string | null
+          id: string
+          kind: string
+          log: string | null
+          source_id: string | null
+          started_at: string
+          stats: Json
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          finished_at?: string | null
+          id?: string
+          kind: string
+          log?: string | null
+          source_id?: string | null
+          started_at?: string
+          stats?: Json
+          status?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          finished_at?: string | null
+          id?: string
+          kind?: string
+          log?: string | null
+          source_id?: string | null
+          started_at?: string
+          stats?: Json
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_import_jobs_v2_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_import_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_import_sources: {
+        Row: {
+          config: Json
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          id: string
+          kind: string
+          last_run_at: string | null
+          last_status: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          kind: string
+          last_run_at?: string | null
+          last_status?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          id?: string
+          kind?: string
+          last_run_at?: string | null
+          last_status?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       catalog_item_descriptions: {
         Row: {
           accessories: string | null
@@ -2807,6 +2890,51 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_pdf_templates: {
+        Row: {
+          accent_color: string | null
+          body_html: string
+          created_at: string
+          footer_html: string | null
+          header_html: string | null
+          id: string
+          is_default: boolean
+          language: string
+          logo_url: string | null
+          name: string
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string | null
+          body_html?: string
+          created_at?: string
+          footer_html?: string | null
+          header_html?: string | null
+          id?: string
+          is_default?: boolean
+          language?: string
+          logo_url?: string | null
+          name: string
+          scope?: string
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string | null
+          body_html?: string
+          created_at?: string
+          footer_html?: string | null
+          header_html?: string | null
+          id?: string
+          is_default?: boolean
+          language?: string
+          logo_url?: string | null
+          name?: string
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       catalog_pending_changes: {
         Row: {
           applied_at: string | null
@@ -3257,6 +3385,89 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      catalog_reminder_log_v2: {
+        Row: {
+          created_at: string
+          details: Json
+          id: string
+          notified_emails: string[]
+          resolved_at: string | null
+          rule_id: string | null
+          status: string
+          target_id: string | null
+          target_label: string | null
+          target_type: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          id?: string
+          notified_emails?: string[]
+          resolved_at?: string | null
+          rule_id?: string | null
+          status?: string
+          target_id?: string | null
+          target_label?: string | null
+          target_type: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          id?: string
+          notified_emails?: string[]
+          resolved_at?: string | null
+          rule_id?: string | null
+          status?: string
+          target_id?: string | null
+          target_label?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_reminder_log_v2_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_reminder_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_reminder_rules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          kind: string
+          last_run_at: string | null
+          name: string
+          notify_emails: string[]
+          threshold_days: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          kind: string
+          last_run_at?: string | null
+          name: string
+          notify_emails?: string[]
+          threshold_days?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          kind?: string
+          last_run_at?: string | null
+          name?: string
+          notify_emails?: string[]
+          threshold_days?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       catalog_share_access_log: {
         Row: {
