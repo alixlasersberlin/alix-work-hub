@@ -466,11 +466,10 @@ export default function TicketsList() {
         })}
       </Tabs>
 
-      {createOpen && createPortal(
+      {createOpen && (
         <div
           className="fixed inset-0 z-[9000] flex items-center justify-center overflow-y-auto bg-background/85 p-4 backdrop-blur-sm sm:p-6"
           role="presentation"
-          onMouseDown={closeCreateDialog}
         >
           <section
             role="dialog"
@@ -574,8 +573,7 @@ export default function TicketsList() {
             </Button>
             </div>
           </section>
-        </div>,
-        getFrameBody()
+        </div>
       )}
 
     </div>
