@@ -1,11 +1,17 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+async function sha256(text: string) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   try {
     const url = new URL(req.url);
     const token = url.searchParams.get('token');
+    const password = url.searchParams.get('pw') ?? '';
     if (!token) return json({ error: 'token required' }, 400);
 
     const sb = createClient(
@@ -13,14 +19,40 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    const ipRaw = req.headers.get('cf-connecting-ip')
+      ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      ?? '';
+    const ipHash = ipRaw ? await sha256(`${ipRaw}|catalog-share`) : null;
+    const ua = req.headers.get('user-agent')?.slice(0, 300) ?? null;
+
+    const logAccess = (linkId: string, outcome: string) => {
+      // fire-and-forget
+      sb.from('catalog_share_access_log')
+        .insert({ link_id: linkId, ip_hash: ipHash, user_agent: ua, outcome })
+        .then(() => {});
+    };
+
     const { data: link, error: linkErr } = await sb
       .from('catalog_share_links')
-      .select('id, item_id, language_code, country_id, expires_at, revoked_at, view_count')
+      .select('id, item_id, language_code, country_id, expires_at, revoked_at, view_count, password_hash, max_views')
       .eq('token', token)
       .maybeSingle();
     if (linkErr || !link) return json({ error: 'not_found' }, 404);
-    if (link.revoked_at) return json({ error: 'revoked' }, 410);
-    if (link.expires_at && new Date(link.expires_at) < new Date()) return json({ error: 'expired' }, 410);
+    if (link.revoked_at) { logAccess(link.id, 'revoked'); return json({ error: 'revoked' }, 410); }
+    if (link.expires_at && new Date(link.expires_at) < new Date()) {
+      logAccess(link.id, 'expired'); return json({ error: 'expired' }, 410);
+    }
+    if (link.max_views != null && (link.view_count ?? 0) >= link.max_views) {
+      logAccess(link.id, 'max_views'); return json({ error: 'max_views' }, 410);
+    }
+    if (link.password_hash) {
+      if (!password) { logAccess(link.id, 'password_required'); return json({ error: 'password_required' }, 401); }
+      const attempt = await sha256(password);
+      if (attempt !== link.password_hash) {
+        logAccess(link.id, 'password_wrong');
+        return json({ error: 'password_wrong' }, 401);
+      }
+    }
 
     const [{ data: item }, { data: desc }, { data: images }, { data: price }] = await Promise.all([
       sb.from('catalog_items').select('id, sku, name, brand, model, status').eq('id', link.item_id).maybeSingle(),
@@ -35,6 +67,7 @@ Deno.serve(async (req) => {
     ]);
 
     if (!item || !['freigegeben', 'aktiv'].includes(item.status)) {
+      logAccess(link.id, 'not_available');
       return json({ error: 'not_available' }, 404);
     }
 
@@ -46,10 +79,11 @@ Deno.serve(async (req) => {
       signedImages = (signed ?? []).map((s: any) => s.signedUrl).filter(Boolean);
     }
 
-    // View-Count erhöhen (fire and forget)
+    // View-Count erhöhen (fire and forget) + Zugriff loggen
     sb.from('catalog_share_links')
       .update({ view_count: (link.view_count ?? 0) + 1, last_viewed_at: new Date().toISOString() })
       .eq('id', link.id).then(() => {});
+    logAccess(link.id, 'ok');
 
     return json({
       item: { sku: item.sku, name: item.name, brand: item.brand, model: item.model },
