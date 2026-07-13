@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft, Save, Upload, Trash2, Star, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Trash2, Star, CheckCircle2, ShieldCheck, FolderTree, Plus, Link2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const ITEM_STATUSES = ['entwurf','zur_pruefung','korrektur','freigegeben','gesperrt','archiviert','aktiv','inaktiv','ausverkauft','vorbestellung','nur_auf_anfrage','nicht_lieferbar'];
 const PRICE_STATUSES = ['entwurf','zur_freigabe','freigegeben','abgelehnt','abgelaufen'];
@@ -33,11 +34,14 @@ export default function KatalogArtikelDetail() {
   const [images, setImages] = useState<any[]>([]);
   const [prices, setPrices] = useState<any[]>([]);
   const [changeLog, setChangeLog] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [assignedCatIds, setAssignedCatIds] = useState<string[]>([]);
+  const [usage, setUsage] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [activeLang, setActiveLang] = useState<string>('de');
 
   const load = async () => {
-    const [itemRes, langsRes, countriesRes, branchesRes, currRes, descRes, imgRes, priceRes, logRes] = await Promise.all([
+    const [itemRes, langsRes, countriesRes, branchesRes, currRes, descRes, imgRes, priceRes, logRes, catsRes, assignRes, usageRes] = await Promise.all([
       client.from('catalog_items').select('*').eq('id', id).maybeSingle(),
       client.from('catalog_languages').select('*').eq('is_active', true).order('sort_order'),
       client.from('catalog_countries').select('*').eq('is_active', true).order('sort_order'),
@@ -47,6 +51,9 @@ export default function KatalogArtikelDetail() {
       client.from('catalog_item_images').select('*').eq('item_id', id).order('sort_order'),
       client.from('catalog_item_prices').select('*').eq('item_id', id).order('created_at', { ascending: false }),
       client.from('catalog_change_log').select('*').eq('entity_id', id).order('performed_at', { ascending: false }).limit(200),
+      client.from('catalog_categories').select('id, slug, names, parent_id, sort_order').order('sort_order'),
+      client.from('item_category_assignments').select('category_id').eq('item_id', id),
+      client.from('catalog_item_snapshots').select('id, used_in_type, used_in_id, created_at').eq('item_id', id).order('created_at', { ascending: false }).limit(100),
     ]);
     setItem(itemRes.data);
     setLanguages(langsRes.data ?? []);
@@ -57,6 +64,9 @@ export default function KatalogArtikelDetail() {
     setImages(imgRes.data ?? []);
     setPrices(priceRes.data ?? []);
     setChangeLog(logRes.data ?? []);
+    setCategories(catsRes.data ?? []);
+    setAssignedCatIds(((assignRes.data ?? []) as any[]).map((a: any) => a.category_id));
+    setUsage(usageRes.data ?? []);
     const def = (langsRes.data ?? []).find((l: any) => l.is_default);
     if (def) setActiveLang(def.code);
   };
@@ -201,6 +211,8 @@ export default function KatalogArtikelDetail() {
           <TabsTrigger value="beschreibungen">Beschreibungen</TabsTrigger>
           <TabsTrigger value="bilder">Bilder</TabsTrigger>
           <TabsTrigger value="preise">Länderpreise</TabsTrigger>
+          <TabsTrigger value="kategorien">Kategorien</TabsTrigger>
+          <TabsTrigger value="verwendung">Verwendung</TabsTrigger>
           <TabsTrigger value="verlauf">Änderungsverlauf</TabsTrigger>
         </TabsList>
 
@@ -355,6 +367,58 @@ export default function KatalogArtikelDetail() {
               })}
               {prices.length === 0 && <p className="text-muted-foreground text-sm">Noch keine Länderpreise.</p>}
             </div>
+          </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="kategorien">
+          <Card><CardContent className="pt-6 space-y-3">
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              <FolderTree className="h-4 w-4" /> Zuordnung zu Katalog-Kategorien. Änderungen werden sofort gespeichert.
+            </div>
+            {categories.length === 0 && <p className="text-sm text-muted-foreground">Noch keine Kategorien angelegt.</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {categories.map((c: any) => {
+                const checked = assignedCatIds.includes(c.id);
+                return (
+                  <label key={c.id} className="flex items-center gap-2 p-2 rounded hover:bg-muted/50 cursor-pointer">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={async (v) => {
+                        if (v) {
+                          const { error } = await client.from('item_category_assignments').insert({ item_id: id, category_id: c.id });
+                          if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+                          setAssignedCatIds([...assignedCatIds, c.id]);
+                        } else {
+                          const { error } = await client.from('item_category_assignments').delete().eq('item_id', id).eq('category_id', c.id);
+                          if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+                          setAssignedCatIds(assignedCatIds.filter((x) => x !== c.id));
+                        }
+                      }}
+                    />
+                    <span className="text-sm">{c.names?.de ?? c.slug}</span>
+                    <span className="text-xs font-mono text-muted-foreground ml-auto">{c.slug}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="verwendung">
+          <Card><CardContent className="pt-6 space-y-2">
+            <div className="text-sm text-muted-foreground flex items-center gap-2 mb-3">
+              <Link2 className="h-4 w-4" /> Snapshots zeigen, wo dieser Artikel in Angeboten und Aufträgen verwendet wurde.
+            </div>
+            {usage.length === 0 && <p className="text-sm text-muted-foreground">Noch nicht in Angeboten oder Aufträgen verwendet.</p>}
+            {usage.map((u: any) => (
+              <div key={u.id} className="text-xs border-b py-2 flex justify-between items-center">
+                <div>
+                  <Badge variant="secondary" className="mr-2">{u.used_in_type}</Badge>
+                  <span className="font-mono">{u.used_in_id ? String(u.used_in_id).slice(0, 8) : '— (Entwurf)'}</span>
+                </div>
+                <span className="text-muted-foreground">{new Date(u.created_at).toLocaleString('de-DE')}</span>
+              </div>
+            ))}
           </CardContent></Card>
         </TabsContent>
 
