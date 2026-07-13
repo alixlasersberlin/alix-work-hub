@@ -32,6 +32,7 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [note, setNote] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
