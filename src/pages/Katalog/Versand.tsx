@@ -43,6 +43,8 @@ export default function KatalogVersand() {
     recipient_name: '', recipient_email: '', recipient_phone: '',
     channel: 'link', expires_days: 30,
   });
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'revoked'>('all');
+  const [search, setSearch] = useState('');
 
   const load = async () => {
     const c = supabase as any;
