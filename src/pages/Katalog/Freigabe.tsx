@@ -60,6 +60,30 @@ export default function KatalogFreigabe() {
 
   useEffect(() => { load(); }, []);
 
+  // Realtime: Freigaben live nachladen, wenn andere Nutzer einreichen/ändern
+  useEffect(() => {
+    if (!canApprove) return;
+    const ch = supabase
+      .channel('katalog-freigabe-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catalog_items' }, (payload: any) => {
+        load();
+        const row: any = payload.new ?? payload.old;
+        if (payload.eventType === 'UPDATE' && row?.status === 'zur_pruefung' && row?.last_edited_by !== user?.id) {
+          toast({ title: 'Neue Artikel-Prüfung eingegangen', description: row?.name ?? row?.sku ?? '' });
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'catalog_item_prices' }, (payload: any) => {
+        load();
+        const row: any = payload.new ?? payload.old;
+        if (payload.eventType === 'UPDATE' && row?.price_status === 'zur_freigabe' && row?.last_edited_by !== user?.id) {
+          toast({ title: 'Neuer Preis zur Freigabe', description: `${row?.currency_code ?? ''} ${row?.standard_gross ?? ''}` });
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canApprove, user?.id]);
+
   const eligibleItems = useMemo(() => items.filter((i) => i.last_edited_by !== user?.id), [items, user]);
   const eligiblePrices = useMemo(() => prices.filter((p) => p.last_edited_by !== user?.id), [prices, user]);
 
