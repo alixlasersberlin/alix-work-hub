@@ -195,6 +195,25 @@ export default function KatalogVersand() {
         </Card>
       )}
 
+      <div className="flex flex-wrap gap-2 items-end justify-between">
+        <div className="flex flex-wrap gap-2 items-end">
+          <div>
+            <Label className="text-xs">Status</Label>
+            <Select value={statusFilter} onValueChange={(v: any) => setStatusFilter(v)}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle</SelectItem>
+                <SelectItem value="active">Aktiv</SelectItem>
+                <SelectItem value="expired">Abgelaufen</SelectItem>
+                <SelectItem value="revoked">Widerrufen</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Suche</Label>
+            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="SKU, Name, Empfänger…" className="w-64" />
+          </div>
+        </div>
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Neuer Freigabelink</Button></DialogTrigger>
