@@ -10,12 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { ArrowLeft, Loader2, Search, Save, Send, Download, Plus, Trash2, Upload, FileText, X, ChevronsUpDown, Check } from 'lucide-react';
+import { ArrowLeft, Loader2, Search, Save, Send, Download, Plus, Trash2, Upload, FileText, X, ChevronsUpDown, Check, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { useAuth } from '@/hooks/useAuth';
 import { markRestbestellungDone } from '@/lib/restbestellung';
+import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalog/KatalogPickerDialog';
 
 type Mode = 'order' | 'reclamation';
 
@@ -45,6 +46,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [manualItems, setManualItems] = useState<Array<{ item_name: string; description: string; sku: string; quantity: string; unit: string }>>([]);
+  const [katalogPickerOpen, setKatalogPickerOpen] = useState(false);
 
   // Modus: Auftrag oder nur Kunde
   const [mainMode, setMainMode] = useState<'order' | 'customer'>('order');
@@ -817,9 +819,14 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
                   {selectedOrder ? 'Positionen, die nicht im Auftrag enthalten sind' : 'Mindestens eine Position erforderlich'}
                 </p>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={addManualItem}>
-                <Plus className="w-4 h-4 mr-1" /> Hinzufügen
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => setKatalogPickerOpen(true)}>
+                  <BookOpen className="w-4 h-4 mr-1" /> Aus Katalog
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addManualItem}>
+                  <Plus className="w-4 h-4 mr-1" /> Hinzufügen
+                </Button>
+              </div>
             </div>
             {manualItems.length === 0 ? (
               <p className="text-xs text-muted-foreground italic">Noch keine manuellen Positionen.</p>
@@ -1145,6 +1152,25 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           Speichern + an Zulieferer senden
         </Button>
       </div>
+
+      <KatalogPickerDialog
+        open={katalogPickerOpen}
+        onOpenChange={setKatalogPickerOpen}
+        usedInType="production_order_draft"
+        onPicked={(picked: KatalogPickResult[]) => {
+          setManualItems(arr => [
+            ...arr,
+            ...picked.map(p => ({
+              item_name: p.name,
+              description: p.description || '',
+              sku: p.sku,
+              quantity: String(p.quantity || 1),
+              unit: '',
+            })),
+          ]);
+          toast.success(`${picked.length} Position(en) aus Katalog übernommen`);
+        }}
+      />
     </div>
   );
 }
