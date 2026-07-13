@@ -42,6 +42,7 @@ export default function KatalogVersand() {
     item_id: '', language_code: 'de', country_id: '__none__',
     recipient_name: '', recipient_email: '', recipient_phone: '',
     channel: 'link', expires_days: 30,
+    password: '', max_views: 0,
   });
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'expired' | 'revoked'>('all');
   const [search, setSearch] = useState('');
@@ -97,6 +98,11 @@ export default function KatalogVersand() {
     const expires = form.expires_days > 0
       ? new Date(Date.now() + form.expires_days * 86400000).toISOString()
       : null;
+    let passwordHash: string | null = null;
+    if (form.password.trim()) {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(form.password.trim()));
+      passwordHash = Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+    }
     const c = supabase as any;
     const { data: userRes } = await supabase.auth.getUser();
     const { error } = await c.from('catalog_share_links').insert({
@@ -109,13 +115,15 @@ export default function KatalogVersand() {
       recipient_phone: form.recipient_phone || null,
       channel: form.channel,
       expires_at: expires,
+      password_hash: passwordHash,
+      max_views: form.max_views > 0 ? form.max_views : null,
       created_by: userRes?.user?.id ?? null,
     });
     setSaving(false);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Link erstellt', description: `${baseUrl()}${token}` });
     setOpen(false);
-    setForm({ ...form, item_id: '', recipient_name: '', recipient_email: '', recipient_phone: '' });
+    setForm({ ...form, item_id: '', recipient_name: '', recipient_email: '', recipient_phone: '', password: '', max_views: 0 });
     load();
   };
 
