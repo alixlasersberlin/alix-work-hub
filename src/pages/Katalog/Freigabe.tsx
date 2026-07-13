@@ -127,17 +127,34 @@ export default function KatalogFreigabe() {
     load();
   };
 
+  const reviewPrices = async () => {
+    const ids = Object.entries(selPrices).filter(([, v]) => v).map(([k]) => k);
+    const target = ids.filter((id) => reviewablePrices.some((p) => p.id === id));
+    if (target.length === 0) return toast({ title: 'Nichts zu prüfen', description: 'Nur ungeprüfte, fremde Preise können geprüft werden.' });
+    const note = window.prompt(`Prüfnotiz für ${target.length} Preis(e) (optional):`, '') ?? '';
+    setBusy(true);
+    const { error } = await client.from('catalog_item_prices').update({
+      reviewed_at: new Date().toISOString(), reviewed_by: user?.id, review_note: note || null,
+    }).in('id', target);
+    setBusy(false);
+    if (error) return toast({ title: 'Prüfung fehlgeschlagen', description: error.message, variant: 'destructive' });
+    toast({ title: `${target.length} Preise als geprüft markiert` });
+    setSelPrices({});
+    load();
+  };
+
   const approvePrices = async () => {
     const ids = Object.entries(selPrices).filter(([, v]) => v).map(([k]) => k);
-    if (ids.length === 0) return;
+    const target = ids.filter((id) => eligiblePrices.some((p) => p.id === id));
+    if (target.length === 0) return toast({ title: 'Freigabe nicht möglich', description: 'Nur von jemand anderem geprüfte Preise können freigegeben werden (4-Augen-Prinzip).' });
     setBusy(true);
     const now = new Date().toISOString();
     const { error } = await client.from('catalog_item_prices').update({
       price_status: 'freigegeben', approved_at: now, approved_by: user?.id,
-    }).in('id', ids);
+    }).in('id', target);
     setBusy(false);
     if (error) return toast({ title: 'Freigabe fehlgeschlagen', description: error.message, variant: 'destructive' });
-    toast({ title: `${ids.length} Preise freigegeben` });
+    toast({ title: `${target.length} Preise freigegeben` });
     setSelPrices({});
     load();
   };
