@@ -1592,10 +1592,35 @@ export default function AngebotErstellen() {
       <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-foreground">Positionen</h2>
-          <Button variant="outline" size="sm" onClick={() => setLines(prev => [...prev, newLine()])}>
-            <Plus className="w-4 h-4 mr-1" /> Leere Zeile
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setKatalogPickerOpen(true)}>
+              <BookOpen className="w-4 h-4 mr-1" /> Aus Katalog
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setLines(prev => [...prev, newLine()])}>
+              <Plus className="w-4 h-4 mr-1" /> Leere Zeile
+            </Button>
+          </div>
         </div>
+        <KatalogPickerDialog
+          open={katalogPickerOpen}
+          onOpenChange={setKatalogPickerOpen}
+          usedInType="offer_draft"
+          onPicked={(picked: KatalogPickResult[]) => {
+            setLines(prev => [
+              ...prev.filter(l => l.name || l.sku || l.rate),
+              ...picked.map(p => ({
+                id: crypto.randomUUID(),
+                item_id: p.item_id,
+                name: p.name,
+                description: p.description,
+                sku: p.sku,
+                quantity: p.quantity,
+                rate: p.rate,
+                tax_percentage: p.tax_percentage,
+              })),
+            ]);
+          }}
+        />
 
         <div className="relative z-20">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
