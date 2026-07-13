@@ -157,7 +157,7 @@ export default function KatalogDashboard() {
                   <span className="text-muted-foreground">{r.entity_type}</span>
                   <span className="ml-auto text-muted-foreground">{new Date(r.performed_at).toLocaleString('de-DE')}</span>
                 </div>
-                {r.change_summary && <div className="text-muted-foreground mt-0.5 line-clamp-2">{r.change_summary}</div>}
+                {(r.note || r.field_name) && <div className="text-muted-foreground mt-0.5 line-clamp-2">{[r.field_name, r.note].filter(Boolean).join(': ')}</div>}
               </div>
             ))}
           </CardContent>
