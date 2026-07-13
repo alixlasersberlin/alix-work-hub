@@ -2705,6 +2705,198 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_portal_cart_items: {
+        Row: {
+          country_iso: string | null
+          created_at: string
+          id: string
+          item_id: string
+          language_code: string | null
+          note: string | null
+          portal_user_id: string
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          country_iso?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          language_code?: string | null
+          note?: string | null
+          portal_user_id: string
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          country_iso?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          language_code?: string | null
+          note?: string | null
+          portal_user_id?: string
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_portal_cart_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_portal_cart_items_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: false
+            referencedRelation: "customer_portal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_portal_inquiries: {
+        Row: {
+          assigned_to: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          country_iso: string | null
+          created_at: string
+          desired_delivery_date: string | null
+          id: string
+          inquiry_number: string | null
+          internal_notes: string | null
+          language_code: string | null
+          message: string | null
+          portal_user_id: string
+          processed_at: string | null
+          processed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          country_iso?: string | null
+          created_at?: string
+          desired_delivery_date?: string | null
+          id?: string
+          inquiry_number?: string | null
+          internal_notes?: string | null
+          language_code?: string | null
+          message?: string | null
+          portal_user_id: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          country_iso?: string | null
+          created_at?: string
+          desired_delivery_date?: string | null
+          id?: string
+          inquiry_number?: string | null
+          internal_notes?: string | null
+          language_code?: string | null
+          message?: string | null
+          portal_user_id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_portal_inquiries_portal_user_id_fkey"
+            columns: ["portal_user_id"]
+            isOneToOne: false
+            referencedRelation: "customer_portal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_portal_inquiry_items: {
+        Row: {
+          created_at: string
+          currency: string | null
+          id: string
+          inquiry_id: string
+          item_id: string
+          name: string | null
+          note: string | null
+          price_gross: number | null
+          price_net: number | null
+          quantity: number
+          sku: string | null
+          snapshot_id: string | null
+          sort_order: number
+          tax_rate: number | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          inquiry_id: string
+          item_id: string
+          name?: string | null
+          note?: string | null
+          price_gross?: number | null
+          price_net?: number | null
+          quantity?: number
+          sku?: string | null
+          snapshot_id?: string | null
+          sort_order?: number
+          tax_rate?: number | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          inquiry_id?: string
+          item_id?: string
+          name?: string | null
+          note?: string | null
+          price_gross?: number | null
+          price_net?: number | null
+          quantity?: number
+          sku?: string | null
+          snapshot_id?: string | null
+          sort_order?: number
+          tax_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_portal_inquiry_items_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_portal_inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_portal_inquiry_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_portal_inquiry_items_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_item_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_price_rules: {
         Row: {
           applies_branch: string | null

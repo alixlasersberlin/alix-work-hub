@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { BookOpen, Search, MessageSquarePlus, Loader2 } from 'lucide-react';
+import { BookOpen, Search, MessageSquarePlus, Loader2, ShoppingCart } from 'lucide-react';
 
 type Ctx = { customerId: string; companyName: string | null; email: string | null };
 
@@ -171,9 +171,23 @@ export default function CustomerPortalKatalog() {
                   </div>
                 )}
               </CardContent>
-              <div className="p-3 pt-0">
-                <Button size="sm" variant="outline" className="w-full" onClick={() => { setAskItem(i); setAskText(''); }}>
-                  <MessageSquarePlus className="h-4 w-4 mr-1" /> Anfrage senden
+              <div className="p-3 pt-0 flex gap-2">
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => { setAskItem(i); setAskText(''); }}>
+                  <MessageSquarePlus className="h-4 w-4 mr-1" /> Anfrage
+                </Button>
+                <Button size="sm" className="flex-1" onClick={async () => {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (!user) return;
+                  const { data: pu } = await (supabase as any).from('customer_portal_users').select('id').eq('user_id', user.id).eq('status', 'active').maybeSingle();
+                  if (!pu) { toast.error('Kein Portal-Zugang'); return; }
+                  const countryObj = countries.find(x => x.id === country);
+                  const { error } = await (supabase as any).from('catalog_portal_cart_items').insert({
+                    portal_user_id: pu.id, item_id: i.id, quantity: 1,
+                    country_iso: countryObj?.iso_code ?? null, language_code: language,
+                  });
+                  if (error) toast.error(error.message); else toast.success(`${i.name} zum Warenkorb hinzugefügt`);
+                }}>
+                  <ShoppingCart className="h-4 w-4 mr-1" /> In den Warenkorb
                 </Button>
               </div>
             </Card>

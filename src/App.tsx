@@ -285,7 +285,10 @@ const KatalogBulkUebersetzung = lazy(() => import("./pages/Katalog/BulkUebersetz
 const KatalogAnalytics = lazy(() => import("./pages/Katalog/Analytics"));
 const KatalogPreishistorie = lazy(() => import("./pages/Katalog/Preishistorie"));
 const KatalogBundles = lazy(() => import("./pages/Katalog/Bundles"));
+const KatalogAnfragen = lazy(() => import("./pages/Katalog/Anfragen"));
+const KatalogImportCsv = lazy(() => import("./pages/Katalog/ImportCsv"));
 const CustomerPortalKatalog = lazy(() => import("./pages/CustomerPortal/Katalog"));
+const CustomerPortalWarenkorb = lazy(() => import("./pages/CustomerPortal/Warenkorb"));
 const AicLayout = lazy(() => import("./pages/AIC/Layout"));
 const AicDashboard = lazy(() => import("./pages/AIC/Dashboard"));
 const AicUnternehmen = lazy(() => import("./pages/AIC/Unternehmen"));
@@ -1140,6 +1143,8 @@ function AppRoutes() {
             <Route path="analytics" element={<KatalogAnalytics />} />
             <Route path="preishistorie" element={<KatalogPreishistorie />} />
             <Route path="bundles" element={<KatalogBundles />} />
+            <Route path="anfragen" element={<KatalogAnfragen />} />
+            <Route path="import-csv" element={<KatalogImportCsv />} />
           </Route>
 
 
@@ -1270,6 +1275,7 @@ function AppRoutes() {
           <Route path="termine" element={<CustomerPortalAppointments />} />
           <Route path="gesundheit" element={<CustomerPortalHealth />} />
           <Route path="katalog" element={<CustomerPortalKatalog />} />
+          <Route path="warenkorb" element={<CustomerPortalWarenkorb />} />
         </Route>
 
         {/* Mobile Techniker-App – eigenes Layout (kein AppLayout) */}
