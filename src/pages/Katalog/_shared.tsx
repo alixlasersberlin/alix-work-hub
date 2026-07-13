@@ -11,6 +11,7 @@ const tabs = [
   { to: '/katalog/preisregeln', label: 'Preisregeln' },
   { to: '/katalog/import', label: 'Import' },
   { to: '/katalog/export', label: 'Export' },
+  { to: '/katalog/versand', label: 'Freigabelinks' },
   { to: '/katalog/protokolle', label: 'Änderungsprotokoll' },
 ];
 
