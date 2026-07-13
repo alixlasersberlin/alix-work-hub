@@ -141,20 +141,18 @@ export default function KatalogVersand() {
     load();
   };
 
-  const openMail = (l: Link) => {
-    const url = baseUrl() + l.token;
-    const item = items.find((i) => i.id === l.item_id);
-    const subj = `Artikelinformation: ${item?.name ?? l.item_id}`;
-    const body = `Guten Tag${l.recipient_name ? ' ' + l.recipient_name : ''},\n\nanbei der Link zum Artikel:\n${url}\n\nMit freundlichen Grüßen\nAlixWork`;
-    window.location.href = `mailto:${l.recipient_email ?? ''}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
-  };
-
-  const openWhats = (l: Link) => {
-    const url = baseUrl() + l.token;
-    const item = items.find((i) => i.id === l.item_id);
-    const text = `Artikel: ${item?.name ?? ''}\n${url}`;
-    const phone = (l.recipient_phone ?? '').replace(/[^\d]/g, '');
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  const sendVia = async (l: Link, channel: 'email' | 'whatsapp' | 'sms') => {
+    try {
+      const { data, error } = await supabase.functions.invoke('catalog-share-send', {
+        body: { link_id: l.id, channel, base_url: baseUrl() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: `Gesendet (${channel})`, description: (data as any)?.result?.sid ? `Twilio SID: ${(data as any).result.sid}` : 'OK' });
+      load();
+    } catch (e: any) {
+      toast({ title: 'Sendefehler', description: e?.message ?? String(e), variant: 'destructive' });
+    }
   };
 
   const now = new Date();
