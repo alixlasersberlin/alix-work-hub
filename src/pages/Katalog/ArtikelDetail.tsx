@@ -41,7 +41,7 @@ export default function KatalogArtikelDetail() {
   const [activeLang, setActiveLang] = useState<string>('de');
 
   const load = async () => {
-    const [itemRes, langsRes, countriesRes, branchesRes, currRes, descRes, imgRes, priceRes, logRes] = await Promise.all([
+    const [itemRes, langsRes, countriesRes, branchesRes, currRes, descRes, imgRes, priceRes, logRes, catsRes, assignRes, usageRes] = await Promise.all([
       client.from('catalog_items').select('*').eq('id', id).maybeSingle(),
       client.from('catalog_languages').select('*').eq('is_active', true).order('sort_order'),
       client.from('catalog_countries').select('*').eq('is_active', true).order('sort_order'),
@@ -51,6 +51,9 @@ export default function KatalogArtikelDetail() {
       client.from('catalog_item_images').select('*').eq('item_id', id).order('sort_order'),
       client.from('catalog_item_prices').select('*').eq('item_id', id).order('created_at', { ascending: false }),
       client.from('catalog_change_log').select('*').eq('entity_id', id).order('performed_at', { ascending: false }).limit(200),
+      client.from('catalog_categories').select('id, slug, names, parent_id, sort_order').order('sort_order'),
+      client.from('item_category_assignments').select('category_id').eq('item_id', id),
+      client.from('catalog_item_snapshots').select('id, used_in_type, used_in_id, created_at').eq('item_id', id).order('created_at', { ascending: false }).limit(100),
     ]);
     setItem(itemRes.data);
     setLanguages(langsRes.data ?? []);
@@ -61,6 +64,9 @@ export default function KatalogArtikelDetail() {
     setImages(imgRes.data ?? []);
     setPrices(priceRes.data ?? []);
     setChangeLog(logRes.data ?? []);
+    setCategories(catsRes.data ?? []);
+    setAssignedCatIds(((assignRes.data ?? []) as any[]).map((a: any) => a.category_id));
+    setUsage(usageRes.data ?? []);
     const def = (langsRes.data ?? []).find((l: any) => l.is_default);
     if (def) setActiveLang(def.code);
   };
