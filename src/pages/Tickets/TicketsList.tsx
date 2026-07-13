@@ -185,11 +185,7 @@ export default function TicketsList() {
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
 
-  const openCreateDialog = () => {
-    // Öffnen nach dem aktuellen Klick-Event, damit Radix den auslösenden Klick
-    // nicht sofort als Outside-Interaction wertet und den Dialog wieder schließt.
-    window.setTimeout(() => setCreateOpen(true), 0);
-  };
+  const openCreateDialog = () => setCreateOpen(true);
 
 
 
@@ -246,7 +242,21 @@ export default function TicketsList() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/tickets/sync"><RefreshCw className="w-4 h-4 mr-2" />Synchronisation</Link>
             </Button>
-            <Button size="sm" onClick={openCreateDialog} className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
+            <Button
+              size="sm"
+              type="button"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                openCreateDialog();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openCreateDialog();
+                }
+              }}
+              className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0"
+            >
               <Plus className="w-4 h-4 mr-1" /> Neues Ticket
             </Button>
           </>
