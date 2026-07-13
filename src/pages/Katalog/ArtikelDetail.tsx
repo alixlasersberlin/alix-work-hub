@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft, Save, Upload, Trash2, Star, CheckCircle2, ShieldCheck, FolderTree, Plus, Link2 } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Trash2, Star, CheckCircle2, ShieldCheck, FolderTree, Plus, Link2, Sparkles, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const ITEM_STATUSES = ['entwurf','zur_pruefung','korrektur','freigegeben','gesperrt','archiviert','aktiv','inaktiv','ausverkauft','vorbestellung','nur_auf_anfrage','nicht_lieferbar'];
