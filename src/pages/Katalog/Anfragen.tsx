@@ -156,10 +156,15 @@ export default function KatalogAnfragen() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         <MessageSquare className="h-5 w-5 text-primary" />
         <h2 className="text-xl font-semibold">Sammelanfragen aus Portal</h2>
         <Badge variant="outline" className="ml-2 text-xs">{rows.length}</Badge>
+        {STATUS.map(s => {
+          const n = rows.filter(r => r.status === s).length;
+          if (!n) return null;
+          return <Badge key={s} variant={STATUS_VARIANT[s] ?? 'outline'} className="text-[10px]">{s}: {n}</Badge>;
+        })}
         <div className="ml-auto flex items-center gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
