@@ -299,7 +299,7 @@ export default function BookingPortal() {
       )}
 
       {step === 'department' && (
-        <div className="space-y-3">
+        <div id="dept-picker" className="space-y-3">
           <button
             type="button"
             onClick={() => setDeptOpen((v) => !v)}
@@ -361,7 +361,7 @@ export default function BookingPortal() {
 
       {step === 'department' && (
         <button
-          onClick={() => navigate('/portal')}
+          onClick={() => { setDeptOpen(true); setTimeout(() => document.getElementById('dept-picker')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }}
           className="w-full text-left rounded-xl border p-4 bg-card hover:border-primary hover:shadow-md transition-all flex items-start gap-3"
         >
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
