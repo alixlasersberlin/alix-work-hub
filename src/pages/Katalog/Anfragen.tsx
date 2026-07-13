@@ -25,6 +25,9 @@ interface InquiryItem {
 }
 
 const STATUS = ['neu', 'in_bearbeitung', 'angebot_erstellt', 'abgeschlossen', 'abgelehnt'];
+const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  neu: 'default', in_bearbeitung: 'secondary', angebot_erstellt: 'outline', abgeschlossen: 'outline', abgelehnt: 'destructive',
+};
 
 export default function KatalogAnfragen() {
   const c = supabase as any;
