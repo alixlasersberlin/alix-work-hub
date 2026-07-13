@@ -167,8 +167,32 @@ export default function KatalogArtikelDetail() {
             <p className="text-xs font-mono text-muted-foreground">{item.sku}</p>
           </div>
           <Badge variant="secondary">{item.status}</Badge>
+          {item.approved_at ? (
+            <Badge className="bg-green-600/20 text-green-500 border-green-600/40"><CheckCircle2 className="h-3 w-3 mr-1" />Freigegeben</Badge>
+          ) : item.submitted_at ? (
+            <Badge variant="outline">Zur Prüfung</Badge>
+          ) : null}
         </div>
-        <Button onClick={saveItem} disabled={saving}><Save className="h-4 w-4 mr-2" />{saving ? 'Speichere…' : 'Speichern'}</Button>
+        <div className="flex gap-2">
+          {!item.submitted_at && (
+            <Button variant="outline" onClick={async () => {
+              const { error } = await client.from('catalog_items').update({ submitted_by: user?.id, submitted_at: new Date().toISOString(), status: 'zur_pruefung' }).eq('id', id);
+              if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+              toast({ title: 'Zur Prüfung eingereicht' }); load();
+            }}>Zur Prüfung einreichen</Button>
+          )}
+          {canApprove && item.submitted_at && !item.approved_at && item.last_edited_by !== user?.id && (
+            <Button onClick={async () => {
+              const { error } = await client.from('catalog_items').update({ approved_by: user?.id, status: 'freigegeben' }).eq('id', id);
+              if (error) return toast({ title: 'Freigabe fehlgeschlagen', description: error.message, variant: 'destructive' });
+              toast({ title: 'Freigegeben' }); load();
+            }}><ShieldCheck className="h-4 w-4 mr-2" />Freigeben (4-Augen)</Button>
+          )}
+          {canApprove && item.submitted_at && !item.approved_at && item.last_edited_by === user?.id && (
+            <Badge variant="outline" className="self-center">Freigabe durch anderen Nutzer nötig</Badge>
+          )}
+          <Button onClick={saveItem} disabled={saving}><Save className="h-4 w-4 mr-2" />{saving ? 'Speichere…' : 'Speichern'}</Button>
+        </div>
       </div>
 
       <Tabs defaultValue="stammdaten">
