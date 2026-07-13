@@ -136,7 +136,6 @@ serve(async (req) => {
         priority: "Normal",
         customer_visible_status: "Ticket eingegangen",
         title: subject,
-        subject,
         description,
         customer_email: fromEmail || null,
         customer_name: customerName,
