@@ -27,6 +27,8 @@ interface TicketRow {
   order_number: string | null;
   device_name: string | null;
   serial_number: string | null;
+  category: string | null;
+  auto_category: string | null;
   title: string | null;
   status: string;
   priority: string;
