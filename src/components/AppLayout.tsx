@@ -503,6 +503,7 @@ const navItems: NavItem[] = [
       { path: '/katalog/import', label: 'Import', icon: Upload, roles: ['Super Admin', 'Admin', 'Katalog'] },
       { path: '/katalog/export', label: 'Export', icon: FileDown, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing'] },
       { path: '/katalog/versand', label: 'Freigabelinks', icon: Send, roles: ['Super Admin', 'Admin', 'Katalog', 'Vertrieb', 'Vertriebsleitung'] },
+      { path: '/katalog/freigabe', label: 'Freigabe-Center', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'Katalog Preise'] },
       { path: '/katalog/protokolle', label: 'Änderungsprotokoll', icon: ScrollText, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise'] },
     ],
   },
