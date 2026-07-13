@@ -379,6 +379,58 @@ export default function KatalogFreigabe() {
           </Table>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Ausstehende Änderungen (Vier-Augen)
+            <span className="text-xs font-normal text-muted-foreground ml-2">Preis-/Textänderungen werden erst nach Zweit-Freigabe wirksam</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Typ</TableHead>
+                <TableHead>Feld</TableHead>
+                <TableHead>Alt → Neu</TableHead>
+                <TableHead>Grund</TableHead>
+                <TableHead>Eingereicht</TableHead>
+                <TableHead className="w-40 text-right">Aktion</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pendingChanges.length === 0 && (
+                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Keine ausstehenden Änderungen.</TableCell></TableRow>
+              )}
+              {pendingChanges.map((pc) => {
+                const own = pc.requested_by === user?.id;
+                return (
+                  <TableRow key={pc.id} className={own ? 'opacity-60' : ''}>
+                    <TableCell className="text-xs uppercase text-muted-foreground">{pc.entity_type}</TableCell>
+                    <TableCell className="text-xs">{pc.field_scope ?? '—'}</TableCell>
+                    <TableCell className="text-xs max-w-md">
+                      <div className="text-muted-foreground line-through truncate">{pc.old_value ? JSON.stringify(pc.old_value) : '—'}</div>
+                      <div className="font-mono truncate">{JSON.stringify(pc.new_value)}</div>
+                    </TableCell>
+                    <TableCell className="text-xs">{pc.reason ?? '—'}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{new Date(pc.created_at).toLocaleString('de-DE')}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" variant="outline" disabled={busy || own} onClick={() => rejectPendingChange(pc)}>
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" disabled={busy || own} onClick={() => applyPendingChange(pc)}>
+                          <CheckCircle2 className="h-4 w-4 mr-1" />Freigeben
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
