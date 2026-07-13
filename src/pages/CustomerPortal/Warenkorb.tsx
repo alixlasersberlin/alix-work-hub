@@ -41,6 +41,11 @@ export default function CustomerPortalWarenkorb() {
   const [contactEmail, setContactEmail] = useState(ctx?.email ?? '');
   const [contactPhone, setContactPhone] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
+  const [customerReference, setCustomerReference] = useState('');
+  const [addrStreet, setAddrStreet] = useState('');
+  const [addrZip, setAddrZip] = useState('');
+  const [addrCity, setAddrCity] = useState('');
+  const [addrCountry, setAddrCountry] = useState('');
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
