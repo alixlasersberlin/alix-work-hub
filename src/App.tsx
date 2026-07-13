@@ -285,7 +285,10 @@ const KatalogBulkUebersetzung = lazy(() => import("./pages/Katalog/BulkUebersetz
 const KatalogAnalytics = lazy(() => import("./pages/Katalog/Analytics"));
 const KatalogPreishistorie = lazy(() => import("./pages/Katalog/Preishistorie"));
 const KatalogBundles = lazy(() => import("./pages/Katalog/Bundles"));
+const KatalogAnfragen = lazy(() => import("./pages/Katalog/Anfragen"));
+const KatalogImportCsv = lazy(() => import("./pages/Katalog/ImportCsv"));
 const CustomerPortalKatalog = lazy(() => import("./pages/CustomerPortal/Katalog"));
+const CustomerPortalWarenkorb = lazy(() => import("./pages/CustomerPortal/Warenkorb"));
 const AicLayout = lazy(() => import("./pages/AIC/Layout"));
 const AicDashboard = lazy(() => import("./pages/AIC/Dashboard"));
 const AicUnternehmen = lazy(() => import("./pages/AIC/Unternehmen"));
