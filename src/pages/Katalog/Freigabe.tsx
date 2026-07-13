@@ -28,6 +28,9 @@ interface PricePending {
   price_status: string;
   submitted_at: string | null;
   last_edited_by: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
   item?: { sku: string; name: string };
   country?: { iso2: string; name: string };
 }
