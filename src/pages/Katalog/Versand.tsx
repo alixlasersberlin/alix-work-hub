@@ -354,6 +354,18 @@ export default function KatalogVersand() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-8">
+                <input
+                  type="checkbox"
+                  aria-label="Alle auswählen"
+                  checked={filteredLinks.length > 0 && filteredLinks.every((l) => selected[l.id])}
+                  onChange={(e) => {
+                    const next: Record<string, boolean> = { ...selected };
+                    filteredLinks.forEach((l) => { next[l.id] = e.target.checked; });
+                    setSelected(next);
+                  }}
+                />
+              </TableHead>
               <TableHead>Artikel</TableHead>
               <TableHead>Empfänger</TableHead>
               <TableHead>Kanal</TableHead>
@@ -365,13 +377,21 @@ export default function KatalogVersand() {
           </TableHeader>
           <TableBody>
             {filteredLinks.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Keine Links passen zum Filter</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Keine Links passen zum Filter</TableCell></TableRow>
             )}
             {filteredLinks.map((l) => {
               const item = items.find((i) => i.id === l.item_id);
               const expired = l.expires_at && new Date(l.expires_at) < new Date();
               return (
-                <TableRow key={l.id}>
+                <TableRow key={l.id} className={selected[l.id] ? 'bg-primary/5' : ''}>
+                  <TableCell>
+                    <input
+                      type="checkbox"
+                      aria-label="Zeile auswählen"
+                      checked={!!selected[l.id]}
+                      onChange={(e) => setSelected((s) => ({ ...s, [l.id]: e.target.checked }))}
+                    />
+                  </TableCell>
                   <TableCell className="text-sm">{item ? `${item.sku} · ${item.name}` : l.item_id.slice(0, 8)}</TableCell>
                   <TableCell className="text-xs">
                     {l.recipient_name ?? '—'}
