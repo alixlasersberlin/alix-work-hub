@@ -176,6 +176,24 @@ export default function KatalogVersand() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [links, statusFilter, search, items]);
 
+  const soonMs = 3 * 86400000;
+  const expiringSoon = useMemo(() => links.filter((l) =>
+    !l.revoked_at && l.expires_at
+    && new Date(l.expires_at).getTime() >= now.getTime()
+    && new Date(l.expires_at).getTime() - now.getTime() < soonMs
+  ).length, [links, now.getTime()]);
+
+  const revokeMany = async () => {
+    const ids = Object.keys(selected).filter((id) => selected[id]);
+    if (ids.length === 0) return;
+    if (!confirm(`${ids.length} Link(s) widerrufen?`)) return;
+    const { error } = await (supabase as any).from('catalog_share_links')
+      .update({ revoked_at: new Date().toISOString() }).in('id', ids);
+    if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    toast({ title: `${ids.length} widerrufen` });
+    setSelected({});
+  };
+
   return (
     <div className="space-y-4">
       <Card className="p-4 flex gap-3 items-start">
@@ -184,6 +202,29 @@ export default function KatalogVersand() {
           Erzeuge sichere Freigabelinks für einzelne Katalog-Artikel und versende sie per E-Mail oder WhatsApp. Links laufen automatisch ab und können jederzeit widerrufen werden.
         </div>
       </Card>
+
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.active}</div><div className="text-xs text-muted-foreground">Aktive Links</div></div>
+          <LinkIcon className="h-6 w-6 text-emerald-500" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.totalViews}</div><div className="text-xs text-muted-foreground">Aufrufe gesamt</div></div>
+          <Eye className="h-6 w-6 text-primary" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{expiringSoon}</div><div className="text-xs text-muted-foreground">Läuft &lt; 3 Tage</div></div>
+          <Clock className="h-6 w-6 text-orange-500" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.expired}</div><div className="text-xs text-muted-foreground">Abgelaufen</div></div>
+          <Clock className="h-6 w-6 text-amber-500" />
+        </CardContent></Card>
+        <Card><CardContent className="pt-6 flex items-center justify-between">
+          <div><div className="text-2xl font-bold">{kpis.revoked}</div><div className="text-xs text-muted-foreground">Widerrufen</div></div>
+          <XCircle className="h-6 w-6 text-red-500" />
+        </CardContent></Card>
+      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card><CardContent className="pt-6 flex items-center justify-between">
