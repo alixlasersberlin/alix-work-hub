@@ -1275,6 +1275,7 @@ function AppRoutes() {
           <Route path="termine" element={<CustomerPortalAppointments />} />
           <Route path="gesundheit" element={<CustomerPortalHealth />} />
           <Route path="katalog" element={<CustomerPortalKatalog />} />
+          <Route path="warenkorb" element={<CustomerPortalWarenkorb />} />
         </Route>
 
         {/* Mobile Techniker-App – eigenes Layout (kein AppLayout) */}
