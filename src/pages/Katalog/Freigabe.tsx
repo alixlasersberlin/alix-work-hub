@@ -43,6 +43,7 @@ export default function KatalogFreigabe() {
 
   const [items, setItems] = useState<ItemPending[]>([]);
   const [prices, setPrices] = useState<PricePending[]>([]);
+  const [pendingChanges, setPendingChanges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selItems, setSelItems] = useState<Record<string, boolean>>({});
   const [selPrices, setSelPrices] = useState<Record<string, boolean>>({});
