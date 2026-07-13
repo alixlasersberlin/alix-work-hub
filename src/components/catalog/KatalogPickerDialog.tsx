@@ -23,6 +23,7 @@ export interface KatalogPickResult {
   rate: number; // brutto wenn tax>0, sonst netto
   tax_percentage: number;
   quantity: number;
+  discount_pct?: number;
   snapshot_id?: string;
 }
 
@@ -47,47 +48,79 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
   const [language, setLanguage] = useState<string>('de');
   const [q, setQ] = useState('');
   const [selected, setSelected] = useState<Record<string, number>>({});
+  const [selectedDiscount, setSelectedDiscount] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<'items' | 'bundles'>('items');
   const [bundles, setBundles] = useState<Array<{ id: string; name: string; category: string | null; default_discount_pct: number }>>([]);
-  const [bundleItemsMap, setBundleItemsMap] = useState<Record<string, Array<{ item_id: string; quantity: number; is_optional: boolean }>>>({});
+  const [bundleItemsMap, setBundleItemsMap] = useState<Record<string, Array<{ item_id: string; quantity: number; is_optional: boolean; discount_pct: number }>>>({});
+  const [bundleTiersMap, setBundleTiersMap] = useState<Record<string, Array<{ min_quantity: number; discount_pct: number }>>>({});
+  const [bundleCounts, setBundleCounts] = useState<Record<string, number>>({});
   const [bundleQ, setBundleQ] = useState('');
 
   useEffect(() => {
     if (!open) return;
     (async () => {
       const c = supabase as any;
-      const [{ data: it }, { data: cc }, { data: ll }, { data: bs }, { data: bis }] = await Promise.all([
+      const [{ data: it }, { data: cc }, { data: ll }, { data: bs }, { data: bis }, { data: tiers }] = await Promise.all([
         c.from('catalog_items').select('id, sku, name, brand, model, status').in('status', ['freigegeben', 'aktiv']).order('sku').limit(1000),
         c.from('catalog_countries').select('id, iso_code, name, default_tax_rate').order('iso_code'),
         c.from('catalog_languages').select('code, name').order('code'),
         c.from('catalog_bundles').select('id, name, category, default_discount_pct').eq('is_active', true).order('sort_order').order('name'),
-        c.from('catalog_bundle_items').select('bundle_id, item_id, quantity, is_optional'),
+        c.from('catalog_bundle_items').select('bundle_id, item_id, quantity, is_optional, discount_pct'),
+        c.from('catalog_bundle_price_tiers').select('bundle_id, min_quantity, discount_pct'),
       ]);
       setItems(it ?? []);
       setCountries(cc ?? []);
       setLanguages(ll ?? []);
       setBundles(bs ?? []);
-      const m: Record<string, Array<{ item_id: string; quantity: number; is_optional: boolean }>> = {};
+      const m: Record<string, Array<{ item_id: string; quantity: number; is_optional: boolean; discount_pct: number }>> = {};
       (bis ?? []).forEach((b: any) => {
         if (!m[b.bundle_id]) m[b.bundle_id] = [];
-        m[b.bundle_id].push({ item_id: b.item_id, quantity: Number(b.quantity), is_optional: !!b.is_optional });
+        m[b.bundle_id].push({ item_id: b.item_id, quantity: Number(b.quantity), is_optional: !!b.is_optional, discount_pct: Number(b.discount_pct ?? 0) });
       });
       setBundleItemsMap(m);
+      const tm: Record<string, Array<{ min_quantity: number; discount_pct: number }>> = {};
+      (tiers ?? []).forEach((t: any) => {
+        if (!tm[t.bundle_id]) tm[t.bundle_id] = [];
+        tm[t.bundle_id].push({ min_quantity: Number(t.min_quantity), discount_pct: Number(t.discount_pct) });
+      });
+      Object.keys(tm).forEach(k => tm[k].sort((a, b) => a.min_quantity - b.min_quantity));
+      setBundleTiersMap(tm);
       const de = (cc ?? []).find((x: any) => x.iso_code === 'DE');
       if (de && !country) setCountry(de.id);
     })();
   }, [open]);
 
+  const bestTierPct = (bundleId: string, count: number): number => {
+    const tiers = bundleTiersMap[bundleId] ?? [];
+    let best = 0;
+    for (const t of tiers) if (count >= t.min_quantity && t.discount_pct > best) best = t.discount_pct;
+    return best;
+  };
+
   const applyBundle = (bundleId: string) => {
     const rows = bundleItemsMap[bundleId] ?? [];
+    const count = Math.max(1, Number(bundleCounts[bundleId] ?? 1));
+    const bundle = bundles.find(b => b.id === bundleId);
+    const tierPct = bestTierPct(bundleId, count);
+    const baseDisc = Number(bundle?.default_discount_pct ?? 0);
+    const effective = tierPct > 0 ? tierPct : baseDisc; // Staffel ersetzt Basisrabatt
+    const nonOpt = rows.filter(r => !r.is_optional);
     setSelected((s) => {
       const n = { ...s };
-      rows.filter(r => !r.is_optional).forEach(r => { n[r.item_id] = (n[r.item_id] ?? 0) + (r.quantity || 1); });
+      nonOpt.forEach(r => { n[r.item_id] = (n[r.item_id] ?? 0) + (r.quantity || 1) * count; });
+      return n;
+    });
+    setSelectedDiscount((d) => {
+      const n = { ...d };
+      nonOpt.forEach(r => {
+        const perItem = Math.max(Number(r.discount_pct ?? 0), effective);
+        n[r.item_id] = Math.max(n[r.item_id] ?? 0, perItem);
+      });
       return n;
     });
     setTab('items');
-    toast({ title: `${rows.filter(r => !r.is_optional).length} Positionen aus Bundle übernommen` });
+    toast({ title: `${nonOpt.length} Positionen × ${count} übernommen`, description: effective > 0 ? `Rabatt ${effective}% angewendet` : undefined });
   };
 
   const filteredBundles = useMemo(() => {
@@ -188,12 +221,15 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
           rate,
           tax_percentage: tax,
           quantity: selected[id] || 1,
+          discount_pct: selectedDiscount[id] || undefined,
           snapshot_id: snap?.id,
         });
       }
 
       onPicked(result);
       setSelected({});
+      setSelectedDiscount({});
+      setBundleCounts({});
       setQ('');
       onOpenChange(false);
       toast({ title: `${result.length} Artikel übernommen` });
@@ -291,18 +327,41 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Kategorie</TableHead>
-                    <TableHead className="w-24 text-right">Positionen</TableHead>
-                    <TableHead className="w-32"></TableHead>
+                    <TableHead className="w-20 text-right">Pos.</TableHead>
+                    <TableHead>Staffel</TableHead>
+                    <TableHead className="w-24">Menge</TableHead>
+                    <TableHead className="w-28"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredBundles.map(b => {
-                    const count = (bundleItemsMap[b.id] ?? []).filter(x => !x.is_optional).length;
+                    const posCount = (bundleItemsMap[b.id] ?? []).filter(x => !x.is_optional).length;
+                    const tiers = bundleTiersMap[b.id] ?? [];
+                    const cnt = Math.max(1, Number(bundleCounts[b.id] ?? 1));
+                    const activePct = bestTierPct(b.id, cnt);
                     return (
                       <TableRow key={b.id}>
                         <TableCell className="font-medium">{b.name}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{b.category ?? '—'}</TableCell>
-                        <TableCell className="text-right text-xs">{count}</TableCell>
+                        <TableCell className="text-right text-xs">{posCount}</TableCell>
+                        <TableCell>
+                          {tiers.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            <div className="flex flex-wrap gap-1">
+                              {tiers.map((t, i) => (
+                                <Badge key={i} variant={activePct === t.discount_pct && cnt >= t.min_quantity ? 'default' : 'outline'} className="text-[10px]">
+                                  ab {t.min_quantity} · {t.discount_pct}%
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Input type="number" min={1} value={cnt}
+                            onChange={(e) => setBundleCounts(s => ({ ...s, [b.id]: Math.max(1, parseInt(e.target.value) || 1) }))}
+                            className="h-8 w-20" />
+                        </TableCell>
                         <TableCell>
                           <Button size="sm" variant="outline" onClick={() => applyBundle(b.id)}>Übernehmen</Button>
                         </TableCell>
@@ -310,7 +369,7 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
                     );
                   })}
                   {filteredBundles.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Keine Bundles verfügbar</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Keine Bundles verfügbar</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>

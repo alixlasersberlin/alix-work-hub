@@ -34,6 +34,13 @@ interface BundleItem {
   sort_order: number;
   is_optional: boolean;
 }
+interface PriceTier {
+  id: string;
+  bundle_id: string;
+  min_quantity: number;
+  discount_pct: number;
+  note: string | null;
+}
 
 export default function KatalogBundles() {
   const c = supabase as any;
@@ -44,6 +51,9 @@ export default function KatalogBundles() {
   const [showOnlyActive, setShowOnlyActive] = useState(false);
   const [selected, setSelected] = useState<Bundle | null>(null);
   const [bundleItems, setBundleItems] = useState<BundleItem[]>([]);
+  const [tiers, setTiers] = useState<PriceTier[]>([]);
+  const [newTierQty, setNewTierQty] = useState<number>(2);
+  const [newTierPct, setNewTierPct] = useState<number>(5);
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Bundle> | null>(null);
   const [addItemOpen, setAddItemOpen] = useState(false);
@@ -62,8 +72,9 @@ export default function KatalogBundles() {
   }, []);
 
   useEffect(() => {
-    if (!selected) { setBundleItems([]); return; }
+    if (!selected) { setBundleItems([]); setTiers([]); return; }
     c.from('catalog_bundle_items').select('*').eq('bundle_id', selected.id).order('sort_order').then(({ data }: any) => setBundleItems(data ?? []));
+    c.from('catalog_bundle_price_tiers').select('*').eq('bundle_id', selected.id).order('min_quantity').then(({ data }: any) => setTiers(data ?? []));
   }, [selected]);
 
   const filtered = useMemo(() => {
@@ -150,6 +161,30 @@ export default function KatalogBundles() {
     const { error } = await c.from('catalog_bundle_items').delete().eq('id', bi.id);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     setBundleItems(prev => prev.filter(x => x.id !== bi.id));
+  };
+
+  const addTier = async () => {
+    if (!selected) return;
+    if (!newTierQty || newTierQty < 1) { toast({ title: 'Mindestmenge ≥ 1', variant: 'destructive' }); return; }
+    if (tiers.some(t => t.min_quantity === newTierQty)) { toast({ title: 'Staffel existiert bereits', variant: 'destructive' }); return; }
+    const { data, error } = await c.from('catalog_bundle_price_tiers')
+      .insert({ bundle_id: selected.id, min_quantity: newTierQty, discount_pct: newTierPct })
+      .select('*').maybeSingle();
+    if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    if (data) setTiers(prev => [...prev, data].sort((a, b) => a.min_quantity - b.min_quantity));
+    setNewTierQty(prev => prev + 1); setNewTierPct(0);
+  };
+
+  const updateTier = async (t: PriceTier, patch: Partial<PriceTier>) => {
+    const { error } = await c.from('catalog_bundle_price_tiers').update(patch).eq('id', t.id);
+    if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    setTiers(prev => prev.map(x => x.id === t.id ? { ...x, ...patch } : x).sort((a, b) => a.min_quantity - b.min_quantity));
+  };
+
+  const removeTier = async (t: PriceTier) => {
+    const { error } = await c.from('catalog_bundle_price_tiers').delete().eq('id', t.id);
+    if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    setTiers(prev => prev.filter(x => x.id !== t.id));
   };
 
   return (
@@ -268,6 +303,62 @@ export default function KatalogBundles() {
                     )}
                   </TableBody>
                 </Table>
+
+                <div className="mt-6 border-t pt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-semibold">Staffelpreise (Mengenrabatt pro Bundle)</div>
+                    <div className="text-xs text-muted-foreground">{tiers.length} Staffeln</div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Ab welcher Anzahl an Bundle-Einheiten greift welcher zusätzlicher Rabatt? Der Basisrabatt ({selected.default_discount_pct}%) bleibt erhalten; die passende Staffel ersetzt ihn.
+                  </p>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-32">ab Menge</TableHead>
+                        <TableHead className="w-32">Rabatt %</TableHead>
+                        <TableHead>Notiz</TableHead>
+                        <TableHead className="w-12"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tiers.map(t => (
+                        <TableRow key={t.id}>
+                          <TableCell>
+                            <Input type="number" min={1} defaultValue={t.min_quantity}
+                              onBlur={(e) => updateTier(t, { min_quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                              className="h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Input type="number" min={0} max={100} step="0.5" defaultValue={t.discount_pct}
+                              onBlur={(e) => updateTier(t, { discount_pct: Number(e.target.value) })}
+                              className="h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Input defaultValue={t.note ?? ''} onBlur={(e) => updateTier(t, { note: e.target.value || null })} className="h-8" />
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => removeTier(t)}><X className="h-4 w-4" /></Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {tiers.length === 0 && (
+                        <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-4 text-xs">Noch keine Staffeln definiert.</TableCell></TableRow>
+                      )}
+                      <TableRow>
+                        <TableCell>
+                          <Input type="number" min={1} value={newTierQty} onChange={(e) => setNewTierQty(parseInt(e.target.value) || 1)} className="h-8" />
+                        </TableCell>
+                        <TableCell>
+                          <Input type="number" min={0} max={100} step="0.5" value={newTierPct} onChange={(e) => setNewTierPct(Number(e.target.value))} className="h-8" />
+                        </TableCell>
+                        <TableCell colSpan={2}>
+                          <Button size="sm" variant="outline" onClick={addTier}><Plus className="h-4 w-4 mr-1" />Staffel hinzufügen</Button>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
               </>
             )}
           </CardContent>
