@@ -47,6 +47,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [manualItems, setManualItems] = useState<Array<{ item_name: string; description: string; sku: string; quantity: string; unit: string }>>([]);
   const [katalogPickerOpen, setKatalogPickerOpen] = useState(false);
+  const [pendingSnapshotIds, setPendingSnapshotIds] = useState<string[]>([]);
 
   // Modus: Auftrag oder nur Kunde
   const [mainMode, setMainMode] = useState<'order' | 'customer'>('order');
@@ -528,6 +529,16 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       }));
       const itemRows = [...fromOrder, ...fromManual];
       if (itemRows.length) await supabase.from('production_order_items').insert(itemRows);
+    }
+    // Katalog-Snapshots mit finaler Bestellung verknüpfen
+    if (poId && pendingSnapshotIds.length > 0) {
+      try {
+        await (supabase as any)
+          .from('catalog_item_snapshots')
+          .update({ used_in_type: 'production_order', used_in_id: poId })
+          .in('id', pendingSnapshotIds);
+        setPendingSnapshotIds([]);
+      } catch { /* nicht blockierend */ }
     }
     savingRef.current = false;
     setSaving(false);
@@ -1158,6 +1169,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         onOpenChange={setKatalogPickerOpen}
         usedInType="production_order_draft"
         onPicked={(picked: KatalogPickResult[]) => {
+          const newSnapIds = picked.map(p => p.snapshot_id).filter(Boolean) as string[];
+          if (newSnapIds.length) setPendingSnapshotIds(prev => [...prev, ...newSnapIds]);
           setManualItems(arr => [
             ...arr,
             ...picked.map(p => ({

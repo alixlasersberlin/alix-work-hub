@@ -84,6 +84,7 @@ export default function AngebotErstellen() {
   const [includeAppendix, setIncludeAppendix] = useState(true);
   const [lines, setLines] = useState<LineItem[]>([newLine()]);
   const [katalogPickerOpen, setKatalogPickerOpen] = useState(false);
+  const [pendingSnapshotIds, setPendingSnapshotIds] = useState<string[]>([]);
 
   // Zahlungsberechnung
   const [payType, setPayType] = useState<'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex' | 'Alix Smart Impulse'>('Direktkauf');
@@ -1021,6 +1022,16 @@ export default function AngebotErstellen() {
         if (idx >= 0) list[idx] = snap; else list.unshift(snap);
         localStorage.setItem(KEY, JSON.stringify(list));
       } catch {}
+      // Snapshots aus Katalog-Picker mit finaler Angebotsnummer verknüpfen
+      if (pendingSnapshotIds.length > 0) {
+        try {
+          await (supabase as any)
+            .from('catalog_item_snapshots')
+            .update({ used_in_type: 'offer', used_in_id: effectiveOfferNumber })
+            .in('id', pendingSnapshotIds);
+          setPendingSnapshotIds([]);
+        } catch { /* nicht blockierend */ }
+      }
       if (!silent) toast.success('Angebot gespeichert. Zu finden unter Sales Management → Angebote.');
       return true;
     } catch (e: any) {
@@ -1606,6 +1617,8 @@ export default function AngebotErstellen() {
           onOpenChange={setKatalogPickerOpen}
           usedInType="offer_draft"
           onPicked={(picked: KatalogPickResult[]) => {
+            const newSnapIds = picked.map(p => p.snapshot_id).filter(Boolean) as string[];
+            if (newSnapIds.length) setPendingSnapshotIds(prev => [...prev, ...newSnapIds]);
             setLines(prev => [
               ...prev.filter(l => l.name || l.sku || l.rate),
               ...picked.map(p => ({
