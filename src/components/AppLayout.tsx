@@ -491,12 +491,27 @@ const navItems: NavItem[] = [
 
 
   {
+    path: '/katalog', label: 'KATALOG', icon: BookOpen,
+    roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing', 'Service', 'Geschäftsführung'],
+    children: [
+      { path: '/katalog', label: 'Übersicht', icon: LayoutDashboard, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing', 'Service', 'Geschäftsführung'] },
+      { path: '/katalog/artikel', label: 'Artikel', icon: Package, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing', 'Service', 'Geschäftsführung'] },
+      { path: '/katalog/kategorien', label: 'Kategorien', icon: FolderTree, roles: ['Super Admin', 'Admin', 'Katalog'] },
+      { path: '/katalog/laender', label: 'Länder & Währungen', icon: Globe, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise'] },
+      { path: '/katalog/niederlassungen', label: 'Niederlassungen', icon: Building2, roles: ['Super Admin', 'Admin', 'Katalog'] },
+      { path: '/katalog/preisregeln', label: 'Preisregeln', icon: ListChecks, roles: ['Super Admin', 'Admin', 'Katalog Preise'] },
+      { path: '/katalog/protokolle', label: 'Änderungsprotokoll', icon: ScrollText, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise'] },
+    ],
+  },
+
+  {
     path: '/mdr-ce', label: 'MDR CE & ISO 13485', icon: ShieldCheck, roles: null,
     children: [
       
       { path: '/iso', label: 'ISO Audit Center', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'QM'] },
     ],
   },
+
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin'],
     children: [

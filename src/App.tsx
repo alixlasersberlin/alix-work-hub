@@ -267,6 +267,15 @@ const IsoTrainings = lazy(() => import("./pages/Iso/Trainings"));
 const IsoSuppliers = lazy(() => import("./pages/Iso/Suppliers"));
 const IsoChanges = lazy(() => import("./pages/Iso/Changes"));
 const IsoVigilance = lazy(() => import("./pages/Iso/Vigilance"));
+const KatalogLayoutLazy = lazy(() => import("./pages/Katalog/_shared").then(m => ({ default: m.KatalogLayout })));
+const KatalogDashboard = lazy(() => import("./pages/Katalog/Dashboard"));
+const KatalogArtikel = lazy(() => import("./pages/Katalog/Artikel"));
+const KatalogArtikelDetail = lazy(() => import("./pages/Katalog/ArtikelDetail"));
+const KatalogKategorien = lazy(() => import("./pages/Katalog/Kategorien"));
+const KatalogLaender = lazy(() => import("./pages/Katalog/Laender"));
+const KatalogNiederlassungen = lazy(() => import("./pages/Katalog/Niederlassungen"));
+const KatalogPreisregeln = lazy(() => import("./pages/Katalog/Preisregeln"));
+const KatalogProtokolle = lazy(() => import("./pages/Katalog/Protokolle"));
 const AicLayout = lazy(() => import("./pages/AIC/Layout"));
 const AicDashboard = lazy(() => import("./pages/AIC/Dashboard"));
 const AicUnternehmen = lazy(() => import("./pages/AIC/Unternehmen"));
@@ -1103,6 +1112,18 @@ function AppRoutes() {
             <Route path="analytics" element={<BugCapaAnalytics />} />
             <Route path="iso-report" element={<BugCapaIsoReport />} />
           </Route>
+
+          <Route path="/katalog" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Katalog','Katalog Preise','Vertrieb','Vertriebsleitung','Marketing','Service','Geschäftsführung']}><KatalogLayoutLazy /></ProtectedRoute>}>
+            <Route index element={<KatalogDashboard />} />
+            <Route path="artikel" element={<KatalogArtikel />} />
+            <Route path="artikel/:id" element={<KatalogArtikelDetail />} />
+            <Route path="kategorien" element={<KatalogKategorien />} />
+            <Route path="laender" element={<KatalogLaender />} />
+            <Route path="niederlassungen" element={<KatalogNiederlassungen />} />
+            <Route path="preisregeln" element={<KatalogPreisregeln />} />
+            <Route path="protokolle" element={<KatalogProtokolle />} />
+          </Route>
+
 
           <Route path="/iso" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin', 'QM']}><IsoLayoutLazy /></ProtectedRoute>}>
             <Route index element={<IsoDashboard />} />
