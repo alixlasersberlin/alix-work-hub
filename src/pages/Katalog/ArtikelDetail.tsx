@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { ArrowLeft, Save, Upload, Trash2, Star, CheckCircle2, ShieldCheck, FolderTree, Plus, Link2 } from 'lucide-react';
+import { ArrowLeft, Save, Upload, Trash2, Star, CheckCircle2, ShieldCheck, FolderTree, Plus, Link2, Sparkles, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const ITEM_STATUSES = ['entwurf','zur_pruefung','korrektur','freigegeben','gesperrt','archiviert','aktiv','inaktiv','ausverkauft','vorbestellung','nur_auf_anfrage','nicht_lieferbar'];
@@ -149,6 +149,43 @@ export default function KatalogArtikelDetail() {
     load();
   };
 
+  const [translating, setTranslating] = useState(false);
+  const translateToAll = async () => {
+    const src = descriptions.find((d) => d.language_code === activeLang);
+    if (!src) return toast({ title: 'Keine Quell-Beschreibung', description: 'Bitte zuerst in aktueller Sprache befüllen.', variant: 'destructive' });
+    const targets = languages.map((l: any) => l.code).filter((c: string) => c !== activeLang);
+    if (targets.length === 0) return toast({ title: 'Keine Zielsprachen aktiv' });
+    setTranslating(true);
+    const fields: Array<keyof typeof src> = ['short_description','long_description','technical_description','scope_of_delivery','accessories','warranty'] as any;
+    try {
+      for (const field of fields) {
+        const text = (src as any)[field];
+        if (!text || !String(text).trim()) continue;
+        const { data, error } = await supabase.functions.invoke('catalog-ai-translate', {
+          body: { text, targetLangs: targets, sourceLang: activeLang, context: item?.name },
+        });
+        if (error) throw new Error(error.message);
+        const translations: Record<string, string> = (data as any)?.translations ?? {};
+        for (const lang of targets) {
+          const value = translations[lang];
+          if (!value) continue;
+          const existing = descriptions.find((d) => d.language_code === lang);
+          if (existing) {
+            await client.from('catalog_item_descriptions').update({ [field]: value, translation_status: 'maschinell' }).eq('id', existing.id);
+          } else {
+            await client.from('catalog_item_descriptions').insert({ item_id: id, language_code: lang, [field]: value, translation_status: 'maschinell' });
+          }
+        }
+      }
+      toast({ title: `In ${targets.length} Sprachen übersetzt` });
+      load();
+    } catch (e: any) {
+      toast({ title: 'KI-Übersetzung fehlgeschlagen', description: e?.message ?? String(e), variant: 'destructive' });
+    } finally {
+      setTranslating(false);
+    }
+  };
+
   const [signed, setSigned] = useState<Record<string,string>>({});
   useEffect(() => {
     (async () => {
@@ -243,13 +280,19 @@ export default function KatalogArtikelDetail() {
 
         <TabsContent value="beschreibungen">
           <Card><CardContent className="pt-6 space-y-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <Label>Sprache</Label>
               <Select value={activeLang} onValueChange={setActiveLang}>
                 <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
                 <SelectContent>{languages.map((l) => <SelectItem key={l.code} value={l.code}>{l.name} ({l.code})</SelectItem>)}</SelectContent>
               </Select>
               <Badge variant="secondary">{desc.translation_status ?? 'nicht_begonnen'}</Badge>
+              <div className="ml-auto">
+                <Button size="sm" variant="outline" onClick={translateToAll} disabled={translating}>
+                  {translating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                  KI-Übersetzung in alle Sprachen
+                </Button>
+              </div>
             </div>
             <div className="grid gap-3">
               <div><Label>Kurzbeschreibung</Label><Textarea rows={2} defaultValue={desc.short_description ?? ''} onBlur={(e) => upsertDescription({ short_description: e.target.value })} /></div>
