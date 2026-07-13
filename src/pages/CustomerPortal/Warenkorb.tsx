@@ -242,6 +242,12 @@ export default function CustomerPortalWarenkorb() {
               <div><Label>E-Mail</Label><Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} /></div>
               <div><Label>Telefon</Label><Input value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} /></div>
               <div><Label>Gewünschter Liefertermin</Label><Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} /></div>
+              <div><Label>Ihre Referenz / Bestellnummer</Label><Input value={customerReference} onChange={(e) => setCustomerReference(e.target.value)} placeholder="z. B. PO-2026-0123" /></div>
+              <div className="md:col-span-2 border-t pt-3 mt-1"><Label className="text-xs font-semibold uppercase text-muted-foreground">Lieferadresse (optional)</Label></div>
+              <div><Label>Straße & Nr.</Label><Input value={addrStreet} onChange={(e) => setAddrStreet(e.target.value)} /></div>
+              <div><Label>PLZ</Label><Input value={addrZip} onChange={(e) => setAddrZip(e.target.value)} /></div>
+              <div><Label>Ort</Label><Input value={addrCity} onChange={(e) => setAddrCity(e.target.value)} /></div>
+              <div><Label>Land</Label><Input value={addrCountry} onChange={(e) => setAddrCountry(e.target.value)} placeholder="DE" /></div>
               <div className="md:col-span-2">
                 <Label>Nachricht an unser Team</Label>
                 <Textarea rows={4} value={message} onChange={(e) => setMessage(e.target.value)}
