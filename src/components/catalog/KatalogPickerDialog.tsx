@@ -327,18 +327,41 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Kategorie</TableHead>
-                    <TableHead className="w-24 text-right">Positionen</TableHead>
-                    <TableHead className="w-32"></TableHead>
+                    <TableHead className="w-20 text-right">Pos.</TableHead>
+                    <TableHead>Staffel</TableHead>
+                    <TableHead className="w-24">Menge</TableHead>
+                    <TableHead className="w-28"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredBundles.map(b => {
-                    const count = (bundleItemsMap[b.id] ?? []).filter(x => !x.is_optional).length;
+                    const posCount = (bundleItemsMap[b.id] ?? []).filter(x => !x.is_optional).length;
+                    const tiers = bundleTiersMap[b.id] ?? [];
+                    const cnt = Math.max(1, Number(bundleCounts[b.id] ?? 1));
+                    const activePct = bestTierPct(b.id, cnt);
                     return (
                       <TableRow key={b.id}>
                         <TableCell className="font-medium">{b.name}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">{b.category ?? '—'}</TableCell>
-                        <TableCell className="text-right text-xs">{count}</TableCell>
+                        <TableCell className="text-right text-xs">{posCount}</TableCell>
+                        <TableCell>
+                          {tiers.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          ) : (
+                            <div className="flex flex-wrap gap-1">
+                              {tiers.map((t, i) => (
+                                <Badge key={i} variant={activePct === t.discount_pct && cnt >= t.min_quantity ? 'default' : 'outline'} className="text-[10px]">
+                                  ab {t.min_quantity} · {t.discount_pct}%
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Input type="number" min={1} value={cnt}
+                            onChange={(e) => setBundleCounts(s => ({ ...s, [b.id]: Math.max(1, parseInt(e.target.value) || 1) }))}
+                            className="h-8 w-20" />
+                        </TableCell>
                         <TableCell>
                           <Button size="sm" variant="outline" onClick={() => applyBundle(b.id)}>Übernehmen</Button>
                         </TableCell>
@@ -346,7 +369,7 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
                     );
                   })}
                   {filteredBundles.length === 0 && (
-                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Keine Bundles verfügbar</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-6">Keine Bundles verfügbar</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
