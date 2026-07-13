@@ -1123,6 +1123,7 @@ function AppRoutes() {
             <Route path="niederlassungen" element={<KatalogNiederlassungen />} />
             <Route path="preisregeln" element={<KatalogPreisregeln />} />
             <Route path="protokolle" element={<KatalogProtokolle />} />
+            <Route path="import" element={<KatalogImport />} />
           </Route>
 
 
