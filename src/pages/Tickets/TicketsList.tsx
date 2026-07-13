@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -85,7 +84,6 @@ function priorityColor(p: string) {
 export default function TicketsList() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const pageRef = useRef<HTMLDivElement | null>(null);
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -204,10 +202,7 @@ export default function TicketsList() {
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
 
-  const getFrameBody = () => pageRef.current?.ownerDocument?.body ?? document.body;
-
   const openCreateDialog = () => {
-    getFrameBody().style.removeProperty('pointer-events');
     setCreateOpen(true);
   };
 
@@ -256,7 +251,7 @@ export default function TicketsList() {
 
   return (
     <>
-      <div ref={pageRef} className="p-6 lg:p-8 animate-fade-in">
+      <div className="p-6 lg:p-8 animate-fade-in">
       <PageHeader
         title="Tickets"
         subtitle="Service-, Technik- und Finance-Tickets aus allen Quellen"
@@ -274,7 +269,6 @@ export default function TicketsList() {
             <Button
               size="sm"
               type="button"
-              onPointerDownCapture={openCreateDialog}
               onClick={openCreateDialog}
               className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0"
             >
@@ -283,6 +277,18 @@ export default function TicketsList() {
           </>
         }
       />
+
+      {!createOpen && (
+        <div className="mb-4">
+          <Button
+            type="button"
+            onClick={openCreateDialog}
+            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0"
+          >
+            <Plus className="w-4 h-4 mr-1" /> Neues Ticket
+          </Button>
+        </div>
+      )}
 
 
 
@@ -472,11 +478,10 @@ export default function TicketsList() {
         })}
       </Tabs>
 
-      {createOpen && createPortal(
+      {createOpen && (
         <div
           className="fixed inset-0 z-[9000] flex items-center justify-center overflow-y-auto bg-background/85 p-4 backdrop-blur-sm sm:p-6"
           role="presentation"
-          onMouseDown={closeCreateDialog}
         >
           <section
             role="dialog"
@@ -580,8 +585,7 @@ export default function TicketsList() {
             </Button>
             </div>
           </section>
-        </div>,
-        getFrameBody()
+        </div>
       )}
 
     </div>
