@@ -45,6 +45,7 @@ export function useCustomerPortal() {
 const tabs = [
   { to: '/kunde', label: 'Übersicht', icon: LayoutDashboard, end: true },
   { to: '/kunde/bestellungen', label: 'Bestellungen', icon: Package },
+  { to: '/kunde/katalog', label: 'Katalog', icon: BookOpen },
   { to: '/kunde/geraete', label: 'Geräte', icon: Cpu },
   { to: '/kunde/wartungen', label: 'Wartungen', icon: Wrench },
   { to: '/kunde/reparaturen', label: 'Reparaturen', icon: Wrench },
