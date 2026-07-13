@@ -56,6 +56,7 @@ function slaBadge(s: string | null) {
 const STATUS_OPTIONS = ['open', 'in-progress', 'wartet_Kunde', 'offen', 'in_bearbeitung', 'wartet_kunde', 'gelöst', 'geschlossen'];
 const PRIORITY_OPTIONS = ['niedrig', 'normal', 'hoch', 'kritisch'];
 const DEPARTMENT_OPTIONS = ['service', 'technik', 'finance', 'tourenplanung', 'lieferung', 'abholung', 'austausch'];
+const CATEGORY_OPTIONS = ['Reklamation', 'Reparatur', 'Wartung', 'Installation', 'Schulung', 'Beratung', 'Ersatzteil', 'Rückgabe', 'Finance', 'Sonstiges'];
 
 function statusColor(s: string) {
   switch (s) {
