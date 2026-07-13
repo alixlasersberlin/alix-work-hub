@@ -270,10 +270,13 @@ export default function KatalogFreigabe() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Preise zur Freigabe</CardTitle>
+          <CardTitle className="text-base">Preise zur Freigabe <span className="text-xs font-normal text-muted-foreground ml-2">(4-Augen-Prinzip: Prüfer ≠ Freigeber)</span></CardTitle>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={rejectPrices} disabled={busy || Object.values(selPrices).filter(Boolean).length === 0}>
               <XCircle className="h-4 w-4 mr-1" />Ablehnen
+            </Button>
+            <Button size="sm" variant="secondary" onClick={reviewPrices} disabled={busy || Object.values(selPrices).filter(Boolean).length === 0}>
+              <Eye className="h-4 w-4 mr-1" />Prüfen
             </Button>
             <Button size="sm" onClick={approvePrices} disabled={busy || Object.values(selPrices).filter(Boolean).length === 0}>
               <CheckCircle2 className="h-4 w-4 mr-1" />Freigeben
@@ -286,7 +289,7 @@ export default function KatalogFreigabe() {
               <TableRow>
                 <TableHead className="w-10">
                   <Checkbox
-                    checked={eligiblePrices.length > 0 && eligiblePrices.every((p) => selPrices[p.id])}
+                    checked={prices.length > 0 && prices.filter((p) => p.last_edited_by !== user?.id).every((p) => selPrices[p.id])}
                     onCheckedChange={(v) => selectAll(prices, setSelPrices, !!v)}
                   />
                 </TableHead>
@@ -294,15 +297,17 @@ export default function KatalogFreigabe() {
                 <TableHead>Artikel</TableHead>
                 <TableHead>Land</TableHead>
                 <TableHead className="text-right">Preis</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Eingereicht</TableHead>
                 <TableHead className="w-16"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Lade…</TableCell></TableRow>}
-              {!loading && prices.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Keine Preise zur Freigabe.</TableCell></TableRow>}
+              {loading && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Lade…</TableCell></TableRow>}
+              {!loading && prices.length === 0 && <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Keine Preise zur Freigabe.</TableCell></TableRow>}
               {prices.map((p) => {
                 const own = p.last_edited_by === user?.id;
+                const reviewedByMe = p.reviewed_by === user?.id;
                 return (
                   <TableRow key={p.id} className={own ? 'opacity-60' : ''}>
                     <TableCell>
@@ -312,6 +317,15 @@ export default function KatalogFreigabe() {
                     <TableCell>{p.item?.name ?? '—'}</TableCell>
                     <TableCell className="text-xs">{p.country?.iso2 ?? '—'}</TableCell>
                     <TableCell className="text-right">{p.standard_gross != null ? `${Number(p.standard_gross).toFixed(2)} ${p.currency_code ?? ''}` : '—'}</TableCell>
+                    <TableCell>
+                      {p.reviewed_at ? (
+                        <Badge variant={reviewedByMe ? 'secondary' : 'default'} className="text-[10px]" title={p.review_note ?? ''}>
+                          geprüft {reviewedByMe ? '(von dir)' : ''}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px]">ungeprüft</Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{p.submitted_at ? new Date(p.submitted_at).toLocaleString('de-DE') : '—'}</TableCell>
                     <TableCell>
                       <Button asChild variant="ghost" size="sm">
