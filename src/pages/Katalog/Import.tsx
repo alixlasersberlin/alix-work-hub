@@ -31,12 +31,14 @@ const TARGET_FIELDS = [
 const AUTO_ALIASES: Record<string, string> = {
   sku: 'sku', artikelnr: 'sku', artikelnummer: 'sku', 'article number': 'sku',
   name: 'name', bezeichnung: 'name', title: 'name', titel: 'name',
+  produktname: 'name', 'produkt name': 'name', productname: 'name', 'product name': 'name',
   brand: 'brand', marke: 'brand', hersteller: 'brand',
   model: 'model', modell: 'model',
   notes: 'notes_internal', notiz: 'notes_internal', 'interne notiz': 'notes_internal',
+  kurzbeschreibung: 'notes_internal', beschreibung: 'notes_internal',
   status: 'status',
   uvp: 'uvp_net', uvb: 'uvp_net', 'uvp netto': 'uvp_net', rrp: 'uvp_net',
-  'uvp brutto': 'uvp_gross',
+  'uvp preis': 'uvp_gross', 'uvp brutto': 'uvp_gross',
   country: 'country_code', land: 'country_code', 'country code': 'country_code', iso: 'country_code',
 };
 
@@ -129,15 +131,19 @@ export default function KatalogImport() {
     setResult(null);
     try {
       const d = await callAt('preview', { baseId: atBase, tableId: atTable });
-      const recs: Row[] = (d.records ?? []).map((r: any) => r.fields ?? {});
-      const hdrSet = new Set<string>();
+      // Record-ID als synthetische Spalte "_airtable_id" mitliefern (SKU-Fallback)
+      const recs: Row[] = (d.records ?? []).map((r: any) => ({ _airtable_id: r.id, ...(r.fields ?? {}) }));
+      const hdrSet = new Set<string>(['_airtable_id']);
       recs.forEach((r) => Object.keys(r).forEach((k) => hdrSet.add(k)));
       const hdrs = Array.from(hdrSet);
       const tableName = atTables.find((t) => t.id === atTable)?.name ?? atTable;
       setFileName(`Airtable: ${tableName}`);
       setHeaders(hdrs);
       setRows(recs);
-      setMapping(autoMap(hdrs));
+      const map = autoMap(hdrs);
+      // Wenn keine SKU-Spalte erkannt wurde → Airtable Record-ID als SKU nutzen
+      if (!Object.values(map).includes('sku')) map['_airtable_id'] = 'sku';
+      setMapping(map);
       toast({ title: `${recs.length} Datensätze geladen (Vorschau)` });
     } catch (e: any) {
       toast({ title: 'Airtable-Fehler', description: e.message, variant: 'destructive' });
