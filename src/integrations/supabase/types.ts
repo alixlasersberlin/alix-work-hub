@@ -2141,6 +2141,41 @@ export type Database = {
           },
         ]
       }
+      catalog_change_approvals: {
+        Row: {
+          comment: string | null
+          created_at: string
+          decided_by: string | null
+          decision: string
+          id: string
+          pending_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          decided_by?: string | null
+          decision: string
+          id?: string
+          pending_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          decided_by?: string | null
+          decision?: string
+          id?: string
+          pending_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_change_approvals_pending_id_fkey"
+            columns: ["pending_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_pending_changes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_change_log: {
         Row: {
           action: string
@@ -2266,6 +2301,35 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      catalog_customer_price_group: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          price_group_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          price_group_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          price_group_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_customer_price_group_price_group_id_fkey"
+            columns: ["price_group_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_price_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       catalog_item_descriptions: {
         Row: {
@@ -2743,6 +2807,57 @@ export type Database = {
         }
         Relationships: []
       }
+      catalog_pending_changes: {
+        Row: {
+          applied_at: string | null
+          approved_by: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          field_scope: string | null
+          id: string
+          new_value: Json
+          old_value: Json | null
+          reason: string | null
+          rejection_reason: string | null
+          requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applied_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          field_scope?: string | null
+          id?: string
+          new_value: Json
+          old_value?: Json | null
+          reason?: string | null
+          rejection_reason?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applied_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          field_scope?: string | null
+          id?: string
+          new_value?: Json
+          old_value?: Json | null
+          reason?: string | null
+          rejection_reason?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       catalog_portal_cart_items: {
         Row: {
           country_iso: string | null
@@ -2790,6 +2905,68 @@ export type Database = {
             columns: ["portal_user_id"]
             isOneToOne: false
             referencedRelation: "customer_portal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_portal_checkouts: {
+        Row: {
+          confirmation_sent_at: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          customer_id: string | null
+          customer_reference: string | null
+          delivery_address: Json | null
+          desired_date: string | null
+          id: string
+          inquiry_id: string | null
+          notes: string | null
+          portal_user_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          confirmation_sent_at?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_reference?: string | null
+          delivery_address?: Json | null
+          desired_date?: string | null
+          id?: string
+          inquiry_id?: string | null
+          notes?: string | null
+          portal_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          confirmation_sent_at?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_reference?: string | null
+          delivery_address?: Json | null
+          desired_date?: string | null
+          id?: string
+          inquiry_id?: string | null
+          notes?: string | null
+          portal_user_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_portal_checkouts_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_portal_inquiries"
             referencedColumns: ["id"]
           },
         ]
@@ -2934,6 +3111,86 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      catalog_price_group_overrides: {
+        Row: {
+          created_at: string
+          discount_pct: number
+          fixed_net: number | null
+          id: string
+          note: string | null
+          price_group_id: string
+          scope_id: string
+          scope_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount_pct?: number
+          fixed_net?: number | null
+          id?: string
+          note?: string | null
+          price_group_id: string
+          scope_id: string
+          scope_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount_pct?: number
+          fixed_net?: number | null
+          id?: string
+          note?: string | null
+          price_group_id?: string
+          scope_id?: string
+          scope_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_price_group_overrides_price_group_id_fkey"
+            columns: ["price_group_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_price_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_price_groups: {
+        Row: {
+          code: string
+          created_at: string
+          default_discount_pct: number
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          default_discount_pct?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          default_discount_pct?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       catalog_price_rules: {
         Row: {
