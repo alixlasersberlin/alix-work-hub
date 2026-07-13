@@ -280,13 +280,19 @@ export default function KatalogArtikelDetail() {
 
         <TabsContent value="beschreibungen">
           <Card><CardContent className="pt-6 space-y-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <Label>Sprache</Label>
               <Select value={activeLang} onValueChange={setActiveLang}>
                 <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
                 <SelectContent>{languages.map((l) => <SelectItem key={l.code} value={l.code}>{l.name} ({l.code})</SelectItem>)}</SelectContent>
               </Select>
               <Badge variant="secondary">{desc.translation_status ?? 'nicht_begonnen'}</Badge>
+              <div className="ml-auto">
+                <Button size="sm" variant="outline" onClick={translateToAll} disabled={translating}>
+                  {translating ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Sparkles className="h-4 w-4 mr-1" />}
+                  KI-Übersetzung in alle Sprachen
+                </Button>
+              </div>
             </div>
             <div className="grid gap-3">
               <div><Label>Kurzbeschreibung</Label><Textarea rows={2} defaultValue={desc.short_description ?? ''} onBlur={(e) => upsertDescription({ short_description: e.target.value })} /></div>
