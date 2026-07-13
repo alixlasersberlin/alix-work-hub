@@ -59,23 +59,31 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
     if (!open) return;
     (async () => {
       const c = supabase as any;
-      const [{ data: it }, { data: cc }, { data: ll }, { data: bs }, { data: bis }] = await Promise.all([
+      const [{ data: it }, { data: cc }, { data: ll }, { data: bs }, { data: bis }, { data: tiers }] = await Promise.all([
         c.from('catalog_items').select('id, sku, name, brand, model, status').in('status', ['freigegeben', 'aktiv']).order('sku').limit(1000),
         c.from('catalog_countries').select('id, iso_code, name, default_tax_rate').order('iso_code'),
         c.from('catalog_languages').select('code, name').order('code'),
         c.from('catalog_bundles').select('id, name, category, default_discount_pct').eq('is_active', true).order('sort_order').order('name'),
-        c.from('catalog_bundle_items').select('bundle_id, item_id, quantity, is_optional'),
+        c.from('catalog_bundle_items').select('bundle_id, item_id, quantity, is_optional, discount_pct'),
+        c.from('catalog_bundle_price_tiers').select('bundle_id, min_quantity, discount_pct'),
       ]);
       setItems(it ?? []);
       setCountries(cc ?? []);
       setLanguages(ll ?? []);
       setBundles(bs ?? []);
-      const m: Record<string, Array<{ item_id: string; quantity: number; is_optional: boolean }>> = {};
+      const m: Record<string, Array<{ item_id: string; quantity: number; is_optional: boolean; discount_pct: number }>> = {};
       (bis ?? []).forEach((b: any) => {
         if (!m[b.bundle_id]) m[b.bundle_id] = [];
-        m[b.bundle_id].push({ item_id: b.item_id, quantity: Number(b.quantity), is_optional: !!b.is_optional });
+        m[b.bundle_id].push({ item_id: b.item_id, quantity: Number(b.quantity), is_optional: !!b.is_optional, discount_pct: Number(b.discount_pct ?? 0) });
       });
       setBundleItemsMap(m);
+      const tm: Record<string, Array<{ min_quantity: number; discount_pct: number }>> = {};
+      (tiers ?? []).forEach((t: any) => {
+        if (!tm[t.bundle_id]) tm[t.bundle_id] = [];
+        tm[t.bundle_id].push({ min_quantity: Number(t.min_quantity), discount_pct: Number(t.discount_pct) });
+      });
+      Object.keys(tm).forEach(k => tm[k].sort((a, b) => a.min_quantity - b.min_quantity));
+      setBundleTiersMap(tm);
       const de = (cc ?? []).find((x: any) => x.iso_code === 'DE');
       if (de && !country) setCountry(de.id);
     })();
