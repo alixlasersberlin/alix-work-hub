@@ -278,17 +278,6 @@ export default function TicketsList() {
         }
       />
 
-      {!createOpen && (
-        <div className="mb-4">
-          <Button
-            type="button"
-            onClick={openCreateDialog}
-            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0"
-          >
-            <Plus className="w-4 h-4 mr-1" /> Neues Ticket
-          </Button>
-        </div>
-      )}
 
 
 
