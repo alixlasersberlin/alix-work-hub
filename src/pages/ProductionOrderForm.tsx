@@ -10,12 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { ArrowLeft, Loader2, Search, Save, Send, Download, Plus, Trash2, Upload, FileText, X, ChevronsUpDown, Check } from 'lucide-react';
+import { ArrowLeft, Loader2, Search, Save, Send, Download, Plus, Trash2, Upload, FileText, X, ChevronsUpDown, Check, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { useAuth } from '@/hooks/useAuth';
 import { markRestbestellungDone } from '@/lib/restbestellung';
+import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalog/KatalogPickerDialog';
 
 type Mode = 'order' | 'reclamation';
 
