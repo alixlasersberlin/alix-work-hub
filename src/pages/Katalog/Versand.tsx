@@ -265,6 +265,12 @@ export default function KatalogVersand() {
             <Label className="text-xs">Suche</Label>
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="SKU, Name, Empfänger…" className="w-64" />
           </div>
+          {Object.values(selected).some(Boolean) && (
+            <Button variant="destructive" size="sm" onClick={revokeMany}>
+              <Ban className="h-4 w-4 mr-1" />
+              {Object.values(selected).filter(Boolean).length} widerrufen
+            </Button>
+          )}
         </div>
       <div className="flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
