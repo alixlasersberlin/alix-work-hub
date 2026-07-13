@@ -400,12 +400,35 @@ export default function TicketsList() {
                           onClick={() => navigate(`/tickets/${r.id}`)}
                           className="cursor-pointer hover:bg-muted/40"
                         >
-                          <TableCell className="text-sm">
-                            {r.category ? (
-                              <Badge variant="outline">{r.category}</Badge>
-                            ) : r.auto_category ? (
-                              <Badge variant="outline" className="opacity-70">{r.auto_category}</Badge>
-                            ) : '—'}
+                          <TableCell className="text-sm" onClick={(e) => e.stopPropagation()}>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button type="button" className="inline-flex items-center gap-1 hover:opacity-80" title="Kategorie zuweisen">
+                                  {r.category ? (
+                                    <Badge variant="outline">{r.category}</Badge>
+                                  ) : r.auto_category ? (
+                                    <Badge variant="outline" className="opacity-70">{r.auto_category}</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="border-dashed text-muted-foreground"><Tag className="w-3 h-3 mr-1" />Kategorie</Badge>
+                                  )}
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-56 p-2" align="start">
+                                <div className="text-xs text-muted-foreground mb-2 px-1">Kategorie wählen</div>
+                                <div className="grid gap-1 max-h-64 overflow-auto">
+                                  {CATEGORY_OPTIONS.map(c => (
+                                    <button
+                                      key={c}
+                                      type="button"
+                                      onClick={() => updateCategory(r.id, c)}
+                                      className={`text-left text-sm px-2 py-1.5 rounded hover:bg-muted ${r.category === c ? 'bg-muted font-medium' : ''}`}
+                                    >
+                                      {c}
+                                    </button>
+                                  ))}
+                                </div>
+                              </PopoverContent>
+                            </Popover>
                           </TableCell>
                           <TableCell>
                             <div className="font-medium text-foreground">
@@ -431,28 +454,6 @@ export default function TicketsList() {
                           </TableCell>
                           <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="inline-flex items-center gap-1">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button size="sm" variant="outline" title="Kategorie zuweisen">
-                                    <Tag className="w-3 h-3 mr-1" /> Kategorie
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-56 p-2" align="end">
-                                  <div className="text-xs text-muted-foreground mb-2 px-1">Kategorie wählen</div>
-                                  <div className="grid gap-1 max-h-64 overflow-auto">
-                                    {CATEGORY_OPTIONS.map(c => (
-                                      <button
-                                        key={c}
-                                        type="button"
-                                        onClick={() => updateCategory(r.id, c)}
-                                        className={`text-left text-sm px-2 py-1.5 rounded hover:bg-muted ${r.category === c ? 'bg-muted font-medium' : ''}`}
-                                      >
-                                        {c}
-                                      </button>
-                                    ))}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
                               <Button size="sm" variant="outline" asChild>
                                 <Link to={`/tickets/${r.id}`}>Details <ArrowRight className="w-3 h-3 ml-1" /></Link>
                               </Button>
