@@ -196,6 +196,11 @@ export default function ProductionOrderDetail() {
           </table>
         )}
       </Card>
+
+      <CatalogSnapshotsPanel
+        usedInType="production_order"
+        usedInIds={[data?.id, data?.production_order_number, data?.order_id].filter(Boolean)}
+      />
     </div>
   );
 }
