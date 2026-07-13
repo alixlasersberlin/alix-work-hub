@@ -17,6 +17,8 @@ export interface KatalogPickResult {
   sku: string;
   name: string;
   description: string;
+  long_text?: string;
+  image_url?: string;
   rate: number; // brutto wenn tax>0, sonst netto
   tax_percentage: number;
   quantity: number;
@@ -89,7 +91,7 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
     setBusy(true);
     try {
       const c = supabase as any;
-      const [{ data: prices }, { data: descs }] = await Promise.all([
+      const [{ data: prices }, { data: descs }, { data: imgs }] = await Promise.all([
         c.from('catalog_item_prices')
           .select('item_id, uvp_net, uvp_gross, sale_net, sale_gross, tax_rate, price_status')
           .in('item_id', ids)
@@ -99,12 +101,18 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
           .select('item_id, short_text, long_text')
           .in('item_id', ids)
           .eq('language_code', language),
+        c.from('catalog_item_images')
+          .select('item_id, url')
+          .in('item_id', ids)
+          .eq('is_primary', true),
       ]);
 
       const priceByItem: Record<string, any> = {};
       (prices ?? []).forEach((p: any) => { priceByItem[p.item_id] = p; });
       const descByItem: Record<string, any> = {};
       (descs ?? []).forEach((d: any) => { descByItem[d.item_id] = d; });
+      const imgByItem: Record<string, string> = {};
+      (imgs ?? []).forEach((i: any) => { imgByItem[i.item_id] = i.url; });
 
       const countryObj = countries.find((x) => x.id === country);
       const { data: userRes } = await supabase.auth.getUser();
@@ -118,11 +126,14 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
         const tax = Number(p.tax_rate ?? countryObj?.default_tax_rate ?? 19);
         const rate = Number(p.sale_gross ?? p.uvp_gross ?? p.sale_net ?? p.uvp_net ?? 0);
 
+        const imageUrl = imgByItem[id];
+
         // Snapshot einfrieren
         const snapshotPayload = {
           item: { id: item.id, sku: item.sku, name: item.name, brand: item.brand, model: item.model },
           price: p,
           description: d,
+          image_url: imageUrl ?? null,
           country: countryObj ? { id: countryObj.id, iso: countryObj.iso_code } : null,
           language,
           captured_at: new Date().toISOString(),
@@ -142,6 +153,8 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
           sku: item.sku,
           name: item.name,
           description: d.short_text ?? d.long_text ?? '',
+          long_text: d.long_text ?? undefined,
+          image_url: imageUrl,
           rate,
           tax_percentage: tax,
           quantity: selected[id] || 1,
