@@ -52,6 +52,9 @@ interface Payload {
   device_name?: string;
   serial_number?: string;
   department?: string;
+  category?: string;
+  kategorie?: string;
+  service?: string;
   customer_visible_status?: string;
   internal_note?: string;
   messages?: MessageIn[];
