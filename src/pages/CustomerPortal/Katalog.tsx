@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { BookOpen, Search, MessageSquarePlus, Loader2 } from 'lucide-react';
+import { BookOpen, Search, MessageSquarePlus, Loader2, ShoppingCart } from 'lucide-react';
 
 type Ctx = { customerId: string; companyName: string | null; email: string | null };
 
