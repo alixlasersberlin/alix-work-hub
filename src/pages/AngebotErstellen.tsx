@@ -20,6 +20,8 @@ import alixLogoAsset from '@/assets/alix-logo-gold-angebot.png.asset.json';
 import { upsertOffer, getOffer, updateOfferStatus } from '@/lib/offers-store';
 import { peekNumber, nextNumber, ensureCaseNumber } from '@/lib/number-ranges';
 import { useAuth } from '@/hooks/useAuth';
+import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalog/KatalogPickerDialog';
+import { BookOpen } from 'lucide-react';
 
 
 type LineItem = {
