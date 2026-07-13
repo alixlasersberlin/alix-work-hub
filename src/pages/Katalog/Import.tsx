@@ -31,12 +31,14 @@ const TARGET_FIELDS = [
 const AUTO_ALIASES: Record<string, string> = {
   sku: 'sku', artikelnr: 'sku', artikelnummer: 'sku', 'article number': 'sku',
   name: 'name', bezeichnung: 'name', title: 'name', titel: 'name',
+  produktname: 'name', 'produkt name': 'name', productname: 'name', 'product name': 'name',
   brand: 'brand', marke: 'brand', hersteller: 'brand',
   model: 'model', modell: 'model',
   notes: 'notes_internal', notiz: 'notes_internal', 'interne notiz': 'notes_internal',
+  kurzbeschreibung: 'notes_internal', beschreibung: 'notes_internal',
   status: 'status',
   uvp: 'uvp_net', uvb: 'uvp_net', 'uvp netto': 'uvp_net', rrp: 'uvp_net',
-  'uvp brutto': 'uvp_gross',
+  'uvp preis': 'uvp_gross', 'uvp brutto': 'uvp_gross',
   country: 'country_code', land: 'country_code', 'country code': 'country_code', iso: 'country_code',
 };
 
