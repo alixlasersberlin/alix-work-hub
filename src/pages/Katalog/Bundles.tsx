@@ -163,6 +163,30 @@ export default function KatalogBundles() {
     setBundleItems(prev => prev.filter(x => x.id !== bi.id));
   };
 
+  const addTier = async () => {
+    if (!selected) return;
+    if (!newTierQty || newTierQty < 1) { toast({ title: 'Mindestmenge ≥ 1', variant: 'destructive' }); return; }
+    if (tiers.some(t => t.min_quantity === newTierQty)) { toast({ title: 'Staffel existiert bereits', variant: 'destructive' }); return; }
+    const { data, error } = await c.from('catalog_bundle_price_tiers')
+      .insert({ bundle_id: selected.id, min_quantity: newTierQty, discount_pct: newTierPct })
+      .select('*').maybeSingle();
+    if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    if (data) setTiers(prev => [...prev, data].sort((a, b) => a.min_quantity - b.min_quantity));
+    setNewTierQty(prev => prev + 1); setNewTierPct(0);
+  };
+
+  const updateTier = async (t: PriceTier, patch: Partial<PriceTier>) => {
+    const { error } = await c.from('catalog_bundle_price_tiers').update(patch).eq('id', t.id);
+    if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    setTiers(prev => prev.map(x => x.id === t.id ? { ...x, ...patch } : x).sort((a, b) => a.min_quantity - b.min_quantity));
+  };
+
+  const removeTier = async (t: PriceTier) => {
+    const { error } = await c.from('catalog_bundle_price_tiers').delete().eq('id', t.id);
+    if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    setTiers(prev => prev.filter(x => x.id !== t.id));
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
