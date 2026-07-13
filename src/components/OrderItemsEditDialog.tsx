@@ -286,9 +286,14 @@ export default function OrderItemsEditDialog({ orderId, orderNumber, open, onClo
             </div>
 
             <div className="flex items-center justify-between">
-              <Button variant="outline" size="sm" onClick={addItem} className="gap-1.5">
-                <Plus className="w-3.5 h-3.5" /> Position hinzufügen
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={addItem} className="gap-1.5">
+                  <Plus className="w-3.5 h-3.5" /> Position hinzufügen
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)} className="gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5" /> Aus Katalog
+                </Button>
+              </div>
               <span className="text-xs text-muted-foreground">
                 {removedIds.length > 0 && `${removedIds.length} zu löschen · `}
                 {items.filter(i => i._isNew).length > 0 && `${items.filter(i => i._isNew).length} neu`}
