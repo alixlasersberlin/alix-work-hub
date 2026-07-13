@@ -425,8 +425,9 @@ export default function KatalogVersand() {
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" onClick={() => copy(l.token)} title="Link kopieren"><Copy className="h-4 w-4" /></Button>
                       <Button size="sm" variant="ghost" onClick={() => window.open(baseUrl() + l.token, '_blank')} title="Öffnen"><LinkIcon className="h-4 w-4" /></Button>
-                      {l.recipient_email && <Button size="sm" variant="ghost" onClick={() => openMail(l)} title="E-Mail"><Mail className="h-4 w-4" /></Button>}
-                      {l.recipient_phone && <Button size="sm" variant="ghost" onClick={() => openWhats(l)} title="WhatsApp"><MessageCircle className="h-4 w-4" /></Button>}
+                      {l.recipient_email && <Button size="sm" variant="ghost" onClick={() => sendVia(l, 'email')} title="E-Mail senden"><Mail className="h-4 w-4" /></Button>}
+                      {l.recipient_phone && <Button size="sm" variant="ghost" onClick={() => sendVia(l, 'whatsapp')} title="WhatsApp senden"><MessageCircle className="h-4 w-4" /></Button>}
+                      {l.recipient_phone && <Button size="sm" variant="ghost" onClick={() => sendVia(l, 'sms')} title="SMS senden"><MessageSquare className="h-4 w-4" /></Button>}
                       {!l.revoked_at && <Button size="sm" variant="ghost" onClick={() => revoke(l.id)} title="Widerrufen"><Ban className="h-4 w-4 text-red-500" /></Button>}
                     </div>
                   </TableCell>
