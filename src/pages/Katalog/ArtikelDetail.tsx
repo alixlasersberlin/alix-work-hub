@@ -20,7 +20,9 @@ const TRANSLATION_STATUSES = ['nicht_begonnen','in_bearbeitung','maschinell','ge
 export default function KatalogArtikelDetail() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
+  const { user, roles } = useAuth();
   const client = supabase as any;
+  const canApprove = (roles ?? []).some((r: string) => ['Super Admin', 'Admin', 'Katalog Preise'].includes(r));
 
   const [item, setItem] = useState<any>(null);
   const [languages, setLanguages] = useState<any[]>([]);
