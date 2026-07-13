@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { addDays, addMonths, addWeeks, differenceInMinutes, format, subDays, subMonths, subWeeks } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Bell, ClipboardList } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Bell, ClipboardList, Users } from 'lucide-react';
 import { ViewSwitcher } from '@/components/esc/ViewSwitcher';
 import { DayView } from '@/components/esc/views/DayView';
 import { WeekView } from '@/components/esc/views/WeekView';
@@ -127,6 +128,33 @@ export default function EscCalendar() {
         </div>
         <div className="text-[13px] font-medium">{title}</div>
         <div className="ml-auto flex items-center gap-2 flex-wrap">
+          <Select
+            value={filters.employeeIds[0] ?? '__all'}
+            onValueChange={(v) =>
+              setFilters((f) => ({ ...f, employeeIds: v === '__all' ? [] : [v] }))
+            }
+          >
+            <SelectTrigger className="h-8 w-[220px] text-xs">
+              <Users className="w-3.5 h-3.5 mr-1.5 opacity-70" />
+              <SelectValue placeholder="Mitarbeiter" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[320px]">
+              <SelectItem value="__all">
+                Alle Mitarbeiter ({appointments.length})
+              </SelectItem>
+              {employees
+                .slice()
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((e) => {
+                  const count = appointments.filter((a) => a.employeeIds?.includes(e.id)).length;
+                  return (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.name} ({count})
+                    </SelectItem>
+                  );
+                })}
+            </SelectContent>
+          </Select>
           <ViewSwitcher value={view} onChange={setView} />
           {canCreate && (
             <>
