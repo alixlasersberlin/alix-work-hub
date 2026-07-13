@@ -229,6 +229,11 @@ export default function KatalogAnfragen() {
                 <div className="text-right text-sm font-semibold">
                   Summe: {total.toLocaleString('de-DE', { minimumFractionDigits: 2 })} {currency}
                 </div>
+                <div className="flex justify-end">
+                  <Button size="sm" onClick={() => createOffer(selected)} disabled={items.length === 0}>
+                    <FileText className="h-4 w-4 mr-2" /> Angebot erstellen
+                  </Button>
+                </div>
                 <div>
                   <Label className="text-xs">Interne Notizen</Label>
                   <Textarea rows={3} defaultValue={selected.internal_notes ?? ''} onBlur={(e) => saveNotes(selected, e.target.value)} />
