@@ -220,7 +220,7 @@ export default function TicketsList() {
     if (error) { toast.error(error.message); return; }
     toast.success('Ticket erstellt');
     setCreateOpen(false);
-    setNt({ title: '', description: '', customer_name: '', company_name: '', customer_email: '', customer_phone: '', order_number: '', device_name: '', serial_number: '', priority: 'normal', department: 'service' });
+    setNt({ title: '', description: '', customer_name: '', company_name: '', customer_email: '', customer_phone: '', order_number: '', device_name: '', serial_number: '', priority: 'normal', department: 'service', category: '' });
     if (data?.id) navigate(`/tickets/${data.id}`);
   }
 
