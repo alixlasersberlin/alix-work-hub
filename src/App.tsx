@@ -1132,6 +1132,7 @@ function AppRoutes() {
             <Route path="export" element={<KatalogExport />} />
             <Route path="versand" element={<KatalogVersand />} />
             <Route path="freigabe" element={<KatalogFreigabe />} />
+            <Route path="uebersetzung" element={<KatalogBulkUebersetzung />} />
           </Route>
 
 
