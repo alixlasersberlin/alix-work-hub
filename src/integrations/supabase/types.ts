@@ -1963,6 +1963,102 @@ export type Database = {
           },
         ]
       }
+      catalog_bundle_items: {
+        Row: {
+          bundle_id: string
+          created_at: string
+          discount_pct: number
+          id: string
+          is_optional: boolean
+          item_id: string
+          note: string | null
+          quantity: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          bundle_id: string
+          created_at?: string
+          discount_pct?: number
+          id?: string
+          is_optional?: boolean
+          item_id: string
+          note?: string | null
+          quantity?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          bundle_id?: string
+          created_at?: string
+          discount_pct?: number
+          id?: string
+          is_optional?: boolean
+          item_id?: string
+          note?: string | null
+          quantity?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_bundle_items_bundle_id_fkey"
+            columns: ["bundle_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_bundles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_bundle_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_bundles: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          default_discount_pct: number
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_discount_pct?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_discount_pct?: number
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       catalog_categories: {
         Row: {
           created_at: string

@@ -17,6 +17,7 @@ const tabs = [
   { to: '/katalog/uebersetzung', label: 'KI-Übersetzung' },
   { to: '/katalog/analytics', label: 'Analytics' },
   { to: '/katalog/preishistorie', label: 'Preishistorie' },
+  { to: '/katalog/bundles', label: 'Bundles' },
   { to: '/katalog/protokolle', label: 'Änderungsprotokoll' },
 ];
 

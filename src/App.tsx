@@ -284,6 +284,7 @@ const KatalogSharePublic = lazy(() => import("./pages/Katalog/SharePublic"));
 const KatalogBulkUebersetzung = lazy(() => import("./pages/Katalog/BulkUebersetzung"));
 const KatalogAnalytics = lazy(() => import("./pages/Katalog/Analytics"));
 const KatalogPreishistorie = lazy(() => import("./pages/Katalog/Preishistorie"));
+const KatalogBundles = lazy(() => import("./pages/Katalog/Bundles"));
 const CustomerPortalKatalog = lazy(() => import("./pages/CustomerPortal/Katalog"));
 const AicLayout = lazy(() => import("./pages/AIC/Layout"));
 const AicDashboard = lazy(() => import("./pages/AIC/Dashboard"));
@@ -1138,6 +1139,7 @@ function AppRoutes() {
             <Route path="uebersetzung" element={<KatalogBulkUebersetzung />} />
             <Route path="analytics" element={<KatalogAnalytics />} />
             <Route path="preishistorie" element={<KatalogPreishistorie />} />
+            <Route path="bundles" element={<KatalogBundles />} />
           </Route>
 
 

@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Search, BookOpen } from 'lucide-react';
+import { Search, BookOpen, Package } from 'lucide-react';
 
 export interface KatalogPickResult {
   item_id: string;
@@ -47,24 +48,53 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
   const [q, setQ] = useState('');
   const [selected, setSelected] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<'items' | 'bundles'>('items');
+  const [bundles, setBundles] = useState<Array<{ id: string; name: string; category: string | null; default_discount_pct: number }>>([]);
+  const [bundleItemsMap, setBundleItemsMap] = useState<Record<string, Array<{ item_id: string; quantity: number; is_optional: boolean }>>>({});
+  const [bundleQ, setBundleQ] = useState('');
 
   useEffect(() => {
     if (!open) return;
     (async () => {
       const c = supabase as any;
-      const [{ data: it }, { data: cc }, { data: ll }] = await Promise.all([
+      const [{ data: it }, { data: cc }, { data: ll }, { data: bs }, { data: bis }] = await Promise.all([
         c.from('catalog_items').select('id, sku, name, brand, model, status').in('status', ['freigegeben', 'aktiv']).order('sku').limit(1000),
         c.from('catalog_countries').select('id, iso_code, name, default_tax_rate').order('iso_code'),
         c.from('catalog_languages').select('code, name').order('code'),
+        c.from('catalog_bundles').select('id, name, category, default_discount_pct').eq('is_active', true).order('sort_order').order('name'),
+        c.from('catalog_bundle_items').select('bundle_id, item_id, quantity, is_optional'),
       ]);
       setItems(it ?? []);
       setCountries(cc ?? []);
       setLanguages(ll ?? []);
-      // Default DE wenn vorhanden
+      setBundles(bs ?? []);
+      const m: Record<string, Array<{ item_id: string; quantity: number; is_optional: boolean }>> = {};
+      (bis ?? []).forEach((b: any) => {
+        if (!m[b.bundle_id]) m[b.bundle_id] = [];
+        m[b.bundle_id].push({ item_id: b.item_id, quantity: Number(b.quantity), is_optional: !!b.is_optional });
+      });
+      setBundleItemsMap(m);
       const de = (cc ?? []).find((x: any) => x.iso_code === 'DE');
       if (de && !country) setCountry(de.id);
     })();
   }, [open]);
+
+  const applyBundle = (bundleId: string) => {
+    const rows = bundleItemsMap[bundleId] ?? [];
+    setSelected((s) => {
+      const n = { ...s };
+      rows.filter(r => !r.is_optional).forEach(r => { n[r.item_id] = (n[r.item_id] ?? 0) + (r.quantity || 1); });
+      return n;
+    });
+    setTab('items');
+    toast({ title: `${rows.filter(r => !r.is_optional).length} Positionen aus Bundle übernommen` });
+  };
+
+  const filteredBundles = useMemo(() => {
+    const n = bundleQ.trim().toLowerCase();
+    if (!n) return bundles;
+    return bundles.filter(b => b.name.toLowerCase().includes(n) || (b.category ?? '').toLowerCase().includes(n));
+  }, [bundles, bundleQ]);
 
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -208,41 +238,87 @@ export function KatalogPickerDialog({ open, onOpenChange, onPicked, usedInType =
           </div>
         </div>
 
-        <ScrollArea className="h-96 border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10"></TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Marke / Modell</TableHead>
-                <TableHead className="w-24">Menge</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((i) => (
-                <TableRow key={i.id} className={selected[i.id] ? 'bg-primary/5' : ''}>
-                  <TableCell><Checkbox checked={!!selected[i.id]} onCheckedChange={() => toggle(i.id)} /></TableCell>
-                  <TableCell className="font-mono text-xs">{i.sku}</TableCell>
-                  <TableCell>{i.name}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{[i.brand, i.model].filter(Boolean).join(' · ')}</TableCell>
-                  <TableCell>
-                    <Input
-                      type="number" min={1}
-                      value={selected[i.id] ?? ''}
-                      onChange={(e) => setSelected((s) => ({ ...s, [i.id]: Math.max(1, parseInt(e.target.value) || 1) }))}
-                      disabled={!selected[i.id]}
-                      className="h-8 w-20"
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Keine Artikel</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </ScrollArea>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+          <TabsList>
+            <TabsTrigger value="items"><BookOpen className="h-4 w-4 mr-1" />Artikel</TabsTrigger>
+            <TabsTrigger value="bundles"><Package className="h-4 w-4 mr-1" />Bundles ({bundles.length})</TabsTrigger>
+          </TabsList>
+          <TabsContent value="items">
+            <ScrollArea className="h-96 border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10"></TableHead>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Marke / Modell</TableHead>
+                    <TableHead className="w-24">Menge</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((i) => (
+                    <TableRow key={i.id} className={selected[i.id] ? 'bg-primary/5' : ''}>
+                      <TableCell><Checkbox checked={!!selected[i.id]} onCheckedChange={() => toggle(i.id)} /></TableCell>
+                      <TableCell className="font-mono text-xs">{i.sku}</TableCell>
+                      <TableCell>{i.name}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{[i.brand, i.model].filter(Boolean).join(' · ')}</TableCell>
+                      <TableCell>
+                        <Input
+                          type="number" min={1}
+                          value={selected[i.id] ?? ''}
+                          onChange={(e) => setSelected((s) => ({ ...s, [i.id]: Math.max(1, parseInt(e.target.value) || 1) }))}
+                          disabled={!selected[i.id]}
+                          className="h-8 w-20"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {filtered.length === 0 && (
+                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-6">Keine Artikel</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </TabsContent>
+          <TabsContent value="bundles">
+            <div className="relative mb-2">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input className="pl-8" value={bundleQ} onChange={(e) => setBundleQ(e.target.value)} placeholder="Bundle filtern…" />
+            </div>
+            <ScrollArea className="h-80 border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Kategorie</TableHead>
+                    <TableHead className="w-24 text-right">Positionen</TableHead>
+                    <TableHead className="w-32"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredBundles.map(b => {
+                    const count = (bundleItemsMap[b.id] ?? []).filter(x => !x.is_optional).length;
+                    return (
+                      <TableRow key={b.id}>
+                        <TableCell className="font-medium">{b.name}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{b.category ?? '—'}</TableCell>
+                        <TableCell className="text-right text-xs">{count}</TableCell>
+                        <TableCell>
+                          <Button size="sm" variant="outline" onClick={() => applyBundle(b.id)}>Übernehmen</Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {filteredBundles.length === 0 && (
+                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Keine Bundles verfügbar</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+            <p className="text-xs text-muted-foreground mt-2">Bundle-Positionen werden zur Artikel-Auswahl hinzugefügt. Optionale Artikel manuell im Tab „Artikel" ergänzen.</p>
+          </TabsContent>
+        </Tabs>
+
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Badge variant="outline">{Object.keys(selected).length} ausgewählt</Badge>
