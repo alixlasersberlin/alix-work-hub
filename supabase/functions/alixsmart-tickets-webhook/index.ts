@@ -26,6 +26,9 @@ interface Payload {
   status?: string;
   priority?: string;
   department?: string;
+  category?: string;
+  kategorie?: string;
+  service?: string;
   customer_visible_status?: string;
   internal_note?: string;
   messages?: Array<{
@@ -142,6 +145,7 @@ Deno.serve(async (req) => {
     status: body.status || 'offen',
     priority: body.priority || 'normal',
     department: body.department || 'service',
+    category: (body.category ?? body.kategorie ?? body.service ?? null) || null,
     customer_visible_status: body.customer_visible_status || 'Ticket eingegangen',
     internal_note: body.internal_note ?? null,
     last_synced_at: now,
