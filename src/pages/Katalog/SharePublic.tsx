@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Loader2, Package, X, ChevronLeft, ChevronRight, Printer, Lock } from 'lucide-react';
+import { Loader2, Package, X, ChevronLeft, ChevronRight, Printer, Lock, MessageSquarePlus } from 'lucide-react';
 
 const SUPA = import.meta.env.VITE_SUPABASE_URL;
 
@@ -13,9 +13,13 @@ interface Payload {
   item: { sku: string; name: string; brand: string | null; model: string | null };
   description: { short_text?: string; long_text?: string; technical_text?: string; warranty_text?: string; scope_text?: string } | null;
   images: string[];
-  price: { uvp_net?: number; uvp_gross?: number; sale_net?: number; sale_gross?: number; tax_rate?: number } | null;
+  price: { uvp_net?: number; uvp_gross?: number; sale_net?: number; sale_gross?: number; tax_rate?: number; currency_code?: string } | null;
   language: string;
+  contact?: { email?: string | null; name?: string | null } | null;
 }
+
+const fmtMoney = (v: number, ccy = 'EUR') =>
+  new Intl.NumberFormat('de-DE', { style: 'currency', currency: ccy }).format(v);
 
 export default function CatalogSharePublic() {
   const { token } = useParams();
