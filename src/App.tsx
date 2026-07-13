@@ -1129,8 +1129,6 @@ function AppRoutes() {
             <Route path="import" element={<KatalogImport />} />
             <Route path="export" element={<KatalogExport />} />
             <Route path="versand" element={<KatalogVersand />} />
-          </Route>
-          <Route path="/catalog/share/:token" element={<KatalogSharePublic />} />
 
 
           <Route path="/iso" element={<ProtectedRoute requiredRoles={['Super Admin', 'Admin', 'QM']}><IsoLayoutLazy /></ProtectedRoute>}>
