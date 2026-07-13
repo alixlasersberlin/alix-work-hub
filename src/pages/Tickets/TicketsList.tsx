@@ -103,6 +103,23 @@ export default function TicketsList() {
   });
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const { isSuperAdmin } = useFinancePermissions();
+
+  async function updateCategory(id: string, category: string) {
+    const { error } = await supabase.from('tickets').update({ category }).eq('id', id);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.map(r => r.id === id ? { ...r, category } : r));
+    toast.success('Kategorie aktualisiert');
+  }
+
+  async function deleteTicket(id: string) {
+    if (!isSuperAdmin) { toast.error('Nur Super Admin darf Tickets löschen'); return; }
+    if (!window.confirm('Ticket wirklich unwiderruflich löschen?')) return;
+    const { error } = await supabase.from('tickets').delete().eq('id', id);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.filter(r => r.id !== id));
+    toast.success('Ticket gelöscht');
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
