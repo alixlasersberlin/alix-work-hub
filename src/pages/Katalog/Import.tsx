@@ -277,26 +277,41 @@ export default function KatalogImport() {
 
         <TabsContent value="airtable" className="space-y-3">
           <Card className="p-4 grid gap-3 sm:grid-cols-3">
-            <div>
-              <Label>Personal Access Token</Label>
-              <Input type="password" value={atToken} onChange={(e) => setAtToken(e.target.value)} placeholder="patXXXXXXXXXXXXXX" />
-            </div>
-            <div>
-              <Label>Base-ID</Label>
-              <Input value={atBase} onChange={(e) => setAtBase(e.target.value)} placeholder="appXXXXXXXXXXXX" />
-            </div>
-            <div>
-              <Label>Tabellenname</Label>
-              <Input value={atTable} onChange={(e) => setAtTable(e.target.value)} placeholder="Products" />
-            </div>
             <div className="sm:col-span-3">
-              <Button onClick={loadAirtable} disabled={atLoading}>
-                {atLoading ? 'Lade…' : 'Aus Airtable laden'}
+              <Button onClick={loadBases} disabled={atLoading} variant="outline">
+                {atLoading ? 'Lade…' : (atBases.length ? 'Bases neu laden' : 'Bases laden')}
               </Button>
               <p className="text-xs text-muted-foreground mt-2">
-                Der Token wird nur im Browser für diesen Ladevorgang verwendet und nicht gespeichert.
+                Nutzt den verbundenen Airtable-Connector – kein Token nötig.
               </p>
             </div>
+            {atBases.length > 0 && (
+              <>
+                <div>
+                  <Label>Base</Label>
+                  <Select value={atBase} onValueChange={loadTables}>
+                    <SelectTrigger><SelectValue placeholder="Base wählen" /></SelectTrigger>
+                    <SelectContent>
+                      {atBases.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Tabelle</Label>
+                  <Select value={atTable} onValueChange={setAtTable} disabled={!atTables.length}>
+                    <SelectTrigger><SelectValue placeholder="Tabelle wählen" /></SelectTrigger>
+                    <SelectContent>
+                      {atTables.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button onClick={loadAirtable} disabled={atLoading || !atBase || !atTable}>
+                    {atLoading ? 'Lade…' : 'Aus Airtable laden'}
+                  </Button>
+                </div>
+              </>
+            )}
           </Card>
         </TabsContent>
       </Tabs>
