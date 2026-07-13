@@ -1869,6 +1869,779 @@ export type Database = {
           },
         ]
       }
+      catalog_branches: {
+        Row: {
+          address: string | null
+          bank_details: Json | null
+          code: string
+          company_name: string | null
+          country_id: string | null
+          created_at: string
+          currency_code: string | null
+          default_language: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          legal_notice: string | null
+          logo_url: string | null
+          name: string
+          pdf_footer: string | null
+          phone: string | null
+          pricelist_label: string | null
+          sort_order: number
+          tax_default: number | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          bank_details?: Json | null
+          code: string
+          company_name?: string | null
+          country_id?: string | null
+          created_at?: string
+          currency_code?: string | null
+          default_language?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          legal_notice?: string | null
+          logo_url?: string | null
+          name: string
+          pdf_footer?: string | null
+          phone?: string | null
+          pricelist_label?: string | null
+          sort_order?: number
+          tax_default?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          bank_details?: Json | null
+          code?: string
+          company_name?: string | null
+          country_id?: string | null
+          created_at?: string
+          currency_code?: string | null
+          default_language?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          legal_notice?: string | null
+          logo_url?: string | null
+          name?: string
+          pdf_footer?: string | null
+          phone?: string | null
+          pricelist_label?: string | null
+          sort_order?: number
+          tax_default?: number | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_branches_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_branches_currency_code_fkey"
+            columns: ["currency_code"]
+            isOneToOne: false
+            referencedRelation: "catalog_currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "catalog_branches_default_language_fkey"
+            columns: ["default_language"]
+            isOneToOne: false
+            referencedRelation: "catalog_languages"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      catalog_categories: {
+        Row: {
+          created_at: string
+          descriptions: Json
+          id: string
+          is_active: boolean
+          names: Json
+          parent_id: string | null
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descriptions?: Json
+          id?: string
+          is_active?: boolean
+          names?: Json
+          parent_id?: string | null
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descriptions?: Json
+          id?: string
+          is_active?: boolean
+          names?: Json
+          parent_id?: string | null
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_change_log: {
+        Row: {
+          action: string
+          entity_id: string
+          entity_type: string
+          field_name: string | null
+          id: string
+          new_value: Json | null
+          note: string | null
+          old_value: Json | null
+          performed_at: string
+          performed_by: string | null
+          source: string | null
+        }
+        Insert: {
+          action: string
+          entity_id: string
+          entity_type: string
+          field_name?: string | null
+          id?: string
+          new_value?: Json | null
+          note?: string | null
+          old_value?: Json | null
+          performed_at?: string
+          performed_by?: string | null
+          source?: string | null
+        }
+        Update: {
+          action?: string
+          entity_id?: string
+          entity_type?: string
+          field_name?: string | null
+          id?: string
+          new_value?: Json | null
+          note?: string | null
+          old_value?: Json | null
+          performed_at?: string
+          performed_by?: string | null
+          source?: string | null
+        }
+        Relationships: []
+      }
+      catalog_countries: {
+        Row: {
+          created_at: string
+          currency_code: string
+          default_language: string | null
+          default_tax_rate: number
+          id: string
+          is_active: boolean
+          iso_code: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency_code: string
+          default_language?: string | null
+          default_tax_rate?: number
+          id?: string
+          is_active?: boolean
+          iso_code: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency_code?: string
+          default_language?: string | null
+          default_tax_rate?: number
+          id?: string
+          is_active?: boolean
+          iso_code?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_countries_currency_code_fkey"
+            columns: ["currency_code"]
+            isOneToOne: false
+            referencedRelation: "catalog_currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "catalog_countries_default_language_fkey"
+            columns: ["default_language"]
+            isOneToOne: false
+            referencedRelation: "catalog_languages"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      catalog_currencies: {
+        Row: {
+          code: string
+          created_at: string
+          is_active: boolean
+          name: string
+          rounding: number
+          symbol: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_active?: boolean
+          name: string
+          rounding?: number
+          symbol?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_active?: boolean
+          name?: string
+          rounding?: number
+          symbol?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      catalog_item_descriptions: {
+        Row: {
+          accessories: string | null
+          created_at: string
+          id: string
+          item_id: string
+          language_code: string
+          legal_notice: string | null
+          long_description: string | null
+          name: string | null
+          offer_description: string | null
+          optional_equipment: string | null
+          pdf_description: string | null
+          scope_of_delivery: string | null
+          selling_points: string | null
+          service_notes: string | null
+          short_description: string | null
+          short_name: string | null
+          technical_description: string | null
+          translation_status: Database["public"]["Enums"]["catalog_translation_status"]
+          updated_at: string
+          warranty: string | null
+        }
+        Insert: {
+          accessories?: string | null
+          created_at?: string
+          id?: string
+          item_id: string
+          language_code: string
+          legal_notice?: string | null
+          long_description?: string | null
+          name?: string | null
+          offer_description?: string | null
+          optional_equipment?: string | null
+          pdf_description?: string | null
+          scope_of_delivery?: string | null
+          selling_points?: string | null
+          service_notes?: string | null
+          short_description?: string | null
+          short_name?: string | null
+          technical_description?: string | null
+          translation_status?: Database["public"]["Enums"]["catalog_translation_status"]
+          updated_at?: string
+          warranty?: string | null
+        }
+        Update: {
+          accessories?: string | null
+          created_at?: string
+          id?: string
+          item_id?: string
+          language_code?: string
+          legal_notice?: string | null
+          long_description?: string | null
+          name?: string | null
+          offer_description?: string | null
+          optional_equipment?: string | null
+          pdf_description?: string | null
+          scope_of_delivery?: string | null
+          selling_points?: string | null
+          service_notes?: string | null
+          short_description?: string | null
+          short_name?: string | null
+          technical_description?: string | null
+          translation_status?: Database["public"]["Enums"]["catalog_translation_status"]
+          updated_at?: string
+          warranty?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_item_descriptions_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_item_descriptions_language_code_fkey"
+            columns: ["language_code"]
+            isOneToOne: false
+            referencedRelation: "catalog_languages"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      catalog_item_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          id: string
+          is_approved: boolean
+          is_primary: boolean
+          item_id: string
+          language_code: string | null
+          sort_order: number
+          storage_path: string
+          title: string | null
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_approved?: boolean
+          is_primary?: boolean
+          item_id: string
+          language_code?: string | null
+          sort_order?: number
+          storage_path: string
+          title?: string | null
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_approved?: boolean
+          is_primary?: boolean
+          item_id?: string
+          language_code?: string | null
+          sort_order?: number
+          storage_path?: string
+          title?: string | null
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_item_images_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_item_images_language_code_fkey"
+            columns: ["language_code"]
+            isOneToOne: false
+            referencedRelation: "catalog_languages"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      catalog_item_prices: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          branch_id: string | null
+          country_id: string
+          created_at: string
+          currency_code: string
+          id: string
+          item_id: string
+          price_status: Database["public"]["Enums"]["catalog_price_status"]
+          pricelist_label: string | null
+          promo_gross: number | null
+          promo_net: number | null
+          rounding: number | null
+          rule_id: string | null
+          standard_gross: number | null
+          standard_net: number | null
+          tax_rate: number | null
+          updated_at: string
+          uvp_gross: number | null
+          uvp_net: number | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string | null
+          country_id: string
+          created_at?: string
+          currency_code: string
+          id?: string
+          item_id: string
+          price_status?: Database["public"]["Enums"]["catalog_price_status"]
+          pricelist_label?: string | null
+          promo_gross?: number | null
+          promo_net?: number | null
+          rounding?: number | null
+          rule_id?: string | null
+          standard_gross?: number | null
+          standard_net?: number | null
+          tax_rate?: number | null
+          updated_at?: string
+          uvp_gross?: number | null
+          uvp_net?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          branch_id?: string | null
+          country_id?: string
+          created_at?: string
+          currency_code?: string
+          id?: string
+          item_id?: string
+          price_status?: Database["public"]["Enums"]["catalog_price_status"]
+          pricelist_label?: string | null
+          promo_gross?: number | null
+          promo_net?: number | null
+          rounding?: number | null
+          rule_id?: string | null
+          standard_gross?: number | null
+          standard_net?: number | null
+          tax_rate?: number | null
+          updated_at?: string
+          uvp_gross?: number | null
+          uvp_net?: number | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_item_prices_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_item_prices_country_id_fkey"
+            columns: ["country_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_countries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_item_prices_currency_code_fkey"
+            columns: ["currency_code"]
+            isOneToOne: false
+            referencedRelation: "catalog_currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "catalog_item_prices_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_item_snapshots: {
+        Row: {
+          branch_code: string | null
+          country_iso: string | null
+          created_at: string
+          created_by: string | null
+          currency_code: string | null
+          id: string
+          item_id: string
+          language_code: string | null
+          snapshot: Json
+          used_in_id: string | null
+          used_in_type: string | null
+        }
+        Insert: {
+          branch_code?: string | null
+          country_iso?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency_code?: string | null
+          id?: string
+          item_id: string
+          language_code?: string | null
+          snapshot: Json
+          used_in_id?: string | null
+          used_in_type?: string | null
+        }
+        Update: {
+          branch_code?: string | null
+          country_iso?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency_code?: string | null
+          id?: string
+          item_id?: string
+          language_code?: string | null
+          snapshot?: Json
+          used_in_id?: string | null
+          used_in_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_item_snapshots_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_items: {
+        Row: {
+          brand: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          default_currency: string | null
+          default_language: string | null
+          ean: string | null
+          id: string
+          internal_number: string | null
+          item_type: string | null
+          manufacturer: string | null
+          model: string | null
+          name: string
+          notes_internal: string | null
+          primary_image_id: string | null
+          short_name: string | null
+          sku: string
+          source_ref: string | null
+          source_system: string | null
+          status: Database["public"]["Enums"]["catalog_item_status"]
+          tags: string[]
+          updated_at: string
+          updated_by: string | null
+          variant: string | null
+        }
+        Insert: {
+          brand?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_currency?: string | null
+          default_language?: string | null
+          ean?: string | null
+          id?: string
+          internal_number?: string | null
+          item_type?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name: string
+          notes_internal?: string | null
+          primary_image_id?: string | null
+          short_name?: string | null
+          sku: string
+          source_ref?: string | null
+          source_system?: string | null
+          status?: Database["public"]["Enums"]["catalog_item_status"]
+          tags?: string[]
+          updated_at?: string
+          updated_by?: string | null
+          variant?: string | null
+        }
+        Update: {
+          brand?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          default_currency?: string | null
+          default_language?: string | null
+          ean?: string | null
+          id?: string
+          internal_number?: string | null
+          item_type?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          name?: string
+          notes_internal?: string | null
+          primary_image_id?: string | null
+          short_name?: string | null
+          sku?: string
+          source_ref?: string | null
+          source_system?: string | null
+          status?: Database["public"]["Enums"]["catalog_item_status"]
+          tags?: string[]
+          updated_at?: string
+          updated_by?: string | null
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_items_default_currency_fkey"
+            columns: ["default_currency"]
+            isOneToOne: false
+            referencedRelation: "catalog_currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "catalog_items_default_language_fkey"
+            columns: ["default_language"]
+            isOneToOne: false
+            referencedRelation: "catalog_languages"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      catalog_languages: {
+        Row: {
+          code: string
+          created_at: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      catalog_price_rules: {
+        Row: {
+          applies_branch: string | null
+          applies_country: string | null
+          code: string
+          created_at: string
+          description: string | null
+          factor_value: number | null
+          fixed_value: number | null
+          id: string
+          is_active: boolean
+          mode: Database["public"]["Enums"]["catalog_price_rule_mode"]
+          name: string
+          percent_value: number | null
+          rounding: number | null
+          updated_at: string
+        }
+        Insert: {
+          applies_branch?: string | null
+          applies_country?: string | null
+          code: string
+          created_at?: string
+          description?: string | null
+          factor_value?: number | null
+          fixed_value?: number | null
+          id?: string
+          is_active?: boolean
+          mode: Database["public"]["Enums"]["catalog_price_rule_mode"]
+          name: string
+          percent_value?: number | null
+          rounding?: number | null
+          updated_at?: string
+        }
+        Update: {
+          applies_branch?: string | null
+          applies_country?: string | null
+          code?: string
+          created_at?: string
+          description?: string | null
+          factor_value?: number | null
+          fixed_value?: number | null
+          id?: string
+          is_active?: boolean
+          mode?: Database["public"]["Enums"]["catalog_price_rule_mode"]
+          name?: string
+          percent_value?: number | null
+          rounding?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_price_rules_applies_branch_fkey"
+            columns: ["applies_branch"]
+            isOneToOne: false
+            referencedRelation: "catalog_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_price_rules_applies_country_fkey"
+            columns: ["applies_country"]
+            isOneToOne: false
+            referencedRelation: "catalog_countries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       copilot_audit_log: {
         Row: {
           action: string
@@ -19470,6 +20243,8 @@ export type Database = {
         Args: { _id: string; _reason?: string }
         Returns: string
       }
+      catalog_can_edit: { Args: never; Returns: boolean }
+      catalog_can_manage_prices: { Args: never; Returns: boolean }
       check_rate_limit: {
         Args: { _bucket: string; _max: number; _window_seconds: number }
         Returns: boolean
@@ -19779,6 +20554,37 @@ export type Database = {
         | "rueckruf"
         | "upselling"
       as_traffic_light: "green" | "yellow" | "red"
+      catalog_item_status:
+        | "entwurf"
+        | "zur_pruefung"
+        | "korrektur"
+        | "freigegeben"
+        | "gesperrt"
+        | "archiviert"
+        | "aktiv"
+        | "inaktiv"
+        | "ausverkauft"
+        | "vorbestellung"
+        | "nur_auf_anfrage"
+        | "nicht_lieferbar"
+      catalog_price_rule_mode:
+        | "uvp_minus_pct"
+        | "uvp_plus_pct"
+        | "uvp_factor"
+        | "fixed"
+        | "rounding"
+      catalog_price_status:
+        | "entwurf"
+        | "zur_freigabe"
+        | "freigegeben"
+        | "abgelehnt"
+        | "abgelaufen"
+      catalog_translation_status:
+        | "nicht_begonnen"
+        | "in_bearbeitung"
+        | "maschinell"
+        | "geprueft"
+        | "freigegeben"
       media_package_service_type: "website" | "flyer" | "social_media"
       media_package_status:
         | "not_started"
@@ -19975,6 +20781,41 @@ export const Constants = {
         "upselling",
       ],
       as_traffic_light: ["green", "yellow", "red"],
+      catalog_item_status: [
+        "entwurf",
+        "zur_pruefung",
+        "korrektur",
+        "freigegeben",
+        "gesperrt",
+        "archiviert",
+        "aktiv",
+        "inaktiv",
+        "ausverkauft",
+        "vorbestellung",
+        "nur_auf_anfrage",
+        "nicht_lieferbar",
+      ],
+      catalog_price_rule_mode: [
+        "uvp_minus_pct",
+        "uvp_plus_pct",
+        "uvp_factor",
+        "fixed",
+        "rounding",
+      ],
+      catalog_price_status: [
+        "entwurf",
+        "zur_freigabe",
+        "freigegeben",
+        "abgelehnt",
+        "abgelaufen",
+      ],
+      catalog_translation_status: [
+        "nicht_begonnen",
+        "in_bearbeitung",
+        "maschinell",
+        "geprueft",
+        "freigegeben",
+      ],
       media_package_service_type: ["website", "flyer", "social_media"],
       media_package_status: [
         "not_started",
