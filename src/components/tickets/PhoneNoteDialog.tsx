@@ -53,7 +53,7 @@ export function PhoneNoteDialog({
       await supabase.from("ticket_history").insert({
         ticket_id: ticketId,
         action: "phone_call_logged",
-        actor_label: actorName || "Mitarbeiter",
+        actor_name: actorName || "Mitarbeiter",
         meta: { direction, reached, duration_min: durationMin, next_step: nextStep || null },
       });
 
