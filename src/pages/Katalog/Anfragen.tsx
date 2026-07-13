@@ -27,12 +27,14 @@ const STATUS = ['neu', 'in_bearbeitung', 'angebot_erstellt', 'abgeschlossen', 'a
 
 export default function KatalogAnfragen() {
   const c = supabase as any;
+  const navigate = useNavigate();
   const [rows, setRows] = useState<Inquiry[]>([]);
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selected, setSelected] = useState<Inquiry | null>(null);
   const [items, setItems] = useState<InquiryItem[]>([]);
   const [customerMap, setCustomerMap] = useState<Record<string, string>>({});
+  const [customerIdMap, setCustomerIdMap] = useState<Record<string, string>>({});
 
   const load = async () => {
     const { data } = await c.from('catalog_portal_inquiries').select('*').order('created_at', { ascending: false }).limit(500);
