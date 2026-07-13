@@ -227,24 +227,6 @@ export default function KatalogVersand() {
         </CardContent></Card>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card><CardContent className="pt-6 flex items-center justify-between">
-          <div><div className="text-2xl font-bold">{kpis.active}</div><div className="text-xs text-muted-foreground">Aktive Links</div></div>
-          <LinkIcon className="h-6 w-6 text-emerald-500" />
-        </CardContent></Card>
-        <Card><CardContent className="pt-6 flex items-center justify-between">
-          <div><div className="text-2xl font-bold">{kpis.totalViews}</div><div className="text-xs text-muted-foreground">Aufrufe gesamt</div></div>
-          <Eye className="h-6 w-6 text-primary" />
-        </CardContent></Card>
-        <Card><CardContent className="pt-6 flex items-center justify-between">
-          <div><div className="text-2xl font-bold">{kpis.expired}</div><div className="text-xs text-muted-foreground">Abgelaufen</div></div>
-          <Clock className="h-6 w-6 text-amber-500" />
-        </CardContent></Card>
-        <Card><CardContent className="pt-6 flex items-center justify-between">
-          <div><div className="text-2xl font-bold">{kpis.revoked}</div><div className="text-xs text-muted-foreground">Widerrufen</div></div>
-          <XCircle className="h-6 w-6 text-red-500" />
-        </CardContent></Card>
-      </div>
 
       {kpis.top.length > 0 && kpis.top[0].view_count > 0 && (
         <Card className="p-4">
