@@ -1,0 +1,1 @@
+ALTER TABLE public.catalog_share_links ADD COLUMN IF NOT EXISTS last_sent_at timestamptz;

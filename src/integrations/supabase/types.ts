@@ -3514,6 +3514,7 @@ export type Database = {
           id: string
           item_id: string
           language_code: string
+          last_sent_at: string | null
           last_viewed_at: string | null
           max_views: number | null
           password_hash: string | null
@@ -3534,6 +3535,7 @@ export type Database = {
           id?: string
           item_id: string
           language_code?: string
+          last_sent_at?: string | null
           last_viewed_at?: string | null
           max_views?: number | null
           password_hash?: string | null
@@ -3554,6 +3556,7 @@ export type Database = {
           id?: string
           item_id?: string
           language_code?: string
+          last_sent_at?: string | null
           last_viewed_at?: string | null
           max_views?: number | null
           password_hash?: string | null

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Copy, Ban, Info, Mail, MessageCircle, Link as LinkIcon, Eye, Clock, XCircle, TrendingUp } from 'lucide-react';
+import { Plus, Copy, Ban, Info, Mail, MessageCircle, MessageSquare, Link as LinkIcon, Eye, Clock, XCircle, TrendingUp } from 'lucide-react';
 
 interface Item { id: string; sku: string; name: string; }
 interface Country { id: string; iso_code: string; name: string; }
@@ -141,20 +141,18 @@ export default function KatalogVersand() {
     load();
   };
 
-  const openMail = (l: Link) => {
-    const url = baseUrl() + l.token;
-    const item = items.find((i) => i.id === l.item_id);
-    const subj = `Artikelinformation: ${item?.name ?? l.item_id}`;
-    const body = `Guten Tag${l.recipient_name ? ' ' + l.recipient_name : ''},\n\nanbei der Link zum Artikel:\n${url}\n\nMit freundlichen Grüßen\nAlixWork`;
-    window.location.href = `mailto:${l.recipient_email ?? ''}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
-  };
-
-  const openWhats = (l: Link) => {
-    const url = baseUrl() + l.token;
-    const item = items.find((i) => i.id === l.item_id);
-    const text = `Artikel: ${item?.name ?? ''}\n${url}`;
-    const phone = (l.recipient_phone ?? '').replace(/[^\d]/g, '');
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  const sendVia = async (l: Link, channel: 'email' | 'whatsapp' | 'sms') => {
+    try {
+      const { data, error } = await supabase.functions.invoke('catalog-share-send', {
+        body: { link_id: l.id, channel, base_url: baseUrl() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: `Gesendet (${channel})`, description: (data as any)?.result?.sid ? `Twilio SID: ${(data as any).result.sid}` : 'OK' });
+      load();
+    } catch (e: any) {
+      toast({ title: 'Sendefehler', description: e?.message ?? String(e), variant: 'destructive' });
+    }
   };
 
   const now = new Date();
@@ -427,8 +425,9 @@ export default function KatalogVersand() {
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" onClick={() => copy(l.token)} title="Link kopieren"><Copy className="h-4 w-4" /></Button>
                       <Button size="sm" variant="ghost" onClick={() => window.open(baseUrl() + l.token, '_blank')} title="Öffnen"><LinkIcon className="h-4 w-4" /></Button>
-                      {l.recipient_email && <Button size="sm" variant="ghost" onClick={() => openMail(l)} title="E-Mail"><Mail className="h-4 w-4" /></Button>}
-                      {l.recipient_phone && <Button size="sm" variant="ghost" onClick={() => openWhats(l)} title="WhatsApp"><MessageCircle className="h-4 w-4" /></Button>}
+                      {l.recipient_email && <Button size="sm" variant="ghost" onClick={() => sendVia(l, 'email')} title="E-Mail senden"><Mail className="h-4 w-4" /></Button>}
+                      {l.recipient_phone && <Button size="sm" variant="ghost" onClick={() => sendVia(l, 'whatsapp')} title="WhatsApp senden"><MessageCircle className="h-4 w-4" /></Button>}
+                      {l.recipient_phone && <Button size="sm" variant="ghost" onClick={() => sendVia(l, 'sms')} title="SMS senden"><MessageSquare className="h-4 w-4" /></Button>}
                       {!l.revoked_at && <Button size="sm" variant="ghost" onClick={() => revoke(l.id)} title="Widerrufen"><Ban className="h-4 w-4 text-red-500" /></Button>}
                     </div>
                   </TableCell>
