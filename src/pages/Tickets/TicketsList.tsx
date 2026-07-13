@@ -97,7 +97,7 @@ export default function TicketsList() {
     title: '', description: '', customer_name: '', company_name: '',
     customer_email: '', customer_phone: '', order_number: '',
     device_name: '', serial_number: '',
-    priority: 'normal', department: 'service',
+    priority: 'normal', department: 'service', category: '',
   });
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
