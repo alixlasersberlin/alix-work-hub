@@ -53,7 +53,7 @@ export default function KatalogFreigabe() {
     const [{ data: it }, { data: pr }] = await Promise.all([
       client.from('catalog_items').select('id, sku, name, status, submitted_at, submitted_by, last_edited_by')
         .eq('status', 'zur_pruefung').is('approved_at', null).order('submitted_at', { ascending: true }),
-      client.from('catalog_item_prices').select('id, item_id, currency_code, standard_gross, price_status, submitted_at, last_edited_by, item:catalog_items(sku,name), country:catalog_countries(iso2,name)')
+      client.from('catalog_item_prices').select('id, item_id, currency_code, standard_gross, price_status, submitted_at, last_edited_by, reviewed_by, reviewed_at, review_note, item:catalog_items(sku,name), country:catalog_countries(iso2,name)')
         .eq('price_status', 'zur_freigabe').is('approved_at', null).order('submitted_at', { ascending: true }),
     ]);
     setItems((it ?? []) as ItemPending[]);
