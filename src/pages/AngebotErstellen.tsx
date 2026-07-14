@@ -6,11 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus, CheckCircle2, CalendarIcon } from 'lucide-react';
+import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus, CheckCircle2, CalendarIcon, Zap } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import { createPDF } from '@/lib/pdf-utils';
@@ -50,8 +50,11 @@ const newLine = (): LineItem => ({
 
 export default function AngebotErstellen() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sofortMode = searchParams.get('mode') === 'sofort';
   const { roles } = useAuth();
   const isSuperAdmin = (roles ?? []).some((r: any) => (typeof r === 'string' ? r : r?.name) === 'Super Admin');
+
   const isAdmin = (roles ?? []).some((r: any) => {
     const n = typeof r === 'string' ? r : r?.name;
     return n === 'Super Admin' || n === 'Admin';
@@ -65,7 +68,7 @@ export default function AngebotErstellen() {
   const [customerId, setCustomerId] = useState<string>('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [itemSearch, setItemSearch] = useState('');
-  const [offerNumber, setOfferNumber] = useState(`ANG-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
+  const [offerNumber, setOfferNumber] = useState(`${sofortMode ? 'AUF' : 'ANG'}-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
   const [caseNumber, setCaseNumber] = useState<string | null>(null);
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
@@ -1148,11 +1151,15 @@ export default function AngebotErstellen() {
 
   // Super-Admin: Angebot selbst bestätigen → Status = 'order' + Auftrag in `orders` anlegen
   const confirmAsOrder = async () => {
-    if (!isSuperAdmin) { toast.error('Nur Super Admin darf Angebote selbst bestätigen.'); return; }
+    if (!sofortMode && !isSuperAdmin) { toast.error('Nur Super Admin darf Angebote selbst bestätigen.'); return; }
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
     const validLines = lines.filter(l => l.name && l.quantity > 0);
     if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return; }
-    if (!confirm(`Angebot ${offerNumber} jetzt anerkennen und als Auftrag übernehmen?\n\nDamit wird ein neuer Auftrag im System angelegt.`)) return;
+    const confirmMsg = sofortMode
+      ? `Sofortauftrag ${offerNumber} jetzt anlegen?\n\nDamit wird ein neuer Auftrag im System erstellt.`
+      : `Angebot ${offerNumber} jetzt anerkennen und als Auftrag übernehmen?\n\nDamit wird ein neuer Auftrag im System angelegt.`;
+    if (!confirm(confirmMsg)) return;
+
 
     setConfirming(true);
     try {
@@ -1235,8 +1242,9 @@ export default function AngebotErstellen() {
       // 5) Angebot als „angenommen / in Auftrag gewandelt" markieren
       await updateOfferStatus(offerNumber, 'order', new Date().toISOString());
 
-      toast.success(`Angebot bestätigt – Auftrag ${orderNr} wurde angelegt.`);
-      navigate('/verkauf/angebote');
+      toast.success(sofortMode ? `Sofortauftrag angelegt – Auftrag ${orderNr}.` : `Angebot bestätigt – Auftrag ${orderNr} wurde angelegt.`);
+      navigate(sofortMode ? '/auftraege' : '/verkauf/angebote');
+
     } catch (e: any) {
       toast.error('Bestätigung fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
     } finally {
@@ -1320,10 +1328,11 @@ export default function AngebotErstellen() {
     <div className="p-6 lg:p-8 animate-fade-in space-y-6 max-w-6xl">
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <FilePlus className="w-6 h-6 text-primary" />
-          Angebot erstellen
+          {sofortMode ? <Zap className="w-6 h-6 text-primary" /> : <FilePlus className="w-6 h-6 text-primary" />}
+          {sofortMode ? 'Sofortauftrag erstellen' : 'Angebot erstellen'}
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Erstellen Sie ein neues Angebot für einen Kunden.</p>
+        <p className="text-sm text-muted-foreground mt-1">{sofortMode ? 'Erstellen Sie direkt einen Auftrag ohne vorheriges Angebot.' : 'Erstellen Sie ein neues Angebot für einen Kunden.'}</p>
+
       </div>
 
       {isLockedForEdit && (
@@ -1341,13 +1350,14 @@ export default function AngebotErstellen() {
 
       <div className="rounded-xl border border-border bg-card card-glow p-6 grid gap-4 md:grid-cols-3">
         <div>
-          <Label>Angebotsnummer</Label>
+          <Label>{sofortMode ? 'Auftragsnummer' : 'Angebotsnummer'}</Label>
           <Input value={offerNumber} onChange={e => setOfferNumber(e.target.value)} className="bg-secondary border-border mt-1.5" />
         </div>
         <div>
-          <Label>Angebotsdatum</Label>
+          <Label>{sofortMode ? 'Auftragsdatum' : 'Angebotsdatum'}</Label>
           <Input type="date" value={offerDate} onChange={e => setOfferDate(e.target.value)} className="bg-secondary border-border mt-1.5" />
         </div>
+
         <div>
           <Label>Gültig bis</Label>
           <Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="bg-secondary border-border mt-1.5" />
@@ -1998,69 +2008,97 @@ export default function AngebotErstellen() {
 
 
       <div className="flex flex-wrap justify-end gap-3 pt-2">
-        <Button
-          variant="outline"
-          className="gap-2 border-border"
-          onClick={() => { saveOffer(); }}
-          disabled={isLockedForEdit}
-          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
-        >
-          <Save className="w-4 h-4" />
-          Speichern
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2 border-border"
-          onClick={async () => { if (await saveOffer()) navigate('/verkauf/angebote'); }}
-          disabled={isLockedForEdit}
-          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
-        >
-          <Save className="w-4 h-4" />
-          Speichern + Schließen
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2 border-border"
-          onClick={sendByEmail}
-          disabled={isLockedForEdit}
-        >
-          <Inbox className="w-4 h-4" />
-          Per E-Mail versenden
-        </Button>
+        {sofortMode ? (
+          <>
+            <Button
+              variant="outline"
+              className="gap-2 border-border"
+              onClick={() => navigate('/auftraege')}
+            >
+              <X className="w-4 h-4" />
+              Abbrechen
+            </Button>
+            <Button
+              onClick={confirmAsOrder}
+              disabled={confirming}
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+              title="Sofortauftrag anlegen (ohne Angebotsphase)"
+            >
+              {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              Sofortauftrag anlegen
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              className="gap-2 border-border"
+              onClick={() => { saveOffer(); }}
+              disabled={isLockedForEdit}
+              title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
+            >
+              <Save className="w-4 h-4" />
+              Speichern
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2 border-border"
+              onClick={async () => { if (await saveOffer()) navigate('/verkauf/angebote'); }}
+              disabled={isLockedForEdit}
+              title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
+            >
+              <Save className="w-4 h-4" />
+              Speichern + Schließen
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2 border-border"
+              onClick={sendByEmail}
+              disabled={isLockedForEdit}
+            >
+              <Inbox className="w-4 h-4" />
+              Per E-Mail versenden
+            </Button>
 
-        <Button
-          className="gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
-          onClick={sendForSignature}
-          disabled={isLockedForEdit}
-        >
-          <Pencil className="w-4 h-4" />
-          Mit Alix Sign zur Unterschrift senden
-        </Button>
-        {isSuperAdmin && (
-          <Button
-            onClick={confirmAsOrder}
-            disabled={confirming}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
-            title="Nur Super Admin: Angebot anerkennen und in einen Auftrag wandeln"
-          >
-            {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-            Selbst bestätigen & in Auftrag wandeln
-          </Button>
+            <Button
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
+              onClick={sendForSignature}
+              disabled={isLockedForEdit}
+            >
+              <Pencil className="w-4 h-4" />
+              Mit Alix Sign zur Unterschrift senden
+            </Button>
+            {isSuperAdmin && (
+              <Button
+                onClick={confirmAsOrder}
+                disabled={confirming}
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+                title="Nur Super Admin: Angebot anerkennen und in einen Auftrag wandeln"
+              >
+                {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                Selbst bestätigen & in Auftrag wandeln
+              </Button>
+            )}
+            <Button
+              onClick={generatePDF}
+              className="gold-gradient text-primary-foreground gap-2"
+              disabled={isLockedForEdit}
+              title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
+            >
+              <FileDown className="w-4 h-4" />
+              Als PDF speichern
+            </Button>
+          </>
         )}
-        <Button
-          onClick={generatePDF}
-          className="gold-gradient text-primary-foreground gap-2"
-          disabled={isLockedForEdit}
-          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
-        >
-          <FileDown className="w-4 h-4" />
-          Als PDF speichern
-        </Button>
       </div>
 
 
 
+
+      {!sofortMode && (
+      <>
       {/* Live-PDF-Vorschau */}
+
       <div className="mt-6 rounded-lg border border-border bg-card">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -2095,7 +2133,9 @@ export default function AngebotErstellen() {
         )}
       </div>
 
-
+      </>
+      )}
     </div>
   );
 }
+

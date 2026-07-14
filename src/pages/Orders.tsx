@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText, Send, Copy, XCircle } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText, Send, Copy, XCircle, Zap } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
@@ -435,23 +435,33 @@ export default function Orders() {
           noBreadcrumbs
           meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
         />
-        {canExportAll && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <FileDown className="w-4 h-4" /> Aufträge exportieren
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={handleExportCsv}>
-                <FileDown className="w-4 h-4 mr-2" /> Als CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPdf}>
-                <FileText className="w-4 h-4 mr-2" /> Als PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => navigate('/verkauf/angebot/neu?mode=sofort')}
+            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+            title="Neuen Auftrag direkt ohne Angebot anlegen"
+          >
+            <Zap className="w-4 h-4" /> Sofortauftrag
+          </Button>
+          {canExportAll && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <FileDown className="w-4 h-4" /> Aufträge exportieren
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={handleExportCsv}>
+                  <FileDown className="w-4 h-4 mr-2" /> Als CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPdf}>
+                  <FileText className="w-4 h-4 mr-2" /> Als PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
       </div>
 
       <Tabs defaultValue="list" className="space-y-4 mt-4">
