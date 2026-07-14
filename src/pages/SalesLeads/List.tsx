@@ -102,6 +102,52 @@ export default function SalesLeadsList() {
     })();
   }, []);
 
+  // Match leads against existing orders (via customers)
+  useEffect(() => {
+    if (!rows.length) { setOrderMatches(new Set()); return; }
+    (async () => {
+      const emails = Array.from(new Set(rows.map(r => r.email?.trim().toLowerCase()).filter(Boolean))) as string[];
+      const companies = Array.from(new Set(rows.map(r => r.company?.trim()).filter(Boolean))) as string[];
+      if (!emails.length && !companies.length) { setOrderMatches(new Set()); return; }
+
+      const filters: string[] = [];
+      if (emails.length) filters.push(`email.in.(${emails.map(e => `"${e}"`).join(',')})`);
+      if (companies.length) filters.push(`company_name.in.(${companies.map(c => `"${c.replace(/"/g, '\\"')}"`).join(',')})`);
+
+      const { data: custs } = await supabase
+        .from('customers')
+        .select('id, email, company_name')
+        .or(filters.join(','))
+        .limit(2000);
+
+      const customerIds = (custs ?? []).map((c: any) => c.id);
+      if (!customerIds.length) { setOrderMatches(new Set()); return; }
+
+      const { data: ords } = await supabase
+        .from('orders')
+        .select('customer_id')
+        .in('customer_id', customerIds)
+        .limit(5000);
+
+      const withOrders = new Set((ords ?? []).map((o: any) => o.customer_id));
+      const emailMap = new Map<string, string>();
+      const companyMap = new Map<string, string>();
+      for (const c of (custs ?? []) as any[]) {
+        if (!withOrders.has(c.id)) continue;
+        if (c.email) emailMap.set(String(c.email).toLowerCase(), c.id);
+        if (c.company_name) companyMap.set(String(c.company_name), c.id);
+      }
+      const matched = new Set<string>();
+      for (const r of rows) {
+        const e = r.email?.trim().toLowerCase();
+        const co = r.company?.trim();
+        if ((e && emailMap.has(e)) || (co && companyMap.has(co))) matched.add(r.id);
+      }
+      setOrderMatches(matched);
+    })();
+  }, [rows]);
+
+
   async function assign(leadId: string, userId: string) {
     setAssigning(leadId);
     const value = userId === '__none' ? null : userId;
