@@ -34,7 +34,7 @@ const APP_VERSION = '5.02';
 type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 type NavItem = NavChild & { children?: NavChild[] };
 
-const navItems: NavItem[] = [
+export const navItems: NavItem[] = [
   {
     path: '/', label: 'DASHBOARDS', icon: LayoutDashboard,
     roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'],
@@ -629,6 +629,18 @@ export default function AppLayout() {
   });
   const [resizing, setResizing] = useState(false);
 
+  // Per-User Menü-Freigaben (überschreibt Rollenlogik, wenn gesetzt)
+  const [menuGrants, setMenuGrants] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    const uid = profile?.id;
+    if (!uid) { setMenuGrants(null); return; }
+    (async () => {
+      const { data } = await supabase.from('user_menu_grants' as any).select('path').eq('user_id', uid);
+      if (!data || data.length === 0) { setMenuGrants(null); return; }
+      setMenuGrants(new Set((data as any[]).map(r => r.path)));
+    })();
+  }, [profile?.id]);
+
   // Globaler Auto-Refresh: remountet die aktuelle Seite alle 60 Minuten,
   // sodass alle Listen & Statistiken neu geladen werden. Zusätzlich bei
   // Tab-Fokus, wenn die letzten Daten älter als 60 Min sind.
@@ -992,6 +1004,13 @@ export default function AppLayout() {
     '/lager/equipment-area/hold',
   ]);
 
+  const filterByGrant = (item: { path: string; children?: any[] }) => {
+    if (!menuGrants) return true;
+    // Container/Gruppen (# oder mit children) immer durchlassen — werden später via children ausgefiltert
+    if (item.path.startsWith('#') || (item.children && item.children.length > 0)) return true;
+    return menuGrants.has(item.path);
+  };
+
   const visibleItems = navItems
     .filter(filterByRoles)
     .map(item => ({
@@ -1001,8 +1020,9 @@ export default function AppLayout() {
         .filter(c => !atOnly || !atHiddenPaths.has(c.path))
         .map(c => ({
           ...c,
-          children: c.children?.filter(filterByRoles),
+          children: c.children?.filter(filterByRoles).filter(filterByGrant),
         }))
+        .filter(filterByGrant)
         .filter(c => !c.children || c.children.length > 0),
     }))
     // Hide groups whose children are all hidden by role

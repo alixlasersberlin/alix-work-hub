@@ -19075,6 +19075,27 @@ export type Database = {
           },
         ]
       }
+      user_menu_grants: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          path?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_mfa_secrets: {
         Row: {
           recovery_codes_hash: string[]

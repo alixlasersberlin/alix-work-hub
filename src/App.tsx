@@ -354,6 +354,7 @@ const RfScheduled = lazy(() => import("./pages/RollenFreigaben/ScheduledGrants")
 const RfChains = lazy(() => import("./pages/RollenFreigaben/ApprovalChains"));
 const RfLifecycle = lazy(() => import("./pages/RollenFreigaben/LifecycleDashboard"));
 const RfAuditExport = lazy(() => import("./pages/RollenFreigaben/AuditExport"));
+const RfZugriffErteilen = lazy(() => import("./pages/RollenFreigaben/ZugriffErteilen"));
 const SelfServiceRoles = lazy(() => import("./pages/SelfService/Roles"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
@@ -1064,6 +1065,7 @@ function AppRoutes() {
           </Route>
           <Route path="/admin/rollen-freigaben" element={<ProtectedRoute requiredRoles={['Super Admin']}><RfLayout /></ProtectedRoute>}>
             <Route index element={<RfOverview />} />
+            <Route path="zugriff-erteilen" element={<RfZugriffErteilen />} />
             <Route path="matrix" element={<RfMatrix />} />
             <Route path="rollen" element={<RfRoles />} />
             <Route path="mitarbeiter" element={<RfEmployees />} />
