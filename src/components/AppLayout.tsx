@@ -1682,6 +1682,13 @@ export default function AppLayout() {
             >
               <HelpCircle className="w-4 h-4" />
             </Button>
+            {!collapsed && (
+              <div className="hidden md:flex items-center gap-1 text-[11px] flex-shrink-0 px-1">
+                <span className="font-display font-bold gold-text">AlixWork</span>
+                <span className="text-muted-foreground font-mono">v{APP_VERSION}</span>
+              </div>
+            )}
+
 
 
             <Button
@@ -1791,10 +1798,7 @@ export default function AppLayout() {
             <TicketNotificationBell />
 
             <KontaktMenu roles={roles} />
-            <div className="hidden md:flex items-center gap-1 text-[11px] flex-shrink-0 px-1">
-              <span className="font-display font-bold gold-text">AlixWork</span>
-              <span className="text-muted-foreground font-mono">v{APP_VERSION}</span>
-            </div>
+
 
           </div>
 
