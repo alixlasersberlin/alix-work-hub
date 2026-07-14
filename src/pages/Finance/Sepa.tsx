@@ -29,6 +29,8 @@ const statusVariant = (s: string): any => ({
 export default function FinanceSepa() {
   const { roles } = useAuth();
   const isSuperAdmin = roles.includes('Super Admin');
+  const reauthDel = useReauthGate('finance.sepa.delete', 'Löschen von SEPA-Mandaten/Läufen');
+  const reauthExp = useReauthGate('finance.sepa.export', 'SEPA pain.008-Export');
   const [tab, setTab] = useState<'runs' | 'mandates'>('runs');
   const [loading, setLoading] = useState(true);
   const [mandates, setMandates] = useState<any[]>([]);
