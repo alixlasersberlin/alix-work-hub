@@ -34,7 +34,7 @@ const APP_VERSION = '5.02';
 type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 type NavItem = NavChild & { children?: NavChild[] };
 
-const navItems: NavItem[] = [
+export const navItems: NavItem[] = [
   {
     path: '/', label: 'DASHBOARDS', icon: LayoutDashboard,
     roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'],
