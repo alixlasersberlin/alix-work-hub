@@ -325,6 +325,48 @@ export default function ImportManagement() {
     }
   }
 
+  // ============ ANGEBOTE (Estimates) Import ============
+  const [estimatesImporting, setEstimatesImporting] = useState(false);
+  const [estimatesResult, setEstimatesResult] = useState<{ de: { fetched: number; imported: number; updated: number; failed: number }; at: { fetched: number; imported: number; updated: number; failed: number } } | null>(null);
+
+  async function handleEstimatesImport() {
+    setEstimatesImporting(true);
+    setEstimatesResult(null);
+    const runOne = async (source: 'zoho_eu_1' | 'zoho_eu_2') => {
+      const totals = { fetched: 0, imported: 0, updated: 0, failed: 0 };
+      let page = 1;
+      for (let i = 0; i < 40; i++) {
+        const { data, error } = await supabase.functions.invoke('sync-zoho-estimates', {
+          body: { source_system: source, page, max_pages: 3, per_page: 100 },
+        });
+        if (error) throw error;
+        if (data?.error && data?.success === false) throw new Error(data.error);
+        totals.fetched += data?.fetched ?? 0;
+        totals.imported += data?.imported ?? 0;
+        totals.updated += data?.updated ?? 0;
+        totals.failed += data?.failed ?? 0;
+        if (!data?.has_more) break;
+        page = (data?.last_page ?? page) + 1;
+        await new Promise(r => setTimeout(r, 800));
+      }
+      return totals;
+    };
+    try {
+      toast({ title: 'Angebote-Import gestartet', description: 'Zoho Estimates DE + AT → Angebote' });
+      const de = await runOne('zoho_eu_1');
+      const at = await runOne('zoho_eu_2');
+      setEstimatesResult({ de, at });
+      toast({
+        title: 'Angebote-Import abgeschlossen',
+        description: `DE: ${de.imported}+ / ${de.updated}~ • AT: ${at.imported}+ / ${at.updated}~ • Fehler: ${de.failed + at.failed}`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Angebote-Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setEstimatesImporting(false);
+    }
+  }
+
   function getInvoiceDateFrom(): string {
     const today = new Date();
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
