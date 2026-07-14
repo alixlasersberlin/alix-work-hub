@@ -1,0 +1,53 @@
+# fastlane – Android release (Play Console)
+# Aktiviert nach: `cd android && bundle init && bundle add fastlane`
+# GitHub Secrets siehe .github/workflows/android-release.yml
+
+default_platform(:android)
+
+PACKAGE_NAME = ENV["PACKAGE_NAME"] || "app.lovable.139141344b954f3fa06471f725c7d887"
+JSON_KEY     = File.expand_path("../play-service-account.json", __dir__)
+
+platform :android do
+  desc "Play Internal Testing"
+  lane :internal do
+    gradle(task: "clean bundleRelease", project_dir: ".")
+    upload_to_play_store(
+      package_name: PACKAGE_NAME,
+      track: "internal",
+      aab: "app/build/outputs/bundle/release/app-release.aab",
+      json_key: JSON_KEY,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  desc "Play Open Beta"
+  lane :beta do
+    gradle(task: "clean bundleRelease", project_dir: ".")
+    upload_to_play_store(
+      package_name: PACKAGE_NAME,
+      track: "beta",
+      aab: "app/build/outputs/bundle/release/app-release.aab",
+      json_key: JSON_KEY,
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+
+  desc "Production Release"
+  lane :production do
+    gradle(task: "clean bundleRelease", project_dir: ".")
+    upload_to_play_store(
+      package_name: PACKAGE_NAME,
+      track: "production",
+      aab: "app/build/outputs/bundle/release/app-release.aab",
+      json_key: JSON_KEY,
+      release_status: "draft",
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+    )
+  end
+end

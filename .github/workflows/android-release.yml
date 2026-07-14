@@ -1,0 +1,56 @@
+name: Android Release (Play Console)
+
+on:
+  workflow_dispatch:
+    inputs:
+      lane:
+        description: "Fastlane lane (internal / beta / production)"
+        required: true
+        default: "internal"
+        type: choice
+        options: [internal, beta, production]
+
+jobs:
+  android:
+    name: Build & upload Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      PLAY_JSON_KEY_BASE64: ${{ secrets.PLAY_JSON_KEY_BASE64 }}
+      PACKAGE_NAME: app.lovable.139141344b954f3fa06471f725c7d887
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: "npm" }
+      - uses: actions/setup-java@v4
+        with: { distribution: "temurin", java-version: "17" }
+      - uses: ruby/setup-ruby@v1
+        with: { ruby-version: "3.2", bundler-cache: true, working-directory: android }
+      - name: Install JS deps
+        run: npm ci
+      - name: Web build
+        run: npm run build
+      - name: Add Android platform
+        run: |
+          if [ ! -d "android" ]; then npx cap add android; fi
+          npx cap sync android
+      - name: Decode keystore
+        run: |
+          mkdir -p android/app/keystore
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/keystore/release.keystore
+      - name: Decode Play JSON key
+        run: echo "$PLAY_JSON_KEY_BASE64" | base64 -d > android/play-service-account.json
+      - name: Fastlane
+        working-directory: android
+        run: bundle exec fastlane ${{ inputs.lane }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-build
+          path: |
+            android/app/build/outputs/**/*.aab
+            android/fastlane/report.xml

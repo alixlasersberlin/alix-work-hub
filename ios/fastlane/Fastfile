@@ -1,0 +1,49 @@
+# fastlane – iOS release (TestFlight & App Store)
+# Aktiviert nach: `cd ios && bundle init && bundle add fastlane`
+# GitHub Secrets siehe .github/workflows/ios-release.yml
+
+default_platform(:ios)
+
+APP_ID    = ENV["APP_IDENTIFIER"] || "app.lovable.139141344b954f3fa06471f725c7d887"
+TEAM_ID   = ENV["APPLE_TEAM_ID"]
+WORKSPACE = "App/App.xcworkspace"
+SCHEME    = "App"
+
+platform :ios do
+  before_all do
+    setup_ci if ENV["CI"]
+    # App Store Connect API-Key aus base64 wiederherstellen
+    if ENV["APP_STORE_CONNECT_API_KEY_BASE64"]
+      require "base64"
+      key_path = "/tmp/appstore_api_key.p8"
+      File.write(key_path, Base64.decode64(ENV["APP_STORE_CONNECT_API_KEY_BASE64"]))
+      app_store_connect_api_key(
+        key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+        issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+        key_filepath: key_path,
+        in_house: false,
+      )
+    end
+  end
+
+  desc "TestFlight-Build"
+  lane :beta do
+    match(type: "appstore", app_identifier: APP_ID, readonly: true)
+    increment_build_number(xcodeproj: "App/App.xcodeproj")
+    build_app(workspace: WORKSPACE, scheme: SCHEME, export_method: "app-store")
+    upload_to_testflight(skip_waiting_for_build_processing: true)
+  end
+
+  desc "App Store Release"
+  lane :release do
+    match(type: "appstore", app_identifier: APP_ID, readonly: true)
+    build_app(workspace: WORKSPACE, scheme: SCHEME, export_method: "app-store")
+    upload_to_app_store(
+      submit_for_review: false,
+      automatic_release: false,
+      force: true,
+      skip_metadata: true,
+      skip_screenshots: true,
+    )
+  end
+end
