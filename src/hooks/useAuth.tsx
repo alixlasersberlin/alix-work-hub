@@ -126,6 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [mfaState, setMfaState] = useState<MfaState>('unknown');
+  const [impersonatedUserId, setImpersonatedUserId] = useState<string | null>(() => {
+    try { return sessionStorage.getItem(IMPERSONATE_KEY); } catch { return null; }
+  });
+  const [impersonatedName, setImpersonatedName] = useState<string | null>(null);
 
   async function fetchProfile(userId: string) {
     const { data } = await supabase
