@@ -1077,7 +1077,21 @@ export default function AppLayout() {
   const toggleGroup = (path: string) => setOpenGroups(s => ({ ...s, [path]: !s[path] }));
 
   return (
-    <div className="h-screen-dvh flex bg-background overflow-hidden">
+    <div className="h-screen-dvh flex flex-col bg-background overflow-hidden">
+      {impersonatedUserId && (
+        <div className="flex-shrink-0 bg-amber-500 text-black text-sm px-4 py-2 flex items-center gap-3 justify-center border-b border-amber-600">
+          <Eye className="w-4 h-4" />
+          <span><strong>Simulation aktiv</strong> — Ansicht als: {impersonatedName ?? impersonatedUserId}</span>
+          <button
+            type="button"
+            onClick={stopImpersonation}
+            className="ml-2 px-2 py-0.5 rounded bg-black/80 text-white text-xs hover:bg-black"
+          >
+            Simulation beenden
+          </button>
+        </div>
+      )}
+      <div className="flex-1 flex overflow-hidden">
       {/* Globale Cmd+K Suche (per Tastatur erreichbar) */}
       <CommandPalette />
       {/* Mobile Backdrop */}
