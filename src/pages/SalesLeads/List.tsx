@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Inbox, Search, Filter, UserCheck, Pencil, Trash2 } from 'lucide-react';
+import { Inbox, Search, Filter, UserCheck, Pencil, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const STATUS_OPTIONS = [
@@ -66,6 +66,7 @@ export default function SalesLeadsList() {
   const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [orderMatches, setOrderMatches] = useState<Set<string>>(new Set());
 
   async function handleDelete(lead: Lead) {
     const label = lead.lead_number || lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.id.slice(0, 8);
@@ -100,6 +101,52 @@ export default function SalesLeadsList() {
       setLoading(false);
     })();
   }, []);
+
+  // Match leads against existing orders (via customers)
+  useEffect(() => {
+    if (!rows.length) { setOrderMatches(new Set()); return; }
+    (async () => {
+      const emails = Array.from(new Set(rows.map(r => r.email?.trim().toLowerCase()).filter(Boolean))) as string[];
+      const companies = Array.from(new Set(rows.map(r => r.company?.trim()).filter(Boolean))) as string[];
+      if (!emails.length && !companies.length) { setOrderMatches(new Set()); return; }
+
+      const filters: string[] = [];
+      if (emails.length) filters.push(`email.in.(${emails.map(e => `"${e}"`).join(',')})`);
+      if (companies.length) filters.push(`company_name.in.(${companies.map(c => `"${c.replace(/"/g, '\\"')}"`).join(',')})`);
+
+      const { data: custs } = await supabase
+        .from('customers')
+        .select('id, email, company_name')
+        .or(filters.join(','))
+        .limit(2000);
+
+      const customerIds = (custs ?? []).map((c: any) => c.id);
+      if (!customerIds.length) { setOrderMatches(new Set()); return; }
+
+      const { data: ords } = await supabase
+        .from('orders')
+        .select('customer_id')
+        .in('customer_id', customerIds)
+        .limit(5000);
+
+      const withOrders = new Set((ords ?? []).map((o: any) => o.customer_id));
+      const emailMap = new Map<string, string>();
+      const companyMap = new Map<string, string>();
+      for (const c of (custs ?? []) as any[]) {
+        if (!withOrders.has(c.id)) continue;
+        if (c.email) emailMap.set(String(c.email).toLowerCase(), c.id);
+        if (c.company_name) companyMap.set(String(c.company_name), c.id);
+      }
+      const matched = new Set<string>();
+      for (const r of rows) {
+        const e = r.email?.trim().toLowerCase();
+        const co = r.company?.trim();
+        if ((e && emailMap.has(e)) || (co && companyMap.has(co))) matched.add(r.id);
+      }
+      setOrderMatches(matched);
+    })();
+  }, [rows]);
+
 
   async function assign(leadId: string, userId: string) {
     setAssigning(leadId);
@@ -189,6 +236,7 @@ export default function SalesLeadsList() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-left">
               <tr>
+                <th className="p-3 w-8" title="Auftrag vorhanden?"></th>
                 <th className="p-3">Datum</th>
                 <th className="p-3">Lead-Nr.</th>
                 <th className="p-3">Score</th>
@@ -205,12 +253,20 @@ export default function SalesLeadsList() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={13} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={13} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
+                  <td className="p-3 align-middle">
+                    {orderMatches.has(r.id) ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" aria-label="Auftrag vorhanden" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-yellow-500" aria-label="Kein Auftrag gefunden" />
+                    )}
+                  </td>
                   <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
+
                   <td className="p-3 font-mono text-xs">
                     <Link to={`/verkauf/anfragen/${r.id}`} className="text-primary hover:underline">
                       {r.lead_number || '—'}
