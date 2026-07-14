@@ -1350,13 +1350,14 @@ export default function AngebotErstellen() {
 
       <div className="rounded-xl border border-border bg-card card-glow p-6 grid gap-4 md:grid-cols-3">
         <div>
-          <Label>Angebotsnummer</Label>
+          <Label>{sofortMode ? 'Auftragsnummer' : 'Angebotsnummer'}</Label>
           <Input value={offerNumber} onChange={e => setOfferNumber(e.target.value)} className="bg-secondary border-border mt-1.5" />
         </div>
         <div>
-          <Label>Angebotsdatum</Label>
+          <Label>{sofortMode ? 'Auftragsdatum' : 'Angebotsdatum'}</Label>
           <Input type="date" value={offerDate} onChange={e => setOfferDate(e.target.value)} className="bg-secondary border-border mt-1.5" />
         </div>
+
         <div>
           <Label>Gültig bis</Label>
           <Input type="date" value={validUntil} onChange={e => setValidUntil(e.target.value)} className="bg-secondary border-border mt-1.5" />
