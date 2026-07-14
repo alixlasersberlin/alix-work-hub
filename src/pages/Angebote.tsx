@@ -190,16 +190,37 @@ export default function Angebote() {
     } else {
       setOrderNumbers(new Set());
     }
-    // Match by customer name: any order with the same customer_name
-    const custNames = Array.from(new Set(
+    // Match by customer name: any order for the same customer.
+    // The orders table has no customer_name column, so join via customer_id -> customers.
+    const custNamesFromOffers = new Set(
       list.map(o => (o.customer?.company_name || o.customer?.contact_name || '').trim().toLowerCase()).filter(Boolean)
-    ));
-    if (custNames.length > 0) {
-      const { data: custRows } = await supabase
+    );
+    if (custNamesFromOffers.size > 0) {
+      const { data: orderRows } = await supabase
         .from('orders')
-        .select('customer_name')
-        .not('customer_name', 'is', null);
-      setOrderCustomerNames(new Set((custRows || []).map((r: any) => (r.customer_name || '').trim().toLowerCase()).filter(Boolean)));
+        .select('customer_id')
+        .not('customer_id', 'is', null)
+        .limit(5000);
+      const custIds = Array.from(new Set((orderRows || []).map((r: any) => r.customer_id).filter(Boolean)));
+      if (custIds.length > 0) {
+        const names = new Set<string>();
+        // Chunk to avoid URL length limits
+        const chunkSize = 500;
+        for (let i = 0; i < custIds.length; i += chunkSize) {
+          const chunk = custIds.slice(i, i + chunkSize);
+          const { data: custs } = await supabase
+            .from('customers')
+            .select('company_name, contact_name')
+            .in('id', chunk);
+          (custs || []).forEach((c: any) => {
+            const n = (c.company_name || c.contact_name || '').trim().toLowerCase();
+            if (n) names.add(n);
+          });
+        }
+        setOrderCustomerNames(names);
+      } else {
+        setOrderCustomerNames(new Set());
+      }
     } else {
       setOrderCustomerNames(new Set());
     }
