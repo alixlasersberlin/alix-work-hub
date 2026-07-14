@@ -13709,7 +13709,9 @@ export type Database = {
           endpoint: string
           id: string
           last_seen_at: string
+          native_token: string | null
           p256dh: string
+          platform: string
           user_agent: string | null
           user_id: string
         }
@@ -13719,7 +13721,9 @@ export type Database = {
           endpoint: string
           id?: string
           last_seen_at?: string
+          native_token?: string | null
           p256dh: string
+          platform?: string
           user_agent?: string | null
           user_id: string
         }
@@ -13729,7 +13733,9 @@ export type Database = {
           endpoint?: string
           id?: string
           last_seen_at?: string
+          native_token?: string | null
           p256dh?: string
+          platform?: string
           user_agent?: string | null
           user_id?: string
         }

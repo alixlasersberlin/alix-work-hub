@@ -1,77 +1,76 @@
+# AlixWork Mobile Kalender – Phase 6 (Capacitor Native App)
 
-# AlixWork Mobile Kalender – Phase 1–3
+Die Web-PWA `/m/kalender` ist jetzt zusätzlich als echte iOS-/Android-App bau- und ausrollbar. Alle Web-Funktionen (Web-Push, Reminder, Realtime, Eskalations-Overlay, Audit) bleiben unverändert – der native Wrapper ergänzt nur APNs/FCM-Push und native Shell-Features.
 
-Neue mobile Route **`/m/kalender`** unter dem bestehenden `/m`-Layout. Die App spiegelt den bestehenden ESC-Teamkalender (`esc_events`) 1:1. Keine parallele Kalenderlogik.
+## Was schon fertig ist
 
-## Was gebaut wird
+- `capacitor.config.ts` mit App-ID `app.lovable.139141344b954f3fa06471f725c7d887`, App-Name „AlixWork Kalender", Hot-Reload-URL auf die Lovable-Sandbox, Dark-StatusBar/SplashScreen, PushNotifications-Plugin aktiviert.
+- Native-Init in `src/main.tsx` (nur aktiv wenn Capacitor.isNativePlatform()): StatusBar Dark, Splash ausblenden, Startroute `/m/kalender`.
+- Hook `src/hooks/useNativePush.ts` registriert APNs/FCM-Token und schreibt in dieselbe Tabelle `mobile_push_subscriptions` (neue Spalten `platform`, `native_token`).
+- Karte „Native Push" in `/m/kalender/einstellungen` (erscheint nur in nativer Shell).
+- Edge Function `push-subscribe` akzeptiert Web-Push- und Native-Push-Subscriptions in einem Endpoint.
+- Neue Edge Function `push-send-native` sendet über FCM (Android) und APNs (iOS).
+- `reminder-scheduler` erkennt native Subscriptions und ruft `push-send-native` mit Service Role auf.
 
-### Phase 1 – Mobile Kalender-UI (keine neuen Tabellen)
-- **`/m/kalender`** – Heute-Ansicht (nächster Termin mit Countdown, Tagesliste, offene Bestätigungen).
-- **`/m/kalender/agenda`** – rollierende 7-Tage-Agenda, unendliches Scrollen.
-- **`/m/kalender/tag/:datum`** – Tagesansicht mit Zeitachse.
-- **`/m/kalender/woche`** – kompakte Wochenübersicht.
-- **`/m/kalender/termin/:id`** – Detailseite mit Schnellaktionen (Anrufen, Navigation, Bestätigen, Verspäten, Ticket/Kunde/Auftrag öffnen).
-- **`/m/kalender/team`** – Team- und Abteilungsauslastung heute.
-- **Datenquelle:** `esc_events`, `esc_departments`, `esc_event_types`, `esc_event_participants`, `esc_resources` via bestehende Hooks (`useAppointments`, `useDepartments`, `useResources`), gefiltert nach `useTenant` und Rollen.
-- **Rechte:** bestehende ESC-Permissions (`src/lib/esc/permissions.ts`) unverändert nutzen; Filter „nur eigene / Abteilung / alle" abhängig von Rolle.
-- **Realtime:** Supabase-Channel auf `esc_events` – Änderungen sofort sichtbar.
+## Was der User lokal machen muss
 
-### Phase 2 – Installierbare PWA
-- **`public/manifest.webmanifest`** erweitern (Name „AlixWork Kalender", Icons, Theme).
-- **Icons** in `public/` (192, 512, maskable, apple-touch).
-- **Head-Tags** in `index.html` (Manifest, Theme-Color, Apple-Touch-Icon).
-- **Install-Prompt-Komponente** unter `/m/kalender` – `beforeinstallprompt` für Android, iOS-Anleitung (Teilen → Zum Home-Bildschirm), Buttons „Später"/„Nicht mehr anzeigen" persistent in localStorage.
-- **Kein neuer Service Worker** für App-Shell-Caching (Regel: nur bei expliziter Offline-Anforderung). Der bestehende `public/push-sw.js` bleibt für Push zuständig.
+Die native App muss außerhalb von Lovable gebaut werden (Xcode/Android Studio notwendig).
 
-### Phase 3 – Web-Push + Reminder-Engine
-Neue Tabellen (mandantenfähig, RLS, GRANTs):
+```bash
+# 1. Projekt via "Export to GitHub" exportieren, lokal klonen
+git clone <euer-repo>
+cd <projekt>
 
-- `appointment_reminder_rules` – pro `event_type_id` / `department_id`: `minutes_before`, `channel`, `escalation_level`, `active`.
-- `appointment_reminders` – geplante Versendungen mit `idempotency_key = event_id|rule_id|user_id|scheduled_at`, Status-Feld (`planned|sent|delivered|opened|failed|cancelled`), `retry_count`.
-- `notification_preferences` – pro User: Push/Email/SMS aktiv, Ruhezeiten, Wochenende, Privacy-Mode, Badge.
-- `app_notifications` – In-App-Center (Titel, Text, Kategorie, `read_at`, `action_url`).
+# 2. Dependencies
+npm install
 
-Bestehende Tabellen wiederverwenden:
-- `mobile_push_subscriptions` (existiert) für VAPID-Endpoints.
-- `audit_logs` für alle relevanten Aktionen (Bestätigung, Verschiebung, Reminder gesendet).
+# 3. Native-Plattformen hinzufügen (nur einmal)
+npx cap add ios
+npx cap add android
 
-Edge Functions:
-- **`push-vapid-subscribe`** – Endpoint-Registrierung, sichere Ablage in `mobile_push_subscriptions`.
-- **`reminder-scheduler`** – Cron alle 60 s: findet fällige `appointment_reminders`, versendet via Web-Push (VAPID), schreibt Status, respektiert Ruhezeiten und Privacy-Mode.
-- **`reminder-materializer`** – Cron alle 5 min: erzeugt aus `esc_events` + `appointment_reminder_rules` konkrete `appointment_reminders` (idempotent).
-- **`reminder-escalate`** – prüft überfällige, nicht bestätigte/gestartete Termine und triggert Eskalationsstufen.
+# 4. Web-Build erzeugen und in native Projekte syncen
+npm run build
+npx cap sync
 
-Secrets (via `generate_secret`): `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
+# 5. Auf Emulator / Gerät starten
+npx cap run ios      # Mac + Xcode erforderlich
+npx cap run android  # Android Studio erforderlich
 
-Frontend:
-- **`/m/kalender/erinnerungen`** – In-App-Benachrichtigungszentrale (jetzt fällig / heute / überfällig / erledigt).
-- **`/m/kalender/einstellungen`** – Push aktivieren, Ruhezeiten, Kanäle, Privacy-Mode.
-- **Reminder-Overlay** (Stufe 3/4) – Vollbild-Alert bei ≤15 min mit „Öffnen" / „In 5 min erinnern".
-- **App-Badge** über `navigator.setAppBadge()` mit Anzahl offener/überfälliger Termine.
-- Bestehender `public/push-sw.js` wird genutzt/erweitert für `notificationclick`-Deep-Link zur Terminseite.
+# Nach jedem git pull:
+npm install && npm run build && npx cap sync
+```
 
-## Was NICHT in diesem Wurf enthalten ist
-- Capacitor / native Wrapper (Phase 6).
-- Offline-Aktionsqueue mit Konfliktauflösung (Phase 4/5 – erst wenn Basis läuft).
-- Externe Kalendersynchronisation (Apple/Google/Outlook Export).
-- Biometrischer Login / Gerätesperre durch Admin.
-- ICS-Feeds, Widgets, Techniker-Route.
+## Store-Vorbereitung
 
-Diese Themen sind im Master-Prompt weiterhin dokumentiert und folgen in späteren Phasen.
+### App-Icons & Splash
+- Icons/Splash aus dem PWA-Icon generieren, z. B.:
+  ```bash
+  npm install --save-dev @capacitor/assets
+  # public/icon-512.png als Master ablegen
+  npx capacitor-assets generate
+  ```
 
-## Sicherheit
-- Alle neuen Tabellen: `authenticated`-scoped RLS via bestehende Security-Definer-Funktionen (`has_role`, `has_tenant_access`).
-- Push-Payloads enthalten **keine** Kundennamen – nur neutrale Vorlage („AlixWork: Ein Termin beginnt in 30 Minuten"). Details erst nach Öffnen der App aus DB nachladen.
-- VAPID-Keys ausschließlich als Edge-Function-Secrets. Kein Service-Role-Key im Frontend.
-- Audit-Log-Einträge für jede Reminder-Versendung, Bestätigung, Verschiebung.
+### Apple / iOS
+- Apple Developer Account nötig.
+- In Xcode: Signing & Capabilities → **Push Notifications** und **Background Modes → Remote notifications** aktivieren.
+- Bundle-ID `app.lovable.139141344b954f3fa06471f725c7d887` in Apple Developer registrieren.
+- APNs Auth Key (.p8) erstellen und in Lovable als Secrets hinterlegen:
+  - `APNS_KEY_P8` – kompletter Inhalt der .p8-Datei
+  - `APNS_KEY_ID` – 10-stellige Key-ID
+  - `APNS_TEAM_ID` – 10-stellige Team-ID
+  - `APNS_BUNDLE_ID` – gleich der App-ID oben
+  - `APNS_USE_SANDBOX` – `true` für Xcode-Debug-Builds, sonst weglassen
 
-## Reihenfolge der Umsetzung
-1. Phase 1 komplett (UI-Routen, Realtime) – sofort testbar.
-2. Phase 2 (Manifest, Icons, Install-Prompt) – sofort auf iOS/Android installierbar.
-3. Migration für Phase-3-Tabellen (ein Migrations-Call, alle GRANTs + RLS).
-4. VAPID-Secrets erzeugen.
-5. Edge Functions + Cron-Jobs.
-6. Push-UI, Einstellungen, Benachrichtigungszentrale, Overlay, Badge.
-7. Rollen-/Sicherheitstest, Playwright-Smoke auf `/m/kalender`.
+### Google / Android
+- Firebase-Projekt anlegen, Android-App mit Package-Name `app.lovable.139141344b954f3fa06471f725c7d887` hinzufügen.
+- `google-services.json` in `android/app/` ablegen.
+- Service-Account-JSON (Firebase → Projekteinstellungen → Dienstkonten) als Lovable-Secret:
+  - `FCM_SERVICE_ACCOUNT_JSON` – gesamter JSON-Inhalt
 
-Nach jeder Phase kurze Rückmeldung und Test, dann weiter.
+Sobald du sagst „Push scharf schalten", fragen wir diese Secrets über `add_secret` an.
+
+## Nicht enthalten (spätere Phasen)
+
+- Offline-Aktionsqueue für Bestätigen/Start/Erledigt ohne Netz.
+- Automatischer Store-Upload (Fastlane etc.).
+- Externe Kalender-Sync (Google/Outlook), ICS-Feeds.

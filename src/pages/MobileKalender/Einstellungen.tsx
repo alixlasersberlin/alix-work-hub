@@ -1,15 +1,17 @@
 import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { usePushSubscription } from '@/hooks/usePushSubscription';
+import { useNativePush } from '@/hooks/useNativePush';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Bell, BellOff, Shield } from 'lucide-react';
+import { Bell, BellOff, Shield, Smartphone } from 'lucide-react';
 
 export default function KalenderEinstellungen() {
   const { prefs, save, loading } = useNotificationPreferences();
   const { supported, permission, subscribed, subscribe, unsubscribe, busy } = usePushSubscription();
+  const native = useNativePush();
 
   if (loading) return null;
 
@@ -34,6 +36,26 @@ export default function KalenderEinstellungen() {
             : <Button size="sm" onClick={subscribe} disabled={busy || permission === 'denied'}>Aktivieren</Button>)}
         </div>
       </Card>
+
+      {native.isNative && (
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <Smartphone className="h-5 w-5 text-primary" />
+            <div className="flex-1">
+              <div className="font-semibold text-sm">Native Push (App Store / Play Store)</div>
+              <div className="text-xs text-muted-foreground">
+                {native.status === 'granted' ? 'Aktiv – native Push (APNs/FCM) registriert.'
+                  : native.status === 'denied' ? 'In den Systemeinstellungen blockiert.'
+                  : native.status === 'error' ? 'Registrierung fehlgeschlagen.'
+                  : 'Native Push noch nicht aktiviert.'}
+              </div>
+            </div>
+            {native.status !== 'granted' && (
+              <Button size="sm" onClick={native.register}>Aktivieren</Button>
+            )}
+          </div>
+        </Card>
+      )}
 
       <Card className="p-4 space-y-3">
         <div className="text-xs uppercase tracking-widest text-muted-foreground">Kanäle</div>

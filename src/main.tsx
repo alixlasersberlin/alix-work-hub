@@ -16,6 +16,28 @@ bootA11yPrefs();
 bootAIBackground();
 bootPageFade();
 
+// Native (Capacitor) Shell-Init – nur wenn App in iOS/Android-Wrapper läuft.
+(async () => {
+  try {
+    const { Capacitor } = await import('@capacitor/core');
+    if (!Capacitor.isNativePlatform()) return;
+    const [{ StatusBar, Style }, { SplashScreen }] = await Promise.all([
+      import('@capacitor/status-bar'),
+      import('@capacitor/splash-screen'),
+    ]);
+    await StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+    await StatusBar.setBackgroundColor({ color: '#0F172A' }).catch(() => {});
+    await SplashScreen.hide().catch(() => {});
+    // Start-Route in nativer Shell auf Kalender fixieren
+    if (location.pathname === '/' || location.pathname === '') {
+      history.replaceState(null, '', '/m/kalender');
+    }
+  } catch {
+    /* Capacitor nicht verfügbar */
+  }
+})();
+
+
 
 // Workaround for React bug with browser translation extensions (Google Translate, etc.)
 // See: https://github.com/facebook/react/issues/11538
