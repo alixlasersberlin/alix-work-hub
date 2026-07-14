@@ -1,76 +1,57 @@
-# AlixWork Mobile Kalender – Phase 6 (Capacitor Native App)
+# AlixWork Mobile Kalender – Phasen 7–9
 
-Die Web-PWA `/m/kalender` ist jetzt zusätzlich als echte iOS-/Android-App bau- und ausrollbar. Alle Web-Funktionen (Web-Push, Reminder, Realtime, Eskalations-Overlay, Audit) bleiben unverändert – der native Wrapper ergänzt nur APNs/FCM-Push und native Shell-Features.
+## Phase 7 · Offline-Aktionsqueue ✅
 
-## Was schon fertig ist
+- `src/lib/offline/kalender-queue.ts` – IndexedDB-Store (idb) mit enqueue/list/count/sync/clear + Pub-Sub.
+- `src/hooks/useOfflineKalenderQueue.ts` – Reaktiver Zähler, automatischer Sync bei `online`-Event und beim Mount.
+- `TerminDetail.tsx` – Bestätigen / Starten / Erledigt / Absagen werden bei Offline oder Netzwerkfehler in die Outbox geschrieben, UI optimistisch aktualisiert.
+- `KalenderLayout.tsx` – Badge mit Zähler ausstehender Aktionen, Klick löst manuellen Sync aus.
 
-- `capacitor.config.ts` mit App-ID `app.lovable.139141344b954f3fa06471f725c7d887`, App-Name „AlixWork Kalender", Hot-Reload-URL auf die Lovable-Sandbox, Dark-StatusBar/SplashScreen, PushNotifications-Plugin aktiviert.
-- Native-Init in `src/main.tsx` (nur aktiv wenn Capacitor.isNativePlatform()): StatusBar Dark, Splash ausblenden, Startroute `/m/kalender`.
-- Hook `src/hooks/useNativePush.ts` registriert APNs/FCM-Token und schreibt in dieselbe Tabelle `mobile_push_subscriptions` (neue Spalten `platform`, `native_token`).
-- Karte „Native Push" in `/m/kalender/einstellungen` (erscheint nur in nativer Shell).
-- Edge Function `push-subscribe` akzeptiert Web-Push- und Native-Push-Subscriptions in einem Endpoint.
-- Neue Edge Function `push-send-native` sendet über FCM (Android) und APNs (iOS).
-- `reminder-scheduler` erkennt native Subscriptions und ruft `push-send-native` mit Service Role auf.
+Datenmodell: keine neue Tabelle – die Queue lebt rein clientseitig in IndexedDB und schreibt beim Sync direkt in `esc_events` (RLS greift wie gewohnt).
 
-## Was der User lokal machen muss
+## Phase 8a · ICS-Feed (Read-only Sync) ✅
 
-Die native App muss außerhalb von Lovable gebaut werden (Xcode/Android Studio notwendig).
+Nutzt die bereits vorhandene Infrastruktur:
+- Edge Function `esc-feed-issue` mintet/holt persönlichen Feed-Token.
+- Edge Function `esc-ics` liefert RFC-5545-kompatibles ICS für Apple, Google, Outlook, Thunderbird.
+- Tabelle `esc_ics_tokens` speichert Tokens mit 5-Jahre-Gültigkeit.
 
-```bash
-# 1. Projekt via "Export to GitHub" exportieren, lokal klonen
-git clone <euer-repo>
-cd <projekt>
+Neu:
+- `src/components/kalender/IcsFeedCard.tsx` – Zeigt Feed-URL, „Kopieren", `webcal://`-Abonnieren-Button, „Neu ausstellen".
+- In `MobileKalender/Einstellungen.tsx` unter „Externer Kalender" eingebunden.
 
-# 2. Dependencies
-npm install
+Anleitungen für Apple / Google / Outlook stehen direkt auf der Karte.
 
-# 3. Native-Plattformen hinzufügen (nur einmal)
-npx cap add ios
-npx cap add android
+## Phase 8b · Google/Outlook OAuth (2-Wege) – **später bei Bedarf**
 
-# 4. Web-Build erzeugen und in native Projekte syncen
-npm run build
-npx cap sync
+Grund: Techniker legen Termine ausschließlich im Alix-Kalender an. Der Read-only ICS-Feed reicht für 95 % der Anwendungsfälle. OAuth-Anbindung an Google/Microsoft würde bedeuten:
+- Google Cloud Console Projekt + OAuth-Consent-Screen-Verification (kann Wochen dauern)
+- Azure App Registration + Graph-API-Berechtigungen
+- Watch-Channels & Change-Tracking
+- Konfliktauflösung wenn beide Seiten schreiben
 
-# 5. Auf Emulator / Gerät starten
-npx cap run ios      # Mac + Xcode erforderlich
-npx cap run android  # Android Studio erforderlich
+Aufheben wir uns auf, wenn ein Kunde/Mitarbeiter das konkret nachfragt.
 
-# Nach jedem git pull:
-npm install && npm run build && npx cap sync
-```
+## Phase 9 · Store-Release-Pipeline ✅ (Setup ausgeliefert, Ausführung außerhalb Lovable)
 
-## Store-Vorbereitung
+- `.github/workflows/ios-release.yml` – macOS-Runner, `fastlane beta|release` → TestFlight/App Store.
+- `.github/workflows/android-release.yml` – Ubuntu-Runner, `fastlane internal|beta|production` → Play Console.
+- `ios/fastlane/Fastfile` – Match für Zertifikate, App Store Connect API-Key, TestFlight- + App-Store-Lane.
+- `android/fastlane/Fastfile` – Gradle bundleRelease + Play-Service-Account-JSON, drei Tracks.
+- `docs/store-release.md` – Komplette Anleitung: Secrets, Keystore, Match, erster Release.
 
-### App-Icons & Splash
-- Icons/Splash aus dem PWA-Icon generieren, z. B.:
-  ```bash
-  npm install --save-dev @capacitor/assets
-  # public/icon-512.png als Master ablegen
-  npx capacitor-assets generate
-  ```
+Was der User machen muss:
+1. Projekt via „Export to GitHub" in eigenes Repo bringen.
+2. `npx cap add ios/android` einmalig lokal, `bundle add fastlane`.
+3. GitHub-Secrets hinterlegen (Liste in `docs/store-release.md`).
+4. Actions → Workflow manuell triggern.
 
-### Apple / iOS
-- Apple Developer Account nötig.
-- In Xcode: Signing & Capabilities → **Push Notifications** und **Background Modes → Remote notifications** aktivieren.
-- Bundle-ID `app.lovable.139141344b954f3fa06471f725c7d887` in Apple Developer registrieren.
-- APNs Auth Key (.p8) erstellen und in Lovable als Secrets hinterlegen:
-  - `APNS_KEY_P8` – kompletter Inhalt der .p8-Datei
-  - `APNS_KEY_ID` – 10-stellige Key-ID
-  - `APNS_TEAM_ID` – 10-stellige Team-ID
-  - `APNS_BUNDLE_ID` – gleich der App-ID oben
-  - `APNS_USE_SANDBOX` – `true` für Xcode-Debug-Builds, sonst weglassen
+Erster Release bleibt manuell (Screenshots/Beschreibung in App Store Connect / Play Console). Ab dem 2. Release genügt ein Klick auf „Run workflow".
 
-### Google / Android
-- Firebase-Projekt anlegen, Android-App mit Package-Name `app.lovable.139141344b954f3fa06471f725c7d887` hinzufügen.
-- `google-services.json` in `android/app/` ablegen.
-- Service-Account-JSON (Firebase → Projekteinstellungen → Dienstkonten) als Lovable-Secret:
-  - `FCM_SERVICE_ACCOUNT_JSON` – gesamter JSON-Inhalt
+## Was ist danach noch offen?
 
-Sobald du sagst „Push scharf schalten", fragen wir diese Secrets über `add_secret` an.
-
-## Nicht enthalten (spätere Phasen)
-
-- Offline-Aktionsqueue für Bestätigen/Start/Erledigt ohne Netz.
-- Automatischer Store-Upload (Fastlane etc.).
-- Externe Kalender-Sync (Google/Outlook), ICS-Feeds.
+Nichts Geplantes. Weitere sinnvolle Ausbaustufen (kein Zwang, alles Kür):
+- Push-Templates für Terminarten anpassbar machen
+- Kalender-Widget für iOS/Android Home-Screen (WidgetKit / AppWidget)
+- Sprachbefehl „Termin erledigt" via SiriKit / Google Assistant
+- Offline-Cache für Kalenderansicht (Read-Path, aktuell nur Write-Path offline)
