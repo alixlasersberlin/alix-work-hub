@@ -1,84 +1,76 @@
-# Phase 6 – Native Wrapper mit Capacitor
+# AlixWork Mobile Kalender – Phase 6 (Capacitor Native App)
 
-Ziel: Aus der bestehenden PWA `/m/kalender` eine echte iOS- und Android-App bauen, die im App Store bzw. Play Store veröffentlicht werden kann. Die vorhandene PWA-Logik (Push, Reminder, Realtime) bleibt unverändert.
+Die Web-PWA `/m/kalender` ist jetzt zusätzlich als echte iOS-/Android-App bau- und ausrollbar. Alle Web-Funktionen (Web-Push, Reminder, Realtime, Eskalations-Overlay, Audit) bleiben unverändert – der native Wrapper ergänzt nur APNs/FCM-Push und native Shell-Features.
 
-## Was im Lovable-Sandbox passiert
+## Was schon fertig ist
 
-1. **Capacitor installieren**
-   - `@capacitor/core`, `@capacitor/cli` (dev), `@capacitor/ios`, `@capacitor/android`
-   - Zusätzlich: `@capacitor/push-notifications`, `@capacitor/app`, `@capacitor/status-bar`, `@capacitor/splash-screen`, `@capacitor/haptics`
+- `capacitor.config.ts` mit App-ID `app.lovable.139141344b954f3fa06471f725c7d887`, App-Name „AlixWork Kalender", Hot-Reload-URL auf die Lovable-Sandbox, Dark-StatusBar/SplashScreen, PushNotifications-Plugin aktiviert.
+- Native-Init in `src/main.tsx` (nur aktiv wenn Capacitor.isNativePlatform()): StatusBar Dark, Splash ausblenden, Startroute `/m/kalender`.
+- Hook `src/hooks/useNativePush.ts` registriert APNs/FCM-Token und schreibt in dieselbe Tabelle `mobile_push_subscriptions` (neue Spalten `platform`, `native_token`).
+- Karte „Native Push" in `/m/kalender/einstellungen` (erscheint nur in nativer Shell).
+- Edge Function `push-subscribe` akzeptiert Web-Push- und Native-Push-Subscriptions in einem Endpoint.
+- Neue Edge Function `push-send-native` sendet über FCM (Android) und APNs (iOS).
+- `reminder-scheduler` erkennt native Subscriptions und ruft `push-send-native` mit Service Role auf.
 
-2. **`capacitor.config.ts` erzeugen**
-   - `appId`: `app.lovable.139141344b954f3fa06471f725c7d887`
-   - `appName`: `AlixWork Kalender`
-   - `webDir`: `dist`
-   - `server.url` auf die Sandbox-Preview-URL (Hot-Reload beim Entwickeln)
-   - Deep-Link-Scheme + Universal Links für `/m/kalender/termin/:id`
-   - Splash- und StatusBar-Konfiguration in Dark-Theme
+## Was der User lokal machen muss
 
-3. **Native-Push-Bridge**
-   - Neuer Hook `useNativePush.ts` erkennt `Capacitor.isNativePlatform()`.
-     - Web → bestehender Web-Push-Flow (VAPID) unverändert.
-     - Native → APNs/FCM-Token via `@capacitor/push-notifications` holen und in derselben Tabelle `mobile_push_subscriptions` speichern (neue Spalten `platform`, `native_token`).
-   - `push-subscribe` Edge Function nimmt beide Formen entgegen.
-   - Neue Edge Function `push-send-native` versendet über FCM (Android) bzw. APNs (iOS) — reiht sich in `reminder-scheduler` ein.
+Die native App muss außerhalb von Lovable gebaut werden (Xcode/Android Studio notwendig).
 
-4. **Native-UX-Anpassungen** (nur in `/m/kalender`)
-   - StatusBar auf Dark, SplashScreen mit AlixWork-Logo.
-   - Haptik beim Bestätigen/Start/Erledigt.
-   - App-Icon aus vorhandenem PWA-Icon generieren.
-   - Startroute in nativer Shell auf `/m/kalender`.
+```bash
+# 1. Projekt via "Export to GitHub" exportieren, lokal klonen
+git clone <euer-repo>
+cd <projekt>
 
-5. **Splash- und Icon-Assets**
-   - Generierung im Standard-Capacitor-Ordner `resources/` — Bau per `@capacitor/assets` bleibt dem User überlassen (siehe unten).
+# 2. Dependencies
+npm install
 
-## Was der User lokal machen muss (kann Lovable nicht ausführen)
+# 3. Native-Plattformen hinzufügen (nur einmal)
+npx cap add ios
+npx cap add android
 
-Da Xcode/Android Studio nötig sind, listen wir die genauen Schritte in `.lovable/plan.md` und im Chat:
+# 4. Web-Build erzeugen und in native Projekte syncen
+npm run build
+npx cap sync
 
-```text
-1. Projekt via "Export to GitHub" exportieren
-2. git pull, dann: npm install
-3. npx cap add ios   # nur einmal
-4. npx cap add android
-5. npm run build
-6. npx cap sync
-7. npx cap run ios     (Mac + Xcode nötig)
-8. npx cap run android (Android Studio nötig)
+# 5. Auf Emulator / Gerät starten
+npx cap run ios      # Mac + Xcode erforderlich
+npx cap run android  # Android Studio erforderlich
+
+# Nach jedem git pull:
+npm install && npm run build && npx cap sync
 ```
 
-## Store-relevante Backend-Ergänzungen
+## Store-Vorbereitung
 
-- **APNs-Auth-Key** (Apple Developer): als Secret `APNS_KEY_P8`, `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID`.
-- **FCM-Service-Account-JSON**: als Secret `FCM_SERVICE_ACCOUNT_JSON`.
-- Diese werden erst benötigt, wenn native Push tatsächlich ausgeliefert wird — Secrets werden per `add_secret` angefragt, sobald du "Push scharf schalten" sagst.
+### App-Icons & Splash
+- Icons/Splash aus dem PWA-Icon generieren, z. B.:
+  ```bash
+  npm install --save-dev @capacitor/assets
+  # public/icon-512.png als Master ablegen
+  npx capacitor-assets generate
+  ```
 
-## Datenbank-Migration
+### Apple / iOS
+- Apple Developer Account nötig.
+- In Xcode: Signing & Capabilities → **Push Notifications** und **Background Modes → Remote notifications** aktivieren.
+- Bundle-ID `app.lovable.139141344b954f3fa06471f725c7d887` in Apple Developer registrieren.
+- APNs Auth Key (.p8) erstellen und in Lovable als Secrets hinterlegen:
+  - `APNS_KEY_P8` – kompletter Inhalt der .p8-Datei
+  - `APNS_KEY_ID` – 10-stellige Key-ID
+  - `APNS_TEAM_ID` – 10-stellige Team-ID
+  - `APNS_BUNDLE_ID` – gleich der App-ID oben
+  - `APNS_USE_SANDBOX` – `true` für Xcode-Debug-Builds, sonst weglassen
 
-Ergänzt `mobile_push_subscriptions` um:
-- `platform` (`web` | `ios` | `android`, default `web`)
-- `native_token` (text, nullable) für APNs-/FCM-Token
-- Unique-Index passt sich an (`user_id, platform, coalesce(endpoint, native_token)`)
+### Google / Android
+- Firebase-Projekt anlegen, Android-App mit Package-Name `app.lovable.139141344b954f3fa06471f725c7d887` hinzufügen.
+- `google-services.json` in `android/app/` ablegen.
+- Service-Account-JSON (Firebase → Projekteinstellungen → Dienstkonten) als Lovable-Secret:
+  - `FCM_SERVICE_ACCOUNT_JSON` – gesamter JSON-Inhalt
 
-Keine neuen Tabellen, keine Änderung an bestehenden RLS-Policies.
+Sobald du sagst „Push scharf schalten", fragen wir diese Secrets über `add_secret` an.
 
-## Sicherheit
+## Nicht enthalten (spätere Phasen)
 
-- Native Tokens werden wie Web-Endpoints RLS-geschützt (nur eigener User).
-- APNs/FCM-Secrets nur in Edge-Functions.
-- Deep-Links validieren Ziel-Event über bestehende `esc_events`-RLS.
-
-## Nicht enthalten (bewusst)
-
-- Kein automatisches Xcode/Gradle-Build in Lovable (technisch unmöglich).
-- Keine Store-Einreichung — bleibt beim User.
-- Keine Änderung an der bestehenden Web-PWA-Auslieferung.
-
-## Reihenfolge der Umsetzung
-
-1. Migration `mobile_push_subscriptions` erweitern
-2. Capacitor + Plugins installieren, `capacitor.config.ts`
-3. `useNativePush.ts` + Integration in `Einstellungen.tsx`
-4. Edge Function `push-send-native` + Anpassung `reminder-scheduler`
-5. StatusBar/Splash/Haptics Init in `main.tsx` (nur nativ aktiv)
-6. Anleitung + Store-Checkliste in `.lovable/plan.md`
+- Offline-Aktionsqueue für Bestätigen/Start/Erledigt ohne Netz.
+- Automatischer Store-Upload (Fastlane etc.).
+- Externe Kalender-Sync (Google/Outlook), ICS-Feeds.
