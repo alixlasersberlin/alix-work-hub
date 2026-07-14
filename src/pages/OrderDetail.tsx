@@ -628,7 +628,7 @@ export default function OrderDetail() {
             );
           };
 
-          const renderActionMenu = (name: 'Backoffice' | 'Bearbeitung') => {
+          const renderActionMenu = (name: 'Backoffice' | 'Bearbeitung' | 'Finanzen') => {
             const am = actionMenus.find((m) => m.name === name);
             if (!am || am.items.length === 0) return null;
             const AMIcon = am.icon;
@@ -671,6 +671,7 @@ export default function OrderDetail() {
               {artikel && renderTabMenu(artikel)}
               {auftrag && renderTabMenu(auftrag)}
               {renderActionMenu('Backoffice')}
+              {renderActionMenu('Finanzen')}
               {kommunikation && renderTabMenu(kommunikation)}
             </>
           );
