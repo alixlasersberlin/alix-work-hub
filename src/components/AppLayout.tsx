@@ -604,7 +604,7 @@ export const navItems: NavItem[] = [
 ];
 
 export default function AppLayout() {
-  const { profile, roles, signOut } = useAuth();
+  const { profile, roles, signOut, impersonatedUserId, impersonatedName, stopImpersonation } = useAuth();
   const { variant } = useDesignVariant();
   const isAurora = variant === 'aurora';
   const location = useLocation();
