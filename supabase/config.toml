@@ -212,3 +212,12 @@ verify_jwt = false
 [functions.catalog-share-resolve]
 verify_jwt = false
 
+
+[functions.reminder-materializer]
+verify_jwt = false
+
+[functions.reminder-scheduler]
+verify_jwt = false
+
+[functions.push-vapid-config]
+verify_jwt = false
