@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAtOnly } from '@/hooks/useAtOnly';
@@ -8,6 +8,10 @@ import {
   PenSquare, Send, FileEdit, MessageSquare, MessageCircle, Sparkles, FileCheck2, Files, Phone, PhoneCall, CheckSquare, CalendarClock, Megaphone, Activity, MailX, HeartPulse, TestTube2, Rocket, Database, Upload, FileDown, BadgeCheck, GraduationCap, Brain, AlertOctagon, LineChart, ListChecks, Cog, Boxes, Repeat, Wallet, Hash
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
@@ -603,6 +607,75 @@ export const navItems: NavItem[] = [
   },
 ];
 
+function filterKontaktByRoles(items: NavChild[] | undefined, roles: string[]): NavChild[] {
+  if (!items) return [];
+  const allowed = (r: string[] | null) => !r || r.some(x => roles.includes(x));
+  return items
+    .filter(it => allowed(it.roles))
+    .map(it => ({ ...it, children: it.children ? filterKontaktByRoles(it.children, roles) : undefined }))
+    .filter(it => !it.children || it.children.length > 0 || !!it.path);
+}
+
+function KontaktMenu({ roles }: { roles: string[] }) {
+  const kontakt = navItems.find(i => i.label === 'KONTAKT');
+  if (!kontakt) return null;
+  if (kontakt.roles && !kontakt.roles.some(r => roles.includes(r))) return null;
+  const children = filterKontaktByRoles(kontakt.children, roles);
+  if (children.length === 0) return null;
+
+  const renderItems = (items: NavChild[]): React.ReactNode =>
+    items.map((it, idx) => {
+      const Icon = it.icon;
+      if (it.children && it.children.length > 0) {
+        return (
+          <DropdownMenuSub key={`${it.path}-${idx}`}>
+            <DropdownMenuSubTrigger className="gap-2">
+              <Icon className="w-4 h-4" />
+              <span>{it.label}</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+              <DropdownMenuSubContent className="max-h-[70vh] overflow-y-auto">
+                {renderItems(it.children)}
+              </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+          </DropdownMenuSub>
+        );
+      }
+      return (
+        <DropdownMenuItem key={`${it.path}-${idx}`} asChild>
+          <Link to={it.path} className="flex items-center gap-2 cursor-pointer">
+            <Icon className="w-4 h-4" />
+            <span>{it.label}</span>
+          </Link>
+        </DropdownMenuItem>
+      );
+    });
+
+  const RootIcon = kontakt.icon;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          aria-label="Kontakt-Menü"
+        >
+          <RootIcon className="w-4 h-4" />
+          <span className="font-medium">Kontakt</span>
+          <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64 max-h-[75vh] overflow-y-auto">
+        <DropdownMenuLabel>Kontakt</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {renderItems(children)}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+
+
 export default function AppLayout() {
   const { profile, roles, signOut, impersonatedUserId, impersonatedName, stopImpersonation } = useAuth();
   const { variant } = useDesignVariant();
@@ -1012,6 +1085,7 @@ export default function AppLayout() {
   };
 
   const visibleItems = navItems
+    .filter(i => i.label !== 'KONTAKT')
     .filter(filterByRoles)
     .map(item => ({
       ...item,
@@ -1675,15 +1749,8 @@ export default function AppLayout() {
             <div className="hidden md:block min-w-0 flex-1">
               <SidebarInfoBar />
             </div>
-            <Link
-              to="/mailcenter"
-              title="Kontakt"
-              aria-label="Kontakt"
-              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            >
-              <HelpCircle className="w-4 h-4" />
-              <span className="font-medium">Kontakt</span>
-            </Link>
+            <KontaktMenu roles={roles} />
+
             <div className="hidden lg:block flex-shrink-0">
               <TenantSwitcher />
             </div>
