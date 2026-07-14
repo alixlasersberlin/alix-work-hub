@@ -1787,7 +1787,9 @@ export default function AppLayout() {
               className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
               <Files className="w-5 h-5" />
+            </Link>
             <TicketNotificationBell />
+
             <KontaktMenu roles={roles} />
             <div className="hidden md:flex items-center gap-1 text-[11px] flex-shrink-0 px-1">
               <span className="font-display font-bold gold-text">AlixWork</span>
