@@ -69,12 +69,9 @@ Deno.serve(async (req) => {
     const termMonths = payment.term != null ? Number(payment.term) : null;
     const purchasePrice = Number(payment.price) || Number(totals.gross) || null;
 
-    // Bestelldatum & Liefertermin aus dem Angebot übernehmen (Fallback: signed_at / null)
+    // Bestelldatum = Unterzeichnungsdatum des Auftrags (Fallback: jetzt)
     let orderDateIso: string = new Date().toISOString();
-    if (payload.offerDate) {
-      const d = new Date(`${payload.offerDate}T00:00:00Z`);
-      if (!isNaN(d.getTime())) orderDateIso = d.toISOString();
-    } else if (sr.signed_at) {
+    if (sr.signed_at) {
       orderDateIso = sr.signed_at as string;
     }
 
