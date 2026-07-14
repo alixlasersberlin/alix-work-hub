@@ -325,6 +325,48 @@ export default function ImportManagement() {
     }
   }
 
+  // ============ ANGEBOTE (Estimates) Import ============
+  const [estimatesImporting, setEstimatesImporting] = useState(false);
+  const [estimatesResult, setEstimatesResult] = useState<{ de: { fetched: number; imported: number; updated: number; failed: number }; at: { fetched: number; imported: number; updated: number; failed: number } } | null>(null);
+
+  async function handleEstimatesImport() {
+    setEstimatesImporting(true);
+    setEstimatesResult(null);
+    const runOne = async (source: 'zoho_eu_1' | 'zoho_eu_2') => {
+      const totals = { fetched: 0, imported: 0, updated: 0, failed: 0 };
+      let page = 1;
+      for (let i = 0; i < 40; i++) {
+        const { data, error } = await supabase.functions.invoke('sync-zoho-estimates', {
+          body: { source_system: source, page, max_pages: 3, per_page: 100 },
+        });
+        if (error) throw error;
+        if (data?.error && data?.success === false) throw new Error(data.error);
+        totals.fetched += data?.fetched ?? 0;
+        totals.imported += data?.imported ?? 0;
+        totals.updated += data?.updated ?? 0;
+        totals.failed += data?.failed ?? 0;
+        if (!data?.has_more) break;
+        page = (data?.last_page ?? page) + 1;
+        await new Promise(r => setTimeout(r, 800));
+      }
+      return totals;
+    };
+    try {
+      toast({ title: 'Angebote-Import gestartet', description: 'Zoho Estimates DE + AT → Angebote' });
+      const de = await runOne('zoho_eu_1');
+      const at = await runOne('zoho_eu_2');
+      setEstimatesResult({ de, at });
+      toast({
+        title: 'Angebote-Import abgeschlossen',
+        description: `DE: ${de.imported}+ / ${de.updated}~ • AT: ${at.imported}+ / ${at.updated}~ • Fehler: ${de.failed + at.failed}`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Angebote-Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setEstimatesImporting(false);
+    }
+  }
+
   function getInvoiceDateFrom(): string {
     const today = new Date();
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
@@ -1772,6 +1814,49 @@ export default function ImportManagement() {
                 <div className="flex items-start gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
                   <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <p>Automatischer Sync alle 3 Stunden über pg_cron. Daten werden in <code>zoho_recurring_profiles</code> gespeichert und unter Finance → ALIX FLEX angezeigt.</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* ============ ANGEBOTE (Estimates) Import ============ */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Angebote (Estimates) – Alix Deutschland & Austria
+                </CardTitle>
+                <CardDescription>
+                  Importiert alle Angebote aus Zoho Books (DE + AT) und legt sie 1:1 unter Sales Management → Angebote an. AT-Angebote erhalten das Suffix „-AT". Wiederholte Läufe aktualisieren bestehende Einträge.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={handleEstimatesImport}
+                    disabled={estimatesImporting}
+                    className="gold-gradient text-primary-foreground"
+                  >
+                    {estimatesImporting ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importiere…</>
+                    ) : (
+                      <><Play className="w-4 h-4 mr-2" /> Angebote importieren (DE + AT)</>
+                    )}
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Läuft nacheinander für zoho_eu_1 und zoho_eu_2.
+                  </span>
+                </div>
+
+                {estimatesResult && (
+                  <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-2 text-sm">
+                    <div>🇩🇪 Alix Deutschland: geladen <strong>{estimatesResult.de.fetched}</strong> • <strong className="text-[hsl(var(--success))]">{estimatesResult.de.imported}</strong> neu • <strong>{estimatesResult.de.updated}</strong> aktualisiert • <strong className="text-destructive">{estimatesResult.de.failed}</strong> Fehler</div>
+                    <div>🇦🇹 Alix Austria: geladen <strong>{estimatesResult.at.fetched}</strong> • <strong className="text-[hsl(var(--success))]">{estimatesResult.at.imported}</strong> neu • <strong>{estimatesResult.at.updated}</strong> aktualisiert • <strong className="text-destructive">{estimatesResult.at.failed}</strong> Fehler</div>
+                  </div>
+                )}
+
+                <div className="flex items-start gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <p>Ziel-Tabelle: <code>offers</code>. Sichtbar unter Sales Management → Angebote.</p>
                 </div>
               </CardContent>
             </Card>
