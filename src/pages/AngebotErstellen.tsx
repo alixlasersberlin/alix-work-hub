@@ -1328,10 +1328,11 @@ export default function AngebotErstellen() {
     <div className="p-6 lg:p-8 animate-fade-in space-y-6 max-w-6xl">
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <FilePlus className="w-6 h-6 text-primary" />
-          Angebot erstellen
+          {sofortMode ? <Zap className="w-6 h-6 text-primary" /> : <FilePlus className="w-6 h-6 text-primary" />}
+          {sofortMode ? 'Sofortauftrag erstellen' : 'Angebot erstellen'}
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Erstellen Sie ein neues Angebot für einen Kunden.</p>
+        <p className="text-sm text-muted-foreground mt-1">{sofortMode ? 'Erstellen Sie direkt einen Auftrag ohne vorheriges Angebot.' : 'Erstellen Sie ein neues Angebot für einen Kunden.'}</p>
+
       </div>
 
       {isLockedForEdit && (
@@ -2006,65 +2007,90 @@ export default function AngebotErstellen() {
 
 
       <div className="flex flex-wrap justify-end gap-3 pt-2">
-        <Button
-          variant="outline"
-          className="gap-2 border-border"
-          onClick={() => { saveOffer(); }}
-          disabled={isLockedForEdit}
-          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
-        >
-          <Save className="w-4 h-4" />
-          Speichern
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2 border-border"
-          onClick={async () => { if (await saveOffer()) navigate('/verkauf/angebote'); }}
-          disabled={isLockedForEdit}
-          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
-        >
-          <Save className="w-4 h-4" />
-          Speichern + Schließen
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2 border-border"
-          onClick={sendByEmail}
-          disabled={isLockedForEdit}
-        >
-          <Inbox className="w-4 h-4" />
-          Per E-Mail versenden
-        </Button>
+        {sofortMode ? (
+          <>
+            <Button
+              variant="outline"
+              className="gap-2 border-border"
+              onClick={() => navigate('/auftraege')}
+            >
+              <X className="w-4 h-4" />
+              Abbrechen
+            </Button>
+            <Button
+              onClick={confirmAsOrder}
+              disabled={confirming}
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+              title="Sofortauftrag anlegen (ohne Angebotsphase)"
+            >
+              {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              Sofortauftrag anlegen
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              variant="outline"
+              className="gap-2 border-border"
+              onClick={() => { saveOffer(); }}
+              disabled={isLockedForEdit}
+              title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
+            >
+              <Save className="w-4 h-4" />
+              Speichern
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2 border-border"
+              onClick={async () => { if (await saveOffer()) navigate('/verkauf/angebote'); }}
+              disabled={isLockedForEdit}
+              title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
+            >
+              <Save className="w-4 h-4" />
+              Speichern + Schließen
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2 border-border"
+              onClick={sendByEmail}
+              disabled={isLockedForEdit}
+            >
+              <Inbox className="w-4 h-4" />
+              Per E-Mail versenden
+            </Button>
 
-        <Button
-          className="gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
-          onClick={sendForSignature}
-          disabled={isLockedForEdit}
-        >
-          <Pencil className="w-4 h-4" />
-          Mit Alix Sign zur Unterschrift senden
-        </Button>
-        {isSuperAdmin && (
-          <Button
-            onClick={confirmAsOrder}
-            disabled={confirming}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
-            title="Nur Super Admin: Angebot anerkennen und in einen Auftrag wandeln"
-          >
-            {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-            Selbst bestätigen & in Auftrag wandeln
-          </Button>
+            <Button
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white border-0"
+              onClick={sendForSignature}
+              disabled={isLockedForEdit}
+            >
+              <Pencil className="w-4 h-4" />
+              Mit Alix Sign zur Unterschrift senden
+            </Button>
+            {isSuperAdmin && (
+              <Button
+                onClick={confirmAsOrder}
+                disabled={confirming}
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
+                title="Nur Super Admin: Angebot anerkennen und in einen Auftrag wandeln"
+              >
+                {confirming ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                Selbst bestätigen & in Auftrag wandeln
+              </Button>
+            )}
+            <Button
+              onClick={generatePDF}
+              className="gold-gradient text-primary-foreground gap-2"
+              disabled={isLockedForEdit}
+              title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
+            >
+              <FileDown className="w-4 h-4" />
+              Als PDF speichern
+            </Button>
+          </>
         )}
-        <Button
-          onClick={generatePDF}
-          className="gold-gradient text-primary-foreground gap-2"
-          disabled={isLockedForEdit}
-          title={isLockedForEdit ? 'Gesperrt – benötigt Freigabe von Admin/Super Admin' : undefined}
-        >
-          <FileDown className="w-4 h-4" />
-          Als PDF speichern
-        </Button>
       </div>
+
 
 
 
