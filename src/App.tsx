@@ -1334,6 +1334,17 @@ function AppRoutes() {
           <Route path="warenkorb" element={<CustomerPortalWarenkorb />} />
         </Route>
 
+        {/* AlixWork Kalender – Mobile PWA (spiegelt den bestehenden Teamkalender) */}
+        <Route path="/m/kalender" element={<ProtectedRoute><KalenderLayout /></ProtectedRoute>}>
+          <Route index element={<KalenderHeute />} />
+          <Route path="agenda" element={<KalenderAgenda />} />
+          <Route path="termin/:id" element={<KalenderDetail />} />
+          <Route path="erinnerungen" element={<KalenderErinnerungen />} />
+          <Route path="team" element={<KalenderTeam />} />
+          <Route path="mehr" element={<KalenderMehr />} />
+          <Route path="einstellungen" element={<KalenderEinstellungen />} />
+        </Route>
+
         {/* Mobile Techniker-App – eigenes Layout (kein AppLayout) */}
         <Route path="/m" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Technik','Tourenplanung','Service','Reparaturannahme']}><MobileLayout /></ProtectedRoute>}>
           <Route index element={<MobileHome />} />
