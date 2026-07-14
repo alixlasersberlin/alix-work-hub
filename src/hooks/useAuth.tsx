@@ -194,7 +194,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setTimeout(async () => {
           await fetchProfile(session.user.id);
-          await fetchRoles(session.user.id);
+          const realRoles = await fetchRoles(session.user.id);
+          if (impersonatedUserId) await applyImpersonation(realRoles, impersonatedUserId);
           setMfaState(await computeMfaState());
         }, 0);
       } else {
@@ -208,14 +209,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        Promise.all([
-          fetchProfile(session.user.id),
-          fetchRoles(session.user.id),
-          computeMfaState(),
-        ]).then(([, , mfa]) => {
-          setMfaState(mfa);
+        (async () => {
+          await fetchProfile(session.user.id);
+          const realRoles = await fetchRoles(session.user.id);
+          if (impersonatedUserId) await applyImpersonation(realRoles, impersonatedUserId);
+          setMfaState(await computeMfaState());
           setLoading(false);
-        });
+        })();
       } else {
         setLoading(false);
       }
