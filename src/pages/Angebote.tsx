@@ -39,6 +39,7 @@ export default function Angebote() {
   const [pageSize, setPageSize] = useState<'10' | '20' | '50' | 'all'>('20');
   const [creatorFilter, setCreatorFilter] = useState<string>('alle');
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year' | 'all'>('all');
+  const [orderFilter, setOrderFilter] = useState<'alle' | 'offen' | 'auftrag'>('alle');
 
   const [signLinkOpen, setSignLinkOpen] = useState(false);
   const [signLinkLoading, setSignLinkLoading] = useState(false);
@@ -358,6 +359,11 @@ export default function Angebote() {
                   const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
                   if (!d || now - d > rangeMs) return false;
                 }
+                if (orderFilter !== 'alle') {
+                  const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+                  if (orderFilter === 'auftrag' && !hasOrder) return false;
+                  if (orderFilter === 'offen' && hasOrder) return false;
+                }
                 if (!q) return true;
                 return (
                   (o.offerNumber || '').toLowerCase().includes(q) ||
@@ -405,6 +411,14 @@ export default function Angebote() {
                 <SelectItem value="all">Gesamte Zeit</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={orderFilter} onValueChange={(v) => setOrderFilter(v as any)}>
+              <SelectTrigger className="w-[220px] h-9"><SelectValue placeholder="Auftragsstatus" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle Angebote</SelectItem>
+                <SelectItem value="offen">Angebot offen</SelectItem>
+                <SelectItem value="auftrag">Als Auftrag übernommen</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -442,6 +456,11 @@ export default function Angebote() {
                     if (rangeMs !== null) {
                       const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
                       if (!d || now - d > rangeMs) return false;
+                    }
+                    if (orderFilter !== 'alle') {
+                      const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+                      if (orderFilter === 'auftrag' && !hasOrder) return false;
+                      if (orderFilter === 'offen' && hasOrder) return false;
                     }
                     if (!q) return true;
                     return (
