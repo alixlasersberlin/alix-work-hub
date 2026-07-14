@@ -40,12 +40,18 @@ export default function Operation() {
   ];
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <PageHeader
-        icon={Workflow}
-        title="Operation"
-        subtitle="Operative Abläufe und Tools."
-        noBreadcrumbs
-      />
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <PageHeader
+          icon={Workflow}
+          title="Operation"
+          subtitle="Operative Abläufe und Tools."
+          noBreadcrumbs
+        />
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Mandantenauswahl</span>
+          <TenantSwitcher />
+        </div>
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {allTiles.map(t => (
           <Link key={t.to} to={t.to}>
