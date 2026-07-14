@@ -655,6 +655,18 @@ export default function Angebote() {
                           <Link2 className="h-4 w-4" />
                         </Button>
                       )}
+                      {approval !== 'rejected' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={!isSuperAdmin}
+                          onClick={() => markNoDeal(o.offerNumber)}
+                          title={isSuperAdmin ? 'Als "Kein Deal" markieren (Angebot abgelehnt)' : 'Nur Super Admin darf "Kein Deal" markieren'}
+                          className="text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                        >
+                          <XCircle className="h-4 w-4 mr-1" /> Kein Deal
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => remove(o.offerNumber)} title="Löschen">
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
