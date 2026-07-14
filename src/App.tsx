@@ -354,6 +354,7 @@ const RfScheduled = lazy(() => import("./pages/RollenFreigaben/ScheduledGrants")
 const RfChains = lazy(() => import("./pages/RollenFreigaben/ApprovalChains"));
 const RfLifecycle = lazy(() => import("./pages/RollenFreigaben/LifecycleDashboard"));
 const RfAuditExport = lazy(() => import("./pages/RollenFreigaben/AuditExport"));
+const RfZugriffErteilen = lazy(() => import("./pages/RollenFreigaben/ZugriffErteilen"));
 const SelfServiceRoles = lazy(() => import("./pages/SelfService/Roles"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
