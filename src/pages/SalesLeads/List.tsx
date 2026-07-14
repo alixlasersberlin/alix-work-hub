@@ -66,6 +66,7 @@ export default function SalesLeadsList() {
   const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [orderMatches, setOrderMatches] = useState<Set<string>>(new Set());
 
   async function handleDelete(lead: Lead) {
     const label = lead.lead_number || lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.id.slice(0, 8);
