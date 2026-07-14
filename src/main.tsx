@@ -16,8 +16,8 @@ bootA11yPrefs();
 bootAIBackground();
 bootPageFade();
 
-// app.alixwork.de → dedizierte Kalender-Domain.
-// Ohne aktive Supabase-Session direkt auf /alix-control (Login), sonst auf /m/kalender.
+// app.alixwork.de → dedizierte Teamkalender-Domain.
+// Ohne aktive Supabase-Session direkt auf /alix-control (Login), sonst auf /esc/kalender.
 if (typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de') {
   const p = window.location.pathname;
   const isRoot = p === '/' || p === '';
@@ -33,7 +33,7 @@ if (typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.
         }
       }
     } catch { /* Storage evtl. blockiert */ }
-    const target = hasSession ? '/m/kalender' : '/alix-control';
+    const target = hasSession ? '/esc/kalender' : '/alix-control';
     window.history.replaceState(null, '', target + window.location.search + window.location.hash);
   } else if (!isLoginAlias) {
     // ProtectedRoute leitet unauth. Nutzer selbst auf /alix-control – hier nichts weiter tun.
