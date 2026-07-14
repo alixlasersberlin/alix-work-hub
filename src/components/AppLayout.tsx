@@ -616,12 +616,12 @@ function filterKontaktByRoles(items: NavChild[] | undefined, roles: string[]): N
     .filter(it => !it.children || it.children.length > 0 || !!it.path);
 }
 
-function KontaktMenu({ roles }: { roles: string[] }) {
-  const kontakt = navItems.find(i => i.label === 'KONTAKT');
-  if (!kontakt) return null;
-  if (kontakt.roles && !kontakt.roles.some(r => roles.includes(r))) return null;
-  const children = filterKontaktByRoles(kontakt.children, roles);
-  if (children.length === 0) return null;
+function HeaderNavMenu({ roles, itemLabel, triggerLabel }: { roles: string[]; itemLabel: string; triggerLabel: string }) {
+  const item = navItems.find(i => i.label === itemLabel);
+  if (!item) return null;
+  if (item.roles && !item.roles.some(r => roles.includes(r))) return null;
+  const children = filterKontaktByRoles(item.children, roles);
+  if (children.length === 0 && !item.path) return null;
 
   const renderItems = (items: NavChild[]): React.ReactNode =>
     items.map((it, idx) => {
@@ -651,28 +651,37 @@ function KontaktMenu({ roles }: { roles: string[] }) {
       );
     });
 
-  const RootIcon = kontakt.icon;
+  const RootIcon = item.icon;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
           className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-          aria-label="Kontakt-Menü"
+          aria-label={`${triggerLabel}-Menü`}
         >
           <RootIcon className="w-4 h-4" />
-          <span className="font-medium">Kontakt</span>
+          <span className="font-medium">{triggerLabel}</span>
           <ChevronDown className="w-3.5 h-3.5 opacity-70" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64 max-h-[75vh] overflow-y-auto">
-        <DropdownMenuLabel>Kontakt</DropdownMenuLabel>
+        <DropdownMenuLabel>{triggerLabel}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {renderItems(children)}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
+
+function KontaktMenu({ roles }: { roles: string[] }) {
+  return <HeaderNavMenu roles={roles} itemLabel="KONTAKT" triggerLabel="Kontakt" />;
+}
+
+function AiDiensteMenu({ roles }: { roles: string[] }) {
+  return <HeaderNavMenu roles={roles} itemLabel="ALIX AI DIENSTE" triggerLabel="Alix AI" />;
+}
+
 
 
 
@@ -1085,8 +1094,9 @@ export default function AppLayout() {
   };
 
   const visibleItems = navItems
-    .filter(i => i.label !== 'KONTAKT')
+    .filter(i => i.label !== 'KONTAKT' && i.label !== 'ALIX AI DIENSTE')
     .filter(filterByRoles)
+
     .map(item => ({
       ...item,
       children: item.children
@@ -1798,6 +1808,8 @@ export default function AppLayout() {
             <TicketNotificationBell />
 
             <KontaktMenu roles={roles} />
+            <AiDiensteMenu roles={roles} />
+
 
 
           </div>
