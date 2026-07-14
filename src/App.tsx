@@ -249,6 +249,7 @@ const KalenderMehr = lazy(() => import("./pages/MobileKalender/Mehr"));
 const KalenderEinstellungen = lazy(() => import("./pages/MobileKalender/Einstellungen"));
 const KalenderGeraete = lazy(() => import("./pages/MobileKalender/Geraete"));
 const KalenderAudit = lazy(() => import("./pages/MobileKalender/Audit"));
+const GeraeteVerwaltung = lazy(() => import("./pages/GeraeteVerwaltung"));
 const AdminAuditLog = lazy(() => import("./pages/Admin/AuditLog"));
 const AlixSmartMigration = lazy(() => import("./pages/AlixSmartMigration"));
 const AlixSmartKonfliktaufloesung = lazy(() => import("./pages/AlixSmartKonfliktaufloesung"));
@@ -920,6 +921,7 @@ function AppRoutes() {
           <Route path="/operation/fort-knox" element={<ProtectedRoute requiredRoles={['Super Admin']}><FortKnox /></ProtectedRoute>} />
           <Route path="/mandanten" element={<ProtectedRoute requiredRoles={['Super Admin']}><Mandanten /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><AdminAuditLog /></ProtectedRoute>} />
+          <Route path="/admin/geraete" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><GeraeteVerwaltung /></ProtectedRoute>} />
           <Route path="/konzern/dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><KonzernDashboard /></ProtectedRoute>} />
           <Route path="/operation/alixsmart-migration" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartMigration /></ProtectedRoute>} />
           <Route path="/operation/alixsmart-konfliktaufloesung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartKonfliktaufloesung /></ProtectedRoute>} />

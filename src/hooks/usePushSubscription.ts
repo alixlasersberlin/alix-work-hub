@@ -70,12 +70,15 @@ export function usePushSubscription() {
         });
       }
       const raw = sub.toJSON();
+      const { detectDeviceInfo } = await import('@/lib/device-info');
+      const info = detectDeviceInfo();
       const { error } = await (supabase as any).functions.invoke('push-subscribe', {
         body: {
           endpoint: raw.endpoint,
           p256dh: raw.keys?.p256dh,
           auth: raw.keys?.auth,
           user_agent: navigator.userAgent,
+          ...info,
         },
       });
       if (error) throw error;

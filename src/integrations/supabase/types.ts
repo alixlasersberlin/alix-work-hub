@@ -13704,36 +13704,69 @@ export type Database = {
       }
       mobile_push_subscriptions: {
         Row: {
+          app_version: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           auth_key: string
+          block_reason: string | null
+          blocked_at: string | null
+          blocked_by: string | null
+          browser: string | null
           created_at: string
+          device_name: string | null
           endpoint: string
           id: string
+          ip_hint: string | null
           last_seen_at: string
           native_token: string | null
+          os: string | null
           p256dh: string
           platform: string
           user_agent: string | null
           user_id: string
         }
         Insert: {
+          app_version?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           auth_key: string
+          block_reason?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          browser?: string | null
           created_at?: string
+          device_name?: string | null
           endpoint: string
           id?: string
+          ip_hint?: string | null
           last_seen_at?: string
           native_token?: string | null
+          os?: string | null
           p256dh: string
           platform?: string
           user_agent?: string | null
           user_id: string
         }
         Update: {
+          app_version?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           auth_key?: string
+          block_reason?: string | null
+          blocked_at?: string | null
+          blocked_by?: string | null
+          browser?: string | null
           created_at?: string
+          device_name?: string | null
           endpoint?: string
           id?: string
+          ip_hint?: string | null
           last_seen_at?: string
           native_token?: string | null
+          os?: string | null
           p256dh?: string
           platform?: string
           user_agent?: string | null
@@ -21636,6 +21669,7 @@ export type Database = {
       has_role: { Args: { check_role: string }; Returns: boolean }
       has_tenant_access: { Args: { _tenant_id: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      is_device_active: { Args: { _sub_id: string }; Returns: boolean }
       is_internal_user: { Args: never; Returns: boolean }
       is_portal_customer: { Args: never; Returns: boolean }
       is_supplier: { Args: never; Returns: boolean }

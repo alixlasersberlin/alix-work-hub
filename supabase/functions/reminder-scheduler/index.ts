@@ -90,7 +90,9 @@ Deno.serve(async (req) => {
     };
 
     // Alle aktiven Subscriptions dieses Users
-    const { data: subs } = await svc.from('mobile_push_subscriptions').select('*').eq('user_id', r.user_id);
+    // Zero-Trust: nur freigegebene, nicht gesperrte Geräte erhalten Pushes
+    const { data: subs } = await svc.from('mobile_push_subscriptions').select('*')
+      .eq('user_id', r.user_id).eq('approval_status', 'approved').is('blocked_at', null);
     if (!subs || subs.length === 0) {
       await svc.from('appointment_reminders').update({ status: 'failed', error_message: 'no_subscription' }).eq('id', r.id);
       failed++; continue;

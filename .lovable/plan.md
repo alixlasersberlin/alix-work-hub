@@ -1,57 +1,59 @@
-# AlixWork Mobile Kalender – Phasen 7–9
+# Phase 10a — Zero-Trust-Baseline (Gerätefreigabe, Offline-Wipe, Domain)
 
-## Phase 7 · Offline-Aktionsqueue ✅
+Umgesetzt in einem Rutsch. Was jetzt aktiv ist:
 
-- `src/lib/offline/kalender-queue.ts` – IndexedDB-Store (idb) mit enqueue/list/count/sync/clear + Pub-Sub.
-- `src/hooks/useOfflineKalenderQueue.ts` – Reaktiver Zähler, automatischer Sync bei `online`-Event und beim Mount.
-- `TerminDetail.tsx` – Bestätigen / Starten / Erledigt / Absagen werden bei Offline oder Netzwerkfehler in die Outbox geschrieben, UI optimistisch aktualisiert.
-- `KalenderLayout.tsx` – Badge mit Zähler ausstehender Aktionen, Klick löst manuellen Sync aus.
+## 1. Gerätefreigabe-Workflow ✅
 
-Datenmodell: keine neue Tabelle – die Queue lebt rein clientseitig in IndexedDB und schreibt beim Sync direkt in `esc_events` (RLS greift wie gewohnt).
+**Migration**: `mobile_push_subscriptions` erweitert um
+- `device_name, os, browser, app_version, ip_hint`
+- `approval_status` (`pending`/`approved`/`blocked`) mit Check-Constraint
+- `approved_at, approved_by, blocked_at, blocked_by, block_reason`
+- Auto-Approve aller Bestandsgeräte (kein Ausloggen).
+- Neue RLS-Policies: Super Admin & Admin dürfen ALLE Geräte lesen und ändern.
+- SECURITY-DEFINER-Funktion `is_device_active(sub_id)` (nur `authenticated`/`service_role`).
 
-## Phase 8a · ICS-Feed (Read-only Sync) ✅
+**Client**:
+- `src/lib/device-info.ts` – best-effort UA-Parsing (OS, Browser, Gerätename, App-Version).
+- `usePushSubscription.subscribe()` schickt Device-Info + IP-Hint (server-seitig aus X-Forwarded-For) beim Registrieren mit.
 
-Nutzt die bereits vorhandene Infrastruktur:
-- Edge Function `esc-feed-issue` mintet/holt persönlichen Feed-Token.
-- Edge Function `esc-ics` liefert RFC-5545-kompatibles ICS für Apple, Google, Outlook, Thunderbird.
-- Tabelle `esc_ics_tokens` speichert Tokens mit 5-Jahre-Gültigkeit.
+**Server-Gate**:
+- `push-subscribe` speichert Device-Info in DB.
+- `reminder-scheduler` filtert vor jedem Push auf `approval_status='approved' AND blocked_at IS NULL`. Gesperrte Geräte bekommen keine Nachrichten mehr – auch wenn die Subscription technisch noch existiert.
 
-Neu:
-- `src/components/kalender/IcsFeedCard.tsx` – Zeigt Feed-URL, „Kopieren", `webcal://`-Abonnieren-Button, „Neu ausstellen".
-- In `MobileKalender/Einstellungen.tsx` unter „Externer Kalender" eingebunden.
+**Admin-UI**: `/admin/geraete` (Super Admin & Admin)
+- Zähler pending/approved/blocked, Filter, Volltextsuche.
+- Freigeben / Sperren (mit optionalem Grund) / Zurücksetzen.
+- Zeigt Nutzer, Gerät, OS, Browser, IP, Registrierungs- und Zuletzt-Aktiv-Zeit.
 
-Anleitungen für Apple / Google / Outlook stehen direkt auf der Karte.
+## 2. Offline-Daten-Wipe beim Logout ✅
 
-## Phase 8b · Google/Outlook OAuth (2-Wege) – **später bei Bedarf**
+`useAuth.signOut()` löscht jetzt vor `supabase.auth.signOut()`:
+- Kalender-Outbox (`clearQueue()`).
+- Alle projekteigenen IndexedDB-Datenbanken (`alixwork*`, `kalender*`, `dispatch*`, `offline*`).
+- `sessionStorage` komplett.
 
-Grund: Techniker legen Termine ausschließlich im Alix-Kalender an. Der Read-only ICS-Feed reicht für 95 % der Anwendungsfälle. OAuth-Anbindung an Google/Microsoft würde bedeuten:
-- Google Cloud Console Projekt + OAuth-Consent-Screen-Verification (kann Wochen dauern)
-- Azure App Registration + Graph-API-Berechtigungen
-- Watch-Channels & Change-Tracking
-- Konfliktauflösung wenn beide Seiten schreiben
+Damit bleiben nach Abmeldung (auch nach Fern-Sperrung des Geräts durch Admin, wenn der Nutzer sich neu einloggen muss) keine Kalender-, Termin- oder Kunden-Fragmente lokal zurück.
 
-Aufheben wir uns auf, wenn ein Kunde/Mitarbeiter das konkret nachfragt.
+## 3. Auto-Logout nach Inaktivität ✅ (bereits vorher)
 
-## Phase 9 · Store-Release-Pipeline ✅ (Setup ausgeliefert, Ausführung außerhalb Lovable)
+Bestehende 30-Minuten-Inaktivitätslogik in `useAuth` bleibt bestehen. Ein Re-Auth-Modal vor sensiblen Kundendaten (KYC-artig) baue ich in Phase 10b zusammen mit MFA.
 
-- `.github/workflows/ios-release.yml` – macOS-Runner, `fastlane beta|release` → TestFlight/App Store.
-- `.github/workflows/android-release.yml` – Ubuntu-Runner, `fastlane internal|beta|production` → Play Console.
-- `ios/fastlane/Fastfile` – Match für Zertifikate, App Store Connect API-Key, TestFlight- + App-Store-Lane.
-- `android/fastlane/Fastfile` – Gradle bundleRelease + Play-Service-Account-JSON, drei Tracks.
-- `docs/store-release.md` – Komplette Anleitung: Secrets, Keystore, Match, erster Release.
+## 4. Domain-Umzug auf `app.alixwork.de`
 
-Was der User machen muss:
-1. Projekt via „Export to GitHub" in eigenes Repo bringen.
-2. `npx cap add ios/android` einmalig lokal, `bundle add fastlane`.
-3. GitHub-Secrets hinterlegen (Liste in `docs/store-release.md`).
-4. Actions → Workflow manuell triggern.
+Musst du im Lovable-UI machen (DNS-Kontrolle liegt bei dir):
 
-Erster Release bleibt manuell (Screenshots/Beschreibung in App Store Connect / Play Console). Ab dem 2. Release genügt ein Klick auf „Run workflow".
+1. **Project Settings → Domains → Connect Domain**
+2. Domain: `app.alixwork.de` eintragen.
+3. DNS-Einträge bei deinem Registrar setzen:
+   - `A` `app` → `185.158.133.1`
+   - `TXT` `_lovable.app` → Wert aus dem Setup-Dialog
+4. Warten bis Status = **Active** (SSL wird automatisch bereitgestellt).
+5. Alte `alix-pro-hub.lovable.app`-URL bleibt weiter erreichbar für interne Bookmarks; sobald `app.alixwork.de` läuft, kannst du sie in Publish Settings als Primary setzen.
 
-## Was ist danach noch offen?
+Weil Publish-Visibility bereits auf `private` steht (Phase davor), sperrt auch `app.alixwork.de` alle Nicht-Workspace-Mitglieder aus.
 
-Nichts Geplantes. Weitere sinnvolle Ausbaustufen (kein Zwang, alles Kür):
-- Push-Templates für Terminarten anpassbar machen
-- Kalender-Widget für iOS/Android Home-Screen (WidgetKit / AppWidget)
-- Sprachbefehl „Termin erledigt" via SiriKit / Google Assistant
-- Offline-Cache für Kalenderansicht (Read-Path, aktuell nur Write-Path offline)
+## Phase 10b (nächster Turn, wenn du willst)
+
+- MFA-Pflicht (TOTP + WebAuthn/Passkey) für Super Admin/Admin/Geschäftsführung.
+- Re-Auth-Modal vor sensiblen Kundendaten-Aktionen.
+- `mfa-enroll` / `mfa-verify` Edge Functions, Migration für `user_mfa_secrets` + Recovery Codes + WebAuthn-Credentials.

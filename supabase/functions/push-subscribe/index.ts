@@ -31,7 +31,8 @@ Deno.serve(async (req) => {
     return json({ ok: true, removed: true });
   }
 
-  const { endpoint, p256dh, auth, user_agent, platform, native_token } = body || {};
+  const { endpoint, p256dh, auth, user_agent, platform, native_token, device_name, os, browser, app_version } = body || {};
+  const ip_hint = (req.headers.get('x-forwarded-for') ?? '').split(',')[0]?.trim() || null;
 
   // Native (iOS/Android via Capacitor)
   if ((platform === 'ios' || platform === 'android') && native_token) {
@@ -43,6 +44,11 @@ Deno.serve(async (req) => {
       p256dh: null,
       auth_key: null,
       user_agent: user_agent ?? null,
+      device_name: device_name ?? null,
+      os: os ?? null,
+      browser: browser ?? null,
+      app_version: app_version ?? null,
+      ip_hint,
       last_seen_at: new Date().toISOString(),
     }, { onConflict: 'user_id,platform,native_token' });
     if (error) return json({ error: error.message }, 500);
@@ -59,6 +65,11 @@ Deno.serve(async (req) => {
     p256dh,
     auth_key: auth,
     user_agent: user_agent ?? null,
+    device_name: device_name ?? null,
+    os: os ?? null,
+    browser: browser ?? null,
+    app_version: app_version ?? null,
+    ip_hint,
     last_seen_at: new Date().toISOString(),
   }, { onConflict: 'user_id,endpoint' });
 
