@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
+import TenantSwitcher from '@/components/TenantSwitcher';
+
 
 const tiles = [
   { to: '/operation/email-vorlagen', icon: Mail, title: 'E-Mail Vorlagen', desc: 'Inhalte automatisch versendeter E-Mails bearbeiten.' },
@@ -38,12 +40,18 @@ export default function Operation() {
   ];
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <PageHeader
-        icon={Workflow}
-        title="Operation"
-        subtitle="Operative Abläufe und Tools."
-        noBreadcrumbs
-      />
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <PageHeader
+          icon={Workflow}
+          title="Operation"
+          subtitle="Operative Abläufe und Tools."
+          noBreadcrumbs
+        />
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-muted-foreground">Mandantenauswahl</span>
+          <TenantSwitcher />
+        </div>
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {allTiles.map(t => (
           <Link key={t.to} to={t.to}>
