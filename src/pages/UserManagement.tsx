@@ -612,7 +612,7 @@ export default function UserManagement() {
                 <Button
                   variant={showConfirmAction.action === 'active' ? 'default' : 'destructive'}
                   disabled={actionLoading}
-                  onClick={() => showConfirmAction && handleStatusChange(showConfirmAction.user, showConfirmAction.action)}
+                  onClick={() => showConfirmAction && reauthStatus.gate(() => handleStatusChange(showConfirmAction.user, showConfirmAction.action))}
                 >
                   {actionLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   Bestätigen
