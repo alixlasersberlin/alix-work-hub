@@ -452,6 +452,15 @@ export default function Angebote() {
                 <SelectItem value="signed">Unterzeichnet – in Aufträge übernommen</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={dealFilter} onValueChange={(v) => setDealFilter(v as any)}>
+              <SelectTrigger className="w-[200px] h-9"><SelectValue placeholder="Deal-Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle Deal-Status</SelectItem>
+                <SelectItem value="offen">Angebot offen</SelectItem>
+                <SelectItem value="angenommen">Angebot angenommen</SelectItem>
+                <SelectItem value="abgelehnt">Abgelehnt</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
