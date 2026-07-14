@@ -75,5 +75,7 @@ export default function CustomerDeleteDialog({ customer, open, onClose, onDelete
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+    <ReauthDialog {...dialogProps} />
+    </>
   );
 }
