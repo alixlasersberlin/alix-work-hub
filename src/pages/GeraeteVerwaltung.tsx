@@ -143,20 +143,20 @@ export default function GeraeteVerwaltung() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {d.approval_status !== 'approved' && (
-                  <Button size="sm" onClick={() => setStatus(d, 'approved')}>
+                  <Button size="sm" onClick={() => gate(() => setStatus(d, 'approved'))}>
                     <ShieldCheck className="h-3.5 w-3.5 mr-1" /> Freigeben
                   </Button>
                 )}
                 {d.approval_status !== 'blocked' && (
                   <Button size="sm" variant="destructive" onClick={() => {
                     const reason = prompt('Sperr-Grund (optional):') || undefined;
-                    setStatus(d, 'blocked', reason);
+                    gate(() => setStatus(d, 'blocked', reason));
                   }}>
                     <ShieldOff className="h-3.5 w-3.5 mr-1" /> Sperren
                   </Button>
                 )}
                 {d.approval_status !== 'pending' && (
-                  <Button size="sm" variant="ghost" onClick={() => setStatus(d, 'pending')}>
+                  <Button size="sm" variant="ghost" onClick={() => gate(() => setStatus(d, 'pending'))}>
                     Zurücksetzen
                   </Button>
                 )}
@@ -168,6 +168,8 @@ export default function GeraeteVerwaltung() {
           <div className="text-center text-sm text-muted-foreground py-8">Keine Geräte im aktuellen Filter.</div>
         )}
       </div>
+
+      <ReauthDialog {...dialogProps} />
     </div>
   );
 }
