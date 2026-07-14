@@ -24,7 +24,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase, Bell, Package as PackageIcon } from 'lucide-react';
+import { Briefcase, Bell, Package as PackageIcon, Eye } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
@@ -604,7 +604,7 @@ export const navItems: NavItem[] = [
 ];
 
 export default function AppLayout() {
-  const { profile, roles, signOut } = useAuth();
+  const { profile, roles, signOut, impersonatedUserId, impersonatedName, stopImpersonation } = useAuth();
   const { variant } = useDesignVariant();
   const isAurora = variant === 'aurora';
   const location = useLocation();
@@ -632,14 +632,14 @@ export default function AppLayout() {
   // Per-User Menü-Freigaben (überschreibt Rollenlogik, wenn gesetzt)
   const [menuGrants, setMenuGrants] = useState<Set<string> | null>(null);
   useEffect(() => {
-    const uid = profile?.id;
+    const uid = impersonatedUserId ?? profile?.id;
     if (!uid) { setMenuGrants(null); return; }
     (async () => {
       const { data } = await supabase.from('user_menu_grants' as any).select('path').eq('user_id', uid);
       if (!data || data.length === 0) { setMenuGrants(null); return; }
       setMenuGrants(new Set((data as any[]).map(r => r.path)));
     })();
-  }, [profile?.id]);
+  }, [profile?.id, impersonatedUserId]);
 
   // Globaler Auto-Refresh: remountet die aktuelle Seite alle 60 Minuten,
   // sodass alle Listen & Statistiken neu geladen werden. Zusätzlich bei
@@ -1077,7 +1077,21 @@ export default function AppLayout() {
   const toggleGroup = (path: string) => setOpenGroups(s => ({ ...s, [path]: !s[path] }));
 
   return (
-    <div className="h-screen-dvh flex bg-background overflow-hidden">
+    <div className="h-screen-dvh flex flex-col bg-background overflow-hidden">
+      {impersonatedUserId && (
+        <div className="flex-shrink-0 bg-amber-500 text-black text-sm px-4 py-2 flex items-center gap-3 justify-center border-b border-amber-600">
+          <Eye className="w-4 h-4" />
+          <span><strong>Simulation aktiv</strong> — Ansicht als: {impersonatedName ?? impersonatedUserId}</span>
+          <button
+            type="button"
+            onClick={stopImpersonation}
+            className="ml-2 px-2 py-0.5 rounded bg-black/80 text-white text-xs hover:bg-black"
+          >
+            Simulation beenden
+          </button>
+        </div>
+      )}
+      <div className="flex-1 flex overflow-hidden">
       {/* Globale Cmd+K Suche (per Tastatur erreichbar) */}
       <CommandPalette />
       {/* Mobile Backdrop */}
@@ -1712,6 +1726,7 @@ export default function AppLayout() {
       {/* Begrüßungs-Overlays für Natalia & Lars deaktiviert */}
 
 
+      </div>
     </div>
   );
 }

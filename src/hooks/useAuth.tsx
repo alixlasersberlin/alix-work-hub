@@ -32,7 +32,12 @@ interface AuthContextType {
   isAdmin: boolean;
   isOtpVerified: boolean;
   refreshProfile: () => Promise<void>;
+  impersonatedUserId: string | null;
+  impersonatedName: string | null;
+  stopImpersonation: () => void;
 }
+
+const IMPERSONATE_KEY = 'alixwork.impersonate_user_id';
 
 const defaultAuthContext: AuthContextType = {
   user: null,
@@ -50,6 +55,9 @@ const defaultAuthContext: AuthContextType = {
   isAdmin: false,
   isOtpVerified: true,
   refreshProfile: async () => {},
+  impersonatedUserId: null,
+  impersonatedName: null,
+  stopImpersonation: () => {},
 };
 
 const AuthContext = createContext<AuthContextType>(defaultAuthContext);
@@ -118,6 +126,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [mfaState, setMfaState] = useState<MfaState>('unknown');
+  const [impersonatedUserId, setImpersonatedUserId] = useState<string | null>(() => {
+    try { return sessionStorage.getItem(IMPERSONATE_KEY); } catch { return null; }
+  });
+  const [impersonatedName, setImpersonatedName] = useState<string | null>(null);
 
   async function fetchProfile(userId: string) {
     const { data } = await supabase
@@ -133,10 +145,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await (supabase as any).rpc('get_current_user_role_names');
     if (error || !Array.isArray(data)) {
       setRoles([]);
+      return [] as string[];
+    }
+    const list = (data as any[]).filter(Boolean) as string[];
+    setRoles(list);
+    return list;
+  }
+
+  async function applyImpersonation(realRoles: string[], targetId: string) {
+    // Nur zulässig, wenn der eingeloggte User tatsächlich Super Admin ist
+    if (!realRoles.includes('Super Admin')) {
+      try { sessionStorage.removeItem(IMPERSONATE_KEY); } catch { /* ignore */ }
+      setImpersonatedUserId(null);
+      setImpersonatedName(null);
       return;
     }
-    setRoles(data.filter(Boolean));
+    const [{ data: prof }, { data: ur }] = await Promise.all([
+      supabase.from('user_profiles').select('full_name, email').eq('id', targetId).maybeSingle(),
+      supabase.from('user_roles').select('roles(name)').eq('user_id', targetId),
+    ]);
+    setImpersonatedName((prof as any)?.full_name ?? (prof as any)?.email ?? targetId);
+    const names = (ur ?? []).map((r: any) => r.roles?.name).filter(Boolean) as string[];
+    setRoles(names);
   }
+
+  const stopImpersonation = useCallback(() => {
+    try { sessionStorage.removeItem(IMPERSONATE_KEY); } catch { /* ignore */ }
+    setImpersonatedUserId(null);
+    setImpersonatedName(null);
+    // Neu laden, damit Rollen wieder frisch aus dem echten User geladen werden
+    window.location.reload();
+  }, []);
 
   const refreshMfaState = useCallback(async () => {
     setMfaState(await computeMfaState());
@@ -155,7 +194,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user) {
         setTimeout(async () => {
           await fetchProfile(session.user.id);
-          await fetchRoles(session.user.id);
+          const realRoles = await fetchRoles(session.user.id);
+          if (impersonatedUserId) await applyImpersonation(realRoles, impersonatedUserId);
           setMfaState(await computeMfaState());
         }, 0);
       } else {
@@ -169,14 +209,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        Promise.all([
-          fetchProfile(session.user.id),
-          fetchRoles(session.user.id),
-          computeMfaState(),
-        ]).then(([, , mfa]) => {
-          setMfaState(mfa);
+        (async () => {
+          await fetchProfile(session.user.id);
+          const realRoles = await fetchRoles(session.user.id);
+          if (impersonatedUserId) await applyImpersonation(realRoles, impersonatedUserId);
+          setMfaState(await computeMfaState());
           setLoading(false);
-        });
+        })();
       } else {
         setLoading(false);
       }
@@ -277,6 +316,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mfaState, refreshMfaState,
       signIn, signOut,
       hasRole, hasAnyRole, isAdmin, isOtpVerified, refreshProfile,
+      impersonatedUserId, impersonatedName, stopImpersonation,
     }}>
       {children}
     </AuthContext.Provider>

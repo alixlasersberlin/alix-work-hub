@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Loader2, Eye, ShieldCheck, Clock, Info } from 'lucide-react';
+import { Loader2, Eye, ShieldCheck, Clock, Info, ExternalLink } from 'lucide-react';
 import { CRITICAL_ROLE_NAMES } from './lib';
 
 type EffRole = { role_id: string; role_name: string; source: string; valid_until: string | null; granted_by: string | null };
@@ -70,9 +71,17 @@ export default function ViewAs() {
                 <div className="text-lg font-semibold">{user.full_name ?? user.email}</div>
                 <div className="text-xs text-muted-foreground">{user.email}</div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant={user.is_active ? 'default' : 'destructive'}>{user.is_active ? 'Aktiv' : 'Inaktiv'}</Badge>
                 <Badge variant="outline">{user.account_status ?? 'unbekannt'}</Badge>
+                <Button
+                  size="sm"
+                  onClick={() => window.open(`/simulate/${selected}`, '_blank', 'noopener,noreferrer')}
+                  className="bg-amber-500 hover:bg-amber-600 text-black"
+                >
+                  <ExternalLink className="w-4 h-4 mr-1.5" />
+                  In neuem Fenster als diesen Benutzer öffnen
+                </Button>
               </div>
             </div>
           </Card>

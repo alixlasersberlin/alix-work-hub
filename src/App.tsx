@@ -356,6 +356,7 @@ const RfLifecycle = lazy(() => import("./pages/RollenFreigaben/LifecycleDashboar
 const RfAuditExport = lazy(() => import("./pages/RollenFreigaben/AuditExport"));
 const RfZugriffErteilen = lazy(() => import("./pages/RollenFreigaben/ZugriffErteilen"));
 const SelfServiceRoles = lazy(() => import("./pages/SelfService/Roles"));
+const SimulateEntry = lazy(() => import("./pages/SimulateEntry"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
 const SecurityPentest = lazy(() => import("./pages/SecurityCenter/Pentest"));
@@ -794,6 +795,7 @@ function AppRoutes() {
         <Route path="/termin/bestaetigen/:token" element={<AppointmentAction action="confirm" />} />
         <Route path="/termin/verschieben/:token" element={<AppointmentAction action="reschedule" />} />
         <Route path="/termin/ablehnen/:token" element={<AppointmentAction action="cancel" />} />
+        <Route path="/simulate/:userId" element={<ProtectedRoute requiredRoles={['Super Admin']}><SimulateEntry /></ProtectedRoute>} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
