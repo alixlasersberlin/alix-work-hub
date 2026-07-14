@@ -1242,8 +1242,9 @@ export default function AngebotErstellen() {
       // 5) Angebot als „angenommen / in Auftrag gewandelt" markieren
       await updateOfferStatus(offerNumber, 'order', new Date().toISOString());
 
-      toast.success(`Angebot bestätigt – Auftrag ${orderNr} wurde angelegt.`);
-      navigate('/verkauf/angebote');
+      toast.success(sofortMode ? `Sofortauftrag angelegt – Auftrag ${orderNr}.` : `Angebot bestätigt – Auftrag ${orderNr} wurde angelegt.`);
+      navigate(sofortMode ? '/auftraege' : '/verkauf/angebote');
+
     } catch (e: any) {
       toast.error('Bestätigung fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
     } finally {
