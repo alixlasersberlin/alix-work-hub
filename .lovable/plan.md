@@ -1,59 +1,73 @@
-# Phase 10a — Zero-Trust-Baseline (Gerätefreigabe, Offline-Wipe, Domain)
 
-Umgesetzt in einem Rutsch. Was jetzt aktiv ist:
+# Phase 10b — MFA & Re-Auth (Zero-Trust Stufe 2)
 
-## 1. Gerätefreigabe-Workflow ✅
+Ziel: Super Admin / Admin / Geschäftsführung können sich ohne aktive 2FA **nichts** mehr ansehen. Zusätzlich muss der Nutzer vor sensiblen Aktionen (Kundendaten öffnen, Finance-Auszahlungen, Rollen ändern, Gerätefreigabe) sein Passwort **oder** einen TOTP/Passkey neu bestätigen.
 
-**Migration**: `mobile_push_subscriptions` erweitert um
-- `device_name, os, browser, app_version, ip_hint`
-- `approval_status` (`pending`/`approved`/`blocked`) mit Check-Constraint
-- `approved_at, approved_by, blocked_at, blocked_by, block_reason`
-- Auto-Approve aller Bestandsgeräte (kein Ausloggen).
-- Neue RLS-Policies: Super Admin & Admin dürfen ALLE Geräte lesen und ändern.
-- SECURITY-DEFINER-Funktion `is_device_active(sub_id)` (nur `authenticated`/`service_role`).
+## Umfang
 
-**Client**:
-- `src/lib/device-info.ts` – best-effort UA-Parsing (OS, Browser, Gerätename, App-Version).
-- `usePushSubscription.subscribe()` schickt Device-Info + IP-Hint (server-seitig aus X-Forwarded-For) beim Registrieren mit.
+### 1. Datenbank (Migration)
+- `user_mfa_secrets` erweitern (aktuell nur 3 Spalten):
+  - `totp_secret` (verschlüsselt, base32), `totp_confirmed_at`, `enrolled_at`, `disabled_at`
+- Neue Tabelle `mfa_recovery_codes` (user_id, code_hash, used_at) — 10 Einmalcodes.
+- Neue Tabelle `mfa_webauthn_credentials` (user_id, credential_id, public_key, counter, transports, device_label, last_used_at) für Passkeys.
+- Neue Tabelle `mfa_reauth_events` (user_id, method, purpose, verified_at, expires_at) — kurzlebige Re-Auth-Tickets (5 min).
+- SECURITY-DEFINER-Funktion `public.mfa_required_for_user(uid uuid) → boolean`: true wenn User eine der Rollen Super Admin/Admin/Geschäftsführung hat.
+- SECURITY-DEFINER-Funktion `public.has_valid_reauth(uid uuid, purpose text) → boolean`.
+- Alle Grants + RLS wie in privacy-Regeln (nur eigene Zeilen, service_role voll).
 
-**Server-Gate**:
-- `push-subscribe` speichert Device-Info in DB.
-- `reminder-scheduler` filtert vor jedem Push auf `approval_status='approved' AND blocked_at IS NULL`. Gesperrte Geräte bekommen keine Nachrichten mehr – auch wenn die Subscription technisch noch existiert.
+### 2. Edge Functions
+- `mfa-enroll-totp`: erzeugt Secret, liefert `otpauth://`-URI + QR-SVG (Base64), speichert **unbestätigt**.
+- `mfa-verify-totp`: prüft 6-stelligen Code (HMAC-SHA1, RFC 6238, ±1 Fenster), setzt `totp_confirmed_at`, generiert 10 Recovery-Codes (nur einmal angezeigt).
+- `mfa-webauthn-register-options` / `mfa-webauthn-register-verify` (via `@simplewebauthn/server`).
+- `mfa-webauthn-auth-options` / `mfa-webauthn-auth-verify`.
+- `mfa-reauth`: nimmt TOTP-Code **oder** Passkey-Assertion **oder** Passwort entgegen, erzeugt Re-Auth-Event (5 min gültig) für angegebenen `purpose`.
+- Alle mit `getClaims()` JWT-Check.
 
-**Admin-UI**: `/admin/geraete` (Super Admin & Admin)
-- Zähler pending/approved/blocked, Filter, Volltextsuche.
-- Freigeben / Sperren (mit optionalem Grund) / Zurücksetzen.
-- Zeigt Nutzer, Gerät, OS, Browser, IP, Registrierungs- und Zuletzt-Aktiv-Zeit.
+### 3. Frontend
 
-## 2. Offline-Daten-Wipe beim Logout ✅
+**Erzwungener MFA-Setup:**
+- Neue Route `/mfa/setup` (kein Layout-Wrap, kein Sidebar).
+- `useAuth` prüft nach Login: wenn `mfa_required_for_user()` = true **und** kein `totp_confirmed_at` → hartes Redirect auf `/mfa/setup`, Rest der App gesperrt (Router-Guard).
+- Setup-Screen: QR-Code scannen, Code eingeben, Recovery-Codes anzeigen + Download-Button.
 
-`useAuth.signOut()` löscht jetzt vor `supabase.auth.signOut()`:
-- Kalender-Outbox (`clearQueue()`).
-- Alle projekteigenen IndexedDB-Datenbanken (`alixwork*`, `kalender*`, `dispatch*`, `offline*`).
-- `sessionStorage` komplett.
+**Login-Flow:**
+- Nach Passwort-Login prüft ein neuer Schritt, ob TOTP oder Passkey vorhanden → Challenge-UI (`/mfa/challenge`) vor Erreichen der App.
+- Passkey-Option als primärer Button, TOTP als Fallback, Recovery-Code als Notausgang.
 
-Damit bleiben nach Abmeldung (auch nach Fern-Sperrung des Geräts durch Admin, wenn der Nutzer sich neu einloggen muss) keine Kalender-, Termin- oder Kunden-Fragmente lokal zurück.
+**Re-Auth-Modal** (`src/components/ReauthDialog.tsx` existiert bereits – erweitern):
+- Wird via Hook `useReauthGate(purpose)` an sensible Aktionen gehängt:
+  - Kundendaten-Detail öffnen (`/kunden/:id`)
+  - Finance-SEPA/Auszahlungs-Freigabe
+  - Rollen-Änderungen (`/admin/rollen`, `/admin/geraete` Sperren)
+  - Bug&CAPA-Löschungen
+- Modal: Passkey-Button + TOTP-Feld + „Passwort erneut eingeben"-Fallback.
+- Nach Erfolg: 5 min lang cached (`has_valid_reauth`) — kein Modal-Spam.
 
-## 3. Auto-Logout nach Inaktivität ✅ (bereits vorher)
+**MFA-Verwaltung** unter `/einstellungen/sicherheit`:
+- TOTP-Status (aktiv/inaktiv), Passkey-Liste (hinzufügen/entfernen), Recovery-Codes neu generieren.
 
-Bestehende 30-Minuten-Inaktivitätslogik in `useAuth` bleibt bestehen. Ein Re-Auth-Modal vor sensiblen Kundendaten (KYC-artig) baue ich in Phase 10b zusammen mit MFA.
+### 4. Abhängigkeiten
+- `bun add @simplewebauthn/browser @simplewebauthn/server qrcode otpauth`
+- Secret `MFA_ENCRYPTION_KEY` für TOTP-Secret-Verschlüsselung (via `generate_secret`, 64 chars).
+- Secret `WEBAUTHN_RP_ID` = `alixwork.de` (bzw. `app.alixwork.de` sobald live).
 
-## 4. Domain-Umzug auf `app.alixwork.de`
+### 5. Rollout-Sicherheit
+- Migration setzt für alle Bestands-Admins `mfa_required_for_user()` = true, aber **Grace-Period** von 7 Tagen (Warn-Banner statt Sperre). Dafür Spalte `mfa_grace_until` in `user_profiles`.
+- Super Admin kann in `/admin/rollen` einzelne User temporär von der Pflicht ausnehmen (auditiert).
 
-Musst du im Lovable-UI machen (DNS-Kontrolle liegt bei dir):
+## Technische Notizen
 
-1. **Project Settings → Domains → Connect Domain**
-2. Domain: `app.alixwork.de` eintragen.
-3. DNS-Einträge bei deinem Registrar setzen:
-   - `A` `app` → `185.158.133.1`
-   - `TXT` `_lovable.app` → Wert aus dem Setup-Dialog
-4. Warten bis Status = **Active** (SSL wird automatisch bereitgestellt).
-5. Alte `alix-pro-hub.lovable.app`-URL bleibt weiter erreichbar für interne Bookmarks; sobald `app.alixwork.de` läuft, kannst du sie in Publish Settings als Primary setzen.
+- TOTP: `otpauth`-lib (Deno-kompatibel via `npm:otpauth`), Algorithmus SHA1, 30s Fenster, 6 Digits (kompatibel mit Google Authenticator, 1Password, Authy).
+- WebAuthn RP: Origin muss exakt matchen — für Dev separat `localhost` als RP-ID, für Prod `app.alixwork.de`. Wird per Env-Var gesteuert.
+- Re-Auth-Ticket-Tabelle mit TTL-Cleanup-Cron (bestehender `reminder-scheduler` kann das mitmachen).
+- Recovery-Codes werden mit `crypto.subtle.digest('SHA-256')` gehasht gespeichert, nie im Klartext.
 
-Weil Publish-Visibility bereits auf `private` steht (Phase davor), sperrt auch `app.alixwork.de` alle Nicht-Workspace-Mitglieder aus.
+## Nicht enthalten
+- SMS-2FA (bewusst weggelassen: SIM-Swap-Risiko + Kosten).
+- Hardware-Security-Keys separat: durch WebAuthn/Passkey automatisch mit abgedeckt.
+- Enforcement für „normale" Rollen (Order, QM, Österreich etc.) — bleibt optional, kann pro User aktiviert werden.
 
-## Phase 10b (nächster Turn, wenn du willst)
+## Umfang / Aufwand
+Rund 15 neue/geänderte Dateien, 1 Migration, 6 Edge Functions, 3 neue Routen. Baue ich in einem Rutsch, sobald du „ok" sagst.
 
-- MFA-Pflicht (TOTP + WebAuthn/Passkey) für Super Admin/Admin/Geschäftsführung.
-- Re-Auth-Modal vor sensiblen Kundendaten-Aktionen.
-- `mfa-enroll` / `mfa-verify` Edge Functions, Migration für `user_mfa_secrets` + Recovery Codes + WebAuthn-Credentials.
+**Frage:** Soll die 7-Tage-Grace-Period rein (empfohlen — verhindert Aussperrung im Live-Betrieb), oder sofort-hart ab Deployment?
