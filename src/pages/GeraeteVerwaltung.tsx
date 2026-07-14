@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import ReauthDialog from '@/components/ReauthDialog';
+import { useReauthGate } from '@/hooks/useReauthGate';
 
 interface Device {
   id: string;
