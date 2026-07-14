@@ -32,7 +32,12 @@ interface AuthContextType {
   isAdmin: boolean;
   isOtpVerified: boolean;
   refreshProfile: () => Promise<void>;
+  impersonatedUserId: string | null;
+  impersonatedName: string | null;
+  stopImpersonation: () => void;
 }
+
+const IMPERSONATE_KEY = 'alixwork.impersonate_user_id';
 
 const defaultAuthContext: AuthContextType = {
   user: null,
