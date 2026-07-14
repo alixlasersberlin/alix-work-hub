@@ -839,6 +839,59 @@ export type Database = {
         }
         Relationships: []
       }
+      app_notifications: {
+        Row: {
+          action_url: string | null
+          category: string
+          created_at: string
+          event_id: string | null
+          expires_at: string | null
+          id: string
+          message: string | null
+          metadata: Json
+          priority: string
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          category?: string
+          created_at?: string
+          event_id?: string | null
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json
+          priority?: string
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          category?: string
+          created_at?: string
+          event_id?: string | null
+          expires_at?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json
+          priority?: string
+          read_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_notifications_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "esc_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           id: string
@@ -867,6 +920,163 @@ export type Database = {
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_reminder_rules: {
+        Row: {
+          active: boolean
+          channel: string
+          created_at: string
+          department_id: string | null
+          escalation_level: number
+          event_type_id: string | null
+          id: string
+          minutes_before: number
+          name: string
+          repeat_interval_minutes: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          channel?: string
+          created_at?: string
+          department_id?: string | null
+          escalation_level?: number
+          event_type_id?: string | null
+          id?: string
+          minutes_before?: number
+          name: string
+          repeat_interval_minutes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          created_at?: string
+          department_id?: string | null
+          escalation_level?: number
+          event_type_id?: string | null
+          id?: string
+          minutes_before?: number
+          name?: string
+          repeat_interval_minutes?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reminder_rules_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminder_rules_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_departments_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminder_rules_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminder_rules_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "esc_event_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminder_rules_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "esc_event_types_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminder_rules_event_type_id_fkey"
+            columns: ["event_type_id"]
+            isOneToOne: false
+            referencedRelation: "esc_public_event_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_reminders: {
+        Row: {
+          channel: string
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          event_id: string
+          id: string
+          idempotency_key: string
+          opened_at: string | null
+          payload: Json
+          processed_at: string | null
+          retry_count: number
+          rule_id: string | null
+          scheduled_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          event_id: string
+          id?: string
+          idempotency_key: string
+          opened_at?: string | null
+          payload?: Json
+          processed_at?: string | null
+          retry_count?: number
+          rule_id?: string | null
+          scheduled_at: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          event_id?: string
+          id?: string
+          idempotency_key?: string
+          opened_at?: string | null
+          payload?: Json
+          processed_at?: string | null
+          retry_count?: number
+          rule_id?: string | null
+          scheduled_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reminders_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "esc_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminders_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_reminder_rules"
             referencedColumns: ["id"]
           },
         ]
@@ -13567,6 +13777,72 @@ export type Database = {
           title?: string | null
           updated_at?: string
           version?: string | null
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          badge_enabled: boolean
+          created_at: string
+          email_enabled: boolean
+          escalations_enabled: boolean
+          id: string
+          in_app_enabled: boolean
+          privacy_mode: boolean
+          push_enabled: boolean
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          selected_departments: string[]
+          selected_event_types: string[]
+          sms_enabled: boolean
+          sound_enabled: boolean
+          updated_at: string
+          user_id: string
+          vibration_enabled: boolean
+          weekend_enabled: boolean
+          whatsapp_enabled: boolean
+        }
+        Insert: {
+          badge_enabled?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          escalations_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          privacy_mode?: boolean
+          push_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          selected_departments?: string[]
+          selected_event_types?: string[]
+          sms_enabled?: boolean
+          sound_enabled?: boolean
+          updated_at?: string
+          user_id: string
+          vibration_enabled?: boolean
+          weekend_enabled?: boolean
+          whatsapp_enabled?: boolean
+        }
+        Update: {
+          badge_enabled?: boolean
+          created_at?: string
+          email_enabled?: boolean
+          escalations_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          privacy_mode?: boolean
+          push_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          selected_departments?: string[]
+          selected_event_types?: string[]
+          sms_enabled?: boolean
+          sound_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+          vibration_enabled?: boolean
+          weekend_enabled?: boolean
+          whatsapp_enabled?: boolean
         }
         Relationships: []
       }
