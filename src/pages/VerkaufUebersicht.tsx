@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
-import { Building2, FileText, ClipboardList, Receipt, Undo2, TrendingUp, Loader2 } from 'lucide-react';
+import { Building2, FileText, ClipboardList, Receipt, Undo2, TrendingUp, Loader2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -43,6 +43,15 @@ const TILES: Tile[] = [
       return count ?? 0;
     },
   },
+  {
+    key: 'sofortauftrag',
+    label: '⚡ Sofortauftrag erstellen',
+    icon: Zap,
+    to: '/verkauf/angebot/neu?mode=sofort',
+    accent: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/30',
+    load: async () => null,
+  },
+
   {
     key: 'auftraege',
     label: '🇩🇪 Aufträge Alix Deutschland',
