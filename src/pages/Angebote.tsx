@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock, Search, AlertTriangle } from 'lucide-react';
+import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock, Search, AlertTriangle, XCircle } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -40,6 +40,7 @@ export default function Angebote() {
   const [creatorFilter, setCreatorFilter] = useState<string>('alle');
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year' | 'all'>('all');
   const [orderFilter, setOrderFilter] = useState<'alle' | 'offen' | 'auftrag' | 'signed'>('alle');
+  const [dealFilter, setDealFilter] = useState<'alle' | 'offen' | 'angenommen' | 'abgelehnt'>('alle');
 
   const [signLinkOpen, setSignLinkOpen] = useState(false);
   const [signLinkLoading, setSignLinkLoading] = useState(false);
@@ -275,6 +276,21 @@ export default function Angebote() {
     };
   }, [offers.length]);
 
+  const markNoDeal = async (offerNumber: string) => {
+    if (!isSuperAdmin) {
+      toast.error('Nur der Super Admin kann ein Angebot als "Kein Deal" markieren.');
+      return;
+    }
+    if (!confirm(`Angebot ${offerNumber} als "Kein Deal" markieren? Es gilt danach als abgelehnt.`)) return;
+    try {
+      await setOfferApproval(offerNumber, 'rejected', 'Kein Deal');
+      toast.success('Angebot als "Kein Deal" markiert.');
+      await reload();
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message || 'Unbekannt'));
+    }
+  };
+
   const remove = async (offerNumber: string) => {
     if (!confirm(`Angebot ${offerNumber} löschen?`)) return;
     try {
@@ -386,6 +402,15 @@ export default function Angebote() {
                   if (orderFilter === 'offen' && hasOrder) return false;
                   if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
                 }
+                if (dealFilter !== 'alle') {
+                  const approval = (o.approvalStatus || 'pending');
+                  const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+                  const angenommen = approval === 'approved' || o.status === 'signed' || o.status === 'order' || hasOrder;
+                  const abgelehnt = approval === 'rejected';
+                  if (dealFilter === 'abgelehnt' && !abgelehnt) return false;
+                  if (dealFilter === 'angenommen' && !angenommen) return false;
+                  if (dealFilter === 'offen' && (angenommen || abgelehnt)) return false;
+                }
                 if (!q) return true;
                 return (
                   (o.offerNumber || '').toLowerCase().includes(q) ||
@@ -442,6 +467,15 @@ export default function Angebote() {
                 <SelectItem value="signed">Unterzeichnet – in Aufträge übernommen</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={dealFilter} onValueChange={(v) => setDealFilter(v as any)}>
+              <SelectTrigger className="w-[200px] h-9"><SelectValue placeholder="Deal-Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle Deal-Status</SelectItem>
+                <SelectItem value="offen">Angebot offen</SelectItem>
+                <SelectItem value="angenommen">Angebot angenommen</SelectItem>
+                <SelectItem value="abgelehnt">Abgelehnt</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -485,6 +519,15 @@ export default function Angebote() {
                       if (orderFilter === 'auftrag' && !hasOrder) return false;
                       if (orderFilter === 'offen' && hasOrder) return false;
                       if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
+                    }
+                    if (dealFilter !== 'alle') {
+                      const approval = (o.approvalStatus || 'pending');
+                      const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+                      const angenommen = approval === 'approved' || o.status === 'signed' || o.status === 'order' || hasOrder;
+                      const abgelehnt = approval === 'rejected';
+                      if (dealFilter === 'abgelehnt' && !abgelehnt) return false;
+                      if (dealFilter === 'angenommen' && !angenommen) return false;
+                      if (dealFilter === 'offen' && (angenommen || abgelehnt)) return false;
                     }
                     if (!q) return true;
                     return (
@@ -610,6 +653,18 @@ export default function Angebote() {
                           title={canEditOrSign ? 'Unterschriftslink anzeigen' : 'Erst nach Freigabe verfügbar'}
                         >
                           <Link2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {approval !== 'rejected' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={!isSuperAdmin}
+                          onClick={() => markNoDeal(o.offerNumber)}
+                          title={isSuperAdmin ? 'Als "Kein Deal" markieren (Angebot abgelehnt)' : 'Nur Super Admin darf "Kein Deal" markieren'}
+                          className="text-destructive hover:bg-destructive/10 disabled:opacity-60"
+                        >
+                          <XCircle className="h-4 w-4 mr-1" /> Kein Deal
                         </Button>
                       )}
                       <Button variant="ghost" size="icon" onClick={() => remove(o.offerNumber)} title="Löschen">
