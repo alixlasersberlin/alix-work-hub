@@ -417,6 +417,7 @@ export default function Angebote() {
                 <SelectItem value="alle">Alle Angebote</SelectItem>
                 <SelectItem value="offen">Angebot offen</SelectItem>
                 <SelectItem value="auftrag">Als Auftrag übernommen</SelectItem>
+                <SelectItem value="signed">Unterzeichnet – in Aufträge übernommen</SelectItem>
               </SelectContent>
             </Select>
           </div>
