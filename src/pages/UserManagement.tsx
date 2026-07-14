@@ -19,6 +19,8 @@ import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { displayRoleName } from '@/lib/role-labels';
+import { useReauthGate } from '@/hooks/useReauthGate';
+import ReauthDialog from '@/components/ReauthDialog';
 
 /* ─── Types ─── */
 interface EnrichedUser {
