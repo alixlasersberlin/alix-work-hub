@@ -1088,7 +1088,7 @@ export default function AngebotErstellen() {
     } : null,
     lines: lines.filter(l => l.name && l.quantity > 0),
     totals,
-    payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, term: payTerm },
+    payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, term: payTerm, rate: parseFloat(payRate) || 0 },
     createdAt: new Date().toISOString(),
   });
 
