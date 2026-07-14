@@ -776,9 +776,10 @@ function AppRoutes() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Landing />} />
         {/* Verdeckte Login-Aliasse (nicht im Menü, nicht in Sitemap, noindex) */}
-        <Route path="/alix-control" element={user ? <Navigate to="/dashboard" replace /> : <CovertLogin />} />
-        <Route path="/alix-secure" element={user ? <Navigate to="/dashboard" replace /> : <CovertLogin />} />
-        <Route path="/alix-enterprise" element={user ? <Navigate to="/dashboard" replace /> : <CovertLogin />} />
+        <Route path="/alix-control" element={user ? <Navigate to={typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de' ? '/m/kalender' : '/dashboard'} replace /> : <CovertLogin />} />
+        <Route path="/alix-secure" element={user ? <Navigate to={typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de' ? '/m/kalender' : '/dashboard'} replace /> : <CovertLogin />} />
+        <Route path="/alix-enterprise" element={user ? <Navigate to={typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de' ? '/m/kalender' : '/dashboard'} replace /> : <CovertLogin />} />
+
         <Route path="/passwort-setzen" element={<SetPassword />} />
         <Route path="/stakeholder/:token" element={<StakeholderPortal />} />
         <Route path="/pdf/ab" element={<PdfAb />} />

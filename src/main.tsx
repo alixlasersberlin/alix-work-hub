@@ -16,11 +16,27 @@ bootA11yPrefs();
 bootAIBackground();
 bootPageFade();
 
-// app.alixwork.de → dedizierte Kalender-Domain: Root immer auf /m/kalender lenken
+// app.alixwork.de → dedizierte Kalender-Domain.
+// Ohne aktive Supabase-Session direkt auf /alix-control (Login), sonst auf /m/kalender.
 if (typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de') {
   const p = window.location.pathname;
-  if (p === '/' || p === '') {
-    window.history.replaceState(null, '', '/m/kalender' + window.location.search + window.location.hash);
+  const isRoot = p === '/' || p === '';
+  const isLoginAlias = p === '/alix-control' || p === '/alix-secure' || p === '/alix-enterprise';
+  if (isRoot) {
+    let hasSession = false;
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i) || '';
+        if (k.startsWith('sb-') && k.endsWith('-auth-token')) {
+          const v = localStorage.getItem(k);
+          if (v && v.length > 20) { hasSession = true; break; }
+        }
+      }
+    } catch { /* Storage evtl. blockiert */ }
+    const target = hasSession ? '/m/kalender' : '/alix-control';
+    window.history.replaceState(null, '', target + window.location.search + window.location.hash);
+  } else if (!isLoginAlias) {
+    // ProtectedRoute leitet unauth. Nutzer selbst auf /alix-control – hier nichts weiter tun.
   }
 }
 
