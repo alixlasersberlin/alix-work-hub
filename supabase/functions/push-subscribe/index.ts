@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     auth_key: auth,
     user_agent: user_agent ?? null,
     last_seen_at: new Date().toISOString(),
-  }, { onConflict: 'endpoint' });
+  }, { onConflict: 'user_id,endpoint' });
 
   if (error) return json({ error: error.message }, 500);
   return json({ ok: true });
