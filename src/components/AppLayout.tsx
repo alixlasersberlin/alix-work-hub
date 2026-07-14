@@ -1094,8 +1094,9 @@ export default function AppLayout() {
   };
 
   const visibleItems = navItems
-    .filter(i => i.label !== 'KONTAKT')
+    .filter(i => i.label !== 'KONTAKT' && i.label !== 'ALIX AI DIENSTE')
     .filter(filterByRoles)
+
     .map(item => ({
       ...item,
       children: item.children
