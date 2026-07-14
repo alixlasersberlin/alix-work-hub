@@ -1,111 +1,77 @@
 
-## Zielbild
+# AlixWork Mobile Kalender – Phase 1–3
 
-Ein zusätzliches, klar getrenntes Modul **Katalogverwaltung** unter `/katalog`. Es lebt neben der bestehenden Artikelverwaltung, ersetzt nichts, ändert keine bestehende Tabelle, Route, Rolle oder Komponente. Freigegebene Katalogartikel werden per Snapshot in Angebote/Aufträge übernommen.
+Neue mobile Route **`/m/kalender`** unter dem bestehenden `/m`-Layout. Die App spiegelt den bestehenden ESC-Teamkalender (`esc_events`) 1:1. Keine parallele Kalenderlogik.
 
-Wegen des Umfangs (36 Kapitel, ~24 neue Tabellen, Import + Export + Versand + Angebots-/Auftragsintegration) baue ich das Modul **schrittweise in Phasen**. Diese Plan-Antwort deckt **Phase 1 (Analyse) + Phase 2 (Fundament) + Phase 3 (Katalog-UI, MVP)** ab. Weitere Phasen (Import, Export, Versand, Angebots-/Auftrags-Snapshots) folgen jeweils in eigenen, ebenfalls freigabepflichtigen Schritten.
+## Was gebaut wird
 
-## Was ich in dieser ersten Iteration liefere
+### Phase 1 – Mobile Kalender-UI (keine neuen Tabellen)
+- **`/m/kalender`** – Heute-Ansicht (nächster Termin mit Countdown, Tagesliste, offene Bestätigungen).
+- **`/m/kalender/agenda`** – rollierende 7-Tage-Agenda, unendliches Scrollen.
+- **`/m/kalender/tag/:datum`** – Tagesansicht mit Zeitachse.
+- **`/m/kalender/woche`** – kompakte Wochenübersicht.
+- **`/m/kalender/termin/:id`** – Detailseite mit Schnellaktionen (Anrufen, Navigation, Bestätigen, Verspäten, Ticket/Kunde/Auftrag öffnen).
+- **`/m/kalender/team`** – Team- und Abteilungsauslastung heute.
+- **Datenquelle:** `esc_events`, `esc_departments`, `esc_event_types`, `esc_event_participants`, `esc_resources` via bestehende Hooks (`useAppointments`, `useDepartments`, `useResources`), gefiltert nach `useTenant` und Rollen.
+- **Rechte:** bestehende ESC-Permissions (`src/lib/esc/permissions.ts`) unverändert nutzen; Filter „nur eigene / Abteilung / alle" abhängig von Rolle.
+- **Realtime:** Supabase-Channel auf `esc_events` – Änderungen sofort sichtbar.
 
-### 1. Analyse (kein Code)
-Ich lese vorher gezielt:
-- bestehende Artikel-/Angebot-/Auftrag-Tabellen und Seiten
-- Rollenmodell (`user_roles`, `has_role`, Delete-Restriktion Super Admin)
-- Storage-Buckets (für Bild-Vorlage)
-- Mail-/WhatsApp-/SMS-Infrastruktur (nur inventarisieren, nicht anfassen)
-- App.tsx Routing + Sidebar-Struktur
+### Phase 2 – Installierbare PWA
+- **`public/manifest.webmanifest`** erweitern (Name „AlixWork Kalender", Icons, Theme).
+- **Icons** in `public/` (192, 512, maskable, apple-touch).
+- **Head-Tags** in `index.html` (Manifest, Theme-Color, Apple-Touch-Icon).
+- **Install-Prompt-Komponente** unter `/m/kalender` – `beforeinstallprompt` für Android, iOS-Anleitung (Teilen → Zum Home-Bildschirm), Buttons „Später"/„Nicht mehr anzeigen" persistent in localStorage.
+- **Kein neuer Service Worker** für App-Shell-Caching (Regel: nur bei expliziter Offline-Anforderung). Der bestehende `public/push-sw.js` bleibt für Push zuständig.
 
-Ergebnis fließt als Kommentare in Migration + Code.
+### Phase 3 – Web-Push + Reminder-Engine
+Neue Tabellen (mandantenfähig, RLS, GRANTs):
 
-### 2. Datenfundament (Migration, additiv)
-Neue Tabellen im `public`-Schema, alle mit `catalog_`-Präfix, alle mit GRANTs + RLS + `has_role`-basierten Policies. Kein Eingriff in bestehende Tabellen.
+- `appointment_reminder_rules` – pro `event_type_id` / `department_id`: `minutes_before`, `channel`, `escalation_level`, `active`.
+- `appointment_reminders` – geplante Versendungen mit `idempotency_key = event_id|rule_id|user_id|scheduled_at`, Status-Feld (`planned|sent|delivered|opened|failed|cancelled`), `retry_count`.
+- `notification_preferences` – pro User: Push/Email/SMS aktiv, Ruhezeiten, Wochenende, Privacy-Mode, Badge.
+- `app_notifications` – In-App-Center (Titel, Text, Kategorie, `read_at`, `action_url`).
 
-MVP-Tabellen dieser Phase:
-- `catalog_branches` – Niederlassungen (Name, Land, Währung, Sprache, Logo, Footer, Bank)
-- `catalog_countries` – Länder (ISO, Währung, Steuersatz, Sprache)
-- `catalog_currencies` – Währungen (Code, Symbol, Rundungsregel)
-- `catalog_categories` – Baum (parent_id, sort, name-JSON für Sprachen)
-- `catalog_items` – Stammdaten (SKU unique, name, brand, model, status, notes_internal)
-- `catalog_item_descriptions` – lange Texte pro Sprache (short, long, technical, warranty, scope, legal, angebot, pdf) + `translation_status`
-- `catalog_item_images` – bis N Bilder, is_primary, alt/title pro Sprache, sort_order, Storage-Pfad
-- `catalog_item_prices` – Länderpreise (item, country, branch, currency, uvp_net, uvp_gross, sale_net, sale_gross, promo, valid_from/to, tax_rate, price_status)
-- `catalog_price_rules` – UVP-basiert (mode: minus_pct | plus_pct | factor | fixed | rounding), Sichtbarkeit rollen-gescoped
-- `catalog_change_log` – wer/wann/altwert/neuwert/quelle
-- Enum-Typen: `catalog_item_status`, `catalog_price_status`, `catalog_translation_status`
+Bestehende Tabellen wiederverwenden:
+- `mobile_push_subscriptions` (existiert) für VAPID-Endpoints.
+- `audit_logs` für alle relevanten Aktionen (Bestätigung, Verschiebung, Reminder gesendet).
 
-Storage-Bucket **`catalog-media`** (privat) für Produktbilder und Datenblätter, mit RLS-Policies auf `storage.objects`.
+Edge Functions:
+- **`push-vapid-subscribe`** – Endpoint-Registrierung, sichere Ablage in `mobile_push_subscriptions`.
+- **`reminder-scheduler`** – Cron alle 60 s: findet fällige `appointment_reminders`, versendet via Web-Push (VAPID), schreibt Status, respektiert Ruhezeiten und Privacy-Mode.
+- **`reminder-materializer`** – Cron alle 5 min: erzeugt aus `esc_events` + `appointment_reminder_rules` konkrete `appointment_reminders` (idempotent).
+- **`reminder-escalate`** – prüft überfällige, nicht bestätigte/gestartete Termine und triggert Eskalationsstufen.
 
-Rollen-Policies:
-- Lesen freigegeben: alle authentifizierten Rollen
-- Bearbeiten Stammdaten: `Super Admin`, `Admin`, neue Rolle **`Katalog`**
-- Preise sehen/ändern/freigeben: `Super Admin`, `Admin`, `Katalog Preise`
-- Löschen: nur `Super Admin` (bestehende Kernregel)
+Secrets (via `generate_secret`): `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
 
-Keine Einkaufspreis-Spalten. Import verwirft solche Felder und protokolliert das.
+Frontend:
+- **`/m/kalender/erinnerungen`** – In-App-Benachrichtigungszentrale (jetzt fällig / heute / überfällig / erledigt).
+- **`/m/kalender/einstellungen`** – Push aktivieren, Ruhezeiten, Kanäle, Privacy-Mode.
+- **Reminder-Overlay** (Stufe 3/4) – Vollbild-Alert bei ≤15 min mit „Öffnen" / „In 5 min erinnern".
+- **App-Badge** über `navigator.setAppBadge()` mit Anzahl offener/überfälliger Termine.
+- Bestehender `public/push-sw.js` wird genutzt/erweitert für `notificationclick`-Deep-Link zur Terminseite.
 
-### 3. Katalog-UI (MVP, additiv)
-Neue Route `/katalog` + Sidebar-Eintrag unter „OPERATIONS", nur sichtbar bei entsprechender Rolle. Vollständig im bestehenden AlixWork-Design (`Card`, `Table`, `Button`, Dark/Gold), keine neuen Design-Tokens.
+## Was NICHT in diesem Wurf enthalten ist
+- Capacitor / native Wrapper (Phase 6).
+- Offline-Aktionsqueue mit Konfliktauflösung (Phase 4/5 – erst wenn Basis läuft).
+- Externe Kalendersynchronisation (Apple/Google/Outlook Export).
+- Biometrischer Login / Gerätesperre durch Admin.
+- ICS-Feeds, Widgets, Techniker-Route.
 
-Seiten:
-- `/katalog` – Dashboard-Kacheln (aktive Artikel, ohne Bild, ohne Übersetzung, Preise offen)
-- `/katalog/artikel` – Tabellen- und Kartenansicht mit Filtern (SKU, Kategorie, Marke, Status, Land, Sprachvollständigkeit, fehlende Bilder)
-- `/katalog/artikel/:id` – Detail mit Tabs: Stammdaten · Beschreibungen · Bilder · Länderpreise · Sprachen · Verwendung · Änderungsverlauf
-- `/katalog/kategorien` – Baumverwaltung
-- `/katalog/laender`, `/katalog/waehrungen`, `/katalog/niederlassungen`, `/katalog/preisregeln` – Stammdaten
-- `/katalog/protokolle` – Änderungslog
+Diese Themen sind im Master-Prompt weiterhin dokumentiert und folgen in späteren Phasen.
 
-Bulk-Aktivieren/Archivieren, Sicherheitsabfrage vor Löschen, alles rollengeprüft (Frontend **und** RLS).
+## Sicherheit
+- Alle neuen Tabellen: `authenticated`-scoped RLS via bestehende Security-Definer-Funktionen (`has_role`, `has_tenant_access`).
+- Push-Payloads enthalten **keine** Kundennamen – nur neutrale Vorlage („AlixWork: Ein Termin beginnt in 30 Minuten"). Details erst nach Öffnen der App aus DB nachladen.
+- VAPID-Keys ausschließlich als Edge-Function-Secrets. Kein Service-Role-Key im Frontend.
+- Audit-Log-Einträge für jede Reminder-Versendung, Bestätigung, Verschiebung.
 
-### 4. Bildupload
-Direkt in Bucket `catalog-media`, signierte URLs zum Anzeigen. Sortierung, Hauptbild-Flag, mehrsprachige Alt-Texte, 4-Bild-Slots + optional weitere. Dateityp-/Größen-Check clientseitig, harte Prüfung serverseitig via Storage-Policies.
+## Reihenfolge der Umsetzung
+1. Phase 1 komplett (UI-Routen, Realtime) – sofort testbar.
+2. Phase 2 (Manifest, Icons, Install-Prompt) – sofort auf iOS/Android installierbar.
+3. Migration für Phase-3-Tabellen (ein Migrations-Call, alle GRANTs + RLS).
+4. VAPID-Secrets erzeugen.
+5. Edge Functions + Cron-Jobs.
+6. Push-UI, Einstellungen, Benachrichtigungszentrale, Overlay, Badge.
+7. Rollen-/Sicherheitstest, Playwright-Smoke auf `/m/kalender`.
 
-### 5. Feste Absicherungen von Anfang an
-- Snapshot-Tabellen (`catalog_item_snapshots`) werden im Schema vorbereitet, aber Angebots-/Auftragsintegration folgt in Phase 7/8.
-- RLS auf jeder Tabelle. `service_role` bekommt `ALL` (für Edge Functions in Folgephasen).
-- Keine Sichtbarkeit von Einkaufs-/Margenfeldern – Spalten existieren nicht.
-- Alle neuen Enums, Trigger, `updated_at`-Trigger.
-
-## Was in dieser Iteration **noch nicht** kommt (bewusst)
-
-Damit dieser Schritt sauber prüfbar bleibt:
-- Airtable-Import, alix-lasers.com-Import, Excel/CSV-Import (Phase 4, eigener Prompt)
-- Excel- + PDF-Export mit Bildern und Vorlagen (Phase 5)
-- Versand E-Mail/WhatsApp/SMS + sichere `alixwork.de/catalog/share/...`-Links (Phase 6)
-- „Aus Katalog hinzufügen" in Angebot + Auftrag inkl. Snapshot-Übernahme (Phase 7 + 8)
-- Vier-Augen-Freigabe-Workflow (Phase 6/7)
-
-Jede dieser Phasen bekommt einen eigenen Plan, sobald das Fundament abgenommen ist.
-
-## Rollout-Reihenfolge in dieser Iteration
-
-1. Analyse-Reads (bestehende Struktur, keine Änderungen)
-2. **Ein** Migrationslauf mit allen Katalog-Tabellen + Enums + RLS + GRANTs
-3. Storage-Bucket `catalog-media` + Policies
-4. Neue Rolle `Katalog` in Rollenliste ergänzen (rein additiv im bestehenden `roles`/`user_roles`-System)
-5. Route + Sidebar-Eintrag + Seiten unter `src/pages/Katalog/`
-6. Wiring an bestehende `useAuth`/`has_role`-Hooks
-7. Kurzer Regressionscheck: bestehende Kernrouten laden, keine Typefehler
-
-## Technische Details
-
-**Namensraum**: Alles `catalog_*` in DB, `src/pages/Katalog/*` und `src/components/catalog/*` im Code. Keine Kollision mit vorhandenem `alixsmart_products`, `zoho_items`, `order_items`.
-
-**Übersetzungen**: statt Wide-Tables ein Zeilenpro-Sprache-Modell (`catalog_item_descriptions.language_code`). Sprachen konfigurierbar in `catalog_languages` (nicht hardcoded).
-
-**Preisintegrität**: `catalog_item_prices` mit `UNIQUE(item_id, country_id, branch_id, price_status='approved', valid_from)` damit pro Land/Niederlassung nur ein aktiver freigegebener Preis gilt.
-
-**RLS-Muster** (verhindert Rekursion): SECURITY DEFINER Helper `public.catalog_can_see_prices(uuid)` – prüft Rolle über bestehendes `has_role`.
-
-**Frontend-Guards**: Preis-Spalten werden serverseitig gar nicht selektiert, wenn Rolle keinen Zugriff hat – nicht nur ausgeblendet.
-
-**Links**: Alle künftigen Share-Links laufen über `alixwork.de/catalog/share/:token`, Edge Function löst Token gegen `catalog_share_links` auf. In dieser Phase noch nicht implementiert, aber Tabelle vorbereitet.
-
-## Was danach passiert
-
-Nach deinem OK für diesen Plan:
-1. lese ich die relevanten bestehenden Dateien,
-2. lege die Migration vor (du bekommst sie zur Freigabe),
-3. baue anschließend Storage-Bucket, Routen und Katalog-MVP-Seiten,
-4. melde mich mit einer kurzen Ergebnis-Checkliste zurück und liste Phase 4 als nächstes.
-
-Bestätige bitte, dass ich mit **Phase 1–3 (Fundament + MVP-UI ohne Import/Export/Versand)** starten soll – dann geht's los.
+Nach jeder Phase kurze Rückmeldung und Test, dann weiter.
