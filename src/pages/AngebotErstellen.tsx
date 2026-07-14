@@ -50,8 +50,11 @@ const newLine = (): LineItem => ({
 
 export default function AngebotErstellen() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sofortMode = searchParams.get('mode') === 'sofort';
   const { roles } = useAuth();
   const isSuperAdmin = (roles ?? []).some((r: any) => (typeof r === 'string' ? r : r?.name) === 'Super Admin');
+
   const isAdmin = (roles ?? []).some((r: any) => {
     const n = typeof r === 'string' ? r : r?.name;
     return n === 'Super Admin' || n === 'Admin';
