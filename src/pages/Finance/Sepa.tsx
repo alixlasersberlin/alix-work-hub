@@ -409,6 +409,8 @@ export default function FinanceSepa() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ReauthDialog {...reauthDel.dialogProps} />
+      <ReauthDialog {...reauthExp.dialogProps} />
     </div>
   );
 }
