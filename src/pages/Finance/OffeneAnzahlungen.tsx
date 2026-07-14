@@ -120,8 +120,7 @@ export default function OffeneAnzahlungen() {
       .from('finance_deposits')
       .select('*')
       .neq('status', 'gebucht')
-      .order('issue_date', { ascending: false, nullsFirst: false })
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: false, nullsFirst: false })
       .limit(2000);
     if (error) toast.error('Laden fehlgeschlagen: ' + error.message);
     setRows((data ?? []) as any);
@@ -336,6 +335,7 @@ export default function OffeneAnzahlungen() {
                 <TableHead className="text-right">Brutto</TableHead>
                 <TableHead className="text-right">Bezahlt</TableHead>
                 <TableHead className="text-right">Offen</TableHead>
+                <TableHead>Erstellt</TableHead>
                 <TableHead>Fällig</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Bestellfreigabe</TableHead>
@@ -399,6 +399,9 @@ export default function OffeneAnzahlungen() {
                   <TableCell className="text-right">{fmtMoney(r.gross_amount, r.currency || 'EUR')}</TableCell>
                   <TableCell className="text-right">{fmtMoney(r.paid_amount, r.currency || 'EUR')}</TableCell>
                   <TableCell className="text-right font-semibold">{fmtMoney(r.open_amount, r.currency || 'EUR')}</TableCell>
+                  <TableCell className="text-xs">
+                    {r.created_at ? format(parseISO(r.created_at), 'dd.MM.yyyy', { locale: de }) : '—'}
+                  </TableCell>
                   <TableCell className="text-xs">
                     {r.due_date ? format(parseISO(r.due_date), 'dd.MM.yyyy', { locale: de }) : '—'}
                   </TableCell>
