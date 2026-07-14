@@ -32,7 +32,7 @@ type ViewValue = EscView | 'timeline';
 export default function EscCalendar() {
   const { roles, hasRole } = useAuth();
   const canOverride = canEditForeignAppointments(roles);
-  const canCreate = hasRole('Super Admin');
+  const canCreate = roles.length > 0; // alle eingeloggten Mitarbeiter dürfen Termine anlegen
   const canSeeInternal = roles.length > 0; // adjust as needed
 
   const [view, setView] = useState<ViewValue>('week');
