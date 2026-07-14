@@ -66,7 +66,11 @@ export default function Login() {
       setLoading(false);
       return;
     }
-    navigate('/dashboard', { replace: true });
+    // Auf der Kalender-Subdomain direkt in den mobilen Kalender springen.
+    const target = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
+      ? '/m/kalender'
+      : '/dashboard';
+    navigate(target, { replace: true });
     setLoading(false);
   };
 
