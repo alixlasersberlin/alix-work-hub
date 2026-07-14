@@ -33,6 +33,7 @@ export default function Angebote() {
   const isSuperAdmin = hasRole('Super Admin') || hasRole('Admin');
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [orderNumbers, setOrderNumbers] = useState<Set<string>>(new Set());
+  const [orderCustomerNames, setOrderCustomerNames] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<'10' | '20' | '50' | 'all'>('20');
