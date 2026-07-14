@@ -39,6 +39,7 @@ export default function Angebote() {
   const [pageSize, setPageSize] = useState<'10' | '20' | '50' | 'all'>('20');
   const [creatorFilter, setCreatorFilter] = useState<string>('alle');
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year' | 'all'>('all');
+  const [orderFilter, setOrderFilter] = useState<'alle' | 'offen' | 'auftrag'>('alle');
 
   const [signLinkOpen, setSignLinkOpen] = useState(false);
   const [signLinkLoading, setSignLinkLoading] = useState(false);
