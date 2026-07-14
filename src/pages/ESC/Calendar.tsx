@@ -32,7 +32,7 @@ type ViewValue = EscView | 'timeline';
 export default function EscCalendar() {
   const { roles, hasRole } = useAuth();
   const canOverride = canEditForeignAppointments(roles);
-  const canCreate = hasRole('Super Admin');
+  const canCreate = roles.length > 0; // alle eingeloggten Mitarbeiter dürfen Termine anlegen
   const canSeeInternal = roles.length > 0; // adjust as needed
 
   const [view, setView] = useState<ViewValue>('week');
@@ -68,11 +68,11 @@ export default function EscCalendar() {
   };
 
   const openNew = (start?: Date, mode: 'intern' | 'extern' = 'intern') => {
-    if (!canCreate) { toast.error('Neue Termine dürfen ausschließlich vom Super Admin angelegt werden.'); return; }
+    if (!canCreate) { toast.error('Bitte einloggen, um Termine anzulegen.'); return; }
     setEditing(null); setDefaultStart(start); setPresetKind(undefined); setPresetMode(mode); setModalOpen(true);
   };
   const openNewKind = (kind: 'Erinnerung' | 'Wiedervorlage') => {
-    if (!canCreate) { toast.error('Neue Termine dürfen ausschließlich vom Super Admin angelegt werden.'); return; }
+    if (!canCreate) { toast.error('Bitte einloggen, um Termine anzulegen.'); return; }
     setEditing(null); setDefaultStart(undefined); setPresetKind(kind); setPresetMode(undefined); setModalOpen(true);
   };
   const openEdit = (a: EscAppointment) => {
