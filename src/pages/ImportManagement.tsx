@@ -1915,7 +1915,7 @@ export default function ImportManagement() {
                   </Button>
 
                   {syncCustomerResult && (
-                    <div className={`p-3 rounded-md text-sm ${syncCustomerResult.success ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]' : 'bg-destructive/10 text-destructive'}`}>
+                    <div className={`p-3 rounded-md text-sm ${syncCustomerResult.success ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]' : 'bg-destructive/90 text-white'}`}>
                       {syncCustomerResult.success ? (
                         <div className="flex items-start gap-2">
                           <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
@@ -1993,7 +1993,7 @@ export default function ImportManagement() {
                   </Button>
 
                   {syncOrderResult && (
-                    <div className={`p-3 rounded-md text-sm ${syncOrderResult.success ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]' : 'bg-destructive/10 text-destructive'}`}>
+                    <div className={`p-3 rounded-md text-sm ${syncOrderResult.success ? 'bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]' : 'bg-destructive/90 text-white'}`}>
                       {syncOrderResult.success ? (
                         <div className="flex items-start gap-2">
                           <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
