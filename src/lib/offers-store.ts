@@ -73,6 +73,7 @@ export async function listOffers(): Promise<OfferSnapshot[]> {
   const { data, error } = await supabase
     .from('offers')
     .select('*')
+    .order('offer_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
     .limit(1000);
   if (error) {
