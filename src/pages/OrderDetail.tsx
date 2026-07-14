@@ -456,6 +456,13 @@ export default function OrderDetail() {
         { key: 'wareneingang', label: 'Wareneingang', icon: Inbox, onClick: () => wareneingangRef.current?.generatePdf() },
       ] as ActionItem[],
     }] : []),
+    ...(!canWrite ? [{
+      name: 'Finanzen',
+      icon: FileText,
+      items: [
+        { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
+      ] as ActionItem[],
+    }] : []),
     ...(canWrite ? [{
       name: 'Bearbeitung',
       icon: Wrench,
