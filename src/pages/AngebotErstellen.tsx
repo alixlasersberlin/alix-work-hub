@@ -1892,7 +1892,7 @@ export default function AngebotErstellen() {
       <div className="rounded-xl border border-border bg-card card-glow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-foreground">Zahlungsberechnung</h3>
-          <Select value={payType} onValueChange={(v: any) => { setPayType(v); if (v === 'Alix Smart Impulse' && payTerm > 36) setPayTerm(36); }}>
+          <Select value={payType} onValueChange={(v: any) => { setPayType(v); if (v === 'Alix Smart Impulse' && payTerm > 36) setPayTerm(36); if (v === 'Miete' && ![12,24,36].includes(payTerm)) setPayTerm(24); }}>
             <SelectTrigger className="w-48 bg-secondary border-border"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="Direktkauf">Direktkauf</SelectItem>
