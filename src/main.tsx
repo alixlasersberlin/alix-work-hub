@@ -16,6 +16,15 @@ bootA11yPrefs();
 bootAIBackground();
 bootPageFade();
 
+// app.alixwork.de → dedizierte Kalender-Domain: Root immer auf /m/kalender lenken
+if (typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de') {
+  const p = window.location.pathname;
+  if (p === '/' || p === '') {
+    window.history.replaceState(null, '', '/m/kalender' + window.location.search + window.location.hash);
+  }
+}
+
+
 // Native (Capacitor) Shell-Init – nur wenn App in iOS/Android-Wrapper läuft.
 (async () => {
   try {
