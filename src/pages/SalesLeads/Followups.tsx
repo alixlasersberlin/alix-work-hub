@@ -139,7 +139,8 @@ export default function SalesFollowups() {
               )}
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
     );
   }
