@@ -908,7 +908,7 @@ export default function UserManagement() {
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setShowEditRoles(false)}>Abbrechen</Button>
-              <Button onClick={handleSaveRoles} disabled={savingRoles}>
+              <Button onClick={() => reauthRole.gate(handleSaveRoles)} disabled={savingRoles}>
                 {savingRoles && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Speichern
               </Button>
