@@ -145,10 +145,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await (supabase as any).rpc('get_current_user_role_names');
     if (error || !Array.isArray(data)) {
       setRoles([]);
+      return [] as string[];
+    }
+    const list = (data as any[]).filter(Boolean) as string[];
+    setRoles(list);
+    return list;
+  }
+
+  async function applyImpersonation(realRoles: string[], targetId: string) {
+    // Nur zulässig, wenn der eingeloggte User tatsächlich Super Admin ist
+    if (!realRoles.includes('Super Admin')) {
+      try { sessionStorage.removeItem(IMPERSONATE_KEY); } catch { /* ignore */ }
+      setImpersonatedUserId(null);
+      setImpersonatedName(null);
       return;
     }
-    setRoles(data.filter(Boolean));
+    const [{ data: prof }, { data: ur }] = await Promise.all([
+      supabase.from('user_profiles').select('full_name, email').eq('id', targetId).maybeSingle(),
+      supabase.from('user_roles').select('roles(name)').eq('user_id', targetId),
+    ]);
+    setImpersonatedName((prof as any)?.full_name ?? (prof as any)?.email ?? targetId);
+    const names = (ur ?? []).map((r: any) => r.roles?.name).filter(Boolean) as string[];
+    setRoles(names);
   }
+
+  const stopImpersonation = useCallback(() => {
+    try { sessionStorage.removeItem(IMPERSONATE_KEY); } catch { /* ignore */ }
+    setImpersonatedUserId(null);
+    setImpersonatedName(null);
+    // Neu laden, damit Rollen wieder frisch aus dem echten User geladen werden
+    window.location.reload();
+  }, []);
 
   const refreshMfaState = useCallback(async () => {
     setMfaState(await computeMfaState());
