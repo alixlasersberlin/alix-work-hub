@@ -1726,6 +1726,7 @@ export default function AppLayout() {
       {/* Begrüßungs-Overlays für Natalia & Lars deaktiviert */}
 
 
+      </div>
     </div>
   );
 }
