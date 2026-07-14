@@ -92,7 +92,7 @@ export default function FinanceSepa() {
     load();
   };
 
-  const deleteMandate = async (id: string) => {
+  const deleteMandate = (id: string) => reauthDel.gate(async () => {
     if (!confirm('Mandat löschen?')) return;
     const { error } = await supabase.from('finance_sepa_mandates' as any).delete().eq('id', id);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
