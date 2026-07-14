@@ -97,7 +97,7 @@ export default function FinanceSepa() {
     const { error } = await supabase.from('finance_sepa_mandates' as any).delete().eq('id', id);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     load();
-  };
+  });
 
   const createRun = async () => {
     if (!rForm.creditor_name || !rForm.creditor_iban || !rForm.creditor_id) {
