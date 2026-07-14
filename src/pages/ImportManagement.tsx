@@ -1852,27 +1852,42 @@ export default function ImportManagement() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <Button
-                    onClick={handleEstimatesImport}
-                    disabled={estimatesImporting}
+                    onClick={handleEstimatesImportDe}
+                    disabled={estimatesDeImporting || estimatesAtImporting}
                     className="gold-gradient text-primary-foreground"
                   >
-                    {estimatesImporting ? (
-                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importiere…</>
+                    {estimatesDeImporting ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importiere DE…</>
                     ) : (
-                      <><Play className="w-4 h-4 mr-2" /> Angebote importieren (DE + AT)</>
+                      <><Play className="w-4 h-4 mr-2" /> 🇩🇪 Angebote importieren (Deutschland)</>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={handleEstimatesImportAt}
+                    disabled={estimatesAtImporting || estimatesDeImporting}
+                    variant="outline"
+                  >
+                    {estimatesAtImporting ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importiere AT…</>
+                    ) : (
+                      <><Play className="w-4 h-4 mr-2" /> 🇦🇹 Angebote importieren (Austria)</>
                     )}
                   </Button>
                   <span className="text-xs text-muted-foreground">
-                    Läuft nacheinander für zoho_eu_1 und zoho_eu_2.
+                    Getrennter Import für zoho_eu_1 (DE) und zoho_eu_2 (AT).
                   </span>
                 </div>
 
-                {estimatesResult && (
+                {(estimatesDeResult || estimatesAtResult) && (
                   <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-2 text-sm">
-                    <div>🇩🇪 Alix Deutschland: geladen <strong>{estimatesResult.de.fetched}</strong> • <strong className="text-[hsl(var(--success))]">{estimatesResult.de.imported}</strong> neu • <strong>{estimatesResult.de.updated}</strong> aktualisiert • <strong className="text-destructive">{estimatesResult.de.failed}</strong> Fehler</div>
-                    <div>🇦🇹 Alix Austria: geladen <strong>{estimatesResult.at.fetched}</strong> • <strong className="text-[hsl(var(--success))]">{estimatesResult.at.imported}</strong> neu • <strong>{estimatesResult.at.updated}</strong> aktualisiert • <strong className="text-destructive">{estimatesResult.at.failed}</strong> Fehler</div>
+                    {estimatesDeResult && (
+                      <div>🇩🇪 Alix Deutschland: geladen <strong>{estimatesDeResult.fetched}</strong> • <strong className="text-[hsl(var(--success))]">{estimatesDeResult.imported}</strong> neu • <strong>{estimatesDeResult.updated}</strong> aktualisiert • <strong className="text-destructive">{estimatesDeResult.failed}</strong> Fehler</div>
+                    )}
+                    {estimatesAtResult && (
+                      <div>🇦🇹 Alix Austria: geladen <strong>{estimatesAtResult.fetched}</strong> • <strong className="text-[hsl(var(--success))]">{estimatesAtResult.imported}</strong> neu • <strong>{estimatesAtResult.updated}</strong> aktualisiert • <strong className="text-destructive">{estimatesAtResult.failed}</strong> Fehler</div>
+                    )}
                   </div>
                 )}
 
@@ -1880,6 +1895,7 @@ export default function ImportManagement() {
                   <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <p>Ziel-Tabelle: <code>offers</code>. Sichtbar unter Sales Management → Angebote.</p>
                 </div>
+
               </CardContent>
             </Card>
           </TabsContent>
