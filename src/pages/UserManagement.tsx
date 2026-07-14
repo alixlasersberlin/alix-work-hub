@@ -436,12 +436,12 @@ export default function UserManagement() {
                   variant="outline"
                   className="w-full justify-start gap-2"
                   disabled={actionLoading}
-                  onClick={() => {
+                  onClick={() => reauthPwd.gate(() => {
                     setPwNew('');
                     setPwConfirm('');
                     setPwRequireReset(true);
                     setShowPasswordDialog(true);
-                  }}
+                  })}
                 >
                   <Key className="w-4 h-4" /> Passwort ändern
                 </Button>
