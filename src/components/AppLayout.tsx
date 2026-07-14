@@ -379,7 +379,7 @@ export const navItems: NavItem[] = [
   },
 
   {
-    path: '/finance', label: 'FINANCE & CONTROLLING', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'],
+    path: '/finance', label: 'BUCHHALTUNG', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance', 'Finanzierungen'],
     children: [
       {
         path: '/finance/dashboard', label: 'DASHBOARD', icon: Banknote, roles: ['Admin', 'Super Admin', 'Finance'],
