@@ -671,6 +671,7 @@ export default function OrderDetail() {
               {artikel && renderTabMenu(artikel)}
               {auftrag && renderTabMenu(auftrag)}
               {renderActionMenu('Backoffice')}
+              {renderActionMenu('Finanzen')}
               {kommunikation && renderTabMenu(kommunikation)}
             </>
           );
