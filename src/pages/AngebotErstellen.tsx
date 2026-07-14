@@ -2095,7 +2095,10 @@ export default function AngebotErstellen() {
 
 
 
+      {!sofortMode && (
+      <>
       {/* Live-PDF-Vorschau */}
+
       <div className="mt-6 rounded-lg border border-border bg-card">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border">
           <div className="flex items-center gap-2 text-sm font-medium">
@@ -2131,6 +2134,8 @@ export default function AngebotErstellen() {
       </div>
 
 
-    </div>
+      </>
+      )}
+
   );
 }
