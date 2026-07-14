@@ -317,25 +317,68 @@ export default function Angebote() {
 
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <CardTitle>Liste ({(() => {
-            const q = search.trim().toLowerCase();
-            if (!q) return offers.length;
-            return offers.filter(o =>
-              (o.offerNumber || '').toLowerCase().includes(q) ||
-              (o.customer?.company_name || '').toLowerCase().includes(q) ||
-              (o.customer?.contact_name || '').toLowerCase().includes(q) ||
-              (o.customer?.email || '').toLowerCase().includes(q)
-            ).length;
-          })()})</CardTitle>
-          <div className="relative w-full max-w-xs">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Suche: Name oder Angebotsnr."
-              className="pl-8"
-            />
+        <CardHeader className="flex flex-col gap-3">
+          <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
+            <CardTitle>Liste ({(() => {
+              const q = search.trim().toLowerCase();
+              const now = Date.now();
+              const rangeMs =
+                dateRange === 'month' ? 30 * 86400000 :
+                dateRange === '3months' ? 90 * 86400000 :
+                dateRange === 'year' ? 365 * 86400000 : null;
+              return offers.filter(o => {
+                if (creatorFilter !== 'alle' && (o.createdByName || '—') !== creatorFilter) return false;
+                if (rangeMs !== null) {
+                  const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
+                  if (!d || now - d > rangeMs) return false;
+                }
+                if (!q) return true;
+                return (
+                  (o.offerNumber || '').toLowerCase().includes(q) ||
+                  (o.customer?.company_name || '').toLowerCase().includes(q) ||
+                  (o.customer?.contact_name || '').toLowerCase().includes(q) ||
+                  (o.customer?.email || '').toLowerCase().includes(q)
+                );
+              }).length;
+            })()})</CardTitle>
+            <div className="relative w-full max-w-xs">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Suche: Name oder Angebotsnr."
+                className="pl-8"
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select value={pageSize} onValueChange={(v) => setPageSize(v as any)}>
+              <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Anzeige" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 pro Seite</SelectItem>
+                <SelectItem value="20">20 pro Seite</SelectItem>
+                <SelectItem value="50">50 pro Seite</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={creatorFilter} onValueChange={setCreatorFilter}>
+              <SelectTrigger className="w-[220px] h-9"><SelectValue placeholder="Ersteller" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle Ersteller</SelectItem>
+                {Array.from(new Set(offers.map(o => o.createdByName || '—'))).sort().map(name => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={dateRange} onValueChange={(v) => setDateRange(v as any)}>
+              <SelectTrigger className="w-[180px] h-9"><SelectValue placeholder="Zeitraum" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="month">Letzter Monat</SelectItem>
+                <SelectItem value="3months">Letzte 3 Monate</SelectItem>
+                <SelectItem value="year">Letztes Jahr</SelectItem>
+                <SelectItem value="all">Gesamte Zeit</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -361,16 +404,30 @@ export default function Angebote() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {offers.filter(o => {
+                {(() => {
                   const q = search.trim().toLowerCase();
-                  if (!q) return true;
-                  return (
-                    (o.offerNumber || '').toLowerCase().includes(q) ||
-                    (o.customer?.company_name || '').toLowerCase().includes(q) ||
-                    (o.customer?.contact_name || '').toLowerCase().includes(q) ||
-                    (o.customer?.email || '').toLowerCase().includes(q)
-                  );
-                }).map(o => {
+                  const now = Date.now();
+                  const rangeMs =
+                    dateRange === 'month' ? 30 * 86400000 :
+                    dateRange === '3months' ? 90 * 86400000 :
+                    dateRange === 'year' ? 365 * 86400000 : null;
+                  const filtered = offers.filter(o => {
+                    if (creatorFilter !== 'alle' && (o.createdByName || '—') !== creatorFilter) return false;
+                    if (rangeMs !== null) {
+                      const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
+                      if (!d || now - d > rangeMs) return false;
+                    }
+                    if (!q) return true;
+                    return (
+                      (o.offerNumber || '').toLowerCase().includes(q) ||
+                      (o.customer?.company_name || '').toLowerCase().includes(q) ||
+                      (o.customer?.contact_name || '').toLowerCase().includes(q) ||
+                      (o.customer?.email || '').toLowerCase().includes(q)
+                    );
+                  });
+                  const limit = pageSize === 'all' ? filtered.length : parseInt(pageSize, 10);
+                  return filtered.slice(0, limit);
+                })().map(o => {
                   const isOrder = o.status === 'order';
                   const isSigned = o.status === 'signed';
                   const approval = (o.approvalStatus || 'pending') as 'pending' | 'approved' | 'rejected';
