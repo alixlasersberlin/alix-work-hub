@@ -356,6 +356,7 @@ const RfLifecycle = lazy(() => import("./pages/RollenFreigaben/LifecycleDashboar
 const RfAuditExport = lazy(() => import("./pages/RollenFreigaben/AuditExport"));
 const RfZugriffErteilen = lazy(() => import("./pages/RollenFreigaben/ZugriffErteilen"));
 const SelfServiceRoles = lazy(() => import("./pages/SelfService/Roles"));
+const SimulateEntry = lazy(() => import("./pages/SimulateEntry"));
 
 const SecurityFindings = lazy(() => import("./pages/SecurityCenter/Findings"));
 const SecurityPentest = lazy(() => import("./pages/SecurityCenter/Pentest"));
