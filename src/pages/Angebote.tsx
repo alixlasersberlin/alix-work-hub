@@ -39,7 +39,7 @@ export default function Angebote() {
   const [pageSize, setPageSize] = useState<'10' | '20' | '50' | 'all'>('20');
   const [creatorFilter, setCreatorFilter] = useState<string>('alle');
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year' | 'all'>('all');
-  const [orderFilter, setOrderFilter] = useState<'alle' | 'offen' | 'auftrag'>('alle');
+  const [orderFilter, setOrderFilter] = useState<'alle' | 'offen' | 'auftrag' | 'signed'>('alle');
 
   const [signLinkOpen, setSignLinkOpen] = useState(false);
   const [signLinkLoading, setSignLinkLoading] = useState(false);
@@ -363,6 +363,7 @@ export default function Angebote() {
                   const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
                   if (orderFilter === 'auftrag' && !hasOrder) return false;
                   if (orderFilter === 'offen' && hasOrder) return false;
+                  if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
                 }
                 if (!q) return true;
                 return (
@@ -417,6 +418,7 @@ export default function Angebote() {
                 <SelectItem value="alle">Alle Angebote</SelectItem>
                 <SelectItem value="offen">Angebot offen</SelectItem>
                 <SelectItem value="auftrag">Als Auftrag übernommen</SelectItem>
+                <SelectItem value="signed">Unterzeichnet – in Aufträge übernommen</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -461,6 +463,7 @@ export default function Angebote() {
                       const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
                       if (orderFilter === 'auftrag' && !hasOrder) return false;
                       if (orderFilter === 'offen' && hasOrder) return false;
+                      if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
                     }
                     if (!q) return true;
                     return (
