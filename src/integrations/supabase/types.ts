@@ -21605,6 +21605,10 @@ export type Database = {
       can_access_mail: { Args: never; Returns: boolean }
       can_access_maintenance: { Args: never; Returns: boolean }
       can_access_media_package: { Args: { _mp_id: string }; Returns: boolean }
+      can_access_media_package_file: {
+        Args: { _path: string; _write: boolean }
+        Returns: boolean
+      }
       can_access_orders: { Args: never; Returns: boolean }
       can_access_planning: { Args: never; Returns: boolean }
       can_access_qm: { Args: never; Returns: boolean }
