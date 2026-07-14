@@ -267,7 +267,7 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/auftragsverwaltung', label: 'ORDER MANAGEMENT', icon: ClipboardList,
+    path: '/auftragsverwaltung', label: 'EINKAUF', icon: ClipboardList,
     roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'],
     children: [
       {
