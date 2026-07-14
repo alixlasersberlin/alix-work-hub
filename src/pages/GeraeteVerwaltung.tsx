@@ -41,6 +41,10 @@ export default function GeraeteVerwaltung() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'blocked'>('all');
+  const { gate, dialogProps } = useReauthGate(
+    'device.manage',
+    'Änderungen an Gerätefreigaben betreffen Zugriff auf interne Daten. Bitte bestätigen Sie mit Ihrem Authenticator-Code.'
+  );
 
   const load = async () => {
     setLoading(true);
