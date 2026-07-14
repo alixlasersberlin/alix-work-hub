@@ -1,73 +1,45 @@
-
 # Phase 10b — MFA & Re-Auth (Zero-Trust Stufe 2)
 
-Ziel: Super Admin / Admin / Geschäftsführung können sich ohne aktive 2FA **nichts** mehr ansehen. Zusätzlich muss der Nutzer vor sensiblen Aktionen (Kundendaten öffnen, Finance-Auszahlungen, Rollen ändern, Gerätefreigabe) sein Passwort **oder** einen TOTP/Passkey neu bestätigen.
+## Ausgangslage
+Das Projekt nutzt bereits **Supabase Native MFA** (TOTP) mit vollständiger Setup-,
+Challenge- und Recovery-UI. MFA ist laut `src/lib/mfa-required.ts` für alle
+Rollen außer „Lieferant Jerry" verpflichtend. Der echte Gap war der Re-Auth-Flow
+vor sensiblen Aktionen — der bisherige `ReauthDialog` zeigte nur einen
+"deaktiviert"-Hinweis.
 
-## Umfang
+## Umgesetzt
 
-### 1. Datenbank (Migration)
-- `user_mfa_secrets` erweitern (aktuell nur 3 Spalten):
-  - `totp_secret` (verschlüsselt, base32), `totp_confirmed_at`, `enrolled_at`, `disabled_at`
-- Neue Tabelle `mfa_recovery_codes` (user_id, code_hash, used_at) — 10 Einmalcodes.
-- Neue Tabelle `mfa_webauthn_credentials` (user_id, credential_id, public_key, counter, transports, device_label, last_used_at) für Passkeys.
-- Neue Tabelle `mfa_reauth_events` (user_id, method, purpose, verified_at, expires_at) — kurzlebige Re-Auth-Tickets (5 min).
-- SECURITY-DEFINER-Funktion `public.mfa_required_for_user(uid uuid) → boolean`: true wenn User eine der Rollen Super Admin/Admin/Geschäftsführung hat.
-- SECURITY-DEFINER-Funktion `public.has_valid_reauth(uid uuid, purpose text) → boolean`.
-- Alle Grants + RLS wie in privacy-Regeln (nur eigene Zeilen, service_role voll).
+### 1. Datenbank
+- `mfa_reauth_events` (user_id, method, purpose, verified_at, expires_at, ip_hint, user_agent) — server-seitige, kurzlebige Re-Auth-Nachweise.
+- `mfa_recovery_codes`, `mfa_webauthn_credentials` — Grundgerüst für spätere Passkey-Erweiterung (aktuell ungenutzt).
+- `user_mfa_secrets` um TOTP-Felder erweitert (falls wir später von Supabase-nativ auf eigene TOTP-Implementierung umsteigen).
+- `user_profiles`: neue Spalten `mfa_grace_until`, `mfa_exempt`, `mfa_exempt_reason`, `mfa_exempt_by`.
+- Bestandsschutz: Alle Super Admins/Admins bekamen automatisch 7 Tage Grace-Period gesetzt.
+- SECURITY-DEFINER-Funktionen `mfa_required_for_user`, `mfa_status_for_user`, `has_valid_reauth` (Ausführungsrecht: authenticated + service_role).
+- RLS: Nutzer sehen nur eigene MFA/Recovery/Reauth-Zeilen; nur Server (service_role) schreibt Recovery/Passkey; Nutzer darf eigene Passkeys löschen.
 
-### 2. Edge Functions
-- `mfa-enroll-totp`: erzeugt Secret, liefert `otpauth://`-URI + QR-SVG (Base64), speichert **unbestätigt**.
-- `mfa-verify-totp`: prüft 6-stelligen Code (HMAC-SHA1, RFC 6238, ±1 Fenster), setzt `totp_confirmed_at`, generiert 10 Recovery-Codes (nur einmal angezeigt).
-- `mfa-webauthn-register-options` / `mfa-webauthn-register-verify` (via `@simplewebauthn/server`).
-- `mfa-webauthn-auth-options` / `mfa-webauthn-auth-verify`.
-- `mfa-reauth`: nimmt TOTP-Code **oder** Passkey-Assertion **oder** Passwort entgegen, erzeugt Re-Auth-Event (5 min gültig) für angegebenen `purpose`.
-- Alle mit `getClaims()` JWT-Check.
+### 2. Frontend
+- **`src/components/ReauthDialog.tsx`** neu geschrieben: fragt den 6-stelligen TOTP-Code ab, ruft `supabase.auth.mfa.challenge` + `verify`, schreibt bei Erfolg einen 5-Minuten-Nachweis in `mfa_reauth_events` **und** in sessionStorage.
+- **`src/hooks/useReauthGate.tsx`** neu: `const { gate, dialogProps } = useReauthGate('purpose', 'reason?')` — gate(action) prüft Cache; wenn gültig, wird die Aktion direkt ausgeführt; sonst öffnet sich der Dialog.
+- **`src/pages/GeraeteVerwaltung.tsx`** verdrahtet: „Freigeben", „Sperren", „Zurücksetzen" laufen jetzt durch das Reauth-Gate mit purpose `device.manage`.
 
-### 3. Frontend
+## Noch TODO (nach Bedarf)
+Der Reauth-Gate ist als `useReauthGate(purpose)` überall in 3 Zeilen einbaubar.
+Sinnvolle nächste Anwendungen:
+- Kundendetail-Öffnen (`src/pages/CustomerDetail.tsx`) mit purpose `customer.view`
+- Finance SEPA-Freigabe (`src/pages/Finance/Sepa.tsx`) mit purpose `finance.sepa.approve`
+- Rollen-Änderungen (`src/pages/RollenVerwaltung*.tsx`) mit purpose `role.change`
+- Bug&CAPA-Löschen mit purpose `capa.delete`
+- Order-Löschen (Super Admin) mit purpose `order.delete`
 
-**Erzwungener MFA-Setup:**
-- Neue Route `/mfa/setup` (kein Layout-Wrap, kein Sidebar).
-- `useAuth` prüft nach Login: wenn `mfa_required_for_user()` = true **und** kein `totp_confirmed_at` → hartes Redirect auf `/mfa/setup`, Rest der App gesperrt (Router-Guard).
-- Setup-Screen: QR-Code scannen, Code eingeben, Recovery-Codes anzeigen + Download-Button.
+Sag Bescheid welche du gate-en willst, dann setze ich das in einem Rutsch um.
 
-**Login-Flow:**
-- Nach Passwort-Login prüft ein neuer Schritt, ob TOTP oder Passkey vorhanden → Challenge-UI (`/mfa/challenge`) vor Erreichen der App.
-- Passkey-Option als primärer Button, TOTP als Fallback, Recovery-Code als Notausgang.
+## Nicht enthalten (bewusst)
+- WebAuthn/Passkey (Tabellen sind vorbereitet, aber Enrollment/Auth-Flow fehlt). Nächster Schritt wäre `@simplewebauthn/browser` + `@simplewebauthn/server` Edge Functions.
+- Hartes Erzwingen der Grace-Period-Sperre nach Ablauf: der Grace-Wert wird gesetzt, aber der Router-Guard interpretiert ihn noch nicht separat — Supabase-MFA-Pflicht ist ohnehin schon aktiv.
 
-**Re-Auth-Modal** (`src/components/ReauthDialog.tsx` existiert bereits – erweitern):
-- Wird via Hook `useReauthGate(purpose)` an sensible Aktionen gehängt:
-  - Kundendaten-Detail öffnen (`/kunden/:id`)
-  - Finance-SEPA/Auszahlungs-Freigabe
-  - Rollen-Änderungen (`/admin/rollen`, `/admin/geraete` Sperren)
-  - Bug&CAPA-Löschungen
-- Modal: Passkey-Button + TOTP-Feld + „Passwort erneut eingeben"-Fallback.
-- Nach Erfolg: 5 min lang cached (`has_valid_reauth`) — kein Modal-Spam.
+---
 
-**MFA-Verwaltung** unter `/einstellungen/sicherheit`:
-- TOTP-Status (aktiv/inaktiv), Passkey-Liste (hinzufügen/entfernen), Recovery-Codes neu generieren.
+# Phase 10a (bereits abgeschlossen)
 
-### 4. Abhängigkeiten
-- `bun add @simplewebauthn/browser @simplewebauthn/server qrcode otpauth`
-- Secret `MFA_ENCRYPTION_KEY` für TOTP-Secret-Verschlüsselung (via `generate_secret`, 64 chars).
-- Secret `WEBAUTHN_RP_ID` = `alixwork.de` (bzw. `app.alixwork.de` sobald live).
-
-### 5. Rollout-Sicherheit
-- Migration setzt für alle Bestands-Admins `mfa_required_for_user()` = true, aber **Grace-Period** von 7 Tagen (Warn-Banner statt Sperre). Dafür Spalte `mfa_grace_until` in `user_profiles`.
-- Super Admin kann in `/admin/rollen` einzelne User temporär von der Pflicht ausnehmen (auditiert).
-
-## Technische Notizen
-
-- TOTP: `otpauth`-lib (Deno-kompatibel via `npm:otpauth`), Algorithmus SHA1, 30s Fenster, 6 Digits (kompatibel mit Google Authenticator, 1Password, Authy).
-- WebAuthn RP: Origin muss exakt matchen — für Dev separat `localhost` als RP-ID, für Prod `app.alixwork.de`. Wird per Env-Var gesteuert.
-- Re-Auth-Ticket-Tabelle mit TTL-Cleanup-Cron (bestehender `reminder-scheduler` kann das mitmachen).
-- Recovery-Codes werden mit `crypto.subtle.digest('SHA-256')` gehasht gespeichert, nie im Klartext.
-
-## Nicht enthalten
-- SMS-2FA (bewusst weggelassen: SIM-Swap-Risiko + Kosten).
-- Hardware-Security-Keys separat: durch WebAuthn/Passkey automatisch mit abgedeckt.
-- Enforcement für „normale" Rollen (Order, QM, Österreich etc.) — bleibt optional, kann pro User aktiviert werden.
-
-## Umfang / Aufwand
-Rund 15 neue/geänderte Dateien, 1 Migration, 6 Edge Functions, 3 neue Routen. Baue ich in einem Rutsch, sobald du „ok" sagst.
-
-**Frage:** Soll die 7-Tage-Grace-Period rein (empfohlen — verhindert Aussperrung im Live-Betrieb), oder sofort-hart ab Deployment?
+Gerätefreigabe-Workflow, Offline-Wipe, Auto-Logout, Domain-Anleitung siehe Git-History.
