@@ -126,6 +126,10 @@ export default function UserManagement() {
 
   // Action loading
   const [actionLoading, setActionLoading] = useState(false);
+  const reauthRole = useReauthGate('user.roles', 'Rollen- oder Abteilungsänderung');
+  const reauthStatus = useReauthGate('user.status', 'Benutzerstatus (Sperren/Aktivieren) ändern');
+  const reauthMfa = useReauthGate('user.mfa_reset', '2FA-Faktor eines Benutzers zurücksetzen');
+  const reauthPwd = useReauthGate('user.password', 'Passwort eines Benutzers ändern');
 
   /* ─── Data loading ─── */
   const loadData = useCallback(async () => {
