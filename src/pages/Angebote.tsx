@@ -359,6 +359,11 @@ export default function Angebote() {
                   const d = o.offerDate ? new Date(o.offerDate).getTime() : 0;
                   if (!d || now - d > rangeMs) return false;
                 }
+                if (orderFilter !== 'alle') {
+                  const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+                  if (orderFilter === 'auftrag' && !hasOrder) return false;
+                  if (orderFilter === 'offen' && hasOrder) return false;
+                }
                 if (!q) return true;
                 return (
                   (o.offerNumber || '').toLowerCase().includes(q) ||
