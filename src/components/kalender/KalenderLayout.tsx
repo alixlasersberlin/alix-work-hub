@@ -1,5 +1,6 @@
 import { Outlet, useNavigate } from 'react-router-dom';
 import KalenderBottomNav from './KalenderBottomNav';
+import EscalationOverlay from './EscalationOverlay';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Wifi, WifiOff, CalendarCheck2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -22,6 +23,7 @@ export default function KalenderLayout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <EscalationOverlay />
       <header
         className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur px-3 py-2 flex items-center gap-2"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.5rem)' }}
