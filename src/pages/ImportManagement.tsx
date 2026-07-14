@@ -1817,6 +1817,49 @@ export default function ImportManagement() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* ============ ANGEBOTE (Estimates) Import ============ */}
+            <Card className="border-border">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-primary" />
+                  Angebote (Estimates) – Alix Deutschland & Austria
+                </CardTitle>
+                <CardDescription>
+                  Importiert alle Angebote aus Zoho Books (DE + AT) und legt sie 1:1 unter Sales Management → Angebote an. AT-Angebote erhalten das Suffix „-AT". Wiederholte Läufe aktualisieren bestehende Einträge.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={handleEstimatesImport}
+                    disabled={estimatesImporting}
+                    className="gold-gradient text-primary-foreground"
+                  >
+                    {estimatesImporting ? (
+                      <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importiere…</>
+                    ) : (
+                      <><Play className="w-4 h-4 mr-2" /> Angebote importieren (DE + AT)</>
+                    )}
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    Läuft nacheinander für zoho_eu_1 und zoho_eu_2.
+                  </span>
+                </div>
+
+                {estimatesResult && (
+                  <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-2 text-sm">
+                    <div>🇩🇪 Alix Deutschland: geladen <strong>{estimatesResult.de.fetched}</strong> • <strong className="text-[hsl(var(--success))]">{estimatesResult.de.imported}</strong> neu • <strong>{estimatesResult.de.updated}</strong> aktualisiert • <strong className="text-destructive">{estimatesResult.de.failed}</strong> Fehler</div>
+                    <div>🇦🇹 Alix Austria: geladen <strong>{estimatesResult.at.fetched}</strong> • <strong className="text-[hsl(var(--success))]">{estimatesResult.at.imported}</strong> neu • <strong>{estimatesResult.at.updated}</strong> aktualisiert • <strong className="text-destructive">{estimatesResult.at.failed}</strong> Fehler</div>
+                  </div>
+                )}
+
+                <div className="flex items-start gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <p>Ziel-Tabelle: <code>offers</code>. Sichtbar unter Sales Management → Angebote.</p>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         )}
 
