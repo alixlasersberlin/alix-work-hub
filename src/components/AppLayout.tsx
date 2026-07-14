@@ -322,7 +322,7 @@ export const navItems: NavItem[] = [
 
 
   {
-    path: '/warehouse-logistics', label: 'WAREHOUSE & LOGISTICS', icon: Warehouse,
+    path: '/warehouse-logistics', label: 'LAGER & WERKSTATT', icon: Warehouse,
     roles: null,
     children: [
       {
