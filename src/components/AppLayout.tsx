@@ -632,14 +632,14 @@ export default function AppLayout() {
   // Per-User Menü-Freigaben (überschreibt Rollenlogik, wenn gesetzt)
   const [menuGrants, setMenuGrants] = useState<Set<string> | null>(null);
   useEffect(() => {
-    const uid = profile?.id;
+    const uid = impersonatedUserId ?? profile?.id;
     if (!uid) { setMenuGrants(null); return; }
     (async () => {
       const { data } = await supabase.from('user_menu_grants' as any).select('path').eq('user_id', uid);
       if (!data || data.length === 0) { setMenuGrants(null); return; }
       setMenuGrants(new Set((data as any[]).map(r => r.path)));
     })();
-  }, [profile?.id]);
+  }, [profile?.id, impersonatedUserId]);
 
   // Globaler Auto-Refresh: remountet die aktuelle Seite alle 60 Minuten,
   // sodass alle Listen & Statistiken neu geladen werden. Zusätzlich bei
