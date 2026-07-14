@@ -20,8 +20,13 @@ type Followup = {
   created_at: string;
 };
 
+type LeadInfo = { company: string | null; first_name: string | null; last_name: string | null; converted_offer_id: string | null };
+type OfferInfo = { offer_number: string; customer_name: string | null };
+
 export default function SalesFollowups() {
   const [rows, setRows] = useState<Followup[]>([]);
+  const [leads, setLeads] = useState<Record<string, LeadInfo>>({});
+  const [offers, setOffers] = useState<Record<string, OfferInfo>>({});
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -31,7 +36,30 @@ export default function SalesFollowups() {
       .select('*')
       .order('due_at', { ascending: true, nullsFirst: false })
       .limit(500);
-    setRows((data ?? []) as Followup[]);
+    const list = (data ?? []) as Followup[];
+    setRows(list);
+
+    const leadIds = Array.from(new Set(list.map(r => r.lead_id).filter(Boolean))) as string[];
+    let leadMap: Record<string, LeadInfo> = {};
+    if (leadIds.length) {
+      const { data: lds } = await supabase
+        .from('sales_leads')
+        .select('id, company, first_name, last_name, converted_offer_id')
+        .in('id', leadIds);
+      (lds ?? []).forEach((l: any) => { leadMap[l.id] = l; });
+    }
+    setLeads(leadMap);
+
+    const offerIds = Array.from(new Set(Object.values(leadMap).map(l => l.converted_offer_id).filter(Boolean))) as string[];
+    let offerMap: Record<string, OfferInfo> = {};
+    if (offerIds.length) {
+      const { data: ofs } = await supabase
+        .from('offers')
+        .select('id, offer_number, customer_name')
+        .in('id', offerIds);
+      (ofs ?? []).forEach((o: any) => { offerMap[o.id] = { offer_number: o.offer_number, customer_name: o.customer_name }; });
+    }
+    setOffers(offerMap);
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
