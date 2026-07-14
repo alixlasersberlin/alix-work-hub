@@ -68,7 +68,7 @@ export default function AngebotErstellen() {
   const [customerId, setCustomerId] = useState<string>('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [itemSearch, setItemSearch] = useState('');
-  const [offerNumber, setOfferNumber] = useState(`ANG-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
+  const [offerNumber, setOfferNumber] = useState(`${sofortMode ? 'AUF' : 'ANG'}-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
   const [caseNumber, setCaseNumber] = useState<string | null>(null);
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
@@ -1151,11 +1151,15 @@ export default function AngebotErstellen() {
 
   // Super-Admin: Angebot selbst bestätigen → Status = 'order' + Auftrag in `orders` anlegen
   const confirmAsOrder = async () => {
-    if (!isSuperAdmin) { toast.error('Nur Super Admin darf Angebote selbst bestätigen.'); return; }
+    if (!sofortMode && !isSuperAdmin) { toast.error('Nur Super Admin darf Angebote selbst bestätigen.'); return; }
     if (!selectedCustomer) { toast.error('Bitte zuerst einen Kunden auswählen.'); return; }
     const validLines = lines.filter(l => l.name && l.quantity > 0);
     if (validLines.length === 0) { toast.error('Bitte mindestens eine Position erfassen.'); return; }
-    if (!confirm(`Angebot ${offerNumber} jetzt anerkennen und als Auftrag übernehmen?\n\nDamit wird ein neuer Auftrag im System angelegt.`)) return;
+    const confirmMsg = sofortMode
+      ? `Sofortauftrag ${offerNumber} jetzt anlegen?\n\nDamit wird ein neuer Auftrag im System erstellt.`
+      : `Angebot ${offerNumber} jetzt anerkennen und als Auftrag übernehmen?\n\nDamit wird ein neuer Auftrag im System angelegt.`;
+    if (!confirm(confirmMsg)) return;
+
 
     setConfirming(true);
     try {
