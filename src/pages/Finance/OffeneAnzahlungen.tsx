@@ -400,6 +400,9 @@ export default function OffeneAnzahlungen() {
                   <TableCell className="text-right">{fmtMoney(r.paid_amount, r.currency || 'EUR')}</TableCell>
                   <TableCell className="text-right font-semibold">{fmtMoney(r.open_amount, r.currency || 'EUR')}</TableCell>
                   <TableCell className="text-xs">
+                    {r.created_at ? format(parseISO(r.created_at), 'dd.MM.yyyy', { locale: de }) : '—'}
+                  </TableCell>
+                  <TableCell className="text-xs">
                     {r.due_date ? format(parseISO(r.due_date), 'dd.MM.yyyy', { locale: de }) : '—'}
                   </TableCell>
                   <TableCell>
