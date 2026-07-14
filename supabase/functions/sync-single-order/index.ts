@@ -185,7 +185,32 @@ Deno.serve(async (req: Request) => {
 
     if (!orderRes.ok) {
       const text = await orderRes.text();
-      return jsonResponse({ error: "Zoho API error", message: text }, 502);
+      let zohoCode: number | null = null;
+      let zohoMessage: string | null = null;
+      try {
+        const parsed = JSON.parse(text);
+        zohoCode = parsed?.code ?? null;
+        zohoMessage = parsed?.message ?? null;
+      } catch { /* not JSON */ }
+
+      // Zoho code 1002 = "Auftrag existiert nicht" → gracefully return 200 (not 502)
+      if (zohoCode === 1002 || orderRes.status === 404) {
+        return jsonResponse({
+          success: false,
+          not_found: true,
+          error: "ORDER_NOT_FOUND",
+          message: `Auftrag "${rawOrderInput}" existiert in Zoho (${source_system}) nicht.`,
+          zoho_code: zohoCode,
+          zoho_message: zohoMessage,
+        }, 200);
+      }
+
+      return jsonResponse({
+        error: "Zoho API error",
+        message: zohoMessage ?? text,
+        zoho_code: zohoCode,
+        status: orderRes.status,
+      }, 502);
     }
 
     const orderData = await orderRes.json();
