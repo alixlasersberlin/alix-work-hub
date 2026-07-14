@@ -4,11 +4,12 @@ import {
   LayoutDashboard, Grid3x3, Users2, ShieldCheck, ClipboardCheck,
   UserCog, FileClock, GitCompare, Eye, Shield, Clock, Database,
   Bell, Upload, Package, BarChart3, Flame, Globe, GitFork, KeyRound,
-  CalendarClock, GaugeCircle, Workflow, FileDown,
+  CalendarClock, GaugeCircle, Workflow, FileDown, UserCheck,
 } from 'lucide-react';
 
 const NAV = [
   { to: '/admin/rollen-freigaben', end: true, label: 'Übersicht', icon: LayoutDashboard },
+  { to: '/admin/rollen-freigaben/zugriff-erteilen', label: 'Zugriff erteilen', icon: UserCheck },
   { to: '/admin/rollen-freigaben/benachrichtigungen', label: 'Benachrichtigungen', icon: Bell },
   { to: '/admin/rollen-freigaben/matrix', label: 'Rollenmatrix', icon: Grid3x3 },
   { to: '/admin/rollen-freigaben/rollen', label: 'Rollen', icon: ShieldCheck },
