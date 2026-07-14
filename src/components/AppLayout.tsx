@@ -1012,6 +1012,7 @@ export default function AppLayout() {
   };
 
   const visibleItems = navItems
+    .filter(i => i.label !== 'KONTAKT')
     .filter(filterByRoles)
     .map(item => ({
       ...item,
