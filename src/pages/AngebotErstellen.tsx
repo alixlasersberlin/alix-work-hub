@@ -1921,7 +1921,7 @@ export default function AngebotErstellen() {
             </button>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Anzahlung (€)</Label>
+            <Label className="text-xs text-muted-foreground">{payType === 'Miete' ? 'Kaution (€)' : 'Anzahlung (€)'}</Label>
             <Input
               type="number" min={0} step="0.01"
               value={payDown}
@@ -1936,19 +1936,32 @@ export default function AngebotErstellen() {
               <Select value={String(payTerm)} onValueChange={v => setPayTerm(Number(v))}>
                 <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {(payType === 'Alix Smart Impulse' ? [12, 24, 36] : [12, 24, 36, 48, 60, 72]).map(t => (
+                  {(payType === 'Alix Smart Impulse' || payType === 'Miete' ? [12, 24, 36] : [12, 24, 36, 48, 60, 72]).map(t => (
                     <SelectItem key={t} value={String(t)}>{t} Monate</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Basis (€)</Label>
-            <div className="h-10 px-3 flex items-center rounded-md bg-secondary/50 border border-border text-foreground font-medium">
-              {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)))}
+          {payType === 'Miete' ? (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Monatliche Miete (€)</Label>
+              <Input
+                type="number" min={0} step="0.01"
+                value={payRate}
+                onChange={e => setPayRate(e.target.value)}
+                placeholder="0,00"
+                className="bg-secondary border-border"
+              />
             </div>
-          </div>
+          ) : (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Basis (€)</Label>
+              <div className="h-10 px-3 flex items-center rounded-md bg-secondary/50 border border-border text-foreground font-medium">
+                {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end pt-2 border-t border-border">
@@ -1960,6 +1973,20 @@ export default function AngebotErstellen() {
                   {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0)))}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">Einmalzahlung</div>
+              </>
+            ) : payType === 'Miete' ? (
+              <>
+                <div className="text-xs text-muted-foreground">Monatliche Miete</div>
+                <div className="text-2xl font-bold text-primary">
+                  {fmtMoney(parseFloat(payRate) || 0)}
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">über {payTerm} Monate + Kaution {fmtMoney(parseFloat(payDown) || 0)}</div>
+                <div className="mt-3 pt-3 border-t border-border">
+                  <div className="text-xs text-muted-foreground">Restwert der Maschine</div>
+                  <div className="text-lg font-semibold text-foreground">
+                    {fmtMoney(Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0) - ((parseFloat(payRate) || 0) * payTerm)))}
+                  </div>
+                </div>
               </>
             ) : (
               <>
@@ -1977,6 +2004,7 @@ export default function AngebotErstellen() {
           </div>
         </div>
       </div>
+
 
 
         <div className="flex flex-col items-end gap-1 pt-3 border-t border-border text-sm">
