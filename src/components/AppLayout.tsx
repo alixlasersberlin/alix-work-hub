@@ -905,38 +905,58 @@ export default function AppLayout() {
     };
   }, [isOrdersRoute]);
 
-  // Anzahl neuer / nicht zugeteilter Vertriebsanfragen (sales_leads)
+  // Anzahl offener Vertriebsanfragen (sales_leads) und offener Angebote (offers) – Echtzeit
   useEffect(() => {
     let cancelled = false;
-    const load = async () => {
+    const loadLeads = async () => {
       const { count } = await supabase
         .from('sales_leads')
         .select('*', { count: 'exact', head: true })
         .or('assigned_user.is.null,lead_status.eq.Neu,lead_status.eq.Importiert - Angebot offen')
         .not('lead_status', 'in', '("Gewonnen","Verloren","Archiviert")');
       if (cancelled) return;
-      const n = count ?? 0;
-      setLagerCounts((prev) => ({ ...prev, '/verkauf/anfragen': n, '/verkauf/angebote': n }));
+      setLagerCounts((prev) => ({ ...prev, '/verkauf/anfragen': count ?? 0 }));
     };
-    const id = window.setTimeout(load, isOrdersRoute ? 5000 : 0);
-    const intervalId = window.setInterval(load, 5 * 60 * 1000);
-    let debounceId: number | undefined;
-    const scheduleReload = () => {
-      if (debounceId) window.clearTimeout(debounceId);
-      debounceId = window.setTimeout(load, 400);
+    const loadOffers = async () => {
+      const { count } = await supabase
+        .from('offers')
+        .select('*', { count: 'exact', head: true })
+        .not('status', 'in', '("signed","order","unterschrieben","abgelehnt","storniert","expired","abgelaufen")');
+      if (cancelled) return;
+      setLagerCounts((prev) => ({ ...prev, '/verkauf/angebote': count ?? 0 }));
     };
-    const channel = supabase
+    const loadAll = () => { void loadLeads(); void loadOffers(); };
+    const id = window.setTimeout(loadAll, isOrdersRoute ? 5000 : 0);
+    const intervalId = window.setInterval(loadAll, 5 * 60 * 1000);
+    let debounceLeads: number | undefined;
+    let debounceOffers: number | undefined;
+    const scheduleLeads = () => {
+      if (debounceLeads) window.clearTimeout(debounceLeads);
+      debounceLeads = window.setTimeout(loadLeads, 400);
+    };
+    const scheduleOffers = () => {
+      if (debounceOffers) window.clearTimeout(debounceOffers);
+      debounceOffers = window.setTimeout(loadOffers, 400);
+    };
+    const chLeads = supabase
       .channel('sales_leads_counts')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales_leads' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales_leads' }, scheduleLeads)
+      .subscribe();
+    const chOffers = supabase
+      .channel('offers_counts')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, scheduleOffers)
       .subscribe();
     return () => {
       cancelled = true;
       window.clearTimeout(id);
       window.clearInterval(intervalId);
-      if (debounceId) window.clearTimeout(debounceId);
-      supabase.removeChannel(channel);
+      if (debounceLeads) window.clearTimeout(debounceLeads);
+      if (debounceOffers) window.clearTimeout(debounceOffers);
+      supabase.removeChannel(chLeads);
+      supabase.removeChannel(chOffers);
     };
   }, [isOrdersRoute]);
+
 
   // Anzahl der Bestellungen (production_orders + Bestellung möglich) – Echtzeit
   useEffect(() => {
@@ -1035,6 +1055,22 @@ export default function AppLayout() {
   }, [location.pathname, isOrdersRoute]);
 
   const labelWithCount = (path: string, label: string) => {
+    if (path === '/verkauf') {
+      const anfragen = lagerCounts['/verkauf/anfragen'];
+      const angebote = lagerCounts['/verkauf/angebote'];
+      if (anfragen === undefined && angebote === undefined) return label;
+      return (
+        <>
+          {label}{' '}
+          <span className={(anfragen ?? 0) > 0 ? 'text-amber-500' : 'text-muted-foreground'} title="Offene Anfragen">
+            ({anfragen ?? 0})
+          </span>{' '}
+          <span className={(angebote ?? 0) > 0 ? 'text-amber-500' : 'text-muted-foreground'} title="Offene Angebote">
+            ({angebote ?? 0})
+          </span>
+        </>
+      );
+    }
     const key = path === '/production' && label === 'Liste' ? '__production_liste' : path;
     const c = lagerCounts[key];
     if (c === undefined) return label;
