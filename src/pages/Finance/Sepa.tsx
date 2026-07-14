@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useReauthGate } from '@/hooks/useReauthGate';
+import ReauthDialog from '@/components/ReauthDialog';
 
 const fmt = (n: number | null | undefined) => typeof n === 'number'
   ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n) : '–';
@@ -27,6 +29,8 @@ const statusVariant = (s: string): any => ({
 export default function FinanceSepa() {
   const { roles } = useAuth();
   const isSuperAdmin = roles.includes('Super Admin');
+  const reauthDel = useReauthGate('finance.sepa.delete', 'Löschen von SEPA-Mandaten/Läufen');
+  const reauthExp = useReauthGate('finance.sepa.export', 'SEPA pain.008-Export');
   const [tab, setTab] = useState<'runs' | 'mandates'>('runs');
   const [loading, setLoading] = useState(true);
   const [mandates, setMandates] = useState<any[]>([]);
@@ -88,12 +92,12 @@ export default function FinanceSepa() {
     load();
   };
 
-  const deleteMandate = async (id: string) => {
+  const deleteMandate = (id: string) => reauthDel.gate(async () => {
     if (!confirm('Mandat löschen?')) return;
     const { error } = await supabase.from('finance_sepa_mandates' as any).delete().eq('id', id);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     load();
-  };
+  });
 
   const createRun = async () => {
     if (!rForm.creditor_name || !rForm.creditor_iban || !rForm.creditor_id) {
@@ -127,7 +131,7 @@ export default function FinanceSepa() {
     loadRunDetail(activeRun);
   };
 
-  const exportXml = async (runId: string) => {
+  const exportXml = (runId: string) => reauthExp.gate(async () => {
     try {
       const { data: session } = await supabase.auth.getSession();
       const token = session.session?.access_token;
@@ -149,15 +153,15 @@ export default function FinanceSepa() {
     } catch (e: any) {
       toast({ title: 'Export-Fehler', description: e?.message, variant: 'destructive' });
     }
-  };
+  });
 
-  const deleteRun = async (id: string) => {
+  const deleteRun = (id: string) => reauthDel.gate(async () => {
     if (!confirm('Lauf löschen?')) return;
     const { error } = await supabase.from('finance_sepa_runs' as any).delete().eq('id', id);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     if (activeRun?.id === id) { setActiveRun(null); setRunItems([]); }
     load();
-  };
+  });
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
@@ -405,6 +409,8 @@ export default function FinanceSepa() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ReauthDialog {...reauthDel.dialogProps} />
+      <ReauthDialog {...reauthExp.dialogProps} />
     </div>
   );
 }

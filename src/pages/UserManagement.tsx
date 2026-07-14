@@ -19,6 +19,8 @@ import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { displayRoleName } from '@/lib/role-labels';
+import { useReauthGate } from '@/hooks/useReauthGate';
+import ReauthDialog from '@/components/ReauthDialog';
 
 /* ─── Types ─── */
 interface EnrichedUser {
@@ -124,6 +126,10 @@ export default function UserManagement() {
 
   // Action loading
   const [actionLoading, setActionLoading] = useState(false);
+  const reauthRole = useReauthGate('user.roles', 'Rollen- oder Abteilungsänderung');
+  const reauthStatus = useReauthGate('user.status', 'Benutzerstatus (Sperren/Aktivieren) ändern');
+  const reauthMfa = useReauthGate('user.mfa_reset', '2FA-Faktor eines Benutzers zurücksetzen');
+  const reauthPwd = useReauthGate('user.password', 'Passwort eines Benutzers ändern');
 
   /* ─── Data loading ─── */
   const loadData = useCallback(async () => {
@@ -408,7 +414,7 @@ export default function UserManagement() {
                   variant="outline"
                   className="w-full justify-start gap-2 text-warning hover:text-warning"
                   disabled={actionLoading}
-                  onClick={async () => {
+                  onClick={() => reauthMfa.gate(async () => {
                     if (!confirm(`2FA für ${selectedUser.full_name || selectedUser.email} zurücksetzen? Der User muss beim nächsten Login neu einrichten.`)) return;
                     setActionLoading(true);
                     try {
@@ -421,7 +427,7 @@ export default function UserManagement() {
                     } finally {
                       setActionLoading(false);
                     }
-                  }}
+                  })}
                 >
                   <ShieldOff className="w-4 h-4" /> 2FA zurücksetzen
                 </Button>
@@ -430,12 +436,12 @@ export default function UserManagement() {
                   variant="outline"
                   className="w-full justify-start gap-2"
                   disabled={actionLoading}
-                  onClick={() => {
+                  onClick={() => reauthPwd.gate(() => {
                     setPwNew('');
                     setPwConfirm('');
                     setPwRequireReset(true);
                     setShowPasswordDialog(true);
-                  }}
+                  })}
                 >
                   <Key className="w-4 h-4" /> Passwort ändern
                 </Button>
@@ -606,7 +612,7 @@ export default function UserManagement() {
                 <Button
                   variant={showConfirmAction.action === 'active' ? 'default' : 'destructive'}
                   disabled={actionLoading}
-                  onClick={() => showConfirmAction && handleStatusChange(showConfirmAction.user, showConfirmAction.action)}
+                  onClick={() => showConfirmAction && reauthStatus.gate(() => handleStatusChange(showConfirmAction.user, showConfirmAction.action))}
                 >
                   {actionLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                   Bestätigen
@@ -615,6 +621,10 @@ export default function UserManagement() {
             </div>
           </div>
         )}
+        <ReauthDialog {...reauthRole.dialogProps} />
+        <ReauthDialog {...reauthStatus.dialogProps} />
+        <ReauthDialog {...reauthMfa.dialogProps} />
+        <ReauthDialog {...reauthPwd.dialogProps} />
       </div>
     );
   }
@@ -902,7 +912,7 @@ export default function UserManagement() {
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setShowEditRoles(false)}>Abbrechen</Button>
-              <Button onClick={handleSaveRoles} disabled={savingRoles}>
+              <Button onClick={() => reauthRole.gate(handleSaveRoles)} disabled={savingRoles}>
                 {savingRoles && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                 Speichern
               </Button>
@@ -910,6 +920,10 @@ export default function UserManagement() {
           </div>
         </div>
       )}
+      <ReauthDialog {...reauthRole.dialogProps} />
+      <ReauthDialog {...reauthStatus.dialogProps} />
+      <ReauthDialog {...reauthMfa.dialogProps} />
+      <ReauthDialog {...reauthPwd.dialogProps} />
     </div>
   );
 }
