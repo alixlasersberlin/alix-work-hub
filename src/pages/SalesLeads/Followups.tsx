@@ -20,8 +20,13 @@ type Followup = {
   created_at: string;
 };
 
+type LeadInfo = { company: string | null; first_name: string | null; last_name: string | null; converted_offer_id: string | null };
+type OfferInfo = { offer_number: string; customer_name: string | null };
+
 export default function SalesFollowups() {
   const [rows, setRows] = useState<Followup[]>([]);
+  const [leads, setLeads] = useState<Record<string, LeadInfo>>({});
+  const [offers, setOffers] = useState<Record<string, OfferInfo>>({});
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -31,7 +36,30 @@ export default function SalesFollowups() {
       .select('*')
       .order('due_at', { ascending: true, nullsFirst: false })
       .limit(500);
-    setRows((data ?? []) as Followup[]);
+    const list = (data ?? []) as Followup[];
+    setRows(list);
+
+    const leadIds = Array.from(new Set(list.map(r => r.lead_id).filter(Boolean))) as string[];
+    let leadMap: Record<string, LeadInfo> = {};
+    if (leadIds.length) {
+      const { data: lds } = await supabase
+        .from('sales_leads')
+        .select('id, company, first_name, last_name, converted_offer_id')
+        .in('id', leadIds);
+      (lds ?? []).forEach((l: any) => { leadMap[l.id] = l; });
+    }
+    setLeads(leadMap);
+
+    const offerIds = Array.from(new Set(Object.values(leadMap).map(l => l.converted_offer_id).filter(Boolean))) as string[];
+    let offerMap: Record<string, OfferInfo> = {};
+    if (offerIds.length) {
+      const { data: ofs } = await supabase
+        .from('offers')
+        .select('id, offer_number, customer_name')
+        .in('id', offerIds);
+      (ofs ?? []).forEach((o: any) => { offerMap[o.id] = { offer_number: o.offer_number, customer_name: o.customer_name }; });
+    }
+    setOffers(offerMap);
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
@@ -71,7 +99,11 @@ export default function SalesFollowups() {
     if (list.length === 0) return <p className="p-4 text-muted-foreground">Keine Einträge.</p>;
     return (
       <ul className="divide-y">
-        {list.map((r) => (
+        {list.map((r) => {
+          const lead = r.lead_id ? leads[r.lead_id] : undefined;
+          const offer = lead?.converted_offer_id ? offers[lead.converted_offer_id] : undefined;
+          const leadName = lead ? (lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ')) : null;
+          return (
           <li key={r.id} className="p-4 flex items-center justify-between gap-3">
             <div>
               <div className="font-medium">
@@ -80,6 +112,18 @@ export default function SalesFollowups() {
                   <Link to={`/verkauf/anfragen/${r.lead_id}`} className="ml-2 text-xs text-primary underline">Zur Anfrage</Link>
                 )}
               </div>
+              {(offer || leadName) && (
+                <div className="text-xs mt-1 flex flex-wrap items-center gap-2">
+                  {offer && (
+                    <Link to={`/verkauf/angebot/${encodeURIComponent(offer.offer_number)}`} className="text-primary underline">
+                      Angebot {offer.offer_number}
+                    </Link>
+                  )}
+                  {(offer?.customer_name || leadName) && (
+                    <span className="text-muted-foreground">· {offer?.customer_name || leadName}</span>
+                  )}
+                </div>
+              )}
               {r.description && <div className="text-sm text-muted-foreground">{r.description}</div>}
               <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                 <CalendarClock className="h-3 w-3" />
@@ -95,7 +139,8 @@ export default function SalesFollowups() {
               )}
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
     );
   }
