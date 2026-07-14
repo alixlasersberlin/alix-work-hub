@@ -316,6 +316,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mfaState, refreshMfaState,
       signIn, signOut,
       hasRole, hasAnyRole, isAdmin, isOtpVerified, refreshProfile,
+      impersonatedUserId, impersonatedName, stopImpersonation,
     }}>
       {children}
     </AuthContext.Provider>
