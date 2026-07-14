@@ -34,6 +34,9 @@ export default function Angebote() {
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [pageSize, setPageSize] = useState<'10' | '20' | '50' | 'all'>('20');
+  const [creatorFilter, setCreatorFilter] = useState<string>('alle');
+  const [dateRange, setDateRange] = useState<'month' | '3months' | 'year' | 'all'>('all');
 
   const [signLinkOpen, setSignLinkOpen] = useState(false);
   const [signLinkLoading, setSignLinkLoading] = useState(false);
