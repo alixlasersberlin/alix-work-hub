@@ -326,46 +326,68 @@ export default function ImportManagement() {
   }
 
   // ============ ANGEBOTE (Estimates) Import ============
-  const [estimatesImporting, setEstimatesImporting] = useState(false);
-  const [estimatesResult, setEstimatesResult] = useState<{ de: { fetched: number; imported: number; updated: number; failed: number }; at: { fetched: number; imported: number; updated: number; failed: number } } | null>(null);
+  type EstTotals = { fetched: number; imported: number; updated: number; failed: number };
+  const [estimatesDeImporting, setEstimatesDeImporting] = useState(false);
+  const [estimatesAtImporting, setEstimatesAtImporting] = useState(false);
+  const [estimatesDeResult, setEstimatesDeResult] = useState<EstTotals | null>(null);
+  const [estimatesAtResult, setEstimatesAtResult] = useState<EstTotals | null>(null);
 
-  async function handleEstimatesImport() {
-    setEstimatesImporting(true);
-    setEstimatesResult(null);
-    const runOne = async (source: 'zoho_eu_1' | 'zoho_eu_2') => {
-      const totals = { fetched: 0, imported: 0, updated: 0, failed: 0 };
-      let page = 1;
-      for (let i = 0; i < 40; i++) {
-        const { data, error } = await supabase.functions.invoke('sync-zoho-estimates', {
-          body: { source_system: source, page, max_pages: 3, per_page: 100 },
-        });
-        if (error) throw error;
-        if (data?.error && data?.success === false) throw new Error(data.error);
-        totals.fetched += data?.fetched ?? 0;
-        totals.imported += data?.imported ?? 0;
-        totals.updated += data?.updated ?? 0;
-        totals.failed += data?.failed ?? 0;
-        if (!data?.has_more) break;
-        page = (data?.last_page ?? page) + 1;
-        await new Promise(r => setTimeout(r, 800));
-      }
-      return totals;
-    };
+  async function runEstimatesFor(source: 'zoho_eu_1' | 'zoho_eu_2'): Promise<EstTotals> {
+    const totals: EstTotals = { fetched: 0, imported: 0, updated: 0, failed: 0 };
+    let page = 1;
+    for (let i = 0; i < 40; i++) {
+      const { data, error } = await supabase.functions.invoke('sync-zoho-estimates', {
+        body: { source_system: source, page, max_pages: 3, per_page: 100 },
+      });
+      if (error) throw error;
+      if (data?.error && data?.success === false) throw new Error(data.error);
+      totals.fetched += data?.fetched ?? 0;
+      totals.imported += data?.imported ?? 0;
+      totals.updated += data?.updated ?? 0;
+      totals.failed += data?.failed ?? 0;
+      if (!data?.has_more) break;
+      page = (data?.last_page ?? page) + 1;
+      await new Promise(r => setTimeout(r, 800));
+    }
+    return totals;
+  }
+
+  async function handleEstimatesImportDe() {
+    setEstimatesDeImporting(true);
+    setEstimatesDeResult(null);
     try {
-      toast({ title: 'Angebote-Import gestartet', description: 'Zoho Estimates DE + AT → Angebote' });
-      const de = await runOne('zoho_eu_1');
-      const at = await runOne('zoho_eu_2');
-      setEstimatesResult({ de, at });
+      toast({ title: 'Angebote-Import DE gestartet', description: 'Zoho Estimates 🇩🇪 Alix Deutschland → Angebote' });
+      const de = await runEstimatesFor('zoho_eu_1');
+      setEstimatesDeResult(de);
       toast({
-        title: 'Angebote-Import abgeschlossen',
-        description: `DE: ${de.imported}+ / ${de.updated}~ • AT: ${at.imported}+ / ${at.updated}~ • Fehler: ${de.failed + at.failed}`,
+        title: 'Angebote-Import DE abgeschlossen',
+        description: `🇩🇪 ${de.imported}+ / ${de.updated}~ • Fehler: ${de.failed}`,
       });
     } catch (e: any) {
-      toast({ title: 'Angebote-Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+      toast({ title: 'Angebote-Import DE fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
     } finally {
-      setEstimatesImporting(false);
+      setEstimatesDeImporting(false);
     }
   }
+
+  async function handleEstimatesImportAt() {
+    setEstimatesAtImporting(true);
+    setEstimatesAtResult(null);
+    try {
+      toast({ title: 'Angebote-Import AT gestartet', description: 'Zoho Estimates 🇦🇹 Alix Austria → Angebote' });
+      const at = await runEstimatesFor('zoho_eu_2');
+      setEstimatesAtResult(at);
+      toast({
+        title: 'Angebote-Import AT abgeschlossen',
+        description: `🇦🇹 ${at.imported}+ / ${at.updated}~ • Fehler: ${at.failed}`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Angebote-Import AT fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setEstimatesAtImporting(false);
+    }
+  }
+
 
   function getInvoiceDateFrom(): string {
     const today = new Date();
