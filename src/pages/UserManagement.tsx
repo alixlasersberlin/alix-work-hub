@@ -621,6 +621,10 @@ export default function UserManagement() {
             </div>
           </div>
         )}
+        <ReauthDialog {...reauthRole.dialogProps} />
+        <ReauthDialog {...reauthStatus.dialogProps} />
+        <ReauthDialog {...reauthMfa.dialogProps} />
+        <ReauthDialog {...reauthPwd.dialogProps} />
       </div>
     );
   }
