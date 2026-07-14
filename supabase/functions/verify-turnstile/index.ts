@@ -5,6 +5,7 @@ import { z } from 'https://esm.sh/zod@3.23.8';
 const ALLOWED_ORIGINS = new Set<string>([
   'https://alixwork.de',
   'https://www.alixwork.de',
+  'https://app.alixwork.de',
   'https://alix-finance.de',
   'https://www.alix-finance.de',
   'https://alix-pro-hub.lovable.app',
