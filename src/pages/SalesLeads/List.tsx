@@ -236,6 +236,7 @@ export default function SalesLeadsList() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-left">
               <tr>
+                <th className="p-3 w-8" title="Auftrag vorhanden?"></th>
                 <th className="p-3">Datum</th>
                 <th className="p-3">Lead-Nr.</th>
                 <th className="p-3">Score</th>
@@ -252,12 +253,20 @@ export default function SalesLeadsList() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={13} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={13} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
                 <tr key={r.id} className="border-t hover:bg-muted/30">
+                  <td className="p-3 align-middle">
+                    {orderMatches.has(r.id) ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" aria-label="Auftrag vorhanden" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-yellow-500" aria-label="Kein Auftrag gefunden" />
+                    )}
+                  </td>
                   <td className="p-3 whitespace-nowrap">{new Date(r.created_at).toLocaleString('de-DE')}</td>
+
                   <td className="p-3 font-mono text-xs">
                     <Link to={`/verkauf/anfragen/${r.id}`} className="text-primary hover:underline">
                       {r.lead_number || '—'}
