@@ -61,7 +61,7 @@ function buildSalesOrderNumberCandidates(input: string) {
 
 async function lookupSalesOrderIdByNumber(config: any, accessToken: string, candidates: string[]) {
   for (const candidate of candidates) {
-    const lookupUrl = `${config.booksApiBaseUrl}/salesorders?organization_id=${config.organizationId}&salesorder_number=${encodeURIComponent(candidate)}`;
+    const lookupUrl = `${config.booksApiBaseUrl}/salesorders?organization_id=${config.organizationId}&search_text=${encodeURIComponent(candidate)}`;
     const lookupRes = await fetch(lookupUrl, {
       headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
     });
@@ -71,9 +71,11 @@ async function lookupSalesOrderIdByNumber(config: any, accessToken: string, cand
     }
     const lookupJson = await lookupRes.json();
     const matches = Array.isArray(lookupJson.salesorders) ? lookupJson.salesorders : [];
-    if (matches.length > 0 && matches[0]?.salesorder_id) {
+    const exactMatch = matches.find((so: any) => String(so?.salesorder_number ?? "").toUpperCase() === candidate.toUpperCase());
+    const match = exactMatch ?? matches[0];
+    if (match?.salesorder_id) {
       return {
-        salesorderId: String(matches[0].salesorder_id),
+        salesorderId: String(match.salesorder_id),
         matchedNumber: candidate,
       };
     }
