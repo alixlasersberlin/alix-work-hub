@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { enqueueAction } from '@/lib/offline/kalender-queue';
 import {
   Phone, Mail, MessageSquare, Navigation, CheckCircle2, Clock,
   MapPin, User, Building2, Ticket as TicketIcon, FileText, StickyNote,
@@ -32,11 +33,31 @@ export default function KalenderDetail() {
   const startTime = new Date(event.start_at).toLocaleString('de-DE', { dateStyle: 'full', timeStyle: 'short' });
   const endTime = new Date(event.end_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
-  const action = async (status: any, msg: string) => {
+  const action = async (status: 'confirmed' | 'in_progress' | 'completed' | 'cancelled', msg: string) => {
     if (!id) return;
     setBusy(true);
+    // Offline? -> in Outbox schreiben, optimistisch UI updaten
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      try {
+        await enqueueAction({ kind: 'status', event_id: id, status });
+        setEvent(prev => prev ? { ...prev, status } as KalenderEvent : prev);
+        toast.success(`${msg} (offline gespeichert – wird bei Verbindung gesendet)`);
+      } catch (e: any) {
+        toast.error(e?.message || 'Konnte nicht offline gespeichert werden');
+      } finally { setBusy(false); }
+      return;
+    }
     try { await confirmEvent(id, status); toast.success(msg); setEvent(await loadEvent(id)); }
-    catch (e: any) { toast.error(e?.message || 'Aktion fehlgeschlagen'); }
+    catch (e: any) {
+      // Netzwerkfehler trotz online? -> in Queue
+      try {
+        await enqueueAction({ kind: 'status', event_id: id, status });
+        setEvent(prev => prev ? { ...prev, status } as KalenderEvent : prev);
+        toast.warning(`${msg} – vorgemerkt für erneuten Versand`);
+      } catch {
+        toast.error(e?.message || 'Aktion fehlgeschlagen');
+      }
+    }
     finally { setBusy(false); }
   };
 
