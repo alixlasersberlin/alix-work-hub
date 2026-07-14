@@ -50,7 +50,10 @@ export default function MfaChallenge() {
       if (vErr) throw vErr;
       markMfaVerifiedThisTab();
       await refreshMfaState();
-      navigate('/dashboard', { replace: true });
+      const postMfaTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
+        ? '/esc/kalender'
+        : '/dashboard';
+      navigate(postMfaTarget, { replace: true });
     } catch (e: any) {
       setErr(e?.message ?? 'Code ungültig');
       setBusy(false);
