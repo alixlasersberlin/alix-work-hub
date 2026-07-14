@@ -15,23 +15,18 @@ export default function TenantSwitcher() {
         else setCurrent(allowedTenants.find(t => t.code === v) || null);
       }}
     >
-      <SelectTrigger
-        className="h-9 w-[64px] bg-secondary border-border justify-center px-2"
-        aria-label="Mandant wählen"
-        title={current?.name ?? 'Alix World'}
-      >
+      <SelectTrigger className="h-9 w-[180px] bg-secondary border-border">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="__all__">
-          <span className="inline-flex items-center justify-center text-lg" title="Alle Mandanten">
-            <Globe className="w-4 h-4" />
-          </span>
+          <span className="inline-flex items-center gap-2"><Globe className="w-4 h-4" /> Alix World</span>
         </SelectItem>
         {allowedTenants.map(t => (
           <SelectItem key={t.code} value={t.code}>
-            <span className="inline-flex items-center justify-center text-lg" title={t.name} aria-label={t.name}>
-              {t.flag_emoji || '🏢'}
+            <span className="inline-flex items-center gap-2">
+              <span aria-hidden>{t.flag_emoji || '🏢'}</span>
+              <span>{t.name}</span>
             </span>
           </SelectItem>
         ))}
