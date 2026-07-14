@@ -7,6 +7,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useReauthGate } from '@/hooks/useReauthGate';
+import ReauthDialog from '@/components/ReauthDialog';
 
 interface Props {
   customer: any;
@@ -18,8 +20,9 @@ interface Props {
 export default function CustomerDeleteDialog({ customer, open, onClose, onDeleted }: Props) {
   const { user } = useAuth();
   const [deleting, setDeleting] = useState(false);
+  const { gate, dialogProps } = useReauthGate('customer.delete', 'Endgültiges Löschen eines Kundendatensatzes');
 
-  async function handleDelete() {
+  async function performDelete() {
     setDeleting(true);
 
     // 1. Record in deleted_customers to prevent re-import
@@ -45,6 +48,8 @@ export default function CustomerDeleteDialog({ customer, open, onClose, onDelete
     onDeleted();
     onClose();
   }
+
+  function handleDelete() { gate(performDelete); }
 
   return (
     <AlertDialog open={open} onOpenChange={v => !v && onClose()}>
