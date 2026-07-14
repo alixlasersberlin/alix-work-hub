@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock, Search } from 'lucide-react';
+import { FileText, FilePlus, Trash2, Pencil, CheckCircle2, Link2, Copy, Download, ShieldCheck, ShieldX, Clock, Search, AlertTriangle } from 'lucide-react';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,7 @@ export default function Angebote() {
   const { hasRole } = useAuth();
   const isSuperAdmin = hasRole('Super Admin') || hasRole('Admin');
   const [offers, setOffers] = useState<OfferSnapshot[]>([]);
+  const [orderNumbers, setOrderNumbers] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<'10' | '20' | '50' | 'all'>('20');
@@ -176,6 +177,17 @@ export default function Angebote() {
   const reload = async () => {
     const list = await listOffers();
     setOffers(list);
+    // Match offers to orders: order_number = offer_number ohne "ANG-" Prefix
+    const candidates = Array.from(new Set(list.map(o => (o.offerNumber || '').replace(/^ANG-/i, '')).filter(Boolean)));
+    if (candidates.length > 0) {
+      const { data } = await supabase
+        .from('orders')
+        .select('order_number')
+        .in('order_number', candidates);
+      setOrderNumbers(new Set((data || []).map((r: any) => r.order_number)));
+    } else {
+      setOrderNumbers(new Set());
+    }
     setLoading(false);
   };
 
@@ -445,7 +457,16 @@ export default function Angebote() {
                       navigate(`/verkauf/angebot/neu?edit=${encodeURIComponent(o.offerNumber)}`);
                     }}
                   >
-                    <TableCell className="font-medium">{o.offerNumber}</TableCell>
+                    <TableCell className="font-medium">
+                      <span className="inline-flex items-center gap-2">
+                        {orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, '')) ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" aria-label="Auftrag vorhanden" />
+                        ) : (
+                          <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" aria-label="Kein Auftrag vorhanden" />
+                        )}
+                        {o.offerNumber}
+                      </span>
+                    </TableCell>
                     <TableCell>{o.offerDate ? new Date(o.offerDate).toLocaleDateString('de-DE') : '—'}</TableCell>
                     <TableCell>{o.customer?.company_name || o.customer?.contact_name || '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{o.customer?.email || '—'}</TableCell>
