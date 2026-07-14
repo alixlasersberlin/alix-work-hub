@@ -71,9 +71,17 @@ export default function ViewAs() {
                 <div className="text-lg font-semibold">{user.full_name ?? user.email}</div>
                 <div className="text-xs text-muted-foreground">{user.email}</div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant={user.is_active ? 'default' : 'destructive'}>{user.is_active ? 'Aktiv' : 'Inaktiv'}</Badge>
                 <Badge variant="outline">{user.account_status ?? 'unbekannt'}</Badge>
+                <Button
+                  size="sm"
+                  onClick={() => window.open(`/simulate/${selected}`, '_blank', 'noopener,noreferrer')}
+                  className="bg-amber-500 hover:bg-amber-600 text-black"
+                >
+                  <ExternalLink className="w-4 h-4 mr-1.5" />
+                  In neuem Fenster als diesen Benutzer öffnen
+                </Button>
               </div>
             </div>
           </Card>
