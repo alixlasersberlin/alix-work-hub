@@ -387,6 +387,15 @@ export default function Angebote() {
                   if (orderFilter === 'offen' && hasOrder) return false;
                   if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
                 }
+                if (dealFilter !== 'alle') {
+                  const approval = (o.approvalStatus || 'pending');
+                  const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+                  const angenommen = approval === 'approved' || o.status === 'signed' || o.status === 'order' || hasOrder;
+                  const abgelehnt = approval === 'rejected';
+                  if (dealFilter === 'abgelehnt' && !abgelehnt) return false;
+                  if (dealFilter === 'angenommen' && !angenommen) return false;
+                  if (dealFilter === 'offen' && (angenommen || abgelehnt)) return false;
+                }
                 if (!q) return true;
                 return (
                   (o.offerNumber || '').toLowerCase().includes(q) ||
