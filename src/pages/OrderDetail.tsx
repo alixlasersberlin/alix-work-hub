@@ -460,6 +460,7 @@ export default function OrderDetail() {
       name: 'Finanzen',
       icon: FileText,
       items: [
+        { key: 'sepa', label: 'SEPA Mandat', icon: FileText, onClick: () => sepaRef.current?.trigger() },
         { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
       ] as ActionItem[],
     }] : []),
