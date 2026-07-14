@@ -52,6 +52,7 @@ export default function CustomerDeleteDialog({ customer, open, onClose, onDelete
   function handleDelete() { gate(performDelete); }
 
   return (
+    <>
     <AlertDialog open={open} onOpenChange={v => !v && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
