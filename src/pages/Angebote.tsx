@@ -40,6 +40,7 @@ export default function Angebote() {
   const [creatorFilter, setCreatorFilter] = useState<string>('alle');
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year' | 'all'>('all');
   const [orderFilter, setOrderFilter] = useState<'alle' | 'offen' | 'auftrag' | 'signed'>('alle');
+  const [dealFilter, setDealFilter] = useState<'alle' | 'offen' | 'angenommen' | 'abgelehnt'>('alle');
 
   const [signLinkOpen, setSignLinkOpen] = useState(false);
   const [signLinkLoading, setSignLinkLoading] = useState(false);
