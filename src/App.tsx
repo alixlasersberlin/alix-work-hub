@@ -239,6 +239,14 @@ const MobileChecklist = lazy(() => import("./pages/Mobile/Checkliste"));
 const MobileSync = lazy(() => import("./pages/Mobile/Sync"));
 const MobileProfil = lazy(() => import("./pages/Mobile/Profil"));
 const MobileSprachnotiz = lazy(() => import("./pages/Mobile/Sprachnotiz"));
+const KalenderLayout = lazy(() => import("./components/kalender/KalenderLayout"));
+const KalenderHeute = lazy(() => import("./pages/MobileKalender/Heute"));
+const KalenderAgenda = lazy(() => import("./pages/MobileKalender/Agenda"));
+const KalenderDetail = lazy(() => import("./pages/MobileKalender/TerminDetail"));
+const KalenderErinnerungen = lazy(() => import("./pages/MobileKalender/Erinnerungen"));
+const KalenderTeam = lazy(() => import("./pages/MobileKalender/Team"));
+const KalenderMehr = lazy(() => import("./pages/MobileKalender/Mehr"));
+const KalenderEinstellungen = lazy(() => import("./pages/MobileKalender/Einstellungen"));
 const AdminAuditLog = lazy(() => import("./pages/Admin/AuditLog"));
 const AlixSmartMigration = lazy(() => import("./pages/AlixSmartMigration"));
 const AlixSmartKonfliktaufloesung = lazy(() => import("./pages/AlixSmartKonfliktaufloesung"));
@@ -1324,6 +1332,17 @@ function AppRoutes() {
           <Route path="gesundheit" element={<CustomerPortalHealth />} />
           <Route path="katalog" element={<CustomerPortalKatalog />} />
           <Route path="warenkorb" element={<CustomerPortalWarenkorb />} />
+        </Route>
+
+        {/* AlixWork Kalender – Mobile PWA (spiegelt den bestehenden Teamkalender) */}
+        <Route path="/m/kalender" element={<ProtectedRoute><KalenderLayout /></ProtectedRoute>}>
+          <Route index element={<KalenderHeute />} />
+          <Route path="agenda" element={<KalenderAgenda />} />
+          <Route path="termin/:id" element={<KalenderDetail />} />
+          <Route path="erinnerungen" element={<KalenderErinnerungen />} />
+          <Route path="team" element={<KalenderTeam />} />
+          <Route path="mehr" element={<KalenderMehr />} />
+          <Route path="einstellungen" element={<KalenderEinstellungen />} />
         </Route>
 
         {/* Mobile Techniker-App – eigenes Layout (kein AppLayout) */}
