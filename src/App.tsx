@@ -1065,6 +1065,7 @@ function AppRoutes() {
           </Route>
           <Route path="/admin/rollen-freigaben" element={<ProtectedRoute requiredRoles={['Super Admin']}><RfLayout /></ProtectedRoute>}>
             <Route index element={<RfOverview />} />
+            <Route path="zugriff-erteilen" element={<RfZugriffErteilen />} />
             <Route path="matrix" element={<RfMatrix />} />
             <Route path="rollen" element={<RfRoles />} />
             <Route path="mitarbeiter" element={<RfEmployees />} />
