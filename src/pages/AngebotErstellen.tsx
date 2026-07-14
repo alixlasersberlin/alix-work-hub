@@ -1218,7 +1218,7 @@ export default function AngebotErstellen() {
           billing_address: (selectedCustomer as any).billing_address || null,
           shipping_address: (selectedCustomer as any).shipping_address || (selectedCustomer as any).billing_address || null,
           deposit_amount: parseFloat(payDown) || null,
-          raw_data: { source: 'offer_confirmation', offer_number: offerNumber, offer_date: offerDate, delivery_week: deliveryWeek || null, payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, term: payTerm } } as any,
+          raw_data: { source: 'offer_confirmation', offer_number: offerNumber, offer_date: offerDate, delivery_week: deliveryWeek || null, payment: { type: payType, price: parseFloat(payPrice) || 0, down: parseFloat(payDown) || 0, term: payTerm, rate: parseFloat(payRate) || 0 } } as any,
         } as any)
         .select('id')
         .single();
