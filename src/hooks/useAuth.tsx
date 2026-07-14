@@ -55,6 +55,9 @@ const defaultAuthContext: AuthContextType = {
   isAdmin: false,
   isOtpVerified: true,
   refreshProfile: async () => {},
+  impersonatedUserId: null,
+  impersonatedName: null,
+  stopImpersonation: () => {},
 };
 
 const AuthContext = createContext<AuthContextType>(defaultAuthContext);
