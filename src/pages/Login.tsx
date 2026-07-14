@@ -66,11 +66,14 @@ export default function Login() {
       setLoading(false);
       return;
     }
-    // Auf der Kalender-Subdomain direkt in den mobilen Kalender springen.
-    const target = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
-      ? '/esc/kalender'
-      : '/dashboard';
-    navigate(target, { replace: true });
+    // Auf der Kalender-Subdomain hart neu laden, damit Auth-/MFA-State
+    // aus der frischen Session sauber initialisiert wird (verhindert
+    // Redirect-Race zwischen /alix-control und /esc/kalender).
+    if (typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de') {
+      window.location.assign('/esc/kalender');
+      return;
+    }
+    navigate('/dashboard', { replace: true });
     setLoading(false);
   };
 
