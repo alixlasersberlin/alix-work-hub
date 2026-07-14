@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Loader2, Eye, ShieldCheck, Clock, Info } from 'lucide-react';
+import { Loader2, Eye, ShieldCheck, Clock, Info, ExternalLink } from 'lucide-react';
 import { CRITICAL_ROLE_NAMES } from './lib';
 
 type EffRole = { role_id: string; role_name: string; source: string; valid_until: string | null; granted_by: string | null };
