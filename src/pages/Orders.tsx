@@ -778,6 +778,13 @@ export default function Orders() {
                               >
                                 Rechnung
                               </span>
+                            ) : (o as any).deposit_ok ? (
+                              <span
+                                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30"
+                                title="Anzahlung bestätigt (ohne separate AZ-Rechnungsnummer)"
+                              >
+                                Anzahlung OK
+                              </span>
                             ) : (
                               <span
                                 className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-red-500/10 text-red-500 border-red-500/30"
