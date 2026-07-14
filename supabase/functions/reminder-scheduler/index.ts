@@ -99,14 +99,40 @@ Deno.serve(async (req) => {
     let anySuccess = false;
     for (const s of subs) {
       try {
-        await webpush.sendNotification(
-          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth_key } },
-          JSON.stringify(push),
-        );
-        anySuccess = true;
-        await svc.from('mobile_push_subscriptions').update({ last_seen_at: now.toISOString() }).eq('id', s.id);
+        if (s.platform === 'ios' || s.platform === 'android') {
+          // Native Push über push-send-native Function
+          const res = await fetch(
+            `${Deno.env.get('SUPABASE_URL')}/functions/v1/push-send-native`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${serviceKey}`,
+              },
+              body: JSON.stringify({
+                user_id: r.user_id,
+                title: push.title,
+                body: push.body,
+                url: push.url,
+                data: { eventId: r.event_id, reminderId: r.id },
+              }),
+            },
+          );
+          if (res.ok) {
+            anySuccess = true;
+            await svc.from('mobile_push_subscriptions').update({ last_seen_at: now.toISOString() }).eq('id', s.id);
+          }
+          // native-send bündelt alle nativen Subs eines Users – nur einmal aufrufen
+          break;
+        } else {
+          await webpush.sendNotification(
+            { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth_key } },
+            JSON.stringify(push),
+          );
+          anySuccess = true;
+          await svc.from('mobile_push_subscriptions').update({ last_seen_at: now.toISOString() }).eq('id', s.id);
+        }
       } catch (e: any) {
-        // 404/410 = expired subscription
         if (e?.statusCode === 404 || e?.statusCode === 410) {
           await svc.from('mobile_push_subscriptions').delete().eq('id', s.id);
         }
