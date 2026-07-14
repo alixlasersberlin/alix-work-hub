@@ -463,6 +463,7 @@ export default function Angebote() {
                       const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
                       if (orderFilter === 'auftrag' && !hasOrder) return false;
                       if (orderFilter === 'offen' && hasOrder) return false;
+                      if (orderFilter === 'signed' && !(hasOrder && (o.status === 'signed' || o.status === 'order'))) return false;
                     }
                     if (!q) return true;
                     return (
