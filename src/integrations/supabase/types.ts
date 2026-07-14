@@ -21644,6 +21644,7 @@ export type Database = {
       }
       catalog_can_edit: { Args: never; Returns: boolean }
       catalog_can_manage_prices: { Args: never; Returns: boolean }
+      catalog_can_read: { Args: never; Returns: boolean }
       check_rate_limit: {
         Args: { _bucket: string; _max: number; _window_seconds: number }
         Returns: boolean
