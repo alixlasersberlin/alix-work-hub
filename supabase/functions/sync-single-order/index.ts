@@ -43,6 +43,45 @@ async function getAccessToken(config: any): Promise<string> {
   return data.access_token;
 }
 
+function buildSalesOrderNumberCandidates(input: string) {
+  const trimmed = input.trim();
+  const withoutAt = trimmed.replace(/-AT$/i, "");
+  const normalized = withoutAt.toUpperCase();
+  const candidates = new Set<string>();
+
+  if (withoutAt) candidates.add(withoutAt);
+  if (/^\d+$/.test(withoutAt)) candidates.add(`SO-${withoutAt}`);
+  if (/^SO\s*[-_]?\s*\d+$/i.test(withoutAt)) {
+    candidates.add(`SO-${withoutAt.replace(/^SO\s*[-_]?\s*/i, "")}`);
+  }
+  if (normalized.startsWith("SO-")) candidates.add(normalized);
+
+  return Array.from(candidates);
+}
+
+async function lookupSalesOrderIdByNumber(config: any, accessToken: string, candidates: string[]) {
+  for (const candidate of candidates) {
+    const lookupUrl = `${config.booksApiBaseUrl}/salesorders?organization_id=${config.organizationId}&salesorder_number=${encodeURIComponent(candidate)}`;
+    const lookupRes = await fetch(lookupUrl, {
+      headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
+    });
+    if (!lookupRes.ok) {
+      const text = await lookupRes.text();
+      throw new Error(`Zoho lookup failed: ${text}`);
+    }
+    const lookupJson = await lookupRes.json();
+    const matches = Array.isArray(lookupJson.salesorders) ? lookupJson.salesorders : [];
+    if (matches.length > 0 && matches[0]?.salesorder_id) {
+      return {
+        salesorderId: String(matches[0].salesorder_id),
+        matchedNumber: candidate,
+      };
+    }
+  }
+
+  return null;
+}
+
 async function syncLineItems(adminClient: any, orderId: string, lineItems: any[], sourceSystem: string) {
   if (!lineItems || lineItems.length === 0) return;
 
@@ -147,7 +186,7 @@ Deno.serve(async (req: Request) => {
 
     const accessToken = await getAccessToken(zohoConfig);
 
-    // Resolve salesorder_id: accept either numeric Zoho ID OR order number (e.g. "SO-4190" / "SO-4190-AT")
+    // Resolve salesorder_id: accept either Zoho ID OR order number (e.g. "2725968", "SO-2725968" / "SO-4190-AT")
     const rawOrderInput = String(external_order_id).trim();
     // Strip "-AT" suffix for zoho_eu_2 lookups (UI display only — Zoho itself has no -AT)
     const lookupInput = source_system === "zoho_eu_2"
@@ -155,33 +194,34 @@ Deno.serve(async (req: Request) => {
       : rawOrderInput;
     let resolvedSalesOrderId = lookupInput;
     const isNumericOrderId = /^\d+$/.test(lookupInput);
+    const orderNumberCandidates = buildSalesOrderNumberCandidates(lookupInput);
 
-    if (!isNumericOrderId) {
-      const lookupUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}&salesorder_number=${encodeURIComponent(lookupInput)}`;
-      const lookupRes = await fetch(lookupUrl, {
-        headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
-      });
-      if (!lookupRes.ok) {
-        const text = await lookupRes.text();
-        return jsonResponse({ error: "Zoho lookup failed", message: text }, 502);
+    // Short numeric values like "2725968" are usually the visible order number suffix, not Zoho's long salesorder_id.
+    if (!isNumericOrderId || lookupInput.length < 10) {
+      try {
+        const resolved = await lookupSalesOrderIdByNumber(zohoConfig, accessToken, orderNumberCandidates);
+        if (resolved) {
+          resolvedSalesOrderId = resolved.salesorderId;
+          console.log(`[sync-single-order] Resolved ${lookupInput} (${resolved.matchedNumber}) -> salesorder_id ${resolvedSalesOrderId}`);
+        } else if (!isNumericOrderId) {
+          return jsonResponse({
+            success: false,
+            not_found: true,
+            error: "ORDER_NOT_FOUND",
+            message: `Kein Auftrag mit Nummer "${lookupInput}" in ${source_system} gefunden.`,
+          }, 200);
+        }
+      } catch (error: any) {
+        return jsonResponse({ error: "Zoho lookup failed", message: error?.message ?? String(error) }, 502);
       }
-      const lookupJson = await lookupRes.json();
-      const matches = Array.isArray(lookupJson.salesorders) ? lookupJson.salesorders : [];
-      if (matches.length === 0) {
-        return jsonResponse({
-          success: false,
-          error: "Order not found in Zoho",
-          message: `Kein Auftrag mit Nummer "${lookupInput}" in ${source_system} gefunden.`,
-        }, 200);
-      }
-      resolvedSalesOrderId = String(matches[0].salesorder_id);
-      console.log(`[sync-single-order] Resolved ${lookupInput} -> salesorder_id ${resolvedSalesOrderId}`);
     }
 
-    const orderRes = await fetch(
-      `${zohoConfig.booksApiBaseUrl}/salesorders/${resolvedSalesOrderId}?organization_id=${zohoConfig.organizationId}`,
+    const fetchOrderById = async (salesOrderId: string) => fetch(
+      `${zohoConfig.booksApiBaseUrl}/salesorders/${salesOrderId}?organization_id=${zohoConfig.organizationId}`,
       { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } }
     );
+
+    let orderRes = await fetchOrderById(resolvedSalesOrderId);
 
     if (!orderRes.ok) {
       const text = await orderRes.text();
@@ -193,24 +233,53 @@ Deno.serve(async (req: Request) => {
         zohoMessage = parsed?.message ?? null;
       } catch { /* not JSON */ }
 
-      // Zoho code 1002 = "Auftrag existiert nicht" → gracefully return 200 (not 502)
-      if (zohoCode === 1002 || orderRes.status === 404) {
-        return jsonResponse({
-          success: false,
-          not_found: true,
-          error: "ORDER_NOT_FOUND",
-          message: `Auftrag "${rawOrderInput}" existiert in Zoho (${source_system}) nicht.`,
-          zoho_code: zohoCode,
-          zoho_message: zohoMessage,
-        }, 200);
+      // If a numeric input was tried as Zoho ID and failed, fall back to visible order-number lookup (e.g. 2725968 -> SO-2725968).
+      if (isNumericOrderId && (zohoCode === 1002 || orderRes.status === 404)) {
+        try {
+          const resolved = await lookupSalesOrderIdByNumber(zohoConfig, accessToken, orderNumberCandidates);
+          if (resolved) {
+            resolvedSalesOrderId = resolved.salesorderId;
+            console.log(`[sync-single-order] Fallback resolved ${lookupInput} (${resolved.matchedNumber}) -> salesorder_id ${resolvedSalesOrderId}`);
+            orderRes = await fetchOrderById(resolvedSalesOrderId);
+          }
+        } catch (error: any) {
+          return jsonResponse({ error: "Zoho lookup failed", message: error?.message ?? String(error) }, 502);
+        }
       }
 
-      return jsonResponse({
-        error: "Zoho API error",
-        message: zohoMessage ?? text,
-        zoho_code: zohoCode,
-        status: orderRes.status,
-      }, 502);
+      if (!orderRes.ok) {
+        const retryText = text;
+        let retryZohoCode = zohoCode;
+        let retryZohoMessage = zohoMessage;
+        if (orderRes.status !== 404 && orderRes.status !== 400) {
+          const currentText = await orderRes.text();
+          try {
+            const parsed = JSON.parse(currentText);
+            retryZohoCode = parsed?.code ?? retryZohoCode;
+            retryZohoMessage = parsed?.message ?? retryZohoMessage;
+          } catch { /* not JSON */ }
+        }
+
+        // Zoho code 1002 = "Auftrag existiert nicht" → gracefully return 200 (not 502)
+        if (retryZohoCode === 1002 || orderRes.status === 404) {
+          return jsonResponse({
+            success: false,
+            not_found: true,
+            error: "ORDER_NOT_FOUND",
+            message: `Auftrag "${rawOrderInput}" existiert in Zoho (${source_system}) nicht.`,
+            searched_order_numbers: orderNumberCandidates,
+            zoho_code: retryZohoCode,
+            zoho_message: retryZohoMessage,
+          }, 200);
+        }
+
+        return jsonResponse({
+          error: "Zoho API error",
+          message: retryZohoMessage ?? retryText,
+          zoho_code: retryZohoCode,
+          status: orderRes.status,
+        }, 502);
+      }
     }
 
     const orderData = await orderRes.json();
