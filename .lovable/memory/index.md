@@ -1,6 +1,7 @@
 # Project Memory
 
 ## Core
+- **PRIVATE INTERNE APP** — nie öffentlich, nie Public-Signup, noindex/nofollow, Publish-Visibility=private, keine öffentlichen Kalenderlinks, Zero-Trust auf jedem Request. Details: mem://constraints/private-internal-app
 - Internal business app "Alix Work" (Orders, Customers, Route Planning, Finance).
 - Dark theme, Premium Enterprise UI (Black / Gold style). Modern and clean.
 - Supabase backend. NEVER create new tables; strictly use existing schema.
@@ -13,6 +14,7 @@
 - Versionierung: `APP_VERSION` in `src/components/AppLayout.tsx` bei jedem Publish um 0.01 erhöhen (Start 5.0 → 5.01 → 5.02 …). Details: [App Versioning](mem://features/app-versioning)
 
 ## Memories
+- [Private interne App](mem://constraints/private-internal-app) — Zero-Trust, kein Public-Signup, keine öffentlichen Kalenderlinks, noindex, Publish=private, private PWA, kein Store-Release ohne Enterprise-Verteilung
 - [Access Control](mem://auth/access-control) — Internal login system without public registration, strict status checks
 - [Role Permissions](mem://auth/role-permissions) — RBAC definitions for Admins and specialized roles
 - [Rolle Order](mem://auth/order-role) — Breite operative Rolle: Kunden, Artikel, Verkäufe, Prio-Listen, Bestellungen, Production (ohne Factory Invoice), Lager, Tourenplanung, Versand, Finanzierungen. Kein Löschen.
