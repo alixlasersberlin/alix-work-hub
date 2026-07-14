@@ -414,7 +414,7 @@ export default function UserManagement() {
                   variant="outline"
                   className="w-full justify-start gap-2 text-warning hover:text-warning"
                   disabled={actionLoading}
-                  onClick={async () => {
+                  onClick={() => reauthMfa.gate(async () => {
                     if (!confirm(`2FA für ${selectedUser.full_name || selectedUser.email} zurücksetzen? Der User muss beim nächsten Login neu einrichten.`)) return;
                     setActionLoading(true);
                     try {
@@ -427,7 +427,7 @@ export default function UserManagement() {
                     } finally {
                       setActionLoading(false);
                     }
-                  }}
+                  })}
                 >
                   <ShieldOff className="w-4 h-4" /> 2FA zurücksetzen
                 </Button>
