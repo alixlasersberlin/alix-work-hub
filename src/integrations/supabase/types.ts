@@ -13648,6 +13648,99 @@ export type Database = {
           },
         ]
       }
+      mfa_reauth_events: {
+        Row: {
+          expires_at: string
+          id: string
+          ip_hint: string | null
+          method: string
+          purpose: string
+          user_agent: string | null
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          expires_at: string
+          id?: string
+          ip_hint?: string | null
+          method: string
+          purpose: string
+          user_agent?: string | null
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          expires_at?: string
+          id?: string
+          ip_hint?: string | null
+          method?: string
+          purpose?: string
+          user_agent?: string | null
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
+      mfa_recovery_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mfa_webauthn_credentials: {
+        Row: {
+          counter: number
+          created_at: string
+          credential_id: string
+          device_label: string | null
+          id: string
+          last_used_at: string | null
+          public_key: string
+          transports: string[] | null
+          user_id: string
+        }
+        Insert: {
+          counter?: number
+          created_at?: string
+          credential_id: string
+          device_label?: string | null
+          id?: string
+          last_used_at?: string | null
+          public_key: string
+          transports?: string[] | null
+          user_id: string
+        }
+        Update: {
+          counter?: number
+          created_at?: string
+          credential_id?: string
+          device_label?: string | null
+          id?: string
+          last_used_at?: string | null
+          public_key?: string
+          transports?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       migration_backup_logs: {
         Row: {
           batch_id: string
@@ -19413,17 +19506,32 @@ export type Database = {
       }
       user_mfa_secrets: {
         Row: {
+          disabled_at: string | null
+          enrolled_at: string | null
+          last_used_at: string | null
           recovery_codes_hash: string[]
+          totp_confirmed_at: string | null
+          totp_secret_encrypted: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          disabled_at?: string | null
+          enrolled_at?: string | null
+          last_used_at?: string | null
           recovery_codes_hash?: string[]
+          totp_confirmed_at?: string | null
+          totp_secret_encrypted?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          disabled_at?: string | null
+          enrolled_at?: string | null
+          last_used_at?: string | null
           recovery_codes_hash?: string[]
+          totp_confirmed_at?: string | null
+          totp_secret_encrypted?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -19449,6 +19557,10 @@ export type Database = {
           is_active: boolean
           last_otp_verified_at: string | null
           mfa_enrolled_at: string | null
+          mfa_exempt: boolean
+          mfa_exempt_by: string | null
+          mfa_exempt_reason: string | null
+          mfa_grace_until: string | null
           otp_channel: string
           password_reset_required: boolean
           phone_number: string | null
@@ -19466,6 +19578,10 @@ export type Database = {
           is_active?: boolean
           last_otp_verified_at?: string | null
           mfa_enrolled_at?: string | null
+          mfa_exempt?: boolean
+          mfa_exempt_by?: string | null
+          mfa_exempt_reason?: string | null
+          mfa_grace_until?: string | null
           otp_channel?: string
           password_reset_required?: boolean
           phone_number?: string | null
@@ -19483,6 +19599,10 @@ export type Database = {
           is_active?: boolean
           last_otp_verified_at?: string | null
           mfa_enrolled_at?: string | null
+          mfa_exempt?: boolean
+          mfa_exempt_by?: string | null
+          mfa_exempt_reason?: string | null
+          mfa_grace_until?: string | null
           otp_channel?: string
           password_reset_required?: boolean
           phone_number?: string | null
@@ -21668,6 +21788,10 @@ export type Database = {
       get_table_columns: { Args: { _table: string }; Returns: string[] }
       has_role: { Args: { check_role: string }; Returns: boolean }
       has_tenant_access: { Args: { _tenant_id: string }; Returns: boolean }
+      has_valid_reauth: {
+        Args: { _purpose: string; _user_id: string }
+        Returns: boolean
+      }
       is_admin: { Args: never; Returns: boolean }
       is_device_active: { Args: { _sub_id: string }; Returns: boolean }
       is_internal_user: { Args: never; Returns: boolean }
@@ -21687,6 +21811,18 @@ export type Database = {
       merge_customers: {
         Args: { _duplicate_ids: string[]; _primary_id: string }
         Returns: Json
+      }
+      mfa_required_for_user: { Args: { _user_id: string }; Returns: boolean }
+      mfa_status_for_user: {
+        Args: { _user_id: string }
+        Returns: {
+          enrolled: boolean
+          grace_until: string
+          has_totp: boolean
+          in_grace: boolean
+          required: boolean
+          webauthn_count: number
+        }[]
       }
       next_case_number: { Args: never; Returns: string }
       next_document_number:
