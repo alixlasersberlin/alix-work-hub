@@ -456,6 +456,13 @@ export default function OrderDetail() {
         { key: 'wareneingang', label: 'Wareneingang', icon: Inbox, onClick: () => wareneingangRef.current?.generatePdf() },
       ] as ActionItem[],
     }] : []),
+    ...(!canWrite ? [{
+      name: 'Finanzen',
+      icon: FileText,
+      items: [
+        { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
+      ] as ActionItem[],
+    }] : []),
     ...(canWrite ? [{
       name: 'Bearbeitung',
       icon: Wrench,
@@ -552,6 +559,7 @@ export default function OrderDetail() {
           <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
           <MietkaufDialog ref={mietkaufRef} order={order ? { ...order, items } : order} hideTrigger />
           <InstallmentPlanDialog ref={ratenplanRef} order={order} hideTrigger />
+          {/* Hinweis: Ratenplan ist für alle Rollen mit Auftragszugriff verfügbar */}
           <WareneingangDialog ref={wareneingangRef} order={order ? { ...order, items } : order} customer={customer} devices={serialDevices} hideTrigger />
         </div>
       </div>
