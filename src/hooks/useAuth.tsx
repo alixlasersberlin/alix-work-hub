@@ -253,6 +253,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     clearMfaTabMarker();
+    // Zero-Trust: Offline-Daten (Kalender-Outbox etc.) beim Logout löschen
+    try {
+      const { clearQueue } = await import('@/lib/offline/kalender-queue');
+      await clearQueue();
+      // Alle App-eigenen IndexedDB-Datenbanken wegwerfen
+      const dbs = (indexedDB as any).databases ? await (indexedDB as any).databases() : [];
+      for (const db of dbs) {
+        if (db?.name && /alixwork|kalender|dispatch|offline/i.test(db.name)) {
+          try { indexedDB.deleteDatabase(db.name); } catch {}
+        }
+      }
+      // Session/Local Storage der App leeren (Auth-Session behält Supabase selbst)
+      try { sessionStorage.clear(); } catch {}
+    } catch {}
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
