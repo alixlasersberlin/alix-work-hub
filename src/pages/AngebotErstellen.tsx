@@ -259,6 +259,7 @@ export default function AngebotErstellen() {
               if (snap.payment.price) setPayPrice(String(snap.payment.price));
               if (snap.payment.down) setPayDown(String(snap.payment.down));
               if (snap.payment.term) setPayTerm(Number(snap.payment.term));
+              if ((snap.payment as any).rate) setPayRate(String((snap.payment as any).rate));
             }
             toast.info(`Angebot ${snap.offerNumber} geladen – Änderungen mit "Speichern" übernehmen.`);
             return;
