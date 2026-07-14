@@ -1,13 +1,21 @@
 {
-  "name": "Alix Mobile",
-  "short_name": "Alix",
-  "description": "Alix Work – Mobile Techniker-App",
-  "start_url": "/m",
+  "name": "AlixWork Kalender",
+  "short_name": "AlixKalender",
+  "description": "AlixWork Kalender – Team. Termine. Erinnerungen.",
+  "start_url": "/m/kalender",
   "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0b0b0b",
   "theme_color": "#0b0b0b",
+  "categories": ["business", "productivity"],
   "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon", "purpose": "any" },
     { "src": "/placeholder.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Heute", "url": "/m/kalender", "description": "Termine heute" },
+    { "name": "Agenda", "url": "/m/kalender/agenda", "description": "Nächste 7 Tage" },
+    { "name": "Erinnerungen", "url": "/m/kalender/erinnerungen", "description": "Offene Erinnerungen" }
   ]
 }
