@@ -1004,6 +1004,13 @@ export default function AppLayout() {
     '/lager/equipment-area/hold',
   ]);
 
+  const filterByGrant = (item: { path: string; children?: any[] }) => {
+    if (!menuGrants) return true;
+    // Container/Gruppen (# oder mit children) immer durchlassen — werden später via children ausgefiltert
+    if (item.path.startsWith('#') || (item.children && item.children.length > 0)) return true;
+    return menuGrants.has(item.path);
+  };
+
   const visibleItems = navItems
     .filter(filterByRoles)
     .map(item => ({
@@ -1013,8 +1020,9 @@ export default function AppLayout() {
         .filter(c => !atOnly || !atHiddenPaths.has(c.path))
         .map(c => ({
           ...c,
-          children: c.children?.filter(filterByRoles),
+          children: c.children?.filter(filterByRoles).filter(filterByGrant),
         }))
+        .filter(filterByGrant)
         .filter(c => !c.children || c.children.length > 0),
     }))
     // Hide groups whose children are all hidden by role
