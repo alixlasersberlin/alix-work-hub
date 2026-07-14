@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { Bell, LogOut, Settings2, ShieldCheck, Smartphone, User } from 'lucide-react';
+import { Bell, LogOut, Settings2, ShieldCheck, Smartphone, User, ListChecks } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function KalenderMehr() {
@@ -22,6 +22,8 @@ export default function KalenderMehr() {
       </Card>
 
       <Tile to="/m/kalender/einstellungen" icon={Bell} title="Benachrichtigungen" desc="Push, Ruhezeiten, Kanäle" />
+      <Tile to="/m/kalender/geraete" icon={Smartphone} title="Geräte" desc="Registrierte Push-Empfänger verwalten" />
+      <Tile to="/m/kalender/audit" icon={ListChecks} title="Audit" desc="Verlauf gesendeter Benachrichtigungen" />
       <Tile to="/m/kalender/team" icon={Smartphone} title="Team & Auslastung" desc="Heutige Verteilung" />
       <Tile to="/dashboard" icon={Settings2} title="Zur Desktop-Ansicht" desc="Vollständiges AlixWork öffnen" />
       <Tile to="/sicherheit" icon={ShieldCheck} title="Sicherheit" desc="MFA, Geräte, Passwort" />

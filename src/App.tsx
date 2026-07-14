@@ -247,6 +247,8 @@ const KalenderErinnerungen = lazy(() => import("./pages/MobileKalender/Erinnerun
 const KalenderTeam = lazy(() => import("./pages/MobileKalender/Team"));
 const KalenderMehr = lazy(() => import("./pages/MobileKalender/Mehr"));
 const KalenderEinstellungen = lazy(() => import("./pages/MobileKalender/Einstellungen"));
+const KalenderGeraete = lazy(() => import("./pages/MobileKalender/Geraete"));
+const KalenderAudit = lazy(() => import("./pages/MobileKalender/Audit"));
 const AdminAuditLog = lazy(() => import("./pages/Admin/AuditLog"));
 const AlixSmartMigration = lazy(() => import("./pages/AlixSmartMigration"));
 const AlixSmartKonfliktaufloesung = lazy(() => import("./pages/AlixSmartKonfliktaufloesung"));
@@ -1343,6 +1345,8 @@ function AppRoutes() {
           <Route path="team" element={<KalenderTeam />} />
           <Route path="mehr" element={<KalenderMehr />} />
           <Route path="einstellungen" element={<KalenderEinstellungen />} />
+          <Route path="geraete" element={<KalenderGeraete />} />
+          <Route path="audit" element={<KalenderAudit />} />
         </Route>
 
         {/* Mobile Techniker-App – eigenes Layout (kein AppLayout) */}
