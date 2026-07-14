@@ -99,7 +99,11 @@ export default function SalesFollowups() {
     if (list.length === 0) return <p className="p-4 text-muted-foreground">Keine Einträge.</p>;
     return (
       <ul className="divide-y">
-        {list.map((r) => (
+        {list.map((r) => {
+          const lead = r.lead_id ? leads[r.lead_id] : undefined;
+          const offer = lead?.converted_offer_id ? offers[lead.converted_offer_id] : undefined;
+          const leadName = lead ? (lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ')) : null;
+          return (
           <li key={r.id} className="p-4 flex items-center justify-between gap-3">
             <div>
               <div className="font-medium">
@@ -108,6 +112,18 @@ export default function SalesFollowups() {
                   <Link to={`/verkauf/anfragen/${r.lead_id}`} className="ml-2 text-xs text-primary underline">Zur Anfrage</Link>
                 )}
               </div>
+              {(offer || leadName) && (
+                <div className="text-xs mt-1 flex flex-wrap items-center gap-2">
+                  {offer && (
+                    <Link to={`/verkauf/angebot/${encodeURIComponent(offer.offer_number)}`} className="text-primary underline">
+                      Angebot {offer.offer_number}
+                    </Link>
+                  )}
+                  {(offer?.customer_name || leadName) && (
+                    <span className="text-muted-foreground">· {offer?.customer_name || leadName}</span>
+                  )}
+                </div>
+              )}
               {r.description && <div className="text-sm text-muted-foreground">{r.description}</div>}
               <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                 <CalendarClock className="h-3 w-3" />
