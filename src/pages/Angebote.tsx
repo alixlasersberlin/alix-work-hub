@@ -406,6 +406,14 @@ export default function Angebote() {
                 <SelectItem value="all">Gesamte Zeit</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={orderFilter} onValueChange={(v) => setOrderFilter(v as any)}>
+              <SelectTrigger className="w-[220px] h-9"><SelectValue placeholder="Auftragsstatus" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle Angebote</SelectItem>
+                <SelectItem value="offen">Angebot offen</SelectItem>
+                <SelectItem value="auftrag">Als Auftrag übernommen</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         <CardContent className="p-0">
