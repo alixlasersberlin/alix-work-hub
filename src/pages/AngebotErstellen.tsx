@@ -768,6 +768,14 @@ export default function AngebotErstellen() {
         doc.text(`Anzahlung: ${fmtMoney(parseFloat(payDown))}`, LEFT, py); py += 5;
       }
       doc.text(`Einmalzahlung: ${fmtMoney(amount > 0 ? amount : totals.gross)}`, LEFT, py); py += 5;
+    } else if (payType === 'Miete') {
+      const kaution = parseFloat(payDown) || 0;
+      const monatlich = parseFloat(payRate) || 0;
+      const restwert = Math.max(0, (parseFloat(payPrice) || 0) - kaution - monatlich * payTerm);
+      if (kaution > 0) { doc.text(`Kaution: ${fmtMoney(kaution)}`, LEFT, py); py += 5; }
+      doc.text(`Laufzeit: ${payTerm} Monate`, LEFT, py); py += 5;
+      doc.text(`Monatliche Miete: ${fmtMoney(monatlich)}`, LEFT, py); py += 5;
+      doc.text(`Restwert der Maschine: ${fmtMoney(restwert)}`, LEFT, py); py += 5;
     } else {
       const base = Math.max(0, (parseFloat(payPrice) || 0) - (parseFloat(payDown) || 0));
       const rate = payTerm > 0 ? base / payTerm : 0;
