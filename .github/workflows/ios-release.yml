@@ -1,0 +1,51 @@
+name: iOS Release (TestFlight)
+
+on:
+  workflow_dispatch:
+    inputs:
+      lane:
+        description: "Fastlane lane (beta oder release)"
+        required: true
+        default: "beta"
+        type: choice
+        options: [beta, release]
+
+jobs:
+  ios:
+    name: Build & upload iOS
+    runs-on: macos-14
+    timeout-minutes: 60
+    env:
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+      MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+      MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+      MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+      FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.FASTLANE_APPLE_APP_PW }}
+      APP_IDENTIFIER: app.lovable.139141344b954f3fa06471f725c7d887
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: "npm" }
+      - uses: ruby/setup-ruby@v1
+        with: { ruby-version: "3.2", bundler-cache: true, working-directory: ios }
+      - name: Install JS deps
+        run: npm ci
+      - name: Web build
+        run: npm run build
+      - name: Add iOS platform
+        run: |
+          if [ ! -d "ios" ]; then npx cap add ios; fi
+          npx cap sync ios
+      - name: Fastlane
+        working-directory: ios
+        run: bundle exec fastlane ${{ inputs.lane }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-build-logs
+          path: |
+            ios/fastlane/report.xml
+            ios/*.ipa
