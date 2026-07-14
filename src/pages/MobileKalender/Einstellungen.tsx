@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Bell, BellOff, Shield, Smartphone } from 'lucide-react';
+import IcsFeedCard from '@/components/kalender/IcsFeedCard';
 
 export default function KalenderEinstellungen() {
   const { prefs, save, loading } = useNotificationPreferences();
@@ -100,6 +101,9 @@ export default function KalenderEinstellungen() {
           <Switch checked={prefs.privacy_mode} onCheckedChange={(v) => save({ privacy_mode: v })} />
         </div>
       </Card>
+
+      <h2 className="text-lg font-semibold pt-2">Externer Kalender</h2>
+      <IcsFeedCard />
     </div>
   );
 }
