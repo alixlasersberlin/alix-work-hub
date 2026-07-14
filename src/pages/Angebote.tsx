@@ -189,6 +189,19 @@ export default function Angebote() {
     } else {
       setOrderNumbers(new Set());
     }
+    // Match by customer name: any order with the same customer_name
+    const custNames = Array.from(new Set(
+      list.map(o => (o.customer?.company_name || o.customer?.contact_name || '').trim().toLowerCase()).filter(Boolean)
+    ));
+    if (custNames.length > 0) {
+      const { data: custRows } = await supabase
+        .from('orders')
+        .select('customer_name')
+        .not('customer_name', 'is', null);
+      setOrderCustomerNames(new Set((custRows || []).map((r: any) => (r.customer_name || '').trim().toLowerCase()).filter(Boolean)));
+    } else {
+      setOrderCustomerNames(new Set());
+    }
     setLoading(false);
   };
 
