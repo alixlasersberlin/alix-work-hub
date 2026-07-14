@@ -106,7 +106,7 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/mailcenter', label: 'CUSTOMER SERVICE', icon: HelpCircle,
+    path: '/mailcenter', label: 'KONTAKT', icon: HelpCircle,
     roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Marketing', 'Finance', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'Tourenplanung', 'Bestellwesen', 'Order', 'Auftragsverwaltung', 'QM', 'Read Only', 'Read Only Audit', 'Österreich', 'SACHBEARBEITUNG'],
     children: [
   {
