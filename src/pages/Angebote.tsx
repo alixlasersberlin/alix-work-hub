@@ -473,11 +473,28 @@ export default function Angebote() {
                   >
                     <TableCell className="font-medium">
                       <span className="inline-flex items-center gap-2">
-                        {orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, '')) ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" aria-label="Auftrag vorhanden" />
-                        ) : (
-                          <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" aria-label="Kein Auftrag vorhanden" />
-                        )}
+                        {(() => {
+                          const hasOrder = orderNumbers.has((o.offerNumber || '').replace(/^ANG-/i, ''));
+                          const custKey = (o.customer?.company_name || o.customer?.contact_name || '').trim().toLowerCase();
+                          const hasCustomerOrder = !!custKey && orderCustomerNames.has(custKey);
+                          if (hasOrder && hasCustomerOrder) {
+                            return (
+                              <span className="inline-flex items-center gap-0.5">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" aria-label="Auftrag vorhanden" />
+                                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" aria-label="Weiterer Auftrag für Kunde vorhanden" />
+                              </span>
+                            );
+                          }
+                          if (hasOrder || hasCustomerOrder) {
+                            return (
+                              <CheckCircle2
+                                className="h-4 w-4 text-emerald-500 shrink-0"
+                                aria-label={hasOrder ? 'Auftrag vorhanden' : 'Auftrag für Kunde vorhanden'}
+                              />
+                            );
+                          }
+                          return <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" aria-label="Kein Auftrag vorhanden" />;
+                        })()}
                         {o.offerNumber}
                       </span>
                     </TableCell>
