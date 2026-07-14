@@ -276,6 +276,21 @@ export default function Angebote() {
     };
   }, [offers.length]);
 
+  const markNoDeal = async (offerNumber: string) => {
+    if (!isSuperAdmin) {
+      toast.error('Nur der Super Admin kann ein Angebot als "Kein Deal" markieren.');
+      return;
+    }
+    if (!confirm(`Angebot ${offerNumber} als "Kein Deal" markieren? Es gilt danach als abgelehnt.`)) return;
+    try {
+      await setOfferApproval(offerNumber, 'rejected', 'Kein Deal');
+      toast.success('Angebot als "Kein Deal" markiert.');
+      await reload();
+    } catch (e: any) {
+      toast.error('Fehler: ' + (e?.message || 'Unbekannt'));
+    }
+  };
+
   const remove = async (offerNumber: string) => {
     if (!confirm(`Angebot ${offerNumber} löschen?`)) return;
     try {
