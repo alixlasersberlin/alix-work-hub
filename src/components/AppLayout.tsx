@@ -1680,15 +1680,8 @@ export default function AppLayout() {
             <div className="hidden md:block min-w-0 flex-1">
               <SidebarInfoBar />
             </div>
-            <Link
-              to="/mailcenter"
-              title="Kontakt"
-              aria-label="Kontakt"
-              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            >
-              <HelpCircle className="w-4 h-4" />
-              <span className="font-medium">Kontakt</span>
-            </Link>
+            <KontaktMenu roles={roles} />
+
             <div className="hidden lg:block flex-shrink-0">
               <TenantSwitcher />
             </div>
