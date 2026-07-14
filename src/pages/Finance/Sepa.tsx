@@ -131,7 +131,7 @@ export default function FinanceSepa() {
     loadRunDetail(activeRun);
   };
 
-  const exportXml = async (runId: string) => {
+  const exportXml = (runId: string) => reauthExp.gate(async () => {
     try {
       const { data: session } = await supabase.auth.getSession();
       const token = session.session?.access_token;
@@ -153,15 +153,15 @@ export default function FinanceSepa() {
     } catch (e: any) {
       toast({ title: 'Export-Fehler', description: e?.message, variant: 'destructive' });
     }
-  };
+  });
 
-  const deleteRun = async (id: string) => {
+  const deleteRun = (id: string) => reauthDel.gate(async () => {
     if (!confirm('Lauf löschen?')) return;
     const { error } = await supabase.from('finance_sepa_runs' as any).delete().eq('id', id);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     if (activeRun?.id === id) { setActiveRun(null); setRunItems([]); }
     load();
-  };
+  });
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
