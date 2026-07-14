@@ -93,10 +93,11 @@ export default function AngebotErstellen() {
   const [pendingSnapshotIds, setPendingSnapshotIds] = useState<string[]>([]);
 
   // Zahlungsberechnung
-  const [payType, setPayType] = useState<'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Alix Flex' | 'Alix Smart Impulse'>('Direktkauf');
+  const [payType, setPayType] = useState<'Direktkauf' | 'Ratenzahlung' | 'Leasing' | 'Mietkauf' | 'Miete' | 'Alix Flex' | 'Alix Smart Impulse'>('Direktkauf');
   const [payPrice, setPayPrice] = useState<string>('');
   const [payDown, setPayDown] = useState<string>('');
   const [payTerm, setPayTerm] = useState<number>(24);
+  const [payRate, setPayRate] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   const [leadsOpen, setLeadsOpen] = useState(false);
