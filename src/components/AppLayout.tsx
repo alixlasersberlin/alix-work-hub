@@ -1682,6 +1682,12 @@ export default function AppLayout() {
             >
               <HelpCircle className="w-4 h-4" />
             </Button>
+            {!collapsed && (
+              <div className="flex items-center gap-1 text-[11px] flex-shrink-0 px-1">
+                <span className="font-display font-bold gold-text">AlixWork</span>
+                <span className="text-muted-foreground font-mono">v{APP_VERSION}</span>
+              </div>
+            )}
             <Button
               variant="ghost"
               className="h-8 ml-auto justify-start text-[13px] px-2 text-muted-foreground hover:text-destructive flex-shrink-0"
@@ -1787,11 +1793,8 @@ export default function AppLayout() {
               <Files className="w-5 h-5" />
             </Link>
             <TicketNotificationBell />
-            <div className="flex items-center gap-2 text-sm flex-shrink-0">
-              <span className="font-display font-bold gold-text">AlixWork</span>
-              <span className="text-muted-foreground font-mono text-xs hidden sm:inline">v{APP_VERSION}</span>
           </div>
-          </div>
+
         </header>
         <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-touch pb-safe">
           <Outlet key={refreshKey} />
