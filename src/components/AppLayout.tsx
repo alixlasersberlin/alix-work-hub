@@ -1808,6 +1808,8 @@ export default function AppLayout() {
             <TicketNotificationBell />
 
             <KontaktMenu roles={roles} />
+            <AiDiensteMenu roles={roles} />
+
 
 
           </div>
