@@ -335,6 +335,7 @@ export default function OffeneAnzahlungen() {
                 <TableHead className="text-right">Brutto</TableHead>
                 <TableHead className="text-right">Bezahlt</TableHead>
                 <TableHead className="text-right">Offen</TableHead>
+                <TableHead>Erstellt</TableHead>
                 <TableHead>Fällig</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Bestellfreigabe</TableHead>
