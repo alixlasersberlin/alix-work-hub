@@ -1072,23 +1072,22 @@ export default function AppLayout() {
   const labelWithCount = (path: string, label: string) => {
     if (path === '/verkauf') {
       const anfragen = lagerCounts['/verkauf/anfragen'];
-      const angebote = lagerCounts['/verkauf/angebote'];
-      if (anfragen === undefined && angebote === undefined) return label;
+      if (anfragen === undefined) return label;
       return (
         <>
           {label}{' '}
           <span className={(anfragen ?? 0) > 0 ? 'text-amber-500' : 'text-muted-foreground'} title="Offene Anfragen">
             ({anfragen ?? 0})
-          </span>{' '}
-          <span className={(angebote ?? 0) > 0 ? 'text-amber-500' : 'text-muted-foreground'} title="Offene Angebote">
-            ({angebote ?? 0})
           </span>
         </>
       );
+
     }
+    if (path === '/verkauf/angebote') return label;
     const key = path === '/production' && label === 'Liste' ? '__production_liste' : path;
     const c = lagerCounts[key];
     if (c === undefined) return label;
+
     if (path === '/einkauf') {
       const factory = lagerCounts['/order'] ?? 0;
       const rekla = lagerCounts['/order/reklamation'] ?? 0;
