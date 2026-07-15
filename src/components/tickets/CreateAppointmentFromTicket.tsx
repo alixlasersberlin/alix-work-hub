@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarPlus, Loader2, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { RmModal } from "@/components/esc/resources/RmModal";
 
 const KINDS = [
   { v: "anruf",         l: "Anruf" },
@@ -34,6 +34,8 @@ export function CreateAppointmentFromTicket({ ticketId, ticketNumber }: { ticket
   const [busy, setBusy] = useState(false);
   const [links, setLinks] = useState<{ confirm: string; reschedule: string; cancel: string } | null>(null);
 
+  const close = () => { setOpen(false); setLinks(null); };
+
   const create = async () => {
     if (!start) return toast.error("Bitte Startzeit wählen");
     setBusy(true);
@@ -57,16 +59,11 @@ export function CreateAppointmentFromTicket({ ticketId, ticketNumber }: { ticket
   const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Link kopiert"); };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setLinks(null); }}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <CalendarPlus className="w-4 h-4 mr-2" /> Termin aus Ticket
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Termin für {ticketNumber ?? "Ticket"} anlegen</DialogTitle>
-        </DialogHeader>
+    <>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <CalendarPlus className="w-4 h-4 mr-2" /> Termin aus Ticket
+      </Button>
+      <RmModal open={open} onClose={close} title={`Termin für ${ticketNumber ?? "Ticket"} anlegen`}>
         {!links ? (
           <div className="space-y-3">
             <div>
@@ -106,10 +103,10 @@ export function CreateAppointmentFromTicket({ ticketId, ticketNumber }: { ticket
                 <Button size="icon" variant="ghost" onClick={() => copy(links[k])}><Copy className="w-4 h-4" /></Button>
               </div>
             ))}
-            <Button className="w-full" onClick={() => { setOpen(false); setLinks(null); setStart(""); }}>Fertig</Button>
+            <Button className="w-full" onClick={close}>Fertig</Button>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </RmModal>
+    </>
   );
 }
