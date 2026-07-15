@@ -39,21 +39,31 @@ export function CreateAppointmentFromTicket({ ticketId, ticketNumber }: { ticket
   const create = async () => {
     if (!start) return toast.error("Bitte Startzeit wählen");
     setBusy(true);
-    const startIso = new Date(start).toISOString();
-    const endIso = new Date(new Date(start).getTime() + durationMin * 60_000).toISOString();
-    const { data, error } = await supabase.functions.invoke("ticket-create-appointment", {
-      body: {
-        ticket_id: ticketId,
-        start_at: startIso,
-        end_at: endIso,
-        event_kind: kind,
-        requires_confirmation: requireConfirm,
-      },
-    });
-    setBusy(false);
-    if (error || (data as any)?.error) return toast.error((data as any)?.error ?? error?.message ?? "Fehler");
-    setLinks((data as any).links);
-    toast.success("Termin erstellt und mit Ticket verknüpft.");
+    try {
+      const startDate = new Date(start);
+      const minutes = Number.isFinite(durationMin) && durationMin > 0 ? durationMin : 30;
+      const startIso = startDate.toISOString();
+      const endIso = new Date(startDate.getTime() + minutes * 60_000).toISOString();
+      const { data, error } = await supabase.functions.invoke("ticket-create-appointment", {
+        body: {
+          ticket_id: ticketId,
+          start_at: startIso,
+          end_at: endIso,
+          event_kind: kind,
+          requires_confirmation: requireConfirm,
+        },
+      });
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error ?? error?.message ?? "Termin konnte nicht erstellt werden");
+        return;
+      }
+      setLinks((data as any).links);
+      toast.success("Termin erstellt und mit Ticket verknüpft.");
+    } catch (err) {
+      toast.error((err as Error)?.message ?? "Termin konnte nicht erstellt werden");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Link kopiert"); };
