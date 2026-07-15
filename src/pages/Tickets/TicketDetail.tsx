@@ -899,6 +899,19 @@ export default function TicketDetail() {
               onClick={() => handover('tourenplanung', 'An Tourenplanung übergeben')}>
               <Truck className="w-4 h-4 mr-2" /> Tourenplanung übergeben
             </Button>
+            <Button variant="outline" className="w-full justify-start" disabled={!canEdit}
+              onClick={() => {
+                try {
+                  sessionStorage.setItem('sales_lead_handoff_v1', JSON.stringify({
+                    customer_email: ticket.customer_email || '',
+                    customer_company: (ticket as any).company_name || ticket.customer_name || '',
+                    notes: `Aus Ticket ${(ticket as any).ticket_number || ticket.id}${(ticket as any).subject ? ` – ${(ticket as any).subject}` : ''}`,
+                  }));
+                } catch { /* ignore */ }
+                navigate('/verkauf/angebot/neu');
+              }}>
+              <FileText className="w-4 h-4 mr-2" /> Angebot erstellen
+            </Button>
           </div>
 
           <div className="rounded-xl border border-border bg-card p-6 space-y-3">
