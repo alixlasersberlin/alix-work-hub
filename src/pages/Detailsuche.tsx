@@ -271,10 +271,11 @@ export default function Detailsuche() {
           .ilike('serial_number', `%${trimmed.serial}%`)
           .limit(2000);
         for (const r of (lagSer || []) as any[]) {
-          // Leihgeräte explizit ausschließen — sie sind nur temporär verliehen
-          // und gehören NICHT in Bestellwesen / Reservierungen / Vorschläge.
+          // Leihgeräte und Geräte in Produktion aus Lagerbestand ausschließen —
+          // sie sind nicht physisch am Lager verfügbar.
           const isLeih = /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(r.notes ?? '');
-          if (isLeih) continue;
+          const inProduktion = /\[Status:\s*Produktion\]/i.test(r.notes ?? '');
+          if (isLeih || inProduktion) continue;
           if (r.reserved_order_id) {
             serialOrderIds.add(r.reserved_order_id);
           } else {
