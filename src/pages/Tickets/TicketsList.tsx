@@ -203,7 +203,16 @@ export default function TicketsList() {
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
   const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status)), [filtered]);
   const closedRows = useMemo(() => filtered.filter(r => isClosed(r.status)), [filtered]);
-  const [tab, setTab] = useState<'open' | 'closed'>('open');
+  const wartungRows = useMemo(
+    () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'wartung'),
+    [filtered],
+  );
+  const reklamationRows = useMemo(
+    () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'reklamation'),
+    [filtered],
+  );
+  const [tab, setTab] = useState<'open' | 'closed' | 'wartung' | 'reklamation'>('open');
+
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
   const categories = useMemo(() => {
@@ -377,14 +386,25 @@ export default function TicketsList() {
 
 
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'open' | 'closed')}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as 'open' | 'closed' | 'wartung' | 'reklamation')}>
         <TabsList className="mb-3">
           <TabsTrigger value="open">Offene Tickets ({openRows.length})</TabsTrigger>
           <TabsTrigger value="closed">Geschlossene Tickets ({closedRows.length})</TabsTrigger>
+          <TabsTrigger value="wartung">Wartung ({wartungRows.length})</TabsTrigger>
+          <TabsTrigger value="reklamation">Reklamation ({reklamationRows.length})</TabsTrigger>
         </TabsList>
 
-        {(['open', 'closed'] as const).map((key) => {
-          const list = key === 'open' ? openRows : closedRows;
+        {(['open', 'closed', 'wartung', 'reklamation'] as const).map((key) => {
+          const list =
+            key === 'open' ? openRows
+              : key === 'closed' ? closedRows
+              : key === 'wartung' ? wartungRows
+              : reklamationRows;
+          const emptyTitle =
+            key === 'open' ? 'Keine offenen Tickets'
+              : key === 'closed' ? 'Keine geschlossenen Tickets'
+              : key === 'wartung' ? 'Keine Wartungs-Tickets'
+              : 'Keine Reklamations-Tickets';
           return (
             <TabsContent key={key} value={key}>
               <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -395,11 +415,12 @@ export default function TicketsList() {
                     <EmptyState
                       compact
                       icon={Inbox}
-                      title={key === 'open' ? 'Keine offenen Tickets' : 'Keine geschlossenen Tickets'}
+                      title={emptyTitle}
                       description="Passe die Filter an oder erstelle ein neues Ticket."
                       action={key === 'open' ? { label: 'Neues Ticket', icon: Plus, onClick: openCreateDialog } : undefined}
                     />
                   </div>
+
                 ) : (
                   <Table>
                     <TableHeader>
