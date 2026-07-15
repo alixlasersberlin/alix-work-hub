@@ -201,22 +201,23 @@ export default function AngebotsKalender() {
   }
 
   async function submitOutcome(decision: 'gewonnen' | 'verloren') {
-    if (!outcomeOfferNr) return;
+    if (!outcomeOfferNr) { toast.error('Kein Angebot ausgewählt.'); return; }
     setOutcomeBusy(true);
     try {
       const { data: userRes } = await supabase.auth.getUser();
-      await supabase.from('offer_outcomes').upsert({
+      const { error } = await supabase.from('offer_outcomes').upsert({
         offer_number: outcomeOfferNr,
         outcome: decision,
         reason: outcomeReason || null,
         decided_by: userRes.user?.id || null,
         decided_at: new Date().toISOString(),
       }, { onConflict: 'offer_number' });
+      if (error) throw error;
       toast.success(decision === 'gewonnen' ? 'Angebot gewonnen.' : 'Angebot verloren.');
       setOutcomeOpen(false);
       await load();
     } catch (e: any) {
-      toast.error('Fehler: ' + (e?.message || 'unbekannt'));
+      toast.error('Fehler beim Speichern: ' + (e?.message || 'unbekannt'));
     } finally {
       setOutcomeBusy(false);
     }
