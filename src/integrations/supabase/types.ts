@@ -4352,6 +4352,56 @@ export type Database = {
           },
         ]
       }
+      customer_portal_audit_logs: {
+        Row: {
+          action: string
+          auth_user_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json
+          object_id: string | null
+          object_type: string | null
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          auth_user_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          object_id?: string | null
+          object_type?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          auth_user_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          object_id?: string | null
+          object_type?: string | null
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_audit_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_portal_document_downloads: {
         Row: {
           attachment_id: string | null
