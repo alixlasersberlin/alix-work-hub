@@ -45,6 +45,8 @@ export default function OrderApprovalQueue() {
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [releasingId, setReleasingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
