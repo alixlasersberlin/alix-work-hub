@@ -133,7 +133,12 @@ export default function BestellwesenErsatzteile() {
 
       toast({
         title: 'Bestellung ausgelöst',
-        description: `${(order as any).order_number ?? 'Bestellung'} in „Bestellung möglich" übernommen (ohne Freigabe – Reparaturbestellung).`,
+        description: `${(order as any).order_number ?? 'Bestellung'} angelegt – zu finden unter Ersatzteilmanagement → Tab „Bestellungen" (Status: offen).`,
+        action: (
+          <Link to="/ersatzteilmanagement" className="text-primary underline text-xs whitespace-nowrap">
+            Öffnen
+          </Link>
+        ) as any,
       });
       load();
     } catch (e: any) {
