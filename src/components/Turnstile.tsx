@@ -42,11 +42,16 @@ export default function Turnstile({ onToken, onExpire, theme = 'dark' }: Props) 
 
   useEffect(() => {
     let cancelled = false;
+    let waitInterval: number | null = null;
     loadScript().then(() => {
       if (cancelled) return;
-      const wait = setInterval(() => {
+      waitInterval = window.setInterval(() => {
+        if (cancelled) {
+          if (waitInterval !== null) { clearInterval(waitInterval); waitInterval = null; }
+          return;
+        }
         if (window.turnstile && ref.current && !widgetId.current) {
-          clearInterval(wait);
+          if (waitInterval !== null) { clearInterval(waitInterval); waitInterval = null; }
           widgetId.current = window.turnstile.render(ref.current, {
             sitekey: SITE_KEY,
             theme,
@@ -60,6 +65,7 @@ export default function Turnstile({ onToken, onExpire, theme = 'dark' }: Props) 
     });
     return () => {
       cancelled = true;
+      if (waitInterval !== null) { clearInterval(waitInterval); waitInterval = null; }
       if (widgetId.current && window.turnstile) {
         try { window.turnstile.remove(widgetId.current); } catch { /* ignore */ }
         widgetId.current = null;
