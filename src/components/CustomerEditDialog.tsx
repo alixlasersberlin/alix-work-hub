@@ -187,16 +187,17 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
 
 
-  const Field = ({ label, field }: { label: string; field: string }) => (
+  const renderField = (label: string, field: string) => (
     <div>
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <Input
-        value={(form as any)[field]}
+        value={(form as any)[field] ?? ''}
         onChange={e => set(field, e.target.value)}
         className="bg-secondary border-border mt-1"
       />
     </div>
   );
+
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
