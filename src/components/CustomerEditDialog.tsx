@@ -214,10 +214,10 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
             <Checkbox checked={form.is_vip} onCheckedChange={v => setForm(f => ({ ...f, is_vip: !!v }))} />
           </label>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Firmenname" field="company_name" />
-            <Field label="Kontaktperson" field="contact_name" />
-            <Field label="E-Mail" field="email" />
-            <Field label="Telefon" field="phone" />
+            {renderField("Firmenname", "company_name")}
+            {renderField("Kontaktperson", "contact_name")}
+            {renderField("E-Mail", "email")}
+            {renderField("Telefon", "phone")}
             <div>
               <Label className="text-xs text-muted-foreground">Geburtsdatum</Label>
               <Input
@@ -276,10 +276,10 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
           <h3 className="text-sm font-medium text-foreground pt-2">Rechnungsadresse</h3>
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2"><Field label="Straße" field="billing_street" /></div>
-            <Field label="PLZ" field="billing_zip" />
-            <Field label="Stadt" field="billing_city" />
-            <Field label="Land" field="billing_country" />
+            <div className="col-span-2">{renderField("Straße", "billing_street")}</div>
+            {renderField("PLZ", "billing_zip")}
+            {renderField("Stadt", "billing_city")}
+            {renderField("Land", "billing_country")}
           </div>
 
           {canEditBank && (
@@ -295,8 +295,8 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
                     placeholder="DE89 3704 0044 0532 0130 00"
                   />
                 </div>
-                <Field label="BIC" field="bic" />
-                <Field label="Bank" field="bank_name" />
+                {renderField("BIC", "bic")}
+                {renderField("Bank", "bank_name")}
               </div>
             </>
           )}
@@ -304,10 +304,10 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
           <h3 className="text-sm font-medium text-foreground pt-2">Lieferadresse</h3>
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2"><Field label="Straße" field="shipping_street" /></div>
-            <Field label="PLZ" field="shipping_zip" />
-            <Field label="Stadt" field="shipping_city" />
-            <Field label="Land" field="shipping_country" />
+            <div className="col-span-2">{renderField("Straße", "shipping_street")}</div>
+            {renderField("PLZ", "shipping_zip")}
+            {renderField("Stadt", "shipping_city")}
+            {renderField("Land", "shipping_country")}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
