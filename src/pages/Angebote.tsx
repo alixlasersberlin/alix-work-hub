@@ -54,6 +54,8 @@ export default function Angebote() {
   const [approvalNote, setApprovalNote] = useState('');
   const [approvalBusy, setApprovalBusy] = useState(false);
   const [pendingPanelOpen, setPendingPanelOpen] = useState(false);
+  const [selectedApprovals, setSelectedApprovals] = useState<Set<string>>(new Set());
+  const [bulkApprovingBusy, setBulkApprovingBusy] = useState(false);
 
   const pendingOffers = offers.filter(o => (o.approvalStatus || 'pending') === 'pending');
   const pendingCount = pendingOffers.length;
