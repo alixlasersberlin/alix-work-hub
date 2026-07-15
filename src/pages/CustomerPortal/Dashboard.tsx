@@ -1,90 +1,131 @@
 import { useEffect, useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Mail, FileText, Receipt, FileCheck2, Wrench, Cpu, ShieldCheck, MessageSquare, Calendar } from 'lucide-react';
-import { KpiTile } from '@/components/infinity/KpiTile';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Receipt, User2, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 type Ctx = { customerId: string; companyName: string | null; email: string | null };
 
+type InvoiceRow = {
+  id: string;
+  file_name: string;
+  sent_at: string | null;
+  created_at: string;
+  status: string;
+};
+
 export default function CustomerPortalDashboard() {
   const ctx = useOutletContext<Ctx>();
-  const [stats, setStats] = useState({
-    messages: 0, documents: 0, invoices: 0, quotes: 0, repairs: 0,
-    devices: 0, warranties: 0, tickets: 0, nextMaintenance: '' as string,
-  });
+  const [loading, setLoading] = useState(true);
+  const [totalInvoices, setTotalInvoices] = useState(0);
+  const [recent, setRecent] = useState<InvoiceRow[]>([]);
+  const [customerNumber, setCustomerNumber] = useState<string | null>(null);
+  const [contactName, setContactName] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
-      const today = new Date().toISOString().slice(0, 10);
-      const [msg, doc, inv, qt, rep, war, tic, ord, nextM] = await Promise.all([
-        supabase.from('mail_messages').select('id', { count: 'exact', head: true })
-          .eq('customer_id', ctx.customerId).eq('is_read', false),
-        supabase.from('mail_attachments').select('id', { count: 'exact', head: true })
-          .eq('customer_id', ctx.customerId),
-        supabase.from('mail_attachments').select('id', { count: 'exact', head: true })
-          .eq('customer_id', ctx.customerId).eq('document_type', 'Rechnung'),
-        supabase.from('orders').select('id', { count: 'exact', head: true })
-          .eq('customer_id', ctx.customerId),
-        supabase.from('repair_orders').select('id', { count: 'exact', head: true })
-          .eq('customer_id', ctx.customerId).not('repair_status', 'in', '("Abgeschlossen","Geliefert")'),
-        supabase.from('warranty_records').select('id', { count: 'exact', head: true })
-          .eq('customer_id', ctx.customerId).eq('warranty_status', 'Aktiv'),
-        supabase.from('customer_portal_tickets').select('id', { count: 'exact', head: true })
-          .eq('customer_id', ctx.customerId).eq('status', 'offen'),
-        supabase.from('orders').select('id').eq('customer_id', ctx.customerId),
-        supabase.from('device_maintenance').select('next_maintenance_date')
-          .eq('customer_id', ctx.customerId).gte('next_maintenance_date', today)
-          .order('next_maintenance_date', { ascending: true }).limit(1),
+      const [{ count }, { data: recentData }, { data: cust }] = await Promise.all([
+        supabase
+          .from('mail_attachments')
+          .select('id', { count: 'exact', head: true })
+          .eq('customer_id', ctx.customerId)
+          .eq('document_type', 'Rechnung'),
+        supabase
+          .from('mail_attachments')
+          .select('id, file_name, sent_at, created_at, status')
+          .eq('customer_id', ctx.customerId)
+          .eq('document_type', 'Rechnung')
+          .order('created_at', { ascending: false })
+          .limit(3),
+        supabase
+          .from('customers')
+          .select('external_customer_id, contact_name')
+          .eq('id', ctx.customerId)
+          .maybeSingle(),
       ]);
-
-      let devices = 0;
-      const ids = (ord.data ?? []).map((o: any) => o.id);
-      if (ids.length > 0) {
-        const { count } = await supabase.from('lager_devices').select('id', { count: 'exact', head: true }).in('reserved_order_id', ids);
-        devices = count ?? 0;
-      }
-
-      const nextDate = (nextM.data ?? [])[0]?.next_maintenance_date as string | undefined;
-
-      setStats({
-        messages: msg.count ?? 0,
-        documents: doc.count ?? 0,
-        invoices: inv.count ?? 0,
-        quotes: qt.count ?? 0,
-        repairs: rep.count ?? 0,
-        devices,
-        warranties: war.count ?? 0,
-        tickets: tic.count ?? 0,
-        nextMaintenance: nextDate ? new Date(nextDate).toLocaleDateString('de-DE') : '—',
-      });
+      setTotalInvoices(count ?? 0);
+      setRecent((recentData ?? []) as InvoiceRow[]);
+      setCustomerNumber(cust?.external_customer_id ?? null);
+      setContactName(cust?.contact_name ?? null);
+      setLoading(false);
     })();
   }, [ctx.customerId]);
 
-  const tiles = [
-    { to: '/kunde/geraete', label: 'Geräte', value: stats.devices, icon: Cpu },
-    { to: '/kunde/garantien', label: 'Aktive Garantien', value: stats.warranties, icon: ShieldCheck },
-    { to: '/kunde/tickets', label: 'Offene Tickets', value: stats.tickets, icon: MessageSquare },
-    { to: '/kunde/reparaturen', label: 'Laufende Reparaturen', value: stats.repairs, icon: Wrench },
-    { to: '/kunde/wartungen', label: 'Nächste Wartung', value: stats.nextMaintenance, icon: Calendar },
-    { to: '/kunde/nachrichten', label: 'Neue Nachrichten', value: stats.messages, icon: Mail },
-    { to: '/kunde/dokumente', label: 'Dokumente', value: stats.documents, icon: FileText },
-    { to: '/kunde/rechnungen', label: 'Rechnungen', value: stats.invoices, icon: Receipt },
-    { to: '/kunde/angebote', label: 'Aufträge / Angebote', value: stats.quotes, icon: FileCheck2 },
-  ];
+  if (loading) {
+    return <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-display font-bold">Willkommen{ctx.companyName ? `, ${ctx.companyName}` : ''}.</h2>
-        <p className="text-muted-foreground text-sm">Ihre zentrale Übersicht bei Alix Lasers.</p>
+        <h2 className="text-2xl font-semibold">Willkommen{ctx.companyName ? `, ${ctx.companyName}` : ''}.</h2>
+        <p className="text-muted-foreground text-sm">Ihre Rechnungen und Stammdaten bei Alix Lasers.</p>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {tiles.map((t) => (
-          <Link key={t.to} to={t.to} className="block">
-            <KpiTile label={t.label} value={t.value} icon={t.icon} accent="gold" />
-          </Link>
-        ))}
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <InfoCard label="Firma" value={ctx.companyName ?? '—'} />
+        <InfoCard label="Ansprechpartner" value={contactName ?? '—'} />
+        <InfoCard label="Kundennummer" value={customerNumber ?? '—'} mono />
       </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base"><Receipt className="w-4 h-4" /> Rechnungen</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="text-3xl font-semibold">{totalInvoices}</div>
+            <p className="text-xs text-muted-foreground">gesamt hinterlegte Rechnungen</p>
+            <Button asChild size="sm" className="w-full"><Link to="/kunde/rechnungen">Alle Rechnungen öffnen</Link></Button>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base"><User2 className="w-4 h-4" /> Meine Daten</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">Firmen- und Kontaktdaten einsehen oder Änderung mitteilen.</p>
+            <Button asChild size="sm" variant="outline" className="w-full"><Link to="/kunde/meine-daten">Stammdaten ansehen</Link></Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Letzte Rechnungen</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recent.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">Aktuell keine Rechnungen hinterlegt.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {recent.map((r) => (
+                <li key={r.id} className="py-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-xs truncate">{r.file_name}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(r.sent_at ?? r.created_at).toLocaleDateString('de-DE')}</p>
+                  </div>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/kunde/rechnungen">Öffnen</Link>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </div>
+  );
+}
+
+function InfoCard({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+        <p className={`mt-1 text-sm font-medium truncate ${mono ? 'font-mono' : ''}`}>{value}</p>
+      </CardContent>
+    </Card>
   );
 }
