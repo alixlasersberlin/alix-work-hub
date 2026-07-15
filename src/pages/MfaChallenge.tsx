@@ -49,11 +49,12 @@ export default function MfaChallenge() {
       });
       if (vErr) throw vErr;
       markMfaVerifiedThisTab();
-      await refreshMfaState();
       const postMfaTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
         ? '/esc/kalender'
         : '/dashboard';
-      navigate(postMfaTarget, { replace: true });
+      // Harte Navigation wie nach Login: verhindert den gemeldeten
+      // Maus-/Pointer-Freeze durch stale Auth-/Overlay-State nach MFA.
+      window.location.replace(postMfaTarget);
     } catch (e: any) {
       setErr(e?.message ?? 'Code ungültig');
       setBusy(false);
