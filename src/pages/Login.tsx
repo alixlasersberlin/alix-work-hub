@@ -66,14 +66,16 @@ export default function Login() {
       setLoading(false);
       return;
     }
-    // Nach erfolgreichem Login bewusst hart neu laden: dadurch werden
-    // Auth-Session, MFA-State und eventuell hängende Browser-/Overlay-States
-    // sauber neu initialisiert. Genau ein kompletter Reload behebt den
-    // gemeldeten Maus-/Pointer-Freeze zuverlässig.
+    // Sicherheitsnetz: pointer-events auf <body> zurücksetzen, falls Radix-Overlays
+    // (Turnstile / Dialog) es beim Unmount hängen ließen.
+    try { document.body.style.removeProperty('pointer-events'); } catch { /* ignore */ }
     const postLoginTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
       ? '/esc/kalender'
       : '/dashboard';
-    window.location.replace(postLoginTarget);
+    // Weiche Navigation via React Router — kein voller Reload, damit das
+    // Design nicht während des Neuparsens „einfriert".
+    setLoading(false);
+    navigate(postLoginTarget, { replace: true });
   };
 
   return (
