@@ -10,6 +10,7 @@ import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 import CustomerCommunication from '@/components/CustomerCommunication';
 import FinanceAccountTab from '@/components/finance/FinanceAccountTab';
+import PortalAccessTab from '@/components/customer/PortalAccessTab';
 import { withAt } from '@/lib/atSuffix';
 
 export default function CustomerDetail() {
