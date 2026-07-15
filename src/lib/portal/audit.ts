@@ -30,7 +30,7 @@ export async function logPortalAudit(params: {
       object_id: params.objectId ?? null,
       success: params.success ?? true,
       user_agent: ua,
-      metadata: params.metadata ?? {},
+      metadata: (params.metadata ?? {}) as any,
     });
   } catch {
     // Audit darf UX nie blockieren
