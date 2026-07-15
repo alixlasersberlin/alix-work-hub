@@ -195,9 +195,12 @@ export default function AngebotsKalender() {
   }
 
   function openOutcome(offer_number: string) {
-    setOutcomeOfferNr(offer_number);
     setOutcomeReason('');
-    setOutcomeOpen(true);
+    setOutcomeOfferNr(offer_number);
+    // Radix Dialog kann durch das gleiche Click-Event, das den Trigger auslöst,
+    // sofort wieder geschlossen werden (pointerdown-outside race). Deshalb den
+    // Open-State erst im nächsten Tick setzen.
+    setTimeout(() => setOutcomeOpen(true), 0);
   }
 
   async function submitOutcome(decision: 'gewonnen' | 'verloren') {
@@ -289,7 +292,8 @@ export default function AngebotsKalender() {
                 <CalendarPlus className="h-4 w-4" />
               </Button>
               <Button size="sm" variant="outline" className="text-emerald-500 border-emerald-500/30"
-                onClick={() => openOutcome(t.offer_number)} title="Gewonnen / Verloren">
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); openOutcome(t.offer_number); }}
+                title="Gewonnen / Verloren">
                 <Trophy className="h-4 w-4" />
               </Button>
             </div>
