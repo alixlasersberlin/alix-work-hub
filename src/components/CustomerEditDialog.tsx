@@ -201,7 +201,7 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto z-[2147483646]">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">{customer?.id ? 'Kunde bearbeiten' : 'Neuen Kunden anlegen'}</DialogTitle>
         </DialogHeader>
