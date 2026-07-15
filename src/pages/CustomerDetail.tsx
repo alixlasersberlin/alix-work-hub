@@ -82,7 +82,7 @@ export default function CustomerDetail() {
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
           <TabsTrigger value="finance">Finanzakte</TabsTrigger>
-          
+          <TabsTrigger value="portal">Kundenportal</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
