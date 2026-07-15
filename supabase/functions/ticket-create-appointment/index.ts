@@ -145,7 +145,7 @@ serve(async (req) => {
     // E-Mail an Kunde senden (nur wenn Bestätigung nötig und E-Mail vorhanden)
     let emailStatus: "sent" | "skipped" | "failed" = "skipped";
     let emailError: string | null = null;
-    if (requires_confirmation && ticket.customer_email) {
+    if (ticket.customer_email) {
       try {
         const dateStr = start.toLocaleString("de-DE", {
           timeZone: "Europe/Berlin", dateStyle: "full", timeStyle: "short",
