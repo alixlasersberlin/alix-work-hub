@@ -340,7 +340,10 @@ export default function ImportManagement() {
         body: { source_system: source, page, max_pages: 3, per_page: 100 },
       });
       if (error) throw error;
-      if (data?.error && data?.success === false) throw new Error(data.error);
+      if (data?.success === false) {
+        throw new Error(data?.fallback ? 'Zoho ist gerade nicht erreichbar – bitte in ein paar Minuten erneut versuchen.' : (data?.error ?? 'Unbekannter Fehler'));
+      }
+
       totals.fetched += data?.fetched ?? 0;
       totals.imported += data?.imported ?? 0;
       totals.updated += data?.updated ?? 0;
