@@ -1327,23 +1327,25 @@ function AppRoutes() {
         <Route path="/kunde/login" element={<CustomerPortalLogin />} />
         <Route path="/kunde" element={<CustomerPortalLayout />}>
           <Route index element={<CustomerPortalDashboard />} />
-          <Route path="nachrichten" element={<CustomerPortalMessages />} />
-          <Route path="dokumente" element={<CustomerPortalDocuments />} />
           <Route path="rechnungen" element={<CustomerPortalInvoices />} />
-          <Route path="angebote" element={<CustomerPortalQuotes />} />
-          <Route path="reparaturen" element={<CustomerPortalRepairs />} />
-          <Route path="support" element={<CustomerPortalSupport />} />
-          <Route path="bewertungen" element={<CustomerPortalReviews />} />
-          <Route path="verlauf" element={<CustomerPortalTimeline />} />
-          <Route path="geraete" element={<CustomerPortalDevices />} />
-          <Route path="bestellungen" element={<CustomerPortalOrders />} />
-          <Route path="wartungen" element={<CustomerPortalMaintenance />} />
-          <Route path="garantien" element={<CustomerPortalWarranty />} />
-          <Route path="tickets" element={<CustomerPortalTickets />} />
-          <Route path="termine" element={<CustomerPortalAppointments />} />
-          <Route path="gesundheit" element={<CustomerPortalHealth />} />
-          <Route path="katalog" element={<CustomerPortalKatalog />} />
-          <Route path="warenkorb" element={<CustomerPortalWarenkorb />} />
+          <Route path="meine-daten" element={<CustomerPortalMyData />} />
+          {/* Phase 1: alle weiteren Bereiche noch nicht freigegeben – Redirect auf Übersicht */}
+          <Route path="nachrichten" element={<Navigate to="/kunde" replace />} />
+          <Route path="dokumente" element={<Navigate to="/kunde" replace />} />
+          <Route path="angebote" element={<Navigate to="/kunde" replace />} />
+          <Route path="reparaturen" element={<Navigate to="/kunde" replace />} />
+          <Route path="support" element={<Navigate to="/kunde" replace />} />
+          <Route path="bewertungen" element={<Navigate to="/kunde" replace />} />
+          <Route path="verlauf" element={<Navigate to="/kunde" replace />} />
+          <Route path="geraete" element={<Navigate to="/kunde" replace />} />
+          <Route path="bestellungen" element={<Navigate to="/kunde" replace />} />
+          <Route path="wartungen" element={<Navigate to="/kunde" replace />} />
+          <Route path="garantien" element={<Navigate to="/kunde" replace />} />
+          <Route path="tickets" element={<Navigate to="/kunde" replace />} />
+          <Route path="termine" element={<Navigate to="/kunde" replace />} />
+          <Route path="gesundheit" element={<Navigate to="/kunde" replace />} />
+          <Route path="katalog" element={<Navigate to="/kunde" replace />} />
+          <Route path="warenkorb" element={<Navigate to="/kunde" replace />} />
         </Route>
 
         {/* AlixWork Kalender – Mobile PWA (spiegelt den bestehenden Teamkalender) */}
