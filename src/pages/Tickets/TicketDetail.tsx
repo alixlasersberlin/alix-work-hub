@@ -628,7 +628,7 @@ export default function TicketDetail() {
             );
           })()}
 
-          <CreateAppointmentFromTicket ticketId={ticket.id} ticketNumber={(ticket as any).ticket_number ?? ticket.external_ticket_id} />
+          <CreateAppointmentFromTicket ticketId={ticket.id} ticketNumber={(ticket as any).ticket_number ?? ticket.external_ticket_id} ticket={ticket as any} />
 
           <PhoneNoteDialog
             ticketId={ticket.id}
