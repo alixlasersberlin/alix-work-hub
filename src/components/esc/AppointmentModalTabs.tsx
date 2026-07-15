@@ -641,13 +641,17 @@ export function AppointmentModalTabs({
                 <div className="text-[12px] text-muted-foreground">Keine Historie vorhanden.</div>
               ) : (
                 <ul className="space-y-1.5 text-[12px]">
-                  {history.map((h, i) => (
-                    <li key={i} className="flex items-start gap-2 border-b pb-1.5">
-                      <span className="text-muted-foreground w-32 shrink-0">{format(new Date(h.at), 'dd.MM.yyyy HH:mm')}</span>
-                      <span className="font-medium">{h.action}</span>
-                      <span className="text-muted-foreground truncate">{h.by}{h.detail ? ` · ${h.detail}` : ''}</span>
-                    </li>
-                  ))}
+                  {history.map((h, i) => {
+                    const isSystemBy = !h.by || /amazonses\.com|@.*\.amazonses|^[0-9a-f]{16,}/i.test(h.by);
+                    const byLabel = isSystemBy ? 'System' : h.by;
+                    return (
+                      <li key={i} className="flex items-start gap-2 border-b pb-1.5">
+                        <span className="text-muted-foreground w-32 shrink-0">{format(new Date(h.at), 'dd.MM.yyyy HH:mm')}</span>
+                        <span className="font-medium">{h.action}</span>
+                        <span className="text-muted-foreground truncate">{byLabel}{h.detail ? ` · ${h.detail}` : ''}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </TabsContent>
