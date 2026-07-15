@@ -328,6 +328,14 @@ export default function TicketsList() {
             {sources.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
+        <Select value={catF} onValueChange={setCatF}>
+          <SelectTrigger><SelectValue placeholder="Kategorie" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Kategorien</SelectItem>
+            {hasUncategorized && <SelectItem value="__none__">Ohne Kategorie</SelectItem>}
+            {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
       {hasUrlFilters && (
