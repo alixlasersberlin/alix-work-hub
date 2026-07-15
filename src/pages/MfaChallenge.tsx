@@ -9,7 +9,7 @@ import { Loader2, ShieldCheck } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 export default function MfaChallenge() {
-  const { signOut, refreshMfaState } = useAuth();
+  const { signOut } = useAuth();
   // markMfaVerifiedThisTab wird nach erfolgreicher Verifikation gesetzt
   const navigate = useNavigate();
   const [factorId, setFactorId] = useState('');
@@ -25,7 +25,7 @@ export default function MfaChallenge() {
         setBusy(false);
         return;
       }
-      const verified = (data?.totp ?? []).find((f: any) => f.status === 'verified');
+      const verified = (data?.totp ?? []).find((f) => f.status === 'verified');
       if (!verified) {
         navigate('/mfa-setup', { replace: true });
         return;
@@ -55,8 +55,8 @@ export default function MfaChallenge() {
       // Harte Navigation wie nach Login: verhindert den gemeldeten
       // Maus-/Pointer-Freeze durch stale Auth-/Overlay-State nach MFA.
       window.location.replace(postMfaTarget);
-    } catch (e: any) {
-      setErr(e?.message ?? 'Code ungültig');
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : 'Code ungültig');
       setBusy(false);
     }
   };
