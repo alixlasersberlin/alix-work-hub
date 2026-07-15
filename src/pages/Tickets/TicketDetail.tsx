@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { validateTicketAttachment, TICKET_ATTACHMENT_ACCEPT } from '@/lib/ticketAttachments';
-import { ArrowLeft, Loader2, MessageSquare, Paperclip, Save, Send, Wrench, Truck, Banknote, ClipboardList, RefreshCw, History, CheckCircle2, AlertCircle, Lock, Unlock, Upload, UserPlus, Flag, Activity } from 'lucide-react';
+import { ArrowLeft, Loader2, MessageSquare, Paperclip, Save, Send, Wrench, Truck, Banknote, ClipboardList, RefreshCw, History, CheckCircle2, AlertCircle, Lock, Unlock, Upload, UserPlus, Flag, Activity, FileText } from 'lucide-react';
 import { sbRepair } from '@/lib/repair/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AiAnalysisPanel } from '@/components/ai-service/AiAnalysisPanel';
@@ -898,6 +898,19 @@ export default function TicketDetail() {
             <Button variant="outline" className="w-full justify-start" disabled={!canEdit}
               onClick={() => handover('tourenplanung', 'An Tourenplanung übergeben')}>
               <Truck className="w-4 h-4 mr-2" /> Tourenplanung übergeben
+            </Button>
+            <Button variant="outline" className="w-full justify-start" disabled={!canEdit}
+              onClick={() => {
+                try {
+                  sessionStorage.setItem('sales_lead_handoff_v1', JSON.stringify({
+                    customer_email: ticket.customer_email || '',
+                    customer_company: (ticket as any).company_name || ticket.customer_name || '',
+                    notes: `Aus Ticket ${(ticket as any).ticket_number || ticket.id}${(ticket as any).subject ? ` – ${(ticket as any).subject}` : ''}`,
+                  }));
+                } catch { /* ignore */ }
+                navigate('/verkauf/angebot/neu');
+              }}>
+              <FileText className="w-4 h-4 mr-2" /> Angebot erstellen
             </Button>
           </div>
 
