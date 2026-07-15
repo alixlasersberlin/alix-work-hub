@@ -815,6 +815,7 @@ function AppRoutes() {
         <Route path="/termin/ablehnen/:token" element={<AppointmentAction action="cancel" />} />
         <Route path="/simulate/:userId" element={<ProtectedRoute requiredRoles={['Super Admin']}><SimulateEntry /></ProtectedRoute>} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route path="/start" element={<Startseite />} />
           <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
           <Route path="/einstellungen/personalisierung" element={<Personalisierung />} />
