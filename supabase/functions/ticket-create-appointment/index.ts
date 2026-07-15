@@ -33,6 +33,7 @@ function normalizePriority(value: unknown): "low" | "normal" | "high" | "urgent"
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const callerAuth = req.headers.get("Authorization") ?? "";
     const body = await req.json();
     const {
       ticket_id, start_at, end_at, event_kind = "kundentermin",
