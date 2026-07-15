@@ -411,6 +411,7 @@ const CustomerPortalWarranty = lazy(() => import("./pages/CustomerPortal/Warrant
 const CustomerPortalTickets = lazy(() => import("./pages/CustomerPortal/Tickets"));
 const CustomerPortalAppointments = lazy(() => import("./pages/CustomerPortal/Appointments"));
 const CustomerPortalHealth = lazy(() => import("./pages/CustomerPortal/Health"));
+const CustomerPortalMyData = lazy(() => import("./pages/CustomerPortal/MyData"));
 const MailCenterPosteingang = lazy(() => import("./pages/MailCenter/Posteingang"));
 const MailCenterGesendet = lazy(() => import("./pages/MailCenter/Gesendet"));
 const MailCenterEntwuerfe = lazy(() => import("./pages/MailCenter/Entwuerfe"));
