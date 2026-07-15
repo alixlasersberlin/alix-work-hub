@@ -195,9 +195,12 @@ export default function AngebotsKalender() {
   }
 
   function openOutcome(offer_number: string) {
-    setOutcomeOfferNr(offer_number);
     setOutcomeReason('');
-    setOutcomeOpen(true);
+    setOutcomeOfferNr(offer_number);
+    // Radix Dialog kann durch das gleiche Click-Event, das den Trigger auslöst,
+    // sofort wieder geschlossen werden (pointerdown-outside race). Deshalb den
+    // Open-State erst im nächsten Tick setzen.
+    setTimeout(() => setOutcomeOpen(true), 0);
   }
 
   async function submitOutcome(decision: 'gewonnen' | 'verloren') {
