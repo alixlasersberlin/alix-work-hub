@@ -2185,6 +2185,16 @@ html :is([role="dialog"], [role="alertdialog"])[data-state="open"] {
   visibility: visible !important;
   animation: none !important;
   filter: none !important;
+  transform: none !important;
+  margin: auto !important;
+}
+
+/* Radix Portal-Wrapper (body > div, das den Center-Container enthält) darf
+   die Zentrierung nicht durch position/transform/filter blockieren. */
+html body > div:has([role="dialog"][data-state="open"]),
+html body > div:has([role="alertdialog"][data-state="open"]) {
+  transform: none !important;
+  filter: none !important;
 }
 
 html [data-radix-dialog-overlay][data-state="open"],
