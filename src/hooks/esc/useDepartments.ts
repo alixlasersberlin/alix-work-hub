@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { MOCK_DEPARTMENTS } from '@/lib/esc/mock-data';
 import type { EscDepartment } from '@/lib/esc/types';
 import { useEscStore } from '@/lib/esc/store/kvStore';
@@ -25,8 +25,11 @@ export function useDepartments() {
 
   const deleteDepartment = useCallback(async (id: string) => { await remove(id); }, [remove]);
 
-  const sorted = [...items].sort(
-    (a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name),
+  const sorted = useMemo(
+    () => [...items].sort(
+      (a, b) => (a.sortOrder ?? 999) - (b.sortOrder ?? 999) || a.name.localeCompare(b.name),
+    ),
+    [items],
   );
 
   return { departments: sorted, createDepartment, updateDepartment, deleteDepartment };

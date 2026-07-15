@@ -98,7 +98,7 @@ export function CreateAppointmentFromTicket({
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => { setLinks(null); setOpen(true); }}>
+      <Button type="button" variant="outline" size="sm" onClick={() => { setLinks(null); setOpen(true); }}>
         <CalendarPlus className="w-4 h-4 mr-2" /> Termin aus Ticket
       </Button>
 
