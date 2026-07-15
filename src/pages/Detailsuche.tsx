@@ -271,10 +271,11 @@ export default function Detailsuche() {
           .ilike('serial_number', `%${trimmed.serial}%`)
           .limit(2000);
         for (const r of (lagSer || []) as any[]) {
-          // Leihgeräte explizit ausschließen — sie sind nur temporär verliehen
-          // und gehören NICHT in Bestellwesen / Reservierungen / Vorschläge.
+          // Leihgeräte und Geräte in Produktion aus Lagerbestand ausschließen —
+          // sie sind nicht physisch am Lager verfügbar.
           const isLeih = /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(r.notes ?? '');
-          if (isLeih) continue;
+          const inProduktion = /\[Status:\s*Produktion\]/i.test(r.notes ?? '');
+          if (isLeih || inProduktion) continue;
           if (r.reserved_order_id) {
             serialOrderIds.add(r.reserved_order_id);
           } else {
@@ -358,7 +359,8 @@ export default function Detailsuche() {
           .limit(2000);
         for (const r of (lagNotes || []) as any[]) {
           const isLeih = /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(r.notes ?? '');
-          if (isLeih) continue;
+          const inProduktion = /\[Status:\s*Produktion\]/i.test(r.notes ?? '');
+          if (isLeih || inProduktion) continue;
           if (r.reserved_order_id) {
             notesOrderIds.add(r.reserved_order_id);
           } else if (!standaloneLager.some(s => s.id === r.id)) {
@@ -457,9 +459,10 @@ export default function Detailsuche() {
           relatedByOrder[p.order_id]?.production.push(p);
         }
         for (const d of (lager || []) as any[]) {
-          // Leihgeräte aus den verknüpften Lager-Treffern ausblenden
+          // Leihgeräte und Geräte in Produktion aus Lagerbestand-Sektion ausblenden
           const isLeih = /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(d.notes ?? '');
-          if (isLeih) continue;
+          const inProduktion = /\[Status:\s*Produktion\]/i.test(d.notes ?? '');
+          if (isLeih || inProduktion) continue;
           relatedByOrder[d.reserved_order_id]?.lager.push(d);
         }
         for (const r of (routes || []) as any[]) {
