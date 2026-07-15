@@ -23,27 +23,31 @@ interface Props {
 export default function CustomerEditDialog({ customer, open, onClose, onSaved }: Props) {
   const { hasRole, isAdmin } = useAuth();
   const canEditBank = isAdmin || hasRole('Finance') || hasRole('Finanzierungen');
+  const c = customer || {};
+  const ba = (c as any).billing_address || {};
+  const sa = (c as any).shipping_address || {};
   const [form, setForm] = useState({
-    company_name: customer?.company_name || '',
-    contact_name: customer?.contact_name || '',
-    email: customer?.email || '',
-    phone: customer?.phone || '',
-    birth_date: customer?.birth_date || '',
-    billing_street: customer?.billing_address?.address || customer?.billing_address?.street || '',
-    billing_zip: customer?.billing_address?.zip || '',
-    billing_city: customer?.billing_address?.city || '',
-    billing_country: customer?.billing_address?.country || '',
-    shipping_street: customer?.shipping_address?.address || customer?.shipping_address?.street || '',
-    shipping_zip: customer?.shipping_address?.zip || '',
-    shipping_city: customer?.shipping_address?.city || '',
-    shipping_country: customer?.shipping_address?.country || '',
-    iban: customer?.iban || '',
-    bic: customer?.bic || '',
-    bank_name: customer?.bank_name || '',
-    is_vip: !!customer?.is_vip,
-    contact_tenant_id: customer?.contact_tenant_id || '',
-    supplier_tenant_id: customer?.supplier_tenant_id || '',
+    company_name: c.company_name ?? '',
+    contact_name: c.contact_name ?? '',
+    email: c.email ?? '',
+    phone: c.phone ?? '',
+    birth_date: c.birth_date ?? '',
+    billing_street: ba.address ?? ba.street ?? '',
+    billing_zip: ba.zip ?? '',
+    billing_city: ba.city ?? '',
+    billing_country: ba.country ?? '',
+    shipping_street: sa.address ?? sa.street ?? '',
+    shipping_zip: sa.zip ?? '',
+    shipping_city: sa.city ?? '',
+    shipping_country: sa.country ?? '',
+    iban: c.iban ?? '',
+    bic: c.bic ?? '',
+    bank_name: c.bank_name ?? '',
+    is_vip: !!c.is_vip,
+    contact_tenant_id: c.contact_tenant_id ?? '',
+    supplier_tenant_id: c.supplier_tenant_id ?? '',
   });
+
   const [saving, setSaving] = useState(false);
   const [tenants, setTenants] = useState<Array<{ id: string; name: string; flag_emoji: string | null; code: string }>>([]);
 
@@ -183,16 +187,17 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
 
 
-  const Field = ({ label, field }: { label: string; field: string }) => (
+  const renderField = (label: string, field: string) => (
     <div>
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <Input
-        value={(form as any)[field]}
+        value={(form as any)[field] ?? ''}
         onChange={e => set(field, e.target.value)}
         className="bg-secondary border-border mt-1"
       />
     </div>
   );
+
 
   return (
     <Dialog open={open} onOpenChange={v => !v && onClose()}>
@@ -209,10 +214,10 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
             <Checkbox checked={form.is_vip} onCheckedChange={v => setForm(f => ({ ...f, is_vip: !!v }))} />
           </label>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Firmenname" field="company_name" />
-            <Field label="Kontaktperson" field="contact_name" />
-            <Field label="E-Mail" field="email" />
-            <Field label="Telefon" field="phone" />
+            {renderField("Firmenname", "company_name")}
+            {renderField("Kontaktperson", "contact_name")}
+            {renderField("E-Mail", "email")}
+            {renderField("Telefon", "phone")}
             <div>
               <Label className="text-xs text-muted-foreground">Geburtsdatum</Label>
               <Input
@@ -271,10 +276,10 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
           <h3 className="text-sm font-medium text-foreground pt-2">Rechnungsadresse</h3>
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2"><Field label="Straße" field="billing_street" /></div>
-            <Field label="PLZ" field="billing_zip" />
-            <Field label="Stadt" field="billing_city" />
-            <Field label="Land" field="billing_country" />
+            <div className="col-span-2">{renderField("Straße", "billing_street")}</div>
+            {renderField("PLZ", "billing_zip")}
+            {renderField("Stadt", "billing_city")}
+            {renderField("Land", "billing_country")}
           </div>
 
           {canEditBank && (
@@ -290,8 +295,8 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
                     placeholder="DE89 3704 0044 0532 0130 00"
                   />
                 </div>
-                <Field label="BIC" field="bic" />
-                <Field label="Bank" field="bank_name" />
+                {renderField("BIC", "bic")}
+                {renderField("Bank", "bank_name")}
               </div>
             </>
           )}
@@ -299,10 +304,10 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
           <h3 className="text-sm font-medium text-foreground pt-2">Lieferadresse</h3>
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2"><Field label="Straße" field="shipping_street" /></div>
-            <Field label="PLZ" field="shipping_zip" />
-            <Field label="Stadt" field="shipping_city" />
-            <Field label="Land" field="shipping_country" />
+            <div className="col-span-2">{renderField("Straße", "shipping_street")}</div>
+            {renderField("PLZ", "shipping_zip")}
+            {renderField("Stadt", "shipping_city")}
+            {renderField("Land", "shipping_country")}
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
