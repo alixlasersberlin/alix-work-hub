@@ -65,11 +65,18 @@ serve(async (req) => {
       .single();
     if (tErr || !ticket) return j({ error: "ticket not found" }, 404);
 
-    // esc_department: Override > Name-Match > Fallback
-    let escDeptId: string | null = departmentIdOverride ?? null;
-    if (!escDeptId && ticket.department) {
+    // esc_department: Override (nur echte UUID) > Name-Match (Override-String oder Ticket.department) > Fallback
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    let escDeptId: string | null = null;
+    if (typeof departmentIdOverride === "string" && UUID_RE.test(departmentIdOverride)) {
+      escDeptId = departmentIdOverride;
+    }
+    const nameCandidate = (!escDeptId && typeof departmentIdOverride === "string" && departmentIdOverride)
+      ? departmentIdOverride
+      : (ticket.department ?? null);
+    if (!escDeptId && nameCandidate) {
       const { data: d } = await supabase
-        .from("esc_departments").select("id").ilike("name", ticket.department).maybeSingle();
+        .from("esc_departments").select("id").ilike("name", nameCandidate).maybeSingle();
       escDeptId = (d as any)?.id ?? null;
     }
     if (!escDeptId) {
@@ -77,6 +84,14 @@ serve(async (req) => {
       escDeptId = (fallback as any)?.id ?? null;
     }
     if (!escDeptId) return j({ error: "Keine ESC-Abteilung vorhanden — bitte in ESC → Abteilungen anlegen." }, 400);
+
+    // assigned_user_id / resource_id müssen ebenfalls echte UUIDs sein, sonst weglassen
+    const assignedUserId = (typeof assignedOverride === "string" && UUID_RE.test(assignedOverride))
+      ? assignedOverride
+      : (typeof ticket.assigned_to === "string" && UUID_RE.test(ticket.assigned_to) ? ticket.assigned_to : null);
+    const resourceId = (typeof resourceOverride === "string" && UUID_RE.test(resourceOverride))
+      ? resourceOverride
+      : null;
 
     const start = new Date(start_at);
     const end = end_at ? new Date(end_at) : new Date(start.getTime() + 30 * 60 * 1000);
@@ -102,8 +117,8 @@ serve(async (req) => {
       location: locationOverride ?? null,
       internal_note: internalNoteOverride ?? null,
       external_note: externalNoteOverride ?? null,
-      resource_id: resourceOverride ?? null,
-      assigned_user_id: assignedOverride ?? ticket.assigned_to,
+      resource_id: resourceId,
+      assigned_user_id: assignedUserId,
       requires_confirmation,
       confirmation_status: requires_confirmation ? "pending" : "not_required",
       confirmation_token: token,
