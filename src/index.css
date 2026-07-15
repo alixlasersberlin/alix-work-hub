@@ -2123,21 +2123,32 @@ html[data-aurora="2"] :is(button, [role="button"], a[data-slot="button"], a[href
   -webkit-text-fill-color: currentColor !important;
 }
 
-html[data-infinity] :is(.card, [data-slot="card"], .rounded-xl.border, .rounded-lg.border)::before,
-html[data-infinity] :is(.card, [data-slot="card"], .rounded-xl.border, .rounded-lg.border)::after,
-html[data-aurora="2"] :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border)::before,
-html[data-aurora="2"] :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border)::after,
-.design-aurora :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border)::before,
-.design-aurora :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border)::after {
+html[data-infinity] :is(.card, [data-slot="card"], .rounded-xl.border, .rounded-lg.border):not([role="dialog"]):not([role="alertdialog"]):not([data-radix-popper-content-wrapper] *)::before,
+html[data-infinity] :is(.card, [data-slot="card"], .rounded-xl.border, .rounded-lg.border):not([role="dialog"]):not([role="alertdialog"]):not([data-radix-popper-content-wrapper] *)::after,
+html[data-aurora="2"] :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border):not([role="dialog"]):not([role="alertdialog"]):not([data-radix-popper-content-wrapper] *)::before,
+html[data-aurora="2"] :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border):not([role="dialog"]):not([role="alertdialog"]):not([data-radix-popper-content-wrapper] *)::after,
+.design-aurora :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border):not([role="dialog"]):not([role="alertdialog"]):not([data-radix-popper-content-wrapper] *)::before,
+.design-aurora :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border):not([role="dialog"]):not([role="alertdialog"]):not([data-radix-popper-content-wrapper] *)::after {
   z-index: 0 !important;
   pointer-events: none !important;
 }
 
-html[data-infinity] :is(.card, [data-slot="card"], .rounded-xl.border, .rounded-lg.border) > *,
-html[data-aurora="2"] :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border) > *,
-.design-aurora :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border) > * {
+html[data-infinity] :is(.card, [data-slot="card"], .rounded-xl.border, .rounded-lg.border):not([role="dialog"]):not([role="alertdialog"]):not([data-radix-popper-content-wrapper] *) > *,
+html[data-aurora="2"] :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border):not([role="dialog"]):not([role="alertdialog"]):not([data-radix-popper-content-wrapper] *) > *,
+.design-aurora :is(.card, [data-slot="card"], [class*="card"], .rounded-xl.border, .rounded-lg.border):not([role="dialog"]):not([role="alertdialog"]):not([data-radix-popper-content-wrapper] *) > * {
   position: relative;
   z-index: 1;
+}
+
+/* Radix Dialog / AlertDialog / Popover Content niemals mit Aurora/Infinity Card-Effekten dekorieren */
+html [role="dialog"]::before,
+html [role="dialog"]::after,
+html [role="alertdialog"]::before,
+html [role="alertdialog"]::after,
+html [data-radix-popper-content-wrapper] *::before,
+html [data-radix-popper-content-wrapper] *::after {
+  content: none !important;
+  background: none !important;
 }
 
 /* Template-Schutz für Radix-Portale: nur z-index/pointer-events erzwingen.
