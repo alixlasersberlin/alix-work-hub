@@ -126,6 +126,20 @@ serve(async (req) => {
         .replace(/[<>]/g, "")
         .slice(0, 255);
 
+    // Idempotenz: gleiche Mail (message-id) darf kein zweites Ticket erzeugen
+    const { data: dupe } = await supabase
+      .from("tickets")
+      .select("id, ticket_number")
+      .eq("external_ticket_id", externalId)
+      .maybeSingle();
+    if (dupe?.id) {
+      console.log("inbound-mail: duplicate message-id, skipping", externalId);
+      return new Response(
+        JSON.stringify({ success: true, duplicate: true, ticket_id: dupe.id, ticket_number: dupe.ticket_number }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const { data: ticket, error } = await supabase
       .from("tickets")
       .insert({
@@ -146,12 +160,27 @@ serve(async (req) => {
       .single();
 
     if (error) {
+      // Race-Fall: parallele Zustellung derselben message-id
+      if ((error as any).code === "23505") {
+        const { data: existing2 } = await supabase
+          .from("tickets")
+          .select("id, ticket_number")
+          .eq("external_ticket_id", externalId)
+          .maybeSingle();
+        if (existing2?.id) {
+          return new Response(
+            JSON.stringify({ success: true, duplicate: true, ticket_id: existing2.id, ticket_number: existing2.ticket_number }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+      }
       console.error("inbound-mail: ticket insert failed", error);
       return new Response(
         JSON.stringify({ success: false, error: error.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
 
     console.log("inbound-mail: ticket created", { ticket_id: ticket?.id, to: toEmail, from: fromEmail });
 
