@@ -206,6 +206,15 @@ export default function TicketsList() {
   const [tab, setTab] = useState<'open' | 'closed'>('open');
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach(r => {
+      const c = (r.category || r.auto_category || '').trim();
+      if (c) set.add(c);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
+  }, [rows]);
+  const hasUncategorized = useMemo(() => rows.some(r => !r.category && !r.auto_category), [rows]);
 
   const openCreateDialog = () => {
     setCreateOpen(true);
