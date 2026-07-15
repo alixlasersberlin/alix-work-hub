@@ -292,7 +292,8 @@ export default function AngebotsKalender() {
                 <CalendarPlus className="h-4 w-4" />
               </Button>
               <Button size="sm" variant="outline" className="text-emerald-500 border-emerald-500/30"
-                onClick={() => openOutcome(t.offer_number)} title="Gewonnen / Verloren">
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); openOutcome(t.offer_number); }}
+                title="Gewonnen / Verloren">
                 <Trophy className="h-4 w-4" />
               </Button>
             </div>
