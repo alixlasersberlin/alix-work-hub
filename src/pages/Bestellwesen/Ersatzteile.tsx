@@ -252,7 +252,7 @@ export default function BestellwesenErsatzteile() {
                             className="gold-gradient text-primary-foreground"
                             disabled={triggering === r.id}
                             onClick={() => triggerOrder(r)}
-                            title='Bestellung anlegen und in "Bestellung möglich" übernehmen (Reparaturbestellung ohne Freigabe)'
+                            title='Bestellung anlegen und in Ersatzteilmanagement → Bestellungen übernehmen (Reparaturbestellung ohne Freigabe)'
                           >
                             {triggering === r.id
                               ? <Loader2 className="w-4 h-4 animate-spin" />
