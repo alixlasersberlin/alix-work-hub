@@ -5385,7 +5385,7 @@ export type Database = {
       }
       esc_calendar_connections: {
         Row: {
-          access_token: string | null
+          access_token_secret_id: string | null
           account_email: string | null
           calendar_id: string | null
           created_at: string
@@ -5393,7 +5393,7 @@ export type Database = {
           id: string
           last_sync_at: string | null
           provider: string
-          refresh_token: string | null
+          refresh_token_secret_id: string | null
           scope: string | null
           status: string
           sync_token: string | null
@@ -5401,7 +5401,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          access_token?: string | null
+          access_token_secret_id?: string | null
           account_email?: string | null
           calendar_id?: string | null
           created_at?: string
@@ -5409,7 +5409,7 @@ export type Database = {
           id?: string
           last_sync_at?: string | null
           provider: string
-          refresh_token?: string | null
+          refresh_token_secret_id?: string | null
           scope?: string | null
           status?: string
           sync_token?: string | null
@@ -5417,7 +5417,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          access_token?: string | null
+          access_token_secret_id?: string | null
           account_email?: string | null
           calendar_id?: string | null
           created_at?: string
@@ -5425,7 +5425,7 @@ export type Database = {
           id?: string
           last_sync_at?: string | null
           provider?: string
-          refresh_token?: string | null
+          refresh_token_secret_id?: string | null
           scope?: string | null
           status?: string
           sync_token?: string | null
@@ -11677,7 +11677,7 @@ export type Database = {
       }
       mail_domains: {
         Row: {
-          api_key_encrypted: string | null
+          api_key_secret_id: string | null
           created_at: string | null
           domain: string
           id: string
@@ -11688,7 +11688,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          api_key_encrypted?: string | null
+          api_key_secret_id?: string | null
           created_at?: string | null
           domain: string
           id?: string
@@ -11699,7 +11699,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          api_key_encrypted?: string | null
+          api_key_secret_id?: string | null
           created_at?: string | null
           domain?: string
           id?: string
@@ -17911,7 +17911,7 @@ export type Database = {
       sms_settings: {
         Row: {
           account_sid: string | null
-          auth_token: string | null
+          auth_token_secret_id: string | null
           from_number: string | null
           id: boolean
           notes: string | null
@@ -17920,7 +17920,7 @@ export type Database = {
         }
         Insert: {
           account_sid?: string | null
-          auth_token?: string | null
+          auth_token_secret_id?: string | null
           from_number?: string | null
           id?: boolean
           notes?: string | null
@@ -17929,7 +17929,7 @@ export type Database = {
         }
         Update: {
           account_sid?: string | null
-          auth_token?: string | null
+          auth_token_secret_id?: string | null
           from_number?: string | null
           id?: boolean
           notes?: string | null
