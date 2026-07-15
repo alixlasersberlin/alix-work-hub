@@ -21651,6 +21651,14 @@ export type Database = {
       can_access_repair: { Args: never; Returns: boolean }
       can_access_tickets: { Args: never; Returns: boolean }
       can_access_warranty: { Args: never; Returns: boolean }
+      can_approve_role_request: {
+        Args: {
+          _approver_role_name: string
+          _request_id: string
+          _step_no: number
+        }
+        Returns: boolean
+      }
       can_approve_warranty: { Args: never; Returns: boolean }
       can_manage_backups: { Args: never; Returns: boolean }
       can_manage_copilot_config: { Args: never; Returns: boolean }
