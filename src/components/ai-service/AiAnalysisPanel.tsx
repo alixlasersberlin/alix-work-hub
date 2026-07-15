@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, FileDown, Wrench, Clock, UserCheck, Package, ThumbsUp, ThumbsDown, Save, RefreshCw } from 'lucide-react';
@@ -126,14 +126,15 @@ export function AiAnalysisPanel({ sourceKind, recordId, trigger }: Props) {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {trigger ?? (
-          <Button variant="outline" size="sm" className="gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400" /> AI Fehleranalyse starten
-          </Button>
-        )}
-      </SheetTrigger>
+    <>
+      {trigger ? (
+        <span onClick={() => setOpen(true)} style={{ display: 'contents' }}>{trigger}</span>
+      ) : (
+        <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => setOpen(true)}>
+          <Sparkles className="w-4 h-4 text-amber-400" /> AI Fehleranalyse starten
+        </Button>
+      )}
+      <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
@@ -264,6 +265,7 @@ export function AiAnalysisPanel({ sourceKind, recordId, trigger }: Props) {
         )}
       </SheetContent>
     </Sheet>
+    </>
   );
 }
 
