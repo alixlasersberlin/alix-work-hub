@@ -217,7 +217,10 @@ export default function OrdersFreiBestellung() {
         .from('orders')
         .select('id, order_number, source_system, order_status, order_date, expected_shipment_date, total_amount, currency, deposit_ok, deposit_ok_by, deposit_ok_at, deposit_amount, customers(company_name, contact_name)')
         .in('id', Array.from(pendingRestIds))
-        .eq('order_status', 'teilgeliefert');
+        .eq('order_status', 'teilgeliefert')
+        .eq('deposit_ok', true)
+        .not('deposit_ok_by', 'is', null)
+        .neq('deposit_ok_by', '');
       if (atOnly) rq = rq.eq('source_system', 'zoho_eu_2');
       restQuery = rq;
     }
