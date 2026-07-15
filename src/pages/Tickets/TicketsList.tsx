@@ -203,7 +203,16 @@ export default function TicketsList() {
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
   const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status)), [filtered]);
   const closedRows = useMemo(() => filtered.filter(r => isClosed(r.status)), [filtered]);
-  const [tab, setTab] = useState<'open' | 'closed'>('open');
+  const wartungRows = useMemo(
+    () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'wartung'),
+    [filtered],
+  );
+  const reklamationRows = useMemo(
+    () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'reklamation'),
+    [filtered],
+  );
+  const [tab, setTab] = useState<'open' | 'closed' | 'wartung' | 'reklamation'>('open');
+
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
   const categories = useMemo(() => {
