@@ -1159,11 +1159,13 @@ html[data-aurora="2"] body::before {
   100% { transform: translate3d(2%, -1%, 0) scale(1.02); opacity: 1; }
 }
 /* Stack app content above the ambient aurora background.
-   Use :where() so specificity stays at 0 and Radix portals / any
-   Tailwind `fixed` / `absolute` positioning wins — otherwise this
-   rule would flatten Dialog overlays (position:fixed → relative)
-   and buttons could no longer open modals. */
-:where(html[data-aurora="2"]) body > :where(:not([data-radix-portal]):not([data-sonner-toaster]):not([data-radix-popper-content-wrapper]):not(.fixed):not(.absolute)) {
+   Whitelist only the known top-level app chrome elements — never
+   apply to plain <div> children of <body>, because that is where
+   Radix / Sonner / Vaul portals mount their overlays and dialogs.
+   Applying `position: relative; z-index: 1` to a portal wrapper
+   creates a stacking context that clamps the inner z-index and
+   can hide dialog content behind other body children. */
+:where(html[data-aurora="2"]) body > :where(main, header, nav, aside, footer, #root, [data-app-shell]) {
   position: relative;
   z-index: 1;
 }
