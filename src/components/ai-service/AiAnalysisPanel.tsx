@@ -126,14 +126,15 @@ export function AiAnalysisPanel({ sourceKind, recordId, trigger }: Props) {
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {trigger ?? (
-          <Button variant="outline" size="sm" className="gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400" /> AI Fehleranalyse starten
-          </Button>
-        )}
-      </SheetTrigger>
+    <>
+      {trigger ? (
+        <span onClick={() => setOpen(true)} style={{ display: 'contents' }}>{trigger}</span>
+      ) : (
+        <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => setOpen(true)}>
+          <Sparkles className="w-4 h-4 text-amber-400" /> AI Fehleranalyse starten
+        </Button>
+      )}
+      <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
