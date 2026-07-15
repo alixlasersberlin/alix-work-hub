@@ -1,11 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
 import { workOrderPdfBase64 } from '@/lib/repair/work-order-pdf';
 
-const REPAIR_NOTIFY_BLOCKLIST = new Set(['support@alix-lasers.com']);
-const REPAIR_NOTIFY_RECIPIENTS = [
+const REPAIR_NOTIFY_BLOCKLIST = new Set([
+  'support@alix-lasers.com',
+  // Forwarden zurück in die Ticket-Inbox (service@alixwork.de) → würde 3× Ticket erzeugen
   'jh@alix-operation.de',
-  's.galushchak@alix-operation.de',
   'k.trinh@alix-operation.de',
+]);
+const REPAIR_NOTIFY_RECIPIENTS = [
+  's.galushchak@alix-operation.de',
 ].filter((e) => !REPAIR_NOTIFY_BLOCKLIST.has(e.toLowerCase()));
 
 export async function notifyNewRepairOrder(args: {
