@@ -91,6 +91,7 @@ export default function TicketsList() {
   const [prioF, setPrioF] = useState<string>('all');
   const [deptF, setDeptF] = useState<string>('all');
   const [sourceF, setSourceF] = useState<string>('all');
+  const [catF, setCatF] = useState<string>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [nt, setNt] = useState({
