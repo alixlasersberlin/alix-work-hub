@@ -359,7 +359,8 @@ export default function Detailsuche() {
           .limit(2000);
         for (const r of (lagNotes || []) as any[]) {
           const isLeih = /\[Typ:\s*Leihgerät\]|\[Leihgerät\]/.test(r.notes ?? '');
-          if (isLeih) continue;
+          const inProduktion = /\[Status:\s*Produktion\]/i.test(r.notes ?? '');
+          if (isLeih || inProduktion) continue;
           if (r.reserved_order_id) {
             notesOrderIds.add(r.reserved_order_id);
           } else if (!standaloneLager.some(s => s.id === r.id)) {
