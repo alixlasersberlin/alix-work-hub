@@ -265,6 +265,7 @@ export function AiAnalysisPanel({ sourceKind, recordId, trigger }: Props) {
         )}
       </SheetContent>
     </Sheet>
+    </>
   );
 }
 
