@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { VipBadge } from '@/components/VipBadge';
 import { ensureCaseNumber, nextNumber } from '@/lib/number-ranges';
 import { useAuth } from '@/hooks/useAuth';
@@ -50,6 +50,23 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
   const [saving, setSaving] = useState(false);
   const [tenants, setTenants] = useState<Array<{ id: string; name: string; flag_emoji: string | null; code: string }>>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    const previousPointerEvents = document.body.style.pointerEvents;
+    document.body.style.overflow = 'hidden';
+    document.body.style.removeProperty('pointer-events');
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.pointerEvents = previousPointerEvents;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open, onClose]);
 
   useEffect(() => {
     (async () => {
@@ -199,15 +216,39 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
   );
 
 
-  return (
-    <Dialog open={open} onOpenChange={v => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="font-display">{customer?.id ? 'Kunde bearbeiten' : 'Neuen Kunden anlegen'}</DialogTitle>
-          <DialogDescription className="sr-only">
+  if (!open) return null;
+
+  return createPortal(
+    <>
+      <div
+        className="fixed inset-0 z-[2147483645] bg-background/80"
+        aria-hidden="true"
+        onMouseDown={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="customer-dialog-title"
+        aria-describedby="customer-dialog-description"
+        className="fixed left-1/2 top-1/2 z-[2147483647] grid w-[calc(100dvw-2rem)] max-w-lg max-h-[85dvh] -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-lg border border-border bg-background p-6 text-foreground shadow-2xl"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          aria-label="Fenster schließen"
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          onClick={onClose}
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="flex flex-col space-y-1.5 text-center sm:text-left">
+          <h2 id="customer-dialog-title" className="font-display text-lg font-semibold leading-none tracking-tight">
+            {customer?.id ? 'Kunde bearbeiten' : 'Neuen Kunden anlegen'}
+          </h2>
+          <p id="customer-dialog-description" className="sr-only">
             Formular zum {customer?.id ? 'Bearbeiten' : 'Anlegen'} eines Kunden inklusive Kontakt-, Adress- und Bankdaten.
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
         <div className="space-y-4">
           <label className="flex items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-transparent p-3 cursor-pointer">
             <span className="flex items-center gap-2">
@@ -321,7 +362,8 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </>,
+    document.body,
   );
 }
