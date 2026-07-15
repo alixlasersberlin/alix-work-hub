@@ -116,7 +116,10 @@ const isRateLimited = (msg?: string) => !!msg && /429|rate_limit|High demand/i.t
 
 function getStatusFromNotes(notes: string | null | undefined): DeviceStatus {
   const matches = Array.from((notes ?? '').matchAll(/\[Status:\s*([^\]]+)\]/g));
-  const v = matches.length ? matches[matches.length - 1][1].trim() : undefined;
+  let v = matches.length ? matches[matches.length - 1][1].trim() : undefined;
+  // Normalisierung häufiger Alt-Schreibweisen
+  if (v && /^in\s+produktion$/i.test(v)) v = 'Produktion';
+  if (v && /^lagereingang$/i.test(v)) v = 'Bestand';
   return (DEVICE_STATUS_OPTIONS as readonly string[]).includes(v ?? '') ? (v as DeviceStatus) : 'Bestand';
 }
 
