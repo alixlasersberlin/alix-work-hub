@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Loader2, ShieldCheck, Search, Download, Calendar, CheckCircle2, Clock, AlertTriangle, Factory, X, Trash2,
 } from 'lucide-react';
@@ -44,6 +45,8 @@ export default function OrderApprovalQueue() {
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [releasingId, setReleasingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -74,10 +77,8 @@ export default function OrderApprovalQueue() {
     };
   }, []);
 
-  const approve = async (id: string) => {
-    if (!isSuperAdmin) return;
-    const row = rows.find((r) => r.id === id);
-    setApprovingId(id);
+  /** Core-Freigabe für eine einzelne Bestellung. Führt DB-Update + Auto-Reservierung aus. */
+  const approveCore = async (row: Row): Promise<{ ok: boolean; error?: string; reservedInfo?: { department: string; serial: string; model: string } | null }> => {
     const { error } = await supabase
       .from('production_orders')
       .update({
@@ -86,23 +87,15 @@ export default function OrderApprovalQueue() {
         approved_at: new Date().toISOString(),
         approval_note: null,
       } as any)
-      .eq('id', id);
-    if (error) {
-      setApprovingId(null);
-      return toast.error(error.message);
-    }
+      .eq('id', row.id);
+    if (error) return { ok: false, error: error.message };
 
     // Nach Freigabe: passendes Gerät automatisch reservieren — bevorzugt Lagergeräte (Bestand),
     // ansonsten Shell Warehouse. Bereits reservierte Geräte werden ignoriert.
-    // WICHTIG: Wenn für diesen Auftrag bereits ein passendes Gerät (Modell+Farbe) reserviert ist,
-    // KEINE zweite Reservierung anlegen — sonst doppelte Reservierung (vgl. Bug Bodylab SO-4166).
     let reservedInfo: { department: string; serial: string; model: string } | null = null;
     try {
       if (row?.order_id && row?.modellname) {
         const { findLagerMatch, deviceDepartment } = await import('@/lib/lager-match');
-
-        // 1) Bereits für diesen Auftrag reservierte Geräte laden und prüfen, ob schon
-        //    ein passendes Modell+Farbe-Gerät reserviert ist.
         const { data: alreadyReserved } = await supabase
           .from('lager_devices')
           .select('id, serial_number, model_name, notes, reserved_order_id')
@@ -111,7 +104,6 @@ export default function OrderApprovalQueue() {
           .map((d) => ({ ...d, reserved_order_id: null as string | null }));
         const alreadyHit = findLagerMatch(row.modellname, row.farbe, reservedPool);
         if (alreadyHit) {
-          // Schon reserviert — nichts zusätzlich claimen.
           reservedInfo = {
             department: alreadyHit.department,
             serial: alreadyHit.device.serial_number,
@@ -123,7 +115,6 @@ export default function OrderApprovalQueue() {
             .select('id, serial_number, model_name, notes, reserved_order_id')
             .is('reserved_order_id', null);
           const all = (freeDevs || []) as any[];
-          // Lagergeräte zuerst, dann Warehouse
           const bestand = all.filter((d) => deviceDepartment(d) === 'Lagergeräte');
           const warehouse = all.filter((d) => /warehouse/i.test((/\[Status:\s*([^\]]+)\]/.exec(d.notes ?? '')?.[1] ?? '')));
           const ordered = [...bestand, ...warehouse];
@@ -147,21 +138,51 @@ export default function OrderApprovalQueue() {
     } catch (e) {
       console.error('Auto-Reservierung fehlgeschlagen', e);
     }
+    return { ok: true, reservedInfo };
+  };
 
-
+  const approve = async (id: string) => {
+    if (!isSuperAdmin) return;
+    const row = rows.find((r) => r.id === id);
+    if (!row) return;
+    setApprovingId(id);
+    const res = await approveCore(row);
     setApprovingId(null);
-    if (reservedInfo) {
+    if (!res.ok) return toast.error(res.error || 'Fehler');
+    if (res.reservedInfo) {
       toast.success(
-        `Freigegeben — Gerät ${reservedInfo.model} (SN ${reservedInfo.serial}) aus ${reservedInfo.department} vergeben`,
+        `Freigegeben — Gerät ${res.reservedInfo.model} (SN ${res.reservedInfo.serial}) aus ${res.reservedInfo.department} vergeben`,
       );
-    } else if (row?.modellname) {
+    } else if (row.modellname) {
       toast.success('Bestellung freigegeben — kein passendes Gerät in Lager/Warehouse gefunden');
     } else {
       toast.success('Bestellung freigegeben');
     }
     setRows((prev) => prev.filter((r) => r.id !== id));
+    setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
     window.dispatchEvent(new Event('einkauf-counts-refresh'));
   };
+
+  const bulkApprove = async () => {
+    if (!isSuperAdmin) return;
+    const targets = filtered.filter((r) => selected.has(r.id));
+    if (targets.length === 0) return toast.info('Bitte zuerst Bestellungen auswählen.');
+    if (!confirm(`${targets.length} Bestellung(en) freigeben?`)) return;
+    setBulkBusy(true);
+    let ok = 0, fail = 0, reserved = 0;
+    for (const row of targets) {
+      const res = await approveCore(row);
+      if (res.ok) { ok++; if (res.reservedInfo) reserved++; } else fail++;
+    }
+    setBulkBusy(false);
+    setRows((prev) => prev.filter((r) => !targets.some((t) => t.id === r.id && ok > 0)));
+    setSelected(new Set());
+    window.dispatchEvent(new Event('einkauf-counts-refresh'));
+    if (fail === 0) toast.success(`${ok} Bestellung(en) freigegeben — ${reserved} Gerät(e) reserviert.`);
+    else toast.warning(`${ok} freigegeben, ${fail} fehlgeschlagen.`);
+    await load();
+  };
+
 
   const downloadPdf = async (path: string | null, orderNumber: string) => {
     if (!path) return toast.error('Kein PDF verfügbar');
@@ -232,6 +253,24 @@ export default function OrderApprovalQueue() {
     );
   }, [rows, search]);
 
+  const allSelected = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+  const someSelected = filtered.some((r) => selected.has(r.id));
+  const toggleAll = () => {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (allSelected) filtered.forEach((r) => n.delete(r.id));
+      else filtered.forEach((r) => n.add(r.id));
+      return n;
+    });
+  };
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <PageHeader
@@ -272,13 +311,44 @@ export default function OrderApprovalQueue() {
           Keine wartenden Bestellungen.
         </Card>
       ) : (
-        <Card className="divide-y divide-border overflow-hidden">
-          {filtered.map((r) => (
-            <div
-              key={r.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
-            >
-              <Clock className="w-4 h-4 text-yellow-500 shrink-0" />
+        <Card className="overflow-hidden">
+          {isSuperAdmin && (
+            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-muted/30">
+              <Checkbox
+                checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                onCheckedChange={toggleAll}
+                aria-label="Alle auswählen"
+              />
+              <span className="text-xs text-muted-foreground">
+                {selected.size > 0 ? `${selected.size} ausgewählt` : 'Alle auswählen'}
+              </span>
+              <div className="ml-auto">
+                <Button
+                  size="sm"
+                  onClick={bulkApprove}
+                  disabled={selected.size === 0 || bulkBusy}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {bulkBusy ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />}
+                  Auswahl freigeben
+                </Button>
+              </div>
+            </div>
+          )}
+          <div className="divide-y divide-border">
+            {filtered.map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
+              >
+                {isSuperAdmin && (
+                  <Checkbox
+                    checked={selected.has(r.id)}
+                    onCheckedChange={() => toggleOne(r.id)}
+                    aria-label={`${r.production_order_number || r.order_number} auswählen`}
+                  />
+                )}
+                <Clock className="w-4 h-4 text-yellow-500 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Link
@@ -372,7 +442,8 @@ export default function OrderApprovalQueue() {
                 )}
               </div>
             </div>
-          ))}
+            ))}
+          </div>
         </Card>
       )}
     </div>
