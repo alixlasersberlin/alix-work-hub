@@ -198,7 +198,7 @@ export default function TicketsList() {
         .filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [rows, search, statusF, prioF, deptF, sourceF, urlSla, urlEscalated, urlMine, urlDue, currentUserId]);
+  }, [rows, search, statusF, prioF, deptF, sourceF, catF, urlSla, urlEscalated, urlMine, urlDue, currentUserId]);
 
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
   const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status)), [filtered]);
