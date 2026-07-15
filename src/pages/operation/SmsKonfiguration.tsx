@@ -84,12 +84,12 @@ export default function SmsKonfiguration() {
   async function loadSettings() {
     setCfgLoading(true);
     const { data, error } = await supabase
-      .from('sms_settings').select('account_sid, auth_token, from_number').eq('id', true).maybeSingle();
+      .from('sms_settings').select('account_sid, from_number').eq('id', true).maybeSingle();
     if (error) toast.error(error.message);
     else setCfg({
-      account_sid: data?.account_sid ?? '',
-      auth_token: data?.auth_token ?? '',
-      from_number: data?.from_number ?? '',
+      account_sid: (data as any)?.account_sid ?? '',
+      auth_token: '',
+      from_number: (data as any)?.from_number ?? '',
     });
     setCfgLoading(false);
   }
@@ -117,18 +117,32 @@ export default function SmsKonfiguration() {
     setCfgSaving(true);
     const { error } = await supabase.from('sms_settings').update({
       account_sid: cfg.account_sid.trim() || null,
-      auth_token: cfg.auth_token.trim() || null,
       from_number: cfg.from_number.trim() || null,
-    }).eq('id', true);
-    setCfgSaving(false);
-    if (error) toast.error(error.message);
-    else {
-      toast.success('Twilio-Verbindung gespeichert');
-      setCredsOpen(false);
-      setShowToken(false);
-      void loadStatus();
+    } as any).eq('id', true);
+    if (error) {
+      setCfgSaving(false);
+      toast.error(error.message);
+      return;
     }
+    // If auth token was entered, store it encrypted via edge function (Vault)
+    if (cfg.auth_token.trim()) {
+      const { data, error: fnErr } = await supabase.functions.invoke('sms-save-auth-token', {
+        body: { auth_token: cfg.auth_token.trim() },
+      });
+      if (fnErr || (data as any)?.error) {
+        setCfgSaving(false);
+        toast.error((data as any)?.error || fnErr?.message || 'Auth-Token konnte nicht gespeichert werden');
+        return;
+      }
+    }
+    setCfgSaving(false);
+    toast.success('Twilio-Verbindung gespeichert');
+    setCredsOpen(false);
+    setShowToken(false);
+    setCfg((c) => ({ ...c, auth_token: '' }));
+    void loadStatus();
   }
+
 
   async function sendTest() {
     if (!testPhone.trim()) {
