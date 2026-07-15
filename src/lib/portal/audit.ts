@@ -9,7 +9,15 @@ export type PortalAuditAction =
   | 'invoice_downloaded'
   | 'profile_opened'
   | 'data_change_requested'
-  | 'session_expired';
+  | 'session_expired'
+  | 'device_viewed'
+  | 'device_document_downloaded'
+  | 'contract_viewed'
+  | 'ticket_viewed'
+  | 'ticket_created'
+  | 'ticket_replied'
+  | 'ticket_closed'
+  | 'ticket_rate_limited';
 
 export async function logPortalAudit(params: {
   action: PortalAuditAction;

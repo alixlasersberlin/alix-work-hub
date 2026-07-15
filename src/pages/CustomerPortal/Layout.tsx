@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, NavLink, Outlet } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { LayoutDashboard, Receipt, User2, LogOut, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Receipt, User2, LogOut, Loader2, Cpu, FileSignature, LifeBuoy } from 'lucide-react';
+import { PORTAL_PHASE } from '@/lib/portal/phase';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -46,11 +47,15 @@ export function useCustomerPortal() {
   return { ctx, loading };
 }
 
-const tabs = [
-  { to: '/kunde', label: 'Übersicht', icon: LayoutDashboard, end: true },
-  { to: '/kunde/rechnungen', label: 'Rechnungen', icon: Receipt },
-  { to: '/kunde/meine-daten', label: 'Meine Daten', icon: User2 },
+const baseTabs = [
+  { to: '/kunde', label: 'Übersicht', icon: LayoutDashboard, end: true, phase: 1 },
+  { to: '/kunde/rechnungen', label: 'Rechnungen', icon: Receipt, phase: 1 },
+  { to: '/kunde/geraete', label: 'Geräte', icon: Cpu, phase: 2 },
+  { to: '/kunde/vertraege', label: 'Verträge', icon: FileSignature, phase: 2 },
+  { to: '/kunde/tickets', label: 'Tickets', icon: LifeBuoy, phase: 2 },
+  { to: '/kunde/meine-daten', label: 'Meine Daten', icon: User2, phase: 1 },
 ];
+const tabs = baseTabs.filter((t) => t.phase <= PORTAL_PHASE);
 
 export default function CustomerPortalLayout() {
   const navigate = useNavigate();

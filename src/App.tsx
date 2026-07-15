@@ -412,6 +412,9 @@ const CustomerPortalTickets = lazy(() => import("./pages/CustomerPortal/Tickets"
 const CustomerPortalAppointments = lazy(() => import("./pages/CustomerPortal/Appointments"));
 const CustomerPortalHealth = lazy(() => import("./pages/CustomerPortal/Health"));
 const CustomerPortalMyData = lazy(() => import("./pages/CustomerPortal/MyData"));
+const CustomerPortalDevicesV2 = lazy(() => import("./pages/CustomerPortal/DevicesV2"));
+const CustomerPortalContractsV2 = lazy(() => import("./pages/CustomerPortal/ContractsV2"));
+const CustomerPortalTicketsV2 = lazy(() => import("./pages/CustomerPortal/TicketsV2"));
 const MailCenterPosteingang = lazy(() => import("./pages/MailCenter/Posteingang"));
 const MailCenterGesendet = lazy(() => import("./pages/MailCenter/Gesendet"));
 const MailCenterEntwuerfe = lazy(() => import("./pages/MailCenter/Entwuerfe"));
@@ -1330,7 +1333,11 @@ function AppRoutes() {
           <Route index element={<CustomerPortalDashboard />} />
           <Route path="rechnungen" element={<CustomerPortalInvoices />} />
           <Route path="meine-daten" element={<CustomerPortalMyData />} />
-          {/* Phase 1: alle weiteren Bereiche noch nicht freigegeben – Redirect auf Übersicht */}
+          {/* Phase 2 */}
+          <Route path="geraete" element={<CustomerPortalDevicesV2 />} />
+          <Route path="vertraege" element={<CustomerPortalContractsV2 />} />
+          <Route path="tickets" element={<CustomerPortalTicketsV2 />} />
+          {/* Phase >=3: alles Weitere noch nicht freigegeben – Redirect */}
           <Route path="nachrichten" element={<Navigate to="/kunde" replace />} />
           <Route path="dokumente" element={<Navigate to="/kunde" replace />} />
           <Route path="angebote" element={<Navigate to="/kunde" replace />} />
@@ -1338,11 +1345,9 @@ function AppRoutes() {
           <Route path="support" element={<Navigate to="/kunde" replace />} />
           <Route path="bewertungen" element={<Navigate to="/kunde" replace />} />
           <Route path="verlauf" element={<Navigate to="/kunde" replace />} />
-          <Route path="geraete" element={<Navigate to="/kunde" replace />} />
           <Route path="bestellungen" element={<Navigate to="/kunde" replace />} />
           <Route path="wartungen" element={<Navigate to="/kunde" replace />} />
           <Route path="garantien" element={<Navigate to="/kunde" replace />} />
-          <Route path="tickets" element={<Navigate to="/kunde" replace />} />
           <Route path="termine" element={<Navigate to="/kunde" replace />} />
           <Route path="gesundheit" element={<Navigate to="/kunde" replace />} />
           <Route path="katalog" element={<Navigate to="/kunde" replace />} />

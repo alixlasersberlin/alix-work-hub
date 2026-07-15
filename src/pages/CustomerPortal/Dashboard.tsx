@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Receipt, User2, Loader2 } from 'lucide-react';
+import { Receipt, User2, Loader2, Cpu, FileSignature, LifeBuoy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PORTAL_PHASE } from '@/lib/portal/phase';
 
 type Ctx = { customerId: string; companyName: string | null; email: string | null };
 
@@ -22,32 +23,27 @@ export default function CustomerPortalDashboard() {
   const [recent, setRecent] = useState<InvoiceRow[]>([]);
   const [customerNumber, setCustomerNumber] = useState<string | null>(null);
   const [contactName, setContactName] = useState<string | null>(null);
+  const [devCount, setDevCount] = useState(0);
+  const [contractCount, setContractCount] = useState(0);
+  const [openTickets, setOpenTickets] = useState(0);
 
   useEffect(() => {
     (async () => {
-      const [{ count }, { data: recentData }, { data: cust }] = await Promise.all([
-        supabase
-          .from('mail_attachments')
-          .select('id', { count: 'exact', head: true })
-          .eq('customer_id', ctx.customerId)
-          .eq('document_type', 'Rechnung'),
-        supabase
-          .from('mail_attachments')
-          .select('id, file_name, sent_at, created_at, status')
-          .eq('customer_id', ctx.customerId)
-          .eq('document_type', 'Rechnung')
-          .order('created_at', { ascending: false })
-          .limit(3),
-        supabase
-          .from('customers')
-          .select('external_customer_id, contact_name')
-          .eq('id', ctx.customerId)
-          .maybeSingle(),
+      const [{ count }, { data: recentData }, { data: cust }, mCnt, cCnt, tCnt] = await Promise.all([
+        supabase.from('mail_attachments').select('id', { count: 'exact', head: true }).eq('customer_id', ctx.customerId).eq('document_type', 'Rechnung'),
+        supabase.from('mail_attachments').select('id, file_name, sent_at, created_at, status').eq('customer_id', ctx.customerId).eq('document_type', 'Rechnung').order('created_at', { ascending: false }).limit(3),
+        supabase.from('customers').select('external_customer_id, contact_name').eq('id', ctx.customerId).maybeSingle(),
+        PORTAL_PHASE >= 2 ? supabase.from('device_maintenance').select('id', { count: 'exact', head: true }).eq('customer_id', ctx.customerId) : Promise.resolve({ count: 0 } as any),
+        PORTAL_PHASE >= 2 ? supabase.from('finance_contracts').select('id', { count: 'exact', head: true }).eq('status', 'active') : Promise.resolve({ count: 0 } as any),
+        PORTAL_PHASE >= 2 ? supabase.from('customer_portal_tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'in_progress']) : Promise.resolve({ count: 0 } as any),
       ]);
       setTotalInvoices(count ?? 0);
       setRecent((recentData ?? []) as InvoiceRow[]);
       setCustomerNumber(cust?.external_customer_id ?? null);
       setContactName(cust?.contact_name ?? null);
+      setDevCount((mCnt as any).count ?? 0);
+      setContractCount((cCnt as any).count ?? 0);
+      setOpenTickets((tCnt as any).count ?? 0);
       setLoading(false);
     })();
   }, [ctx.customerId]);
@@ -69,27 +65,22 @@ export default function CustomerPortalDashboard() {
         <InfoCard label="Kundennummer" value={customerNumber ?? '—'} mono />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base"><Receipt className="w-4 h-4" /> Rechnungen</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="text-3xl font-semibold">{totalInvoices}</div>
-            <p className="text-xs text-muted-foreground">gesamt hinterlegte Rechnungen</p>
-            <Button asChild size="sm" className="w-full"><Link to="/kunde/rechnungen">Alle Rechnungen öffnen</Link></Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base"><User2 className="w-4 h-4" /> Meine Daten</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">Firmen- und Kontaktdaten einsehen oder Änderung mitteilen.</p>
-            <Button asChild size="sm" variant="outline" className="w-full"><Link to="/kunde/meine-daten">Stammdaten ansehen</Link></Button>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={<Receipt className="w-4 h-4" />} label="Rechnungen" value={totalInvoices} to="/kunde/rechnungen" />
+        {PORTAL_PHASE >= 2 && <StatCard icon={<Cpu className="w-4 h-4" />} label="Geräte" value={devCount} to="/kunde/geraete" />}
+        {PORTAL_PHASE >= 2 && <StatCard icon={<FileSignature className="w-4 h-4" />} label="Verträge" value={contractCount} to="/kunde/vertraege" />}
+        {PORTAL_PHASE >= 2 && <StatCard icon={<LifeBuoy className="w-4 h-4" />} label="Offene Tickets" value={openTickets} to="/kunde/tickets" />}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base"><User2 className="w-4 h-4" /> Meine Daten</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">Firmen- und Kontaktdaten einsehen oder Änderung mitteilen.</p>
+          <Button asChild size="sm" variant="outline"><Link to="/kunde/meine-daten">Stammdaten ansehen</Link></Button>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -125,6 +116,18 @@ function InfoCard({ label, value, mono }: { label: string; value: string; mono?:
       <CardContent className="p-4">
         <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
         <p className={`mt-1 text-sm font-medium truncate ${mono ? 'font-mono' : ''}`}>{value}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StatCard({ icon, label, value, to }: { icon: React.ReactNode; label: string; value: number; to: string }) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-muted-foreground text-xs">{icon}{label}</div>
+        <div className="mt-1 text-3xl font-semibold">{value}</div>
+        <Button asChild size="sm" variant="ghost" className="mt-2 -ml-2 h-auto p-2 text-xs"><Link to={to}>Öffnen →</Link></Button>
       </CardContent>
     </Card>
   );

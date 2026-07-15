@@ -1,70 +1,69 @@
+# Phase 2 — Kundenportal-Ausbau: Geräte, Verträge, Tickets
 
-# Phase 1 — Sicheres Kundenportal (Rechnungen + Stammdaten)
+Aufbauend auf Phase 1 (Login + Rechnungen + Meine Daten). Prinzip bleibt: **AlixWork ist Master**, das Portal liest nur, keine Parallel-Datenbank, RLS über `current_portal_customer_id()`.
 
-Bestehendes `/kunde` wird umgebaut, keine Parallelstruktur. Rechnungen bleiben `mail_attachments` (document_type='Rechnung'). Kein `tenant_id` auf Portal-Zugängen — Mandant wird über `customers` abgeleitet. OTP über Supabase Standard.
+## Umfang
 
-## 1. Login-Umbau (`/kunde/login`)
+Drei neue Portal-Bereiche werden freigeschaltet:
 
-- Passwortfeld entfernen. Zwei Schritte: E-Mail eingeben → 6-stelliger Code eingeben.
-- `supabase.auth.signInWithOtp({ email, shouldCreateUser: false })` + `verifyOtp({ type: 'email' })`.
-- Neutrale Fehlermeldung ("Falls die E-Mail hinterlegt ist, wurde ein Code gesendet") — kein Enumeration-Leak.
-- Nach Verify: Prüfung ob `customer_portal_users`-Eintrag mit `status='active'` existiert; sonst sofort `signOut` + Hinweis "Bitte Alix Lasers kontaktieren".
-- Client-seitiges Rate-Limit-Feedback (5 Fehlversuche → 15 Min Sperre lokal + Audit-Eintrag). Harte Limits über Supabase Auth-Config (`rate_limit_email_sent`).
-- Auto-Logout nach 30 Min Inaktivität (Idle-Timer im Layout).
+1. **Geräte** (`/kunde/geraete`) — Übersicht aller Geräte des Kunden aus `lager_devices` (nur `customer_id = current_portal_customer_id()`).
+   Anzeige: Modell, Seriennummer, Kaufdatum, Garantie-Status, letzte Wartung. Read-only. Detailseite mit Wartungshistorie aus `device_maintenance`.
 
-## 2. Portal-Reduktion (`/kunde/*`)
+2. **Verträge** (`/kunde/vertraege`) — Laufende Serviceverträge & Wartungspläne aus `maintenance_plans` (+ ggf. `finance_contracts` für Ratenzahlungen wenn zum Kunden zugeordnet).
+   Anzeige: Vertragstyp, Laufzeit, nächster Termin, monatliche Kosten, Status. PDF-Download über Edge Function.
 
-Sichtbar in Phase 1: **Übersicht, Rechnungen, Meine Daten, Abmelden**.
-Alle anderen Tabs (Bestellungen, Katalog, Warenkorb, Geräte, Wartungen, Reparaturen, Garantien, Gesundheit, Tickets, Termine, Dokumente, Angebote, Nachrichten, Support, Bewertungen, Verlauf) und deren Routen werden hinter einem Feature-Flag `PORTAL_PHASE=1` ausgeblendet (Routen bleiben im Code, aber redirect auf `/kunde`).
+3. **Tickets** (`/kunde/tickets`) — Eigene Support-Tickets aus `customer_portal_tickets` (bereits vorhanden).
+   Neu: Kunde kann Tickets **anlegen** (Typ, Betreff, Beschreibung, optional Gerät verknüpfen) und **antworten** über `customer_portal_ticket_messages`. Admin-Antworten werden im Portal sichtbar.
 
-- **Dashboard**: Firmenname, Ansprechpartner, Kundennummer, Gesamt-/Offene Rechnungen, Summe offen, letzte 3 Rechnungen, Buttons "Alle Rechnungen", "Meine Daten", "Abmelden".
-- **Rechnungen**: bestehende Seite bleibt; Filter (alle/bezahlt/offen/überfällig/Jahr), Sortierung, Detailansicht mit Netto/USt/Brutto sofern in `mail_attachments`-Metadaten vorhanden (sonst nur Basis-Felder). Download über signierte URL (60s).
-- **Meine Daten**: read-only + Button "Datenänderung mitteilen" → schreibt Eintrag in `customer_portal_tickets` (Typ `data_change_request`), nicht in `customers`.
+## Sicherheit
 
-## 3. Datenbank-Änderungen (Migration)
+- Alle Reads über RLS auf `current_portal_customer_id()`.
+- Ticket-Anlage: Client-Insert mit RLS-Check `customer_id = current_portal_customer_id()`.
+- Gerätedokumente (Handbücher, Wartungsprotokolle) NUR über neue Edge Function `portal-device-document-download` (analog zu `portal-invoice-download`).
+- Rate-Limit für Ticket-Anlage: max 5/Stunde pro Kunde (Client + Audit-Log-Check).
+- Alle Aktionen → `customer_portal_audit_logs` (`device_viewed`, `contract_viewed`, `ticket_created`, `ticket_replied`, `document_downloaded`).
 
-- Neue Tabelle `customer_portal_audit_logs` (id, customer_id, auth_user_id, action, object_type, object_id, success, ip_address, user_agent, metadata jsonb, created_at) + GRANTs + RLS: nur Super Admin / Buchhaltung / Datenschutz lesen; alle Portal-User dürfen INSERT für die eigene `customer_id`.
-- `customer_portal_users`: RLS-Verschärfung, Status-Enum-Check (`invited|active|suspended|disabled`).
-- SECURITY DEFINER Funktion `public.current_portal_customer_id()` → liest `customer_portal_users.customer_id` für `auth.uid()` mit `status='active'`.
-- RLS auf `mail_attachments` prüfen/ergänzen: Portal-User darf nur Zeilen mit `customer_id = current_portal_customer_id()` UND `document_type='Rechnung'` sehen. Bestehende interne Policies bleiben.
-- Storage-Policy für `mail-attachments`-Bucket: nur signed URLs, Zugriff via Edge Function `portal-invoice-download` die vorher RLS-Check macht (Bucket bleibt privat).
+## Datenbank-Änderungen (Migration)
 
-## 4. Edge Function `portal-invoice-download`
+- RLS auf `lager_devices`: Portal-User darf nur eigene Geräte lesen (zusätzliche Policy, interne Policies unverändert).
+- RLS auf `device_maintenance`: analog, verknüpft über `device_id → lager_devices.customer_id`.
+- RLS auf `maintenance_plans`: analog über `customer_id`.
+- `customer_portal_ticket_messages`: RLS-Policies erweitern (INSERT für Kunde erlauben, wenn Ticket ihm gehört).
+- `customer_portal_tickets`: INSERT-Policy für Portal-User, UPDATE nur auf `status='closed'` durch Kunde erlaubt.
+- Keine neuen Tabellen.
 
-- Input: `attachment_id`.
-- Prüft: eingeloggter User → `customer_portal_users.status='active'` → `mail_attachments.customer_id` stimmt → `document_type='Rechnung'`.
-- Erst dann `createSignedUrl(60)` und zurückgeben. Audit-Insert.
+## Edge Functions
 
-## 5. AlixWork-Admin: „Kundenportal"-Bereich
+- `portal-device-document-download` — signierte URL für Gerätedokumente (60s), Ownership-Check.
+- `portal-ticket-notify` — sendet Admin-Benachrichtigung bei neuem Ticket/Antwort (Supabase Auth SMTP).
 
-Im bestehenden Kundendetail (`/kunden/:id`) neuer Tab **Kundenportal** mit:
-- Portalzugang aktivieren/deaktivieren, Login-E-Mail anzeigen/ändern, letzter Login, aktive Sitzungen anzeigen/beenden (via Admin API in Edge Function `portal-admin`), Einladung erneut senden (Supabase Invite), Audit-Log-Viewer.
-- Neue Berechtigungen als Rolle-Flags: `customer_portal.view|activate|disable|manage_sessions|view_audit_logs|change_login_email|resend_invitation` — zugewiesen an Super Admin, Geschäftsleitung, Buchhaltung, Datenschutz.
+## UI
 
-## 6. Design & Sicherheits-Feinschliff
+- Portal-Layout erweitern: neue Menüpunkte **Geräte, Verträge, Tickets** hinter Feature-Flag `PORTAL_PHASE >= 2`.
+- Dashboard bekommt drei zusätzliche Kacheln (Anzahl Geräte, aktive Verträge, offene Tickets).
+- Design: bestehendes dunkles Silber + Gold, mobile-first.
 
-- Login-Screen im bestehenden Alix-Design (dunkles Silber + Gold, mobile-first). Datenschutz/Impressum-Links.
-- Keine Marketing-Cookies im Portal-Bereich.
-- Manuelle Sicherheits-Testchecks in `docs/portal-phase1-tests.md`.
+## AlixWork Admin
 
-## 7. Dokumentation
+- Bestehender Tab „Kundenportal" bekommt Sektion **Ticket-Antwort** — Mitarbeiter kann direkt aus dem Kundendetail auf Portal-Tickets antworten.
+- Neue Rolle-Flags: `customer_portal.reply_tickets` (Super Admin, Support, Geschäftsleitung).
 
-`docs/customer-portal-phase1.md` mit Tabellen, RLS, Storage, Auth-Flow, Rollen, Edge Functions, ENV, Testfällen, Rollback.
+## Reihenfolge
 
-## Explizit NICHT in Phase 1
+1. Migration (RLS auf lager_devices / device_maintenance / maintenance_plans / customer_portal_ticket_messages).
+2. Feature-Flag hochziehen (`PORTAL_PHASE=2`), Layout + Dashboard-Kacheln.
+3. Geräte-Seite (Liste + Detail + Wartungshistorie).
+4. Verträge-Seite.
+5. Tickets-Seite (Liste, Anlage, Antworten) + Edge Function `portal-ticket-notify`.
+6. Edge Function `portal-device-document-download`.
+7. AlixWork Admin-Erweiterung (Ticket-Antwort).
+8. Dokumentation `docs/customer-portal-phase2.md` + Tests `docs/portal-phase2-tests.md`.
 
-- Keine neue `invoices`/`customers`-Tabelle (Prompt-Vorschlag verworfen — würde AlixWork-Struktur duplizieren).
-- Kein `tenant_id` in `customer_portal_users`.
-- Keine Änderungen an Bestellungen/Angeboten/Tickets/Geräten/Verträgen — Routen ausgeblendet.
-- Keine Datenmigration bestehender Portal-Nutzer (bleiben aktiv, wechseln beim nächsten Login auf OTP).
+## Explizit NICHT in Phase 2
 
-## Reihenfolge der Umsetzung
+- Keine Alix ID / SSO über Portale hinweg.
+- Kein Katalog/Warenkorb/Bestellungen.
+- Keine Rechnungszahlung im Portal.
+- Keine Änderungen an Geräte-/Vertragsdaten durch den Kunden — nur Read + Ticket.
 
-1. Migration (audit-Tabelle, RLS, `current_portal_customer_id()`).
-2. Edge Function `portal-invoice-download`.
-3. Login-Umbau + Layout-Reduktion.
-4. Dashboard/Rechnungen/Meine-Daten Feinschliff + Audit-Calls.
-5. AlixWork Admin-Tab „Kundenportal" + Edge Function `portal-admin`.
-6. Dokumentation + manuelle Sicherheitstests.
-
-Nach jedem Schritt kurzer Zwischencheck durch dich, bevor der nächste startet.
+Nach jedem Schritt Zwischencheck durch dich, bevor der nächste startet.
