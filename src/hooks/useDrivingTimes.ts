@@ -16,7 +16,8 @@ interface CacheEntry {
 }
 
 const CACHE_PREFIX = 'dt_v1_';
-const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 Woche
+// Fahrtzeit wird nur einmal pro Auftrag berechnet. Neuberechnung erfolgt
+// ausschließlich, wenn sich die Adresse ändert (kein Zeit-Ablauf).
 
 function resolveAddress(order: any): string | null {
   const hasAddr = (a: any) => a && (a.city || a.address || a.street || a.zip || a.postal_code);
