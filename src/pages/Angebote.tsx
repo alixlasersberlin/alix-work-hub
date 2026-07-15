@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { EmptyState } from '@/components/infinity/EmptyState';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -54,6 +55,8 @@ export default function Angebote() {
   const [approvalNote, setApprovalNote] = useState('');
   const [approvalBusy, setApprovalBusy] = useState(false);
   const [pendingPanelOpen, setPendingPanelOpen] = useState(false);
+  const [selectedApprovals, setSelectedApprovals] = useState<Set<string>>(new Set());
+  const [bulkApprovingBusy, setBulkApprovingBusy] = useState(false);
 
   const pendingOffers = offers.filter(o => (o.approvalStatus || 'pending') === 'pending');
   const pendingCount = pendingOffers.length;
@@ -104,6 +107,41 @@ export default function Angebote() {
     } finally {
       setApprovalBusy(false);
     }
+  };
+
+  const toggleSelectApproval = (offerNumber: string) => {
+    setSelectedApprovals(prev => {
+      const next = new Set(prev);
+      if (next.has(offerNumber)) next.delete(offerNumber); else next.add(offerNumber);
+      return next;
+    });
+  };
+  const toggleSelectAllApprovals = () => {
+    setSelectedApprovals(prev =>
+      prev.size === pendingOffers.length
+        ? new Set()
+        : new Set(pendingOffers.map(o => o.offerNumber))
+    );
+  };
+  const bulkApprove = async (mode: 'selected' | 'all') => {
+    const targets = mode === 'all'
+      ? pendingOffers.map(o => o.offerNumber)
+      : pendingOffers.filter(o => selectedApprovals.has(o.offerNumber)).map(o => o.offerNumber);
+    if (!targets.length) {
+      toast.info('Keine Angebote ausgewählt.');
+      return;
+    }
+    if (!window.confirm(`${targets.length} Angebot(e) freigeben?`)) return;
+    setBulkApprovingBusy(true);
+    let ok = 0, fail = 0;
+    for (const n of targets) {
+      try { await setOfferApproval(n, 'approved', null); ok++; }
+      catch { fail++; }
+    }
+    setBulkApprovingBusy(false);
+    setSelectedApprovals(new Set());
+    toast.success(`${ok} freigegeben${fail ? `, ${fail} fehlgeschlagen` : ''}.`);
+    await reload();
   };
 
   const openSignLink = async (offerNumber: string) => {
@@ -338,16 +376,45 @@ export default function Angebote() {
 
       {isSuperAdmin && pendingPanelOpen && pendingCount > 0 && (
         <Card className="border-amber-500/40 bg-amber-500/5">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
             <CardTitle className="text-base flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-amber-400" /> Offene Freigaben ({pendingCount})
+              {selectedApprovals.size > 0 && (
+                <span className="text-xs font-normal text-amber-300">· {selectedApprovals.size} ausgewählt</span>
+              )}
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setPendingPanelOpen(false)}>Schließen</Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
+                disabled={bulkApprovingBusy || selectedApprovals.size === 0}
+                onClick={() => bulkApprove('selected')}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" /> Ausgewählte freigeben
+              </Button>
+              <Button
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                disabled={bulkApprovingBusy || pendingCount === 0}
+                onClick={() => bulkApprove('all')}
+              >
+                <ShieldCheck className="h-4 w-4 mr-2" /> Alle freigeben ({pendingCount})
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setPendingPanelOpen(false)}>Schließen</Button>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={pendingOffers.length > 0 && selectedApprovals.size === pendingOffers.length}
+                      onCheckedChange={toggleSelectAllApprovals}
+                      aria-label="Alle auswählen"
+                    />
+                  </TableHead>
                   <TableHead>Angebotsnr.</TableHead>
                   <TableHead>Kunde</TableHead>
                   <TableHead className="text-right">Summe</TableHead>
@@ -357,6 +424,13 @@ export default function Angebote() {
               <TableBody>
                 {pendingOffers.map(o => (
                   <TableRow key={o.offerNumber}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedApprovals.has(o.offerNumber)}
+                        onCheckedChange={() => toggleSelectApproval(o.offerNumber)}
+                        aria-label={`Auswählen ${o.offerNumber}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{o.offerNumber}</TableCell>
                     <TableCell>{o.customer?.company_name || o.customer?.contact_name || '—'}</TableCell>
                     <TableCell className="text-right">{fmtMoney(o.totals?.gross || 0)}</TableCell>
