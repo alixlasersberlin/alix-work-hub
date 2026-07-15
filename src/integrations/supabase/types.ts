@@ -21707,6 +21707,10 @@ export type Database = {
           id: string
         }[]
       }
+      create_sms_auth_token_secret: {
+        Args: { p_token: string }
+        Returns: string
+      }
       current_portal_customer_id: { Args: never; Returns: string }
       current_supplier_id: { Args: never; Returns: string }
       decide_recert_item: {
