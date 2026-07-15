@@ -33,10 +33,22 @@ function normalizePriority(value: unknown): "low" | "normal" | "high" | "urgent"
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const body = await req.json();
     const {
       ticket_id, start_at, end_at, event_kind = "kundentermin",
-      title, requires_confirmation = true,
-    } = await req.json();
+      title, description, requires_confirmation = true,
+      department_id: departmentIdOverride,
+      assigned_user_id: assignedOverride,
+      resource_id: resourceOverride,
+      customer_name: customerNameOverride,
+      customer_email: customerEmailOverride,
+      customer_phone: customerPhoneOverride,
+      address: addressOverride,
+      location: locationOverride,
+      internal_note: internalNoteOverride,
+      external_note: externalNoteOverride,
+      priority: priorityOverride,
+    } = body ?? {};
 
     if (!ticket_id || !start_at) return j({ error: "ticket_id & start_at required" }, 400);
 
@@ -47,14 +59,14 @@ serve(async (req) => {
 
     const { data: ticket, error: tErr } = await supabase
       .from("tickets")
-      .select("id, ticket_number, title, department, customer_name, customer_email, customer_phone, assigned_to, priority")
+      .select("id, ticket_number, title, department, customer_name, customer_email, customer_phone, customer_address, assigned_to, priority")
       .eq("id", ticket_id)
       .single();
     if (tErr || !ticket) return j({ error: "ticket not found" }, 404);
 
-    // esc_department per Name-Match auflösen (Fallback: erste vorhandene).
-    let escDeptId: string | null = null;
-    if (ticket.department) {
+    // esc_department: Override > Name-Match > Fallback
+    let escDeptId: string | null = departmentIdOverride ?? null;
+    if (!escDeptId && ticket.department) {
       const { data: d } = await supabase
         .from("esc_departments").select("id").ilike("name", ticket.department).maybeSingle();
       escDeptId = (d as any)?.id ?? null;
@@ -67,7 +79,7 @@ serve(async (req) => {
 
     const start = new Date(start_at);
     const end = end_at ? new Date(end_at) : new Date(start.getTime() + 30 * 60 * 1000);
-    const priority = normalizePriority(ticket.priority);
+    const priority = normalizePriority(priorityOverride ?? ticket.priority);
 
     const token = crypto.randomUUID().replace(/-/g, "");
     const tokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -76,16 +88,21 @@ serve(async (req) => {
       ticket_id,
       event_kind,
       title: title ?? `${ticket.ticket_number ?? "Ticket"} · ${ticket.title ?? ticket.customer_name ?? ""}`,
-      description: `Erstellt aus Ticket ${ticket.ticket_number ?? ticket_id}`,
+      description: description ?? `Erstellt aus Ticket ${ticket.ticket_number ?? ticket_id}`,
       start_at: start.toISOString(),
       end_at: end.toISOString(),
       department_id: escDeptId,
       status: "planned",
       priority,
-      customer_name: ticket.customer_name,
-      customer_email: ticket.customer_email,
-      customer_phone: ticket.customer_phone,
-      assigned_user_id: ticket.assigned_to,
+      customer_name: customerNameOverride ?? ticket.customer_name,
+      customer_email: customerEmailOverride ?? ticket.customer_email,
+      customer_phone: customerPhoneOverride ?? ticket.customer_phone,
+      address: addressOverride ?? (ticket as any).customer_address ?? null,
+      location: locationOverride ?? null,
+      internal_note: internalNoteOverride ?? null,
+      external_note: externalNoteOverride ?? null,
+      resource_id: resourceOverride ?? null,
+      assigned_user_id: assignedOverride ?? ticket.assigned_to,
       requires_confirmation,
       confirmation_status: requires_confirmation ? "pending" : "not_required",
       confirmation_token: token,
@@ -94,6 +111,7 @@ serve(async (req) => {
       source: "ticket",
     }).select("id").single();
     if (evErr) throw evErr;
+
 
     // Ticket-Felder synchronisieren
     const ticketPatch: Record<string, unknown> = {};
