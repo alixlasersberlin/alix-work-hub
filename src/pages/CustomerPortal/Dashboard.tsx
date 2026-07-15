@@ -120,3 +120,15 @@ function InfoCard({ label, value, mono }: { label: string; value: string; mono?:
     </Card>
   );
 }
+
+function StatCard({ icon, label, value, to }: { icon: React.ReactNode; label: string; value: number; to: string }) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-muted-foreground text-xs">{icon}{label}</div>
+        <div className="mt-1 text-3xl font-semibold">{value}</div>
+        <Button asChild size="sm" variant="ghost" className="mt-2 -ml-2 h-auto p-2 text-xs"><Link to={to}>Öffnen →</Link></Button>
+      </CardContent>
+    </Card>
+  );
+}
