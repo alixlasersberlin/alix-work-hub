@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -204,6 +204,9 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">{customer?.id ? 'Kunde bearbeiten' : 'Neuen Kunden anlegen'}</DialogTitle>
+          <DialogDescription className="sr-only">
+            Formular zum {customer?.id ? 'Bearbeiten' : 'Anlegen'} eines Kunden inklusive Kontakt-, Adress- und Bankdaten.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <label className="flex items-center justify-between gap-3 rounded-md border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-transparent p-3 cursor-pointer">
