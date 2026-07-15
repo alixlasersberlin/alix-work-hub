@@ -72,7 +72,6 @@ export function useDrivingTimes() {
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
 
   const fetchDrivingTimes = useCallback(async (orders: any[]) => {
-    const now = Date.now();
     const cachedHits: DrivingTimeMap = {};
     const toFetch: { id: string; address: string }[] = [];
     const attemptedIds = new Set<string>();
@@ -85,7 +84,8 @@ export function useDrivingTimes() {
       const key = addressKey(address);
       const cached = readCache(o.id);
 
-      // Cache gilt nur wenn Adresse unverändert UND nicht älter als 1 Woche
+      // Fahrtzeit nur einmal berechnen: Cache gilt permanent, solange Adresse gleich bleibt.
+      // Fehlgeschlagene Einträge (result === null) werden erneut versucht.
       if (cached && cached.addressKey === key && cached.result !== null) {
         cachedHits[o.id] = cached.result;
       } else {
