@@ -77,6 +77,9 @@ verify_jwt = false
 [functions.portal-invoice-download]
 verify_jwt = true
 
+[functions.portal-admin]
+verify_jwt = true
+
 [functions.resend-webhook]
 verify_jwt = false
 
