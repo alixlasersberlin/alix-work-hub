@@ -376,16 +376,45 @@ export default function Angebote() {
 
       {isSuperAdmin && pendingPanelOpen && pendingCount > 0 && (
         <Card className="border-amber-500/40 bg-amber-500/5">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
             <CardTitle className="text-base flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-amber-400" /> Offene Freigaben ({pendingCount})
+              {selectedApprovals.size > 0 && (
+                <span className="text-xs font-normal text-amber-300">· {selectedApprovals.size} ausgewählt</span>
+              )}
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setPendingPanelOpen(false)}>Schließen</Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10"
+                disabled={bulkApprovingBusy || selectedApprovals.size === 0}
+                onClick={() => bulkApprove('selected')}
+              >
+                <CheckCircle2 className="h-4 w-4 mr-2" /> Ausgewählte freigeben
+              </Button>
+              <Button
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                disabled={bulkApprovingBusy || pendingCount === 0}
+                onClick={() => bulkApprove('all')}
+              >
+                <ShieldCheck className="h-4 w-4 mr-2" /> Alle freigeben ({pendingCount})
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setPendingPanelOpen(false)}>Schließen</Button>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={pendingOffers.length > 0 && selectedApprovals.size === pendingOffers.length}
+                      onCheckedChange={toggleSelectAllApprovals}
+                      aria-label="Alle auswählen"
+                    />
+                  </TableHead>
                   <TableHead>Angebotsnr.</TableHead>
                   <TableHead>Kunde</TableHead>
                   <TableHead className="text-right">Summe</TableHead>
@@ -395,6 +424,13 @@ export default function Angebote() {
               <TableBody>
                 {pendingOffers.map(o => (
                   <TableRow key={o.offerNumber}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedApprovals.has(o.offerNumber)}
+                        onCheckedChange={() => toggleSelectApproval(o.offerNumber)}
+                        aria-label={`Auswählen ${o.offerNumber}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs">{o.offerNumber}</TableCell>
                     <TableCell>{o.customer?.company_name || o.customer?.contact_name || '—'}</TableCell>
                     <TableCell className="text-right">{fmtMoney(o.totals?.gross || 0)}</TableCell>
