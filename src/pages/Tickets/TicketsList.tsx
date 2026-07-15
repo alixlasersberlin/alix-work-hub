@@ -179,6 +179,10 @@ export default function TicketsList() {
       if (prioF !== 'all' && r.priority !== prioF) return false;
       if (deptF !== 'all' && r.department !== deptF) return false;
       if (sourceF !== 'all' && r.source_system !== sourceF) return false;
+      if (catF !== 'all') {
+        const c = r.category || r.auto_category || '__none__';
+        if (catF === '__none__' ? (r.category || r.auto_category) : c !== catF) return false;
+      }
       if (urlSla === 'warning' && !(r.sla_status && r.sla_status.startsWith('warn'))) return false;
       if (urlSla === 'breach' && r.sla_status !== 'breach') return false;
       if (urlEscalated && (r.escalation_count || 0) <= 0) return false;
