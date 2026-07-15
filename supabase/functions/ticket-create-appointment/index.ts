@@ -33,6 +33,7 @@ function normalizePriority(value: unknown): "low" | "normal" | "high" | "urgent"
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const callerAuth = req.headers.get("Authorization") ?? "";
     const body = await req.json();
     const {
       ticket_id, start_at, end_at, event_kind = "kundentermin",
@@ -169,7 +170,14 @@ serve(async (req) => {
         const fromEmail = event_kind === "kundentermin" || event_kind === "beratung"
           ? "service@alixwork.de" : "service@alixwork.de";
         const resp = await supabase.functions.invoke("send-mail", {
-          body: { to: ticket.customer_email, subject, html, from: fromEmail },
+          body: {
+            to_email: ticket.customer_email,
+            from_email: fromEmail,
+            subject,
+            body_html: html,
+            ticket_id,
+          },
+          headers: callerAuth ? { Authorization: callerAuth } : undefined,
         });
         if (resp.error) throw resp.error;
         emailStatus = "sent";
