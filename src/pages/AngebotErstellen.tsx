@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus, CheckCircle2, CalendarIcon, Zap } from 'lucide-react';
+import { FilePlus, Plus, Trash2, Search, Loader2, FileDown, Inbox, ChevronDown, Pencil, Save, X, UserPlus, CheckCircle2, CalendarIcon, Zap, ArrowLeft } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
