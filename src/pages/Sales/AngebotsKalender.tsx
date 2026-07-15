@@ -341,7 +341,12 @@ export default function AngebotsKalender() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Tabs defaultValue="heute">
+          <Tabs defaultValue={
+            groups.ueberfaellig.length > 0 ? 'ueberfaellig'
+            : groups.heute.length > 0 ? 'heute'
+            : groups.woche.length > 0 ? 'woche'
+            : 'monat'
+          }>
             <TabsList className="m-3">
               <TabsTrigger value="heute">Heute ({groups.heute.length})</TabsTrigger>
               <TabsTrigger value="ueberfaellig">Überfällig ({groups.ueberfaellig.length})</TabsTrigger>
