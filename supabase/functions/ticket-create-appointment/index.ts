@@ -12,6 +12,24 @@ const corsHeaders = {
 
 const PUBLIC_BASE = "https://alixwork.de";
 
+function normalizePriority(value: unknown): "low" | "normal" | "high" | "urgent" {
+  const raw = String(value ?? "normal").trim().toLowerCase();
+  const map: Record<string, "low" | "normal" | "high" | "urgent"> = {
+    low: "low",
+    niedrig: "low",
+    normal: "normal",
+    mittel: "normal",
+    medium: "normal",
+    high: "high",
+    hoch: "high",
+    urgent: "urgent",
+    kritisch: "urgent",
+    critical: "urgent",
+    dringend: "urgent",
+  };
+  return map[raw] ?? "normal";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -49,6 +67,7 @@ serve(async (req) => {
 
     const start = new Date(start_at);
     const end = end_at ? new Date(end_at) : new Date(start.getTime() + 30 * 60 * 1000);
+    const priority = normalizePriority(ticket.priority);
 
     const token = crypto.randomUUID().replace(/-/g, "");
     const tokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -62,7 +81,7 @@ serve(async (req) => {
       end_at: end.toISOString(),
       department_id: escDeptId,
       status: "planned",
-      priority: (ticket.priority ?? "normal").toLowerCase(),
+      priority,
       customer_name: ticket.customer_name,
       customer_email: ticket.customer_email,
       customer_phone: ticket.customer_phone,
