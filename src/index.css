@@ -2156,17 +2156,17 @@ html [data-radix-popper-content-wrapper] *::after {
    sonst landen Select/Popover-Dropdowns außerhalb des Viewports und
    Dialog-Animationen (zoom-in/slide) werden überschrieben. */
 html :is([data-radix-portal], [data-radix-popper-content-wrapper]) {
-  z-index: 9999 !important;
+  z-index: 2147483646 !important;
   pointer-events: auto !important;
 }
 
 html :is([role="dialog"], [role="alertdialog"])[data-state] {
-  z-index: 10000 !important;
+  z-index: 2147483647 !important;
   pointer-events: auto !important;
 }
 
 html [data-radix-popper-content-wrapper] > * {
-  z-index: 10000 !important;
+  z-index: 2147483647 !important;
   pointer-events: auto !important;
 }
 
@@ -2185,8 +2185,6 @@ html :is([role="dialog"], [role="alertdialog"])[data-state="open"] {
   visibility: visible !important;
   animation: none !important;
   filter: none !important;
-  transform: none !important;
-  margin: auto !important;
 }
 
 /* Radix Portal-Wrapper (body > div, das den Center-Container enthält) darf
@@ -2203,7 +2201,7 @@ html [data-state="open"][class*="overlay"]:not([role="dialog"]):not([role="alert
   opacity: 1 !important;
   visibility: visible !important;
   animation: none !important;
-  z-index: 9998 !important;
+  z-index: 2147483645 !important;
   pointer-events: auto !important;
 }
 
@@ -2218,7 +2216,7 @@ html [data-state="open"][class*="translate-y"] {
 html body > div:has(> [role="dialog"][data-state="open"]),
 html body > div:has(> [role="alertdialog"][data-state="open"]) {
   position: relative;
-  z-index: 10000 !important;
+  z-index: 2147483646 !important;
 }
 
 
