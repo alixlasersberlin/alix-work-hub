@@ -16,7 +16,8 @@ interface CacheEntry {
 }
 
 const CACHE_PREFIX = 'dt_v1_';
-const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 Woche
+// Fahrtzeit wird nur einmal pro Auftrag berechnet. Neuberechnung erfolgt
+// ausschließlich, wenn sich die Adresse ändert (kein Zeit-Ablauf).
 
 function resolveAddress(order: any): string | null {
   const hasAddr = (a: any) => a && (a.city || a.address || a.street || a.zip || a.postal_code);
@@ -71,7 +72,6 @@ export function useDrivingTimes() {
   const [requestedIds, setRequestedIds] = useState<Set<string>>(new Set());
 
   const fetchDrivingTimes = useCallback(async (orders: any[]) => {
-    const now = Date.now();
     const cachedHits: DrivingTimeMap = {};
     const toFetch: { id: string; address: string }[] = [];
     const attemptedIds = new Set<string>();
@@ -84,8 +84,9 @@ export function useDrivingTimes() {
       const key = addressKey(address);
       const cached = readCache(o.id);
 
-      // Cache gilt nur wenn Adresse unverändert UND nicht älter als 1 Woche
-      if (cached && cached.addressKey === key && now - cached.timestamp < CACHE_TTL_MS) {
+      // Fahrtzeit nur einmal berechnen: Cache gilt permanent, solange Adresse gleich bleibt.
+      // Fehlgeschlagene Einträge (result === null) werden erneut versucht.
+      if (cached && cached.addressKey === key && cached.result !== null) {
         cachedHits[o.id] = cached.result;
       } else {
         // Adresse hat sich geändert oder Cache veraltet → neu abrufen
