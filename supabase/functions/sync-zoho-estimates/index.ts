@@ -280,6 +280,14 @@ Deno.serve(async (req) => {
       errors: errors.slice(0, 10),
     });
   } catch (e: any) {
-    return json({ success: false, error: e?.message ?? String(e) }, 500);
+    const msg = e?.message ?? String(e);
+    const isTransient =
+      /exceeded retries|too many requests|rate limit|timeout|fetch failed|network|zoho token/i.test(msg);
+    // Return 200 with fallback flag on transient Zoho issues so the UI doesn't crash / blank-screen.
+    return json(
+      { success: false, error: msg, fallback: isTransient },
+      isTransient ? 200 : 500,
+    );
   }
 });
+
