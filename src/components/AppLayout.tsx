@@ -1030,15 +1030,26 @@ export default function AppLayout() {
     let debounceId: number | undefined;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
-      debounceId = window.setTimeout(load, 400);
+      // Längeres Debounce (2s), damit Bursts (Import/Batch-Updates) nicht 8 parallele
+      // Count-Queries pro Zeile auslösen. Reicht für gefühlte "Echtzeit"-Aktualisierung.
+      debounceId = window.setTimeout(load, 2000);
     };
-    // Realtime-Subscriptions auf `production_orders`, `orders` und `lager_devices`
-    // wurden entfernt — sie haben bei jeder Zeilenänderung 8 parallele Count-
-    // Queries ausgelöst und die App spürbar gebremst. Statt dessen wird über
-    // das custom Event `einkauf-counts-refresh` (Routenwechsel + nach manuellen
-    // Mutationen) sowie dem 5-Minuten-Intervall aktualisiert.
     const onRefresh = () => scheduleReload();
     window.addEventListener('einkauf-counts-refresh', onRefresh);
+    // Realtime: Menü-Zähler live aktualisieren bei Änderungen an production_orders,
+    // orders (source_system für AT-Filter) und lager_devices.
+    const chProd = supabase
+      .channel('menu_counts_production_orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'production_orders' }, scheduleReload)
+      .subscribe();
+    const chOrders = supabase
+      .channel('menu_counts_orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, scheduleReload)
+      .subscribe();
+    const chLager = supabase
+      .channel('menu_counts_lager_devices')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lager_devices' }, scheduleReload)
+      .subscribe();
     return () => {
       cancelled = true;
       if (isOrdersRoute) window.clearTimeout(initialId);
@@ -1046,7 +1057,11 @@ export default function AppLayout() {
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
       window.removeEventListener('einkauf-counts-refresh', onRefresh);
+      supabase.removeChannel(chProd);
+      supabase.removeChannel(chOrders);
+      supabase.removeChannel(chLager);
     };
+
   }, [atOnly, isOrdersRoute]);
 
   useEffect(() => {
