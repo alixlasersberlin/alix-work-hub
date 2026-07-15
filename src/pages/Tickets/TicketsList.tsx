@@ -91,6 +91,7 @@ export default function TicketsList() {
   const [prioF, setPrioF] = useState<string>('all');
   const [deptF, setDeptF] = useState<string>('all');
   const [sourceF, setSourceF] = useState<string>('all');
+  const [catF, setCatF] = useState<string>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [nt, setNt] = useState({
@@ -178,6 +179,10 @@ export default function TicketsList() {
       if (prioF !== 'all' && r.priority !== prioF) return false;
       if (deptF !== 'all' && r.department !== deptF) return false;
       if (sourceF !== 'all' && r.source_system !== sourceF) return false;
+      if (catF !== 'all') {
+        const c = r.category || r.auto_category || '__none__';
+        if (catF === '__none__' ? (r.category || r.auto_category) : c !== catF) return false;
+      }
       if (urlSla === 'warning' && !(r.sla_status && r.sla_status.startsWith('warn'))) return false;
       if (urlSla === 'breach' && r.sla_status !== 'breach') return false;
       if (urlEscalated && (r.escalation_count || 0) <= 0) return false;
@@ -193,7 +198,7 @@ export default function TicketsList() {
         .filter(Boolean).join(' ').toLowerCase();
       return hay.includes(q);
     });
-  }, [rows, search, statusF, prioF, deptF, sourceF, urlSla, urlEscalated, urlMine, urlDue, currentUserId]);
+  }, [rows, search, statusF, prioF, deptF, sourceF, catF, urlSla, urlEscalated, urlMine, urlDue, currentUserId]);
 
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
   const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status)), [filtered]);
@@ -201,6 +206,15 @@ export default function TicketsList() {
   const [tab, setTab] = useState<'open' | 'closed'>('open');
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach(r => {
+      const c = (r.category || r.auto_category || '').trim();
+      if (c) set.add(c);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'de'));
+  }, [rows]);
+  const hasUncategorized = useMemo(() => rows.some(r => !r.category && !r.auto_category), [rows]);
 
   const openCreateDialog = () => {
     setCreateOpen(true);
@@ -312,6 +326,14 @@ export default function TicketsList() {
           <SelectContent>
             <SelectItem value="all">Alle Quellen</SelectItem>
             {sources.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={catF} onValueChange={setCatF}>
+          <SelectTrigger><SelectValue placeholder="Kategorie" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Kategorien</SelectItem>
+            {hasUncategorized && <SelectItem value="__none__">Ohne Kategorie</SelectItem>}
+            {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
