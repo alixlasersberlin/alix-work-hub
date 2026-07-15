@@ -124,6 +124,19 @@ Deno.serve(async (req) => {
     let hasMore = true;
     let fetched = 0, imported = 0, updated = 0, failed = 0;
     const errors: { id: string; message: string }[] = [];
+    const runId = crypto.randomUUID();
+    const logs: any[] = [];
+    const pushLog = (status: 'success' | 'updated' | 'failed' | 'skipped', est: any, error_message: string | null, extra?: any) => {
+      logs.push({
+        run_id: runId,
+        source_system: sourceSystem,
+        estimate_id: est?.estimate_id ?? null,
+        estimate_number: est?.estimate_number ? `${est.estimate_number}${suffix}` : null,
+        status,
+        error_message,
+        payload: extra ?? null,
+      });
+    };
 
     for (let i = 0; i < maxPages && hasMore; i++, page++) {
       const params = new URLSearchParams({
@@ -228,20 +241,38 @@ Deno.serve(async (req) => {
             const { error } = await admin.from("offers").update(row).eq("offer_number", offerNumber);
             if (error) throw error;
             updated++;
+            pushLog('updated', est, null);
           } else {
             const { error } = await admin.from("offers").insert(row);
             if (error) throw error;
             imported++;
+            pushLog('success', est, null);
           }
         } catch (e: any) {
           failed++;
-          errors.push({ id: est.estimate_id, message: e?.message ?? String(e) });
+          const msg = e?.message ?? String(e);
+          errors.push({ id: est.estimate_id, message: msg });
+          pushLog('failed', est, msg, { zoho_status: est?.status ?? null, customer_id: est?.customer_id ?? null });
         }
+      }
+    }
+
+    // Persist per-item logs (best-effort, non-fatal)
+    if (logs.length > 0) {
+      try {
+        // Chunk to stay under payload limits
+        const chunkSize = 500;
+        for (let i = 0; i < logs.length; i += chunkSize) {
+          await admin.from('zoho_estimate_import_logs').insert(logs.slice(i, i + chunkSize));
+        }
+      } catch (e) {
+        console.error('zoho_estimate_import_logs insert failed', e);
       }
     }
 
     return json({
       success: true,
+      run_id: runId,
       source_system: sourceSystem,
       fetched, imported, updated, failed,
       last_page: page - 1,

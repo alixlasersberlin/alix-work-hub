@@ -20387,6 +20387,42 @@ export type Database = {
         }
         Relationships: []
       }
+      zoho_estimate_import_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          estimate_id: string | null
+          estimate_number: string | null
+          id: string
+          payload: Json | null
+          run_id: string
+          source_system: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          estimate_id?: string | null
+          estimate_number?: string | null
+          id?: string
+          payload?: Json | null
+          run_id: string
+          source_system: string
+          status: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          estimate_id?: string | null
+          estimate_number?: string | null
+          id?: string
+          payload?: Json | null
+          run_id?: string
+          source_system?: string
+          status?: string
+        }
+        Relationships: []
+      }
       zoho_invoices: {
         Row: {
           balance: number | null
