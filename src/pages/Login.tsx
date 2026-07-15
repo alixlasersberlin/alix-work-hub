@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +10,6 @@ import { supabase } from '@/integrations/supabase/client';
 
 export default function Login() {
   const { signIn } = useAuth();
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -66,15 +64,14 @@ export default function Login() {
       setLoading(false);
       return;
     }
-    // Auf der Kalender-Subdomain hart neu laden, damit Auth-/MFA-State
-    // aus der frischen Session sauber initialisiert wird (verhindert
-    // Redirect-Race zwischen /alix-control und /esc/kalender).
-    if (typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de') {
-      window.location.assign('/esc/kalender');
-      return;
-    }
-    navigate('/dashboard', { replace: true });
-    setLoading(false);
+    // Nach erfolgreichem Login bewusst hart neu laden: dadurch werden
+    // Auth-Session, MFA-State und eventuell hängende Browser-/Overlay-States
+    // sauber neu initialisiert. Genau ein kompletter Reload behebt den
+    // gemeldeten Maus-/Pointer-Freeze zuverlässig.
+    const postLoginTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
+      ? '/esc/kalender'
+      : '/dashboard';
+    window.location.replace(postLoginTarget);
   };
 
   return (
