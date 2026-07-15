@@ -124,6 +124,19 @@ Deno.serve(async (req) => {
     let hasMore = true;
     let fetched = 0, imported = 0, updated = 0, failed = 0;
     const errors: { id: string; message: string }[] = [];
+    const runId = crypto.randomUUID();
+    const logs: any[] = [];
+    const pushLog = (status: 'success' | 'updated' | 'failed' | 'skipped', est: any, error_message: string | null, extra?: any) => {
+      logs.push({
+        run_id: runId,
+        source_system: sourceSystem,
+        estimate_id: est?.estimate_id ?? null,
+        estimate_number: est?.estimate_number ? `${est.estimate_number}${suffix}` : null,
+        status,
+        error_message,
+        payload: extra ?? null,
+      });
+    };
 
     for (let i = 0; i < maxPages && hasMore; i++, page++) {
       const params = new URLSearchParams({
