@@ -77,10 +77,8 @@ export default function OrderApprovalQueue() {
     };
   }, []);
 
-  const approve = async (id: string) => {
-    if (!isSuperAdmin) return;
-    const row = rows.find((r) => r.id === id);
-    setApprovingId(id);
+  /** Core-Freigabe für eine einzelne Bestellung. Führt DB-Update + Auto-Reservierung aus. */
+  const approveCore = async (row: Row): Promise<{ ok: boolean; error?: string; reservedInfo?: { department: string; serial: string; model: string } | null }> => {
     const { error } = await supabase
       .from('production_orders')
       .update({
@@ -89,23 +87,15 @@ export default function OrderApprovalQueue() {
         approved_at: new Date().toISOString(),
         approval_note: null,
       } as any)
-      .eq('id', id);
-    if (error) {
-      setApprovingId(null);
-      return toast.error(error.message);
-    }
+      .eq('id', row.id);
+    if (error) return { ok: false, error: error.message };
 
     // Nach Freigabe: passendes Gerät automatisch reservieren — bevorzugt Lagergeräte (Bestand),
     // ansonsten Shell Warehouse. Bereits reservierte Geräte werden ignoriert.
-    // WICHTIG: Wenn für diesen Auftrag bereits ein passendes Gerät (Modell+Farbe) reserviert ist,
-    // KEINE zweite Reservierung anlegen — sonst doppelte Reservierung (vgl. Bug Bodylab SO-4166).
     let reservedInfo: { department: string; serial: string; model: string } | null = null;
     try {
       if (row?.order_id && row?.modellname) {
         const { findLagerMatch, deviceDepartment } = await import('@/lib/lager-match');
-
-        // 1) Bereits für diesen Auftrag reservierte Geräte laden und prüfen, ob schon
-        //    ein passendes Modell+Farbe-Gerät reserviert ist.
         const { data: alreadyReserved } = await supabase
           .from('lager_devices')
           .select('id, serial_number, model_name, notes, reserved_order_id')
@@ -114,7 +104,6 @@ export default function OrderApprovalQueue() {
           .map((d) => ({ ...d, reserved_order_id: null as string | null }));
         const alreadyHit = findLagerMatch(row.modellname, row.farbe, reservedPool);
         if (alreadyHit) {
-          // Schon reserviert — nichts zusätzlich claimen.
           reservedInfo = {
             department: alreadyHit.department,
             serial: alreadyHit.device.serial_number,
@@ -126,7 +115,6 @@ export default function OrderApprovalQueue() {
             .select('id, serial_number, model_name, notes, reserved_order_id')
             .is('reserved_order_id', null);
           const all = (freeDevs || []) as any[];
-          // Lagergeräte zuerst, dann Warehouse
           const bestand = all.filter((d) => deviceDepartment(d) === 'Lagergeräte');
           const warehouse = all.filter((d) => /warehouse/i.test((/\[Status:\s*([^\]]+)\]/.exec(d.notes ?? '')?.[1] ?? '')));
           const ordered = [...bestand, ...warehouse];
@@ -150,21 +138,51 @@ export default function OrderApprovalQueue() {
     } catch (e) {
       console.error('Auto-Reservierung fehlgeschlagen', e);
     }
+    return { ok: true, reservedInfo };
+  };
 
-
+  const approve = async (id: string) => {
+    if (!isSuperAdmin) return;
+    const row = rows.find((r) => r.id === id);
+    if (!row) return;
+    setApprovingId(id);
+    const res = await approveCore(row);
     setApprovingId(null);
-    if (reservedInfo) {
+    if (!res.ok) return toast.error(res.error || 'Fehler');
+    if (res.reservedInfo) {
       toast.success(
-        `Freigegeben — Gerät ${reservedInfo.model} (SN ${reservedInfo.serial}) aus ${reservedInfo.department} vergeben`,
+        `Freigegeben — Gerät ${res.reservedInfo.model} (SN ${res.reservedInfo.serial}) aus ${res.reservedInfo.department} vergeben`,
       );
-    } else if (row?.modellname) {
+    } else if (row.modellname) {
       toast.success('Bestellung freigegeben — kein passendes Gerät in Lager/Warehouse gefunden');
     } else {
       toast.success('Bestellung freigegeben');
     }
     setRows((prev) => prev.filter((r) => r.id !== id));
+    setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
     window.dispatchEvent(new Event('einkauf-counts-refresh'));
   };
+
+  const bulkApprove = async () => {
+    if (!isSuperAdmin) return;
+    const targets = filtered.filter((r) => selected.has(r.id));
+    if (targets.length === 0) return toast.info('Bitte zuerst Bestellungen auswählen.');
+    if (!confirm(`${targets.length} Bestellung(en) freigeben?`)) return;
+    setBulkBusy(true);
+    let ok = 0, fail = 0, reserved = 0;
+    for (const row of targets) {
+      const res = await approveCore(row);
+      if (res.ok) { ok++; if (res.reservedInfo) reserved++; } else fail++;
+    }
+    setBulkBusy(false);
+    setRows((prev) => prev.filter((r) => !targets.some((t) => t.id === r.id && ok > 0)));
+    setSelected(new Set());
+    window.dispatchEvent(new Event('einkauf-counts-refresh'));
+    if (fail === 0) toast.success(`${ok} Bestellung(en) freigegeben — ${reserved} Gerät(e) reserviert.`);
+    else toast.warning(`${ok} freigegeben, ${fail} fehlgeschlagen.`);
+    await load();
+  };
+
 
   const downloadPdf = async (path: string | null, orderNumber: string) => {
     if (!path) return toast.error('Kein PDF verfügbar');
