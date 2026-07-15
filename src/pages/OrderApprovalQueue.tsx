@@ -442,7 +442,8 @@ export default function OrderApprovalQueue() {
                 )}
               </div>
             </div>
-          ))}
+            ))}
+          </div>
         </Card>
       )}
     </div>
