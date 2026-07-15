@@ -1158,7 +1158,15 @@ html[data-aurora="2"] body::before {
   50%  { transform: translate3d(-2%, 1%, 0) scale(1.04); opacity: 0.85; }
   100% { transform: translate3d(2%, -1%, 0) scale(1.02); opacity: 1; }
 }
-html[data-aurora="2"] body > * { position: relative; z-index: 1; }
+/* Stack app content above the ambient aurora background.
+   Use :where() so specificity stays at 0 and Radix portals / any
+   Tailwind `fixed` / `absolute` positioning wins — otherwise this
+   rule would flatten Dialog overlays (position:fixed → relative)
+   and buttons could no longer open modals. */
+:where(html[data-aurora="2"]) body > :where(:not([data-radix-portal]):not([data-sonner-toaster]):not([data-radix-popper-content-wrapper]):not(.fixed):not(.absolute)) {
+  position: relative;
+  z-index: 1;
+}
 
 /* Subtle noise texture — adds film-grain depth */
 html[data-aurora="2"] body::after {
