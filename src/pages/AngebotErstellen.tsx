@@ -1337,6 +1337,15 @@ export default function AngebotErstellen() {
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-6 max-w-6xl">
       <div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/verkauf/angebote')}
+          className="mb-3 -ml-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1.5" />
+          Zurück
+        </Button>
         <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
           {sofortMode ? <Zap className="w-6 h-6 text-primary" /> : <FilePlus className="w-6 h-6 text-primary" />}
           {sofortMode ? 'Sofortauftrag erstellen' : 'Angebot erstellen'}
