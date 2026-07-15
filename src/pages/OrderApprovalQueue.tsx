@@ -311,13 +311,44 @@ export default function OrderApprovalQueue() {
           Keine wartenden Bestellungen.
         </Card>
       ) : (
-        <Card className="divide-y divide-border overflow-hidden">
-          {filtered.map((r) => (
-            <div
-              key={r.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
-            >
-              <Clock className="w-4 h-4 text-yellow-500 shrink-0" />
+        <Card className="overflow-hidden">
+          {isSuperAdmin && (
+            <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-muted/30">
+              <Checkbox
+                checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                onCheckedChange={toggleAll}
+                aria-label="Alle auswählen"
+              />
+              <span className="text-xs text-muted-foreground">
+                {selected.size > 0 ? `${selected.size} ausgewählt` : 'Alle auswählen'}
+              </span>
+              <div className="ml-auto">
+                <Button
+                  size="sm"
+                  onClick={bulkApprove}
+                  disabled={selected.size === 0 || bulkBusy}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {bulkBusy ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />}
+                  Auswahl freigeben
+                </Button>
+              </div>
+            </div>
+          )}
+          <div className="divide-y divide-border">
+            {filtered.map((r) => (
+              <div
+                key={r.id}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors"
+              >
+                {isSuperAdmin && (
+                  <Checkbox
+                    checked={selected.has(r.id)}
+                    onCheckedChange={() => toggleOne(r.id)}
+                    aria-label={`${r.production_order_number || r.order_number} auswählen`}
+                  />
+                )}
+                <Clock className="w-4 h-4 text-yellow-500 shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <Link
