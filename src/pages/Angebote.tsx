@@ -109,6 +109,41 @@ export default function Angebote() {
     }
   };
 
+  const toggleSelectApproval = (offerNumber: string) => {
+    setSelectedApprovals(prev => {
+      const next = new Set(prev);
+      if (next.has(offerNumber)) next.delete(offerNumber); else next.add(offerNumber);
+      return next;
+    });
+  };
+  const toggleSelectAllApprovals = () => {
+    setSelectedApprovals(prev =>
+      prev.size === pendingOffers.length
+        ? new Set()
+        : new Set(pendingOffers.map(o => o.offerNumber))
+    );
+  };
+  const bulkApprove = async (mode: 'selected' | 'all') => {
+    const targets = mode === 'all'
+      ? pendingOffers.map(o => o.offerNumber)
+      : pendingOffers.filter(o => selectedApprovals.has(o.offerNumber)).map(o => o.offerNumber);
+    if (!targets.length) {
+      toast.info('Keine Angebote ausgewählt.');
+      return;
+    }
+    if (!window.confirm(`${targets.length} Angebot(e) freigeben?`)) return;
+    setBulkApprovingBusy(true);
+    let ok = 0, fail = 0;
+    for (const n of targets) {
+      try { await setOfferApproval(n, 'approved', null); ok++; }
+      catch { fail++; }
+    }
+    setBulkApprovingBusy(false);
+    setSelectedApprovals(new Set());
+    toast.success(`${ok} freigegeben${fail ? `, ${fail} fehlgeschlagen` : ''}.`);
+    await reload();
+  };
+
   const openSignLink = async (offerNumber: string) => {
     // Pre-open a tab synchronously so popup blockers allow it later.
     const popup = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
