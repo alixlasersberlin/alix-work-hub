@@ -253,6 +253,24 @@ export default function OrderApprovalQueue() {
     );
   }, [rows, search]);
 
+  const allSelected = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+  const someSelected = filtered.some((r) => selected.has(r.id));
+  const toggleAll = () => {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (allSelected) filtered.forEach((r) => n.delete(r.id));
+      else filtered.forEach((r) => n.add(r.id));
+      return n;
+    });
+  };
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <PageHeader
