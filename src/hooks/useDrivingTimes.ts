@@ -86,7 +86,7 @@ export function useDrivingTimes() {
       const cached = readCache(o.id);
 
       // Cache gilt nur wenn Adresse unverändert UND nicht älter als 1 Woche
-      if (cached && cached.addressKey === key && now - cached.timestamp < CACHE_TTL_MS) {
+      if (cached && cached.addressKey === key && cached.result !== null) {
         cachedHits[o.id] = cached.result;
       } else {
         // Adresse hat sich geändert oder Cache veraltet → neu abrufen
