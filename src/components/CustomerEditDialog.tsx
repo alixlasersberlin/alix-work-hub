@@ -23,27 +23,31 @@ interface Props {
 export default function CustomerEditDialog({ customer, open, onClose, onSaved }: Props) {
   const { hasRole, isAdmin } = useAuth();
   const canEditBank = isAdmin || hasRole('Finance') || hasRole('Finanzierungen');
+  const c = customer || {};
+  const ba = (c as any).billing_address || {};
+  const sa = (c as any).shipping_address || {};
   const [form, setForm] = useState({
-    company_name: customer?.company_name || '',
-    contact_name: customer?.contact_name || '',
-    email: customer?.email || '',
-    phone: customer?.phone || '',
-    birth_date: customer?.birth_date || '',
-    billing_street: customer?.billing_address?.address || customer?.billing_address?.street || '',
-    billing_zip: customer?.billing_address?.zip || '',
-    billing_city: customer?.billing_address?.city || '',
-    billing_country: customer?.billing_address?.country || '',
-    shipping_street: customer?.shipping_address?.address || customer?.shipping_address?.street || '',
-    shipping_zip: customer?.shipping_address?.zip || '',
-    shipping_city: customer?.shipping_address?.city || '',
-    shipping_country: customer?.shipping_address?.country || '',
-    iban: customer?.iban || '',
-    bic: customer?.bic || '',
-    bank_name: customer?.bank_name || '',
-    is_vip: !!customer?.is_vip,
-    contact_tenant_id: customer?.contact_tenant_id || '',
-    supplier_tenant_id: customer?.supplier_tenant_id || '',
+    company_name: c.company_name ?? '',
+    contact_name: c.contact_name ?? '',
+    email: c.email ?? '',
+    phone: c.phone ?? '',
+    birth_date: c.birth_date ?? '',
+    billing_street: ba.address ?? ba.street ?? '',
+    billing_zip: ba.zip ?? '',
+    billing_city: ba.city ?? '',
+    billing_country: ba.country ?? '',
+    shipping_street: sa.address ?? sa.street ?? '',
+    shipping_zip: sa.zip ?? '',
+    shipping_city: sa.city ?? '',
+    shipping_country: sa.country ?? '',
+    iban: c.iban ?? '',
+    bic: c.bic ?? '',
+    bank_name: c.bank_name ?? '',
+    is_vip: !!c.is_vip,
+    contact_tenant_id: c.contact_tenant_id ?? '',
+    supplier_tenant_id: c.supplier_tenant_id ?? '',
   });
+
   const [saving, setSaving] = useState(false);
   const [tenants, setTenants] = useState<Array<{ id: string; name: string; flag_emoji: string | null; code: string }>>([]);
 
