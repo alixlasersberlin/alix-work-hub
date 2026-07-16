@@ -798,14 +798,17 @@ export default function Invoices() {
         .split(/[,;\s]+/)
         .map((s) => s.trim())
         .filter((s) => s.includes('@'));
-      const { data, error } = await supabase.functions.invoke('send-invoice-mail', {
+      const { data, error } = await supabase.functions.invoke('send-mail', {
         body: {
           to_email: emailForm.to_email,
           to_name: emailForm.to_name || null,
+          from_email: 'finance@alixwork.de',
+          from_name: 'Alix Lasers | Finance',
           subject: emailForm.subject,
           body_text: emailForm.body_text,
           bcc: bccList.length ? bccList : null,
-          invoice_number: emailRow.invoice_number ?? null,
+          invoice_id: emailRow.id,
+          customer_id: emailRow.customer_id ?? null,
           attachments: [{
             filename: `${emailRow.invoice_number ?? 'rechnung'}.pdf`,
             content: b64,
