@@ -56,7 +56,6 @@ export default function ProductionOrderIn() {
       .from('production_orders')
       .select('id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, pdf_path, supplier_id, approval_status, approved_at, created_at, is_reclamation, customer_name_snapshot, supplier:suppliers(name)')
       .eq('approval_status', 'approved')
-      .not('status', 'in', '("fertig","versendet")')
       .order('approved_at', { ascending: false });
     if (error) toast.error(error.message);
     else setRows(data || []);
