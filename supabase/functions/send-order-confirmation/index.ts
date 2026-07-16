@@ -64,6 +64,8 @@ Deno.serve(async (req) => {
   let signedAt: string | undefined
   let totalAmountStr: string | undefined
   let createdBy: string | undefined
+  let salespersonName: string | undefined
+
   const fmt = (n: number, c = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: c }).format(n)
 
   if (signatureId) {
@@ -89,15 +91,19 @@ Deno.serve(async (req) => {
     createdBy = r.created_by || undefined
 
     if (orderId) {
-      const { data: ord } = await admin.from('orders').select('order_number, internal_number').eq('id', orderId).maybeSingle()
+      const { data: ord } = await admin.from('orders').select('order_number, internal_number, salesperson_name').eq('id', orderId).maybeSingle()
       orderNumber = ord?.internal_number || ord?.order_number || undefined
+      salespersonName = (ord as any)?.salesperson_name || undefined
     }
+
   } else {
     // Fallback: PDF from order data
     const { data: ord } = await admin.from('orders')
-      .select('id, customer_id, order_number, internal_number, total_amount, currency, billing_address')
+      .select('id, customer_id, order_number, internal_number, total_amount, currency, billing_address, salesperson_name')
       .eq('id', orderId!).maybeSingle()
     if (!ord) return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    salespersonName = (ord as any).salesperson_name || undefined
+
     const { data: cust } = ord.customer_id
       ? await admin.from('customers').select('company_name, contact_name, email').eq('id', ord.customer_id).maybeSingle()
       : { data: null as any }
@@ -138,6 +144,19 @@ Deno.serve(async (req) => {
     if (ce && ce.toLowerCase() !== primary.toLowerCase() && ce.toLowerCase() !== 'rde@alix-lasers.com') {
       recipients.push({ email: ce, subjectPrefix: '[Kopie] ', key: 'creator' })
     }
+  }
+  // Vertriebspartner (salesperson) als BCC hinzufügen
+  if (salespersonName) {
+    const { data: sp } = await admin
+      .from('user_profiles')
+      .select('email')
+      .ilike('full_name', salespersonName)
+      .maybeSingle()
+    const spEmail = sp?.email
+    if (spEmail && !recipients.some(r => r.email.toLowerCase() === spEmail.toLowerCase())) {
+      recipients.push({ email: spEmail, subjectPrefix: '[Kopie – Vertriebspartner] ', key: 'salesperson' })
+    }
+
   }
 
   const results: any[] = []
