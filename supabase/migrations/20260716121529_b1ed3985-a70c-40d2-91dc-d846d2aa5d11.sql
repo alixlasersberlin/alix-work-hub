@@ -1,0 +1,1 @@
+UPDATE public.orders SET order_date = now() WHERE order_number = 'AB-2026-04225';
