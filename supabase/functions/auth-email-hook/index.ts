@@ -17,12 +17,12 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  signup: 'AlixWork · E-Mail bestätigen',
+  invite: 'AlixWork · Sie wurden eingeladen',
+  magiclink: 'AlixWork · Ihr Anmeldecode',
+  recovery: 'AlixWork · Passwort zurücksetzen',
+  email_change: 'AlixWork · Neue E-Mail bestätigen',
+  reauthentication: 'AlixWork · Bestätigungscode',
 }
 
 // Template mapping
@@ -36,9 +36,9 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "alix-pro-hub"
+const SITE_NAME = "AlixWork"
 const SENDER_DOMAIN = "notify.alixlasers.ai"
-const ROOT_DOMAIN = "alixlasers.ai"
+const ROOT_DOMAIN = "alixwork.de"
 const FROM_DOMAIN = "notify.alixlasers.ai" // Domain shown in From address (may be root or sender subdomain)
 
 // Sample data for preview mode ONLY (not used in actual email sending).
