@@ -230,3 +230,6 @@ verify_jwt = false
 
 [functions.push-send-native]
 verify_jwt = false
+
+[functions.alix-id-token]
+verify_jwt = false
