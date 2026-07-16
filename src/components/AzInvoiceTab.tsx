@@ -762,7 +762,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             PDF Entwurf erstellen
           </Button>
           <Button
-            onClick={() => setConfirm('saveSend')}
+            onClick={() => { console.log('[AzInvoice] click saveSend button', { generating, booking, sending, postingToBuchhaltung, hasDeposit, existingInvoice, checkingExisting, customerEmail: customer?.email }); setConfirm('saveSend'); }}
             disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !!existingInvoice || checkingExisting || !customer?.email}
             className="gold-gradient text-primary-foreground"
             title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Anzahlung festschreiben, in "Offene Anzahlungen" buchen und per E-Mail an Kunde (BCC k.trinh, natalia.p) senden'}
@@ -774,7 +774,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           </Button>
           <Button
             variant="outline"
-            onClick={() => setConfirm('sendOnly')}
+            onClick={() => { console.log('[AzInvoice] click sendOnly button', { generating, booking, sending, postingToBuchhaltung, hasDeposit, existingInvoice, checkingExisting, customerEmail: customer?.email }); setConfirm('sendOnly'); }}
             disabled={generating || booking || sending || postingToBuchhaltung || (!hasDeposit && !existingInvoice) || !customer?.email || checkingExisting}
             title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : (existingInvoice ? 'Bereits gestellte Rechnung erneut per E-Mail versenden (kein neuer Buchungssatz).' : (!hasDeposit ? 'Keine Anzahlung vereinbart.' : undefined))}
           >
