@@ -90,13 +90,8 @@ export default function PdfOrderImportReview() {
   const [customerHits, setCustomerHits] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [createNewCustomer, setCreateNewCustomer] = useState(false);
-  const [followups, setFollowups] = useState({
-    delivery_planning: true,
-    mediapaket: true,
-    nisv: true,
-    financing: true,
-    deposit_check: true,
-  });
+  const [config, setConfig] = useState<PdfOrderImportConfig>(DEFAULT_PDF_IMPORT_CONFIG);
+  const [followups, setFollowups] = useState({ ...DEFAULT_PDF_IMPORT_CONFIG.auto_followups_default });
 
   async function load() {
     if (!id) return;
