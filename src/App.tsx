@@ -1389,6 +1389,7 @@ function AppRoutes() {
         {/* Alix ID — zentrale Identität und SSO (Phase 3) */}
         <Route path="/id/login" element={<AlixIdLogin />} />
         <Route path="/sso/callback" element={<AlixIdSsoCallback />} />
+        <Route path="/id/callback" element={<AlixIdCallback />} />
         <Route path="/id" element={<AlixIdLayout />}>
           <Route index element={<Navigate to="/id/apps" replace />} />
           <Route path="apps" element={<AlixIdApps />} />
