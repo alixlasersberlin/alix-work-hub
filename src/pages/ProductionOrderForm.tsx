@@ -508,26 +508,15 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       if (error) { savingRef.current = false; toast.error(error.message); setSaving(false); return null; }
       await supabase.from('production_order_items').delete().eq('production_order_id', id);
     } else {
-      // Sperre: Pro Auftrag entweder Lager-Reservierung ODER Bestellung.
-      if (selectedOrder?.id) {
-        const { data: reservedDevs } = await supabase
-          .from('lager_devices')
-          .select('serial_number, model_name, notes')
-          .eq('reserved_order_id', selectedOrder.id);
-        // Leihgeräte schließen eine Bestellung NICHT aus — sie sind nur temporär verliehen.
-        const blocker = (reservedDevs ?? []).find((d: any) => {
-          const n = d.notes ?? '';
-          const isLeih = n.includes('[Typ: Leihgerät]') || n.includes('[Leihgerät]');
-          return !isLeih;
-        });
-        if (blocker) {
-          savingRef.current = false;
-          setSaving(false);
-          toast.error(
-            `Bestellung nicht möglich: Für Auftrag ${selectedOrder.order_number} ist bereits ein Lagergerät reserviert (${blocker.model_name} · SN ${blocker.serial_number}). Bitte zuerst die Reservierung im Lager aufheben.`,
-          );
-          return null;
-        }
+      // Regel: Positionen, für die bereits ein Lagergerät reserviert ist, werden NICHT bestellt.
+      // Sie sind bereits im Auswahl-UI deaktiviert und aus der Auswahl entfernt. Die restlichen
+      // Positionen dürfen weiterhin regulär bestellt werden.
+      if (selectedOrder?.id && Object.keys(reservedByItemId).length > 0) {
+        const skipped = Object.values(reservedByItemId)
+          .map(r => `${r.model} · SN ${r.serial}`)
+          .join(', ');
+        toast.info(`${Object.keys(reservedByItemId).length} Position(en) bereits im Lager reserviert – aus Bestellung ausgenommen: ${skipped}`);
+      }
 
         // Sperre: pro Auftrag nur EINE reguläre Produktionsbestellung (Reklamationen ausgenommen)
         if (!isReclamation) {
