@@ -694,6 +694,7 @@ export default function Invoices() {
     setEmailForm({
       to_email: '',
       to_name: r.customer_name ?? '',
+      bcc: '',
       subject: `Rechnung ${r.invoice_number ?? ''}`.trim(),
       body_text: `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung ${r.invoice_number ?? ''}${r.reference_number ? ` zum Auftrag ${r.reference_number}` : ''}.\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nAlix Lasers`,
     });
