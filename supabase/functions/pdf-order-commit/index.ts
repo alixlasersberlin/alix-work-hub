@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
       };
       const payload: Record<string, any> = {
         company_name: cust.company_name ?? cust.studio_name ?? null,
-        contact_name: cust.contact_person ?? [cust.first_name, cust.last_name].filter(Boolean).join(" ") || null,
+        contact_name: cust.contact_person ?? ([cust.first_name, cust.last_name].filter(Boolean).join(" ") || null),
         email: cust.email ?? null,
         phone: cust.phone ?? cust.mobile ?? null,
         billing_address: billing,
