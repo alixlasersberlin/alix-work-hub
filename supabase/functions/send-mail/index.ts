@@ -37,12 +37,13 @@ serve(async (req) => {
   }
 
   try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!RESEND_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
+    if (!LOVABLE_API_KEY || !RESEND_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SUPABASE_ANON_KEY) {
       return jsonResponse({ error: "Missing environment secrets" }, 500);
     }
 
@@ -244,10 +245,11 @@ serve(async (req) => {
     }
 
 
-    const resendResponse = await fetch("https://api.resend.com/emails", {
+    const resendResponse = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": RESEND_API_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -278,7 +280,13 @@ serve(async (req) => {
       }),
     });
 
-    const resendData = await resendResponse.json();
+    const resendText = await resendResponse.text();
+    let resendData: any;
+    try {
+      resendData = resendText ? JSON.parse(resendText) : {};
+    } catch (_parseError) {
+      resendData = { raw: resendText };
+    }
 
     if (!resendResponse.ok) {
       await supabase.from("mail_messages").insert({
@@ -299,7 +307,7 @@ serve(async (req) => {
         error_message: JSON.stringify(resendData),
         created_by: userData.user.id,
       });
-      return jsonResponse({ error: resendData }, 500);
+      return jsonResponse({ error: "Provider request failed", status: resendResponse.status, details: resendData }, resendResponse.status);
     }
 
     const fromLc = String(from_email).toLowerCase();
