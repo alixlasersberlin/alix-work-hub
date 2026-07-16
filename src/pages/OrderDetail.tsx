@@ -468,23 +468,39 @@ export default function OrderDetail() {
       name: 'Bearbeitung',
       icon: Wrench,
       items: [
-        ...(order.order_status !== 'geliefert' ? [{
-          key: 'mark-delivered', label: 'Als geliefert markieren', icon: Truck,
-          onClick: async () => {
-            const { data: devs } = await supabase
-              .from('lager_devices')
-              .select('model_name, serial_number')
-              .eq('reserved_order_id', order.id);
-            const prefetchedDevices = devs || [];
-            const { error } = await supabase.from('orders').update({ order_status: 'geliefert' }).eq('id', order.id);
-            if (error) { toast.error('Fehler: ' + error.message); return; }
-            toast.success('Auftrag als geliefert markiert');
-            const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', prefetchedDevices);
-            if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
-            sendReviewInvitation(order.id, { manual: false }).catch(() => {});
-            loadAll();
-          },
-        }] : []),
+        ...((() => {
+          const st = String(order.order_status || '').toLowerCase();
+          const zohoShipped = Array.isArray((order as any).raw_data?.packages)
+            && (order as any).raw_data.packages.some((p: any) =>
+              ['delivered', 'shipped'].includes(String(p?.status || '').toLowerCase())
+              || ['delivered', 'shipped'].includes(String(p?.shipment_status || '').toLowerCase()));
+          const alreadyFulfilled = ['geliefert', 'invoiced', 'closed', 'delivered'].includes(st)
+            || (order as any).invoiced_flag === true
+            || zohoShipped;
+          return alreadyFulfilled ? [] : [
+            ...(st !== 'geliefert' ? [{
+              key: 'mark-delivered', label: 'Als geliefert markieren', icon: Truck,
+              onClick: async () => {
+                const { data: devs } = await supabase
+                  .from('lager_devices')
+                  .select('model_name, serial_number')
+                  .eq('reserved_order_id', order.id);
+                const prefetchedDevices = devs || [];
+                const { error } = await supabase.from('orders').update({ order_status: 'geliefert' }).eq('id', order.id);
+                if (error) { toast.error('Fehler: ' + error.message); return; }
+                toast.success('Auftrag als geliefert markiert');
+                const mail = await sendCustomerShippingNotice(order.id, undefined, 'automatisch', 'customer_delivered', prefetchedDevices);
+                if (mail.ok) toast.success(mail.message); else toast.error('E-Mail nicht versendet: ' + mail.message);
+                sendReviewInvitation(order.id, { manual: false }).catch(() => {});
+                loadAll();
+              },
+            }] : []),
+            {
+              key: 'trigger-order', label: 'Bestellung auslösen', icon: ShoppingBag,
+              onClick: () => navigate(`/order/neu?order_id=${order.id}`),
+            },
+          ] as ActionItem[];
+        })()),
         ...(hasRole('Super Admin') ? [{
           key: 'review-manual', label: 'Bewertung manuell senden', icon: Mail,
           onClick: async () => {
@@ -494,10 +510,6 @@ export default function OrderDetail() {
             else toast.error(res?.message || 'Bewertungseinladung fehlgeschlagen');
           },
         }] : []),
-        {
-          key: 'trigger-order', label: 'Bestellung auslösen', icon: ShoppingBag,
-          onClick: () => navigate(`/order/neu?order_id=${order.id}`),
-        },
         { key: 'defer', label: 'Zurückstellen', icon: CalendarClock, onClick: () => setDeferOpen(true) },
       ] as ActionItem[],
     }] : []),
