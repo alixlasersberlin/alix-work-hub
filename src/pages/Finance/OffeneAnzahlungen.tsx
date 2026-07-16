@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Wallet, Loader2, RefreshCw, Lock, Unlock, CheckCircle2, History as HistoryIcon, Upload, FileText, Mail, MessageSquare } from 'lucide-react';
+import { Wallet, Loader2, RefreshCw, Lock, Unlock, CheckCircle2, History as HistoryIcon, Upload, FileText, Mail, MessageSquare, Send } from 'lucide-react';
 import { format, parseISO, differenceInCalendarDays, startOfMonth, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -189,6 +189,111 @@ export default function OffeneAnzahlungen() {
     }
   };
 
+  const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
+  const sendInvoiceEmail = async (d: Deposit) => {
+    if (!d.order_id) { toast.error('Kein Auftrag verknüpft'); return; }
+    if (!confirm(`Anzahlungsrechnung ${d.invoice_number || ''} per E-Mail an ${d.company_name || d.customer_name || 'Kunde'} versenden?`)) return;
+    setSendingInvoiceId(d.id);
+    try {
+      // Kunde + Bestellung laden
+      const { data: order } = await supabase
+        .from('orders')
+        .select('id, order_number, customer_id')
+        .eq('id', d.order_id).maybeSingle();
+      if (!order) throw new Error('Auftrag nicht gefunden');
+      if (!order.customer_id) throw new Error('Auftrag hat keinen Kunden');
+
+      const { data: cust } = await supabase
+        .from('customers')
+        .select('email, company_name, contact_name')
+        .eq('id', order.customer_id).maybeSingle();
+      if (!cust?.email) throw new Error('Kunde hat keine E-Mail-Adresse');
+
+      // Neueste Anzahlungsrechnung-PDF holen und Download-Token sicherstellen
+      const { data: docs } = await supabase
+        .from('order_documents')
+        .select('id, file_name, download_token')
+        .eq('order_id', d.order_id)
+        .eq('document_type', 'Anzahlungsrechnung')
+        .order('created_at', { ascending: false })
+        .limit(1);
+      const doc = (docs ?? [])[0];
+      if (!doc) throw new Error('Keine Anzahlungsrechnungs-PDF gefunden. Bitte zuerst PDF erstellen.');
+
+      let token: string | null = (doc as any).download_token ?? null;
+      if (!token) {
+        token = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+        const { error: uErr } = await supabase.from('order_documents')
+          .update({ download_token: token } as any).eq('id', doc.id);
+        if (uErr) throw uErr;
+      }
+      const downloadUrl = `https://alixwork.de/d/${token}`;
+
+      const orderNo = order.order_number ?? '';
+      const invoiceNumber = d.invoice_number || d.deposit_number || '';
+      const currency = d.currency || 'EUR';
+      const subject = `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNo}`;
+      const body = [
+        `Sehr geehrte Damen und Herren${cust.contact_name ? `, ${cust.contact_name}` : ''},`,
+        '',
+        `anbei erhalten Sie die Anzahlungsrechnung ${invoiceNumber} zum Auftrag ${orderNo}.`,
+        '',
+        `Rechnungsbetrag (brutto): ${fmtMoney(d.gross_amount, currency)}`,
+        d.due_date ? `Fällig am: ${format(parseISO(d.due_date), 'dd.MM.yyyy', { locale: de })}` : '',
+        '',
+        'Bankverbindung:',
+        'Kontoinhaber: Alix Lasers GmbH',
+        'Bank: Deutsche Bank',
+        'IBAN: DE07 1007 0100 0142 6600 00',
+        'SWIFT/BIC: DEUTDEBB101',
+        '',
+        'Bitte geben Sie bei der Überweisung die Rechnungsnummer als Verwendungszweck an.',
+        '',
+        'Mit freundlichen Grüßen',
+        'Alix Lasers Deutschland',
+      ].filter(Boolean).join('\n');
+
+      const { error } = await supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'customer-shipping-notice',
+          recipientEmail: cust.email,
+          idempotencyKey: `az-invoice-${d.order_id}-${invoiceNumber}-${Date.now()}`,
+          bcc: ['k.trinh@alix-operation.de'],
+          templateData: {
+            subject,
+            body,
+            downloadUrl,
+            downloadLabel: 'Anzahlungsrechnung herunterladen',
+          },
+        },
+      });
+      if (error) throw error;
+
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        await supabase.from('order_notes').insert({
+          order_id: d.order_id,
+          note_type: 'email',
+          is_internal: true,
+          note_text: [
+            `[Manuell versendet – Offene Anzahlungen] Anzahlungsrechnung ${invoiceNumber}`,
+            `An: ${cust.email}`,
+            `Betreff: ${subject}`,
+            '',
+            body,
+          ].join('\n'),
+          created_by: userData.user?.id ?? null,
+        } as any);
+      } catch { /* nicht kritisch */ }
+
+      toast.success(`Anzahlungsrechnung an ${cust.email} versendet.`);
+    } catch (e: any) {
+      toast.error('Fehler beim Versenden: ' + (e?.message ?? 'Unbekannt'));
+    } finally {
+      setSendingInvoiceId(null);
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter(r => {
@@ -359,6 +464,15 @@ export default function OffeneAnzahlungen() {
                       {canWrite && r.release_status !== 'auto_freigegeben' && r.release_status !== 'manuell_freigegeben' && (
                         <Button size="sm" variant="outline" onClick={() => manualRelease(r)} title="Manuell freigeben">
                           <CheckCircle2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                      {canWrite && r.order_id && (
+                        <Button size="sm" variant="outline" onClick={() => sendInvoiceEmail(r)}
+                          disabled={sendingInvoiceId === r.id}
+                          title="Anzahlungsrechnung (PDF) per E-Mail an den Kunden versenden">
+                          {sendingInvoiceId === r.id
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Send className="w-3.5 h-3.5" />}
                         </Button>
                       )}
                       {canWrite && r.order_id && (
