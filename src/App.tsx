@@ -403,6 +403,14 @@ const AlixIdKonto = lazy(() => import("./pages/AlixId/Konto"));
 const AlixIdSicherheit = lazy(() => import("./pages/AlixId/Sicherheit"));
 const AlixIdSitzungen = lazy(() => import("./pages/AlixId/Sitzungen"));
 const AlixIdSsoCallback = lazy(() => import("./pages/AlixId/SsoCallback"));
+const IdAdminLayout = lazy(() => import("./pages/IdAdmin/Layout"));
+const IdAdminIdentities = lazy(() => import("./pages/IdAdmin/Identities"));
+const IdAdminOrganizations = lazy(() => import("./pages/IdAdmin/Organizations"));
+const IdAdminApplications = lazy(() => import("./pages/IdAdmin/Applications"));
+const IdAdminAccess = lazy(() => import("./pages/IdAdmin/Access"));
+const IdAdminSessions = lazy(() => import("./pages/IdAdmin/Sessions"));
+const IdAdminSecurityEvents = lazy(() => import("./pages/IdAdmin/SecurityEvents"));
+const IdAdminEmergencyLock = lazy(() => import("./pages/IdAdmin/EmergencyLock"));
 const CustomerPortalDashboard = lazy(() => import("./pages/CustomerPortal/Dashboard"));
 const CustomerPortalMessages = lazy(() => import("./pages/CustomerPortal/Messages"));
 const CustomerPortalDocuments = lazy(() => import("./pages/CustomerPortal/Documents"));
@@ -1386,6 +1394,18 @@ function AppRoutes() {
           <Route path="konto" element={<AlixIdKonto />} />
           <Route path="sicherheit" element={<AlixIdSicherheit />} />
           <Route path="sitzungen" element={<AlixIdSitzungen />} />
+        </Route>
+
+        {/* Alix ID — Administration (Phase 3e) */}
+        <Route path="/id-admin" element={<IdAdminLayout />}>
+          <Route index element={<Navigate to="/id-admin/identities" replace />} />
+          <Route path="identities" element={<IdAdminIdentities />} />
+          <Route path="organizations" element={<IdAdminOrganizations />} />
+          <Route path="applications" element={<IdAdminApplications />} />
+          <Route path="access" element={<IdAdminAccess />} />
+          <Route path="sessions" element={<IdAdminSessions />} />
+          <Route path="security-events" element={<IdAdminSecurityEvents />} />
+          <Route path="emergency-lock" element={<IdAdminEmergencyLock />} />
         </Route>
 
         {/* AlixWork Kalender – Mobile PWA (spiegelt den bestehenden Teamkalender) */}
