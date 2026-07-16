@@ -49,6 +49,9 @@ const OrdersAt = lazy(() => import("./pages/OrdersAt"));
 const OrdersCh = lazy(() => import("./pages/OrdersCh"));
 const OrderDetail = lazy(() => import("./pages/OrderDetail"));
 const OrdersInClarification = lazy(() => import("./pages/OrdersInClarification"));
+const PdfOrderImportList = lazy(() => import("./pages/PdfOrderImport/List"));
+const PdfOrderImportNew = lazy(() => import("./pages/PdfOrderImport/New"));
+const PdfOrderImportDetail = lazy(() => import("./pages/PdfOrderImport/Detail"));
 const PriorityList = lazy(() => import("./pages/PriorityList"));
 const HoldList = lazy(() => import("./pages/HoldList"));
 const RoutePlanning = lazy(() => import("./pages/RoutePlanning"));
@@ -912,6 +915,9 @@ function AppRoutes() {
           <Route path="/auftraege-at" element={<ProtectedRoute><OrdersAt /></ProtectedRoute>} />
           <Route path="/auftraege-ch" element={<ProtectedRoute><OrdersCh /></ProtectedRoute>} />
           <Route path="/auftraege/in-klaerung" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrdersInClarification /></ProtectedRoute>} />
+          <Route path="/auftraege/pdf-import" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Vertrieb', 'Geschäftsführung']}><PdfOrderImportList /></ProtectedRoute>} />
+          <Route path="/auftraege/pdf-import/neu" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Vertrieb', 'Geschäftsführung']}><PdfOrderImportNew /></ProtectedRoute>} />
+          <Route path="/auftraege/pdf-import/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Vertrieb', 'Geschäftsführung']}><PdfOrderImportDetail /></ProtectedRoute>} />
           <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Finanzierungen', 'Order']}><OrderDetail /></ProtectedRoute>} />
           <Route path="/mediapaket" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG']}><MediapaketOverview /></ProtectedRoute>} />
           <Route path="/mediapaket/admin" element={<ProtectedRoute requiredRoles={['Super Admin']}><MediapaketAdmin /></ProtectedRoute>} />

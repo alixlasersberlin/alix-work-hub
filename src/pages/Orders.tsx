@@ -437,6 +437,14 @@ export default function Orders() {
         />
         <div className="flex items-center gap-2">
           <Button
+            onClick={() => navigate('/auftraege/pdf-import/neu')}
+            variant="outline"
+            className="gap-2 border-amber-400/40 text-amber-300 hover:bg-amber-500/10"
+            title="Bestehenden Auftrag oder Vertrag als PDF hochladen und per KI erfassen"
+          >
+            <FileText className="w-4 h-4" /> Auftrag aus PDF importieren
+          </Button>
+          <Button
             onClick={() => navigate('/verkauf/angebot/neu?mode=sofort')}
             className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white border-0"
             title="Neuen Auftrag direkt ohne Angebot anlegen"
