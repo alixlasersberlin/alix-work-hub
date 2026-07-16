@@ -161,7 +161,7 @@ Deno.test({
         // 5) authorize OHNE MFA → 403 mfa_required
         const { verifier } = pkce();
         const challenge = await sha256b64url(verifier);
-        const state = b64url(randomBytes(12).buffer);
+        const state = b64url(randomBytes(12));
         const authorizeBody = {
           app_key: appKey,
           organization_id: org.id,
