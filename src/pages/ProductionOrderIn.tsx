@@ -6,11 +6,20 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Search, Download, Building2, Calendar, UserCog } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Inbox, Search, Download, Building2, Calendar, UserCog, Warehouse, RefreshCw, PackagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { cn } from '@/lib/utils';
+
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'offen', label: 'offen' },
+  { value: 'in Bearbeitung', label: 'in Bearbeitung' },
+  { value: 'fertig', label: 'fertig produziert' },
+  { value: 'versendet', label: 'versendet' },
+  { value: 'erledigt', label: 'erledigt' },
+];
 
 interface Row {
   id: string;
