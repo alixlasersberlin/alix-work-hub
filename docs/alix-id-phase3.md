@@ -78,7 +78,7 @@ Benutzer lesbar (nur Metadaten wie Name/Icon).
 | **3d** | AlixWork-Portal auf SSO umstellen (Authorization-Code-Flow, Fallback auf OTP) | ✅ fertig |
 | **3e** | Admin: `/id-admin/identities`, `/organizations`, `/applications`, `/access`, `/sessions`, `/security-events`, `/emergency-lock` | ✅ fertig |
 | **3f** | MFA-Pflicht für sensible Rollen, Passkey-Vorbereitung, Risk-Scoring | ⏳ |
-| **3g** | Weitere Apps: AlixSmart → Academy → Medi Metropole → Mediapaket → Studio → eAnamnese → Finance (jeweils einzeln getestet) | ⏳ |
+| **3g** | Weitere Apps: AlixSmart → Academy → Medi Metropole → Mediapaket → Studio → eAnamnese → Finance (jeweils einzeln getestet) | 🚀 gestartet (Framework + Rollout-Plan) |
 
 Jede Sub-Phase endet mit dokumentiertem Test + Rollback.
 
