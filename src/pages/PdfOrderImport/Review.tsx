@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { FileText, Loader2, Save, Search, UserPlus, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { loadPdfOrderImportConfig, DEFAULT_PDF_IMPORT_CONFIG, type PdfOrderImportConfig } from '@/lib/pdf-order-import-config';
 
 // ---------- Helpers ----------
 function extractValue(v: any): any {
