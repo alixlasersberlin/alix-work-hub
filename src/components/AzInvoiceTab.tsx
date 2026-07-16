@@ -705,6 +705,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function saveAndSendEmail() {
+    console.log('[AzInvoice] saveAndSendEmail clicked', {
+      existingInvoice, hasDeposit, grossDeposit, customerEmail: customer?.email,
+    });
     if (blockIfDuplicate()) return;
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart.');
@@ -714,12 +717,17 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.');
       return;
     }
-    await postToBuchhaltung();
+    const booked = await postToBuchhaltung();
+    if (!booked) {
+      toast.error('Buchung fehlgeschlagen – E-Mail wurde NICHT versendet.');
+      return;
+    }
     const sent = await sendByEmail();
     if (sent) {
       toast.success('Vorgang abgeschlossen: Anzahlung gebucht und E-Mail versendet.');
     }
   }
+
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 card-glow space-y-6">
