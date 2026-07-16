@@ -1,4 +1,17 @@
 import { SkeletonForm } from '@/components/infinity/Skeleton';
+
+const CURRENCY_SYMBOL_MAP: Record<string, string> = {
+  '€': 'EUR', 'EUR': 'EUR', 'eur': 'EUR',
+  '$': 'USD', 'USD': 'USD',
+  'CHF': 'CHF', 'chf': 'CHF', 'Fr': 'CHF', 'SFr': 'CHF',
+  '£': 'GBP', 'GBP': 'GBP',
+};
+const normalizeCurrency = (c?: string | null): string => {
+  if (!c) return 'EUR';
+  const trimmed = String(c).trim();
+  if (CURRENCY_SYMBOL_MAP[trimmed]) return CURRENCY_SYMBOL_MAP[trimmed];
+  return /^[A-Za-z]{3}$/.test(trimmed) ? trimmed.toUpperCase() : 'EUR';
+};
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { toast } from 'sonner';
