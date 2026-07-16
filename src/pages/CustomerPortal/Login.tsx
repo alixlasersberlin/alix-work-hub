@@ -149,6 +149,18 @@ export default function CustomerPortalLogin() {
                 {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <LogIn className="w-4 h-4 mr-2" />}
                 Code anfordern
               </Button>
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/60" /></div>
+                <div className="relative flex justify-center text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span className="bg-card px-2">oder</span>
+                </div>
+              </div>
+              <Link to="/id/login" className="block">
+                <Button type="button" variant="outline" className="w-full">
+                  <ShieldCheck className="w-4 h-4 mr-2" />
+                  Über Alix ID anmelden
+                </Button>
+              </Link>
               {lockedUntil && (
                 <p className="text-xs text-destructive text-center">
                   Zu viele Fehlversuche. Login gesperrt bis {new Date(lockedUntil).toLocaleTimeString('de-DE')}.
