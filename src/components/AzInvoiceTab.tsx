@@ -741,25 +741,15 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             PDF Entwurf erstellen
           </Button>
           <Button
-            onClick={generateAndBook}
-            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !!existingInvoice || checkingExisting}
+            onClick={saveAndSendEmail}
+            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !!existingInvoice || checkingExisting || !customer?.email}
             className="gold-gradient text-primary-foreground"
+            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Anzahlung festschreiben, in "Offene Anzahlungen" buchen und per E-Mail an Kunde (BCC k.trinh, natalia.p) senden'}
           >
-            {booking
+            {(booking || postingToBuchhaltung || sending)
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               : <BookmarkCheck className="w-4 h-4 mr-2" />}
-            ANZAHLUNG STELLEN & SPEICHERN
-          </Button>
-          <Button
-            onClick={postToBuchhaltung}
-            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !!existingInvoice || checkingExisting}
-            className="bg-red-600 hover:bg-red-700 text-white border border-red-700 shadow-sm"
-            title="Diese Anzahlungsrechnung in Finance & Controlling / Offene Anzahlungen übernehmen"
-          >
-            {postingToBuchhaltung
-              ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              : <BookOpen className="w-4 h-4 mr-2" />}
-            In Buchhaltung schreiben
+            Anzahlung Speichern und Email senden
           </Button>
           <Button
             variant="outline"
