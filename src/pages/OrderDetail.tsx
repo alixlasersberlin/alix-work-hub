@@ -1386,6 +1386,46 @@ export default function OrderDetail() {
               return !role || role === 'primary';
             });
             const latest = primaryLogs[0] || emailLogs[0] || null;
+            const isFailed = (s: string | null) => {
+              const v = (s || '').toLowerCase();
+              return v === 'failed' || v === 'bounced' || v === 'error';
+            };
+            const lastFailed = emailLogs.find(l => isFailed(l.status)) || null;
+            const KNOWN_KEYS = [
+              'customer_warehouse_received',
+              'customer_warehouse_prepared',
+              'customer_in_production',
+              'customer_in_transit',
+              'customer_shipping_notice',
+              'customer_delivered',
+            ] as const;
+            type TplKey = typeof KNOWN_KEYS[number];
+            const resolveTemplateKey = (l: any): TplKey => {
+              const idk: string = l?.metadata?.idempotency_key || '';
+              const found = KNOWN_KEYS.find(k => idk.startsWith(k + '-'));
+              if (found) return found;
+              const tpl: string = (l?.template || '').toLowerCase();
+              if (tpl.includes('production')) return 'customer_in_production';
+              if (tpl.includes('transit')) return 'customer_in_transit';
+              if (tpl.includes('prepared')) return 'customer_warehouse_prepared';
+              if (tpl.includes('delivered')) return 'customer_delivered';
+              if (tpl.includes('received') || tpl.includes('warehouse')) return 'customer_warehouse_received';
+              return 'customer_shipping_notice';
+            };
+            const handleResend = async (l: any) => {
+              if (!order || resendingId) return;
+              setResendingId(l.id);
+              try {
+                const key = resolveTemplateKey(l);
+                const r = await sendCustomerShippingNotice(order.id, undefined, 'manuell', key);
+                if (r.ok) { toast.success(`Erneut versendet: ${r.message}`); loadAll(); }
+                else toast.error(`Fehler beim erneuten Versand: ${r.message}`);
+              } catch (e: any) {
+                toast.error(e?.message || 'Unbekannter Fehler beim erneuten Versand');
+              } finally {
+                setResendingId(null);
+              }
+            };
             const statusStyle = (s: string | null) => {
               const v = (s || '').toLowerCase();
               if (v === 'sent' || v === 'delivered') return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/40';
@@ -1401,8 +1441,21 @@ export default function OrderDetail() {
                     <Mail className="w-4 h-4 text-primary" />
                     <h3 className="font-semibold text-foreground">E-Mail-Status</h3>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {emailNotes.length} Notiz(en) · {emailLogs.length} Send-Log-Eintrag(e)
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {lastFailed && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={resendingId === lastFailed.id}
+                        onClick={() => handleResend(lastFailed)}
+                        className="h-7 text-xs border-red-500/40 text-red-500 hover:bg-red-500/10"
+                      >
+                        {resendingId === lastFailed.id ? 'Sende…' : 'Letzten Fehlversuch erneut senden'}
+                      </Button>
+                    )}
+                    <div className="text-xs text-muted-foreground">
+                      {emailNotes.length} Notiz(en) · {emailLogs.length} Send-Log-Eintrag(e)
+                    </div>
                   </div>
                 </div>
                 {!latest ? (
@@ -1445,6 +1498,7 @@ export default function OrderDetail() {
                             <th className="px-2 py-1.5 font-medium">Template</th>
                             <th className="px-2 py-1.5 font-medium">Rolle</th>
                             <th className="px-2 py-1.5 font-medium">Status</th>
+                            <th className="px-2 py-1.5 font-medium text-right">Aktion</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
@@ -1460,6 +1514,18 @@ export default function OrderDetail() {
                                 <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium border ${statusStyle(l.status)}`}>
                                   {l.status || '—'}
                                 </span>
+                              </td>
+                              <td className="px-2 py-1.5 text-right">
+                                {isFailed(l.status) && (
+                                  <button
+                                    type="button"
+                                    disabled={resendingId === l.id}
+                                    onClick={() => handleResend(l)}
+                                    className="text-[11px] px-2 py-0.5 rounded border border-red-500/40 text-red-500 hover:bg-red-500/10 disabled:opacity-50"
+                                  >
+                                    {resendingId === l.id ? '…' : 'Erneut senden'}
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           ))}
