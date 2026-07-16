@@ -166,8 +166,12 @@ export default function OrderApprovalQueue() {
       toast.success(
         `Freigegeben — Gerät ${res.reservedInfo.model} (SN ${res.reservedInfo.serial}) aus ${res.reservedInfo.department} vergeben`,
       );
-    } else if (row.modellname) {
-      toast.success('Bestellung freigegeben — kein passendes Gerät in Lager/Warehouse gefunden');
+    } else if (res.supplierSent?.ok) {
+      toast.success(`Freigegeben — kein Lagergerät gefunden, PDF an Lieferant gesendet (${res.supplierSent.message})`);
+    } else if (res.supplierSent && !res.supplierSent.ok) {
+      toast.warning(`Freigegeben, aber Lieferanten-Versand fehlgeschlagen: ${res.supplierSent.message}`);
+    } else if (row.modellname && !row.supplier_id) {
+      toast.warning('Freigegeben — kein Lagergerät und kein Lieferant hinterlegt. Bitte manuell versenden.');
     } else {
       toast.success('Bestellung freigegeben');
     }
@@ -182,10 +186,15 @@ export default function OrderApprovalQueue() {
     if (targets.length === 0) return toast.info('Bitte zuerst Bestellungen auswählen.');
     if (!confirm(`${targets.length} Bestellung(en) freigeben?`)) return;
     setBulkBusy(true);
-    let ok = 0, fail = 0, reserved = 0;
+    let ok = 0, fail = 0, reserved = 0, sent = 0, sendFail = 0;
     for (const row of targets) {
       const res = await approveCore(row);
-      if (res.ok) { ok++; if (res.reservedInfo) reserved++; } else fail++;
+      if (res.ok) {
+        ok++;
+        if (res.reservedInfo) reserved++;
+        if (res.supplierSent?.ok) sent++;
+        else if (res.supplierSent && !res.supplierSent.ok) sendFail++;
+      } else fail++;
     }
     setBulkBusy(false);
     setRows((prev) => prev.filter((r) => !targets.some((t) => t.id === r.id && ok > 0)));
