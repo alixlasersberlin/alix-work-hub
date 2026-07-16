@@ -415,6 +415,14 @@ const CustomerPortalMyData = lazy(() => import("./pages/CustomerPortal/MyData"))
 const CustomerPortalDevicesV2 = lazy(() => import("./pages/CustomerPortal/DevicesV2"));
 const CustomerPortalContractsV2 = lazy(() => import("./pages/CustomerPortal/ContractsV2"));
 const CustomerPortalTicketsV2 = lazy(() => import("./pages/CustomerPortal/TicketsV2"));
+const CustomerPortalOffersV2 = lazy(() => import("./pages/CustomerPortal/OffersV2"));
+const CustomerPortalOfferDetail = lazy(() => import("./pages/CustomerPortal/OfferDetail"));
+const CustomerPortalWarrantyV2 = lazy(() => import("./pages/CustomerPortal/WarrantyV2"));
+const CustomerPortalMaintenanceV2 = lazy(() => import("./pages/CustomerPortal/MaintenanceV2"));
+const CustomerPortalMessagesV2 = lazy(() => import("./pages/CustomerPortal/MessagesV2"));
+const CustomerPortalDocumentsV2 = lazy(() => import("./pages/CustomerPortal/DocumentsV2"));
+const CustomerPortalNotificationsCenter = lazy(() => import("./pages/CustomerPortal/NotificationsCenter"));
+const CustomerPortalSecurityPage = lazy(() => import("./pages/CustomerPortal/SecurityPage"));
 const MailCenterPosteingang = lazy(() => import("./pages/MailCenter/Posteingang"));
 const MailCenterGesendet = lazy(() => import("./pages/MailCenter/Gesendet"));
 const MailCenterEntwuerfe = lazy(() => import("./pages/MailCenter/Entwuerfe"));
@@ -1337,17 +1345,22 @@ function AppRoutes() {
           <Route path="geraete" element={<CustomerPortalDevicesV2 />} />
           <Route path="vertraege" element={<CustomerPortalContractsV2 />} />
           <Route path="tickets" element={<CustomerPortalTicketsV2 />} />
-          {/* Phase >=3: alles Weitere noch nicht freigegeben – Redirect */}
-          <Route path="nachrichten" element={<Navigate to="/kunde" replace />} />
-          <Route path="dokumente" element={<Navigate to="/kunde" replace />} />
-          <Route path="angebote" element={<Navigate to="/kunde" replace />} />
+          {/* Phase 3 – Sub-Phase 2b */}
+          <Route path="angebote" element={<CustomerPortalOffersV2 />} />
+          <Route path="angebote/:id" element={<CustomerPortalOfferDetail />} />
+          <Route path="garantie" element={<CustomerPortalWarrantyV2 />} />
+          <Route path="wartungen" element={<CustomerPortalMaintenanceV2 />} />
+          <Route path="nachrichten" element={<CustomerPortalMessagesV2 />} />
+          <Route path="nachrichten/:id" element={<CustomerPortalMessagesV2 />} />
+          <Route path="dokumente" element={<CustomerPortalDocumentsV2 />} />
+          <Route path="benachrichtigungen" element={<CustomerPortalNotificationsCenter />} />
+          <Route path="sicherheit" element={<CustomerPortalSecurityPage />} />
+          {/* Noch nicht freigegebene Bereiche */}
           <Route path="reparaturen" element={<Navigate to="/kunde" replace />} />
           <Route path="support" element={<Navigate to="/kunde" replace />} />
           <Route path="bewertungen" element={<Navigate to="/kunde" replace />} />
           <Route path="verlauf" element={<Navigate to="/kunde" replace />} />
           <Route path="bestellungen" element={<Navigate to="/kunde" replace />} />
-          <Route path="wartungen" element={<Navigate to="/kunde" replace />} />
-          <Route path="garantien" element={<Navigate to="/kunde" replace />} />
           <Route path="termine" element={<Navigate to="/kunde" replace />} />
           <Route path="gesundheit" element={<Navigate to="/kunde" replace />} />
           <Route path="katalog" element={<Navigate to="/kunde" replace />} />
