@@ -59,7 +59,21 @@ export default function AlixIdApps() {
           scope: ['openid', 'profile'],
         },
       });
-      if (error || !data?.redirect) throw error ?? new Error('kein Redirect');
+      if (error || !data?.redirect) {
+        // Fehlerkörper aus FunctionsHttpError extrahieren (mfa_required etc.)
+        let code: string | null = data?.error ?? null;
+        const anyErr = error as any;
+        if (!code && anyErr?.context?.json) {
+          try { code = (await anyErr.context.json())?.error ?? null; } catch { /* ignore */ }
+        }
+        if (code === 'mfa_required') {
+          toast.error('Für diese App ist Zwei-Faktor-Authentifizierung Pflicht. Bitte richten Sie MFA ein.');
+          setOpening(null);
+          navigate('/id/sicherheit');
+          return;
+        }
+        throw error ?? new Error(code ?? 'kein Redirect');
+      }
       window.location.href = data.redirect;
     } catch (e: any) {
       toast.error(`Konnte App nicht öffnen: ${e?.message ?? e}`);
