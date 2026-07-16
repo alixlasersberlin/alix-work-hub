@@ -81,7 +81,7 @@ export async function requireAdminPermission(req: Request, permission: string) {
   const { data: u } = await userClient.auth.getUser();
   if (!u?.user) return { error: json({ error: 'unauthorized' }, 401) };
 
-  const { data: allowed } = await a.rpc('has_alix_id_permission', { _permission: permission });
+  const { data: allowed } = await userClient.rpc('has_alix_id_permission', { _permission: permission });
   if (!allowed) return { error: json({ error: 'forbidden' }, 403) };
 
   return {
