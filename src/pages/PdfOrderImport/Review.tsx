@@ -22,9 +22,9 @@ function extractConf(v: any): number | null {
   if (v && typeof v === 'object' && typeof v.confidence === 'number') return v.confidence;
   return null;
 }
-function ConfPill({ c }: { c: number | null }) {
+function ConfPill({ c, green, yellow }: { c: number | null; green: number; yellow: number }) {
   if (c == null) return <span className="inline-block w-2 h-2 rounded-full bg-slate-500" />;
-  const cls = c >= 90 ? 'bg-emerald-500' : c >= 70 ? 'bg-amber-400' : 'bg-red-500';
+  const cls = c >= green ? 'bg-emerald-500' : c >= yellow ? 'bg-amber-400' : 'bg-red-500';
   return <span className={`inline-block w-2 h-2 rounded-full ${cls}`} title={`${Math.round(c)} %`} />;
 }
 
