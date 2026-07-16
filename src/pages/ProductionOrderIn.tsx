@@ -40,6 +40,7 @@ interface Row {
   modellname: string | null;
   farbe: string | null;
   bearbeiter: string | null;
+  seriennummer: string | null;
   pdf_path: string | null;
   supplier_id: string;
   approval_status: string;
@@ -58,6 +59,9 @@ export default function ProductionOrderIn() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [reassignFor, setReassignFor] = useState<Row | null>(null);
+  const [moveFor, setMoveFor] = useState<{ row: Row; target: LagerTarget } | null>(null);
+  const [moveSerial, setMoveSerial] = useState('');
+  const [moveBusy, setMoveBusy] = useState(false);
   const canReassign = isAdmin || roles.includes('Auftragsverwaltung') || roles.includes('Order');
   const [busyId, setBusyId] = useState<string | null>(null);
 
