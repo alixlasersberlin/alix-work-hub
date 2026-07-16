@@ -390,6 +390,42 @@ export default function ProductionOrderIn() {
           load();
         }}
       />
+
+      <Dialog open={!!moveFor} onOpenChange={(o) => { if (!o) { setMoveFor(null); setMoveSerial(''); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              In {moveFor ? LAGER_TARGETS.find(t => t.value === moveFor.target)?.label : ''} verschieben
+            </DialogTitle>
+            <DialogDescription>
+              {moveFor?.row.production_order_number || moveFor?.row.order_number} · {moveFor?.row.modellname}
+              {moveFor?.row.farbe ? ` · ${moveFor.row.farbe}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="move-serial">Seriennummer *</Label>
+            <Input
+              id="move-serial"
+              value={moveSerial}
+              onChange={(e) => setMoveSerial(e.target.value)}
+              placeholder="SN eingeben oder scannen"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">
+              Das Gerät wird in der Lagerverwaltung angelegt (bzw. aktualisiert) und der Bestellstatus wird angepasst.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setMoveFor(null); setMoveSerial(''); }} disabled={moveBusy}>
+              Abbrechen
+            </Button>
+            <Button onClick={confirmMove} disabled={moveBusy || !moveSerial.trim()}>
+              {moveBusy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PackagePlus className="w-4 h-4 mr-1" />}
+              Verschieben
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
