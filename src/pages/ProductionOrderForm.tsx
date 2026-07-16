@@ -131,6 +131,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         setMainMode('order');
         const { data: srcItems } = await supabase.from('order_items').select('*').eq('order_id', po.order_id).order('item_order');
         setOrderItems(srcItems || []);
+        await loadReservedForOrder(po.order_id, srcItems || []);
       } else if ((po as any).customer_id) {
         const { data: cust } = await supabase.from('customers').select('id, company_name, contact_name').eq('id', (po as any).customer_id).maybeSingle();
         setSelectedCustomer(cust || { id: (po as any).customer_id, company_name: (po as any).customer_name_snapshot, contact_name: null });
