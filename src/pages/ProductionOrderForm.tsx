@@ -873,18 +873,41 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               <p className="text-sm text-muted-foreground">Keine Positionen im Auftrag.</p>
             ) : (
               <div className="space-y-2">
-                {orderItems.map(it => (
-                  <label key={it.id} className="flex items-start gap-3 p-2 rounded border border-border hover:bg-muted/30 cursor-pointer">
-                    <Checkbox checked={selectedItemIds.has(it.id)} onCheckedChange={() => toggleItem(it.id)} className="mt-1" />
-                    <div className="flex-1">
-                      <div className="font-medium">{it.item_name || '—'}</div>
-                      {it.description && <div className="text-xs text-muted-foreground">{it.description}</div>}
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Menge: {it.quantity} {it.unit || ''} {it.sku && `· SKU: ${it.sku}`}
+                {orderItems.map(it => {
+                  const reserved = reservedByItemId[it.id];
+                  return (
+                    <label
+                      key={it.id}
+                      className={`flex items-start gap-3 p-2 rounded border ${reserved ? 'border-amber-500/40 bg-amber-500/5 cursor-not-allowed opacity-80' : 'border-border hover:bg-muted/30 cursor-pointer'}`}
+                    >
+                      <Checkbox
+                        checked={selectedItemIds.has(it.id)}
+                        onCheckedChange={() => toggleItem(it.id)}
+                        disabled={!!reserved}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium flex items-center gap-2">
+                          {it.item_name || '—'}
+                          {reserved && (
+                            <span className="text-[10px] uppercase tracking-wide bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded">
+                              Bereits im Lager · {reserved.department} · SN {reserved.serial}
+                            </span>
+                          )}
+                        </div>
+                        {it.description && <div className="text-xs text-muted-foreground">{it.description}</div>}
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Menge: {it.quantity} {it.unit || ''} {it.sku && `· SKU: ${it.sku}`}
+                        </div>
+                        {reserved && (
+                          <div className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                            Wird nicht bestellt – Gerät ist bereits im Lager reserviert.
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </label>
-                ))}
+                    </label>
+                  );
+                })}
               </div>
             )
           )}
