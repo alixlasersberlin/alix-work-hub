@@ -71,13 +71,14 @@ Deno.serve(async (req) => {
     // Import prüfen (RLS via user-client)
     const { data: imp, error: impErr } = await user
       .from("pdf_order_imports")
-      .select("id, status, source_filename, uploaded_by, created_order_id")
+      .select("id, status, source_filename, uploaded_by, created_order_id, document_type")
       .eq("id", body.import_id)
       .maybeSingle();
     if (impErr || !imp) return j({ error: "Import nicht gefunden oder kein Zugriff" }, 404);
     if (imp.status === "committed" || imp.created_order_id) {
       return j({ error: "Dieser Import wurde bereits importiert.", order_id: imp.created_order_id }, 400);
     }
+    const isOffer = imp.document_type === "offer";
 
     const c = body.corrected;
     const cust = c.customer ?? {};
