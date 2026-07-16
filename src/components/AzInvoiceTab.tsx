@@ -104,6 +104,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const [sending, setSending] = useState(false);
   const [existingInvoice, setExistingInvoice] = useState<{ invoice_number: string; issue_date?: string | null } | null>(null);
   const [checkingExisting, setCheckingExisting] = useState(true);
+  const [confirm, setConfirm] = useState<null | 'saveSend' | 'sendOnly'>(null);
 
   useEffect(() => {
     if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
