@@ -91,9 +91,11 @@ Deno.serve(async (req) => {
     createdBy = r.created_by || undefined
 
     if (orderId) {
-      const { data: ord } = await admin.from('orders').select('order_number, internal_number').eq('id', orderId).maybeSingle()
+      const { data: ord } = await admin.from('orders').select('order_number, internal_number, salesperson_name').eq('id', orderId).maybeSingle()
       orderNumber = ord?.internal_number || ord?.order_number || undefined
+      salespersonName = (ord as any)?.salesperson_name || undefined
     }
+
   } else {
     // Fallback: PDF from order data
     const { data: ord } = await admin.from('orders')
