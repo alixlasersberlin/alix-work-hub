@@ -4402,6 +4402,122 @@ export type Database = {
           },
         ]
       }
+      customer_portal_contract_signatures: {
+        Row: {
+          auth_user_id: string
+          consents: Json
+          contract_id: string
+          contract_version: number
+          customer_id: string
+          id: string
+          ip_address: string | null
+          otp_challenge_id: string | null
+          pdf_hash: string | null
+          signature_storage_path: string | null
+          signed_at: string
+          signed_by_name: string
+          signed_by_role: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          auth_user_id: string
+          consents?: Json
+          contract_id: string
+          contract_version: number
+          customer_id: string
+          id?: string
+          ip_address?: string | null
+          otp_challenge_id?: string | null
+          pdf_hash?: string | null
+          signature_storage_path?: string | null
+          signed_at?: string
+          signed_by_name: string
+          signed_by_role?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          auth_user_id?: string
+          consents?: Json
+          contract_id?: string
+          contract_version?: number
+          customer_id?: string
+          id?: string
+          ip_address?: string | null
+          otp_challenge_id?: string | null
+          pdf_hash?: string | null
+          signature_storage_path?: string | null
+          signed_at?: string
+          signed_by_name?: string
+          signed_by_role?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_contract_signatures_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "finance_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_contract_signatures_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_data_requests: {
+        Row: {
+          auth_user_id: string
+          created_at: string
+          customer_id: string
+          description: string | null
+          handled_at: string | null
+          handled_by: string | null
+          handler_note: string | null
+          id: string
+          request_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id: string
+          created_at?: string
+          customer_id: string
+          description?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          handler_note?: string | null
+          id?: string
+          request_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string
+          created_at?: string
+          customer_id?: string
+          description?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          handler_note?: string | null
+          id?: string
+          request_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_data_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_portal_document_downloads: {
         Row: {
           attachment_id: string | null
@@ -4449,6 +4565,362 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          customer_visible: boolean
+          description: string | null
+          device_serial: string | null
+          document_number: string | null
+          document_type: string
+          download_count: number
+          expires_at: string | null
+          file_hash: string | null
+          id: string
+          published_at: string | null
+          storage_bucket: string
+          storage_path: string
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          customer_visible?: boolean
+          description?: string | null
+          device_serial?: string | null
+          document_number?: string | null
+          document_type: string
+          download_count?: number
+          expires_at?: string | null
+          file_hash?: string | null
+          id?: string
+          published_at?: string | null
+          storage_bucket: string
+          storage_path: string
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          customer_visible?: boolean
+          description?: string | null
+          device_serial?: string | null
+          document_number?: string | null
+          document_type?: string
+          download_count?: number
+          expires_at?: string | null
+          file_hash?: string | null
+          id?: string
+          published_at?: string | null
+          storage_bucket?: string
+          storage_path?: string
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_maintenance_requests: {
+        Row: {
+          attachments: Json
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string
+          customer_id: string
+          device_name: string | null
+          device_operable: boolean | null
+          device_serial: string | null
+          extra_note: string | null
+          id: string
+          issue_description: string
+          linked_ticket_id: string | null
+          preferred_period: string | null
+          preferred_time: string | null
+          preferred_weekday: string | null
+          site_address: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by: string
+          customer_id: string
+          device_name?: string | null
+          device_operable?: boolean | null
+          device_serial?: string | null
+          extra_note?: string | null
+          id?: string
+          issue_description: string
+          linked_ticket_id?: string | null
+          preferred_period?: string | null
+          preferred_time?: string | null
+          preferred_weekday?: string | null
+          site_address?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string
+          customer_id?: string
+          device_name?: string | null
+          device_operable?: boolean | null
+          device_serial?: string | null
+          extra_note?: string | null
+          id?: string
+          issue_description?: string
+          linked_ticket_id?: string | null
+          preferred_period?: string | null
+          preferred_time?: string | null
+          preferred_weekday?: string | null
+          site_address?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_maintenance_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_message_threads: {
+        Row: {
+          archived_by_customer: boolean
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          department: string
+          id: string
+          last_message_at: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          archived_by_customer?: boolean
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          department: string
+          id?: string
+          last_message_at?: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          archived_by_customer?: boolean
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          department?: string
+          id?: string
+          last_message_at?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_message_threads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_messages: {
+        Row: {
+          attachments: Json
+          author_id: string | null
+          body: string
+          created_at: string
+          customer_id: string
+          from_role: string
+          id: string
+          read_at: string | null
+          thread_id: string
+        }
+        Insert: {
+          attachments?: Json
+          author_id?: string | null
+          body: string
+          created_at?: string
+          customer_id: string
+          from_role: string
+          id?: string
+          read_at?: string | null
+          thread_id: string
+        }
+        Update: {
+          attachments?: Json
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          customer_id?: string
+          from_role?: string
+          id?: string
+          read_at?: string | null
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_messages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "customer_portal_message_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_notifications: {
+        Row: {
+          body: string | null
+          category: string
+          created_at: string
+          customer_id: string
+          id: string
+          priority: string
+          read_at: string | null
+          target_route: string | null
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          category: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          priority?: string
+          read_at?: string | null
+          target_route?: string | null
+          title: string
+        }
+        Update: {
+          body?: string | null
+          category?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          priority?: string
+          read_at?: string | null
+          target_route?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_notifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_portal_offer_acceptances: {
+        Row: {
+          accepted_by_name: string
+          accepted_by_role: string | null
+          action: string
+          auth_user_id: string
+          consent_text: string
+          created_at: string
+          customer_id: string
+          decline_note: string | null
+          decline_reason: string | null
+          id: string
+          ip_address: string | null
+          offer_id: string
+          offer_version: number
+          pdf_hash: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          accepted_by_name: string
+          accepted_by_role?: string | null
+          action?: string
+          auth_user_id: string
+          consent_text: string
+          created_at?: string
+          customer_id: string
+          decline_note?: string | null
+          decline_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          offer_id: string
+          offer_version: number
+          pdf_hash?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          accepted_by_name?: string
+          accepted_by_role?: string | null
+          action?: string
+          auth_user_id?: string
+          consent_text?: string
+          created_at?: string
+          customer_id?: string
+          decline_note?: string | null
+          decline_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          offer_id?: string
+          offer_version?: number
+          pdf_hash?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_portal_offer_acceptances_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_offer_acceptances_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
             referencedColumns: ["id"]
           },
         ]
@@ -4970,6 +5442,7 @@ export type Database = {
           customer_email: string | null
           customer_id: string | null
           customer_name: string | null
+          customer_visible: boolean
           device_name: string | null
           id: string
           last_maintenance_date: string | null
@@ -4994,6 +5467,7 @@ export type Database = {
           customer_email?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          customer_visible?: boolean
           device_name?: string | null
           id?: string
           last_maintenance_date?: string | null
@@ -5018,6 +5492,7 @@ export type Database = {
           customer_email?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          customer_visible?: boolean
           device_name?: string | null
           id?: string
           last_maintenance_date?: string | null
@@ -8256,8 +8731,10 @@ export type Database = {
         Row: {
           contract_number: string | null
           contract_type: string
+          contract_version: number
           created_at: string
           customer_id: string
+          customer_visible: boolean
           device_id: string | null
           end_date: string | null
           id: string
@@ -8265,6 +8742,8 @@ export type Database = {
           notes: string | null
           order_id: string | null
           remaining_amount: number | null
+          signature_status: string | null
+          signed_pdf_path: string | null
           start_date: string | null
           status: string
           tenant_id: string | null
@@ -8273,8 +8752,10 @@ export type Database = {
         Insert: {
           contract_number?: string | null
           contract_type?: string
+          contract_version?: number
           created_at?: string
           customer_id: string
+          customer_visible?: boolean
           device_id?: string | null
           end_date?: string | null
           id?: string
@@ -8282,6 +8763,8 @@ export type Database = {
           notes?: string | null
           order_id?: string | null
           remaining_amount?: number | null
+          signature_status?: string | null
+          signed_pdf_path?: string | null
           start_date?: string | null
           status?: string
           tenant_id?: string | null
@@ -8290,8 +8773,10 @@ export type Database = {
         Update: {
           contract_number?: string | null
           contract_type?: string
+          contract_version?: number
           created_at?: string
           customer_id?: string
+          customer_visible?: boolean
           device_id?: string | null
           end_date?: string | null
           id?: string
@@ -8299,6 +8784,8 @@ export type Database = {
           notes?: string | null
           order_id?: string | null
           remaining_amount?: number | null
+          signature_status?: string | null
+          signed_pdf_path?: string | null
           start_date?: string | null
           status?: string
           tenant_id?: string | null
@@ -14237,6 +14724,8 @@ export type Database = {
       }
       offers: {
         Row: {
+          accepted_at: string | null
+          accepted_by_name: string | null
           approval_note: string | null
           approval_status: string
           approved_at: string | null
@@ -14248,10 +14737,16 @@ export type Database = {
           customer_email: string | null
           customer_id: string | null
           customer_name: string | null
+          customer_visible: boolean
+          declined_at: string | null
+          declined_reason: string | null
           id: string
           offer_date: string | null
           offer_number: string
           payload: Json
+          portal_pdf_hash: string | null
+          portal_published_at: string | null
+          portal_version: number
           signed_at: string | null
           status: string
           total_gross: number | null
@@ -14261,6 +14756,8 @@ export type Database = {
           valid_until: string | null
         }
         Insert: {
+          accepted_at?: string | null
+          accepted_by_name?: string | null
           approval_note?: string | null
           approval_status?: string
           approved_at?: string | null
@@ -14272,10 +14769,16 @@ export type Database = {
           customer_email?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          customer_visible?: boolean
+          declined_at?: string | null
+          declined_reason?: string | null
           id?: string
           offer_date?: string | null
           offer_number: string
           payload?: Json
+          portal_pdf_hash?: string | null
+          portal_published_at?: string | null
+          portal_version?: number
           signed_at?: string | null
           status?: string
           total_gross?: number | null
@@ -14285,6 +14788,8 @@ export type Database = {
           valid_until?: string | null
         }
         Update: {
+          accepted_at?: string | null
+          accepted_by_name?: string | null
           approval_note?: string | null
           approval_status?: string
           approved_at?: string | null
@@ -14296,10 +14801,16 @@ export type Database = {
           customer_email?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          customer_visible?: boolean
+          declined_at?: string | null
+          declined_reason?: string | null
           id?: string
           offer_date?: string | null
           offer_number?: string
           payload?: Json
+          portal_pdf_hash?: string | null
+          portal_published_at?: string | null
+          portal_version?: number
           signed_at?: string | null
           status?: string
           total_gross?: number | null
@@ -19850,6 +20361,7 @@ export type Database = {
           created_by: string | null
           customer_id: string | null
           customer_name: string | null
+          customer_visible: boolean
           decided_at: string | null
           decided_by: string | null
           decision: string | null
@@ -19876,6 +20388,7 @@ export type Database = {
           created_by?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          customer_visible?: boolean
           decided_at?: string | null
           decided_by?: string | null
           decision?: string | null
@@ -19902,6 +20415,7 @@ export type Database = {
           created_by?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          customer_visible?: boolean
           decided_at?: string | null
           decided_by?: string | null
           decision?: string | null
@@ -19933,6 +20447,7 @@ export type Database = {
           created_at: string
           customer_id: string | null
           customer_name: string | null
+          customer_visible: boolean
           device_name: string | null
           id: string
           manufacturer: string | null
@@ -19949,6 +20464,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
+          customer_visible?: boolean
           device_name?: string | null
           id?: string
           manufacturer?: string | null
@@ -19965,6 +20481,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           customer_name?: string | null
+          customer_visible?: boolean
           device_name?: string | null
           id?: string
           manufacturer?: string | null
@@ -21898,7 +22415,9 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_device_active: { Args: { _sub_id: string }; Returns: boolean }
       is_internal_user: { Args: never; Returns: boolean }
-      is_portal_customer: { Args: never; Returns: boolean }
+      is_portal_customer:
+        | { Args: never; Returns: boolean }
+        | { Args: { _customer_id: string }; Returns: boolean }
       is_supplier: { Args: never; Returns: boolean }
       log_audit_event: {
         Args: {
