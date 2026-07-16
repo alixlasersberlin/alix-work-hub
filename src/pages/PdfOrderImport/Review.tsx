@@ -355,12 +355,36 @@ export default function PdfOrderImportReview() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        {/* Links: PDF */}
+        {/* Links: PDF mit Textselektion */}
         <Card className="border-border/60 bg-card/40 backdrop-blur-xl lg:sticky lg:top-4 h-fit">
-          <CardHeader><CardTitle className="text-sm">PDF-Vorschau</CardTitle></CardHeader>
-          <CardContent>
+          <CardHeader className="flex-row items-start justify-between space-y-0 gap-3">
+            <div>
+              <CardTitle className="text-sm">PDF-Vorschau</CardTitle>
+              <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+                <MousePointerClick className="w-3 h-3" /> Feld rechts anklicken, dann Text im PDF markieren und übernehmen.
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs ${
+              activeField || activeItem ? 'border-amber-500/60 bg-amber-500/10' : 'border-border bg-secondary/30'
+            }`}>
+              <Target className="w-3.5 h-3.5 text-amber-400" />
+              <div className="flex-1 min-w-0 truncate">
+                {activeField ? <>Ziel: <span className="font-medium">{activeField.label}</span></>
+                  : activeItem ? <>Ziel: <span className="font-medium">Pos {activeItem.idx + 1} · {activeItem.label}</span></>
+                  : <span className="text-muted-foreground">Kein Zielfeld gewählt</span>}
+              </div>
+              <span className="hidden md:inline text-muted-foreground truncate max-w-[40%]">
+                {pdfSelection ? `„${pdfSelection.slice(0, 40)}${pdfSelection.length > 40 ? '…' : ''}"` : 'Nichts markiert'}
+              </span>
+              <Button size="sm" className="h-7 bg-amber-500 hover:bg-amber-600 text-black"
+                onClick={applySelectionToActive}
+                disabled={!pdfSelection || (!activeField && !activeItem)}
+              >Übernehmen</Button>
+            </div>
             {pdfUrl ? (
-              <iframe src={pdfUrl} className="w-full h-[calc(100vh-220px)] rounded border border-border" />
+              <PdfSelectViewer url={pdfUrl} onSelectionChange={setPdfSelection} />
             ) : <div className="text-sm text-muted-foreground">Vorschau nicht verfügbar.</div>}
           </CardContent>
         </Card>
