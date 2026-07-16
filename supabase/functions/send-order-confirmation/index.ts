@@ -99,9 +99,11 @@ Deno.serve(async (req) => {
   } else {
     // Fallback: PDF from order data
     const { data: ord } = await admin.from('orders')
-      .select('id, customer_id, order_number, internal_number, total_amount, currency, billing_address')
+      .select('id, customer_id, order_number, internal_number, total_amount, currency, billing_address, salesperson_name')
       .eq('id', orderId!).maybeSingle()
     if (!ord) return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    salespersonName = (ord as any).salesperson_name || undefined
+
     const { data: cust } = ord.customer_id
       ? await admin.from('customers').select('company_name, contact_name, email').eq('id', ord.customer_id).maybeSingle()
       : { data: null as any }
