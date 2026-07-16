@@ -77,8 +77,8 @@ Benutzer lesbar (nur Metadaten wie Name/Icon).
 | **3c** | Alix-ID-UI: `/id/login` (OTP), `/id/apps` (Picker), `/id/konto`, `/id/sicherheit`, `/id/sitzungen` | ✅ fertig |
 | **3d** | AlixWork-Portal auf SSO umstellen (Authorization-Code-Flow, Fallback auf OTP) | ✅ fertig |
 | **3e** | Admin: `/id-admin/identities`, `/organizations`, `/applications`, `/access`, `/sessions`, `/security-events`, `/emergency-lock` | ✅ fertig |
-| **3f** | MFA-Pflicht für sensible Rollen, Passkey-Vorbereitung, Risk-Scoring | ⏳ |
-| **3g** | Weitere Apps: AlixSmart → Academy → Medi Metropole → Mediapaket → Studio → eAnamnese → Finance (jeweils einzeln getestet) | 🚀 gestartet (Framework + Rollout-Plan) |
+| **3f** | MFA-Pflicht in `alix-id-authorize` (Minimum). Passkey-Registrierung + Risk-Scoring bewusst später | ✅ fertig (Minimum) |
+| **3g** | Weitere Apps: AlixSmart ✅ · Academy · Medi Metropole · Mediapaket (`inactive`, MFA-frei, konfiguriert) · Studio · eAnamnese · Finance (`inactive`, MFA-pflichtig, warten auf 3f-Rollout) | ✅ Katalog vollständig |
 
 Jede Sub-Phase endet mit dokumentiertem Test + Rollback.
 
