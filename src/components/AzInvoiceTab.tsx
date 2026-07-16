@@ -585,6 +585,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function sendByEmail(): Promise<boolean> {
+    console.log('[AzInvoice] sendByEmail called', {
+      hasDeposit, existingInvoice, customerEmail: customer?.email,
+    });
     if (!hasDeposit && !existingInvoice) {
       toast.error('Keine Anzahlung vereinbart.');
       return false;
