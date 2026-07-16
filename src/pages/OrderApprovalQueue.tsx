@@ -78,7 +78,7 @@ export default function OrderApprovalQueue() {
   }, []);
 
   /** Core-Freigabe für eine einzelne Bestellung. Führt DB-Update + Auto-Reservierung aus. */
-  const approveCore = async (row: Row): Promise<{ ok: boolean; error?: string; reservedInfo?: { department: string; serial: string; model: string } | null }> => {
+  const approveCore = async (row: Row): Promise<{ ok: boolean; error?: string; reservedInfo?: { department: string; serial: string; model: string } | null; supplierSent?: { ok: boolean; message: string } | null }> => {
     const { error } = await supabase
       .from('production_orders')
       .update({
@@ -138,7 +138,20 @@ export default function OrderApprovalQueue() {
     } catch (e) {
       console.error('Auto-Reservierung fehlgeschlagen', e);
     }
-    return { ok: true, reservedInfo };
+
+    // Kein Gerät in Lager/Warehouse gefunden → Bestellung realisieren:
+    // PDF automatisch an zugeteilten Lieferanten senden.
+    let supplierSent: { ok: boolean; message: string } | null = null;
+    if (!reservedInfo && row.supplier_id) {
+      try {
+        const { sendProductionOrderEmail } = await import('@/lib/send-production-order-email');
+        const res = await sendProductionOrderEmail(row.id);
+        supplierSent = { ok: res.ok, message: res.message };
+      } catch (e: any) {
+        supplierSent = { ok: false, message: e?.message || 'E-Mail-Versand fehlgeschlagen' };
+      }
+    }
+    return { ok: true, reservedInfo, supplierSent };
   };
 
   const approve = async (id: string) => {
@@ -153,8 +166,12 @@ export default function OrderApprovalQueue() {
       toast.success(
         `Freigegeben — Gerät ${res.reservedInfo.model} (SN ${res.reservedInfo.serial}) aus ${res.reservedInfo.department} vergeben`,
       );
-    } else if (row.modellname) {
-      toast.success('Bestellung freigegeben — kein passendes Gerät in Lager/Warehouse gefunden');
+    } else if (res.supplierSent?.ok) {
+      toast.success(`Freigegeben — kein Lagergerät gefunden, PDF an Lieferant gesendet (${res.supplierSent.message})`);
+    } else if (res.supplierSent && !res.supplierSent.ok) {
+      toast.warning(`Freigegeben, aber Lieferanten-Versand fehlgeschlagen: ${res.supplierSent.message}`);
+    } else if (row.modellname && !row.supplier_id) {
+      toast.warning('Freigegeben — kein Lagergerät und kein Lieferant hinterlegt. Bitte manuell versenden.');
     } else {
       toast.success('Bestellung freigegeben');
     }
@@ -169,17 +186,24 @@ export default function OrderApprovalQueue() {
     if (targets.length === 0) return toast.info('Bitte zuerst Bestellungen auswählen.');
     if (!confirm(`${targets.length} Bestellung(en) freigeben?`)) return;
     setBulkBusy(true);
-    let ok = 0, fail = 0, reserved = 0;
+    let ok = 0, fail = 0, reserved = 0, sent = 0, sendFail = 0;
     for (const row of targets) {
       const res = await approveCore(row);
-      if (res.ok) { ok++; if (res.reservedInfo) reserved++; } else fail++;
+      if (res.ok) {
+        ok++;
+        if (res.reservedInfo) reserved++;
+        if (res.supplierSent?.ok) sent++;
+        else if (res.supplierSent && !res.supplierSent.ok) sendFail++;
+      } else fail++;
     }
     setBulkBusy(false);
     setRows((prev) => prev.filter((r) => !targets.some((t) => t.id === r.id && ok > 0)));
     setSelected(new Set());
     window.dispatchEvent(new Event('einkauf-counts-refresh'));
-    if (fail === 0) toast.success(`${ok} Bestellung(en) freigegeben — ${reserved} Gerät(e) reserviert.`);
-    else toast.warning(`${ok} freigegeben, ${fail} fehlgeschlagen.`);
+    const parts = [`${ok} freigegeben`, `${reserved} Gerät(e) reserviert`, `${sent} an Lieferant gesendet`];
+    if (sendFail > 0) parts.push(`${sendFail} Versand-Fehler`);
+    if (fail === 0) toast.success(parts.join(' — '));
+    else toast.warning(`${parts.join(' — ')} · ${fail} fehlgeschlagen`);
     await load();
   };
 
