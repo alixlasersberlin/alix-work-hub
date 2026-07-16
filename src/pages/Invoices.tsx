@@ -746,6 +746,29 @@ export default function Invoices() {
       } else {
         console.warn('[Invoices] Keine Kunden-Email gefunden für', r.customer_name, r.customer_id);
       }
+
+      // 4) Vertriebspartner (salesperson) aus verknüpftem Auftrag → user_profiles.email → BCC
+      if (r.reference_number) {
+        const { data: ord } = await supabase
+          .from('orders')
+          .select('salesperson_name')
+          .or(`order_number.eq.${r.reference_number},internal_number.eq.${r.reference_number}`)
+          .not('salesperson_name', 'is', null)
+          .limit(1)
+          .maybeSingle();
+        const spName = (ord as any)?.salesperson_name?.trim();
+        if (spName) {
+          const { data: sp } = await supabase
+            .from('user_profiles')
+            .select('email')
+            .ilike('full_name', spName)
+            .maybeSingle();
+          const spEmail = (sp as any)?.email;
+          if (spEmail) {
+            setEmailForm((f) => ({ ...f, bcc: spEmail }));
+          }
+        }
+      }
     } catch (e) {
       console.error('[Invoices] openEmail error', e);
     } finally {
