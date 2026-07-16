@@ -302,18 +302,35 @@ export default function ProductionOrderIn() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => moveToLager(r)}
-                        title="In Lagerverwaltung übernehmen"
-                        className={cn(
-                          (r.status === 'fertig' || r.status === 'versendet') &&
-                            'border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10',
-                        )}
-                      >
-                        <PackagePlus className="w-3.5 h-3.5 mr-1.5" /> In Lager
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              (r.status === 'fertig' || r.status === 'versendet') &&
+                                'border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10',
+                            )}
+                          >
+                            <PackagePlus className="w-3.5 h-3.5 mr-1.5" />
+                            Verschieben
+                            <ChevronDown className="w-3 h-3 ml-1" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuLabel>In Lager-Abteilung</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          {LAGER_TARGETS.map(t => {
+                            const Icon = t.icon;
+                            return (
+                              <DropdownMenuItem key={t.value} onClick={() => openMoveDialog(r, t.value)}>
+                                <Icon className="w-3.5 h-3.5 mr-2" />
+                                {t.label}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <Button
                         variant="outline"
                         size="sm"
