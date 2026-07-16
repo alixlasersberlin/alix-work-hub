@@ -82,7 +82,7 @@ export default function IdAdminAccess() {
           <div><Label>Organisation</Label>
             <select className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm" value={form.organization_id} onChange={(e) => setForm(f => ({ ...f, organization_id: e.target.value }))}>
               <option value="">(keine)</option>
-              {orgs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+              {orgs.map(o => <option key={o.id} value={o.id}>{o.display_name ?? o.legal_name}</option>)}
             </select>
           </div>
           <div><Label>Applikation</Label>
