@@ -471,12 +471,12 @@ export default function PdfOrderImportReview() {
                   {draft.items.map((it, idx) => (
                     <tr key={idx} className="border-t border-border">
                       <td className="p-1 text-center text-muted-foreground">{it.position}</td>
-                      <td className="p-1"><Input value={it.product_name} onChange={(e) => setItem(idx, 'product_name', e.target.value)} className="h-7 text-xs" /></td>
-                      <td className="p-1"><Input value={it.sku} onChange={(e) => setItem(idx, 'sku', e.target.value)} className="h-7 text-xs" /></td>
-                      <td className="p-1"><Input value={it.quantity} onChange={(e) => setItem(idx, 'quantity', e.target.value)} className="h-7 text-xs text-right" /></td>
-                      <td className="p-1"><Input value={it.unit_price} onChange={(e) => setItem(idx, 'unit_price', e.target.value)} className="h-7 text-xs text-right" /></td>
-                      <td className="p-1"><Input value={it.total_price} onChange={(e) => setItem(idx, 'total_price', e.target.value)} className="h-7 text-xs text-right" /></td>
-                      <td className="p-1"><Input value={it.tax_rate} onChange={(e) => setItem(idx, 'tax_rate', e.target.value)} className="h-7 text-xs text-right" /></td>
+                      <td className="p-1"><Input value={it.product_name} onChange={(e) => setItem(idx, 'product_name', e.target.value)} onFocus={() => focusItem(idx, 'product_name', 'Produkt')} className={`h-7 text-xs ${activeItem?.idx === idx && activeItem.key === 'product_name' ? 'ring-2 ring-amber-400' : ''}`} /></td>
+                      <td className="p-1"><Input value={it.sku} onChange={(e) => setItem(idx, 'sku', e.target.value)} onFocus={() => focusItem(idx, 'sku', 'SKU')} className={`h-7 text-xs ${activeItem?.idx === idx && activeItem.key === 'sku' ? 'ring-2 ring-amber-400' : ''}`} /></td>
+                      <td className="p-1"><Input value={it.quantity} onChange={(e) => setItem(idx, 'quantity', e.target.value)} onFocus={() => focusItem(idx, 'quantity', 'Menge')} className={`h-7 text-xs text-right ${activeItem?.idx === idx && activeItem.key === 'quantity' ? 'ring-2 ring-amber-400' : ''}`} /></td>
+                      <td className="p-1"><Input value={it.unit_price} onChange={(e) => setItem(idx, 'unit_price', e.target.value)} onFocus={() => focusItem(idx, 'unit_price', 'EP')} className={`h-7 text-xs text-right ${activeItem?.idx === idx && activeItem.key === 'unit_price' ? 'ring-2 ring-amber-400' : ''}`} /></td>
+                      <td className="p-1"><Input value={it.total_price} onChange={(e) => setItem(idx, 'total_price', e.target.value)} onFocus={() => focusItem(idx, 'total_price', 'Summe')} className={`h-7 text-xs text-right ${activeItem?.idx === idx && activeItem.key === 'total_price' ? 'ring-2 ring-amber-400' : ''}`} /></td>
+                      <td className="p-1"><Input value={it.tax_rate} onChange={(e) => setItem(idx, 'tax_rate', e.target.value)} onFocus={() => focusItem(idx, 'tax_rate', 'MwSt %')} className={`h-7 text-xs text-right ${activeItem?.idx === idx && activeItem.key === 'tax_rate' ? 'ring-2 ring-amber-400' : ''}`} /></td>
                       <td className="p-1 text-center"><Button size="sm" variant="ghost" onClick={() => removeItem(idx)}>×</Button></td>
                     </tr>
                   ))}
