@@ -243,6 +243,8 @@ export default function Lagergeraete({
   const canReserve = isAdmin || hasRole('Order');
   const canManage = isAdmin || hasRole('Order') || hasRole('Auftragsverwaltung') || hasRole('SACHBEARBEITUNG');
   const [devices, setDevices] = useState<LagerDevice[]>([]);
+  const [lastFailedByOrder, setLastFailedByOrder] = useState<Record<string, { id: string; template: string | null; recipient_email: string | null; created_at: string; metadata: any; status: string | null }>>({});
+  const [resendingOrderId, setResendingOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -622,6 +624,76 @@ export default function Lagergeraete({
     }
     setDevices(rows.map((r) => ({ ...r, orders: r.reserved_order_id ? orderMap[r.reserved_order_id] ?? null : null })) as LagerDevice[]);
     setLoading(false);
+
+    // Last failed E-Mail-Versuch pro reserviertem Auftrag laden
+    if (orderIds.length > 0) {
+      try {
+        const orFilters = orderIds.map((oid) => `metadata->>idempotency_key.ilike.%${oid}%`).join(',');
+        const { data: logs } = await supabase
+          .from('email_send_log')
+          .select('id, template, recipient_email, status, created_at, metadata')
+          .in('status', ['failed', 'bounced', 'error'])
+          .or(orFilters)
+          .gte('created_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+          .order('created_at', { ascending: false })
+          .limit(500);
+        const map: Record<string, any> = {};
+        (logs ?? []).forEach((l: any) => {
+          const idk: string = l?.metadata?.idempotency_key || '';
+          const matched = orderIds.find((oid) => idk.includes(oid));
+          if (matched && !map[matched]) map[matched] = l;
+        });
+        setLastFailedByOrder(map);
+      } catch { setLastFailedByOrder({}); }
+    } else {
+      setLastFailedByOrder({});
+    }
+  };
+
+  const KNOWN_EMAIL_TEMPLATE_KEYS = [
+    'customer_warehouse_received',
+    'customer_warehouse_prepared',
+    'customer_in_production',
+    'customer_in_transit',
+    'customer_shipping_notice',
+    'customer_delivered',
+  ] as const;
+  type EmailTplKey = typeof KNOWN_EMAIL_TEMPLATE_KEYS[number];
+  const resolveTemplateKeyFromLog = (l: any): EmailTplKey => {
+    const idk: string = l?.metadata?.idempotency_key || '';
+    const found = KNOWN_EMAIL_TEMPLATE_KEYS.find((k) => idk.startsWith(k + '-'));
+    if (found) return found;
+    const tpl: string = (l?.template || '').toLowerCase();
+    if (tpl.includes('production')) return 'customer_in_production';
+    if (tpl.includes('transit')) return 'customer_in_transit';
+    if (tpl.includes('prepared')) return 'customer_warehouse_prepared';
+    if (tpl.includes('delivered')) return 'customer_delivered';
+    if (tpl.includes('received') || tpl.includes('warehouse')) return 'customer_warehouse_received';
+    return 'customer_shipping_notice';
+  };
+
+  const handleResendLastFailed = async (orderId: string, deviceId?: string) => {
+    const log = lastFailedByOrder[orderId];
+    if (!log || resendingOrderId) return;
+    setResendingOrderId(orderId);
+    try {
+      const key = resolveTemplateKeyFromLog(log);
+      const r = await sendCustomerShippingNotice(orderId, deviceId, 'manuell', key);
+      if (r.ok) {
+        toast.success(`Erneut versendet: ${r.message}`);
+        setLastFailedByOrder((prev) => {
+          const next = { ...prev };
+          delete next[orderId];
+          return next;
+        });
+      } else {
+        toast.error(`Fehler beim erneuten Versand: ${r.message}`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Unbekannter Fehler beim erneuten Versand');
+    } finally {
+      setResendingOrderId(null);
+    }
   };
 
   useEffect(() => {
@@ -2257,6 +2329,19 @@ export default function Lagergeraete({
                           }}
                         >
                           <Mail className="w-4 h-4" /> E-Mail an Kunde
+                        </Button>
+                      )}
+                      {d.reserved_order_id && lastFailedByOrder[d.reserved_order_id] && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={resendingOrderId === d.reserved_order_id}
+                          onClick={() => handleResendLastFailed(d.reserved_order_id!, d.id)}
+                          className="gap-1 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-400"
+                          title={`Letzten Fehlversuch erneut senden (${lastFailedByOrder[d.reserved_order_id]?.template ?? ''} → ${lastFailedByOrder[d.reserved_order_id]?.recipient_email ?? ''})`}
+                        >
+                          <Mail className="w-4 h-4" />
+                          {resendingOrderId === d.reserved_order_id ? 'Sende…' : 'Fehlversuch erneut senden'}
                         </Button>
                       )}
                       {d.reserved_order_id && (
