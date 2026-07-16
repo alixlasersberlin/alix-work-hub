@@ -156,7 +156,7 @@ export default function PdfOrderImportNew() {
                   <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => pickFile(e.target.files?.[0])} />
                 </label>
               </p>
-              <p className="text-xs text-muted-foreground">Max. {MAX_SIZE_MB} MB · nur PDF</p>
+              <p className="text-xs text-muted-foreground">Max. {maxSizeMb} MB · nur PDF</p>
               {file && (
                 <div className="mt-4 text-sm inline-flex items-center gap-2 rounded-md bg-secondary/60 px-3 py-2">
                   <FileText className="w-4 h-4" />
@@ -170,7 +170,7 @@ export default function PdfOrderImportNew() {
               <label className="text-sm font-medium">Dokumenttyp</label>
               <Select value={docType} onValueChange={setDocType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{DOC_TYPES.map((t) => <SelectItem key={t.v} value={t.v}>{t.label}</SelectItem>)}</SelectContent>
+                <SelectContent>{docTypes.map((t) => <SelectItem key={t.v} value={t.v}>{t.label}</SelectItem>)}</SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">Die KI erkennt den Typ eigenständig – deine Auswahl dient als Fallback.</p>
             </div>
