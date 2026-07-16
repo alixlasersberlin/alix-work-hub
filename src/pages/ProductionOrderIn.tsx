@@ -6,11 +6,20 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Inbox, Search, Download, Building2, Calendar, UserCog } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Inbox, Search, Download, Building2, Calendar, UserCog, Warehouse, RefreshCw, PackagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { cn } from '@/lib/utils';
+
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'offen', label: 'offen' },
+  { value: 'in Bearbeitung', label: 'in Bearbeitung' },
+  { value: 'fertig', label: 'fertig produziert' },
+  { value: 'versendet', label: 'versendet' },
+  { value: 'erledigt', label: 'erledigt' },
+];
 
 interface Row {
   id: string;
@@ -40,6 +49,31 @@ export default function ProductionOrderIn() {
   const [search, setSearch] = useState('');
   const [reassignFor, setReassignFor] = useState<Row | null>(null);
   const canReassign = isAdmin || roles.includes('Auftragsverwaltung') || roles.includes('Order');
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const changeStatus = async (r: Row, newStatus: string) => {
+    setBusyId(r.id);
+    const { error } = await supabase
+      .from('production_orders')
+      .update({ status: newStatus })
+      .eq('id', r.id);
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success(`Status geändert: "${newStatus}"`);
+    setRows(prev => prev.map(x => x.id === r.id ? { ...x, status: newStatus } : x));
+  };
+
+  const moveToLager = (r: Row) => {
+    const params = new URLSearchParams({
+      from_production: r.id,
+      order_number: r.order_number || '',
+      production_order_number: r.production_order_number || '',
+      model: r.modellname || '',
+      color: r.farbe || '',
+    });
+    toast.info('Bitte im Lager als Neugerät erfassen — Daten wurden vorbereitet.');
+    navigate(`/lager/lagergeraete?${params.toString()}`);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -47,7 +81,6 @@ export default function ProductionOrderIn() {
       .from('production_orders')
       .select('id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, pdf_path, supplier_id, approval_status, approved_at, created_at, is_reclamation, customer_name_snapshot, supplier:suppliers(name)')
       .eq('approval_status', 'approved')
-      .not('status', 'in', '("fertig","versendet")')
       .order('approved_at', { ascending: false });
     if (error) toast.error(error.message);
     else setRows(data || []);
@@ -102,9 +135,14 @@ export default function ProductionOrderIn() {
             Freigegebene Bestellungen, gruppiert nach Lieferant
           </p>
         </div>
-        <Badge variant="outline" className="text-xs">
-          {filtered.length} freigegebene Bestellungen
-        </Badge>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className="text-xs">
+            {filtered.length} freigegebene Bestellungen
+          </Badge>
+          <Button variant="outline" size="sm" onClick={() => navigate('/lager')}>
+            <Warehouse className="w-4 h-4 mr-1.5" /> Zur Lagerverwaltung
+          </Button>
+        </div>
       </div>
 
       <Card className="p-3">
@@ -149,7 +187,6 @@ export default function ProductionOrderIn() {
                         {r.is_reclamation && (
                           <Badge variant="outline" className="text-[10px] border-red-500/40 text-red-500">Reklamation</Badge>
                         )}
-                        <Badge variant="outline" className="text-[10px]">{r.status}</Badge>
                       </div>
                       {r.customer_name_snapshot && (
                         <div className="text-xs font-medium text-foreground/90 mt-0.5 truncate">
@@ -168,7 +205,34 @@ export default function ProductionOrderIn() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      <Select
+                        value={r.status}
+                        onValueChange={(v) => v !== r.status && changeStatus(r, v)}
+                        disabled={busyId === r.id}
+                      >
+                        <SelectTrigger className="h-9 w-[170px]">
+                          <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => moveToLager(r)}
+                        title="In Lagerverwaltung übernehmen"
+                        className={cn(
+                          (r.status === 'fertig' || r.status === 'versendet') &&
+                            'border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10',
+                        )}
+                      >
+                        <PackagePlus className="w-3.5 h-3.5 mr-1.5" /> In Lager
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
