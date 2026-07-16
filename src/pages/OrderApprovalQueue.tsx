@@ -78,7 +78,7 @@ export default function OrderApprovalQueue() {
   }, []);
 
   /** Core-Freigabe für eine einzelne Bestellung. Führt DB-Update + Auto-Reservierung aus. */
-  const approveCore = async (row: Row): Promise<{ ok: boolean; error?: string; reservedInfo?: { department: string; serial: string; model: string } | null }> => {
+  const approveCore = async (row: Row): Promise<{ ok: boolean; error?: string; reservedInfo?: { department: string; serial: string; model: string } | null; supplierSent?: { ok: boolean; message: string } | null }> => {
     const { error } = await supabase
       .from('production_orders')
       .update({
@@ -138,7 +138,20 @@ export default function OrderApprovalQueue() {
     } catch (e) {
       console.error('Auto-Reservierung fehlgeschlagen', e);
     }
-    return { ok: true, reservedInfo };
+
+    // Kein Gerät in Lager/Warehouse gefunden → Bestellung realisieren:
+    // PDF automatisch an zugeteilten Lieferanten senden.
+    let supplierSent: { ok: boolean; message: string } | null = null;
+    if (!reservedInfo && row.supplier_id) {
+      try {
+        const { sendProductionOrderEmail } = await import('@/lib/send-production-order-email');
+        const res = await sendProductionOrderEmail(row.id);
+        supplierSent = { ok: res.ok, message: res.message };
+      } catch (e: any) {
+        supplierSent = { ok: false, message: e?.message || 'E-Mail-Versand fehlgeschlagen' };
+      }
+    }
+    return { ok: true, reservedInfo, supplierSent };
   };
 
   const approve = async (id: string) => {
