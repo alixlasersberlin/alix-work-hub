@@ -16,27 +16,33 @@ import {
 interface MagicLinkEmailProps {
   siteName: string
   confirmationUrl: string
+  token?: string
 }
 
 export const MagicLinkEmail = ({
   siteName,
   confirmationUrl,
+  token,
 }: MagicLinkEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="de" dir="ltr">
     <Head />
-    <Preview>Your login link for {siteName}</Preview>
+    <Preview>Ihr Anmeldecode für {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Your login link</Heading>
+        <Heading style={h1}>AlixWork · Anmeldung</Heading>
         <Text style={text}>
-          Click the button below to log in to {siteName}. This link will expire
-          shortly.
+          Geben Sie den folgenden 6-stelligen Code auf der Anmeldeseite ein:
+        </Text>
+        {token ? <Text style={codeStyle}>{token}</Text> : null}
+        <Text style={text}>
+          Alternativ können Sie diesen Button klicken, um sich direkt anzumelden:
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Log In
+          Jetzt anmelden
         </Button>
         <Text style={footer}>
-          If you didn't request this link, you can safely ignore this email.
+          Code und Link sind 10 Minuten gültig. Wenn Sie diese Anmeldung nicht
+          angefordert haben, ignorieren Sie diese E-Mail.
         </Text>
       </Container>
     </Body>
@@ -46,21 +52,33 @@ export const MagicLinkEmail = ({
 export default MagicLinkEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const container = { padding: '20px 25px', maxWidth: '480px' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: '#0a0a0a',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
   color: '#55575d',
   lineHeight: '1.5',
-  margin: '0 0 25px',
+  margin: '0 0 20px',
+}
+const codeStyle = {
+  fontFamily: 'Courier, monospace',
+  fontSize: '32px',
+  fontWeight: 'bold' as const,
+  color: '#0a0a0a',
+  letterSpacing: '8px',
+  textAlign: 'center' as const,
+  backgroundColor: '#f5f5f5',
+  padding: '16px 0',
+  borderRadius: '8px',
+  margin: '0 0 24px',
 }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: '#0a0a0a',
   color: '#ffffff',
   fontSize: '14px',
   borderRadius: '8px',
