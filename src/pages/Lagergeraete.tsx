@@ -243,6 +243,8 @@ export default function Lagergeraete({
   const canReserve = isAdmin || hasRole('Order');
   const canManage = isAdmin || hasRole('Order') || hasRole('Auftragsverwaltung') || hasRole('SACHBEARBEITUNG');
   const [devices, setDevices] = useState<LagerDevice[]>([]);
+  const [lastFailedByOrder, setLastFailedByOrder] = useState<Record<string, { id: string; template: string | null; recipient_email: string | null; created_at: string; metadata: any; status: string | null }>>({});
+  const [resendingOrderId, setResendingOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
