@@ -49,6 +49,31 @@ export default function ProductionOrderIn() {
   const [search, setSearch] = useState('');
   const [reassignFor, setReassignFor] = useState<Row | null>(null);
   const canReassign = isAdmin || roles.includes('Auftragsverwaltung') || roles.includes('Order');
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const changeStatus = async (r: Row, newStatus: string) => {
+    setBusyId(r.id);
+    const { error } = await supabase
+      .from('production_orders')
+      .update({ status: newStatus })
+      .eq('id', r.id);
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success(`Status geändert: "${newStatus}"`);
+    setRows(prev => prev.map(x => x.id === r.id ? { ...x, status: newStatus } : x));
+  };
+
+  const moveToLager = (r: Row) => {
+    const params = new URLSearchParams({
+      from_production: r.id,
+      order_number: r.order_number || '',
+      production_order_number: r.production_order_number || '',
+      model: r.modellname || '',
+      color: r.farbe || '',
+    });
+    toast.info('Bitte im Lager als Neugerät erfassen — Daten wurden vorbereitet.');
+    navigate(`/lager/lagergeraete?${params.toString()}`);
+  };
 
   const load = async () => {
     setLoading(true);
