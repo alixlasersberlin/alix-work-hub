@@ -138,7 +138,26 @@ export default function PdfOrderImportReview() {
     setLoading(false);
   }
 
-  useEffect(() => { document.title = 'PDF-Import prüfen · Alix Work'; load(); }, [id]);
+  useEffect(() => {
+    document.title = 'PDF-Import prüfen · Alix Work';
+    loadPdfOrderImportConfig().then((cfg) => {
+      setConfig(cfg);
+      setFollowups({ ...cfg.auto_followups_default });
+    });
+    load();
+  }, [id]);
+
+  // Standard-Währung aus Config als Fallback befüllen
+  useEffect(() => {
+    if (!draft) return;
+    if (!draft.order.currency && config.default_currency) {
+      setField('order', 'currency', config.default_currency);
+    }
+    if (!draft.order.branch && config.default_branch) {
+      setField('order', 'branch', config.default_branch);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft && !draft.order.currency, config.default_currency]);
 
   // Kundensuche mit Debounce
   useEffect(() => {
