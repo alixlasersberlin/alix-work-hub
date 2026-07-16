@@ -53,6 +53,7 @@ const PdfOrderImportList = lazy(() => import("./pages/PdfOrderImport/List"));
 const PdfOrderImportNew = lazy(() => import("./pages/PdfOrderImport/New"));
 const PdfOrderImportDetail = lazy(() => import("./pages/PdfOrderImport/Detail"));
 const PdfOrderImportReview = lazy(() => import("./pages/PdfOrderImport/Review"));
+const PdfOrderImportKonfiguration = lazy(() => import("./pages/Operation/PdfOrderImportKonfiguration"));
 const PriorityList = lazy(() => import("./pages/PriorityList"));
 const HoldList = lazy(() => import("./pages/HoldList"));
 const RoutePlanning = lazy(() => import("./pages/RoutePlanning"));
@@ -920,6 +921,7 @@ function AppRoutes() {
           <Route path="/auftraege/pdf-import/neu" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Vertrieb', 'Geschäftsführung']}><PdfOrderImportNew /></ProtectedRoute>} />
           <Route path="/auftraege/pdf-import/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Vertrieb', 'Geschäftsführung']}><PdfOrderImportDetail /></ProtectedRoute>} />
           <Route path="/auftraege/pdf-import/:id/review" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Geschäftsführung']}><PdfOrderImportReview /></ProtectedRoute>} />
+          <Route path="/operation/pdf-import-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin']}><PdfOrderImportKonfiguration /></ProtectedRoute>} />
           <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Finanzierungen', 'Order']}><OrderDetail /></ProtectedRoute>} />
           <Route path="/mediapaket" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG']}><MediapaketOverview /></ProtectedRoute>} />
           <Route path="/mediapaket/admin" element={<ProtectedRoute requiredRoles={['Super Admin']}><MediapaketAdmin /></ProtectedRoute>} />

@@ -12,6 +12,7 @@ const tiles = [
   { to: '/operation/logfiles', icon: FileText, title: 'Logfiles', desc: 'System- und Audit-Logs einsehen.' },
   { to: '/operation/alixsmart-migration', icon: Database, title: 'AlixSmart Migration', desc: 'Import Engine: Verbindung, Dry-Run und Wellen-Import.' },
   { to: '/operation/health-check', icon: Activity, title: 'Supabase Health Check', desc: 'Auth- und REST-Endpunkte live testen (Status, Latenz, Fehler).' },
+  { to: '/operation/pdf-import-konfiguration', icon: FileText, title: 'PDF-Auftragsimport', desc: 'Limits, Konfidenz-Schwellen, aktive Dokumenttypen und Standard-Folgeprozesse.' },
 ];
 
 const SECURITY_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung'];
