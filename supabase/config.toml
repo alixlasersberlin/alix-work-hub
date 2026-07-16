@@ -233,3 +233,6 @@ verify_jwt = false
 
 [functions.alix-id-token]
 verify_jwt = false
+
+[functions.auth-email-hook]
+verify_jwt = false
