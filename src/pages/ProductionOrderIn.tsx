@@ -364,7 +364,7 @@ export default function ProductionOrderIn() {
                           {LAGER_TARGETS.map(t => {
                             const Icon = t.icon;
                             return (
-                              <DropdownMenuItem key={t.value} onClick={() => openMoveDialog(r, t.value)}>
+                              <DropdownMenuItem key={t.value} onClick={() => handleMoveClick(r, t.value)}>
                                 <Icon className="w-3.5 h-3.5 mr-2" />
                                 {t.label}
                               </DropdownMenuItem>
