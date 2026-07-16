@@ -15,6 +15,38 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { cn } from '@/lib/utils';
+import { sendProductionSuccessfulEmail } from '@/lib/send-production-successful-email';
+import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice';
+
+/** Löst je nach neuem Status die passende Kunden-E-Mail aus. */
+async function triggerStatusEmail(r: Row, newStatus: string, trigger: 'automatisch' | 'manuell') {
+  try {
+    if (newStatus === 'fertig') {
+      const res = await sendProductionSuccessfulEmail(r.id, trigger);
+      res.ok
+        ? toast.success(`E-Mail „Produktion erfolgreich" versendet`)
+        : toast.warning(`E-Mail nicht versendet: ${res.message}`);
+      return;
+    }
+    if (!r.order_number) return;
+    const { data: ord } = await supabase
+      .from('orders').select('id').eq('order_number', r.order_number).maybeSingle();
+    if (!ord?.id) return;
+    if (newStatus === 'versendet') {
+      const res = await sendCustomerShippingNotice(ord.id, undefined, trigger, 'customer_in_transit');
+      res.ok
+        ? toast.success(`E-Mail „Unterwegs" versendet`)
+        : toast.warning(`E-Mail nicht versendet: ${res.message}`);
+    } else if (newStatus === 'in Bearbeitung') {
+      const res = await sendCustomerShippingNotice(ord.id, undefined, trigger, 'customer_in_production');
+      res.ok
+        ? toast.success(`E-Mail „In Produktion" versendet`)
+        : toast.warning(`E-Mail nicht versendet: ${res.message}`);
+    }
+  } catch (e: any) {
+    toast.warning('E-Mail-Versand fehlgeschlagen: ' + (e?.message || e));
+  }
+}
 
 type LagerTarget = 'Bestand' | 'Transfer' | 'Produktion';
 const LAGER_TARGETS: { value: LagerTarget; label: string; icon: typeof Warehouse; route: string }[] = [
@@ -75,6 +107,7 @@ export default function ProductionOrderIn() {
     if (error) return toast.error(error.message);
     toast.success(`Status geändert: "${newStatus}"`);
     setRows(prev => prev.map(x => x.id === r.id ? { ...x, status: newStatus } : x));
+    void triggerStatusEmail(r, newStatus, 'manuell');
   };
 
   const performMove = async (r: Row, target: LagerTarget, serialArg: string) => {
@@ -171,6 +204,7 @@ export default function ProductionOrderIn() {
       toast.success(`In „${targetCfg.label}" verschoben · SN ${serial}`, {
         action: { label: 'Öffnen', onClick: () => navigate(targetCfg.route) },
       });
+      void triggerStatusEmail({ ...r, seriennummer: serial }, newProdStatus, 'manuell');
       setMoveFor(null);
       setMoveSerial('');
     } catch (e: any) {
