@@ -45,6 +45,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [reservedByItemId, setReservedByItemId] = useState<Record<string, { serial: string; model: string; department: string }>>({});
   const [manualItems, setManualItems] = useState<Array<{ item_name: string; description: string; sku: string; quantity: string; unit: string }>>([]);
   const [katalogPickerOpen, setKatalogPickerOpen] = useState(false);
   const [pendingSnapshotIds, setPendingSnapshotIds] = useState<string[]>([]);
@@ -130,6 +131,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         setMainMode('order');
         const { data: srcItems } = await supabase.from('order_items').select('*').eq('order_id', po.order_id).order('item_order');
         setOrderItems(srcItems || []);
+        await loadReservedForOrder(po.order_id, srcItems || []);
       } else if ((po as any).customer_id) {
         const { data: cust } = await supabase.from('customers').select('id, company_name, contact_name').eq('id', (po as any).customer_id).maybeSingle();
         setSelectedCustomer(cust || { id: (po as any).customer_id, company_name: (po as any).customer_name_snapshot, contact_name: null });
@@ -229,8 +231,10 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     setOrderResults([]);
     setOrderSearch('');
     const { data } = await supabase.from('order_items').select('*').eq('order_id', o.id).order('item_order');
-    setOrderItems(data || []);
+    const items = data || [];
+    setOrderItems(items);
     setSelectedItemIds(new Set());
+    await loadReservedForOrder(o.id, items);
   };
 
   const searchCustomers = async () => {
@@ -257,9 +261,83 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   };
 
   const toggleItem = (id: string) => {
+    if (reservedByItemId[id]) return; // bereits im Lager reserviert – nicht bestellbar
     const next = new Set(selectedItemIds);
     next.has(id) ? next.delete(id) : next.add(id);
     setSelectedItemIds(next);
+  };
+
+  // Matching-Helfer: normalisiert Modellname + prüft Farbüberschneidung
+  const normalizeStr = (s: string | null | undefined) =>
+    (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const COLOR_MAP: Record<string, string> = {
+    weiss: 'white', weiß: 'white', white: 'white',
+    schwarz: 'black', black: 'black',
+    gold: 'gold', golden: 'gold',
+    silber: 'silver', silver: 'silver',
+    grau: 'grey', gray: 'grey', grey: 'grey',
+    blau: 'blue', blue: 'blue', rot: 'red', red: 'red',
+    pink: 'pink', rosa: 'pink',
+    grün: 'green', gruen: 'green', green: 'green',
+  };
+  const colorTokens = (s: string | null | undefined) => {
+    const out = new Set<string>();
+    if (!s) return out;
+    for (const t of s.toLowerCase().split(/[^a-zäöüß]+/).filter(Boolean)) {
+      const c = COLOR_MAP[t];
+      if (c) out.add(c);
+    }
+    return out;
+  };
+  const itemMatchesDevice = (item: any, dev: { model_name: string; notes: string | null }) => {
+    const itemStr = normalizeStr(`${item.item_name || ''} ${item.sku || ''}`);
+    const devStr = normalizeStr(dev.model_name);
+    if (!itemStr || !devStr) return false;
+    // Modellname-Kern: Bindestriche/Slashes entfernen
+    const stripPunct = (s: string) => s.replace(/[\-\/]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const a = stripPunct(itemStr);
+    const b = stripPunct(devStr);
+    // Token-basierter Vergleich: alle „starken" Tokens (>=4 Zeichen, kein Farbwort) aus dem Item müssen im Device vorkommen
+    const strong = a.split(' ').filter(t => t.length >= 4 && !COLOR_MAP[t]);
+    if (strong.length === 0) return false;
+    for (const t of strong) if (!b.includes(t)) return false;
+    // Farben (falls angegeben) müssen sich überschneiden
+    const wantColors = colorTokens(`${item.item_name || ''} ${item.sku || ''}`);
+    if (wantColors.size > 0) {
+      const haveColors = colorTokens(`${dev.model_name} ${dev.notes || ''}`);
+      let ok = false;
+      for (const c of wantColors) { if (haveColors.has(c)) { ok = true; break; } }
+      if (!ok) return false;
+    }
+    return true;
+  };
+
+  const loadReservedForOrder = async (orderId: string, items: any[]) => {
+    const { data: devs } = await supabase
+      .from('lager_devices')
+      .select('serial_number, model_name, notes')
+      .eq('reserved_order_id', orderId);
+    const nonLeih = (devs || []).filter((d: any) => {
+      const n = d.notes ?? '';
+      return !(n.includes('[Typ: Leihgerät]') || n.includes('[Leihgerät]'));
+    });
+    const map: Record<string, { serial: string; model: string; department: string }> = {};
+    for (const item of items) {
+      const hit = nonLeih.find((d: any) => itemMatchesDevice(item, d));
+      if (hit) {
+        const statusMatch = /\[Status:\s*([^\]]+)\]/.exec(hit.notes ?? '');
+        const dept = statusMatch?.[1]?.trim() || 'Lager';
+        map[item.id] = { serial: hit.serial_number, model: hit.model_name, department: dept };
+      }
+    }
+    setReservedByItemId(map);
+    // Bereits ausgewählte, aber jetzt reservierte Positionen aus der Auswahl entfernen
+    setSelectedItemIds(prev => {
+      if (!Object.keys(map).length) return prev;
+      const next = new Set(prev);
+      for (const id of Object.keys(map)) next.delete(id);
+      return next;
+    });
   };
 
   const selectedItems = useMemo(
@@ -430,25 +508,14 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       if (error) { savingRef.current = false; toast.error(error.message); setSaving(false); return null; }
       await supabase.from('production_order_items').delete().eq('production_order_id', id);
     } else {
-      // Sperre: Pro Auftrag entweder Lager-Reservierung ODER Bestellung.
       if (selectedOrder?.id) {
-        const { data: reservedDevs } = await supabase
-          .from('lager_devices')
-          .select('serial_number, model_name, notes')
-          .eq('reserved_order_id', selectedOrder.id);
-        // Leihgeräte schließen eine Bestellung NICHT aus — sie sind nur temporär verliehen.
-        const blocker = (reservedDevs ?? []).find((d: any) => {
-          const n = d.notes ?? '';
-          const isLeih = n.includes('[Typ: Leihgerät]') || n.includes('[Leihgerät]');
-          return !isLeih;
-        });
-        if (blocker) {
-          savingRef.current = false;
-          setSaving(false);
-          toast.error(
-            `Bestellung nicht möglich: Für Auftrag ${selectedOrder.order_number} ist bereits ein Lagergerät reserviert (${blocker.model_name} · SN ${blocker.serial_number}). Bitte zuerst die Reservierung im Lager aufheben.`,
-          );
-          return null;
+        // Regel: Positionen, für die bereits ein Lagergerät reserviert ist, werden NICHT bestellt.
+        // Sie sind im UI deaktiviert und aus der Auswahl entfernt; hier nur zur Info.
+        if (Object.keys(reservedByItemId).length > 0) {
+          const skipped = Object.values(reservedByItemId)
+            .map(r => `${r.model} · SN ${r.serial}`)
+            .join(', ');
+          toast.info(`${Object.keys(reservedByItemId).length} Position(en) bereits im Lager reserviert – aus Bestellung ausgenommen: ${skipped}`);
         }
 
         // Sperre: pro Auftrag nur EINE reguläre Produktionsbestellung (Reklamationen ausgenommen)
@@ -486,7 +553,6 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           );
           return null;
         }
-
       }
       const { data, error } = await supabase.from('production_orders').insert(payload).select('id').single();
       if (error || !data) {
@@ -507,16 +573,18 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       }
     }
     if (poId) {
-      const fromOrder = selectedItems.map((it, idx) => ({
-        production_order_id: poId,
-        source_order_item_id: it.id,
-        item_name: it.item_name,
-        description: it.description,
-        sku: it.sku,
-        quantity: it.quantity,
-        unit: it.unit,
-        item_order: idx,
-      }));
+      const fromOrder = selectedItems
+        .filter(it => !reservedByItemId[it.id])
+        .map((it, idx) => ({
+          production_order_id: poId,
+          source_order_item_id: it.id,
+          item_name: it.item_name,
+          description: it.description,
+          sku: it.sku,
+          quantity: it.quantity,
+          unit: it.unit,
+          item_order: idx,
+        }));
       const fromManual = cleanManualItems.map((m, idx) => ({
         production_order_id: poId,
         source_order_item_id: null,
@@ -805,18 +873,41 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               <p className="text-sm text-muted-foreground">Keine Positionen im Auftrag.</p>
             ) : (
               <div className="space-y-2">
-                {orderItems.map(it => (
-                  <label key={it.id} className="flex items-start gap-3 p-2 rounded border border-border hover:bg-muted/30 cursor-pointer">
-                    <Checkbox checked={selectedItemIds.has(it.id)} onCheckedChange={() => toggleItem(it.id)} className="mt-1" />
-                    <div className="flex-1">
-                      <div className="font-medium">{it.item_name || '—'}</div>
-                      {it.description && <div className="text-xs text-muted-foreground">{it.description}</div>}
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Menge: {it.quantity} {it.unit || ''} {it.sku && `· SKU: ${it.sku}`}
+                {orderItems.map(it => {
+                  const reserved = reservedByItemId[it.id];
+                  return (
+                    <label
+                      key={it.id}
+                      className={`flex items-start gap-3 p-2 rounded border ${reserved ? 'border-amber-500/40 bg-amber-500/5 cursor-not-allowed opacity-80' : 'border-border hover:bg-muted/30 cursor-pointer'}`}
+                    >
+                      <Checkbox
+                        checked={selectedItemIds.has(it.id)}
+                        onCheckedChange={() => toggleItem(it.id)}
+                        disabled={!!reserved}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium flex items-center gap-2">
+                          {it.item_name || '—'}
+                          {reserved && (
+                            <span className="text-[10px] uppercase tracking-wide bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded">
+                              Bereits im Lager · {reserved.department} · SN {reserved.serial}
+                            </span>
+                          )}
+                        </div>
+                        {it.description && <div className="text-xs text-muted-foreground">{it.description}</div>}
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Menge: {it.quantity} {it.unit || ''} {it.sku && `· SKU: ${it.sku}`}
+                        </div>
+                        {reserved && (
+                          <div className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                            Wird nicht bestellt – Gerät ist bereits im Lager reserviert.
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </label>
-                ))}
+                    </label>
+                  );
+                })}
               </div>
             )
           )}
