@@ -28,8 +28,7 @@ const MFA_APP_KEYS = ['alix_studio', 'alix_eanamnese', 'alix_finance'] as const;
 
 // ────────────────────────── Helpers ──────────────────────────
 
-function b64url(buf: ArrayBuffer): string {
-  const bytes = new Uint8Array(buf);
+function b64url(bytes: Uint8Array): string {
   let bin = '';
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -41,10 +40,10 @@ function randomBytes(len: number): Uint8Array {
 }
 async function sha256b64url(s: string): Promise<string> {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
-  return b64url(buf);
+  return b64url(new Uint8Array(buf));
 }
 function pkce() {
-  const verifier = b64url(randomBytes(48).buffer); // 64 chars, meets 43..128
+  const verifier = b64url(randomBytes(48)); // 64 chars, meets 43..128
   return { verifier };
 }
 async function invoke(path: string, body: unknown, bearer: string) {
