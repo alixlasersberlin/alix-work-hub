@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { FileText, Loader2, Save, Search, UserPlus, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { FileText, Loader2, Save, Search, UserPlus, CheckCircle2, AlertTriangle, MousePointerClick, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { loadPdfOrderImportConfig, DEFAULT_PDF_IMPORT_CONFIG, type PdfOrderImportConfig } from '@/lib/pdf-order-import-config';
+import PdfSelectViewer from '@/components/PdfSelectViewer';
 
 // ---------- Helpers ----------
 function extractValue(v: any): any {
@@ -92,6 +93,35 @@ export default function PdfOrderImportReview() {
   const [createNewCustomer, setCreateNewCustomer] = useState(false);
   const [config, setConfig] = useState<PdfOrderImportConfig>(DEFAULT_PDF_IMPORT_CONFIG);
   const [followups, setFollowups] = useState({ ...DEFAULT_PDF_IMPORT_CONFIG.auto_followups_default });
+  const [activeField, setActiveField] = useState<{ sec: keyof Draft; key: string; label: string } | null>(null);
+  const [activeItem, setActiveItem] = useState<{ idx: number; key: string; label: string } | null>(null);
+  const [pdfSelection, setPdfSelection] = useState<string>('');
+
+  const FIELD_LABELS: Record<string, string> = Object.fromEntries(
+    [...ORDER_FIELDS, ...CUST_FIELDS, ...FIN_FIELDS, ...SALES_FIELDS],
+  );
+
+  function focusField(sec: keyof Draft, key: string) {
+    setActiveItem(null);
+    setActiveField({ sec, key, label: FIELD_LABELS[key] ?? key });
+  }
+  function focusItem(idx: number, key: string, label: string) {
+    setActiveField(null);
+    setActiveItem({ idx, key, label });
+  }
+  function applySelectionToActive() {
+    const val = pdfSelection.trim();
+    if (!val) { toast.error('Bitte zuerst Text im PDF markieren.'); return; }
+    if (activeField) {
+      setField(activeField.sec, activeField.key, val);
+      toast.success(`„${activeField.label}" übernommen`);
+    } else if (activeItem) {
+      setItem(activeItem.idx, activeItem.key, val);
+      toast.success(`Position ${activeItem.idx + 1} · ${activeItem.label} übernommen`);
+    } else {
+      toast.error('Bitte zuerst ein Zielfeld anklicken.');
+    }
+  }
 
   async function load() {
     if (!id) return;
@@ -325,12 +355,36 @@ export default function PdfOrderImportReview() {
       )}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        {/* Links: PDF */}
+        {/* Links: PDF mit Textselektion */}
         <Card className="border-border/60 bg-card/40 backdrop-blur-xl lg:sticky lg:top-4 h-fit">
-          <CardHeader><CardTitle className="text-sm">PDF-Vorschau</CardTitle></CardHeader>
-          <CardContent>
+          <CardHeader className="flex-row items-start justify-between space-y-0 gap-3">
+            <div>
+              <CardTitle className="text-sm">PDF-Vorschau</CardTitle>
+              <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1">
+                <MousePointerClick className="w-3 h-3" /> Feld rechts anklicken, dann Text im PDF markieren und übernehmen.
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs ${
+              activeField || activeItem ? 'border-amber-500/60 bg-amber-500/10' : 'border-border bg-secondary/30'
+            }`}>
+              <Target className="w-3.5 h-3.5 text-amber-400" />
+              <div className="flex-1 min-w-0 truncate">
+                {activeField ? <>Ziel: <span className="font-medium">{activeField.label}</span></>
+                  : activeItem ? <>Ziel: <span className="font-medium">Pos {activeItem.idx + 1} · {activeItem.label}</span></>
+                  : <span className="text-muted-foreground">Kein Zielfeld gewählt</span>}
+              </div>
+              <span className="hidden md:inline text-muted-foreground truncate max-w-[40%]">
+                {pdfSelection ? `„${pdfSelection.slice(0, 40)}${pdfSelection.length > 40 ? '…' : ''}"` : 'Nichts markiert'}
+              </span>
+              <Button size="sm" className="h-7 bg-amber-500 hover:bg-amber-600 text-black"
+                onClick={applySelectionToActive}
+                disabled={!pdfSelection || (!activeField && !activeItem)}
+              >Übernehmen</Button>
+            </div>
             {pdfUrl ? (
-              <iframe src={pdfUrl} className="w-full h-[calc(100vh-220px)] rounded border border-border" />
+              <PdfSelectViewer url={pdfUrl} onSelectionChange={setPdfSelection} />
             ) : <div className="text-sm text-muted-foreground">Vorschau nicht verfügbar.</div>}
           </CardContent>
         </Card>
@@ -382,16 +436,16 @@ export default function PdfOrderImportReview() {
           </Card>
 
           {/* Auftragsdaten */}
-          <Section title="Auftragsdaten" fields={ORDER_FIELDS} data={draft.order} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('order', k, v)} />
+          <Section title="Auftragsdaten" fields={ORDER_FIELDS} data={draft.order} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('order', k, v)} onFocusField={(k) => focusField('order', k)} activeKey={activeField?.sec === 'order' ? activeField.key : null} />
 
           {/* Kunde */}
-          <Section title="Kundendaten" fields={CUST_FIELDS} data={draft.customer} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('customer', k, v)} />
+          <Section title="Kundendaten" fields={CUST_FIELDS} data={draft.customer} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('customer', k, v)} onFocusField={(k) => focusField('customer', k)} activeKey={activeField?.sec === 'customer' ? activeField.key : null} />
 
           {/* Finanzen */}
-          <Section title="Finanzen" fields={FIN_FIELDS} data={draft.financials} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('financials', k, v)} />
+          <Section title="Finanzen" fields={FIN_FIELDS} data={draft.financials} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('financials', k, v)} onFocusField={(k) => focusField('financials', k)} activeKey={activeField?.sec === 'financials' ? activeField.key : null} />
 
           {/* Sales */}
-          <Section title="Vertrieb" fields={SALES_FIELDS} data={draft.sales} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('sales', k, v)} />
+          <Section title="Vertrieb" fields={SALES_FIELDS} data={draft.sales} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('sales', k, v)} onFocusField={(k) => focusField('sales', k)} activeKey={activeField?.sec === 'sales' ? activeField.key : null} />
 
           {/* Positionen */}
           <Card className="border-border/60 bg-card/40 backdrop-blur-xl">
@@ -417,12 +471,12 @@ export default function PdfOrderImportReview() {
                   {draft.items.map((it, idx) => (
                     <tr key={idx} className="border-t border-border">
                       <td className="p-1 text-center text-muted-foreground">{it.position}</td>
-                      <td className="p-1"><Input value={it.product_name} onChange={(e) => setItem(idx, 'product_name', e.target.value)} className="h-7 text-xs" /></td>
-                      <td className="p-1"><Input value={it.sku} onChange={(e) => setItem(idx, 'sku', e.target.value)} className="h-7 text-xs" /></td>
-                      <td className="p-1"><Input value={it.quantity} onChange={(e) => setItem(idx, 'quantity', e.target.value)} className="h-7 text-xs text-right" /></td>
-                      <td className="p-1"><Input value={it.unit_price} onChange={(e) => setItem(idx, 'unit_price', e.target.value)} className="h-7 text-xs text-right" /></td>
-                      <td className="p-1"><Input value={it.total_price} onChange={(e) => setItem(idx, 'total_price', e.target.value)} className="h-7 text-xs text-right" /></td>
-                      <td className="p-1"><Input value={it.tax_rate} onChange={(e) => setItem(idx, 'tax_rate', e.target.value)} className="h-7 text-xs text-right" /></td>
+                      <td className="p-1"><Input value={it.product_name} onChange={(e) => setItem(idx, 'product_name', e.target.value)} onFocus={() => focusItem(idx, 'product_name', 'Produkt')} className={`h-7 text-xs ${activeItem?.idx === idx && activeItem.key === 'product_name' ? 'ring-2 ring-amber-400' : ''}`} /></td>
+                      <td className="p-1"><Input value={it.sku} onChange={(e) => setItem(idx, 'sku', e.target.value)} onFocus={() => focusItem(idx, 'sku', 'SKU')} className={`h-7 text-xs ${activeItem?.idx === idx && activeItem.key === 'sku' ? 'ring-2 ring-amber-400' : ''}`} /></td>
+                      <td className="p-1"><Input value={it.quantity} onChange={(e) => setItem(idx, 'quantity', e.target.value)} onFocus={() => focusItem(idx, 'quantity', 'Menge')} className={`h-7 text-xs text-right ${activeItem?.idx === idx && activeItem.key === 'quantity' ? 'ring-2 ring-amber-400' : ''}`} /></td>
+                      <td className="p-1"><Input value={it.unit_price} onChange={(e) => setItem(idx, 'unit_price', e.target.value)} onFocus={() => focusItem(idx, 'unit_price', 'EP')} className={`h-7 text-xs text-right ${activeItem?.idx === idx && activeItem.key === 'unit_price' ? 'ring-2 ring-amber-400' : ''}`} /></td>
+                      <td className="p-1"><Input value={it.total_price} onChange={(e) => setItem(idx, 'total_price', e.target.value)} onFocus={() => focusItem(idx, 'total_price', 'Summe')} className={`h-7 text-xs text-right ${activeItem?.idx === idx && activeItem.key === 'total_price' ? 'ring-2 ring-amber-400' : ''}`} /></td>
+                      <td className="p-1"><Input value={it.tax_rate} onChange={(e) => setItem(idx, 'tax_rate', e.target.value)} onFocus={() => focusItem(idx, 'tax_rate', 'MwSt %')} className={`h-7 text-xs text-right ${activeItem?.idx === idx && activeItem.key === 'tax_rate' ? 'ring-2 ring-amber-400' : ''}`} /></td>
                       <td className="p-1 text-center"><Button size="sm" variant="ghost" onClick={() => removeItem(idx)}>×</Button></td>
                     </tr>
                   ))}
@@ -461,7 +515,7 @@ export default function PdfOrderImportReview() {
   );
 }
 
-function Section({ title, fields, data, conf, green, yellow, onChange }: {
+function Section({ title, fields, data, conf, green, yellow, onChange, onFocusField, activeKey }: {
   title: string;
   fields: Array<[string, string]>;
   data: Record<string, string>;
@@ -469,6 +523,8 @@ function Section({ title, fields, data, conf, green, yellow, onChange }: {
   green: number;
   yellow: number;
   onChange: (key: string, val: string) => void;
+  onFocusField?: (key: string) => void;
+  activeKey?: string | null;
 }) {
   return (
     <Card className="border-border/60 bg-card/40 backdrop-blur-xl">
@@ -479,7 +535,13 @@ function Section({ title, fields, data, conf, green, yellow, onChange }: {
             <Label className="text-xs flex items-center gap-1.5">
               <ConfPill c={conf[k] ?? null} green={green} yellow={yellow} /> {label}
             </Label>
-            <Input value={data[k] ?? ''} onChange={(e) => onChange(k, e.target.value)} className="h-8 text-sm" />
+            <Input
+              value={data[k] ?? ''}
+              onChange={(e) => onChange(k, e.target.value)}
+              onFocus={() => onFocusField?.(k)}
+              onClick={() => onFocusField?.(k)}
+              className={`h-8 text-sm ${activeKey === k ? 'ring-2 ring-amber-400 border-amber-400' : ''}`}
+            />
           </div>
         ))}
       </CardContent>
