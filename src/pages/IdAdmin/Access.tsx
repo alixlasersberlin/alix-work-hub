@@ -76,7 +76,7 @@ export default function IdAdminAccess() {
           <div className="md:col-span-2"><Label>Identität</Label>
             <select className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm" value={form.identity_id} onChange={(e) => setForm(f => ({ ...f, identity_id: e.target.value }))}>
               <option value="">— wählen —</option>
-              {idents.map(i => <option key={i.id} value={i.id}>{i.display_name ?? i.id.slice(0, 8)}</option>)}
+              {idents.map(i => <option key={i.id} value={i.id}>{i.display_name ?? i.primary_email}</option>)}
             </select>
           </div>
           <div><Label>Organisation</Label>
