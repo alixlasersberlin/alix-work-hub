@@ -305,8 +305,9 @@ export default function PdfOrderImportReview() {
       toast.error('Import fehlgeschlagen: ' + (error?.message ?? (data as any)?.error));
       return;
     }
-    toast.success(`Auftrag ${(data as any).order_number} angelegt.`);
-    nav('/auftraege');
+    const isOffer = imp?.document_type === 'offer';
+    toast.success(`${isOffer ? 'Angebot' : 'Auftrag'} ${(data as any).order_number} angelegt.`);
+    nav(isOffer ? '/verkauf' : '/auftraege');
   }
 
   if (loading || !draft || !imp) {
@@ -340,7 +341,7 @@ export default function PdfOrderImportReview() {
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Entwurf speichern
           </Button>
           <Button onClick={commit} disabled={saving} className="bg-amber-500 hover:bg-amber-600 text-black gap-2">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Auftrag anlegen
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} {imp.document_type === 'offer' ? 'Angebot anlegen' : 'Auftrag anlegen'}
           </Button>
         </div>
       </div>
