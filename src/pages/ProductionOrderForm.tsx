@@ -508,15 +508,15 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       if (error) { savingRef.current = false; toast.error(error.message); setSaving(false); return null; }
       await supabase.from('production_order_items').delete().eq('production_order_id', id);
     } else {
-      // Regel: Positionen, für die bereits ein Lagergerät reserviert ist, werden NICHT bestellt.
-      // Sie sind bereits im Auswahl-UI deaktiviert und aus der Auswahl entfernt. Die restlichen
-      // Positionen dürfen weiterhin regulär bestellt werden.
-      if (selectedOrder?.id && Object.keys(reservedByItemId).length > 0) {
-        const skipped = Object.values(reservedByItemId)
-          .map(r => `${r.model} · SN ${r.serial}`)
-          .join(', ');
-        toast.info(`${Object.keys(reservedByItemId).length} Position(en) bereits im Lager reserviert – aus Bestellung ausgenommen: ${skipped}`);
-      }
+      if (selectedOrder?.id) {
+        // Regel: Positionen, für die bereits ein Lagergerät reserviert ist, werden NICHT bestellt.
+        // Sie sind im UI deaktiviert und aus der Auswahl entfernt; hier nur zur Info.
+        if (Object.keys(reservedByItemId).length > 0) {
+          const skipped = Object.values(reservedByItemId)
+            .map(r => `${r.model} · SN ${r.serial}`)
+            .join(', ');
+          toast.info(`${Object.keys(reservedByItemId).length} Position(en) bereits im Lager reserviert – aus Bestellung ausgenommen: ${skipped}`);
+        }
 
         // Sperre: pro Auftrag nur EINE reguläre Produktionsbestellung (Reklamationen ausgenommen)
         if (!isReclamation) {
@@ -553,7 +553,6 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           );
           return null;
         }
-
       }
       const { data, error } = await supabase.from('production_orders').insert(payload).select('id').single();
       if (error || !data) {
