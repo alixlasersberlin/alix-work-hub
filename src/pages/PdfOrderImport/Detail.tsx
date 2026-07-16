@@ -235,13 +235,15 @@ export default function PdfOrderImportDetail() {
 
             <Card className="border-emerald-500/40 bg-emerald-500/5">
               <CardContent className="p-4 text-sm">
-                <div className="font-medium mb-1">Nächster Schritt</div>
+                <div className="font-medium mb-1">Nächster Schritt: Prüfen &amp; Auftrag anlegen</div>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Der Import-Assistent zum verbindlichen Anlegen des Auftrags (Kunden-Matching, Artikel-Zuordnung, Freigabe) kommt in Phase 3 dieses Rollouts.
-                  Aktuell werden Daten sicher zur Prüfung gespeichert.
+                  Im Review-Assistenten kannst du alle erkannten Felder korrigieren, den Kunden matchen (oder neu anlegen), Positionen anpassen und den Auftrag verbindlich anlegen. Es werden keine Daten produktiv, bevor du bestätigst.
                 </p>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => nav('/auftraege/pdf-import')}>Zurück</Button>
+                  <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-black" onClick={() => nav(`/auftraege/pdf-import/${id}/review`)}>
+                    Prüfen &amp; anlegen
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => nav('/auftraege/pdf-import')}>Zurück zur Liste</Button>
                 </div>
               </CardContent>
             </Card>
