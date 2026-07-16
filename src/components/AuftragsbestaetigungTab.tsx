@@ -255,8 +255,9 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
                 className="bg-secondary border-border mt-1"
               />
               <p className="text-[11px] text-muted-foreground mt-1">
-                BCC: rde@alix-lasers.com sowie Ersteller des Angebots
+                BCC: rde@alix-lasers.com, Ersteller des Angebots sowie Vertriebspartner
               </p>
+
             </div>
             <Button
               onClick={handleSend}
