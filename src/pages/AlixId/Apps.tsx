@@ -33,13 +33,13 @@ export default function AlixIdApps() {
 
   async function openApp(app: App) {
     if (!app.has_access || app.app_status !== 'active') return;
-    if (!app.base_url) { toast.error('Für diese App ist keine Ziel-URL hinterlegt.'); return; }
     setOpening(app.id);
     try {
       const verifier = randomVerifier();
       const challenge = await challengeFromVerifier(verifier);
       const state = randomState();
-      const redirectUri = `${app.base_url.replace(/\/$/, '')}/sso/callback`;
+      const base = (app.base_url ?? window.location.origin).replace(/\/$/, '');
+      const redirectUri = `${base}/sso/callback`;
       const orgId = app.access[0]?.organization_id ?? null;
 
       sessionStorage.setItem(`alix_id_pkce_${state}`, JSON.stringify({
