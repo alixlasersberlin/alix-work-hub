@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, PlayCircle, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+
 
 type App = {
   id: string; app_key: string; app_name: string; description: string | null;
