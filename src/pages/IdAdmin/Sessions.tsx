@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react';
 type Tx = {
   id: string; identity_id: string; application_id: string; status: string;
   created_at: string; expires_at: string; used_at: string | null;
-  redirect_uri: string; ip_address: string | null;
+  redirect_uri: string;
 };
 
 export default function IdAdminSessions() {
@@ -16,7 +16,7 @@ export default function IdAdminSessions() {
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from('alix_auth_transactions')
-        .select('id, identity_id, application_id, status, created_at, expires_at, used_at, redirect_uri, ip_address')
+        .select('id, identity_id, application_id, status, created_at, expires_at, used_at, redirect_uri')
         .order('created_at', { ascending: false }).limit(200);
       setRows((data ?? []) as Tx[]);
       setLoading(false);

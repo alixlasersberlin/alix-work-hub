@@ -97,7 +97,7 @@ export default function IdAdminIdentities() {
                   </tr>
                 ))}
                 {rows.length === 0 && (
-                  <tr><td colSpan={7} className="py-8 text-center text-muted-foreground">Keine Identitäten gefunden.</td></tr>
+                  <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Keine Identitäten gefunden.</td></tr>
                 )}
               </tbody>
             </table>
