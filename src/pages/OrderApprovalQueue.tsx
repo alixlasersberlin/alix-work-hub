@@ -200,8 +200,10 @@ export default function OrderApprovalQueue() {
     setRows((prev) => prev.filter((r) => !targets.some((t) => t.id === r.id && ok > 0)));
     setSelected(new Set());
     window.dispatchEvent(new Event('einkauf-counts-refresh'));
-    if (fail === 0) toast.success(`${ok} Bestellung(en) freigegeben — ${reserved} Gerät(e) reserviert.`);
-    else toast.warning(`${ok} freigegeben, ${fail} fehlgeschlagen.`);
+    const parts = [`${ok} freigegeben`, `${reserved} Gerät(e) reserviert`, `${sent} an Lieferant gesendet`];
+    if (sendFail > 0) parts.push(`${sendFail} Versand-Fehler`);
+    if (fail === 0) toast.success(parts.join(' — '));
+    else toast.warning(`${parts.join(' — ')} · ${fail} fehlgeschlagen`);
     await load();
   };
 
