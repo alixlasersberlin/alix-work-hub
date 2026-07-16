@@ -1441,6 +1441,11 @@ export default function Invoices() {
               <Input id="mton" value={emailForm.to_name} onChange={(e) => setEmailForm((f) => ({ ...f, to_name: e.target.value }))} />
             </div>
             <div>
+              <Label htmlFor="mbcc">BCC (Vertriebspartner / weitere Kopien)</Label>
+              <Input id="mbcc" value={emailForm.bcc} onChange={(e) => setEmailForm((f) => ({ ...f, bcc: e.target.value }))} placeholder="vertrieb@example.com, weitere@example.com" />
+              <p className="text-[11px] text-muted-foreground mt-1">Mehrere Adressen mit Komma trennen. Wird automatisch aus dem verknüpften Auftrag vorbefüllt.</p>
+            </div>
+            <div>
               <Label htmlFor="msub">Betreff</Label>
               <Input id="msub" value={emailForm.subject} onChange={(e) => setEmailForm((f) => ({ ...f, subject: e.target.value }))} />
             </div>
