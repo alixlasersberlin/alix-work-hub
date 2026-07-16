@@ -121,7 +121,7 @@ export default function PdfOrderImportNew() {
         },
       );
 
-      nav(`/auftraege/pdf-import/${ins.id}`);
+      nav(`/auftraege/pdf-import/${ins.id}/review`);
     } catch (e: any) {
       toast.error(e?.message ?? 'Upload fehlgeschlagen');
     } finally {
