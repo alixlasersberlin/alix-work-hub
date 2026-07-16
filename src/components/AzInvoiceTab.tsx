@@ -604,28 +604,33 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
       let downloadUrl = '';
       if (blob && order?.id) {
-        const safeNo = String(invoiceNumber || 'AZ').replace(/[^\w.-]+/g, '_');
-        const storagePath = `${order.id}/anzahlung/${Date.now()}_${safeNo}.pdf`;
-        const up = await supabase.storage
-          .from('order-invoices')
-          .upload(storagePath, blob, { contentType: 'application/pdf', upsert: true });
-        if (up.error) throw up.error;
+        try {
+          const safeNo = String(invoiceNumber || 'AZ').replace(/[^\w.-]+/g, '_');
+          const storagePath = `${order.id}/anzahlung/${Date.now()}_${safeNo}.pdf`;
+          const up = await supabase.storage
+            .from('order-invoices')
+            .upload(storagePath, blob, { contentType: 'application/pdf', upsert: true });
+          if (up.error) throw up.error;
 
-        const token = (crypto.randomUUID().replace(/-/g, '').slice(0, 10));
+          const token = (crypto.randomUUID().replace(/-/g, '').slice(0, 10));
 
-        const { data: userData } = await supabase.auth.getUser();
-        const { error: docErr } = await supabase.from('order_documents').insert({
-          order_id: order.id,
-          file_name: fileName,
-          file_path: storagePath,
-          file_type: 'application/pdf',
-          document_type: 'Anzahlungsrechnung',
-          uploaded_by: userData.user?.id ?? null,
-          download_token: token,
-        } as any);
-        if (docErr) throw docErr;
+          const { data: userData } = await supabase.auth.getUser();
+          const { error: docErr } = await supabase.from('order_documents').insert({
+            order_id: order.id,
+            file_name: fileName,
+            file_path: storagePath,
+            file_type: 'application/pdf',
+            document_type: 'Anzahlungsrechnung',
+            uploaded_by: userData.user?.id ?? null,
+            download_token: token,
+          } as any);
+          if (docErr) throw docErr;
 
-        downloadUrl = `https://alixwork.de/d/${token}`;
+          downloadUrl = `https://alixwork.de/d/${token}`;
+        } catch (upErr: any) {
+          console.error('[AzInvoice] PDF-Upload/Doc-Insert fehlgeschlagen:', upErr);
+          toast.warning('PDF konnte nicht abgelegt werden – E-Mail wird ohne Download-Link versendet.');
+        }
       }
 
       const subject = `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNo}`;
