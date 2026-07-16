@@ -45,6 +45,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [reservedByItemId, setReservedByItemId] = useState<Record<string, { serial: string; model: string; department: string }>>({});
   const [manualItems, setManualItems] = useState<Array<{ item_name: string; description: string; sku: string; quantity: string; unit: string }>>([]);
   const [katalogPickerOpen, setKatalogPickerOpen] = useState(false);
   const [pendingSnapshotIds, setPendingSnapshotIds] = useState<string[]>([]);
