@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { FileText, Upload, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { loadPdfOrderImportConfig, DEFAULT_PDF_IMPORT_CONFIG } from '@/lib/pdf-order-import-config';
 
-const DOC_TYPES: Array<{ v: string; label: string }> = [
+const DOC_TYPES_ALL: Array<{ v: string; label: string }> = [
   { v: 'purchase_order', label: 'Auftrag / Kaufvertrag' },
   { v: 'sales_contract', label: 'Kaufvertrag' },
   { v: 'rental_contract', label: 'Mietvertrag' },
@@ -21,8 +22,6 @@ const DOC_TYPES: Array<{ v: string; label: string }> = [
   { v: 'service_order', label: 'Serviceauftrag' },
   { v: 'other', label: 'Sonstiges Auftragsdokument' },
 ];
-
-const MAX_SIZE_MB = 20;
 
 async function sha256Hex(buf: ArrayBuffer): Promise<string> {
   const hash = await crypto.subtle.digest('SHA-256', buf);
