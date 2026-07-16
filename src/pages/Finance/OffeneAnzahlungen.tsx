@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Wallet, Loader2, RefreshCw, Lock, Unlock, CheckCircle2, History as HistoryIcon, Upload, FileText, Mail, MessageSquare } from 'lucide-react';
+import { Wallet, Loader2, RefreshCw, Lock, Unlock, CheckCircle2, History as HistoryIcon, Upload, FileText, Mail, MessageSquare, Send } from 'lucide-react';
 import { format, parseISO, differenceInCalendarDays, startOfMonth, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { PageHeader } from '@/components/infinity/PageHeader';
