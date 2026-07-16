@@ -205,7 +205,34 @@ export default function ProductionOrderIn() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
+                      <Select
+                        value={r.status}
+                        onValueChange={(v) => v !== r.status && changeStatus(r, v)}
+                        disabled={busyId === r.id}
+                      >
+                        <SelectTrigger className="h-9 w-[170px]">
+                          <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map(o => (
+                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => moveToLager(r)}
+                        title="In Lagerverwaltung übernehmen"
+                        className={cn(
+                          (r.status === 'fertig' || r.status === 'versendet') &&
+                            'border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10',
+                        )}
+                      >
+                        <PackagePlus className="w-3.5 h-3.5 mr-1.5" /> In Lager
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
