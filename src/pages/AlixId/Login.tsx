@@ -23,7 +23,10 @@ export default function AlixIdLogin() {
     setLoading(true);
     await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: false },
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: 'https://app.alixwork.de/id/callback',
+      },
     });
     setLoading(false);
     toast.success(NEUTRAL);

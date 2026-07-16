@@ -398,6 +398,7 @@ const CustomerPortalLayout = lazy(() => import("./pages/CustomerPortal/Layout"))
 const CustomerPortalLogin = lazy(() => import("./pages/CustomerPortal/Login"));
 const AlixIdLayout = lazy(() => import("./pages/AlixId/Layout"));
 const AlixIdLogin = lazy(() => import("./pages/AlixId/Login"));
+const AlixIdCallback = lazy(() => import("./pages/AlixId/Callback"));
 const AlixIdApps = lazy(() => import("./pages/AlixId/Apps"));
 const AlixIdKonto = lazy(() => import("./pages/AlixId/Konto"));
 const AlixIdSicherheit = lazy(() => import("./pages/AlixId/Sicherheit"));
@@ -1388,6 +1389,7 @@ function AppRoutes() {
         {/* Alix ID — zentrale Identität und SSO (Phase 3) */}
         <Route path="/id/login" element={<AlixIdLogin />} />
         <Route path="/sso/callback" element={<AlixIdSsoCallback />} />
+        <Route path="/id/callback" element={<AlixIdCallback />} />
         <Route path="/id" element={<AlixIdLayout />}>
           <Route index element={<Navigate to="/id/apps" replace />} />
           <Route path="apps" element={<AlixIdApps />} />
