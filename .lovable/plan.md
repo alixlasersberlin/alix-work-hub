@@ -1,99 +1,84 @@
-# Kundenportal Phase 2+ — Umsetzungsplan
+# PDF-Auftragsimport für AlixWork
 
-Aufbauend auf bestehendem Portal (Phase 1 Login/OTP/Rechnungen/Meine Daten + bereits vorhandene Phase-2-Basis Geräte/Verträge/Tickets). Phase 1 bleibt unverändert. AlixWork bleibt Master. Kunde hat nur eng definierte Schreibrechte.
+Ein Assistent, mit dem berechtigte Mitarbeiter PDF-Aufträge (Kaufvertrag, Angebot, Auftragsbestätigung, Leasing usw.) hochladen. Die KI extrahiert Kunden-, Produkt-, Finanz- und Vertragsdaten, gleicht sie mit dem bestehenden Katalog / CRM ab, und der Mitarbeiter bestätigt vor dem endgültigen Anlegen des Auftrags.
 
-Weil der Umfang enorm ist, teile ich in **vier Sub-Phasen** und liefere jede Sub-Phase in einem eigenen, prüfbaren Schritt.
-
----
-
-## Sub-Phase 2a — Fundament (Sicherheit, RLS, Rollen, Portal-Flag = 3)
-
-**Datenbank (Migration, alle mit RLS + GRANTs, keine Tabelle wird gelöscht):**
-
-Neu:
-- `customer_portal_offer_acceptances` — Rechtsnachweis Angebotsannahme (offer_id, customer_id, tenant_id, auth_user_id, name, funktion, ip, ua, pdf_hash, consent_text, offer_version, accepted_at). Immutable.
-- `customer_portal_contract_signatures` — Vertrags­signatur (contract_id, contract_version, customer_id, tenant_id, auth_user_id, name, funktion, signature_png_path, pdf_hash, otp_challenge_id, consents jsonb, ip, ua, signed_at). Immutable.
-- `customer_portal_messages` + `customer_portal_message_threads` — sichere Nachrichten (thread_id, department, subject, body, attachments, direction, read_at). Kein DELETE für Kunden.
-- `customer_portal_documents` — kuratierte Dokumentenablage (tenant_id, customer_id, device_id, doc_type, doc_number, title, storage_bucket, storage_path, file_hash, version, customer_visible, published_at, expires_at). Nur `customer_visible=true` sichtbar.
-- `customer_portal_notifications` — In-Portal-Benachrichtigungen (title, body, target_route, priority, read_at).
-- `customer_portal_maintenance_requests` — Wartungsanfragen des Kunden (device_id, wunsch_zeitraum, standort, kontakt, beschreibung, geraet_nutzbar, attachments).
-- `customer_portal_data_requests` — DSGVO-Anfragen (Löschung/Auskunft/Korrektur), keine automatische Löschung.
-
-Ergänzungen an bestehenden Tabellen (ADD COLUMN IF NOT EXISTS):
-- `offers`: `customer_visible boolean default false`, `portal_published_at`, `portal_version int default 1`, `portal_pdf_hash text`, `accepted_at`, `accepted_by_name`, `declined_reason`.
-- `finance_contracts`: `customer_visible boolean default false`, `signature_status text`, `signed_pdf_path text`, `contract_version int default 1`.
-- `device_maintenance` / Serviceberichte: `customer_visible boolean default false`.
-- `warranty_records` / `warranty_decisions`: `customer_visible boolean default false`.
-- `lager_devices`: `image_url text` (falls fehlt) — nur wenn nicht schon vorhanden.
-
-RLS-Prinzip (jede Tabelle einzeln, SELECT/INSERT/UPDATE getrennt):
-- Lesen: `tenant_id = current_portal_tenant_id() AND customer_id = current_portal_customer_id() AND customer_visible = true` (wo anwendbar).
-- Schreiben: nur für definierte Kunden-Aktionen (Angebot annehmen/ablehnen, Vertrag signieren, Ticket erstellen/antworten, Wartung anfragen, Nachricht senden, Benachrichtigung lesen, Datenanfrage). Alles andere ausschließlich `service_role` via Edge Functions.
-- Neue SECURITY DEFINER Funktion `current_portal_tenant_id()` analog zu `current_portal_customer_id()`.
-
-Neue Berechtigungen (in bestehendem Rollensystem eintragen):
-`customer_portal.offers.{view,publish,manage}`, `.contracts.{view,publish,manage}`, `.devices.{view,assign}`, `.warranty.{view,publish}`, `.maintenance.{view,manage}`, `.tickets.{view,reply}`, `.messages.{view,send}`, `.documents.{view,publish}`, `.audit.view`, `.sessions.manage`. **Nicht** automatisch verteilt.
-
-Audit-Actions erweitert: `offer_opened/downloaded/accepted/declined`, `contract_opened/downloaded/signed`, `device_opened`, `warranty_opened`, `maintenance_requested`, `ticket_created/replied`, `file_uploaded`, `message_sent/read`, `document_opened/downloaded`, `notification_read`.
-
-Feature-Flag: `PORTAL_PHASE = 3`.
-
-**Rollback:** Neue Tabellen droppen, `customer_visible`-Spalten belassen (default false = kein Kundenzugriff), Flag auf 2 zurück.
+**Grundregeln (nicht verhandelbar):**
+- Keine neuen Kunden-, Auftrags- oder Artikel-Tabellen. Import läuft über neue **Staging-Tabellen** und schreibt erst nach Bestätigung in `customers` / `orders` / `order_items`.
+- KI-Ausgabe wird **nie** direkt produktiv. Immer Review durch Mensch.
+- Private Supabase-Storage-Bucket, signierte URLs, RLS mit `has_role`.
+- Original-PDF unverändert speichern + SHA-256 Hash für Dublettenprüfung.
+- Bestehendes Design (Black/Gold Enterprise), keine neuen Design-Systeme.
 
 ---
 
-## Sub-Phase 2b — Kunden-UI (Portal)
+## Rollout in 5 Phasen
 
-Neue Portal-Seiten unter `src/pages/CustomerPortal/`:
-- `OffersV2.tsx` + `OfferDetail.tsx` (annehmen/ablehnen inkl. Bestätigungsdialog, Signaturhash)
-- `ContractsV3.tsx` + `ContractDetail.tsx` mit Signaturflow (Canvas-Signatur + OTP-Zweitbestätigung via Edge Function)
-- `DevicesV3.tsx` mit Karten + Detailtabs (Übersicht/Garantie/Wartung/Reparatur/Dokumente/Schulungen/Tickets)
-- `Warranty.tsx`
-- `MaintenanceV2.tsx` inkl. Anfrageformular (Uploads in privaten Bucket)
-- `MessagesV2.tsx` (Threads pro Abteilung)
-- `DocumentsV2.tsx` (Kategorien, signierte 60s-URLs)
-- `NotificationsCenter.tsx` + Bell im Header, Badges im Menü
-- `Security.tsx` (Sessions/Login-Historie, maskierte IP)
-- Erweiterte `Dashboard.tsx` (alle geforderten Kacheln + Schnellzugriff)
-- Slide-in-Menü mobil in `Layout.tsx`
+Ich empfehle, in kleinen Phasen zu bauen und jede Phase getrennt zu testen. Ich starte nach deiner Freigabe mit **Phase 1**.
 
-Design: bestehendes weiß / dunkles Silber / Gold, semantische Tokens, keine Farben hartcodiert.
+### Phase 1 – Fundament (Datenbank + Storage + Rollen)
+- Neuer privater Storage-Bucket `order-imports`.
+- Neue Tabellen: `order_imports`, `order_import_fields`, `order_import_items`, `order_import_logs`.
+  Alle mit `tenant_id`, RLS, `has_role`-Policies, Zeitstempeln, Grants.
+- Neue Berechtigungen (via bestehende Rollenlogik):
+  - Upload/Analyse: `Super Admin`, `Admin`, `Geschäftsführung`, `Order`, `Vertrieb`.
+  - Import bestätigen: `Super Admin`, `Admin`, `Geschäftsführung`, `Order`.
+  - Löschen: nur `Super Admin` (bestehende Regel).
+- Bestehende Tabellen (`customers`, `orders`, `catalog_items` …) werden **nicht** verändert.
+
+### Phase 2 – Upload & Edge Function „analyze"
+- Edge Function `order-import-analyze`:
+  1. PDF-Validation (MIME, Größe ≤ 20 MB, kein passwortgeschützt).
+  2. SHA-256 Hash → Dublettencheck gegen `order_imports`, `orders.external_reference`.
+  3. Text-Extraktion (pdfjs) + OCR-Fallback (Tesseract / Cloud) für Scans.
+  4. Klassifikation Dokumenttyp.
+  5. Lovable AI Gateway (`google/gemini-3-flash-preview`), strukturierte JSON-Ausgabe mit Konfidenzwerten pro Feld + Seitenreferenz.
+  6. Prompt-Injection-Schutz: PDF-Inhalt als user-Content, System-Prompt fixiert.
+  7. Speichert Rohergebnis in `order_imports.raw_extraction_json`.
+- Neue Seite `/auftraege/pdf-import/upload`: Drag-and-drop, Dokumenttyp-Auswahl, DSGVO-Hinweis.
+
+### Phase 3 – Review-Assistent (5 Schritte)
+- Route `/auftraege/pdf-import/:id/review`.
+- Zweispaltig: links PDF-Preview (react-pdf) mit Highlight-Sprung, rechts editierbare Felder gruppiert (Auftrag/Kunde/Produkte/Finanzen/Lieferung/Vertrag/Mitarbeiter/Unterschriften).
+- Konfidenz-Ampel: grün ≥ 90, gelb 70–89, rot < 70, grau = leer.
+- Kunden-Matching-Widget (E-Mail, Telefon, USt-ID, Fuzzy Name/Adresse) → Auswahl bestehender Kunde / neu anlegen / zusammenführen.
+- Artikel-Matching pro Position: SKU exact → Fuzzy Name → manuelle Zuordnung / freier Text.
+- Automatische Prüfungen: Netto+MwSt=Brutto, Brutto−Anzahlung=Rest, USt-Plausibilität, Signatur vorhanden, Duplikatverdacht.
+- Manuelle Änderungen → `order_import_fields` (original + korrigiert + user + timestamp).
+
+### Phase 4 – Import & Folgeprozesse
+- Edge Function `order-import-commit`:
+  - Serverseitige Re-Validation aller Werte.
+  - Kunde: bestehende ID nutzen oder in `customers` INSERT (nur wenn User bestätigt „neu anlegen").
+  - Auftrag in `orders` INSERT (Nummernkreis via bestehendes `number-ranges`), `external_reference` = erkannte externe Nummer.
+  - Positionen in `order_items`.
+  - PDF-Link in `order_documents`.
+  - Audit-Eintrag in `order_import_logs` + `audit_logs`.
+  - Folgeaufgaben nur wenn Modul existiert (Lieferplanung, Mediapaket, Finanzierung, NiSV) – als optionale Checkboxen im Review-Schritt.
+- Status-Übergang `order_imports.status`: `analyzing → review → committed | cancelled | duplicate`.
+
+### Phase 5 – Übersicht, Admin & Feinschliff
+- Seite `/auftraege/pdf-import`: Tabelle aller Importe mit Filtern (Zeitraum, Status, Kunde, Verkäufer, Warnungen, Duplikate).
+- Admin-Seite `/einstellungen/pdf-import`: max. Dateigröße, aktive Dokumenttypen, Konfidenzgrenzen, OCR an/aus, Standard-Status/Niederlassung/Währung, Aufbewahrungsfrist Entwürfe.
+- Dashboard-Schnellaktion + Button „Auftrag aus PDF importieren" neben „Neuer Auftrag".
+- Abschluss-QA gegen die 18 Abnahmekriterien.
 
 ---
 
-## Sub-Phase 2c — Edge Functions & E-Mails
+## Technische Details (für dich als Entwickler-Zusammenfassung)
 
-Neue Functions (alle mit CORS, JWT-Prüfung, Zod-Validierung, `service_role` nur intern):
-- `portal-offer-accept` — Prüft Version/Ablauf, erzeugt Nachweis + Bestätigungs-PDF, benachrichtigt Vertrieb, Mail an Kunde.
-- `portal-offer-decline` — Grund + optionaler Text, Benachrichtigung intern.
-- `portal-contract-sign-otp` — sendet 6-stelligen Code an hinterlegte Mail via Resend.
-- `portal-contract-sign` — verifiziert OTP, speichert Signatur, hängt Signaturseite an PDF, sperrt Vertrag.
-- `portal-maintenance-request` — legt AlixWork-Serviceanfrage an, benachrichtigt Serviceteam.
-- `portal-message-send` — schreibt Nachricht, Benachrichtigungs-Mail ohne Inhalt.
-- `portal-notify` — generischer Trigger für neue Rechnung/Angebot/etc. (per DB-Trigger).
-- `portal-document-download` — signierte URL 60s, Audit.
-- `portal-upload` — Whitelist (PDF/JPG/PNG/HEIC/MP4/MOV), Größe, MIME/Extension-Vergleich, Rename auf UUID.
-- `portal-sessions` — Liste + Beenden.
-
-E-Mail-Templates (Resend) — nur allgemeiner Hinweis + Portal-Link, keine sensiblen Daten:
-`offer_new`, `offer_accepted`, `contract_new`, `contract_to_sign`, `contract_signed`, `document_new`, `ticket_created`, `ticket_replied`, `maintenance_reminder`, `portal_message`.
-
-Storage: bestehende private Buckets nutzen; neu `portal-uploads` (privat) für Kunden-Uploads.
+- **KI-Modell:** Lovable AI Gateway, `google/gemini-3-flash-preview`, `response_format: json_object`, feste JSON-Schema-Definition, Temperature niedrig.
+- **PDF:** `pdfjs-dist` serverseitig via `npm:` in Edge Function; OCR-Fallback via `tesseract.js` (langsam) oder – falls gewünscht – Google Cloud Vision (Secret nötig).
+- **Storage:** `order-imports/{tenant}/{yyyy-mm}/{uuid}.pdf`, RLS via `tenant_id` claim.
+- **Realtime-Status** (optional): `order_imports` in `supabase_realtime` publication für Live-Progress.
+- **Ausgeschlossen im ersten Wurf:** biometrische Signaturprüfung, Malware-Scan (Hook nur vorbereitet), Foto/E-Mail/Excel-Import, automatische Zahlungszuordnung.
 
 ---
 
-## Sub-Phase 2d — AlixWork Admin + Tests + Doku
+## Was ich zuerst brauche
 
-Admin-Kundenprofil `CustomerDetail.tsx` bekommt Tab **„Kundenportal 2.0"** mit Untertabs: Übersicht, Portalzugang, Rechnungen, Angebote, Verträge, Geräte, Garantie, Wartungen, Tickets, Nachrichten, Dokumente, Sitzungen, Audit-Log. Aktionen (Sichtbarkeit umschalten, veröffentlichen, Session beenden, Zugang deaktivieren) berechtigungsgesteuert.
+Zwei Entscheidungen, dann lege ich mit Phase 1 (Migration + Bucket) los:
 
-Sicherheitstests (Playwright-Script + SQL-Checks): alle 20 geforderten Fälle als Skript unter `docs/portal-phase2plus-tests.md` + automatisierte Regressionsprüfung der RLS mit einem zweiten Testkunden.
+1. **OCR für Scans:** eingebautes `tesseract.js` (kostenlos, langsamer, ok für ~10 Seiten) **oder** Google Cloud Vision (schneller/genauer, du müsstest Secret bereitstellen)?
+2. **Automatische Folgeprozesse in Phase 4:** alle Module (Lieferung, Mediapaket, NiSV, Finanzierung) oder erstmal nur Auftrag + Dokumentenablage und Folgeaufgaben später?
 
-Dokumentation: `docs/customer-portal-phase2plus.md` mit allen Tabellen, RLS-Regeln, Buckets, Functions, E-Mails, Audit-Events, Rollback.
-
----
-
-## Reihenfolge & Freigaben
-
-Ich fahre in Reihenfolge 2a → 2b → 2c → 2d. Nach **2a (Migration)** brauche ich deine Freigabe im Migrations-Review, weil viele Tabellen und Spalten neu sind. Danach laufen 2b–2d weitgehend ohne weitere DB-Änderungen.
-
-Bitte bestätige den Plan (oder sag mir, welche Sub-Phase du zuerst willst). Bei "ok" starte ich mit 2a und lege die Migration zur Freigabe vor.
+Sag mir kurz „Phase 1 starten" mit deiner Wahl, dann geht's los.
