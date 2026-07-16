@@ -573,16 +573,18 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       }
     }
     if (poId) {
-      const fromOrder = selectedItems.map((it, idx) => ({
-        production_order_id: poId,
-        source_order_item_id: it.id,
-        item_name: it.item_name,
-        description: it.description,
-        sku: it.sku,
-        quantity: it.quantity,
-        unit: it.unit,
-        item_order: idx,
-      }));
+      const fromOrder = selectedItems
+        .filter(it => !reservedByItemId[it.id])
+        .map((it, idx) => ({
+          production_order_id: poId,
+          source_order_item_id: it.id,
+          item_name: it.item_name,
+          description: it.description,
+          sku: it.sku,
+          quantity: it.quantity,
+          unit: it.unit,
+          item_order: idx,
+        }));
       const fromManual = cleanManualItems.map((m, idx) => ({
         production_order_id: poId,
         source_order_item_id: null,
