@@ -145,6 +145,19 @@ Deno.serve(async (req) => {
       recipients.push({ email: ce, subjectPrefix: '[Kopie] ', key: 'creator' })
     }
   }
+  // Vertriebspartner (salesperson) als BCC hinzufügen
+  if (salespersonName) {
+    const { data: sp } = await admin
+      .from('user_profiles')
+      .select('email')
+      .ilike('full_name', salespersonName)
+      .maybeSingle()
+    const spEmail = sp?.email
+    if (spEmail && !recipients.some(r => r.email.toLowerCase() === spEmail.toLowerCase())) {
+      recipients.push({ email: spEmail, subjectPrefix: '[Kopie – Vertriebspartner] ', key: 'salesperson' })
+    }
+
+  }
 
   const results: any[] = []
   const stamp = Date.now()
