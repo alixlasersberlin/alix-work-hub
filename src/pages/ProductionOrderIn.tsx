@@ -187,7 +187,6 @@ export default function ProductionOrderIn() {
                         {r.is_reclamation && (
                           <Badge variant="outline" className="text-[10px] border-red-500/40 text-red-500">Reklamation</Badge>
                         )}
-                        <Badge variant="outline" className="text-[10px]">{r.status}</Badge>
                       </div>
                       {r.customer_name_snapshot && (
                         <div className="text-xs font-medium text-foreground/90 mt-0.5 truncate">
