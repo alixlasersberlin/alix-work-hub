@@ -1189,10 +1189,9 @@ export default function AngebotErstellen() {
         return;
       }
 
-      // Bestelldatum & Liefertermin (KW) direkt aus dem Angebot übernehmen.
-      const orderDateIso = offerDate
-        ? new Date(`${offerDate}T00:00:00Z`).toISOString()
-        : new Date().toISOString();
+      // Auftragsdatum = Anlagedatum des Auftrags (heute), NICHT das Angebotsdatum.
+      // Das Angebotsdatum wird separat in raw_data.offer_date gespeichert.
+      const orderDateIso = new Date().toISOString();
       let expectedShipmentIso: string | null = null;
       if (deliveryWeek) {
         const m = deliveryWeek.match(/^(\d{4})-W(\d{2})$/);
