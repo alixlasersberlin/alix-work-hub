@@ -119,17 +119,17 @@ Deno.serve(async (req) => {
       createdCustomer = true;
     }
 
-    // 2) Auftragsnummer aus zentralem Nummernkreis
-    let orderNumber: string | null = null;
+    // 2) Nummernkreis (Auftrag ODER Angebot)
+    let docNumber: string | null = null;
     try {
       const { data: nn } = await admin.rpc("next_document_number" as any, {
-        p_code: "order",
+        p_code: isOffer ? "offer" : "order",
         p_case_number: null,
       });
-      if (nn && typeof nn === "string") orderNumber = nn;
+      if (nn && typeof nn === "string") docNumber = nn;
     } catch { /* fallback below */ }
-    if (!orderNumber) {
-      orderNumber = `PDF-${new Date().getFullYear()}-${Date.now().toString(36).toUpperCase()}`;
+    if (!docNumber) {
+      docNumber = `${isOffer ? "ANG" : "PDF"}-${new Date().getFullYear()}-${Date.now().toString(36).toUpperCase()}`;
     }
 
     const orderDateIso = ord.order_date
@@ -139,55 +139,109 @@ Deno.serve(async (req) => {
       ? new Date(`${String(ord.delivery_date_planned).slice(0, 10)}T00:00:00Z`).toISOString()
       : null;
 
-    const orderPayload: Record<string, any> = {
-      customer_id: customerId,
-      order_number: orderNumber,
-      source_system: "pdf_import",
-      order_status: "offen",
-      currency: ord.currency ?? "EUR",
-      total_amount: typeof fin.gross_amount === "number" ? fin.gross_amount : null,
-      order_date: orderDateIso,
-      expected_shipment_date: expectedShipmentIso,
-      salesperson_name: sales.salesperson ?? null,
-      deposit_amount: typeof fin.downpayment === "number" ? fin.downpayment : null,
-      raw_data: {
-        source: "pdf_import",
-        import_id: body.import_id,
-        external_order_number: ord.external_order_number ?? null,
-        offer_number: ord.offer_number ?? null,
-        contract_number: ord.contract_number ?? null,
-        payment_method: fin.payment_method ?? null,
-        financing_partner: fin.financing_partner ?? null,
-      },
-    };
+    let newOrderId: string | null = null;
+    let newOrderNumber: string = docNumber;
 
-    const { data: newOrder, error: oErr } = await admin
-      .from("orders")
-      .insert(orderPayload)
-      .select("id, order_number")
-      .maybeSingle();
-    if (oErr || !newOrder) return j({ error: "Auftrag konnte nicht angelegt werden: " + oErr?.message }, 500);
-
-    // 3) Positionen
-    const items = (c.items ?? []).map((it, idx) => {
-      const qty = Number(it.quantity ?? 0) || 0;
-      const rate = Number(it.unit_price ?? 0) || 0;
-      const amt = typeof it.total_price === "number" ? it.total_price : qty * rate;
-      const tax = ((Number(it.tax_rate) || 0) / 100) * amt;
-      return {
-        order_id: newOrder.id,
-        item_name: it.product_name ?? "(unbenannt)",
-        sku: it.sku ?? null,
-        quantity: qty,
-        rate,
-        amount: amt,
-        tax_amount: tax,
-        item_order: it.position ?? idx + 1,
+    if (isOffer) {
+      // -------- Angebot anlegen --------
+      const items = (c.items ?? []).map((it, idx) => {
+        const qty = Number(it.quantity ?? 0) || 0;
+        const rate = Number(it.unit_price ?? 0) || 0;
+        const amt = typeof it.total_price === "number" ? it.total_price : qty * rate;
+        return {
+          position: it.position ?? idx + 1,
+          product_name: it.product_name ?? "(unbenannt)",
+          sku: it.sku ?? null,
+          quantity: qty,
+          unit_price: rate,
+          total_price: amt,
+          tax_rate: Number(it.tax_rate) || 0,
+        };
+      });
+      const offerPayload: Record<string, any> = {
+        offer_number: docNumber,
+        offer_date: String(orderDateIso).slice(0, 10),
+        customer_id: customerId,
+        customer_name: cust.company_name ?? cust.contact_person ?? null,
+        customer_email: cust.email ?? null,
+        total_net: typeof fin.net_amount === "number" ? fin.net_amount : 0,
+        total_tax: typeof fin.tax_amount === "number" ? fin.tax_amount : 0,
+        total_gross: typeof fin.gross_amount === "number" ? fin.gross_amount : 0,
+        status: "draft",
+        created_by: userId,
+        payload: {
+          source: "pdf_import",
+          import_id: body.import_id,
+          currency: ord.currency ?? "EUR",
+          external_offer_number: ord.offer_number ?? ord.external_order_number ?? null,
+          salesperson_name: sales.salesperson ?? null,
+          payment_method: fin.payment_method ?? null,
+          financing_partner: fin.financing_partner ?? null,
+          expected_shipment_date: expectedShipmentIso,
+          items,
+        },
       };
-    });
-    if (items.length > 0) {
-      const { error: iErr } = await admin.from("order_items").insert(items);
-      if (iErr) return j({ error: "Positionen konnten nicht angelegt werden: " + iErr.message }, 500);
+      const { data: newOffer, error: oErr } = await admin
+        .from("offers")
+        .insert(offerPayload)
+        .select("id, offer_number")
+        .maybeSingle();
+      if (oErr || !newOffer) return j({ error: "Angebot konnte nicht angelegt werden: " + oErr?.message }, 500);
+      newOrderId = newOffer.id;
+      newOrderNumber = newOffer.offer_number;
+    } else {
+      // -------- Auftrag anlegen --------
+      const orderPayload: Record<string, any> = {
+        customer_id: customerId,
+        order_number: docNumber,
+        source_system: "pdf_import",
+        order_status: "offen",
+        currency: ord.currency ?? "EUR",
+        total_amount: typeof fin.gross_amount === "number" ? fin.gross_amount : null,
+        order_date: orderDateIso,
+        expected_shipment_date: expectedShipmentIso,
+        salesperson_name: sales.salesperson ?? null,
+        deposit_amount: typeof fin.downpayment === "number" ? fin.downpayment : null,
+        raw_data: {
+          source: "pdf_import",
+          import_id: body.import_id,
+          external_order_number: ord.external_order_number ?? null,
+          offer_number: ord.offer_number ?? null,
+          contract_number: ord.contract_number ?? null,
+          payment_method: fin.payment_method ?? null,
+          financing_partner: fin.financing_partner ?? null,
+        },
+      };
+      const { data: newOrder, error: oErr } = await admin
+        .from("orders")
+        .insert(orderPayload)
+        .select("id, order_number")
+        .maybeSingle();
+      if (oErr || !newOrder) return j({ error: "Auftrag konnte nicht angelegt werden: " + oErr?.message }, 500);
+      newOrderId = newOrder.id;
+      newOrderNumber = newOrder.order_number;
+
+      // Positionen (nur bei Auftrag – Angebot speichert diese im payload)
+      const items = (c.items ?? []).map((it, idx) => {
+        const qty = Number(it.quantity ?? 0) || 0;
+        const rate = Number(it.unit_price ?? 0) || 0;
+        const amt = typeof it.total_price === "number" ? it.total_price : qty * rate;
+        const tax = ((Number(it.tax_rate) || 0) / 100) * amt;
+        return {
+          order_id: newOrder.id,
+          item_name: it.product_name ?? "(unbenannt)",
+          sku: it.sku ?? null,
+          quantity: qty,
+          rate,
+          amount: amt,
+          tax_amount: tax,
+          item_order: it.position ?? idx + 1,
+        };
+      });
+      if (items.length > 0) {
+        const { error: iErr } = await admin.from("order_items").insert(items);
+        if (iErr) return j({ error: "Positionen konnten nicht angelegt werden: " + iErr.message }, 500);
+      }
     }
 
     // 4) Import als committed markieren
@@ -197,7 +251,7 @@ Deno.serve(async (req) => {
         status: "committed",
         corrected_extraction_json: c as any,
         created_customer_id: customerId,
-        created_order_id: newOrder.id,
+        created_order_id: newOrderId,
         imported_at: new Date().toISOString(),
         imported_by: userId,
         auto_followups: body.auto_followups ?? {},
@@ -210,13 +264,22 @@ Deno.serve(async (req) => {
       action: "committed",
       user_id: userId,
       metadata_json: {
-        order_id: newOrder.id,
-        order_number: newOrder.order_number,
+        document_type: isOffer ? "offer" : "order",
+        order_id: newOrderId,
+        order_number: newOrderNumber,
         customer_id: customerId,
         created_customer: createdCustomer,
-        item_count: items.length,
         auto_followups: body.auto_followups ?? {},
       },
+    });
+
+    return j({
+      ok: true,
+      document_type: isOffer ? "offer" : "order",
+      order_id: newOrderId,
+      order_number: newOrderNumber,
+      customer_id: customerId,
+      created_customer: createdCustomer,
     });
 
     return j({
