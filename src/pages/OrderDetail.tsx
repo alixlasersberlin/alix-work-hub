@@ -81,6 +81,7 @@ export default function OrderDetail() {
   const [newAddGeleistet, setNewAddGeleistet] = useState<'ja' | 'nein'>('nein');
   const [addingDeposit, setAddingDeposit] = useState(false);
   const [azInvoiceDoc, setAzInvoiceDoc] = useState<{ download_token: string | null; file_path: string | null; file_name: string | null } | null>(null);
+  const [emailLogs, setEmailLogs] = useState<Array<{ id: string; recipient_email: string | null; subject: string | null; template: string | null; status: string | null; provider_message_id: string | null; sent_at: string | null; created_at: string; metadata: any }>>([]);
 
 
   // Note form
