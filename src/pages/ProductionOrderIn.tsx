@@ -7,11 +7,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Inbox, Search, Download, Building2, Calendar, UserCog, Warehouse, RefreshCw, PackagePlus } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Loader2, Inbox, Search, Download, Building2, Calendar, UserCog, Warehouse, RefreshCw, PackagePlus, Truck, Factory, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { cn } from '@/lib/utils';
+
+type LagerTarget = 'Bestand' | 'Transfer' | 'Produktion';
+const LAGER_TARGETS: { value: LagerTarget; label: string; icon: typeof Warehouse; route: string }[] = [
+  { value: 'Bestand',    label: 'Lagergeräte',  icon: Warehouse, route: '/lager/lagergeraete' },
+  { value: 'Transfer',   label: 'Unterwegs',    icon: Truck,     route: '/lager/equipment-area/unterwegs' },
+  { value: 'Produktion', label: 'Produktion',   icon: Factory,   route: '/lager/equipment-area/produktion' },
+];
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: 'offen', label: 'offen' },
@@ -30,6 +40,7 @@ interface Row {
   modellname: string | null;
   farbe: string | null;
   bearbeiter: string | null;
+  seriennummer: string | null;
   pdf_path: string | null;
   supplier_id: string;
   approval_status: string;
@@ -48,6 +59,9 @@ export default function ProductionOrderIn() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [reassignFor, setReassignFor] = useState<Row | null>(null);
+  const [moveFor, setMoveFor] = useState<{ row: Row; target: LagerTarget } | null>(null);
+  const [moveSerial, setMoveSerial] = useState('');
+  const [moveBusy, setMoveBusy] = useState(false);
   const canReassign = isAdmin || roles.includes('Auftragsverwaltung') || roles.includes('Order');
   const [busyId, setBusyId] = useState<string | null>(null);
 
@@ -63,23 +77,90 @@ export default function ProductionOrderIn() {
     setRows(prev => prev.map(x => x.id === r.id ? { ...x, status: newStatus } : x));
   };
 
-  const moveToLager = (r: Row) => {
-    const params = new URLSearchParams({
-      from_production: r.id,
-      order_number: r.order_number || '',
-      production_order_number: r.production_order_number || '',
-      model: r.modellname || '',
-      color: r.farbe || '',
-    });
-    toast.info('Bitte im Lager als Neugerät erfassen — Daten wurden vorbereitet.');
-    navigate(`/lager/lagergeraete?${params.toString()}`);
+  const openMoveDialog = (r: Row, target: LagerTarget) => {
+    setMoveSerial(r.seriennummer || '');
+    setMoveFor({ row: r, target });
   };
+
+  const confirmMove = async () => {
+    if (!moveFor) return;
+    const serial = moveSerial.trim();
+    if (!serial) { toast.error('Seriennummer wird benötigt'); return; }
+    const { row: r, target } = moveFor;
+    setMoveBusy(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const today = new Date().toISOString().slice(0, 10);
+      const targetCfg = LAGER_TARGETS.find(t => t.value === target)!;
+
+      // Check if a lager_devices entry already exists for this serial
+      const { data: existing } = await supabase
+        .from('lager_devices')
+        .select('id, notes')
+        .eq('serial_number', serial)
+        .maybeSingle();
+
+      const modelWithColor = [r.modellname, r.farbe].filter(Boolean).join(' ');
+      const meta = `[Aus Bestellung: ${r.production_order_number || r.order_number}]`;
+      const tagPrefix = `[Typ: Neugerät] [Status: ${target}]`;
+
+      if (existing) {
+        // rewrite status tag while keeping other content
+        const cleaned = (existing.notes || '')
+          .replace(/\s*\[Typ:\s*[^\]]+\]\s*/g, ' ')
+          .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        const newNotes = `${tagPrefix} ${meta}${cleaned ? ' ' + cleaned : ''}`.trim();
+        const { error } = await supabase
+          .from('lager_devices')
+          .update({ notes: newNotes, model_name: modelWithColor || r.modellname || '—', updated_by: userData.user?.id })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('lager_devices').insert([{
+          serial_number: serial,
+          model_name: modelWithColor || r.modellname || '—',
+          entry_date: today,
+          notes: `${tagPrefix} ${meta}`.trim(),
+          reserved_order_id: null,
+          created_by: userData.user?.id,
+          updated_by: userData.user?.id,
+          airtable_record_id: null,
+        }]);
+        if (error) throw error;
+      }
+
+      // Map lager target → production_orders.status
+      const statusMap: Record<LagerTarget, string> = {
+        Bestand: 'fertig',
+        Transfer: 'versendet',
+        Produktion: 'in Bearbeitung',
+      };
+      const newProdStatus = statusMap[target];
+      await supabase.from('production_orders')
+        .update({ status: newProdStatus, seriennummer: serial })
+        .eq('id', r.id);
+
+      setRows(prev => prev.map(x => x.id === r.id ? { ...x, status: newProdStatus, seriennummer: serial } : x));
+      toast.success(`In "${targetCfg.label}" verschoben`, {
+        action: { label: 'Öffnen', onClick: () => navigate(targetCfg.route) },
+      });
+      setMoveFor(null);
+      setMoveSerial('');
+    } catch (e: any) {
+      toast.error('Verschieben fehlgeschlagen: ' + (e?.message || e));
+    } finally {
+      setMoveBusy(false);
+    }
+  };
+
 
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('production_orders')
-      .select('id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, pdf_path, supplier_id, approval_status, approved_at, created_at, is_reclamation, customer_name_snapshot, supplier:suppliers(name)')
+      .select('id, order_number, production_order_number, status, liefertermin, modellname, farbe, bearbeiter, seriennummer, pdf_path, supplier_id, approval_status, approved_at, created_at, is_reclamation, customer_name_snapshot, supplier:suppliers(name)')
       .eq('approval_status', 'approved')
       .order('approved_at', { ascending: false });
     if (error) toast.error(error.message);
@@ -221,18 +302,35 @@ export default function ProductionOrderIn() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => moveToLager(r)}
-                        title="In Lagerverwaltung übernehmen"
-                        className={cn(
-                          (r.status === 'fertig' || r.status === 'versendet') &&
-                            'border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10',
-                        )}
-                      >
-                        <PackagePlus className="w-3.5 h-3.5 mr-1.5" /> In Lager
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              (r.status === 'fertig' || r.status === 'versendet') &&
+                                'border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10',
+                            )}
+                          >
+                            <PackagePlus className="w-3.5 h-3.5 mr-1.5" />
+                            Verschieben
+                            <ChevronDown className="w-3 h-3 ml-1" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuLabel>In Lager-Abteilung</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          {LAGER_TARGETS.map(t => {
+                            const Icon = t.icon;
+                            return (
+                              <DropdownMenuItem key={t.value} onClick={() => openMoveDialog(r, t.value)}>
+                                <Icon className="w-3.5 h-3.5 mr-2" />
+                                {t.label}
+                              </DropdownMenuItem>
+                            );
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <Button
                         variant="outline"
                         size="sm"
@@ -292,6 +390,42 @@ export default function ProductionOrderIn() {
           load();
         }}
       />
+
+      <Dialog open={!!moveFor} onOpenChange={(o) => { if (!o) { setMoveFor(null); setMoveSerial(''); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              In {moveFor ? LAGER_TARGETS.find(t => t.value === moveFor.target)?.label : ''} verschieben
+            </DialogTitle>
+            <DialogDescription>
+              {moveFor?.row.production_order_number || moveFor?.row.order_number} · {moveFor?.row.modellname}
+              {moveFor?.row.farbe ? ` · ${moveFor.row.farbe}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="move-serial">Seriennummer *</Label>
+            <Input
+              id="move-serial"
+              value={moveSerial}
+              onChange={(e) => setMoveSerial(e.target.value)}
+              placeholder="SN eingeben oder scannen"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground">
+              Das Gerät wird in der Lagerverwaltung angelegt (bzw. aktualisiert) und der Bestellstatus wird angepasst.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setMoveFor(null); setMoveSerial(''); }} disabled={moveBusy}>
+              Abbrechen
+            </Button>
+            <Button onClick={confirmMove} disabled={moveBusy || !moveSerial.trim()}>
+              {moveBusy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <PackagePlus className="w-4 h-4 mr-1" />}
+              Verschieben
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
