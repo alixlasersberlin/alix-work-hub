@@ -377,6 +377,7 @@ const SecuritySimulate = lazy(() => import("./pages/SecurityCenter/Simulate"));
 const SecurityPlan = lazy(() => import("./pages/SecurityCenter/Plan"));
 const PortalStatus = lazy(() => import("./pages/Portal/Status"));
 const PortalAdmin = lazy(() => import("./pages/PortalAdmin"));
+const PortalReleases = lazy(() => import("./pages/PortalReleases"));
 const MailCenterLayout = lazy(() => import("./pages/MailCenter/Layout"));
 const MailCenterDashboard = lazy(() => import("./pages/MailCenter/Dashboard"));
 const MailCenterCompose = lazy(() => import("./pages/MailCenter/Compose"));
@@ -946,6 +947,8 @@ function AppRoutes() {
           <Route path="/operation/alixsmart-migration" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartMigration /></ProtectedRoute>} />
           <Route path="/operation/alixsmart-konfliktaufloesung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartKonfliktaufloesung /></ProtectedRoute>} />
           <Route path="/portal-admin" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><PortalAdmin /></ProtectedRoute>} />
+          <Route path="/portal-admin/freigaben" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><PortalReleases /></ProtectedRoute>} />
+
           <Route path="/hilfe" element={<ProtectedRoute><Hilfe /></ProtectedRoute>} />
           <Route path="/hilfe/dokumentation" element={<ProtectedRoute><Dokumentation /></ProtectedRoute>} />
           <Route path="/hilfe/arbeitsanleitung" element={<ProtectedRoute><Arbeitsanleitung /></ProtectedRoute>} />
