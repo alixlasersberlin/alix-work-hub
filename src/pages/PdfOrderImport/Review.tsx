@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { FileText, Loader2, Save, Search, UserPlus, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { FileText, Loader2, Save, Search, UserPlus, CheckCircle2, AlertTriangle, MousePointerClick, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { loadPdfOrderImportConfig, DEFAULT_PDF_IMPORT_CONFIG, type PdfOrderImportConfig } from '@/lib/pdf-order-import-config';
+import PdfSelectViewer from '@/components/PdfSelectViewer';
 
 // ---------- Helpers ----------
 function extractValue(v: any): any {
