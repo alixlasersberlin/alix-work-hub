@@ -459,11 +459,11 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     return true;
   }
 
-  async function postToBuchhaltung() {
-    if (blockIfDuplicate()) return;
+  async function postToBuchhaltung(): Promise<boolean> {
+    if (blockIfDuplicate()) return false;
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart.');
-      return;
+      return false;
     }
     setPostingToBuchhaltung(true);
     try {
@@ -476,7 +476,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         .limit(1);
       if (existing && existing.length > 0) {
         toast.info(`Anzahlung ${invoiceNumber} ist bereits in der Buchhaltung erfasst.`);
-        return;
+        return true;
       }
 
       const netAmt = Number(netDeposit.toFixed(2));
@@ -524,9 +524,12 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       });
       toast.success(`In Buchhaltung übernommen: ${invoiceNumber} wurde unter Offene Anzahlungen erfasst.`);
       onReload?.();
+      return true;
 
     } catch (e: any) {
+      console.error('[AzInvoice] postToBuchhaltung failed:', e);
       toast.error('Konnte nicht in Buchhaltung schreiben: ' + (e?.message || 'Unbekannter Fehler'));
+      return false;
     } finally {
       setPostingToBuchhaltung(false);
     }
@@ -582,6 +585,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function sendByEmail(): Promise<boolean> {
+    console.log('[AzInvoice] sendByEmail called', {
+      hasDeposit, existingInvoice, customerEmail: customer?.email,
+    });
     if (!hasDeposit && !existingInvoice) {
       toast.error('Keine Anzahlung vereinbart.');
       return false;
@@ -604,28 +610,33 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
       let downloadUrl = '';
       if (blob && order?.id) {
-        const safeNo = String(invoiceNumber || 'AZ').replace(/[^\w.-]+/g, '_');
-        const storagePath = `${order.id}/anzahlung/${Date.now()}_${safeNo}.pdf`;
-        const up = await supabase.storage
-          .from('order-invoices')
-          .upload(storagePath, blob, { contentType: 'application/pdf', upsert: true });
-        if (up.error) throw up.error;
+        try {
+          const safeNo = String(invoiceNumber || 'AZ').replace(/[^\w.-]+/g, '_');
+          const storagePath = `${order.id}/anzahlung/${Date.now()}_${safeNo}.pdf`;
+          const up = await supabase.storage
+            .from('order-invoices')
+            .upload(storagePath, blob, { contentType: 'application/pdf', upsert: true });
+          if (up.error) throw up.error;
 
-        const token = (crypto.randomUUID().replace(/-/g, '').slice(0, 10));
+          const token = (crypto.randomUUID().replace(/-/g, '').slice(0, 10));
 
-        const { data: userData } = await supabase.auth.getUser();
-        const { error: docErr } = await supabase.from('order_documents').insert({
-          order_id: order.id,
-          file_name: fileName,
-          file_path: storagePath,
-          file_type: 'application/pdf',
-          document_type: 'Anzahlungsrechnung',
-          uploaded_by: userData.user?.id ?? null,
-          download_token: token,
-        } as any);
-        if (docErr) throw docErr;
+          const { data: userData } = await supabase.auth.getUser();
+          const { error: docErr } = await supabase.from('order_documents').insert({
+            order_id: order.id,
+            file_name: fileName,
+            file_path: storagePath,
+            file_type: 'application/pdf',
+            document_type: 'Anzahlungsrechnung',
+            uploaded_by: userData.user?.id ?? null,
+            download_token: token,
+          } as any);
+          if (docErr) throw docErr;
 
-        downloadUrl = `https://alixwork.de/d/${token}`;
+          downloadUrl = `https://alixwork.de/d/${token}`;
+        } catch (upErr: any) {
+          console.error('[AzInvoice] PDF-Upload/Doc-Insert fehlgeschlagen:', upErr);
+          toast.warning('PDF konnte nicht abgelegt werden – E-Mail wird ohne Download-Link versendet.');
+        }
       }
 
       const subject = `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNo}`;
@@ -697,6 +708,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   async function saveAndSendEmail() {
+    console.log('[AzInvoice] saveAndSendEmail clicked', {
+      existingInvoice, hasDeposit, grossDeposit, customerEmail: customer?.email,
+    });
     if (blockIfDuplicate()) return;
     if (!hasDeposit) {
       toast.error('Keine Anzahlung vereinbart.');
@@ -706,12 +720,17 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.');
       return;
     }
-    await postToBuchhaltung();
+    const booked = await postToBuchhaltung();
+    if (!booked) {
+      toast.error('Buchung fehlgeschlagen – E-Mail wurde NICHT versendet.');
+      return;
+    }
     const sent = await sendByEmail();
     if (sent) {
       toast.success('Vorgang abgeschlossen: Anzahlung gebucht und E-Mail versendet.');
     }
   }
+
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 card-glow space-y-6">
