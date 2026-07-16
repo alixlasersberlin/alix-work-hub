@@ -77,23 +77,22 @@ export default function ProductionOrderIn() {
     setRows(prev => prev.map(x => x.id === r.id ? { ...x, status: newStatus } : x));
   };
 
-  const openMoveDialog = (r: Row, target: LagerTarget) => {
-    setMoveSerial(r.seriennummer || '');
-    setMoveFor({ row: r, target });
-  };
-
-  const confirmMove = async () => {
-    if (!moveFor) return;
-    const serial = moveSerial.trim();
-    if (!serial) { toast.error('Seriennummer wird benötigt'); return; }
-    const { row: r, target } = moveFor;
+  const performMove = async (r: Row, target: LagerTarget, serialArg: string) => {
+    const serial = serialArg.trim();
+    if (!serial) {
+      // No serial → open dialog to ask
+      setMoveSerial('');
+      setMoveFor({ row: r, target });
+      return;
+    }
     setMoveBusy(true);
+    setBusyId(r.id);
     try {
       const { data: userData } = await supabase.auth.getUser();
       const today = new Date().toISOString().slice(0, 10);
       const targetCfg = LAGER_TARGETS.find(t => t.value === target)!;
 
-      // Check if a lager_devices entry already exists for this serial
+      // Existing lager_devices entry?
       const { data: existing } = await supabase
         .from('lager_devices')
         .select('id, notes')
@@ -105,7 +104,6 @@ export default function ProductionOrderIn() {
       const tagPrefix = `[Typ: Neugerät] [Status: ${target}]`;
 
       if (existing) {
-        // rewrite status tag while keeping other content
         const cleaned = (existing.notes || '')
           .replace(/\s*\[Typ:\s*[^\]]+\]\s*/g, ' ')
           .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
@@ -138,12 +136,39 @@ export default function ProductionOrderIn() {
         Produktion: 'in Bearbeitung',
       };
       const newProdStatus = statusMap[target];
-      await supabase.from('production_orders')
+      const { error: poErr } = await supabase.from('production_orders')
         .update({ status: newProdStatus, seriennummer: serial })
         .eq('id', r.id);
+      if (poErr) throw poErr;
 
-      setRows(prev => prev.map(x => x.id === r.id ? { ...x, status: newProdStatus, seriennummer: serial } : x));
-      toast.success(`In "${targetCfg.label}" verschoben`, {
+      // Auslöse-Prozess: bei Bestand (fertig) einen Tourenplan anlegen, falls Auftrag existiert
+      if (target === 'Bestand' && r.order_number) {
+        const { data: orderRow } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('order_number', r.order_number)
+          .maybeSingle();
+        if (orderRow?.id) {
+          const { data: existingPlan } = await supabase
+            .from('route_plans')
+            .select('id')
+            .eq('order_id', orderRow.id)
+            .limit(1);
+          if (!existingPlan || existingPlan.length === 0) {
+            await supabase.from('route_plans').insert([{
+              order_id: orderRow.id,
+              planning_status: 'offen',
+              priority: 'normal',
+              planning_note: 'Automatisch erstellt aus Order In (fertig produziert)',
+              created_by: userData.user?.id,
+            }]);
+          }
+        }
+      }
+
+      // Entferne die Zeile aus Order In
+      setRows(prev => prev.filter(x => x.id !== r.id));
+      toast.success(`In „${targetCfg.label}" verschoben · SN ${serial}`, {
         action: { label: 'Öffnen', onClick: () => navigate(targetCfg.route) },
       });
       setMoveFor(null);
@@ -152,8 +177,24 @@ export default function ProductionOrderIn() {
       toast.error('Verschieben fehlgeschlagen: ' + (e?.message || e));
     } finally {
       setMoveBusy(false);
+      setBusyId(null);
     }
   };
+
+  const handleMoveClick = (r: Row, target: LagerTarget) => {
+    if (r.seriennummer && r.seriennummer.trim()) {
+      void performMove(r, target, r.seriennummer);
+    } else {
+      setMoveSerial('');
+      setMoveFor({ row: r, target });
+    }
+  };
+
+  const confirmMove = () => {
+    if (!moveFor) return;
+    void performMove(moveFor.row, moveFor.target, moveSerial);
+  };
+
 
 
   const load = async () => {
