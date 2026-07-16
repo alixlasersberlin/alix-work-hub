@@ -260,9 +260,83 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   };
 
   const toggleItem = (id: string) => {
+    if (reservedByItemId[id]) return; // bereits im Lager reserviert – nicht bestellbar
     const next = new Set(selectedItemIds);
     next.has(id) ? next.delete(id) : next.add(id);
     setSelectedItemIds(next);
+  };
+
+  // Matching-Helfer: normalisiert Modellname + prüft Farbüberschneidung
+  const normalizeStr = (s: string | null | undefined) =>
+    (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const COLOR_MAP: Record<string, string> = {
+    weiss: 'white', weiß: 'white', white: 'white',
+    schwarz: 'black', black: 'black',
+    gold: 'gold', golden: 'gold',
+    silber: 'silver', silver: 'silver',
+    grau: 'grey', gray: 'grey', grey: 'grey',
+    blau: 'blue', blue: 'blue', rot: 'red', red: 'red',
+    pink: 'pink', rosa: 'pink',
+    grün: 'green', gruen: 'green', green: 'green',
+  };
+  const colorTokens = (s: string | null | undefined) => {
+    const out = new Set<string>();
+    if (!s) return out;
+    for (const t of s.toLowerCase().split(/[^a-zäöüß]+/).filter(Boolean)) {
+      const c = COLOR_MAP[t];
+      if (c) out.add(c);
+    }
+    return out;
+  };
+  const itemMatchesDevice = (item: any, dev: { model_name: string; notes: string | null }) => {
+    const itemStr = normalizeStr(`${item.item_name || ''} ${item.sku || ''}`);
+    const devStr = normalizeStr(dev.model_name);
+    if (!itemStr || !devStr) return false;
+    // Modellname-Kern: Bindestriche/Slashes entfernen
+    const stripPunct = (s: string) => s.replace(/[\-\/]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const a = stripPunct(itemStr);
+    const b = stripPunct(devStr);
+    // Token-basierter Vergleich: alle „starken" Tokens (>=4 Zeichen, kein Farbwort) aus dem Item müssen im Device vorkommen
+    const strong = a.split(' ').filter(t => t.length >= 4 && !COLOR_MAP[t]);
+    if (strong.length === 0) return false;
+    for (const t of strong) if (!b.includes(t)) return false;
+    // Farben (falls angegeben) müssen sich überschneiden
+    const wantColors = colorTokens(`${item.item_name || ''} ${item.sku || ''}`);
+    if (wantColors.size > 0) {
+      const haveColors = colorTokens(`${dev.model_name} ${dev.notes || ''}`);
+      let ok = false;
+      for (const c of wantColors) { if (haveColors.has(c)) { ok = true; break; } }
+      if (!ok) return false;
+    }
+    return true;
+  };
+
+  const loadReservedForOrder = async (orderId: string, items: any[]) => {
+    const { data: devs } = await supabase
+      .from('lager_devices')
+      .select('serial_number, model_name, notes')
+      .eq('reserved_order_id', orderId);
+    const nonLeih = (devs || []).filter((d: any) => {
+      const n = d.notes ?? '';
+      return !(n.includes('[Typ: Leihgerät]') || n.includes('[Leihgerät]'));
+    });
+    const map: Record<string, { serial: string; model: string; department: string }> = {};
+    for (const item of items) {
+      const hit = nonLeih.find((d: any) => itemMatchesDevice(item, d));
+      if (hit) {
+        const statusMatch = /\[Status:\s*([^\]]+)\]/.exec(hit.notes ?? '');
+        const dept = statusMatch?.[1]?.trim() || 'Lager';
+        map[item.id] = { serial: hit.serial_number, model: hit.model_name, department: dept };
+      }
+    }
+    setReservedByItemId(map);
+    // Bereits ausgewählte, aber jetzt reservierte Positionen aus der Auswahl entfernen
+    setSelectedItemIds(prev => {
+      if (!Object.keys(map).length) return prev;
+      const next = new Set(prev);
+      for (const id of Object.keys(map)) next.delete(id);
+      return next;
+    });
   };
 
   const selectedItems = useMemo(
