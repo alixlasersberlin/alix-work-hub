@@ -147,7 +147,7 @@ export default function Invoices() {
   const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '', status: '' });
   const [editSaving, setEditSaving] = useState(false);
   const [emailRow, setEmailRow] = useState<Row | null>(null);
-  const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', subject: '', body_text: '' });
+  const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', bcc: '', subject: '', body_text: '' });
   const [emailSending, setEmailSending] = useState(false);
   const [emailPreparing, setEmailPreparing] = useState(false);
   const [bookRow, setBookRow] = useState<Row | null>(null);
@@ -694,6 +694,7 @@ export default function Invoices() {
     setEmailForm({
       to_email: '',
       to_name: r.customer_name ?? '',
+      bcc: '',
       subject: `Rechnung ${r.invoice_number ?? ''}`.trim(),
       body_text: `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung ${r.invoice_number ?? ''}${r.reference_number ? ` zum Auftrag ${r.reference_number}` : ''}.\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nAlix Lasers`,
     });
@@ -745,6 +746,29 @@ export default function Invoices() {
       } else {
         console.warn('[Invoices] Keine Kunden-Email gefunden für', r.customer_name, r.customer_id);
       }
+
+      // 4) Vertriebspartner (salesperson) aus verknüpftem Auftrag → user_profiles.email → BCC
+      if (r.reference_number) {
+        const { data: ord } = await supabase
+          .from('orders')
+          .select('salesperson_name')
+          .or(`order_number.eq.${r.reference_number},internal_number.eq.${r.reference_number}`)
+          .not('salesperson_name', 'is', null)
+          .limit(1)
+          .maybeSingle();
+        const spName = (ord as any)?.salesperson_name?.trim();
+        if (spName) {
+          const { data: sp } = await supabase
+            .from('user_profiles')
+            .select('email')
+            .ilike('full_name', spName)
+            .maybeSingle();
+          const spEmail = (sp as any)?.email;
+          if (spEmail) {
+            setEmailForm((f) => ({ ...f, bcc: spEmail }));
+          }
+        }
+      }
     } catch (e) {
       console.error('[Invoices] openEmail error', e);
     } finally {
@@ -770,6 +794,10 @@ export default function Invoices() {
         binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
       }
       const b64 = btoa(binary);
+      const bccList = emailForm.bcc
+        .split(/[,;\s]+/)
+        .map((s) => s.trim())
+        .filter((s) => s.includes('@'));
       const { data, error } = await supabase.functions.invoke('send-mail', {
         body: {
           to_email: emailForm.to_email,
@@ -782,6 +810,7 @@ export default function Invoices() {
           invoice_id: emailRow.zoho_invoice_id ?? null,
           customer_id: emailRow.customer_id ?? null,
           category: 'finance',
+          bcc: bccList.length ? bccList : null,
           attachments: [{
             filename: `${emailRow.invoice_number ?? 'rechnung'}.pdf`,
             content: b64,
@@ -1410,6 +1439,11 @@ export default function Invoices() {
             <div>
               <Label htmlFor="mton">Empfängername</Label>
               <Input id="mton" value={emailForm.to_name} onChange={(e) => setEmailForm((f) => ({ ...f, to_name: e.target.value }))} />
+            </div>
+            <div>
+              <Label htmlFor="mbcc">BCC (Vertriebspartner / weitere Kopien)</Label>
+              <Input id="mbcc" value={emailForm.bcc} onChange={(e) => setEmailForm((f) => ({ ...f, bcc: e.target.value }))} placeholder="vertrieb@example.com, weitere@example.com" />
+              <p className="text-[11px] text-muted-foreground mt-1">Mehrere Adressen mit Komma trennen. Wird automatisch aus dem verknüpften Auftrag vorbefüllt.</p>
             </div>
             <div>
               <Label htmlFor="msub">Betreff</Label>
