@@ -517,6 +517,455 @@ export type Database = {
           },
         ]
       }
+      alix_applications: {
+        Row: {
+          allowed_origins: string[]
+          app_key: string
+          app_name: string
+          app_status: string
+          base_url: string | null
+          created_at: string
+          description: string | null
+          icon_url: string | null
+          id: string
+          redirect_uris: string[]
+          requires_mfa: boolean
+          session_duration_minutes: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          allowed_origins?: string[]
+          app_key: string
+          app_name: string
+          app_status?: string
+          base_url?: string | null
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          redirect_uris?: string[]
+          requires_mfa?: boolean
+          session_duration_minutes?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          allowed_origins?: string[]
+          app_key?: string
+          app_name?: string
+          app_status?: string
+          base_url?: string | null
+          created_at?: string
+          description?: string | null
+          icon_url?: string | null
+          id?: string
+          redirect_uris?: string[]
+          requires_mfa?: boolean
+          session_duration_minutes?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      alix_auth_transactions: {
+        Row: {
+          application_id: string
+          authorization_code_hash: string
+          code_challenge: string | null
+          code_challenge_method: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          identity_id: string
+          organization_id: string | null
+          redirect_uri: string
+          scope: string[]
+          status: string
+          used_at: string | null
+        }
+        Insert: {
+          application_id: string
+          authorization_code_hash: string
+          code_challenge?: string | null
+          code_challenge_method?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          identity_id: string
+          organization_id?: string | null
+          redirect_uri: string
+          scope?: string[]
+          status?: string
+          used_at?: string | null
+        }
+        Update: {
+          application_id?: string
+          authorization_code_hash?: string
+          code_challenge?: string | null
+          code_challenge_method?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          identity_id?: string
+          organization_id?: string | null
+          redirect_uri?: string
+          scope?: string[]
+          status?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alix_auth_transactions_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "alix_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alix_auth_transactions_identity_id_fkey"
+            columns: ["identity_id"]
+            isOneToOne: false
+            referencedRelation: "alix_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alix_auth_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alix_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alix_id_admin_permissions: {
+        Row: {
+          auth_user_id: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          permission: string
+        }
+        Insert: {
+          auth_user_id: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          permission: string
+        }
+        Update: {
+          auth_user_id?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          permission?: string
+        }
+        Relationships: []
+      }
+      alix_identities: {
+        Row: {
+          account_status: string
+          account_type: string
+          auth_user_id: string
+          created_at: string
+          deleted_at: string | null
+          display_name: string | null
+          email_verified_at: string | null
+          id: string
+          last_login_at: string | null
+          preferred_language: string
+          primary_email: string
+          updated_at: string
+        }
+        Insert: {
+          account_status?: string
+          account_type?: string
+          auth_user_id: string
+          created_at?: string
+          deleted_at?: string | null
+          display_name?: string | null
+          email_verified_at?: string | null
+          id?: string
+          last_login_at?: string | null
+          preferred_language?: string
+          primary_email: string
+          updated_at?: string
+        }
+        Update: {
+          account_status?: string
+          account_type?: string
+          auth_user_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          display_name?: string | null
+          email_verified_at?: string | null
+          id?: string
+          last_login_at?: string | null
+          preferred_language?: string
+          primary_email?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      alix_identity_app_access: {
+        Row: {
+          access_status: string
+          app_role: string
+          application_id: string
+          created_at: string
+          granted_at: string
+          granted_by: string | null
+          id: string
+          identity_id: string
+          last_used_at: string | null
+          organization_id: string | null
+          permissions: Json
+          revoke_reason: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          tenant_id: string | null
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          access_status?: string
+          app_role: string
+          application_id: string
+          created_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          identity_id: string
+          last_used_at?: string | null
+          organization_id?: string | null
+          permissions?: Json
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          access_status?: string
+          app_role?: string
+          application_id?: string
+          created_at?: string
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          identity_id?: string
+          last_used_at?: string | null
+          organization_id?: string | null
+          permissions?: Json
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alix_identity_app_access_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "alix_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alix_identity_app_access_identity_id_fkey"
+            columns: ["identity_id"]
+            isOneToOne: false
+            referencedRelation: "alix_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alix_identity_app_access_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alix_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alix_identity_organizations: {
+        Row: {
+          created_at: string
+          id: string
+          identity_id: string
+          is_primary: boolean
+          organization_id: string
+          relationship_status: string
+          relationship_type: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identity_id: string
+          is_primary?: boolean
+          organization_id: string
+          relationship_status?: string
+          relationship_type: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identity_id?: string
+          is_primary?: boolean
+          organization_id?: string
+          relationship_status?: string
+          relationship_type?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alix_identity_organizations_identity_id_fkey"
+            columns: ["identity_id"]
+            isOneToOne: false
+            referencedRelation: "alix_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alix_identity_organizations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alix_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alix_organizations: {
+        Row: {
+          country: string | null
+          created_at: string
+          customer_number: string | null
+          display_name: string | null
+          id: string
+          legal_name: string
+          linked_customer_id: string | null
+          organization_type: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          customer_number?: string | null
+          display_name?: string | null
+          id?: string
+          legal_name: string
+          linked_customer_id?: string | null
+          organization_type?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          customer_number?: string | null
+          display_name?: string | null
+          id?: string
+          legal_name?: string
+          linked_customer_id?: string | null
+          organization_type?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alix_organizations_linked_customer_id_fkey"
+            columns: ["linked_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alix_security_events: {
+        Row: {
+          application_id: string | null
+          created_at: string
+          device_fingerprint_hash: string | null
+          event_type: string
+          id: string
+          identity_id: string | null
+          ip_address: string | null
+          metadata: Json
+          organization_id: string | null
+          session_id: string | null
+          severity: string
+          success: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          created_at?: string
+          device_fingerprint_hash?: string | null
+          event_type: string
+          id?: string
+          identity_id?: string | null
+          ip_address?: string | null
+          metadata?: Json
+          organization_id?: string | null
+          session_id?: string | null
+          severity?: string
+          success?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          created_at?: string
+          device_fingerprint_hash?: string | null
+          event_type?: string
+          id?: string
+          identity_id?: string | null
+          ip_address?: string | null
+          metadata?: Json
+          organization_id?: string | null
+          session_id?: string | null
+          severity?: string
+          success?: boolean
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alix_security_events_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "alix_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alix_security_events_identity_id_fkey"
+            columns: ["identity_id"]
+            isOneToOne: false
+            referencedRelation: "alix_identities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alix_security_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "alix_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alix_sign_audit_log: {
         Row: {
           action: string
@@ -22154,6 +22603,15 @@ export type Database = {
         }
         Returns: string
       }
+      alix_id_bootstrap_from_portal_users: {
+        Args: never
+        Returns: {
+          app_access_created: number
+          identities_created: number
+          organizations_created: number
+          relationships_created: number
+        }[]
+      }
       apply_role_change_request: {
         Args: { _request_id: string }
         Returns: Json
@@ -22286,6 +22744,7 @@ export type Database = {
         Args: { p_token: string }
         Returns: string
       }
+      current_alix_identity_id: { Args: never; Returns: string }
       current_portal_customer_id: { Args: never; Returns: string }
       current_supplier_id: { Args: never; Returns: string }
       decide_recert_item: {
@@ -22406,6 +22865,10 @@ export type Database = {
         }[]
       }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
+      has_alix_id_permission: {
+        Args: { _permission: string }
+        Returns: boolean
+      }
       has_role: { Args: { check_role: string }; Returns: boolean }
       has_tenant_access: { Args: { _tenant_id: string }; Returns: boolean }
       has_valid_reauth: {
