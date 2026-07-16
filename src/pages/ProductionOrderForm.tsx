@@ -230,8 +230,10 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     setOrderResults([]);
     setOrderSearch('');
     const { data } = await supabase.from('order_items').select('*').eq('order_id', o.id).order('item_order');
-    setOrderItems(data || []);
+    const items = data || [];
+    setOrderItems(items);
     setSelectedItemIds(new Set());
+    await loadReservedForOrder(o.id, items);
   };
 
   const searchCustomers = async () => {
