@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
 
   const { data: app } = await admin
     .from('alix_applications')
-    .select('id, app_key, app_status, redirect_uris, session_duration_minutes')
+    .select('id, app_key, app_status, redirect_uris, session_duration_minutes, requires_mfa')
     .eq('app_key', app_key)
     .maybeSingle();
 
@@ -41,6 +41,33 @@ Deno.serve(async (req) => {
       metadata: { reason: 'app_inactive_or_unknown', app_key },
     });
     return json({ error: 'application_unavailable' }, 403);
+  }
+
+  // Phase 3f — MFA-Enforcement: Apps mit requires_mfa=true blockieren, wenn die
+  // Identität weder ein bestätigtes TOTP-Secret noch einen WebAuthn-Passkey hat.
+  if (app.requires_mfa) {
+    const [{ data: totp }, { count: webauthnCount }] = await Promise.all([
+      admin
+        .from('user_mfa_secrets')
+        .select('user_id, totp_confirmed_at, enrolled_at, disabled_at')
+        .eq('user_id', ctx.user.id)
+        .maybeSingle(),
+      admin
+        .from('mfa_webauthn_credentials')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', ctx.user.id),
+    ]);
+    const totpActive = !!(totp?.totp_confirmed_at && totp?.enrolled_at && !totp?.disabled_at);
+    const webauthnActive = (webauthnCount ?? 0) > 0;
+    if (!totpActive && !webauthnActive) {
+      await logEvent(admin, {
+        identity_id: identity.id, application_id: app.id,
+        event_type: 'sso_authorize_denied',
+        severity: 'warn', success: false, ip_address: ip, user_agent: ua,
+        metadata: { reason: 'mfa_required', app_key },
+      });
+      return json({ error: 'mfa_required' }, 403);
+    }
   }
 
   if (!Array.isArray(app.redirect_uris) || !app.redirect_uris.includes(redirect_uri)) {
