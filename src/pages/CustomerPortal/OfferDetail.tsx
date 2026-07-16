@@ -73,38 +73,24 @@ export default function CustomerPortalOfferDetail() {
   const submitAcceptance = async (action: 'accepted' | 'declined') => {
     setBusy(true);
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('Nicht angemeldet');
-      const payload: any = {
-        offer_id: offer.id,
-        offer_version: offer.portal_version ?? 1,
-        customer_id: ctx.customerId,
-        auth_user_id: user.user.id,
-        accepted_by_name: name.trim(),
-        accepted_by_role: role.trim() || null,
-        consent_text: action === 'accepted' ? CONSENT_ACCEPT : `Angebot abgelehnt. Grund: ${declineReason}`,
-        pdf_hash: offer.portal_pdf_hash ?? null,
-        user_agent: navigator.userAgent,
-        action,
-        decline_reason: action === 'declined' ? declineReason : null,
-        decline_note: action === 'declined' ? declineNote.trim() || null : null,
-      };
-      const { error } = await supabase.from('customer_portal_offer_acceptances').insert(payload);
+      const { error } = await supabase.functions.invoke('portal-offer-action', {
+        body: {
+          offer_id: offer.id,
+          action,
+          accepted_by_name: name.trim(),
+          accepted_by_role: role.trim() || null,
+          consent_text: action === 'accepted' ? CONSENT_ACCEPT : `Angebot abgelehnt. Grund: ${declineReason}`,
+          decline_reason: action === 'declined' ? declineReason : null,
+          decline_note: action === 'declined' ? declineNote.trim() || null : null,
+        },
+      });
       if (error) throw error;
-      // Optimistisch UI aktualisieren — offiziellen Status setzt AlixWork per Edge Function/Trigger in 2c.
-      await supabase.from('offers').update({
-        status: action === 'accepted' ? 'angenommen' : 'abgelehnt',
-        accepted_at: action === 'accepted' ? new Date().toISOString() : null,
-        accepted_by_name: action === 'accepted' ? name.trim() : null,
-        declined_at: action === 'declined' ? new Date().toISOString() : null,
-        declined_reason: action === 'declined' ? declineReason : null,
-      }).eq('id', offer.id);
       void logPortalAudit({
-        action: action === 'accepted' ? 'invoice_downloaded' : 'invoice_opened',
+        action: action === 'accepted' ? 'offer_accepted' : 'offer_declined',
         customerId: ctx.customerId, objectType: 'offer', objectId: offer.id,
         metadata: { action, reason: declineReason },
       });
-      toast.success(action === 'accepted' ? 'Angebot angenommen.' : 'Angebot abgelehnt.');
+      toast.success(action === 'accepted' ? 'Angebot rechtsverbindlich angenommen.' : 'Angebot abgelehnt.');
       setAcceptOpen(false); setDeclineOpen(false);
       navigate('/kunde/angebote');
     } catch (e: any) {
