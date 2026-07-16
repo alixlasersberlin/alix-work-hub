@@ -21,8 +21,20 @@ interface Props {
   items: any[];
 }
 
-const fmtMoney = (n: number, currency = 'EUR') =>
-  (Number(n) || 0).toLocaleString('de-DE', { style: 'currency', currency });
+const CURRENCY_SYMBOL_MAP: Record<string, string> = {
+  '€': 'EUR', 'EUR': 'EUR', 'eur': 'EUR',
+  '$': 'USD', 'USD': 'USD',
+  'CHF': 'CHF', 'chf': 'CHF', 'Fr': 'CHF', 'SFr': 'CHF',
+  '£': 'GBP', 'GBP': 'GBP',
+};
+const normalizeCurrency = (c?: string | null): string => {
+  if (!c) return 'EUR';
+  const t = String(c).trim();
+  if (CURRENCY_SYMBOL_MAP[t]) return CURRENCY_SYMBOL_MAP[t];
+  return /^[A-Za-z]{3}$/.test(t) ? t.toUpperCase() : 'EUR';
+};
+const fmtMoney = (n: number, currency: string | null | undefined = 'EUR') =>
+  (Number(n) || 0).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(currency) });
 
 const fmtDate = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString('de-DE') : '—';
