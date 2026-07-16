@@ -476,7 +476,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         .limit(1);
       if (existing && existing.length > 0) {
         toast.info(`Anzahlung ${invoiceNumber} ist bereits in der Buchhaltung erfasst.`);
-        return;
+        return true;
       }
 
       const netAmt = Number(netDeposit.toFixed(2));
@@ -524,9 +524,12 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       });
       toast.success(`In Buchhaltung übernommen: ${invoiceNumber} wurde unter Offene Anzahlungen erfasst.`);
       onReload?.();
+      return true;
 
     } catch (e: any) {
+      console.error('[AzInvoice] postToBuchhaltung failed:', e);
       toast.error('Konnte nicht in Buchhaltung schreiben: ' + (e?.message || 'Unbekannter Fehler'));
+      return false;
     } finally {
       setPostingToBuchhaltung(false);
     }
