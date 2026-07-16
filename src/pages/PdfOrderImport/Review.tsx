@@ -93,6 +93,35 @@ export default function PdfOrderImportReview() {
   const [createNewCustomer, setCreateNewCustomer] = useState(false);
   const [config, setConfig] = useState<PdfOrderImportConfig>(DEFAULT_PDF_IMPORT_CONFIG);
   const [followups, setFollowups] = useState({ ...DEFAULT_PDF_IMPORT_CONFIG.auto_followups_default });
+  const [activeField, setActiveField] = useState<{ sec: keyof Draft; key: string; label: string } | null>(null);
+  const [activeItem, setActiveItem] = useState<{ idx: number; key: string; label: string } | null>(null);
+  const [pdfSelection, setPdfSelection] = useState<string>('');
+
+  const FIELD_LABELS: Record<string, string> = Object.fromEntries(
+    [...ORDER_FIELDS, ...CUST_FIELDS, ...FIN_FIELDS, ...SALES_FIELDS],
+  );
+
+  function focusField(sec: keyof Draft, key: string) {
+    setActiveItem(null);
+    setActiveField({ sec, key, label: FIELD_LABELS[key] ?? key });
+  }
+  function focusItem(idx: number, key: string, label: string) {
+    setActiveField(null);
+    setActiveItem({ idx, key, label });
+  }
+  function applySelectionToActive() {
+    const val = pdfSelection.trim();
+    if (!val) { toast.error('Bitte zuerst Text im PDF markieren.'); return; }
+    if (activeField) {
+      setField(activeField.sec, activeField.key, val);
+      toast.success(`„${activeField.label}" übernommen`);
+    } else if (activeItem) {
+      setItem(activeItem.idx, activeItem.key, val);
+      toast.success(`Position ${activeItem.idx + 1} · ${activeItem.label} übernommen`);
+    } else {
+      toast.error('Bitte zuerst ein Zielfeld anklicken.');
+    }
+  }
 
   async function load() {
     if (!id) return;
