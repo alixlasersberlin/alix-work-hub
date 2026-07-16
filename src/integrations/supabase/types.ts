@@ -15842,6 +15842,291 @@ export type Database = {
           },
         ]
       }
+      pdf_order_import_fields: {
+        Row: {
+          bounding_box_json: Json | null
+          changed_at: string | null
+          changed_by: string | null
+          confidence: number | null
+          corrected_value: string | null
+          created_at: string
+          field_group: string
+          field_name: string
+          id: string
+          manually_changed: boolean
+          order_import_id: string
+          original_value: string | null
+          source_page: number | null
+          source_text: string | null
+          validation_status: string | null
+        }
+        Insert: {
+          bounding_box_json?: Json | null
+          changed_at?: string | null
+          changed_by?: string | null
+          confidence?: number | null
+          corrected_value?: string | null
+          created_at?: string
+          field_group: string
+          field_name: string
+          id?: string
+          manually_changed?: boolean
+          order_import_id: string
+          original_value?: string | null
+          source_page?: number | null
+          source_text?: string | null
+          validation_status?: string | null
+        }
+        Update: {
+          bounding_box_json?: Json | null
+          changed_at?: string | null
+          changed_by?: string | null
+          confidence?: number | null
+          corrected_value?: string | null
+          created_at?: string
+          field_group?: string
+          field_name?: string
+          id?: string
+          manually_changed?: boolean
+          order_import_id?: string
+          original_value?: string | null
+          source_page?: number | null
+          source_text?: string | null
+          validation_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_order_import_fields_order_import_id_fkey"
+            columns: ["order_import_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_order_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_order_import_items: {
+        Row: {
+          created_at: string
+          detected_discount: number | null
+          detected_product_name: string | null
+          detected_quantity: number | null
+          detected_serial_number: string | null
+          detected_sku: string | null
+          detected_tax_rate: number | null
+          detected_total_price: number | null
+          detected_unit_price: number | null
+          id: string
+          manually_confirmed: boolean
+          match_confidence: number | null
+          match_status: string | null
+          matched_catalog_item_id: string | null
+          notes: string | null
+          order_import_id: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          detected_discount?: number | null
+          detected_product_name?: string | null
+          detected_quantity?: number | null
+          detected_serial_number?: string | null
+          detected_sku?: string | null
+          detected_tax_rate?: number | null
+          detected_total_price?: number | null
+          detected_unit_price?: number | null
+          id?: string
+          manually_confirmed?: boolean
+          match_confidence?: number | null
+          match_status?: string | null
+          matched_catalog_item_id?: string | null
+          notes?: string | null
+          order_import_id: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          detected_discount?: number | null
+          detected_product_name?: string | null
+          detected_quantity?: number | null
+          detected_serial_number?: string | null
+          detected_sku?: string | null
+          detected_tax_rate?: number | null
+          detected_total_price?: number | null
+          detected_unit_price?: number | null
+          id?: string
+          manually_confirmed?: boolean
+          match_confidence?: number | null
+          match_status?: string | null
+          matched_catalog_item_id?: string | null
+          notes?: string | null
+          order_import_id?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_order_import_items_order_import_id_fkey"
+            columns: ["order_import_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_order_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_order_import_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata_json: Json | null
+          new_value_json: Json | null
+          old_value_json: Json | null
+          order_import_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata_json?: Json | null
+          new_value_json?: Json | null
+          old_value_json?: Json | null
+          order_import_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata_json?: Json | null
+          new_value_json?: Json | null
+          old_value_json?: Json | null
+          order_import_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_order_import_logs_order_import_id_fkey"
+            columns: ["order_import_id"]
+            isOneToOne: false
+            referencedRelation: "pdf_order_imports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pdf_order_imports: {
+        Row: {
+          ai_model: string | null
+          analyzed_at: string | null
+          auto_followups: Json | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          corrected_extraction_json: Json | null
+          created_at: string
+          created_customer_id: string | null
+          created_order_id: string | null
+          detected_language: string | null
+          document_hash: string
+          document_type: Database["public"]["Enums"]["pdf_import_doc_type"]
+          duplicate_order_id: string | null
+          duplicate_risk: number | null
+          error_message: string | null
+          id: string
+          imported_at: string | null
+          imported_by: string | null
+          overall_confidence: number | null
+          parser_version: string | null
+          raw_extraction_json: Json | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_filename: string
+          source_mime: string | null
+          source_size_bytes: number | null
+          source_storage_path: string
+          status: Database["public"]["Enums"]["pdf_import_status"]
+          tenant_id: string | null
+          updated_at: string
+          uploaded_by: string
+          validation_results_json: Json | null
+          warnings_json: Json | null
+        }
+        Insert: {
+          ai_model?: string | null
+          analyzed_at?: string | null
+          auto_followups?: Json | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          corrected_extraction_json?: Json | null
+          created_at?: string
+          created_customer_id?: string | null
+          created_order_id?: string | null
+          detected_language?: string | null
+          document_hash: string
+          document_type?: Database["public"]["Enums"]["pdf_import_doc_type"]
+          duplicate_order_id?: string | null
+          duplicate_risk?: number | null
+          error_message?: string | null
+          id?: string
+          imported_at?: string | null
+          imported_by?: string | null
+          overall_confidence?: number | null
+          parser_version?: string | null
+          raw_extraction_json?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_filename: string
+          source_mime?: string | null
+          source_size_bytes?: number | null
+          source_storage_path: string
+          status?: Database["public"]["Enums"]["pdf_import_status"]
+          tenant_id?: string | null
+          updated_at?: string
+          uploaded_by: string
+          validation_results_json?: Json | null
+          warnings_json?: Json | null
+        }
+        Update: {
+          ai_model?: string | null
+          analyzed_at?: string | null
+          auto_followups?: Json | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
+          corrected_extraction_json?: Json | null
+          created_at?: string
+          created_customer_id?: string | null
+          created_order_id?: string | null
+          detected_language?: string | null
+          document_hash?: string
+          document_type?: Database["public"]["Enums"]["pdf_import_doc_type"]
+          duplicate_order_id?: string | null
+          duplicate_risk?: number | null
+          error_message?: string | null
+          id?: string
+          imported_at?: string | null
+          imported_by?: string | null
+          overall_confidence?: number | null
+          parser_version?: string | null
+          raw_extraction_json?: Json | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_filename?: string
+          source_mime?: string | null
+          source_size_bytes?: number | null
+          source_storage_path?: string
+          status?: Database["public"]["Enums"]["pdf_import_status"]
+          tenant_id?: string | null
+          updated_at?: string
+          uploaded_by?: string
+          validation_results_json?: Json | null
+          warnings_json?: Json | null
+        }
+        Relationships: []
+      }
       portal_ticket_reads: {
         Row: {
           created_at: string
@@ -22671,6 +22956,7 @@ export type Database = {
         Returns: boolean
       }
       can_access_orders: { Args: never; Returns: boolean }
+      can_access_pdf_import: { Args: { p_import_id: string }; Returns: boolean }
       can_access_planning: { Args: never; Returns: boolean }
       can_access_qm: { Args: never; Returns: boolean }
       can_access_repair: { Args: never; Returns: boolean }
@@ -22700,6 +22986,7 @@ export type Database = {
       can_manage_warranty: { Args: never; Returns: boolean }
       can_manage_whatsapp_automation: { Args: never; Returns: boolean }
       can_read_media_packages: { Args: never; Returns: boolean }
+      can_read_pdf_import: { Args: { p_import_id: string }; Returns: boolean }
       can_read_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       can_run_ai_service: { Args: never; Returns: boolean }
       can_send_customer_sms: { Args: never; Returns: boolean }
@@ -23097,6 +23384,26 @@ export type Database = {
         | "customer_correction"
         | "approval_pending"
         | "completed"
+      pdf_import_doc_type:
+        | "purchase_order"
+        | "sales_contract"
+        | "rental_contract"
+        | "leasing_contract"
+        | "order_confirmation"
+        | "offer"
+        | "financing_order"
+        | "device_order"
+        | "service_order"
+        | "other"
+      pdf_import_status:
+        | "uploaded"
+        | "analyzing"
+        | "analyzed"
+        | "review"
+        | "committed"
+        | "cancelled"
+        | "duplicate"
+        | "failed"
       ticket_comm_status:
         | "none"
         | "awaiting_customer"
@@ -23328,6 +23635,28 @@ export const Constants = {
         "customer_correction",
         "approval_pending",
         "completed",
+      ],
+      pdf_import_doc_type: [
+        "purchase_order",
+        "sales_contract",
+        "rental_contract",
+        "leasing_contract",
+        "order_confirmation",
+        "offer",
+        "financing_order",
+        "device_order",
+        "service_order",
+        "other",
+      ],
+      pdf_import_status: [
+        "uploaded",
+        "analyzing",
+        "analyzed",
+        "review",
+        "committed",
+        "cancelled",
+        "duplicate",
+        "failed",
       ],
       ticket_comm_status: [
         "none",
