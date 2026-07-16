@@ -436,16 +436,16 @@ export default function PdfOrderImportReview() {
           </Card>
 
           {/* Auftragsdaten */}
-          <Section title="Auftragsdaten" fields={ORDER_FIELDS} data={draft.order} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('order', k, v)} />
+          <Section title="Auftragsdaten" fields={ORDER_FIELDS} data={draft.order} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('order', k, v)} onFocusField={(k) => focusField('order', k)} activeKey={activeField?.sec === 'order' ? activeField.key : null} />
 
           {/* Kunde */}
-          <Section title="Kundendaten" fields={CUST_FIELDS} data={draft.customer} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('customer', k, v)} />
+          <Section title="Kundendaten" fields={CUST_FIELDS} data={draft.customer} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('customer', k, v)} onFocusField={(k) => focusField('customer', k)} activeKey={activeField?.sec === 'customer' ? activeField.key : null} />
 
           {/* Finanzen */}
-          <Section title="Finanzen" fields={FIN_FIELDS} data={draft.financials} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('financials', k, v)} />
+          <Section title="Finanzen" fields={FIN_FIELDS} data={draft.financials} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('financials', k, v)} onFocusField={(k) => focusField('financials', k)} activeKey={activeField?.sec === 'financials' ? activeField.key : null} />
 
           {/* Sales */}
-          <Section title="Vertrieb" fields={SALES_FIELDS} data={draft.sales} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('sales', k, v)} />
+          <Section title="Vertrieb" fields={SALES_FIELDS} data={draft.sales} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('sales', k, v)} onFocusField={(k) => focusField('sales', k)} activeKey={activeField?.sec === 'sales' ? activeField.key : null} />
 
           {/* Positionen */}
           <Card className="border-border/60 bg-card/40 backdrop-blur-xl">
