@@ -35,10 +35,34 @@ export default function PdfOrderImportNew() {
   const [docType, setDocType] = useState('purchase_order');
   const [busy, setBusy] = useState(false);
   const [drag, setDrag] = useState(false);
+  const [maxSizeMb, setMaxSizeMb] = useState<number>(DEFAULT_PDF_IMPORT_CONFIG.max_file_size_mb);
+  const [activeTypes, setActiveTypes] = useState<string[]>(DEFAULT_PDF_IMPORT_CONFIG.active_doc_types);
+
+  const docTypes = DOC_TYPES_ALL.filter((t) => activeTypes.includes(t.v));
 
   useEffect(() => {
     document.title = 'PDF-Auftragsimport · Alix Work';
+    loadPdfOrderImportConfig().then((cfg) => {
+      setMaxSizeMb(cfg.max_file_size_mb);
+      setActiveTypes(cfg.active_doc_types);
+      if (!cfg.active_doc_types.includes('purchase_order') && cfg.active_doc_types[0]) {
+        setDocType(cfg.active_doc_types[0]);
+      }
+    });
   }, []);
+
+  function pickFile(f: File | undefined | null) {
+    if (!f) return;
+    if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
+      toast.error('Nur PDF-Dateien sind erlaubt.');
+      return;
+    }
+    if (f.size > maxSizeMb * 1024 * 1024) {
+      toast.error(`Datei ist größer als ${maxSizeMb} MB.`);
+      return;
+    }
+    setFile(f);
+  }
 
   function pickFile(f: File | undefined | null) {
     if (!f) return;
