@@ -10,6 +10,7 @@ import { Loader2, LogIn, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 const NEUTRAL = 'Falls die E-Mail bei Alix ID hinterlegt ist, wurde ein 6-stelliger Code gesendet.';
+const RATE_LIMIT = 'Zu viele Codes angefordert. Bitte warten Sie ein paar Minuten und versuchen Sie es erneut.';
 
 export default function AlixIdLogin() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function AlixIdLogin() {
   const sendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
       options: {
         shouldCreateUser: false,
@@ -29,6 +30,13 @@ export default function AlixIdLogin() {
       },
     });
     setLoading(false);
+
+    if (error) {
+      const isRateLimit = error.status === 429 || error.message.toLowerCase().includes('rate limit');
+      toast.error(isRateLimit ? RATE_LIMIT : 'Code konnte nicht gesendet werden. Bitte später erneut versuchen.');
+      return;
+    }
+
     toast.success(NEUTRAL);
     setStep('otp');
   };
