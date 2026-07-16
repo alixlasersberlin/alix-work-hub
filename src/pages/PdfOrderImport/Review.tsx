@@ -515,7 +515,7 @@ export default function PdfOrderImportReview() {
   );
 }
 
-function Section({ title, fields, data, conf, green, yellow, onChange }: {
+function Section({ title, fields, data, conf, green, yellow, onChange, onFocusField, activeKey }: {
   title: string;
   fields: Array<[string, string]>;
   data: Record<string, string>;
@@ -523,6 +523,8 @@ function Section({ title, fields, data, conf, green, yellow, onChange }: {
   green: number;
   yellow: number;
   onChange: (key: string, val: string) => void;
+  onFocusField?: (key: string) => void;
+  activeKey?: string | null;
 }) {
   return (
     <Card className="border-border/60 bg-card/40 backdrop-blur-xl">
@@ -533,7 +535,13 @@ function Section({ title, fields, data, conf, green, yellow, onChange }: {
             <Label className="text-xs flex items-center gap-1.5">
               <ConfPill c={conf[k] ?? null} green={green} yellow={yellow} /> {label}
             </Label>
-            <Input value={data[k] ?? ''} onChange={(e) => onChange(k, e.target.value)} className="h-8 text-sm" />
+            <Input
+              value={data[k] ?? ''}
+              onChange={(e) => onChange(k, e.target.value)}
+              onFocus={() => onFocusField?.(k)}
+              onClick={() => onFocusField?.(k)}
+              className={`h-8 text-sm ${activeKey === k ? 'ring-2 ring-amber-400 border-amber-400' : ''}`}
+            />
           </div>
         ))}
       </CardContent>
