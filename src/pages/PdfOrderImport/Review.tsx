@@ -305,8 +305,9 @@ export default function PdfOrderImportReview() {
       toast.error('Import fehlgeschlagen: ' + (error?.message ?? (data as any)?.error));
       return;
     }
-    toast.success(`Auftrag ${(data as any).order_number} angelegt.`);
-    nav('/auftraege');
+    const isOffer = imp?.document_type === 'offer';
+    toast.success(`${isOffer ? 'Angebot' : 'Auftrag'} ${(data as any).order_number} angelegt.`);
+    nav(isOffer ? '/verkauf' : '/auftraege');
   }
 
   if (loading || !draft || !imp) {
