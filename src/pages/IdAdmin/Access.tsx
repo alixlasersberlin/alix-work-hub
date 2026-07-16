@@ -14,8 +14,8 @@ type Row = {
   revoked_at: string | null; revoke_reason: string | null;
 };
 type App = { id: string; app_key: string; app_name: string };
-type Ident = { id: string; display_name: string | null };
-type Org = { id: string; name: string };
+type Ident = { id: string; display_name: string | null; primary_email: string };
+type Org = { id: string; legal_name: string; display_name: string | null };
 
 export default function IdAdminAccess() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -34,8 +34,8 @@ export default function IdAdminAccess() {
         .select('id, identity_id, organization_id, application_id, app_role, access_status, granted_at, valid_until, revoked_at, revoke_reason')
         .order('granted_at', { ascending: false }).limit(500),
       supabase.from('alix_applications').select('id, app_key, app_name').order('sort_order'),
-      supabase.from('alix_identities').select('id, display_name').order('created_at', { ascending: false }).limit(500),
-      supabase.from('alix_organizations').select('id, name').order('name').limit(500),
+      supabase.from('alix_identities').select('id, display_name, primary_email').order('created_at', { ascending: false }).limit(500),
+      supabase.from('alix_organizations').select('id, legal_name, display_name').order('legal_name').limit(500),
     ]);
     setRows((a ?? []) as Row[]);
     setApps((b ?? []) as App[]);
@@ -47,8 +47,8 @@ export default function IdAdminAccess() {
 
   const filtered = useMemo(() => rows.filter(r => filterApp === 'all' || r.application_id === filterApp), [rows, filterApp]);
   const appName = (id: string) => apps.find(a => a.id === id)?.app_name ?? id.slice(0, 8);
-  const identName = (id: string) => idents.find(i => i.id === id)?.display_name ?? id.slice(0, 8);
-  const orgName = (id: string | null) => id ? (orgs.find(o => o.id === id)?.name ?? id.slice(0, 8)) : '—';
+  const identName = (id: string) => { const i = idents.find(x => x.id === id); return i ? (i.display_name ?? i.primary_email) : id.slice(0, 8); };
+  const orgName = (id: string | null) => id ? (() => { const o = orgs.find(x => x.id === id); return o ? (o.display_name ?? o.legal_name) : id.slice(0, 8); })() : '—';
 
   const grant = async () => {
     if (!form.identity_id || !form.application_id) { toast.error('Identität und Applikation wählen.'); return; }

@@ -30,7 +30,7 @@ export default function IdAdminSessions() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-muted-foreground border-b">
-                <tr><th className="py-2 pr-4">Zeit</th><th className="py-2 pr-4">Identität</th><th className="py-2 pr-4">App</th><th className="py-2 pr-4">Status</th><th className="py-2 pr-4">Redirect</th><th className="py-2 pr-4">IP</th><th className="py-2 pr-4">Ablauf</th></tr>
+                <tr><th className="py-2 pr-4">Zeit</th><th className="py-2 pr-4">Identität</th><th className="py-2 pr-4">App</th><th className="py-2 pr-4">Status</th><th className="py-2 pr-4">Redirect</th><th className="py-2 pr-4">Ablauf</th></tr>
               </thead>
               <tbody>
                 {rows.map(r => (
@@ -40,11 +40,10 @@ export default function IdAdminSessions() {
                     <td className="py-2 pr-4 font-mono text-xs">{r.application_id.slice(0, 8)}</td>
                     <td className="py-2 pr-4"><Badge variant={r.status === 'consumed' ? 'default' : r.status === 'revoked' ? 'destructive' : 'secondary'}>{r.status}</Badge></td>
                     <td className="py-2 pr-4 text-xs truncate max-w-[280px]">{r.redirect_uri}</td>
-                    <td className="py-2 pr-4 text-xs">{r.ip_address ?? '—'}</td>
                     <td className="py-2 pr-4 text-xs text-muted-foreground">{new Date(r.expires_at).toLocaleTimeString()}</td>
                   </tr>
                 ))}
-                {rows.length === 0 && <tr><td colSpan={7} className="py-8 text-center text-muted-foreground">Keine Transaktionen.</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">Keine Transaktionen.</td></tr>}
               </tbody>
             </table>
           </div>
