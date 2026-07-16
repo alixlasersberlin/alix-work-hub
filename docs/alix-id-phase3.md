@@ -76,7 +76,7 @@ Benutzer lesbar (nur Metadaten wie Name/Icon).
 | **3b** | Edge Functions: `alix-id-authorize`, `alix-id-token`, `alix-id-userinfo`, `alix-id-logout`, `alix-id-invite`, `alix-id-admin` | ✅ fertig |
 | **3c** | Alix-ID-UI: `/id/login` (OTP), `/id/apps` (Picker), `/id/konto`, `/id/sicherheit`, `/id/sitzungen` | ✅ fertig |
 | **3d** | AlixWork-Portal auf SSO umstellen (Authorization-Code-Flow, Fallback auf OTP) | ✅ fertig |
-| **3e** | Admin: `/id-admin/identities`, `/organizations`, `/applications`, `/access`, `/sessions`, `/security-events`, `/emergency-lock` | ⏳ |
+| **3e** | Admin: `/id-admin/identities`, `/organizations`, `/applications`, `/access`, `/sessions`, `/security-events`, `/emergency-lock` | ✅ fertig |
 | **3f** | MFA-Pflicht für sensible Rollen, Passkey-Vorbereitung, Risk-Scoring | ⏳ |
 | **3g** | Weitere Apps: AlixSmart → Academy → Medi Metropole → Mediapaket → Studio → eAnamnese → Finance (jeweils einzeln getestet) | ⏳ |
 
