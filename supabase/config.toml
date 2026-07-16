@@ -170,6 +170,10 @@ verify_jwt = false
 [functions.send-order-confirmation]
 verify_jwt = false
 
+[functions.send-invoice-mail]
+verify_jwt = false
+
+
 [functions.send-customer-sms]
 verify_jwt = true
 
