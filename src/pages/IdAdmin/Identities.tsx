@@ -8,8 +8,8 @@ import { Loader2, Search, Ban, Play } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Identity = {
-  id: string; auth_user_id: string; display_name: string | null;
-  identity_type: string; account_status: string; preferred_language: string | null;
+  id: string; auth_user_id: string; display_name: string | null; primary_email: string;
+  account_type: string; account_status: string; preferred_language: string | null;
   last_login_at: string | null; created_at: string;
 };
 
@@ -22,10 +22,10 @@ export default function IdAdminIdentities() {
   const load = async () => {
     setLoading(true);
     let query = supabase.from('alix_identities')
-      .select('id, auth_user_id, display_name, identity_type, account_status, preferred_language, last_login_at, created_at')
+      .select('id, auth_user_id, display_name, primary_email, account_type, account_status, preferred_language, last_login_at, created_at')
       .order('created_at', { ascending: false })
       .limit(200);
-    if (q.trim()) query = query.ilike('display_name', `%${q.trim()}%`);
+    if (q.trim()) query = query.or(`display_name.ilike.%${q.trim()}%,primary_email.ilike.%${q.trim()}%`);
     const { data, error } = await query;
     if (error) toast.error(error.message); else setRows((data ?? []) as Identity[]);
     setLoading(false);
@@ -62,6 +62,7 @@ export default function IdAdminIdentities() {
               <thead className="text-left text-muted-foreground border-b">
                 <tr>
                   <th className="py-2 pr-4">Name</th>
+                  <th className="py-2 pr-4">E-Mail</th>
                   <th className="py-2 pr-4">Typ</th>
                   <th className="py-2 pr-4">Status</th>
                   <th className="py-2 pr-4">Sprache</th>
@@ -74,7 +75,8 @@ export default function IdAdminIdentities() {
                 {rows.map((r) => (
                   <tr key={r.id} className="border-b border-border/40">
                     <td className="py-2 pr-4 font-medium">{r.display_name ?? <span className="text-muted-foreground">—</span>}</td>
-                    <td className="py-2 pr-4">{r.identity_type}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">{r.primary_email}</td>
+                    <td className="py-2 pr-4">{r.account_type}</td>
                     <td className="py-2 pr-4">
                       <Badge variant={r.account_status === 'active' ? 'default' : 'destructive'}>{r.account_status}</Badge>
                     </td>
