@@ -794,6 +794,10 @@ export default function Invoices() {
         binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
       }
       const b64 = btoa(binary);
+      const bccList = emailForm.bcc
+        .split(/[,;\s]+/)
+        .map((s) => s.trim())
+        .filter((s) => s.includes('@'));
       const { data, error } = await supabase.functions.invoke('send-mail', {
         body: {
           to_email: emailForm.to_email,
@@ -806,6 +810,7 @@ export default function Invoices() {
           invoice_id: emailRow.zoho_invoice_id ?? null,
           customer_id: emailRow.customer_id ?? null,
           category: 'finance',
+          bcc: bccList.length ? bccList : null,
           attachments: [{
             filename: `${emailRow.invoice_number ?? 'rechnung'}.pdf`,
             content: b64,
