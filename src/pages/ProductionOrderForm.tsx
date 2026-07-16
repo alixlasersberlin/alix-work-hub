@@ -742,7 +742,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     } else {
       toast.success(`E-Mail an Zulieferer versendet (Kopie an ${BCC_EMAIL})`);
     }
-    setTimeout(() => navigate(basePath), 1500);
+    navigate(basePath);
   };
 
   if (loading) return <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
