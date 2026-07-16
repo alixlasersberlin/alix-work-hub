@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FileDown, Loader2, Receipt, AlertCircle, Mail, BookmarkCheck, BookOpen, Ban } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -103,6 +104,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const [sending, setSending] = useState(false);
   const [existingInvoice, setExistingInvoice] = useState<{ invoice_number: string; issue_date?: string | null } | null>(null);
   const [checkingExisting, setCheckingExisting] = useState(true);
+  const [confirm, setConfirm] = useState<null | 'saveSend' | 'sendOnly'>(null);
 
   useEffect(() => {
     if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
@@ -760,7 +762,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             PDF Entwurf erstellen
           </Button>
           <Button
-            onClick={saveAndSendEmail}
+            onClick={() => setConfirm('saveSend')}
             disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !!existingInvoice || checkingExisting || !customer?.email}
             className="gold-gradient text-primary-foreground"
             title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Anzahlung festschreiben, in "Offene Anzahlungen" buchen und per E-Mail an Kunde (BCC k.trinh, natalia.p) senden'}
@@ -772,7 +774,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           </Button>
           <Button
             variant="outline"
-            onClick={sendByEmail}
+            onClick={() => setConfirm('sendOnly')}
             disabled={generating || booking || sending || postingToBuchhaltung || (!hasDeposit && !existingInvoice) || !customer?.email || checkingExisting}
             title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : (existingInvoice ? 'Bereits gestellte Rechnung erneut per E-Mail versenden (kein neuer Buchungssatz).' : (!hasDeposit ? 'Keine Anzahlung vereinbart.' : undefined))}
           >
@@ -783,6 +785,74 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           </Button>
         </div>
       </div>
+
+      {confirm && typeof document !== 'undefined' && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed', inset: 0, zIndex: 2147483647,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(2px)',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget && !(booking || postingToBuchhaltung || sending)) setConfirm(null); }}
+        >
+          <div
+            style={{
+              background: 'hsl(var(--card))',
+              color: 'hsl(var(--card-foreground))',
+              border: '1px solid hsl(var(--border))',
+              borderRadius: 12,
+              padding: 24,
+              maxWidth: 520,
+              width: 'calc(100% - 32px)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+            }}
+          >
+            <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
+              {confirm === 'saveSend' ? 'Anzahlung speichern und per E-Mail senden?' : 'Anzahlungsrechnung per E-Mail senden?'}
+            </h3>
+            <div style={{ fontSize: 14, opacity: 0.85, marginBottom: 16, lineHeight: 1.5 }}>
+              <div><strong>Rechnungsnummer:</strong> {invoiceNumber}</div>
+              <div><strong>Betrag (brutto):</strong> {fmtMoney(grossDeposit, currency)} (MwSt {taxPercentage}%)</div>
+              <div><strong>Empfänger:</strong> {customer?.email || '—'}</div>
+              <div><strong>BCC:</strong> k.trinh@alix-operation.de, natalia.p@alix-operation.de</div>
+              {confirm === 'saveSend' && (
+                <div style={{ marginTop: 8 }}>
+                  Die Rechnung wird festgeschrieben, in <em>Offene Anzahlungen</em> gebucht
+                  und anschließend per E-Mail versendet.
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <Button
+                variant="outline"
+                onClick={() => setConfirm(null)}
+                disabled={booking || postingToBuchhaltung || sending}
+              >
+                Abbrechen
+              </Button>
+              <Button
+                className="gold-gradient text-primary-foreground"
+                disabled={booking || postingToBuchhaltung || sending}
+                onClick={async () => {
+                  const mode = confirm;
+                  if (mode === 'saveSend') await saveAndSendEmail();
+                  else if (mode === 'sendOnly') await sendByEmail();
+                  setConfirm(null);
+                }}
+              >
+                {(booking || postingToBuchhaltung || sending)
+                  ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  : null}
+                Bestätigen &amp; senden
+              </Button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+
 
       {existingInvoice && (
         <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
