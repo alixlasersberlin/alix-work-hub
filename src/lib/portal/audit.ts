@@ -17,7 +17,14 @@ export type PortalAuditAction =
   | 'ticket_created'
   | 'ticket_replied'
   | 'ticket_closed'
-  | 'ticket_rate_limited';
+  | 'ticket_rate_limited'
+  | 'offer_accepted'
+  | 'offer_declined'
+  | 'contract_signed'
+  | 'message_sent'
+  | 'maintenance_requested'
+  | 'document_downloaded'
+  | 'gdpr_request_created';
 
 export async function logPortalAudit(params: {
   action: PortalAuditAction;
