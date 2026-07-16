@@ -106,6 +106,18 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const [checkingExisting, setCheckingExisting] = useState(true);
   const [confirm, setConfirm] = useState<null | 'saveSend' | 'sendOnly'>(null);
 
+  const releaseStalePointerLock = () => {
+    if (typeof document === 'undefined') return;
+    if (document.body.style.pointerEvents === 'none') {
+      document.body.style.pointerEvents = 'auto';
+    }
+  };
+
+  useEffect(() => {
+    releaseStalePointerLock();
+    return releaseStalePointerLock;
+  }, [confirm]);
+
   useEffect(() => {
     if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
   }, [orderDeposit]);
@@ -733,6 +745,49 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
   }
 
+  function openConfirm(mode: 'saveSend' | 'sendOnly', e?: React.MouseEvent<HTMLButtonElement>) {
+    e?.preventDefault();
+    e?.stopPropagation();
+    releaseStalePointerLock();
+
+    const busy = generating || booking || sending || postingToBuchhaltung;
+    console.log(`[AzInvoice] click ${mode} button`, {
+      generating,
+      booking,
+      sending,
+      postingToBuchhaltung,
+      hasDeposit,
+      existingInvoice,
+      checkingExisting,
+      customerEmail: customer?.email,
+    });
+
+    if (busy) {
+      toast.info('Der aktuelle Vorgang läuft noch. Bitte kurz warten.');
+      return;
+    }
+    if (!customer?.email) {
+      toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.');
+      return;
+    }
+    if (mode === 'saveSend') {
+      if (!hasDeposit) {
+        toast.error('Keine Anzahlung vereinbart.');
+        return;
+      }
+      if (existingInvoice) {
+        toast.error(`Anzahlungsrechnung ${existingInvoice.invoice_number} wurde bereits gestellt. Bitte „Rechnung per E-Mail versenden" nutzen.`);
+        return;
+      }
+    }
+    if (mode === 'sendOnly' && !hasDeposit && !existingInvoice) {
+      toast.error('Keine Anzahlung vereinbart.');
+      return;
+    }
+
+    setConfirm(mode);
+  }
+
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 card-glow space-y-6">
@@ -762,10 +817,13 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             PDF Entwurf erstellen
           </Button>
           <Button
-            onClick={() => { console.log('[AzInvoice] click saveSend button', { generating, booking, sending, postingToBuchhaltung, hasDeposit, existingInvoice, checkingExisting, customerEmail: customer?.email }); setConfirm('saveSend'); }}
-            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !!existingInvoice || checkingExisting || !customer?.email}
+            type="button"
+            onMouseDown={() => releaseStalePointerLock()}
+            onClick={(e) => openConfirm('saveSend', e)}
+            disabled={generating || booking || sending || postingToBuchhaltung}
             className="gold-gradient text-primary-foreground"
             title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Anzahlung festschreiben, in "Offene Anzahlungen" buchen und per E-Mail an Kunde (BCC k.trinh, natalia.p) senden'}
+            style={{ pointerEvents: 'auto' }}
           >
             {(booking || postingToBuchhaltung || sending)
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -773,10 +831,13 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             Anzahlung Speichern und Email senden
           </Button>
           <Button
+            type="button"
             variant="outline"
-            onClick={() => { console.log('[AzInvoice] click sendOnly button', { generating, booking, sending, postingToBuchhaltung, hasDeposit, existingInvoice, checkingExisting, customerEmail: customer?.email }); setConfirm('sendOnly'); }}
-            disabled={generating || booking || sending || postingToBuchhaltung || (!hasDeposit && !existingInvoice) || !customer?.email || checkingExisting}
+            onMouseDown={() => releaseStalePointerLock()}
+            onClick={(e) => openConfirm('sendOnly', e)}
+            disabled={generating || booking || sending || postingToBuchhaltung}
             title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : (existingInvoice ? 'Bereits gestellte Rechnung erneut per E-Mail versenden (kein neuer Buchungssatz).' : (!hasDeposit ? 'Keine Anzahlung vereinbart.' : undefined))}
+            style={{ pointerEvents: 'auto' }}
           >
             {sending
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -794,6 +855,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             position: 'fixed', inset: 0, zIndex: 2147483647,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(2px)',
+            pointerEvents: 'auto',
           }}
           onClick={(e) => { if (e.target === e.currentTarget && !(booking || postingToBuchhaltung || sending)) setConfirm(null); }}
         >
