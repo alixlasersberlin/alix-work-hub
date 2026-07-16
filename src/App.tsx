@@ -415,6 +415,14 @@ const CustomerPortalMyData = lazy(() => import("./pages/CustomerPortal/MyData"))
 const CustomerPortalDevicesV2 = lazy(() => import("./pages/CustomerPortal/DevicesV2"));
 const CustomerPortalContractsV2 = lazy(() => import("./pages/CustomerPortal/ContractsV2"));
 const CustomerPortalTicketsV2 = lazy(() => import("./pages/CustomerPortal/TicketsV2"));
+const CustomerPortalOffersV2 = lazy(() => import("./pages/CustomerPortal/OffersV2"));
+const CustomerPortalOfferDetail = lazy(() => import("./pages/CustomerPortal/OfferDetail"));
+const CustomerPortalWarrantyV2 = lazy(() => import("./pages/CustomerPortal/WarrantyV2"));
+const CustomerPortalMaintenanceV2 = lazy(() => import("./pages/CustomerPortal/MaintenanceV2"));
+const CustomerPortalMessagesV2 = lazy(() => import("./pages/CustomerPortal/MessagesV2"));
+const CustomerPortalDocumentsV2 = lazy(() => import("./pages/CustomerPortal/DocumentsV2"));
+const CustomerPortalNotificationsCenter = lazy(() => import("./pages/CustomerPortal/NotificationsCenter"));
+const CustomerPortalSecurityPage = lazy(() => import("./pages/CustomerPortal/SecurityPage"));
 const MailCenterPosteingang = lazy(() => import("./pages/MailCenter/Posteingang"));
 const MailCenterGesendet = lazy(() => import("./pages/MailCenter/Gesendet"));
 const MailCenterEntwuerfe = lazy(() => import("./pages/MailCenter/Entwuerfe"));
