@@ -7,11 +7,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Inbox, Search, Download, Building2, Calendar, UserCog, Warehouse, RefreshCw, PackagePlus } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Loader2, Inbox, Search, Download, Building2, Calendar, UserCog, Warehouse, RefreshCw, PackagePlus, Truck, Factory, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import OrderPickerDialog from '@/components/OrderPickerDialog';
 import { cn } from '@/lib/utils';
+
+type LagerTarget = 'Bestand' | 'Transfer' | 'Produktion';
+const LAGER_TARGETS: { value: LagerTarget; label: string; icon: typeof Warehouse; route: string }[] = [
+  { value: 'Bestand',    label: 'Lagergeräte',  icon: Warehouse, route: '/lager/lagergeraete' },
+  { value: 'Transfer',   label: 'Unterwegs',    icon: Truck,     route: '/lager/equipment-area/unterwegs' },
+  { value: 'Produktion', label: 'Produktion',   icon: Factory,   route: '/lager/equipment-area/produktion' },
+];
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: 'offen', label: 'offen' },
