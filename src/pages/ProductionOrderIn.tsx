@@ -77,17 +77,84 @@ export default function ProductionOrderIn() {
     setRows(prev => prev.map(x => x.id === r.id ? { ...x, status: newStatus } : x));
   };
 
-  const moveToLager = (r: Row) => {
-    const params = new URLSearchParams({
-      from_production: r.id,
-      order_number: r.order_number || '',
-      production_order_number: r.production_order_number || '',
-      model: r.modellname || '',
-      color: r.farbe || '',
-    });
-    toast.info('Bitte im Lager als Neugerät erfassen — Daten wurden vorbereitet.');
-    navigate(`/lager/lagergeraete?${params.toString()}`);
+  const openMoveDialog = (r: Row, target: LagerTarget) => {
+    setMoveSerial(r.seriennummer || '');
+    setMoveFor({ row: r, target });
   };
+
+  const confirmMove = async () => {
+    if (!moveFor) return;
+    const serial = moveSerial.trim();
+    if (!serial) { toast.error('Seriennummer wird benötigt'); return; }
+    const { row: r, target } = moveFor;
+    setMoveBusy(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const today = new Date().toISOString().slice(0, 10);
+      const targetCfg = LAGER_TARGETS.find(t => t.value === target)!;
+
+      // Check if a lager_devices entry already exists for this serial
+      const { data: existing } = await supabase
+        .from('lager_devices')
+        .select('id, notes')
+        .eq('serial_number', serial)
+        .maybeSingle();
+
+      const modelWithColor = [r.modellname, r.farbe].filter(Boolean).join(' ');
+      const meta = `[Aus Bestellung: ${r.production_order_number || r.order_number}]`;
+      const tagPrefix = `[Typ: Neugerät] [Status: ${target}]`;
+
+      if (existing) {
+        // rewrite status tag while keeping other content
+        const cleaned = (existing.notes || '')
+          .replace(/\s*\[Typ:\s*[^\]]+\]\s*/g, ' ')
+          .replace(/\s*\[Status:\s*[^\]]+\]\s*/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        const newNotes = `${tagPrefix} ${meta}${cleaned ? ' ' + cleaned : ''}`.trim();
+        const { error } = await supabase
+          .from('lager_devices')
+          .update({ notes: newNotes, model_name: modelWithColor || r.modellname || '—', updated_by: userData.user?.id })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('lager_devices').insert([{
+          serial_number: serial,
+          model_name: modelWithColor || r.modellname || '—',
+          entry_date: today,
+          notes: `${tagPrefix} ${meta}`.trim(),
+          reserved_order_id: null,
+          created_by: userData.user?.id,
+          updated_by: userData.user?.id,
+          airtable_record_id: null,
+        }]);
+        if (error) throw error;
+      }
+
+      // Map lager target → production_orders.status
+      const statusMap: Record<LagerTarget, string> = {
+        Bestand: 'fertig',
+        Transfer: 'versendet',
+        Produktion: 'in Bearbeitung',
+      };
+      const newProdStatus = statusMap[target];
+      await supabase.from('production_orders')
+        .update({ status: newProdStatus, seriennummer: serial })
+        .eq('id', r.id);
+
+      setRows(prev => prev.map(x => x.id === r.id ? { ...x, status: newProdStatus, seriennummer: serial } : x));
+      toast.success(`In "${targetCfg.label}" verschoben`, {
+        action: { label: 'Öffnen', onClick: () => navigate(targetCfg.route) },
+      });
+      setMoveFor(null);
+      setMoveSerial('');
+    } catch (e: any) {
+      toast.error('Verschieben fehlgeschlagen: ' + (e?.message || e));
+    } finally {
+      setMoveBusy(false);
+    }
+  };
+
 
   const load = async () => {
     setLoading(true);
