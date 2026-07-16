@@ -698,20 +698,52 @@ export default function Invoices() {
       body_text: `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie die Rechnung ${r.invoice_number ?? ''}${r.reference_number ? ` zum Auftrag ${r.reference_number}` : ''}.\n\nBei Rückfragen stehen wir Ihnen gerne zur Verfügung.\n\nMit freundlichen Grüßen\nAlix Lasers`,
     });
     try {
+      let foundEmail: string | null = null;
+      let foundName: string | null = null;
+
+      // 1) Lookup über external_customer_id (+ source_system, falls vorhanden)
       if (r.customer_id) {
-        const { data: c, error } = await supabase
+        let q = supabase
+          .from('customers')
+          .select('email, contact_name, company_name, source_system')
+          .eq('external_customer_id', r.customer_id);
+        if (r.source_system) q = q.eq('source_system', r.source_system);
+        const { data: c } = await q.maybeSingle();
+        if (c?.email) { foundEmail = c.email; foundName = c.company_name ?? c.contact_name ?? null; }
+      }
+
+      // 2) Fallback: Lookup über Firmenname
+      if (!foundEmail && r.customer_name) {
+        const { data: c2 } = await supabase
           .from('customers')
           .select('email, contact_name, company_name')
-          .eq('external_customer_id', r.customer_id)
+          .ilike('company_name', r.customer_name)
+          .not('email', 'is', null)
+          .limit(1)
           .maybeSingle();
-        if (error) console.warn('[Invoices] customer lookup failed', error);
-        if (c) {
-          setEmailForm((f) => ({
-            ...f,
-            to_email: c.email ?? '',
-            to_name: c.company_name ?? c.contact_name ?? f.to_name,
-          }));
-        }
+        if (c2?.email) { foundEmail = c2.email; foundName = c2.company_name ?? c2.contact_name ?? null; }
+      }
+
+      // 3) Fallback: Email aus raw_data der Zoho-Rechnung
+      if (!foundEmail) {
+        const rd: any = r.raw_data || {};
+        const rawEmail =
+          rd.email ||
+          rd.customer_email ||
+          rd?.contact_persons?.[0]?.email ||
+          rd?.billing_address?.email ||
+          null;
+        if (rawEmail && typeof rawEmail === 'string') foundEmail = rawEmail;
+      }
+
+      if (foundEmail) {
+        setEmailForm((f) => ({
+          ...f,
+          to_email: foundEmail!,
+          to_name: foundName ?? f.to_name,
+        }));
+      } else {
+        console.warn('[Invoices] Keine Kunden-Email gefunden für', r.customer_name, r.customer_id);
       }
     } catch (e) {
       console.error('[Invoices] openEmail error', e);
