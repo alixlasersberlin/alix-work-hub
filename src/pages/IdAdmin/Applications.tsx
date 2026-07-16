@@ -23,6 +23,20 @@ export default function IdAdminApplications() {
   const [rows, setRows] = useState<App[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [e2eRunning, setE2eRunning] = useState(false);
+  const [e2eResults, setE2eResults] = useState<Array<{ app_key: string; ok: boolean; steps: Array<{ name: string; ok: boolean; detail?: string }> }> | null>(null);
+
+  const runMfaE2e = async () => {
+    setE2eRunning(true);
+    setE2eResults(null);
+    const { data, error } = await supabase.functions.invoke('alix-id-mfa-e2e', { body: {} });
+    setE2eRunning(false);
+    if (error) { toast.error(`E2E-Test fehlgeschlagen: ${error.message}`); return; }
+    setE2eResults(data?.results ?? []);
+    toast[data?.ok ? 'success' : 'error'](
+      data?.ok ? 'MFA-E2E-Test bestanden für alle Apps.' : 'MFA-E2E-Test hat Fehler gefunden — siehe Details.'
+    );
+  };
 
   const load = async () => {
     setLoading(true);
