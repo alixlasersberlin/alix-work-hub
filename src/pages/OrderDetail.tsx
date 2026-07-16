@@ -207,6 +207,21 @@ export default function OrderDetail() {
       .order('updated_at', { ascending: false });
     setSerialDevices((serialsData as any) ?? []);
 
+    // E-Mail Send-Log (letzte 90 Tage): via Idempotency-Key (enthält order.id) oder Empfänger-E-Mail
+    try {
+      const filters: string[] = [`metadata->>idempotency_key.ilike.%${id}%`];
+      const custEmail = (baseCust?.email || '').trim();
+      if (custEmail) filters.push(`recipient_email.ilike.${custEmail}`);
+      const { data: logs } = await supabase
+        .from('email_send_log')
+        .select('id, recipient_email, subject, template, status, provider_message_id, sent_at, created_at, metadata')
+        .or(filters.join(','))
+        .gte('created_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+        .limit(100);
+      setEmailLogs((logs as any) ?? []);
+    } catch { setEmailLogs([]); }
+
     setLoading(false);
   }
 
