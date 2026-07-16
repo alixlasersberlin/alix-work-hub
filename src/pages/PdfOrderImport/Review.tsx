@@ -461,11 +461,13 @@ export default function PdfOrderImportReview() {
   );
 }
 
-function Section({ title, fields, data, conf, onChange }: {
+function Section({ title, fields, data, conf, green, yellow, onChange }: {
   title: string;
   fields: Array<[string, string]>;
   data: Record<string, string>;
   conf: Record<string, number | null>;
+  green: number;
+  yellow: number;
   onChange: (key: string, val: string) => void;
 }) {
   return (
@@ -475,7 +477,7 @@ function Section({ title, fields, data, conf, onChange }: {
         {fields.map(([k, label]) => (
           <div key={k} className="space-y-1">
             <Label className="text-xs flex items-center gap-1.5">
-              <ConfPill c={conf[k] ?? null} /> {label}
+              <ConfPill c={conf[k] ?? null} green={green} yellow={yellow} /> {label}
             </Label>
             <Input value={data[k] ?? ''} onChange={(e) => onChange(k, e.target.value)} className="h-8 text-sm" />
           </div>
