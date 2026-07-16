@@ -558,7 +558,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
   async function sendByEmail() {
     // Versand ist idempotent (PDF-Reprint + E-Mail) und darf auch nach bereits gestellter Rechnung genutzt werden.
-    if (!hasDeposit) {
+    // Wenn bereits eine Rechnung existiert, ist keine Deposit-Vereinbarung mehr nötig – der Betrag steht fest.
+    if (!hasDeposit && !existingInvoice) {
       toast.error('Keine Anzahlung vereinbart.');
       return;
     }
@@ -761,13 +762,13 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           <Button
             variant="outline"
             onClick={sendByEmail}
-            disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || !customer?.email || checkingExisting}
-            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : (existingInvoice ? 'Rechnung bereits gestellt – wird als E-Mail erneut versendet (kein neuer Buchungssatz).' : undefined)}
+            disabled={generating || booking || sending || postingToBuchhaltung || (!hasDeposit && !existingInvoice) || !customer?.email || checkingExisting}
+            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : (existingInvoice ? 'Bereits gestellte Rechnung erneut per E-Mail versenden (kein neuer Buchungssatz).' : (!hasDeposit ? 'Keine Anzahlung vereinbart.' : undefined))}
           >
             {sending
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               : <Mail className="w-4 h-4 mr-2" />}
-            Anzahlung per E-Mail versenden
+            {existingInvoice ? 'Rechnung per E-Mail versenden' : 'Anzahlung per E-Mail versenden'}
           </Button>
         </div>
       </div>
