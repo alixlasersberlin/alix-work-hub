@@ -64,6 +64,8 @@ Deno.serve(async (req) => {
   let signedAt: string | undefined
   let totalAmountStr: string | undefined
   let createdBy: string | undefined
+  let salespersonName: string | undefined
+
   const fmt = (n: number, c = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: c }).format(n)
 
   if (signatureId) {
