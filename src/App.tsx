@@ -398,6 +398,7 @@ const CustomerPortalLayout = lazy(() => import("./pages/CustomerPortal/Layout"))
 const CustomerPortalLogin = lazy(() => import("./pages/CustomerPortal/Login"));
 const AlixIdLayout = lazy(() => import("./pages/AlixId/Layout"));
 const AlixIdLogin = lazy(() => import("./pages/AlixId/Login"));
+const AlixIdCallback = lazy(() => import("./pages/AlixId/Callback"));
 const AlixIdApps = lazy(() => import("./pages/AlixId/Apps"));
 const AlixIdKonto = lazy(() => import("./pages/AlixId/Konto"));
 const AlixIdSicherheit = lazy(() => import("./pages/AlixId/Sicherheit"));
