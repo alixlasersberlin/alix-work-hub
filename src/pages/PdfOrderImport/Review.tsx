@@ -307,7 +307,7 @@ export default function PdfOrderImportReview() {
     }
     const isOffer = imp?.document_type === 'offer';
     toast.success(`${isOffer ? 'Angebot' : 'Auftrag'} ${(data as any).order_number} angelegt.`);
-    nav(isOffer ? '/verkauf' : '/auftraege');
+    nav(isOffer ? '/verkauf/angebote' : '/auftraege');
   }
 
   if (loading || !draft || !imp) {
