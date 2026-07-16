@@ -396,6 +396,12 @@ const MailCenterDokumentenVorlagen = lazy(() => import("./pages/MailCenter/Dokum
 const MailCenterDokumentenAutomationen = lazy(() => import("./pages/MailCenter/DokumentenAutomationen"));
 const CustomerPortalLayout = lazy(() => import("./pages/CustomerPortal/Layout"));
 const CustomerPortalLogin = lazy(() => import("./pages/CustomerPortal/Login"));
+const AlixIdLayout = lazy(() => import("./pages/AlixId/Layout"));
+const AlixIdLogin = lazy(() => import("./pages/AlixId/Login"));
+const AlixIdApps = lazy(() => import("./pages/AlixId/Apps"));
+const AlixIdKonto = lazy(() => import("./pages/AlixId/Konto"));
+const AlixIdSicherheit = lazy(() => import("./pages/AlixId/Sicherheit"));
+const AlixIdSitzungen = lazy(() => import("./pages/AlixId/Sitzungen"));
 const CustomerPortalDashboard = lazy(() => import("./pages/CustomerPortal/Dashboard"));
 const CustomerPortalMessages = lazy(() => import("./pages/CustomerPortal/Messages"));
 const CustomerPortalDocuments = lazy(() => import("./pages/CustomerPortal/Documents"));
@@ -1368,6 +1374,16 @@ function AppRoutes() {
           <Route path="gesundheit" element={<Navigate to="/kunde" replace />} />
           <Route path="katalog" element={<Navigate to="/kunde" replace />} />
           <Route path="warenkorb" element={<Navigate to="/kunde" replace />} />
+        </Route>
+
+        {/* Alix ID — zentrale Identität und SSO (Phase 3) */}
+        <Route path="/id/login" element={<AlixIdLogin />} />
+        <Route path="/id" element={<AlixIdLayout />}>
+          <Route index element={<Navigate to="/id/apps" replace />} />
+          <Route path="apps" element={<AlixIdApps />} />
+          <Route path="konto" element={<AlixIdKonto />} />
+          <Route path="sicherheit" element={<AlixIdSicherheit />} />
+          <Route path="sitzungen" element={<AlixIdSitzungen />} />
         </Route>
 
         {/* AlixWork Kalender – Mobile PWA (spiegelt den bestehenden Teamkalender) */}
