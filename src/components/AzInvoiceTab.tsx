@@ -761,7 +761,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             {generating
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               : <FileDown className="w-4 h-4 mr-2" />}
-            PDF erstellen & vermerken
+            PDF Entwurf erstellen
           </Button>
           <Button
             onClick={generateAndBook}
