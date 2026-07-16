@@ -74,6 +74,42 @@ export default function IdAdminApplications() {
 
   return (
     <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-base">MFA-Enforcement E2E-Test</CardTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Prüft für Studio, eAnamnese und Finance: 403 mfa_required → Enrollment → 200 mit Code → Token-Tausch → Reuse-Schutz.
+              Legt Testnutzer temporär an und räumt sie danach wieder ab.
+            </p>
+          </div>
+          <Button size="sm" onClick={runMfaE2e} disabled={e2eRunning}>
+            {e2eRunning ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <PlayCircle className="w-3 h-3 mr-1" />}
+            Test starten
+          </Button>
+        </CardHeader>
+        {e2eResults && (
+          <CardContent className="space-y-3">
+            {e2eResults.map((r) => (
+              <div key={r.app_key} className="rounded-md border p-3 space-y-1">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  {r.ok ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <XCircle className="w-4 h-4 text-destructive" />}
+                  <span className="font-mono">{r.app_key}</span>
+                  <Badge variant={r.ok ? 'default' : 'destructive'}>{r.ok ? 'PASS' : 'FAIL'}</Badge>
+                </div>
+                <ul className="text-xs space-y-0.5 pl-6">
+                  {r.steps.map((s, i) => (
+                    <li key={i} className={s.ok ? 'text-muted-foreground' : 'text-destructive'}>
+                      {s.ok ? '✓' : '✗'} {s.name}{s.detail ? ` — ${s.detail}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </CardContent>
+        )}
+      </Card>
+
       {rows.map((r) => (
         <Card key={r.id}>
           <CardHeader className="flex-row items-center justify-between">
