@@ -108,6 +108,31 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
   }, [orderDeposit]);
 
+  // Fallback: Wenn im Auftrag kein deposit_amount hinterlegt ist, aus finance_deposits ziehen.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (orderDeposit > 0) return;
+      if (!order?.id && !orderNo) return;
+      try {
+        let query = supabase
+          .from('finance_deposits' as any)
+          .select('gross_amount, order_id, order_number')
+          .limit(1);
+        const orFilters: string[] = [];
+        if (order?.id) orFilters.push(`order_id.eq.${order.id}`);
+        if (orderNo) orFilters.push(`order_number.eq.${orderNo}`);
+        if (orFilters.length) query = query.or(orFilters.join(','));
+        const { data } = await query;
+        const gross = Number((data?.[0] as any)?.gross_amount) || 0;
+        if (!cancelled && gross > 0) {
+          setDepositAmount(prev => (Number(prev) > 0 ? prev : String(gross)));
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [order?.id, orderNo, orderDeposit]);
+
   // Duplikatscheck: existiert bereits eine AZ-Rechnung für diesen Auftrag?
   useEffect(() => {
     let cancelled = false;
