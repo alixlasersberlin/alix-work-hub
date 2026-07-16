@@ -158,27 +158,56 @@ Deno.serve(async (req) => {
           tax_rate: Number(it.tax_rate) || 0,
         };
       });
+      const netTotal = typeof fin.net_amount === "number" ? fin.net_amount : items.reduce((s, i) => s + (i.total_price || 0), 0);
+      const taxTotal = typeof fin.tax_amount === "number" ? fin.tax_amount : items.reduce((s, i) => s + ((i.total_price || 0) * (i.tax_rate || 0) / 100), 0);
+      const grossTotal = typeof fin.gross_amount === "number" ? fin.gross_amount : (netTotal + taxTotal);
+
+      // created_by_name für Anzeige
+      let createdByName: string | null = null;
+      try {
+        const { data: prof } = await admin
+          .from("user_profiles")
+          .select("full_name, email")
+          .eq("id", userId)
+          .maybeSingle();
+        createdByName = (prof as any)?.full_name || (prof as any)?.email || null;
+      } catch { /* optional */ }
+
       const offerPayload: Record<string, any> = {
         offer_number: docNumber,
         offer_date: String(orderDateIso).slice(0, 10),
         customer_id: customerId,
         customer_name: cust.company_name ?? cust.contact_person ?? null,
         customer_email: cust.email ?? null,
-        total_net: typeof fin.net_amount === "number" ? fin.net_amount : 0,
-        total_tax: typeof fin.tax_amount === "number" ? fin.tax_amount : 0,
-        total_gross: typeof fin.gross_amount === "number" ? fin.gross_amount : 0,
+        total_net: netTotal,
+        total_tax: taxTotal,
+        total_gross: grossTotal,
         status: "draft",
         created_by: userId,
+        created_by_name: createdByName,
         payload: {
+          offerNumber: docNumber,
+          offerDate: String(orderDateIso).slice(0, 10),
+          customer: {
+            id: customerId,
+            company_name: cust.company_name ?? null,
+            contact_name: cust.contact_person ?? ([cust.first_name, cust.last_name].filter(Boolean).join(" ") || null),
+            email: cust.email ?? null,
+            phone: cust.phone ?? cust.mobile ?? null,
+          },
+          totals: { net: netTotal, tax: taxTotal, gross: grossTotal },
+          lines: items,
+          notes: null,
+          salesAdvisor: sales.salesperson ?? null,
           source: "pdf_import",
           import_id: body.import_id,
           currency: ord.currency ?? "EUR",
           external_offer_number: ord.offer_number ?? ord.external_order_number ?? null,
-          salesperson_name: sales.salesperson ?? null,
           payment_method: fin.payment_method ?? null,
           financing_partner: fin.financing_partner ?? null,
           expected_shipment_date: expectedShipmentIso,
-          items,
+          createdAt: new Date().toISOString(),
+          status: "draft",
         },
       };
       const { data: newOffer, error: oErr } = await admin

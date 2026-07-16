@@ -307,7 +307,7 @@ export default function PdfOrderImportReview() {
     }
     const isOffer = imp?.document_type === 'offer';
     toast.success(`${isOffer ? 'Angebot' : 'Auftrag'} ${(data as any).order_number} angelegt.`);
-    nav(isOffer ? '/verkauf' : '/auftraege');
+    nav(isOffer ? '/verkauf/angebote' : '/auftraege');
   }
 
   if (loading || !draft || !imp) {
@@ -315,15 +315,18 @@ export default function PdfOrderImportReview() {
   }
 
   if (imp.status === 'committed') {
+    const isOffer = imp.document_type === 'offer';
     return (
       <div className="space-y-4">
         <PageHeader icon={FileText} title="Bereits importiert" subtitle={imp.source_filename} />
         <Card className="border-emerald-500/40 bg-emerald-500/5">
           <CardContent className="p-4 flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-            <div className="flex-1 text-sm">Dieser Import wurde bereits in einen Auftrag überführt.</div>
+            <div className="flex-1 text-sm">Dieser Import wurde bereits {isOffer ? 'in ein Angebot' : 'in einen Auftrag'} überführt.</div>
             {imp.created_order_id && (
-              <Button size="sm" onClick={() => nav(`/auftraege/${imp.created_order_id}`)}>Zum Auftrag</Button>
+              <Button size="sm" onClick={() => nav(isOffer ? '/verkauf/angebote' : `/auftraege/${imp.created_order_id}`)}>
+                {isOffer ? 'Zu den Angeboten' : 'Zum Auftrag'}
+              </Button>
             )}
           </CardContent>
         </Card>
