@@ -107,6 +107,7 @@ export default function ProductionOrderIn() {
     if (error) return toast.error(error.message);
     toast.success(`Status geändert: "${newStatus}"`);
     setRows(prev => prev.map(x => x.id === r.id ? { ...x, status: newStatus } : x));
+    void triggerStatusEmail(r, newStatus, 'manuell');
   };
 
   const performMove = async (r: Row, target: LagerTarget, serialArg: string) => {
