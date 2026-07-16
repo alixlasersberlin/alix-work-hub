@@ -798,19 +798,14 @@ export default function Invoices() {
         .split(/[,;\s]+/)
         .map((s) => s.trim())
         .filter((s) => s.includes('@'));
-      const { data, error } = await supabase.functions.invoke('send-mail', {
+      const { data, error } = await supabase.functions.invoke('send-invoice-mail', {
         body: {
           to_email: emailForm.to_email,
           to_name: emailForm.to_name || null,
-          from_email: 'finance@alixwork.de',
-          from_name: 'Alix Lasers Finance',
           subject: emailForm.subject,
           body_text: emailForm.body_text,
-          body_html: `<pre style="font-family:Arial,sans-serif;font-size:14px;white-space:pre-wrap;margin:0">${emailForm.body_text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string))}</pre>`,
-          invoice_id: emailRow.zoho_invoice_id ?? null,
-          customer_id: emailRow.customer_id ?? null,
-          category: 'finance',
           bcc: bccList.length ? bccList : null,
+          invoice_number: emailRow.invoice_number ?? null,
           attachments: [{
             filename: `${emailRow.invoice_number ?? 'rechnung'}.pdf`,
             content: b64,
