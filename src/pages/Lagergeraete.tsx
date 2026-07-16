@@ -2331,6 +2331,19 @@ export default function Lagergeraete({
                           <Mail className="w-4 h-4" /> E-Mail an Kunde
                         </Button>
                       )}
+                      {d.reserved_order_id && lastFailedByOrder[d.reserved_order_id] && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={resendingOrderId === d.reserved_order_id}
+                          onClick={() => handleResendLastFailed(d.reserved_order_id!, d.id)}
+                          className="gap-1 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-400"
+                          title={`Letzten Fehlversuch erneut senden (${lastFailedByOrder[d.reserved_order_id]?.template ?? ''} → ${lastFailedByOrder[d.reserved_order_id]?.recipient_email ?? ''})`}
+                        >
+                          <Mail className="w-4 h-4" />
+                          {resendingOrderId === d.reserved_order_id ? 'Sende…' : 'Fehlversuch erneut senden'}
+                        </Button>
+                      )}
                       {d.reserved_order_id && (
                         <Button
                           variant="outline"
