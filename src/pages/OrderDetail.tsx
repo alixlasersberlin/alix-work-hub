@@ -81,6 +81,7 @@ export default function OrderDetail() {
   const [newAddGeleistet, setNewAddGeleistet] = useState<'ja' | 'nein'>('nein');
   const [addingDeposit, setAddingDeposit] = useState(false);
   const [azInvoiceDoc, setAzInvoiceDoc] = useState<{ download_token: string | null; file_path: string | null; file_name: string | null } | null>(null);
+  const [emailLogs, setEmailLogs] = useState<Array<{ id: string; recipient_email: string | null; subject: string | null; template: string | null; status: string | null; provider_message_id: string | null; sent_at: string | null; created_at: string; metadata: any }>>([]);
 
 
   // Note form
@@ -205,6 +206,21 @@ export default function OrderDetail() {
       .or(`reserved_order_id.eq.${id},delivered_order_id.eq.${id}`)
       .order('updated_at', { ascending: false });
     setSerialDevices((serialsData as any) ?? []);
+
+    // E-Mail Send-Log (letzte 90 Tage): via Idempotency-Key (enthält order.id) oder Empfänger-E-Mail
+    try {
+      const filters: string[] = [`metadata->>idempotency_key.ilike.%${id}%`];
+      const custEmail = (baseCust?.email || '').trim();
+      if (custEmail) filters.push(`recipient_email.ilike.${custEmail}`);
+      const { data: logs } = await supabase
+        .from('email_send_log')
+        .select('id, recipient_email, subject, template, status, provider_message_id, sent_at, created_at, metadata')
+        .or(filters.join(','))
+        .gte('created_at', new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false })
+        .limit(100);
+      setEmailLogs((logs as any) ?? []);
+    } catch { setEmailLogs([]); }
 
     setLoading(false);
   }
@@ -1362,6 +1378,100 @@ export default function OrderDetail() {
               </Button>
             </div>
           )}
+
+          {/* E-Mail-Status Übersicht */}
+          {(() => {
+            const primaryLogs = emailLogs.filter(l => {
+              const role = (l.metadata as any)?.role;
+              return !role || role === 'primary';
+            });
+            const latest = primaryLogs[0] || emailLogs[0] || null;
+            const statusStyle = (s: string | null) => {
+              const v = (s || '').toLowerCase();
+              if (v === 'sent' || v === 'delivered') return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/40';
+              if (v === 'failed' || v === 'bounced' || v === 'error') return 'bg-red-500/10 text-red-500 border-red-500/40';
+              if (v === 'queued' || v === 'sending') return 'bg-amber-500/10 text-amber-500 border-amber-500/40';
+              return 'bg-muted text-muted-foreground border-border';
+            };
+            const errorReason = latest ? ((latest.metadata as any)?.error || (latest.metadata as any)?.error_message || null) : null;
+            return (
+              <div className="rounded-xl border border-border bg-card p-4 card-glow mb-4">
+                <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-primary" />
+                    <h3 className="font-semibold text-foreground">E-Mail-Status</h3>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {emailNotes.length} Notiz(en) · {emailLogs.length} Send-Log-Eintrag(e)
+                  </div>
+                </div>
+                {!latest ? (
+                  <div className="text-sm text-muted-foreground">
+                    Bisher wurde keine E-Mail für diesen Auftrag versendet.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap text-sm">
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${statusStyle(latest.status)}`}>
+                        {latest.status || 'unbekannt'}
+                      </span>
+                      <span className="text-muted-foreground">{latest.template || '—'}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="font-medium text-foreground">{latest.recipient_email || '—'}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(latest.sent_at || latest.created_at).toLocaleString('de-DE')}
+                      </span>
+                    </div>
+                    {latest.subject && <div className="text-xs text-muted-foreground truncate">Betreff: {latest.subject}</div>}
+                    {errorReason && (
+                      <div className="text-xs text-red-500 bg-red-500/5 border border-red-500/20 rounded px-2 py-1">
+                        Fehler: {String(errorReason)}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {emailLogs.length > 0 && (
+                  <details className="mt-3">
+                    <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                      Alle Versand-Versuche anzeigen ({emailLogs.length})
+                    </summary>
+                    <div className="mt-2 border rounded-lg overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead className="bg-muted/30">
+                          <tr className="text-left">
+                            <th className="px-2 py-1.5 font-medium">Zeit</th>
+                            <th className="px-2 py-1.5 font-medium">Empfänger</th>
+                            <th className="px-2 py-1.5 font-medium">Template</th>
+                            <th className="px-2 py-1.5 font-medium">Rolle</th>
+                            <th className="px-2 py-1.5 font-medium">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {emailLogs.map(l => (
+                            <tr key={l.id} className="hover:bg-muted/20">
+                              <td className="px-2 py-1.5 text-muted-foreground whitespace-nowrap">
+                                {new Date(l.sent_at || l.created_at).toLocaleString('de-DE')}
+                              </td>
+                              <td className="px-2 py-1.5 truncate max-w-[220px]">{l.recipient_email || '—'}</td>
+                              <td className="px-2 py-1.5 text-muted-foreground truncate max-w-[180px]">{l.template || '—'}</td>
+                              <td className="px-2 py-1.5 text-muted-foreground">{(l.metadata as any)?.role || '—'}</td>
+                              <td className="px-2 py-1.5">
+                                <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium border ${statusStyle(l.status)}`}>
+                                  {l.status || '—'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                )}
+              </div>
+            );
+          })()}
+
           {emailNotes.length === 0 ? (
             <div className="rounded-xl border border-border bg-card p-8 text-center card-glow">
               <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
