@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { FileText, Loader2, Save, Search, UserPlus, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { loadPdfOrderImportConfig, DEFAULT_PDF_IMPORT_CONFIG, type PdfOrderImportConfig } from '@/lib/pdf-order-import-config';
 
 // ---------- Helpers ----------
 function extractValue(v: any): any {
@@ -21,9 +22,9 @@ function extractConf(v: any): number | null {
   if (v && typeof v === 'object' && typeof v.confidence === 'number') return v.confidence;
   return null;
 }
-function ConfPill({ c }: { c: number | null }) {
+function ConfPill({ c, green, yellow }: { c: number | null; green: number; yellow: number }) {
   if (c == null) return <span className="inline-block w-2 h-2 rounded-full bg-slate-500" />;
-  const cls = c >= 90 ? 'bg-emerald-500' : c >= 70 ? 'bg-amber-400' : 'bg-red-500';
+  const cls = c >= green ? 'bg-emerald-500' : c >= yellow ? 'bg-amber-400' : 'bg-red-500';
   return <span className={`inline-block w-2 h-2 rounded-full ${cls}`} title={`${Math.round(c)} %`} />;
 }
 
@@ -89,13 +90,8 @@ export default function PdfOrderImportReview() {
   const [customerHits, setCustomerHits] = useState<any[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [createNewCustomer, setCreateNewCustomer] = useState(false);
-  const [followups, setFollowups] = useState({
-    delivery_planning: true,
-    mediapaket: true,
-    nisv: true,
-    financing: true,
-    deposit_check: true,
-  });
+  const [config, setConfig] = useState<PdfOrderImportConfig>(DEFAULT_PDF_IMPORT_CONFIG);
+  const [followups, setFollowups] = useState({ ...DEFAULT_PDF_IMPORT_CONFIG.auto_followups_default });
 
   async function load() {
     if (!id) return;
@@ -142,7 +138,26 @@ export default function PdfOrderImportReview() {
     setLoading(false);
   }
 
-  useEffect(() => { document.title = 'PDF-Import prüfen · Alix Work'; load(); }, [id]);
+  useEffect(() => {
+    document.title = 'PDF-Import prüfen · Alix Work';
+    loadPdfOrderImportConfig().then((cfg) => {
+      setConfig(cfg);
+      setFollowups({ ...cfg.auto_followups_default });
+    });
+    load();
+  }, [id]);
+
+  // Standard-Währung aus Config als Fallback befüllen
+  useEffect(() => {
+    if (!draft) return;
+    if (!draft.order.currency && config.default_currency) {
+      setField('order', 'currency', config.default_currency);
+    }
+    if (!draft.order.branch && config.default_branch) {
+      setField('order', 'branch', config.default_branch);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft && !draft.order.currency, config.default_currency]);
 
   // Kundensuche mit Debounce
   useEffect(() => {
@@ -367,16 +382,16 @@ export default function PdfOrderImportReview() {
           </Card>
 
           {/* Auftragsdaten */}
-          <Section title="Auftragsdaten" fields={ORDER_FIELDS} data={draft.order} conf={confidences} onChange={(k, v) => setField('order', k, v)} />
+          <Section title="Auftragsdaten" fields={ORDER_FIELDS} data={draft.order} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('order', k, v)} />
 
           {/* Kunde */}
-          <Section title="Kundendaten" fields={CUST_FIELDS} data={draft.customer} conf={confidences} onChange={(k, v) => setField('customer', k, v)} />
+          <Section title="Kundendaten" fields={CUST_FIELDS} data={draft.customer} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('customer', k, v)} />
 
           {/* Finanzen */}
-          <Section title="Finanzen" fields={FIN_FIELDS} data={draft.financials} conf={confidences} onChange={(k, v) => setField('financials', k, v)} />
+          <Section title="Finanzen" fields={FIN_FIELDS} data={draft.financials} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('financials', k, v)} />
 
           {/* Sales */}
-          <Section title="Vertrieb" fields={SALES_FIELDS} data={draft.sales} conf={confidences} onChange={(k, v) => setField('sales', k, v)} />
+          <Section title="Vertrieb" fields={SALES_FIELDS} data={draft.sales} conf={confidences} green={config.confidence_green} yellow={config.confidence_yellow} onChange={(k, v) => setField('sales', k, v)} />
 
           {/* Positionen */}
           <Card className="border-border/60 bg-card/40 backdrop-blur-xl">
@@ -446,11 +461,13 @@ export default function PdfOrderImportReview() {
   );
 }
 
-function Section({ title, fields, data, conf, onChange }: {
+function Section({ title, fields, data, conf, green, yellow, onChange }: {
   title: string;
   fields: Array<[string, string]>;
   data: Record<string, string>;
   conf: Record<string, number | null>;
+  green: number;
+  yellow: number;
   onChange: (key: string, val: string) => void;
 }) {
   return (
@@ -460,7 +477,7 @@ function Section({ title, fields, data, conf, onChange }: {
         {fields.map(([k, label]) => (
           <div key={k} className="space-y-1">
             <Label className="text-xs flex items-center gap-1.5">
-              <ConfPill c={conf[k] ?? null} /> {label}
+              <ConfPill c={conf[k] ?? null} green={green} yellow={yellow} /> {label}
             </Label>
             <Input value={data[k] ?? ''} onChange={(e) => onChange(k, e.target.value)} className="h-8 text-sm" />
           </div>

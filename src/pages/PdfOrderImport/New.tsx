@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { FileText, Upload, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { loadPdfOrderImportConfig, DEFAULT_PDF_IMPORT_CONFIG } from '@/lib/pdf-order-import-config';
 
-const DOC_TYPES: Array<{ v: string; label: string }> = [
+const DOC_TYPES_ALL: Array<{ v: string; label: string }> = [
   { v: 'purchase_order', label: 'Auftrag / Kaufvertrag' },
   { v: 'sales_contract', label: 'Kaufvertrag' },
   { v: 'rental_contract', label: 'Mietvertrag' },
@@ -21,8 +22,6 @@ const DOC_TYPES: Array<{ v: string; label: string }> = [
   { v: 'service_order', label: 'Serviceauftrag' },
   { v: 'other', label: 'Sonstiges Auftragsdokument' },
 ];
-
-const MAX_SIZE_MB = 20;
 
 async function sha256Hex(buf: ArrayBuffer): Promise<string> {
   const hash = await crypto.subtle.digest('SHA-256', buf);
@@ -36,9 +35,20 @@ export default function PdfOrderImportNew() {
   const [docType, setDocType] = useState('purchase_order');
   const [busy, setBusy] = useState(false);
   const [drag, setDrag] = useState(false);
+  const [maxSizeMb, setMaxSizeMb] = useState<number>(DEFAULT_PDF_IMPORT_CONFIG.max_file_size_mb);
+  const [activeTypes, setActiveTypes] = useState<string[]>(DEFAULT_PDF_IMPORT_CONFIG.active_doc_types);
+
+  const docTypes = DOC_TYPES_ALL.filter((t) => activeTypes.includes(t.v));
 
   useEffect(() => {
     document.title = 'PDF-Auftragsimport · Alix Work';
+    loadPdfOrderImportConfig().then((cfg) => {
+      setMaxSizeMb(cfg.max_file_size_mb);
+      setActiveTypes(cfg.active_doc_types);
+      if (!cfg.active_doc_types.includes('purchase_order') && cfg.active_doc_types[0]) {
+        setDocType(cfg.active_doc_types[0]);
+      }
+    });
   }, []);
 
   function pickFile(f: File | undefined | null) {
@@ -47,12 +57,14 @@ export default function PdfOrderImportNew() {
       toast.error('Nur PDF-Dateien sind erlaubt.');
       return;
     }
-    if (f.size > MAX_SIZE_MB * 1024 * 1024) {
-      toast.error(`Datei ist größer als ${MAX_SIZE_MB} MB.`);
+    if (f.size > maxSizeMb * 1024 * 1024) {
+      toast.error(`Datei ist größer als ${maxSizeMb} MB.`);
       return;
     }
     setFile(f);
   }
+
+
 
   async function onUpload() {
     if (!file || !user) return;
@@ -144,7 +156,7 @@ export default function PdfOrderImportNew() {
                   <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => pickFile(e.target.files?.[0])} />
                 </label>
               </p>
-              <p className="text-xs text-muted-foreground">Max. {MAX_SIZE_MB} MB · nur PDF</p>
+              <p className="text-xs text-muted-foreground">Max. {maxSizeMb} MB · nur PDF</p>
               {file && (
                 <div className="mt-4 text-sm inline-flex items-center gap-2 rounded-md bg-secondary/60 px-3 py-2">
                   <FileText className="w-4 h-4" />
@@ -158,7 +170,7 @@ export default function PdfOrderImportNew() {
               <label className="text-sm font-medium">Dokumenttyp</label>
               <Select value={docType} onValueChange={setDocType}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{DOC_TYPES.map((t) => <SelectItem key={t.v} value={t.v}>{t.label}</SelectItem>)}</SelectContent>
+                <SelectContent>{docTypes.map((t) => <SelectItem key={t.v} value={t.v}>{t.label}</SelectItem>)}</SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">Die KI erkennt den Typ eigenständig – deine Auswahl dient als Fallback.</p>
             </div>
