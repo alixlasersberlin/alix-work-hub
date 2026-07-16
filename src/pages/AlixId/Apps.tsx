@@ -20,6 +20,7 @@ export default function AlixIdApps() {
   const [orgs, setOrgs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [opening, setOpening] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => { void load(); }, []);
 
