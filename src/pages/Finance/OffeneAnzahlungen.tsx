@@ -467,6 +467,15 @@ export default function OffeneAnzahlungen() {
                         </Button>
                       )}
                       {canWrite && r.order_id && (
+                        <Button size="sm" variant="outline" onClick={() => sendInvoiceEmail(r)}
+                          disabled={sendingInvoiceId === r.id}
+                          title="Anzahlungsrechnung (PDF) per E-Mail an den Kunden versenden">
+                          {sendingInvoiceId === r.id
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Send className="w-3.5 h-3.5" />}
+                        </Button>
+                      )}
+                      {canWrite && r.order_id && (
                         <Button size="sm" variant="outline" onClick={() => sendReminder(r, 'email')}
                           disabled={sendingId === r.id + 'email'} title="Anzahlungs-Erinnerung per E-Mail senden">
                           {sendingId === r.id + 'email'
