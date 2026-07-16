@@ -204,6 +204,7 @@ export default function ProductionOrderIn() {
       toast.success(`In „${targetCfg.label}" verschoben · SN ${serial}`, {
         action: { label: 'Öffnen', onClick: () => navigate(targetCfg.route) },
       });
+      void triggerStatusEmail({ ...r, seriennummer: serial }, newProdStatus, 'manuell');
       setMoveFor(null);
       setMoveSerial('');
     } catch (e: any) {
