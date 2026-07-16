@@ -64,18 +64,7 @@ export default function PdfOrderImportNew() {
     setFile(f);
   }
 
-  function pickFile(f: File | undefined | null) {
-    if (!f) return;
-    if (f.type !== 'application/pdf' && !f.name.toLowerCase().endsWith('.pdf')) {
-      toast.error('Nur PDF-Dateien sind erlaubt.');
-      return;
-    }
-    if (f.size > MAX_SIZE_MB * 1024 * 1024) {
-      toast.error(`Datei ist größer als ${MAX_SIZE_MB} MB.`);
-      return;
-    }
-    setFile(f);
-  }
+
 
   async function onUpload() {
     if (!file || !user) return;
