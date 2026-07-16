@@ -581,21 +581,17 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
   }
 
-  async function sendByEmail() {
-    // Versand ist idempotent (PDF-Reprint + E-Mail) und darf auch nach bereits gestellter Rechnung genutzt werden.
-    // Wenn bereits eine Rechnung existiert, ist keine Deposit-Vereinbarung mehr nötig – der Betrag steht fest.
+  async function sendByEmail(): Promise<boolean> {
     if (!hasDeposit && !existingInvoice) {
       toast.error('Keine Anzahlung vereinbart.');
-      return;
+      return false;
     }
-
     if (!customer?.email) {
       toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.');
-      return;
+      return false;
     }
     setSending(true);
     try {
-      // PDF erstellen (Blob für Upload + lokaler Download als Backup)
       const { blob, fileName } = await buildPdf('blob');
       if (blob) {
         try {
@@ -606,7 +602,6 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         } catch { /* optional */ }
       }
 
-      // PDF in Storage hochladen und kurzen Download-Link auf alixwork.de erzeugen
       let downloadUrl = '';
       if (blob && order?.id) {
         const safeNo = String(invoiceNumber || 'AZ').replace(/[^\w.-]+/g, '_');
@@ -616,7 +611,6 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           .upload(storagePath, blob, { contentType: 'application/pdf', upsert: true });
         if (up.error) throw up.error;
 
-        // Kurzer, eindeutiger Token (~10 Zeichen)
         const token = (crypto.randomUUID().replace(/-/g, '').slice(0, 10));
 
         const { data: userData } = await supabase.auth.getUser();
@@ -661,7 +655,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           templateName: 'customer-shipping-notice',
           recipientEmail: customer.email,
           idempotencyKey: `az-invoice-${order?.id || orderNo}-${invoiceNumber}-${Date.now()}`,
-          bcc: ['k.trinh@alix-operation.de'],
+          bcc: ['k.trinh@alix-operation.de', 'natalia.p@alix-operation.de'],
           templateData: {
             subject,
             body,
@@ -682,6 +676,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           note_text: [
             `[Manuell versendet] Anzahlungsrechnung ${invoiceNumber}`,
             `An: ${customer.email}`,
+            `BCC: k.trinh@alix-operation.de, natalia.p@alix-operation.de`,
             `Betreff: ${subject}`,
             '',
             body,
@@ -690,49 +685,31 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         } as any);
       } catch { /* nicht kritisch */ }
 
-      toast.success(`Anzahlungsrechnung an ${customer.email} versendet (mit Download-Link zur Rechnung).`);
-
-      // Verifikation: prüfe email_send_log für Primary, Copy Natalia und BCC k.trinh
-      try {
-        const sourceId = `az-invoice-${order?.id || orderNo}-${invoiceNumber}`;
-        // Verifikation: nutze Prefix-Match, da idempotencyKey jetzt einen Timestamp enthält
-        const sourceIdPrefix = sourceId;
-        // kurze Wartezeit, bis die Edge Function die Zeilen geschrieben hat
-        await new Promise((r) => setTimeout(r, 1500));
-        const { data: logs } = await supabase
-          .from('email_send_log')
-          .select('recipient_email, status, provider_message_id, metadata, created_at')
-          .like('source_id', `${sourceIdPrefix}%`)
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        const norm = (e: string) => e.trim().toLowerCase();
-        const targets = [
-          { role: 'Primary', email: norm(customer.email) },
-          { role: 'Copy Natalia', email: 'natalia.p@alix-operation.de' },
-          { role: 'BCC k.trinh', email: 'k.trinh@alix-operation.de' },
-        ];
-        const lines = targets.map((t) => {
-          const row = (logs || []).find((l: any) => norm(l.recipient_email) === t.email);
-          if (!row) return `❌ ${t.role} (${t.email}): kein Log-Eintrag`;
-          const icon = row.status === 'sent' ? '✅' : '❌';
-          const pmid = row.provider_message_id ? ` · id: ${row.provider_message_id}` : '';
-          return `${icon} ${t.role} (${row.recipient_email}): ${row.status}${pmid}`;
-        });
-        const allOk = (logs || []).length >= 3 && (logs || []).every((l: any) => l.status === 'sent');
-        const msg = lines.join('\n');
-        if (allOk) toast.success('Zustellung verifiziert:\n' + msg, { duration: 10000 });
-        else toast.warning('Versand-Verifikation:\n' + msg, { duration: 14000 });
-        console.log('[AZ-Versand Verifikation]', { sourceId, logs });
-      } catch (verifyErr) {
-        console.warn('[AZ-Versand Verifikation] Fehler:', verifyErr);
-      }
-
+      toast.success(`Anzahlungsrechnung an ${customer.email} versendet (BCC: k.trinh, natalia.p).`);
       onReload?.();
+      return true;
     } catch (e: any) {
       toast.error('Fehler beim Versenden: ' + (e?.message || 'Unbekannter Fehler'));
+      return false;
     } finally {
       setSending(false);
+    }
+  }
+
+  async function saveAndSendEmail() {
+    if (blockIfDuplicate()) return;
+    if (!hasDeposit) {
+      toast.error('Keine Anzahlung vereinbart.');
+      return;
+    }
+    if (!customer?.email) {
+      toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.');
+      return;
+    }
+    await postToBuchhaltung();
+    const sent = await sendByEmail();
+    if (sent) {
+      toast.success('Vorgang abgeschlossen: Anzahlung gebucht und E-Mail versendet.');
     }
   }
 
