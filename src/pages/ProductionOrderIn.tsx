@@ -135,9 +135,14 @@ export default function ProductionOrderIn() {
             Freigegebene Bestellungen, gruppiert nach Lieferant
           </p>
         </div>
-        <Badge variant="outline" className="text-xs">
-          {filtered.length} freigegebene Bestellungen
-        </Badge>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className="text-xs">
+            {filtered.length} freigegebene Bestellungen
+          </Badge>
+          <Button variant="outline" size="sm" onClick={() => navigate('/lager')}>
+            <Warehouse className="w-4 h-4 mr-1.5" /> Zur Lagerverwaltung
+          </Button>
+        </div>
       </div>
 
       <Card className="p-3">
