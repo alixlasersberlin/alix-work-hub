@@ -915,6 +915,9 @@ function AppRoutes() {
           <Route path="/auftraege-at" element={<ProtectedRoute><OrdersAt /></ProtectedRoute>} />
           <Route path="/auftraege-ch" element={<ProtectedRoute><OrdersCh /></ProtectedRoute>} />
           <Route path="/auftraege/in-klaerung" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><OrdersInClarification /></ProtectedRoute>} />
+          <Route path="/auftraege/pdf-import" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Vertrieb', 'Geschäftsführung']}><PdfOrderImportList /></ProtectedRoute>} />
+          <Route path="/auftraege/pdf-import/neu" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Vertrieb', 'Geschäftsführung']}><PdfOrderImportNew /></ProtectedRoute>} />
+          <Route path="/auftraege/pdf-import/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Vertrieb', 'Geschäftsführung']}><PdfOrderImportDetail /></ProtectedRoute>} />
           <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Finanzierungen', 'Order']}><OrderDetail /></ProtectedRoute>} />
           <Route path="/mediapaket" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG']}><MediapaketOverview /></ProtectedRoute>} />
           <Route path="/mediapaket/admin" element={<ProtectedRoute requiredRoles={['Super Admin']}><MediapaketAdmin /></ProtectedRoute>} />
