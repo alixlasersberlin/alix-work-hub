@@ -13,9 +13,8 @@ type Req = {
   document_id: string;
   status: string;
   created_at: string;
-  signer_email: string | null;
-  signer_name: string | null;
   sig_documents?: { title: string } | null;
+  sig_signers?: { id: string; email: string | null; name: string | null; signed_at: string | null }[];
 };
 
 export default function EmpSignaturen() {
@@ -30,7 +29,7 @@ export default function EmpSignaturen() {
     setLoading(true);
     let q = supabase
       .from('sig_requests')
-      .select('id, document_id, status, created_at, signer_email, signer_name, sig_documents(title)')
+      .select('id, document_id, status, created_at, sig_documents(title), sig_signers(id, email, name, signed_at)')
       .in('status', ['versendet', 'geoeffnet', 'teilweise_signiert', 'neu'])
       .order('created_at', { ascending: false })
       .limit(100);
@@ -38,12 +37,13 @@ export default function EmpSignaturen() {
       const today = new Date(); today.setHours(0, 0, 0, 0);
       q = q.gte('created_at', today.toISOString());
     }
-    if (filter === 'mine' && user?.email) {
-      q = q.eq('signer_email', user.email);
-    }
     const { data, error } = await q;
     if (error) toast.error(error.message);
-    setRows((data ?? []) as any);
+    let list = (data ?? []) as any as Req[];
+    if (filter === 'mine' && user?.email) {
+      list = list.filter(r => (r.sig_signers ?? []).some(s => s.email === user.email));
+    }
+    setRows(list);
     setLoading(false);
   };
 
@@ -51,11 +51,15 @@ export default function EmpSignaturen() {
 
   const submitSignature = async (dataUrl: string) => {
     if (!active) return;
+    const mySigner = (active.sig_signers ?? []).find(s => s.email === user?.email && !s.signed_at)
+      ?? (active.sig_signers ?? []).find(s => !s.signed_at);
+    if (!mySigner) { toast.error('Kein offener Signer gefunden'); return; }
     setSaving(true);
     try {
       const { error } = await supabase.functions.invoke('sig-submit', {
         body: {
           request_id: active.id,
+          signer_id: mySigner.id,
           signature_data_url: dataUrl,
           geo: await getGeo(),
           source: 'mobile',
@@ -73,6 +77,7 @@ export default function EmpSignaturen() {
   };
 
   if (active) {
+    const primary = (active.sig_signers ?? [])[0];
     return (
       <div className="space-y-3">
         <Button variant="ghost" size="sm" onClick={() => setActive(null)}>
@@ -82,7 +87,7 @@ export default function EmpSignaturen() {
           <CardHeader><CardTitle className="text-base">{active.sig_documents?.title ?? 'Signatur'}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="text-xs text-muted-foreground">
-              Signer: {active.signer_name || active.signer_email || '—'}
+              Signer: {primary?.name || primary?.email || '—'}
             </div>
             <div className="border rounded-lg bg-muted/20">
               <SignaturePad onSave={submitSignature} label={saving ? 'Wird übertragen…' : 'Unterschrift bestätigen'} />
@@ -121,19 +126,22 @@ export default function EmpSignaturen() {
         <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Keine offenen Signaturen.</CardContent></Card>
       ) : (
         <div className="space-y-2">
-          {rows.map(r => (
-            <Card key={r.id} className="cursor-pointer active:scale-[.99] transition" onClick={() => setActive(r)}>
-              <CardContent className="p-3 flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{r.sig_documents?.title ?? 'Dokument'}</div>
-                  <div className="text-[11px] text-muted-foreground truncate">
-                    {r.signer_name || r.signer_email || '—'} · {new Date(r.created_at).toLocaleDateString('de-DE')}
+          {rows.map(r => {
+            const primary = (r.sig_signers ?? [])[0];
+            return (
+              <Card key={r.id} className="cursor-pointer active:scale-[.99] transition" onClick={() => setActive(r)}>
+                <CardContent className="p-3 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{r.sig_documents?.title ?? 'Dokument'}</div>
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      {primary?.name || primary?.email || '—'} · {new Date(r.created_at).toLocaleDateString('de-DE')}
+                    </div>
                   </div>
-                </div>
-                <Badge variant="outline" className="shrink-0 text-[10px]">{r.status}</Badge>
-              </CardContent>
-            </Card>
-          ))}
+                  <Badge variant="outline" className="shrink-0 text-[10px]">{r.status}</Badge>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
