@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
+import NewsAnnouncementDialog from '@/components/NewsAnnouncementDialog';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
@@ -602,6 +603,7 @@ export const navItems: NavItem[] = [
           { path: '/verkauf/angebot/import', label: 'Angebote Data Import', icon: Upload, roles: ['Super Admin'] },
           { path: '/operation/angebotskalender-config', label: 'Angebotskalender Konfiguration', icon: Calendar, roles: ['Super Admin'] },
           { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
+          { path: '/operation/news', label: 'News & Begrüßung', icon: Megaphone, roles: ['Super Admin'] },
         ],
       },
     ],
@@ -1897,6 +1899,7 @@ export default function AppLayout() {
         </main>
       </div>
       <WelcomeDialog />
+      <NewsAnnouncementDialog />
       <SalesLeadAssignmentOverlay />
       {/* Begrüßungs-Overlays für Natalia & Lars deaktiviert */}
 

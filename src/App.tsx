@@ -223,6 +223,7 @@ const Detailsuche = lazy(() => import("./pages/Detailsuche"));
 const AuftragStatus = lazy(() => import("./pages/AuftragStatus"));
 const Geraetesperren = lazy(() => import("./pages/Geraetesperren"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
+const NewsAdmin = lazy(() => import("./pages/Operation/NewsAdmin"));
 const HealthCheck = lazy(() => import("./pages/HealthCheck"));
 const Nummernkreise = lazy(() => import("./pages/operation/Nummernkreise"));
 const AngebotsKalenderConfig = lazy(() => import("./pages/Operation/AngebotsKalenderConfig"));
@@ -955,6 +956,7 @@ function AppRoutes() {
           <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
           <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
           <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
+          <Route path="/operation/news" element={<ProtectedRoute requiredRoles={['Super Admin']}><NewsAdmin /></ProtectedRoute>} />
           <Route path="/operation/health-check" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><HealthCheck /></ProtectedRoute>} />
           <Route path="/operation/nummernkreise" element={<ProtectedRoute requiredRoles={['Super Admin']}><Nummernkreise /></ProtectedRoute>} />
           <Route path="/operation/ticket-abteilungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketDepartments /></ProtectedRoute>} />
