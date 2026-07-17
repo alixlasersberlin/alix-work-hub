@@ -1491,6 +1491,7 @@ function AppRoutes() {
           <Route path="benachrichtigungen" element={<EmpNotifications />} />
           <Route path="sync" element={<EmpSync />} />
           <Route path="einstellungen" element={<EmpSettingsPage />} />
+          <Route path="signaturen" element={<EmpSignaturen />} />
         </Route>
 
         {/* ECP – Enterprise Customer Portal (rollenbasiert: Kunde, Händler, Servicepartner, ...) */}
