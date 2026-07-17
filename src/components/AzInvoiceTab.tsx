@@ -12,6 +12,7 @@ import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
 import logoAsset from '@/assets/alix-logo-gold-pdf.png.asset.json';
 import { postPaymentToJournal } from '@/lib/finance/journal';
+import { downloadStampedPdf, stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 
 type BuildMode = 'download' | 'blob';
 
@@ -390,10 +391,10 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
     const fileName = `Anzahlungsrechnung_${invoiceNumber || orderNo}.pdf`;
     if (mode === 'download') {
-      doc.save(fileName);
+      await downloadStampedPdf(doc, 'invoice', fileName, invoiceNumber ?? undefined);
       return { doc, fileName };
     }
-    const blob: Blob = doc.output('blob');
+    const blob: Blob = await stampedPdfBlob(doc, 'invoice', invoiceNumber ?? undefined);
     return { doc, fileName, blob };
   }
 

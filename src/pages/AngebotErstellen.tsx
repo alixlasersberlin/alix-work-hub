@@ -22,6 +22,7 @@ import { peekNumber, nextNumber, ensureCaseNumber } from '@/lib/number-ranges';
 import { useAuth } from '@/hooks/useAuth';
 import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalog/KatalogPickerDialog';
 import { BookOpen } from 'lucide-react';
+import { downloadStampedPdf } from '@/lib/facsimile/jsPdfHelpers';
 
 
 type LineItem = {
@@ -1016,7 +1017,7 @@ export default function AngebotErstellen() {
     }
     const doc = await buildPDF();
     if (!doc) return;
-    doc.save(`${offerNumber}.pdf`);
+    await downloadStampedPdf(doc, 'offer', `${offerNumber}.pdf`, offerNumber);
     toast.success('Angebot gespeichert und als PDF erstellt.');
   };
 

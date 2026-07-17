@@ -14,6 +14,7 @@ import { peekNumber, nextNumber } from '@/lib/number-ranges';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 import logoAsset from '@/assets/alix-logo-gold.png.asset.json';
+import { downloadStampedPdf, openStampedPdf, stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 
 interface Props {
   order: any;
@@ -520,24 +521,21 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
 
       const fileName = `Auftragsbestaetigung_${orderNo || order?.id}.pdf`;
       if (mode === 'print') {
-        const blobUrl = doc.output('bloburl') as unknown as string;
+        const stamped = await stampedPdfBlob(doc, 'order_confirmation', orderNo || undefined);
+        const blobUrl = URL.createObjectURL(stamped);
         const win = window.open(blobUrl, '_blank');
         if (win) {
           win.addEventListener('load', () => { try { win.focus(); win.print(); } catch {} });
         } else {
           toast.error('Popup wurde blockiert. Bitte Popups erlauben.');
         }
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
         toast.success('Druckvorschau geöffnet.');
       } else if (mode === 'view') {
-        const blobUrl = doc.output('bloburl') as unknown as string;
-        const win = window.open(blobUrl, '_blank');
-        if (!win) {
-          toast.error('Popup wurde blockiert. Bitte Popups erlauben.');
-        } else {
-          toast.success('Auftragsbestätigung geöffnet.');
-        }
+        await openStampedPdf(doc, 'order_confirmation', orderNo || undefined);
+        toast.success('Auftragsbestätigung geöffnet.');
       } else {
-        doc.save(fileName);
+        await downloadStampedPdf(doc, 'order_confirmation', fileName, orderNo || undefined);
         toast.success('Auftragsbestätigung erstellt.');
       }
     } catch (e: any) {

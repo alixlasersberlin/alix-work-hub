@@ -3,6 +3,7 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { sbRepair } from '@/lib/repair/api';
+import { stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 
 export type HandoverKind = 'finance' | 'delivery';
 
@@ -163,7 +164,7 @@ export async function generateHandoverPdf(input: HandoverPdfInput): Promise<{ bl
     y,
   );
 
-  const blob = doc.output('blob');
+  const blob = await stampedPdfBlob(doc, 'service_report', header.repair_number ?? undefined);
   const fileName = `${input.kind === 'finance' ? 'finance' : 'delivery'}-handover-${(header.repair_number || input.repairId.slice(0, 8))}-${Date.now()}.pdf`;
   const storagePath = `${input.repairId}/handover-pdfs/${fileName}`;
 
