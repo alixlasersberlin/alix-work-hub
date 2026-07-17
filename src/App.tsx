@@ -276,6 +276,7 @@ const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk
 const DigitaleSignaturenTemplateEditor = lazy(() => import("./pages/DigitaleSignaturenTemplateEditor"));
 const SignMarketplace = lazy(() => import("./pages/SignMarketplace"));
 const SignApprovals = lazy(() => import("./pages/SignApprovals"));
+const SignSlaDashboard = lazy(() => import("./pages/SignSlaDashboard"));
 const MobileSignaturen = lazy(() => import("./pages/Mobile/Signaturen"));
 const CustomerPortalSignaturen = lazy(() => import("./pages/CustomerPortal/Signaturen"));
 const SignDocPublic = lazy(() => import("./pages/SignDocPublic"));
@@ -1128,6 +1129,7 @@ function AppRoutes() {
           <Route path="/admin/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenAdmin /></ProtectedRoute>} />
           <Route path="/admin/signaturen/templates/:id" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenTemplateEditor /></ProtectedRoute>} />
           <Route path="/signaturen/genehmigungen" element={<ProtectedRoute><SignApprovals /></ProtectedRoute>} />
+          <Route path="/signaturen/dashboard" element={<ProtectedRoute><SignSlaDashboard /></ProtectedRoute>} />
           <Route path="/admin/sign-marketplace" element={<ProtectedRoute requiredRoles={['Super Admin']}><SignMarketplace /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
