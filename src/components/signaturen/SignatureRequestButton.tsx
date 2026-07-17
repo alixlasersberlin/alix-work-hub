@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PenLine } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+
 
 interface Props {
   entityType: 'order' | 'invoice' | 'offer' | 'service_report' | 'maintenance' | 'contract' | 'delivery' | string;
