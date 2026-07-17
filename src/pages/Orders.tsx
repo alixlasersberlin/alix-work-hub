@@ -406,7 +406,16 @@ export default function Orders() {
     const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
     const isAt = o.source_system === 'zoho_eu_2';
     const matchRegion = regionFilter === 'all' || (regionFilter === 'at' ? isAt : !isAt);
-    return matchSearch && matchStatus && matchModel && matchRegion && notExcluded;
+    let matchDeposit = true;
+    if (depositFilter === 'partial') {
+      if (Number(o.deposit_amount) > 0) {
+        const ds = computeDepositStatus(o, o._additionalDeposits);
+        matchDeposit = ds.isPartial;
+      } else {
+        matchDeposit = false;
+      }
+    }
+    return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && notExcluded;
   });
 
   // VIP-Kunden und VIP-Aufträge immer an Position 1
@@ -415,7 +424,7 @@ export default function Orders() {
   const totalPages = pageSize === 'all' ? 1 : Math.ceil(sorted.length / pageSize);
   const paged = pageSize === 'all' ? sorted : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, pageSize]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, depositFilter, pageSize]);
 
   // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
   useEffect(() => {
