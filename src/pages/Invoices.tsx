@@ -546,7 +546,8 @@ export default function Invoices() {
       );
     }
 
-    return doc.output('blob') as Blob;
+    const raw = doc.output('blob') as Blob;
+    return await stampExistingPdfBlob(raw, 'invoice', full.invoice_number);
   };
 
 
@@ -577,7 +578,8 @@ export default function Invoices() {
       const bin = atob(b64);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      return new Blob([bytes], { type: 'application/pdf' });
+      const raw = new Blob([bytes], { type: 'application/pdf' });
+      return await stampExistingPdfBlob(raw, 'invoice', r.invoice_number ?? undefined);
     } catch (e: any) {
       console.error('[Invoices] fetchInvoicePdf failed', e);
       toast({ title: 'PDF fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
