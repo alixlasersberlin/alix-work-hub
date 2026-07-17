@@ -32,6 +32,7 @@ export default function DigitaleSignaturNeu() {
   const [fields, setFields] = useState<SigField[]>([]);
   const [otp, setOtp] = useState(true);
   const [expiresDays, setExpiresDays] = useState(14);
+  const [inPerson, setInPerson] = useState(false);
   const [entityCtx, setEntityCtx] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
