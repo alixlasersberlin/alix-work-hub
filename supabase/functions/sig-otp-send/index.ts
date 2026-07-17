@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         templateName: 'sig-otp',
         recipientEmail: signer.email,
         idempotencyKey: `sig-otp-${reqRow.id}-${Date.now()}`,
-        templateData: { code, name: signer.name, expires_min: 10 },
+        templateData: { code, name: signer.name, expires_min: 60 },
       }),
     });
   } catch (e: any) { console.error('sig-otp-send mail error', e?.message); }
