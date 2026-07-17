@@ -5,8 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { FileText, Loader2, RefreshCcw, ExternalLink, Download, AlertTriangle } from 'lucide-react';
+import { FileText, Loader2, RefreshCcw, ExternalLink, Download, AlertTriangle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 function conf(v: any): number | null {
   if (!v || typeof v !== 'object') return null;
@@ -41,6 +46,10 @@ export default function PdfOrderImportDetail() {
   const [loading, setLoading] = useState(true);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [rerunning, setRerunning] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { hasRole } = useAuth();
+  const canDelete = hasRole('Super Admin');
 
   async function load() {
     if (!id) return;
@@ -74,6 +83,20 @@ export default function PdfOrderImportDetail() {
     if (error) toast.error(error.message); else { toast.success('Analyse gestartet'); load(); }
   }
 
+  async function performDelete() {
+    if (!id) return;
+    setDeleting(true);
+    if (imp?.source_storage_path) {
+      await supabase.storage.from('order-imports').remove([imp.source_storage_path]);
+    }
+    const { error } = await supabase.from('pdf_order_imports').delete().eq('id', id);
+    setDeleting(false);
+    setConfirmDelete(false);
+    if (error) { toast.error('Löschen fehlgeschlagen: ' + error.message); return; }
+    toast.success('PDF-Import gelöscht');
+    nav('/auftraege/pdf-import');
+  }
+
   const raw = imp?.raw_extraction_json ?? {};
   const order = raw.order ?? {};
   const customer = raw.customer ?? {};
@@ -103,9 +126,41 @@ export default function PdfOrderImportDetail() {
           <Button variant="outline" onClick={rerun} disabled={rerunning || busy} className="gap-2">
             {rerunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />} Erneut analysieren
           </Button>
+          {canDelete && (
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDelete(true)}
+              disabled={deleting}
+              className="gap-2 border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Löschen
+            </Button>
+          )}
           <Button variant="outline" onClick={() => nav('/auftraege/pdf-import')}>Zurück zur Liste</Button>
         </div>
       </div>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>PDF-Import löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              „{imp?.source_filename}" wird unwiderruflich gelöscht, inklusive Original-PDF, erkannten Feldern und Positionen. Bereits angelegte Aufträge bleiben bestehen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={performDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {loading && <div className="p-8 flex items-center justify-center text-muted-foreground"><Loader2 className="w-5 h-5 animate-spin mr-2" /> Lädt …</div>}
 
