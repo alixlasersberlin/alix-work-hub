@@ -115,6 +115,10 @@ Deno.serve(async (req) => {
               }
             }
           }
+        }
+        offset = data.offset;
+      } while (offset);
+
 
       await supabase.from('catalog_import_jobs_v2').update({
         status: errors.length ? 'partial' : 'success',
