@@ -92,6 +92,17 @@ export const navItems: NavItem[] = [
     ],
   },
   {
+    path: '/signaturen', label: 'ALIX SIGN PRO', icon: FileSignature,
+    roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Vertrieb', 'Vertriebsleitung', 'Kundenservice', 'Serviceleitung', 'Service', 'Auftragsverwaltung', 'Order', 'Finance', 'SACHBEARBEITUNG', 'Österreich'],
+    children: [
+      { path: '/signaturen', label: 'Übersicht', icon: LayoutDashboard, roles: null },
+      { path: '/signaturen/neu', label: 'Neue Anfrage', icon: FilePlus, roles: null },
+      { path: '/signaturen/cockpit', label: 'Cockpit & Analytics', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Vertriebsleitung', 'Serviceleitung', 'Finance'] },
+      { path: '/signaturen/bulk', label: 'Serien-Versand', icon: Send, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Vertrieb', 'Vertriebsleitung', 'Kundenservice', 'Serviceleitung'] },
+      { path: '/admin/signaturen', label: 'Admin (Stempel & Templates)', icon: Settings, roles: ['Admin', 'Super Admin'] },
+    ],
+  },
+  {
     path: '/tickets/dashboard', label: 'TICKETS', icon: Ticket,
     roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'],
     children: [
