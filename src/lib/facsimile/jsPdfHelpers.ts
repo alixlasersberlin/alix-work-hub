@@ -12,7 +12,7 @@ export async function stampedPdfBlob(
   const ab = doc.output("arraybuffer") as ArrayBuffer;
   try {
     const { bytes } = await applyFacsimileToPdf(new Uint8Array(ab), docType, ref);
-    return new Blob([bytes], { type: "application/pdf" });
+    return new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
   } catch (e) {
     console.warn("[facsimile] stamping failed, using original PDF:", e);
     return new Blob([ab], { type: "application/pdf" });
@@ -54,7 +54,7 @@ export async function stampExistingPdfBlob(
   const ab = await input.arrayBuffer();
   try {
     const { bytes } = await applyFacsimileToPdf(new Uint8Array(ab), docType, ref);
-    return new Blob([bytes], { type: "application/pdf" });
+    return new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
   } catch (e) {
     console.warn("[facsimile] stamping (blob) failed, using original:", e);
     return input;
