@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
 import FieldEditor, { EditorSigner, SigField } from '@/components/signaturen/FieldEditor';
+import ApprovalChainEditor from '@/components/signaturen/ApprovalChainEditor';
 
 const DOC_TYPES = [
   'angebot','auftrag','rechnung','lieferschein','servicebericht','arbeitsbericht',
@@ -226,6 +227,8 @@ export default function DigitaleSignaturenTemplateEditor() {
           {!samplePdf && <p className="text-xs text-muted-foreground mt-2">Zum Platzieren eine Referenz-PDF hochladen. Bestehende Felder werden auch ohne PDF gespeichert.</p>}
         </CardContent>
       </Card>
+
+      <ApprovalChainEditor templateId={tplId} />
     </div>
   );
 }

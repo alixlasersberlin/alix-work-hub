@@ -12,6 +12,8 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const token = url.searchParams.get('token');
+  const partnerSlug = url.searchParams.get('p');
+  const hostHeader = req.headers.get('x-forwarded-host') || req.headers.get('host') || '';
   if (!token) return new Response(JSON.stringify({ error: 'token required' }), {
     status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
@@ -45,6 +47,19 @@ Deno.serve(async (req) => {
   // Signed URL for PDF (5min)
   const { data: signed } = await admin.storage.from('sig-documents').createSignedUrl(doc!.storage_path, 300);
 
+  // White-Label: resolve partner via ?p=slug or custom_domain host match
+  let branding: any = null;
+  try {
+    let q = admin.from('sig_partners').select('name, logo_url, primary_color, custom_domain, slug, status').eq('status', 'active').limit(1);
+    if (partnerSlug) {
+      const { data } = await q.eq('slug', partnerSlug).maybeSingle();
+      if (data) branding = data;
+    } else if (hostHeader) {
+      const { data } = await admin.from('sig_partners').select('name, logo_url, primary_color, custom_domain, slug, status').eq('status', 'active').eq('custom_domain', hostHeader).maybeSingle();
+      if (data) branding = data;
+    }
+  } catch (_) { /* ignore branding failures */ }
+
   if (!reqRow.opened_at) {
     await admin.from('sig_requests').update({ opened_at: new Date().toISOString(), status: 'geoeffnet' }).eq('id', reqRow.id);
     await admin.from('sig_audit_log').insert({
@@ -55,6 +70,6 @@ Deno.serve(async (req) => {
   }
 
   return new Response(JSON.stringify({
-    request: reqRow, document: doc, signers, pdf_url: signed?.signedUrl,
+    request: reqRow, document: doc, signers, pdf_url: signed?.signedUrl, branding,
   }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 });

@@ -16,6 +16,7 @@ export default function SignDocPublic() {
   const { token } = useParams();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
+  const partnerSlug = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('p') : null;
   const [signerId, setSignerId] = useState<string>('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
@@ -43,7 +44,9 @@ export default function SignDocPublic() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/sig-public-load?token=${token}`, {
+        const qs = new URLSearchParams({ token: token || '' });
+        if (partnerSlug) qs.set('p', partnerSlug);
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/sig-public-load?${qs.toString()}`, {
           headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
         });
         const j = await res.json();
@@ -147,16 +150,29 @@ export default function SignDocPublic() {
   const done = ['signiert','abgelehnt','abgelaufen'].includes(data.request.status);
   const needsOtp = data.request.otp_required && !otpVerified;
 
+  const brand = data.branding;
+  const brandStyle = brand?.primary_color ? { ['--primary' as any]: brand.primary_color } : undefined;
+
   return (
-    <div className="min-h-screen bg-background py-6 px-4">
+    <div className="min-h-screen bg-background py-6 px-4" style={brandStyle}>
       <div className="max-w-4xl mx-auto space-y-4">
+        {brand && (
+          <div className="flex items-center justify-between border-b pb-3 mb-2">
+            <div className="flex items-center gap-3">
+              {brand.logo_url && <img src={brand.logo_url} alt={brand.name} className="h-10 w-auto" />}
+              <span className="text-sm font-medium">{brand.name}</span>
+            </div>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Powered by ALIX SIGN</span>
+          </div>
+        )}
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-6 h-6 text-primary" />
+          <ShieldCheck className="w-6 h-6" style={brand?.primary_color ? { color: brand.primary_color } : undefined} />
           <div>
             <h1 className="text-xl font-semibold">{data.document.title}</h1>
             <p className="text-xs text-muted-foreground">Dokumenttyp: {data.document.document_type} · Status: {data.request.status}</p>
           </div>
         </div>
+
 
         <Card>
           <CardHeader><CardTitle className="text-base">Dokument</CardTitle></CardHeader>
