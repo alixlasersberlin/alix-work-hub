@@ -826,23 +826,36 @@ export default function Orders() {
                           />
                         </td>
                         <td className="px-4 py-3 text-xs">
-                          {Number(o.deposit_amount) > 0 ? (
-                            <div className="flex flex-col gap-0.5">
-                              <span className="inline-flex items-center gap-1.5 font-medium">
-                                <span className="text-foreground">
-                                  {Number(o.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
+                          {Number(o.deposit_amount) > 0 ? (() => {
+                            const ds = computeDepositStatus(o, o._additionalDeposits);
+                            return (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="inline-flex items-center gap-1.5 font-medium">
+                                  <span className="text-foreground">
+                                    {Number(o.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
+                                  </span>
+                                  {ds.isPartial ? (
+                                    <AlertCircle
+                                      className="w-4 h-4 text-orange-500"
+                                      aria-label="Teilzahlung – Restbetrag offen"
+                                      title={`Teilzahlung – noch offen: ${ds.open.toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}`}
+                                    />
+                                  ) : o.deposit_ok ? (
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-label="bezahlt" />
+                                  ) : (
+                                    <XCircle className="w-4 h-4 text-red-500" aria-label="nicht bezahlt" />
+                                  )}
                                 </span>
-                                {o.deposit_ok ? (
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-label="bezahlt" />
-                                ) : (
-                                  <XCircle className="w-4 h-4 text-red-500" aria-label="nicht bezahlt" />
+                                {ds.isPartial && (
+                                  <span className="text-[10px] font-medium text-orange-400" title="Noch offener Restbetrag der Anzahlung">
+                                    Rest offen: {ds.open.toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
+                                  </span>
                                 )}
-                              </span>
-                              {o.deposit_ok && o._azInvoiceNumber && (
-                                <span className="text-[10px] text-muted-foreground" title="Anzahlungsrechnung">
-                                  Rg. {o._azInvoiceNumber}
-                                </span>
-                              )}
+                                {o.deposit_ok && o._azInvoiceNumber && (
+                                  <span className="text-[10px] text-muted-foreground" title="Anzahlungsrechnung">
+                                    Rg. {o._azInvoiceNumber}
+                                  </span>
+                                )}
                             </div>
                           ) : (
                             <span className="text-muted-foreground">—</span>
