@@ -82,9 +82,16 @@ export default function DigitaleSignaturNeu() {
         },
       });
       if (error) throw error;
-      toast.success('Signaturanfrage versendet');
-      console.log('sign_url', data?.sign_url);
-      navigate('/signaturen');
+      const url: string | undefined = (data as any)?.sign_url;
+      if (inPerson && url) {
+        toast.success('Signaturanfrage erstellt – Vor-Ort-Modus wird geöffnet');
+        window.open(url, '_blank', 'noopener');
+        navigate('/signaturen');
+      } else {
+        toast.success('Signaturanfrage versendet');
+        console.log('sign_url', url);
+        navigate('/signaturen');
+      }
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
 
