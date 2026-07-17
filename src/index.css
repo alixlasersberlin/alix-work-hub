@@ -2219,4 +2219,27 @@ html body > div:has(> [role="alertdialog"][data-state="open"]) {
   z-index: 2147483646 !important;
 }
 
+/* News-Popup: externe Theme-Hover/Zoom-Effekte dürfen den Pflichtdialog nicht bewegen. */
+html [role="dialog"].news-announcement-dialog,
+html [role="dialog"].news-announcement-dialog:hover {
+  transform: translate(-50%, -50%) !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+html [role="dialog"].news-announcement-dialog :is(.news-announcement-image, .news-announcement-image:hover) {
+  transform: none !important;
+  animation: none !important;
+  transition: none !important;
+  pointer-events: none;
+}
+
+html [role="dialog"].news-announcement-dialog :is(.news-announcement-ack, .news-announcement-ack:hover, .news-announcement-ack *:hover) {
+  transform: none !important;
+}
+
+html [role="dialog"].news-announcement-dialog .news-announcement-checkbox {
+  pointer-events: auto !important;
+}
+
 
