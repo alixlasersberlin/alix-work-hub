@@ -77,7 +77,13 @@ export default function KatalogImportManaged() {
 
   const mapWebsite = async () => {
     setBusy(true);
-    try { const d = await call('catalog-import-firecrawl', { action: 'map', url: wUrl, limit: wLimit }); setWLinks(d.links); }
+    try {
+      const d = await call('catalog-import-firecrawl', { action: 'map', url: wUrl, limit: wLimit });
+      const links: string[] = (d.links ?? [])
+        .map((l: any) => (typeof l === 'string' ? l : l?.url ?? ''))
+        .filter((s: string) => !!s);
+      setWLinks(links);
+    }
     catch (e: any) { toast({ title: 'Fehler', description: e.message, variant: 'destructive' }); }
     finally { setBusy(false); }
   };
