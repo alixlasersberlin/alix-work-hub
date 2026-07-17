@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { stampExistingPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/az-rechnung-template.jpg.asset.json';
@@ -546,8 +547,8 @@ export default function Invoices() {
       );
     }
 
-    const raw = doc.output('blob') as Blob;
-    return await stampExistingPdfBlob(raw, 'invoice', full.invoice_number);
+    const rawBlob = doc.output('blob') as Blob;
+    return await stampExistingPdfBlob(rawBlob, 'invoice', full.invoice_number);
   };
 
 
@@ -578,8 +579,8 @@ export default function Invoices() {
       const bin = atob(b64);
       const bytes = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      const raw = new Blob([bytes], { type: 'application/pdf' });
-      return await stampExistingPdfBlob(raw, 'invoice', r.invoice_number ?? undefined);
+      const rawBlob = new Blob([bytes], { type: 'application/pdf' });
+      return await stampExistingPdfBlob(rawBlob, 'invoice', r.invoice_number ?? undefined);
     } catch (e: any) {
       console.error('[Invoices] fetchInvoicePdf failed', e);
       toast({ title: 'PDF fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
