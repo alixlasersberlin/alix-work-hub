@@ -328,12 +328,19 @@ export default function Orders() {
         if (!fullInvoiceByOrderNumber[ref]) fullInvoiceByOrderNumber[ref] = num;
       });
 
+      const addDepositsByOrder: Record<string, { amount: number; geleistet: boolean }[]> = {};
+      (addDepRes.data || []).forEach((r: any) => {
+        if (!r?.order_id) return;
+        (addDepositsByOrder[r.order_id] ||= []).push({ amount: Number(r.amount) || 0, geleistet: !!r.geleistet });
+      });
+
       setOrders(prev => prev.map(o => orderIdSet.has(o.id) ? ({
         ...o,
         order_items: itemsByOrder[o.id] || o.order_items || [],
         _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
         _azInvoiceNumber: azInvoiceByOrder[o.id] || o._azInvoiceNumber || null,
         _fullInvoiceNumber: (o.order_number ? fullInvoiceByOrderNumber[o.order_number] : null) || o._fullInvoiceNumber || null,
+        _additionalDeposits: addDepositsByOrder[o.id] || [],
       }) : o));
     };
 
