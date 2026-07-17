@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText, Send, Copy, XCircle, Zap } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText, Send, Copy, XCircle, Zap, AlertCircle } from 'lucide-react';
+import { computeDepositStatus } from '@/lib/deposit-status';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
@@ -265,7 +266,7 @@ export default function Orders() {
       const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
       if (orderIds.length === 0 && orderNumbers.length === 0) return;
 
-      const [itemsRes, posRes, depRes, zohoInvRes] = await Promise.all([
+      const [itemsRes, posRes, depRes, zohoInvRes, addDepRes] = await Promise.all([
         orderIds.length > 0
           ? supabase
               .from('order_items')
@@ -289,6 +290,12 @@ export default function Orders() {
               .from('zoho_invoices')
               .select('invoice_number, reference_number')
               .in('reference_number', orderNumbers)
+          : Promise.resolve({ data: [] as any[] }),
+        orderIds.length > 0
+          ? supabase
+              .from('order_additional_deposits')
+              .select('order_id, amount, geleistet')
+              .in('order_id', orderIds)
           : Promise.resolve({ data: [] as any[] }),
       ]);
       if (requestId !== loadRequestRef.current) return;
@@ -321,12 +328,19 @@ export default function Orders() {
         if (!fullInvoiceByOrderNumber[ref]) fullInvoiceByOrderNumber[ref] = num;
       });
 
+      const addDepositsByOrder: Record<string, { amount: number; geleistet: boolean }[]> = {};
+      (addDepRes.data || []).forEach((r: any) => {
+        if (!r?.order_id) return;
+        (addDepositsByOrder[r.order_id] ||= []).push({ amount: Number(r.amount) || 0, geleistet: !!r.geleistet });
+      });
+
       setOrders(prev => prev.map(o => orderIdSet.has(o.id) ? ({
         ...o,
         order_items: itemsByOrder[o.id] || o.order_items || [],
         _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
         _azInvoiceNumber: azInvoiceByOrder[o.id] || o._azInvoiceNumber || null,
         _fullInvoiceNumber: (o.order_number ? fullInvoiceByOrderNumber[o.order_number] : null) || o._fullInvoiceNumber || null,
+        _additionalDeposits: addDepositsByOrder[o.id] || [],
       }) : o));
     };
 
@@ -812,25 +826,40 @@ export default function Orders() {
                           />
                         </td>
                         <td className="px-4 py-3 text-xs">
-                          {Number(o.deposit_amount) > 0 ? (
-                            <div className="flex flex-col gap-0.5">
-                              <span className="inline-flex items-center gap-1.5 font-medium">
-                                <span className="text-foreground">
-                                  {Number(o.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
+                          {Number(o.deposit_amount) > 0 ? (() => {
+                            const ds = computeDepositStatus(o, o._additionalDeposits);
+                            return (
+                              <div className="flex flex-col gap-0.5">
+                                <span className="inline-flex items-center gap-1.5 font-medium">
+                                  <span className="text-foreground">
+                                    {Number(o.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
+                                  </span>
+                                  {ds.isPartial ? (
+                                    <span
+                                      title={`Teilzahlung – noch offen: ${ds.open.toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}`}
+                                      className="inline-flex"
+                                    >
+                                      <AlertCircle className="w-4 h-4 text-orange-500" aria-label="Teilzahlung – Restbetrag offen" />
+                                    </span>
+                                  ) : o.deposit_ok ? (
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-label="bezahlt" />
+                                  ) : (
+                                    <XCircle className="w-4 h-4 text-red-500" aria-label="nicht bezahlt" />
+                                  )}
                                 </span>
-                                {o.deposit_ok ? (
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-label="bezahlt" />
-                                ) : (
-                                  <XCircle className="w-4 h-4 text-red-500" aria-label="nicht bezahlt" />
+                                {ds.isPartial && (
+                                  <span className="text-[10px] font-medium text-orange-400" title="Noch offener Restbetrag der Anzahlung">
+                                    Rest offen: {ds.open.toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
+                                  </span>
                                 )}
-                              </span>
-                              {o.deposit_ok && o._azInvoiceNumber && (
-                                <span className="text-[10px] text-muted-foreground" title="Anzahlungsrechnung">
-                                  Rg. {o._azInvoiceNumber}
-                                </span>
-                              )}
-                            </div>
-                          ) : (
+                                {o.deposit_ok && o._azInvoiceNumber && (
+                                  <span className="text-[10px] text-muted-foreground" title="Anzahlungsrechnung">
+                                    Rg. {o._azInvoiceNumber}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })() : (
                             <span className="text-muted-foreground">—</span>
                           )}
                         </td>

@@ -9,9 +9,10 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  ShoppingCart, CheckCircle2, Clock, Factory, ListOrdered, Search, Crown,
+  ShoppingCart, CheckCircle2, Clock, Factory, ListOrdered, Search, Crown, AlertCircle,
 } from 'lucide-react';
 import { qk, STALE } from '@/lib/query-keys';
+import { computeDepositStatus } from '@/lib/deposit-status';
 
 interface ProdOrder {
   id: string;
@@ -48,6 +49,7 @@ interface Row {
   finance_payment_status: string | null;
   customers?: { company_name: string | null; contact_name: string | null; is_vip: boolean | null } | null;
   production_orders?: ProdOrder[];
+  additional_deposits?: { amount: number; geleistet: boolean }[];
 }
 
 type Filter = 'all' | 'deposit_open' | 'deposit_ok_no_order' | 'ordered' | 'vip';
@@ -71,19 +73,35 @@ async function fetchBestellungenDashboard(): Promise<Row[]> {
 
   const orderIds = (ordersData ?? []).map((r: any) => r.id);
   const poByOrder: Record<string, ProdOrder[]> = {};
+  const addDepByOrder: Record<string, { amount: number; geleistet: boolean }[]> = {};
   if (orderIds.length) {
-    const { data: poData, error: pErr } = await (supabase as any)
-      .from('production_orders')
-      .select('id, order_id, production_order_number, status, sent_at, approval_status, pdf_path, modellname, farbe, liefertermin, is_reclamation, supplier:suppliers(name)')
-      .in('order_id', orderIds);
+    const [{ data: poData, error: pErr }, { data: addData, error: aErr }] = await Promise.all([
+      (supabase as any)
+        .from('production_orders')
+        .select('id, order_id, production_order_number, status, sent_at, approval_status, pdf_path, modellname, farbe, liefertermin, is_reclamation, supplier:suppliers(name)')
+        .in('order_id', orderIds),
+      (supabase as any)
+        .from('order_additional_deposits')
+        .select('order_id, amount, geleistet')
+        .in('order_id', orderIds),
+    ]);
     if (pErr) throw pErr;
+    if (aErr) throw aErr;
     (poData ?? []).forEach((p: any) => {
       if (!p.order_id) return;
       (poByOrder[p.order_id] ||= []).push(p);
     });
+    (addData ?? []).forEach((r: any) => {
+      if (!r.order_id) return;
+      (addDepByOrder[r.order_id] ||= []).push({ amount: Number(r.amount) || 0, geleistet: !!r.geleistet });
+    });
   }
 
-  return (ordersData ?? []).map((r: any) => ({ ...r, production_orders: poByOrder[r.id] ?? [] }));
+  return (ordersData ?? []).map((r: any) => ({
+    ...r,
+    production_orders: poByOrder[r.id] ?? [],
+    additional_deposits: addDepByOrder[r.id] ?? [],
+  }));
 }
 
 export default function BestellungenDashboard() {
@@ -204,6 +222,7 @@ export default function BestellungenDashboard() {
               {visible.map(r => {
                 const po = (r.production_orders ?? [])[0];
                 const depTotal = Number(r.deposit_amount || 0) + Number(r.deposit_additional || 0);
+                const ds = computeDepositStatus(r, r.additional_deposits);
                 return (
                   <tr key={r.id} className="border-b border-border/40 hover:bg-muted/30">
                     <td className="py-2 px-2">
@@ -228,7 +247,16 @@ export default function BestellungenDashboard() {
                     <td className="py-2 px-2 text-right whitespace-nowrap">{fmt(depTotal)}</td>
                     <td className="py-2 px-2 whitespace-nowrap">{fmtDate(r.deposit_booking_date)}</td>
                     <td className="py-2 px-2 text-center">
-                      {r._depositOk
+                      {ds.isPartial ? (
+                        <span
+                          className="inline-flex"
+                          title={`Teilzahlung – noch offen: ${fmt(ds.open)}`}
+                        >
+                          <Badge variant="outline" className="border-orange-500/60 text-orange-400 inline-flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> Teilzahlung
+                          </Badge>
+                        </span>
+                      ) : r._depositOk
                         ? <Badge variant="outline" className="border-emerald-500/50 text-emerald-500">OK</Badge>
                         : <Badge variant="outline" className="border-rose-500/50 text-rose-500">offen</Badge>}
                     </td>

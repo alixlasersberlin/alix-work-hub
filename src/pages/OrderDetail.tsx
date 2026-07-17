@@ -26,11 +26,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare, ChevronDown, Briefcase, Wrench
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare, ChevronDown, Briefcase, Wrench, AlertCircle
 } from 'lucide-react';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
 import { postPaymentToJournal } from '@/lib/finance/journal';
+import { computeDepositStatus } from '@/lib/deposit-status';
 import BankFinancingTab from '@/components/BankFinancingTab';
 import AtPurchaseTab from '@/components/AtPurchaseTab';
 import AtApprovalTab from '@/components/AtApprovalTab';
@@ -417,6 +418,14 @@ export default function OrderDetail() {
   const canSeeAtPurchase = isAtOrder && (hasRole('Super Admin') || hasRole('Österreich'));
   const canSeeAtApproval = isAtOrder && (hasRole('Super Admin') || hasRole('Admin') || hasRole('Österreich'));
 
+  const depositStatusForBadge = computeDepositStatus(
+    { deposit_amount: depositAmount, deposit_additional: depositAdditional, deposit_ok: depositOk },
+    additionalDeposits,
+  );
+  const depositTabBadge = depositStatusForBadge.isPartial
+    ? '!'
+    : (order?.deposit_ok ? '✓' : ((Number(order?.deposit_amount) || 0) > 0 ? undefined : undefined));
+
   const overviewTab = { key: 'overview', label: 'Übersicht', icon: ClipboardList };
   const tabMenus: Array<{ name: string; icon: any; tabs: any[] }> = [
     {
@@ -437,7 +446,7 @@ export default function OrderDetail() {
         { key: 'auftragsbestaetigung', label: 'Auftrag Unterzeichnet', icon: FileText },
         { key: 'az_invoice', label: 'AZ Rechnung', icon: Euro, badge: (Number(order?.deposit_amount) || 0) > 0 ? '€' : undefined },
         { key: 'mediapaket', label: 'Mediapaket', icon: Briefcase },
-        { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: order?.deposit_ok ? '✓' : undefined },
+        { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: depositTabBadge },
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
         ...(canSeeAtApproval ? [{ key: 'at_approval', label: 'Freigabe AT', icon: CheckCircle2 }] : []),
@@ -661,7 +670,14 @@ export default function OrderDetail() {
                         {typeof t.count === 'number' && (
                           <span className={`text-[11px] px-1.5 py-0.5 rounded-full ml-2 ${active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'}`}>{t.count}</span>
                         )}
-                        {t.badge && <span className="text-emerald-400 text-xs ml-2">{t.badge}</span>}
+                        {t.badge && (
+                          <span
+                            className={`text-xs ml-2 ${t.badge === '!' ? 'text-orange-400 font-bold' : 'text-emerald-400'}`}
+                            title={t.badge === '!' ? 'Teilzahlung – Restbetrag offen' : undefined}
+                          >
+                            {t.badge}
+                          </span>
+                        )}
                       </DropdownMenuItem>
                     );
                   })}
@@ -981,17 +997,31 @@ export default function OrderDetail() {
             const openTotal = openMain + openAdd;
             const paidTotal = (depositOk ? mainAmt : 0) + additionalDeposits.reduce((s, d) => s + (d.geleistet ? Number(d.amount) || 0 : 0), 0);
             const fmt = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: cur });
+            const isPartial = paidTotal > 0.005 && openTotal > 0.005;
             return (
-              <div className="mb-4 grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-border bg-secondary/30 p-3">
-                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Offene Anzahlung</div>
-                  <div className={`text-lg font-bold ${openTotal > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{fmt(openTotal)}</div>
+              <>
+                <div className="mb-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Offene Anzahlung</div>
+                    <div className={`text-lg font-bold ${openTotal > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{fmt(openTotal)}</div>
+                  </div>
+                  <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Geleistete Anzahlung</div>
+                    <div className="text-lg font-bold text-emerald-400">{fmt(paidTotal)}</div>
+                  </div>
                 </div>
-                <div className="rounded-lg border border-border bg-secondary/30 p-3">
-                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Geleistete Anzahlung</div>
-                  <div className="text-lg font-bold text-emerald-400">{fmt(paidTotal)}</div>
-                </div>
-              </div>
+                {isPartial && (
+                  <div className="mb-4 flex items-start gap-2 rounded-lg border border-orange-500/50 bg-orange-500/10 p-3 text-sm text-orange-300">
+                    <AlertCircle className="w-4 h-4 mt-0.5 text-orange-400 shrink-0" />
+                    <div>
+                      <div className="font-semibold text-orange-200">Teilzahlung – Restbetrag offen</div>
+                      <div className="text-xs text-orange-300/90">
+                        Bisher geleistet: <span className="font-medium">{fmt(paidTotal)}</span> · Noch offen: <span className="font-medium">{fmt(openTotal)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             );
           })()}
           <div className="space-y-4">
