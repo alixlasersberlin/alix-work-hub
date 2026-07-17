@@ -276,6 +276,7 @@ const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk
 const DigitaleSignaturenTemplateEditor = lazy(() => import("./pages/DigitaleSignaturenTemplateEditor"));
 const SignMarketplace = lazy(() => import("./pages/SignMarketplace"));
 const SignApprovals = lazy(() => import("./pages/SignApprovals"));
+const SignSlaDashboard = lazy(() => import("./pages/SignSlaDashboard"));
 const MobileSignaturen = lazy(() => import("./pages/Mobile/Signaturen"));
 const CustomerPortalSignaturen = lazy(() => import("./pages/CustomerPortal/Signaturen"));
 const SignDocPublic = lazy(() => import("./pages/SignDocPublic"));
