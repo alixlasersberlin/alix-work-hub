@@ -21,13 +21,13 @@ Deno.serve(async (req) => {
     if (!userId) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: corsHeaders });
 
     const { document_id, text_content } = await req.json();
-    if (!document_id) {
-      return new Response(JSON.stringify({ error: 'document_id required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // Preview-Mode: document_id optional, wenn Text übergeben wird (Wizard vor Erstellung)
+    if (!document_id && !text_content) {
+      return new Response(JSON.stringify({ error: 'document_id or text_content required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // If text not provided, try to load metadata (real PDF extraction happens client-side)
     let content = text_content ?? '';
-    if (!content) {
+    if (!content && document_id) {
       const { data: doc } = await supabase.from('sig_documents').select('title, description').eq('id', document_id).single();
       content = `${doc?.title ?? ''}\n${doc?.description ?? ''}`;
     }
