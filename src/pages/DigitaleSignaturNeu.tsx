@@ -39,6 +39,8 @@ export default function DigitaleSignaturNeu() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [templates, setTemplates] = useState<any[]>([]);
   const [templateId, setTemplateId] = useState<string>('');
+  const [pdfText, setPdfText] = useState<string>('');
+  const [pageSizes, setPageSizes] = useState<{ w: number; h: number }[]>([]);
 
   useEffect(() => {
     (async () => {
