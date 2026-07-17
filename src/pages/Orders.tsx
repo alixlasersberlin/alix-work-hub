@@ -37,7 +37,7 @@ import { useAtOnly } from '@/hooks/useAtOnly';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
-type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
+type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at' | 'deposit_status';
 type SortDir = 'asc' | 'desc';
 type PageSize = 20 | 30 | 50 | 'all';
 
@@ -247,10 +247,13 @@ export default function Orders() {
         finance_payment_status, case_number, billing_address, shipping_address,
         customers(company_name, contact_name, shipping_address, billing_address, is_vip)
       `;
+    const isClientSortField = sortField === 'deposit_status';
+    const serverSortField = isClientSortField ? 'order_date' : sortField;
+    const serverSortAsc = isClientSortField ? false : sortDir === 'asc';
     const fetchOrders = (limit: number) => supabase
       .from('orders')
       .select(orderSelect)
-      .order(sortField, { ascending: sortDir === 'asc', nullsFirst: false })
+      .order(serverSortField, { ascending: serverSortAsc, nullsFirst: false })
       .limit(limit);
 
     const expandOrders = (loaded: any[]) => loaded.map(o => ({
@@ -418,8 +421,23 @@ export default function Orders() {
     return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && notExcluded;
   });
 
+  // Client-seitige Sortierung nach Anzahlungsstatus
+  const depositRank = (o: any): number => {
+    if (!(Number(o.deposit_amount) > 0)) return 4; // keine Anzahlung nötig -> ans Ende
+    const ds = computeDepositStatus(o, o._additionalDeposits);
+    if (ds.isPartial) return 3;      // ⚠ Teilzahlung
+    if (o.deposit_ok) return 1;      // OK
+    return 2;                         // offen
+  };
+  const filteredSorted = sortField === 'deposit_status'
+    ? [...filtered].sort((a, b) => {
+        const diff = depositRank(a) - depositRank(b);
+        return sortDir === 'asc' ? diff : -diff;
+      })
+    : filtered;
+
   // VIP-Kunden und VIP-Aufträge immer an Position 1
-  const sorted = vipFirst(filtered, isOrderVip);
+  const sorted = vipFirst(filteredSorted, isOrderVip);
 
   const totalPages = pageSize === 'all' ? 1 : Math.ceil(sorted.length / pageSize);
   const paged = pageSize === 'all' ? sorted : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -738,7 +756,7 @@ export default function Orders() {
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">
                       <span className="inline-flex items-center gap-1"><Car className="w-3.5 h-3.5" /> Fahrzeit</span>
                     </th>
-                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Anzahlung</th>
+                    <SortHeader field="deposit_status" label="Anzahlung" />
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Anzahlung OK</th>
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Bestellung</th>
                     
