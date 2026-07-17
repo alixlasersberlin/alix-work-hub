@@ -733,7 +733,7 @@ export default function Orders() {
                   </tbody>
                 ) : filtered.length === 0 ? (
                   <tbody>
-                    <tr><td colSpan={(canWrite ? 10 : 9) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
+                    <tr><td colSpan={9 + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
                       <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                       <p className="text-muted-foreground">Keine Aufträge gefunden.</p>
                     </td></tr>
