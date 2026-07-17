@@ -1124,15 +1124,16 @@ function AppRoutes() {
           <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><AnfragenOffen /></ProtectedRoute>} />
           
           <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
-          <Route path="/signaturen" element={<ProtectedRoute><DigitaleSignaturen /></ProtectedRoute>} />
-          <Route path="/signaturen/neu" element={<ProtectedRoute><DigitaleSignaturNeu /></ProtectedRoute>} />
-          <Route path="/signaturen/cockpit" element={<ProtectedRoute><DigitaleSignaturenCockpit /></ProtectedRoute>} />
-          <Route path="/signaturen/bulk" element={<ProtectedRoute><DigitaleSignaturenBulk /></ProtectedRoute>} />
+          <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
+          <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
+          <Route path="/signaturen/cockpit" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenCockpit /></ProtectedRoute>} />
+          <Route path="/signaturen/bulk" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenBulk /></ProtectedRoute>} />
           <Route path="/admin/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenAdmin /></ProtectedRoute>} />
           <Route path="/admin/signaturen/templates/:id" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenTemplateEditor /></ProtectedRoute>} />
           <Route path="/admin/signaturen/facsimile" element={<ProtectedRoute requiredRoles={['Super Admin']}><DigitaleSignaturenFacsimile /></ProtectedRoute>} />
-          <Route path="/signaturen/genehmigungen" element={<ProtectedRoute><SignApprovals /></ProtectedRoute>} />
-          <Route path="/signaturen/dashboard" element={<ProtectedRoute><SignSlaDashboard /></ProtectedRoute>} />
+          <Route path="/signaturen/genehmigungen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignApprovals /></ProtectedRoute>} />
+          <Route path="/signaturen/dashboard" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignSlaDashboard /></ProtectedRoute>} />
+
           <Route path="/admin/sign-marketplace" element={<ProtectedRoute requiredRoles={['Super Admin']}><SignMarketplace /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />

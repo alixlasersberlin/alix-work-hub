@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PenLine } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+
 
 interface Props {
   entityType: 'order' | 'invoice' | 'offer' | 'service_report' | 'maintenance' | 'contract' | 'delivery' | string;
@@ -21,7 +23,10 @@ export function SignatureRequestButton({
   variant = 'outline', size = 'sm', label = 'Signatur anfordern',
 }: Props) {
   const navigate = useNavigate();
+  const { hasAnyRole } = useAuth();
   const [busy, setBusy] = useState(false);
+  if (!hasAnyRole(['Admin', 'Super Admin'])) return null;
+
   const onClick = () => {
     setBusy(true);
     sessionStorage.setItem('sig_handoff_v1', JSON.stringify({
