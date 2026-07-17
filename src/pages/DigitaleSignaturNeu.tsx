@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { ArrowLeft, Send, Plus, Trash2 } from 'lucide-react';
 import FieldEditor, { EditorSigner, SigField } from '@/components/signaturen/FieldEditor';
+import { AiAnalysisPanel } from '@/components/signaturen/AiAnalysisPanel';
 
 const DOC_TYPES = [
   'angebot','auftrag','rechnung','lieferschein','servicebericht','arbeitsbericht',
