@@ -1,0 +1,169 @@
+import { useEffect, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import SignatureCanvas from 'react-signature-canvas';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Loader2, ShieldCheck, Eraser, Check } from 'lucide-react';
+import { toast } from 'sonner';
+
+export default function SignDocPublic() {
+  const { token } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+  const [signerId, setSignerId] = useState<string>('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const sigRef = useRef<SignatureCanvas | null>(null);
+
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+  const call = async (fn: string, body: any) => {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: ANON, Authorization: `Bearer ${ANON}` },
+      body: JSON.stringify(body),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.error || `HTTP ${res.status}`);
+    return j;
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/sig-public-load?token=${token}`, {
+          headers: { apikey: ANON, Authorization: `Bearer ${ANON}` },
+        });
+        const j = await res.json();
+        if (!res.ok) throw new Error(j.error || 'Fehler');
+        setData(j);
+        const first = j.signers?.find((s: any) => !s.signed_at && !s.declined_at);
+        if (first) setSignerId(first.id);
+      } catch (e: any) { toast.error(e.message); }
+      finally { setLoading(false); }
+    })();
+  }, [token]);
+
+  const sendOtp = async () => {
+    setBusy(true);
+    try {
+      await call('sig-otp-send', { token, signer_id: signerId });
+      setOtpSent(true);
+      toast.success('OTP-Code per E-Mail versendet');
+    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+
+  const verifyOtp = async () => {
+    setBusy(true);
+    try {
+      await call('sig-otp-verify', { token, signer_id: signerId, code });
+      setOtpVerified(true);
+      toast.success('OTP verifiziert');
+    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+
+  const submit = async () => {
+    if (!sigRef.current || sigRef.current.isEmpty()) return toast.error('Bitte unterschreiben');
+    setBusy(true);
+    try {
+      const png = sigRef.current.getCanvas().toDataURL('image/png');
+      const vector = sigRef.current.toData();
+      await call('sig-submit', {
+        token, signer_id: signerId,
+        signatures: [{ field_key: 'main', field_type: 'signature', vector_data: vector, png_data: png, page: 1, x: 40, y: 40, width: 260, height: 90 }],
+      });
+      toast.success('Signatur übermittelt – vielen Dank!');
+      setData({ ...data, request: { ...data.request, status: 'signiert' } });
+    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+
+  const decline = async () => {
+    const reason = prompt('Grund der Ablehnung?');
+    if (!reason) return;
+    setBusy(true);
+    try {
+      await call('sig-submit', { token, signer_id: signerId, decline_reason: reason });
+      toast.success('Ablehnung übermittelt');
+      setData({ ...data, request: { ...data.request, status: 'abgelehnt' } });
+    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+
+  if (loading) return (
+    <div className="min-h-screen grid place-items-center bg-background text-muted-foreground">
+      <div className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Lädt …</div>
+    </div>
+  );
+  if (!data) return (
+    <div className="min-h-screen grid place-items-center bg-background text-muted-foreground">
+      Signaturanfrage nicht gefunden oder abgelaufen.
+    </div>
+  );
+
+  const done = ['signiert','abgelehnt','abgelaufen'].includes(data.request.status);
+
+  return (
+    <div className="min-h-screen bg-background py-6 px-4">
+      <div className="max-w-4xl mx-auto space-y-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-6 h-6 text-primary" />
+          <div>
+            <h1 className="text-xl font-semibold">{data.document.title}</h1>
+            <p className="text-xs text-muted-foreground">Dokumenttyp: {data.document.document_type} · Status: {data.request.status}</p>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader><CardTitle className="text-base">Dokument</CardTitle></CardHeader>
+          <CardContent>
+            <iframe src={data.pdf_url} className="w-full h-[600px] rounded border" title="PDF" />
+            <a href={data.pdf_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline mt-2 inline-block">PDF in neuem Tab öffnen</a>
+          </CardContent>
+        </Card>
+
+        {!done && (
+          <>
+            {data.request.otp_required && !otpVerified && (
+              <Card>
+                <CardHeader><CardTitle className="text-base">E-Mail-Verifizierung (FES)</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  {!otpSent ? (
+                    <Button onClick={sendOtp} disabled={busy}>Code per E-Mail senden</Button>
+                  ) : (
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1"><Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="6-stelliger Code" maxLength={6} /></div>
+                      <Button onClick={verifyOtp} disabled={busy}>Prüfen</Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {(!data.request.otp_required || otpVerified) && (
+              <Card>
+                <CardHeader><CardTitle className="text-base">Unterschrift</CardTitle></CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="rounded-md border bg-white">
+                    <SignatureCanvas ref={(el) => { sigRef.current = el; }} penColor="#111" canvasProps={{ className: 'w-full h-48 rounded-md' }} />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={() => sigRef.current?.clear()}><Eraser className="w-4 h-4 mr-1" />Löschen</Button>
+                    <Button onClick={submit} disabled={busy}><Check className="w-4 h-4 mr-1" />Verbindlich unterzeichnen</Button>
+                    <Button variant="ghost" onClick={decline} disabled={busy}>Ablehnen</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+
+        {done && (
+          <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Diese Signaturanfrage ist abgeschlossen.</CardContent></Card>
+        )}
+      </div>
+    </div>
+  );
+}
