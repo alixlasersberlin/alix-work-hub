@@ -273,6 +273,8 @@ const DigitaleSignaturenAdmin = lazy(() => import("./pages/DigitaleSignaturenAdm
 const DigitaleSignaturNeu = lazy(() => import("./pages/DigitaleSignaturNeu"));
 const DigitaleSignaturenCockpit = lazy(() => import("./pages/DigitaleSignaturenCockpit"));
 const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk"));
+const DigitaleSignaturenTemplateEditor = lazy(() => import("./pages/DigitaleSignaturenTemplateEditor"));
+const CustomerPortalSignaturen = lazy(() => import("./pages/CustomerPortal/Signaturen"));
 const SignDocPublic = lazy(() => import("./pages/SignDocPublic"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
@@ -1121,6 +1123,7 @@ function AppRoutes() {
           <Route path="/signaturen/cockpit" element={<ProtectedRoute><DigitaleSignaturenCockpit /></ProtectedRoute>} />
           <Route path="/signaturen/bulk" element={<ProtectedRoute><DigitaleSignaturenBulk /></ProtectedRoute>} />
           <Route path="/admin/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenAdmin /></ProtectedRoute>} />
+          <Route path="/admin/signaturen/templates/:id" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenTemplateEditor /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
           <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
@@ -1396,6 +1399,7 @@ function AppRoutes() {
           <Route path="nachrichten" element={<CustomerPortalMessagesV2 />} />
           <Route path="nachrichten/:id" element={<CustomerPortalMessagesV2 />} />
           <Route path="dokumente" element={<CustomerPortalDocumentsV2 />} />
+          <Route path="signaturen" element={<CustomerPortalSignaturen />} />
           <Route path="benachrichtigungen" element={<CustomerPortalNotificationsCenter />} />
           <Route path="sicherheit" element={<CustomerPortalSecurityPage />} />
           {/* Noch nicht freigegebene Bereiche */}

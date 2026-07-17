@@ -36,6 +36,45 @@ export default function DigitaleSignaturNeu() {
   const [entityCtx, setEntityCtx] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [templateId, setTemplateId] = useState<string>('');
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('sig_templates')
+        .select('id, name, document_type, category, default_message, default_expiry_days, default_signers')
+        .eq('is_active', true).order('usage_count', { ascending: false });
+      setTemplates(data || []);
+    })();
+  }, []);
+
+  const applyTemplate = async (tid: string) => {
+    setTemplateId(tid);
+    const t = templates.find((x) => x.id === tid);
+    if (!t) return;
+    setDocType(t.document_type);
+    if (t.default_expiry_days) setExpiresDays(t.default_expiry_days);
+    if (Array.isArray(t.default_signers) && t.default_signers.length) {
+      setSigners(t.default_signers.map((s: any) => ({
+        name: s.name || '', email: s.email || '', phone: '',
+        signer_role: s.signer_role || 'kunde', is_required: s.is_required !== false,
+      })));
+    }
+    const { data: fs } = await supabase.from('sig_template_fields').select('*').eq('template_id', tid);
+    if (fs) {
+      setFields(fs.map((r: any) => ({
+        id: crypto.randomUUID(), page: (r.page_index || 0) + 1,
+        x: Number(r.x), y: Number(r.y), width: Number(r.width), height: Number(r.height),
+        field_type: r.field_type, signer_index: r.signer_index || 0,
+        field_key: r.label || `${r.field_type}`,
+      })));
+    }
+    toast.success(`Vorlage „${t.name}" angewendet`);
+    // usage_count hochzählen (direktes Update, kein RPC nötig)
+    await supabase.from('sig_templates')
+      .update({ last_used_at: new Date().toISOString(), usage_count: (t.usage_count || 0) + 1 })
+      .eq('id', tid);
+  };
 
   useEffect(() => {
     try {
@@ -122,6 +161,24 @@ export default function DigitaleSignaturNeu() {
                 </Select>
               </div>
             </div>
+
+            {templates.length > 0 && (
+              <div className="p-3 rounded-lg border bg-primary/5">
+                <Label className="text-sm">Aus Vorlage starten (optional)</Label>
+                <Select value={templateId} onValueChange={applyTemplate}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Vorlage wählen…" /></SelectTrigger>
+                  <SelectContent>
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name} <span className="text-xs text-muted-foreground ml-2">· {t.category || t.document_type}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Belegt Signer, Nachricht, Gültigkeit und Feld-Positionen vor.</p>
+              </div>
+            )}
+
 
             <div>
               <Label>PDF-Datei</Label>

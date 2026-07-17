@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, FileSignature, Search, Plus, ShieldCheck, Activity, Users } from 'lucide-react';
+import { Loader2, FileSignature, Search, Plus, ShieldCheck, Activity, Users, FileCheck2 } from 'lucide-react';
+import { generateSignatureCertificate } from '@/lib/signaturen/certificate';
+import { toast } from 'sonner';
 
 
 type Row = {
@@ -118,18 +120,27 @@ export default function DigitaleSignaturen() {
                       <th className="py-2 px-2">Status</th>
                       <th className="py-2 px-2">Version</th>
                       <th className="py-2 px-2">Erstellt</th>
+                      <th className="py-2 px-2 text-right">Aktion</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map((r) => (
-                      <tr key={r.id} className="border-b hover:bg-muted/30 cursor-pointer" onClick={() => navigate(`/signaturen/${r.id}`)}>
-                        <td className="py-2 px-2 font-medium">{r.title}</td>
+                      <tr key={r.id} className="border-b hover:bg-muted/30">
+                        <td className="py-2 px-2 font-medium cursor-pointer" onClick={() => navigate(`/signaturen/${r.id}`)}>{r.title}</td>
                         <td className="py-2 px-2">{r.document_type}</td>
                         <td className="py-2 px-2">
                           <Badge className={statusBadge[r.status] || ''} variant="outline">{r.status}</Badge>
                         </td>
                         <td className="py-2 px-2">v{r.version}</td>
                         <td className="py-2 px-2 text-muted-foreground">{new Date(r.created_at).toLocaleString('de-DE')}</td>
+                        <td className="py-2 px-2 text-right">
+                          <Button size="sm" variant="ghost" onClick={(e) => {
+                            e.stopPropagation();
+                            generateSignatureCertificate(r.id).catch((err) => toast.error(err.message));
+                          }} title="Prüfbericht als PDF">
+                            <FileCheck2 className="w-4 h-4" />
+                          </Button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

@@ -61,6 +61,7 @@ const baseTabs = [
   { to: '/kunde/rechnungen', label: 'Rechnungen', icon: Receipt, phase: 1, key: 'invoices' },
   { to: '/kunde/angebote', label: 'Angebote', icon: FileText, phase: 3, key: 'offers' },
   { to: '/kunde/vertraege', label: 'Verträge', icon: FileSignature, phase: 2, key: 'contracts' },
+  { to: '/kunde/signaturen', label: 'Signaturen', icon: FileSignature, phase: 1, key: 'signatures' },
   { to: '/kunde/geraete', label: 'Geräte', icon: Cpu, phase: 2, key: 'devices' },
   { to: '/kunde/garantie', label: 'Garantie', icon: ShieldCheck, phase: 3, key: 'warranty' },
   { to: '/kunde/wartungen', label: 'Wartungen', icon: Wrench, phase: 3, key: 'maintenance' },
