@@ -52,7 +52,7 @@ const ORDER_SELECT = `
     deposit_amount, deposit_additional, deposit_booking_date, is_vip,
     finance_total_amount, finance_deposit_amount, finance_remaining_amount,
     finance_open_amount, finance_paid_amount, finance_overdue_amount,
-    finance_payment_status, case_number, billing_address, shipping_address,
+    finance_payment_status, case_number, billing_address, shipping_address, raw_data,
     customers(company_name, contact_name, shipping_address, billing_address, is_vip)
   `;
 
