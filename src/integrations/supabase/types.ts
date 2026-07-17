@@ -19705,6 +19705,92 @@ export type Database = {
           },
         ]
       }
+      sig_facsimile_log: {
+        Row: {
+          applied_by: string | null
+          created_at: string
+          doc_type: string
+          document_ref: string | null
+          id: string
+          settings_id: string | null
+        }
+        Insert: {
+          applied_by?: string | null
+          created_at?: string
+          doc_type: string
+          document_ref?: string | null
+          id?: string
+          settings_id?: string | null
+        }
+        Update: {
+          applied_by?: string | null
+          created_at?: string
+          doc_type?: string
+          document_ref?: string | null
+          id?: string
+          settings_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_facsimile_log_settings_id_fkey"
+            columns: ["settings_id"]
+            isOneToOne: false
+            referencedRelation: "sig_facsimile_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_facsimile_settings: {
+        Row: {
+          created_at: string
+          doc_type: string
+          enabled: boolean
+          height: number
+          id: string
+          image_path: string
+          pos_x: number
+          pos_y: number
+          show_name_line: boolean
+          signer_name: string
+          signer_title: string | null
+          updated_at: string
+          updated_by: string | null
+          width: number
+        }
+        Insert: {
+          created_at?: string
+          doc_type: string
+          enabled?: boolean
+          height?: number
+          id?: string
+          image_path: string
+          pos_x?: number
+          pos_y?: number
+          show_name_line?: boolean
+          signer_name?: string
+          signer_title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          width?: number
+        }
+        Update: {
+          created_at?: string
+          doc_type?: string
+          enabled?: boolean
+          height?: number
+          id?: string
+          image_path?: string
+          pos_x?: number
+          pos_y?: number
+          show_name_line?: boolean
+          signer_name?: string
+          signer_title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          width?: number
+        }
+        Relationships: []
+      }
       sig_otp_challenges: {
         Row: {
           attempts: number
