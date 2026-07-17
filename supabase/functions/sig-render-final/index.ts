@@ -139,7 +139,21 @@ Deno.serve(async (req) => {
     details: { path: newPath, sha256: outHash, version: nextVersion },
   });
 
+  // Optional: RFC 3161 Zeitstempel über konfigurierte TSA anfordern (PAdES-B-T Vorstufe).
+  // Vollständige PAdES-LTV Einbettung (DSS-Dictionary, VRI) wird von pdf-lib nicht unterstützt;
+  // wir speichern das TimeStampToken revisionssicher im Audit-Log und referenzieren es im Prüfbericht.
+  const SUPABASE_URL2 = Deno.env.get('SUPABASE_URL')!;
+  const SERVICE_KEY2 = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  try {
+    await fetch(`${SUPABASE_URL2}/functions/v1/sig-tsa-timestamp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SERVICE_KEY2, Authorization: `Bearer ${SERVICE_KEY2}` },
+      body: JSON.stringify({ document_id: doc.id, storage_path: newPath }),
+    });
+  } catch (e) { console.error('sig-tsa-timestamp err', e); }
+
   return new Response(JSON.stringify({ ok: true, storage_path: newPath, version: nextVersion, sha256: outHash }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 });
+
