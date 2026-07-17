@@ -1,14 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -92,22 +86,52 @@ export default function ReauthDialog({ open, onClose, onSuccess, purpose, reason
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen && !loading) onClose(); }}>
-      <DialogContent className="sm:max-w-md border-border bg-card">
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <div>
-              <DialogTitle className="text-foreground">Zusätzliche Bestätigung erforderlich</DialogTitle>
-              <DialogDescription className="text-muted-foreground text-xs">
-                {reason ?? 'Bitte bestätigen Sie mit Ihrem 6-stelligen Authenticator-Code.'}
-              </DialogDescription>
-            </div>
+  if (!open) return null;
+
+  return createPortal(
+    <div
+      role="presentation"
+      onMouseDown={() => { if (!loading) onClose(); }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 2147483647,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        background: 'hsl(var(--background) / 0.86)',
+        backdropFilter: 'blur(10px)',
+        pointerEvents: 'auto',
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reauth-dialog-title"
+        aria-describedby="reauth-dialog-description"
+        onMouseDown={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl"
+        style={{
+          position: 'relative',
+          zIndex: 2147483647,
+          transform: 'none',
+          opacity: 1,
+          visibility: 'visible',
+          pointerEvents: 'auto',
+        }}
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl gold-gradient flex items-center justify-center">
+            <ShieldCheck className="w-5 h-5 text-primary-foreground" />
           </div>
-        </DialogHeader>
+          <div>
+            <h2 id="reauth-dialog-title" className="text-lg font-semibold leading-none text-foreground">Zusätzliche Bestätigung erforderlich</h2>
+            <p id="reauth-dialog-description" className="mt-1 text-xs text-muted-foreground">
+              {reason ?? 'Bitte bestätigen Sie mit Ihrem 6-stelligen Authenticator-Code.'}
+            </p>
+          </div>
+        </div>
 
         <form
           onSubmit={(e) => { e.preventDefault(); submit(); }}
@@ -157,7 +181,8 @@ export default function ReauthDialog({ open, onClose, onSuccess, purpose, reason
             Die Bestätigung ist 5 Minuten lang gültig.
           </p>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>,
+    document.body,
   );
 }

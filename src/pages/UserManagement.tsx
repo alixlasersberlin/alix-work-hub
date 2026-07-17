@@ -534,10 +534,17 @@ export default function UserManagement() {
 
         {/* Password Change Dialog */}
         {showPasswordDialog && createPortal(
-          <div style={{ pointerEvents: 'auto' }} className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => !pwSaving && setShowPasswordDialog(false)}>
-            <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={e => e.stopPropagation()}>
+          <div style={{ pointerEvents: 'auto', zIndex: 2147483647 }} className="fixed inset-0 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => !pwSaving && setShowPasswordDialog(false)}>
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="password-change-title"
+              className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4"
+              style={{ position: 'relative', zIndex: 2147483647, transform: 'none', opacity: 1, visibility: 'visible', pointerEvents: 'auto' }}
+              onClick={e => e.stopPropagation()}
+            >
               <div>
-                <h2 className="text-lg font-semibold">Passwort ändern</h2>
+                <h2 id="password-change-title" className="text-lg font-semibold">Passwort ändern</h2>
                 <p className="text-sm text-muted-foreground">
                   Neues Passwort für <strong>{selectedUser?.full_name || selectedUser?.email}</strong> festlegen.
                 </p>
