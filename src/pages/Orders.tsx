@@ -421,8 +421,23 @@ export default function Orders() {
     return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && notExcluded;
   });
 
+  // Client-seitige Sortierung nach Anzahlungsstatus
+  const depositRank = (o: any): number => {
+    if (!(Number(o.deposit_amount) > 0)) return 4; // keine Anzahlung nötig -> ans Ende
+    const ds = computeDepositStatus(o, o._additionalDeposits);
+    if (ds.isPartial) return 3;      // ⚠ Teilzahlung
+    if (o.deposit_ok) return 1;      // OK
+    return 2;                         // offen
+  };
+  const filteredSorted = sortField === 'deposit_status'
+    ? [...filtered].sort((a, b) => {
+        const diff = depositRank(a) - depositRank(b);
+        return sortDir === 'asc' ? diff : -diff;
+      })
+    : filtered;
+
   // VIP-Kunden und VIP-Aufträge immer an Position 1
-  const sorted = vipFirst(filtered, isOrderVip);
+  const sorted = vipFirst(filteredSorted, isOrderVip);
 
   const totalPages = pageSize === 'all' ? 1 : Math.ceil(sorted.length / pageSize);
   const paged = pageSize === 'all' ? sorted : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
