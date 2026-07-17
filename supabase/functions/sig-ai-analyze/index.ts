@@ -21,13 +21,13 @@ Deno.serve(async (req) => {
     if (!userId) return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401, headers: corsHeaders });
 
     const { document_id, text_content } = await req.json();
-    if (!document_id) {
-      return new Response(JSON.stringify({ error: 'document_id required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // Preview-Mode: document_id optional, wenn Text übergeben wird (Wizard vor Erstellung)
+    if (!document_id && !text_content) {
+      return new Response(JSON.stringify({ error: 'document_id or text_content required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // If text not provided, try to load metadata (real PDF extraction happens client-side)
     let content = text_content ?? '';
-    if (!content) {
+    if (!content && document_id) {
       const { data: doc } = await supabase.from('sig_documents').select('title, description').eq('id', document_id).single();
       content = `${doc?.title ?? ''}\n${doc?.description ?? ''}`;
     }
@@ -74,14 +74,25 @@ Koordinaten x,y,w,h relativ 0-1. Max 5 clauses, max 4 suggested_fields.`;
     let parsed: any = {};
     try { parsed = JSON.parse(raw); } catch { parsed = { summary: raw, risk_score: 0, clauses: [], suggested_fields: [] }; }
 
-    const { data: analysis, error } = await supabase.from('sig_ai_analyses').insert({
-      document_id,
+    const analysisPayload = {
       risk_score: parsed.risk_score ?? null,
       summary: parsed.summary ?? null,
       clauses: parsed.clauses ?? [],
       suggested_fields: parsed.suggested_fields ?? [],
       model: 'google/gemini-3-flash-preview',
       tokens_used: aiData.usage?.total_tokens ?? null,
+    };
+
+    if (!document_id) {
+      // Preview – nichts persistieren
+      return new Response(JSON.stringify({ ok: true, analysis: analysisPayload, preview: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { data: analysis, error } = await supabase.from('sig_ai_analyses').insert({
+      document_id,
+      ...analysisPayload,
       created_by: userId,
     }).select().single();
 

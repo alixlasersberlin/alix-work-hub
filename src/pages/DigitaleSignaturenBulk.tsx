@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Send, Users, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { BulkJobsProgress } from '@/components/signaturen/BulkJobsProgress';
 
 const DOC_TYPES = ['angebot','auftrag','rechnung','servicevertrag','nda','sonstiges'];
 
@@ -90,6 +91,8 @@ export default function DigitaleSignaturenBulk() {
           <h1 className="text-lg font-semibold">Serien-Versand</h1>
         </div>
       </div>
+
+      <BulkJobsProgress />
 
       <Card>
         <CardHeader><CardTitle className="text-base">Dokument</CardTitle></CardHeader>
