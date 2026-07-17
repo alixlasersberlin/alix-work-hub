@@ -722,7 +722,7 @@ export default function Orders() {
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Anzahlung</th>
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Anzahlung OK</th>
                     <th className="text-left px-4 py-3 text-muted-foreground font-medium">Bestellung</th>
-                    {canWrite && <th className="text-right px-4 py-3 text-muted-foreground font-medium">Aktionen</th>}
+                    
                   </tr>
                 </thead>
                 {loading ? (
