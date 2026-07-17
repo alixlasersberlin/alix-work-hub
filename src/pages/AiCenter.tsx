@@ -29,10 +29,31 @@ async function callAi(messages: ChatMsg[], opts?: { response_format?: any; model
 }
 
 function tone(score: number) {
-  if (score >= 80) return { label: "Kritisch", cls: "border-destructive/40 bg-destructive/5 text-destructive" };
-  if (score >= 60) return { label: "Hoch", cls: "border-orange-500/40 bg-orange-500/5 text-orange-600" };
-  if (score >= 30) return { label: "Mittel", cls: "border-yellow-500/40 bg-yellow-500/5 text-yellow-700" };
-  return { label: "Niedrig", cls: "border-emerald-500/40 bg-emerald-500/5 text-emerald-600" };
+  // Card = neutrale Oberfläche mit farbigem Rand · Badge = kräftige Akzentfarbe
+  if (score >= 80) return {
+    label: "Kritisch",
+    card: "border-l-4 border-l-destructive border-border bg-card",
+    badge: "bg-destructive/15 text-destructive border-destructive/30",
+    bar: "[&>div]:bg-destructive",
+  };
+  if (score >= 60) return {
+    label: "Hoch",
+    card: "border-l-4 border-l-orange-500 border-border bg-card",
+    badge: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30",
+    bar: "[&>div]:bg-orange-500",
+  };
+  if (score >= 30) return {
+    label: "Mittel",
+    card: "border-l-4 border-l-yellow-500 border-border bg-card",
+    badge: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30",
+    bar: "[&>div]:bg-yellow-500",
+  };
+  return {
+    label: "Niedrig",
+    card: "border-l-4 border-l-emerald-500 border-border bg-card",
+    badge: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+    bar: "[&>div]:bg-emerald-500",
+  };
 }
 
 export default function AiCenter() {
@@ -266,18 +287,18 @@ function RiskTab() {
             const score = Math.min(100, Number(r.health_score || 0) * 8);
             const t = tone(score);
             return (
-              <div key={r.serial_number} className={`rounded border p-3 ${t.cls.split(" ").slice(0, 2).join(" ")}`}>
+              <div key={r.serial_number} className={`rounded-md border p-3 ${t.card}`}>
                 <div className="flex justify-between items-start gap-2">
                   <div>
-                    <div className="font-medium">{r.device_name || "Gerät"} <span className="text-xs text-muted-foreground">· SN {r.serial_number}</span></div>
+                    <div className="font-medium text-foreground">{r.device_name || "Gerät"} <span className="text-xs text-muted-foreground">· SN {r.serial_number}</span></div>
                     <div className="text-xs text-muted-foreground">Kunde: {r.customer_name || "—"}</div>
-                    <div className="text-xs mt-1">
+                    <div className="text-xs mt-1 text-muted-foreground">
                       Reparaturen {r.repair_count} · Tickets {r.ticket_count} · Ersatzteile {r.spare_part_count} · Garantie {r.warranty_cases}
                     </div>
                   </div>
-                  <Badge className={t.cls}>{t.label} · {score.toFixed(0)}</Badge>
+                  <Badge variant="outline" className={t.badge}>{t.label} · {score.toFixed(0)}</Badge>
                 </div>
-                <Progress value={score} className="h-1 mt-2" />
+                <Progress value={score} className={`h-1 mt-2 ${t.bar}`} />
               </div>
             );
           })}
