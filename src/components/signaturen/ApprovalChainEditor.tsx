@@ -29,8 +29,8 @@ export default function ApprovalChainEditor({ templateId }: { templateId: string
           steps: Array.isArray(data.steps) ? (data.steps as unknown as Step[]) : [],
         });
       }
-      const { data: up } = await supabase.from('user_profiles').select('user_id, display_name, email').limit(200);
-      setUsers((up ?? []).map((u: any) => ({ id: u.user_id, label: u.display_name || u.email || u.user_id.slice(0, 8) })));
+      const { data: up } = await supabase.from('user_profiles').select('id, full_name, email').eq('is_active', true).limit(200);
+      setUsers((up ?? []).map((u: any) => ({ id: u.id, label: u.full_name || u.email || u.id.slice(0, 8) })));
     })();
   }, [templateId]);
 
