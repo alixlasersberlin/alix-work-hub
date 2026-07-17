@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Megaphone, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,9 +32,11 @@ export default function NewsAnnouncementDialog() {
   const [ack, setAck] = useState(false);
   const [saving, setSaving] = useState(false);
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
+  const openTimerRef = useRef<number | null>(null);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
+    if (openTimerRef.current) window.clearTimeout(openTimerRef.current);
     const nowIso = new Date().toISOString();
     const { data: posts, error } = await supabase
       .from('news_posts')
@@ -64,17 +65,22 @@ export default function NewsAnnouncementDialog() {
     // Warten bis kein anderer modaler Dialog (z.B. WelcomeDialog) mehr offen ist,
     // damit sich die Dialoge nicht stapeln und Pointer-Events blockieren.
     const tryOpen = () => {
-      const others = document.querySelectorAll<HTMLElement>('[role="dialog"][data-state="open"]');
+      const others = Array.from(document.querySelectorAll<HTMLElement>('[role="dialog"][data-state="open"]'))
+        .filter((el) => el.dataset.newsAnnouncementDialog !== 'true');
       if (others.length === 0) {
         setOpen(true);
       } else {
-        window.setTimeout(tryOpen, 400);
+        openTimerRef.current = window.setTimeout(tryOpen, 400);
       }
     };
-    window.setTimeout(tryOpen, 500);
+    openTimerRef.current = window.setTimeout(tryOpen, 500);
   }, [user?.id]);
 
   useEffect(() => { void load(); }, [load]);
+
+  useEffect(() => () => {
+    if (openTimerRef.current) window.clearTimeout(openTimerRef.current);
+  }, []);
 
   // Bild-URL (Signed URL, weil Bucket privat) für aktuelles Item laden.
   useEffect(() => {
@@ -127,7 +133,8 @@ export default function NewsAnnouncementDialog() {
       }}
     >
       <DialogContent
-        className="max-w-2xl"
+        data-news-announcement-dialog="true"
+        className="news-announcement-dialog max-w-2xl overflow-hidden"
         onEscapeKeyDown={(e) => { if (mustAck) e.preventDefault(); }}
         onPointerDownOutside={(e) => { if (mustAck) e.preventDefault(); }}
         onInteractOutside={(e) => { if (mustAck) e.preventDefault(); }}
@@ -143,12 +150,13 @@ export default function NewsAnnouncementDialog() {
           <DialogDescription className="sr-only">Wichtige Mitteilung – bitte lesen und bestätigen.</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
           {signedImageUrl && (
             <img
               src={signedImageUrl}
               alt=""
-              className="w-full rounded-lg border border-border object-cover max-h-72"
+              className="news-announcement-image block w-full rounded-lg border border-border object-cover max-h-72 select-none"
+              draggable={false}
             />
           )}
           {current.body && (
@@ -169,17 +177,19 @@ export default function NewsAnnouncementDialog() {
           )}
         </div>
 
-        <div className="mt-4 rounded-lg border border-border bg-muted/40 p-3">
-          <label className="flex items-start gap-3 cursor-pointer">
-            <Checkbox
+        <div className="news-announcement-ack mt-4 rounded-lg border border-border bg-muted/40 p-3">
+          <div className="flex items-start gap-3">
+            <input
+              id={`news-announcement-ack-${current.id}`}
+              type="checkbox"
               checked={ack}
-              onCheckedChange={(v) => setAck(v === true)}
-              className="mt-0.5"
+              onChange={(e) => setAck(e.currentTarget.checked)}
+              className="news-announcement-checkbox mt-0.5 h-4 w-4 shrink-0 cursor-pointer rounded-sm border border-primary bg-background accent-primary"
             />
-            <span className="text-sm">
+            <label htmlFor={`news-announcement-ack-${current.id}`} className="cursor-pointer text-sm">
               Ich habe die News gesehen und verstanden.
-            </span>
-          </label>
+            </label>
+          </div>
         </div>
 
         <DialogFooter>
