@@ -396,11 +396,32 @@ function ListView({ rows, selected, onToggle, onToggleAll }: { rows: MpRow[]; se
                   <td className="p-3 text-xs">{r._assignee_name || <span className="text-muted-foreground">—</span>}</td>
                   <td className="p-3 text-xs text-muted-foreground">{format(new Date(r.updated_at), 'dd.MM.yyyy HH:mm')}</td>
                   <td className="p-3">
-                    {r.order_id && (
-                      <Link to={`/auftraege/${r.order_id}?tab=mediapaket`}>
-                        <Button size="sm" variant="ghost" className="h-7 px-2"><ExternalLink className="w-3.5 h-3.5" /></Button>
-                      </Link>
-                    )}
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2"
+                        title="Kundendaten als PDF herunterladen"
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const t = toast.loading('PDF wird erstellt…');
+                          try {
+                            await exportMediaPackagePdf(r.id);
+                            toast.success('PDF heruntergeladen', { id: t });
+                          } catch (err: any) {
+                            toast.error(err?.message || 'PDF-Export fehlgeschlagen', { id: t });
+                          }
+                        }}
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                      </Button>
+                      {r.order_id && (
+                        <Link to={`/auftraege/${r.order_id}?tab=mediapaket`}>
+                          <Button size="sm" variant="ghost" className="h-7 px-2"><ExternalLink className="w-3.5 h-3.5" /></Button>
+                        </Link>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
