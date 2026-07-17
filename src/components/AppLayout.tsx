@@ -92,22 +92,6 @@ export const navItems: NavItem[] = [
     ],
   },
   {
-    path: '/signaturen', label: 'ALIX SIGN PRO', icon: FileSignature,
-    roles: ['Admin', 'Super Admin'],
-    children: [
-      { path: '/signaturen', label: 'Übersicht', icon: LayoutDashboard, roles: ['Admin', 'Super Admin'] },
-      { path: '/signaturen/neu', label: 'Neue Anfrage', icon: FilePlus, roles: ['Admin', 'Super Admin'] },
-      { path: '/signaturen/cockpit', label: 'Cockpit & Analytics', icon: BarChart3, roles: ['Admin', 'Super Admin'] },
-      { path: '/signaturen/dashboard', label: 'SLA-Dashboard', icon: BarChart3, roles: ['Admin', 'Super Admin'] },
-      { path: '/signaturen/bulk', label: 'Serien-Versand', icon: Send, roles: ['Admin', 'Super Admin'] },
-      { path: '/signaturen/genehmigungen', label: 'Genehmigungen', icon: CheckCircle2, roles: ['Admin', 'Super Admin'] },
-      { path: '/admin/sign-marketplace', label: 'Marketplace &amp; White-Label', icon: Settings, roles: ['Super Admin'] },
-      { path: '/admin/signaturen', label: 'Admin (Stempel & Templates)', icon: Settings, roles: ['Admin', 'Super Admin'] },
-      { path: '/admin/signaturen/facsimile', label: 'Facsimile-Unterschrift', icon: Settings, roles: ['Super Admin'] },
-    ],
-
-  },
-  {
     path: '/tickets/dashboard', label: 'TICKETS', icon: Ticket,
     roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'],
     children: [
