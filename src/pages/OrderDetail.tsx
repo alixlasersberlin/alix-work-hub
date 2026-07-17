@@ -60,6 +60,7 @@ import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
 import MediapaketOrderTab from '@/components/MediapaketOrderTab';
 import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
+import { SignatureRequestButton } from '@/components/signaturen/SignatureRequestButton';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
