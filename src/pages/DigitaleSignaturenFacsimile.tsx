@@ -247,8 +247,25 @@ export default function DigitaleSignaturenFacsimile() {
                   {saving === dt.key && <span className="text-xs text-muted-foreground flex items-center gap-1"><Save className="h-3 w-3" />speichert…</span>}
                 </div>
 
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase text-muted-foreground">Live-Vorschau (A4, letzte Seite)</Label>
+                  <FacsimilePreview
+                    signerName={row?.signer_name ?? DEFAULTS.signer_name}
+                    signerTitle={row?.signer_title ?? DEFAULTS.signer_title ?? ""}
+                    posX={Number(row?.pos_x ?? DEFAULTS.pos_x)}
+                    posY={Number(row?.pos_y ?? DEFAULTS.pos_y)}
+                    width={Number(row?.width ?? DEFAULTS.width)}
+                    height={Number(row?.height ?? DEFAULTS.height)}
+                    showNameLine={row?.show_name_line ?? true}
+                    imageUrl={preview}
+                    docLabel={dt.label}
+                  />
+                </div>
+
                 <p className="text-xs text-muted-foreground">
-                  Position in PDF-Punkten von unten links. Standard = unten rechts (Seite letzte).
+                  Position in PDF-Punkten von unten links. Standard = unten rechts (letzte Seite).
                 </p>
               </CardContent>
             </Card>
