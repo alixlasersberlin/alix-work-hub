@@ -214,6 +214,7 @@ export default function PdfOrderImportList() {
                       <td className="p-3">{warnCount > 0 ? <span className="text-amber-400 text-xs">⚠ {warnCount}</span> : <span className="text-xs text-muted-foreground">—</span>}</td>
                       <td className="p-3 text-xs text-muted-foreground">{format(new Date(r.created_at), 'dd.MM.yyyy HH:mm')}</td>
                       <td className="p-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
                         {r.status === 'analyzed' || r.status === 'review' ? (
                           <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-black" onClick={(e) => { e.stopPropagation(); nav(`/auftraege/pdf-import/${r.id}/review`); }}>Prüfen</Button>
                         ) : r.created_order_id ? (
@@ -221,6 +222,18 @@ export default function PdfOrderImportList() {
                         ) : (
                           <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); nav(`/auftraege/pdf-import/${r.id}`); }}>Öffnen</Button>
                         )}
+                        {canDelete && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                            title="Löschen"
+                            onClick={(e) => { e.stopPropagation(); setToDelete(r); }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                        </div>
                       </td>
                     </tr>
                   );
