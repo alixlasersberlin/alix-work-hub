@@ -835,11 +835,12 @@ export default function Orders() {
                                     {Number(o.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
                                   </span>
                                   {ds.isPartial ? (
-                                    <AlertCircle
-                                      className="w-4 h-4 text-orange-500"
-                                      aria-label="Teilzahlung – Restbetrag offen"
+                                    <span
                                       title={`Teilzahlung – noch offen: ${ds.open.toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}`}
-                                    />
+                                      className="inline-flex"
+                                    >
+                                      <AlertCircle className="w-4 h-4 text-orange-500" aria-label="Teilzahlung – Restbetrag offen" />
+                                    </span>
                                   ) : o.deposit_ok ? (
                                     <CheckCircle2 className="w-4 h-4 text-emerald-500" aria-label="bezahlt" />
                                   ) : (
