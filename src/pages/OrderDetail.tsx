@@ -670,7 +670,14 @@ export default function OrderDetail() {
                         {typeof t.count === 'number' && (
                           <span className={`text-[11px] px-1.5 py-0.5 rounded-full ml-2 ${active ? 'bg-primary/15 text-primary' : 'bg-secondary text-muted-foreground'}`}>{t.count}</span>
                         )}
-                        {t.badge && <span className="text-emerald-400 text-xs ml-2">{t.badge}</span>}
+                        {t.badge && (
+                          <span
+                            className={`text-xs ml-2 ${t.badge === '!' ? 'text-orange-400 font-bold' : 'text-emerald-400'}`}
+                            title={t.badge === '!' ? 'Teilzahlung – Restbetrag offen' : undefined}
+                          >
+                            {t.badge}
+                          </span>
+                        )}
                       </DropdownMenuItem>
                     );
                   })}
