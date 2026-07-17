@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
 
   const code = String(Math.floor(100000 + Math.random() * 900000));
   const codeHash = await sha256Hex(code);
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
   await admin.from('sig_otp_challenges').insert({
     request_id: reqRow.id, signer_id: signer.id, code_hash: codeHash, expires_at: expiresAt,
