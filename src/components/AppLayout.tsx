@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
+import NewsAnnouncementDialog from '@/components/NewsAnnouncementDialog';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
