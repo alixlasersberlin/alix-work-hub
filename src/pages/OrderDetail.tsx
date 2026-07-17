@@ -493,6 +493,18 @@ export default function OrderDetail() {
         { key: 'mietkauf', label: 'Mietkauf', icon: FileText, onClick: () => mietkaufRef.current?.open() },
         { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
         { key: 'wareneingang', label: 'Wareneingang', icon: Inbox, onClick: () => wareneingangRef.current?.generatePdf() },
+        {
+          key: 'sig-request', label: 'Signatur anfordern', icon: PenLine,
+          onClick: () => {
+            sessionStorage.setItem('sig_handoff_v1', JSON.stringify({
+              entity_type: 'order', entity_id: order.id,
+              document_type: 'auftrag',
+              title: `Auftrag ${withAt(order.order_number, order.source_system)}`,
+              customer_id: order.customer_id,
+            }));
+            navigate('/signaturen/neu');
+          },
+        },
       ] as ActionItem[],
     }] : []),
     ...(!canWrite ? [{
