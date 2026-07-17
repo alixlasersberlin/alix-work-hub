@@ -70,11 +70,10 @@ export default function DigitaleSignaturNeu() {
       })));
     }
     toast.success(`Vorlage „${t.name}" angewendet`);
-    // usage_count hochzählen
-    await supabase.rpc('increment_sig_template_usage', { _id: tid }).then(() => {}, () => {
-      // Fallback: direktes Update
-      supabase.from('sig_templates').update({ last_used_at: new Date().toISOString() }).eq('id', tid);
-    });
+    // usage_count hochzählen (direktes Update, kein RPC nötig)
+    await supabase.from('sig_templates')
+      .update({ last_used_at: new Date().toISOString(), usage_count: (t.usage_count || 0) + 1 })
+      .eq('id', tid);
   };
 
   useEffect(() => {
