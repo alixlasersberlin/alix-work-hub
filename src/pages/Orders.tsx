@@ -45,6 +45,16 @@ type PageSize = 20 | 30 | 50 | 'all';
 const QUICK_LOAD_LIMIT = 50;
 const FULL_LOAD_LIMIT = 500;
 
+// Normalisiert Währungsangaben aus der DB (z. B. "€", "$") auf ISO-4217-Codes,
+// da Intl.NumberFormat sonst mit RangeError abbricht.
+const CURRENCY_SYMBOL_MAP: Record<string, string> = { '€': 'EUR', '$': 'USD', '£': 'GBP', 'CHF': 'CHF' };
+const cur = (c?: string | null): string => {
+  const v = (c ?? '').trim();
+  if (!v) return 'EUR';
+  if (CURRENCY_SYMBOL_MAP[v]) return CURRENCY_SYMBOL_MAP[v];
+  return /^[A-Za-z]{3}$/.test(v) ? v.toUpperCase() : 'EUR';
+};
+
 const ORDER_SELECT = `
     id, customer_id, external_order_id, order_number, source_system, order_status, invoiced_flag,
     currency, total_amount, order_date, expected_shipment_date, salesperson_name,
