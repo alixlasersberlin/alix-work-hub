@@ -581,7 +581,25 @@ export default function UserManagement() {
                       const { data, error } = await supabase.functions.invoke('admin-reset-password', {
                         body: { user_id: selectedUser.id, new_password: pwNew, require_reset: pwRequireReset },
                       });
-                      if (error || data?.error) throw new Error(data?.error || error?.message);
+                      let errMsg: string | null = data?.error ?? null;
+                      if (error) {
+                        try {
+                          const ctx: any = (error as any).context;
+                          if (ctx && typeof ctx.json === 'function') {
+                            const body = await ctx.json();
+                            errMsg = body?.error || errMsg || error.message;
+                          } else if (ctx && typeof ctx.text === 'function') {
+                            const t = await ctx.text();
+                            try { errMsg = JSON.parse(t)?.error || errMsg || error.message; }
+                            catch { errMsg = t || errMsg || error.message; }
+                          } else {
+                            errMsg = errMsg || error.message;
+                          }
+                        } catch {
+                          errMsg = errMsg || error.message;
+                        }
+                      }
+                      if (errMsg) throw new Error(errMsg);
                       toast.success('Passwort wurde geändert');
                       setShowPasswordDialog(false);
                       setPwNew(''); setPwConfirm('');
