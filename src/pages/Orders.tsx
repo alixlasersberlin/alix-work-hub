@@ -36,6 +36,7 @@ import { withAt } from '@/lib/atSuffix';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { OrderColumnPicker } from '@/components/OrderColumnPicker';
 
 type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at' | 'deposit_status';
 type SortDir = 'asc' | 'desc';
