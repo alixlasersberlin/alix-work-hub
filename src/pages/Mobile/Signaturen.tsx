@@ -14,7 +14,7 @@ export default function MobileSignaturen() {
   const load = async () => {
     setLoading(true);
     let q = supabase.from('sig_requests').select('id, status, created_at, sig_documents(title, document_type)').order('created_at', { ascending: false }).limit(50);
-    if (tab === 'open') q = q.in('status', ['sent', 'pending']);
+    if (tab === 'open') q = q.in('status', ['versendet', 'neu', 'geoeffnet', 'in_bearbeitung', 'teilweise_signiert']);
     if (tab === 'today') {
       const start = new Date(); start.setHours(0, 0, 0, 0);
       q = q.gte('created_at', start.toISOString());
@@ -51,7 +51,7 @@ export default function MobileSignaturen() {
                   <div className="text-sm font-medium truncate">{r.sig_documents?.title ?? 'Unbenannt'}</div>
                   <div className="text-[11px] text-muted-foreground">{new Date(r.created_at).toLocaleString('de-DE')}</div>
                 </div>
-                <Badge variant={r.status === 'signed' ? 'default' : 'secondary'} className="text-[10px]">{r.status}</Badge>
+                <Badge variant={r.status === 'signiert' ? 'default' : 'secondary'} className="text-[10px]">{r.status}</Badge>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </Card>
             </Link>

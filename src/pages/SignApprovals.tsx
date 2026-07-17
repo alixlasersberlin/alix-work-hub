@@ -48,7 +48,7 @@ export default function SignApprovals() {
     if (error) { toast.error(error.message); return; }
 
     if (finished && decision === 'approved' && row.request_id) {
-      await supabase.from('sig_requests').update({ status: 'sent' }).eq('id', row.request_id);
+      await supabase.from('sig_requests').update({ status: 'versendet' }).eq('id', row.request_id);
     }
     toast.success(decision === 'approved' ? 'Freigegeben' : 'Abgelehnt');
     load();
