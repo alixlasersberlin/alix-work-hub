@@ -1399,6 +1399,7 @@ function AppRoutes() {
           <Route path="nachrichten" element={<CustomerPortalMessagesV2 />} />
           <Route path="nachrichten/:id" element={<CustomerPortalMessagesV2 />} />
           <Route path="dokumente" element={<CustomerPortalDocumentsV2 />} />
+          <Route path="signaturen" element={<CustomerPortalSignaturen />} />
           <Route path="benachrichtigungen" element={<CustomerPortalNotificationsCenter />} />
           <Route path="sicherheit" element={<CustomerPortalSecurityPage />} />
           {/* Noch nicht freigegebene Bereiche */}
