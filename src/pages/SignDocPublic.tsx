@@ -1,11 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, ShieldCheck, Eraser, Check } from 'lucide-react';
+import { Loader2, ShieldCheck, Eraser, Check, PenLine } from 'lucide-react';
 import { toast } from 'sonner';
+
+type FieldBlueprint = {
+  page: number; x: number; y: number; width: number; height: number;
+  signer_index: number; field_type: string; field_key: string;
+};
 
 export default function SignDocPublic() {
   const { token } = useParams();
@@ -16,6 +21,9 @@ export default function SignDocPublic() {
   const [otpVerified, setOtpVerified] = useState(false);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
+  const [activeFieldIdx, setActiveFieldIdx] = useState(0);
+  const [collected, setCollected] = useState<Record<string, { png: string; vec: any }>>({});
+  const [textValues, setTextValues] = useState<Record<string, string>>({});
   const sigRef = useRef<SignatureCanvas | null>(null);
 
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -48,34 +56,67 @@ export default function SignDocPublic() {
     })();
   }, [token]);
 
+  const currentSigner = useMemo(
+    () => data?.signers?.find((s: any) => s.id === signerId),
+    [data, signerId],
+  );
+
+  const myFields: FieldBlueprint[] = useMemo(() => {
+    const all: FieldBlueprint[] = data?.document?.fields || [];
+    if (!currentSigner) return [];
+    return all.filter((f) => f.signer_index === currentSigner.order_index);
+  }, [data, currentSigner]);
+
+  const activeField = myFields[activeFieldIdx];
+
   const sendOtp = async () => {
     setBusy(true);
-    try {
-      await call('sig-otp-send', { token, signer_id: signerId });
-      setOtpSent(true);
-      toast.success('OTP-Code per E-Mail versendet');
-    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+    try { await call('sig-otp-send', { token, signer_id: signerId }); setOtpSent(true); toast.success('OTP-Code per E-Mail versendet'); }
+    catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
-
   const verifyOtp = async () => {
     setBusy(true);
-    try {
-      await call('sig-otp-verify', { token, signer_id: signerId, code });
-      setOtpVerified(true);
-      toast.success('OTP verifiziert');
-    } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+    try { await call('sig-otp-verify', { token, signer_id: signerId, code }); setOtpVerified(true); toast.success('OTP verifiziert'); }
+    catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
 
-  const submit = async () => {
-    if (!sigRef.current || sigRef.current.isEmpty()) return toast.error('Bitte unterschreiben');
+  const captureField = () => {
+    if (!activeField) return;
+    const needsSig = activeField.field_type === 'signature' || activeField.field_type === 'initials';
+    if (needsSig) {
+      if (!sigRef.current || sigRef.current.isEmpty()) return toast.error('Bitte im Feld unterschreiben');
+      const png = sigRef.current.getCanvas().toDataURL('image/png');
+      const vec = sigRef.current.toData();
+      setCollected({ ...collected, [activeField.field_key]: { png, vec } });
+      sigRef.current.clear();
+    }
+    if (activeFieldIdx < myFields.length - 1) setActiveFieldIdx(activeFieldIdx + 1);
+    else submitAll();
+  };
+
+  const submitAll = async () => {
     setBusy(true);
     try {
-      const png = sigRef.current.getCanvas().toDataURL('image/png');
-      const vector = sigRef.current.toData();
-      await call('sig-submit', {
-        token, signer_id: signerId,
-        signatures: [{ field_key: 'main', field_type: 'signature', vector_data: vector, png_data: png, page: 1, x: 40, y: 40, width: 260, height: 90 }],
-      });
+      const signatures: any[] = [];
+      if (myFields.length > 0) {
+        for (const f of myFields) {
+          const c = collected[f.field_key];
+          const isSigLike = f.field_type === 'signature' || f.field_type === 'initials';
+          signatures.push({
+            field_key: f.field_key, field_type: f.field_type, page: f.page,
+            x: f.x, y: f.y, width: f.width, height: f.height,
+            png_data: isSigLike ? c?.png : null,
+            vector_data: isSigLike ? c?.vec : (textValues[f.field_key] ? { text: textValues[f.field_key] } : null),
+          });
+        }
+      } else {
+        // Legacy: no blueprint → single free signature
+        if (!sigRef.current || sigRef.current.isEmpty()) return toast.error('Bitte unterschreiben');
+        const png = sigRef.current.getCanvas().toDataURL('image/png');
+        const vec = sigRef.current.toData();
+        signatures.push({ field_key: 'main', field_type: 'signature', vector_data: vec, png_data: png, page: 1, x: 40, y: 40, width: 260, height: 90 });
+      }
+      await call('sig-submit', { token, signer_id: signerId, signatures });
       toast.success('Signatur übermittelt – vielen Dank!');
       setData({ ...data, request: { ...data.request, status: 'signiert' } });
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
@@ -104,6 +145,7 @@ export default function SignDocPublic() {
   );
 
   const done = ['signiert','abgelehnt','abgelaufen'].includes(data.request.status);
+  const needsOtp = data.request.otp_required && !otpVerified;
 
   return (
     <div className="min-h-screen bg-background py-6 px-4">
@@ -126,7 +168,7 @@ export default function SignDocPublic() {
 
         {!done && (
           <>
-            {data.request.otp_required && !otpVerified && (
+            {needsOtp && (
               <Card>
                 <CardHeader><CardTitle className="text-base">E-Mail-Verifizierung (FES)</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
@@ -142,7 +184,49 @@ export default function SignDocPublic() {
               </Card>
             )}
 
-            {(!data.request.otp_required || otpVerified) && (
+            {!needsOtp && myFields.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center justify-between">
+                    <span>Feld {activeFieldIdx + 1} von {myFields.length}: {activeField?.field_type}</span>
+                    <div className="flex gap-1">
+                      {myFields.map((f, i) => (
+                        <span key={i} className={`w-2 h-2 rounded-full ${collected[f.field_key] || textValues[f.field_key] ? 'bg-emerald-500' : i === activeFieldIdx ? 'bg-primary' : 'bg-muted'}`} />
+                      ))}
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {(activeField?.field_type === 'signature' || activeField?.field_type === 'initials') && (
+                    <div className="rounded-md border bg-white">
+                      <SignatureCanvas ref={(el) => { sigRef.current = el; }} penColor="#111" canvasProps={{ className: 'w-full h-48 rounded-md' }} />
+                    </div>
+                  )}
+                  {activeField?.field_type === 'text' && (
+                    <Input value={textValues[activeField.field_key] || ''} onChange={(e) => setTextValues({ ...textValues, [activeField.field_key]: e.target.value })} placeholder="Text eingeben" />
+                  )}
+                  {activeField?.field_type === 'date' && (
+                    <p className="text-sm text-muted-foreground">Wird automatisch mit dem Signaturdatum gefüllt.</p>
+                  )}
+                  {activeField?.field_type === 'checkbox' && (
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" onChange={(e) => setTextValues({ ...textValues, [activeField.field_key]: e.target.checked ? 'X' : '' })} />
+                      Zustimmung markieren
+                    </label>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={() => sigRef.current?.clear()}><Eraser className="w-4 h-4 mr-1" />Löschen</Button>
+                    <Button onClick={captureField} disabled={busy}>
+                      <Check className="w-4 h-4 mr-1" />
+                      {activeFieldIdx < myFields.length - 1 ? 'Weiter zum nächsten Feld' : 'Verbindlich unterzeichnen'}
+                    </Button>
+                    <Button variant="ghost" onClick={decline} disabled={busy}>Ablehnen</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {!needsOtp && myFields.length === 0 && (
               <Card>
                 <CardHeader><CardTitle className="text-base">Unterschrift</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
@@ -151,7 +235,7 @@ export default function SignDocPublic() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" onClick={() => sigRef.current?.clear()}><Eraser className="w-4 h-4 mr-1" />Löschen</Button>
-                    <Button onClick={submit} disabled={busy}><Check className="w-4 h-4 mr-1" />Verbindlich unterzeichnen</Button>
+                    <Button onClick={submitAll} disabled={busy}><PenLine className="w-4 h-4 mr-1" />Verbindlich unterzeichnen</Button>
                     <Button variant="ghost" onClick={decline} disabled={busy}>Ablehnen</Button>
                   </div>
                 </CardContent>
