@@ -727,7 +727,7 @@ export default function Orders() {
                 </thead>
                 {loading ? (
                   <tbody>
-                    <tr><td colSpan={(canWrite ? 10 : 9) + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
+                    <tr><td colSpan={9 + (selectionMode ? 1 : 0)} className="px-4 py-12 text-center">
                       <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                     </td></tr>
                   </tbody>
