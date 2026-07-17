@@ -620,6 +620,48 @@ export default function OrderDetail() {
           {canWrite && (
             <CreateInvoiceDialog order={order} customer={customer} items={items} />
           )}
+          {canWrite && (order as any)?.zoho_salesorder_id && String(order.source_system || '').startsWith('zoho') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const t = toast.loading('Zoho Auftragsbestätigung wird geladen…');
+                try {
+                  const { data, error } = await supabase.functions.invoke('zoho-invoice-pdf', {
+                    body: {
+                      zoho_id: (order as any).zoho_salesorder_id,
+                      source_system: order.source_system,
+                      resource: 'salesorders',
+                      document_ref: order.order_number,
+                    },
+                  });
+                  if (error) throw error;
+                  if ((data as any)?.error) throw new Error((data as any).error);
+                  const b64 = (data as any)?.pdf_base64;
+                  if (!b64) throw new Error('Kein PDF erhalten');
+                  const bin = atob(b64);
+                  const bytes = new Uint8Array(bin.length);
+                  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                  const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `Auftragsbestaetigung_${order.order_number || (order as any).zoho_salesorder_id}.pdf`;
+                  document.body.appendChild(a); a.click(); a.remove();
+                  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+                  toast.success(
+                    (data as any)?.facsimile_applied
+                      ? 'Auftragsbestätigung mit H. Tran Signatur geladen'
+                      : 'Auftragsbestätigung geladen (ohne Signatur – Facsimile deaktiviert)',
+                    { id: t }
+                  );
+                } catch (e: any) {
+                  toast.error(e?.message || 'Download fehlgeschlagen', { id: t });
+                }
+              }}
+            >
+              <FileText className="w-3.5 h-3.5 mr-1.5" /> AB (Zoho) mit Signatur
+            </Button>
+          )}
           {canWrite && (
             <SignatureRequestButton
               entityType="order"
