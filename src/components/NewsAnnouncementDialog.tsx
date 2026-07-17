@@ -60,7 +60,18 @@ export default function NewsAnnouncementDialog() {
     setItems(pending);
     setIndex(0);
     setAck(false);
-    setOpen(pending.length > 0);
+    if (pending.length === 0) { setOpen(false); return; }
+    // Warten bis kein anderer modaler Dialog (z.B. WelcomeDialog) mehr offen ist,
+    // damit sich die Dialoge nicht stapeln und Pointer-Events blockieren.
+    const tryOpen = () => {
+      const others = document.querySelectorAll<HTMLElement>('[role="dialog"][data-state="open"]');
+      if (others.length === 0) {
+        setOpen(true);
+      } else {
+        window.setTimeout(tryOpen, 400);
+      }
+    };
+    window.setTimeout(tryOpen, 500);
   }, [user?.id]);
 
   useEffect(() => { void load(); }, [load]);
