@@ -856,8 +856,9 @@ export default function Orders() {
                                     Rg. {o._azInvoiceNumber}
                                   </span>
                                 )}
-                            </div>
-                          ) : (
+                              </div>
+                            );
+                          })() : (
                             <span className="text-muted-foreground">—</span>
                           )}
                         </td>
