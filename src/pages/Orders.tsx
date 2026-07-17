@@ -37,7 +37,7 @@ import { useAtOnly } from '@/hooks/useAtOnly';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 
-type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at';
+type SortField = 'order_number' | 'order_date' | 'total_amount' | 'created_at' | 'deposit_status';
 type SortDir = 'asc' | 'desc';
 type PageSize = 20 | 30 | 50 | 'all';
 
