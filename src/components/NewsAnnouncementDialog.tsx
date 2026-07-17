@@ -140,6 +140,7 @@ export default function NewsAnnouncementDialog() {
             </Badge>
           </div>
           <DialogTitle className="text-2xl leading-tight">{current.title}</DialogTitle>
+          <DialogDescription className="sr-only">Wichtige Mitteilung – bitte lesen und bestätigen.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
