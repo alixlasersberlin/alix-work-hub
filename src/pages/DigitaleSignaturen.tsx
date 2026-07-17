@@ -63,7 +63,13 @@ export default function DigitaleSignaturen() {
             </h1>
             <p className="text-sm text-muted-foreground">Signaturanfragen erstellen, überwachen und archivieren</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => navigate('/signaturen/cockpit')}>
+              <Activity className="w-4 h-4 mr-2" /> Cockpit
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/signaturen/bulk')}>
+              <Users className="w-4 h-4 mr-2" /> Serien-Versand
+            </Button>
             <Button variant="outline" onClick={() => navigate('/admin/signaturen')}>
               <ShieldCheck className="w-4 h-4 mr-2" /> Admin
             </Button>
