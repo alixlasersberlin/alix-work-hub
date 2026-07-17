@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { ShieldCheck, Upload, FileText, Bell, Webhook, ClipboardList, Trash2, Plus } from 'lucide-react';
-import { PageShell } from '@/components/PageShell';
+
 
 const DOC_TYPES = [
   'angebot','auftrag','rechnung','lieferschein','servicebericht','arbeitsbericht',
@@ -22,7 +22,7 @@ const DOC_TYPES = [
 
 export default function DigitaleSignaturenAdmin() {
   return (
-    <PageShell>
+    
       <div className="space-y-6 p-4 md:p-6">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-6 h-6 text-primary" />
@@ -48,7 +48,7 @@ export default function DigitaleSignaturenAdmin() {
           <TabsContent value="audit"><AuditPanel /></TabsContent>
         </Tabs>
       </div>
-    </PageShell>
+    
   );
 }
 

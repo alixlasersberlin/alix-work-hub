@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { ArrowLeft, Send } from 'lucide-react';
-import { PageShell } from '@/components/PageShell';
+
 
 const DOC_TYPES = [
   'angebot','auftrag','rechnung','lieferschein','servicebericht','arbeitsbericht',
@@ -56,7 +56,7 @@ export default function DigitaleSignaturNeu() {
   };
 
   return (
-    <PageShell>
+    
       <div className="max-w-2xl mx-auto space-y-4 p-4 md:p-6">
         <Button variant="ghost" onClick={() => navigate('/signaturen')}><ArrowLeft className="w-4 h-4 mr-2" />Zurück</Button>
         <Card>
@@ -98,6 +98,6 @@ export default function DigitaleSignaturNeu() {
           </CardContent>
         </Card>
       </div>
-    </PageShell>
+    
   );
 }

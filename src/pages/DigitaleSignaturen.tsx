@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, FileSignature, Search, Plus, ShieldCheck } from 'lucide-react';
-import { PageShell } from '@/components/PageShell';
+
 
 type Row = {
   id: string; title: string; document_type: string; status: string;
@@ -54,7 +54,7 @@ export default function DigitaleSignaturen() {
   const filtered = rows.filter((r) => !q || r.title.toLowerCase().includes(q.toLowerCase()) || r.document_type.toLowerCase().includes(q.toLowerCase()));
 
   return (
-    <PageShell>
+    
       <div className="space-y-6 p-4 md:p-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
@@ -133,6 +133,6 @@ export default function DigitaleSignaturen() {
           </CardContent>
         </Card>
       </div>
-    </PageShell>
+    
   );
 }
