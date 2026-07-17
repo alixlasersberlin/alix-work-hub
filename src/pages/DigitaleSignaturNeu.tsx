@@ -162,6 +162,24 @@ export default function DigitaleSignaturNeu() {
               </div>
             </div>
 
+            {templates.length > 0 && (
+              <div className="p-3 rounded-lg border bg-primary/5">
+                <Label className="text-sm">Aus Vorlage starten (optional)</Label>
+                <Select value={templateId} onValueChange={applyTemplate}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="Vorlage wählen…" /></SelectTrigger>
+                  <SelectContent>
+                    {templates.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name} <span className="text-xs text-muted-foreground ml-2">· {t.category || t.document_type}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">Belegt Signer, Nachricht, Gültigkeit und Feld-Positionen vor.</p>
+              </div>
+            )}
+
+
             <div>
               <Label>PDF-Datei</Label>
               <Input type="file" accept="application/pdf" onChange={(e) => { setFile(e.target.files?.[0] || null); setFields([]); }} />
