@@ -272,18 +272,20 @@ async function buildPdf({ repair, parts = [], workOrders = [] }: RenderInput): P
 
 export async function generateRepairWorkOrderPdfBlob(input: RenderInput): Promise<Blob> {
   const doc = await buildPdf(input);
-  return doc.output('blob');
+  return await stampedPdfBlob(doc, 'service_report', input.repair.repair_number ?? undefined);
 }
 
 export async function renderRepairWorkOrderPdf(input: RenderInput, action: 'print' | 'download') {
   const doc = await buildPdf(input);
   const fileName = `Arbeitsauftrag-${input.repair.repair_number || 'reparatur'}.pdf`;
   if (action === 'print') {
-    const url = doc.output('bloburl');
-    const w = window.open(String(url), '_blank');
+    const stamped = await stampedPdfBlob(doc, 'service_report', input.repair.repair_number ?? undefined);
+    const url = URL.createObjectURL(stamped);
+    const w = window.open(url, '_blank');
     if (w) setTimeout(() => { try { w.print(); } catch { /* ignore */ } }, 600);
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   } else {
-    doc.save(fileName);
+    await downloadStampedPdf(doc, 'service_report', fileName, input.repair.repair_number ?? undefined);
   }
 }
 

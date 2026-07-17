@@ -113,17 +113,19 @@ function build({ repair, parts, history = [], technician }: ReportDoc): jsPDF {
   return doc;
 }
 
-export function printRepairReport(d: ReportDoc) {
+export async function printRepairReport(d: ReportDoc) {
   const doc = build(d);
-  const url = doc.output('bloburl');
-  window.open(String(url), '_blank');
+  const stamped = await stampedPdfBlob(doc, 'service_report');
+  const url = URL.createObjectURL(stamped);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
-export function repairReportPdfBlob(d: ReportDoc): Blob {
-  return build(d).output('blob');
+export async function repairReportPdfBlob(d: ReportDoc): Promise<Blob> {
+  return await stampedPdfBlob(build(d), 'service_report');
 }
 
 // Backwards-compat alias (kept name, now returns PDF Blob)
-export function repairReportHtmlBlob(d: ReportDoc): Blob {
+export async function repairReportHtmlBlob(d: ReportDoc): Promise<Blob> {
   return repairReportPdfBlob(d);
 }

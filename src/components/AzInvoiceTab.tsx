@@ -390,10 +390,10 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
     const fileName = `Anzahlungsrechnung_${invoiceNumber || orderNo}.pdf`;
     if (mode === 'download') {
-      doc.save(fileName);
+      await downloadStampedPdf(doc, 'invoice', fileName, invoiceNumber ?? undefined);
       return { doc, fileName };
     }
-    const blob: Blob = doc.output('blob');
+    const blob: Blob = await stampedPdfBlob(doc, 'invoice', invoiceNumber ?? undefined);
     return { doc, fileName, blob };
   }
 

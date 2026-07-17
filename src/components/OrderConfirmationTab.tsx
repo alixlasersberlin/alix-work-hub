@@ -520,24 +520,21 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
 
       const fileName = `Auftragsbestaetigung_${orderNo || order?.id}.pdf`;
       if (mode === 'print') {
-        const blobUrl = doc.output('bloburl') as unknown as string;
+        const stamped = await stampedPdfBlob(doc, 'order_confirmation', orderNo || undefined);
+        const blobUrl = URL.createObjectURL(stamped);
         const win = window.open(blobUrl, '_blank');
         if (win) {
           win.addEventListener('load', () => { try { win.focus(); win.print(); } catch {} });
         } else {
           toast.error('Popup wurde blockiert. Bitte Popups erlauben.');
         }
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
         toast.success('Druckvorschau geöffnet.');
       } else if (mode === 'view') {
-        const blobUrl = doc.output('bloburl') as unknown as string;
-        const win = window.open(blobUrl, '_blank');
-        if (!win) {
-          toast.error('Popup wurde blockiert. Bitte Popups erlauben.');
-        } else {
-          toast.success('Auftragsbestätigung geöffnet.');
-        }
+        await openStampedPdf(doc, 'order_confirmation', orderNo || undefined);
+        toast.success('Auftragsbestätigung geöffnet.');
       } else {
-        doc.save(fileName);
+        await downloadStampedPdf(doc, 'order_confirmation', fileName, orderNo || undefined);
         toast.success('Auftragsbestätigung erstellt.');
       }
     } catch (e: any) {
