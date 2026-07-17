@@ -19286,6 +19286,620 @@ export type Database = {
         }
         Relationships: []
       }
+      sig_audit_log: {
+        Row: {
+          actor_email: string | null
+          actor_user_id: string | null
+          created_at: string
+          details: Json
+          document_id: string | null
+          event: string
+          id: string
+          ip_address: string | null
+          request_id: string | null
+          signer_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json
+          document_id?: string | null
+          event: string
+          id?: string
+          ip_address?: string | null
+          request_id?: string | null
+          signer_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          details?: Json
+          document_id?: string | null
+          event?: string
+          id?: string
+          ip_address?: string | null
+          request_id?: string | null
+          signer_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_audit_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "sig_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sig_audit_log_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "sig_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sig_audit_log_signer_id_fkey"
+            columns: ["signer_id"]
+            isOneToOne: false
+            referencedRelation: "sig_signers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_document_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document_id: string
+          id: string
+          is_signed_version: boolean
+          sha256: string
+          storage_path: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          id?: string
+          is_signed_version?: boolean
+          sha256: string
+          storage_path: string
+          version: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          id?: string
+          is_signed_version?: boolean
+          sha256?: string
+          storage_path?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_document_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "sig_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_documents: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          customer_id: string | null
+          document_type: string
+          entity_id: string | null
+          entity_type: string | null
+          fields: Json
+          id: string
+          locked_at: string | null
+          metadata: Json
+          sha256: string | null
+          status: Database["public"]["Enums"]["sig_doc_status"]
+          storage_path: string
+          template_id: string | null
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          customer_id?: string | null
+          document_type: string
+          entity_id?: string | null
+          entity_type?: string | null
+          fields?: Json
+          id?: string
+          locked_at?: string | null
+          metadata?: Json
+          sha256?: string | null
+          status?: Database["public"]["Enums"]["sig_doc_status"]
+          storage_path: string
+          template_id?: string | null
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          document_type?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          fields?: Json
+          id?: string
+          locked_at?: string | null
+          metadata?: Json
+          sha256?: string | null
+          status?: Database["public"]["Enums"]["sig_doc_status"]
+          storage_path?: string
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_documents_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sig_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_otp_challenges: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: string | null
+          max_attempts: number
+          request_id: string
+          signer_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          max_attempts?: number
+          request_id: string
+          signer_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          max_attempts?: number
+          request_id?: string
+          signer_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_otp_challenges_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "sig_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sig_otp_challenges_signer_id_fkey"
+            columns: ["signer_id"]
+            isOneToOne: false
+            referencedRelation: "sig_signers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_reminder_rules: {
+        Row: {
+          created_at: string
+          created_by: string
+          document_type: string | null
+          escalate_to_role: string | null
+          id: string
+          is_active: boolean
+          offsets_hours: number[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          document_type?: string | null
+          escalate_to_role?: string | null
+          id?: string
+          is_active?: boolean
+          offsets_hours?: number[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          document_type?: string | null
+          escalate_to_role?: string | null
+          id?: string
+          is_active?: boolean
+          offsets_hours?: number[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sig_requests: {
+        Row: {
+          channel: Database["public"]["Enums"]["sig_channel"]
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          document_id: string
+          expires_at: string
+          id: string
+          opened_at: string | null
+          otp_required: boolean
+          sent_at: string | null
+          status: Database["public"]["Enums"]["sig_doc_status"]
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          channel?: Database["public"]["Enums"]["sig_channel"]
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          document_id: string
+          expires_at: string
+          id?: string
+          opened_at?: string | null
+          otp_required?: boolean
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["sig_doc_status"]
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          channel?: Database["public"]["Enums"]["sig_channel"]
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          document_id?: string
+          expires_at?: string
+          id?: string
+          opened_at?: string | null
+          otp_required?: boolean
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["sig_doc_status"]
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_requests_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "sig_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_signatures: {
+        Row: {
+          country: string | null
+          field_key: string
+          field_type: Database["public"]["Enums"]["sig_field_type"]
+          hash: string | null
+          height: number
+          id: string
+          ip_address: string | null
+          os: string | null
+          otp_verified: boolean
+          page: number
+          png_data: string | null
+          request_id: string
+          signed_at: string
+          signer_id: string
+          user_agent: string | null
+          vector_data: Json | null
+          width: number
+          x: number
+          y: number
+        }
+        Insert: {
+          country?: string | null
+          field_key: string
+          field_type: Database["public"]["Enums"]["sig_field_type"]
+          hash?: string | null
+          height: number
+          id?: string
+          ip_address?: string | null
+          os?: string | null
+          otp_verified?: boolean
+          page?: number
+          png_data?: string | null
+          request_id: string
+          signed_at?: string
+          signer_id: string
+          user_agent?: string | null
+          vector_data?: Json | null
+          width: number
+          x: number
+          y: number
+        }
+        Update: {
+          country?: string | null
+          field_key?: string
+          field_type?: Database["public"]["Enums"]["sig_field_type"]
+          hash?: string | null
+          height?: number
+          id?: string
+          ip_address?: string | null
+          os?: string | null
+          otp_verified?: boolean
+          page?: number
+          png_data?: string | null
+          request_id?: string
+          signed_at?: string
+          signer_id?: string
+          user_agent?: string | null
+          vector_data?: Json | null
+          width?: number
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_signatures_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "sig_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sig_signatures_signer_id_fkey"
+            columns: ["signer_id"]
+            isOneToOne: false
+            referencedRelation: "sig_signers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_signers: {
+        Row: {
+          created_at: string
+          decline_reason: string | null
+          declined_at: string | null
+          email: string | null
+          id: string
+          is_required: boolean
+          name: string | null
+          order_index: number
+          phone: string | null
+          request_id: string
+          signed_at: string | null
+          signer_role: Database["public"]["Enums"]["sig_signer_role"]
+        }
+        Insert: {
+          created_at?: string
+          decline_reason?: string | null
+          declined_at?: string | null
+          email?: string | null
+          id?: string
+          is_required?: boolean
+          name?: string | null
+          order_index?: number
+          phone?: string | null
+          request_id: string
+          signed_at?: string | null
+          signer_role: Database["public"]["Enums"]["sig_signer_role"]
+        }
+        Update: {
+          created_at?: string
+          decline_reason?: string | null
+          declined_at?: string | null
+          email?: string | null
+          id?: string
+          is_required?: boolean
+          name?: string | null
+          order_index?: number
+          phone?: string | null
+          request_id?: string
+          signed_at?: string | null
+          signer_role?: Database["public"]["Enums"]["sig_signer_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_signers_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "sig_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_stamps: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_company_wide: boolean
+          is_default: boolean
+          kind: string
+          mime_type: string
+          name: string
+          owner_user_id: string | null
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_company_wide?: boolean
+          is_default?: boolean
+          kind: string
+          mime_type: string
+          name: string
+          owner_user_id?: string | null
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_company_wide?: boolean
+          is_default?: boolean
+          kind?: string
+          mime_type?: string
+          name?: string
+          owner_user_id?: string | null
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sig_templates: {
+        Row: {
+          created_at: string
+          created_by: string
+          default_signers: Json
+          document_type: string
+          fields: Json
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          default_signers?: Json
+          document_type: string
+          fields?: Json
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          default_signers?: Json
+          document_type?: string
+          fields?: Json
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sig_webhook_deliveries: {
+        Row: {
+          attempts: number
+          created_at: string
+          delivered_at: string | null
+          event: string
+          id: string
+          last_error: string | null
+          payload: Json
+          response_status: number | null
+          status: string
+          webhook_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          delivered_at?: string | null
+          event: string
+          id?: string
+          last_error?: string | null
+          payload: Json
+          response_status?: number | null
+          status?: string
+          webhook_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          delivered_at?: string | null
+          event?: string
+          id?: string
+          last_error?: string | null
+          payload?: Json
+          response_status?: number | null
+          status?: string
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_webhook_deliveries_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "sig_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_webhooks: {
+        Row: {
+          created_at: string
+          created_by: string
+          events: string[]
+          id: string
+          is_active: boolean
+          name: string
+          secret: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          events?: string[]
+          id?: string
+          is_active?: boolean
+          name: string
+          secret: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          events?: string[]
+          id?: string
+          is_active?: boolean
+          name?: string
+          secret?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       sms_settings: {
         Row: {
           account_sid: string | null
@@ -23361,6 +23975,8 @@ export type Database = {
         Args: { _order_id: string; _reason: string }
         Returns: undefined
       }
+      sig_can_send: { Args: never; Returns: boolean }
+      sig_is_admin: { Args: never; Returns: boolean }
       sod_conflict_report: {
         Args: never
         Returns: {
@@ -23487,6 +24103,35 @@ export type Database = {
         | "cancelled"
         | "duplicate"
         | "failed"
+      sig_channel: "email" | "portal" | "link" | "qr" | "sms"
+      sig_doc_status:
+        | "neu"
+        | "in_bearbeitung"
+        | "versendet"
+        | "geoeffnet"
+        | "teilweise_signiert"
+        | "signiert"
+        | "abgelehnt"
+        | "abgelaufen"
+        | "archiviert"
+        | "ungueltig"
+      sig_field_type:
+        | "signature"
+        | "initials"
+        | "date"
+        | "place"
+        | "stamp"
+        | "text"
+        | "checkbox"
+      sig_signer_role:
+        | "kunde"
+        | "techniker"
+        | "verkaeufer"
+        | "geschaeftsfuehrer"
+        | "zeuge"
+        | "partner"
+        | "lieferant"
+        | "sonstiges"
       ticket_comm_status:
         | "none"
         | "awaiting_customer"
@@ -23740,6 +24385,38 @@ export const Constants = {
         "cancelled",
         "duplicate",
         "failed",
+      ],
+      sig_channel: ["email", "portal", "link", "qr", "sms"],
+      sig_doc_status: [
+        "neu",
+        "in_bearbeitung",
+        "versendet",
+        "geoeffnet",
+        "teilweise_signiert",
+        "signiert",
+        "abgelehnt",
+        "abgelaufen",
+        "archiviert",
+        "ungueltig",
+      ],
+      sig_field_type: [
+        "signature",
+        "initials",
+        "date",
+        "place",
+        "stamp",
+        "text",
+        "checkbox",
+      ],
+      sig_signer_role: [
+        "kunde",
+        "techniker",
+        "verkaeufer",
+        "geschaeftsfuehrer",
+        "zeuge",
+        "partner",
+        "lieferant",
+        "sonstiges",
       ],
       ticket_comm_status: [
         "none",
