@@ -133,6 +133,31 @@ Deno.serve(async (req) => {
     ip_address: ip, user_agent: ua, details: { signatures: rows.length },
   });
 
+  // Fully signed: render final PDF and dispatch webhooks (best-effort)
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+  const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  if (finalStatus === 'signiert') {
+    try {
+      await fetch(`${SUPABASE_URL}/functions/v1/sig-render-final`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
+        body: JSON.stringify({ document_id: reqRow.document_id, request_id: reqRow.id }),
+      });
+    } catch (e) { console.error('sig-render-final err', e); }
+  }
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/sig-webhook-dispatch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
+      body: JSON.stringify({
+        event: finalStatus === 'signiert' ? 'document.signed' :
+               finalStatus === 'abgelehnt' ? 'document.declined' : 'signer.signed',
+        document_id: reqRow.document_id, request_id: reqRow.id,
+        payload: { signer_id: signer.id, status: finalStatus },
+      }),
+    });
+  } catch (e) { console.error('sig-webhook-dispatch err', e); }
+
   return new Response(JSON.stringify({ ok: true, status: finalStatus }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
