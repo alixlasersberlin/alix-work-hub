@@ -29,10 +29,31 @@ async function callAi(messages: ChatMsg[], opts?: { response_format?: any; model
 }
 
 function tone(score: number) {
-  if (score >= 80) return { label: "Kritisch", cls: "border-destructive/40 bg-destructive/5 text-destructive" };
-  if (score >= 60) return { label: "Hoch", cls: "border-orange-500/40 bg-orange-500/5 text-orange-600" };
-  if (score >= 30) return { label: "Mittel", cls: "border-yellow-500/40 bg-yellow-500/5 text-yellow-700" };
-  return { label: "Niedrig", cls: "border-emerald-500/40 bg-emerald-500/5 text-emerald-600" };
+  // Card = neutrale Oberfläche mit farbigem Rand · Badge = kräftige Akzentfarbe
+  if (score >= 80) return {
+    label: "Kritisch",
+    card: "border-l-4 border-l-destructive border-border bg-card",
+    badge: "bg-destructive/15 text-destructive border-destructive/30",
+    bar: "[&>div]:bg-destructive",
+  };
+  if (score >= 60) return {
+    label: "Hoch",
+    card: "border-l-4 border-l-orange-500 border-border bg-card",
+    badge: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30",
+    bar: "[&>div]:bg-orange-500",
+  };
+  if (score >= 30) return {
+    label: "Mittel",
+    card: "border-l-4 border-l-yellow-500 border-border bg-card",
+    badge: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30",
+    bar: "[&>div]:bg-yellow-500",
+  };
+  return {
+    label: "Niedrig",
+    card: "border-l-4 border-l-emerald-500 border-border bg-card",
+    badge: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+    bar: "[&>div]:bg-emerald-500",
+  };
 }
 
 export default function AiCenter() {
