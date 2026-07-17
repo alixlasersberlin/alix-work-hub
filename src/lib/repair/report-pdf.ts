@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import alixLogo from '@/assets/alix-logo-gold.png';
+import { stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 
 type ReportDoc = {
   repair: any;

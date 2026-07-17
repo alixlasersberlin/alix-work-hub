@@ -14,6 +14,7 @@ import { peekNumber, nextNumber } from '@/lib/number-ranges';
 import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 import logoAsset from '@/assets/alix-logo-gold.png.asset.json';
+import { downloadStampedPdf, openStampedPdf, stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 
 interface Props {
   order: any;

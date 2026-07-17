@@ -184,7 +184,7 @@ export default function ReparaturDetail() {
           size="sm"
           onClick={async () => {
             try {
-              const blob = repairReportHtmlBlob({ repair, parts, history });
+              const blob = await repairReportHtmlBlob({ repair, parts, history });
               const fileName = `Reparaturbericht-${repair.repair_number ?? repair.id}.pdf`;
               const path = `${repair.id}/reports/repair-report-${Date.now()}.pdf`;
               const { error: upErr } = await supabase.storage

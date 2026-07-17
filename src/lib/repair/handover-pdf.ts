@@ -3,6 +3,7 @@ import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '@/integrations/supabase/client';
 import { sbRepair } from '@/lib/repair/api';
+import { stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 
 export type HandoverKind = 'finance' | 'delivery';
 

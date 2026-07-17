@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 import { createPDF } from '@/lib/pdf-utils';
 import autoTable from 'jspdf-autotable';
 import logoAsset from '@/assets/alix-lasers-logo-gold.png.asset.json';
+import { downloadStampedPdf, stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 
 type RenderInput = {
   repair: any;
