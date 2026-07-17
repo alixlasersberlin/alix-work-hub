@@ -46,6 +46,10 @@ export default function PdfOrderImportDetail() {
   const [loading, setLoading] = useState(true);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [rerunning, setRerunning] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { hasRole } = useAuth();
+  const canDelete = hasRole('Super Admin');
 
   async function load() {
     if (!id) return;
