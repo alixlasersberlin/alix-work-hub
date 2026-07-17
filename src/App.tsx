@@ -268,6 +268,10 @@ const Garantiecenter = lazy(() => import("./pages/Garantiecenter"));
 const GarantieKulanz = lazy(() => import("./pages/GarantieKulanz"));
 const AlixSignPublic = lazy(() => import("./pages/AlixSignPublic"));
 const AlixSignPdfDownload = lazy(() => import("./pages/AlixSignPdfDownload"));
+const DigitaleSignaturen = lazy(() => import("./pages/DigitaleSignaturen"));
+const DigitaleSignaturenAdmin = lazy(() => import("./pages/DigitaleSignaturenAdmin"));
+const DigitaleSignaturNeu = lazy(() => import("./pages/DigitaleSignaturNeu"));
+const SignDocPublic = lazy(() => import("./pages/SignDocPublic"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
@@ -1110,6 +1114,9 @@ function AppRoutes() {
           <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><AnfragenOffen /></ProtectedRoute>} />
           
           <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
+          <Route path="/signaturen" element={<ProtectedRoute><DigitaleSignaturen /></ProtectedRoute>} />
+          <Route path="/signaturen/neu" element={<ProtectedRoute><DigitaleSignaturNeu /></ProtectedRoute>} />
+          <Route path="/admin/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenAdmin /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
           <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
@@ -1361,6 +1368,7 @@ function AppRoutes() {
         <Route path="/portal/status" element={<PortalStatus />} />
         <Route path="/sign/:token" element={<AlixSignPublic />} />
         <Route path="/sign/pdf/:signatureId" element={<AlixSignPdfDownload />} />
+        <Route path="/sign-doc/:token" element={<SignDocPublic />} />
         <Route path="/d/:token" element={<OrderDocDownload />} />
         <Route path="/catalog/share/:token" element={<KatalogSharePublic />} />
         <Route path="/catalog/portal" element={<Navigate to="/kunde/katalog" replace />} />
