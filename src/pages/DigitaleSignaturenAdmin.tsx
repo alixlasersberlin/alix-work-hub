@@ -39,6 +39,7 @@ export default function DigitaleSignaturenAdmin() {
             <TabsTrigger value="reminders"><Bell className="w-4 h-4 mr-1" /> Erinnerungen</TabsTrigger>
             <TabsTrigger value="webhooks"><Webhook className="w-4 h-4 mr-1" /> Webhooks</TabsTrigger>
             <TabsTrigger value="audit"><ClipboardList className="w-4 h-4 mr-1" /> Audit-Log</TabsTrigger>
+            <TabsTrigger value="tsa"><ShieldCheck className="w-4 h-4 mr-1" /> Zeitstempel (TSA)</TabsTrigger>
           </TabsList>
 
           <TabsContent value="stamps"><StampsPanel /></TabsContent>
@@ -46,6 +47,7 @@ export default function DigitaleSignaturenAdmin() {
           <TabsContent value="reminders"><RemindersPanel /></TabsContent>
           <TabsContent value="webhooks"><WebhooksPanel /></TabsContent>
           <TabsContent value="audit"><AuditPanel /></TabsContent>
+          <TabsContent value="tsa"><TsaPanel /></TabsContent>
         </Tabs>
       </div>
     
