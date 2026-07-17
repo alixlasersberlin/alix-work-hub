@@ -8,10 +8,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Loader2, Package as PackageIcon, Search, LayoutGrid, List as ListIcon, AlertTriangle, CalendarClock, ExternalLink, User, Download, X } from 'lucide-react';
+import { Loader2, Package as PackageIcon, Search, LayoutGrid, List as ListIcon, AlertTriangle, CalendarClock, ExternalLink, User, Download, X, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { exportMediaPackagePdf } from '@/lib/mediapaket/exportPdf';
 
 const STATUS_LABEL: Record<string, string> = {
   not_started: 'Nicht begonnen',
