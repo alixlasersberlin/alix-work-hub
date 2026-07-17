@@ -222,6 +222,7 @@ export default function BestellungenDashboard() {
               {visible.map(r => {
                 const po = (r.production_orders ?? [])[0];
                 const depTotal = Number(r.deposit_amount || 0) + Number(r.deposit_additional || 0);
+                const ds = computeDepositStatus(r, r.additional_deposits);
                 return (
                   <tr key={r.id} className="border-b border-border/40 hover:bg-muted/30">
                     <td className="py-2 px-2">
@@ -246,7 +247,16 @@ export default function BestellungenDashboard() {
                     <td className="py-2 px-2 text-right whitespace-nowrap">{fmt(depTotal)}</td>
                     <td className="py-2 px-2 whitespace-nowrap">{fmtDate(r.deposit_booking_date)}</td>
                     <td className="py-2 px-2 text-center">
-                      {r._depositOk
+                      {ds.isPartial ? (
+                        <span
+                          className="inline-flex"
+                          title={`Teilzahlung – noch offen: ${fmt(ds.open)}`}
+                        >
+                          <Badge variant="outline" className="border-orange-500/60 text-orange-400 inline-flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> Teilzahlung
+                          </Badge>
+                        </span>
+                      ) : r._depositOk
                         ? <Badge variant="outline" className="border-emerald-500/50 text-emerald-500">OK</Badge>
                         : <Badge variant="outline" className="border-rose-500/50 text-rose-500">offen</Badge>}
                     </td>
