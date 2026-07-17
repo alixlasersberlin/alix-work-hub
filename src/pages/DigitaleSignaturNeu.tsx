@@ -32,6 +32,7 @@ export default function DigitaleSignaturNeu() {
   const [fields, setFields] = useState<SigField[]>([]);
   const [otp, setOtp] = useState(true);
   const [expiresDays, setExpiresDays] = useState(14);
+  const [inPerson, setInPerson] = useState(false);
   const [entityCtx, setEntityCtx] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -81,9 +82,16 @@ export default function DigitaleSignaturNeu() {
         },
       });
       if (error) throw error;
-      toast.success('Signaturanfrage versendet');
-      console.log('sign_url', data?.sign_url);
-      navigate('/signaturen');
+      const url: string | undefined = (data as any)?.sign_url;
+      if (inPerson && url) {
+        toast.success('Signaturanfrage erstellt – Vor-Ort-Modus wird geöffnet');
+        window.open(url, '_blank', 'noopener');
+        navigate('/signaturen');
+      } else {
+        toast.success('Signaturanfrage versendet');
+        console.log('sign_url', url);
+        navigate('/signaturen');
+      }
     } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
   };
 
@@ -153,10 +161,14 @@ export default function DigitaleSignaturNeu() {
               ))}
             </div>
 
-            <div className="grid md:grid-cols-2 gap-3">
+            <div className="grid md:grid-cols-3 gap-3">
               <div className="flex items-center gap-2 p-3 rounded-lg border">
                 <Switch checked={otp} onCheckedChange={setOtp} />
                 <span className="text-sm">E-Mail-OTP-Code vor Signatur (FES)</span>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-lg border" title="Öffnet direkt die Signaturseite auf diesem Gerät">
+                <Switch checked={inPerson} onCheckedChange={setInPerson} />
+                <span className="text-sm">Vor-Ort-Signatur (dieses Gerät)</span>
               </div>
               <div>
                 <Label>Gültig für (Tage)</Label>

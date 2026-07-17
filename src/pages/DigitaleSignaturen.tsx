@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, FileSignature, Search, Plus, ShieldCheck } from 'lucide-react';
+import { Loader2, FileSignature, Search, Plus, ShieldCheck, Activity, Users } from 'lucide-react';
 
 
 type Row = {
@@ -63,7 +63,13 @@ export default function DigitaleSignaturen() {
             </h1>
             <p className="text-sm text-muted-foreground">Signaturanfragen erstellen, überwachen und archivieren</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => navigate('/signaturen/cockpit')}>
+              <Activity className="w-4 h-4 mr-2" /> Cockpit
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/signaturen/bulk')}>
+              <Users className="w-4 h-4 mr-2" /> Serien-Versand
+            </Button>
             <Button variant="outline" onClick={() => navigate('/admin/signaturen')}>
               <ShieldCheck className="w-4 h-4 mr-2" /> Admin
             </Button>
