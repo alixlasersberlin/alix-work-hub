@@ -5,8 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { FileText, Loader2, RefreshCcw, ExternalLink, Download, AlertTriangle } from 'lucide-react';
+import { FileText, Loader2, RefreshCcw, ExternalLink, Download, AlertTriangle, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 function conf(v: any): number | null {
   if (!v || typeof v !== 'object') return null;
