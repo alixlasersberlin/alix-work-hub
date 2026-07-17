@@ -300,7 +300,10 @@ export default function DigitaleSignaturNeu() {
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {pdfText && (
+              <AiAnalysisPanel documentId="" textContent={pdfText} onFieldsSuggested={applySuggestedFields} />
+            )}
             <FieldEditor file={file} signers={editorSigners} fields={fields} onChange={setFields} />
           </CardContent>
         </Card>
