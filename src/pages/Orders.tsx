@@ -44,6 +44,17 @@ type PageSize = 20 | 30 | 50 | 'all';
 const QUICK_LOAD_LIMIT = 50;
 const FULL_LOAD_LIMIT = 500;
 
+const ORDER_SELECT = `
+    id, customer_id, external_order_id, order_number, source_system, order_status, invoiced_flag,
+    currency, total_amount, order_date, expected_shipment_date, salesperson_name,
+    internal_number, lawyer_reason, deposit_ok, deposit_ok_by, deposit_ok_at,
+    deposit_amount, deposit_additional, deposit_booking_date, is_vip,
+    finance_total_amount, finance_deposit_amount, finance_remaining_amount,
+    finance_open_amount, finance_paid_amount, finance_overdue_amount,
+    finance_payment_status, case_number, billing_address, shipping_address,
+    customers(company_name, contact_name, shipping_address, billing_address, is_vip)
+  `;
+
 export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -237,16 +248,7 @@ export default function Orders() {
     const requestId = ++loadRequestRef.current;
     setLoading(true);
     setError(null);
-    const orderSelect = `
-        id, customer_id, external_order_id, order_number, source_system, order_status, invoiced_flag,
-        currency, total_amount, order_date, expected_shipment_date, salesperson_name,
-        internal_number, lawyer_reason, deposit_ok, deposit_ok_by, deposit_ok_at,
-        deposit_amount, deposit_additional, deposit_booking_date, is_vip,
-        finance_total_amount, finance_deposit_amount, finance_remaining_amount,
-        finance_open_amount, finance_paid_amount, finance_overdue_amount,
-        finance_payment_status, case_number, billing_address, shipping_address,
-        customers(company_name, contact_name, shipping_address, billing_address, is_vip)
-      `;
+    const orderSelect = ORDER_SELECT;
     const isClientSortField = sortField === 'deposit_status';
     const serverSortField = isClientSortField ? 'order_date' : sortField;
     const serverSortAsc = isClientSortField ? false : sortDir === 'asc';
@@ -367,6 +369,58 @@ export default function Orders() {
   }
 
   useEffect(() => { load(); }, [sortField, sortDir]);
+
+  // Serverseitige Suche: bei Eingabe im Suchfeld direkt in DB nachladen,
+  // damit auch Aufträge außerhalb der 500 zuletzt geladenen gefunden werden.
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const like = `%${q.replace(/[%,]/g, ' ')}%`;
+      const orderQuery = supabase
+        .from('orders')
+        .select(ORDER_SELECT)
+        .or(`order_number.ilike.${like},external_order_id.ilike.${like},internal_number.ilike.${like},case_number.ilike.${like}`)
+        .limit(100);
+      const custQuery = supabase
+        .from('customers')
+        .select('id')
+        .or(`company_name.ilike.${like},contact_name.ilike.${like}`)
+        .limit(200);
+      const [byOrder, custMatches] = await Promise.all([orderQuery, custQuery]);
+      if (cancelled) return;
+
+      let byCustomer: any[] = [];
+      const custIds = (custMatches.data || []).map((c: any) => c.id);
+      if (custIds.length > 0) {
+        const res = await supabase
+          .from('orders')
+          .select(ORDER_SELECT)
+          .in('customer_id', custIds)
+          .limit(200);
+        if (cancelled) return;
+        byCustomer = res.data || [];
+      }
+
+      const merged = [...(byOrder.data || []), ...byCustomer];
+      if (merged.length === 0) return;
+      setOrders(prev => {
+        const seen = new Set(prev.map(o => o.id));
+        const additions = merged
+          .filter(o => !seen.has(o.id))
+          .map(o => ({
+            ...o,
+            order_items: [],
+            _seq: 1,
+            _displayNumber: withAt(o.order_number, o.source_system),
+            _productionOrderCount: 0,
+          }));
+        return additions.length ? [...prev, ...additions] : prev;
+      });
+    }, 350);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [search]);
 
   const EXCLUDED_STATUSES: string[] = [];
 
