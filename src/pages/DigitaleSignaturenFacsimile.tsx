@@ -292,3 +292,105 @@ const { bytes, applied } = await applyFacsimileToPdf(
     </div>
   );
 }
+
+// A4 in PDF points: 595 x 842. Coordinates are from bottom-left.
+const PDF_W = 595;
+const PDF_H = 842;
+
+function FacsimilePreview(props: {
+  signerName: string;
+  signerTitle: string;
+  posX: number;
+  posY: number;
+  width: number;
+  height: number;
+  showNameLine: boolean;
+  imageUrl: string | null;
+  docLabel: string;
+}) {
+  const previewW = 320;
+  const scale = previewW / PDF_W;
+  const previewH = PDF_H * scale;
+
+  // Convert PDF coords (bottom-left origin) → CSS (top-left origin)
+  const sigW = props.width * scale;
+  const sigH = props.height * scale;
+  const left = props.posX * scale;
+  const top = (PDF_H - props.posY - props.height) * scale;
+
+  return (
+    <div
+      className="relative mx-auto rounded border bg-white shadow-sm overflow-hidden"
+      style={{ width: previewW, height: previewH }}
+      aria-label={`Vorschau ${props.docLabel}`}
+    >
+      {/* Mock document layout */}
+      <div className="absolute inset-0 p-3 text-[6px] leading-[1.35] text-neutral-800 font-sans">
+        <div className="flex items-start justify-between border-b border-neutral-200 pb-1.5">
+          <div>
+            <div className="font-bold text-[9px] text-neutral-900">Alix Work GmbH</div>
+            <div className="text-neutral-500">Musterstraße 1 · 12345 Musterstadt</div>
+          </div>
+          <div className="text-right">
+            <div className="font-bold text-[8px] uppercase tracking-wide text-neutral-900">{props.docLabel}</div>
+            <div className="text-neutral-500">Nr. 2026-000123</div>
+            <div className="text-neutral-500">17.07.2026</div>
+          </div>
+        </div>
+        <div className="mt-2 space-y-0.5">
+          <div className="h-1 w-3/5 rounded bg-neutral-200" />
+          <div className="h-1 w-2/5 rounded bg-neutral-200" />
+        </div>
+        <div className="mt-2 space-y-0.5">
+          {Array.from({ length: 14 }).map((_, i) => (
+            <div key={i} className="h-0.5 rounded bg-neutral-100" style={{ width: `${60 + ((i * 13) % 35)}%` }} />
+          ))}
+        </div>
+        <div className="mt-2 border-t border-neutral-200 pt-1 flex justify-end">
+          <div className="text-right">
+            <div className="text-neutral-500">Summe</div>
+            <div className="font-bold text-[8px] text-neutral-900">1.234,56 €</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Signature block – positioned from PDF coordinates */}
+      <div
+        className="absolute flex flex-col items-start justify-end"
+        style={{ left, top, width: sigW }}
+      >
+        <div
+          className="w-full flex items-center justify-center"
+          style={{ height: sigH }}
+        >
+          {props.imageUrl ? (
+            <img
+              src={props.imageUrl}
+              alt="Unterschrift"
+              className="max-w-full max-h-full object-contain"
+              style={{ mixBlendMode: "multiply" }}
+            />
+          ) : (
+            <div className="w-full h-full border border-dashed border-neutral-300 rounded flex items-center justify-center text-[7px] text-neutral-400">
+              keine Unterschrift
+            </div>
+          )}
+        </div>
+        {props.showNameLine && (
+          <div className="w-full">
+            <div className="border-t border-neutral-700" style={{ marginTop: 2 }} />
+            <div className="text-[6px] text-neutral-900 font-medium leading-tight mt-0.5">
+              {props.signerName || "—"}
+            </div>
+            {props.signerTitle && (
+              <div className="text-[5px] text-neutral-500 leading-tight">{props.signerTitle}</div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Corner label */}
+      <div className="absolute bottom-1 left-1 text-[5px] text-neutral-300 uppercase tracking-wider">A4 · Vorschau</div>
+    </div>
+  );
+}
