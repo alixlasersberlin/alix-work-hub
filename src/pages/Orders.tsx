@@ -863,17 +863,16 @@ export default function Orders() {
                         />
                       </th>
                     )}
-                    <SortHeader field="order_number" label="Auftrag Nr." />
-                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Kunde</th>
-                    <SortHeader field="order_date" label="Datum" />
-                    <SortHeader field="total_amount" label="Betrag" />
-                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Status</th>
-                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">
-                      <span className="inline-flex items-center gap-1"><Car className="w-3.5 h-3.5" /> Fahrzeit</span>
-                    </th>
-                    <SortHeader field="deposit_status" label="Anzahlung" />
-                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Anzahlung OK</th>
-                    <th className="text-left px-4 py-3 text-muted-foreground font-medium">Bestellung</th>
+                    {visibleColumns.map(colId => {
+                      const col = ALL_COLUMNS.find(c => c.id === colId)!;
+                      if (col.sortField) return <SortHeader key={colId} field={col.sortField} label={col.label} />;
+                      if (colId === 'fahrzeit') return (
+                        <th key={colId} className="text-left px-4 py-3 text-muted-foreground font-medium">
+                          <span className="inline-flex items-center gap-1"><Car className="w-3.5 h-3.5" /> Fahrzeit</span>
+                        </th>
+                      );
+                      return <th key={colId} className="text-left px-4 py-3 text-muted-foreground font-medium">{col.label}</th>;
+                    })}
                     
                   </tr>
                 </thead>
