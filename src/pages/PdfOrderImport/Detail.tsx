@@ -126,9 +126,41 @@ export default function PdfOrderImportDetail() {
           <Button variant="outline" onClick={rerun} disabled={rerunning || busy} className="gap-2">
             {rerunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />} Erneut analysieren
           </Button>
+          {canDelete && (
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDelete(true)}
+              disabled={deleting}
+              className="gap-2 border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Löschen
+            </Button>
+          )}
           <Button variant="outline" onClick={() => nav('/auftraege/pdf-import')}>Zurück zur Liste</Button>
         </div>
       </div>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>PDF-Import löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              „{imp?.source_filename}" wird unwiderruflich gelöscht, inklusive Original-PDF, erkannten Feldern und Positionen. Bereits angelegte Aufträge bleiben bestehen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={performDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {loading && <div className="p-8 flex items-center justify-center text-muted-foreground"><Loader2 className="w-5 h-5 animate-spin mr-2" /> Lädt …</div>}
 
