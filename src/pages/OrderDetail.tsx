@@ -31,6 +31,7 @@ import {
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
 import { postPaymentToJournal } from '@/lib/finance/journal';
+import { computeDepositStatus } from '@/lib/deposit-status';
 import BankFinancingTab from '@/components/BankFinancingTab';
 import AtPurchaseTab from '@/components/AtPurchaseTab';
 import AtApprovalTab from '@/components/AtApprovalTab';
