@@ -1,84 +1,87 @@
-# PDF-Auftragsimport für AlixWork
+# Phase 4 – ALIX SIGN PRO
 
-Ein Assistent, mit dem berechtigte Mitarbeiter PDF-Aufträge (Kaufvertrag, Angebot, Auftragsbestätigung, Leasing usw.) hochladen. Die KI extrahiert Kunden-, Produkt-, Finanz- und Vertragsdaten, gleicht sie mit dem bestehenden Katalog / CRM ab, und der Mitarbeiter bestätigt vor dem endgültigen Anlegen des Auftrags.
+Umfang: alle vier gewählten Blöcke. Vorgeschlagene Reihenfolge (unabhängig lauffähig, ohne Blocker):
 
-**Grundregeln (nicht verhandelbar):**
-- Keine neuen Kunden-, Auftrags- oder Artikel-Tabellen. Import läuft über neue **Staging-Tabellen** und schreibt erst nach Bestätigung in `customers` / `orders` / `order_items`.
-- KI-Ausgabe wird **nie** direkt produktiv. Immer Review durch Mensch.
-- Private Supabase-Storage-Bucket, signierte URLs, RLS mit `has_role`.
-- Original-PDF unverändert speichern + SHA-256 Hash für Dublettenprüfung.
-- Bestehendes Design (Black/Gold Enterprise), keine neuen Design-Systeme.
+1. **Templates & Wiederverwendung** (Fundament — spätere Blöcke bauen darauf auf)
+2. **CRM-Deep-Integration** (nutzt Templates via Ein-Klick)
+3. **Rechtssicherheit & Compliance** (härtet bestehende + neue Flows)
+4. **Kunden-Signatur-Portal** (setzt auf gehärteten Backend-Stack)
 
 ---
 
-## Rollout in 5 Phasen
+## 1. Templates & Wiederverwendung
 
-Ich empfehle, in kleinen Phasen zu bauen und jede Phase getrennt zu testen. Ich starte nach deiner Freigabe mit **Phase 1**.
+**Backend (Migration)**
+- `sig_templates` (bereits vorhanden) erweitern: `default_signer_roles jsonb`, `default_expiry_days int`, `default_message text`, `preview_thumb_url text`, `usage_count int default 0`, `last_used_at timestamptz`, `category text`.
+- `sig_template_fields` (neu): `id, template_id, page_index, x/y/width/height, field_type, signer_index, required, default_value` + Grants + RLS (Owner/Admin schreibt, Rolle liest).
+- Trigger: `usage_count`/`last_used_at` bei Anwendung hochzählen.
 
-### Phase 1 – Fundament (Datenbank + Storage + Rollen)
-- Neuer privater Storage-Bucket `order-imports`.
-- Neue Tabellen: `order_imports`, `order_import_fields`, `order_import_items`, `order_import_logs`.
-  Alle mit `tenant_id`, RLS, `has_role`-Policies, Zeitstempeln, Grants.
-- Neue Berechtigungen (via bestehende Rollenlogik):
-  - Upload/Analyse: `Super Admin`, `Admin`, `Geschäftsführung`, `Order`, `Vertrieb`.
-  - Import bestätigen: `Super Admin`, `Admin`, `Geschäftsführung`, `Order`.
-  - Löschen: nur `Super Admin` (bestehende Regel).
-- Bestehende Tabellen (`customers`, `orders`, `catalog_items` …) werden **nicht** verändert.
+**UI**
+- `/admin/signaturen` Tab „Templates" – Liste, Kategorie-Filter, Duplizieren, Löschen, Vorschau.
+- `TemplateEditor.tsx` – PDF hochladen, Felder via `FieldEditor` platzieren, Signer-Rollen definieren, speichern.
+- `/signaturen/neu` – Auswahl „Aus Template starten" → Dokument + Feldpositionen + Standard-Signer/Message vorbelegt.
 
-### Phase 2 – Upload & Edge Function „analyze"
-- Edge Function `order-import-analyze`:
-  1. PDF-Validation (MIME, Größe ≤ 20 MB, kein passwortgeschützt).
-  2. SHA-256 Hash → Dublettencheck gegen `order_imports`, `orders.external_reference`.
-  3. Text-Extraktion (pdfjs) + OCR-Fallback (Tesseract / Cloud) für Scans.
-  4. Klassifikation Dokumenttyp.
-  5. Lovable AI Gateway (`google/gemini-3-flash-preview`), strukturierte JSON-Ausgabe mit Konfidenzwerten pro Feld + Seitenreferenz.
-  6. Prompt-Injection-Schutz: PDF-Inhalt als user-Content, System-Prompt fixiert.
-  7. Speichert Rohergebnis in `order_imports.raw_extraction_json`.
-- Neue Seite `/auftraege/pdf-import/upload`: Drag-and-drop, Dokumenttyp-Auswahl, DSGVO-Hinweis.
+## 2. CRM-Deep-Integration
 
-### Phase 3 – Review-Assistent (5 Schritte)
-- Route `/auftraege/pdf-import/:id/review`.
-- Zweispaltig: links PDF-Preview (react-pdf) mit Highlight-Sprung, rechts editierbare Felder gruppiert (Auftrag/Kunde/Produkte/Finanzen/Lieferung/Vertrag/Mitarbeiter/Unterschriften).
-- Konfidenz-Ampel: grün ≥ 90, gelb 70–89, rot < 70, grau = leer.
-- Kunden-Matching-Widget (E-Mail, Telefon, USt-ID, Fuzzy Name/Adresse) → Auswahl bestehender Kunde / neu anlegen / zusammenführen.
-- Artikel-Matching pro Position: SKU exact → Fuzzy Name → manuelle Zuordnung / freier Text.
-- Automatische Prüfungen: Netto+MwSt=Brutto, Brutto−Anzahlung=Rest, USt-Plausibilität, Signatur vorhanden, Duplikatverdacht.
-- Manuelle Änderungen → `order_import_fields` (original + korrigiert + user + timestamp).
+**Einbau-Punkte für `<SignatureRequestButton>`** (jeweils mit prefilled `entity_ref`, `title`, Kunde, Template-Vorschlag):
+- `RepairOrderDetail` – Reparaturauftrag & Kostenvoranschlag
+- `OfferDetail` / Angebotsliste – Angebot / Auftragsbestätigung
+- `finance_incoming_invoices` Detail – Rechnungs-Freigabe intern
+- `MaintenanceConfirmationDetail` – Wartungsprotokoll
+- `AzInvoiceTab` / `DeliveryNoteTab` – Anzahlungs- und Lieferscheinunterschrift
+- `AfterSales/CaseDetail` – Kulanzvereinbarung
 
-### Phase 4 – Import & Folgeprozesse
-- Edge Function `order-import-commit`:
-  - Serverseitige Re-Validation aller Werte.
-  - Kunde: bestehende ID nutzen oder in `customers` INSERT (nur wenn User bestätigt „neu anlegen").
-  - Auftrag in `orders` INSERT (Nummernkreis via bestehendes `number-ranges`), `external_reference` = erkannte externe Nummer.
-  - Positionen in `order_items`.
-  - PDF-Link in `order_documents`.
-  - Audit-Eintrag in `order_import_logs` + `audit_logs`.
-  - Folgeaufgaben nur wenn Modul existiert (Lieferplanung, Mediapaket, Finanzierung, NiSV) – als optionale Checkboxen im Review-Schritt.
-- Status-Übergang `order_imports.status`: `analyzing → review → committed | cancelled | duplicate`.
+**Status-Sync zurück**
+- Edge Function `sig-entity-sync` – bei `document.signed`/`declined` Webhook-Event: passendes Ziel-Modul updaten (z.B. `orders.signature_status`, `offers.signed_at`).
+- Migration: pro Ziel-Tabelle `signature_status text`, `signature_signed_at timestamptz`, `signature_document_id uuid` (nur wo noch nicht vorhanden).
+- Anzeige: Badge „✍️ Signiert am …" in den jeweiligen Detailseiten.
 
-### Phase 5 – Übersicht, Admin & Feinschliff
-- Seite `/auftraege/pdf-import`: Tabelle aller Importe mit Filtern (Zeitraum, Status, Kunde, Verkäufer, Warnungen, Duplikate).
-- Admin-Seite `/einstellungen/pdf-import`: max. Dateigröße, aktive Dokumenttypen, Konfidenzgrenzen, OCR an/aus, Standard-Status/Niederlassung/Währung, Aufbewahrungsfrist Entwürfe.
-- Dashboard-Schnellaktion + Button „Auftrag aus PDF importieren" neben „Neuer Auftrag".
-- Abschluss-QA gegen die 18 Abnahmekriterien.
+## 3. Rechtssicherheit & Compliance
 
----
+**Backend**
+- Edge Function `sig-tsa-timestamp` – RFC 3161 Zeitstempel-Request an konfigurierten TSA-Provider (Secret `TSA_URL`, optional Auth). Fallback: intern signierter Zeitstempel + Warn-Flag.
+- `sig-render-final` erweitern:
+  - PAdES-B-LT / LTV Vorbereitung (Zertifikatskette + OCSP/CRL einbetten wenn TSA-Cert vorhanden).
+  - Sichtbares Zertifikats-Panel auf letzter Seite (Signer, Zeit, IP, Geräte-Hash, TSA-Token-Hash).
+- Neue Migration: `sig_audit_log.prev_hash text`, `sig_audit_log.entry_hash text`  → Hash-Chain (jeder Eintrag = SHA-256 über `prev_hash|payload`).
+- Trigger `sig_audit_log_chain` (BEFORE INSERT) berechnet `entry_hash`.
 
-## Technische Details (für dich als Entwickler-Zusammenfassung)
+**UI**
+- `SignatureCertificate.tsx` – Downloadbarer PDF-Prüfbericht pro Signatur: Timeline, Hash-Chain-Verifikation, OTP-Nachweis, TSA-Token, IP/UA.
+- Button „Prüfbericht" in `/signaturen` Detail + Cockpit.
+- Admin-Panel: TSA-URL & Testlauf.
 
-- **KI-Modell:** Lovable AI Gateway, `google/gemini-3-flash-preview`, `response_format: json_object`, feste JSON-Schema-Definition, Temperature niedrig.
-- **PDF:** `pdfjs-dist` serverseitig via `npm:` in Edge Function; OCR-Fallback via `tesseract.js` (langsam) oder – falls gewünscht – Google Cloud Vision (Secret nötig).
-- **Storage:** `order-imports/{tenant}/{yyyy-mm}/{uuid}.pdf`, RLS via `tenant_id` claim.
-- **Realtime-Status** (optional): `order_imports` in `supabase_realtime` publication für Live-Progress.
-- **Ausgeschlossen im ersten Wurf:** biometrische Signaturprüfung, Malware-Scan (Hook nur vorbereitet), Foto/E-Mail/Excel-Import, automatische Zahlungszuordnung.
+## 4. Kunden-Signatur-Portal
+
+**Backend**
+- Neuer Endpoint in bestehendem Customer-Portal-Kontext.
+- Edge Function `sig-portal-list` – gibt für eingeloggten Portal-User (`customer_portal_users`) alle `sig_requests` seines `customer_id` zurück (offen + abgeschlossen).
+- RLS: Portal-User dürfen eigene `sig_signatures` + Finaldokumente lesen (via `security definer` Funktion `is_portal_customer(_customer_id)`).
+
+**UI (`/portal/signaturen`)**
+- Tabs: „Offen" / „Erledigt" / „Archiv".
+- Karte pro Dokument: Titel, Status, Ablauf, „Jetzt unterschreiben"-CTA (öffnet bestehende `SignDocPublic`-Seite mit Portal-Session-Handoff, ohne OTP wenn Portal-Login < 24 h).
+- „Herunterladen" (Original + Finales signiertes PDF + Prüfbericht).
+- Wiedervorlage: `remind_at` setzen → Reminder-Cron respektiert.
 
 ---
 
-## Was ich zuerst brauche
+## Technische Notizen
 
-Zwei Entscheidungen, dann lege ich mit Phase 1 (Migration + Bucket) los:
+- Alle Migrationen: `GRANT` + RLS + `has_role(...)` gemäß bestehender Konventionen.
+- Neue Secrets (nur wenn Compliance-Block aktiviert wird): `TSA_URL`, optional `TSA_AUTH_HEADER`.
+- Kein neues Deps-Bündel – `pdf-lib`, `pdfjs-dist`, `jsPDF` bereits im Projekt.
+- Cron: bestehender `sig-reminders-run` deckt Portal-Wiedervorlage mit ab.
 
-1. **OCR für Scans:** eingebautes `tesseract.js` (kostenlos, langsamer, ok für ~10 Seiten) **oder** Google Cloud Vision (schneller/genauer, du müsstest Secret bereitstellen)?
-2. **Automatische Folgeprozesse in Phase 4:** alle Module (Lieferung, Mediapaket, NiSV, Finanzierung) oder erstmal nur Auftrag + Dokumentenablage und Folgeaufgaben später?
+## Deliverables pro Block (in Reihenfolge)
 
-Sag mir kurz „Phase 1 starten" mit deiner Wahl, dann geht's los.
+```text
+Block 1  → Migration templates+fields, TemplateEditor, /admin Tab, Wizard-Integration
+Block 2  → SignatureRequestButton in 6 Modulen, sig-entity-sync Function, Status-Badges
+Block 3  → Hash-Chain-Migration+Trigger, sig-tsa-timestamp Function,
+           sig-render-final Erweiterung, Certificate-PDF Generator, Admin-TSA-Config
+Block 4  → RLS-Helper, sig-portal-list Function, /portal/signaturen Seite,
+           Portal-Session-Handoff in SignDocPublic
+```
+
+Nach jedem Block: kurzer Test-Hinweis, dann direkt weiter zum nächsten. Am Ende Publish-Vorschlag.
