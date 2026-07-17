@@ -270,6 +270,7 @@ const AlixSignPublic = lazy(() => import("./pages/AlixSignPublic"));
 const AlixSignPdfDownload = lazy(() => import("./pages/AlixSignPdfDownload"));
 const DigitaleSignaturen = lazy(() => import("./pages/DigitaleSignaturen"));
 const DigitaleSignaturenAdmin = lazy(() => import("./pages/DigitaleSignaturenAdmin"));
+const DigitaleSignaturenFacsimile = lazy(() => import("./pages/DigitaleSignaturenFacsimile"));
 const DigitaleSignaturNeu = lazy(() => import("./pages/DigitaleSignaturNeu"));
 const DigitaleSignaturenCockpit = lazy(() => import("./pages/DigitaleSignaturenCockpit"));
 const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk"));
@@ -1129,6 +1130,7 @@ function AppRoutes() {
           <Route path="/signaturen/bulk" element={<ProtectedRoute><DigitaleSignaturenBulk /></ProtectedRoute>} />
           <Route path="/admin/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenAdmin /></ProtectedRoute>} />
           <Route path="/admin/signaturen/templates/:id" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenTemplateEditor /></ProtectedRoute>} />
+          <Route path="/admin/signaturen/facsimile" element={<ProtectedRoute requiredRoles={['Super Admin']}><DigitaleSignaturenFacsimile /></ProtectedRoute>} />
           <Route path="/signaturen/genehmigungen" element={<ProtectedRoute><SignApprovals /></ProtectedRoute>} />
           <Route path="/signaturen/dashboard" element={<ProtectedRoute><SignSlaDashboard /></ProtectedRoute>} />
           <Route path="/admin/sign-marketplace" element={<ProtectedRoute requiredRoles={['Super Admin']}><SignMarketplace /></ProtectedRoute>} />
