@@ -73,19 +73,35 @@ async function fetchBestellungenDashboard(): Promise<Row[]> {
 
   const orderIds = (ordersData ?? []).map((r: any) => r.id);
   const poByOrder: Record<string, ProdOrder[]> = {};
+  const addDepByOrder: Record<string, { amount: number; geleistet: boolean }[]> = {};
   if (orderIds.length) {
-    const { data: poData, error: pErr } = await (supabase as any)
-      .from('production_orders')
-      .select('id, order_id, production_order_number, status, sent_at, approval_status, pdf_path, modellname, farbe, liefertermin, is_reclamation, supplier:suppliers(name)')
-      .in('order_id', orderIds);
+    const [{ data: poData, error: pErr }, { data: addData, error: aErr }] = await Promise.all([
+      (supabase as any)
+        .from('production_orders')
+        .select('id, order_id, production_order_number, status, sent_at, approval_status, pdf_path, modellname, farbe, liefertermin, is_reclamation, supplier:suppliers(name)')
+        .in('order_id', orderIds),
+      (supabase as any)
+        .from('order_additional_deposits')
+        .select('order_id, amount, geleistet')
+        .in('order_id', orderIds),
+    ]);
     if (pErr) throw pErr;
+    if (aErr) throw aErr;
     (poData ?? []).forEach((p: any) => {
       if (!p.order_id) return;
       (poByOrder[p.order_id] ||= []).push(p);
     });
+    (addData ?? []).forEach((r: any) => {
+      if (!r.order_id) return;
+      (addDepByOrder[r.order_id] ||= []).push({ amount: Number(r.amount) || 0, geleistet: !!r.geleistet });
+    });
   }
 
-  return (ordersData ?? []).map((r: any) => ({ ...r, production_orders: poByOrder[r.id] ?? [] }));
+  return (ordersData ?? []).map((r: any) => ({
+    ...r,
+    production_orders: poByOrder[r.id] ?? [],
+    additional_deposits: addDepByOrder[r.id] ?? [],
+  }));
 }
 
 export default function BestellungenDashboard() {
