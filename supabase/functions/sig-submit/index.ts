@@ -144,6 +144,14 @@ Deno.serve(async (req) => {
         body: JSON.stringify({ document_id: reqRow.document_id, request_id: reqRow.id }),
       });
     } catch (e) { console.error('sig-render-final err', e); }
+    // Sync back to CRM entity (order/offer/repair/maintenance/invoice)
+    try {
+      await fetch(`${SUPABASE_URL}/functions/v1/sig-entity-sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
+        body: JSON.stringify({ document_id: reqRow.document_id, status: finalStatus }),
+      });
+    } catch (e) { console.error('sig-entity-sync err', e); }
   }
   try {
     await fetch(`${SUPABASE_URL}/functions/v1/sig-webhook-dispatch`, {
