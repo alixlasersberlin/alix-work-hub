@@ -19331,6 +19331,148 @@ export type Database = {
         }
         Relationships: []
       }
+      sig_ai_analyses: {
+        Row: {
+          clauses: Json | null
+          created_at: string
+          created_by: string | null
+          document_id: string | null
+          id: string
+          model: string | null
+          risk_score: number | null
+          suggested_fields: Json | null
+          summary: string | null
+          tokens_used: number | null
+          updated_at: string
+        }
+        Insert: {
+          clauses?: Json | null
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          id?: string
+          model?: string | null
+          risk_score?: number | null
+          suggested_fields?: Json | null
+          summary?: string | null
+          tokens_used?: number | null
+          updated_at?: string
+        }
+        Update: {
+          clauses?: Json | null
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          id?: string
+          model?: string | null
+          risk_score?: number | null
+          suggested_fields?: Json | null
+          summary?: string | null
+          tokens_used?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_ai_analyses_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "sig_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_approval_chains: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          steps: Json
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          steps?: Json
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          steps?: Json
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_approval_chains_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sig_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_approval_states: {
+        Row: {
+          chain_id: string | null
+          created_at: string
+          current_approver: string | null
+          current_step: number
+          history: Json
+          id: string
+          request_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          chain_id?: string | null
+          created_at?: string
+          current_approver?: string | null
+          current_step?: number
+          history?: Json
+          id?: string
+          request_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          chain_id?: string | null
+          created_at?: string
+          current_approver?: string | null
+          current_step?: number
+          history?: Json
+          id?: string
+          request_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_approval_states_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "sig_approval_chains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sig_approval_states_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "sig_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sig_audit_log: {
         Row: {
           actor_email: string | null
@@ -19397,6 +19539,56 @@ export type Database = {
             columns: ["signer_id"]
             isOneToOne: false
             referencedRelation: "sig_signers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_bulk_jobs: {
+        Row: {
+          created_at: string
+          csv_path: string | null
+          error_log: Json | null
+          failed: number
+          id: string
+          processed: number
+          status: string
+          template_id: string | null
+          total: number
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          csv_path?: string | null
+          error_log?: Json | null
+          failed?: number
+          id?: string
+          processed?: number
+          status?: string
+          template_id?: string | null
+          total?: number
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          csv_path?: string | null
+          error_log?: Json | null
+          failed?: number
+          id?: string
+          processed?: number
+          status?: string
+          template_id?: string | null
+          total?: number
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_bulk_jobs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sig_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -19566,6 +19758,107 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sig_partner_usage: {
+        Row: {
+          api_calls: number
+          created_at: string
+          id: string
+          month: string
+          partner_id: string
+          revenue_cents: number
+          signatures_count: number
+          updated_at: string
+        }
+        Insert: {
+          api_calls?: number
+          created_at?: string
+          id?: string
+          month: string
+          partner_id: string
+          revenue_cents?: number
+          signatures_count?: number
+          updated_at?: string
+        }
+        Update: {
+          api_calls?: number
+          created_at?: string
+          id?: string
+          month?: string
+          partner_id?: string
+          revenue_cents?: number
+          signatures_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_partner_usage_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "sig_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_partners: {
+        Row: {
+          api_key_hash: string | null
+          api_key_prefix: string | null
+          contact_email: string | null
+          created_at: string
+          custom_domain: string | null
+          id: string
+          logo_url: string | null
+          monthly_quota: number
+          name: string
+          owner_user_id: string | null
+          plan: string
+          primary_color: string | null
+          slug: string
+          status: string
+          updated_at: string
+          used_quota: number
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key_hash?: string | null
+          api_key_prefix?: string | null
+          contact_email?: string | null
+          created_at?: string
+          custom_domain?: string | null
+          id?: string
+          logo_url?: string | null
+          monthly_quota?: number
+          name: string
+          owner_user_id?: string | null
+          plan?: string
+          primary_color?: string | null
+          slug: string
+          status?: string
+          updated_at?: string
+          used_quota?: number
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key_hash?: string | null
+          api_key_prefix?: string | null
+          contact_email?: string | null
+          created_at?: string
+          custom_domain?: string | null
+          id?: string
+          logo_url?: string | null
+          monthly_quota?: number
+          name?: string
+          owner_user_id?: string | null
+          plan?: string
+          primary_color?: string | null
+          slug?: string
+          status?: string
+          updated_at?: string
+          used_quota?: number
+          webhook_url?: string | null
+        }
+        Relationships: []
       }
       sig_reminder_rules: {
         Row: {
