@@ -48,35 +48,30 @@ export default function DigitaleSignaturenBulk() {
   const send = async () => {
     if (!title || !file || recipients.length === 0) return toast.error('Titel, PDF und Empfänger erforderlich');
     setRunning(true); setDone(false);
-    const b64 = await new Promise<string>((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res((r.result as string).split(',')[1] || '');
-      r.onerror = rej; r.readAsDataURL(file);
-    });
-    const next: Recipient[] = [...recipients];
-    for (let i = 0; i < next.length; i++) {
-      next[i] = { ...next[i], status: 'pending' };
-      setRecipients([...next]);
-      try {
-        const { data, error } = await supabase.functions.invoke('sig-create-request', {
-          body: {
-            title: `${title} – ${next[i].name || next[i].email}`,
-            document_type: docType, pdf_base64: b64,
-            signers: [{ signer_role: 'kunde', name: next[i].name, email: next[i].email, phone: next[i].phone }],
-            otp_required: otp,
-            expires_days: expiresDays,
-            base_url: window.location.origin,
-          },
-        });
-        if (error) throw error;
-        next[i] = { ...next[i], status: 'ok', sign_url: (data as any)?.sign_url };
-      } catch (e: any) {
-        next[i] = { ...next[i], status: 'error', message: e.message };
-      }
-      setRecipients([...next]);
+    try {
+      const b64 = await new Promise<string>((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res((r.result as string).split(',')[1] || '');
+        r.onerror = rej; r.readAsDataURL(file);
+      });
+      const { data, error } = await supabase.functions.invoke('sig-bulk-create', {
+        body: {
+          title, document_type: docType, pdf_base64: b64,
+          recipients: recipients.map((r) => ({ name: r.name, email: r.email, phone: r.phone })),
+          otp_required: otp, expires_days: expiresDays,
+          base_url: window.location.origin,
+        },
+      });
+      if (error) throw error;
+      toast.success(`Bulk-Job gestartet (${recipients.length} Empfänger) – Fortschritt oben.`);
+      setRecipients(recipients.map((r) => ({ ...r, status: 'pending' })));
+      setDone(true);
+      console.log('bulk job', data);
+    } catch (e: any) {
+      toast.error('Bulk-Job fehlgeschlagen: ' + (e.message ?? e));
+    } finally {
+      setRunning(false);
     }
-    setRunning(false); setDone(true);
-    toast.success(`Fertig: ${next.filter((r) => r.status === 'ok').length}/${next.length} versendet`);
   };
 
   const okCount = recipients.filter((r) => r.status === 'ok').length;
