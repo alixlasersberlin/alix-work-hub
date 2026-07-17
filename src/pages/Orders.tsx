@@ -55,6 +55,21 @@ const ORDER_SELECT = `
     customers(company_name, contact_name, shipping_address, billing_address, is_vip)
   `;
 
+type ColumnId = 'order_number' | 'customer' | 'order_date' | 'total_amount' | 'status' | 'fahrzeit' | 'anzahlung' | 'anzahlung_ok' | 'bestellung';
+
+const ALL_COLUMNS: { id: ColumnId; label: string; sortField?: SortField }[] = [
+  { id: 'order_number', label: 'Auftrag Nr.', sortField: 'order_number' },
+  { id: 'customer', label: 'Kunde' },
+  { id: 'order_date', label: 'Datum', sortField: 'order_date' },
+  { id: 'total_amount', label: 'Betrag', sortField: 'total_amount' },
+  { id: 'status', label: 'Status' },
+  { id: 'fahrzeit', label: 'Fahrzeit' },
+  { id: 'anzahlung', label: 'Anzahlung', sortField: 'deposit_status' },
+  { id: 'anzahlung_ok', label: 'Anzahlung OK' },
+  { id: 'bestellung', label: 'Bestellung' },
+];
+const DEFAULT_COLUMN_ORDER: ColumnId[] = ALL_COLUMNS.map(c => c.id);
+
 export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
