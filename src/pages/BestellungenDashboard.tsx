@@ -49,6 +49,7 @@ interface Row {
   finance_payment_status: string | null;
   customers?: { company_name: string | null; contact_name: string | null; is_vip: boolean | null } | null;
   production_orders?: ProdOrder[];
+  additional_deposits?: { amount: number; geleistet: boolean }[];
 }
 
 type Filter = 'all' | 'deposit_open' | 'deposit_ok_no_order' | 'ordered' | 'vip';
