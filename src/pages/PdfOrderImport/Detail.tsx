@@ -83,6 +83,20 @@ export default function PdfOrderImportDetail() {
     if (error) toast.error(error.message); else { toast.success('Analyse gestartet'); load(); }
   }
 
+  async function performDelete() {
+    if (!id) return;
+    setDeleting(true);
+    if (imp?.source_storage_path) {
+      await supabase.storage.from('order-imports').remove([imp.source_storage_path]);
+    }
+    const { error } = await supabase.from('pdf_order_imports').delete().eq('id', id);
+    setDeleting(false);
+    setConfirmDelete(false);
+    if (error) { toast.error('Löschen fehlgeschlagen: ' + error.message); return; }
+    toast.success('PDF-Import gelöscht');
+    nav('/auftraege/pdf-import');
+  }
+
   const raw = imp?.raw_extraction_json ?? {};
   const order = raw.order ?? {};
   const customer = raw.customer ?? {};
