@@ -997,17 +997,31 @@ export default function OrderDetail() {
             const openTotal = openMain + openAdd;
             const paidTotal = (depositOk ? mainAmt : 0) + additionalDeposits.reduce((s, d) => s + (d.geleistet ? Number(d.amount) || 0 : 0), 0);
             const fmt = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: cur });
+            const isPartial = paidTotal > 0.005 && openTotal > 0.005;
             return (
-              <div className="mb-4 grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-border bg-secondary/30 p-3">
-                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Offene Anzahlung</div>
-                  <div className={`text-lg font-bold ${openTotal > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{fmt(openTotal)}</div>
+              <>
+                <div className="mb-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Offene Anzahlung</div>
+                    <div className={`text-lg font-bold ${openTotal > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{fmt(openTotal)}</div>
+                  </div>
+                  <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Geleistete Anzahlung</div>
+                    <div className="text-lg font-bold text-emerald-400">{fmt(paidTotal)}</div>
+                  </div>
                 </div>
-                <div className="rounded-lg border border-border bg-secondary/30 p-3">
-                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Geleistete Anzahlung</div>
-                  <div className="text-lg font-bold text-emerald-400">{fmt(paidTotal)}</div>
-                </div>
-              </div>
+                {isPartial && (
+                  <div className="mb-4 flex items-start gap-2 rounded-lg border border-orange-500/50 bg-orange-500/10 p-3 text-sm text-orange-300">
+                    <AlertCircle className="w-4 h-4 mt-0.5 text-orange-400 shrink-0" />
+                    <div>
+                      <div className="font-semibold text-orange-200">Teilzahlung – Restbetrag offen</div>
+                      <div className="text-xs text-orange-300/90">
+                        Bisher geleistet: <span className="font-medium">{fmt(paidTotal)}</span> · Noch offen: <span className="font-medium">{fmt(openTotal)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             );
           })()}
           <div className="space-y-4">
