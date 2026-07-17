@@ -1,4 +1,8 @@
-// Fetches invoice PDF from Zoho Books and returns it base64-encoded.
+// Fetches invoice/salesorder PDF from Zoho Books and returns it base64-encoded.
+// Automatically routes the PDF through sig-apply-facsimile so the H. Tran
+// signature is stamped on Zoho-generated documents as well.
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -56,25 +60,88 @@ function bytesToBase64(bytes: Uint8Array): string {
   return btoa(bin);
 }
 
+type Resource = 'invoices' | 'recurringinvoices' | 'salesorders' | 'estimates';
+
+function resolveResource(input: {
+  resource?: string;
+  recurring?: boolean;
+}): { resource: Resource; docType: string } {
+  const r = (input.resource || '').toLowerCase();
+  if (r === 'salesorders' || r === 'salesorder' || r === 'order') {
+    return { resource: 'salesorders', docType: 'order_confirmation' };
+  }
+  if (r === 'estimates' || r === 'estimate' || r === 'offer') {
+    return { resource: 'estimates', docType: 'offer' };
+  }
+  if (r === 'recurringinvoices' || input.recurring) {
+    return { resource: 'recurringinvoices', docType: 'invoice' };
+  }
+  return { resource: 'invoices', docType: 'invoice' };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const { zoho_invoice_id, source_system = "zoho_eu_1", recurring = false } = await req.json();
-    if (!zoho_invoice_id) return json({ error: "zoho_invoice_id missing" }, 400);
+    const body = await req.json();
+    const {
+      zoho_invoice_id,
+      zoho_id,
+      source_system = "zoho_eu_1",
+      recurring = false,
+      resource,
+      doc_type,
+      document_ref,
+      skip_facsimile = false,
+    } = body || {};
+
+    const id = zoho_id || zoho_invoice_id;
+    if (!id) return json({ error: "zoho_id / zoho_invoice_id missing" }, 400);
+
     const cfg = getZohoConfig(source_system);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
+
+    const { resource: res, docType: defaultDocType } = resolveResource({ resource, recurring });
+    const finalDocType = doc_type || defaultDocType;
+
     const token = await getAccessToken(cfg);
-    const path = recurring ? "recurringinvoices" : "invoices";
-    const url = `${cfg.booksApiBaseUrl}/${path}/${zoho_invoice_id}?organization_id=${cfg.organizationId}&accept=pdf`;
-    const res = await fetch(url, {
+    const url = `${cfg.booksApiBaseUrl}/${res}/${id}?organization_id=${cfg.organizationId}&accept=pdf`;
+    const zohoRes = await fetch(url, {
       headers: { Authorization: `Zoho-oauthtoken ${token}` },
     });
-    if (!res.ok) {
-      const t = await res.text();
-      return json({ error: `Zoho PDF fehler [${res.status}]: ${t}` }, res.status);
+    if (!zohoRes.ok) {
+      const t = await zohoRes.text();
+      return json({ error: `Zoho PDF fehler [${zohoRes.status}]: ${t}` }, zohoRes.status);
     }
-    const buf = new Uint8Array(await res.arrayBuffer());
-    return json({ pdf_base64: bytesToBase64(buf), size: buf.length });
+    const buf = new Uint8Array(await zohoRes.arrayBuffer());
+    let pdfB64 = bytesToBase64(buf);
+    let stamped = false;
+
+    // Route through facsimile (server-side) so Zoho downloads carry H. Tran too.
+    if (!skip_facsimile) {
+      try {
+        const admin = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        );
+        const { data: stampRes, error: stampErr } = await admin.functions.invoke('sig-apply-facsimile', {
+          body: {
+            pdf_base64: pdfB64,
+            doc_type: finalDocType,
+            document_ref: document_ref || id,
+          },
+        });
+        if (!stampErr && stampRes?.pdf_base64) {
+          pdfB64 = stampRes.pdf_base64;
+          stamped = !!stampRes.applied;
+        } else if (stampErr) {
+          console.warn('[zoho-invoice-pdf] facsimile skipped:', stampErr.message);
+        }
+      } catch (e) {
+        console.warn('[zoho-invoice-pdf] facsimile error:', (e as Error).message);
+      }
+    }
+
+    return json({ pdf_base64: pdfB64, size: buf.length, facsimile_applied: stamped, doc_type: finalDocType, resource: res });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }
