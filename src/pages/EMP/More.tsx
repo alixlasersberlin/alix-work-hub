@@ -1,11 +1,12 @@
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { Settings, Bell, ClipboardList, ShieldCheck, Truck, TrendingUp, GraduationCap, LayoutDashboard, RefreshCw } from 'lucide-react';
+import { Settings, Bell, ClipboardList, ShieldCheck, Truck, TrendingUp, GraduationCap, LayoutDashboard, RefreshCw, FileSignature } from 'lucide-react';
 import { useEmpPersona } from '@/hooks/emp/useEmpPersona';
 
 const items = [
   { to: '/emp/dashboard', label: 'Dashboard', icon: LayoutDashboard, personas: ['management'] as string[] },
   { to: '/emp/genehmigungen', label: 'Genehmigungen', icon: ShieldCheck, personas: ['management'] as string[] },
+  { to: '/emp/signaturen', label: 'Signaturen', icon: FileSignature, personas: [] as string[] },
   { to: '/emp/servicebericht', label: 'Servicebericht', icon: ClipboardList, personas: ['technik'] as string[] },
   { to: '/emp/schulungen', label: 'Schulungen', icon: GraduationCap, personas: ['dozent'] as string[] },
   { to: '/emp/lieferungen', label: 'Lieferungen', icon: Truck, personas: ['logistik'] as string[] },
@@ -14,6 +15,7 @@ const items = [
   { to: '/emp/sync', label: 'Synchronisation', icon: RefreshCw, personas: [] as string[] },
   { to: '/emp/einstellungen', label: 'Einstellungen', icon: Settings, personas: [] as string[] },
 ];
+
 
 export default function EmpMore() {
   const { persona } = useEmpPersona();
