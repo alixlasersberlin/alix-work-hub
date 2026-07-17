@@ -14898,6 +14898,89 @@ export type Database = {
         }
         Relationships: []
       }
+      news_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          id: string
+          news_id: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          id?: string
+          news_id: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          id?: string
+          news_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_acknowledgements_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_posts: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          image_path: string | null
+          link_label: string | null
+          link_url: string | null
+          priority: number
+          publish_at: string
+          published: boolean
+          require_ack: boolean
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          image_path?: string | null
+          link_label?: string | null
+          link_url?: string | null
+          priority?: number
+          publish_at?: string
+          published?: boolean
+          require_ack?: boolean
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          image_path?: string | null
+          link_label?: string | null
+          link_url?: string | null
+          priority?: number
+          publish_at?: string
+          published?: boolean
+          require_ack?: boolean
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           badge_enabled: boolean
