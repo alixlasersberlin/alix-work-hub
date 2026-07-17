@@ -7,8 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { FileText, Plus, Loader2, RefreshCcw, Search, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { FileText, Plus, Loader2, RefreshCcw, Search, X, AlertTriangle, CheckCircle2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const STATUS_LABEL: Record<string, string> = {
   uploaded: 'Hochgeladen',
@@ -45,6 +51,8 @@ const DOC_LABEL: Record<string, string> = {
 
 export default function PdfOrderImportList() {
   const nav = useNavigate();
+  const { hasRole } = useAuth();
+  const canDelete = hasRole('Super Admin');
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -52,6 +60,29 @@ export default function PdfOrderImportList() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [range, setRange] = useState<'7' | '30' | '90' | 'all'>('30');
   const [onlyWarnings, setOnlyWarnings] = useState(false);
+  const [toDelete, setToDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function performDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
+    if (toDelete.source_storage_path) {
+      await supabase.storage.from('order-imports').remove([toDelete.source_storage_path]);
+    } else {
+      // Pfad fehlt in Liste – nachladen
+      const { data } = await supabase.from('pdf_order_imports').select('source_storage_path').eq('id', toDelete.id).maybeSingle();
+      if (data?.source_storage_path) {
+        await supabase.storage.from('order-imports').remove([data.source_storage_path]);
+      }
+    }
+    const { error } = await supabase.from('pdf_order_imports').delete().eq('id', toDelete.id);
+    setDeleting(false);
+    if (error) { toast.error('Löschen fehlgeschlagen: ' + error.message); return; }
+    toast.success('PDF-Import gelöscht');
+    setToDelete(null);
+    load();
+  }
+
 
   async function load() {
     setLoading(true);
@@ -183,6 +214,7 @@ export default function PdfOrderImportList() {
                       <td className="p-3">{warnCount > 0 ? <span className="text-amber-400 text-xs">⚠ {warnCount}</span> : <span className="text-xs text-muted-foreground">—</span>}</td>
                       <td className="p-3 text-xs text-muted-foreground">{format(new Date(r.created_at), 'dd.MM.yyyy HH:mm')}</td>
                       <td className="p-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
                         {r.status === 'analyzed' || r.status === 'review' ? (
                           <Button size="sm" className="bg-amber-500 hover:bg-amber-600 text-black" onClick={(e) => { e.stopPropagation(); nav(`/auftraege/pdf-import/${r.id}/review`); }}>Prüfen</Button>
                         ) : r.created_order_id ? (
@@ -190,6 +222,18 @@ export default function PdfOrderImportList() {
                         ) : (
                           <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); nav(`/auftraege/pdf-import/${r.id}`); }}>Öffnen</Button>
                         )}
+                        {canDelete && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                            title="Löschen"
+                            onClick={(e) => { e.stopPropagation(); setToDelete(r); }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -199,6 +243,28 @@ export default function PdfOrderImportList() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(v) => !v && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>PDF-Import löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              „{toDelete?.source_filename}" wird unwiderruflich gelöscht, inklusive Original-PDF, erkannten Feldern und Positionen. Bereits angelegte Aufträge bleiben bestehen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={performDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
