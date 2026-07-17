@@ -593,7 +593,8 @@ export default function UserManagement() {
                 </Button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* Confirm Action Dialog */}
