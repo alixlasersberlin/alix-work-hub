@@ -139,66 +139,107 @@ function StampsPanel() {
 
 function TemplatesPanel() {
   const [rows, setRows] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [docType, setDocType] = useState('angebot');
+  const navigate = (window as any).__navigate;
 
   const load = async () => {
-    const { data } = await supabase.from('sig_templates').select('*').order('created_at', { ascending: false });
+    const { data } = await supabase.from('sig_templates')
+      .select('*, sig_template_fields(count)').order('created_at', { ascending: false });
     setRows(data || []);
   };
   useEffect(() => { load(); }, []);
 
-  const create = async () => {
-    const { data: userData } = await supabase.auth.getUser();
-    const { error } = await supabase.from('sig_templates').insert({
-      name, document_type: docType, fields: [], default_signers: [], created_by: userData.user!.id,
-    });
+  const remove = async (id: string) => {
+    if (!confirm('Vorlage wirklich löschen?')) return;
+    const { error } = await supabase.from('sig_templates').delete().eq('id', id);
     if (error) return toast.error(error.message);
-    toast.success('Vorlage erstellt');
-    setOpen(false); setName(''); await load();
+    toast.success('Vorlage gelöscht'); load();
+  };
+
+  const duplicate = async (r: any) => {
+    const { data: userData } = await supabase.auth.getUser();
+    const { data: copy, error } = await supabase.from('sig_templates').insert({
+      name: r.name + ' (Kopie)', document_type: r.document_type, category: r.category,
+      default_message: r.default_message, default_expiry_days: r.default_expiry_days,
+      default_signers: r.default_signers, is_active: false, fields: [],
+      created_by: userData.user!.id,
+    }).select('id').single();
+    if (error) return toast.error(error.message);
+    const { data: fs } = await supabase.from('sig_template_fields').select('*').eq('template_id', r.id);
+    if (fs?.length) {
+      await supabase.from('sig_template_fields').insert(fs.map(({ id, created_at, ...rest }: any) => ({ ...rest, template_id: copy.id })));
+    }
+    toast.success('Vorlage dupliziert'); load();
   };
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base">Signaturfeld-Vorlagen</CardTitle>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button size="sm"><Plus className="w-4 h-4 mr-1" />Neu</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Neue Vorlage</DialogTitle></DialogHeader>
-            <div className="space-y-3">
-              <div><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
-              <div>
-                <Label>Dokumenttyp</Label>
-                <Select value={docType} onValueChange={setDocType}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{DOC_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter><Button onClick={create}>Anlegen</Button></DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button size="sm" onClick={() => window.location.assign('/admin/signaturen/templates/neu')}>
+          <Plus className="w-4 h-4 mr-1" />Neue Vorlage
+        </Button>
       </CardHeader>
       <CardContent>
         <table className="w-full text-sm">
           <thead className="text-left text-xs text-muted-foreground border-b">
-            <tr><th className="py-2">Name</th><th>Dokumenttyp</th><th>Felder</th><th>Aktiv</th></tr>
+            <tr><th className="py-2">Name</th><th>Typ</th><th>Kategorie</th><th>Felder</th><th>Nutzung</th><th>Aktiv</th><th></th></tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-b">
                 <td className="py-2 font-medium">{r.name}</td>
                 <td>{r.document_type}</td>
-                <td>{Array.isArray(r.fields) ? r.fields.length : 0}</td>
-                <td>{r.is_active ? '✓' : '—'}</td>
+                <td>{r.category || '—'}</td>
+                <td>{r.sig_template_fields?.[0]?.count ?? 0}</td>
+                <td>{r.usage_count || 0}×</td>
+                <td>{r.is_active ? <Badge>aktiv</Badge> : <Badge variant="outline">inaktiv</Badge>}</td>
+                <td className="text-right">
+                  <div className="flex gap-1 justify-end">
+                    <Button size="sm" variant="outline" onClick={() => window.location.assign(`/admin/signaturen/templates/${r.id}`)}>Bearbeiten</Button>
+                    <Button size="sm" variant="ghost" onClick={() => duplicate(r)}>Duplizieren</Button>
+                    <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="w-3 h-3" /></Button>
+                  </div>
+                </td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={4} className="text-center py-6 text-muted-foreground">Noch keine Vorlagen</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={7} className="text-center py-6 text-muted-foreground">Noch keine Vorlagen</td></tr>}
           </tbody>
         </table>
-        <p className="text-xs text-muted-foreground mt-3">Drag&amp;Drop-Feldplatzierung folgt in Phase 2.</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TsaPanel() {
+  const [cfg, setCfg] = useState<any>({ enabled: false, url: '', auth_header: '' });
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('app_settings').select('value').eq('key', 'sig_tsa_config').maybeSingle();
+      if (data?.value) setCfg(data.value);
+      setLoading(false);
+    })();
+  }, []);
+  const save = async () => {
+    const { error } = await supabase.from('app_settings').update({ value: cfg }).eq('key', 'sig_tsa_config');
+    if (error) return toast.error(error.message);
+    toast.success('TSA-Konfiguration gespeichert');
+  };
+  if (loading) return <div className="p-4 text-sm text-muted-foreground">Lade…</div>;
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">RFC 3161 Zeitstempel-Provider (TSA)</CardTitle></CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Switch checked={!!cfg.enabled} onCheckedChange={(v) => setCfg({ ...cfg, enabled: v })} />
+          <span className="text-sm">TSA-Zeitstempel für neue Signaturen aktivieren</span>
+        </div>
+        <div><Label>TSA-URL</Label><Input value={cfg.url || ''} onChange={(e) => setCfg({ ...cfg, url: e.target.value })} placeholder="https://freetsa.org/tsr" /></div>
+        <div><Label>Auth-Header (optional)</Label><Input value={cfg.auth_header || ''} onChange={(e) => setCfg({ ...cfg, auth_header: e.target.value })} placeholder="Bearer …" /></div>
+        <p className="text-xs text-muted-foreground">
+          Erzeugt einen qualifizierten Zeitstempel gemäß RFC 3161 pro finalisierter Signatur. Das Token wird zusammen mit dem Prüfbericht hinterlegt.
+        </p>
+        <Button size="sm" onClick={save}>Speichern</Button>
       </CardContent>
     </Card>
   );
