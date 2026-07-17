@@ -7,8 +7,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { FileText, Plus, Loader2, RefreshCcw, Search, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { FileText, Plus, Loader2, RefreshCcw, Search, X, AlertTriangle, CheckCircle2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const STATUS_LABEL: Record<string, string> = {
   uploaded: 'Hochgeladen',
