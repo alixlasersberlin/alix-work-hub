@@ -776,8 +776,8 @@ export default function Orders() {
                     </td></tr>
                   </tbody>
                 ) : (
-                  paged.map(o => (
-                    <tbody key={`${o.id}-${o._seq}`} className="border-b border-border">
+                  paged.map((o, idx) => (
+                    <tbody key={`${o.id}-${o._seq}`} className={`border-b border-border ${idx % 2 === 1 ? 'bg-secondary/40' : ''}`}>
                       <tr
                         className="hover:bg-secondary/30 transition-colors cursor-pointer"
                         onClick={() => {
