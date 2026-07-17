@@ -266,7 +266,7 @@ export default function Orders() {
       const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
       if (orderIds.length === 0 && orderNumbers.length === 0) return;
 
-      const [itemsRes, posRes, depRes, zohoInvRes] = await Promise.all([
+      const [itemsRes, posRes, depRes, zohoInvRes, addDepRes] = await Promise.all([
         orderIds.length > 0
           ? supabase
               .from('order_items')
@@ -290,6 +290,12 @@ export default function Orders() {
               .from('zoho_invoices')
               .select('invoice_number, reference_number')
               .in('reference_number', orderNumbers)
+          : Promise.resolve({ data: [] as any[] }),
+        orderIds.length > 0
+          ? supabase
+              .from('order_additional_deposits')
+              .select('order_id, amount, geleistet')
+              .in('order_id', orderIds)
           : Promise.resolve({ data: [] as any[] }),
       ]);
       if (requestId !== loadRequestRef.current) return;
