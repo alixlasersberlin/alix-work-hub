@@ -99,6 +99,8 @@ export const navItems: NavItem[] = [
       { path: '/signaturen/neu', label: 'Neue Anfrage', icon: FilePlus, roles: null },
       { path: '/signaturen/cockpit', label: 'Cockpit & Analytics', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Vertriebsleitung', 'Serviceleitung', 'Finance'] },
       { path: '/signaturen/bulk', label: 'Serien-Versand', icon: Send, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Vertrieb', 'Vertriebsleitung', 'Kundenservice', 'Serviceleitung'] },
+      { path: '/signaturen/genehmigungen', label: 'Genehmigungen', icon: CheckCircle2, roles: null },
+      { path: '/admin/sign-marketplace', label: 'Marketplace &amp; White-Label', icon: Settings, roles: ['Super Admin'] },
       { path: '/admin/signaturen', label: 'Admin (Stempel & Templates)', icon: Settings, roles: ['Admin', 'Super Admin'] },
     ],
   },

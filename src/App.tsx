@@ -1468,6 +1468,7 @@ function AppRoutes() {
           <Route path="einsatz/:id/checkliste" element={<MobileChecklist />} />
           <Route path="einsatz/:id/sprachnotiz" element={<MobileSprachnotiz />} />
           <Route path="sprachnotiz" element={<MobileSprachnotiz />} />
+          <Route path="signaturen" element={<MobileSignaturen />} />
         </Route>
 
 
