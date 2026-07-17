@@ -9,9 +9,10 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  ShoppingCart, CheckCircle2, Clock, Factory, ListOrdered, Search, Crown,
+  ShoppingCart, CheckCircle2, Clock, Factory, ListOrdered, Search, Crown, AlertCircle,
 } from 'lucide-react';
 import { qk, STALE } from '@/lib/query-keys';
+import { computeDepositStatus } from '@/lib/deposit-status';
 
 interface ProdOrder {
   id: string;
