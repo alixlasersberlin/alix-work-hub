@@ -533,7 +533,7 @@ export default function UserManagement() {
         </div>
 
         {/* Password Change Dialog */}
-        {showPasswordDialog && (
+        {showPasswordDialog && createPortal(
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => !pwSaving && setShowPasswordDialog(false)}>
             <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={e => e.stopPropagation()}>
               <div>
