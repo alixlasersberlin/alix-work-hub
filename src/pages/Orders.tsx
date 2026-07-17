@@ -247,10 +247,13 @@ export default function Orders() {
         finance_payment_status, case_number, billing_address, shipping_address,
         customers(company_name, contact_name, shipping_address, billing_address, is_vip)
       `;
+    const isClientSortField = sortField === 'deposit_status';
+    const serverSortField = isClientSortField ? 'order_date' : sortField;
+    const serverSortAsc = isClientSortField ? false : sortDir === 'asc';
     const fetchOrders = (limit: number) => supabase
       .from('orders')
       .select(orderSelect)
-      .order(sortField, { ascending: sortDir === 'asc', nullsFirst: false })
+      .order(serverSortField, { ascending: serverSortAsc, nullsFirst: false })
       .limit(limit);
 
     const expandOrders = (loaded: any[]) => loaded.map(o => ({
