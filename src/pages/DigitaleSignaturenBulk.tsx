@@ -92,6 +92,8 @@ export default function DigitaleSignaturenBulk() {
         </div>
       </div>
 
+      <BulkJobsProgress />
+
       <Card>
         <CardHeader><CardTitle className="text-base">Dokument</CardTitle></CardHeader>
         <CardContent className="space-y-3">
