@@ -44,7 +44,14 @@ Deno.serve(async (req) => {
       password: new_password,
     });
     if (updateError) {
-      return json({ error: `Auth error: ${updateError.message}` }, 400);
+      const msg = updateError.message || "";
+      if (/weak|pwned|compromis|leaked/i.test(msg)) {
+        return json({
+          error:
+            "Das Passwort ist zu schwach oder wurde in bekannten Datenlecks gefunden. Bitte wähle ein längeres Passwort mit Groß-/Kleinbuchstaben, Zahlen und Sonderzeichen.",
+        }, 400);
+      }
+      return json({ error: `Auth error: ${msg}` }, 400);
     }
 
     await adminClient
