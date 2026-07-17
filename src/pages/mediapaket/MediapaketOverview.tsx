@@ -8,10 +8,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Loader2, Package as PackageIcon, Search, LayoutGrid, List as ListIcon, AlertTriangle, CalendarClock, ExternalLink, User, Download, X } from 'lucide-react';
+import { Loader2, Package as PackageIcon, Search, LayoutGrid, List as ListIcon, AlertTriangle, CalendarClock, ExternalLink, User, Download, X, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { exportMediaPackagePdf } from '@/lib/mediapaket/exportPdf';
 
 const STATUS_LABEL: Record<string, string> = {
   not_started: 'Nicht begonnen',
@@ -299,6 +300,30 @@ export default function MediapaketOverview() {
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => exportCsv(filtered.filter(r => selected.has(r.id)))}>
             <Download className="w-3.5 h-3.5 mr-1" /> Auswahl exportieren
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            disabled={bulkBusy}
+            onClick={async () => {
+              const ids = Array.from(selected);
+              setBulkBusy(true);
+              const t = toast.loading(`Erstelle ${ids.length} PDF(s)…`);
+              try {
+                for (const id of ids) {
+                  await exportMediaPackagePdf(id);
+                  await new Promise(r => setTimeout(r, 250));
+                }
+                toast.success(`${ids.length} PDF(s) heruntergeladen`, { id: t });
+              } catch (err: any) {
+                toast.error(err?.message || 'PDF-Export fehlgeschlagen', { id: t });
+              } finally {
+                setBulkBusy(false);
+              }
+            }}
+          >
+            <FileText className="w-3.5 h-3.5 mr-1" /> PDF Export
+          </Button>
           <div className="ml-auto flex items-center gap-1">
             {bulkBusy && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
             <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setSelected(new Set())}><X className="w-4 h-4" /></Button>
@@ -395,11 +420,32 @@ function ListView({ rows, selected, onToggle, onToggleAll }: { rows: MpRow[]; se
                   <td className="p-3 text-xs">{r._assignee_name || <span className="text-muted-foreground">—</span>}</td>
                   <td className="p-3 text-xs text-muted-foreground">{format(new Date(r.updated_at), 'dd.MM.yyyy HH:mm')}</td>
                   <td className="p-3">
-                    {r.order_id && (
-                      <Link to={`/auftraege/${r.order_id}?tab=mediapaket`}>
-                        <Button size="sm" variant="ghost" className="h-7 px-2"><ExternalLink className="w-3.5 h-3.5" /></Button>
-                      </Link>
-                    )}
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2"
+                        title="Kundendaten als PDF herunterladen"
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const t = toast.loading('PDF wird erstellt…');
+                          try {
+                            await exportMediaPackagePdf(r.id);
+                            toast.success('PDF heruntergeladen', { id: t });
+                          } catch (err: any) {
+                            toast.error(err?.message || 'PDF-Export fehlgeschlagen', { id: t });
+                          }
+                        }}
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                      </Button>
+                      {r.order_id && (
+                        <Link to={`/auftraege/${r.order_id}?tab=mediapaket`}>
+                          <Button size="sm" variant="ghost" className="h-7 px-2"><ExternalLink className="w-3.5 h-3.5" /></Button>
+                        </Link>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
