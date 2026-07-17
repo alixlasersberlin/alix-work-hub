@@ -1118,6 +1118,8 @@ function AppRoutes() {
           <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
           <Route path="/signaturen" element={<ProtectedRoute><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute><DigitaleSignaturNeu /></ProtectedRoute>} />
+          <Route path="/signaturen/cockpit" element={<ProtectedRoute><DigitaleSignaturenCockpit /></ProtectedRoute>} />
+          <Route path="/signaturen/bulk" element={<ProtectedRoute><DigitaleSignaturenBulk /></ProtectedRoute>} />
           <Route path="/admin/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenAdmin /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
