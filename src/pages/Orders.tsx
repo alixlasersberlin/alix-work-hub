@@ -370,6 +370,58 @@ export default function Orders() {
 
   useEffect(() => { load(); }, [sortField, sortDir]);
 
+  // Serverseitige Suche: bei Eingabe im Suchfeld direkt in DB nachladen,
+  // damit auch Aufträge außerhalb der 500 zuletzt geladenen gefunden werden.
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const like = `%${q.replace(/[%,]/g, ' ')}%`;
+      const orderQuery = supabase
+        .from('orders')
+        .select(ORDER_SELECT)
+        .or(`order_number.ilike.${like},external_order_id.ilike.${like},internal_number.ilike.${like},case_number.ilike.${like}`)
+        .limit(100);
+      const custQuery = supabase
+        .from('customers')
+        .select('id')
+        .or(`company_name.ilike.${like},contact_name.ilike.${like}`)
+        .limit(200);
+      const [byOrder, custMatches] = await Promise.all([orderQuery, custQuery]);
+      if (cancelled) return;
+
+      let byCustomer: any[] = [];
+      const custIds = (custMatches.data || []).map((c: any) => c.id);
+      if (custIds.length > 0) {
+        const res = await supabase
+          .from('orders')
+          .select(ORDER_SELECT)
+          .in('customer_id', custIds)
+          .limit(200);
+        if (cancelled) return;
+        byCustomer = res.data || [];
+      }
+
+      const merged = [...(byOrder.data || []), ...byCustomer];
+      if (merged.length === 0) return;
+      setOrders(prev => {
+        const seen = new Set(prev.map(o => o.id));
+        const additions = merged
+          .filter(o => !seen.has(o.id))
+          .map(o => ({
+            ...o,
+            order_items: [],
+            _seq: 1,
+            _displayNumber: withAt(o.order_number, o.source_system),
+            _productionOrderCount: 0,
+          }));
+        return additions.length ? [...prev, ...additions] : prev;
+      });
+    }, 350);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [search]);
+
   const EXCLUDED_STATUSES: string[] = [];
 
   const statuses = [...new Set(orders.map(o => o.order_status).filter(Boolean))];
