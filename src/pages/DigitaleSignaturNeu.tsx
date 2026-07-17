@@ -92,6 +92,52 @@ export default function DigitaleSignaturNeu() {
     } catch { /* ignore */ }
   }, []);
 
+  // PDF Text extrahieren, sobald eine Datei gewählt wird (für KI-Analyse)
+  useEffect(() => {
+    if (!file) { setPdfText(''); setPageSizes([]); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const buf = await file.arrayBuffer();
+        const pdfjs: any = await import('pdfjs-dist');
+        const workerUrl = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+        pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+        const pdf = await pdfjs.getDocument({ data: buf }).promise;
+        const parts: string[] = [];
+        const sizes: { w: number; h: number }[] = [];
+        for (let p = 1; p <= pdf.numPages; p++) {
+          const page = await pdf.getPage(p);
+          const viewport = page.getViewport({ scale: 1 });
+          sizes.push({ w: viewport.width, h: viewport.height });
+          const content = await page.getTextContent();
+          parts.push(content.items.map((it: any) => it.str).join(' '));
+        }
+        if (!cancelled) { setPdfText(parts.join('\n\n')); setPageSizes(sizes); }
+      } catch (e) { console.warn('pdf text extract failed', e); }
+    })();
+    return () => { cancelled = true; };
+  }, [file]);
+
+  const applySuggestedFields = (suggested: any[]) => {
+    // Suggested Felder haben relative 0-1 Koordinaten -> in Editor-Feld-Format konvertieren
+    const mapped: SigField[] = suggested.map((s) => {
+      const size = pageSizes[(s.page ?? 1) - 1] ?? { w: 595, h: 842 };
+      return {
+        id: crypto.randomUUID(),
+        page: s.page ?? 1,
+        x: Math.round((s.x ?? 0.5) * size.w),
+        y: Math.round((s.y ?? 0.9) * size.h),
+        width: Math.round((s.w ?? 0.2) * size.w),
+        height: Math.round((s.h ?? 0.05) * size.h),
+        field_type: s.type || 'signature',
+        signer_index: 0,
+        field_key: s.label || s.type || 'signature',
+      };
+    });
+    setFields((prev) => [...prev, ...mapped]);
+    toast.success(`${mapped.length} Felder von KI übernommen`);
+  };
+
   const editorSigners: EditorSigner[] = useMemo(
     () => signers.map((s, i) => ({ name: s.name, email: s.email, order_index: i })),
     [signers],
