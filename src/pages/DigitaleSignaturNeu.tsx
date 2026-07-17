@@ -161,10 +161,14 @@ export default function DigitaleSignaturNeu() {
               ))}
             </div>
 
-            <div className="grid md:grid-cols-2 gap-3">
+            <div className="grid md:grid-cols-3 gap-3">
               <div className="flex items-center gap-2 p-3 rounded-lg border">
                 <Switch checked={otp} onCheckedChange={setOtp} />
                 <span className="text-sm">E-Mail-OTP-Code vor Signatur (FES)</span>
+              </div>
+              <div className="flex items-center gap-2 p-3 rounded-lg border" title="Öffnet direkt die Signaturseite auf diesem Gerät">
+                <Switch checked={inPerson} onCheckedChange={setInPerson} />
+                <span className="text-sm">Vor-Ort-Signatur (dieses Gerät)</span>
               </div>
               <div>
                 <Label>Gültig für (Tage)</Label>
