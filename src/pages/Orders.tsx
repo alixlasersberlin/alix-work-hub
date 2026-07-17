@@ -702,6 +702,13 @@ export default function Orders() {
                 <SelectItem value="all">Alle</SelectItem>
               </SelectContent>
             </Select>
+            <OrderColumnPicker
+              allColumns={ALL_COLUMNS.map(c => ({ id: c.id, label: c.label }))}
+              order={columnPrefs.order}
+              hidden={columnPrefs.hidden}
+              onChange={updateColumnPrefs}
+              onReset={resetColumnPrefs}
+            />
             {(() => {
               const failed = paged.filter((o: any) => drivingTimes[o.id] === null);
               if (failed.length === 0) return null;
