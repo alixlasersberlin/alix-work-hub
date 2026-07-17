@@ -929,50 +929,6 @@ export default function Orders() {
                             <span className="text-muted-foreground">—</span>
                           )}
                         </td>
-                        {canWrite && (
-                          <td className="px-4 py-3 text-right" onClick={e => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                onClick={() => setEditOrder(o)}
-                              >
-                                <Pencil className="w-3 h-3 mr-1" /> Ändern
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                onClick={() => setDeferOrder(o)}
-                              >
-                                <CalendarClock className="w-3 h-3 mr-1" /> Zurückstellen
-                              </Button>
-                              {canEditItems && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 px-2 text-xs text-primary hover:text-primary"
-                                  onClick={() => setItemsOrder(o)}
-                                >
-                                  <Package className="w-3 h-3 mr-1" /> Artikel
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                disabled={resendingId === o.id}
-                                onClick={() => resendOrderConfirmation(o)}
-                                title="Auftragsbestätigung erneut an Kunde senden (BCC: rde@alix-lasers.com)"
-                              >
-                                {resendingId === o.id ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
-                                AB senden
-                              </Button>
-
-                            </div>
-                          </td>
-                        )}
                       </tr>
                     </tbody>
                   ))
