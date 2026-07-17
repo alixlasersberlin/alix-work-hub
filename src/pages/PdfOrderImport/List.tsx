@@ -51,6 +51,8 @@ const DOC_LABEL: Record<string, string> = {
 
 export default function PdfOrderImportList() {
   const nav = useNavigate();
+  const { hasRole } = useAuth();
+  const canDelete = hasRole('Super Admin');
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -58,6 +60,29 @@ export default function PdfOrderImportList() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [range, setRange] = useState<'7' | '30' | '90' | 'all'>('30');
   const [onlyWarnings, setOnlyWarnings] = useState(false);
+  const [toDelete, setToDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function performDelete() {
+    if (!toDelete) return;
+    setDeleting(true);
+    if (toDelete.source_storage_path) {
+      await supabase.storage.from('order-imports').remove([toDelete.source_storage_path]);
+    } else {
+      // Pfad fehlt in Liste – nachladen
+      const { data } = await supabase.from('pdf_order_imports').select('source_storage_path').eq('id', toDelete.id).maybeSingle();
+      if (data?.source_storage_path) {
+        await supabase.storage.from('order-imports').remove([data.source_storage_path]);
+      }
+    }
+    const { error } = await supabase.from('pdf_order_imports').delete().eq('id', toDelete.id);
+    setDeleting(false);
+    if (error) { toast.error('Löschen fehlgeschlagen: ' + error.message); return; }
+    toast.success('PDF-Import gelöscht');
+    setToDelete(null);
+    load();
+  }
+
 
   async function load() {
     setLoading(true);
