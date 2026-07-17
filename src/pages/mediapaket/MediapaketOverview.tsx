@@ -300,6 +300,30 @@ export default function MediapaketOverview() {
           <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => exportCsv(filtered.filter(r => selected.has(r.id)))}>
             <Download className="w-3.5 h-3.5 mr-1" /> Auswahl exportieren
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+            disabled={bulkBusy}
+            onClick={async () => {
+              const ids = Array.from(selected);
+              setBulkBusy(true);
+              const t = toast.loading(`Erstelle ${ids.length} PDF(s)…`);
+              try {
+                for (const id of ids) {
+                  await exportMediaPackagePdf(id);
+                  await new Promise(r => setTimeout(r, 250));
+                }
+                toast.success(`${ids.length} PDF(s) heruntergeladen`, { id: t });
+              } catch (err: any) {
+                toast.error(err?.message || 'PDF-Export fehlgeschlagen', { id: t });
+              } finally {
+                setBulkBusy(false);
+              }
+            }}
+          >
+            <FileText className="w-3.5 h-3.5 mr-1" /> PDF Export
+          </Button>
           <div className="ml-auto flex items-center gap-1">
             {bulkBusy && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
             <Button variant="ghost" size="sm" className="h-8 px-2" onClick={() => setSelected(new Set())}><X className="w-4 h-4" /></Button>
