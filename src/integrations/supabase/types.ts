@@ -9811,6 +9811,9 @@ export type Database = {
           payment_reference: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          signature_document_id: string | null
+          signature_signed_at: string | null
+          signature_status: string | null
           status: string
           supplier_iban: string | null
           supplier_id: string | null
@@ -9845,6 +9848,9 @@ export type Database = {
           payment_reference?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          signature_document_id?: string | null
+          signature_signed_at?: string | null
+          signature_status?: string | null
           status?: string
           supplier_iban?: string | null
           supplier_id?: string | null
@@ -9879,6 +9885,9 @@ export type Database = {
           payment_reference?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          signature_document_id?: string | null
+          signature_signed_at?: string | null
+          signature_status?: string | null
           status?: string
           supplier_iban?: string | null
           supplier_id?: string | null
@@ -13361,6 +13370,9 @@ export type Database = {
           metadata: Json | null
           notes: string | null
           serial_number: string | null
+          signature_document_id: string | null
+          signature_signed_at: string | null
+          signature_status: string | null
           signature_url: string | null
           source_device_id: string | null
           source_id: string | null
@@ -13378,6 +13390,9 @@ export type Database = {
           metadata?: Json | null
           notes?: string | null
           serial_number?: string | null
+          signature_document_id?: string | null
+          signature_signed_at?: string | null
+          signature_status?: string | null
           signature_url?: string | null
           source_device_id?: string | null
           source_id?: string | null
@@ -13395,6 +13410,9 @@ export type Database = {
           metadata?: Json | null
           notes?: string | null
           serial_number?: string | null
+          signature_document_id?: string | null
+          signature_signed_at?: string | null
+          signature_status?: string | null
           signature_url?: string | null
           source_device_id?: string | null
           source_id?: string | null
@@ -15279,6 +15297,9 @@ export type Database = {
           portal_pdf_hash: string | null
           portal_published_at: string | null
           portal_version: number
+          signature_document_id: string | null
+          signature_signed_at: string | null
+          signature_status: string | null
           signed_at: string | null
           status: string
           total_gross: number | null
@@ -15311,6 +15332,9 @@ export type Database = {
           portal_pdf_hash?: string | null
           portal_published_at?: string | null
           portal_version?: number
+          signature_document_id?: string | null
+          signature_signed_at?: string | null
+          signature_status?: string | null
           signed_at?: string | null
           status?: string
           total_gross?: number | null
@@ -15343,6 +15367,9 @@ export type Database = {
           portal_pdf_hash?: string | null
           portal_published_at?: string | null
           portal_version?: number
+          signature_document_id?: string | null
+          signature_signed_at?: string | null
+          signature_status?: string | null
           signed_at?: string | null
           status?: string
           total_gross?: number | null
@@ -15771,6 +15798,9 @@ export type Database = {
           raw_data: Json | null
           salesperson_name: string | null
           shipping_address: Json | null
+          signature_document_id: string | null
+          signature_signed_at: string | null
+          signature_status: string | null
           source_system: string
           total_amount: number | null
           updated_at: string
@@ -15808,6 +15838,9 @@ export type Database = {
           raw_data?: Json | null
           salesperson_name?: string | null
           shipping_address?: Json | null
+          signature_document_id?: string | null
+          signature_signed_at?: string | null
+          signature_status?: string | null
           source_system: string
           total_amount?: number | null
           updated_at?: string
@@ -15845,6 +15878,9 @@ export type Database = {
           raw_data?: Json | null
           salesperson_name?: string | null
           shipping_address?: Json | null
+          signature_document_id?: string | null
+          signature_signed_at?: string | null
+          signature_status?: string | null
           source_system?: string
           total_amount?: number | null
           updated_at?: string
@@ -16877,6 +16913,9 @@ export type Database = {
           shipping_note: string | null
           shipping_tracking_number: string | null
           shipping_tracking_url: string | null
+          signature_document_id: string | null
+          signature_signed_at: string | null
+          signature_status: string | null
           ticket_id: string | null
           updated_at: string
           updated_by: string | null
@@ -16931,6 +16970,9 @@ export type Database = {
           shipping_note?: string | null
           shipping_tracking_number?: string | null
           shipping_tracking_url?: string | null
+          signature_document_id?: string | null
+          signature_signed_at?: string | null
+          signature_status?: string | null
           ticket_id?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -16985,6 +17027,9 @@ export type Database = {
           shipping_note?: string | null
           shipping_tracking_number?: string | null
           shipping_tracking_url?: string | null
+          signature_document_id?: string | null
+          signature_signed_at?: string | null
+          signature_status?: string | null
           ticket_id?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -19293,9 +19338,11 @@ export type Database = {
           created_at: string
           details: Json
           document_id: string | null
+          entry_hash: string | null
           event: string
           id: string
           ip_address: string | null
+          prev_hash: string | null
           request_id: string | null
           signer_id: string | null
           user_agent: string | null
@@ -19306,9 +19353,11 @@ export type Database = {
           created_at?: string
           details?: Json
           document_id?: string | null
+          entry_hash?: string | null
           event: string
           id?: string
           ip_address?: string | null
+          prev_hash?: string | null
           request_id?: string | null
           signer_id?: string | null
           user_agent?: string | null
@@ -19319,9 +19368,11 @@ export type Database = {
           created_at?: string
           details?: Json
           document_id?: string | null
+          entry_hash?: string | null
           event?: string
           id?: string
           ip_address?: string | null
+          prev_hash?: string | null
           request_id?: string | null
           signer_id?: string | null
           user_agent?: string | null
@@ -19781,39 +19832,116 @@ export type Database = {
         }
         Relationships: []
       }
-      sig_templates: {
+      sig_template_fields: {
         Row: {
           created_at: string
+          default_value: string | null
+          field_type: string
+          height: number
+          id: string
+          label: string | null
+          page_index: number
+          required: boolean
+          signer_index: number
+          template_id: string
+          width: number
+          x: number
+          y: number
+        }
+        Insert: {
+          created_at?: string
+          default_value?: string | null
+          field_type: string
+          height: number
+          id?: string
+          label?: string | null
+          page_index?: number
+          required?: boolean
+          signer_index?: number
+          template_id: string
+          width: number
+          x: number
+          y: number
+        }
+        Update: {
+          created_at?: string
+          default_value?: string | null
+          field_type?: string
+          height?: number
+          id?: string
+          label?: string | null
+          page_index?: number
+          required?: boolean
+          signer_index?: number
+          template_id?: string
+          width?: number
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sig_template_fields_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sig_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sig_templates: {
+        Row: {
+          category: string | null
+          created_at: string
           created_by: string
+          default_expiry_days: number | null
+          default_message: string | null
           default_signers: Json
           document_type: string
           fields: Json
           id: string
           is_active: boolean
+          last_used_at: string | null
           name: string
+          preview_thumb_url: string | null
+          sample_pdf_path: string | null
           updated_at: string
+          usage_count: number
         }
         Insert: {
+          category?: string | null
           created_at?: string
           created_by: string
+          default_expiry_days?: number | null
+          default_message?: string | null
           default_signers?: Json
           document_type: string
           fields?: Json
           id?: string
           is_active?: boolean
+          last_used_at?: string | null
           name: string
+          preview_thumb_url?: string | null
+          sample_pdf_path?: string | null
           updated_at?: string
+          usage_count?: number
         }
         Update: {
+          category?: string | null
           created_at?: string
           created_by?: string
+          default_expiry_days?: number | null
+          default_message?: string | null
           default_signers?: Json
           document_type?: string
           fields?: Json
           id?: string
           is_active?: boolean
+          last_used_at?: string | null
           name?: string
+          preview_thumb_url?: string | null
+          sample_pdf_path?: string | null
           updated_at?: string
+          usage_count?: number
         }
         Relationships: []
       }
