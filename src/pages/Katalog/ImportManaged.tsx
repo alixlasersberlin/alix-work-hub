@@ -25,7 +25,7 @@ export default function KatalogImportManaged() {
   const [baseId, setBaseId] = useState('');
   const [tableId, setTableId] = useState('');
   const [preview, setPreview] = useState<any[]>([]);
-  const [mapping, setMapping] = useState({ sku: '', name: '', brand: '', model: '', notes: '' });
+  const [mapping, setMapping] = useState({ sku: '', name: '', brand: '', model: '', notes: '', image: '' });
 
   // Website
   const [wUrl, setWUrl] = useState('');
