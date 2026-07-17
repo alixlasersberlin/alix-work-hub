@@ -137,9 +137,9 @@ export default function KatalogImportManaged() {
               </div>
 
               {previewFields.length > 0 && (
-                <div className="grid md:grid-cols-5 gap-3">
-                  {(['sku', 'name', 'brand', 'model', 'notes'] as const).map(k => (
-                    <div key={k}><Label>{k}</Label>
+                <div className="grid md:grid-cols-6 gap-3">
+                  {(['sku', 'name', 'brand', 'model', 'notes', 'image'] as const).map(k => (
+                    <div key={k}><Label>{k === 'image' ? 'Bild (Attachment)' : k}</Label>
                       <Select value={(mapping as any)[k]} onValueChange={v => setMapping({ ...mapping, [k]: v })}>
                         <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                         <SelectContent>{previewFields.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}</SelectContent>
