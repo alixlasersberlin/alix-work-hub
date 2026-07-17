@@ -287,18 +287,18 @@ function RiskTab() {
             const score = Math.min(100, Number(r.health_score || 0) * 8);
             const t = tone(score);
             return (
-              <div key={r.serial_number} className={`rounded border p-3 ${t.cls.split(" ").slice(0, 2).join(" ")}`}>
+              <div key={r.serial_number} className={`rounded-md border p-3 ${t.card}`}>
                 <div className="flex justify-between items-start gap-2">
                   <div>
-                    <div className="font-medium">{r.device_name || "Gerät"} <span className="text-xs text-muted-foreground">· SN {r.serial_number}</span></div>
+                    <div className="font-medium text-foreground">{r.device_name || "Gerät"} <span className="text-xs text-muted-foreground">· SN {r.serial_number}</span></div>
                     <div className="text-xs text-muted-foreground">Kunde: {r.customer_name || "—"}</div>
-                    <div className="text-xs mt-1">
+                    <div className="text-xs mt-1 text-muted-foreground">
                       Reparaturen {r.repair_count} · Tickets {r.ticket_count} · Ersatzteile {r.spare_part_count} · Garantie {r.warranty_cases}
                     </div>
                   </div>
-                  <Badge className={t.cls}>{t.label} · {score.toFixed(0)}</Badge>
+                  <Badge variant="outline" className={t.badge}>{t.label} · {score.toFixed(0)}</Badge>
                 </div>
-                <Progress value={score} className="h-1 mt-2" />
+                <Progress value={score} className={`h-1 mt-2 ${t.bar}`} />
               </div>
             );
           })}
