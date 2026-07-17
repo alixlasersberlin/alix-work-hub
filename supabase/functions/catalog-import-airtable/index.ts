@@ -69,17 +69,52 @@ Deno.serve(async (req) => {
             notes_internal: mapping.notes ? f[mapping.notes] : null,
             status: 'entwurf',
           };
+          let itemId: string | null = null;
           const { data: existing } = await supabase.from('catalog_items').select('id').eq('sku', payload.sku).maybeSingle();
           if (existing) {
             const { error } = await supabase.from('catalog_items').update(payload).eq('id', existing.id);
-            if (error) errors.push(`${payload.sku}: ${error.message}`); else updated++;
+            if (error) { errors.push(`${payload.sku}: ${error.message}`); }
+            else { updated++; itemId = existing.id; }
           } else {
-            const { error } = await supabase.from('catalog_items').insert(payload);
-            if (error) errors.push(`${payload.sku}: ${error.message}`); else inserted++;
+            const { data: ins, error } = await supabase.from('catalog_items').insert(payload).select('id').single();
+            if (error) { errors.push(`${payload.sku}: ${error.message}`); }
+            else { inserted++; itemId = ins.id; }
           }
-        }
-        offset = data.offset;
-      } while (offset);
+
+          // Bild-Attachment übernehmen (nur wenn gemappt & Item ok)
+          if (itemId && mapping.image) {
+            const atts = f[mapping.image];
+            const first = Array.isArray(atts) ? atts[0] : null;
+            if (first?.url) {
+              try {
+                const imgRes = await fetch(first.url);
+                if (imgRes.ok) {
+                  const buf = new Uint8Array(await imgRes.arrayBuffer());
+                  const ct = imgRes.headers.get('content-type') || first.type || 'image/jpeg';
+                  const ext = (first.filename?.split('.').pop() || ct.split('/')[1] || 'jpg').toLowerCase();
+                  const path = `${itemId}/airtable-${Date.now()}.${ext}`;
+                  const { error: upErr } = await supabase.storage.from('catalog-media').upload(path, buf, {
+                    contentType: ct, upsert: true,
+                  });
+                  if (!upErr) {
+                    // Wenn schon ein Primary existiert, nur ergänzen; sonst als Primary
+                    const { data: existingImg } = await supabase.from('catalog_item_images')
+                      .select('id').eq('item_id', itemId).eq('is_primary', true).maybeSingle();
+                    await supabase.from('catalog_item_images').insert({
+                      item_id: itemId, storage_path: path,
+                      file_name: first.filename ?? `airtable.${ext}`,
+                      file_type: ct, file_size: buf.byteLength,
+                      is_primary: !existingImg, is_approved: true,
+                    });
+                  } else {
+                    errors.push(`${payload.sku} (Bild): ${upErr.message}`);
+                  }
+                }
+              } catch (e: any) {
+                errors.push(`${payload.sku} (Bild): ${e.message}`);
+              }
+            }
+          }
 
       await supabase.from('catalog_import_jobs_v2').update({
         status: errors.length ? 'partial' : 'success',
