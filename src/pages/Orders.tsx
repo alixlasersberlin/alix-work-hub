@@ -55,6 +55,7 @@ export default function Orders() {
   const [regionFilter, setRegionFilter] = useState<'all' | 'de' | 'at'>(
     atOnly ? 'at' : (initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all')
   );
+  const [depositFilter, setDepositFilter] = useState<'all' | 'partial'>('all');
   const [sortField, setSortField] = useState<SortField>('order_date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
