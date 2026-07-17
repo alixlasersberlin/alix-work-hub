@@ -271,6 +271,8 @@ const AlixSignPdfDownload = lazy(() => import("./pages/AlixSignPdfDownload"));
 const DigitaleSignaturen = lazy(() => import("./pages/DigitaleSignaturen"));
 const DigitaleSignaturenAdmin = lazy(() => import("./pages/DigitaleSignaturenAdmin"));
 const DigitaleSignaturNeu = lazy(() => import("./pages/DigitaleSignaturNeu"));
+const DigitaleSignaturenCockpit = lazy(() => import("./pages/DigitaleSignaturenCockpit"));
+const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk"));
 const SignDocPublic = lazy(() => import("./pages/SignDocPublic"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
