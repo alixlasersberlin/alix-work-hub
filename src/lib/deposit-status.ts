@@ -22,6 +22,7 @@ export type OrderDepositInput = {
   deposit_amount?: number | string | null;
   deposit_additional?: number | string | null;
   deposit_ok?: boolean | null;
+  raw_data?: any;
 };
 
 export interface DepositStatus {
@@ -55,8 +56,13 @@ export function computeDepositStatus(
   // als Summe gesetzt ist, als offener Zusatzbetrag interpretieren.
   const legacyAdditional = addRows.length === 0 ? n(order?.deposit_additional) : 0;
 
+  // Vereinbarte Anzahlung aus dem Angebot (raw_data.payment.down).
+  // Ist diese höher als der aktuell erfasste Soll-Betrag, gilt die Differenz als offen.
+  const offerDown = n(order?.raw_data?.payment?.down);
+
   const depositOk = !!order?.deposit_ok;
-  const expected = main + addTotal + legacyAdditional;
+  const bookedExpected = main + addTotal + legacyAdditional;
+  const expected = Math.max(bookedExpected, offerDown);
   const paid = (depositOk ? main : 0) + addPaid;
   const open = Math.max(0, expected - paid);
 
