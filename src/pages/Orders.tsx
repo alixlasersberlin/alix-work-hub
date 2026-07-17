@@ -44,6 +44,17 @@ type PageSize = 20 | 30 | 50 | 'all';
 const QUICK_LOAD_LIMIT = 50;
 const FULL_LOAD_LIMIT = 500;
 
+const ORDER_SELECT = `
+    id, customer_id, external_order_id, order_number, source_system, order_status, invoiced_flag,
+    currency, total_amount, order_date, expected_shipment_date, salesperson_name,
+    internal_number, lawyer_reason, deposit_ok, deposit_ok_by, deposit_ok_at,
+    deposit_amount, deposit_additional, deposit_booking_date, is_vip,
+    finance_total_amount, finance_deposit_amount, finance_remaining_amount,
+    finance_open_amount, finance_paid_amount, finance_overdue_amount,
+    finance_payment_status, case_number, billing_address, shipping_address,
+    customers(company_name, contact_name, shipping_address, billing_address, is_vip)
+  `;
+
 export default function Orders() {
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
