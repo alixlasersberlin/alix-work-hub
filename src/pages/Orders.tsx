@@ -208,6 +208,44 @@ export default function Orders() {
   const canEditItems = hasRole('Super Admin');
   const canExportAll = hasRole('Super Admin') || (user?.email?.toLowerCase() === 'jh@alix-operation.de');
 
+  // ------- Spalten-Anpassung pro Nutzer (localStorage) -------
+  const colStorageKey = `orders.columns.${user?.id || 'anon'}`;
+  const [columnPrefs, setColumnPrefs] = useState<{ order: ColumnId[]; hidden: ColumnId[] }>(() => {
+    try {
+      const raw = localStorage.getItem(`orders.columns.${(typeof window !== 'undefined' ? (JSON.parse(localStorage.getItem('sb-userid') || '""') || '') : '')}`);
+      // ignore stale legacy; we'll load in effect
+    } catch {}
+    return { order: DEFAULT_COLUMN_ORDER, hidden: [] };
+  });
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(colStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.order) && Array.isArray(parsed.hidden)) {
+          setColumnPrefs({ order: parsed.order, hidden: parsed.hidden });
+        }
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colStorageKey]);
+  const updateColumnPrefs = (next: { order: string[]; hidden: string[] }) => {
+    const typed = {
+      order: next.order.filter((id): id is ColumnId => DEFAULT_COLUMN_ORDER.includes(id as ColumnId)) as ColumnId[],
+      hidden: next.hidden.filter((id): id is ColumnId => DEFAULT_COLUMN_ORDER.includes(id as ColumnId)) as ColumnId[],
+    };
+    setColumnPrefs(typed);
+    try { localStorage.setItem(colStorageKey, JSON.stringify(typed)); } catch {}
+  };
+  const resetColumnPrefs = () => {
+    setColumnPrefs({ order: DEFAULT_COLUMN_ORDER, hidden: [] });
+    try { localStorage.removeItem(colStorageKey); } catch {}
+  };
+  const visibleColumns = columnPrefs.order
+    .filter(id => DEFAULT_COLUMN_ORDER.includes(id))
+    .concat(DEFAULT_COLUMN_ORDER.filter(id => !columnPrefs.order.includes(id)))
+    .filter(id => !columnPrefs.hidden.includes(id));
+
   function escCsv(v: any) {
     const s = (v ?? '').toString().replace(/"/g, '""');
     return /[";\n]/.test(s) ? `"${s}"` : s;
