@@ -568,6 +568,7 @@ const EmpDashboard = lazy(() => import("./pages/EMP/Dashboard"));
 const EmpNotifications = lazy(() => import("./pages/EMP/Notifications"));
 const EmpSync = lazy(() => import("./pages/EMP/Sync"));
 const EmpSettingsPage = lazy(() => import("./pages/EMP/Settings"));
+const EmpSignaturen = lazy(() => import("./pages/EMP/Signaturen"));
 
 // ABIC – Enterprise Analytics & Business Intelligence Center
 const AbicLayout = lazy(() => import("./components/abic/AbicLayout"));
@@ -1490,6 +1491,7 @@ function AppRoutes() {
           <Route path="benachrichtigungen" element={<EmpNotifications />} />
           <Route path="sync" element={<EmpSync />} />
           <Route path="einstellungen" element={<EmpSettingsPage />} />
+          <Route path="signaturen" element={<EmpSignaturen />} />
         </Route>
 
         {/* ECP – Enterprise Customer Portal (rollenbasiert: Kunde, Händler, Servicepartner, ...) */}
