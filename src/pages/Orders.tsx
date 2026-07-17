@@ -55,6 +55,7 @@ export default function Orders() {
   const [regionFilter, setRegionFilter] = useState<'all' | 'de' | 'at'>(
     atOnly ? 'at' : (initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all')
   );
+  const [depositFilter, setDepositFilter] = useState<'all' | 'partial'>('all');
   const [sortField, setSortField] = useState<SortField>('order_date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
@@ -405,7 +406,16 @@ export default function Orders() {
     const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
     const isAt = o.source_system === 'zoho_eu_2';
     const matchRegion = regionFilter === 'all' || (regionFilter === 'at' ? isAt : !isAt);
-    return matchSearch && matchStatus && matchModel && matchRegion && notExcluded;
+    let matchDeposit = true;
+    if (depositFilter === 'partial') {
+      if (Number(o.deposit_amount) > 0) {
+        const ds = computeDepositStatus(o, o._additionalDeposits);
+        matchDeposit = ds.isPartial;
+      } else {
+        matchDeposit = false;
+      }
+    }
+    return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && notExcluded;
   });
 
   // VIP-Kunden und VIP-Aufträge immer an Position 1
@@ -414,7 +424,7 @@ export default function Orders() {
   const totalPages = pageSize === 'all' ? 1 : Math.ceil(sorted.length / pageSize);
   const paged = pageSize === 'all' ? sorted : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, pageSize]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, depositFilter, pageSize]);
 
   // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
   useEffect(() => {
@@ -546,6 +556,15 @@ export default function Orders() {
                 </SelectContent>
               </Select>
             )}
+            <Select value={depositFilter} onValueChange={(v) => setDepositFilter(v as 'all' | 'partial')}>
+              <SelectTrigger className="w-56 bg-secondary border-border">
+                <SelectValue placeholder="Anzahlung filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Anzahlungen</SelectItem>
+                <SelectItem value="partial">⚠ Offene Teilzahlung</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={String(pageSize)} onValueChange={v => setPageSize(v === 'all' ? 'all' : Number(v) as 20 | 30 | 50)}>
               <SelectTrigger className="w-36 bg-secondary border-border">
                 <SelectValue />
