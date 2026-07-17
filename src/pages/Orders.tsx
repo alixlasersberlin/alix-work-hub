@@ -556,6 +556,15 @@ export default function Orders() {
                 </SelectContent>
               </Select>
             )}
+            <Select value={depositFilter} onValueChange={(v) => setDepositFilter(v as 'all' | 'partial')}>
+              <SelectTrigger className="w-56 bg-secondary border-border">
+                <SelectValue placeholder="Anzahlung filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Anzahlungen</SelectItem>
+                <SelectItem value="partial">⚠ Offene Teilzahlung</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={String(pageSize)} onValueChange={v => setPageSize(v === 'all' ? 'all' : Number(v) as 20 | 30 | 50)}>
               <SelectTrigger className="w-36 bg-secondary border-border">
                 <SelectValue />
