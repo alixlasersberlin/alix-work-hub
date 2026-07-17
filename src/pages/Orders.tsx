@@ -979,7 +979,7 @@ export default function Orders() {
                           );
                           if (colId === 'total_amount') return (
                             <td key={colId} className="px-4 py-3 text-foreground">
-                              {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' }) : '—'}
+                              {o.total_amount != null ? Number(o.total_amount).toLocaleString('de-DE', { style: 'currency', currency: cur(o.currency) }) : '—'}
                             </td>
                           );
                           if (colId === 'status') return (
@@ -1023,10 +1023,10 @@ export default function Orders() {
                                   <div className="flex flex-col gap-0.5">
                                     <span className="inline-flex items-center gap-1.5 font-medium">
                                       <span className="text-foreground">
-                                        {Number(o.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
+                                        {Number(o.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: cur(o.currency) })}
                                       </span>
                                       {ds.isPartial ? (
-                                        <span title={`Teilzahlung – noch offen: ${ds.open.toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}`} className="inline-flex">
+                                        <span title={`Teilzahlung – noch offen: ${ds.open.toLocaleString('de-DE', { style: 'currency', currency: cur(o.currency) })}`} className="inline-flex">
                                           <AlertCircle className="w-4 h-4 text-orange-500" aria-label="Teilzahlung – Restbetrag offen" />
                                         </span>
                                       ) : o.deposit_ok ? (
@@ -1037,7 +1037,7 @@ export default function Orders() {
                                     </span>
                                     {ds.isPartial && (
                                       <span className="text-[10px] font-medium text-orange-400" title="Noch offener Restbetrag der Anzahlung">
-                                        Rest offen: {ds.open.toLocaleString('de-DE', { style: 'currency', currency: o.currency || 'EUR' })}
+                                        Rest offen: {ds.open.toLocaleString('de-DE', { style: 'currency', currency: cur(o.currency) })}
                                       </span>
                                     )}
                                     {o.deposit_ok && o._azInvoiceNumber && (
