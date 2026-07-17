@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -60,7 +60,18 @@ export default function NewsAnnouncementDialog() {
     setItems(pending);
     setIndex(0);
     setAck(false);
-    setOpen(pending.length > 0);
+    if (pending.length === 0) { setOpen(false); return; }
+    // Warten bis kein anderer modaler Dialog (z.B. WelcomeDialog) mehr offen ist,
+    // damit sich die Dialoge nicht stapeln und Pointer-Events blockieren.
+    const tryOpen = () => {
+      const others = document.querySelectorAll<HTMLElement>('[role="dialog"][data-state="open"]');
+      if (others.length === 0) {
+        setOpen(true);
+      } else {
+        window.setTimeout(tryOpen, 400);
+      }
+    };
+    window.setTimeout(tryOpen, 500);
   }, [user?.id]);
 
   useEffect(() => { void load(); }, [load]);
@@ -129,6 +140,7 @@ export default function NewsAnnouncementDialog() {
             </Badge>
           </div>
           <DialogTitle className="text-2xl leading-tight">{current.title}</DialogTitle>
+          <DialogDescription className="sr-only">Wichtige Mitteilung – bitte lesen und bestätigen.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
