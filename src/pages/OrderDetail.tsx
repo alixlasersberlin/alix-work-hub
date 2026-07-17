@@ -620,6 +620,15 @@ export default function OrderDetail() {
           {canWrite && (
             <CreateInvoiceDialog order={order} customer={customer} items={items} />
           )}
+          {canWrite && (
+            <SignatureRequestButton
+              entityType="order"
+              entityId={order.id}
+              documentType="auftrag"
+              title={`Auftrag ${primaryDisplayNumber}`}
+              customerId={(order as any).customer_id}
+            />
+          )}
           {/* Headless mounts für Aktionen aus den Menüs */}
           <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
           <MietkaufDialog ref={mietkaufRef} order={order ? { ...order, items } : order} hideTrigger />
