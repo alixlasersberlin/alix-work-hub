@@ -273,6 +273,8 @@ const DigitaleSignaturenAdmin = lazy(() => import("./pages/DigitaleSignaturenAdm
 const DigitaleSignaturNeu = lazy(() => import("./pages/DigitaleSignaturNeu"));
 const DigitaleSignaturenCockpit = lazy(() => import("./pages/DigitaleSignaturenCockpit"));
 const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk"));
+const DigitaleSignaturenTemplateEditor = lazy(() => import("./pages/DigitaleSignaturenTemplateEditor"));
+const CustomerPortalSignaturen = lazy(() => import("./pages/CustomerPortal/Signaturen"));
 const SignDocPublic = lazy(() => import("./pages/SignDocPublic"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
