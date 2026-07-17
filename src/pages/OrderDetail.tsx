@@ -418,6 +418,14 @@ export default function OrderDetail() {
   const canSeeAtPurchase = isAtOrder && (hasRole('Super Admin') || hasRole('Österreich'));
   const canSeeAtApproval = isAtOrder && (hasRole('Super Admin') || hasRole('Admin') || hasRole('Österreich'));
 
+  const depositStatusForBadge = computeDepositStatus(
+    { deposit_amount: depositAmount, deposit_additional: depositAdditional, deposit_ok: depositOk },
+    additionalDeposits,
+  );
+  const depositTabBadge = depositStatusForBadge.isPartial
+    ? '!'
+    : (order?.deposit_ok ? '✓' : ((Number(order?.deposit_amount) || 0) > 0 ? undefined : undefined));
+
   const overviewTab = { key: 'overview', label: 'Übersicht', icon: ClipboardList };
   const tabMenus: Array<{ name: string; icon: any; tabs: any[] }> = [
     {
