@@ -36,6 +36,7 @@ import { isMfaMandatory } from "@/lib/mfa-required";
 
 // Lazy: alle Hauptseiten → Route-basiertes Code-Splitting
 const SetPassword = lazy(() => import("./pages/SetPassword"));
+const AlixSmartRegister = lazy(() => import("./pages/AlixSmartRegister"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Startseite = lazy(() => import("./pages/Startseite"));
 const VerkaufDashboard = lazy(() => import("./pages/VerkaufDashboard"));
