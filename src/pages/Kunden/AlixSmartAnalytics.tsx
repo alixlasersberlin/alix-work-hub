@@ -222,9 +222,16 @@ export default function AlixSmartAnalytics() {
                 <SelectItem value="365">Letzte 12 Monate</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" onClick={exportReport}>
-              <Download className="h-4 w-4 mr-2" /> Bericht (CSV)
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" /> Bericht</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => exportReport("xlsx")}><FileSpreadsheet className="h-4 w-4 mr-2" /> Excel (.xlsx)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportReport("csv")}><FileText className="h-4 w-4 mr-2" /> CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportReport("pdf")}><FileText className="h-4 w-4 mr-2" /> PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="outline" size="sm" onClick={load} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Aktualisieren
             </Button>
