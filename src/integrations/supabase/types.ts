@@ -25057,6 +25057,10 @@ export type Database = {
           relationships_created: number
         }[]
       }
+      alixsmart_emit: {
+        Args: { _data: Json; _event: string }
+        Returns: undefined
+      }
       alixsmart_norm_email: { Args: { e: string }; Returns: string }
       alixsmart_norm_phone: { Args: { p: string }; Returns: string }
       apply_role_change_request: {
