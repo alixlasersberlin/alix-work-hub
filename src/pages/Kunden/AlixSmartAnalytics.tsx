@@ -3,12 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/infinity/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RefreshCw, Download, TrendingUp, Users, Bell, Target } from "lucide-react";
+import { RefreshCw, Download, TrendingUp, Users, Bell, Target, FileSpreadsheet, FileText } from "lucide-react";
 import { toast } from "sonner";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   BarChart, Bar, PieChart, Pie, Cell,
 } from "recharts";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type CustomerLink = {
   id: string;
