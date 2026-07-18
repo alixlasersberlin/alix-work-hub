@@ -113,6 +113,12 @@ export default function AlixSmartStatus() {
       cell: (r) => <StatusBadge kind={STATUS_MAP[r.match_status]} label={STATUS_LABEL[r.match_status]} /> },
     { key: "last_reminder_at", header: "Letzte Erinnerung", sortable: true,
       cell: (r) => r.last_reminder_at ? new Date(r.last_reminder_at).toLocaleDateString("de-DE") : "—" },
+    { key: "customer_id", header: "", width: "60px",
+      cell: (r) => (
+        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); checkOne(r.customer_id); }} title="Jetzt prüfen">
+          <Search className="h-4 w-4" />
+        </Button>
+      ) },
   ];
 
   return (
