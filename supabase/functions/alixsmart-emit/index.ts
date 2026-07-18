@@ -66,16 +66,17 @@ Deno.serve(async (req) => {
     respText = (e as Error).message;
   }
 
+  const ok = status >= 200 && status < 300;
   await supabase.from("ticket_outbound_sync_logs").insert({
     external_ticket_id: data?.external_ticket_id ?? null,
     direction: "outbound",
     action: event,
-    status: status >= 200 && status < 300 ? "success" : "failed",
+    status: ok ? "success" : "failed",
     response_code: status,
     payload: envelope,
-    response_body: respText,
-    duration_ms: Date.now() - started,
+    error_message: ok ? null : respText,
   }).then(() => {}, () => {}); // best-effort log
+  void started;
 
   return json(status >= 200 && status < 300 ? 200 : 502, {
     ok: status >= 200 && status < 300,
