@@ -106,7 +106,7 @@ export default function AlixSmartStatus() {
   async function loadExportData() {
     const { data: devices, error } = await supabase
       .from("v_alixsmart_customer_devices" as any)
-      .select("customer_id, serial_number, device_name, device_model")
+      .select("customer_id, serial_number, device_model, device_status")
       .limit(10000);
     if (error) throw error;
     const { data: links } = await supabase
@@ -116,7 +116,7 @@ export default function AlixSmartStatus() {
       (links || []).map((l: any) => [`${l.alixwork_customer_id}::${l.serial_number}`, l])
     );
     const custMap = new Map(rows.map(r => [r.customer_id, r]));
-    const header = ["Kd-Nr.", "Firma", "E-Mail", "Kunden-Status", "Seriennummer", "Modell", "Gerätename", "Geräte-Status", "Registriert am", "AlixSmart Device-ID"];
+    const header = ["Kd-Nr.", "Firma", "E-Mail", "Kunden-Status", "Seriennummer", "Modell", "Geräte-Status (AlixWork)", "Registrierung (AlixSmart)", "Registriert am", "AlixSmart Device-ID"];
     const dataRows = ((devices as any[]) || []).map((d) => {
       const c = custMap.get(d.customer_id);
       const l: any = linkMap.get(`${d.customer_id}::${d.serial_number}`);
@@ -127,7 +127,7 @@ export default function AlixSmartStatus() {
         c?.match_status ? STATUS_LABEL[c.match_status] : "",
         d.serial_number || "",
         d.device_model || "",
-        d.device_name || "",
+        d.device_status || "",
         l?.registration_status ? ({ registered: "Registriert", unregistered: "Nicht registriert", possible: "Möglich" }[l.registration_status] || l.registration_status) : "Nicht registriert",
         l?.registered_at ? new Date(l.registered_at).toLocaleDateString("de-DE") : "",
         l?.alixsmart_device_id || "",
