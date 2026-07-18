@@ -24,6 +24,7 @@ type Row = {
   match_score: number | null;
   last_reminder_at: string | null;
   registered_at: string | null;
+  alixsmart_user_id?: string | null;
 };
 
 const STATUS_MAP: Record<Row["match_status"], StatusKind> = {
