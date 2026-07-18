@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
                   kind: "registration",
                   ctaUrl: link,
                   ctaLabel: "Jetzt registrieren",
-                  customMessage: customText ?? bodyText,
+                  ...(customText ? { customMessage: customText.replaceAll("{{link}}", link).replaceAll("{{name}}", name) } : {}),
                 },
               }),
             });
