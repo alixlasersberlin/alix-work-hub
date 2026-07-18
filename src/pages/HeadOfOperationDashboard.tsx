@@ -150,8 +150,8 @@ export default function HeadOfOperationDashboard() {
 
         if (!alive) return;
 
-        const revenueDe = (revenueDeR.data ?? []).reduce((s: number, r: any) => s + Number(r.total_amount ?? 0), 0);
-        const revenueAt = (revenueAtR.data ?? []).reduce((s: number, r: any) => s + Number(r.total_amount ?? 0), 0);
+        const revenueDe = Number(_mand.revenue_de ?? 0);
+        const revenueAt = Number(_mand.revenue_at ?? 0);
         const stockOnHand = (stockR.data ?? []).reduce((s: number, r: any) => s + Number(r.stock_on_hand ?? 0), 0);
         const financeAmountOpen = (financeListR.data ?? []).reduce(
           (s: number, r: any) => s + (Number(r.amount_due ?? 0) - Number(r.amount_paid ?? 0)), 0,
@@ -161,12 +161,12 @@ export default function HeadOfOperationDashboard() {
           usersTotal: usersTotalR.count ?? 0,
           usersActive: usersActiveR.count ?? 0,
           sessionsActive: sessionsR.count ?? 0,
-          customersTotal: customersR.count ?? 0,
-          customersDe: customersDeR.count ?? 0,
-          customersAt: customersAtR.count ?? 0,
-          ordersTotal: ordersR.count ?? 0,
-          ordersDe: ordersDeR.count ?? 0,
-          ordersAt: ordersAtR.count ?? 0,
+          customersTotal: Number(_mand.customers_total ?? 0),
+          customersDe: Number(_mand.customers_de ?? 0),
+          customersAt: Number(_mand.customers_at ?? 0),
+          ordersTotal: Number(_mand.orders_total ?? 0),
+          ordersDe: Number(_mand.orders_de ?? 0),
+          ordersAt: Number(_mand.orders_at ?? 0),
           ordersOpen: ordersOpenR.count ?? 0,
           ordersOverdue: ordersOverdueR.count ?? 0,
           revenueDe, revenueAt,
