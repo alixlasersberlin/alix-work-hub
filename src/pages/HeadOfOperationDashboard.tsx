@@ -203,8 +203,9 @@ export default function HeadOfOperationDashboard() {
   const groups: { title: string; icon: any; items: { label: string; value: any; hint?: string; onClick?: () => void; tone?: 'default' | 'warn' | 'danger' | 'success' }[] }[] = [
     {
       title: 'Mandanten & Umsatz', icon: Globe, items: [
-        { label: 'Umsatz Alix Deutschland 🇩🇪', value: fmtEur(c.revenueDe), tone: 'success' },
-        { label: 'Umsatz Alix Austria 🇦🇹', value: fmtEur(c.revenueAt), tone: 'success' },
+        { label: 'Umsatz Alix Deutschland 🇩🇪', value: fmtEurBase(c.revenueDe), tone: 'success', hint: 'Gesamtumsatz aller Aufträge' },
+        { label: 'Umsatz Alix Austria 🇦🇹', value: fmtEurBase(c.revenueAt), tone: 'success', hint: 'Gesamtumsatz aller Aufträge' },
+        { label: 'Umsatz Gesamt (DE + AT)', value: fmtEurBase(c.revenueDe + c.revenueAt), tone: 'success' },
         { label: 'Aufträge -DE', value: c.ordersDe, onClick: () => navigate('/auftraege') },
         { label: 'Aufträge -AT', value: c.ordersAt, onClick: () => navigate('/auftraege-at') },
         { label: 'Kunden -DE', value: c.customersDe },
