@@ -86,16 +86,16 @@ export default function AlixSmartDeepSync() {
     toast.success("Webhook-URL kopiert");
   };
 
-  const stateCols: InfinityColumn<SyncState>[] = [
-    { key: "entity", header: "Entität", cell: (r) => <span className="font-mono">{r.entity}</span> },
-    { key: "last_status", header: "Status", cell: (r) => (
+  const stateCols: InfinityColumn<any>[] = [
+    { key: "entity", header: "Entität", cell: (r: SyncState) => <span className="font-mono">{r.entity}</span> },
+    { key: "last_status", header: "Status", cell: (r: SyncState) => (
       <StatusBadge kind={(r.last_status === "success" ? "done" : r.last_status === "failed" ? "error" : "pending") as StatusKind}
         label={r.last_status ?? "—"} />
     )},
-    { key: "last_synced_at", header: "Letzter Sync", cell: (r) => r.last_synced_at ? new Date(r.last_synced_at).toLocaleString("de-DE") : "—" },
-    { key: "items_processed", header: "Items", cell: (r) => r.items_processed ?? 0 },
-    { key: "last_error", header: "Fehler", cell: (r) => <span className="text-xs text-red-400">{r.last_error ?? "—"}</span> },
-    { key: "actions", header: "", cell: (r) => (
+    { key: "last_synced_at", header: "Letzter Sync", cell: (r: SyncState) => r.last_synced_at ? new Date(r.last_synced_at).toLocaleString("de-DE") : "—" },
+    { key: "items_processed", header: "Items", cell: (r: SyncState) => r.items_processed ?? 0 },
+    { key: "last_error", header: "Fehler", cell: (r: SyncState) => <span className="text-xs text-red-400">{r.last_error ?? "—"}</span> },
+    { key: "entity" as any, header: "", cell: (r: SyncState) => (
       <Button size="sm" variant="outline" disabled={running !== null}
         onClick={() => runSync(r.entity)}>
         <Play className="w-3 h-3 mr-1" /> Sync
@@ -103,11 +103,11 @@ export default function AlixSmartDeepSync() {
     )},
   ];
 
-  const runCols: InfinityColumn<SyncRun>[] = [
-    { key: "started_at", header: "Zeit", cell: (r) => new Date(r.started_at).toLocaleString("de-DE") },
+  const runCols: InfinityColumn<any>[] = [
+    { key: "started_at", header: "Zeit", cell: (r: SyncRun) => new Date(r.started_at).toLocaleString("de-DE") },
     { key: "entity", header: "Entität" },
     { key: "trigger", header: "Trigger" },
-    { key: "status", header: "Status", cell: (r) => (
+    { key: "status", header: "Status", cell: (r: SyncRun) => (
       <StatusBadge kind={(r.status === "success" ? "done" : r.status === "failed" ? "error" : "pending") as StatusKind} label={r.status} />
     )},
     { key: "items_processed", header: "Verarb." },
@@ -116,15 +116,15 @@ export default function AlixSmartDeepSync() {
     { key: "items_failed", header: "Fehler" },
   ];
 
-  const delCols: InfinityColumn<Delivery>[] = [
-    { key: "received_at", header: "Empfangen", cell: (r) => new Date(r.received_at).toLocaleString("de-DE") },
+  const delCols: InfinityColumn<any>[] = [
+    { key: "received_at", header: "Empfangen", cell: (r: Delivery) => new Date(r.received_at).toLocaleString("de-DE") },
     { key: "event_type", header: "Typ" },
-    { key: "signature_valid", header: "Signatur", cell: (r) => (
+    { key: "signature_valid", header: "Signatur", cell: (r: Delivery) => (
       <StatusBadge kind={r.signature_valid ? "done" : "error"} label={r.signature_valid ? "gültig" : "ungültig"} />
     )},
     { key: "status", header: "Status" },
-    { key: "external_id", header: "Ext. ID", cell: (r) => <span className="font-mono text-xs">{r.external_id ?? "—"}</span> },
-    { key: "error", header: "Fehler", cell: (r) => <span className="text-xs text-red-400">{r.error ?? "—"}</span> },
+    { key: "external_id", header: "Ext. ID", cell: (r: Delivery) => <span className="font-mono text-xs">{r.external_id ?? "—"}</span> },
+    { key: "error", header: "Fehler", cell: (r: Delivery) => <span className="text-xs text-red-400">{r.error ?? "—"}</span> },
   ];
 
   return (
@@ -159,17 +159,17 @@ export default function AlixSmartDeepSync() {
 
       <Card>
         <CardHeader><CardTitle>Sync-Status pro Entität</CardTitle></CardHeader>
-        <CardContent><InfinityTable columns={stateCols} rows={states} getRowKey={(r) => r.entity} /></CardContent>
+        <CardContent><InfinityTable columns={stateCols} rows={states} rowKey={(r) => r.entity} /></CardContent>
       </Card>
 
       <Card>
         <CardHeader><CardTitle>Letzte Sync-Läufe</CardTitle></CardHeader>
-        <CardContent><InfinityTable columns={runCols} rows={runs} getRowKey={(r) => r.id} /></CardContent>
+        <CardContent><InfinityTable columns={runCols} rows={runs} rowKey={(r) => r.id} /></CardContent>
       </Card>
 
       <Card>
         <CardHeader><CardTitle>Webhook-Deliveries</CardTitle></CardHeader>
-        <CardContent><InfinityTable columns={delCols} rows={deliveries} getRowKey={(r) => r.id} /></CardContent>
+        <CardContent><InfinityTable columns={delCols} rows={deliveries} rowKey={(r) => r.id} /></CardContent>
       </Card>
     </div>
   );
