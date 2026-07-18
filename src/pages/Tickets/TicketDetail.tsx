@@ -122,6 +122,7 @@ export default function TicketDetail() {
   const [internalNoteDraft, setInternalNoteDraft] = useState('');
   const [savingInternalNote, setSavingInternalNote] = useState(false);
   const [handoverOpen, setHandoverOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'messages' | 'attachments' | 'history'>('messages');
 
   async function loadLinkedRepair(repairId: string | null) {
     if (!repairId) { setLinkedRepair(null); return; }
@@ -646,13 +647,17 @@ export default function TicketDetail() {
             size="sm"
             variant="outline"
             onClick={() => {
-              const el = document.getElementById('ticket-new-message');
-              el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              setTimeout(() => (el as HTMLTextAreaElement | null)?.focus(), 350);
+              setActiveTab('messages');
+              setTimeout(() => {
+                const el = document.getElementById('ticket-new-message');
+                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                (el as HTMLTextAreaElement | null)?.focus();
+              }, 100);
             }}
           >
             <MessageSquare className="w-4 h-4 mr-1" /> Kommentar
           </Button>
+
 
           <label className="inline-flex">
             <input
@@ -716,7 +721,7 @@ export default function TicketDetail() {
           </div>
 
           {/* Tabs */}
-          <Tabs defaultValue="messages" className="w-full">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
             <TabsList>
               <TabsTrigger value="messages"><MessageSquare className="w-4 h-4 mr-1" /> Nachrichten ({messages.length})</TabsTrigger>
               <TabsTrigger value="attachments"><Paperclip className="w-4 h-4 mr-1" /> Anhänge ({attachments.length})</TabsTrigger>
