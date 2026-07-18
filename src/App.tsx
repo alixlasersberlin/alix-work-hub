@@ -264,6 +264,7 @@ const AlixSmartKonfliktaufloesung = lazy(() => import("./pages/AlixSmartKonflikt
 const AlixSmartStatus = lazy(() => import("./pages/Kunden/AlixSmartStatus"));
 const AlixSmartAnalytics = lazy(() => import("./pages/Kunden/AlixSmartAnalytics"));
 const AlixSmartSettings = lazy(() => import("./pages/Admin/AlixSmartSettings"));
+const AlixSmartDeepSync = lazy(() => import("./pages/Kunden/AlixSmartDeepSync"));
 const Geraeteakte = lazy(() => import("./pages/Geraeteakte"));
 const GeraeteLebenslauf = lazy(() => import("./pages/GeraeteLebenslauf"));
 const Wartungscenter = lazy(() => import("./pages/Wartungscenter"));
@@ -996,6 +997,7 @@ function AppRoutes() {
           <Route path="/kunden/alixsmart-status" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Vertrieb','Kundenservice']}><AlixSmartStatus /></ProtectedRoute>} />
           <Route path="/kunden/alixsmart-analytics" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><AlixSmartAnalytics /></ProtectedRoute>} />
           <Route path="/admin/alixsmart-settings" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartSettings /></ProtectedRoute>} />
+          <Route path="/admin/alixsmart-deepsync" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartDeepSync /></ProtectedRoute>} />
           <Route path="/portal-admin" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><PortalAdmin /></ProtectedRoute>} />
           <Route path="/portal-admin/freigaben" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><PortalReleases /></ProtectedRoute>} />
 
