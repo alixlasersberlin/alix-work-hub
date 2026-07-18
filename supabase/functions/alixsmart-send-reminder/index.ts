@@ -16,7 +16,7 @@ const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
 const ALLOWED = new Set(["Super Admin", "Admin", "Vertrieb", "Kundenservice"]);
-const INVITE_BASE = Deno.env.get("ALIXSMART_INVITE_BASE_URL") ?? "https://app.alixsmart.de/register";
+const INVITE_BASE = Deno.env.get("ALIXSMART_INVITE_BASE_URL") ?? "https://app.alixwork.de/alixsmart/register";
 
 const json = (data: unknown, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
