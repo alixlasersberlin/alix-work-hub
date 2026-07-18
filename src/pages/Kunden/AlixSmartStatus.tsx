@@ -166,11 +166,16 @@ export default function AlixSmartStatus() {
       cell: (r) => <StatusBadge kind={STATUS_MAP[r.match_status]} label={STATUS_LABEL[r.match_status]} /> },
     { key: "last_reminder_at", header: "Letzte Erinnerung", sortable: true,
       cell: (r) => r.last_reminder_at ? new Date(r.last_reminder_at).toLocaleDateString("de-DE") : "—" },
-    { key: "customer_id", header: "", width: "60px",
+    { key: "customer_id", header: "", width: "110px",
       cell: (r) => (
-        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); checkOne(r.customer_id); }} title="Jetzt prüfen">
-          <Search className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-1 justify-end">
+          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); checkOne(r.customer_id); }} title="Jetzt prüfen">
+            <Search className="h-4 w-4" />
+          </Button>
+          <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setDetailFor(r); }} title="Geräte & manuelle Zuordnung">
+            <Settings2 className="h-4 w-4" />
+          </Button>
+        </div>
       ) },
   ];
 
