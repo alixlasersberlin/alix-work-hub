@@ -3,12 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/infinity/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { RefreshCw, Download, TrendingUp, Users, Bell, Target } from "lucide-react";
+import { RefreshCw, Download, TrendingUp, Users, Bell, Target, FileSpreadsheet, FileText } from "lucide-react";
 import { toast } from "sonner";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend,
   BarChart, Bar, PieChart, Pie, Cell,
 } from "recharts";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type CustomerLink = {
   id: string;
@@ -143,42 +147,63 @@ export default function AlixSmartAnalytics() {
       .slice(0, 20);
   }, [custs]);
 
-  function exportReport() {
-    const lines: string[] = [];
-    lines.push(`AlixSmart Analytics Report;${new Date().toLocaleString("de-DE")}`);
-    lines.push(`Zeitraum;letzte ${range} Tage`);
-    lines.push("");
-    lines.push("KPI;Wert");
-    lines.push(`Kunden mit Geräten;${kpis.total}`);
-    lines.push(`Registriert;${kpis.registered}`);
-    lines.push(`Nicht registriert;${kpis.unregistered}`);
-    lines.push(`Registrierungsquote;${kpis.total ? ((kpis.registered / kpis.total) * 100).toFixed(1) : 0}%`);
-    lines.push(`Reminder gesendet;${kpis.remindersSent}`);
-    lines.push(`Nach Reminder registriert;${kpis.convertedAfterReminder}`);
-    lines.push(`Reminder-Konversion;${kpis.conversion.toFixed(1)}%`);
-    lines.push("");
-    lines.push("Registrierungs-Trend");
-    lines.push("Datum;Neu registriert;Kumulativ");
-    trendData.forEach(t => lines.push(`${t.date};${t.registered};${t.cumulative}`));
-    lines.push("");
-    lines.push("Reminder-Wirksamkeit");
-    lines.push("Kanal;Gesendet;Konvertiert;Rate");
-    reminderData.forEach(r => lines.push(`${r.channel};${r.sent};${r.converted};${r.sent ? ((r.converted / r.sent) * 100).toFixed(1) : 0}%`));
-    lines.push("");
-    lines.push("Top 20 Nicht-Registrierte");
-    lines.push("Kd-Nr.;Firma;E-Mail;Geräte;Letzte Erinnerung");
-    topUnregistered.forEach(c => lines.push(
-      `${c.customer_number || ""};${(c.company_name || c.contact_name || "").replace(/;/g, ",")};${c.email || ""};${c.device_count};${c.last_reminder_at ? new Date(c.last_reminder_at).toLocaleDateString("de-DE") : ""}`
-    ));
-    const csv = lines.join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `alixsmart-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Bericht exportiert");
+  function buildReportSections() {
+    const kpiRows: (string | number)[][] = [
+      ["KPI", "Wert"],
+      ["Kunden mit Geräten", kpis.total],
+      ["Registriert", kpis.registered],
+      ["Nicht registriert", kpis.unregistered],
+      ["Registrierungsquote", `${kpis.total ? ((kpis.registered / kpis.total) * 100).toFixed(1) : 0}%`],
+      ["Reminder gesendet", kpis.remindersSent],
+      ["Nach Reminder registriert", kpis.convertedAfterReminder],
+      ["Reminder-Konversion", `${kpis.conversion.toFixed(1)}%`],
+    ];
+    const trendRows: (string | number)[][] = [["Datum", "Neu registriert", "Kumulativ"],
+      ...trendData.map(t => [t.date, t.registered, t.cumulative])];
+    const reminderRows: (string | number)[][] = [["Kanal", "Gesendet", "Konvertiert", "Rate"],
+      ...reminderData.map(r => [r.channel, r.sent, r.converted, `${r.sent ? ((r.converted / r.sent) * 100).toFixed(1) : 0}%`])];
+    const topRows: (string | number)[][] = [["Kd-Nr.", "Firma", "E-Mail", "Geräte", "Letzte Erinnerung"],
+      ...topUnregistered.map(c => [c.customer_number || "", c.company_name || c.contact_name || "", c.email || "",
+        c.device_count, c.last_reminder_at ? new Date(c.last_reminder_at).toLocaleDateString("de-DE") : ""])];
+    return { kpiRows, trendRows, reminderRows, topRows };
+  }
+
+  function exportReport(fmt: "csv" | "xlsx" | "pdf") {
+    const { kpiRows, trendRows, reminderRows, topRows } = buildReportSections();
+    const stamp = new Date().toISOString().slice(0, 10);
+    const fname = `alixsmart-analytics-${stamp}`;
+    if (fmt === "csv") {
+      const lines: string[] = [`AlixSmart Analytics Report;${new Date().toLocaleString("de-DE")}`, `Zeitraum;letzte ${range} Tage`, ""];
+      const toCsv = (rows: any[][]) => rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\n");
+      lines.push(toCsv(kpiRows), "", "Registrierungs-Trend", toCsv(trendRows), "", "Reminder-Wirksamkeit", toCsv(reminderRows), "", "Top 20 Nicht-Registrierte", toCsv(topRows));
+      const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = `${fname}.csv`; a.click();
+      URL.revokeObjectURL(url);
+    } else if (fmt === "xlsx") {
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpiRows), "KPIs");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(trendRows), "Trend");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(reminderRows), "Reminder");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(topRows), "Top Nicht-Registriert");
+      XLSX.writeFile(wb, `${fname}.xlsx`);
+    } else {
+      const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+      doc.setFontSize(14); doc.text("AlixSmart Analytics Report", 40, 40);
+      doc.setFontSize(9); doc.text(`${new Date().toLocaleString("de-DE")} · Zeitraum: letzte ${range} Tage`, 40, 56);
+      let y = 70;
+      const section = (title: string, rows: any[][]) => {
+        doc.setFontSize(11); doc.text(title, 40, y); y += 6;
+        autoTable(doc, { head: [rows[0]], body: rows.slice(1), startY: y + 4, styles: { fontSize: 8, cellPadding: 3 }, headStyles: { fillColor: [15, 23, 42] } });
+        y = (doc as any).lastAutoTable.finalY + 20;
+      };
+      section("KPIs", kpiRows);
+      section("Registrierungs-Trend", trendRows);
+      section("Reminder-Wirksamkeit", reminderRows);
+      section("Top 20 Nicht-Registrierte", topRows);
+      doc.save(`${fname}.pdf`);
+    }
+    toast.success(`Bericht exportiert (${fmt.toUpperCase()})`);
   }
 
   return (
@@ -197,9 +222,16 @@ export default function AlixSmartAnalytics() {
                 <SelectItem value="365">Letzte 12 Monate</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" onClick={exportReport}>
-              <Download className="h-4 w-4 mr-2" /> Bericht (CSV)
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" /> Bericht</Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => exportReport("xlsx")}><FileSpreadsheet className="h-4 w-4 mr-2" /> Excel (.xlsx)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportReport("csv")}><FileText className="h-4 w-4 mr-2" /> CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportReport("pdf")}><FileText className="h-4 w-4 mr-2" /> PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="outline" size="sm" onClick={load} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Aktualisieren
             </Button>
