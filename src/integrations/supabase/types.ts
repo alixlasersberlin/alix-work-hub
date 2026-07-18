@@ -1327,6 +1327,39 @@ export type Database = {
           },
         ]
       }
+      alixsmart_events: {
+        Row: {
+          alixsmart_user_id: string | null
+          device_serial: string | null
+          event_at: string
+          event_type: string
+          external_id: string | null
+          id: string
+          payload: Json | null
+          received_at: string
+        }
+        Insert: {
+          alixsmart_user_id?: string | null
+          device_serial?: string | null
+          event_at?: string
+          event_type: string
+          external_id?: string | null
+          id?: string
+          payload?: Json | null
+          received_at?: string
+        }
+        Update: {
+          alixsmart_user_id?: string | null
+          device_serial?: string | null
+          event_at?: string
+          event_type?: string
+          external_id?: string | null
+          id?: string
+          payload?: Json | null
+          received_at?: string
+        }
+        Relationships: []
+      }
       alixsmart_match_logs: {
         Row: {
           candidate_user_id: string | null
@@ -1702,6 +1735,117 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alixsmart_sync_runs: {
+        Row: {
+          direction: string
+          entity: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          items_created: number | null
+          items_failed: number | null
+          items_processed: number | null
+          items_updated: number | null
+          meta: Json | null
+          started_at: string
+          status: string
+          trigger: string
+        }
+        Insert: {
+          direction?: string
+          entity: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          items_created?: number | null
+          items_failed?: number | null
+          items_processed?: number | null
+          items_updated?: number | null
+          meta?: Json | null
+          started_at?: string
+          status?: string
+          trigger?: string
+        }
+        Update: {
+          direction?: string
+          entity?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          items_created?: number | null
+          items_failed?: number | null
+          items_processed?: number | null
+          items_updated?: number | null
+          meta?: Json | null
+          started_at?: string
+          status?: string
+          trigger?: string
+        }
+        Relationships: []
+      }
+      alixsmart_sync_state: {
+        Row: {
+          entity: string
+          items_processed: number | null
+          last_cursor: string | null
+          last_error: string | null
+          last_status: string | null
+          last_synced_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          entity: string
+          items_processed?: number | null
+          last_cursor?: string | null
+          last_error?: string | null
+          last_status?: string | null
+          last_synced_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          entity?: string
+          items_processed?: number | null
+          last_cursor?: string | null
+          last_error?: string | null
+          last_status?: string | null
+          last_synced_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      alixsmart_webhook_deliveries: {
+        Row: {
+          error: string | null
+          event_type: string | null
+          external_id: string | null
+          id: string
+          payload: Json | null
+          received_at: string
+          signature_valid: boolean | null
+          status: string
+        }
+        Insert: {
+          error?: string | null
+          event_type?: string | null
+          external_id?: string | null
+          id?: string
+          payload?: Json | null
+          received_at?: string
+          signature_valid?: boolean | null
+          status?: string
+        }
+        Update: {
+          error?: string | null
+          event_type?: string | null
+          external_id?: string | null
+          id?: string
+          payload?: Json | null
+          received_at?: string
+          signature_valid?: boolean | null
+          status?: string
+        }
+        Relationships: []
       }
       api_rate_limits: {
         Row: {
