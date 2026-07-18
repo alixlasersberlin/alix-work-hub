@@ -647,13 +647,17 @@ export default function TicketDetail() {
             size="sm"
             variant="outline"
             onClick={() => {
-              const el = document.getElementById('ticket-new-message');
-              el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              setTimeout(() => (el as HTMLTextAreaElement | null)?.focus(), 350);
+              setActiveTab('messages');
+              setTimeout(() => {
+                const el = document.getElementById('ticket-new-message');
+                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                (el as HTMLTextAreaElement | null)?.focus();
+              }, 100);
             }}
           >
             <MessageSquare className="w-4 h-4 mr-1" /> Kommentar
           </Button>
+
 
           <label className="inline-flex">
             <input
