@@ -1,87 +1,60 @@
-# Phase 5 – ALIX SIGN PRO Ausbau
 
-Aufbauend auf Phase 4 (Templates, CRM-Sync, Compliance, Portal). Vier Arbeitspakete, alle in einem Rutsch umgesetzt, jeweils mit Migration + UI + Edge Function wo nötig.
+# AlixSmart Anmeldestatus – Umsetzungsplan
 
-## 1. Mobile Signatur-App (PWA für Techniker vor Ort)
+Großes Modul (20 Punkte). Zerlege ich in 4 Phasen mit klaren Abnahmen. Nach jeder Phase Freigabe, dann geht's weiter.
 
-**Route:** `/m/signaturen` (im bestehenden `/m` PWA-Layout)
+## Bestandsaufnahme
+Vorhanden nutzbar:
+- `customers`, `lager_devices` (Seriennummern), `orders`, `alixsmart_products`, `alixsmart_migration_map/logs`
+- E-Mail-System (`email_templates`, `email_send_log`, `send-customer-email`)
+- SMS via Twilio (`send-customer-sms`, `sms_templates`, `customer_sms_logs`)
+- RBAC (`user_roles`, `has_role`), Tenants (`user_tenant_access`), Design-Tokens
 
-- **Neue Seite** `src/pages/mobile/MobileSignaturen.tsx`
-  - Liste offener `sig_requests` mit Filter „Meine Aufträge / Heute / Alle"
-  - Detail: PDF-Vorschau, Touch-Signatur-Pad (bereits vorhanden via `SignaturePad` Komponente wiederverwenden)
-  - QR-Scan Button → öffnet direkt Signatur-URL (`html5-qrcode` bereits im Projekt)
-- **Offline-Cache** via bestehender Outbox (`src/lib/mobile/outbox.ts`):
-  - Neuer Store `sig_pending`: `{request_id, signature_blob, timestamp, geo}`
-  - Auto-Sync bei Reconnect → ruft `sig-submit` Edge Function
-- **Menü**: Eintrag in `src/pages/mobile/MobileLayout.tsx` unter „Signaturen"
+Fehlend → neu:
+- 5 Tabellen (siehe §19 des Prompts) + RLS + GRANTs
+- Edge Functions: `alixsmart-match-run`, `alixsmart-invite-token`, `alixsmart-webhook`, `alixsmart-reminders-cron`
+- UI: Dashboard-Kachel, `/kunden/alixsmart-status` (Liste + Detail), Admin-Einstellungen
 
-## 2. Marketplace & White-Label
+## Phase 1 – Fundament (DB + Matching-Engine + Basis-UI)
+1. Migration: `alixsmart_customer_links`, `alixsmart_device_links`, `alixsmart_registration_invites`, `alixsmart_reminders`, `alixsmart_match_logs` inkl. GRANTs, RLS (nur Admin/Super Admin/Vertrieb, Tenant-Scope).
+2. SQL-Funktionen zum Normalisieren (E-Mail lower/trim, Telefon E.164) + Match-Score-View.
+3. Edge Function `alixsmart-match-run`: batch-Abgleich Kunden↔AlixSmart-Konten, schreibt `_customer_links` (green/yellow/red) und `_match_logs`.
+4. Menü „Kunden → AlixSmart Anmeldestatus" + Seite `/kunden/alixsmart-status` mit Tabelle (Status-Filter, Volltextsuche, InfinityTable), Kachel auf Dashboard.
+5. Detailansicht mit Feld-für-Feld-Vergleich (grün/gelb/rot).
 
-**Ziel:** Externe Partner (Praxen, Werkstätten) buchen ALIX SIGN als Service.
+**Abnahme:** Alle Kunden mit Seriennummer sichtbar, Statusbuttons korrekt, keine Auto-Zuordnung bei Unsicher.
 
-- **Neue Tabellen** (Migration):
-  - `sig_partners`: name, slug, logo_url, primary_color, custom_domain, plan (`starter|pro|enterprise`), api_key_hash, status, monthly_quota, used_quota
-  - `sig_partner_usage`: partner_id, month, signatures_count, api_calls, revenue_cents
-- **RLS**: nur Super Admin CRUD; Partner-User (neue Rolle `sig_partner`) sieht nur eigenen Datensatz
-- **Admin-UI** `/admin/sign-marketplace`:
-  - Partner-CRUD, API-Key generieren, Branding-Editor (Logo, Farbe, Domain), Usage-Dashboard, Rechnungs-Export CSV
-- **White-Label**: Signer-Portal (`/sign/:token`) lädt Branding aus `sig_partners` via Slug/Domain-Detection
-- **Edge Function** `sig-partner-api` (verify_jwt=false, HMAC via API-Key):
-  - `POST /requests` – neue Signaturanfrage
-  - `GET /requests/:id` – Status
-  - `POST /webhooks` – Callback-Registrierung
+## Phase 2 – Erinnerungen (Einzel & Bulk)
+1. E-Mail-Template `alixsmart_invite` + Button „E-Mail senden" (Vorschau, editierbar).
+2. SMS-Template + Button „SMS senden" (deaktiviert ohne Mobil).
+3. Individuelle Invite-Tokens: `alixsmart-invite-token` (server-seitig, gehashter Token, TTL, Single/Multi-Use).
+4. Stapelaktionen (E-Mail/SMS/Erinnerung planen/erneut prüfen) mit Vorab-Zusammenfassung + Rate-Limit.
+5. Logging jeder Aktion in `alixsmart_reminders` + Kundenverlauf.
 
-## 3. KI-Assistent Sign
+**Abnahme:** Einzel- + Bulk-Versand funktioniert, Tokens werden serverseitig validiert.
 
-Nutzt Lovable AI Gateway (`google/gemini-3-flash-preview`).
+## Phase 3 – Automatik & Webhook
+1. Admin-UI `/admin/alixsmart-status` für Erinnerungsserie (Zeitabstände, Kanäle, Vorlagen, Ruhezeiten, Länder-/Geräte-Filter).
+2. Cron `alixsmart-reminders-cron` (pg_cron, alle 60 min) – erzeugt/plant Reminder nach Regeln, stoppt bei „Angemeldet".
+3. Webhook `alixsmart-webhook` (Endpunkt für AlixSmart-Events: user_registered, device_registered, profile_updated, …) → triggert Match-Run + Statuswechsel.
+4. Manueller Button „Jetzt prüfen" pro Kunde.
 
-- **Edge Function** `sig-ai-analyze`:
-  - Input: `document_id`
-  - Lädt PDF-Text (pdfjs), sendet an Gemini mit System-Prompt „Vertragsanalyse Deutsch, DSGVO/BGB"
-  - Output JSON: `{ risk_score: 0-100, clauses: [{type, risk, quote, suggestion}], summary, suggested_fields: [{type, page, x, y, w, h, label}] }`
-  - Speichert in neuer Tabelle `sig_ai_analyses` (document_id, risk_score, payload jsonb, model, tokens_used)
-- **UI-Integration** in `DigitaleSignaturNeu.tsx` Wizard-Schritt 2:
-  - Button „KI-Analyse starten" → Card mit Risk-Badge, Klausel-Liste, „Felder automatisch platzieren" (übernimmt `suggested_fields` in Field-Editor)
-- **Detail-Panel** in `DigitaleSignaturen.tsx` List-Row expandable: KI-Zusammenfassung
+**Abnahme:** Nach Registrierung wechselt Status automatisch auf „Angemeldet"; Erinnerungen enden.
 
-## 4. Massen-Workflows & Approval
+## Phase 4 – Erweiterungen & Compliance
+1. Manuelle Zuordnung / Aufheben mit Bestätigung + Audit.
+2. Multi-Device: Status pro Seriennummer + Gesamtstatus, Admin-Option „ein Konto reicht / jede SN nötig".
+3. Exporte (CSV/Excel/PDF).
+4. Rollen-Feintuning + Feldmaskierung für Non-Admins.
+5. Rate-Limits, Audit-Log-Review, DSGVO-Löschpfad.
 
-- **Neue Tabellen**:
-  - `sig_approval_chains`: template_id, steps jsonb `[{order, role, user_id}]`
-  - `sig_approval_states`: request_id, chain_id, current_step, status (`pending|approved|rejected`), history jsonb
-  - `sig_bulk_jobs`: uploaded_by, template_id, csv_url, total, processed, failed, status
-- **Approval-Flow**:
-  - Bei `sig_requests.insert` mit Chain-Bindung → Status `awaiting_approval`
-  - Approver bekommt `app_notifications` + Row auf neuer Seite `/signaturen/genehmigungen`
-  - Approve/Reject rückt Step weiter; nach letztem Step → Request wird versendet
-- **Bulk-Import** UI `/signaturen/bulk`:
-  - Drag&Drop CSV (Spalten: email, name, entity_type, entity_id, custom_fields…)
-  - Template-Auswahl, Vorschau, Start
-  - Edge Function `sig-bulk-create` verarbeitet asynchron, Progress via Realtime
-- **SLA-Dashboard** `/signaturen/dashboard`:
-  - KPI-Cards: Ø Signaturzeit, Overdue, Approval-Backlog
-  - Charts (recharts): Requests/Tag, Conversion Rate, Provider-Latenz
+**Abnahme:** Alle 12 Abnahmekriterien aus Prompt erfüllt.
 
-## Menü-Ergänzungen (AppLayout ALIX SIGN PRO)
+## Sicherheit
+- Alle Tabellen: `ENABLE ROW LEVEL SECURITY`, Policies via `has_role` + `tenant_id`, GRANTs auf `authenticated` + `service_role`.
+- Tokens: nur `token_hash` (SHA-256) in DB, Klartext nur einmalig zurückgegeben.
+- Keine PII in URLs, keine Seriennummern in Invite-Links.
+- Bestehende Module (Design, Auth, Zoho-Sync, Facsimile) bleiben unberührt.
 
-- Dashboard → `/signaturen/dashboard`
-- Bulk-Versand → `/signaturen/bulk`
-- Genehmigungen → `/signaturen/genehmigungen`
-- Marketplace → `/admin/sign-marketplace` (nur Super Admin)
-
-## Technische Details
-
-- Migration in **einem** SQL-Block: 6 neue Tabellen + GRANTs + RLS + Trigger für `updated_at`
-- Neue Rolle `sig_partner` in `app_role` Enum
-- Storage-Bucket `sig-bulk-imports` (private) für CSV-Uploads
-- Secret `LOVABLE_API_KEY` bereits vorhanden für KI-Modul
-- Realtime Publication für `sig_bulk_jobs`, `sig_approval_states`
-
-## Reihenfolge der Umsetzung
-
-1. Migration (Tabellen, Rolle, Storage-Bucket, Realtime)
-2. Edge Functions parallel: `sig-partner-api`, `sig-ai-analyze`, `sig-bulk-create`
-3. UI-Seiten parallel: Mobile, Marketplace-Admin, Bulk, Approvals, Dashboard, KI-Panel im Wizard
-4. Menü + Routen in `App.tsx` / `AppLayout.tsx` / `MobileLayout.tsx`
-
-Bestätigen zum Starten?
+## Start
+Ich beginne mit **Phase 1** (DB-Migration + Match-Engine + Basis-UI), sobald du OK gibst. Antworte mit „Phase 1 starten" oder gib Anpassungen an (z. B. Rollen, Cron-Intervall, Match-Schwelle).
