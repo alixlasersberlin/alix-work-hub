@@ -84,11 +84,16 @@ Deno.serve(async (req) => {
               method: "POST",
               headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE },
               body: JSON.stringify({
-                templateName: "generic-notice",
+                templateName: "as-customer-reminder",
                 recipientEmail: recipient,
-                subject,
                 idempotencyKey: `as-invite-${cid}-${new Date().toISOString().slice(0,10)}`,
-                templateData: { title: subject, message: bodyText, ctaUrl: link, ctaLabel: "Jetzt registrieren", customerName: name },
+                templateData: {
+                  customerName: name,
+                  kind: "registration",
+                  ctaUrl: link,
+                  ctaLabel: "Jetzt registrieren",
+                  customMessage: customText ?? bodyText,
+                },
               }),
             });
             const info: any = await resp.json().catch(() => ({}));
