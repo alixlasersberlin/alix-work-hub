@@ -5,7 +5,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-type Kind = 'app' | 'nisv' | 'schulung' | 'mediapaket' | 'feedback' | 'callback' | 'generic'
+type Kind = 'app' | 'nisv' | 'schulung' | 'mediapaket' | 'feedback' | 'callback' | 'registration' | 'generic'
 
 interface Props {
   customerName?: string
@@ -49,6 +49,11 @@ const COPY: Record<Kind, { title: string; intro: string; cta: string }> = {
     intro: 'unser Team möchte einen Rückruf mit Ihnen vereinbaren, um offene Themen zu klären und Sie bestmöglich zu unterstützen. Bitte teilen Sie uns einen für Sie passenden Zeitpunkt mit.',
     cta: 'Rückruf-Termin auswählen',
   },
+  registration: {
+    title: 'Ihre kostenlose AlixSmart-Registrierung',
+    intro: 'sichern Sie sich mit einem Klick Ihre AlixSmart-Registrierung und profitieren Sie von automatischen Wartungserinnerungen, Support-Tickets und Ihrer digitalen Geräteakte.',
+    cta: 'Jetzt registrieren',
+  },
   generic: {
     title: 'Eine Nachricht von Ihrem Alix After-Sales-Team',
     intro: 'wir möchten uns kurz bei Ihnen melden und sicherstellen, dass alles rund um Ihr Alix-Gerät zu Ihrer vollsten Zufriedenheit läuft.',
@@ -68,7 +73,7 @@ const Email = ({
       <Body style={main}>
         <Container style={container}>
           <Heading style={h1}>{c.title}</Heading>
-          <Text style={p}>Sehr geehrte Damen und Herren{customerName ? `, ${customerName}` : ''},</Text>
+          <Text style={p}>{customerName ? `Guten Tag ${customerName},` : 'Sehr geehrte Damen und Herren,'}</Text>
           <Text style={p}>{customMessage ?? c.intro}</Text>
 
           {(orderNumber || deviceModel) && (
