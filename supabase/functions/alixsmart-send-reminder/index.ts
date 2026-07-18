@@ -51,10 +51,14 @@ Deno.serve(async (req) => {
     if (!customer_ids.length) return json({ error: "customer_ids fehlt" }, 400);
 
     const results: any[] = [];
-    for (const cid of customer_ids) {
+    for (let i = 0; i < customer_ids.length; i++) {
+      const cid = customer_ids[i];
+      // Throttle: 500ms zwischen den Sends (Resend-Ratelimit ~2/s)
+      if (i > 0) await new Promise((r) => setTimeout(r, 500));
       const { data: cust } = await admin
         .from("customers").select("id, email, phone, company_name, contact_name").eq("id", cid).maybeSingle();
       if (!cust) { results.push({ customer_id: cid, ok: false, error: "Kunde nicht gefunden" }); continue; }
+
 
       // Invite-Token (30 Tage)
       const raw = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
