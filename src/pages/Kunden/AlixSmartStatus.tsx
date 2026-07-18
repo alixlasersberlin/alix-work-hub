@@ -218,9 +218,18 @@ export default function AlixSmartStatus() {
                 <Play className={`h-4 w-4 mr-2 ${busy === "match" ? "animate-spin" : ""}`} /> Match ausführen
               </Button>
             )}
-            <Button variant="outline" size="sm" onClick={exportDevices} disabled={busy !== null || loading}>
-              <Download className={`h-4 w-4 mr-2 ${busy === "export" ? "animate-spin" : ""}`} /> Detail-Export
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={busy !== null || loading}>
+                  <Download className={`h-4 w-4 mr-2 ${busy === "export" ? "animate-spin" : ""}`} /> Detail-Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => exportAs("xlsx")}><FileSpreadsheet className="h-4 w-4 mr-2" /> Excel (.xlsx)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportAs("csv")}><FileText className="h-4 w-4 mr-2" /> CSV</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportAs("pdf")}><FileText className="h-4 w-4 mr-2" /> PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="outline" size="sm" onClick={load} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Aktualisieren
             </Button>
