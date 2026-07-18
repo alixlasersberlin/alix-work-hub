@@ -73,7 +73,7 @@ const Email = ({
       <Body style={main}>
         <Container style={container}>
           <Heading style={h1}>{c.title}</Heading>
-          <Text style={p}>Sehr geehrte Damen und Herren{customerName ? `, ${customerName}` : ''},</Text>
+          <Text style={p}>{customerName ? `Guten Tag ${customerName},` : 'Sehr geehrte Damen und Herren,'}</Text>
           <Text style={p}>{customMessage ?? c.intro}</Text>
 
           {(orderNumber || deviceModel) && (
