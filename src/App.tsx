@@ -841,6 +841,7 @@ function AppRoutes() {
 
         <Route path="/passwort-setzen" element={<SetPassword />} />
         <Route path="/stakeholder/:token" element={<StakeholderPortal />} />
+        <Route path="/alixsmart/register" element={<AlixSmartRegister />} />
         <Route path="/pdf/ab" element={<PdfAb />} />
         <Route path="/mfa-setup" element={<MfaGate expect="not_enrolled"><MfaSetup /></MfaGate>} />
         <Route path="/mfa-challenge" element={<MfaGate expect="challenge_required"><MfaChallenge /></MfaGate>} />
