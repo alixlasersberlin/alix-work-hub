@@ -106,7 +106,9 @@ export function DeviceDetailDialog({
         alixsmart_user_id: alixsmartUserId.trim() || null,
         last_checked_at: new Date().toISOString(),
         registered_at: customerStatus === "registered" ? new Date().toISOString() : null,
-        manual_override: true,
+        manually_confirmed: true,
+        confirmed_at: new Date().toISOString(),
+        match_method: 'manual',
       };
       if (existing?.id) {
         await supabase.from("alixsmart_customer_links").update(linkPayload).eq("id", existing.id);
