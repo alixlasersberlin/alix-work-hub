@@ -122,6 +122,7 @@ export default function TicketDetail() {
   const [internalNoteDraft, setInternalNoteDraft] = useState('');
   const [savingInternalNote, setSavingInternalNote] = useState(false);
   const [handoverOpen, setHandoverOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'messages' | 'attachments' | 'history'>('messages');
 
   async function loadLinkedRepair(repairId: string | null) {
     if (!repairId) { setLinkedRepair(null); return; }
