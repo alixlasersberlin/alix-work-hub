@@ -228,6 +228,7 @@ export const navItems: NavItem[] = [
         children: [
           { path: '/kunden', label: 'Kunden', icon: Building2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
           { path: '/kunden/alixsmart-status', label: 'AlixSmart Anmeldestatus', icon: UserCheck, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Kundenservice'] },
+          { path: '/admin/alixsmart-settings', label: 'AlixSmart Automatik', icon: UserCheck, roles: ['Admin', 'Super Admin'] },
         ],
       },
       {
