@@ -89,6 +89,13 @@ export default function AlixSmartStatus() {
     load();
   }
 
+  async function checkOne(customer_id: string) {
+    const { error } = await supabase.functions.invoke("alixsmart-match-run", { body: { customer_ids: [customer_id] } });
+    if (error) return toast.error(error.message);
+    toast.success("Neu geprüft");
+    load();
+  }
+
   const cols: InfinityColumn<Row>[] = [
     { key: "customer_id", header: "", width: "36px",
       cell: (r) => (
