@@ -230,6 +230,7 @@ export const navItems: NavItem[] = [
           { path: '/kunden/alixsmart-status', label: 'AlixSmart Anmeldestatus', icon: UserCheck, roles: ['Admin', 'Super Admin', 'Vertrieb', 'Kundenservice'] },
           { path: '/kunden/alixsmart-analytics', label: 'AlixSmart Analytics', icon: UserCheck, roles: ['Admin', 'Super Admin', 'Geschäftsführung'] },
           { path: '/admin/alixsmart-settings', label: 'AlixSmart Automatik', icon: UserCheck, roles: ['Admin', 'Super Admin'] },
+          { path: '/admin/alixsmart-deepsync', label: 'AlixSmart Deep-Sync', icon: UserCheck, roles: ['Admin', 'Super Admin'] },
         ],
       },
       {
