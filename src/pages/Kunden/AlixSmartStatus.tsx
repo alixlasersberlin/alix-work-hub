@@ -5,7 +5,7 @@ import { InfinityTable, type InfinityColumn } from "@/components/infinity/Infini
 import { StatusBadge, type StatusKind } from "@/components/infinity/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RefreshCw, UserCheck, UserX, HelpCircle, Bell, Play, Mail, MessageSquare } from "lucide-react";
+import { RefreshCw, UserCheck, UserX, HelpCircle, Bell, Play, Mail, MessageSquare, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -89,6 +89,13 @@ export default function AlixSmartStatus() {
     load();
   }
 
+  async function checkOne(customer_id: string) {
+    const { error } = await supabase.functions.invoke("alixsmart-match-run", { body: { customer_ids: [customer_id] } });
+    if (error) return toast.error(error.message);
+    toast.success("Neu geprüft");
+    load();
+  }
+
   const cols: InfinityColumn<Row>[] = [
     { key: "customer_id", header: "", width: "36px",
       cell: (r) => (
@@ -106,6 +113,12 @@ export default function AlixSmartStatus() {
       cell: (r) => <StatusBadge kind={STATUS_MAP[r.match_status]} label={STATUS_LABEL[r.match_status]} /> },
     { key: "last_reminder_at", header: "Letzte Erinnerung", sortable: true,
       cell: (r) => r.last_reminder_at ? new Date(r.last_reminder_at).toLocaleDateString("de-DE") : "—" },
+    { key: "customer_id", header: "", width: "60px",
+      cell: (r) => (
+        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); checkOne(r.customer_id); }} title="Jetzt prüfen">
+          <Search className="h-4 w-4" />
+        </Button>
+      ) },
   ];
 
   return (
