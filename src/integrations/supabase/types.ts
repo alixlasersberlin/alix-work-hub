@@ -15895,6 +15895,45 @@ export type Database = {
           },
         ]
       }
+      orders_inbox: {
+        Row: {
+          created_at: string
+          error: string | null
+          external_id: string | null
+          id: string
+          idempotency_key: string | null
+          payload: Json
+          processed_at: string | null
+          received_at: string
+          source_system: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          payload: Json
+          processed_at?: string | null
+          received_at?: string
+          source_system?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          external_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          payload?: Json
+          processed_at?: string | null
+          received_at?: string
+          source_system?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       otp_challenges: {
         Row: {
           attempt_count: number
