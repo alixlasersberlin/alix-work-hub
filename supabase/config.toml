@@ -1,5 +1,9 @@
 project_id = "xmrmkgfgpoundfwhnxfs"
 
+[functions.orders-inbox]
+verify_jwt = false
+
+
 [functions.mediapaket-portal]
 verify_jwt = false
 
