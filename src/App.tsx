@@ -36,6 +36,7 @@ import { isMfaMandatory } from "@/lib/mfa-required";
 
 // Lazy: alle Hauptseiten → Route-basiertes Code-Splitting
 const SetPassword = lazy(() => import("./pages/SetPassword"));
+const AlixSmartRegister = lazy(() => import("./pages/AlixSmartRegister"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Startseite = lazy(() => import("./pages/Startseite"));
 const VerkaufDashboard = lazy(() => import("./pages/VerkaufDashboard"));
@@ -840,6 +841,7 @@ function AppRoutes() {
 
         <Route path="/passwort-setzen" element={<SetPassword />} />
         <Route path="/stakeholder/:token" element={<StakeholderPortal />} />
+        <Route path="/alixsmart/register" element={<AlixSmartRegister />} />
         <Route path="/pdf/ab" element={<PdfAb />} />
         <Route path="/mfa-setup" element={<MfaGate expect="not_enrolled"><MfaSetup /></MfaGate>} />
         <Route path="/mfa-challenge" element={<MfaGate expect="challenge_required"><MfaChallenge /></MfaGate>} />
