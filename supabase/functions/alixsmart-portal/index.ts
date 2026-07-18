@@ -144,9 +144,9 @@ Deno.serve(async (req) => {
 
       await admin.from("alixsmart_match_logs").insert({
         customer_id: customerId,
-        match_status: "registered",
-        match_method: "self_registration",
-        details: { source: "portal", devices_registered: deviceIds.length },
+        decision: "registered",
+        source: "self_registration",
+        compared_fields: { devices_registered: deviceIds.length, alixsmart_user_id: asUserId },
       }).then(() => {}, () => {});
 
       return json({ ok: true });
