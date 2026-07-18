@@ -32,7 +32,7 @@ export default function AlixSmartSettings() {
 
   useEffect(() => {
     supabase.from("alixsmart_reminder_settings").select("*").limit(1).maybeSingle().then(({ data }) => {
-      if (data) setCfg({ ...DEFAULT, ...data, quiet_hours_start: String(data.quiet_hours_start).slice(0,5), quiet_hours_end: String(data.quiet_hours_end).slice(0,5) });
+      if (data) setCfg({ ...DEFAULT, ...(data as any), channel: (data as any).channel as Cfg["channel"], quiet_hours_start: String((data as any).quiet_hours_start).slice(0,5), quiet_hours_end: String((data as any).quiet_hours_end).slice(0,5) });
       setLoading(false);
     });
   }, []);
