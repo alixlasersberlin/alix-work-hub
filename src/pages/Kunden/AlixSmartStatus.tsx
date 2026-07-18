@@ -4,8 +4,10 @@ import PageHeader from "@/components/infinity/PageHeader";
 import { InfinityTable, type InfinityColumn } from "@/components/infinity/InfinityTable";
 import { StatusBadge, type StatusKind } from "@/components/infinity/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, UserCheck, UserX, HelpCircle, Bell } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RefreshCw, UserCheck, UserX, HelpCircle, Bell, Play, Mail, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 type Row = {
   customer_id: string;
@@ -24,31 +26,30 @@ type Row = {
 };
 
 const STATUS_MAP: Record<Row["match_status"], StatusKind> = {
-  registered: "done",
-  unregistered: "error",
-  possible: "warning",
-  reminded: "pending",
+  registered: "done", unregistered: "error", possible: "warning", reminded: "pending",
 };
 const STATUS_LABEL: Record<Row["match_status"], string> = {
-  registered: "Registriert",
-  unregistered: "Nicht registriert",
-  possible: "Möglich",
-  reminded: "Erinnert",
+  registered: "Registriert", unregistered: "Nicht registriert", possible: "Möglich", reminded: "Erinnert",
 };
 
 export default function AlixSmartStatus() {
+  const { hasRole } = useAuth();
+  const canAdmin = hasRole("Super Admin") || hasRole("Admin");
+  const canSend = canAdmin || hasRole("Vertrieb") || hasRole("Kundenservice");
+
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState<null | "match" | "email" | "sms">(null);
 
   async function load() {
     setLoading(true);
     const { data, error } = await supabase
-      .from("v_alixsmart_customer_status")
-      .select("*")
-      .order("company_name", { ascending: true })
-      .limit(1000);
+      .from("v_alixsmart_customer_status" as any)
+      .select("*").order("company_name", { ascending: true }).limit(1000);
     if (error) toast.error("Fehler: " + error.message);
     setRows((data as any) || []);
+    setSelected(new Set());
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
@@ -59,7 +60,41 @@ export default function AlixSmartStatus() {
     return s;
   }, [rows]);
 
+  function toggle(id: string) {
+    setSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  }
+  function toggleAll() {
+    setSelected(prev => prev.size === rows.length ? new Set() : new Set(rows.map(r => r.customer_id)));
+  }
+
+  async function runMatch() {
+    setBusy("match");
+    const { data, error } = await supabase.functions.invoke("alixsmart-match-run", { body: {} });
+    setBusy(null);
+    if (error) return toast.error("Match fehlgeschlagen: " + error.message);
+    toast.success(`Match ok: ${data?.registered ?? 0} registriert · ${data?.possible ?? 0} möglich · ${data?.unregistered ?? 0} offen`);
+    load();
+  }
+
+  async function sendReminder(channel: "email" | "sms") {
+    const ids = Array.from(selected);
+    if (!ids.length) return toast.info("Bitte Kunden auswählen");
+    setBusy(channel);
+    const { data, error } = await supabase.functions.invoke("alixsmart-send-reminder", {
+      body: { customer_ids: ids, channel },
+    });
+    setBusy(null);
+    if (error) return toast.error("Versand fehlgeschlagen: " + error.message);
+    toast.success(`${data?.sent ?? 0} von ${ids.length} ${channel === "email" ? "E-Mails" : "SMS"} gesendet`);
+    load();
+  }
+
   const cols: InfinityColumn<Row>[] = [
+    { key: "customer_id", header: "", width: "36px",
+      cell: (r) => (
+        <Checkbox checked={selected.has(r.customer_id)} onCheckedChange={() => toggle(r.customer_id)}
+          onClick={(e) => e.stopPropagation()} />
+      ) },
     { key: "customer_number", header: "Kd-Nr.", sortable: true, width: "110px" },
     { key: "company_name", header: "Firma", sortable: true,
       cell: (r) => <span className="font-medium">{r.company_name || r.contact_name || "—"}</span> },
@@ -79,9 +114,16 @@ export default function AlixSmartStatus() {
         title="AlixSmart Anmeldestatus"
         subtitle="Übersicht welche Kunden mit Geräten in AlixSmart registriert sind"
         actions={
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Aktualisieren
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {canAdmin && (
+              <Button variant="outline" size="sm" onClick={runMatch} disabled={busy !== null}>
+                <Play className={`h-4 w-4 mr-2 ${busy === "match" ? "animate-spin" : ""}`} /> Match ausführen
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} /> Aktualisieren
+            </Button>
+          </div>
         }
       />
 
@@ -92,6 +134,21 @@ export default function AlixSmartStatus() {
         <StatTile label="Möglich" value={stats.possible} tone="amber" icon={<HelpCircle className="h-4 w-4" />} />
         <StatTile label="Erinnert" value={stats.reminded} tone="sky" icon={<Bell className="h-4 w-4" />} />
       </div>
+
+      {canSend && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card/50 p-3">
+          <Button size="sm" variant="ghost" onClick={toggleAll}>
+            {selected.size === rows.length && rows.length > 0 ? "Auswahl aufheben" : "Alle auswählen"}
+          </Button>
+          <span className="text-sm text-muted-foreground mr-2">{selected.size} ausgewählt</span>
+          <Button size="sm" onClick={() => sendReminder("email")} disabled={!selected.size || busy !== null}>
+            <Mail className="h-4 w-4 mr-2" /> Email-Erinnerung
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => sendReminder("sms")} disabled={!selected.size || busy !== null}>
+            <MessageSquare className="h-4 w-4 mr-2" /> SMS-Erinnerung
+          </Button>
+        </div>
+      )}
 
       <InfinityTable<Row>
         rows={rows}
