@@ -989,6 +989,7 @@ function AppRoutes() {
           <Route path="/konzern/dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><KonzernDashboard /></ProtectedRoute>} />
           <Route path="/operation/alixsmart-migration" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartMigration /></ProtectedRoute>} />
           <Route path="/operation/alixsmart-konfliktaufloesung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixSmartKonfliktaufloesung /></ProtectedRoute>} />
+          <Route path="/kunden/alixsmart-status" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Vertrieb','Kundenservice']}><AlixSmartStatus /></ProtectedRoute>} />
           <Route path="/portal-admin" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><PortalAdmin /></ProtectedRoute>} />
           <Route path="/portal-admin/freigaben" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><PortalReleases /></ProtectedRoute>} />
 
