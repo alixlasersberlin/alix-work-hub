@@ -42,7 +42,8 @@ export default function AlixSmartStatus() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [busy, setBusy] = useState<null | "match" | "email" | "sms">(null);
+  const [busy, setBusy] = useState<null | "match" | "email" | "sms" | "export">(null);
+  const [detailFor, setDetailFor] = useState<Row | null>(null);
 
   async function load() {
     setLoading(true);
