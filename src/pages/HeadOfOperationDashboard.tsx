@@ -116,16 +116,16 @@ export default function HeadOfOperationDashboard() {
           supabase.from('user_profiles').select('id', headOpts),
           supabase.from('user_profiles').select('id', headOpts).eq('is_active', true),
           supabase.from('login_sessions').select('id', headOpts).eq('is_active', true).gt('expires_at', new Date().toISOString()),
-          supabase.from('customers').select('id', headOpts),
-          supabase.from('customers').select('id', headOpts).eq('source_system', 'zoho_eu_1'),
-          supabase.from('customers').select('id', headOpts).eq('source_system', 'zoho_eu_2'),
-          supabase.from('orders').select('id', headOpts),
-          supabase.from('orders').select('id', headOpts).eq('source_system', 'zoho_eu_1'),
-          supabase.from('orders').select('id', headOpts).eq('source_system', 'zoho_eu_2'),
+          (supabase as any).rpc('hoo_mandanten_stats'),
+          Promise.resolve({ data: null }),
+          Promise.resolve({ data: null }),
+          Promise.resolve({ data: null }),
+          Promise.resolve({ data: null }),
+          Promise.resolve({ data: null }),
           supabase.from('orders').select('id', headOpts).in('order_status', ['offen', 'Offen', 'open', 'Open', 'approved', 'Approved', 'invoiced', 'Invoiced']),
           supabase.from('orders').select('id', headOpts).not('expected_shipment_date', 'is', null).lt('expected_shipment_date', today).not('order_status', 'in', '("geliefert","storniert","cancelled")'),
-          supabase.from('orders').select('total_amount').eq('source_system', 'zoho_eu_1'),
-          supabase.from('orders').select('total_amount').eq('source_system', 'zoho_eu_2'),
+          Promise.resolve({ data: null }),
+          Promise.resolve({ data: null }),
           supabase.from('production_orders').select('id', headOpts),
           supabase.from('production_orders').select('id', headOpts).eq('approval_status', 'pending'),
           supabase.from('production_orders').select('id', headOpts).eq('is_reclamation', true),
@@ -146,6 +146,7 @@ export default function HeadOfOperationDashboard() {
           supabase.from('audit_logs').select('id, created_at, action, module, user_profiles!audit_logs_user_id_fkey(full_name, email)').order('created_at', { ascending: false }).limit(10),
           supabase.from('login_sessions').select('id, user_id, created_at, ip_address, user_profiles!login_sessions_user_id_fkey(full_name, email)').eq('is_active', true).gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(8),
         ]);
+        const _mand = ((customersR as any)?.data?.[0]) || {};
 
         if (!alive) return;
 
