@@ -5,7 +5,7 @@ import {
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
-type Kind = 'app' | 'nisv' | 'schulung' | 'mediapaket' | 'feedback' | 'callback' | 'generic'
+type Kind = 'app' | 'nisv' | 'schulung' | 'mediapaket' | 'feedback' | 'callback' | 'registration' | 'generic'
 
 interface Props {
   customerName?: string
