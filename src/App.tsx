@@ -260,6 +260,7 @@ const GeraeteVerwaltung = lazy(() => import("./pages/GeraeteVerwaltung"));
 const AdminAuditLog = lazy(() => import("./pages/Admin/AuditLog"));
 const AlixSmartMigration = lazy(() => import("./pages/AlixSmartMigration"));
 const AlixSmartKonfliktaufloesung = lazy(() => import("./pages/AlixSmartKonfliktaufloesung"));
+const AlixSmartStatus = lazy(() => import("./pages/Kunden/AlixSmartStatus"));
 const Geraeteakte = lazy(() => import("./pages/Geraeteakte"));
 const GeraeteLebenslauf = lazy(() => import("./pages/GeraeteLebenslauf"));
 const Wartungscenter = lazy(() => import("./pages/Wartungscenter"));
