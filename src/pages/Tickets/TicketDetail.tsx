@@ -721,7 +721,7 @@ export default function TicketDetail() {
           </div>
 
           {/* Tabs */}
-          <Tabs defaultValue="messages" className="w-full">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
             <TabsList>
               <TabsTrigger value="messages"><MessageSquare className="w-4 h-4 mr-1" /> Nachrichten ({messages.length})</TabsTrigger>
               <TabsTrigger value="attachments"><Paperclip className="w-4 h-4 mr-1" /> Anhänge ({attachments.length})</TabsTrigger>
