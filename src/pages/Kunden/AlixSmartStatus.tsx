@@ -106,7 +106,7 @@ export default function AlixSmartStatus() {
   async function loadExportData() {
     const { data: devices, error } = await supabase
       .from("v_alixsmart_customer_devices" as any)
-      .select("customer_id, serial_number, device_name, device_model")
+      .select("customer_id, serial_number, device_model, device_status")
       .limit(10000);
     if (error) throw error;
     const { data: links } = await supabase
