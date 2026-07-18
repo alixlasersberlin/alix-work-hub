@@ -49,6 +49,11 @@ const COPY: Record<Kind, { title: string; intro: string; cta: string }> = {
     intro: 'unser Team möchte einen Rückruf mit Ihnen vereinbaren, um offene Themen zu klären und Sie bestmöglich zu unterstützen. Bitte teilen Sie uns einen für Sie passenden Zeitpunkt mit.',
     cta: 'Rückruf-Termin auswählen',
   },
+  registration: {
+    title: 'Ihre kostenlose AlixSmart-Registrierung',
+    intro: 'sichern Sie sich mit einem Klick Ihre AlixSmart-Registrierung und profitieren Sie von automatischen Wartungserinnerungen, Support-Tickets und Ihrer digitalen Geräteakte.',
+    cta: 'Jetzt registrieren',
+  },
   generic: {
     title: 'Eine Nachricht von Ihrem Alix After-Sales-Team',
     intro: 'wir möchten uns kurz bei Ihnen melden und sicherstellen, dass alles rund um Ihr Alix-Gerät zu Ihrer vollsten Zufriedenheit läuft.',
