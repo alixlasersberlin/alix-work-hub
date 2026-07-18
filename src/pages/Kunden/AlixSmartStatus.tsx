@@ -5,10 +5,14 @@ import { InfinityTable, type InfinityColumn } from "@/components/infinity/Infini
 import { StatusBadge, type StatusKind } from "@/components/infinity/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RefreshCw, UserCheck, UserX, HelpCircle, Bell, Play, Mail, MessageSquare, Search, Download, Settings2 } from "lucide-react";
+import { RefreshCw, UserCheck, UserX, HelpCircle, Bell, Play, Mail, MessageSquare, Search, Download, Settings2, FileSpreadsheet, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { DeviceDetailDialog } from "@/components/alixsmart/DeviceDetailDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 type Row = {
   customer_id: string;
