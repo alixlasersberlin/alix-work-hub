@@ -103,49 +103,72 @@ export default function AlixSmartStatus() {
     load();
   }
 
-  async function exportDevices() {
+  async function loadExportData() {
+    const { data: devices, error } = await supabase
+      .from("v_alixsmart_customer_devices" as any)
+      .select("customer_id, serial_number, device_name, device_model")
+      .limit(10000);
+    if (error) throw error;
+    const { data: links } = await supabase
+      .from("alixsmart_device_links")
+      .select("alixwork_customer_id, serial_number, registration_status, registered_at, alixsmart_device_id");
+    const linkMap = new Map(
+      (links || []).map((l: any) => [`${l.alixwork_customer_id}::${l.serial_number}`, l])
+    );
+    const custMap = new Map(rows.map(r => [r.customer_id, r]));
+    const header = ["Kd-Nr.", "Firma", "E-Mail", "Kunden-Status", "Seriennummer", "Modell", "Gerätename", "Geräte-Status", "Registriert am", "AlixSmart Device-ID"];
+    const dataRows = ((devices as any[]) || []).map((d) => {
+      const c = custMap.get(d.customer_id);
+      const l: any = linkMap.get(`${d.customer_id}::${d.serial_number}`);
+      return [
+        c?.customer_number || "",
+        c?.company_name || c?.contact_name || "",
+        c?.email || "",
+        c?.match_status ? STATUS_LABEL[c.match_status] : "",
+        d.serial_number || "",
+        d.device_model || "",
+        d.device_name || "",
+        l?.registration_status ? ({ registered: "Registriert", unregistered: "Nicht registriert", possible: "Möglich" }[l.registration_status] || l.registration_status) : "Nicht registriert",
+        l?.registered_at ? new Date(l.registered_at).toLocaleDateString("de-DE") : "",
+        l?.alixsmart_device_id || "",
+      ];
+    });
+    return { header, dataRows };
+  }
+
+  async function exportAs(fmt: "csv" | "xlsx" | "pdf") {
     setBusy("export");
     try {
-      const { data: devices, error } = await supabase
-        .from("v_alixsmart_customer_devices" as any)
-        .select("customer_id, serial_number, device_name, device_model")
-        .limit(10000);
-      if (error) throw error;
-      const { data: links } = await supabase
-        .from("alixsmart_device_links")
-        .select("alixwork_customer_id, serial_number, registration_status, registered_at, alixsmart_device_id");
-      const linkMap = new Map(
-        (links || []).map((l: any) => [`${l.alixwork_customer_id}::${l.serial_number}`, l])
-      );
-      const custMap = new Map(rows.map(r => [r.customer_id, r]));
-      const header = ["Kd-Nr.", "Firma", "E-Mail", "Kunden-Status", "Seriennummer", "Modell", "Gerätename", "Geräte-Status", "Registriert am", "AlixSmart Device-ID"];
-      const csvRows = ((devices as any[]) || []).map((d) => {
-        const c = custMap.get(d.customer_id);
-        const l: any = linkMap.get(`${d.customer_id}::${d.serial_number}`);
-        return [
-          c?.customer_number || "",
-          c?.company_name || c?.contact_name || "",
-          c?.email || "",
-          c?.match_status ? STATUS_LABEL[c.match_status] : "",
-          d.serial_number || "",
-          d.device_model || "",
-          d.device_name || "",
-          l?.registration_status ? ({ registered: "Registriert", unregistered: "Nicht registriert", possible: "Möglich" }[l.registration_status] || l.registration_status) : "Nicht registriert",
-          l?.registered_at ? new Date(l.registered_at).toLocaleDateString("de-DE") : "",
-          l?.alixsmart_device_id || "",
-        ];
-      });
-      const csv = [header, ...csvRows]
-        .map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";"))
-        .join("\n");
-      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `alixsmart-geraete-detail-${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(`Detail-Export: ${csvRows.length} Geräte`);
+      const { header, dataRows } = await loadExportData();
+      const stamp = new Date().toISOString().slice(0, 10);
+      const fname = `alixsmart-geraete-detail-${stamp}`;
+      if (fmt === "csv") {
+        const csv = [header, ...dataRows]
+          .map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";"))
+          .join("\n");
+        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = `${fname}.csv`; a.click();
+        URL.revokeObjectURL(url);
+      } else if (fmt === "xlsx") {
+        const ws = XLSX.utils.aoa_to_sheet([header, ...dataRows]);
+        ws["!cols"] = header.map(() => ({ wch: 20 }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "AlixSmart Status");
+        XLSX.writeFile(wb, `${fname}.xlsx`);
+      } else {
+        const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+        doc.setFontSize(14);
+        doc.text("AlixSmart Anmeldestatus – Geräte-Detail", 40, 40);
+        doc.setFontSize(9);
+        doc.text(`Stand: ${new Date().toLocaleString("de-DE")} · ${dataRows.length} Datensätze`, 40, 56);
+        autoTable(doc, {
+          head: [header], body: dataRows, startY: 70, styles: { fontSize: 7, cellPadding: 3 },
+          headStyles: { fillColor: [15, 23, 42] }, alternateRowStyles: { fillColor: [245, 247, 250] },
+        });
+        doc.save(`${fname}.pdf`);
+      }
+      toast.success(`Export: ${dataRows.length} Geräte (${fmt.toUpperCase()})`);
     } catch (e: any) {
       toast.error("Export fehlgeschlagen: " + e.message);
     } finally {
