@@ -228,10 +228,21 @@ export default function AlixSmartStatus() {
         rows={rows}
         columns={cols}
         rowKey={(r) => r.customer_id}
+        onRowClick={(r) => setDetailFor(r)}
         searchKeys={["company_name", "contact_name", "email", "customer_number"]}
         initialSort={{ key: "company_name", dir: "asc" }}
         exportFileName="alixsmart-anmeldestatus.csv"
         emptyText={loading ? "Lade …" : "Keine Kunden mit Geräten gefunden."}
+      />
+
+      <DeviceDetailDialog
+        open={!!detailFor}
+        onOpenChange={(v) => { if (!v) setDetailFor(null); }}
+        customerId={detailFor?.customer_id || null}
+        customerName={detailFor?.company_name || detailFor?.contact_name || undefined}
+        currentLinkStatus={detailFor?.match_status}
+        currentAlixsmartUserId={detailFor?.alixsmart_user_id || null}
+        onSaved={load}
       />
     </div>
   );
