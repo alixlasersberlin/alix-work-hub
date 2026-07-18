@@ -75,6 +75,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "academy_bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       academy_sessions: {
@@ -894,6 +901,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "alix_organizations_linked_customer_id_fkey"
+            columns: ["linked_customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       alix_security_events: {
@@ -1061,6 +1075,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "alix_sign_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       alix_sign_signatures: {
@@ -1133,11 +1154,230 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "alix_sign_signatures_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
             foreignKeyName: "alix_sign_signatures_sign_request_id_fkey"
             columns: ["sign_request_id"]
             isOneToOne: false
             referencedRelation: "alix_sign_requests"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixsmart_customer_links: {
+        Row: {
+          alixsmart_email: string | null
+          alixsmart_phone: string | null
+          alixsmart_user_id: string | null
+          alixwork_customer_id: string
+          compared_fields: Json | null
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          id: string
+          last_checked_at: string | null
+          last_reminder_at: string | null
+          manually_confirmed: boolean
+          match_method: string | null
+          match_score: number | null
+          match_status: string
+          registered_at: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          alixsmart_email?: string | null
+          alixsmart_phone?: string | null
+          alixsmart_user_id?: string | null
+          alixwork_customer_id: string
+          compared_fields?: Json | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          last_checked_at?: string | null
+          last_reminder_at?: string | null
+          manually_confirmed?: boolean
+          match_method?: string | null
+          match_score?: number | null
+          match_status?: string
+          registered_at?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alixsmart_email?: string | null
+          alixsmart_phone?: string | null
+          alixsmart_user_id?: string | null
+          alixwork_customer_id?: string
+          compared_fields?: Json | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          last_checked_at?: string | null
+          last_reminder_at?: string | null
+          manually_confirmed?: boolean
+          match_method?: string | null
+          match_score?: number | null
+          match_status?: string
+          registered_at?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixsmart_customer_links_alixwork_customer_id_fkey"
+            columns: ["alixwork_customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixsmart_customer_links_alixwork_customer_id_fkey"
+            columns: ["alixwork_customer_id"]
+            isOneToOne: true
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+        ]
+      }
+      alixsmart_device_links: {
+        Row: {
+          alixsmart_device_id: string | null
+          alixwork_customer_id: string | null
+          created_at: string
+          customer_link_id: string | null
+          device_id: string | null
+          device_model: string | null
+          device_name: string | null
+          id: string
+          last_checked_at: string | null
+          registered_at: string | null
+          registration_status: string
+          serial_number: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          alixsmart_device_id?: string | null
+          alixwork_customer_id?: string | null
+          created_at?: string
+          customer_link_id?: string | null
+          device_id?: string | null
+          device_model?: string | null
+          device_name?: string | null
+          id?: string
+          last_checked_at?: string | null
+          registered_at?: string | null
+          registration_status?: string
+          serial_number: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          alixsmart_device_id?: string | null
+          alixwork_customer_id?: string | null
+          created_at?: string
+          customer_link_id?: string | null
+          device_id?: string | null
+          device_model?: string | null
+          device_name?: string | null
+          id?: string
+          last_checked_at?: string | null
+          registered_at?: string | null
+          registration_status?: string
+          serial_number?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixsmart_device_links_alixwork_customer_id_fkey"
+            columns: ["alixwork_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixsmart_device_links_alixwork_customer_id_fkey"
+            columns: ["alixwork_customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "alixsmart_device_links_customer_link_id_fkey"
+            columns: ["customer_link_id"]
+            isOneToOne: false
+            referencedRelation: "alixsmart_customer_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixsmart_device_links_customer_link_id_fkey"
+            columns: ["customer_link_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["link_id"]
+          },
+        ]
+      }
+      alixsmart_match_logs: {
+        Row: {
+          candidate_user_id: string | null
+          compared_fields: Json | null
+          created_at: string
+          customer_id: string
+          decided_by: string | null
+          decision: string | null
+          id: string
+          match_score: number | null
+          source: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          candidate_user_id?: string | null
+          compared_fields?: Json | null
+          created_at?: string
+          customer_id: string
+          decided_by?: string | null
+          decision?: string | null
+          id?: string
+          match_score?: number | null
+          source?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          candidate_user_id?: string | null
+          compared_fields?: Json | null
+          created_at?: string
+          customer_id?: string
+          decided_by?: string | null
+          decision?: string | null
+          id?: string
+          match_score?: number | null
+          source?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixsmart_match_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixsmart_match_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
         ]
       }
@@ -1272,6 +1512,148 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      alixsmart_registration_invites: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          expires_at: string | null
+          id: string
+          revoked_at: string | null
+          single_use: boolean
+          tenant_id: string | null
+          token_hash: string
+          used_at: string | null
+          used_ip: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          expires_at?: string | null
+          id?: string
+          revoked_at?: string | null
+          single_use?: boolean
+          tenant_id?: string | null
+          token_hash: string
+          used_at?: string | null
+          used_ip?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          expires_at?: string | null
+          id?: string
+          revoked_at?: string | null
+          single_use?: boolean
+          tenant_id?: string | null
+          token_hash?: string
+          used_at?: string | null
+          used_ip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixsmart_registration_invites_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixsmart_registration_invites_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+        ]
+      }
+      alixsmart_reminders: {
+        Row: {
+          channel: string
+          created_at: string
+          customer_id: string
+          delivered_at: string | null
+          device_link_id: string | null
+          error_message: string | null
+          failed_at: string | null
+          id: string
+          message_content: string | null
+          message_subject: string | null
+          provider_message_id: string | null
+          recipient: string | null
+          scheduled_for: string | null
+          sent_at: string | null
+          sent_by: string | null
+          status: string
+          template_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          customer_id: string
+          delivered_at?: string | null
+          device_link_id?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          message_content?: string | null
+          message_subject?: string | null
+          provider_message_id?: string | null
+          recipient?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          template_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          customer_id?: string
+          delivered_at?: string | null
+          device_link_id?: string | null
+          error_message?: string | null
+          failed_at?: string | null
+          id?: string
+          message_content?: string | null
+          message_subject?: string | null
+          provider_message_id?: string | null
+          recipient?: string | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string
+          template_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixsmart_reminders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixsmart_reminders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "alixsmart_reminders_device_link_id_fkey"
+            columns: ["device_link_id"]
+            isOneToOne: false
+            referencedRelation: "alixsmart_device_links"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       api_rate_limits: {
         Row: {
@@ -1660,11 +2042,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "as_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
             foreignKeyName: "as_cases_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "lager_devices"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_cases_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_devices"
+            referencedColumns: ["device_id"]
           },
           {
             foreignKeyName: "as_cases_order_id_fkey"
@@ -4692,6 +5088,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "customer_bank_details_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       customer_communication_log: {
@@ -4799,6 +5202,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       customer_portal_audit_logs: {
@@ -4848,6 +5258,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_audit_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
         ]
       }
@@ -4915,6 +5332,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "customer_portal_contract_signatures_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       customer_portal_data_requests: {
@@ -4964,6 +5388,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_data_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
         ]
       }
@@ -5015,6 +5446,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_document_downloads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
         ]
       }
@@ -5086,6 +5524,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
         ]
       }
@@ -5161,6 +5606,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "customer_portal_maintenance_requests_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       customer_portal_message_threads: {
@@ -5208,6 +5660,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "customer_portal_message_threads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       customer_portal_messages: {
@@ -5251,6 +5710,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_messages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "customer_portal_messages_thread_id_fkey"
@@ -5302,6 +5768,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_notifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
         ]
       }
@@ -5366,6 +5839,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "customer_portal_offer_acceptances_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
             foreignKeyName: "customer_portal_offer_acceptances_offer_id_fkey"
             columns: ["offer_id"]
             isOneToOne: false
@@ -5424,6 +5904,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_quote_responses_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "customer_portal_quote_responses_order_id_fkey"
@@ -5527,6 +6014,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "customer_portal_tickets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       customer_portal_users: {
@@ -5570,6 +6064,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_portal_users_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
         ]
       }
@@ -5635,6 +6136,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_sms_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "customer_sms_logs_order_id_fkey"
@@ -7937,6 +8445,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "finance_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       finance_ai_insights: {
@@ -8605,6 +9120,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "finance_bank_lines_matched_customer_id_fkey"
+            columns: ["matched_customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
             foreignKeyName: "finance_bank_lines_matched_transaction_id_fkey"
             columns: ["matched_transaction_id"]
             isOneToOne: false
@@ -8691,6 +9213,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_bank_postings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "finance_bank_postings_supplier_id_fkey"
@@ -8891,6 +9420,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_cashbook_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "finance_cashbook_reverses_id_fkey"
@@ -9249,11 +9785,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "finance_contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
             foreignKeyName: "finance_contracts_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "lager_devices"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_contracts_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_devices"
+            referencedColumns: ["device_id"]
           },
           {
             foreignKeyName: "finance_contracts_order_id_fkey"
@@ -9608,6 +10158,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "finance_documents_supplier_id_fkey"
@@ -10139,6 +10696,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_journal_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "finance_journal_supplier_id_fkey"
@@ -10770,6 +11334,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "finance_reminders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       finance_report_schedules: {
@@ -10961,6 +11532,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "finance_sepa_mandates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
             foreignKeyName: "finance_sepa_mandates_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -11016,6 +11594,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_sepa_run_items_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "finance_sepa_run_items_mandate_id_fkey"
@@ -11470,11 +12055,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "finance_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
             foreignKeyName: "finance_transactions_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "lager_devices"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_devices"
+            referencedColumns: ["device_id"]
           },
           {
             foreignKeyName: "finance_transactions_order_id_fkey"
@@ -12274,6 +12873,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "loaner_device_assignments_lager_device_id_fkey"
+            columns: ["lager_device_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_devices"
+            referencedColumns: ["device_id"]
+          },
+          {
             foreignKeyName: "loaner_device_assignments_warranty_decision_id_fkey"
             columns: ["warranty_decision_id"]
             isOneToOne: false
@@ -12415,6 +13021,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_attachments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "mail_attachments_message_id_fkey"
@@ -13426,6 +14039,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "maintenance_confirmations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       maintenance_plans: {
@@ -13997,6 +14617,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "media_package_devices_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_devices"
+            referencedColumns: ["device_id"]
+          },
+          {
             foreignKeyName: "media_package_devices_media_package_id_fkey"
             columns: ["media_package_id"]
             isOneToOne: false
@@ -14121,6 +14748,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_package_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "media_package_files_media_package_id_fkey"
@@ -14315,6 +14949,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "lager_devices"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_package_prices_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_devices"
+            referencedColumns: ["device_id"]
           },
           {
             foreignKeyName: "media_package_prices_media_package_id_fkey"
@@ -14642,6 +15283,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_packages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "media_packages_order_id_fkey"
@@ -15893,6 +16541,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
         ]
       }
       orders_inbox: {
@@ -16505,6 +17160,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
           {
             foreignKeyName: "production_orders_supplier_id_fkey"
@@ -18798,6 +19460,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_leads_converted_customer_id_fkey"
+            columns: ["converted_customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
           },
         ]
       }
@@ -22718,6 +23387,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "whatsapp_sc_conversations_linked_customer_id_fkey"
+            columns: ["linked_customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
             foreignKeyName: "whatsapp_sc_conversations_linked_ticket_id_fkey"
             columns: ["linked_ticket_id"]
             isOneToOne: false
@@ -23476,11 +24152,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "as_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
             foreignKeyName: "as_cases_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "lager_devices"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "as_cases_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_devices"
+            referencedColumns: ["device_id"]
           },
           {
             foreignKeyName: "as_cases_order_id_fkey"
@@ -24063,6 +24753,41 @@ export type Database = {
         }
         Relationships: []
       }
+      v_alixsmart_customer_devices: {
+        Row: {
+          alixsmart_user_id: string | null
+          commissioning_date: string | null
+          customer_id: string | null
+          device_id: string | null
+          device_model: string | null
+          device_status: string | null
+          serial_number: string | null
+        }
+        Relationships: []
+      }
+      v_alixsmart_customer_status: {
+        Row: {
+          alixsmart_user_id: string | null
+          billing_address: Json | null
+          company_name: string | null
+          contact_name: string | null
+          customer_id: string | null
+          customer_number: string | null
+          device_count: number | null
+          email: string | null
+          last_checked_at: string | null
+          last_reminder_at: string | null
+          link_id: string | null
+          match_score: number | null
+          match_status: string | null
+          phone: string | null
+          registered_at: string | null
+          serial_numbers: string[] | null
+          shipping_address: Json | null
+          source_system: string | null
+        }
+        Relationships: []
+      }
       v_temp_grants_expiring_soon: {
         Row: {
           auto_revoked_at: string | null
@@ -24140,6 +24865,8 @@ export type Database = {
           relationships_created: number
         }[]
       }
+      alixsmart_norm_email: { Args: { e: string }; Returns: string }
+      alixsmart_norm_phone: { Args: { p: string }; Returns: string }
       apply_role_change_request: {
         Args: { _request_id: string }
         Returns: Json
