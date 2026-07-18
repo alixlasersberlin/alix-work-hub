@@ -24405,6 +24405,19 @@ export type Database = {
         Args: { _purpose: string; _user_id: string }
         Returns: boolean
       }
+      hoo_mandanten_stats: {
+        Args: never
+        Returns: {
+          customers_at: number
+          customers_de: number
+          customers_total: number
+          orders_at: number
+          orders_de: number
+          orders_total: number
+          revenue_at: number
+          revenue_de: number
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
       is_device_active: { Args: { _sub_id: string }; Returns: boolean }
       is_internal_user: { Args: never; Returns: boolean }

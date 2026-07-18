@@ -116,16 +116,16 @@ export default function HeadOfOperationDashboard() {
           supabase.from('user_profiles').select('id', headOpts),
           supabase.from('user_profiles').select('id', headOpts).eq('is_active', true),
           supabase.from('login_sessions').select('id', headOpts).eq('is_active', true).gt('expires_at', new Date().toISOString()),
-          supabase.from('customers').select('id', headOpts),
-          supabase.from('customers').select('id', headOpts).eq('source_system', 'zoho_eu_1'),
-          supabase.from('customers').select('id', headOpts).eq('source_system', 'zoho_eu_2'),
-          supabase.from('orders').select('id', headOpts),
-          supabase.from('orders').select('id', headOpts).eq('source_system', 'zoho_eu_1'),
-          supabase.from('orders').select('id', headOpts).eq('source_system', 'zoho_eu_2'),
+          (supabase as any).rpc('hoo_mandanten_stats'),
+          Promise.resolve({ data: null }),
+          Promise.resolve({ data: null }),
+          Promise.resolve({ data: null }),
+          Promise.resolve({ data: null }),
+          Promise.resolve({ data: null }),
           supabase.from('orders').select('id', headOpts).in('order_status', ['offen', 'Offen', 'open', 'Open', 'approved', 'Approved', 'invoiced', 'Invoiced']),
           supabase.from('orders').select('id', headOpts).not('expected_shipment_date', 'is', null).lt('expected_shipment_date', today).not('order_status', 'in', '("geliefert","storniert","cancelled")'),
-          supabase.from('orders').select('total_amount').eq('source_system', 'zoho_eu_1'),
-          supabase.from('orders').select('total_amount').eq('source_system', 'zoho_eu_2'),
+          Promise.resolve({ data: null }),
+          Promise.resolve({ data: null }),
           supabase.from('production_orders').select('id', headOpts),
           supabase.from('production_orders').select('id', headOpts).eq('approval_status', 'pending'),
           supabase.from('production_orders').select('id', headOpts).eq('is_reclamation', true),
@@ -146,11 +146,12 @@ export default function HeadOfOperationDashboard() {
           supabase.from('audit_logs').select('id, created_at, action, module, user_profiles!audit_logs_user_id_fkey(full_name, email)').order('created_at', { ascending: false }).limit(10),
           supabase.from('login_sessions').select('id, user_id, created_at, ip_address, user_profiles!login_sessions_user_id_fkey(full_name, email)').eq('is_active', true).gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(8),
         ]);
+        const _mand = ((customersR as any)?.data?.[0]) || {};
 
         if (!alive) return;
 
-        const revenueDe = (revenueDeR.data ?? []).reduce((s: number, r: any) => s + Number(r.total_amount ?? 0), 0);
-        const revenueAt = (revenueAtR.data ?? []).reduce((s: number, r: any) => s + Number(r.total_amount ?? 0), 0);
+        const revenueDe = Number(_mand.revenue_de ?? 0);
+        const revenueAt = Number(_mand.revenue_at ?? 0);
         const stockOnHand = (stockR.data ?? []).reduce((s: number, r: any) => s + Number(r.stock_on_hand ?? 0), 0);
         const financeAmountOpen = (financeListR.data ?? []).reduce(
           (s: number, r: any) => s + (Number(r.amount_due ?? 0) - Number(r.amount_paid ?? 0)), 0,
@@ -160,12 +161,12 @@ export default function HeadOfOperationDashboard() {
           usersTotal: usersTotalR.count ?? 0,
           usersActive: usersActiveR.count ?? 0,
           sessionsActive: sessionsR.count ?? 0,
-          customersTotal: customersR.count ?? 0,
-          customersDe: customersDeR.count ?? 0,
-          customersAt: customersAtR.count ?? 0,
-          ordersTotal: ordersR.count ?? 0,
-          ordersDe: ordersDeR.count ?? 0,
-          ordersAt: ordersAtR.count ?? 0,
+          customersTotal: Number(_mand.customers_total ?? 0),
+          customersDe: Number(_mand.customers_de ?? 0),
+          customersAt: Number(_mand.customers_at ?? 0),
+          ordersTotal: Number(_mand.orders_total ?? 0),
+          ordersDe: Number(_mand.orders_de ?? 0),
+          ordersAt: Number(_mand.orders_at ?? 0),
           ordersOpen: ordersOpenR.count ?? 0,
           ordersOverdue: ordersOverdueR.count ?? 0,
           revenueDe, revenueAt,
