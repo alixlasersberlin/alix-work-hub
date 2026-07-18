@@ -5,7 +5,7 @@ import { InfinityTable, type InfinityColumn } from "@/components/infinity/Infini
 import { StatusBadge, type StatusKind } from "@/components/infinity/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RefreshCw, UserCheck, UserX, HelpCircle, Bell, Play, Mail, MessageSquare } from "lucide-react";
+import { RefreshCw, UserCheck, UserX, HelpCircle, Bell, Play, Mail, MessageSquare, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
