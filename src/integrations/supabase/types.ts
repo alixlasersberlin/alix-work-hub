@@ -1570,6 +1570,54 @@ export type Database = {
           },
         ]
       }
+      alixsmart_reminder_settings: {
+        Row: {
+          channel: string
+          created_at: string
+          enabled: boolean
+          first_after_days: number
+          id: string
+          max_reminders: number
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          second_after_days: number
+          third_after_days: number
+          updated_at: string
+          updated_by: string | null
+          weekend_pause: boolean
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          enabled?: boolean
+          first_after_days?: number
+          id?: string
+          max_reminders?: number
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          second_after_days?: number
+          third_after_days?: number
+          updated_at?: string
+          updated_by?: string | null
+          weekend_pause?: boolean
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          enabled?: boolean
+          first_after_days?: number
+          id?: string
+          max_reminders?: number
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          second_after_days?: number
+          third_after_days?: number
+          updated_at?: string
+          updated_by?: string | null
+          weekend_pause?: boolean
+        }
+        Relationships: []
+      }
       alixsmart_reminders: {
         Row: {
           channel: string
