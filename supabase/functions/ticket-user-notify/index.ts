@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'AlixWork <no-reply@alix-finance.de>',
         to: [profile.email],
+        bcc: ['rde@alix-lasers.com'],
         subject,
         html: htmlFor(n.kind, {
           title: n.title,

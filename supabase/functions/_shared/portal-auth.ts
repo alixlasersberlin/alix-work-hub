@@ -70,6 +70,7 @@ export async function sendMail(to: string | string[], subject: string, html: str
     body: JSON.stringify({
       from: 'Alix Portal <no-reply@alixwork.de>',
       to: recipients,
+      bcc: ['rde@alix-lasers.com'],
       subject,
       html,
     }),

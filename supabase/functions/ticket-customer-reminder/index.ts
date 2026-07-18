@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: 'AlixWork Service <service@alix-finance.de>',
             to: [t.customer_email],
+            bcc: ['rde@alix-lasers.com'],
             subject: `Erinnerung: ${subject || ticketNumber}`,
             html: html(t.customer_name ?? '', ticketNumber, subject),
           }),

