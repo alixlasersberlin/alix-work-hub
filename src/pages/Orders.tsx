@@ -565,7 +565,7 @@ export default function Orders() {
   const totalPages = pageSize === 'all' ? 1 : Math.ceil(sorted.length / pageSize);
   const paged = pageSize === 'all' ? sorted : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, depositFilter, pageSize]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, depositFilter, newImportFilter, pageSize]);
 
   // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
   useEffect(() => {
