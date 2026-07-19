@@ -261,12 +261,26 @@ async function processSource(
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // Auth
-  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  // Auth: service key, CRON_SECRET, or authenticated Admin/Super Admin
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
   const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  if (!token || (token !== cronSecret && token !== SERVICE_KEY)) {
-    return json({ error: "Unauthorized" }, 401);
+  let authed = !!token && (token === cronSecret || token === SERVICE_KEY);
+  if (!authed && token) {
+    try {
+      const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const userClient = createClient(SUPABASE_URL, ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: u } = await userClient.auth.getUser(token);
+      if (u?.user) {
+        const { data: isAdmin } = await userClient.rpc("is_admin");
+        authed = !!isAdmin;
+      }
+    } catch { /* ignore */ }
   }
+  if (!authed) return json({ error: "Unauthorized" }, 401);
 
   let body: any = {};
   try { body = await req.json(); } catch { /* GET / empty */ }
