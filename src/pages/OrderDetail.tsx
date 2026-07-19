@@ -61,6 +61,7 @@ import { isOrderVip } from '@/lib/vip';
 import MediapaketOrderTab from '@/components/MediapaketOrderTab';
 import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
 import { SignatureRequestButton } from '@/components/signaturen/SignatureRequestButton';
+import AlixDocsPanel from '@/components/alixdocs/AlixDocsPanel';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -80,7 +81,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'mediapaket' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'mediapaket' | 'alixdocs' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
   const [serialDevices, setSerialDevices] = useState<Array<{ id: string; serial_number: string; model_name: string; notes: string | null; updated_at: string | null }>>([]);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
@@ -447,6 +448,7 @@ export default function OrderDetail() {
         { key: 'auftragsbestaetigung', label: 'Auftrag Unterzeichnet', icon: FileText },
         { key: 'az_invoice', label: 'AZ Rechnung', icon: Euro, badge: (Number(order?.deposit_amount) || 0) > 0 ? '€' : undefined },
         { key: 'mediapaket', label: 'Mediapaket', icon: Briefcase },
+        { key: 'alixdocs', label: 'Dokumente', icon: FileText },
         { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: depositTabBadge },
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
@@ -1387,6 +1389,11 @@ export default function OrderDetail() {
       {activeTab === 'mediapaket' && id && (
         <MediapaketOrderTab orderId={id} customerId={order?.customer_id ?? null} />
       )}
+
+      {activeTab === 'alixdocs' && id && (
+        <AlixDocsPanel orderId={id} customerId={order?.customer_id ?? null} orderNumber={order?.order_number} />
+      )}
+
 
 
 
