@@ -34,20 +34,43 @@ function cfg(source: SourceSystem) {
   };
 }
 
+// Module-level token cache — reused across invocations within a warm instance
+// to avoid hitting Zoho's OAuth rate limit ("too many requests continuously").
+const TOKEN_CACHE: Record<string, { value: string; expiresAt: number }> = {};
+const TOKEN_TTL_MS = 50 * 60 * 1000; // Zoho tokens valid 60 min; refresh 10 min early
+
 async function token(c: ReturnType<typeof cfg>) {
-  const res = await fetch(`${c.accountsBaseUrl}/oauth/v2/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      refresh_token: c.refreshToken,
-      client_id: c.clientId,
-      client_secret: c.clientSecret,
-      grant_type: "refresh_token",
-    }),
-  });
-  if (!res.ok) throw new Error(`Zoho token refresh failed: ${await res.text()}`);
-  const j = await res.json();
-  return j.access_token as string;
+  const cacheKey = `${c.clientId}|${c.refreshToken}`;
+  const cached = TOKEN_CACHE[cacheKey];
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  let lastErr = "";
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await fetch(`${c.accountsBaseUrl}/oauth/v2/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        refresh_token: c.refreshToken,
+        client_id: c.clientId,
+        client_secret: c.clientSecret,
+        grant_type: "refresh_token",
+      }),
+    });
+    if (res.ok) {
+      const j = await res.json();
+      const value = j.access_token as string;
+      TOKEN_CACHE[cacheKey] = { value, expiresAt: Date.now() + TOKEN_TTL_MS };
+      return value;
+    }
+    lastErr = await res.text();
+    // Zoho throttles OAuth aggressively — back off exponentially before retrying.
+    if (lastErr.includes("too many requests") || res.status === 429) {
+      await new Promise((r) => setTimeout(r, 3000 * (attempt + 1) ** 2));
+      continue;
+    }
+    break;
+  }
+  throw new Error(`Zoho token refresh failed: ${lastErr}`);
 }
 
 function statusMap(s: string): "draft" | "signed" | "order" {
