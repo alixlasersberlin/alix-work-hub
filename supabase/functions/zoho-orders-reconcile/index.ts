@@ -137,6 +137,45 @@ async function processSource(
     !local.ids.has(o.salesorder_id) && !local.nums.has(o.salesorder_number.toUpperCase())
   );
 
+  // Persist missing orders into public.orders_missing (upsert + mark resolved for imported ones)
+  if (missing.length) {
+    const rows = missing.map((m) => ({
+      source_system: source,
+      external_order_id: m.salesorder_id,
+      order_number: m.salesorder_number || null,
+      zoho_date: m.date || null,
+      zoho_status: m.status || null,
+      customer_name: m.customer_name || null,
+      total: typeof m.total === "number" ? m.total : null,
+      last_seen_at: new Date().toISOString(),
+      import_status: "pending",
+    }));
+    // chunk upserts
+    for (let i = 0; i < rows.length; i += 500) {
+      const chunk = rows.slice(i, i + 500);
+      const { error } = await supabase
+        .from("orders_missing")
+        .upsert(chunk, { onConflict: "source_system,external_order_id", ignoreDuplicates: false });
+      if (error) console.error("orders_missing upsert error", error.message);
+    }
+    // bump seen_count for rows we just upserted (best-effort)
+    await supabase.rpc("exec_sql", { sql: "" }).catch(() => {});
+  }
+
+  // Mark any previously-missing rows that are now present in local orders as resolved
+  const localAll = Array.from(local.ids);
+  if (localAll.length) {
+    for (let i = 0; i < localAll.length; i += 500) {
+      const chunk = localAll.slice(i, i + 500);
+      await supabase
+        .from("orders_missing")
+        .update({ import_status: "resolved", resolved_at: new Date().toISOString() })
+        .eq("source_system", source)
+        .in("external_order_id", chunk)
+        .neq("import_status", "resolved");
+    }
+  }
+
   const result: any = {
     source,
     zoho_total: zohoOrders.length,
@@ -161,14 +200,31 @@ async function processSource(
       if (Date.now() - startedAt > hardCapMs) { result.truncated = true; break; }
       try {
         const r = await importOne(source, m.salesorder_id);
-        if (r.ok) result.imported += 1;
-        else {
+        if (r.ok) {
+          result.imported += 1;
+          await supabase.from("orders_missing").update({
+            import_status: "imported",
+            imported_at: new Date().toISOString(),
+            resolved_at: new Date().toISOString(),
+            import_error: null,
+          }).eq("source_system", source).eq("external_order_id", m.salesorder_id);
+        } else {
           result.failed += 1;
-          result.import_errors.push({ id: m.salesorder_id, number: m.salesorder_number, message: (r.body as any)?.message || (r.body as any)?.error || `HTTP ${r.status}` });
+          const msg = (r.body as any)?.message || (r.body as any)?.error || `HTTP ${r.status}`;
+          result.import_errors.push({ id: m.salesorder_id, number: m.salesorder_number, message: msg });
+          await supabase.from("orders_missing").update({
+            import_status: "failed",
+            import_error: msg,
+          }).eq("source_system", source).eq("external_order_id", m.salesorder_id);
         }
       } catch (e) {
         result.failed += 1;
-        result.import_errors.push({ id: m.salesorder_id, number: m.salesorder_number, message: (e as Error).message });
+        const msg = (e as Error).message;
+        result.import_errors.push({ id: m.salesorder_id, number: m.salesorder_number, message: msg });
+        await supabase.from("orders_missing").update({
+          import_status: "failed",
+          import_error: msg,
+        }).eq("source_system", source).eq("external_order_id", m.salesorder_id);
       }
       // gentle pacing to avoid Zoho rate limits
       await new Promise((r) => setTimeout(r, 150));
