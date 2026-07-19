@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import JSZip from "jszip";
 
+type Candidate = { order_id: string; order_number: string; customer_name: string | null };
 type Row = {
   name: string;
   size: number;
@@ -20,6 +21,9 @@ type Row = {
   document_id?: string;
   match_score?: number;
   match_confidence?: string;
+  candidates?: Candidate[];
+  selected_order_id?: string;
+  scanning?: boolean;
 };
 
 const IMAGE_MIME: Record<string, string> = {
