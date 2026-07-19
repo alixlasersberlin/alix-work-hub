@@ -89,7 +89,8 @@ Deno.serve(async (req) => {
   "category_code": "einer von: ${CATEGORY_CODES.join(', ')}",
   "serial_numbers": ["z.B. AL-2024-1234"],
   "order_numbers": ["Auftragsnummer, Angebotsnummer, Rechnungsnummer wie SO-1234, AB-2024-001, INV-…"],
-  "expiry_date": "YYYY-MM-DD oder null (Ablauf/Garantie/Vertragsende)"
+  "expiry_date": "YYYY-MM-DD oder null (Ablauf/Garantie/Vertragsende)",
+  "tags": ["3-6 knappe deutsche Schlagworte, kleingeschrieben, ohne Sonderzeichen"]
 }`;
 
     const content: any[] = [
@@ -138,6 +139,12 @@ Deno.serve(async (req) => {
     const serial_numbers: string[] = Array.isArray(parsed.serial_numbers) ? parsed.serial_numbers.filter((x: any) => typeof x === 'string').slice(0, 20) : [];
     const order_numbers: string[] = Array.isArray(parsed.order_numbers) ? parsed.order_numbers.filter((x: any) => typeof x === 'string').slice(0, 20) : [];
     const expiry_date: string | null = typeof parsed.expiry_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parsed.expiry_date) ? parsed.expiry_date : null;
+    const ai_tags: string[] = Array.isArray(parsed.tags)
+      ? parsed.tags.filter((x: any) => typeof x === 'string')
+        .map((x: string) => x.toLowerCase().replace(/[^a-z0-9äöüß\- ]/g, '').trim().replace(/\s+/g, '-'))
+        .filter((x: string) => x.length >= 2 && x.length <= 32)
+        .slice(0, 8)
+      : [];
 
     // Try to link order_id via first matched order_number
     let matchedOrderId: string | null = null;
@@ -169,6 +176,14 @@ Deno.serve(async (req) => {
     if (matchedOrderId) patch.order_id = matchedOrderId;
     if (matchedDeviceId) patch.device_id = matchedDeviceId;
     if (serial_numbers.length && !patch.serial_number) patch.serial_number = serial_numbers[0];
+
+    // Merge AI-Tags mit existierenden Tags (dedupliziert)
+    if (ai_tags.length) {
+      const { data: cur } = await admin.from('alixdocs_documents').select('tags').eq('id', document_id).maybeSingle();
+      const existing: string[] = Array.isArray(cur?.tags) ? cur!.tags : [];
+      const merged = Array.from(new Set([...existing, ...ai_tags])).slice(0, 20);
+      patch.tags = merged;
+    }
 
     // Apply category suggestion automatically only if current is 'sonstiges' or null
     if (category_code) {

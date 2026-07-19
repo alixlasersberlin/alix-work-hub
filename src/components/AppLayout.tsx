@@ -60,6 +60,7 @@ export const navItems: NavItem[] = [
       { path: '/dokumente', label: 'Dokumentensuche', icon: SearchCheck, roles: null },
       { path: '/dokumente/freigaben', label: 'Freigaben-Inbox', icon: CheckCircle2, roles: null },
       { path: '/admin/alixdocs/chains', label: 'Approval-Chains (Admin)', icon: Workflow, roles: ['Admin', 'Super Admin'] },
+      { path: '/admin/alixdocs/reindex', label: 'KI-Reindex & Duplikate', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
     ],
   },
 
