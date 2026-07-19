@@ -131,15 +131,11 @@ Deno.serve(async (req) => {
 }`;
 
     const dataUrl = `data:${mime};base64,${b64}`;
+    console.log('ai-process', { document_id, mime, bytes: buf.length, b64Len: b64.length });
     const content: any[] = [
       { type: 'text', text: `Analysiere das Dokument und liefere JSON mit folgender Struktur:\n${schemaHint}` },
+      { type: 'image_url', image_url: { url: dataUrl } },
     ];
-    if (mime.startsWith('image/')) {
-      content.push({ type: 'image_url', image_url: { url: dataUrl } });
-    } else {
-      const filename = (ver.original_filename || doc.original_filename || 'doc.pdf').replace(/[^a-zA-Z0-9._-]/g, '_');
-      content.push({ type: 'file', file: { filename, file_data: dataUrl } });
-    }
 
 
     const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
