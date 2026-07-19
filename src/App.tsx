@@ -1157,7 +1157,9 @@ function AppRoutes() {
           <Route path="/signaturen/genehmigungen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignApprovals /></ProtectedRoute>} />
           <Route path="/signaturen/dashboard" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignSlaDashboard /></ProtectedRoute>} />
           <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />
+          <Route path="/dokumente/vorschau" element={<ProtectedRoute><AlixDocsPreview /></ProtectedRoute>} />
           <Route path="/dokumente/dashboard" element={<ProtectedRoute><AlixDocsDashboardPage /></ProtectedRoute>} />
+          <Route path="/admin/sign-api-docs" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><SignApiDocs /></ProtectedRoute>} />
           <Route path="/dokumente/freigaben" element={<ProtectedRoute><AlixDocsApprovals /></ProtectedRoute>} />
           <Route path="/admin/alixdocs/chains" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixDocsChainsAdmin /></ProtectedRoute>} />
           <Route path="/admin/alixdocs/reindex" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixDocsReindex /></ProtectedRoute>} />
