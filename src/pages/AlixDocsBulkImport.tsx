@@ -165,6 +165,24 @@ export default function AlixDocsBulkImport() {
     return out;
   }, []);
 
+  const scanCandidates = async (items: { name: string; blob: Blob }[], startIdx = 0) => {
+    for (let i = startIdx; i < items.length; i++) {
+      if (!guessMime(items[i].name)) continue;
+      setRows(prev => prev.map((r, idx) => idx === i ? { ...r, scanning: true } : r));
+      try {
+        const cands = await findCandidates(items[i].name);
+        setRows(prev => prev.map((r, idx) => idx === i ? {
+          ...r,
+          scanning: false,
+          candidates: cands,
+          selected_order_id: cands.length === 1 ? cands[0].order_id : r.selected_order_id,
+        } : r));
+      } catch {
+        setRows(prev => prev.map((r, idx) => idx === i ? { ...r, scanning: false } : r));
+      }
+    }
+  };
+
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     toast.info("Dateien werden vorbereitet …");
@@ -177,6 +195,8 @@ export default function AlixDocsBulkImport() {
     })));
     (window as any).__bulkBlobs = items;
     setDone(0);
+    // Fire-and-forget candidate scan
+    scanCandidates(items).catch(() => {});
   };
 
   const run = async () => {
