@@ -159,7 +159,7 @@ export default function AlixDocsSearch() {
     const custIds = [...new Set(rows.map(r => r.customer_id).filter(Boolean))] as string[];
     if (custIds.length) {
       const { data: c } = await supabase.from('customers')
-        .select('id, name, customer_number').in('id', custIds);
+        .select('id, company_name, contact_name, external_customer_id').in('id', custIds);
       setCustomers(Object.fromEntries((c ?? []).map((r: any) => [r.id, r])));
     }
     setLoading(false);
