@@ -53,6 +53,13 @@ export const navItems: NavItem[] = [
   },
 
   {
+    path: '/dokumente', label: 'ALIXDOCS', icon: FolderTree,
+    roles: null,
+  },
+
+
+
+  {
     path: '/ai-center', label: 'ALIX AI DIENSTE', icon: Sparkles,
     roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Serviceleitung', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
     children: [
