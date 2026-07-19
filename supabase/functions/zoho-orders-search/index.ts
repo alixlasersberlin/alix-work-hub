@@ -45,38 +45,47 @@ async function token(c: ReturnType<typeof cfg>) {
   return j.access_token as string;
 }
 
-async function searchSource(source: SourceSystem, query: string, mode: "number" | "customer" | "auto") {
+type Entity = "salesorder" | "estimate";
+
+async function searchSource(source: SourceSystem, query: string, mode: "number" | "customer" | "auto", entity: Entity) {
   const c = cfg(source);
   if (!c.clientId || !c.refreshToken || !c.organizationId) {
-    return { source, error: "Missing Zoho credentials/organization", results: [] as any[] };
+    return { source, entity, error: "Missing Zoho credentials/organization", results: [] as any[] };
   }
   const t = await token(c);
-  const base = `${c.booksApiBaseUrl}/salesorders?organization_id=${c.organizationId}&per_page=50&sort_column=created_time&sort_order=D`;
+  const resource = entity === "estimate" ? "estimates" : "salesorders";
+  const numberField = entity === "estimate" ? "estimate_number_contains" : "salesorder_number_contains";
+  const base = `${c.booksApiBaseUrl}/${resource}?organization_id=${c.organizationId}&per_page=50&sort_column=created_time&sort_order=D`;
   const params: string[] = [];
-  const looksLikeNumber = /^\s*(so-|SO-)?\d/i.test(query);
+  const looksLikeNumber = /^\s*(so-|SO-|es-|ES-|an-|AN-)?\d/i.test(query);
   const effectiveMode = mode === "auto" ? (looksLikeNumber ? "number" : "customer") : mode;
   if (effectiveMode === "number") {
-    params.push(`salesorder_number_contains=${encodeURIComponent(query.trim())}`);
+    params.push(`${numberField}=${encodeURIComponent(query.trim())}`);
   } else {
     params.push(`customer_name_contains=${encodeURIComponent(query.trim())}`);
   }
   const url = `${base}&${params.join("&")}`;
   const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${t}` } });
   if (!res.ok) {
-    return { source, error: `Zoho search failed: ${await res.text()}`, results: [] };
+    return { source, entity, error: `Zoho search failed: ${await res.text()}`, results: [] };
   }
   const j = await res.json();
-  const rows: any[] = Array.isArray(j.salesorders) ? j.salesorders : [];
+  const rows: any[] = Array.isArray(j[resource]) ? j[resource] : [];
+  const suffix = source === "zoho_eu_2" && entity === "estimate" ? "-AT" : "";
   return {
     source,
+    entity,
     mode: effectiveMode,
     results: rows.map((r) => ({
-      salesorder_id: String(r.salesorder_id),
-      salesorder_number: String(r.salesorder_number ?? ""),
+      salesorder_id: String(entity === "estimate" ? r.estimate_id : r.salesorder_id),
+      salesorder_number: entity === "estimate"
+        ? `${String(r.estimate_number ?? "")}${suffix}`
+        : String(r.salesorder_number ?? ""),
       date: r.date,
       status: r.status,
       customer_name: r.customer_name,
       total: r.total,
+      entity,
     })),
   };
 }
@@ -109,35 +118,55 @@ Deno.serve(async (req) => {
     const sources: SourceSystem[] = Array.isArray(body?.sources) && body.sources.length
       ? body.sources.filter((s: any) => s === "zoho_eu_1" || s === "zoho_eu_2")
       : ["zoho_eu_1", "zoho_eu_2"];
+    const entities: Entity[] = Array.isArray(body?.entities) && body.entities.length
+      ? body.entities.filter((e: any) => e === "salesorder" || e === "estimate")
+      : ["salesorder"];
     if (query.length < 2) return json({ error: "Query too short (min 2 chars)" }, 400);
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const results = await Promise.all(sources.map((s) => searchSource(s, query, mode).catch((e) => ({
-      source: s, error: (e as Error).message, results: [] as any[],
-    }))));
+    const tasks: Promise<any>[] = [];
+    for (const s of sources) {
+      for (const e of entities) {
+        tasks.push(searchSource(s, query, mode, e).catch((err) => ({
+          source: s, entity: e, error: (err as Error).message, results: [] as any[],
+        })));
+      }
+    }
+    const results = await Promise.all(tasks);
 
-    // Annotate each result with whether it already exists locally
-    const allIds = results.flatMap((r) => (r.results ?? []).map((x: any) => x.salesorder_id));
-    const allNums = results.flatMap((r) => (r.results ?? []).map((x: any) => String(x.salesorder_number ?? "").toUpperCase()));
+    // Annotate salesorder hits with local orders match
+    const soIds = results.filter((r) => r.entity === "salesorder").flatMap((r) => (r.results ?? []).map((x: any) => x.salesorder_id));
+    const soNums = results.filter((r) => r.entity === "salesorder").flatMap((r) => (r.results ?? []).map((x: any) => String(x.salesorder_number ?? "").toUpperCase()));
     const localById = new Set<string>();
     const localByNum = new Set<string>();
-    if (allIds.length) {
+    if (soIds.length) {
       const { data } = await admin
         .from("orders")
         .select("external_order_id, order_number, source_system")
-        .or(`external_order_id.in.(${allIds.map((i) => `"${i}"`).join(",")}),order_number.in.(${allNums.map((n) => `"${n}"`).join(",")})`);
+        .or(`external_order_id.in.(${soIds.map((i) => `"${i}"`).join(",")}),order_number.in.(${soNums.map((n) => `"${n}"`).join(",")})`);
       (data as any[] | null)?.forEach((r) => {
         if (r.external_order_id) localById.add(String(r.external_order_id));
         if (r.order_number) localByNum.add(String(r.order_number).toUpperCase());
       });
     }
+    // Annotate estimate hits with local offers match (by offer_number)
+    const estNums = results.filter((r) => r.entity === "estimate").flatMap((r) => (r.results ?? []).map((x: any) => String(x.salesorder_number ?? "").toUpperCase()));
+    const localOffers = new Set<string>();
+    if (estNums.length) {
+      const { data } = await admin.from("offers").select("offer_number").in("offer_number", Array.from(new Set(estNums)));
+      (data as any[] | null)?.forEach((r) => { if (r.offer_number) localOffers.add(String(r.offer_number).toUpperCase()); });
+    }
     for (const r of results) {
       for (const row of (r.results ?? []) as any[]) {
-        row.exists_local = localById.has(row.salesorder_id) || localByNum.has(String(row.salesorder_number ?? "").toUpperCase());
+        if (r.entity === "estimate") {
+          row.exists_local = localOffers.has(String(row.salesorder_number ?? "").toUpperCase());
+        } else {
+          row.exists_local = localById.has(row.salesorder_id) || localByNum.has(String(row.salesorder_number ?? "").toUpperCase());
+        }
       }
     }
 
-    return json({ ok: true, query, mode, results });
+    return json({ ok: true, query, mode, entities, results });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }

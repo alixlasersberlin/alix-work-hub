@@ -27,32 +27,53 @@ interface SourceResult {
   error?: string;
 }
 
+type EntityKey = "orders" | "offers";
+const ENTITIES: { key: EntityKey; label: string; fn: string }[] = [
+  { key: "orders", label: "Aufträge (Salesorders)", fn: "zoho-orders-reconcile" },
+  { key: "offers", label: "Angebote (Estimates)", fn: "zoho-offers-reconcile" },
+];
+
 export default function ZohoAbgleich() {
   const [loading, setLoading] = useState<"check" | "import" | null>(null);
   const [selected, setSelected] = useState<Record<SourceKey, boolean>>({ zoho_eu_1: true, zoho_eu_2: true });
-  const [results, setResults] = useState<SourceResult[] | null>(null);
+  const [entitySel, setEntitySel] = useState<Record<EntityKey, boolean>>({ orders: true, offers: false });
+  const [results, setResults] = useState<Array<SourceResult & { entity: EntityKey }> | null>(null);
   const [durationMs, setDurationMs] = useState<number | null>(null);
 
   async function run(doImport: boolean) {
     const sources = SOURCES.filter((s) => selected[s.key]).map((s) => s.key);
+    const entities = ENTITIES.filter((e) => entitySel[e.key]);
     if (sources.length === 0) {
       toast({ title: "Keine Quelle gewählt", variant: "destructive" });
+      return;
+    }
+    if (entities.length === 0) {
+      toast({ title: "Kein Import-Typ gewählt", variant: "destructive" });
       return;
     }
     setLoading(doImport ? "import" : "check");
     setResults(null);
     setDurationMs(null);
     try {
-      const { data, error } = await supabase.functions.invoke("zoho-orders-reconcile", {
-        body: { sources, import: doImport },
-      });
-      if (error) throw error;
-      setResults(data?.results ?? []);
-      setDurationMs(data?.duration_ms ?? null);
-      const totalMissing = (data?.results ?? []).reduce((s: number, r: SourceResult) => s + (r.missing_count ?? 0), 0);
-      const totalImported = (data?.results ?? []).reduce((s: number, r: SourceResult) => s + (r.imported ?? 0), 0);
+      const responses = await Promise.all(entities.map(async (ent) => {
+        const { data, error } = await supabase.functions.invoke(ent.fn, { body: { sources, import: doImport } });
+        if (error) throw error;
+        return { ent, data };
+      }));
+      const merged: Array<SourceResult & { entity: EntityKey }> = [];
+      let totalMs = 0;
+      for (const { ent, data } of responses) {
+        totalMs = Math.max(totalMs, data?.duration_ms ?? 0);
+        for (const r of (data?.results ?? []) as SourceResult[]) {
+          merged.push({ ...r, entity: ent.key });
+        }
+      }
+      setResults(merged);
+      setDurationMs(totalMs);
+      const totalMissing = merged.reduce((s, r) => s + (r.missing_count ?? 0), 0);
+      const totalImported = merged.reduce((s, r) => s + (r.imported ?? 0), 0);
       toast({
-        title: doImport ? `${totalImported} Aufträge importiert` : `${totalMissing} fehlende Aufträge`,
+        title: doImport ? `${totalImported} Datensätze importiert` : `${totalMissing} fehlende Datensätze`,
         description: doImport ? "Import abgeschlossen." : "Prüfung abgeschlossen.",
       });
     } catch (e: any) {
@@ -65,28 +86,47 @@ export default function ZohoAbgleich() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <PageHeader
-        title="Zoho ⇄ AlixWork Auftrags-Abgleich"
-        subtitle="Prüft alle Aufträge in Zoho (Deutschland & Österreich) und importiert fehlende in AlixWork."
+        title="Zoho ⇄ AlixWork Abgleich"
+        subtitle="Prüft Aufträge und Angebote in Zoho (Deutschland & Österreich) und importiert fehlende in AlixWork."
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Quellen wählen</CardTitle>
-          <CardDescription>Beide Mandanten sind standardmäßig aktiv.</CardDescription>
+          <CardTitle>Quellen & Import-Typ wählen</CardTitle>
+          <CardDescription>Beide Mandanten aktiv, Aufträge standardmäßig. Angebote optional zuschalten.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            {SOURCES.map((s) => (
-              <label key={s.key} className="flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selected[s.key]}
-                  onChange={(e) => setSelected((prev) => ({ ...prev, [s.key]: e.target.checked }))}
-                />
-                <span>{s.flag} {s.label}</span>
-                <Badge variant="outline" className="ml-2">{s.key}</Badge>
-              </label>
-            ))}
+          <div>
+            <div className="text-sm font-medium mb-2 text-muted-foreground">Mandanten</div>
+            <div className="flex flex-wrap gap-3">
+              {SOURCES.map((s) => (
+                <label key={s.key} className="flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selected[s.key]}
+                    onChange={(e) => setSelected((prev) => ({ ...prev, [s.key]: e.target.checked }))}
+                  />
+                  <span>{s.flag} {s.label}</span>
+                  <Badge variant="outline" className="ml-2">{s.key}</Badge>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-sm font-medium mb-2 text-muted-foreground">Import-Typ</div>
+            <div className="flex flex-wrap gap-3">
+              {ENTITIES.map((e) => (
+                <label key={e.key} className="flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={entitySel[e.key]}
+                    onChange={(ev) => setEntitySel((prev) => ({ ...prev, [e.key]: ev.target.checked }))}
+                  />
+                  <span>{e.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-3 pt-2">
@@ -107,11 +147,13 @@ export default function ZohoAbgleich() {
 
       {results?.map((r) => {
         const src = SOURCES.find((s) => s.key === r.source);
+        const ent = ENTITIES.find((e) => e.key === r.entity);
         return (
-          <Card key={r.source}>
+          <Card key={`${r.entity}-${r.source}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {src?.flag} {src?.label}
+                <Badge variant="secondary" className="ml-1">{ent?.label}</Badge>
                 {r.error ? (
                   <Badge variant="destructive" className="ml-2"><AlertTriangle className="h-3 w-3 mr-1" />Fehler</Badge>
                 ) : (r.missing_count ?? 0) === 0 ? (
@@ -137,7 +179,7 @@ export default function ZohoAbgleich() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Auftragsnummer</TableHead>
+                        <TableHead>{r.entity === "offers" ? "Angebotsnummer" : "Auftragsnummer"}</TableHead>
                         <TableHead>Datum</TableHead>
                         <TableHead>Kunde</TableHead>
                         <TableHead>Status</TableHead>
