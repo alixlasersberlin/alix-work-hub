@@ -111,17 +111,50 @@ export default function AlixDocsBulkImport() {
         }
 
         setRow(i, { status: "uploading" });
-        const fd = new FormData();
-        fd.append("file", new File([blob], name, { type: mime }));
-        fd.append("category_code", category);
-        fd.append("title", name);
-        fd.append("confidentiality_level", "normal");
-        if (orderId) fd.append("order_id", orderId);
-        if (customerId) fd.append("customer_id", customerId);
+        const LARGE = 5 * 1024 * 1024; // >5MB → via signed upload (edge body limit ~10MB)
+        let docId: string | undefined;
 
-        const { data, error } = await supabase.functions.invoke("alixdocs-upload", { body: fd });
-        if (error) throw error;
-        const docId = (data as any)?.document_id ?? (data as any)?.id;
+        if (blob.size > LARGE) {
+          // 1) Signed upload URL
+          const { data: sig, error: sigErr } = await supabase.functions.invoke("alixdocs-signed-upload", {
+            body: { filename: name },
+          });
+          if (sigErr) throw sigErr;
+          const { bucket, path, token } = sig as { bucket: string; path: string; token: string };
+          // 2) Direct storage upload (no edge body limit)
+          const { error: upErr } = await supabase.storage
+            .from(bucket)
+            .uploadToSignedUrl(path, token, new File([blob], name, { type: mime }), { contentType: mime });
+          if (upErr) throw upErr;
+          // 3) Attach as AlixDoc
+          const { data: att, error: attErr } = await supabase.functions.invoke("alixdocs-attach-from-storage", {
+            body: {
+              source_bucket: bucket,
+              source_path: path,
+              category_code: category,
+              title: name,
+              confidentiality_level: "normal",
+              source: "bulk_import",
+              order_id: orderId || undefined,
+              customer_id: customerId || undefined,
+            },
+          });
+          if (attErr) throw attErr;
+          docId = (att as any)?.document_id;
+          // Best-effort staging cleanup
+          try { await supabase.storage.from(bucket).remove([path]); } catch {}
+        } else {
+          const fd = new FormData();
+          fd.append("file", new File([blob], name, { type: mime }));
+          fd.append("category_code", category);
+          fd.append("title", name);
+          fd.append("confidentiality_level", "normal");
+          if (orderId) fd.append("order_id", orderId);
+          if (customerId) fd.append("customer_id", customerId);
+          const { data, error } = await supabase.functions.invoke("alixdocs-upload", { body: fd });
+          if (error) throw error;
+          docId = (data as any)?.document_id ?? (data as any)?.id;
+        }
         if (!docId) throw new Error("Kein document_id zurückerhalten");
 
         setRow(i, { status: "processing", document_id: docId });
