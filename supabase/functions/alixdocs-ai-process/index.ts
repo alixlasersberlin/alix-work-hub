@@ -177,6 +177,14 @@ Deno.serve(async (req) => {
     if (matchedDeviceId) patch.device_id = matchedDeviceId;
     if (serial_numbers.length && !patch.serial_number) patch.serial_number = serial_numbers[0];
 
+    // Merge AI-Tags mit existierenden Tags (dedupliziert)
+    if (ai_tags.length) {
+      const { data: cur } = await admin.from('alixdocs_documents').select('tags').eq('id', document_id).maybeSingle();
+      const existing: string[] = Array.isArray(cur?.tags) ? cur!.tags : [];
+      const merged = Array.from(new Set([...existing, ...ai_tags])).slice(0, 20);
+      patch.tags = merged;
+    }
+
     // Apply category suggestion automatically only if current is 'sonstiges' or null
     if (category_code) {
       const { data: currentCat } = await admin.from('alixdocs_categories').select('code').eq('id', doc.category_id).maybeSingle();
