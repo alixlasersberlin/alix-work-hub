@@ -1411,6 +1411,7 @@ function AppRoutes() {
         <Route path="/portal" element={<PortalLookup />} />
         <Route path="/portal/status" element={<PortalStatus />} />
         <Route path="/sign/:token" element={<AlixSignPublic />} />
+        <Route path="/dokumente/share/:token" element={<AlixDocsSharePublic />} />
         <Route path="/sign/pdf/:signatureId" element={<AlixSignPdfDownload />} />
         <Route path="/sign-doc/:token" element={<SignDocPublic />} />
         <Route path="/d/:token" element={<OrderDocDownload />} />
