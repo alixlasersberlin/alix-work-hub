@@ -1435,6 +1435,7 @@ export type Database = {
           signed_via_sig_request: string | null
           source: string
           status: string
+          tags: string[]
           tenant_id: string | null
           title: string
           updated_at: string
@@ -1479,6 +1480,7 @@ export type Database = {
           signed_via_sig_request?: string | null
           source?: string
           status?: string
+          tags?: string[]
           tenant_id?: string | null
           title: string
           updated_at?: string
@@ -1523,6 +1525,7 @@ export type Database = {
           signed_via_sig_request?: string | null
           source?: string
           status?: string
+          tags?: string[]
           tenant_id?: string | null
           title?: string
           updated_at?: string
@@ -1617,6 +1620,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alixdocs_share_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document_ids: string[]
+          download_count: number
+          expires_at: string | null
+          id: string
+          last_accessed_at: string | null
+          max_downloads: number | null
+          note: string | null
+          password_hash: string | null
+          revoked_at: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document_ids: string[]
+          download_count?: number
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          max_downloads?: number | null
+          note?: string | null
+          password_hash?: string | null
+          revoked_at?: string | null
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document_ids?: string[]
+          download_count?: number
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          max_downloads?: number | null
+          note?: string | null
+          password_hash?: string | null
+          revoked_at?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       alixdocs_versions: {
         Row: {

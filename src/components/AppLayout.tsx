@@ -56,6 +56,7 @@ export const navItems: NavItem[] = [
     path: '/dokumente', label: 'ALIXDOCS', icon: FolderTree,
     roles: null,
     children: [
+      { path: '/dokumente/dashboard', label: 'Dashboard', icon: SearchCheck, roles: null },
       { path: '/dokumente', label: 'Dokumentensuche', icon: SearchCheck, roles: null },
       { path: '/dokumente/freigaben', label: 'Freigaben-Inbox', icon: CheckCircle2, roles: null },
       { path: '/admin/alixdocs/chains', label: 'Approval-Chains (Admin)', icon: Workflow, roles: ['Admin', 'Super Admin'] },

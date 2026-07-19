@@ -45,17 +45,20 @@ type Doc = {
   ai_order_numbers?: string[] | null;
   expiry_date?: string | null;
   duplicate_of?: string | null;
+  tags?: string[] | null;
 };
 
 type Cat = { id: string; code: string; name: string; sort_order: number };
 
 interface Props {
-  orderId: string;
+  orderId?: string | null;
   customerId?: string | null;
   orderNumber?: string;
+  scope?: 'order' | 'customer';
 }
 
-export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Props) {
+export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope }: Props) {
+  const effectiveScope: 'order' | 'customer' = scope ?? (orderId ? 'order' : 'customer');
   const [docs, setDocs] = useState<Doc[]>([]);
   const [cats, setCats] = useState<Cat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +73,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
   const [previewMime, setPreviewMime] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newVersionForId, setNewVersionForId] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Upload form state
   const [file, setFile] = useState<File | null>(null);
@@ -80,11 +84,16 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
   const [documentDate, setDocumentDate] = useState<string>('');
   const [serial, setSerial] = useState('');
   const [changeNote, setChangeNote] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
 
   const load = async () => {
     setLoading(true);
+    let q = supabase.from('alixdocs_documents').select('*');
+    if (effectiveScope === 'order' && orderId) q = q.eq('order_id', orderId);
+    else if (effectiveScope === 'customer' && customerId) q = q.eq('customer_id', customerId);
+    else { setDocs([]); setLoading(false); return; }
     const [{ data: d }, { data: c }] = await Promise.all([
-      supabase.from('alixdocs_documents').select('*').eq('order_id', orderId).order('created_at', { ascending: false }),
+      q.order('created_at', { ascending: false }),
       supabase.from('alixdocs_categories').select('id, code, name, sort_order').order('sort_order'),
     ]);
     setDocs((d ?? []) as Doc[]);
@@ -92,7 +101,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [orderId]);
+  useEffect(() => { load(); }, [orderId, customerId, effectiveScope]);
 
   const catMap = useMemo(() => Object.fromEntries(cats.map(c => [c.id, c])), [cats]);
 
@@ -113,6 +122,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
   const resetUploadForm = () => {
     setFile(null); setTitle(''); setCategory('sonstiges'); setConfLevel('normal');
     setDescription(''); setDocumentDate(''); setSerial(''); setChangeNote('');
+    setTagsInput('');
     setNewVersionForId(null);
   };
 
@@ -131,7 +141,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
     try {
       const fd = new FormData();
       fd.append('file', file);
-      fd.append('order_id', orderId);
+      if (orderId) fd.append('order_id', orderId);
       if (customerId) fd.append('customer_id', customerId);
       fd.append('category_code', category);
       fd.append('title', title || file.name);
@@ -146,6 +156,14 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
       const { data, error } = await supabase.functions.invoke('alixdocs-upload', { body: fd });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
+
+      // Tags nach dem Upload speichern (falls angegeben)
+      const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+      const newDocId = (data as any)?.document_id ?? (data as any)?.id;
+      if (!newVersionForId && tags.length > 0 && newDocId) {
+        await supabase.from('alixdocs_documents').update({ tags }).eq('id', newDocId);
+      }
+
       toast.success(newVersionForId ? 'Neue Version gespeichert' : 'Dokument hochgeladen');
       setUploadOpen(false);
       resetUploadForm();
@@ -155,6 +173,19 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
     } finally {
       setUploading(false);
     }
+  };
+
+  // Drag & Drop Upload
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = () => setIsDragOver(false);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault(); setIsDragOver(false);
+    const f = e.dataTransfer.files?.[0];
+    if (!f) return;
+    resetUploadForm();
+    setFile(f);
+    setTitle(f.name);
+    setUploadOpen(true);
   };
 
   const openPreview = async (d: Doc, version?: number) => {
@@ -234,14 +265,29 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
   };
 
   return (
-    <div className="space-y-4">
+    <div
+      className={`space-y-4 relative rounded-lg transition-colors ${isDragOver ? 'ring-2 ring-primary/60 bg-primary/5' : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragOver && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-primary/10 border-2 border-dashed border-primary rounded-lg">
+          <div className="text-center">
+            <Upload className="w-10 h-10 text-primary mx-auto mb-2" />
+            <p className="font-medium">Datei hier ablegen zum Hochladen</p>
+          </div>
+        </div>
+      )}
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-2 mr-auto">
           <Files className="w-5 h-5 text-primary" />
           <div>
             <h2 className="text-lg font-semibold">AlixDocs — Dokumente</h2>
-            <p className="text-xs text-muted-foreground">Auftrag {orderNumber ?? ''} · privat · max {MAX_MB} MB · PDF/JPG/PNG/WEBP/HEIC</p>
+            <p className="text-xs text-muted-foreground">
+              {effectiveScope === 'order' ? `Auftrag ${orderNumber ?? ''}` : 'Kunde'} · privat · max {MAX_MB} MB · PDF/JPG/PNG/WEBP/HEIC · Drag & Drop
+            </p>
           </div>
         </div>
         <div className="relative">
@@ -302,6 +348,11 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
                           {d.ocr_status === 'pending' && <Badge variant="outline" className="text-muted-foreground"><Loader2 className="w-3 h-3 mr-1 animate-spin" />KI …</Badge>}
                         </div>
                         {d.original_filename && <div className="text-xs text-muted-foreground font-mono">{d.original_filename}</div>}
+                        {d.tags && d.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {d.tags.map(t => <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>)}
+                          </div>
+                        )}
                         {d.ai_summary && <div className="text-xs text-muted-foreground italic mt-1 line-clamp-2 max-w-lg">💡 {d.ai_summary}</div>}
                       </div>
                     </div>
@@ -416,6 +467,10 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
                 <div>
                   <label className="text-xs font-medium text-muted-foreground">Beschreibung</label>
                   <Input value={description} onChange={(e) => setDescription(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Tags (Komma-getrennt)</label>
+                  <Input value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} placeholder="z.B. dringend, projekt-x" />
                 </div>
               </>
             )}
