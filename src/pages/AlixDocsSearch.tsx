@@ -516,6 +516,15 @@ export default function AlixDocsSearch() {
                               <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Freigeben
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+                            onClick={() => { setAssignDoc(d); setAssignQ(''); setAssignResults([]); }}
+                            title="Zu Auftrag zuordnen"
+                          >
+                            <LinkIcon className="w-3.5 h-3.5 mr-1" />Zu Auftrag
+                          </Button>
                           <Button size="sm" variant="ghost" onClick={() => openDoc(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
                           {canDelete && (
                             <Button
@@ -528,6 +537,7 @@ export default function AlixDocsSearch() {
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           )}
+
 
 
                         </TableCell>
