@@ -165,6 +165,9 @@ export default function AlixDocsSearch() {
             <div className="md:col-span-3 text-xs text-muted-foreground flex items-center">
               {!loading && `${docs.length} Treffer`}
             </div>
+          </div>
+
+
 
           {loading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
