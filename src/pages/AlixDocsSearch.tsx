@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy, CheckCircle2, Trash2 } from 'lucide-react';
+import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy, CheckCircle2, Trash2, LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -239,6 +239,100 @@ export default function AlixDocsSearch() {
     setDocs(prev => prev.filter(x => x.id !== d.id));
   };
 
+  // Zu Auftrag zuordnen
+  const [assignDoc, setAssignDoc] = useState<Doc | null>(null);
+  const [assignQ, setAssignQ] = useState('');
+  const [assignBusy, setAssignBusy] = useState(false);
+  const [assignResults, setAssignResults] = useState<Array<{ id: string; order_number: string | null; customer_id: string | null; customer_name?: string | null; customer_number?: string | null; hit?: string }>>([]);
+
+  const searchOrdersForAssign = async () => {
+    const term = assignQ.trim();
+    if (!term) { setAssignResults([]); return; }
+    setAssignBusy(true);
+    try {
+      const like = `%${term}%`;
+      const orderIds = new Set<string>();
+      const hitMap = new Map<string, string>();
+
+      // 1) Auftragsnummer
+      const { data: byNum } = await supabase.from('orders')
+        .select('id, order_number, customer_id')
+        .ilike('order_number', like).limit(50);
+      (byNum ?? []).forEach((o: any) => { orderIds.add(o.id); hitMap.set(o.id, `Auftrag ${o.order_number}`); });
+
+      // 2) Kunde
+      const { data: cs } = await supabase.from('customers')
+        .select('id, name, customer_number')
+        .or(`name.ilike.${like},customer_number.ilike.${like}`).limit(50);
+      const cIds = (cs ?? []).map((c: any) => c.id);
+      if (cIds.length) {
+        const { data: byCust } = await supabase.from('orders')
+          .select('id, order_number, customer_id')
+          .in('customer_id', cIds).order('created_at', { ascending: false }).limit(100);
+        (byCust ?? []).forEach((o: any) => {
+          if (!orderIds.has(o.id)) hitMap.set(o.id, `Kunde`);
+          orderIds.add(o.id);
+        });
+      }
+
+      // 3) Seriennummer via lager_devices
+      const { data: devs } = await supabase.from('lager_devices')
+        .select('serial_number, order_id').ilike('serial_number', like).not('order_id', 'is', null).limit(50);
+      (devs ?? []).forEach((d: any) => {
+        if (d.order_id) {
+          if (!orderIds.has(d.order_id)) hitMap.set(d.order_id, `SN ${d.serial_number}`);
+          orderIds.add(d.order_id);
+        }
+      });
+
+      if (orderIds.size === 0) { setAssignResults([]); return; }
+      const ids = Array.from(orderIds);
+      const { data: full } = await supabase.from('orders')
+        .select('id, order_number, customer_id').in('id', ids);
+      const custIds = [...new Set((full ?? []).map((o: any) => o.customer_id).filter(Boolean))] as string[];
+      let cMap: Record<string, any> = {};
+      if (custIds.length) {
+        const { data: cc } = await supabase.from('customers')
+          .select('id, name, customer_number').in('id', custIds);
+        cMap = Object.fromEntries((cc ?? []).map((c: any) => [c.id, c]));
+      }
+      setAssignResults((full ?? []).map((o: any) => ({
+        id: o.id,
+        order_number: o.order_number,
+        customer_id: o.customer_id,
+        customer_name: o.customer_id ? cMap[o.customer_id]?.name : null,
+        customer_number: o.customer_id ? cMap[o.customer_id]?.customer_number : null,
+        hit: hitMap.get(o.id),
+      })));
+    } finally { setAssignBusy(false); }
+  };
+
+  const assignOrder = async (orderId: string, customerId: string | null) => {
+    if (!assignDoc) return;
+    const patch: any = { order_id: orderId, status: 'freigegeben' };
+    if (customerId) patch.customer_id = customerId;
+    const { error } = await supabase.from('alixdocs_documents')
+      .update(patch).eq('id', assignDoc.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Auftrag zugeordnet und freigegeben');
+    setDocs(prev => prev.map(x => x.id === assignDoc.id
+      ? { ...x, order_id: orderId, customer_id: customerId ?? x.customer_id, status: 'freigegeben' }
+      : x));
+    // Order/Customer-Maps ergänzen
+    if (!orders[orderId]) {
+      const { data: o } = await supabase.from('orders')
+        .select('id, order_number, customer_id').eq('id', orderId).maybeSingle();
+      if (o) setOrders(prev => ({ ...prev, [orderId]: o as any }));
+    }
+    if (customerId && !customers[customerId]) {
+      const { data: c } = await supabase.from('customers')
+        .select('id, name, customer_number').eq('id', customerId).maybeSingle();
+      if (c) setCustomers(prev => ({ ...prev, [customerId]: c as any }));
+    }
+    setAssignDoc(null); setAssignQ(''); setAssignResults([]);
+  };
+
+
 
 
   const createShare = async () => {
@@ -422,6 +516,15 @@ export default function AlixDocsSearch() {
                               <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Freigeben
                             </Button>
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 border-blue-500/40 text-blue-400 hover:bg-blue-500/10"
+                            onClick={() => { setAssignDoc(d); setAssignQ(''); setAssignResults([]); }}
+                            title="Zu Auftrag zuordnen"
+                          >
+                            <LinkIcon className="w-3.5 h-3.5 mr-1" />Zu Auftrag
+                          </Button>
                           <Button size="sm" variant="ghost" onClick={() => openDoc(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
                           {canDelete && (
                             <Button
@@ -434,6 +537,7 @@ export default function AlixDocsSearch() {
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           )}
+
 
 
                         </TableCell>
@@ -499,6 +603,73 @@ export default function AlixDocsSearch() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Zu Auftrag zuordnen Dialog */}
+      <Dialog open={!!assignDoc} onOpenChange={(o) => { if (!o) { setAssignDoc(null); setAssignQ(''); setAssignResults([]); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5" /> Dokument einem Auftrag zuordnen</DialogTitle>
+          </DialogHeader>
+          {assignDoc && (
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                Dokument: <span className="font-medium text-foreground">{assignDoc.title}</span>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  autoFocus
+                  placeholder="Auftragsnummer, Kundenname, Kundennr. oder Seriennummer…"
+                  value={assignQ}
+                  onChange={(e) => setAssignQ(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && searchOrdersForAssign()}
+                />
+                <Button onClick={searchOrdersForAssign} disabled={assignBusy}>
+                  {assignBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                </Button>
+              </div>
+              <div className="max-h-96 overflow-y-auto border border-border rounded-md">
+                {assignResults.length === 0 ? (
+                  <div className="text-center text-sm text-muted-foreground py-8">
+                    {assignBusy ? 'Suche…' : 'Suchbegriff eingeben und Enter drücken.'}
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Auftrag</TableHead>
+                        <TableHead>Kunde</TableHead>
+                        <TableHead>Treffer</TableHead>
+                        <TableHead className="text-right">Aktion</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {assignResults.map(r => (
+                        <TableRow key={r.id}>
+                          <TableCell className="font-mono text-xs">{r.order_number ?? r.id.slice(0, 8)}</TableCell>
+                          <TableCell className="text-xs">
+                            {r.customer_number ? <span className="text-muted-foreground mr-1">{r.customer_number}</span> : null}
+                            {r.customer_name ?? '—'}
+                          </TableCell>
+                          <TableCell className="text-[11px] text-muted-foreground">{r.hit ?? ''}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" onClick={() => assignOrder(r.id, r.customer_id)}>
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Zuordnen &amp; freigeben
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignDoc(null)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
