@@ -292,6 +292,7 @@ const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
 const AlixDocsChainsAdmin = lazy(() => import("./pages/Admin/AlixDocsChains"));
+const AlixDocsReindex = lazy(() => import("./pages/Admin/AlixDocsReindex"));
 const AlixDocsDashboardPage = lazy(() => import("./pages/AlixDocsDashboard"));
 const AlixDocsSharePublic = lazy(() => import("./pages/AlixDocsSharePublic"));
 const CustomerPortalAlixDocs = lazy(() => import("./pages/CustomerPortal/AlixDocs"));
