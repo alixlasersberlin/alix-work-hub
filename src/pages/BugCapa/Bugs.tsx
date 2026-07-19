@@ -124,6 +124,89 @@ export default function Bugs() {
   async function setStatus(id: string, status: string) {
     const { error } = await (supabase as any).from('bugs').update({ status }).eq('id', id);
     if (error) { toast.error('Update fehlgeschlagen: ' + error.message); return; }
+
+    // Bei Schließen: Reporter per E-Mail informieren (Bug + Antwort/Verlauf)
+    if (status === 'geschlossen' || status === 'erledigt') {
+      try {
+        const bug = rows.find(r => r.id === id);
+        // Reporter-Info laden
+        const { data: bugFull } = await (supabase as any)
+          .from('bugs')
+          .select('id, ticket_number, title, description, product, module, software_version, priority, criticality, due_date, reporter_id, created_by')
+          .eq('id', id)
+          .maybeSingle();
+        const reporterId = bugFull?.reporter_id || bugFull?.created_by;
+        let reporterEmail: string | undefined;
+        let reporterName: string | undefined;
+        if (reporterId) {
+          const { data: prof } = await (supabase as any)
+            .from('user_profiles')
+            .select('email, full_name')
+            .eq('id', reporterId)
+            .maybeSingle();
+          reporterEmail = prof?.email;
+          reporterName = prof?.full_name;
+        }
+        // Kommentare (Antwort/Verlauf) laden
+        const { data: comments } = await (supabase as any)
+          .from('qm_comments')
+          .select('comment_text, created_at, created_by')
+          .eq('entity_type', 'bug')
+          .eq('entity_id', id)
+          .order('created_at', { ascending: true });
+        // Autor-Namen auflösen
+        const authorIds = Array.from(new Set((comments ?? []).map((c: any) => c.created_by).filter(Boolean)));
+        let authorMap: Record<string, string> = {};
+        if (authorIds.length) {
+          const { data: profs } = await (supabase as any)
+            .from('user_profiles')
+            .select('id, full_name, email')
+            .in('id', authorIds);
+          authorMap = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p.full_name || p.email || 'Team']));
+        }
+        const closerName = ((user as any)?.user_metadata?.full_name as string | undefined)
+          || ((user as any)?.email as string | undefined)
+          || 'AlixWork';
+
+        if (reporterEmail) {
+          await supabase.functions.invoke('send-transactional-email', {
+            body: {
+              templateName: 'bug-closed-notification',
+              recipientEmail: reporterEmail,
+              idempotencyKey: `bug-closed-${id}-${status}`,
+              templateData: {
+                ticketNumber: bugFull?.ticket_number ?? bug?.ticket_number,
+                title: bugFull?.title ?? bug?.title,
+                description: bugFull?.description ?? bug?.description ?? '',
+                reporterName,
+                closedBy: closerName,
+                closedAt: new Date().toISOString().slice(0, 10),
+                newStatus: status,
+                fields: [
+                  { label: 'Produkt', value: bugFull?.product ?? '' },
+                  { label: 'Modul', value: bugFull?.module ?? '' },
+                  { label: 'Softwareversion', value: bugFull?.software_version ?? '' },
+                  { label: 'Priorität', value: bugFull?.priority ?? '' },
+                  { label: 'Kritikalität', value: bugFull?.criticality ?? '' },
+                ],
+                comments: (comments ?? []).map((c: any) => ({
+                  author: c.created_by ? (authorMap[c.created_by] || 'Team') : 'Team',
+                  created_at: c.created_at ? String(c.created_at).slice(0, 16).replace('T', ' ') : '',
+                  text: c.comment_text ?? '',
+                })),
+              },
+            },
+          });
+          toast.success(`Bug ${status} – Benachrichtigung an ${reporterEmail} gesendet`);
+        } else {
+          toast.info(`Bug ${status} – keine Reporter-E-Mail hinterlegt`);
+        }
+      } catch (e: any) {
+        console.error('Bug-Close-Notify fehlgeschlagen', e);
+        toast.warning('Statuswechsel gespeichert, E-Mail-Versand fehlgeschlagen');
+      }
+    }
+
     load();
   }
 

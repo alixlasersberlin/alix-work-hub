@@ -16,6 +16,7 @@ import { template as customerShippingNotice } from './customer-shipping-notice.t
 import { template as backupFailureAlert } from './backup-failure-alert.tsx'
 import { template as bankFinancingRequest } from './bank-financing-request.tsx'
 import { template as bugCapaNotification } from './bug-capa-notification.tsx'
+import { template as bugClosedNotification } from './bug-closed-notification.tsx'
 import { template as reviewInvitation } from './review-invitation.tsx'
 import { template as financeReminder } from './finance-reminder.tsx'
 import { template as salesWizardConfirmation } from './sales-wizard-confirmation.tsx'
@@ -35,6 +36,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'backup-failure-alert': backupFailureAlert,
   'bank-financing-request': bankFinancingRequest,
   'bug-capa-notification': bugCapaNotification,
+  'bug-closed-notification': bugClosedNotification,
   'review-invitation': reviewInvitation,
   'finance-reminder': financeReminder,
   'sales-wizard-confirmation': salesWizardConfirmation,
