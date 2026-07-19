@@ -13,6 +13,7 @@ import {
 
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import DocActionsMenu from './DocActionsMenu';
 
 const ALLOWED = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'];
 const ALLOWED_MIME = new Set([
@@ -331,6 +332,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
                             <DropdownMenuItem onClick={() => setStatus(d, 'archiviert')}><Archive className="w-3 h-3 mr-2" />Archivieren</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
+                        <DocActionsMenu doc={{ id: d.id, title: d.title, mime_type: d.mime_type, customer_id: customerId ?? null }} onChanged={load} />
                         <Button size="sm" variant="ghost" onClick={() => softDelete(d)} title="Papierkorb"><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     )}
