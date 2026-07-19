@@ -16628,6 +16628,7 @@ export type Database = {
           finance_remaining_amount: number | null
           finance_total_amount: number | null
           id: string
+          imported_via_reconcile_at: string | null
           internal_number: string | null
           invoiced_flag: boolean
           is_vip: boolean
@@ -16668,6 +16669,7 @@ export type Database = {
           finance_remaining_amount?: number | null
           finance_total_amount?: number | null
           id?: string
+          imported_via_reconcile_at?: string | null
           internal_number?: string | null
           invoiced_flag?: boolean
           is_vip?: boolean
@@ -16708,6 +16710,7 @@ export type Database = {
           finance_remaining_amount?: number | null
           finance_total_amount?: number | null
           id?: string
+          imported_via_reconcile_at?: string | null
           internal_number?: string | null
           invoiced_flag?: boolean
           is_vip?: boolean

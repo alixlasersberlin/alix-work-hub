@@ -63,6 +63,7 @@ const ORDER_SELECT = `
     finance_total_amount, finance_deposit_amount, finance_remaining_amount,
     finance_open_amount, finance_paid_amount, finance_overdue_amount,
     finance_payment_status, case_number, billing_address, shipping_address, raw_data,
+    imported_via_reconcile_at,
     customers(company_name, contact_name, shipping_address, billing_address, is_vip)
   `;
 
@@ -93,6 +94,9 @@ export default function Orders() {
     atOnly ? 'at' : (initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all')
   );
   const [depositFilter, setDepositFilter] = useState<'all' | 'partial'>('all');
+  const [newImportFilter, setNewImportFilter] = useState<'all' | 'new'>(
+    (searchParams.get('filter') === 'new-import' ? 'new' : 'all')
+  );
   const [sortField, setSortField] = useState<SortField>('order_date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
@@ -536,7 +540,8 @@ export default function Orders() {
         matchDeposit = false;
       }
     }
-    return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && notExcluded;
+    const matchNewImport = newImportFilter === 'all' || !!o.imported_via_reconcile_at;
+    return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && matchNewImport && notExcluded;
   });
 
   // Client-seitige Sortierung nach Anzahlungsstatus
@@ -560,7 +565,7 @@ export default function Orders() {
   const totalPages = pageSize === 'all' ? 1 : Math.ceil(sorted.length / pageSize);
   const paged = pageSize === 'all' ? sorted : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, depositFilter, pageSize]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, depositFilter, newImportFilter, pageSize]);
 
   // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
   useEffect(() => {
@@ -694,6 +699,15 @@ export default function Orders() {
               <SelectContent>
                 <SelectItem value="all">Alle Anzahlungen</SelectItem>
                 <SelectItem value="partial">⚠ Offene Teilzahlung</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={newImportFilter} onValueChange={(v) => setNewImportFilter(v as 'all' | 'new')}>
+              <SelectTrigger className="w-48 bg-secondary border-border">
+                <SelectValue placeholder="Import filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Aufträge</SelectItem>
+                <SelectItem value="new">🆕 NEU Import (Zoho-Abgleich)</SelectItem>
               </SelectContent>
             </Select>
             <Select value={String(pageSize)} onValueChange={v => setPageSize(v === 'all' ? 'all' : Number(v) as 20 | 30 | 50)}>
@@ -924,9 +938,17 @@ export default function Orders() {
                         {visibleColumns.map(colId => {
                           if (colId === 'order_number') return (
                             <td key={colId} className="px-4 py-3 font-medium text-foreground">
-                              <span className="inline-flex items-center gap-2">
+                              <span className="inline-flex items-center gap-2 flex-wrap">
                                 {isOrderVip(o) && <VipBadge size="sm" iconOnly />}
                                 {o._displayNumber || o.order_number}
+                                {o.imported_via_reconcile_at && (
+                                  <span
+                                    title={`Über Zoho-Abgleich importiert am ${new Date(o.imported_via_reconcile_at).toLocaleString('de-DE')}`}
+                                    className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300"
+                                  >
+                                    🆕 NEW Import
+                                  </span>
+                                )}
                               </span>
                             </td>
                           );
