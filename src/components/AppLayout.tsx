@@ -29,7 +29,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck } from 'lucide-react';
+import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Files } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
@@ -611,7 +611,7 @@ export const navItems: NavItem[] = [
           { path: '/admin/sign-marketplace', label: 'Marketplace & White-Label', icon: Settings, roles: ['Super Admin'] },
           { path: '/admin/signaturen', label: 'Admin (Stempel & Templates)', icon: Settings, roles: ['Admin', 'Super Admin'] },
           { path: '/admin/signaturen/facsimile', label: 'Facsimile-Unterschrift', icon: Settings, roles: ['Super Admin'] },
-          { path: '/dokumente', label: 'AlixDocs — Suche', icon: Files },
+          { path: '/dokumente', label: 'AlixDocs — Suche', icon: Files, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Buchhaltung', 'Order'] },
         ],
       },
 
