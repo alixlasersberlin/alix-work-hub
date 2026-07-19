@@ -141,7 +141,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
     try {
       const fd = new FormData();
       fd.append('file', file);
-      fd.append('order_id', orderId);
+      if (orderId) fd.append('order_id', orderId);
       if (customerId) fd.append('customer_id', customerId);
       fd.append('category_code', category);
       fd.append('title', title || file.name);
@@ -156,6 +156,14 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
       const { data, error } = await supabase.functions.invoke('alixdocs-upload', { body: fd });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
+
+      // Tags nach dem Upload speichern (falls angegeben)
+      const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+      const newDocId = (data as any)?.document_id ?? (data as any)?.id;
+      if (!newVersionForId && tags.length > 0 && newDocId) {
+        await supabase.from('alixdocs_documents').update({ tags }).eq('id', newDocId);
+      }
+
       toast.success(newVersionForId ? 'Neue Version gespeichert' : 'Dokument hochgeladen');
       setUploadOpen(false);
       resetUploadForm();
@@ -165,6 +173,19 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
     } finally {
       setUploading(false);
     }
+  };
+
+  // Drag & Drop Upload
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = () => setIsDragOver(false);
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault(); setIsDragOver(false);
+    const f = e.dataTransfer.files?.[0];
+    if (!f) return;
+    resetUploadForm();
+    setFile(f);
+    setTitle(f.name);
+    setUploadOpen(true);
   };
 
   const openPreview = async (d: Doc, version?: number) => {
