@@ -34,7 +34,7 @@ type Doc = {
 };
 type Cat = { id: string; code: string; name: string };
 type Order = { id: string; order_number: string | null; customer_id: string | null };
-type Customer = { id: string; company_name: string | null; contact_name: string | null; external_customer_id: string | null };
+type Customer = { id: string; company_name: string | null; contact_name: string | null; external_customer_id: string | null; raw_data?: any };
 
 export default function AlixDocsSearch() {
   const { roles } = useAuth();
@@ -159,7 +159,7 @@ export default function AlixDocsSearch() {
     const custIds = [...new Set(rows.map(r => r.customer_id).filter(Boolean))] as string[];
     if (custIds.length) {
       const { data: c } = await supabase.from('customers')
-        .select('id, company_name, contact_name, external_customer_id').in('id', custIds);
+        .select('id, company_name, contact_name, external_customer_id, raw_data').in('id', custIds);
       setCustomers(Object.fromEntries((c ?? []).map((r: any) => [r.id, r])));
     }
     setLoading(false);
@@ -341,7 +341,7 @@ export default function AlixDocsSearch() {
       let cMap: Record<string, any> = {};
       if (custIds.length) {
         const { data: cc } = await supabase.from('customers')
-          .select('id, company_name, contact_name, external_customer_id').in('id', custIds);
+          .select('id, company_name, contact_name, external_customer_id, raw_data').in('id', custIds);
         cMap = Object.fromEntries((cc ?? []).map((c: any) => [c.id, c]));
       }
       setAssignResults((full ?? []).map((o: any) => ({
@@ -349,7 +349,7 @@ export default function AlixDocsSearch() {
         order_number: o.order_number,
         customer_id: o.customer_id,
         customer_name: o.customer_id ? (cMap[o.customer_id]?.company_name ?? cMap[o.customer_id]?.contact_name) : null,
-        customer_number: o.customer_id ? cMap[o.customer_id]?.external_customer_id : null,
+        customer_number: o.customer_id ? (cMap[o.customer_id]?.raw_data?.contact_number ?? cMap[o.customer_id]?.external_customer_id) : null,
         hit: hitMap.get(o.id),
       })));
     } finally { setAssignBusy(false); }
@@ -374,7 +374,7 @@ export default function AlixDocsSearch() {
     }
     if (customerId && !customers[customerId]) {
       const { data: c } = await supabase.from('customers')
-        .select('id, company_name, contact_name, external_customer_id').eq('id', customerId).maybeSingle();
+        .select('id, company_name, contact_name, external_customer_id, raw_data').eq('id', customerId).maybeSingle();
       if (c) setCustomers(prev => ({ ...prev, [customerId]: c as any }));
     }
     setAssignDoc(null); setAssignQ(''); setAssignResults([]);
@@ -576,7 +576,7 @@ export default function AlixDocsSearch() {
                           ) : '—'}
                         </TableCell>
                         <TableCell className="text-xs">
-                          {c ? `${c.external_customer_id ?? ''} ${c.company_name ?? c.contact_name ?? ''}`.trim() || '—' : '—'}
+                          {c ? `${c.raw_data?.contact_number ?? c.external_customer_id ?? ''} ${c.company_name ?? c.contact_name ?? ''}`.trim() || '—' : '—'}
                         </TableCell>
                         <TableCell>v{d.current_version}</TableCell>
                         <TableCell><Badge variant="outline">{d.status}</Badge></TableCell>
