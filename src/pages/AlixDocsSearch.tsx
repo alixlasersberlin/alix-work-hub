@@ -60,7 +60,7 @@ export default function AlixDocsSearch() {
     if (dateTo) query = query.lte('created_at', dateTo + 'T23:59:59');
     if (q) {
       const s = `%${q}%`;
-      query = query.or(`title.ilike.${s},description.ilike.${s},original_filename.ilike.${s},serial_number.ilike.${s}`);
+      query = query.or(`title.ilike.${s},description.ilike.${s},original_filename.ilike.${s},serial_number.ilike.${s},ocr_text.ilike.${s},ai_summary.ilike.${s}`);
     }
     const { data, error } = await query;
     if (error) toast.error(error.message);
