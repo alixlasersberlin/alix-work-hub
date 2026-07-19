@@ -46,6 +46,8 @@ type ZohoHit = {
 type SearchGroup = { source: string; mode?: string; error?: string; results: ZohoHit[] };
 
 export default function AuftraegeGesucht() {
+  const { hasRole } = useAuth();
+  const canImport = hasRole("Super Admin") || hasRole("Admin");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
