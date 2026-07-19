@@ -368,29 +368,56 @@ export default function AlixDocsBulkImport() {
 
               <div className="max-h-[500px] overflow-y-auto border rounded-md divide-y">
                 {rows.map((r, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 text-sm">
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium">{r.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {(r.size / 1024).toFixed(1)} KB {r.message ? `· ${r.message}` : ""}
+                  <div key={i} className="p-2 text-sm space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-medium">{r.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {(r.size / 1024).toFixed(1)} KB {r.message ? `· ${r.message}` : ""}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {r.match_score != null && (
+                          <Badge variant="outline" className={
+                            r.match_confidence === "auto" ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" :
+                            r.match_confidence === "suggested" ? "bg-amber-500/15 text-amber-600 border-amber-500/30" :
+                            "bg-muted"
+                          }>Score {r.match_score}</Badge>
+                        )}
+                        {r.status === "pending" && <Badge variant="secondary">wartet</Badge>}
+                        {r.status === "converting" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />HEIC→JPG</Badge>}
+                        {r.status === "uploading" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />Upload</Badge>}
+                        {r.status === "processing" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />OCR + AI</Badge>}
+                        {r.status === "done" && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                        {r.status === "error" && <XCircle className="w-4 h-4 text-rose-600" />}
+                        {r.status === "skipped" && <Badge variant="outline">skip</Badge>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {r.match_score != null && (
-                        <Badge variant="outline" className={
-                          r.match_confidence === "auto" ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" :
-                          r.match_confidence === "suggested" ? "bg-amber-500/15 text-amber-600 border-amber-500/30" :
-                          "bg-muted"
-                        }>Score {r.match_score}</Badge>
-                      )}
-                      {r.status === "pending" && <Badge variant="secondary">wartet</Badge>}
-                      {r.status === "converting" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />HEIC→JPG</Badge>}
-                      {r.status === "uploading" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />Upload</Badge>}
-                      {r.status === "processing" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />OCR + AI</Badge>}
-                      {r.status === "done" && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-                      {r.status === "error" && <XCircle className="w-4 h-4 text-rose-600" />}
-                      {r.status === "skipped" && <Badge variant="outline">skip</Badge>}
-                    </div>
+                    {r.status !== "skipped" && r.status !== "done" && (
+                      <div className="pl-1">
+                        {r.scanning ? (
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Kandidaten werden gesucht …
+                          </div>
+                        ) : r.candidates && r.candidates.length > 0 ? (
+                          <select
+                            value={r.selected_order_id ?? ""}
+                            onChange={e => setRow(i, { selected_order_id: e.target.value || undefined })}
+                            disabled={running}
+                            className="w-full text-xs bg-background border rounded px-2 py-1"
+                          >
+                            <option value="">— Kein Auftrag zuordnen —</option>
+                            {r.candidates.map(c => (
+                              <option key={c.order_id} value={c.order_id}>
+                                {c.order_number}{c.customer_name ? ` · ${c.customer_name}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="text-xs text-muted-foreground">Keine Auftragsvorschläge aus Dateiname</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
