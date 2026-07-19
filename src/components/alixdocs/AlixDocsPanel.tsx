@@ -14,6 +14,7 @@ import {
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import DocActionsMenu from './DocActionsMenu';
+import PdfPreview from './PdfPreview';
 
 const ALLOWED = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'];
 const ALLOWED_MIME = new Set([
@@ -515,6 +516,8 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
               <div className="h-full flex items-center justify-center overflow-auto">
                 <img src={previewUrl} alt={previewDoc?.title} className="max-w-full max-h-full object-contain" />
               </div>
+            ) : previewMime === 'application/pdf' ? (
+              <PdfPreview url={previewUrl} />
             ) : (
               <iframe src={previewUrl} className="w-full h-full border-0 bg-white" title={previewDoc?.title} />
             )}
