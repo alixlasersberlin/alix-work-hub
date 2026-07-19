@@ -271,22 +271,31 @@ async function buildPdf({ repair, parts = [], workOrders = [] }: RenderInput): P
   return doc;
 }
 
+function repairAutoFile(repair: any) {
+  return {
+    customer_id: repair?.customer_id ?? null,
+    order_id: repair?.order_id ?? null,
+    title: `Arbeitsauftrag ${repair?.repair_number ?? ''}`.trim(),
+  };
+}
+
 export async function generateRepairWorkOrderPdfBlob(input: RenderInput): Promise<Blob> {
   const doc = await buildPdf(input);
-  return await stampedPdfBlob(doc, 'service_report', input.repair.repair_number ?? undefined);
+  return await stampedPdfBlob(doc, 'service_report', input.repair.repair_number ?? undefined, repairAutoFile(input.repair));
 }
 
 export async function renderRepairWorkOrderPdf(input: RenderInput, action: 'print' | 'download') {
   const doc = await buildPdf(input);
   const fileName = `Arbeitsauftrag-${input.repair.repair_number || 'reparatur'}.pdf`;
+  const autoFile = repairAutoFile(input.repair);
   if (action === 'print') {
-    const stamped = await stampedPdfBlob(doc, 'service_report', input.repair.repair_number ?? undefined);
+    const stamped = await stampedPdfBlob(doc, 'service_report', input.repair.repair_number ?? undefined, autoFile);
     const url = URL.createObjectURL(stamped);
     const w = window.open(url, '_blank');
     if (w) setTimeout(() => { try { w.print(); } catch { /* ignore */ } }, 600);
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   } else {
-    await downloadStampedPdf(doc, 'service_report', fileName, input.repair.repair_number ?? undefined);
+    await downloadStampedPdf(doc, 'service_report', fileName, input.repair.repair_number ?? undefined, autoFile);
   }
 }
 
