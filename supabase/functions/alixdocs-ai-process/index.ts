@@ -57,13 +57,12 @@ Deno.serve(async (req) => {
   }).select('id').single();
   const startedAt = Date.now();
 
-  try {
-    // Download file
-    const { data: blob, error: dErr } = await admin.storage.from(ver.storage_bucket).download(ver.storage_path);
-    if (dErr || !blob) throw new Error(`storage_download_failed: ${dErr?.message}`);
-    const buf = new Uint8Array(await blob.arrayBuffer());
+  // Skip AI for very large files – edge worker memory (~150MB) can't hold
+  // download + base64 (~1.35x) + AI request buffers. 8MB raw ≈ 11MB base64.
+  const MAX_AI_BYTES = 8 * 1024 * 1024;
 
-    // Duplicate check on file hash
+  try {
+    // Duplicate check on file hash (cheap, before any download)
     if (ver.file_hash) {
       const { data: dupes } = await admin.from('alixdocs_versions')
         .select('document_id').eq('file_hash', ver.file_hash).neq('document_id', document_id).limit(1);
@@ -71,6 +70,29 @@ Deno.serve(async (req) => {
         await admin.from('alixdocs_documents').update({ duplicate_of: dupes[0].document_id }).eq('id', document_id);
       }
     }
+
+    // Check file size via storage metadata to avoid downloading huge files
+    const { data: fileInfo } = await admin.storage.from(ver.storage_bucket)
+      .list(ver.storage_path.substring(0, ver.storage_path.lastIndexOf('/')), {
+        search: ver.storage_path.split('/').pop(),
+      });
+    const size = fileInfo?.[0]?.metadata?.size ?? 0;
+    if (size > MAX_AI_BYTES) {
+      await admin.from('alixdocs_documents').update({
+        ocr_status: 'skipped_too_large',
+        ai_processed_at: new Date().toISOString(),
+      }).eq('id', document_id);
+      await admin.from('alixdocs_ai_jobs').update({
+        status: 'skipped', error: `file_too_large_${size}`,
+        duration_ms: Date.now() - startedAt, finished_at: new Date().toISOString(),
+      }).eq('id', job!.id);
+      return json(200, { ok: true, skipped: 'file_too_large', size });
+    }
+
+    // Download file
+    const { data: blob, error: dErr } = await admin.storage.from(ver.storage_bucket).download(ver.storage_path);
+    if (dErr || !blob) throw new Error(`storage_download_failed: ${dErr?.message}`);
+    const buf = new Uint8Array(await blob.arrayBuffer());
 
     // Base64 for inline content
     const b64 = base64FromBytes(buf);
