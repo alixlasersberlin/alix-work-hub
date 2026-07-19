@@ -179,7 +179,7 @@ export default function ZohoAbgleich() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Auftragsnummer</TableHead>
+                        <TableHead>{r.entity === "offers" ? "Angebotsnummer" : "Auftragsnummer"}</TableHead>
                         <TableHead>Datum</TableHead>
                         <TableHead>Kunde</TableHead>
                         <TableHead>Status</TableHead>
