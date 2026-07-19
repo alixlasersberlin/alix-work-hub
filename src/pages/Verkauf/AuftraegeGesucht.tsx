@@ -33,6 +33,17 @@ const SOURCE_LABEL: Record<string, string> = {
   zoho_eu_2: "🇦🇹 Alix Austria",
 };
 
+type ZohoHit = {
+  salesorder_id: string;
+  salesorder_number: string;
+  date?: string;
+  status?: string;
+  customer_name?: string;
+  total?: number;
+  exists_local?: boolean;
+};
+type SearchGroup = { source: string; mode?: string; error?: string; results: ZohoHit[] };
+
 export default function AuftraegeGesucht() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,6 +52,62 @@ export default function AuftraegeGesucht() {
   const [status, setStatus] = useState<string>("pending");
   const [source, setSource] = useState<string>("all");
   const [q, setQ] = useState("");
+
+  // Zoho manual search
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchMode, setSearchMode] = useState<"auto" | "number" | "customer">("auto");
+  const [searchSource, setSearchSource] = useState<"all" | "zoho_eu_1" | "zoho_eu_2">("all");
+  const [searching, setSearching] = useState(false);
+  const [searchGroups, setSearchGroups] = useState<SearchGroup[] | null>(null);
+  const [importingHit, setImportingHit] = useState<string | null>(null);
+
+  async function runZohoSearch() {
+    const term = searchTerm.trim();
+    if (term.length < 2) {
+      toast({ title: "Bitte mindestens 2 Zeichen eingeben", variant: "destructive" });
+      return;
+    }
+    setSearching(true);
+    setSearchGroups(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("zoho-orders-search", {
+        body: {
+          query: term,
+          mode: searchMode,
+          sources: searchSource === "all" ? ["zoho_eu_1", "zoho_eu_2"] : [searchSource],
+        },
+      });
+      if (error) throw error;
+      const groups = (data?.results ?? []) as SearchGroup[];
+      setSearchGroups(groups);
+      const total = groups.reduce((s, g) => s + (g.results?.length ?? 0), 0);
+      toast({ title: `${total} Treffer in Zoho`, description: total === 0 ? "Keine passenden Aufträge gefunden." : undefined });
+    } catch (e: any) {
+      toast({ title: "Suche fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  async function importZohoHit(source_system: string, hit: ZohoHit) {
+    setImportingHit(hit.salesorder_id);
+    try {
+      const { error } = await supabase.functions.invoke("sync-single-order", {
+        body: { source_system, external_order_id: hit.salesorder_id },
+      });
+      if (error) throw error;
+      toast({ title: "Import erfolgreich", description: hit.salesorder_number || hit.salesorder_id });
+      // mark local
+      setSearchGroups((prev) => prev?.map((g) => g.source === source_system
+        ? { ...g, results: g.results.map((r) => r.salesorder_id === hit.salesorder_id ? { ...r, exists_local: true } : r) }
+        : g) ?? null);
+      await load();
+    } catch (e: any) {
+      toast({ title: "Import fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setImportingHit(null);
+    }
+  }
 
   async function load() {
     setLoading(true);
