@@ -257,7 +257,70 @@ export default function AuftraegeGesucht() {
     }
   }
 
-  async function removeRow(r: Row) {
+  async function importSelected() {
+    if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
+    const targets = rows.filter((r) => selected.has(r.id) && r.import_status !== "imported" && r.import_status !== "resolved");
+    if (targets.length === 0) { toast({ title: "Keine importierbaren Einträge ausgewählt" }); return; }
+    if (!confirm(`${targets.length} Auftrag/Aufträge importieren?`)) return;
+
+    setRunning("import");
+    setBulkProgress({ done: 0, total: targets.length });
+    let ok = 0, fail = 0;
+    const parseRetryMs = (msg: string, fallback: number) => {
+      const m = msg.match(/Retry after\s*~?\s*(\d+)\s*(ms|s)?/i);
+      if (m) { const n = parseInt(m[1], 10); return m[2]?.toLowerCase() === "s" ? n * 1000 : n; }
+      return fallback;
+    };
+
+    for (let i = 0; i < targets.length; i++) {
+      const r = targets[i];
+      setBusy(r.id);
+      let attempt = 0; let success = false; let lastMsg = "";
+      while (attempt <= 3 && !success) {
+        let data: any = null, error: any = null;
+        try {
+          const res = await supabase.functions.invoke("sync-single-order", {
+            body: { source_system: r.source_system, external_order_id: r.external_order_id },
+          });
+          data = res.data; error = res.error;
+        } catch (e: any) { error = { message: e?.message ?? String(e) }; }
+        const rawMsg = (error?.message || data?.message || data?.error || "") as string;
+        const msg = typeof rawMsg === "string" ? rawMsg : JSON.stringify(rawMsg);
+        const tokenRL = /token refresh/i.test(msg) && /too many requests|rate/i.test(msg);
+        const rateLimited = tokenRL || /rate limit/i.test(msg) || /429/.test(msg) || /too many requests/i.test(msg);
+        if (!error && !data?.error) {
+          const now = new Date().toISOString();
+          await supabase.from("orders_missing").update({
+            import_status: "imported", imported_at: now, resolved_at: now, import_error: null,
+          }).eq("id", r.id);
+          await supabase.from("orders").update({ imported_via_reconcile_at: now })
+            .eq("source_system", r.source_system).eq("external_order_id", r.external_order_id);
+          success = true; ok += 1;
+          break;
+        }
+        lastMsg = msg || "Unbekannter Fehler";
+        if (!rateLimited || attempt === 3) break;
+        const base = tokenRL ? 60000 : 15000;
+        const waitMs = Math.min(parseRetryMs(lastMsg, base * (attempt + 1)), 120000);
+        await new Promise((res) => setTimeout(res, waitMs));
+        attempt += 1;
+      }
+      if (!success) {
+        fail += 1;
+        await supabase.from("orders_missing").update({ import_status: "failed", import_error: lastMsg }).eq("id", r.id);
+      }
+      setBulkProgress({ done: i + 1, total: targets.length });
+      // Pacing between orders to respect Zoho rate limits
+      if (i < targets.length - 1) await new Promise((res) => setTimeout(res, 1500));
+    }
+    setBusy(null);
+    setBulkProgress(null);
+    setRunning(null);
+    setSelected(new Set());
+    toast({ title: `Import fertig: ${ok} ok, ${fail} Fehler` });
+    await load();
+  }
+
     if (!confirm(`Eintrag ${r.order_number ?? r.external_order_id} entfernen?`)) return;
     const { error } = await supabase.from("orders_missing").delete().eq("id", r.id);
     if (error) toast({ title: "Löschen fehlgeschlagen", description: error.message, variant: "destructive" });
