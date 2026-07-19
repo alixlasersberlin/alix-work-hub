@@ -27,32 +27,53 @@ interface SourceResult {
   error?: string;
 }
 
+type EntityKey = "orders" | "offers";
+const ENTITIES: { key: EntityKey; label: string; fn: string }[] = [
+  { key: "orders", label: "Aufträge (Salesorders)", fn: "zoho-orders-reconcile" },
+  { key: "offers", label: "Angebote (Estimates)", fn: "zoho-offers-reconcile" },
+];
+
 export default function ZohoAbgleich() {
   const [loading, setLoading] = useState<"check" | "import" | null>(null);
   const [selected, setSelected] = useState<Record<SourceKey, boolean>>({ zoho_eu_1: true, zoho_eu_2: true });
-  const [results, setResults] = useState<SourceResult[] | null>(null);
+  const [entitySel, setEntitySel] = useState<Record<EntityKey, boolean>>({ orders: true, offers: false });
+  const [results, setResults] = useState<Array<SourceResult & { entity: EntityKey }> | null>(null);
   const [durationMs, setDurationMs] = useState<number | null>(null);
 
   async function run(doImport: boolean) {
     const sources = SOURCES.filter((s) => selected[s.key]).map((s) => s.key);
+    const entities = ENTITIES.filter((e) => entitySel[e.key]);
     if (sources.length === 0) {
       toast({ title: "Keine Quelle gewählt", variant: "destructive" });
+      return;
+    }
+    if (entities.length === 0) {
+      toast({ title: "Kein Import-Typ gewählt", variant: "destructive" });
       return;
     }
     setLoading(doImport ? "import" : "check");
     setResults(null);
     setDurationMs(null);
     try {
-      const { data, error } = await supabase.functions.invoke("zoho-orders-reconcile", {
-        body: { sources, import: doImport },
-      });
-      if (error) throw error;
-      setResults(data?.results ?? []);
-      setDurationMs(data?.duration_ms ?? null);
-      const totalMissing = (data?.results ?? []).reduce((s: number, r: SourceResult) => s + (r.missing_count ?? 0), 0);
-      const totalImported = (data?.results ?? []).reduce((s: number, r: SourceResult) => s + (r.imported ?? 0), 0);
+      const responses = await Promise.all(entities.map(async (ent) => {
+        const { data, error } = await supabase.functions.invoke(ent.fn, { body: { sources, import: doImport } });
+        if (error) throw error;
+        return { ent, data };
+      }));
+      const merged: Array<SourceResult & { entity: EntityKey }> = [];
+      let totalMs = 0;
+      for (const { ent, data } of responses) {
+        totalMs = Math.max(totalMs, data?.duration_ms ?? 0);
+        for (const r of (data?.results ?? []) as SourceResult[]) {
+          merged.push({ ...r, entity: ent.key });
+        }
+      }
+      setResults(merged);
+      setDurationMs(totalMs);
+      const totalMissing = merged.reduce((s, r) => s + (r.missing_count ?? 0), 0);
+      const totalImported = merged.reduce((s, r) => s + (r.imported ?? 0), 0);
       toast({
-        title: doImport ? `${totalImported} Aufträge importiert` : `${totalMissing} fehlende Aufträge`,
+        title: doImport ? `${totalImported} Datensätze importiert` : `${totalMissing} fehlende Datensätze`,
         description: doImport ? "Import abgeschlossen." : "Prüfung abgeschlossen.",
       });
     } catch (e: any) {
