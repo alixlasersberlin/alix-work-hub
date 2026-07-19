@@ -423,6 +423,18 @@ export default function AlixDocsSearch() {
                             </Button>
                           )}
                           <Button size="sm" variant="ghost" onClick={() => openDoc(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
+                          {canDelete && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-400 hover:text-red-500 hover:bg-red-500/10"
+                              onClick={() => deleteDoc(d)}
+                              title="Löschen (Admin)"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+
 
                         </TableCell>
                       </TableRow>
