@@ -666,6 +666,100 @@ export default function AuftraegeGesucht() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
           <div>
+            <CardTitle>Fehlende Angebote</CardTitle>
+            <CardDescription>Zoho-Estimates, die in AlixWork noch nicht als Angebot vorliegen.</CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={scanMissingOffers} disabled={offersScanning}>
+              {offersScanning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Jetzt prüfen
+            </Button>
+            {canImport && offersMissing.length > 0 && (
+              <Button onClick={importSelectedOffers} disabled={offersBulkRunning || offersSelected.size === 0}>
+                {offersBulkRunning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                {offersSelected.size > 0 ? `${offersSelected.size} importieren` : "Auswahl importieren"}
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {offersMissing.length === 0 ? (
+            <div className="text-sm text-muted-foreground py-6 text-center">
+              {offersScanning ? "Prüfe…" : 'Noch nichts geprüft oder alle Angebote sind synchron. Klicke „Jetzt prüfen".'}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={offersSelected.size === offersMissing.length && offersMissing.length > 0}
+                      onCheckedChange={(v) => {
+                        if (v) setOffersSelected(new Set(offersMissing.map((r) => `${r.source_system}|${r.salesorder_id}`)));
+                        else setOffersSelected(new Set());
+                      }}
+                    />
+                  </TableHead>
+                  <TableHead>Angebots-Nr.</TableHead>
+                  <TableHead>Mandant</TableHead>
+                  <TableHead>Kunde</TableHead>
+                  <TableHead>Datum</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Betrag</TableHead>
+                  <TableHead className="text-right">Aktion</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {offersMissing.map((row) => {
+                  const key = `${row.source_system}|${row.salesorder_id}`;
+                  return (
+                    <TableRow key={key}>
+                      <TableCell>
+                        <Checkbox
+                          checked={offersSelected.has(key)}
+                          onCheckedChange={(v) => {
+                            setOffersSelected((prev) => {
+                              const n = new Set(prev);
+                              if (v) n.add(key); else n.delete(key);
+                              return n;
+                            });
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <div className="font-medium">{row.salesorder_number}</div>
+                        <div className="text-muted-foreground">{row.salesorder_id}</div>
+                      </TableCell>
+                      <TableCell className="text-xs">{SOURCE_LABEL[row.source_system] ?? row.source_system}</TableCell>
+                      <TableCell>{row.customer_name ?? "—"}</TableCell>
+                      <TableCell>{row.date ?? "—"}</TableCell>
+                      <TableCell>{row.status ?? "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {typeof row.total === "number" ? row.total.toLocaleString("de-DE", { style: "currency", currency: "EUR" }) : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {canImport ? (
+                          <Button size="sm" onClick={() => importOneOffer(row)} disabled={offersBusy === key}>
+                            {offersBusy === key ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Download className="h-3 w-3 mr-1" />}
+                            Importieren
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">nur Admin</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
+          <div>
             <CardTitle>Fehlende Aufträge</CardTitle>
             <CardDescription>Automatisch befüllt durch den Zoho-Abgleich.</CardDescription>
           </div>
