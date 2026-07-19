@@ -47,7 +47,7 @@ export default function AlixDocsSearch() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [catFilter, setCatFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('entwurf');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [custQ, setCustQ] = useState('');
   const [dateFrom, setDateFrom] = useState('');
