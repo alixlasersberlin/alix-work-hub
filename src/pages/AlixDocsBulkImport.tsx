@@ -24,6 +24,8 @@ type Row = {
   candidates?: Candidate[];
   selected_order_id?: string;
   scanning?: boolean;
+  searchQuery?: string;
+  searching?: boolean;
 };
 
 const IMAGE_MIME: Record<string, string> = {
