@@ -476,7 +476,7 @@ export default function AlixDocsBulkImport() {
                       </div>
                     </div>
                     {r.status !== "skipped" && r.status !== "done" && (
-                      <div className="pl-1">
+                      <div className="pl-1 space-y-1">
                         {r.scanning ? (
                           <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <Loader2 className="w-3 h-3 animate-spin" /> Kandidaten werden gesucht …
@@ -498,6 +498,26 @@ export default function AlixDocsBulkImport() {
                         ) : (
                           <div className="text-xs text-muted-foreground">Keine Auftragsvorschläge aus Dateiname</div>
                         )}
+                        <div className="flex gap-1">
+                          <Input
+                            value={r.searchQuery ?? ""}
+                            onChange={e => setRow(i, { searchQuery: e.target.value })}
+                            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); searchOrders(i, r.searchQuery ?? ""); } }}
+                            placeholder="Auftragsnummer oder Kundenname suchen …"
+                            disabled={running || r.searching}
+                            className="h-7 text-xs"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            disabled={running || r.searching}
+                            onClick={() => searchOrders(i, r.searchQuery ?? "")}
+                          >
+                            {r.searching ? <Loader2 className="w-3 h-3 animate-spin" /> : "Suchen"}
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
