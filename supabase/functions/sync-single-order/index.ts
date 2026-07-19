@@ -8,6 +8,28 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   });
 }
 
+class SyncSingleOrderError extends Error {
+  status: number;
+  code: string;
+  retryAfterSeconds?: number;
+  details?: string;
+
+  constructor(code: string, message: string, status = 500, details?: string, retryAfterSeconds?: number) {
+    super(message);
+    this.name = "SyncSingleOrderError";
+    this.code = code;
+    this.status = status;
+    this.details = details;
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+const tokenCache = new Map<string, { accessToken: string; expiresAt: number }>();
+
+function isZohoTokenRateLimit(text: string, status: number) {
+  return status === 429 || /too many requests continuously|rate limit|rate exceeded/i.test(text);
+}
+
 function getZohoConfig(sourceSystem: string) {
   const configs: Record<string, { prefix: string; accountsBase: string; apiBase: string }> = {
     zoho_eu_1: { prefix: "ZOHO_EU_1", accountsBase: "https://accounts.zoho.eu", apiBase: "https://www.zohoapis.eu/books/v3" },
@@ -26,7 +48,10 @@ function getZohoConfig(sourceSystem: string) {
   };
 }
 
-async function getAccessToken(config: any): Promise<string> {
+async function getAccessToken(config: any, cacheKey: string): Promise<string> {
+  const cached = tokenCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now() + 60_000) return cached.accessToken;
+
   const res = await fetch(`${config.accountsBaseUrl}/oauth/v2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -37,9 +62,25 @@ async function getAccessToken(config: any): Promise<string> {
       grant_type: "refresh_token",
     }),
   });
-  if (!res.ok) throw new Error(`Token refresh failed: ${await res.text()}`);
+  if (!res.ok) {
+    const text = await res.text();
+    if (isZohoTokenRateLimit(text, res.status)) {
+      throw new SyncSingleOrderError(
+        "ZOHO_TOKEN_RATE_LIMIT",
+        "Zoho Token-Limit erreicht. Bitte 1–2 Minuten warten und danach erneut importieren.",
+        429,
+        text,
+        90,
+      );
+    }
+    throw new Error(`Token refresh failed: ${text}`);
+  }
   const data = await res.json();
   if (!data.access_token) throw new Error("Access token missing");
+  tokenCache.set(cacheKey, {
+    accessToken: data.access_token,
+    expiresAt: Date.now() + 55 * 60_000,
+  });
   return data.access_token;
 }
 
@@ -186,7 +227,8 @@ Deno.serve(async (req: Request) => {
     const zohoConfig = getZohoConfig(source_system);
     if (!zohoConfig) return jsonResponse({ error: "Config not found" }, 500);
 
-    const accessToken = await getAccessToken(zohoConfig);
+    const tokenCacheKey = `${zohoConfig.accountsBaseUrl}:${zohoConfig.clientId}:${zohoConfig.refreshToken.slice(-12)}`;
+    const accessToken = await getAccessToken(zohoConfig, tokenCacheKey);
 
     // Resolve salesorder_id: accept either Zoho ID OR order number (e.g. "2725968", "SO-2725968" / "SO-4190-AT")
     const rawOrderInput = String(external_order_id).trim();
@@ -461,6 +503,14 @@ Deno.serve(async (req: Request) => {
     });
   } catch (error: any) {
     console.error("sync-single-order error:", error);
+    if (error instanceof SyncSingleOrderError) {
+      return jsonResponse({
+        error: error.code,
+        message: error.message,
+        details: error.details ?? null,
+        retry_after_seconds: error.retryAfterSeconds ?? null,
+      }, error.status);
+    }
     return jsonResponse({ error: "Internal server error", message: error?.message ?? null }, 500);
   }
 });
