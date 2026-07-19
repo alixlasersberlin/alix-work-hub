@@ -172,6 +172,7 @@ export default function AuftraegeGesucht() {
   }
 
   async function importOne(r: Row) {
+    if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setBusy(r.id);
     try {
       const { data, error } = await supabase.functions.invoke("sync-single-order", {
