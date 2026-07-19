@@ -341,7 +341,7 @@ export default function AlixDocsSearch() {
       let cMap: Record<string, any> = {};
       if (custIds.length) {
         const { data: cc } = await supabase.from('customers')
-          .select('id, company_name, contact_name, external_customer_id').in('id', custIds);
+          .select('id, company_name, contact_name, external_customer_id, raw_data').in('id', custIds);
         cMap = Object.fromEntries((cc ?? []).map((c: any) => [c.id, c]));
       }
       setAssignResults((full ?? []).map((o: any) => ({
@@ -349,7 +349,7 @@ export default function AlixDocsSearch() {
         order_number: o.order_number,
         customer_id: o.customer_id,
         customer_name: o.customer_id ? (cMap[o.customer_id]?.company_name ?? cMap[o.customer_id]?.contact_name) : null,
-        customer_number: o.customer_id ? cMap[o.customer_id]?.external_customer_id : null,
+        customer_number: o.customer_id ? (cMap[o.customer_id]?.raw_data?.contact_number ?? cMap[o.customer_id]?.external_customer_id) : null,
         hit: hitMap.get(o.id),
       })));
     } finally { setAssignBusy(false); }
