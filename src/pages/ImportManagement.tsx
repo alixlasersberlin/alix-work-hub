@@ -801,9 +801,14 @@ export default function ImportManagement() {
         subtitle="Zoho Books Verbindungen, Importe & Kontrollfunktionen"
         noBreadcrumbs
         actions={
-          <Button variant="outline" size="sm" onClick={() => { fetchSourceStats(); fetchLogs(); }}>
-            <RefreshCw className="w-4 h-4 mr-2" /> Aktualisieren
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <a href="/admin/zoho-abgleich"><ArrowUpDown className="w-4 h-4 mr-2" /> Zoho-Abgleich</a>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => { fetchSourceStats(); fetchLogs(); }}>
+              <RefreshCw className="w-4 h-4 mr-2" /> Aktualisieren
+            </Button>
+          </div>
         }
       />
 
