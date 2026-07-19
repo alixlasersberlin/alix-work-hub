@@ -16781,6 +16781,66 @@ export type Database = {
         }
         Relationships: []
       }
+      orders_missing: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          external_order_id: string
+          first_seen_at: string
+          id: string
+          import_error: string | null
+          import_status: string
+          imported_at: string | null
+          last_seen_at: string
+          order_number: string | null
+          resolved_at: string | null
+          seen_count: number
+          source_system: string
+          total: number | null
+          updated_at: string
+          zoho_date: string | null
+          zoho_status: string | null
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          external_order_id: string
+          first_seen_at?: string
+          id?: string
+          import_error?: string | null
+          import_status?: string
+          imported_at?: string | null
+          last_seen_at?: string
+          order_number?: string | null
+          resolved_at?: string | null
+          seen_count?: number
+          source_system: string
+          total?: number | null
+          updated_at?: string
+          zoho_date?: string | null
+          zoho_status?: string | null
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          external_order_id?: string
+          first_seen_at?: string
+          id?: string
+          import_error?: string | null
+          import_status?: string
+          imported_at?: string | null
+          last_seen_at?: string
+          order_number?: string | null
+          resolved_at?: string | null
+          seen_count?: number
+          source_system?: string
+          total?: number | null
+          updated_at?: string
+          zoho_date?: string | null
+          zoho_status?: string | null
+        }
+        Relationships: []
+      }
       otp_challenges: {
         Row: {
           attempt_count: number

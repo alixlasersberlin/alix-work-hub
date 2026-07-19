@@ -261,6 +261,7 @@ export const navItems: NavItem[] = [
           { path: '/auftraege-at', label: 'Aufträge AT', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG'] },
           { path: '/auftraege-ch', label: 'Aufträge CH', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG', 'Österreich'] },
           { path: '/auftraege/pdf-import', label: 'Aufträge Import PDF', icon: FileUp, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Vertrieb', 'Geschäftsführung', 'SACHBEARBEITUNG'] },
+          { path: '/auftraege/gesucht', label: 'Aufträge gesucht', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
           { path: '/mediapaket', label: 'Mediapaket', icon: PackageIcon, roles: ['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG'] },
           { path: '/mediapaket/admin', label: 'Mediapaket-Konfigurator', icon: PackageIcon, roles: ['Super Admin'] },
         ],

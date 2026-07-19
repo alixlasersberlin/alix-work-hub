@@ -1,0 +1,286 @@
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { PageHeader } from "@/components/infinity/PageHeader";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Loader2, RefreshCw, Download, Search, ExternalLink, Trash2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+
+type Row = {
+  id: string;
+  source_system: string;
+  external_order_id: string;
+  order_number: string | null;
+  zoho_date: string | null;
+  zoho_status: string | null;
+  customer_name: string | null;
+  total: number | null;
+  first_seen_at: string;
+  last_seen_at: string;
+  seen_count: number;
+  import_status: string;
+  import_error: string | null;
+  imported_at: string | null;
+  resolved_at: string | null;
+};
+
+const SOURCE_LABEL: Record<string, string> = {
+  zoho_eu_1: "🇩🇪 Alix Deutschland",
+  zoho_eu_2: "🇦🇹 Alix Austria",
+};
+
+export default function AuftraegeGesucht() {
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [running, setRunning] = useState<"scan" | "import" | null>(null);
+  const [status, setStatus] = useState<string>("pending");
+  const [source, setSource] = useState<string>("all");
+  const [q, setQ] = useState("");
+
+  async function load() {
+    setLoading(true);
+    let query = supabase
+      .from("orders_missing")
+      .select("*")
+      .order("last_seen_at", { ascending: false })
+      .limit(1000);
+    if (status !== "all") query = query.eq("import_status", status);
+    if (source !== "all") query = query.eq("source_system", source);
+    const { data, error } = await query;
+    setLoading(false);
+    if (error) {
+      toast({ title: "Fehler beim Laden", description: error.message, variant: "destructive" });
+      return;
+    }
+    setRows((data ?? []) as Row[]);
+  }
+
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [status, source]);
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term) return rows;
+    return rows.filter((r) =>
+      [r.order_number, r.customer_name, r.external_order_id, r.import_error]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(term))
+    );
+  }, [rows, q]);
+
+  const counts = useMemo(() => {
+    const c = { pending: 0, failed: 0, imported: 0, resolved: 0 };
+    for (const r of rows) c[r.import_status as keyof typeof c] = (c[r.import_status as keyof typeof c] ?? 0) + 1;
+    return c;
+  }, [rows]);
+
+  async function runReconcile(doImport: boolean) {
+    setRunning(doImport ? "import" : "scan");
+    try {
+      const { data, error } = await supabase.functions.invoke("zoho-orders-reconcile", {
+        body: { sources: ["zoho_eu_1", "zoho_eu_2"], import: doImport },
+      });
+      if (error) throw error;
+      const totalMissing = (data?.results ?? []).reduce((s: number, r: any) => s + (r.missing_count ?? 0), 0);
+      const totalImported = (data?.results ?? []).reduce((s: number, r: any) => s + (r.imported ?? 0), 0);
+      toast({
+        title: doImport ? `${totalImported} importiert` : `${totalMissing} fehlende gefunden`,
+        description: "Liste aktualisiert.",
+      });
+      await load();
+    } catch (e: any) {
+      toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setRunning(null);
+    }
+  }
+
+  async function importOne(r: Row) {
+    setBusy(r.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-single-order", {
+        body: { source_system: r.source_system, external_order_id: r.external_order_id },
+      });
+      if (error) throw error;
+      await supabase.from("orders_missing").update({
+        import_status: "imported",
+        imported_at: new Date().toISOString(),
+        resolved_at: new Date().toISOString(),
+        import_error: null,
+      }).eq("id", r.id);
+      toast({ title: "Import erfolgreich", description: r.order_number ?? r.external_order_id });
+      await load();
+    } catch (e: any) {
+      const msg = e?.message ?? String(e);
+      await supabase.from("orders_missing").update({
+        import_status: "failed",
+        import_error: msg,
+      }).eq("id", r.id);
+      toast({ title: "Import fehlgeschlagen", description: msg, variant: "destructive" });
+      await load();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function removeRow(r: Row) {
+    if (!confirm(`Eintrag ${r.order_number ?? r.external_order_id} entfernen?`)) return;
+    const { error } = await supabase.from("orders_missing").delete().eq("id", r.id);
+    if (error) toast({ title: "Löschen fehlgeschlagen", description: error.message, variant: "destructive" });
+    else load();
+  }
+
+  function statusBadge(s: string) {
+    const map: Record<string, string> = {
+      pending: "bg-amber-500/15 text-amber-500 border-amber-500/30",
+      failed: "bg-red-500/15 text-red-500 border-red-500/30",
+      imported: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
+      resolved: "bg-sky-500/15 text-sky-500 border-sky-500/30",
+    };
+    return <Badge variant="outline" className={map[s] ?? ""}>{s}</Badge>;
+  }
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <PageHeader
+        title="Aufträge gesucht"
+        subtitle="In Zoho gefundene, aber in AlixWork fehlende Aufträge. Einzelimport oder Massenimport möglich."
+      />
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { k: "pending", label: "Offen" },
+          { k: "failed", label: "Fehler" },
+          { k: "imported", label: "Importiert" },
+          { k: "resolved", label: "Erledigt" },
+        ].map((c) => (
+          <Card key={c.k} className="cursor-pointer" onClick={() => setStatus(c.k)}>
+            <CardContent className="p-4">
+              <div className="text-xs text-muted-foreground">{c.label}</div>
+              <div className="text-2xl font-semibold">{counts[c.k as keyof typeof counts] ?? 0}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
+          <div>
+            <CardTitle>Fehlende Aufträge</CardTitle>
+            <CardDescription>Automatisch befüllt durch den Zoho-Abgleich.</CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => runReconcile(false)} disabled={running !== null}>
+              {running === "scan" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Jetzt prüfen
+            </Button>
+            <Button onClick={() => runReconcile(true)} disabled={running !== null}>
+              {running === "import" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+              Alle fehlenden importieren
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input className="pl-8 w-64" placeholder="Suche Nr./Kunde…" value={q} onChange={(e) => setQ(e.target.value)} />
+            </div>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Offen</SelectItem>
+                <SelectItem value="failed">Fehler</SelectItem>
+                <SelectItem value="imported">Importiert</SelectItem>
+                <SelectItem value="resolved">Erledigt</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={source} onValueChange={setSource}>
+              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Quellen</SelectItem>
+                <SelectItem value="zoho_eu_1">🇩🇪 Alix Deutschland</SelectItem>
+                <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="ghost" onClick={load} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Neu laden
+            </Button>
+          </div>
+
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Auftragsnr.</TableHead>
+                  <TableHead>Quelle</TableHead>
+                  <TableHead>Kunde</TableHead>
+                  <TableHead>Datum</TableHead>
+                  <TableHead className="text-right">Betrag</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Zuletzt gesehen</TableHead>
+                  <TableHead className="text-right">Aktionen</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.length === 0 && (
+                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Keine Einträge.</TableCell></TableRow>
+                )}
+                {filtered.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-mono text-xs">
+                      <div className="font-medium">{r.order_number ?? "—"}</div>
+                      <div className="text-muted-foreground">{r.external_order_id}</div>
+                    </TableCell>
+                    <TableCell>{SOURCE_LABEL[r.source_system] ?? r.source_system}</TableCell>
+                    <TableCell>{r.customer_name ?? "—"}</TableCell>
+                    <TableCell>{r.zoho_date ?? "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {typeof r.total === "number" ? r.total.toLocaleString("de-DE", { style: "currency", currency: "EUR" }) : "—"}
+                    </TableCell>
+                    <TableCell>
+                      {statusBadge(r.import_status)}
+                      {r.import_error && (
+                        <div className="text-xs text-red-500 mt-1 max-w-xs truncate" title={r.import_error}>{r.import_error}</div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(r.last_seen_at).toLocaleString("de-DE")}
+                      <div>({r.seen_count}×)</div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        {r.import_status !== "imported" && r.import_status !== "resolved" && (
+                          <Button size="sm" variant="outline" onClick={() => importOne(r)} disabled={busy === r.id}>
+                            {busy === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+                            <span className="ml-1">Import</span>
+                          </Button>
+                        )}
+                        {(r.import_status === "imported" || r.import_status === "resolved") && (
+                          <Button size="sm" variant="ghost" asChild>
+                            <a href={`/auftraege?q=${encodeURIComponent(r.order_number ?? r.external_order_id)}`}>
+                              <ExternalLink className="h-3 w-3 mr-1" /> öffnen
+                            </a>
+                          </Button>
+                        )}
+                        <Button size="sm" variant="ghost" onClick={() => removeRow(r)}>
+                          <Trash2 className="h-3 w-3 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
