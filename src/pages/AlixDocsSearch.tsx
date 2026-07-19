@@ -576,7 +576,7 @@ export default function AlixDocsSearch() {
                           ) : '—'}
                         </TableCell>
                         <TableCell className="text-xs">
-                          {c ? `${c.external_customer_id ?? ''} ${c.company_name ?? c.contact_name ?? ''}`.trim() || '—' : '—'}
+                          {c ? `${c.raw_data?.contact_number ?? c.external_customer_id ?? ''} ${c.company_name ?? c.contact_name ?? ''}`.trim() || '—' : '—'}
                         </TableCell>
                         <TableCell>v{d.current_version}</TableCell>
                         <TableCell><Badge variant="outline">{d.status}</Badge></TableCell>
