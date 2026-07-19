@@ -1163,6 +1163,8 @@ function AppRoutes() {
           <Route path="/dokumente/vorschau" element={<ProtectedRoute><AlixDocsPreview /></ProtectedRoute>} />
           <Route path="/dokumente/smart-review" element={<ProtectedRoute><AlixDocsSmartReview /></ProtectedRoute>} />
           <Route path="/dokumente/bulk-import" element={<ProtectedRoute><AlixDocsBulkImport /></ProtectedRoute>} />
+          <Route path="/dokumente/lernregeln" element={<ProtectedRoute><AlixDocsLearnRules /></ProtectedRoute>} />
+
           <Route path="/dokumente/dashboard" element={<ProtectedRoute><AlixDocsDashboardPage /></ProtectedRoute>} />
           <Route path="/admin/sign-api-docs" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><SignApiDocs /></ProtectedRoute>} />
           <Route path="/dokumente/freigaben" element={<ProtectedRoute><AlixDocsApprovals /></ProtectedRoute>} />
