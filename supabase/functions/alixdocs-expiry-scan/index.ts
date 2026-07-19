@@ -21,29 +21,43 @@ Deno.serve(async (req) => {
     .not('expiry_date', 'is', null)
     .is('deleted_at', null);
 
+  // Recipients: Admin + Super Admin
+  const { data: recipients } = await admin
+    .from('user_roles')
+    .select('user_id, roles:role_id(name)');
+  const targetUserIds = Array.from(new Set(
+    (recipients ?? [])
+      .filter((r: any) => ['Admin', 'Super Admin'].includes(r.roles?.name))
+      .map((r: any) => r.user_id as string),
+  ));
+
   let created = 0;
   for (const d of docs ?? []) {
     const daysLeft = Math.round((new Date(d.expiry_date!).getTime() - new Date(today).getTime()) / 86400000);
     if (daysLeft > (d.expiry_warning_days ?? 30) || daysLeft < -1) continue;
 
-    // De-dupe: 1 Notification pro Dokument alle 7 Tage
-    const { data: recent } = await admin.from('app_notifications')
-      .select('id').eq('type', 'alixdocs_expiry').contains('metadata', { document_id: d.id })
-      .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()).limit(1);
-    if (recent && recent.length) continue;
+    for (const uid of targetUserIds) {
+      const { data: recent } = await admin.from('app_notifications')
+        .select('id').eq('user_id', uid).eq('category', 'alixdocs_expiry')
+        .contains('metadata', { document_id: d.id })
+        .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()).limit(1);
+      if (recent && recent.length) continue;
 
-    await admin.from('app_notifications').insert({
-      type: 'alixdocs_expiry',
-      title: `Dokument läuft ab: ${d.title}`,
-      body: daysLeft < 0
-        ? `Ablauf war vor ${Math.abs(daysLeft)} Tag(en).`
-        : `Ablauf in ${daysLeft} Tag(en) (${d.expiry_date}).`,
-      severity: daysLeft <= 7 ? 'warning' : 'info',
-      metadata: { document_id: d.id, order_id: d.order_id, expiry_date: d.expiry_date },
-      target_role: 'Admin',
-    });
-    created++;
+      await admin.from('app_notifications').insert({
+        user_id: uid,
+        category: 'alixdocs_expiry',
+        priority: daysLeft <= 7 ? 'high' : 'normal',
+        title: `Dokument läuft ab: ${d.title}`,
+        message: daysLeft < 0
+          ? `Ablauf war vor ${Math.abs(daysLeft)} Tag(en).`
+          : `Ablauf in ${daysLeft} Tag(en) (${d.expiry_date}).`,
+        action_url: '/dokumente',
+        metadata: { document_id: d.id, order_id: d.order_id, expiry_date: d.expiry_date },
+      });
+      created++;
+    }
   }
+
 
   return new Response(JSON.stringify({ ok: true, checked: docs?.length ?? 0, created }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
