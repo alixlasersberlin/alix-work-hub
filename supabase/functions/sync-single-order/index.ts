@@ -469,15 +469,37 @@ Deno.serve(async (req: Request) => {
     }
 
     let expectedShipmentDate: string | null = null;
-    const parseToIso = (s: string): string | null => {
-      const d = new Date(s);
-      return isNaN(d.getTime()) ? null : d.toISOString();
+    const DE_MONTHS: Record<string, string> = {
+      jan: "Jan", feb: "Feb", mrz: "Mar", "mär": "Mar", maerz: "Mar", "märz": "Mar",
+      apr: "Apr", mai: "May", jun: "Jun", jul: "Jul", aug: "Aug",
+      sep: "Sep", sept: "Sep", okt: "Oct", nov: "Nov", dez: "Dec",
     };
-    if (cfLiefertermin) {
-      expectedShipmentDate = parseToIso(cfLiefertermin) ?? cfLiefertermin;
-    } else if (salesOrder.shipment_date) {
-      expectedShipmentDate = new Date(salesOrder.shipment_date).toISOString();
-    } else {
+    const parseToIso = (s: string): string | null => {
+      if (!s) return null;
+      const raw = String(s).trim();
+      let d = new Date(raw);
+      if (!isNaN(d.getTime())) return d.toISOString();
+      let m = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})$/);
+      if (m) {
+        const y = m[3].length === 2 ? `20${m[3]}` : m[3];
+        d = new Date(`${y}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}T00:00:00Z`);
+        if (!isNaN(d.getTime())) return d.toISOString();
+      }
+      m = raw.match(/^(\d{1,2})\.?\s+([A-Za-zäöüÄÖÜ]+)\.?\s+(\d{4})$/);
+      if (m) {
+        const mon = DE_MONTHS[m[2].toLowerCase()];
+        if (mon) {
+          d = new Date(`${m[1]} ${mon} ${m[3]} 00:00:00 UTC`);
+          if (!isNaN(d.getTime())) return d.toISOString();
+        }
+      }
+      return null;
+    };
+    if (cfLiefertermin) expectedShipmentDate = parseToIso(cfLiefertermin);
+    if (!expectedShipmentDate && salesOrder.shipment_date) {
+      expectedShipmentDate = parseToIso(salesOrder.shipment_date);
+    }
+    if (!expectedShipmentDate) {
       const fallback = new Date();
       fallback.setDate(fallback.getDate() + 56);
       expectedShipmentDate = fallback.toISOString();
