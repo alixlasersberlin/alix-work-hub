@@ -1158,6 +1158,7 @@ function AppRoutes() {
           <Route path="/dokumente/freigaben" element={<ProtectedRoute><AlixDocsApprovals /></ProtectedRoute>} />
           <Route path="/admin/alixdocs/chains" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixDocsChainsAdmin /></ProtectedRoute>} />
           <Route path="/admin/alixdocs/reindex" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixDocsReindex /></ProtectedRoute>} />
+          <Route path="/m/alixdocs" element={<ProtectedRoute><AlixDocsMobile /></ProtectedRoute>} />
 
 
 
