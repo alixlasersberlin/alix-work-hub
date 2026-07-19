@@ -146,5 +146,17 @@ Deno.serve(async (req) => {
     user_agent: req.headers.get('user-agent'),
   });
 
+  // Fire-and-forget: KI-Analyse asynchron starten (blockiert Upload nicht)
+  try {
+    const kick = fetch(`${supabaseUrl}/functions/v1/alixdocs-ai-process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: authHeader },
+      body: JSON.stringify({ document_id: documentId }),
+    });
+    // @ts-ignore Deno EdgeRuntime background task
+    if (typeof EdgeRuntime !== 'undefined' && (EdgeRuntime as any).waitUntil) (EdgeRuntime as any).waitUntil(kick);
+  } catch { /* ignore */ }
+
   return json(200, { ok: true, document_id: documentId, version: versionNumber });
 });
+

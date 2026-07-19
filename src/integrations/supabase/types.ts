@@ -1169,6 +1169,59 @@ export type Database = {
           },
         ]
       }
+      alixdocs_ai_jobs: {
+        Row: {
+          created_at: string
+          document_id: string
+          duration_ms: number | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          input_tokens: number | null
+          job_type: string
+          model: string | null
+          output_tokens: number | null
+          status: string
+          triggered_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          input_tokens?: number | null
+          job_type: string
+          model?: string | null
+          output_tokens?: number | null
+          status?: string
+          triggered_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          input_tokens?: number | null
+          job_type?: string
+          model?: string | null
+          output_tokens?: number | null
+          status?: string
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs_ai_jobs_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixdocs_audit_log: {
         Row: {
           action: string
@@ -1242,11 +1295,18 @@ export type Database = {
       }
       alixdocs_documents: {
         Row: {
+          ai_category_suggestion: string | null
+          ai_model: string | null
+          ai_order_numbers: string[]
+          ai_processed_at: string | null
+          ai_serial_numbers: string[]
+          ai_summary: string | null
           approved_at: string | null
           approved_by: string | null
           archived_at: string | null
           category_id: string | null
           confidentiality_level: string
+          content_hash: string | null
           created_at: string
           current_version: number
           customer_id: string | null
@@ -1254,9 +1314,14 @@ export type Database = {
           description: string | null
           device_id: string | null
           document_date: string | null
+          duplicate_of: string | null
+          expiry_date: string | null
+          expiry_warning_days: number
           file_size: number
           id: string
           mime_type: string
+          ocr_status: string
+          ocr_text: string | null
           order_id: string | null
           original_filename: string | null
           purge_after: string | null
@@ -1271,11 +1336,18 @@ export type Database = {
           verified_by: string | null
         }
         Insert: {
+          ai_category_suggestion?: string | null
+          ai_model?: string | null
+          ai_order_numbers?: string[]
+          ai_processed_at?: string | null
+          ai_serial_numbers?: string[]
+          ai_summary?: string | null
           approved_at?: string | null
           approved_by?: string | null
           archived_at?: string | null
           category_id?: string | null
           confidentiality_level?: string
+          content_hash?: string | null
           created_at?: string
           current_version?: number
           customer_id?: string | null
@@ -1283,9 +1355,14 @@ export type Database = {
           description?: string | null
           device_id?: string | null
           document_date?: string | null
+          duplicate_of?: string | null
+          expiry_date?: string | null
+          expiry_warning_days?: number
           file_size?: number
           id?: string
           mime_type: string
+          ocr_status?: string
+          ocr_text?: string | null
           order_id?: string | null
           original_filename?: string | null
           purge_after?: string | null
@@ -1300,11 +1377,18 @@ export type Database = {
           verified_by?: string | null
         }
         Update: {
+          ai_category_suggestion?: string | null
+          ai_model?: string | null
+          ai_order_numbers?: string[]
+          ai_processed_at?: string | null
+          ai_serial_numbers?: string[]
+          ai_summary?: string | null
           approved_at?: string | null
           approved_by?: string | null
           archived_at?: string | null
           category_id?: string | null
           confidentiality_level?: string
+          content_hash?: string | null
           created_at?: string
           current_version?: number
           customer_id?: string | null
@@ -1312,9 +1396,14 @@ export type Database = {
           description?: string | null
           device_id?: string | null
           document_date?: string | null
+          duplicate_of?: string | null
+          expiry_date?: string | null
+          expiry_warning_days?: number
           file_size?: number
           id?: string
           mime_type?: string
+          ocr_status?: string
+          ocr_text?: string | null
           order_id?: string | null
           original_filename?: string | null
           purge_after?: string | null
@@ -1349,6 +1438,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_alixsmart_customer_status"
             referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "alixdocs_documents_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "alixdocs_documents_order_id_fkey"
