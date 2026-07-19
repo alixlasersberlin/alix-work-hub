@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
   Files, Upload, Search, Grid3x3, List as ListIcon, Loader2, Eye, Trash2, RotateCcw,
-  Plus, FileText, Image as ImageIcon, ShieldAlert, Download, CheckCircle2, Archive,
+  Plus, FileText, Image as ImageIcon, ShieldAlert, Download, CheckCircle2, Archive, Sparkles,
 } from 'lucide-react';
+
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -36,7 +37,15 @@ type Doc = {
   updated_at: string;
   deleted_at: string | null;
   uploaded_by: string | null;
+  ocr_status?: string | null;
+  ai_summary?: string | null;
+  ai_category_suggestion?: string | null;
+  ai_serial_numbers?: string[] | null;
+  ai_order_numbers?: string[] | null;
+  expiry_date?: string | null;
+  duplicate_of?: string | null;
 };
+
 type Cat = { id: string; code: string; name: string; sort_order: number };
 
 interface Props {
@@ -189,6 +198,17 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
     load();
   };
 
+  const analyze = async (d: Doc) => {
+    toast.info('KI-Analyse gestartet …');
+    const { data, error } = await supabase.functions.invoke('alixdocs-ai-process', {
+      body: { document_id: d.id },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Analyse fertig${data?.category_suggestion ? ` – Kategorie: ${data.category_suggestion}` : ''}`);
+    load();
+  };
+
+
   const fmtSize = (n: number) => n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`;
 
   const catBadge = (id: string | null) => {
@@ -273,9 +293,15 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       {isImage(d.mime_type) ? <ImageIcon className="w-4 h-4 text-blue-400" /> : <FileText className="w-4 h-4 text-primary" />}
-                      <div>
-                        <div className="font-medium">{d.title}</div>
+                      <div className="min-w-0">
+                        <div className="font-medium flex items-center gap-2">
+                          {d.title}
+                          {d.duplicate_of && <Badge variant="outline" className="text-amber-400 border-amber-500/40">Dublette</Badge>}
+                          {d.expiry_date && <Badge variant="outline" className="text-red-400 border-red-500/40">läuft ab {d.expiry_date}</Badge>}
+                          {d.ocr_status === 'pending' && <Badge variant="outline" className="text-muted-foreground"><Loader2 className="w-3 h-3 mr-1 animate-spin" />KI …</Badge>}
+                        </div>
                         {d.original_filename && <div className="text-xs text-muted-foreground font-mono">{d.original_filename}</div>}
+                        {d.ai_summary && <div className="text-xs text-muted-foreground italic mt-1 line-clamp-2 max-w-lg">💡 {d.ai_summary}</div>}
                       </div>
                     </div>
                   </td>
@@ -291,7 +317,9 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
                     ) : (
                       <div className="flex justify-end gap-1">
                         <Button size="sm" variant="ghost" onClick={() => openPreview(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => analyze(d)} title="KI-Analyse"><Sparkles className="w-4 h-4 text-primary" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => openUpload(d.id)} title="Neue Version"><Plus className="w-4 h-4" /></Button>
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button size="sm" variant="ghost" title="Status"><CheckCircle2 className="w-4 h-4" /></Button>
