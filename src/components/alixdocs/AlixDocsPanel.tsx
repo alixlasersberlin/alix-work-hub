@@ -348,6 +348,11 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
                           {d.ocr_status === 'pending' && <Badge variant="outline" className="text-muted-foreground"><Loader2 className="w-3 h-3 mr-1 animate-spin" />KI …</Badge>}
                         </div>
                         {d.original_filename && <div className="text-xs text-muted-foreground font-mono">{d.original_filename}</div>}
+                        {d.tags && d.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {d.tags.map(t => <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>)}
+                          </div>
+                        )}
                         {d.ai_summary && <div className="text-xs text-muted-foreground italic mt-1 line-clamp-2 max-w-lg">💡 {d.ai_summary}</div>}
                       </div>
                     </div>
