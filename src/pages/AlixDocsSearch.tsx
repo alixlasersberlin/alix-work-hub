@@ -378,8 +378,15 @@ export default function AlixDocsSearch() {
                         <TableCell>v{d.current_version}</TableCell>
                         <TableCell><Badge variant="outline">{d.status}</Badge></TableCell>
                         <TableCell className="text-xs">{new Date(d.created_at).toLocaleDateString('de-DE')}</TableCell>
-                        <TableCell className="text-right">
-                          <Button size="sm" variant="ghost" onClick={() => openDoc(d)}><Eye className="w-4 h-4" /></Button>
+                        <TableCell className="text-right whitespace-nowrap">
+                          {d.mime_type?.includes('pdf') && (
+                            <Button size="sm" variant="ghost" asChild title="Vorschau mit Treffermarkierung">
+                              <Link to={`/dokumente/vorschau?doc=${d.id}&q=${encodeURIComponent(q)}`}>
+                                <Search className="w-4 h-4" />
+                              </Link>
+                            </Button>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => openDoc(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
                         </TableCell>
                       </TableRow>
                     );

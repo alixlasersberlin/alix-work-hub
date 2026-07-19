@@ -293,6 +293,8 @@ const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
 const AlixDocsChainsAdmin = lazy(() => import("./pages/Admin/AlixDocsChains"));
 const AlixDocsReindex = lazy(() => import("./pages/Admin/AlixDocsReindex"));
+const AlixDocsPreview = lazy(() => import("./pages/AlixDocsPreview"));
+const SignApiDocs = lazy(() => import("./pages/Admin/SignApiDocs"));
 const AlixDocsReports = lazy(() => import("./pages/Admin/AlixDocsReports"));
 const AlixDocsMobile = lazy(() => import("./pages/mobile/AlixDocsMobile"));
 const AlixDocsDashboardPage = lazy(() => import("./pages/AlixDocsDashboard"));
@@ -1155,7 +1157,9 @@ function AppRoutes() {
           <Route path="/signaturen/genehmigungen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignApprovals /></ProtectedRoute>} />
           <Route path="/signaturen/dashboard" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignSlaDashboard /></ProtectedRoute>} />
           <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />
+          <Route path="/dokumente/vorschau" element={<ProtectedRoute><AlixDocsPreview /></ProtectedRoute>} />
           <Route path="/dokumente/dashboard" element={<ProtectedRoute><AlixDocsDashboardPage /></ProtectedRoute>} />
+          <Route path="/admin/sign-api-docs" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><SignApiDocs /></ProtectedRoute>} />
           <Route path="/dokumente/freigaben" element={<ProtectedRoute><AlixDocsApprovals /></ProtectedRoute>} />
           <Route path="/admin/alixdocs/chains" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixDocsChainsAdmin /></ProtectedRoute>} />
           <Route path="/admin/alixdocs/reindex" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixDocsReindex /></ProtectedRoute>} />
