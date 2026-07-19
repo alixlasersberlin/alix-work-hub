@@ -62,6 +62,8 @@ export const navItems: NavItem[] = [
       { path: '/dokumente/smart-review', label: 'Smart Review', icon: SearchCheck, roles: null },
       { path: '/dokumente/bulk-import', label: 'Bulk Import', icon: CheckCircle2, roles: null },
       { path: '/dokumente/lernregeln', label: 'Lern-Regeln 🧠', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
+      { path: '/dokumente/ai-suche', label: 'AI-Suche ✨', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
+      { path: '/dokumente/duplikate', label: 'Duplikate', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },
       { path: '/admin/alixdocs/chains', label: 'Approval-Chains (Admin)', icon: Workflow, roles: ['Admin', 'Super Admin'] },
       { path: '/admin/alixdocs/reindex', label: 'KI-Reindex & Duplikate', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
       { path: '/admin/alixdocs/reports', label: 'Reporting & Audit-Export', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },

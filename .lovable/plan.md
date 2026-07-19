@@ -1,76 +1,29 @@
+## Etappe 6 – Wissens-Vernetzung & Duplikat-Kontrolle
 
-# ALIXDocs Smart Import & Auto-Matching
+### 1. Duplikat-Erkennung
+- **DB**: Backfill `content_hash` (SHA-256 aus Storage-Objekt) via Edge Function `alixdocs-hash-backfill`; Trigger prüft bei Insert/Update auf existierenden `content_hash` und schlägt `duplicate_of` vor (nicht automatisch – nur Vormerkung).
+- **Seite `/dokumente/duplikate`**: Gruppen-Ansicht nach `content_hash`. Aktionen: „Als Duplikat markieren", „Alle bis auf neueste archivieren", „Ignorieren" (setzt Flag im neuen JSON-Field `dedupe_ignored`).
+- **Upload-Hook**: `AlixDocsUpload` warnt vor dem Save, wenn Hash bereits existiert.
 
-Ausbaustufe „Smart Import" – hebt den bestehenden Upload auf mehrstufige, gewichtete Auto-Zuordnung mit Massenverarbeitung und lernender KI.
+### 2. Cross-Doc-Verknüpfungen
+- **Neue Tabelle `alixdocs_document_links`** (`from_doc_id`, `to_doc_id`, `link_type`, `confidence`, `source` = ai|manual, `created_by`).
+- **Link-Typen**: `related_order`, `invoice_for`, `delivery_for`, `references`, `supersedes`.
+- **Edge Function `alixdocs-link-suggest`**: läuft nach OCR; matcht Auftragsnummern/Seriennummern zwischen Dokumenten und schlägt Links vor.
+- **UI**: Dokument-Detail bekommt Tab „Verknüpfte Dokumente" mit Graph-artiger Anzeige + Manuell-Verknüpfen-Dialog.
 
-## Umsetzung in 4 Etappen
+### 3. AI-Volltextsuche (RAG)
+- **Edge Function `alixdocs-ai-search`**: nimmt Frage, ruft PostgreSQL Full-Text-Search auf `search_tsv` (top 15 Snippets), sendet Kontext an Gemini (`google/gemini-3-flash-preview`) mit Zitier-Instruktion, gibt Antwort + Quellenliste zurück.
+- **Seite `/dokumente/ai-suche`**: Eingabefeld, Antwort mit Fußnoten `[1]`, `[2]`, die auf Dokument-Detail klickbar sind.
+- Nutzt bestehende `alixdocs_documents.ocr_text` + `search_tsv`; kein neuer Index nötig.
 
-### Etappe 1 – Matching-Engine (Kern)
-Neue Edge Function `alixdocs-smart-match` (Deno) mit gewichtetem Score-Algorithmus.
+### 4. Menü & Rechte
+- Neue Menüpunkte unter **Dokumente**: „Duplikate" und „AI-Suche" (nur Admin/Super Admin).
+- RLS: neue Tabelle `alixdocs_document_links` nach identischen Sichtbarkeitsregeln wie `alixdocs_documents` (via `has_role`).
 
-Ablauf pro Dokument:
-1. **Dateiname-Parser** – Regex für Auftrag (`AW-\d{4}-\d+`), Rechnung, Seriennummer, Kundennummer.
-2. **OCR-Kontext** – nutzt vorhandenen `alixdocs-ai-process` Output (`ocr_text`, `extracted_entities`).
-3. **Feld-Extraktion via Gemini 2.5 Flash** – strukturierte JSON-Ausgabe:
-   ```
-   { order_no, invoice_no, serial_no, customer_no, customer_name,
-     company, email, phone, address{street,zip,city,country},
-     device_name, sku, contract_no, iban, doc_type }
-   ```
-4. **Kandidaten-Suche** in `orders`, `customers`, `lager_devices` (parallel, top-20 je Feld).
-5. **Score-Berechnung** pro Kandidat (Auftrag / Kunde / Gerät):
-   ```
-   Auftragsnummer 100 · Seriennummer 90 · Kundennummer 80
-   Email 70 · Telefon 60 · Firma 50 · Name 40
-   Anschrift 35 · Gerät 25 · Rechnungsnr 20
-   ```
-6. **Entscheidung**:
-   - `≥ 95` und Abstand zum 2. Treffer `≥ 20` → **Auto-Assign**
-   - `≥ 60` → **Suggestions** (max. 5)
-   - sonst → **Unassigned**
+### Technische Details
+- `content_hash` bereits vorhanden → nur befüllen, Index anlegen.
+- Backfill iteriert Storage-Objekte in Batches à 50; idempotent.
+- AI-Suche cached Antworten nicht (jede Frage neu).
+- Volltext-Snippets werden mit `ts_headline` extrahiert.
 
-### Etappe 2 – Persistenz & UI
-- Neue Spalten in `alixdocs_documents`: `match_score`, `match_confidence`, `match_method` (`filename`|`ocr`|`ai`|`manual`), `match_candidates` (jsonb, Vorschlagsliste).
-- Neue Tabelle `alixdocs_match_feedback` – speichert manuelle Korrekturen (Basis für Lernen).
-- Review-Seite `/dokumente/smart-review` – Liste offener Vorschläge mit Karten:
-  - Score-Balken, Top-3-Vorschläge, „Zuweisen" / „Anderes wählen" / „Später".
-- Erweiterung `AlixDocsUpload`: nach Upload zeigt Toast Score + Zielauftrag oder „Vorschläge prüfen".
-
-### Etappe 3 – Massenupload (ZIP + Bilder)
-- Upload-Komponente akzeptiert `.zip`, `.heic`, `.webp`, `.jpg`, `.png`, `.pdf`.
-- Neue Edge Function `alixdocs-bulk-ingest`: entpackt ZIP (via `jszip` npm), HEIC→JPEG (`heic-convert`), reiht jede Datei in Queue.
-- Fortschritts-UI: „300 Dokumente · 278 zugeordnet · 18 Vorschläge · 4 Fehler" mit Realtime auf `alixdocs_ai_jobs`.
-
-### Etappe 4 – Lernende KI + Admin
-- Nach jeder manuellen Zuweisung: Feedback nach `alixdocs_match_feedback`, Aggregation zu Regeln in `alixdocs_matching_rules` (Absender-Präfixe → Kategorie/Kunde).
-- Beim nächsten Import werden Regeln vor der Gemini-Analyse angewandt (+30 Bonuspunkte).
-- Admin-Seite `/admin/alixdocs/smart-config`:
-  - Score-Gewichte editieren, Auto-Assign-Schwelle, Lieferantenvorlagen, Blacklist, Dublettenregeln.
-- Dashboard-Erweiterung `/dokumente/dashboard`:
-  - Heute importiert · Auto-Match-Quote · Offene Vorschläge · OCR-Erfolg · KI-Trefferquote (7d-Trend).
-
-## Technische Details
-
-**Neue/geänderte Tabellen**
-- `alixdocs_documents`: + `match_score int`, `match_confidence text`, `match_method text`, `match_candidates jsonb`, `matched_by uuid`.
-- `alixdocs_match_feedback` (neu): `document_id`, `chosen_entity_type`, `chosen_entity_id`, `rejected_candidates jsonb`, `user_id`, `created_at`.
-- `alixdocs_matching_rules` (neu): `pattern`, `field` (filename/ocr), `target_type`, `target_id`, `weight_bonus`, `hit_count`, aktiviert-Flag.
-- `alixdocs_smart_config` (neu, single-row): Gewichte + Schwellenwerte als jsonb.
-
-**Edge Functions**
-- `alixdocs-smart-match` – Kern-Matcher (LLM: `google/gemini-2.5-flash` via Lovable AI Gateway).
-- `alixdocs-bulk-ingest` – ZIP/HEIC-Entpacker, Queue-Runner.
-- Erweiterung `alixdocs-ai-process` – ruft nach OCR direkt Smart-Match auf.
-
-**Frontend**
-- `src/pages/AlixDocs/SmartReview.tsx` – Review-Queue.
-- `src/pages/Admin/AlixDocsSmartConfig.tsx` – Gewichte/Regeln.
-- `src/components/alixdocs/MatchScoreBar.tsx`, `CandidateCard.tsx`.
-- `src/lib/alixdocs/smartMatch.ts` – Client-Wrapper + Type-Defs.
-
-**RLS**: alle neuen Tabellen intern (`is_internal_user()`), Admin-Config nur Admin/Super Admin.
-
-**Model**: `google/gemini-2.5-flash` (Chat) für Feldextraktion; Vision bereits in `alixdocs-ai-process` für OCR.
-
-## Reihenfolge & Approval
-Etappen werden nacheinander gebaut, jede endet mit lauffähigem UI. Ich starte nach deinem OK mit **Etappe 1 (Matching-Engine + DB-Felder)**.
+Nach OK starte ich mit Migration + Edge Functions.
