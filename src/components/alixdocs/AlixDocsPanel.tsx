@@ -45,14 +45,16 @@ type Doc = {
   ai_order_numbers?: string[] | null;
   expiry_date?: string | null;
   duplicate_of?: string | null;
+  tags?: string[] | null;
 };
 
 type Cat = { id: string; code: string; name: string; sort_order: number };
 
 interface Props {
-  orderId: string;
+  orderId?: string | null;
   customerId?: string | null;
   orderNumber?: string;
+  scope?: 'order' | 'customer';
 }
 
 export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Props) {
