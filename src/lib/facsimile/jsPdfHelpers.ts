@@ -45,15 +45,19 @@ export async function stampedPdfBlob(
   doc: any,
   docType: FacsimileDocType,
   ref?: string,
+  autoFile?: AutoFileOpts,
 ): Promise<Blob> {
   const ab = doc.output("arraybuffer") as ArrayBuffer;
+  let blob: Blob;
   try {
     const { bytes } = await applyFacsimileToPdf(new Uint8Array(ab), docType, ref);
-    return new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
+    blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/pdf" });
   } catch (e) {
     console.warn("[facsimile] stamping failed, using original PDF:", e);
-    return new Blob([ab], { type: "application/pdf" });
+    blob = new Blob([ab], { type: "application/pdf" });
   }
+  void maybeAutoFile(blob, docType, `${ref ?? docType}.pdf`, ref, autoFile);
+  return blob;
 }
 
 /** Öffnet die gestempelte PDF in neuem Fenster (Ersatz für doc.output('bloburl') → open). */
