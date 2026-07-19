@@ -235,6 +235,112 @@ export default function AuftraegeGesucht() {
       </div>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Zoho manuell suchen</CardTitle>
+          <CardDescription>
+            Gezielte Suche in beiden Zoho-Mandanten nach Auftragsnummer (z. B. <span className="font-mono">SO-3540</span>) oder Kundenname. Treffer können direkt importiert werden.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-[220px] max-w-md">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pl-8"
+                placeholder="Auftragsnr. oder Kundenname…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") runZohoSearch(); }}
+              />
+            </div>
+            <Select value={searchMode} onValueChange={(v) => setSearchMode(v as any)}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto erkennen</SelectItem>
+                <SelectItem value="number">Auftragsnummer</SelectItem>
+                <SelectItem value="customer">Kundenname</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={searchSource} onValueChange={(v) => setSearchSource(v as any)}>
+              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Beide Mandanten</SelectItem>
+                <SelectItem value="zoho_eu_1">🇩🇪 Alix Deutschland</SelectItem>
+                <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={runZohoSearch} disabled={searching}>
+              {searching ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+              In Zoho suchen
+            </Button>
+          </div>
+
+          {searchGroups && (
+            <div className="space-y-4">
+              {searchGroups.map((g) => (
+                <div key={g.source} className="rounded-md border">
+                  <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b">
+                    <div className="text-sm font-medium">{SOURCE_LABEL[g.source] ?? g.source}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {g.error ? <span className="text-red-500">{g.error}</span> : `${g.results.length} Treffer`}
+                    </div>
+                  </div>
+                  {g.results.length > 0 && (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Auftragsnr.</TableHead>
+                          <TableHead>Kunde</TableHead>
+                          <TableHead>Datum</TableHead>
+                          <TableHead>Zoho-Status</TableHead>
+                          <TableHead className="text-right">Betrag</TableHead>
+                          <TableHead className="text-right">Aktion</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {g.results.map((h) => (
+                          <TableRow key={h.salesorder_id}>
+                            <TableCell className="font-mono text-xs">
+                              <div className="font-medium">{h.salesorder_number || "—"}</div>
+                              <div className="text-muted-foreground">{h.salesorder_id}</div>
+                            </TableCell>
+                            <TableCell>{h.customer_name ?? "—"}</TableCell>
+                            <TableCell>{h.date ?? "—"}</TableCell>
+                            <TableCell>{h.status ?? "—"}</TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {typeof h.total === "number" ? h.total.toLocaleString("de-DE", { style: "currency", currency: "EUR" }) : "—"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {h.exists_local ? (
+                                <Badge variant="outline" className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30">
+                                  bereits in AlixWork
+                                </Badge>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  onClick={() => importZohoHit(g.source, h)}
+                                  disabled={importingHit === h.salesorder_id}
+                                >
+                                  {importingHit === h.salesorder_id
+                                    ? <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                    : <Download className="h-3 w-3 mr-1" />}
+                                  Importieren
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
           <div>
             <CardTitle>Fehlende Aufträge</CardTitle>
