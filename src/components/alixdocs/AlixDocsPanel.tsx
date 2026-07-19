@@ -198,6 +198,17 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
     load();
   };
 
+  const analyze = async (d: Doc) => {
+    toast.info('KI-Analyse gestartet …');
+    const { data, error } = await supabase.functions.invoke('alixdocs-ai-process', {
+      body: { document_id: d.id },
+    });
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Analyse fertig${data?.category_suggestion ? ` – Kategorie: ${data.category_suggestion}` : ''}`);
+    load();
+  };
+
+
   const fmtSize = (n: number) => n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`;
 
   const catBadge = (id: string | null) => {
