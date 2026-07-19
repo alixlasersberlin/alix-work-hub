@@ -374,7 +374,7 @@ export default function AlixDocsSearch() {
     }
     if (customerId && !customers[customerId]) {
       const { data: c } = await supabase.from('customers')
-        .select('id, name, customer_number').eq('id', customerId).maybeSingle();
+        .select('id, company_name, contact_name, external_customer_id').eq('id', customerId).maybeSingle();
       if (c) setCustomers(prev => ({ ...prev, [customerId]: c as any }));
     }
     setAssignDoc(null); setAssignQ(''); setAssignResults([]);
