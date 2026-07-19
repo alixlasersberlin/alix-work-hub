@@ -104,18 +104,47 @@ async function loadLocalExternalIds(supabase: ReturnType<typeof createClient>, s
   return { ids, nums };
 }
 
+function parseRetryMs(body: any, fallbackMs: number): number {
+  const msg = String(body?.message || body?.error || "");
+  const m = msg.match(/Retry after\s*~?\s*(\d+)\s*(ms|s)?/i);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    return m[2]?.toLowerCase() === "s" ? n * 1000 : n;
+  }
+  return fallbackMs;
+}
+
 async function importOne(source: SourceSystem, external_order_id: string) {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-single-order`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      apikey: SERVICE_KEY,
-    },
-    body: JSON.stringify({ source_system: source, external_order_id }),
-  });
-  const body = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, body };
+  const maxRetries = 3;
+  let attempt = 0;
+  let lastStatus = 0;
+  let lastBody: any = {};
+  while (attempt <= maxRetries) {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/sync-single-order`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        apikey: SERVICE_KEY,
+      },
+      body: JSON.stringify({ source_system: source, external_order_id }),
+    });
+    const body = await res.json().catch(() => ({}));
+    lastStatus = res.status;
+    lastBody = body;
+    if (res.ok) return { ok: true, status: res.status, body };
+
+    const msg = String((body as any)?.message || (body as any)?.error || "");
+    const rateLimited = res.status === 429 || /rate limit/i.test(msg);
+    if (!rateLimited || attempt === maxRetries) {
+      return { ok: false, status: res.status, body };
+    }
+    const waitMs = Math.min(parseRetryMs(body, 15000 * (attempt + 1)), 60000);
+    console.log(`[importOne] rate limited (attempt ${attempt + 1}), waiting ${waitMs}ms — ${external_order_id}`);
+    await new Promise((r) => setTimeout(r, waitMs));
+    attempt += 1;
+  }
+  return { ok: false, status: lastStatus, body: lastBody };
 }
 
 async function processSource(
