@@ -372,6 +372,18 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
                         <Button size="sm" variant="ghost" onClick={() => openPreview(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => analyze(d)} title="KI-Analyse"><Sparkles className="w-4 h-4 text-primary" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => openUpload(d.id)} title="Neue Version"><Plus className="w-4 h-4" /></Button>
+                        {d.status === 'entwurf' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                            onClick={() => setStatus(d, 'freigegeben')}
+                            title="Intern freigeben"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Freigeben
+                          </Button>
+                        )}
+
 
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
