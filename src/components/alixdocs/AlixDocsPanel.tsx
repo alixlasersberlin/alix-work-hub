@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
   Files, Upload, Search, Grid3x3, List as ListIcon, Loader2, Eye, Trash2, RotateCcw,
-  Plus, FileText, Image as ImageIcon, ShieldAlert, Download,
+  Plus, FileText, Image as ImageIcon, ShieldAlert, Download, CheckCircle2, Archive,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const ALLOWED = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'];
 const ALLOWED_MIME = new Set([
