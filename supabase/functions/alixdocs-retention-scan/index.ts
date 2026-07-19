@@ -142,7 +142,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json(200, { ok: true, archived, deleted, warned: (soon ?? []).length });
+    return json(200, { ok: true, archived, deleted, warned: (soon ?? []).length, owner_mails: ownerMails });
   } catch (e: any) {
     return json(500, { error: e?.message ?? String(e) });
   }
