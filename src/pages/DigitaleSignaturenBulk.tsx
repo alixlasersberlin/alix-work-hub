@@ -163,11 +163,23 @@ export default function DigitaleSignaturenBulk() {
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
             Ein Empfänger pro Zeile. Format: <code className="px-1 py-0.5 bg-muted rounded">Name;E-Mail;Telefon</code> oder <code className="px-1 py-0.5 bg-muted rounded">E-Mail</code>.
-            Trennzeichen: Semikolon, Komma oder Tab.
+            Trennzeichen: Semikolon, Komma oder Tab. Header-Zeile wird automatisch erkannt.
           </p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={downloadSample}>
+              <Download className="w-4 h-4 mr-2" />Muster-CSV
+            </Button>
+            <label className="inline-flex">
+              <input type="file" accept=".csv,text/csv" className="hidden"
+                onChange={(e) => onCsvUpload(e.target.files?.[0] || null)} />
+              <span className="inline-flex items-center gap-2 h-9 px-3 rounded-md border text-sm cursor-pointer hover:bg-accent">
+                <Upload className="w-4 h-4" />CSV hochladen
+              </span>
+            </label>
+          </div>
           <Textarea rows={8} value={rawText} onChange={(e) => setRawText(e.target.value)}
             placeholder={"Max Muster;max@firma.de;+49 30 123\nErika Beispiel;erika@firma.de"} />
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" onClick={parse}>Empfänger einlesen</Button>
             {recipients.length > 0 && <Badge variant="secondary">{recipients.length} Empfänger</Badge>}
             {done && (
