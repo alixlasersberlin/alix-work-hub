@@ -25900,6 +25900,7 @@ export type Database = {
           snippet: string
         }[]
       }
+      alixdocs_soft_delete: { Args: { _doc_id: string }; Returns: undefined }
       alixsmart_emit: {
         Args: { _data: Json; _event: string }
         Returns: undefined
