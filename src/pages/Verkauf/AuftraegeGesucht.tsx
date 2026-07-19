@@ -321,6 +321,7 @@ export default function AuftraegeGesucht() {
     await load();
   }
 
+  async function removeRow(r: Row) {
     if (!confirm(`Eintrag ${r.order_number ?? r.external_order_id} entfernen?`)) return;
     const { error } = await supabase.from("orders_missing").delete().eq("id", r.id);
     if (error) toast({ title: "Löschen fehlgeschlagen", description: error.message, variant: "destructive" });
