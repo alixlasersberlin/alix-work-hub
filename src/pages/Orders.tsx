@@ -938,9 +938,17 @@ export default function Orders() {
                         {visibleColumns.map(colId => {
                           if (colId === 'order_number') return (
                             <td key={colId} className="px-4 py-3 font-medium text-foreground">
-                              <span className="inline-flex items-center gap-2">
+                              <span className="inline-flex items-center gap-2 flex-wrap">
                                 {isOrderVip(o) && <VipBadge size="sm" iconOnly />}
                                 {o._displayNumber || o.order_number}
+                                {o.imported_via_reconcile_at && (
+                                  <span
+                                    title={`Über Zoho-Abgleich importiert am ${new Date(o.imported_via_reconcile_at).toLocaleString('de-DE')}`}
+                                    className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300"
+                                  >
+                                    🆕 NEW Import
+                                  </span>
+                                )}
                               </span>
                             </td>
                           );
