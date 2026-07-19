@@ -590,10 +590,18 @@ export default function AuftraegeGesucht() {
 
           {searchGroups && (
             <div className="space-y-4">
-              {searchGroups.map((g) => (
-                <div key={g.source} className="rounded-md border">
+              {searchGroups.map((g) => {
+                const ent = (g.entity ?? "salesorder") as "salesorder" | "estimate";
+                const entLabel = ent === "estimate" ? "Angebot" : "Auftrag";
+                return (
+                <div key={`${g.source}-${ent}`} className="rounded-md border">
                   <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b">
-                    <div className="text-sm font-medium">{SOURCE_LABEL[g.source] ?? g.source}</div>
+                    <div className="text-sm font-medium flex items-center gap-2">
+                      <Badge variant="outline" className={ent === "estimate" ? "bg-purple-500/15 text-purple-500 border-purple-500/30" : "bg-blue-500/15 text-blue-500 border-blue-500/30"}>
+                        {entLabel}
+                      </Badge>
+                      {SOURCE_LABEL[g.source] ?? g.source}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {g.error ? <span className="text-red-500">{g.error}</span> : `${g.results.length} Treffer`}
                     </div>
@@ -602,7 +610,7 @@ export default function AuftraegeGesucht() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Auftragsnr.</TableHead>
+                          <TableHead>{entLabel}-Nr.</TableHead>
                           <TableHead>Kunde</TableHead>
                           <TableHead>Datum</TableHead>
                           <TableHead>Zoho-Status</TableHead>
@@ -612,7 +620,7 @@ export default function AuftraegeGesucht() {
                       </TableHeader>
                       <TableBody>
                         {g.results.map((h) => (
-                          <TableRow key={h.salesorder_id}>
+                          <TableRow key={`${ent}-${h.salesorder_id}`}>
                             <TableCell className="font-mono text-xs">
                               <div className="font-medium">{h.salesorder_number || "—"}</div>
                               <div className="text-muted-foreground">{h.salesorder_id}</div>
@@ -631,7 +639,7 @@ export default function AuftraegeGesucht() {
                               ) : canImport ? (
                                 <Button
                                   size="sm"
-                                  onClick={() => importZohoHit(g.source, h)}
+                                  onClick={() => importZohoHit(g.source, h, ent)}
                                   disabled={importingHit === h.salesorder_id}
                                 >
                                   {importingHit === h.salesorder_id
@@ -649,7 +657,7 @@ export default function AuftraegeGesucht() {
                     </Table>
                   )}
                 </div>
-              ))}
+              );})}
             </div>
           )}
         </CardContent>
