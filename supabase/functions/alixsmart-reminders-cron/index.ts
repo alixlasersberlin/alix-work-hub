@@ -80,10 +80,44 @@ Deno.serve(async (req) => {
 
   const [emailRes, smsRes] = await Promise.all([invoke('email', dueEmail), invoke('sms', dueSms)]);
 
+  // In-App / Native Push an Vertrieb + Kundenservice, wenn Kunden fällig sind
+  let pushSent = 0;
+  const totalDue = new Set([...dueEmail, ...dueSms]).size;
+  if (totalDue > 0) {
+    try {
+      const { data: staff } = await svc
+        .from('user_roles')
+        .select('user_id, roles:role_id(name)')
+        .limit(500);
+      const allowed = new Set(['Vertrieb', 'Kundenservice', 'Admin', 'Super Admin']);
+      const userIds = Array.from(new Set(
+        (staff || [])
+          .filter((r: any) => allowed.has(r?.roles?.name))
+          .map((r: any) => r.user_id)
+      ));
+      if (userIds.length > 0) {
+        const pr = await fetch(`${url}/functions/v1/mobile-push-send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
+          body: JSON.stringify({
+            user_ids: userIds,
+            title: 'AlixSmart: Kunden fällig',
+            body: `${totalDue} Kunde(n) haben sich noch nicht angemeldet.`,
+            url: '/kunden/alixsmart-status',
+            tag: 'alixsmart-reminder',
+          }),
+        });
+        const pj = await pr.json().catch(() => ({}));
+        pushSent = pj?.sent ?? 0;
+      }
+    } catch (_) { /* soft-fail */ }
+  }
+
   return json({
     ok: true, candidates: rows?.length ?? 0,
     email_planned: dueEmail.length, email_sent: emailRes?.sent ?? 0,
     sms_planned: dueSms.length, sms_sent: smsRes?.sent ?? 0,
+    push_sent: pushSent,
   });
 });
 
