@@ -283,8 +283,9 @@ async function processSource(
           import_error: msg,
         }).eq("source_system", source).eq("external_order_id", m.salesorder_id);
       }
-      // gentle pacing to avoid Zoho rate limits
-      await new Promise((r) => setTimeout(r, 150));
+      // gentle pacing to avoid Zoho rate limits (~40 req/min safe)
+      await new Promise((r) => setTimeout(r, 1500));
+
     }
   }
 
