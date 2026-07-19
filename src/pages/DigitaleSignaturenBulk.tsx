@@ -135,6 +135,18 @@ export default function DigitaleSignaturenBulk() {
           </div>
           <div><Label>PDF-Datei (identisch für alle Empfänger)</Label>
             <Input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} /></div>
+          <div>
+            <Label>Template (optional – Felder & Positionen)</Label>
+            <Select value={templateId} onValueChange={setTemplateId}>
+              <SelectTrigger><SelectValue placeholder="Kein Template" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Kein Template</SelectItem>
+                {templates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.name}{t.document_type ? ` (${t.document_type})` : ''}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid md:grid-cols-2 gap-3">
             <div className="flex items-center gap-2 p-3 rounded-lg border">
               <Switch checked={otp} onCheckedChange={setOtp} />
