@@ -43,8 +43,9 @@ type ZohoHit = {
   customer_name?: string;
   total?: number;
   exists_local?: boolean;
+  entity?: "salesorder" | "estimate";
 };
-type SearchGroup = { source: string; mode?: string; error?: string; results: ZohoHit[] };
+type SearchGroup = { source: string; entity?: "salesorder" | "estimate"; mode?: string; error?: string; results: ZohoHit[] };
 
 type SyncSingleOrderResult = {
   ok: boolean;
