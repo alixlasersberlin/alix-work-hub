@@ -156,6 +156,7 @@ const FinanceP2P = lazy(() => import("./pages/Finance/P2P"));
 const FinanceMeldewesen = lazy(() => import("./pages/Finance/Meldewesen"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
+const ZohoAbgleich = lazy(() => import("./pages/Admin/ZohoAbgleich"));
 const Backups = lazy(() => import("./pages/Backups"));
 const Rollen = lazy(() => import("./pages/Rollen"));
 const SystemMonitoring = lazy(() => import("./pages/SystemMonitoring"));
@@ -1146,6 +1147,7 @@ function AppRoutes() {
 
           <Route path="/admin/sign-marketplace" element={<ProtectedRoute requiredRoles={['Super Admin']}><SignMarketplace /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
+          <Route path="/admin/zoho-abgleich" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><ZohoAbgleich /></ProtectedRoute>} />
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
           <Route path="/rollen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Rollen /></ProtectedRoute>} />
           <Route path="/system" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><SystemMonitoring /></ProtectedRoute>} />
