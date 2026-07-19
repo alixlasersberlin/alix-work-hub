@@ -193,20 +193,19 @@ export default function AuftraegeGesucht() {
   async function importZohoHit(source_system: string, hit: ZohoHit) {
     if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setImportingHit(hit.salesorder_id);
-    try {
-      const result = await invokeSyncSingleOrder(source_system, hit.salesorder_id);
-      if (!result.ok) throw new Error(result.message);
-      toast({ title: "Import erfolgreich", description: hit.salesorder_number || hit.salesorder_id });
-      // mark local
-      setSearchGroups((prev) => prev?.map((g) => g.source === source_system
-        ? { ...g, results: g.results.map((r) => r.salesorder_id === hit.salesorder_id ? { ...r, exists_local: true } : r) }
-        : g) ?? null);
-      await load();
-    } catch (e: any) {
-      toast({ title: "Import fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
-    } finally {
+    const result = await invokeSyncSingleOrder(source_system, hit.salesorder_id);
+    if (!result.ok) {
+      toast({ title: result.rateLimited ? "Zoho Rate Limit" : "Import fehlgeschlagen", description: result.message, variant: "destructive" });
       setImportingHit(null);
+      return;
     }
+    toast({ title: "Import erfolgreich", description: hit.salesorder_number || hit.salesorder_id });
+    // mark local
+    setSearchGroups((prev) => prev?.map((g) => g.source === source_system
+      ? { ...g, results: g.results.map((r) => r.salesorder_id === hit.salesorder_id ? { ...r, exists_local: true } : r) }
+      : g) ?? null);
+    await load();
+    setImportingHit(null);
   }
 
   async function load() {
@@ -306,7 +305,7 @@ export default function AuftraegeGesucht() {
           return;
         }
         lastMsg = result.message || "Unbekannter Fehler";
-        if (!result.rateLimited || attempt === maxRetries) throw new Error(lastMsg);
+        if (!result.rateLimited || attempt === maxRetries) break;
         // Token-refresh rate limit needs much longer backoff (Zoho throttles the /token endpoint for ~1 min)
         const base = result.tokenRefreshRateLimited ? 60000 : 15000;
         const waitMs = Math.min(result.retryAfterMs ?? parseRetryMs(lastMsg, base * (attempt + 1)), 120000);
@@ -314,16 +313,16 @@ export default function AuftraegeGesucht() {
         await sleep(waitMs);
         attempt += 1;
       }
-      throw new Error(lastMsg || "Rate limit");
-
-    } catch (e: any) {
-      const msg = e?.message ?? String(e);
+      const msg = lastMsg || "Import fehlgeschlagen";
       await supabase.from("orders_missing").update({
         import_status: "failed",
         import_error: msg,
       }).eq("id", r.id);
       toast({ title: "Import fehlgeschlagen", description: msg, variant: "destructive" });
       await load();
+    } catch (e: any) {
+      const msg = e?.message ?? String(e);
+      toast({ title: "Import fehlgeschlagen", description: msg, variant: "destructive" });
     } finally {
       setBusy(null);
     }
