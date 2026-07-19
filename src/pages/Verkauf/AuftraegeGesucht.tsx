@@ -544,6 +544,33 @@ export default function AuftraegeGesucht() {
               {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
               Neu laden
             </Button>
+            {canImport && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const selectable = filtered.filter((r) => r.import_status !== "imported" && r.import_status !== "resolved");
+                    const allSelected = selectable.length > 0 && selectable.every((r) => selected.has(r.id));
+                    setSelected(allSelected ? new Set() : new Set(selectable.map((r) => r.id)));
+                  }}
+                >
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  {(() => {
+                    const selectable = filtered.filter((r) => r.import_status !== "imported" && r.import_status !== "resolved");
+                    return selectable.length > 0 && selectable.every((r) => selected.has(r.id)) ? "Auswahl leeren" : "Alle sichtbaren";
+                  })()}
+                </Button>
+                <Button
+                  onClick={importSelected}
+                  disabled={running !== null || selected.size === 0}
+                >
+                  {running === "import" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                  {bulkProgress
+                    ? `Import ${bulkProgress.done}/${bulkProgress.total}…`
+                    : `Auswahl importieren (${selected.size})`}
+                </Button>
+              </>
+            )}
           </div>
 
           <div className="rounded-md border overflow-x-auto">
