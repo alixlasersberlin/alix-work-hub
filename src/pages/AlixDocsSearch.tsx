@@ -216,6 +216,15 @@ export default function AlixDocsSearch() {
     toast.success('Archiviert'); load();
   };
 
+  const releaseDoc = async (d: Doc) => {
+    const { error } = await supabase.from('alixdocs_documents')
+      .update({ status: 'freigegeben' }).eq('id', d.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Freigegeben');
+    setDocs(prev => prev.map(x => x.id === d.id ? { ...x, status: 'freigegeben' } : x));
+  };
+
+
   const createShare = async () => {
     if (selected.size === 0) return;
     setBulkBusy(true);
