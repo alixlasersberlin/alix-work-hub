@@ -137,8 +137,24 @@ async function processSource(
     !local.ids.has(o.salesorder_id) && !local.nums.has(o.salesorder_number.toUpperCase())
   );
 
-  // Persist missing orders into public.orders_missing (upsert + mark resolved for imported ones)
+  // Determine which of the missing salesorders are NEW (not yet tracked in orders_missing)
+  const newlyDiscovered: typeof missing = [];
   if (missing.length) {
+    const missingIds = missing.map((m) => m.salesorder_id);
+    const existingIds = new Set<string>();
+    for (let i = 0; i < missingIds.length; i += 500) {
+      const chunk = missingIds.slice(i, i + 500);
+      const { data: existing } = await supabase
+        .from("orders_missing")
+        .select("external_order_id")
+        .eq("source_system", source)
+        .in("external_order_id", chunk);
+      (existing as any[] | null)?.forEach((r) => existingIds.add(String(r.external_order_id)));
+    }
+    for (const m of missing) {
+      if (!existingIds.has(m.salesorder_id)) newlyDiscovered.push(m);
+    }
+
     const rows = missing.map((m) => ({
       source_system: source,
       external_order_id: m.salesorder_id,
@@ -150,7 +166,6 @@ async function processSource(
       last_seen_at: new Date().toISOString(),
       import_status: "pending",
     }));
-    // chunk upserts
     for (let i = 0; i < rows.length; i += 500) {
       const chunk = rows.slice(i, i + 500);
       const { error } = await supabase
@@ -158,9 +173,8 @@ async function processSource(
         .upsert(chunk, { onConflict: "source_system,external_order_id", ignoreDuplicates: false });
       if (error) console.error("orders_missing upsert error", error.message);
     }
-    // bump seen_count for rows we just upserted (best-effort)
-    await supabase.rpc("exec_sql", { sql: "" }).catch(() => {});
   }
+
 
   // Mark any previously-missing rows that are now present in local orders as resolved
   const localAll = Array.from(local.ids);
