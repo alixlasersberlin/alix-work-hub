@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy, CheckCircle2, Trash2, LinkIcon } from 'lucide-react';
+import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy, CheckCircle2, Trash2, LinkIcon, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -245,6 +245,36 @@ export default function AlixDocsSearch() {
   const [assignBusy, setAssignBusy] = useState(false);
   const [assignResults, setAssignResults] = useState<Array<{ id: string; order_number: string | null; customer_id: string | null; customer_name?: string | null; customer_number?: string | null; hit?: string }>>([]);
 
+  // Inline Tag-Editor
+  const [tagEditId, setTagEditId] = useState<string | null>(null);
+  const [tagDraft, setTagDraft] = useState('');
+  const [tagBusy, setTagBusy] = useState(false);
+
+  const saveTags = async (d: Doc, next: string[]) => {
+    setTagBusy(true);
+    const { error } = await supabase.from('alixdocs_documents')
+      .update({ tags: next }).eq('id', d.id);
+    setTagBusy(false);
+    if (error) { toast.error(error.message); return false; }
+    setDocs(prev => prev.map(x => x.id === d.id ? { ...x, tags: next } : x));
+    return true;
+  };
+
+  const addTag = async (d: Doc) => {
+    const raw = tagDraft.trim();
+    if (!raw) { setTagEditId(null); return; }
+    const additions = raw.split(',').map(t => t.trim()).filter(Boolean);
+    const current = d.tags || [];
+    const merged = Array.from(new Set([...current, ...additions]));
+    const ok = await saveTags(d, merged);
+    if (ok) { toast.success('Tag hinzugefügt'); setTagDraft(''); setTagEditId(null); }
+  };
+
+  const removeTag = async (d: Doc, tag: string) => {
+    const next = (d.tags || []).filter(t => t !== tag);
+    await saveTags(d, next);
+  };
+
   const searchOrdersForAssign = async () => {
     const term = assignQ.trim();
     if (!term) { setAssignResults([]); return; }
@@ -479,9 +509,45 @@ export default function AlixDocsSearch() {
                         </TableCell>
                         <TableCell><Badge variant="outline">{catMap[d.category_id ?? '']?.name ?? '—'}</Badge></TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {(d.tags || []).slice(0, 3).map(t => <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>)}
-                            {(d.tags || []).length > 3 && <span className="text-[10px] text-muted-foreground">+{(d.tags || []).length - 3}</span>}
+                          <div className="flex flex-wrap items-center gap-1 max-w-[200px]">
+                            {(d.tags || []).map(t => (
+                              <Badge key={t} variant="outline" className="text-[10px] pr-1 gap-1 group">
+                                {t}
+                                <button
+                                  type="button"
+                                  onClick={() => removeTag(d, t)}
+                                  className="opacity-60 hover:opacity-100 hover:text-red-400"
+                                  title="Tag entfernen"
+                                  disabled={tagBusy}
+                                >
+                                  <X className="w-2.5 h-2.5" />
+                                </button>
+                              </Badge>
+                            ))}
+                            {tagEditId === d.id ? (
+                              <Input
+                                autoFocus
+                                value={tagDraft}
+                                onChange={e => setTagDraft(e.target.value)}
+                                onBlur={() => addTag(d)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') { e.preventDefault(); addTag(d); }
+                                  if (e.key === 'Escape') { setTagDraft(''); setTagEditId(null); }
+                                }}
+                                placeholder="Tag…"
+                                className="h-6 w-24 text-[11px] px-1.5"
+                                disabled={tagBusy}
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => { setTagEditId(d.id); setTagDraft(''); }}
+                                className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-primary border border-dashed border-border rounded px-1.5 py-0.5"
+                                title="Tag hinzufügen"
+                              >
+                                <Plus className="w-2.5 h-2.5" />Tag
+                              </button>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="text-xs">
