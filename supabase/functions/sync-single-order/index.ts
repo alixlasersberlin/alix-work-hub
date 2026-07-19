@@ -39,6 +39,12 @@ function zohoTokenLimitResponse(details?: string, retryAfterSeconds = 90) {
   }, 200);
 }
 
+function isZohoTokenLimitError(error: unknown) {
+  const e = error as { code?: unknown; message?: unknown; details?: unknown } | null;
+  return e?.code === "ZOHO_TOKEN_RATE_LIMIT"
+    || isZohoTokenRateLimit(`${String(e?.message ?? "")} ${String(e?.details ?? "")}`, 429);
+}
+
 function isZohoTokenRateLimit(text: string, status: number) {
   return status === 429 || /too many requests continuously|rate limit|rate exceeded/i.test(text);
 }
@@ -71,7 +77,7 @@ async function getAccessToken(config: any, cacheKey: string): Promise<string> {
     throw new SyncSingleOrderError(
       "ZOHO_TOKEN_RATE_LIMIT",
       "Zoho Token-Limit erreicht. Bitte 1–2 Minuten warten und danach erneut importieren.",
-      429,
+        200,
       cooldown.details,
       retryAfterSeconds,
     );
@@ -94,7 +100,7 @@ async function getAccessToken(config: any, cacheKey: string): Promise<string> {
       throw new SyncSingleOrderError(
         "ZOHO_TOKEN_RATE_LIMIT",
         "Zoho Token-Limit erreicht. Bitte 1–2 Minuten warten und danach erneut importieren.",
-        429,
+        200,
         text,
         90,
       );
@@ -530,10 +536,10 @@ Deno.serve(async (req: Request) => {
     });
   } catch (error: any) {
     console.error("sync-single-order error:", error);
+    if (isZohoTokenLimitError(error)) {
+      return zohoTokenLimitResponse(error?.details, error?.retryAfterSeconds ?? 90);
+    }
     if (error instanceof SyncSingleOrderError) {
-      if (error.code === "ZOHO_TOKEN_RATE_LIMIT") {
-        return zohoTokenLimitResponse(error.details, error.retryAfterSeconds ?? 90);
-      }
       return jsonResponse({
         success: false,
         error: error.code,
