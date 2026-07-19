@@ -179,12 +179,16 @@ export default function AuftraegeGesucht() {
         body: { source_system: r.source_system, external_order_id: r.external_order_id },
       });
       if (error) throw error;
+      const now = new Date().toISOString();
       await supabase.from("orders_missing").update({
         import_status: "imported",
-        imported_at: new Date().toISOString(),
-        resolved_at: new Date().toISOString(),
+        imported_at: now,
+        resolved_at: now,
         import_error: null,
       }).eq("id", r.id);
+      await supabase.from("orders").update({ imported_via_reconcile_at: now })
+        .eq("source_system", r.source_system)
+        .eq("external_order_id", r.external_order_id);
       toast({ title: "Import erfolgreich", description: r.order_number ?? r.external_order_id });
       await load();
     } catch (e: any) {
