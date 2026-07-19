@@ -220,8 +220,10 @@ export default function AlixDocsBulkImport() {
         const existing = r.candidates ?? [];
         const merged = [...results];
         existing.forEach(e => { if (!merged.find(m => m.order_id === e.order_id)) merged.push(e); });
-        return { ...r, candidates: merged, searching: false };
+        // Auto-select first search hit so the user immediately sees the match
+        return { ...r, candidates: merged, selected_order_id: results[0].order_id, searching: false };
       }));
+      toast.success(`${results.length} Treffer – „${results[0].order_number}" ausgewählt`);
     } catch (e: any) {
       toast.error("Suche fehlgeschlagen: " + (e?.message ?? "unbekannt"));
       setRow(i, { searching: false });
