@@ -577,6 +577,7 @@ export default function AuftraegeGesucht() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  {canImport && <TableHead className="w-10"></TableHead>}
                   <TableHead>Auftragsnr.</TableHead>
                   <TableHead>Quelle</TableHead>
                   <TableHead>Kunde</TableHead>
@@ -589,10 +590,28 @@ export default function AuftraegeGesucht() {
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Keine Einträge.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={canImport ? 9 : 8} className="text-center text-muted-foreground py-8">Keine Einträge.</TableCell></TableRow>
                 )}
-                {filtered.map((r) => (
-                  <TableRow key={r.id}>
+                {filtered.map((r) => {
+                  const selectable = r.import_status !== "imported" && r.import_status !== "resolved";
+                  return (
+                  <TableRow key={r.id} data-state={selected.has(r.id) ? "selected" : undefined}>
+                    {canImport && (
+                      <TableCell>
+                        {selectable && (
+                          <Checkbox
+                            checked={selected.has(r.id)}
+                            onCheckedChange={(v) => {
+                              setSelected((prev) => {
+                                const next = new Set(prev);
+                                if (v) next.add(r.id); else next.delete(r.id);
+                                return next;
+                              });
+                            }}
+                          />
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="font-mono text-xs">
                       <div className="font-medium">{r.order_number ?? "—"}</div>
                       <div className="text-muted-foreground">{r.external_order_id}</div>
