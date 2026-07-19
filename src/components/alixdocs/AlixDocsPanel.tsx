@@ -57,7 +57,8 @@ interface Props {
   scope?: 'order' | 'customer';
 }
 
-export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Props) {
+export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope }: Props) {
+  const effectiveScope: 'order' | 'customer' = scope ?? (orderId ? 'order' : 'customer');
   const [docs, setDocs] = useState<Doc[]>([]);
   const [cats, setCats] = useState<Cat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +73,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
   const [previewMime, setPreviewMime] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [newVersionForId, setNewVersionForId] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Upload form state
   const [file, setFile] = useState<File | null>(null);
@@ -82,11 +84,16 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
   const [documentDate, setDocumentDate] = useState<string>('');
   const [serial, setSerial] = useState('');
   const [changeNote, setChangeNote] = useState('');
+  const [tagsInput, setTagsInput] = useState('');
 
   const load = async () => {
     setLoading(true);
+    let q = supabase.from('alixdocs_documents').select('*');
+    if (effectiveScope === 'order' && orderId) q = q.eq('order_id', orderId);
+    else if (effectiveScope === 'customer' && customerId) q = q.eq('customer_id', customerId);
+    else { setDocs([]); setLoading(false); return; }
     const [{ data: d }, { data: c }] = await Promise.all([
-      supabase.from('alixdocs_documents').select('*').eq('order_id', orderId).order('created_at', { ascending: false }),
+      q.order('created_at', { ascending: false }),
       supabase.from('alixdocs_categories').select('id, code, name, sort_order').order('sort_order'),
     ]);
     setDocs((d ?? []) as Doc[]);
@@ -94,7 +101,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [orderId]);
+  useEffect(() => { load(); }, [orderId, customerId, effectiveScope]);
 
   const catMap = useMemo(() => Object.fromEntries(cats.map(c => [c.id, c])), [cats]);
 
