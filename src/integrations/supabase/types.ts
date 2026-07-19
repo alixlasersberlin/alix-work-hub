@@ -1362,6 +1362,7 @@ export type Database = {
         Row: {
           code: string
           created_at: string
+          delete_after_archive_days: number | null
           description: string | null
           hard_delete_allowed: boolean
           id: string
@@ -1374,6 +1375,7 @@ export type Database = {
         Insert: {
           code: string
           created_at?: string
+          delete_after_archive_days?: number | null
           description?: string | null
           hard_delete_allowed?: boolean
           id?: string
@@ -1386,6 +1388,7 @@ export type Database = {
         Update: {
           code?: string
           created_at?: string
+          delete_after_archive_days?: number | null
           description?: string | null
           hard_delete_allowed?: boolean
           id?: string
@@ -1431,6 +1434,7 @@ export type Database = {
           original_filename: string | null
           purge_after: string | null
           retention_until: string | null
+          search_tsv: unknown
           serial_number: string | null
           signed_via_sig_request: string | null
           source: string
@@ -1476,6 +1480,7 @@ export type Database = {
           original_filename?: string | null
           purge_after?: string | null
           retention_until?: string | null
+          search_tsv?: unknown
           serial_number?: string | null
           signed_via_sig_request?: string | null
           source?: string
@@ -1521,6 +1526,7 @@ export type Database = {
           original_filename?: string | null
           purge_after?: string | null
           retention_until?: string | null
+          search_tsv?: unknown
           serial_number?: string | null
           signed_via_sig_request?: string | null
           source?: string
@@ -25687,6 +25693,14 @@ export type Database = {
       alixdocs_is_protected_category: {
         Args: { _cat_id: string }
         Returns: boolean
+      }
+      alixdocs_search_snippets: {
+        Args: { max_rows?: number; q: string }
+        Returns: {
+          id: string
+          rank: number
+          snippet: string
+        }[]
       }
       alixsmart_emit: {
         Args: { _data: Json; _event: string }
