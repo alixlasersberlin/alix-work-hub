@@ -55,7 +55,7 @@ export default function AlixDocsSmartReview() {
     setLoading(true);
     const { data, error } = await supabase
       .from("alixdocs_documents")
-      .select("id,file_name,created_at,match_score,match_confidence,match_method,match_candidates,order_id,customer_id,device_id,category_id")
+      .select("id,title,original_filename,created_at,match_score,match_confidence,match_method,match_candidates,order_id,customer_id,device_id,category_id")
       .eq("match_confidence", tab)
       .order("created_at", { ascending: false })
       .limit(100);
@@ -173,7 +173,7 @@ export default function AlixDocsSmartReview() {
                     <div className="min-w-0">
                       <CardTitle className="text-base flex items-center gap-2 truncate">
                         <FileText className="w-4 h-4 shrink-0" />
-                        <span className="truncate">{doc.file_name}</span>
+                        <span className="truncate">{doc.title || doc.original_filename}</span>
                       </CardTitle>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                         <span>{new Date(doc.created_at).toLocaleString("de-DE")}</span>
