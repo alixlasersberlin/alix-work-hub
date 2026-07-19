@@ -227,7 +227,8 @@ Deno.serve(async (req: Request) => {
     const zohoConfig = getZohoConfig(source_system);
     if (!zohoConfig) return jsonResponse({ error: "Config not found" }, 500);
 
-    const accessToken = await getAccessToken(zohoConfig, source_system);
+    const tokenCacheKey = `${zohoConfig.accountsBaseUrl}:${zohoConfig.clientId}:${zohoConfig.refreshToken.slice(-12)}`;
+    const accessToken = await getAccessToken(zohoConfig, tokenCacheKey);
 
     // Resolve salesorder_id: accept either Zoho ID OR order number (e.g. "2725968", "SO-2725968" / "SO-4190-AT")
     const rawOrderInput = String(external_order_id).trim();
