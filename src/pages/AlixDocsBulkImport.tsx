@@ -51,6 +51,87 @@ async function heicToJpeg(blob: Blob): Promise<Blob> {
   return Array.isArray(out) ? out[0] : out;
 }
 
+// Extract candidate search tokens from a filename (order-number patterns + name-like words)
+function extractTokens(filename: string): { orderNumbers: string[]; words: string[] } {
+  const base = filename.replace(/\.[a-z0-9]+$/i, "");
+  const orderNumbers = Array.from(base.matchAll(/\b(20\d{2}[-_/]?\d{3,6})\b/g)).map(m => m[1].replace(/[_/]/g, "-"));
+  const words = Array.from(
+    new Set(
+      base
+        .split(/[\s_\-.,()\[\]]+/)
+        .map(w => w.trim())
+        .filter(w => w.length >= 3 && /[a-zA-ZäöüÄÖÜß]/.test(w) && !/^\d+$/.test(w) && !/^(kopie|copy|final|scan|foto|img|dsc|dcim)$/i.test(w))
+    )
+  ).slice(0, 6);
+  return { orderNumbers, words };
+}
+
+async function findCandidates(filename: string): Promise<Candidate[]> {
+  const { orderNumbers, words } = extractTokens(filename);
+  const found = new Map<string, Candidate>();
+
+  // 1) Order-number matches
+  for (const on of orderNumbers) {
+    const { data } = await supabase
+      .from("orders")
+      .select("id, order_number, customer_id, source_system")
+      .ilike("order_number", `%${on}%`)
+      .limit(5);
+    for (const o of data ?? []) {
+      if (!found.has(o.id)) found.set(o.id, { order_id: o.id, order_number: o.order_number, customer_name: null });
+    }
+  }
+
+  // 2) Customer name matches → their recent orders
+  if (found.size < 5 && words.length) {
+    const ors = words.map(w => `company_name.ilike.%${w}%,contact_name.ilike.%${w}%`).join(",");
+    const { data: cust } = await supabase
+      .from("customers")
+      .select("id, company_name, contact_name")
+      .or(ors)
+      .limit(5);
+    const custIds = (cust ?? []).map(c => c.id);
+    if (custIds.length) {
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("id, order_number, customer_id")
+        .in("customer_id", custIds)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      const custMap = new Map((cust ?? []).map(c => [c.id, c.company_name || c.contact_name]));
+      for (const o of orders ?? []) {
+        if (!found.has(o.id)) {
+          found.set(o.id, {
+            order_id: o.id,
+            order_number: o.order_number,
+            customer_name: (custMap.get(o.customer_id) as string) ?? null,
+          });
+        }
+      }
+    }
+  }
+
+  // Fill missing customer names
+  const need = [...found.values()].filter(c => !c.customer_name);
+  if (need.length) {
+    const { data: orders } = await supabase
+      .from("orders")
+      .select("id, customer_id")
+      .in("id", need.map(n => n.order_id));
+    const cidMap = new Map((orders ?? []).map(o => [o.id, o.customer_id]));
+    const cids = Array.from(new Set([...cidMap.values()].filter(Boolean))) as string[];
+    if (cids.length) {
+      const { data: cust } = await supabase.from("customers").select("id, company_name, contact_name").in("id", cids);
+      const nameMap = new Map((cust ?? []).map(c => [c.id, c.company_name || c.contact_name]));
+      for (const c of need) {
+        const cid = cidMap.get(c.order_id);
+        if (cid) c.customer_name = (nameMap.get(cid) as string) ?? null;
+      }
+    }
+  }
+
+  return [...found.values()].slice(0, 8);
+
 export default function AlixDocsBulkImport() {
   const [category, setCategory] = useState("sonstiges");
   const [orderId, setOrderId] = useState("");
