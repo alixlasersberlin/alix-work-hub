@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
     // 1. Auto-archive documents whose retention has passed
     const { data: expired } = await svc.from('alixdocs_documents')
-      .select('id, title, category_id, retention_until, status')
+      .select('id, title, category_id, retention_until, status, legal_hold')
       .lte('retention_until', today)
       .neq('status', 'archiviert')
       .is('deleted_at', null)
@@ -22,12 +22,47 @@ Deno.serve(async (req) => {
 
     let archived = 0;
     for (const d of expired ?? []) {
+      if (d.legal_hold) continue;
       await svc.from('alixdocs_documents').update({ status: 'archiviert' }).eq('id', d.id);
-      await svc.from('alixdocs_audit_log').insert({ document_id: d.id, action: 'retention_archived', metadata: { retention_until: d.retention_until } });
+      await svc.from('alixdocs_audit_log').insert({
+        document_id: d.id, action: 'retention_archived',
+        metadata: { retention_until: d.retention_until },
+      });
       archived++;
     }
 
-    // 2. Warn admins about docs expiring in next 30 days (skip if in query mode)
+    // 2. Auto soft-delete archived docs older than category.delete_after_archive_days
+    const { data: cats } = await svc.from('alixdocs_categories')
+      .select('id, code, delete_after_archive_days')
+      .not('delete_after_archive_days', 'is', null);
+
+    let deleted = 0;
+    for (const c of cats ?? []) {
+      const days = Number((c as any).delete_after_archive_days);
+      if (!days || days <= 0) continue;
+      const cutoff = new Date(Date.now() - days * 86400_000).toISOString();
+      const { data: toDel } = await svc.from('alixdocs_documents')
+        .select('id, title, legal_hold, updated_at')
+        .eq('category_id', (c as any).id)
+        .eq('status', 'archiviert')
+        .is('deleted_at', null)
+        .lte('updated_at', cutoff)
+        .limit(500);
+      for (const d of toDel ?? []) {
+        if ((d as any).legal_hold) continue;
+        await svc.from('alixdocs_documents').update({
+          deleted_at: new Date().toISOString(),
+          status: 'geloescht',
+        }).eq('id', (d as any).id);
+        await svc.from('alixdocs_audit_log').insert({
+          document_id: (d as any).id, action: 'retention_deleted',
+          metadata: { after_archive_days: days, category_code: (c as any).code },
+        });
+        deleted++;
+      }
+    }
+
+    // 3. Warn admins about docs expiring in next 30 days
     const in30 = new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10);
     const { data: soon } = await svc.from('alixdocs_documents')
       .select('id, title, retention_until')
@@ -36,7 +71,6 @@ Deno.serve(async (req) => {
       .is('deleted_at', null)
       .limit(200);
 
-    // Notify Admin + Super Admin once per doc (dedupe by title-of-notification)
     if ((soon ?? []).length > 0) {
       const { data: admins } = await svc.from('user_roles').select('user_id').in('role' as any, ['Admin', 'Super Admin']);
       const adminIds = Array.from(new Set((admins ?? []).map((a: any) => a.user_id)));
@@ -55,7 +89,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return json(200, { ok: true, archived, warned: (soon ?? []).length });
+    return json(200, { ok: true, archived, deleted, warned: (soon ?? []).length });
   } catch (e: any) {
     return json(500, { error: e?.message ?? String(e) });
   }
