@@ -18,7 +18,8 @@ type Candidate = {
 
 type Doc = {
   id: string;
-  file_name: string;
+  title: string;
+  original_filename: string | null;
   created_at: string;
   match_score: number | null;
   match_confidence: "auto" | "suggested" | "unassigned" | null;
