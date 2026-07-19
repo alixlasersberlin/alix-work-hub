@@ -323,54 +323,77 @@ Deno.serve(async (req) => {
     ? body.sources.filter((s: any) => s === "zoho_eu_1" || s === "zoho_eu_2")
     : ["zoho_eu_1", "zoho_eu_2"];
   const doImport = body.import === true;
+  // Bulk imports always run in the background so we don't hit the 150s idle timeout.
+  const background = body.background === true || doImport;
 
   const startedAt = Date.now();
-  const HARD_CAP_MS = Math.min(Math.max(Number(body.timeout_ms) || 240_000, 30_000), 280_000);
+  const HARD_CAP_MS = background
+    ? Math.min(Math.max(Number(body.timeout_ms) || 780_000, 60_000), 840_000)
+    : Math.min(Math.max(Number(body.timeout_ms) || 130_000, 30_000), 140_000);
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  const results: any[] = [];
-  for (const src of requested) {
-    try {
-      results.push(await processSource(supabase, src, doImport, HARD_CAP_MS, startedAt));
-    } catch (e) {
-      results.push({ source: src, error: (e as Error).message });
+  const runWork = async () => {
+    const results: any[] = [];
+    for (const src of requested) {
+      try {
+        results.push(await processSource(supabase, src, doImport, HARD_CAP_MS, startedAt));
+      } catch (e) {
+        results.push({ source: src, error: (e as Error).message });
+      }
     }
-  }
-
-  // Aggregate newly discovered across all sources and notify
-  const allNew: any[] = [];
-  for (const r of results) {
-    if (Array.isArray(r?.newly_discovered)) allNew.push(...r.newly_discovered);
-  }
-  if (allNew.length > 0) {
-    try {
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${SERVICE_KEY}`,
-          apikey: SERVICE_KEY,
-        },
-        body: JSON.stringify({
-          templateName: "orders-missing-alert",
-          recipientEmail: "natalia.p@alix-operation.de",
-          extraCc: ["k.trinh@alix-operation.de"],
-          skipDefaultCopies: true,
-          idempotencyKey: `orders-missing-${new Date().toISOString().slice(0,16)}`,
-          templateData: {
-            count: allNew.length,
-            orders: allNew,
-            portalUrl: "https://app.alixwork.de/auftraege/gesucht",
+    const allNew: any[] = [];
+    for (const r of results) {
+      if (Array.isArray(r?.newly_discovered)) allNew.push(...r.newly_discovered);
+    }
+    if (allNew.length > 0) {
+      try {
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SERVICE_KEY}`,
+            apikey: SERVICE_KEY,
           },
-        }),
-      });
-      if (!resp.ok) console.error("orders-missing-alert send failed:", await resp.text());
-    } catch (e) {
-      console.error("orders-missing-alert send error:", (e as Error).message);
+          body: JSON.stringify({
+            templateName: "orders-missing-alert",
+            recipientEmail: "natalia.p@alix-operation.de",
+            extraCc: ["k.trinh@alix-operation.de"],
+            skipDefaultCopies: true,
+            idempotencyKey: `orders-missing-${new Date().toISOString().slice(0,16)}`,
+            templateData: {
+              count: allNew.length,
+              orders: allNew,
+              portalUrl: "https://app.alixwork.de/auftraege/gesucht",
+            },
+          }),
+        });
+        if (!resp.ok) console.error("orders-missing-alert send failed:", await resp.text());
+      } catch (e) {
+        console.error("orders-missing-alert send error:", (e as Error).message);
+      }
     }
+    return { results, allNew };
+  };
+
+  if (background) {
+    const waitUntil = (globalThis as any).EdgeRuntime?.waitUntil;
+    if (typeof waitUntil === "function") {
+      waitUntil(runWork().catch((e) => console.error("bg run failed:", (e as Error).message)));
+    } else {
+      runWork().catch((e) => console.error("bg run failed:", (e as Error).message));
+    }
+    return json({
+      ok: true,
+      background: true,
+      import: doImport,
+      message: doImport
+        ? "Bulk-Import läuft im Hintergrund. Fortschritt wird in 'Aufträge gesucht' aktualisiert."
+        : "Abgleich läuft im Hintergrund.",
+    });
   }
 
+  const { results, allNew } = await runWork();
   return json({
     ok: true,
     import: doImport,
