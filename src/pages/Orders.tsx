@@ -540,7 +540,8 @@ export default function Orders() {
         matchDeposit = false;
       }
     }
-    return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && notExcluded;
+    const matchNewImport = newImportFilter === 'all' || !!o.imported_via_reconcile_at;
+    return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && matchNewImport && notExcluded;
   });
 
   // Client-seitige Sortierung nach Anzahlungsstatus
