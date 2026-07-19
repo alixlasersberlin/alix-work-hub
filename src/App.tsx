@@ -290,6 +290,8 @@ const CustomerPortalSignaturen = lazy(() => import("./pages/CustomerPortal/Signa
 const SignDocPublic = lazy(() => import("./pages/SignDocPublic"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
+const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
+const CustomerPortalAlixDocs = lazy(() => import("./pages/CustomerPortal/AlixDocs"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
@@ -1147,6 +1149,7 @@ function AppRoutes() {
           <Route path="/signaturen/genehmigungen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignApprovals /></ProtectedRoute>} />
           <Route path="/signaturen/dashboard" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignSlaDashboard /></ProtectedRoute>} />
           <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />
+          <Route path="/dokumente/freigaben" element={<ProtectedRoute><AlixDocsApprovals /></ProtectedRoute>} />
 
 
           <Route path="/admin/sign-marketplace" element={<ProtectedRoute requiredRoles={['Super Admin']}><SignMarketplace /></ProtectedRoute>} />
@@ -1428,6 +1431,7 @@ function AppRoutes() {
           <Route path="nachrichten" element={<CustomerPortalMessagesV2 />} />
           <Route path="nachrichten/:id" element={<CustomerPortalMessagesV2 />} />
           <Route path="dokumente" element={<CustomerPortalDocumentsV2 />} />
+          <Route path="alixdocs" element={<CustomerPortalAlixDocs />} />
           <Route path="signaturen" element={<CustomerPortalSignaturen />} />
           <Route path="benachrichtigungen" element={<CustomerPortalNotificationsCenter />} />
           <Route path="sicherheit" element={<CustomerPortalSecurityPage />} />
