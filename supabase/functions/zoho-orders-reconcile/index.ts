@@ -137,8 +137,24 @@ async function processSource(
     !local.ids.has(o.salesorder_id) && !local.nums.has(o.salesorder_number.toUpperCase())
   );
 
-  // Persist missing orders into public.orders_missing (upsert + mark resolved for imported ones)
+  // Determine which of the missing salesorders are NEW (not yet tracked in orders_missing)
+  const newlyDiscovered: typeof missing = [];
   if (missing.length) {
+    const missingIds = missing.map((m) => m.salesorder_id);
+    const existingIds = new Set<string>();
+    for (let i = 0; i < missingIds.length; i += 500) {
+      const chunk = missingIds.slice(i, i + 500);
+      const { data: existing } = await supabase
+        .from("orders_missing")
+        .select("external_order_id")
+        .eq("source_system", source)
+        .in("external_order_id", chunk);
+      (existing as any[] | null)?.forEach((r) => existingIds.add(String(r.external_order_id)));
+    }
+    for (const m of missing) {
+      if (!existingIds.has(m.salesorder_id)) newlyDiscovered.push(m);
+    }
+
     const rows = missing.map((m) => ({
       source_system: source,
       external_order_id: m.salesorder_id,
@@ -150,7 +166,6 @@ async function processSource(
       last_seen_at: new Date().toISOString(),
       import_status: "pending",
     }));
-    // chunk upserts
     for (let i = 0; i < rows.length; i += 500) {
       const chunk = rows.slice(i, i + 500);
       const { error } = await supabase
@@ -158,9 +173,8 @@ async function processSource(
         .upsert(chunk, { onConflict: "source_system,external_order_id", ignoreDuplicates: false });
       if (error) console.error("orders_missing upsert error", error.message);
     }
-    // bump seen_count for rows we just upserted (best-effort)
-    await supabase.rpc("exec_sql", { sql: "" }).catch(() => {});
   }
+
 
   // Mark any previously-missing rows that are now present in local orders as resolved
   const localAll = Array.from(local.ids);
@@ -181,6 +195,15 @@ async function processSource(
     zoho_total: zohoOrders.length,
     local_total: local.ids.size,
     missing_count: missing.length,
+    newly_discovered: newlyDiscovered.map((m) => ({
+      source_system: source,
+      external_order_id: m.salesorder_id,
+      order_number: m.salesorder_number,
+      customer_name: m.customer_name,
+      zoho_date: m.date,
+      zoho_status: m.status,
+      total: m.total,
+    })),
     missing: missing.slice(0, 500).map((m) => ({
       salesorder_id: m.salesorder_id,
       salesorder_number: m.salesorder_number,
@@ -194,6 +217,7 @@ async function processSource(
     import_errors: [] as Array<{ id: string; number: string; message: string }>,
     truncated: false,
   };
+
 
   if (doImport && missing.length) {
     for (const m of missing) {
@@ -266,10 +290,44 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Aggregate newly discovered across all sources and notify
+  const allNew: any[] = [];
+  for (const r of results) {
+    if (Array.isArray(r?.newly_discovered)) allNew.push(...r.newly_discovered);
+  }
+  if (allNew.length > 0) {
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          apikey: SERVICE_KEY,
+        },
+        body: JSON.stringify({
+          templateName: "orders-missing-alert",
+          recipientEmail: "natalia.p@alix-operation.de",
+          extraCc: ["k.trinh@alix-operation.de"],
+          skipDefaultCopies: true,
+          idempotencyKey: `orders-missing-${new Date().toISOString().slice(0,16)}`,
+          templateData: {
+            count: allNew.length,
+            orders: allNew,
+            portalUrl: "https://app.alixwork.de/auftraege/gesucht",
+          },
+        }),
+      });
+      if (!resp.ok) console.error("orders-missing-alert send failed:", await resp.text());
+    } catch (e) {
+      console.error("orders-missing-alert send error:", (e as Error).message);
+    }
+  }
+
   return json({
     ok: true,
     import: doImport,
     duration_ms: Date.now() - startedAt,
+    newly_discovered_count: allNew.length,
     results,
   });
 });
