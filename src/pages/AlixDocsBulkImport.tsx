@@ -115,7 +115,7 @@ export default function AlixDocsBulkImport() {
         fd.append("file", new File([blob], name, { type: mime }));
         fd.append("category_code", category);
         fd.append("title", name);
-        fd.append("confidentiality_level", "internal");
+        fd.append("confidentiality_level", "normal");
         if (orderId) fd.append("order_id", orderId);
         if (customerId) fd.append("customer_id", customerId);
 

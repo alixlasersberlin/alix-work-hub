@@ -92,7 +92,7 @@ export default function AlixDocsMobile() {
     if (customerId) fd.append('customer_id', customerId);
     fd.append('category_code', category);
     fd.append('title', item.file.name.replace(/\.[^.]+$/, ''));
-    fd.append('confidentiality_level', 'internal');
+    fd.append('confidentiality_level', 'normal');
     const { data, error } = await supabase.functions.invoke('alixdocs-upload', { body: fd });
     if (error) throw error;
     if ((data as any)?.error) throw new Error((data as any).error);
