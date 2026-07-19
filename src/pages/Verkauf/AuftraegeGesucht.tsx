@@ -653,7 +653,8 @@ export default function AuftraegeGesucht() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
