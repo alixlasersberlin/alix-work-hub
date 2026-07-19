@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, RefreshCw, Download, Search, ExternalLink, Trash2, Mail } from "lucide-react";
+import { Loader2, RefreshCw, Download, Search, ExternalLink, Trash2, Mail, CheckSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -55,6 +56,8 @@ export default function AuftraegeGesucht() {
   const [status, setStatus] = useState<string>("pending");
   const [source, setSource] = useState<string>("all");
   const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   // Zoho manual search
   const [searchTerm, setSearchTerm] = useState("");
@@ -252,6 +255,70 @@ export default function AuftraegeGesucht() {
     } finally {
       setBusy(null);
     }
+  }
+
+  async function importSelected() {
+    if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
+    const targets = rows.filter((r) => selected.has(r.id) && r.import_status !== "imported" && r.import_status !== "resolved");
+    if (targets.length === 0) { toast({ title: "Keine importierbaren Einträge ausgewählt" }); return; }
+    if (!confirm(`${targets.length} Auftrag/Aufträge importieren?`)) return;
+
+    setRunning("import");
+    setBulkProgress({ done: 0, total: targets.length });
+    let ok = 0, fail = 0;
+    const parseRetryMs = (msg: string, fallback: number) => {
+      const m = msg.match(/Retry after\s*~?\s*(\d+)\s*(ms|s)?/i);
+      if (m) { const n = parseInt(m[1], 10); return m[2]?.toLowerCase() === "s" ? n * 1000 : n; }
+      return fallback;
+    };
+
+    for (let i = 0; i < targets.length; i++) {
+      const r = targets[i];
+      setBusy(r.id);
+      let attempt = 0; let success = false; let lastMsg = "";
+      while (attempt <= 3 && !success) {
+        let data: any = null, error: any = null;
+        try {
+          const res = await supabase.functions.invoke("sync-single-order", {
+            body: { source_system: r.source_system, external_order_id: r.external_order_id },
+          });
+          data = res.data; error = res.error;
+        } catch (e: any) { error = { message: e?.message ?? String(e) }; }
+        const rawMsg = (error?.message || data?.message || data?.error || "") as string;
+        const msg = typeof rawMsg === "string" ? rawMsg : JSON.stringify(rawMsg);
+        const tokenRL = /token refresh/i.test(msg) && /too many requests|rate/i.test(msg);
+        const rateLimited = tokenRL || /rate limit/i.test(msg) || /429/.test(msg) || /too many requests/i.test(msg);
+        if (!error && !data?.error) {
+          const now = new Date().toISOString();
+          await supabase.from("orders_missing").update({
+            import_status: "imported", imported_at: now, resolved_at: now, import_error: null,
+          }).eq("id", r.id);
+          await supabase.from("orders").update({ imported_via_reconcile_at: now })
+            .eq("source_system", r.source_system).eq("external_order_id", r.external_order_id);
+          success = true; ok += 1;
+          break;
+        }
+        lastMsg = msg || "Unbekannter Fehler";
+        if (!rateLimited || attempt === 3) break;
+        const base = tokenRL ? 60000 : 15000;
+        const waitMs = Math.min(parseRetryMs(lastMsg, base * (attempt + 1)), 120000);
+        await new Promise((res) => setTimeout(res, waitMs));
+        attempt += 1;
+      }
+      if (!success) {
+        fail += 1;
+        await supabase.from("orders_missing").update({ import_status: "failed", import_error: lastMsg }).eq("id", r.id);
+      }
+      setBulkProgress({ done: i + 1, total: targets.length });
+      // Pacing between orders to respect Zoho rate limits
+      if (i < targets.length - 1) await new Promise((res) => setTimeout(res, 1500));
+    }
+    setBusy(null);
+    setBulkProgress(null);
+    setRunning(null);
+    setSelected(new Set());
+    toast({ title: `Import fertig: ${ok} ok, ${fail} Fehler` });
+    await load();
   }
 
   async function removeRow(r: Row) {
@@ -477,12 +544,40 @@ export default function AuftraegeGesucht() {
               {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
               Neu laden
             </Button>
+            {canImport && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const selectable = filtered.filter((r) => r.import_status !== "imported" && r.import_status !== "resolved");
+                    const allSelected = selectable.length > 0 && selectable.every((r) => selected.has(r.id));
+                    setSelected(allSelected ? new Set() : new Set(selectable.map((r) => r.id)));
+                  }}
+                >
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  {(() => {
+                    const selectable = filtered.filter((r) => r.import_status !== "imported" && r.import_status !== "resolved");
+                    return selectable.length > 0 && selectable.every((r) => selected.has(r.id)) ? "Auswahl leeren" : "Alle sichtbaren";
+                  })()}
+                </Button>
+                <Button
+                  onClick={importSelected}
+                  disabled={running !== null || selected.size === 0}
+                >
+                  {running === "import" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                  {bulkProgress
+                    ? `Import ${bulkProgress.done}/${bulkProgress.total}…`
+                    : `Auswahl importieren (${selected.size})`}
+                </Button>
+              </>
+            )}
           </div>
 
           <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
+                  {canImport && <TableHead className="w-10"></TableHead>}
                   <TableHead>Auftragsnr.</TableHead>
                   <TableHead>Quelle</TableHead>
                   <TableHead>Kunde</TableHead>
@@ -495,10 +590,28 @@ export default function AuftraegeGesucht() {
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Keine Einträge.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={canImport ? 9 : 8} className="text-center text-muted-foreground py-8">Keine Einträge.</TableCell></TableRow>
                 )}
-                {filtered.map((r) => (
-                  <TableRow key={r.id}>
+                {filtered.map((r) => {
+                  const selectable = r.import_status !== "imported" && r.import_status !== "resolved";
+                  return (
+                  <TableRow key={r.id} data-state={selected.has(r.id) ? "selected" : undefined}>
+                    {canImport && (
+                      <TableCell>
+                        {selectable && (
+                          <Checkbox
+                            checked={selected.has(r.id)}
+                            onCheckedChange={(v) => {
+                              setSelected((prev) => {
+                                const next = new Set(prev);
+                                if (v) next.add(r.id); else next.delete(r.id);
+                                return next;
+                              });
+                            }}
+                          />
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="font-mono text-xs">
                       <div className="font-medium">{r.order_number ?? "—"}</div>
                       <div className="text-muted-foreground">{r.external_order_id}</div>
@@ -540,7 +653,8 @@ export default function AuftraegeGesucht() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
