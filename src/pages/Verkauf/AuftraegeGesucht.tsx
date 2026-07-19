@@ -383,10 +383,12 @@ export default function AuftraegeGesucht() {
               {running === "scan" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
               Jetzt prüfen
             </Button>
-            <Button onClick={() => runReconcile(true)} disabled={running !== null}>
-              {running === "import" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-              Alle fehlenden importieren
-            </Button>
+            {canImport && (
+              <Button onClick={() => runReconcile(true)} disabled={running !== null}>
+                {running === "import" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                Alle fehlenden importieren
+              </Button>
+            )}
           </div>
 
         </CardHeader>
