@@ -239,6 +239,100 @@ export default function AlixDocsSearch() {
     setDocs(prev => prev.filter(x => x.id !== d.id));
   };
 
+  // Zu Auftrag zuordnen
+  const [assignDoc, setAssignDoc] = useState<Doc | null>(null);
+  const [assignQ, setAssignQ] = useState('');
+  const [assignBusy, setAssignBusy] = useState(false);
+  const [assignResults, setAssignResults] = useState<Array<{ id: string; order_number: string | null; customer_id: string | null; customer_name?: string | null; customer_number?: string | null; hit?: string }>>([]);
+
+  const searchOrdersForAssign = async () => {
+    const term = assignQ.trim();
+    if (!term) { setAssignResults([]); return; }
+    setAssignBusy(true);
+    try {
+      const like = `%${term}%`;
+      const orderIds = new Set<string>();
+      const hitMap = new Map<string, string>();
+
+      // 1) Auftragsnummer
+      const { data: byNum } = await supabase.from('orders')
+        .select('id, order_number, customer_id')
+        .ilike('order_number', like).limit(50);
+      (byNum ?? []).forEach((o: any) => { orderIds.add(o.id); hitMap.set(o.id, `Auftrag ${o.order_number}`); });
+
+      // 2) Kunde
+      const { data: cs } = await supabase.from('customers')
+        .select('id, name, customer_number')
+        .or(`name.ilike.${like},customer_number.ilike.${like}`).limit(50);
+      const cIds = (cs ?? []).map((c: any) => c.id);
+      if (cIds.length) {
+        const { data: byCust } = await supabase.from('orders')
+          .select('id, order_number, customer_id')
+          .in('customer_id', cIds).order('created_at', { ascending: false }).limit(100);
+        (byCust ?? []).forEach((o: any) => {
+          if (!orderIds.has(o.id)) hitMap.set(o.id, `Kunde`);
+          orderIds.add(o.id);
+        });
+      }
+
+      // 3) Seriennummer via lager_devices
+      const { data: devs } = await supabase.from('lager_devices')
+        .select('serial_number, order_id').ilike('serial_number', like).not('order_id', 'is', null).limit(50);
+      (devs ?? []).forEach((d: any) => {
+        if (d.order_id) {
+          if (!orderIds.has(d.order_id)) hitMap.set(d.order_id, `SN ${d.serial_number}`);
+          orderIds.add(d.order_id);
+        }
+      });
+
+      if (orderIds.size === 0) { setAssignResults([]); return; }
+      const ids = Array.from(orderIds);
+      const { data: full } = await supabase.from('orders')
+        .select('id, order_number, customer_id').in('id', ids);
+      const custIds = [...new Set((full ?? []).map((o: any) => o.customer_id).filter(Boolean))] as string[];
+      let cMap: Record<string, any> = {};
+      if (custIds.length) {
+        const { data: cc } = await supabase.from('customers')
+          .select('id, name, customer_number').in('id', custIds);
+        cMap = Object.fromEntries((cc ?? []).map((c: any) => [c.id, c]));
+      }
+      setAssignResults((full ?? []).map((o: any) => ({
+        id: o.id,
+        order_number: o.order_number,
+        customer_id: o.customer_id,
+        customer_name: o.customer_id ? cMap[o.customer_id]?.name : null,
+        customer_number: o.customer_id ? cMap[o.customer_id]?.customer_number : null,
+        hit: hitMap.get(o.id),
+      })));
+    } finally { setAssignBusy(false); }
+  };
+
+  const assignOrder = async (orderId: string, customerId: string | null) => {
+    if (!assignDoc) return;
+    const patch: any = { order_id: orderId, status: 'freigegeben' };
+    if (customerId) patch.customer_id = customerId;
+    const { error } = await supabase.from('alixdocs_documents')
+      .update(patch).eq('id', assignDoc.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Auftrag zugeordnet und freigegeben');
+    setDocs(prev => prev.map(x => x.id === assignDoc.id
+      ? { ...x, order_id: orderId, customer_id: customerId ?? x.customer_id, status: 'freigegeben' }
+      : x));
+    // Order/Customer-Maps ergänzen
+    if (!orders[orderId]) {
+      const { data: o } = await supabase.from('orders')
+        .select('id, order_number, customer_id').eq('id', orderId).maybeSingle();
+      if (o) setOrders(prev => ({ ...prev, [orderId]: o as any }));
+    }
+    if (customerId && !customers[customerId]) {
+      const { data: c } = await supabase.from('customers')
+        .select('id, name, customer_number').eq('id', customerId).maybeSingle();
+      if (c) setCustomers(prev => ({ ...prev, [customerId]: c as any }));
+    }
+    setAssignDoc(null); setAssignQ(''); setAssignResults([]);
+  };
+
+
 
 
   const createShare = async () => {
