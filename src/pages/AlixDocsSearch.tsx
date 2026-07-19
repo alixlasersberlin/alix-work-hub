@@ -34,7 +34,7 @@ type Doc = {
 };
 type Cat = { id: string; code: string; name: string };
 type Order = { id: string; order_number: string | null; customer_id: string | null };
-type Customer = { id: string; name: string | null; customer_number: string | null };
+type Customer = { id: string; company_name: string | null; contact_name: string | null; external_customer_id: string | null };
 
 export default function AlixDocsSearch() {
   const { roles } = useAuth();
