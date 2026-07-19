@@ -341,7 +341,7 @@ export default function AlixDocsSearch() {
       let cMap: Record<string, any> = {};
       if (custIds.length) {
         const { data: cc } = await supabase.from('customers')
-          .select('id, name, customer_number').in('id', custIds);
+          .select('id, company_name, contact_name, external_customer_id').in('id', custIds);
         cMap = Object.fromEntries((cc ?? []).map((c: any) => [c.id, c]));
       }
       setAssignResults((full ?? []).map((o: any) => ({
