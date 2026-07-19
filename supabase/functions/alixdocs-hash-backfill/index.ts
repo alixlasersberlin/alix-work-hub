@@ -21,22 +21,22 @@ async function sha256Hex(buf: ArrayBuffer): Promise<string> {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const supa = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const supa = createClient(url, serviceKey);
 
   // Auth: nur Admin/Super Admin ODER Service-Role
   const authHeader = req.headers.get("Authorization") ?? "";
   const jwt = authHeader.replace("Bearer ", "");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   if (jwt && jwt !== serviceKey) {
-    const { data: userRes } = await supa.auth.getUser(jwt);
-    const uid = userRes?.user?.id;
-    if (!uid) return json(401, { error: "unauthorized" });
-    const { data: roles } = await supa.from("user_roles").select("role").eq("user_id", uid);
-    const allowed = (roles ?? []).some((r) => ["Super Admin", "Admin"].includes(String(r.role)));
-    if (!allowed) return json(403, { error: "forbidden" });
+    const userClient = createClient(url, anon, {
+      global: { headers: { Authorization: authHeader } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: isAdmin } = await userClient.rpc("has_role", { check_role: "Admin" });
+    const { data: isSuper } = await userClient.rpc("has_role", { check_role: "Super Admin" });
+    if (!isAdmin && !isSuper) return json(403, { error: "forbidden" });
   }
 
   const body = await req.json().catch(() => ({}));

@@ -30,13 +30,9 @@ Deno.serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const { data: userRes } = await userClient.auth.getUser();
-  const uid = userRes?.user?.id;
-  if (!uid) return json(401, { error: "unauthorized" });
-
-  const { data: roles } = await userClient.from("user_roles").select("role").eq("user_id", uid);
-  const allowed = (roles ?? []).some((r) => ["Super Admin", "Admin"].includes(String(r.role)));
-  if (!allowed) return json(403, { error: "forbidden" });
+  const { data: isAdmin } = await userClient.rpc("has_role", { check_role: "Admin" });
+  const { data: isSuper } = await userClient.rpc("has_role", { check_role: "Super Admin" });
+  if (!isAdmin && !isSuper) return json(403, { error: "forbidden" });
 
   const body = await req.json().catch(() => ({}));
   const question = String(body?.question ?? "").trim();
