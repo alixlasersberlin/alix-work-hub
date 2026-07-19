@@ -206,9 +206,25 @@ async function processSource(supabase: ReturnType<typeof createClient>, source: 
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  const tok = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const tok = authHeader.replace(/^Bearer\s+/i, "").trim();
   const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  if (!tok || (tok !== cronSecret && tok !== SERVICE_KEY)) return json({ error: "Unauthorized" }, 401);
+  let authed = !!tok && (tok === cronSecret || tok === SERVICE_KEY);
+  if (!authed && tok) {
+    try {
+      const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const uc = createClient(SUPABASE_URL, ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+        auth: { autoRefreshToken: false, persistSession: false },
+      });
+      const { data: u } = await uc.auth.getUser(tok);
+      if (u?.user) {
+        const { data: isAdmin } = await uc.rpc("is_admin");
+        authed = !!isAdmin;
+      }
+    } catch { /* ignore */ }
+  }
+  if (!authed) return json({ error: "Unauthorized" }, 401);
 
   let body: any = {};
   try { body = await req.json(); } catch { /* empty */ }
