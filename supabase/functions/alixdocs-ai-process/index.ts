@@ -96,7 +96,22 @@ Deno.serve(async (req) => {
 
     // Base64 for inline content
     const b64 = base64FromBytes(buf);
-    const mime = ver.mime_type || doc.mime_type || 'application/pdf';
+    let mime = (ver.mime_type || doc.mime_type || '').trim();
+    if (!mime || mime === 'application/octet-stream') {
+      const name = (ver.original_filename || doc.original_filename || '').toLowerCase();
+      if (name.endsWith('.pdf')) mime = 'application/pdf';
+      else if (name.endsWith('.png')) mime = 'image/png';
+      else if (name.endsWith('.jpg') || name.endsWith('.jpeg')) mime = 'image/jpeg';
+      else if (name.endsWith('.webp')) mime = 'image/webp';
+      else mime = 'application/pdf';
+    }
+    if (!b64 || b64.length === 0) {
+      await admin.from('alixdocs_ai_jobs').update({
+        status: 'skipped', error: 'empty_file',
+        duration_ms: Date.now() - startedAt, finished_at: new Date().toISOString(),
+      }).eq('id', job!.id);
+      return json(200, { ok: true, skipped: 'empty_file' });
+    }
 
     // Ask Gemini for structured extraction
     const model = 'google/gemini-2.5-flash';
@@ -115,14 +130,17 @@ Deno.serve(async (req) => {
   "tags": ["3-6 knappe deutsche Schlagworte, kleingeschrieben, ohne Sonderzeichen"]
 }`;
 
+    const dataUrl = `data:${mime};base64,${b64}`;
     const content: any[] = [
       { type: 'text', text: `Analysiere das Dokument und liefere JSON mit folgender Struktur:\n${schemaHint}` },
     ];
     if (mime.startsWith('image/')) {
-      content.push({ type: 'image_url', image_url: { url: `data:${mime};base64,${b64}` } });
+      content.push({ type: 'image_url', image_url: { url: dataUrl } });
     } else {
-      content.push({ type: 'file', file: { filename: 'doc', file_data: `data:${mime};base64,${b64}` } });
+      const filename = (ver.original_filename || doc.original_filename || 'doc.pdf').replace(/[^a-zA-Z0-9._-]/g, '_');
+      content.push({ type: 'file', file: { filename, file_data: dataUrl } });
     }
+
 
     const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
