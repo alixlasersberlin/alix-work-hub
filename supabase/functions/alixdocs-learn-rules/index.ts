@@ -46,17 +46,22 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  // Auth: nur Admin/Super Admin
+  // Auth: Service-Role (Cron/Trigger) ODER Admin/Super Admin
   const authHeader = req.headers.get("Authorization") ?? "";
   const jwt = authHeader.replace("Bearer ", "");
-  const { data: userRes } = await supa.auth.getUser(jwt);
-  const uid = userRes?.user?.id;
-  if (!uid) return json(401, { error: "unauthorized" });
-  const { data: roles } = await supa.from("user_roles").select("role").eq("user_id", uid);
-  const allowed = (roles ?? []).some((r) =>
-    ["Super Admin", "Admin"].includes(String(r.role)),
-  );
-  if (!allowed) return json(403, { error: "forbidden" });
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  let uid: string | null = null;
+  if (jwt && jwt !== serviceKey) {
+    const { data: userRes } = await supa.auth.getUser(jwt);
+    uid = userRes?.user?.id ?? null;
+    if (!uid) return json(401, { error: "unauthorized" });
+    const { data: roles } = await supa.from("user_roles").select("role").eq("user_id", uid);
+    const allowed = (roles ?? []).some((r) =>
+      ["Super Admin", "Admin"].includes(String(r.role)),
+    );
+    if (!allowed) return json(403, { error: "forbidden" });
+  }
+
 
   const body = await req.json().catch(() => ({}));
   const sinceDays = Number(body?.since_days ?? 90);

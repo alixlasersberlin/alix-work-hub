@@ -50,6 +50,7 @@ export default function AlixDocsSmartReview() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [labels, setLabels] = useState<Record<string, string>>({});
+  const [ruleLabels, setRuleLabels] = useState<Record<string, { pattern: string; bonus: number }>>({});
 
   async function load() {
     setLoading(true);
@@ -92,6 +93,27 @@ export default function AlixDocsSmartReview() {
       (data ?? []).forEach((d: any) => { map[`device:${d.id}`] = `SN ${d.serial_number ?? ""} · ${d.model ?? ""}`; });
     }
     setLabels(map);
+
+    // Regel-IDs aus hits sammeln → Regel-Explainer
+    const ruleIds = new Set<string>();
+    for (const d of list) {
+      for (const c of d.match_candidates ?? []) {
+        for (const h of c?.hits ?? []) {
+          if (typeof h === "string" && h.startsWith("rule:")) ruleIds.add(h.slice(5));
+        }
+      }
+    }
+    if (ruleIds.size) {
+      const { data: rs } = await supabase
+        .from("alixdocs_matching_rules")
+        .select("id, pattern, weight_bonus")
+        .in("id", [...ruleIds]);
+      const rmap: Record<string, { pattern: string; bonus: number }> = {};
+      (rs ?? []).forEach((r: any) => { rmap[r.id] = { pattern: r.pattern, bonus: r.weight_bonus }; });
+      setRuleLabels(rmap);
+    } else {
+      setRuleLabels({});
+    }
   }
 
   useEffect(() => { load(); }, [tab]);
@@ -200,7 +222,19 @@ export default function AlixDocsSmartReview() {
                             {label}
                           </div>
                           {c.hits && c.hits.length > 0 && (
-                            <div className="text-xs text-muted-foreground truncate">Treffer: {c.hits.join(", ")}</div>
+                            <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-1">
+                              {c.hits.map((h, hi) => {
+                                if (typeof h === "string" && h.startsWith("rule:")) {
+                                  const r = ruleLabels[h.slice(5)];
+                                  return (
+                                    <Badge key={hi} variant="outline" className="text-[10px] bg-violet-500/10 text-violet-600 border-violet-500/30">
+                                      🧠 {r ? `${r.pattern} (+${r.bonus})` : "Gelernte Regel"}
+                                    </Badge>
+                                  );
+                                }
+                                return <Badge key={hi} variant="outline" className="text-[10px]">{String(h)}</Badge>;
+                              })}
+                            </div>
                           )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
