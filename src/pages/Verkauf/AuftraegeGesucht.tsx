@@ -56,6 +56,8 @@ export default function AuftraegeGesucht() {
   const [status, setStatus] = useState<string>("pending");
   const [source, setSource] = useState<string>("all");
   const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
 
   // Zoho manual search
   const [searchTerm, setSearchTerm] = useState("");
