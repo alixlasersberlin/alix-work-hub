@@ -464,7 +464,7 @@ export default function AuftraegeGesucht() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        {r.import_status !== "imported" && r.import_status !== "resolved" && (
+                        {r.import_status !== "imported" && r.import_status !== "resolved" && canImport && (
                           <Button size="sm" variant="outline" onClick={() => importOne(r)} disabled={busy === r.id}>
                             {busy === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                             <span className="ml-1">Import</span>
