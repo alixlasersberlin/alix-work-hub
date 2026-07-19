@@ -14,6 +14,7 @@ import {
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import DocActionsMenu from './DocActionsMenu';
+import PdfPreview from './PdfPreview';
 
 const ALLOWED = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'];
 const ALLOWED_MIME = new Set([
