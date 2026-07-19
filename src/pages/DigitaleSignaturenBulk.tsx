@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,17 +9,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Send, Users, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Users, CheckCircle2, XCircle, Loader2, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { BulkJobsProgress } from '@/components/signaturen/BulkJobsProgress';
 
 const DOC_TYPES = ['angebot','auftrag','rechnung','servicevertrag','nda','sonstiges'];
+const SAMPLE_CSV = 'Name;Email;Telefon\nMax Muster;max@firma.de;+49 30 1234567\nErika Beispiel;erika@firma.de;\n';
 
 type Recipient = { name: string; email: string; phone?: string; status?: 'pending' | 'ok' | 'error'; message?: string; sign_url?: string };
+type Template = { id: string; name: string; document_type: string | null };
 
 function parseRecipients(text: string): Recipient[] {
-  return text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((line) => {
-    // Accept "Name;Email;Phone" or "Name,Email,Phone" or just "Email"
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  // Skip header row if it looks like one
+  const dataLines = lines.length > 0 && /name|email|e-mail|telefon|phone/i.test(lines[0]) ? lines.slice(1) : lines;
+  return dataLines.map((line) => {
     const parts = line.split(/[;,\t]/).map((p) => p.trim());
     if (parts.length === 1) return { name: '', email: parts[0] };
     return { name: parts[0] || '', email: parts[1] || '', phone: parts[2] || '' };
@@ -30,6 +34,8 @@ export default function DigitaleSignaturenBulk() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [docType, setDocType] = useState('nda');
+  const [templateId, setTemplateId] = useState<string>('none');
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [rawText, setRawText] = useState('');
   const [otp, setOtp] = useState(false);
@@ -38,11 +44,35 @@ export default function DigitaleSignaturenBulk() {
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('sig_templates').select('id, name, document_type').order('name');
+      setTemplates((data ?? []) as Template[]);
+    })();
+  }, []);
+
   const parse = () => {
     const list = parseRecipients(rawText);
     if (!list.length) return toast.error('Keine gültigen E-Mail-Adressen erkannt');
     setRecipients(list);
     toast.success(`${list.length} Empfänger erkannt`);
+  };
+
+  const onCsvUpload = async (f: File | null) => {
+    if (!f) return;
+    const text = await f.text();
+    setRawText(text);
+    const list = parseRecipients(text);
+    setRecipients(list);
+    toast.success(`CSV geladen: ${list.length} Empfänger`);
+  };
+
+  const downloadSample = () => {
+    const blob = new Blob([SAMPLE_CSV], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'bulk-signatur-vorlage.csv'; a.click();
+    URL.revokeObjectURL(url);
   };
 
   const send = async () => {
@@ -57,6 +87,7 @@ export default function DigitaleSignaturenBulk() {
       const { data, error } = await supabase.functions.invoke('sig-bulk-create', {
         body: {
           title, document_type: docType, pdf_base64: b64,
+          template_id: templateId !== 'none' ? templateId : null,
           recipients: recipients.map((r) => ({ name: r.name, email: r.email, phone: r.phone })),
           otp_required: otp, expires_days: expiresDays,
           base_url: window.location.origin,
@@ -104,6 +135,18 @@ export default function DigitaleSignaturenBulk() {
           </div>
           <div><Label>PDF-Datei (identisch für alle Empfänger)</Label>
             <Input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} /></div>
+          <div>
+            <Label>Template (optional – Felder & Positionen)</Label>
+            <Select value={templateId} onValueChange={setTemplateId}>
+              <SelectTrigger><SelectValue placeholder="Kein Template" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Kein Template</SelectItem>
+                {templates.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>{t.name}{t.document_type ? ` (${t.document_type})` : ''}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid md:grid-cols-2 gap-3">
             <div className="flex items-center gap-2 p-3 rounded-lg border">
               <Switch checked={otp} onCheckedChange={setOtp} />
@@ -120,11 +163,23 @@ export default function DigitaleSignaturenBulk() {
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
             Ein Empfänger pro Zeile. Format: <code className="px-1 py-0.5 bg-muted rounded">Name;E-Mail;Telefon</code> oder <code className="px-1 py-0.5 bg-muted rounded">E-Mail</code>.
-            Trennzeichen: Semikolon, Komma oder Tab.
+            Trennzeichen: Semikolon, Komma oder Tab. Header-Zeile wird automatisch erkannt.
           </p>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={downloadSample}>
+              <Download className="w-4 h-4 mr-2" />Muster-CSV
+            </Button>
+            <label className="inline-flex">
+              <input type="file" accept=".csv,text/csv" className="hidden"
+                onChange={(e) => onCsvUpload(e.target.files?.[0] || null)} />
+              <span className="inline-flex items-center gap-2 h-9 px-3 rounded-md border text-sm cursor-pointer hover:bg-accent">
+                <Upload className="w-4 h-4" />CSV hochladen
+              </span>
+            </label>
+          </div>
           <Textarea rows={8} value={rawText} onChange={(e) => setRawText(e.target.value)}
             placeholder={"Max Muster;max@firma.de;+49 30 123\nErika Beispiel;erika@firma.de"} />
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button variant="outline" onClick={parse}>Empfänger einlesen</Button>
             {recipients.length > 0 && <Badge variant="secondary">{recipients.length} Empfänger</Badge>}
             {done && (
