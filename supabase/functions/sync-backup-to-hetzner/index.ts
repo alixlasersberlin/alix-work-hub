@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
     for (const p of backupPaths) tasks.push({ srcBucket: "backups", srcPath: p, destKey: p });
 
     const ALL_BUCKETS = [
-      "alix-sign-pdfs","bank-offers","bug-capa-attachments","finance-documents",
+      "alix-sign-pdfs","alixdocs-private","bank-offers","bug-capa-attachments","finance-documents",
       "order-invoices","production-orders","production-photos","repair-files",
     ];
     const targetBuckets = mirrorBucketsFlag ? (bucketsToMirror ?? ALL_BUCKETS) : [];
