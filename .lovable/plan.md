@@ -1,60 +1,70 @@
+## AlixDocs – Auftragsbezogenes Dokumentenmanagement
 
-# AlixSmart Anmeldestatus – Umsetzungsplan
+Ich baue das Modul in drei Etappen. **Phase 1 + Versionierung aus Phase 2** zuerst (deine Empfehlung), danach optional Freigabe/Suche und später die KI‑Phase.
 
-Großes Modul (20 Punkte). Zerlege ich in 4 Phasen mit klaren Abnahmen. Nach jeder Phase Freigabe, dann geht's weiter.
+---
 
-## Bestandsaufnahme
-Vorhanden nutzbar:
-- `customers`, `lager_devices` (Seriennummern), `orders`, `alixsmart_products`, `alixsmart_migration_map/logs`
-- E-Mail-System (`email_templates`, `email_send_log`, `send-customer-email`)
-- SMS via Twilio (`send-customer-sms`, `sms_templates`, `customer_sms_logs`)
-- RBAC (`user_roles`, `has_role`), Tenants (`user_tenant_access`), Design-Tokens
+### Etappe A — Phase 1: Sicheres Grundsystem (jetzt bauen)
 
-Fehlend → neu:
-- 5 Tabellen (siehe §19 des Prompts) + RLS + GRANTs
-- Edge Functions: `alixsmart-match-run`, `alixsmart-invite-token`, `alixsmart-webhook`, `alixsmart-reminders-cron`
-- UI: Dashboard-Kachel, `/kunden/alixsmart-status` (Liste + Detail), Admin-Einstellungen
+**Backend / Datenbank (Migration)**
+- Neue Tabellen im `public` Schema:
+  - `alixdocs_categories` (Seed: Angebot, Auftrag, Kaufvertrag, Mietvertrag, Finanzierung, Rechnung, Lieferschein, Übergabe, Gerätefoto, Seriennummer, Servicebericht, Reparatur, Wartung, Garantie, Schulung, NiSV, Mediapaket, Reklamation, Kundenkommunikation, Intern vertraulich, Sonstiges)
+  - `alixdocs_documents` (order_id, customer_id, device_id, category_id, title, storage_path, mime_type, file_size, document_date, confidentiality_level `normal|vertraulich|streng_vertraulich`, status `entwurf|geprueft|freigegeben|archiviert`, current_version, uploaded_by, deleted_at)
+  - `alixdocs_versions` (document_id, version_number, storage_path, file_hash, file_size, uploaded_by, change_note)
+  - `alixdocs_audit_log` (document_id, user_id, action, metadata, ip, ua) – append-only, keine Update/Delete-Policy
+- GRANT + RLS in jeder Tabelle (authenticated only, `service_role` für Edge Functions).
+- Zugriff per `has_role()` — Rollenmatrix wie im Prompt (Geschäftsführung/Admin/SuperAdmin = alles; Buchhaltung/Order = view+upload+approve; Vertrieb/Service = view+upload; Techniker = nur zugewiesene Aufträge; Externe = keiner).
+- Streng vertrauliche Dokumente nur Super Admin + Geschäftsführung.
+- Trigger für `updated_at`, Trigger schreibt automatisch in `alixdocs_audit_log` bei INSERT/UPDATE/soft-delete.
 
-## Phase 1 – Fundament (DB + Matching-Engine + Basis-UI)
-1. Migration: `alixsmart_customer_links`, `alixsmart_device_links`, `alixsmart_registration_invites`, `alixsmart_reminders`, `alixsmart_match_logs` inkl. GRANTs, RLS (nur Admin/Super Admin/Vertrieb, Tenant-Scope).
-2. SQL-Funktionen zum Normalisieren (E-Mail lower/trim, Telefon E.164) + Match-Score-View.
-3. Edge Function `alixsmart-match-run`: batch-Abgleich Kunden↔AlixSmart-Konten, schreibt `_customer_links` (green/yellow/red) und `_match_logs`.
-4. Menü „Kunden → AlixSmart Anmeldestatus" + Seite `/kunden/alixsmart-status` mit Tabelle (Status-Filter, Volltextsuche, InfinityTable), Kachel auf Dashboard.
-5. Detailansicht mit Feld-für-Feld-Vergleich (grün/gelb/rot).
+**Storage**
+- Privater Bucket `alixdocs-private` (public=false).
+- Pfadschema: `tenants/{tenant_id}/customers/{customer_id}/orders/{order_id}/{document_id}/v{version}/{sanitized_filename}`
+- RLS auf `storage.objects` — Lesen/Schreiben nur über Edge Function, keine direkten Client-Uploads.
 
-**Abnahme:** Alle Kunden mit Seriennummer sichtbar, Statusbuttons korrekt, keine Auto-Zuordnung bei Unsicher.
+**Edge Functions**
+- `alixdocs-upload` — validiert MIME + Größe (max 50 MB), sanitized Filename, erzeugt document + v1, schreibt Audit-Log.
+- `alixdocs-signed-url` — prüft Rechte + Vertraulichkeit, erzeugt Signed URL (10 min), loggt Aktion.
+- `alixdocs-delete` — Soft-Delete (Papierkorb, 30 Tage), Purge nur Super Admin.
+- `alixdocs-new-version` — hängt neue Version an, alte bleibt sichtbar.
 
-## Phase 2 – Erinnerungen (Einzel & Bulk)
-1. E-Mail-Template `alixsmart_invite` + Button „E-Mail senden" (Vorschau, editierbar).
-2. SMS-Template + Button „SMS senden" (deaktiviert ohne Mobil).
-3. Individuelle Invite-Tokens: `alixsmart-invite-token` (server-seitig, gehashter Token, TTL, Single/Multi-Use).
-4. Stapelaktionen (E-Mail/SMS/Erinnerung planen/erneut prüfen) mit Vorab-Zusammenfassung + Rate-Limit.
-5. Logging jeder Aktion in `alixsmart_reminders` + Kundenverlauf.
+**Frontend**
+- Neuer Tab **„Dokumente"** in `OrderDetail` (und analog in RepairOrder/ProductionOrder wenn gewünscht — sag Bescheid).
+- Komponente `AlixDocsPanel`:
+  - Toolbar: Upload (Drag&Drop), Kategorie-Filter, Suche, Umschalter Liste ↔ Galerie.
+  - Listenansicht: Titel, Kategorie, Version, Uploader, Datum, Status, Vertraulichkeit, Aktionen (Öffnen / neue Version / Papierkorb).
+  - Galerieansicht: Thumbnails für Bilder, PDF-Icon für PDFs.
+  - Inline-Viewer: PDF (`<iframe>` mit Blob-URL), Bilder (Lightbox mit Zoom). Kein direkter Download-Link im DOM.
+- Nur erlaubte Formate Phase 1: PDF, JPG, JPEG, PNG, WEBP, HEIC.
+- Papierkorb-Ansicht (30 Tage) + Wiederherstellen.
 
-**Abnahme:** Einzel- + Bulk-Versand funktioniert, Tokens werden serverseitig validiert.
+**Versionierung (Phase 2 vorgezogen)**
+- „Neue Version hochladen" statt Überschreiben, `current_version` steigt, alte Versionen aufklappbar.
+- SHA-256 Hash pro Version.
 
-## Phase 3 – Automatik & Webhook
-1. Admin-UI `/admin/alixsmart-status` für Erinnerungsserie (Zeitabstände, Kanäle, Vorlagen, Ruhezeiten, Länder-/Geräte-Filter).
-2. Cron `alixsmart-reminders-cron` (pg_cron, alle 60 min) – erzeugt/plant Reminder nach Regeln, stoppt bei „Angemeldet".
-3. Webhook `alixsmart-webhook` (Endpunkt für AlixSmart-Events: user_registered, device_registered, profile_updated, …) → triggert Match-Run + Statuswechsel.
-4. Manueller Button „Jetzt prüfen" pro Kunde.
+---
 
-**Abnahme:** Nach Registrierung wechselt Status automatisch auf „Angemeldet"; Erinnerungen enden.
+### Etappe B — später (nach deiner Freigabe von A)
 
-## Phase 4 – Erweiterungen & Compliance
-1. Manuelle Zuordnung / Aufheben mit Bestätigung + Audit.
-2. Multi-Device: Status pro Seriennummer + Gesamtstatus, Admin-Option „ein Konto reicht / jede SN nötig".
-3. Exporte (CSV/Excel/PDF).
-4. Rollen-Feintuning + Feldmaskierung für Non-Admins.
-5. Rate-Limits, Audit-Log-Review, DSGVO-Löschpfad.
+- Freigabe-Workflow (Entwurf → Geprüft → Freigegeben) inkl. Sperre gegen Löschen freigegebener Verträge/Rechnungen.
+- Globale Dokumentensuche `/dokumente` (Kunde, Auftrag, Seriennummer, Kategorie, Zeitraum, Volltext auf Metadaten).
+- Auto-Ablage bereits generierter PDFs (Angebot, AB, Rechnung, Servicebericht, Übergabeprotokoll) → schreibt automatisch in AlixDocs.
+- E-Mail-Anhänge aus MailCenter „an Auftrag anheften".
 
-**Abnahme:** Alle 12 Abnahmekriterien aus Prompt erfüllt.
+### Etappe C — AlixDocs KI
 
-## Sicherheit
-- Alle Tabellen: `ENABLE ROW LEVEL SECURITY`, Policies via `has_role` + `tenant_id`, GRANTs auf `authenticated` + `service_role`.
-- Tokens: nur `token_hash` (SHA-256) in DB, Klartext nur einmalig zurückgegeben.
-- Keine PII in URLs, keine Seriennummern in Invite-Links.
-- Bestehende Module (Design, Auth, Zoho-Sync, Facsimile) bleiben unberührt.
+- OCR (Gemini via Lovable AI), Auto-Kategorisierung, Serien-/Auftragsnummer-Erkennung, Dubletten, Zusammenfassungen, Ablauf-Warnungen.
 
-## Start
-Ich beginne mit **Phase 1** (DB-Migration + Match-Engine + Basis-UI), sobald du OK gibst. Antworte mit „Phase 1 starten" oder gib Anpassungen an (z. B. Rollen, Cron-Intervall, Match-Schwelle).
+---
+
+### Sicherheitsprinzipien (verbindlich)
+- Bucket **immer privat**, Zugriff nur über Signed URLs mit 10 min TTL.
+- Keine Storage-Pfade im Frontend sichtbar.
+- Jede Aktion → Audit-Log (append-only, kein UPDATE/DELETE per RLS).
+- MIME + Magic-Bytes-Check server-seitig, ausführbare Dateien blockiert.
+- Soft-Delete Standard; Hard-Delete nur Super Admin.
+- Vertraulichkeitsstufe entscheidet zusätzlich zum Rollen-Check.
+
+---
+
+**Frage vor Start:** Soll AlixDocs in Etappe A nur in **`OrderDetail`** erscheinen, oder gleich auch in **Reparaturaufträgen** und **Produktionsaufträgen**? (Datenmodell unterstützt es von Anfang an — es geht nur um die UI-Tabs.)
