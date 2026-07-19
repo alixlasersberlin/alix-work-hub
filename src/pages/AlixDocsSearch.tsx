@@ -28,7 +28,7 @@ type Doc = {
   source: string | null;
 };
 type Cat = { id: string; code: string; name: string };
-type Order = { id: string; order_number: string | null; customer_name: string | null };
+type Order = { id: string; order_number: string | null; customer_id: string | null };
 type Customer = { id: string; name: string | null; customer_number: string | null };
 
 export default function AlixDocsSearch() {
@@ -71,7 +71,7 @@ export default function AlixDocsSearch() {
     const custIds = [...new Set(rows.map(r => r.customer_id).filter(Boolean))] as string[];
     if (orderIds.length) {
       const { data: o } = await supabase.from('orders')
-        .select('id, order_number, customer_name').in('id', orderIds);
+        .select('id, order_number, customer_id').in('id', orderIds);
       setOrders(Object.fromEntries((o ?? []).map((r: any) => [r.id, r])));
     }
     if (custIds.length) {
@@ -182,7 +182,7 @@ export default function AlixDocsSearch() {
                           ) : '—'}
                         </TableCell>
                         <TableCell className="text-xs">
-                          {c ? `${c.customer_number ?? ''} ${c.name ?? ''}`.trim() : (o?.customer_name ?? '—')}
+                          {c ? `${c.customer_number ?? ''} ${c.name ?? ''}`.trim() : '—'}
                         </TableCell>
                         <TableCell>v{d.current_version}</TableCell>
                         <TableCell><Badge variant="outline">{d.status}</Badge></TableCell>

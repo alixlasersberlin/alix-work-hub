@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+type OrderHit = { id: string; order_number: string | null; customer_name: string | null };
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,7 +9,6 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Cat = { id: string; code: string; name: string };
-type OrderHit = { id: string; order_number: string | null; customer_name: string | null };
 
 interface Props {
   open: boolean;
@@ -45,11 +45,29 @@ export default function AttachToOrderDialog({
     const t = setTimeout(async () => {
       const s = `%${q}%`;
       const { data } = await supabase.from('orders')
-        .select('id, order_number, customer_name')
-        .or(`order_number.ilike.${s},customer_name.ilike.${s}`)
+        .select('id, order_number, customers:customer_id(name)')
+        .or(`order_number.ilike.${s}`)
         .order('created_at', { ascending: false })
         .limit(20);
-      setHits((data ?? []) as OrderHit[]);
+      const rows: OrderHit[] = ((data ?? []) as any[]).map((r) => ({
+        id: r.id, order_number: r.order_number,
+        customer_name: r.customers?.name ?? null,
+      }));
+      // Second search by customer name → orders
+      const { data: byCust } = await supabase.from('customers')
+        .select('id, name').ilike('name', s).limit(10);
+      if (byCust && byCust.length) {
+        const ids = byCust.map((c: any) => c.id);
+        const { data: co } = await supabase.from('orders')
+          .select('id, order_number, customers:customer_id(name)')
+          .in('customer_id', ids).order('created_at', { ascending: false }).limit(20);
+        for (const r of (co ?? []) as any[]) {
+          if (!rows.find(x => x.id === r.id)) {
+            rows.push({ id: r.id, order_number: r.order_number, customer_name: r.customers?.name ?? null });
+          }
+        }
+      }
+      setHits(rows);
     }, 250);
     return () => clearTimeout(t);
   }, [q]);
