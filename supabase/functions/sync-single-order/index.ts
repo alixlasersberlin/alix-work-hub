@@ -25,6 +25,19 @@ class SyncSingleOrderError extends Error {
 }
 
 const tokenCache = new Map<string, { accessToken: string; expiresAt: number }>();
+const tokenCooldown = new Map<string, { until: number; details?: string }>();
+
+function zohoTokenLimitResponse(details?: string, retryAfterSeconds = 90) {
+  return jsonResponse({
+    success: false,
+    retryable: true,
+    rate_limited: true,
+    error: "ZOHO_TOKEN_RATE_LIMIT",
+    message: "Zoho Token-Limit erreicht. Bitte 1–2 Minuten warten und danach erneut importieren.",
+    details: details ?? null,
+    retry_after_seconds: retryAfterSeconds,
+  }, 200);
+}
 
 function isZohoTokenRateLimit(text: string, status: number) {
   return status === 429 || /too many requests continuously|rate limit|rate exceeded/i.test(text);
@@ -52,6 +65,18 @@ async function getAccessToken(config: any, cacheKey: string): Promise<string> {
   const cached = tokenCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now() + 60_000) return cached.accessToken;
 
+  const cooldown = tokenCooldown.get(cacheKey);
+  if (cooldown && cooldown.until > Date.now()) {
+    const retryAfterSeconds = Math.max(1, Math.ceil((cooldown.until - Date.now()) / 1000));
+    throw new SyncSingleOrderError(
+      "ZOHO_TOKEN_RATE_LIMIT",
+      "Zoho Token-Limit erreicht. Bitte 1–2 Minuten warten und danach erneut importieren.",
+      429,
+      cooldown.details,
+      retryAfterSeconds,
+    );
+  }
+
   const res = await fetch(`${config.accountsBaseUrl}/oauth/v2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -65,6 +90,7 @@ async function getAccessToken(config: any, cacheKey: string): Promise<string> {
   if (!res.ok) {
     const text = await res.text();
     if (isZohoTokenRateLimit(text, res.status)) {
+      tokenCooldown.set(cacheKey, { until: Date.now() + 90_000, details: text });
       throw new SyncSingleOrderError(
         "ZOHO_TOKEN_RATE_LIMIT",
         "Zoho Token-Limit erreicht. Bitte 1–2 Minuten warten und danach erneut importieren.",
@@ -77,6 +103,7 @@ async function getAccessToken(config: any, cacheKey: string): Promise<string> {
   }
   const data = await res.json();
   if (!data.access_token) throw new Error("Access token missing");
+  tokenCooldown.delete(cacheKey);
   tokenCache.set(cacheKey, {
     accessToken: data.access_token,
     expiresAt: Date.now() + 55 * 60_000,
@@ -504,7 +531,11 @@ Deno.serve(async (req: Request) => {
   } catch (error: any) {
     console.error("sync-single-order error:", error);
     if (error instanceof SyncSingleOrderError) {
+      if (error.code === "ZOHO_TOKEN_RATE_LIMIT") {
+        return zohoTokenLimitResponse(error.details, error.retryAfterSeconds ?? 90);
+      }
       return jsonResponse({
+        success: false,
         error: error.code,
         message: error.message,
         details: error.details ?? null,
