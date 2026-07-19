@@ -448,6 +448,7 @@ export default function OrderDetail() {
         { key: 'auftragsbestaetigung', label: 'Auftrag Unterzeichnet', icon: FileText },
         { key: 'az_invoice', label: 'AZ Rechnung', icon: Euro, badge: (Number(order?.deposit_amount) || 0) > 0 ? '€' : undefined },
         { key: 'mediapaket', label: 'Mediapaket', icon: Briefcase },
+        { key: 'alixdocs', label: 'Dokumente', icon: FileText },
         { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: depositTabBadge },
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
