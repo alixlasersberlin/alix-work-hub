@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Doc = {
@@ -26,6 +28,7 @@ type Doc = {
   customer_id: string | null;
   category_id: string | null;
   source: string | null;
+  tags: string[] | null;
 };
 type Cat = { id: string; code: string; name: string };
 type Order = { id: string; order_number: string | null; customer_id: string | null };
@@ -44,9 +47,19 @@ export default function AlixDocsSearch() {
   const [custQ, setCustQ] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareResult, setShareResult] = useState<{ url: string; token: string } | null>(null);
+  const [sharePwd, setSharePwd] = useState('');
+  const [shareExpiry, setShareExpiry] = useState('');
+  const [shareMax, setShareMax] = useState('');
+  const [shareNote, setShareNote] = useState('');
 
   const load = async () => {
     setLoading(true);
+    setSelected(new Set());
     let query = supabase.from('alixdocs_documents')
       .select('*')
       .is('deleted_at', null)
@@ -61,6 +74,10 @@ export default function AlixDocsSearch() {
     if (sourceFilter !== 'all') query = query.eq('source', sourceFilter);
     if (dateFrom) query = query.gte('created_at', dateFrom);
     if (dateTo) query = query.lte('created_at', dateTo + 'T23:59:59');
+    if (tagFilter.trim()) {
+      const tags = tagFilter.split(',').map(t => t.trim()).filter(Boolean);
+      if (tags.length) query = query.overlaps('tags', tags);
+    }
     if (custQ.trim()) {
       const { data: cs } = await supabase.from('customers')
         .select('id').or(`name.ilike.%${custQ}%,customer_number.ilike.%${custQ}%`).limit(100);
@@ -107,6 +124,71 @@ export default function AlixDocsSearch() {
     window.open((data as any).url, '_blank');
   };
 
+  const toggle = (id: string) => {
+    setSelected(s => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+  const toggleAll = () => {
+    if (selected.size === docs.length) setSelected(new Set());
+    else setSelected(new Set(docs.map(d => d.id)));
+  };
+
+  const bulkZip = async () => {
+    if (selected.size === 0) return;
+    setBulkBusy(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const projectUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+      const res = await fetch(`${projectUrl}/functions/v1/alixdocs-zip`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ document_ids: Array.from(selected) }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `alixdocs_${new Date().toISOString().slice(0, 10)}.zip`;
+      a.click(); URL.revokeObjectURL(a.href);
+      toast.success(`${selected.size} Dokumente als ZIP heruntergeladen`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Download fehlgeschlagen');
+    } finally { setBulkBusy(false); }
+  };
+
+  const bulkArchive = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`${selected.size} Dokumente archivieren?`)) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from('alixdocs_documents')
+      .update({ status: 'archiviert' }).in('id', Array.from(selected));
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Archiviert'); load();
+  };
+
+  const createShare = async () => {
+    if (selected.size === 0) return;
+    setBulkBusy(true);
+    try {
+      const body: any = { document_ids: Array.from(selected), note: shareNote || null };
+      if (sharePwd) body.password = sharePwd;
+      if (shareExpiry) body.expires_at = new Date(shareExpiry).toISOString();
+      if (shareMax) body.max_downloads = Number(shareMax);
+      const { data, error } = await supabase.functions.invoke('alixdocs-share-create', { body });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const token = (data as any).token;
+      const fullUrl = `${window.location.origin}/dokumente/share/${token}`;
+      setShareResult({ url: fullUrl, token });
+    } catch (e: any) {
+      toast.error(e?.message || 'Share fehlgeschlagen');
+    } finally { setBulkBusy(false); }
+  };
+
   const confBadge = (l: string) => l === 'streng_vertraulich'
     ? <Badge className="bg-red-500/15 text-red-400"><ShieldAlert className="w-3 h-3 mr-1" />streng</Badge>
     : l === 'vertraulich' ? <Badge className="bg-amber-500/15 text-amber-400">vertraulich</Badge> : null;
@@ -121,7 +203,7 @@ export default function AlixDocsSearch() {
           <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
             <div className="md:col-span-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input className="pl-9" placeholder="Titel, Dateiname, Seriennummer…"
+              <Input className="pl-9" placeholder="Titel, Dateiname, OCR, Seriennummer…"
                      value={q} onChange={(e) => setQ(e.target.value)}
                      onKeyDown={(e) => e.key === 'Enter' && load()} />
             </div>
@@ -162,12 +244,26 @@ export default function AlixDocsSearch() {
                 <SelectItem value="zoho">Zoho</SelectItem>
               </SelectContent>
             </Select>
-            <div className="md:col-span-3 text-xs text-muted-foreground flex items-center">
-              {!loading && `${docs.length} Treffer`}
+            <Input placeholder="Tags (Komma)" value={tagFilter} onChange={e => setTagFilter(e.target.value)}
+                   onKeyDown={e => e.key === 'Enter' && load()} />
+            <div className="md:col-span-2 text-xs text-muted-foreground flex items-center">
+              {!loading && `${docs.length} Treffer${selected.size ? ` · ${selected.size} ausgewählt` : ''}`}
             </div>
           </div>
 
-
+          {selected.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-md">
+              <span className="text-sm font-medium mr-auto">{selected.size} Dokumente ausgewählt</span>
+              <Button size="sm" variant="outline" disabled={bulkBusy} onClick={bulkZip}>
+                <Archive className="w-4 h-4 mr-1" /> ZIP herunterladen
+              </Button>
+              <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => { setShareResult(null); setShareOpen(true); }}>
+                <Link2 className="w-4 h-4 mr-1" /> Freigabe-Link erstellen
+              </Button>
+              <Button size="sm" variant="outline" disabled={bulkBusy} onClick={bulkArchive}>Archivieren</Button>
+              <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Auswahl aufheben</Button>
+            </div>
+          )}
 
           {loading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
@@ -180,8 +276,15 @@ export default function AlixDocsSearch() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-8">
+                      <Checkbox
+                        checked={selected.size === docs.length && docs.length > 0}
+                        onCheckedChange={toggleAll}
+                      />
+                    </TableHead>
                     <TableHead>Titel</TableHead>
                     <TableHead>Kategorie</TableHead>
+                    <TableHead>Tags</TableHead>
                     <TableHead>Auftrag</TableHead>
                     <TableHead>Kunde</TableHead>
                     <TableHead>Version</TableHead>
@@ -195,7 +298,8 @@ export default function AlixDocsSearch() {
                     const o = d.order_id ? orders[d.order_id] : null;
                     const c = d.customer_id ? customers[d.customer_id] : null;
                     return (
-                      <TableRow key={d.id}>
+                      <TableRow key={d.id} className={selected.has(d.id) ? 'bg-primary/5' : ''}>
+                        <TableCell><Checkbox checked={selected.has(d.id)} onCheckedChange={() => toggle(d.id)} /></TableCell>
                         <TableCell>
                           <div className="font-medium">{d.title}</div>
                           <div className="flex items-center gap-1 mt-0.5">
@@ -204,6 +308,12 @@ export default function AlixDocsSearch() {
                           </div>
                         </TableCell>
                         <TableCell><Badge variant="outline">{catMap[d.category_id ?? '']?.name ?? '—'}</Badge></TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {(d.tags || []).slice(0, 3).map(t => <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>)}
+                            {(d.tags || []).length > 3 && <span className="text-[10px] text-muted-foreground">+{(d.tags || []).length - 3}</span>}
+                          </div>
+                        </TableCell>
                         <TableCell className="text-xs">
                           {o ? (
                             <Link to={`/auftraege/${o.id}`} className="text-primary hover:underline inline-flex items-center gap-1">
@@ -229,6 +339,59 @@ export default function AlixDocsSearch() {
           )}
         </CardContent>
       </Card>
+
+      {/* Share-Link Dialog */}
+      <Dialog open={shareOpen} onOpenChange={(o) => { setShareOpen(o); if (!o) { setShareResult(null); setSharePwd(''); setShareExpiry(''); setShareMax(''); setShareNote(''); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Link2 className="w-5 h-5" /> Externen Freigabe-Link erstellen</DialogTitle>
+          </DialogHeader>
+          {!shareResult ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">{selected.size} Dokumente werden über den Link zugänglich.</p>
+              <div>
+                <label className="text-xs font-medium">Passwort (optional)</label>
+                <Input type="password" value={sharePwd} onChange={e => setSharePwd(e.target.value)} placeholder="mind. 6 Zeichen empfohlen" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium">Ablaufdatum</label>
+                  <Input type="datetime-local" value={shareExpiry} onChange={e => setShareExpiry(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium">Max. Downloads</label>
+                  <Input type="number" min={1} value={shareMax} onChange={e => setShareMax(e.target.value)} placeholder="unbegrenzt" />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium">Notiz (intern)</label>
+                <Input value={shareNote} onChange={e => setShareNote(e.target.value)} placeholder="z.B. an Kunde XYZ" />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-emerald-500 font-medium">✓ Link erstellt</p>
+              <div className="flex gap-2">
+                <Input readOnly value={shareResult.url} className="font-mono text-xs" />
+                <Button size="sm" onClick={() => { navigator.clipboard.writeText(shareResult.url); toast.success('Link kopiert'); }}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Empfänger können die Dateien einzeln oder als ZIP herunterladen.</p>
+            </div>
+          )}
+          <DialogFooter>
+            {!shareResult ? (
+              <>
+                <Button variant="outline" onClick={() => setShareOpen(false)}>Abbrechen</Button>
+                <Button onClick={createShare} disabled={bulkBusy}>{bulkBusy && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}Link erstellen</Button>
+              </>
+            ) : (
+              <Button onClick={() => setShareOpen(false)}>Fertig</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
