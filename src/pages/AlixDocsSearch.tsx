@@ -9,8 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy, CheckCircle2 } from 'lucide-react';
+import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy, CheckCircle2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+
 
 type Doc = {
   id: string;
@@ -35,6 +37,9 @@ type Order = { id: string; order_number: string | null; customer_id: string | nu
 type Customer = { id: string; name: string | null; customer_number: string | null };
 
 export default function AlixDocsSearch() {
+  const { roles } = useAuth();
+  const canDelete = roles.includes('Super Admin') || roles.includes('Admin');
+
   const [docs, setDocs] = useState<Doc[]>([]);
   const [cats, setCats] = useState<Cat[]>([]);
   const [orders, setOrders] = useState<Record<string, Order>>({});
@@ -224,6 +229,17 @@ export default function AlixDocsSearch() {
     setDocs(prev => prev.map(x => x.id === d.id ? { ...x, status: 'freigegeben' } : x));
   };
 
+  const deleteDoc = async (d: Doc) => {
+    if (!canDelete) return;
+    if (!confirm(`Dokument "${d.title}" endgültig in den Papierkorb verschieben?`)) return;
+    const { error } = await supabase.from('alixdocs_documents')
+      .update({ deleted_at: new Date().toISOString() }).eq('id', d.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('In Papierkorb verschoben');
+    setDocs(prev => prev.filter(x => x.id !== d.id));
+  };
+
+
 
   const createShare = async () => {
     if (selected.size === 0) return;
@@ -407,6 +423,18 @@ export default function AlixDocsSearch() {
                             </Button>
                           )}
                           <Button size="sm" variant="ghost" onClick={() => openDoc(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
+                          {canDelete && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-400 hover:text-red-500 hover:bg-red-500/10"
+                              onClick={() => deleteDoc(d)}
+                              title="Löschen (Admin)"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+
 
                         </TableCell>
                       </TableRow>
