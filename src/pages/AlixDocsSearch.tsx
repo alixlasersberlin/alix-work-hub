@@ -133,12 +133,30 @@ export default function AlixDocsSearch() {
     setDocs(rows);
 
     const orderIds = [...new Set(rows.map(r => r.order_id).filter(Boolean))] as string[];
-    const custIds = [...new Set(rows.map(r => r.customer_id).filter(Boolean))] as string[];
+    let orderMap: Record<string, Order> = {};
     if (orderIds.length) {
       const { data: o } = await supabase.from('orders')
         .select('id, order_number, customer_id').in('id', orderIds);
-      setOrders(Object.fromEntries((o ?? []).map((r: any) => [r.id, r])));
+      orderMap = Object.fromEntries((o ?? []).map((r: any) => [r.id, r]));
+      setOrders(orderMap);
     }
+
+    // Auto-Backfill: Dokumente mit Auftrag aber ohne Kunde → Kunde aus Auftrag übernehmen
+    const backfill = rows.filter(r => r.order_id && !r.customer_id && orderMap[r.order_id]?.customer_id);
+    if (backfill.length) {
+      const updates = backfill.map(r => ({ id: r.id, customer_id: orderMap[r.order_id!].customer_id! }));
+      // Sequenziell updaten (RLS-freundlich), Fehler ignorieren
+      await Promise.all(updates.map(u =>
+        supabase.from('alixdocs_documents').update({ customer_id: u.customer_id }).eq('id', u.id)
+      ));
+      rows = rows.map(r => {
+        const u = updates.find(x => x.id === r.id);
+        return u ? { ...r, customer_id: u.customer_id } : r;
+      });
+      setDocs(rows);
+    }
+
+    const custIds = [...new Set(rows.map(r => r.customer_id).filter(Boolean))] as string[];
     if (custIds.length) {
       const { data: c } = await supabase.from('customers')
         .select('id, name, customer_number').in('id', custIds);
