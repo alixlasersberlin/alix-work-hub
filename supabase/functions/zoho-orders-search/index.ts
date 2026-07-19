@@ -118,35 +118,55 @@ Deno.serve(async (req) => {
     const sources: SourceSystem[] = Array.isArray(body?.sources) && body.sources.length
       ? body.sources.filter((s: any) => s === "zoho_eu_1" || s === "zoho_eu_2")
       : ["zoho_eu_1", "zoho_eu_2"];
+    const entities: Entity[] = Array.isArray(body?.entities) && body.entities.length
+      ? body.entities.filter((e: any) => e === "salesorder" || e === "estimate")
+      : ["salesorder"];
     if (query.length < 2) return json({ error: "Query too short (min 2 chars)" }, 400);
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-    const results = await Promise.all(sources.map((s) => searchSource(s, query, mode).catch((e) => ({
-      source: s, error: (e as Error).message, results: [] as any[],
-    }))));
+    const tasks: Promise<any>[] = [];
+    for (const s of sources) {
+      for (const e of entities) {
+        tasks.push(searchSource(s, query, mode, e).catch((err) => ({
+          source: s, entity: e, error: (err as Error).message, results: [] as any[],
+        })));
+      }
+    }
+    const results = await Promise.all(tasks);
 
-    // Annotate each result with whether it already exists locally
-    const allIds = results.flatMap((r) => (r.results ?? []).map((x: any) => x.salesorder_id));
-    const allNums = results.flatMap((r) => (r.results ?? []).map((x: any) => String(x.salesorder_number ?? "").toUpperCase()));
+    // Annotate salesorder hits with local orders match
+    const soIds = results.filter((r) => r.entity === "salesorder").flatMap((r) => (r.results ?? []).map((x: any) => x.salesorder_id));
+    const soNums = results.filter((r) => r.entity === "salesorder").flatMap((r) => (r.results ?? []).map((x: any) => String(x.salesorder_number ?? "").toUpperCase()));
     const localById = new Set<string>();
     const localByNum = new Set<string>();
-    if (allIds.length) {
+    if (soIds.length) {
       const { data } = await admin
         .from("orders")
         .select("external_order_id, order_number, source_system")
-        .or(`external_order_id.in.(${allIds.map((i) => `"${i}"`).join(",")}),order_number.in.(${allNums.map((n) => `"${n}"`).join(",")})`);
+        .or(`external_order_id.in.(${soIds.map((i) => `"${i}"`).join(",")}),order_number.in.(${soNums.map((n) => `"${n}"`).join(",")})`);
       (data as any[] | null)?.forEach((r) => {
         if (r.external_order_id) localById.add(String(r.external_order_id));
         if (r.order_number) localByNum.add(String(r.order_number).toUpperCase());
       });
     }
+    // Annotate estimate hits with local offers match (by offer_number)
+    const estNums = results.filter((r) => r.entity === "estimate").flatMap((r) => (r.results ?? []).map((x: any) => String(x.salesorder_number ?? "").toUpperCase()));
+    const localOffers = new Set<string>();
+    if (estNums.length) {
+      const { data } = await admin.from("offers").select("offer_number").in("offer_number", Array.from(new Set(estNums)));
+      (data as any[] | null)?.forEach((r) => { if (r.offer_number) localOffers.add(String(r.offer_number).toUpperCase()); });
+    }
     for (const r of results) {
       for (const row of (r.results ?? []) as any[]) {
-        row.exists_local = localById.has(row.salesorder_id) || localByNum.has(String(row.salesorder_number ?? "").toUpperCase());
+        if (r.entity === "estimate") {
+          row.exists_local = localOffers.has(String(row.salesorder_number ?? "").toUpperCase());
+        } else {
+          row.exists_local = localById.has(row.salesorder_id) || localByNum.has(String(row.salesorder_number ?? "").toUpperCase());
+        }
       }
     }
 
-    return json({ ok: true, query, mode, results });
+    return json({ ok: true, query, mode, entities, results });
   } catch (e) {
     return json({ error: (e as Error).message }, 500);
   }
