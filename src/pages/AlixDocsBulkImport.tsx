@@ -218,6 +218,7 @@ export default function AlixDocsBulkImport() {
         }
 
         setRow(i, { status: "uploading" });
+        const effectiveOrderId = rows[i]?.selected_order_id || orderId || undefined;
         const LARGE = 5 * 1024 * 1024; // >5MB → via signed upload (edge body limit ~10MB)
         let docId: string | undefined;
 
@@ -242,13 +243,12 @@ export default function AlixDocsBulkImport() {
               title: name,
               confidentiality_level: "normal",
               source: "bulk_import",
-              order_id: orderId || undefined,
+              order_id: effectiveOrderId,
               customer_id: customerId || undefined,
             },
           });
           if (attErr) throw attErr;
           docId = (att as any)?.document_id;
-          // Best-effort staging cleanup
           try { await supabase.storage.from(bucket).remove([path]); } catch {}
         } else {
           const fd = new FormData();
@@ -256,7 +256,7 @@ export default function AlixDocsBulkImport() {
           fd.append("category_code", category);
           fd.append("title", name);
           fd.append("confidentiality_level", "normal");
-          if (orderId) fd.append("order_id", orderId);
+          if (effectiveOrderId) fd.append("order_id", effectiveOrderId);
           if (customerId) fd.append("customer_id", customerId);
           const { data, error } = await supabase.functions.invoke("alixdocs-upload", { body: fd });
           if (error) throw error;
