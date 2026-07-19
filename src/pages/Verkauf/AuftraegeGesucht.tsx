@@ -43,8 +43,9 @@ type ZohoHit = {
   customer_name?: string;
   total?: number;
   exists_local?: boolean;
+  entity?: "salesorder" | "estimate";
 };
-type SearchGroup = { source: string; mode?: string; error?: string; results: ZohoHit[] };
+type SearchGroup = { source: string; entity?: "salesorder" | "estimate"; mode?: string; error?: string; results: ZohoHit[] };
 
 type SyncSingleOrderResult = {
   ok: boolean;
@@ -158,9 +159,17 @@ export default function AuftraegeGesucht() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchMode, setSearchMode] = useState<"auto" | "number" | "customer">("auto");
   const [searchSource, setSearchSource] = useState<"all" | "zoho_eu_1" | "zoho_eu_2">("all");
+  const [searchEntity, setSearchEntity] = useState<"salesorder" | "estimate" | "both">("salesorder");
   const [searching, setSearching] = useState(false);
   const [searchGroups, setSearchGroups] = useState<SearchGroup[] | null>(null);
   const [importingHit, setImportingHit] = useState<string | null>(null);
+
+  // Fehlende Angebote (in-memory Ergebnis von zoho-offers-reconcile scan)
+  const [offersMissing, setOffersMissing] = useState<Array<ZohoHit & { source_system: string }>>([]);
+  const [offersScanning, setOffersScanning] = useState(false);
+  const [offersSelected, setOffersSelected] = useState<Set<string>>(new Set()); // key = source|estimate_id
+  const [offersBusy, setOffersBusy] = useState<string | null>(null);
+  const [offersBulkRunning, setOffersBulkRunning] = useState(false);
 
   async function runZohoSearch() {
     const term = searchTerm.trim();
@@ -171,18 +180,20 @@ export default function AuftraegeGesucht() {
     setSearching(true);
     setSearchGroups(null);
     try {
+      const entities = searchEntity === "both" ? ["salesorder", "estimate"] : [searchEntity];
       const { data, error } = await supabase.functions.invoke("zoho-orders-search", {
         body: {
           query: term,
           mode: searchMode,
           sources: searchSource === "all" ? ["zoho_eu_1", "zoho_eu_2"] : [searchSource],
+          entities,
         },
       });
       if (error) throw error;
       const groups = (data?.results ?? []) as SearchGroup[];
       setSearchGroups(groups);
       const total = groups.reduce((s, g) => s + (g.results?.length ?? 0), 0);
-      toast({ title: `${total} Treffer in Zoho`, description: total === 0 ? "Keine passenden Aufträge gefunden." : undefined });
+      toast({ title: `${total} Treffer in Zoho`, description: total === 0 ? "Keine passenden Einträge gefunden." : undefined });
     } catch (e: any) {
       toast({ title: "Suche fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
     } finally {
@@ -190,9 +201,32 @@ export default function AuftraegeGesucht() {
     }
   }
 
-  async function importZohoHit(source_system: string, hit: ZohoHit) {
+  async function importZohoHit(source_system: string, hit: ZohoHit, entity: "salesorder" | "estimate" = "salesorder") {
     if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setImportingHit(hit.salesorder_id);
+    if (entity === "estimate") {
+      try {
+        const { data, error } = await supabase.functions.invoke("zoho-offers-reconcile", {
+          body: { source: source_system, estimate_ids: [hit.salesorder_id] },
+        });
+        if (error) throw error;
+        const res = data?.result;
+        if (res?.imported > 0) {
+          toast({ title: "Angebot importiert", description: hit.salesorder_number || hit.salesorder_id });
+          setSearchGroups((prev) => prev?.map((g) => g.source === source_system && g.entity === "estimate"
+            ? { ...g, results: g.results.map((r) => r.salesorder_id === hit.salesorder_id ? { ...r, exists_local: true } : r) }
+            : g) ?? null);
+        } else {
+          const msg = res?.errors?.[0]?.message ?? "Import fehlgeschlagen";
+          toast({ title: "Import fehlgeschlagen", description: msg, variant: "destructive" });
+        }
+      } catch (e: any) {
+        toast({ title: "Import fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+      } finally {
+        setImportingHit(null);
+      }
+      return;
+    }
     const result = await invokeSyncSingleOrder(source_system, hit.salesorder_id);
     if (!result.ok) {
       toast({ title: result.rateLimited ? "Zoho Rate Limit" : "Import fehlgeschlagen", description: result.message, variant: "destructive" });
@@ -200,12 +234,95 @@ export default function AuftraegeGesucht() {
       return;
     }
     toast({ title: "Import erfolgreich", description: hit.salesorder_number || hit.salesorder_id });
-    // mark local
-    setSearchGroups((prev) => prev?.map((g) => g.source === source_system
+    setSearchGroups((prev) => prev?.map((g) => g.source === source_system && (g.entity ?? "salesorder") === "salesorder"
       ? { ...g, results: g.results.map((r) => r.salesorder_id === hit.salesorder_id ? { ...r, exists_local: true } : r) }
       : g) ?? null);
     await load();
     setImportingHit(null);
+  }
+
+  // ==== Fehlende Angebote (Estimates) ====
+  async function scanMissingOffers() {
+    setOffersScanning(true);
+    setOffersMissing([]);
+    setOffersSelected(new Set());
+    try {
+      const { data, error } = await supabase.functions.invoke("zoho-offers-reconcile", {
+        body: { sources: ["zoho_eu_1", "zoho_eu_2"], import: false },
+      });
+      if (error) throw error;
+      const flat: Array<ZohoHit & { source_system: string }> = [];
+      for (const r of (data?.results ?? [])) {
+        for (const m of (r.missing ?? [])) {
+          flat.push({ ...m, entity: "estimate", source_system: r.source });
+        }
+      }
+      setOffersMissing(flat);
+      toast({ title: `${flat.length} fehlende Angebote gefunden` });
+    } catch (e: any) {
+      toast({ title: "Angebots-Abgleich fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setOffersScanning(false);
+    }
+  }
+
+  async function importOneOffer(row: ZohoHit & { source_system: string }) {
+    if (!canImport) return;
+    const key = `${row.source_system}|${row.salesorder_id}`;
+    setOffersBusy(key);
+    try {
+      const { data, error } = await supabase.functions.invoke("zoho-offers-reconcile", {
+        body: { source: row.source_system, estimate_ids: [row.salesorder_id] },
+      });
+      if (error) throw error;
+      if (data?.result?.imported > 0) {
+        toast({ title: "Angebot importiert", description: row.salesorder_number });
+        setOffersMissing((prev) => prev.filter((r) => !(r.source_system === row.source_system && r.salesorder_id === row.salesorder_id)));
+      } else {
+        toast({ title: "Import fehlgeschlagen", description: data?.result?.errors?.[0]?.message ?? "Unbekannter Fehler", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: "Import fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setOffersBusy(null);
+    }
+  }
+
+  async function importSelectedOffers() {
+    if (!canImport) return;
+    const targets = offersMissing.filter((r) => offersSelected.has(`${r.source_system}|${r.salesorder_id}`));
+    if (targets.length === 0) { toast({ title: "Keine Angebote ausgewählt" }); return; }
+    if (!confirm(`${targets.length} Angebot(e) importieren?`)) return;
+    setOffersBulkRunning(true);
+    try {
+      const bySource = new Map<string, string[]>();
+      for (const t of targets) {
+        const arr = bySource.get(t.source_system) ?? [];
+        arr.push(t.salesorder_id);
+        bySource.set(t.source_system, arr);
+      }
+      let ok = 0, fail = 0;
+      for (const [src, ids] of bySource.entries()) {
+        // chunk to keep runtime bounded
+        for (let i = 0; i < ids.length; i += 25) {
+          const chunk = ids.slice(i, i + 25);
+          const { data, error } = await supabase.functions.invoke("zoho-offers-reconcile", {
+            body: { source: src, estimate_ids: chunk },
+          });
+          if (error) { fail += chunk.length; continue; }
+          ok += data?.result?.imported ?? 0;
+          fail += data?.result?.failed ?? 0;
+        }
+      }
+      const importedKeys = new Set<string>();
+      // Optimistically remove selected (best effort; failures stay reported in toast)
+      offersSelected.forEach((k) => importedKeys.add(k));
+      setOffersMissing((prev) => prev.filter((r) => !importedKeys.has(`${r.source_system}|${r.salesorder_id}`)));
+      setOffersSelected(new Set());
+      toast({ title: `Angebots-Import fertig: ${ok} ok, ${fail} Fehler` });
+    } finally {
+      setOffersBulkRunning(false);
+    }
   }
 
   async function load() {
@@ -457,6 +574,14 @@ export default function AuftraegeGesucht() {
                 <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={searchEntity} onValueChange={(v) => setSearchEntity(v as any)}>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="salesorder">Aufträge</SelectItem>
+                <SelectItem value="estimate">Angebote</SelectItem>
+                <SelectItem value="both">Aufträge + Angebote</SelectItem>
+              </SelectContent>
+            </Select>
             <Button onClick={runZohoSearch} disabled={searching}>
               {searching ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
               In Zoho suchen
@@ -465,10 +590,18 @@ export default function AuftraegeGesucht() {
 
           {searchGroups && (
             <div className="space-y-4">
-              {searchGroups.map((g) => (
-                <div key={g.source} className="rounded-md border">
+              {searchGroups.map((g) => {
+                const ent = (g.entity ?? "salesorder") as "salesorder" | "estimate";
+                const entLabel = ent === "estimate" ? "Angebot" : "Auftrag";
+                return (
+                <div key={`${g.source}-${ent}`} className="rounded-md border">
                   <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b">
-                    <div className="text-sm font-medium">{SOURCE_LABEL[g.source] ?? g.source}</div>
+                    <div className="text-sm font-medium flex items-center gap-2">
+                      <Badge variant="outline" className={ent === "estimate" ? "bg-purple-500/15 text-purple-500 border-purple-500/30" : "bg-blue-500/15 text-blue-500 border-blue-500/30"}>
+                        {entLabel}
+                      </Badge>
+                      {SOURCE_LABEL[g.source] ?? g.source}
+                    </div>
                     <div className="text-xs text-muted-foreground">
                       {g.error ? <span className="text-red-500">{g.error}</span> : `${g.results.length} Treffer`}
                     </div>
@@ -477,7 +610,7 @@ export default function AuftraegeGesucht() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Auftragsnr.</TableHead>
+                          <TableHead>{entLabel}-Nr.</TableHead>
                           <TableHead>Kunde</TableHead>
                           <TableHead>Datum</TableHead>
                           <TableHead>Zoho-Status</TableHead>
@@ -487,7 +620,7 @@ export default function AuftraegeGesucht() {
                       </TableHeader>
                       <TableBody>
                         {g.results.map((h) => (
-                          <TableRow key={h.salesorder_id}>
+                          <TableRow key={`${ent}-${h.salesorder_id}`}>
                             <TableCell className="font-mono text-xs">
                               <div className="font-medium">{h.salesorder_number || "—"}</div>
                               <div className="text-muted-foreground">{h.salesorder_id}</div>
@@ -506,7 +639,7 @@ export default function AuftraegeGesucht() {
                               ) : canImport ? (
                                 <Button
                                   size="sm"
-                                  onClick={() => importZohoHit(g.source, h)}
+                                  onClick={() => importZohoHit(g.source, h, ent)}
                                   disabled={importingHit === h.salesorder_id}
                                 >
                                   {importingHit === h.salesorder_id
@@ -524,11 +657,105 @@ export default function AuftraegeGesucht() {
                     </Table>
                   )}
                 </div>
-              ))}
+              );})}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
+          <div>
+            <CardTitle>Fehlende Angebote</CardTitle>
+            <CardDescription>Zoho-Estimates, die in AlixWork noch nicht als Angebot vorliegen.</CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={scanMissingOffers} disabled={offersScanning}>
+              {offersScanning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Jetzt prüfen
+            </Button>
+            {canImport && offersMissing.length > 0 && (
+              <Button onClick={importSelectedOffers} disabled={offersBulkRunning || offersSelected.size === 0}>
+                {offersBulkRunning ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                {offersSelected.size > 0 ? `${offersSelected.size} importieren` : "Auswahl importieren"}
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {offersMissing.length === 0 ? (
+            <div className="text-sm text-muted-foreground py-6 text-center">
+              {offersScanning ? "Prüfe…" : 'Noch nichts geprüft oder alle Angebote sind synchron. Klicke „Jetzt prüfen".'}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={offersSelected.size === offersMissing.length && offersMissing.length > 0}
+                      onCheckedChange={(v) => {
+                        if (v) setOffersSelected(new Set(offersMissing.map((r) => `${r.source_system}|${r.salesorder_id}`)));
+                        else setOffersSelected(new Set());
+                      }}
+                    />
+                  </TableHead>
+                  <TableHead>Angebots-Nr.</TableHead>
+                  <TableHead>Mandant</TableHead>
+                  <TableHead>Kunde</TableHead>
+                  <TableHead>Datum</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Betrag</TableHead>
+                  <TableHead className="text-right">Aktion</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {offersMissing.map((row) => {
+                  const key = `${row.source_system}|${row.salesorder_id}`;
+                  return (
+                    <TableRow key={key}>
+                      <TableCell>
+                        <Checkbox
+                          checked={offersSelected.has(key)}
+                          onCheckedChange={(v) => {
+                            setOffersSelected((prev) => {
+                              const n = new Set(prev);
+                              if (v) n.add(key); else n.delete(key);
+                              return n;
+                            });
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        <div className="font-medium">{row.salesorder_number}</div>
+                        <div className="text-muted-foreground">{row.salesorder_id}</div>
+                      </TableCell>
+                      <TableCell className="text-xs">{SOURCE_LABEL[row.source_system] ?? row.source_system}</TableCell>
+                      <TableCell>{row.customer_name ?? "—"}</TableCell>
+                      <TableCell>{row.date ?? "—"}</TableCell>
+                      <TableCell>{row.status ?? "—"}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {typeof row.total === "number" ? row.total.toLocaleString("de-DE", { style: "currency", currency: "EUR" }) : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {canImport ? (
+                          <Button size="sm" onClick={() => importOneOffer(row)} disabled={offersBusy === key}>
+                            {offersBusy === key ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Download className="h-3 w-3 mr-1" />}
+                            Importieren
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">nur Admin</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
