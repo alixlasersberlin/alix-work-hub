@@ -1242,6 +1242,8 @@ export type Database = {
       }
       alixdocs_documents: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           archived_at: string | null
           category_id: string | null
           confidentiality_level: string
@@ -1259,13 +1261,18 @@ export type Database = {
           original_filename: string | null
           purge_after: string | null
           serial_number: string | null
+          source: string
           status: string
           tenant_id: string | null
           title: string
           updated_at: string
           uploaded_by: string | null
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           archived_at?: string | null
           category_id?: string | null
           confidentiality_level?: string
@@ -1283,13 +1290,18 @@ export type Database = {
           original_filename?: string | null
           purge_after?: string | null
           serial_number?: string | null
+          source?: string
           status?: string
           tenant_id?: string | null
           title: string
           updated_at?: string
           uploaded_by?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           archived_at?: string | null
           category_id?: string | null
           confidentiality_level?: string
@@ -1307,11 +1319,14 @@ export type Database = {
           original_filename?: string | null
           purge_after?: string | null
           serial_number?: string | null
+          source?: string
           status?: string
           tenant_id?: string | null
           title?: string
           updated_at?: string
           uploaded_by?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -25347,6 +25362,11 @@ export type Database = {
           organizations_created: number
           relationships_created: number
         }[]
+      }
+      alixdocs_can_manage_status: { Args: never; Returns: boolean }
+      alixdocs_is_protected_category: {
+        Args: { _cat_id: string }
+        Returns: boolean
       }
       alixsmart_emit: {
         Args: { _data: Json; _event: string }
