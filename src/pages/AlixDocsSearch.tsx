@@ -57,9 +57,27 @@ export default function AlixDocsSearch() {
   const [shareMax, setShareMax] = useState('');
   const [shareNote, setShareNote] = useState('');
 
+  const [snippets, setSnippets] = useState<Record<string, string>>({});
+
   const load = async () => {
     setLoading(true);
     setSelected(new Set());
+    setSnippets({});
+
+    // Volltext-Snippet-Suche zuerst (nur wenn Query gesetzt)
+    let ftsIds: string[] | null = null;
+    if (q.trim()) {
+      const { data: fts, error: ftsErr } = await supabase.rpc('alixdocs_search_snippets', {
+        q: q.trim(), max_rows: 300,
+      });
+      if (!ftsErr && fts) {
+        const map: Record<string, string> = {};
+        (fts as any[]).forEach(r => { map[r.id] = r.snippet; });
+        setSnippets(map);
+        ftsIds = (fts as any[]).map(r => r.id);
+      }
+    }
+
     let query = supabase.from('alixdocs_documents')
       .select('*')
       .is('deleted_at', null)
@@ -85,13 +103,28 @@ export default function AlixDocsSearch() {
       if (ids.length === 0) { setDocs([]); setLoading(false); return; }
       query = query.in('customer_id', ids);
     }
-    if (q) {
+    if (q.trim()) {
+      // Volltext-Ergebnisse ∪ Fallback ILIKE (Dateiname/Seriennummer werden nicht indiziert)
       const s = `%${q}%`;
-      query = query.or(`title.ilike.${s},description.ilike.${s},original_filename.ilike.${s},serial_number.ilike.${s},ocr_text.ilike.${s},ai_summary.ilike.${s}`);
+      if (ftsIds && ftsIds.length) {
+        const idList = ftsIds.map(id => `"${id}"`).join(',');
+        query = query.or(
+          `id.in.(${idList}),original_filename.ilike.${s},serial_number.ilike.${s}`
+        );
+      } else {
+        query = query.or(
+          `title.ilike.${s},description.ilike.${s},original_filename.ilike.${s},serial_number.ilike.${s},ocr_text.ilike.${s},ai_summary.ilike.${s}`
+        );
+      }
     }
     const { data, error } = await query;
     if (error) toast.error(error.message);
-    const rows = (data ?? []) as Doc[];
+    let rows = (data ?? []) as Doc[];
+    // Sortiere nach FTS-Rang wenn vorhanden
+    if (ftsIds && ftsIds.length) {
+      const rank = new Map(ftsIds.map((id, i) => [id, i]));
+      rows = [...rows].sort((a, b) => (rank.get(a.id) ?? 999) - (rank.get(b.id) ?? 999));
+    }
     setDocs(rows);
 
     const orderIds = [...new Set(rows.map(r => r.order_id).filter(Boolean))] as string[];
@@ -107,6 +140,19 @@ export default function AlixDocsSearch() {
       setCustomers(Object.fromEntries((c ?? []).map((r: any) => [r.id, r])));
     }
     setLoading(false);
+  };
+
+  const renderSnippet = (raw: string) => {
+    // <<...>> als <mark> darstellen
+    const parts = raw.split(/(<<|>>)/);
+    let hi = false;
+    return parts.map((p, i) => {
+      if (p === '<<') { hi = true; return null; }
+      if (p === '>>') { hi = false; return null; }
+      return hi
+        ? <mark key={i} className="bg-yellow-400/40 text-foreground rounded px-0.5">{p}</mark>
+        : <span key={i}>{p}</span>;
+    });
   };
 
   useEffect(() => {
@@ -306,6 +352,11 @@ export default function AlixDocsSearch() {
                             {d.original_filename && <span className="text-[11px] text-muted-foreground font-mono">{d.original_filename}</span>}
                             {confBadge(d.confidentiality_level)}
                           </div>
+                          {snippets[d.id] && (
+                            <div className="text-[11px] text-muted-foreground mt-1 leading-snug italic">
+                              {renderSnippet(snippets[d.id])}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell><Badge variant="outline">{catMap[d.category_id ?? '']?.name ?? '—'}</Badge></TableCell>
                         <TableCell>
