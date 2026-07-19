@@ -1017,7 +1017,7 @@ export default function AngebotErstellen() {
     }
     const doc = await buildPDF();
     if (!doc) return;
-    await downloadStampedPdf(doc, 'offer', `${offerNumber}.pdf`, offerNumber);
+    await downloadStampedPdf(doc, 'offer', `${offerNumber}.pdf`, offerNumber, { customer_id: customerId || null, title: `Angebot ${offerNumber}` });
     toast.success('Angebot gespeichert und als PDF erstellt.');
   };
 
