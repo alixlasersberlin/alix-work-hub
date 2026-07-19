@@ -87,6 +87,7 @@ export default function DigitaleSignaturenBulk() {
       const { data, error } = await supabase.functions.invoke('sig-bulk-create', {
         body: {
           title, document_type: docType, pdf_base64: b64,
+          template_id: templateId !== 'none' ? templateId : null,
           recipients: recipients.map((r) => ({ name: r.name, email: r.email, phone: r.phone })),
           otp_required: otp, expires_days: expiresDays,
           base_url: window.location.origin,
