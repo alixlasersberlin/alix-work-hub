@@ -1390,6 +1390,11 @@ export default function OrderDetail() {
         <MediapaketOrderTab orderId={id} customerId={order?.customer_id ?? null} />
       )}
 
+      {activeTab === 'alixdocs' && id && (
+        <AlixDocsPanel orderId={id} customerId={order?.customer_id ?? null} orderNumber={order?.order_number} />
+      )}
+
+
 
 
 
