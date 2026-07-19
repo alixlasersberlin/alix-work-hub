@@ -159,9 +159,17 @@ export default function AuftraegeGesucht() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchMode, setSearchMode] = useState<"auto" | "number" | "customer">("auto");
   const [searchSource, setSearchSource] = useState<"all" | "zoho_eu_1" | "zoho_eu_2">("all");
+  const [searchEntity, setSearchEntity] = useState<"salesorder" | "estimate" | "both">("salesorder");
   const [searching, setSearching] = useState(false);
   const [searchGroups, setSearchGroups] = useState<SearchGroup[] | null>(null);
   const [importingHit, setImportingHit] = useState<string | null>(null);
+
+  // Fehlende Angebote (in-memory Ergebnis von zoho-offers-reconcile scan)
+  const [offersMissing, setOffersMissing] = useState<Array<ZohoHit & { source_system: string }>>([]);
+  const [offersScanning, setOffersScanning] = useState(false);
+  const [offersSelected, setOffersSelected] = useState<Set<string>>(new Set()); // key = source|estimate_id
+  const [offersBusy, setOffersBusy] = useState<string | null>(null);
+  const [offersBulkRunning, setOffersBulkRunning] = useState(false);
 
   async function runZohoSearch() {
     const term = searchTerm.trim();
