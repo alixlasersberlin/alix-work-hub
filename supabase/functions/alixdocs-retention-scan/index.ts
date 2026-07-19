@@ -65,15 +65,19 @@ Deno.serve(async (req) => {
     // 3. Warn admins about docs expiring in next 30 days
     const in30 = new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10);
     const { data: soon } = await svc.from('alixdocs_documents')
-      .select('id, title, retention_until')
+      .select('id, title, retention_until, uploaded_by')
       .gt('retention_until', today)
       .lte('retention_until', in30)
       .is('deleted_at', null)
       .limit(200);
 
+    let ownerMails = 0;
     if ((soon ?? []).length > 0) {
       const { data: admins } = await svc.from('user_roles').select('user_id').in('role' as any, ['Admin', 'Super Admin']);
       const adminIds = Array.from(new Set((admins ?? []).map((a: any) => a.user_id)));
+
+      // Group by owner for one email per owner
+      const perOwner = new Map<string, any[]>();
       for (const d of soon ?? []) {
         for (const uid of adminIds) {
           await svc.from('app_notifications').insert({
@@ -86,6 +90,55 @@ Deno.serve(async (req) => {
             action_url: `/dokumente?doc=${d.id}`,
           });
         }
+        if ((d as any).uploaded_by) {
+          const k = (d as any).uploaded_by as string;
+          if (!perOwner.has(k)) perOwner.set(k, []);
+          perOwner.get(k)!.push(d);
+        }
+      }
+
+      // Owner email warnings (one summary per owner, once per doc/day via audit dedupe)
+      for (const [ownerId, docs] of perOwner) {
+        const { data: prof } = await svc.from('user_profiles').select('email').eq('id', ownerId).maybeSingle();
+        const to = (prof as any)?.email;
+        if (!to) continue;
+
+        // dedupe: skip if we warned this owner today
+        const startOfDay = new Date(); startOfDay.setUTCHours(0, 0, 0, 0);
+        const { data: already } = await svc.from('alixdocs_audit_log')
+          .select('id').eq('action', 'retention_owner_warned')
+          .gte('created_at', startOfDay.toISOString())
+          .contains('metadata', { owner_id: ownerId }).limit(1);
+        if ((already ?? []).length > 0) continue;
+
+        const rows = docs.map((d) =>
+          `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee">${d.title}</td>` +
+          `<td style="padding:6px 10px;border-bottom:1px solid #eee">${d.retention_until}</td></tr>`
+        ).join('');
+        const html =
+          `<h2>AlixDocs – Aufbewahrungsfrist läuft ab</h2>` +
+          `<p>Folgende ${docs.length} Dokument(e) laufen in den nächsten 30 Tagen aus:</p>` +
+          `<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px">` +
+          `<thead><tr><th style="text-align:left;padding:6px 10px;border-bottom:2px solid #333">Titel</th>` +
+          `<th style="text-align:left;padding:6px 10px;border-bottom:2px solid #333">Frist</th></tr></thead>` +
+          `<tbody>${rows}</tbody></table>` +
+          `<p style="margin-top:16px"><a href="https://app.alixwork.de/dokumente">In AlixDocs öffnen</a></p>`;
+
+        try {
+          await svc.functions.invoke('send-transactional-email', {
+            body: {
+              to,
+              subject: `AlixDocs: ${docs.length} Dokument(e) laufen bald ab`,
+              html,
+              category: 'alixdocs_retention',
+            },
+          });
+          ownerMails++;
+          await svc.from('alixdocs_audit_log').insert({
+            action: 'retention_owner_warned',
+            metadata: { owner_id: ownerId, count: docs.length },
+          });
+        } catch (_) { /* soft-fail */ }
       }
     }
 
