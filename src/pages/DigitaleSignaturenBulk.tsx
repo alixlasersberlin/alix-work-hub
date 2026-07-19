@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,17 +9,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Send, Users, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Users, CheckCircle2, XCircle, Loader2, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { BulkJobsProgress } from '@/components/signaturen/BulkJobsProgress';
 
 const DOC_TYPES = ['angebot','auftrag','rechnung','servicevertrag','nda','sonstiges'];
+const SAMPLE_CSV = 'Name;Email;Telefon\nMax Muster;max@firma.de;+49 30 1234567\nErika Beispiel;erika@firma.de;\n';
 
 type Recipient = { name: string; email: string; phone?: string; status?: 'pending' | 'ok' | 'error'; message?: string; sign_url?: string };
+type Template = { id: string; name: string; document_type: string | null };
 
 function parseRecipients(text: string): Recipient[] {
-  return text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean).map((line) => {
-    // Accept "Name;Email;Phone" or "Name,Email,Phone" or just "Email"
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  // Skip header row if it looks like one
+  const dataLines = lines.length > 0 && /name|email|e-mail|telefon|phone/i.test(lines[0]) ? lines.slice(1) : lines;
+  return dataLines.map((line) => {
     const parts = line.split(/[;,\t]/).map((p) => p.trim());
     if (parts.length === 1) return { name: '', email: parts[0] };
     return { name: parts[0] || '', email: parts[1] || '', phone: parts[2] || '' };
@@ -30,6 +34,8 @@ export default function DigitaleSignaturenBulk() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [docType, setDocType] = useState('nda');
+  const [templateId, setTemplateId] = useState<string>('none');
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [rawText, setRawText] = useState('');
   const [otp, setOtp] = useState(false);
@@ -38,11 +44,35 @@ export default function DigitaleSignaturenBulk() {
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
 
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('sig_templates').select('id, name, document_type').order('name');
+      setTemplates((data ?? []) as Template[]);
+    })();
+  }, []);
+
   const parse = () => {
     const list = parseRecipients(rawText);
     if (!list.length) return toast.error('Keine gültigen E-Mail-Adressen erkannt');
     setRecipients(list);
     toast.success(`${list.length} Empfänger erkannt`);
+  };
+
+  const onCsvUpload = async (f: File | null) => {
+    if (!f) return;
+    const text = await f.text();
+    setRawText(text);
+    const list = parseRecipients(text);
+    setRecipients(list);
+    toast.success(`CSV geladen: ${list.length} Empfänger`);
+  };
+
+  const downloadSample = () => {
+    const blob = new Blob([SAMPLE_CSV], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'bulk-signatur-vorlage.csv'; a.click();
+    URL.revokeObjectURL(url);
   };
 
   const send = async () => {
