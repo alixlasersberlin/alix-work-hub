@@ -352,6 +352,11 @@ export default function AlixDocsSearch() {
                             {d.original_filename && <span className="text-[11px] text-muted-foreground font-mono">{d.original_filename}</span>}
                             {confBadge(d.confidentiality_level)}
                           </div>
+                          {snippets[d.id] && (
+                            <div className="text-[11px] text-muted-foreground mt-1 leading-snug italic">
+                              {renderSnippet(snippets[d.id])}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell><Badge variant="outline">{catMap[d.category_id ?? '']?.name ?? '—'}</Badge></TableCell>
                         <TableCell>
