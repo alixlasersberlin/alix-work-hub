@@ -188,23 +188,47 @@ export default function AuftraegeGesucht() {
   async function importOne(r: Row) {
     if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setBusy(r.id);
+    const parseRetryMs = (msg: string, fallback: number) => {
+      const m = msg.match(/Retry after\s*~?\s*(\d+)\s*(ms|s)?/i);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        return m[2]?.toLowerCase() === "s" ? n * 1000 : n;
+      }
+      return fallback;
+    };
+    const maxRetries = 3;
+    let attempt = 0;
+    let lastMsg = "";
     try {
-      const { data, error } = await supabase.functions.invoke("sync-single-order", {
-        body: { source_system: r.source_system, external_order_id: r.external_order_id },
-      });
-      if (error) throw error;
-      const now = new Date().toISOString();
-      await supabase.from("orders_missing").update({
-        import_status: "imported",
-        imported_at: now,
-        resolved_at: now,
-        import_error: null,
-      }).eq("id", r.id);
-      await supabase.from("orders").update({ imported_via_reconcile_at: now })
-        .eq("source_system", r.source_system)
-        .eq("external_order_id", r.external_order_id);
-      toast({ title: "Import erfolgreich", description: r.order_number ?? r.external_order_id });
-      await load();
+      while (attempt <= maxRetries) {
+        const { data, error } = await supabase.functions.invoke("sync-single-order", {
+          body: { source_system: r.source_system, external_order_id: r.external_order_id },
+        });
+        const msg = (error?.message || (data as any)?.message || (data as any)?.error || "") as string;
+        const rateLimited = /rate limit/i.test(msg) || /429/.test(msg);
+        if (!error && !(data as any)?.error) {
+          const now = new Date().toISOString();
+          await supabase.from("orders_missing").update({
+            import_status: "imported",
+            imported_at: now,
+            resolved_at: now,
+            import_error: null,
+          }).eq("id", r.id);
+          await supabase.from("orders").update({ imported_via_reconcile_at: now })
+            .eq("source_system", r.source_system)
+            .eq("external_order_id", r.external_order_id);
+          toast({ title: "Import erfolgreich", description: r.order_number ?? r.external_order_id });
+          await load();
+          return;
+        }
+        lastMsg = msg || "Unbekannter Fehler";
+        if (!rateLimited || attempt === maxRetries) throw new Error(lastMsg);
+        const waitMs = Math.min(parseRetryMs(lastMsg, 15000 * (attempt + 1)), 60000);
+        toast({ title: `Rate limit – warte ${Math.round(waitMs/1000)}s (Versuch ${attempt + 1}/${maxRetries})` });
+        await new Promise((res) => setTimeout(res, waitMs));
+        attempt += 1;
+      }
+      throw new Error(lastMsg || "Rate limit");
     } catch (e: any) {
       const msg = e?.message ?? String(e);
       await supabase.from("orders_missing").update({
