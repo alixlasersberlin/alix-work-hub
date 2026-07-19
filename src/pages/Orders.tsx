@@ -701,6 +701,15 @@ export default function Orders() {
                 <SelectItem value="partial">⚠ Offene Teilzahlung</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={newImportFilter} onValueChange={(v) => setNewImportFilter(v as 'all' | 'new')}>
+              <SelectTrigger className="w-48 bg-secondary border-border">
+                <SelectValue placeholder="Import filtern" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Aufträge</SelectItem>
+                <SelectItem value="new">🆕 NEU Import (Zoho-Abgleich)</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={String(pageSize)} onValueChange={v => setPageSize(v === 'all' ? 'all' : Number(v) as 20 | 30 | 50)}>
               <SelectTrigger className="w-36 bg-secondary border-border">
                 <SelectValue />
