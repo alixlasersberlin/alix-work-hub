@@ -236,6 +236,28 @@ Deno.serve(async (req) => {
   const startedAt = Date.now();
   const HARD_CAP_MS = Math.min(Math.max(Number(body.timeout_ms) || 240_000, 30_000), 280_000);
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+
+  // Targeted import: { source, estimate_ids: [...] } – skips the full listing.
+  if (Array.isArray(body.estimate_ids) && body.estimate_ids.length && body.source) {
+    const src: SourceSystem = body.source === "zoho_eu_2" ? "zoho_eu_2" : "zoho_eu_1";
+    const c = cfg(src);
+    if (!c.clientId || !c.refreshToken || !c.organizationId) {
+      return json({ ok: false, error: "Missing Zoho credentials/organization" }, 500);
+    }
+    const t = await token(c);
+    const out: any = { source: src, requested: body.estimate_ids.length, imported: 0, failed: 0, errors: [] as any[] };
+    for (const id of body.estimate_ids as string[]) {
+      try {
+        await importEstimate(supabase, src, c, t, { estimate_id: String(id), estimate_number: "" });
+        out.imported += 1;
+      } catch (e) {
+        out.failed += 1;
+        out.errors.push({ id, message: (e as Error).message });
+      }
+    }
+    return json({ ok: true, entity: "offers", targeted: true, duration_ms: Date.now() - startedAt, result: out });
+  }
+
   const results: any[] = [];
   for (const src of requested) {
     try { results.push(await processSource(supabase, src, doImport, HARD_CAP_MS, startedAt)); }
