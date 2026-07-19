@@ -229,6 +229,17 @@ export default function AlixDocsSearch() {
     setDocs(prev => prev.map(x => x.id === d.id ? { ...x, status: 'freigegeben' } : x));
   };
 
+  const deleteDoc = async (d: Doc) => {
+    if (!canDelete) return;
+    if (!confirm(`Dokument "${d.title}" endgültig in den Papierkorb verschieben?`)) return;
+    const { error } = await supabase.from('alixdocs_documents')
+      .update({ deleted_at: new Date().toISOString() }).eq('id', d.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('In Papierkorb verschoben');
+    setDocs(prev => prev.filter(x => x.id !== d.id));
+  };
+
+
 
   const createShare = async () => {
     if (selected.size === 0) return;
