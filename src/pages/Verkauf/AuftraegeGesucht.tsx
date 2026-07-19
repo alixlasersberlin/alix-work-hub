@@ -46,6 +46,101 @@ type ZohoHit = {
 };
 type SearchGroup = { source: string; mode?: string; error?: string; results: ZohoHit[] };
 
+type SyncSingleOrderResult = {
+  ok: boolean;
+  data: any;
+  message: string;
+  rateLimited: boolean;
+  tokenRefreshRateLimited: boolean;
+  retryAfterMs?: number;
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function parseRetryMs(msg: string, fallback: number) {
+  const m = msg.match(/Retry after\s*~?\s*(\d+)\s*(ms|s)?/i);
+  if (m) {
+    const n = parseInt(m[1], 10);
+    return m[2]?.toLowerCase() === "s" ? n * 1000 : n;
+  }
+  return fallback;
+}
+
+function isRateLimitedMessage(msg: string, status?: number) {
+  return status === 429 || /rate limit|too many requests|token-limit|token refresh|Access Denied/i.test(msg);
+}
+
+async function getFunctionErrorDetails(error: any) {
+  let message = error?.message ?? "Edge Function Fehler";
+  let status: number | undefined = error?.context?.status;
+  let retryAfterMs: number | undefined;
+
+  const context = error?.context;
+  if (context && typeof context.text === "function") {
+    try {
+      const text = await (typeof context.clone === "function" ? context.clone().text() : context.text());
+      if (text) {
+        try {
+          const parsed = JSON.parse(text);
+          message = parsed?.message || parsed?.error || text;
+          status = parsed?.status ?? status;
+          retryAfterMs = parsed?.retry_after_seconds ? Number(parsed.retry_after_seconds) * 1000 : undefined;
+        } catch {
+          message = text;
+        }
+      }
+    } catch {
+      // Keep Supabase's generic message if the response body was already consumed.
+    }
+  }
+
+  return { message, status, retryAfterMs };
+}
+
+async function invokeSyncSingleOrder(source_system: string, external_order_id: string): Promise<SyncSingleOrderResult> {
+  try {
+    const { data, error } = await supabase.functions.invoke("sync-single-order", {
+      body: { source_system, external_order_id },
+    });
+
+    if (error) {
+      const details = await getFunctionErrorDetails(error);
+      const message = details.message || error.message || "Import fehlgeschlagen";
+      return {
+        ok: false,
+        data: null,
+        message,
+        rateLimited: isRateLimitedMessage(message, details.status),
+        tokenRefreshRateLimited: /token|zoho token|Access Denied/i.test(message),
+        retryAfterMs: details.retryAfterMs,
+      };
+    }
+
+    if (data?.error) {
+      const message = data?.message || data?.error || "Import fehlgeschlagen";
+      return {
+        ok: false,
+        data,
+        message,
+        rateLimited: isRateLimitedMessage(message, data?.status),
+        tokenRefreshRateLimited: /token|zoho token|Access Denied/i.test(message),
+        retryAfterMs: data?.retry_after_seconds ? Number(data.retry_after_seconds) * 1000 : undefined,
+      };
+    }
+
+    return { ok: true, data, message: "", rateLimited: false, tokenRefreshRateLimited: false };
+  } catch (e: any) {
+    const message = e?.message ?? String(e);
+    return {
+      ok: false,
+      data: null,
+      message,
+      rateLimited: isRateLimitedMessage(message),
+      tokenRefreshRateLimited: /token|zoho token|Access Denied/i.test(message),
+    };
+  }
+}
+
 export default function AuftraegeGesucht() {
   const { hasRole } = useAuth();
   const canImport = hasRole("Super Admin") || hasRole("Admin");
@@ -99,10 +194,8 @@ export default function AuftraegeGesucht() {
     if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setImportingHit(hit.salesorder_id);
     try {
-      const { error } = await supabase.functions.invoke("sync-single-order", {
-        body: { source_system, external_order_id: hit.salesorder_id },
-      });
-      if (error) throw error;
+      const result = await invokeSyncSingleOrder(source_system, hit.salesorder_id);
+      if (!result.ok) throw new Error(result.message);
       toast({ title: "Import erfolgreich", description: hit.salesorder_number || hit.salesorder_id });
       // mark local
       setSearchGroups((prev) => prev?.map((g) => g.source === source_system
@@ -191,34 +284,13 @@ export default function AuftraegeGesucht() {
   async function importOne(r: Row) {
     if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setBusy(r.id);
-    const parseRetryMs = (msg: string, fallback: number) => {
-      const m = msg.match(/Retry after\s*~?\s*(\d+)\s*(ms|s)?/i);
-      if (m) {
-        const n = parseInt(m[1], 10);
-        return m[2]?.toLowerCase() === "s" ? n * 1000 : n;
-      }
-      return fallback;
-    };
     const maxRetries = 4;
     let attempt = 0;
     let lastMsg = "";
     try {
       while (attempt <= maxRetries) {
-        let data: any = null;
-        let error: any = null;
-        try {
-          const res = await supabase.functions.invoke("sync-single-order", {
-            body: { source_system: r.source_system, external_order_id: r.external_order_id },
-          });
-          data = res.data; error = res.error;
-        } catch (invokeErr: any) {
-          error = { message: invokeErr?.message ?? String(invokeErr) };
-        }
-        const rawMsg = (error?.message || data?.message || data?.error || "") as string;
-        const msg = typeof rawMsg === "string" ? rawMsg : JSON.stringify(rawMsg);
-        const tokenRefreshRL = /token refresh/i.test(msg) && /too many requests|rate/i.test(msg);
-        const rateLimited = tokenRefreshRL || /rate limit/i.test(msg) || /429/.test(msg) || /too many requests/i.test(msg);
-        if (!error && !data?.error) {
+        const result = await invokeSyncSingleOrder(r.source_system, r.external_order_id);
+        if (result.ok) {
           const now = new Date().toISOString();
           await supabase.from("orders_missing").update({
             import_status: "imported",
@@ -233,13 +305,13 @@ export default function AuftraegeGesucht() {
           await load();
           return;
         }
-        lastMsg = msg || "Unbekannter Fehler";
-        if (!rateLimited || attempt === maxRetries) throw new Error(lastMsg);
+        lastMsg = result.message || "Unbekannter Fehler";
+        if (!result.rateLimited || attempt === maxRetries) throw new Error(lastMsg);
         // Token-refresh rate limit needs much longer backoff (Zoho throttles the /token endpoint for ~1 min)
-        const base = tokenRefreshRL ? 60000 : 15000;
-        const waitMs = Math.min(parseRetryMs(lastMsg, base * (attempt + 1)), 120000);
+        const base = result.tokenRefreshRateLimited ? 60000 : 15000;
+        const waitMs = Math.min(result.retryAfterMs ?? parseRetryMs(lastMsg, base * (attempt + 1)), 120000);
         toast({ title: `Rate limit – warte ${Math.round(waitMs/1000)}s (Versuch ${attempt + 1}/${maxRetries})` });
-        await new Promise((res) => setTimeout(res, waitMs));
+        await sleep(waitMs);
         attempt += 1;
       }
       throw new Error(lastMsg || "Rate limit");
@@ -266,59 +338,49 @@ export default function AuftraegeGesucht() {
     setRunning("import");
     setBulkProgress({ done: 0, total: targets.length });
     let ok = 0, fail = 0;
-    const parseRetryMs = (msg: string, fallback: number) => {
-      const m = msg.match(/Retry after\s*~?\s*(\d+)\s*(ms|s)?/i);
-      if (m) { const n = parseInt(m[1], 10); return m[2]?.toLowerCase() === "s" ? n * 1000 : n; }
-      return fallback;
-    };
-
-    for (let i = 0; i < targets.length; i++) {
-      const r = targets[i];
-      setBusy(r.id);
-      let attempt = 0; let success = false; let lastMsg = "";
-      while (attempt <= 3 && !success) {
-        let data: any = null, error: any = null;
-        try {
-          const res = await supabase.functions.invoke("sync-single-order", {
-            body: { source_system: r.source_system, external_order_id: r.external_order_id },
-          });
-          data = res.data; error = res.error;
-        } catch (e: any) { error = { message: e?.message ?? String(e) }; }
-        const rawMsg = (error?.message || data?.message || data?.error || "") as string;
-        const msg = typeof rawMsg === "string" ? rawMsg : JSON.stringify(rawMsg);
-        const tokenRL = /token refresh/i.test(msg) && /too many requests|rate/i.test(msg);
-        const rateLimited = tokenRL || /rate limit/i.test(msg) || /429/.test(msg) || /too many requests/i.test(msg);
-        if (!error && !data?.error) {
-          const now = new Date().toISOString();
-          await supabase.from("orders_missing").update({
-            import_status: "imported", imported_at: now, resolved_at: now, import_error: null,
-          }).eq("id", r.id);
-          await supabase.from("orders").update({ imported_via_reconcile_at: now })
-            .eq("source_system", r.source_system).eq("external_order_id", r.external_order_id);
-          success = true; ok += 1;
-          break;
+    try {
+      for (let i = 0; i < targets.length; i++) {
+        const r = targets[i];
+        setBusy(r.id);
+        let attempt = 0; let success = false; let lastMsg = "";
+        while (attempt <= 3 && !success) {
+          const result = await invokeSyncSingleOrder(r.source_system, r.external_order_id);
+          if (result.ok) {
+            const now = new Date().toISOString();
+            await supabase.from("orders_missing").update({
+              import_status: "imported", imported_at: now, resolved_at: now, import_error: null,
+            }).eq("id", r.id);
+            await supabase.from("orders").update({ imported_via_reconcile_at: now })
+              .eq("source_system", r.source_system).eq("external_order_id", r.external_order_id);
+            success = true; ok += 1;
+            break;
+          }
+          lastMsg = result.message || "Unbekannter Fehler";
+          if (!result.rateLimited || attempt === 3) break;
+          const base = result.tokenRefreshRateLimited ? 60000 : 15000;
+          const waitMs = Math.min(result.retryAfterMs ?? parseRetryMs(lastMsg, base * (attempt + 1)), 120000);
+          toast({ title: `Rate limit – warte ${Math.round(waitMs/1000)}s (Import ${i + 1}/${targets.length})` });
+          await sleep(waitMs);
+          attempt += 1;
         }
-        lastMsg = msg || "Unbekannter Fehler";
-        if (!rateLimited || attempt === 3) break;
-        const base = tokenRL ? 60000 : 15000;
-        const waitMs = Math.min(parseRetryMs(lastMsg, base * (attempt + 1)), 120000);
-        await new Promise((res) => setTimeout(res, waitMs));
-        attempt += 1;
+        if (!success) {
+          fail += 1;
+          await supabase.from("orders_missing").update({ import_status: "failed", import_error: lastMsg }).eq("id", r.id);
+        }
+        setBulkProgress({ done: i + 1, total: targets.length });
+        // Pacing between orders to respect Zoho rate limits
+        if (i < targets.length - 1) await sleep(1500);
       }
-      if (!success) {
-        fail += 1;
-        await supabase.from("orders_missing").update({ import_status: "failed", import_error: lastMsg }).eq("id", r.id);
-      }
-      setBulkProgress({ done: i + 1, total: targets.length });
-      // Pacing between orders to respect Zoho rate limits
-      if (i < targets.length - 1) await new Promise((res) => setTimeout(res, 1500));
+      setSelected(new Set());
+      toast({ title: `Import fertig: ${ok} ok, ${fail} Fehler` });
+      await load();
+    } catch (e: any) {
+      toast({ title: "Import abgebrochen", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setBusy(null);
+      setBulkProgress(null);
+      setRunning(null);
     }
-    setBusy(null);
-    setBulkProgress(null);
-    setRunning(null);
-    setSelected(new Set());
-    toast({ title: `Import fertig: ${ok} ok, ${fail} Fehler` });
-    await load();
   }
 
   async function removeRow(r: Row) {
