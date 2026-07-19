@@ -50,6 +50,7 @@ export default function AlixDocsSmartReview() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [labels, setLabels] = useState<Record<string, string>>({});
+  const [ruleLabels, setRuleLabels] = useState<Record<string, { pattern: string; bonus: number }>>({});
 
   async function load() {
     setLoading(true);
