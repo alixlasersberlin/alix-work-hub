@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy } from 'lucide-react';
+import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Doc = {
