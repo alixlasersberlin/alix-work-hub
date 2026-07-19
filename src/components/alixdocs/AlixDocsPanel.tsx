@@ -37,7 +37,15 @@ type Doc = {
   updated_at: string;
   deleted_at: string | null;
   uploaded_by: string | null;
+  ocr_status?: string | null;
+  ai_summary?: string | null;
+  ai_category_suggestion?: string | null;
+  ai_serial_numbers?: string[] | null;
+  ai_order_numbers?: string[] | null;
+  expiry_date?: string | null;
+  duplicate_of?: string | null;
 };
+
 type Cat = { id: string; code: string; name: string; sort_order: number };
 
 interface Props {
