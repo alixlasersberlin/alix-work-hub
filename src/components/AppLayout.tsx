@@ -270,7 +270,7 @@ export const navItems: NavItem[] = [
           { path: '/auftraege/pdf-import', label: 'Aufträge Import PDF', icon: FileUp, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Vertrieb', 'Geschäftsführung', 'SACHBEARBEITUNG'] },
           { path: '/auftraege/gesucht', label: 'Aufträge gesucht', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
           { path: '/mediapaket', label: 'Mediapaket', icon: PackageIcon, roles: ['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG'] },
-          { path: '/mediapaket/admin', label: 'Mediapaket-Konfigurator', icon: PackageIcon, roles: ['Super Admin'] },
+
         ],
       },
       {
@@ -602,7 +602,9 @@ export const navItems: NavItem[] = [
           { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
           { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
           { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
+          { path: '/mediapaket/admin', label: 'Mediapaket-Konfigurator', icon: PackageIcon, roles: ['Super Admin'] },
           { path: '/operation/security-center', label: 'Alix Security Center', icon: Shield, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
+
         ],
       },
 
