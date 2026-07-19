@@ -603,6 +603,73 @@ export default function AlixDocsSearch() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Zu Auftrag zuordnen Dialog */}
+      <Dialog open={!!assignDoc} onOpenChange={(o) => { if (!o) { setAssignDoc(null); setAssignQ(''); setAssignResults([]); } }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><LinkIcon className="w-5 h-5" /> Dokument einem Auftrag zuordnen</DialogTitle>
+          </DialogHeader>
+          {assignDoc && (
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                Dokument: <span className="font-medium text-foreground">{assignDoc.title}</span>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  autoFocus
+                  placeholder="Auftragsnummer, Kundenname, Kundennr. oder Seriennummer…"
+                  value={assignQ}
+                  onChange={(e) => setAssignQ(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && searchOrdersForAssign()}
+                />
+                <Button onClick={searchOrdersForAssign} disabled={assignBusy}>
+                  {assignBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                </Button>
+              </div>
+              <div className="max-h-96 overflow-y-auto border border-border rounded-md">
+                {assignResults.length === 0 ? (
+                  <div className="text-center text-sm text-muted-foreground py-8">
+                    {assignBusy ? 'Suche…' : 'Suchbegriff eingeben und Enter drücken.'}
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Auftrag</TableHead>
+                        <TableHead>Kunde</TableHead>
+                        <TableHead>Treffer</TableHead>
+                        <TableHead className="text-right">Aktion</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {assignResults.map(r => (
+                        <TableRow key={r.id}>
+                          <TableCell className="font-mono text-xs">{r.order_number ?? r.id.slice(0, 8)}</TableCell>
+                          <TableCell className="text-xs">
+                            {r.customer_number ? <span className="text-muted-foreground mr-1">{r.customer_number}</span> : null}
+                            {r.customer_name ?? '—'}
+                          </TableCell>
+                          <TableCell className="text-[11px] text-muted-foreground">{r.hit ?? ''}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" onClick={() => assignOrder(r.id, r.customer_id)}>
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Zuordnen &amp; freigeben
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignDoc(null)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
