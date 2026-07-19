@@ -1,5 +1,5 @@
 // AlixDocs KI — OCR, Kategorisierung, Serien-/Auftragsnummer-Erkennung,
-// Zusammenfassung, Ablaufdatum. Ruft Lovable AI Gateway (Gemini) auf.
+// Zusammenfassung. Ruft Lovable AI Gateway (Gemini) auf.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
@@ -126,7 +126,6 @@ Deno.serve(async (req) => {
   "category_code": "einer von: ${CATEGORY_CODES.join(', ')}",
   "serial_numbers": ["z.B. AL-2024-1234"],
   "order_numbers": ["Auftragsnummer, Angebotsnummer, Rechnungsnummer wie SO-1234, AB-2024-001, INV-…"],
-  "expiry_date": "YYYY-MM-DD oder null (Ablauf/Garantie/Vertragsende)",
   "tags": ["3-6 knappe deutsche Schlagworte, kleingeschrieben, ohne Sonderzeichen"]
 }`;
 
@@ -174,7 +173,6 @@ Deno.serve(async (req) => {
       typeof parsed.category_code === 'string' && CATEGORY_CODES.includes(parsed.category_code) ? parsed.category_code : null;
     const serial_numbers: string[] = Array.isArray(parsed.serial_numbers) ? parsed.serial_numbers.filter((x: any) => typeof x === 'string').slice(0, 20) : [];
     const order_numbers: string[] = Array.isArray(parsed.order_numbers) ? parsed.order_numbers.filter((x: any) => typeof x === 'string').slice(0, 20) : [];
-    const expiry_date: string | null = typeof parsed.expiry_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parsed.expiry_date) ? parsed.expiry_date : null;
     const ai_tags: string[] = Array.isArray(parsed.tags)
       ? parsed.tags.filter((x: any) => typeof x === 'string')
         .map((x: string) => x.toLowerCase().replace(/[^a-z0-9äöüß\- ]/g, '').trim().replace(/\s+/g, '-'))
@@ -208,7 +206,6 @@ Deno.serve(async (req) => {
       ai_model: model,
       content_hash: ver.file_hash,
     };
-    if (expiry_date) patch.expiry_date = expiry_date;
     if (matchedOrderId) patch.order_id = matchedOrderId;
     if (matchedDeviceId) patch.device_id = matchedDeviceId;
     if (serial_numbers.length && !patch.serial_number) patch.serial_number = serial_numbers[0];
@@ -238,7 +235,7 @@ Deno.serve(async (req) => {
 
     await admin.from('alixdocs_audit_log').insert({
       document_id, user_id: userId, action: 'ai_processed',
-      metadata: { category: category_code, serials: serial_numbers.length, orders: order_numbers.length, expiry: expiry_date },
+      metadata: { category: category_code, serials: serial_numbers.length, orders: order_numbers.length },
       user_agent: req.headers.get('user-agent'),
     });
 
@@ -257,7 +254,7 @@ Deno.serve(async (req) => {
     return json(200, {
       ok: true,
       summary, category_suggestion: category_code,
-      serial_numbers, order_numbers, expiry_date,
+      serial_numbers, order_numbers,
       linked_order_id: matchedOrderId, linked_device_id: matchedDeviceId,
     });
   } catch (e: any) {
