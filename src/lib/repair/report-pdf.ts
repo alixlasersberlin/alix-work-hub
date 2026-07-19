@@ -114,16 +114,24 @@ function build({ repair, parts, history = [], technician }: ReportDoc): jsPDF {
   return doc;
 }
 
+function reportAutoFile(d: ReportDoc) {
+  return {
+    customer_id: d.repair?.customer_id ?? null,
+    order_id: d.repair?.order_id ?? null,
+    title: `Reparaturbericht ${d.repair?.repair_number ?? ''}`.trim(),
+  };
+}
+
 export async function printRepairReport(d: ReportDoc) {
   const doc = build(d);
-  const stamped = await stampedPdfBlob(doc, 'service_report');
+  const stamped = await stampedPdfBlob(doc, 'service_report', d.repair?.repair_number ?? undefined, reportAutoFile(d));
   const url = URL.createObjectURL(stamped);
   window.open(url, '_blank');
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export async function repairReportPdfBlob(d: ReportDoc): Promise<Blob> {
-  return await stampedPdfBlob(build(d), 'service_report');
+  return await stampedPdfBlob(build(d), 'service_report', d.repair?.repair_number ?? undefined, reportAutoFile(d));
 }
 
 // Backwards-compat alias (kept name, now returns PDF Blob)
