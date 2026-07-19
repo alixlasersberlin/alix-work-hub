@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileText, Download, Eye, Search, Loader2, Send, FileCheck2 } from 'lucide-react';
+import { FileText, Download, Eye, Search, Loader2, Send, FileCheck2, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { KpiTile } from '@/components/infinity/KpiTile';
+import AttachToOrderDialog from '@/components/alixdocs/AttachToOrderDialog';
 
 const TYPES = ['Alle','Rechnung','Angebot','Lieferschein','Reparaturbericht','Servicebericht','Vertrag','Schulungszertifikat','Mahnung','Sonstiges'];
 const STATUSES = ['Alle','erstellt','versendet','geoeffnet','heruntergeladen','signiert','fehler'];
@@ -46,6 +47,7 @@ export default function DokumentenCenter() {
   const [type, setType] = useState('Alle');
   const [status, setStatus] = useState('Alle');
   const [q, setQ] = useState('');
+  const [attachRow, setAttachRow] = useState<Row | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -151,9 +153,14 @@ export default function DokumentenCenter() {
                       <TableCell className="text-xs">{r.opened_at ? new Date(r.opened_at).toLocaleString('de-DE') : '—'}</TableCell>
                       <TableCell>{r.download_count}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="ghost" onClick={() => download(r)}>
-                          <Download className="w-4 h-4" />
-                        </Button>
+                        <div className="inline-flex gap-1">
+                          <Button size="sm" variant="ghost" title="An Auftrag anheften" onClick={() => setAttachRow(r)}>
+                            <Paperclip className="w-4 h-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => download(r)}>
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -163,6 +170,27 @@ export default function DokumentenCenter() {
           )}
         </CardContent>
       </Card>
+
+      {attachRow && (
+        <AttachToOrderDialog
+          open={!!attachRow}
+          onOpenChange={(v) => { if (!v) setAttachRow(null); }}
+          source_bucket={attachRow.storage_bucket}
+          source_path={attachRow.storage_path}
+          defaultTitle={attachRow.file_name}
+          defaultCategory={mapMailTypeToCategory(attachRow.document_type)}
+          source="mail_attachment"
+        />
+      )}
     </div>
   );
+}
+
+function mapMailTypeToCategory(t: string): string {
+  const m: Record<string, string> = {
+    Rechnung: 'rechnung', Angebot: 'angebot', Lieferschein: 'lieferschein',
+    Reparaturbericht: 'servicebericht', Servicebericht: 'servicebericht',
+    Vertrag: 'kaufvertrag', Schulungszertifikat: 'schulung', Mahnung: 'rechnung',
+  };
+  return m[t] ?? 'sonstiges';
 }

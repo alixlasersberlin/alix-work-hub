@@ -611,8 +611,10 @@ export const navItems: NavItem[] = [
           { path: '/admin/sign-marketplace', label: 'Marketplace & White-Label', icon: Settings, roles: ['Super Admin'] },
           { path: '/admin/signaturen', label: 'Admin (Stempel & Templates)', icon: Settings, roles: ['Admin', 'Super Admin'] },
           { path: '/admin/signaturen/facsimile', label: 'Facsimile-Unterschrift', icon: Settings, roles: ['Super Admin'] },
+          { path: '/dokumente', label: 'AlixDocs — Suche', icon: Files, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Buchhaltung', 'Order'] },
         ],
       },
+
 
 
       {

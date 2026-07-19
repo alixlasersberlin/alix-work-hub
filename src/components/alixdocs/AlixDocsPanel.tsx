@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import {
   Files, Upload, Search, Grid3x3, List as ListIcon, Loader2, Eye, Trash2, RotateCcw,
-  Plus, FileText, Image as ImageIcon, ShieldAlert, Download,
+  Plus, FileText, Image as ImageIcon, ShieldAlert, Download, CheckCircle2, Archive,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const ALLOWED = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'];
 const ALLOWED_MIME = new Set([
@@ -181,6 +182,13 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
     load();
   };
 
+  const setStatus = async (d: Doc, status: string) => {
+    const { error } = await supabase.from('alixdocs_documents').update({ status }).eq('id', d.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Status: ${status}`);
+    load();
+  };
+
   const fmtSize = (n: number) => n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`;
 
   const catBadge = (id: string | null) => {
@@ -284,6 +292,17 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
                       <div className="flex justify-end gap-1">
                         <Button size="sm" variant="ghost" onClick={() => openPreview(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => openUpload(d.id)} title="Neue Version"><Plus className="w-4 h-4" /></Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="ghost" title="Status"><CheckCircle2 className="w-4 h-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setStatus(d, 'entwurf')}>Entwurf</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setStatus(d, 'geprueft')}>Geprüft</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setStatus(d, 'freigegeben')}>Freigegeben ✓</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setStatus(d, 'archiviert')}><Archive className="w-3 h-3 mr-2" />Archivieren</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                         <Button size="sm" variant="ghost" onClick={() => softDelete(d)} title="Papierkorb"><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     )}

@@ -289,6 +289,7 @@ const MobileSignaturen = lazy(() => import("./pages/Mobile/Signaturen"));
 const CustomerPortalSignaturen = lazy(() => import("./pages/CustomerPortal/Signaturen"));
 const SignDocPublic = lazy(() => import("./pages/SignDocPublic"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
+const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
@@ -1145,6 +1146,8 @@ function AppRoutes() {
           <Route path="/admin/signaturen/facsimile" element={<ProtectedRoute requiredRoles={['Super Admin']}><DigitaleSignaturenFacsimile /></ProtectedRoute>} />
           <Route path="/signaturen/genehmigungen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignApprovals /></ProtectedRoute>} />
           <Route path="/signaturen/dashboard" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignSlaDashboard /></ProtectedRoute>} />
+          <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />
+
 
           <Route path="/admin/sign-marketplace" element={<ProtectedRoute requiredRoles={['Super Admin']}><SignMarketplace /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
