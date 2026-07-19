@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import JSZip from "jszip";
 
+type Candidate = { order_id: string; order_number: string; customer_name: string | null };
 type Row = {
   name: string;
   size: number;
@@ -20,6 +21,9 @@ type Row = {
   document_id?: string;
   match_score?: number;
   match_confidence?: string;
+  candidates?: Candidate[];
+  selected_order_id?: string;
+  scanning?: boolean;
 };
 
 const IMAGE_MIME: Record<string, string> = {
@@ -46,6 +50,89 @@ async function heicToJpeg(blob: Blob): Promise<Blob> {
   const out = await fn({ blob, toType: "image/jpeg", quality: 0.9 });
   return Array.isArray(out) ? out[0] : out;
 }
+
+// Extract candidate search tokens from a filename (order-number patterns + name-like words)
+function extractTokens(filename: string): { orderNumbers: string[]; words: string[] } {
+  const base = filename.replace(/\.[a-z0-9]+$/i, "");
+  const orderNumbers = Array.from(base.matchAll(/\b(20\d{2}[-_/]?\d{3,6})\b/g)).map(m => m[1].replace(/[_/]/g, "-"));
+  const words = Array.from(
+    new Set(
+      base
+        .split(/[\s_\-.,()\[\]]+/)
+        .map(w => w.trim())
+        .filter(w => w.length >= 3 && /[a-zA-ZäöüÄÖÜß]/.test(w) && !/^\d+$/.test(w) && !/^(kopie|copy|final|scan|foto|img|dsc|dcim)$/i.test(w))
+    )
+  ).slice(0, 6);
+  return { orderNumbers, words };
+}
+
+async function findCandidates(filename: string): Promise<Candidate[]> {
+  const { orderNumbers, words } = extractTokens(filename);
+  const found = new Map<string, Candidate>();
+
+  // 1) Order-number matches
+  for (const on of orderNumbers) {
+    const { data } = await supabase
+      .from("orders")
+      .select("id, order_number, customer_id, source_system")
+      .ilike("order_number", `%${on}%`)
+      .limit(5);
+    for (const o of data ?? []) {
+      if (!found.has(o.id)) found.set(o.id, { order_id: o.id, order_number: o.order_number, customer_name: null });
+    }
+  }
+
+  // 2) Customer name matches → their recent orders
+  if (found.size < 5 && words.length) {
+    const ors = words.map(w => `company_name.ilike.%${w}%,contact_name.ilike.%${w}%`).join(",");
+    const { data: cust } = await supabase
+      .from("customers")
+      .select("id, company_name, contact_name")
+      .or(ors)
+      .limit(5);
+    const custIds = (cust ?? []).map(c => c.id);
+    if (custIds.length) {
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("id, order_number, customer_id")
+        .in("customer_id", custIds)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      const custMap = new Map((cust ?? []).map(c => [c.id, c.company_name || c.contact_name]));
+      for (const o of orders ?? []) {
+        if (!found.has(o.id)) {
+          found.set(o.id, {
+            order_id: o.id,
+            order_number: o.order_number,
+            customer_name: (custMap.get(o.customer_id) as string) ?? null,
+          });
+        }
+      }
+    }
+  }
+
+  // Fill missing customer names
+  const need = [...found.values()].filter(c => !c.customer_name);
+  if (need.length) {
+    const { data: orders } = await supabase
+      .from("orders")
+      .select("id, customer_id")
+      .in("id", need.map(n => n.order_id));
+    const cidMap = new Map((orders ?? []).map(o => [o.id, o.customer_id]));
+    const cids = Array.from(new Set([...cidMap.values()].filter(Boolean))) as string[];
+    if (cids.length) {
+      const { data: cust } = await supabase.from("customers").select("id, company_name, contact_name").in("id", cids);
+      const nameMap = new Map((cust ?? []).map(c => [c.id, c.company_name || c.contact_name]));
+      for (const c of need) {
+        const cid = cidMap.get(c.order_id);
+        if (cid) c.customer_name = (nameMap.get(cid) as string) ?? null;
+      }
+    }
+  }
+
+  return [...found.values()].slice(0, 8);
+}
+
 
 export default function AlixDocsBulkImport() {
   const [category, setCategory] = useState("sonstiges");
@@ -78,6 +165,24 @@ export default function AlixDocsBulkImport() {
     return out;
   }, []);
 
+  const scanCandidates = async (items: { name: string; blob: Blob }[], startIdx = 0) => {
+    for (let i = startIdx; i < items.length; i++) {
+      if (!guessMime(items[i].name)) continue;
+      setRows(prev => prev.map((r, idx) => idx === i ? { ...r, scanning: true } : r));
+      try {
+        const cands = await findCandidates(items[i].name);
+        setRows(prev => prev.map((r, idx) => idx === i ? {
+          ...r,
+          scanning: false,
+          candidates: cands,
+          selected_order_id: cands.length === 1 ? cands[0].order_id : r.selected_order_id,
+        } : r));
+      } catch {
+        setRows(prev => prev.map((r, idx) => idx === i ? { ...r, scanning: false } : r));
+      }
+    }
+  };
+
   const onFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     toast.info("Dateien werden vorbereitet …");
@@ -90,6 +195,8 @@ export default function AlixDocsBulkImport() {
     })));
     (window as any).__bulkBlobs = items;
     setDone(0);
+    // Fire-and-forget candidate scan
+    scanCandidates(items).catch(() => {});
   };
 
   const run = async () => {
@@ -111,6 +218,7 @@ export default function AlixDocsBulkImport() {
         }
 
         setRow(i, { status: "uploading" });
+        const effectiveOrderId = rows[i]?.selected_order_id || orderId || undefined;
         const LARGE = 5 * 1024 * 1024; // >5MB → via signed upload (edge body limit ~10MB)
         let docId: string | undefined;
 
@@ -135,13 +243,12 @@ export default function AlixDocsBulkImport() {
               title: name,
               confidentiality_level: "normal",
               source: "bulk_import",
-              order_id: orderId || undefined,
+              order_id: effectiveOrderId,
               customer_id: customerId || undefined,
             },
           });
           if (attErr) throw attErr;
           docId = (att as any)?.document_id;
-          // Best-effort staging cleanup
           try { await supabase.storage.from(bucket).remove([path]); } catch {}
         } else {
           const fd = new FormData();
@@ -149,7 +256,7 @@ export default function AlixDocsBulkImport() {
           fd.append("category_code", category);
           fd.append("title", name);
           fd.append("confidentiality_level", "normal");
-          if (orderId) fd.append("order_id", orderId);
+          if (effectiveOrderId) fd.append("order_id", effectiveOrderId);
           if (customerId) fd.append("customer_id", customerId);
           const { data, error } = await supabase.functions.invoke("alixdocs-upload", { body: fd });
           if (error) throw error;
@@ -261,29 +368,56 @@ export default function AlixDocsBulkImport() {
 
               <div className="max-h-[500px] overflow-y-auto border rounded-md divide-y">
                 {rows.map((r, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 text-sm">
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium">{r.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {(r.size / 1024).toFixed(1)} KB {r.message ? `· ${r.message}` : ""}
+                  <div key={i} className="p-2 text-sm space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-medium">{r.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {(r.size / 1024).toFixed(1)} KB {r.message ? `· ${r.message}` : ""}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {r.match_score != null && (
+                          <Badge variant="outline" className={
+                            r.match_confidence === "auto" ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" :
+                            r.match_confidence === "suggested" ? "bg-amber-500/15 text-amber-600 border-amber-500/30" :
+                            "bg-muted"
+                          }>Score {r.match_score}</Badge>
+                        )}
+                        {r.status === "pending" && <Badge variant="secondary">wartet</Badge>}
+                        {r.status === "converting" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />HEIC→JPG</Badge>}
+                        {r.status === "uploading" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />Upload</Badge>}
+                        {r.status === "processing" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />OCR + AI</Badge>}
+                        {r.status === "done" && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                        {r.status === "error" && <XCircle className="w-4 h-4 text-rose-600" />}
+                        {r.status === "skipped" && <Badge variant="outline">skip</Badge>}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {r.match_score != null && (
-                        <Badge variant="outline" className={
-                          r.match_confidence === "auto" ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" :
-                          r.match_confidence === "suggested" ? "bg-amber-500/15 text-amber-600 border-amber-500/30" :
-                          "bg-muted"
-                        }>Score {r.match_score}</Badge>
-                      )}
-                      {r.status === "pending" && <Badge variant="secondary">wartet</Badge>}
-                      {r.status === "converting" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />HEIC→JPG</Badge>}
-                      {r.status === "uploading" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />Upload</Badge>}
-                      {r.status === "processing" && <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/30" variant="outline"><Loader2 className="w-3 h-3 mr-1 animate-spin" />OCR + AI</Badge>}
-                      {r.status === "done" && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-                      {r.status === "error" && <XCircle className="w-4 h-4 text-rose-600" />}
-                      {r.status === "skipped" && <Badge variant="outline">skip</Badge>}
-                    </div>
+                    {r.status !== "skipped" && r.status !== "done" && (
+                      <div className="pl-1">
+                        {r.scanning ? (
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Kandidaten werden gesucht …
+                          </div>
+                        ) : r.candidates && r.candidates.length > 0 ? (
+                          <select
+                            value={r.selected_order_id ?? ""}
+                            onChange={e => setRow(i, { selected_order_id: e.target.value || undefined })}
+                            disabled={running}
+                            className="w-full text-xs bg-background border rounded px-2 py-1"
+                          >
+                            <option value="">— Kein Auftrag zuordnen —</option>
+                            {r.candidates.map(c => (
+                              <option key={c.order_id} value={c.order_id}>
+                                {c.order_number}{c.customer_name ? ` · ${c.customer_name}` : ""}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="text-xs text-muted-foreground">Keine Auftragsvorschläge aus Dateiname</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
