@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy } from 'lucide-react';
+import { Files, Search, Loader2, Eye, ExternalLink, ShieldAlert, Archive, Link2, Copy, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Doc = {
@@ -216,6 +216,15 @@ export default function AlixDocsSearch() {
     toast.success('Archiviert'); load();
   };
 
+  const releaseDoc = async (d: Doc) => {
+    const { error } = await supabase.from('alixdocs_documents')
+      .update({ status: 'freigegeben' }).eq('id', d.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Freigegeben');
+    setDocs(prev => prev.map(x => x.id === d.id ? { ...x, status: 'freigegeben' } : x));
+  };
+
+
   const createShare = async () => {
     if (selected.size === 0) return;
     setBulkBusy(true);
@@ -386,7 +395,19 @@ export default function AlixDocsSearch() {
                               </Link>
                             </Button>
                           )}
+                          {d.status === 'entwurf' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                              onClick={() => releaseDoc(d)}
+                              title="Intern freigeben"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Freigeben
+                            </Button>
+                          )}
                           <Button size="sm" variant="ghost" onClick={() => openDoc(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
+
                         </TableCell>
                       </TableRow>
                     );
