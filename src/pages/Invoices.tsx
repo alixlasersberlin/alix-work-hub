@@ -548,7 +548,10 @@ export default function Invoices() {
     }
 
     const rawBlob = doc.output('blob') as Blob;
-    return await stampExistingPdfBlob(rawBlob, 'invoice', full.invoice_number);
+    return await stampExistingPdfBlob(rawBlob, 'invoice', full.invoice_number, {
+      customer_id: customer?.id ?? null,
+      title: `Rechnung ${full.invoice_number}`,
+    });
   };
 
 
