@@ -245,6 +245,36 @@ export default function AlixDocsSearch() {
   const [assignBusy, setAssignBusy] = useState(false);
   const [assignResults, setAssignResults] = useState<Array<{ id: string; order_number: string | null; customer_id: string | null; customer_name?: string | null; customer_number?: string | null; hit?: string }>>([]);
 
+  // Inline Tag-Editor
+  const [tagEditId, setTagEditId] = useState<string | null>(null);
+  const [tagDraft, setTagDraft] = useState('');
+  const [tagBusy, setTagBusy] = useState(false);
+
+  const saveTags = async (d: Doc, next: string[]) => {
+    setTagBusy(true);
+    const { error } = await supabase.from('alixdocs_documents')
+      .update({ tags: next }).eq('id', d.id);
+    setTagBusy(false);
+    if (error) { toast.error(error.message); return false; }
+    setDocs(prev => prev.map(x => x.id === d.id ? { ...x, tags: next } : x));
+    return true;
+  };
+
+  const addTag = async (d: Doc) => {
+    const raw = tagDraft.trim();
+    if (!raw) { setTagEditId(null); return; }
+    const additions = raw.split(',').map(t => t.trim()).filter(Boolean);
+    const current = d.tags || [];
+    const merged = Array.from(new Set([...current, ...additions]));
+    const ok = await saveTags(d, merged);
+    if (ok) { toast.success('Tag hinzugefügt'); setTagDraft(''); setTagEditId(null); }
+  };
+
+  const removeTag = async (d: Doc, tag: string) => {
+    const next = (d.tags || []).filter(t => t !== tag);
+    await saveTags(d, next);
+  };
+
   const searchOrdersForAssign = async () => {
     const term = assignQ.trim();
     if (!term) { setAssignResults([]); return; }
