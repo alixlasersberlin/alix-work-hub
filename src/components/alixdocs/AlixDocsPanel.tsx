@@ -516,6 +516,8 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
               <div className="h-full flex items-center justify-center overflow-auto">
                 <img src={previewUrl} alt={previewDoc?.title} className="max-w-full max-h-full object-contain" />
               </div>
+            ) : previewMime === 'application/pdf' ? (
+              <PdfPreview url={previewUrl} />
             ) : (
               <iframe src={previewUrl} className="w-full h-full border-0 bg-white" title={previewDoc?.title} />
             )}
