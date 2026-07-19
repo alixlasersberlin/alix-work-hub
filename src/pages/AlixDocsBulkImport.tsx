@@ -24,6 +24,8 @@ type Row = {
   candidates?: Candidate[];
   selected_order_id?: string;
   scanning?: boolean;
+  searchQuery?: string;
+  searching?: boolean;
 };
 
 const IMAGE_MIME: Record<string, string> = {
@@ -145,6 +147,86 @@ export default function AlixDocsBulkImport() {
 
   const setRow = (i: number, patch: Partial<Row>) =>
     setRows(prev => prev.map((r, idx) => idx === i ? { ...r, ...patch } : r));
+
+  const searchOrders = async (i: number, query: string) => {
+    const q = query.trim();
+    if (q.length < 2) {
+      toast.info("Mindestens 2 Zeichen eingeben");
+      return;
+    }
+    setRow(i, { searching: true });
+    try {
+      const found = new Map<string, Candidate>();
+      // Search by order_number
+      const { data: byNum } = await supabase
+        .from("orders")
+        .select("id, order_number, customer_id, source_system")
+        .ilike("order_number", `%${q}%`)
+        .limit(15);
+      (byNum ?? []).forEach(o => found.set(o.id, { order_id: o.id, order_number: o.order_number, customer_name: null }));
+
+      // Search by customer name
+      const { data: custs } = await supabase
+        .from("customers")
+        .select("id, company_name, contact_name")
+        .or(`company_name.ilike.%${q}%,contact_name.ilike.%${q}%`)
+        .limit(15);
+      if (custs?.length) {
+        const cids = custs.map(c => c.id);
+        const { data: ords } = await supabase
+          .from("orders")
+          .select("id, order_number, customer_id")
+          .in("customer_id", cids)
+          .limit(30);
+        const nameMap = new Map(custs.map(c => [c.id, c.company_name || c.contact_name || ""]));
+        (ords ?? []).forEach(o => {
+          if (!found.has(o.id)) {
+            found.set(o.id, { order_id: o.id, order_number: o.order_number, customer_name: nameMap.get(o.customer_id) || null });
+          } else {
+            const c = found.get(o.id)!;
+            if (!c.customer_name) c.customer_name = nameMap.get(o.customer_id) || null;
+          }
+        });
+      }
+
+      // Fill missing customer names
+      const need = [...found.values()].filter(c => !c.customer_name);
+      if (need.length) {
+        const { data: ords2 } = await supabase
+          .from("orders")
+          .select("id, customer_id")
+          .in("id", need.map(n => n.order_id));
+        const cidMap = new Map((ords2 ?? []).map(o => [o.id, o.customer_id]));
+        const cids = [...new Set([...cidMap.values()].filter(Boolean))];
+        if (cids.length) {
+          const { data: cust } = await supabase.from("customers").select("id, company_name, contact_name").in("id", cids as string[]);
+          const nmap = new Map((cust ?? []).map(c => [c.id, c.company_name || c.contact_name || ""]));
+          need.forEach(c => {
+            const cid = cidMap.get(c.order_id);
+            if (cid) c.customer_name = nmap.get(cid) || null;
+          });
+        }
+      }
+
+      const results = [...found.values()].slice(0, 25);
+      if (!results.length) {
+        toast.info("Keine Treffer");
+        setRow(i, { searching: false });
+        return;
+      }
+      // Merge with existing candidates (search results first)
+      setRows(prev => prev.map((r, idx) => {
+        if (idx !== i) return r;
+        const existing = r.candidates ?? [];
+        const merged = [...results];
+        existing.forEach(e => { if (!merged.find(m => m.order_id === e.order_id)) merged.push(e); });
+        return { ...r, candidates: merged, searching: false };
+      }));
+    } catch (e: any) {
+      toast.error("Suche fehlgeschlagen: " + (e?.message ?? "unbekannt"));
+      setRow(i, { searching: false });
+    }
+  };
 
   const collectFiles = useCallback(async (files: FileList): Promise<{ name: string; blob: Blob }[]> => {
     const out: { name: string; blob: Blob }[] = [];
@@ -394,7 +476,7 @@ export default function AlixDocsBulkImport() {
                       </div>
                     </div>
                     {r.status !== "skipped" && r.status !== "done" && (
-                      <div className="pl-1">
+                      <div className="pl-1 space-y-1">
                         {r.scanning ? (
                           <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <Loader2 className="w-3 h-3 animate-spin" /> Kandidaten werden gesucht …
@@ -416,6 +498,26 @@ export default function AlixDocsBulkImport() {
                         ) : (
                           <div className="text-xs text-muted-foreground">Keine Auftragsvorschläge aus Dateiname</div>
                         )}
+                        <div className="flex gap-1">
+                          <Input
+                            value={r.searchQuery ?? ""}
+                            onChange={e => setRow(i, { searchQuery: e.target.value })}
+                            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); searchOrders(i, r.searchQuery ?? ""); } }}
+                            placeholder="Auftragsnummer oder Kundenname suchen …"
+                            disabled={running || r.searching}
+                            className="h-7 text-xs"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            disabled={running || r.searching}
+                            onClick={() => searchOrders(i, r.searchQuery ?? "")}
+                          >
+                            {r.searching ? <Loader2 className="w-3 h-3 animate-spin" /> : "Suchen"}
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
