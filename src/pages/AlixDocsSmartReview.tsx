@@ -93,6 +93,27 @@ export default function AlixDocsSmartReview() {
       (data ?? []).forEach((d: any) => { map[`device:${d.id}`] = `SN ${d.serial_number ?? ""} · ${d.model ?? ""}`; });
     }
     setLabels(map);
+
+    // Regel-IDs aus hits sammeln → Regel-Explainer
+    const ruleIds = new Set<string>();
+    for (const d of list) {
+      for (const c of d.match_candidates ?? []) {
+        for (const h of c?.hits ?? []) {
+          if (typeof h === "string" && h.startsWith("rule:")) ruleIds.add(h.slice(5));
+        }
+      }
+    }
+    if (ruleIds.size) {
+      const { data: rs } = await supabase
+        .from("alixdocs_matching_rules")
+        .select("id, pattern, weight_bonus")
+        .in("id", [...ruleIds]);
+      const rmap: Record<string, { pattern: string; bonus: number }> = {};
+      (rs ?? []).forEach((r: any) => { rmap[r.id] = { pattern: r.pattern, bonus: r.weight_bonus }; });
+      setRuleLabels(rmap);
+    } else {
+      setRuleLabels({});
+    }
   }
 
   useEffect(() => { load(); }, [tab]);
