@@ -206,6 +206,18 @@ Deno.serve(async (req) => {
       user_agent: req.headers.get('user-agent'),
     });
 
+    // Smart-Match anstoßen (Fire & Forget, Fehler nicht kritisch)
+    try {
+      await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/alixdocs-smart-match`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+        },
+        body: JSON.stringify({ document_id }),
+      });
+    } catch (e) { console.warn('smart-match trigger failed', e); }
+
     return json(200, {
       ok: true,
       summary, category_suggestion: category_code,

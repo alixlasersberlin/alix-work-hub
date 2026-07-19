@@ -1427,6 +1427,11 @@ export type Database = {
           file_size: number
           id: string
           legal_hold: boolean
+          match_candidates: Json | null
+          match_confidence: string | null
+          match_method: string | null
+          match_score: number | null
+          matched_by: string | null
           mime_type: string
           ocr_status: string
           ocr_text: string | null
@@ -1473,6 +1478,11 @@ export type Database = {
           file_size?: number
           id?: string
           legal_hold?: boolean
+          match_candidates?: Json | null
+          match_confidence?: string | null
+          match_method?: string | null
+          match_score?: number | null
+          matched_by?: string | null
           mime_type: string
           ocr_status?: string
           ocr_text?: string | null
@@ -1519,6 +1529,11 @@ export type Database = {
           file_size?: number
           id?: string
           legal_hold?: boolean
+          match_candidates?: Json | null
+          match_confidence?: string | null
+          match_method?: string | null
+          match_score?: number | null
+          matched_by?: string | null
           mime_type?: string
           ocr_status?: string
           ocr_text?: string | null
@@ -1576,6 +1591,92 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alixdocs_match_feedback: {
+        Row: {
+          chosen_entity_id: string | null
+          chosen_entity_type: string
+          created_at: string
+          document_id: string
+          id: string
+          match_score_before: number | null
+          rejected_candidates: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          chosen_entity_id?: string | null
+          chosen_entity_type: string
+          created_at?: string
+          document_id: string
+          id?: string
+          match_score_before?: number | null
+          rejected_candidates?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          chosen_entity_id?: string | null
+          chosen_entity_type?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          match_score_before?: number | null
+          rejected_candidates?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs_match_feedback_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs_matching_rules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          field: string
+          hit_count: number
+          id: string
+          is_active: boolean
+          pattern: string
+          target_category_id: string | null
+          target_id: string | null
+          target_type: string
+          updated_at: string
+          weight_bonus: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          field: string
+          hit_count?: number
+          id?: string
+          is_active?: boolean
+          pattern: string
+          target_category_id?: string | null
+          target_id?: string | null
+          target_type: string
+          updated_at?: string
+          weight_bonus?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          field?: string
+          hit_count?: number
+          id?: string
+          is_active?: boolean
+          pattern?: string
+          target_category_id?: string | null
+          target_id?: string | null
+          target_type?: string
+          updated_at?: string
+          weight_bonus?: number
+        }
+        Relationships: []
       }
       alixdocs_portal_shares: {
         Row: {
@@ -1672,6 +1773,39 @@ export type Database = {
           revoked_at?: string | null
           token?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      alixdocs_smart_config: {
+        Row: {
+          auto_assign_gap: number
+          auto_assign_threshold: number
+          blacklist: Json
+          id: number
+          suggest_threshold: number
+          updated_at: string
+          updated_by: string | null
+          weights: Json
+        }
+        Insert: {
+          auto_assign_gap?: number
+          auto_assign_threshold?: number
+          blacklist?: Json
+          id?: number
+          suggest_threshold?: number
+          updated_at?: string
+          updated_by?: string | null
+          weights?: Json
+        }
+        Update: {
+          auto_assign_gap?: number
+          auto_assign_threshold?: number
+          blacklist?: Json
+          id?: number
+          suggest_threshold?: number
+          updated_at?: string
+          updated_by?: string | null
+          weights?: Json
         }
         Relationships: []
       }

@@ -1,70 +1,76 @@
-## AlixDocs – Auftragsbezogenes Dokumentenmanagement
 
-Ich baue das Modul in drei Etappen. **Phase 1 + Versionierung aus Phase 2** zuerst (deine Empfehlung), danach optional Freigabe/Suche und später die KI‑Phase.
+# ALIXDocs Smart Import & Auto-Matching
 
----
+Ausbaustufe „Smart Import" – hebt den bestehenden Upload auf mehrstufige, gewichtete Auto-Zuordnung mit Massenverarbeitung und lernender KI.
 
-### Etappe A — Phase 1: Sicheres Grundsystem (jetzt bauen)
+## Umsetzung in 4 Etappen
 
-**Backend / Datenbank (Migration)**
-- Neue Tabellen im `public` Schema:
-  - `alixdocs_categories` (Seed: Angebot, Auftrag, Kaufvertrag, Mietvertrag, Finanzierung, Rechnung, Lieferschein, Übergabe, Gerätefoto, Seriennummer, Servicebericht, Reparatur, Wartung, Garantie, Schulung, NiSV, Mediapaket, Reklamation, Kundenkommunikation, Intern vertraulich, Sonstiges)
-  - `alixdocs_documents` (order_id, customer_id, device_id, category_id, title, storage_path, mime_type, file_size, document_date, confidentiality_level `normal|vertraulich|streng_vertraulich`, status `entwurf|geprueft|freigegeben|archiviert`, current_version, uploaded_by, deleted_at)
-  - `alixdocs_versions` (document_id, version_number, storage_path, file_hash, file_size, uploaded_by, change_note)
-  - `alixdocs_audit_log` (document_id, user_id, action, metadata, ip, ua) – append-only, keine Update/Delete-Policy
-- GRANT + RLS in jeder Tabelle (authenticated only, `service_role` für Edge Functions).
-- Zugriff per `has_role()` — Rollenmatrix wie im Prompt (Geschäftsführung/Admin/SuperAdmin = alles; Buchhaltung/Order = view+upload+approve; Vertrieb/Service = view+upload; Techniker = nur zugewiesene Aufträge; Externe = keiner).
-- Streng vertrauliche Dokumente nur Super Admin + Geschäftsführung.
-- Trigger für `updated_at`, Trigger schreibt automatisch in `alixdocs_audit_log` bei INSERT/UPDATE/soft-delete.
+### Etappe 1 – Matching-Engine (Kern)
+Neue Edge Function `alixdocs-smart-match` (Deno) mit gewichtetem Score-Algorithmus.
 
-**Storage**
-- Privater Bucket `alixdocs-private` (public=false).
-- Pfadschema: `tenants/{tenant_id}/customers/{customer_id}/orders/{order_id}/{document_id}/v{version}/{sanitized_filename}`
-- RLS auf `storage.objects` — Lesen/Schreiben nur über Edge Function, keine direkten Client-Uploads.
+Ablauf pro Dokument:
+1. **Dateiname-Parser** – Regex für Auftrag (`AW-\d{4}-\d+`), Rechnung, Seriennummer, Kundennummer.
+2. **OCR-Kontext** – nutzt vorhandenen `alixdocs-ai-process` Output (`ocr_text`, `extracted_entities`).
+3. **Feld-Extraktion via Gemini 2.5 Flash** – strukturierte JSON-Ausgabe:
+   ```
+   { order_no, invoice_no, serial_no, customer_no, customer_name,
+     company, email, phone, address{street,zip,city,country},
+     device_name, sku, contract_no, iban, doc_type }
+   ```
+4. **Kandidaten-Suche** in `orders`, `customers`, `lager_devices` (parallel, top-20 je Feld).
+5. **Score-Berechnung** pro Kandidat (Auftrag / Kunde / Gerät):
+   ```
+   Auftragsnummer 100 · Seriennummer 90 · Kundennummer 80
+   Email 70 · Telefon 60 · Firma 50 · Name 40
+   Anschrift 35 · Gerät 25 · Rechnungsnr 20
+   ```
+6. **Entscheidung**:
+   - `≥ 95` und Abstand zum 2. Treffer `≥ 20` → **Auto-Assign**
+   - `≥ 60` → **Suggestions** (max. 5)
+   - sonst → **Unassigned**
+
+### Etappe 2 – Persistenz & UI
+- Neue Spalten in `alixdocs_documents`: `match_score`, `match_confidence`, `match_method` (`filename`|`ocr`|`ai`|`manual`), `match_candidates` (jsonb, Vorschlagsliste).
+- Neue Tabelle `alixdocs_match_feedback` – speichert manuelle Korrekturen (Basis für Lernen).
+- Review-Seite `/dokumente/smart-review` – Liste offener Vorschläge mit Karten:
+  - Score-Balken, Top-3-Vorschläge, „Zuweisen" / „Anderes wählen" / „Später".
+- Erweiterung `AlixDocsUpload`: nach Upload zeigt Toast Score + Zielauftrag oder „Vorschläge prüfen".
+
+### Etappe 3 – Massenupload (ZIP + Bilder)
+- Upload-Komponente akzeptiert `.zip`, `.heic`, `.webp`, `.jpg`, `.png`, `.pdf`.
+- Neue Edge Function `alixdocs-bulk-ingest`: entpackt ZIP (via `jszip` npm), HEIC→JPEG (`heic-convert`), reiht jede Datei in Queue.
+- Fortschritts-UI: „300 Dokumente · 278 zugeordnet · 18 Vorschläge · 4 Fehler" mit Realtime auf `alixdocs_ai_jobs`.
+
+### Etappe 4 – Lernende KI + Admin
+- Nach jeder manuellen Zuweisung: Feedback nach `alixdocs_match_feedback`, Aggregation zu Regeln in `alixdocs_matching_rules` (Absender-Präfixe → Kategorie/Kunde).
+- Beim nächsten Import werden Regeln vor der Gemini-Analyse angewandt (+30 Bonuspunkte).
+- Admin-Seite `/admin/alixdocs/smart-config`:
+  - Score-Gewichte editieren, Auto-Assign-Schwelle, Lieferantenvorlagen, Blacklist, Dublettenregeln.
+- Dashboard-Erweiterung `/dokumente/dashboard`:
+  - Heute importiert · Auto-Match-Quote · Offene Vorschläge · OCR-Erfolg · KI-Trefferquote (7d-Trend).
+
+## Technische Details
+
+**Neue/geänderte Tabellen**
+- `alixdocs_documents`: + `match_score int`, `match_confidence text`, `match_method text`, `match_candidates jsonb`, `matched_by uuid`.
+- `alixdocs_match_feedback` (neu): `document_id`, `chosen_entity_type`, `chosen_entity_id`, `rejected_candidates jsonb`, `user_id`, `created_at`.
+- `alixdocs_matching_rules` (neu): `pattern`, `field` (filename/ocr), `target_type`, `target_id`, `weight_bonus`, `hit_count`, aktiviert-Flag.
+- `alixdocs_smart_config` (neu, single-row): Gewichte + Schwellenwerte als jsonb.
 
 **Edge Functions**
-- `alixdocs-upload` — validiert MIME + Größe (max 50 MB), sanitized Filename, erzeugt document + v1, schreibt Audit-Log.
-- `alixdocs-signed-url` — prüft Rechte + Vertraulichkeit, erzeugt Signed URL (10 min), loggt Aktion.
-- `alixdocs-delete` — Soft-Delete (Papierkorb, 30 Tage), Purge nur Super Admin.
-- `alixdocs-new-version` — hängt neue Version an, alte bleibt sichtbar.
+- `alixdocs-smart-match` – Kern-Matcher (LLM: `google/gemini-2.5-flash` via Lovable AI Gateway).
+- `alixdocs-bulk-ingest` – ZIP/HEIC-Entpacker, Queue-Runner.
+- Erweiterung `alixdocs-ai-process` – ruft nach OCR direkt Smart-Match auf.
 
 **Frontend**
-- Neuer Tab **„Dokumente"** in `OrderDetail` (und analog in RepairOrder/ProductionOrder wenn gewünscht — sag Bescheid).
-- Komponente `AlixDocsPanel`:
-  - Toolbar: Upload (Drag&Drop), Kategorie-Filter, Suche, Umschalter Liste ↔ Galerie.
-  - Listenansicht: Titel, Kategorie, Version, Uploader, Datum, Status, Vertraulichkeit, Aktionen (Öffnen / neue Version / Papierkorb).
-  - Galerieansicht: Thumbnails für Bilder, PDF-Icon für PDFs.
-  - Inline-Viewer: PDF (`<iframe>` mit Blob-URL), Bilder (Lightbox mit Zoom). Kein direkter Download-Link im DOM.
-- Nur erlaubte Formate Phase 1: PDF, JPG, JPEG, PNG, WEBP, HEIC.
-- Papierkorb-Ansicht (30 Tage) + Wiederherstellen.
+- `src/pages/AlixDocs/SmartReview.tsx` – Review-Queue.
+- `src/pages/Admin/AlixDocsSmartConfig.tsx` – Gewichte/Regeln.
+- `src/components/alixdocs/MatchScoreBar.tsx`, `CandidateCard.tsx`.
+- `src/lib/alixdocs/smartMatch.ts` – Client-Wrapper + Type-Defs.
 
-**Versionierung (Phase 2 vorgezogen)**
-- „Neue Version hochladen" statt Überschreiben, `current_version` steigt, alte Versionen aufklappbar.
-- SHA-256 Hash pro Version.
+**RLS**: alle neuen Tabellen intern (`is_internal_user()`), Admin-Config nur Admin/Super Admin.
 
----
+**Model**: `google/gemini-2.5-flash` (Chat) für Feldextraktion; Vision bereits in `alixdocs-ai-process` für OCR.
 
-### Etappe B — später (nach deiner Freigabe von A)
-
-- Freigabe-Workflow (Entwurf → Geprüft → Freigegeben) inkl. Sperre gegen Löschen freigegebener Verträge/Rechnungen.
-- Globale Dokumentensuche `/dokumente` (Kunde, Auftrag, Seriennummer, Kategorie, Zeitraum, Volltext auf Metadaten).
-- Auto-Ablage bereits generierter PDFs (Angebot, AB, Rechnung, Servicebericht, Übergabeprotokoll) → schreibt automatisch in AlixDocs.
-- E-Mail-Anhänge aus MailCenter „an Auftrag anheften".
-
-### Etappe C — AlixDocs KI
-
-- OCR (Gemini via Lovable AI), Auto-Kategorisierung, Serien-/Auftragsnummer-Erkennung, Dubletten, Zusammenfassungen, Ablauf-Warnungen.
-
----
-
-### Sicherheitsprinzipien (verbindlich)
-- Bucket **immer privat**, Zugriff nur über Signed URLs mit 10 min TTL.
-- Keine Storage-Pfade im Frontend sichtbar.
-- Jede Aktion → Audit-Log (append-only, kein UPDATE/DELETE per RLS).
-- MIME + Magic-Bytes-Check server-seitig, ausführbare Dateien blockiert.
-- Soft-Delete Standard; Hard-Delete nur Super Admin.
-- Vertraulichkeitsstufe entscheidet zusätzlich zum Rollen-Check.
-
----
-
-**Frage vor Start:** Soll AlixDocs in Etappe A nur in **`OrderDetail`** erscheinen, oder gleich auch in **Reparaturaufträgen** und **Produktionsaufträgen**? (Datenmodell unterstützt es von Anfang an — es geht nur um die UI-Tabs.)
+## Reihenfolge & Approval
+Etappen werden nacheinander gebaut, jede endet mit lauffähigem UI. Ich starte nach deinem OK mit **Etappe 1 (Matching-Engine + DB-Felder)**.
