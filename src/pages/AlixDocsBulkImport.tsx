@@ -131,6 +131,8 @@ async function findCandidates(filename: string): Promise<Candidate[]> {
   }
 
   return [...found.values()].slice(0, 8);
+}
+
 
 export default function AlixDocsBulkImport() {
   const [category, setCategory] = useState("sonstiges");
