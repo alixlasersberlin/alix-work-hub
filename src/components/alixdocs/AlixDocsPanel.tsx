@@ -122,6 +122,7 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
   const resetUploadForm = () => {
     setFile(null); setTitle(''); setCategory('sonstiges'); setConfLevel('normal');
     setDescription(''); setDocumentDate(''); setSerial(''); setChangeNote('');
+    setTagsInput('');
     setNewVersionForId(null);
   };
 
