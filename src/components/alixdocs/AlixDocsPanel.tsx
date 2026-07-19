@@ -463,6 +463,10 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
                   <label className="text-xs font-medium text-muted-foreground">Beschreibung</label>
                   <Input value={description} onChange={(e) => setDescription(e.target.value)} />
                 </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground">Tags (Komma-getrennt)</label>
+                  <Input value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} placeholder="z.B. dringend, projekt-x" />
+                </div>
               </>
             )}
             {newVersionForId && (
