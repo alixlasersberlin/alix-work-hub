@@ -45,38 +45,47 @@ async function token(c: ReturnType<typeof cfg>) {
   return j.access_token as string;
 }
 
-async function searchSource(source: SourceSystem, query: string, mode: "number" | "customer" | "auto") {
+type Entity = "salesorder" | "estimate";
+
+async function searchSource(source: SourceSystem, query: string, mode: "number" | "customer" | "auto", entity: Entity) {
   const c = cfg(source);
   if (!c.clientId || !c.refreshToken || !c.organizationId) {
-    return { source, error: "Missing Zoho credentials/organization", results: [] as any[] };
+    return { source, entity, error: "Missing Zoho credentials/organization", results: [] as any[] };
   }
   const t = await token(c);
-  const base = `${c.booksApiBaseUrl}/salesorders?organization_id=${c.organizationId}&per_page=50&sort_column=created_time&sort_order=D`;
+  const resource = entity === "estimate" ? "estimates" : "salesorders";
+  const numberField = entity === "estimate" ? "estimate_number_contains" : "salesorder_number_contains";
+  const base = `${c.booksApiBaseUrl}/${resource}?organization_id=${c.organizationId}&per_page=50&sort_column=created_time&sort_order=D`;
   const params: string[] = [];
-  const looksLikeNumber = /^\s*(so-|SO-)?\d/i.test(query);
+  const looksLikeNumber = /^\s*(so-|SO-|es-|ES-|an-|AN-)?\d/i.test(query);
   const effectiveMode = mode === "auto" ? (looksLikeNumber ? "number" : "customer") : mode;
   if (effectiveMode === "number") {
-    params.push(`salesorder_number_contains=${encodeURIComponent(query.trim())}`);
+    params.push(`${numberField}=${encodeURIComponent(query.trim())}`);
   } else {
     params.push(`customer_name_contains=${encodeURIComponent(query.trim())}`);
   }
   const url = `${base}&${params.join("&")}`;
   const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${t}` } });
   if (!res.ok) {
-    return { source, error: `Zoho search failed: ${await res.text()}`, results: [] };
+    return { source, entity, error: `Zoho search failed: ${await res.text()}`, results: [] };
   }
   const j = await res.json();
-  const rows: any[] = Array.isArray(j.salesorders) ? j.salesorders : [];
+  const rows: any[] = Array.isArray(j[resource]) ? j[resource] : [];
+  const suffix = source === "zoho_eu_2" && entity === "estimate" ? "-AT" : "";
   return {
     source,
+    entity,
     mode: effectiveMode,
     results: rows.map((r) => ({
-      salesorder_id: String(r.salesorder_id),
-      salesorder_number: String(r.salesorder_number ?? ""),
+      salesorder_id: String(entity === "estimate" ? r.estimate_id : r.salesorder_id),
+      salesorder_number: entity === "estimate"
+        ? `${String(r.estimate_number ?? "")}${suffix}`
+        : String(r.salesorder_number ?? ""),
       date: r.date,
       status: r.status,
       customer_name: r.customer_name,
       total: r.total,
+      entity,
     })),
   };
 }
