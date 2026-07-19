@@ -148,6 +148,23 @@ export default function AlixDocsSearch() {
               <Button onClick={load}>Suchen</Button>
             </div>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+            <Input className="md:col-span-2" placeholder="Kunde: Name oder Nr." value={custQ} onChange={e => setCustQ(e.target.value)}
+                   onKeyDown={e => e.key === 'Enter' && load()} />
+            <Select value={sourceFilter} onValueChange={setSourceFilter}>
+              <SelectTrigger><SelectValue placeholder="Quelle" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Quellen</SelectItem>
+                <SelectItem value="upload">Upload</SelectItem>
+                <SelectItem value="auto_pdf">Auto-Ablage</SelectItem>
+                <SelectItem value="mail_attachment">MailCenter</SelectItem>
+                <SelectItem value="signature">Signatur</SelectItem>
+                <SelectItem value="zoho">Zoho</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="md:col-span-3 text-xs text-muted-foreground flex items-center">
+              {!loading && `${docs.length} Treffer`}
+            </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
