@@ -520,8 +520,9 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       }
 
       const fileName = `Auftragsbestaetigung_${orderNo || order?.id}.pdf`;
+      const autoFile = { order_id: order?.id ?? null, customer_id: customer?.id ?? null, title: `Auftragsbestätigung ${orderNo}` };
       if (mode === 'print') {
-        const stamped = await stampedPdfBlob(doc, 'order_confirmation', orderNo || undefined);
+        const stamped = await stampedPdfBlob(doc, 'order_confirmation', orderNo || undefined, autoFile);
         const blobUrl = URL.createObjectURL(stamped);
         const win = window.open(blobUrl, '_blank');
         if (win) {
@@ -532,10 +533,10 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
         toast.success('Druckvorschau geöffnet.');
       } else if (mode === 'view') {
-        await openStampedPdf(doc, 'order_confirmation', orderNo || undefined);
+        await openStampedPdf(doc, 'order_confirmation', orderNo || undefined, autoFile);
         toast.success('Auftragsbestätigung geöffnet.');
       } else {
-        await downloadStampedPdf(doc, 'order_confirmation', fileName, orderNo || undefined);
+        await downloadStampedPdf(doc, 'order_confirmation', fileName, orderNo || undefined, autoFile);
         toast.success('Auftragsbestätigung erstellt.');
       }
     } catch (e: any) {

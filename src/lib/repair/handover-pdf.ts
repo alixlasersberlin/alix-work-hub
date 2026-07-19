@@ -164,7 +164,11 @@ export async function generateHandoverPdf(input: HandoverPdfInput): Promise<{ bl
     y,
   );
 
-  const blob = await stampedPdfBlob(doc, 'service_report', header.repair_number ?? undefined);
+  const blob = await stampedPdfBlob(doc, 'service_report', header.repair_number ?? undefined, {
+    customer_id: (header as any)?.customer_id ?? null,
+    order_id: (header as any)?.order_id ?? null,
+    title: `Übergabe ${header.repair_number ?? ''} (${input.kind === 'finance' ? 'Finance' : 'Auslieferung'})`.trim(),
+  });
   const fileName = `${input.kind === 'finance' ? 'finance' : 'delivery'}-handover-${(header.repair_number || input.repairId.slice(0, 8))}-${Date.now()}.pdf`;
   const storagePath = `${input.repairId}/handover-pdfs/${fileName}`;
 
