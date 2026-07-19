@@ -108,6 +108,7 @@ const BACKUP_TABLES = [
 // (mirror_buckets=true) direkt nach Hetzner S3 unter dem Prefix `bucket-mirror/<bucket>/`.
 const STORAGE_BUCKETS = [
   "alix-sign-pdfs",
+  "alixdocs-private",
   "bank-offers",
   "bug-capa-attachments",
   "finance-documents",
