@@ -52,14 +52,19 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   let uid: string | null = null;
   if (jwt && jwt !== serviceKey) {
-    const { data: userRes } = await supa.auth.getUser(jwt);
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: `Bearer ${jwt}` } } },
+    );
+    const { data: userRes } = await userClient.auth.getUser();
     uid = userRes?.user?.id ?? null;
     if (!uid) return json(401, { error: "unauthorized" });
-    const { data: roles } = await supa.from("user_roles").select("role").eq("user_id", uid);
-    const allowed = (roles ?? []).some((r) =>
-      ["Super Admin", "Admin"].includes(String(r.role)),
-    );
-    if (!allowed) return json(403, { error: "forbidden" });
+    const [{ data: isAdmin }, { data: isSuper }] = await Promise.all([
+      userClient.rpc("has_role", { _role: "Admin" }),
+      userClient.rpc("has_role", { _role: "Super Admin" }),
+    ]);
+    if (!isAdmin && !isSuper) return json(403, { error: "forbidden" });
   }
 
 
