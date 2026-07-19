@@ -222,7 +222,19 @@ export default function AlixDocsSmartReview() {
                             {label}
                           </div>
                           {c.hits && c.hits.length > 0 && (
-                            <div className="text-xs text-muted-foreground truncate">Treffer: {c.hits.join(", ")}</div>
+                            <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-1">
+                              {c.hits.map((h, hi) => {
+                                if (typeof h === "string" && h.startsWith("rule:")) {
+                                  const r = ruleLabels[h.slice(5)];
+                                  return (
+                                    <Badge key={hi} variant="outline" className="text-[10px] bg-violet-500/10 text-violet-600 border-violet-500/30">
+                                      🧠 {r ? `${r.pattern} (+${r.bonus})` : "Gelernte Regel"}
+                                    </Badge>
+                                  );
+                                }
+                                return <Badge key={hi} variant="outline" className="text-[10px]">{String(h)}</Badge>;
+                              })}
+                            </div>
                           )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
