@@ -157,12 +157,26 @@ export default function AuftraegeGesucht() {
         body: { sources: ["zoho_eu_1", "zoho_eu_2"], import: doImport },
       });
       if (error) throw error;
-      const totalMissing = (data?.results ?? []).reduce((s: number, r: any) => s + (r.missing_count ?? 0), 0);
-      const totalImported = (data?.results ?? []).reduce((s: number, r: any) => s + (r.imported ?? 0), 0);
-      toast({
-        title: doImport ? `${totalImported} importiert` : `${totalMissing} fehlende gefunden`,
-        description: "Liste aktualisiert.",
-      });
+      if (data?.background) {
+        toast({
+          title: doImport ? "Bulk-Import gestartet" : "Abgleich gestartet",
+          description: "Läuft im Hintergrund – die Liste aktualisiert sich automatisch.",
+        });
+        // Poll every 10s for 5 minutes to reflect progress in the UI
+        let ticks = 0;
+        const iv = setInterval(async () => {
+          ticks += 1;
+          await load();
+          if (ticks >= 30) clearInterval(iv);
+        }, 10000);
+      } else {
+        const totalMissing = (data?.results ?? []).reduce((s: number, r: any) => s + (r.missing_count ?? 0), 0);
+        const totalImported = (data?.results ?? []).reduce((s: number, r: any) => s + (r.imported ?? 0), 0);
+        toast({
+          title: doImport ? `${totalImported} importiert` : `${totalMissing} fehlende gefunden`,
+          description: "Liste aktualisiert.",
+        });
+      }
       await load();
     } catch (e: any) {
       toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
