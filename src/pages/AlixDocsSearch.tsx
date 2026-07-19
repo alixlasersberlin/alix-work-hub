@@ -37,6 +37,9 @@ type Order = { id: string; order_number: string | null; customer_id: string | nu
 type Customer = { id: string; name: string | null; customer_number: string | null };
 
 export default function AlixDocsSearch() {
+  const { roles } = useAuth();
+  const canDelete = roles.includes('Super Admin') || roles.includes('Admin');
+
   const [docs, setDocs] = useState<Doc[]>([]);
   const [cats, setCats] = useState<Cat[]>([]);
   const [orders, setOrders] = useState<Record<string, Order>>({});
