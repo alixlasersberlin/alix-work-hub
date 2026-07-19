@@ -66,7 +66,7 @@ export default function ZohoAbgleich() {
     <div className="container mx-auto p-6 space-y-6">
       <PageHeader
         title="Zoho ⇄ AlixWork Auftrags-Abgleich"
-        description="Prüft alle Aufträge in Zoho (Deutschland & Österreich) und importiert fehlende in AlixWork."
+        subtitle="Prüft alle Aufträge in Zoho (Deutschland & Österreich) und importiert fehlende in AlixWork."
       />
 
       <Card>
