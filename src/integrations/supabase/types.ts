@@ -1222,6 +1222,101 @@ export type Database = {
           },
         ]
       }
+      alixdocs_approval_chains: {
+        Row: {
+          active: boolean
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          steps: Json
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          steps?: Json
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          steps?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs_approval_chains_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs_approval_states: {
+        Row: {
+          chain_id: string | null
+          created_at: string
+          created_by: string | null
+          current_approver: string | null
+          current_step: number
+          document_id: string
+          history: Json
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          chain_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_approver?: string | null
+          current_step?: number
+          document_id: string
+          history?: Json
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          chain_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_approver?: string | null
+          current_step?: number
+          document_id?: string
+          history?: Json
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs_approval_states_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_approval_chains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixdocs_approval_states_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixdocs_audit_log: {
         Row: {
           action: string
@@ -1268,27 +1363,36 @@ export type Database = {
           code: string
           created_at: string
           description: string | null
+          hard_delete_allowed: boolean
           id: string
           is_system: boolean
           name: string
+          requires_approval: boolean
+          retention_years: number | null
           sort_order: number
         }
         Insert: {
           code: string
           created_at?: string
           description?: string | null
+          hard_delete_allowed?: boolean
           id?: string
           is_system?: boolean
           name: string
+          requires_approval?: boolean
+          retention_years?: number | null
           sort_order?: number
         }
         Update: {
           code?: string
           created_at?: string
           description?: string | null
+          hard_delete_allowed?: boolean
           id?: string
           is_system?: boolean
           name?: string
+          requires_approval?: boolean
+          retention_years?: number | null
           sort_order?: number
         }
         Relationships: []
@@ -1319,13 +1423,16 @@ export type Database = {
           expiry_warning_days: number
           file_size: number
           id: string
+          legal_hold: boolean
           mime_type: string
           ocr_status: string
           ocr_text: string | null
           order_id: string | null
           original_filename: string | null
           purge_after: string | null
+          retention_until: string | null
           serial_number: string | null
+          signed_via_sig_request: string | null
           source: string
           status: string
           tenant_id: string | null
@@ -1360,13 +1467,16 @@ export type Database = {
           expiry_warning_days?: number
           file_size?: number
           id?: string
+          legal_hold?: boolean
           mime_type: string
           ocr_status?: string
           ocr_text?: string | null
           order_id?: string | null
           original_filename?: string | null
           purge_after?: string | null
+          retention_until?: string | null
           serial_number?: string | null
+          signed_via_sig_request?: string | null
           source?: string
           status?: string
           tenant_id?: string | null
@@ -1401,13 +1511,16 @@ export type Database = {
           expiry_warning_days?: number
           file_size?: number
           id?: string
+          legal_hold?: boolean
           mime_type?: string
           ocr_status?: string
           ocr_text?: string | null
           order_id?: string | null
           original_filename?: string | null
           purge_after?: string | null
+          retention_until?: string | null
           serial_number?: string | null
+          signed_via_sig_request?: string | null
           source?: string
           status?: string
           tenant_id?: string | null
@@ -1451,6 +1564,56 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs_portal_shares: {
+        Row: {
+          created_at: string
+          customer_id: string
+          document_id: string
+          download_count: number
+          expires_at: string | null
+          id: string
+          last_accessed_at: string | null
+          note: string | null
+          revoked_at: string | null
+          shared_at: string
+          shared_by: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          document_id: string
+          download_count?: number
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          note?: string | null
+          revoked_at?: string | null
+          shared_at?: string
+          shared_by: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          document_id?: string
+          download_count?: number
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          note?: string | null
+          revoked_at?: string | null
+          shared_at?: string
+          shared_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs_portal_shares_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
             referencedColumns: ["id"]
           },
         ]
@@ -21283,6 +21446,7 @@ export type Database = {
       }
       sig_requests: {
         Row: {
+          alixdocs_document_id: string | null
           channel: Database["public"]["Enums"]["sig_channel"]
           completed_at: string | null
           created_at: string
@@ -21298,6 +21462,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          alixdocs_document_id?: string | null
           channel?: Database["public"]["Enums"]["sig_channel"]
           completed_at?: string | null
           created_at?: string
@@ -21313,6 +21478,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          alixdocs_document_id?: string | null
           channel?: Database["public"]["Enums"]["sig_channel"]
           completed_at?: string | null
           created_at?: string
@@ -21328,6 +21494,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sig_requests_alixdocs_document_id_fkey"
+            columns: ["alixdocs_document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sig_requests_document_id_fkey"
             columns: ["document_id"]
