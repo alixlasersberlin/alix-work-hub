@@ -1400,6 +1400,57 @@ export type Database = {
         }
         Relationships: []
       }
+      alixdocs_document_links: {
+        Row: {
+          confidence: number
+          created_at: string
+          created_by: string | null
+          from_doc_id: string
+          id: string
+          link_type: string
+          note: string | null
+          source: string
+          to_doc_id: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          created_by?: string | null
+          from_doc_id: string
+          id?: string
+          link_type?: string
+          note?: string | null
+          source?: string
+          to_doc_id: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          created_by?: string | null
+          from_doc_id?: string
+          id?: string
+          link_type?: string
+          note?: string | null
+          source?: string
+          to_doc_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs_document_links_from_doc_id_fkey"
+            columns: ["from_doc_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixdocs_document_links_to_doc_id_fkey"
+            columns: ["to_doc_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixdocs_documents: {
         Row: {
           ai_category_suggestion: string | null
@@ -1417,6 +1468,7 @@ export type Database = {
           created_at: string
           current_version: number
           customer_id: string | null
+          dedupe_ignored: boolean
           deleted_at: string | null
           description: string | null
           device_id: string | null
@@ -1468,6 +1520,7 @@ export type Database = {
           created_at?: string
           current_version?: number
           customer_id?: string | null
+          dedupe_ignored?: boolean
           deleted_at?: string | null
           description?: string | null
           device_id?: string | null
@@ -1519,6 +1572,7 @@ export type Database = {
           created_at?: string
           current_version?: number
           customer_id?: string | null
+          dedupe_ignored?: boolean
           deleted_at?: string | null
           description?: string | null
           device_id?: string | null
