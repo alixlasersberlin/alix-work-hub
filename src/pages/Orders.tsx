@@ -94,6 +94,9 @@ export default function Orders() {
     atOnly ? 'at' : (initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all')
   );
   const [depositFilter, setDepositFilter] = useState<'all' | 'partial'>('all');
+  const [newImportFilter, setNewImportFilter] = useState<'all' | 'new'>(
+    (searchParams.get('filter') === 'new-import' ? 'new' : 'all')
+  );
   const [sortField, setSortField] = useState<SortField>('order_date');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [loading, setLoading] = useState(true);
