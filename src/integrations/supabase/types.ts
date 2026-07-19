@@ -1169,6 +1169,234 @@ export type Database = {
           },
         ]
       }
+      alixdocs_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          document_id: string | null
+          id: string
+          ip: unknown
+          metadata: Json
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          ip?: unknown
+          metadata?: Json
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          ip?: unknown
+          metadata?: Json
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs_audit_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs_categories: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_system: boolean
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      alixdocs_documents: {
+        Row: {
+          archived_at: string | null
+          category_id: string | null
+          confidentiality_level: string
+          created_at: string
+          current_version: number
+          customer_id: string | null
+          deleted_at: string | null
+          description: string | null
+          device_id: string | null
+          document_date: string | null
+          file_size: number
+          id: string
+          mime_type: string
+          order_id: string | null
+          original_filename: string | null
+          purge_after: string | null
+          serial_number: string | null
+          status: string
+          tenant_id: string | null
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          category_id?: string | null
+          confidentiality_level?: string
+          created_at?: string
+          current_version?: number
+          customer_id?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          device_id?: string | null
+          document_date?: string | null
+          file_size?: number
+          id?: string
+          mime_type: string
+          order_id?: string | null
+          original_filename?: string | null
+          purge_after?: string | null
+          serial_number?: string | null
+          status?: string
+          tenant_id?: string | null
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          category_id?: string | null
+          confidentiality_level?: string
+          created_at?: string
+          current_version?: number
+          customer_id?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          device_id?: string | null
+          document_date?: string | null
+          file_size?: number
+          id?: string
+          mime_type?: string
+          order_id?: string | null
+          original_filename?: string | null
+          purge_after?: string | null
+          serial_number?: string | null
+          status?: string
+          tenant_id?: string | null
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs_documents_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixdocs_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixdocs_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "alixdocs_documents_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs_versions: {
+        Row: {
+          change_note: string | null
+          created_at: string
+          document_id: string
+          file_hash: string | null
+          file_size: number
+          id: string
+          mime_type: string
+          original_filename: string | null
+          storage_bucket: string
+          storage_path: string
+          uploaded_by: string | null
+          version_number: number
+        }
+        Insert: {
+          change_note?: string | null
+          created_at?: string
+          document_id: string
+          file_hash?: string | null
+          file_size?: number
+          id?: string
+          mime_type: string
+          original_filename?: string | null
+          storage_bucket?: string
+          storage_path: string
+          uploaded_by?: string | null
+          version_number: number
+        }
+        Update: {
+          change_note?: string | null
+          created_at?: string
+          document_id?: string
+          file_hash?: string | null
+          file_size?: number
+          id?: string
+          mime_type?: string
+          original_filename?: string | null
+          storage_bucket?: string
+          storage_path?: string
+          uploaded_by?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixsmart_customer_links: {
         Row: {
           alixsmart_email: string | null
