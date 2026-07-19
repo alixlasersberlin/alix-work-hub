@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, RefreshCw, Download, Search, ExternalLink, Trash2 } from "lucide-react";
+import { Loader2, RefreshCw, Download, Search, ExternalLink, Trash2, Mail } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 type Row = {
@@ -174,6 +174,33 @@ export default function AuftraegeGesucht() {
             <CardDescription>Automatisch befüllt durch den Zoho-Abgleich.</CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={async () => {
+              try {
+                const { error } = await supabase.functions.invoke("send-transactional-email", {
+                  body: {
+                    templateName: "orders-missing-alert",
+                    recipientEmail: "rde@alix-lasers.com",
+                    skipDefaultCopies: true,
+                    idempotencyKey: `orders-missing-test-${Date.now()}`,
+                    templateData: {
+                      count: 2,
+                      testMode: true,
+                      portalUrl: "https://app.alixwork.de/auftraege/gesucht",
+                      orders: [
+                        { order_number: "SO-3540", customer_name: "Skin Master", zoho_date: "2024-12-04", source_system: "zoho_eu_1", zoho_status: "confirmed" },
+                        { order_number: "SO-3658", customer_name: "Blueice", zoho_date: "2025-04-28", source_system: "zoho_eu_1", zoho_status: "confirmed" },
+                      ],
+                    },
+                  },
+                });
+                if (error) throw error;
+                toast({ title: "Test-Mail gesendet", description: "an rde@alix-lasers.com" });
+              } catch (e: any) {
+                toast({ title: "Test-Mail Fehler", description: e?.message ?? String(e), variant: "destructive" });
+              }
+            }}>
+              <Mail className="h-4 w-4 mr-2" /> Test-Mail
+            </Button>
             <Button variant="outline" onClick={() => runReconcile(false)} disabled={running !== null}>
               {running === "scan" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
               Jetzt prüfen
@@ -183,6 +210,7 @@ export default function AuftraegeGesucht() {
               Alle fehlenden importieren
             </Button>
           </div>
+
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
