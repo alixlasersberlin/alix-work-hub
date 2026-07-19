@@ -25878,6 +25878,16 @@ export type Database = {
         }[]
       }
       alixdocs_can_manage_status: { Args: never; Returns: boolean }
+      alixdocs_fts_search: {
+        Args: { _limit?: number; _query: string }
+        Returns: {
+          id: string
+          original_filename: string
+          rank: number
+          snippet: string
+          title: string
+        }[]
+      }
       alixdocs_is_protected_category: {
         Args: { _cat_id: string }
         Returns: boolean
