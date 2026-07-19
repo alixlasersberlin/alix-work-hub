@@ -86,28 +86,47 @@ export default function ZohoAbgleich() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <PageHeader
-        title="Zoho ⇄ AlixWork Auftrags-Abgleich"
-        subtitle="Prüft alle Aufträge in Zoho (Deutschland & Österreich) und importiert fehlende in AlixWork."
+        title="Zoho ⇄ AlixWork Abgleich"
+        subtitle="Prüft Aufträge und Angebote in Zoho (Deutschland & Österreich) und importiert fehlende in AlixWork."
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Quellen wählen</CardTitle>
-          <CardDescription>Beide Mandanten sind standardmäßig aktiv.</CardDescription>
+          <CardTitle>Quellen & Import-Typ wählen</CardTitle>
+          <CardDescription>Beide Mandanten aktiv, Aufträge standardmäßig. Angebote optional zuschalten.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            {SOURCES.map((s) => (
-              <label key={s.key} className="flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selected[s.key]}
-                  onChange={(e) => setSelected((prev) => ({ ...prev, [s.key]: e.target.checked }))}
-                />
-                <span>{s.flag} {s.label}</span>
-                <Badge variant="outline" className="ml-2">{s.key}</Badge>
-              </label>
-            ))}
+          <div>
+            <div className="text-sm font-medium mb-2 text-muted-foreground">Mandanten</div>
+            <div className="flex flex-wrap gap-3">
+              {SOURCES.map((s) => (
+                <label key={s.key} className="flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selected[s.key]}
+                    onChange={(e) => setSelected((prev) => ({ ...prev, [s.key]: e.target.checked }))}
+                  />
+                  <span>{s.flag} {s.label}</span>
+                  <Badge variant="outline" className="ml-2">{s.key}</Badge>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-sm font-medium mb-2 text-muted-foreground">Import-Typ</div>
+            <div className="flex flex-wrap gap-3">
+              {ENTITIES.map((e) => (
+                <label key={e.key} className="flex items-center gap-2 rounded-md border px-3 py-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={entitySel[e.key]}
+                    onChange={(ev) => setEntitySel((prev) => ({ ...prev, [e.key]: ev.target.checked }))}
+                  />
+                  <span>{e.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-3 pt-2">
@@ -128,11 +147,13 @@ export default function ZohoAbgleich() {
 
       {results?.map((r) => {
         const src = SOURCES.find((s) => s.key === r.source);
+        const ent = ENTITIES.find((e) => e.key === r.entity);
         return (
-          <Card key={r.source}>
+          <Card key={`${r.entity}-${r.source}`}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {src?.flag} {src?.label}
+                <Badge variant="secondary" className="ml-1">{ent?.label}</Badge>
                 {r.error ? (
                   <Badge variant="destructive" className="ml-2"><AlertTriangle className="h-3 w-3 mr-1" />Fehler</Badge>
                 ) : (r.missing_count ?? 0) === 0 ? (
