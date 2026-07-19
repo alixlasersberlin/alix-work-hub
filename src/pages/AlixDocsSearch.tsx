@@ -310,8 +310,8 @@ export default function AlixDocsSearch() {
 
       // 2) Kunde
       const { data: cs } = await supabase.from('customers')
-        .select('id, name, customer_number')
-        .or(`name.ilike.${like},customer_number.ilike.${like}`).limit(50);
+        .select('id, company_name, contact_name, external_customer_id')
+        .or(`company_name.ilike.${like},contact_name.ilike.${like},external_customer_id.ilike.${like}`).limit(50);
       const cIds = (cs ?? []).map((c: any) => c.id);
       if (cIds.length) {
         const { data: byCust } = await supabase.from('orders')
