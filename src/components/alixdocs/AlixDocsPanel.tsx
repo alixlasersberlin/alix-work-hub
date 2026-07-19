@@ -293,9 +293,15 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       {isImage(d.mime_type) ? <ImageIcon className="w-4 h-4 text-blue-400" /> : <FileText className="w-4 h-4 text-primary" />}
-                      <div>
-                        <div className="font-medium">{d.title}</div>
+                      <div className="min-w-0">
+                        <div className="font-medium flex items-center gap-2">
+                          {d.title}
+                          {d.duplicate_of && <Badge variant="outline" className="text-amber-400 border-amber-500/40">Dublette</Badge>}
+                          {d.expiry_date && <Badge variant="outline" className="text-red-400 border-red-500/40">läuft ab {d.expiry_date}</Badge>}
+                          {d.ocr_status === 'pending' && <Badge variant="outline" className="text-muted-foreground"><Loader2 className="w-3 h-3 mr-1 animate-spin" />KI …</Badge>}
+                        </div>
                         {d.original_filename && <div className="text-xs text-muted-foreground font-mono">{d.original_filename}</div>}
+                        {d.ai_summary && <div className="text-xs text-muted-foreground italic mt-1 line-clamp-2 max-w-lg">💡 {d.ai_summary}</div>}
                       </div>
                     </div>
                   </td>
@@ -311,7 +317,9 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber }: Prop
                     ) : (
                       <div className="flex justify-end gap-1">
                         <Button size="sm" variant="ghost" onClick={() => openPreview(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => analyze(d)} title="KI-Analyse"><Sparkles className="w-4 h-4 text-primary" /></Button>
                         <Button size="sm" variant="ghost" onClick={() => openUpload(d.id)} title="Neue Version"><Plus className="w-4 h-4" /></Button>
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button size="sm" variant="ghost" title="Status"><CheckCircle2 className="w-4 h-4" /></Button>
