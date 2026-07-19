@@ -301,6 +301,7 @@ const AlixDocsDashboardPage = lazy(() => import("./pages/AlixDocsDashboard"));
 const AlixDocsSharePublic = lazy(() => import("./pages/AlixDocsSharePublic"));
 const CustomerPortalAlixDocs = lazy(() => import("./pages/CustomerPortal/AlixDocs"));
 const AlixDocsSmartReview = lazy(() => import("./pages/AlixDocsSmartReview"));
+const AlixDocsBulkImport = lazy(() => import("./pages/AlixDocsBulkImport"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
