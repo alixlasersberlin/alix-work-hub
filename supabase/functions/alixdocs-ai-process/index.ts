@@ -139,6 +139,12 @@ Deno.serve(async (req) => {
     const serial_numbers: string[] = Array.isArray(parsed.serial_numbers) ? parsed.serial_numbers.filter((x: any) => typeof x === 'string').slice(0, 20) : [];
     const order_numbers: string[] = Array.isArray(parsed.order_numbers) ? parsed.order_numbers.filter((x: any) => typeof x === 'string').slice(0, 20) : [];
     const expiry_date: string | null = typeof parsed.expiry_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parsed.expiry_date) ? parsed.expiry_date : null;
+    const ai_tags: string[] = Array.isArray(parsed.tags)
+      ? parsed.tags.filter((x: any) => typeof x === 'string')
+        .map((x: string) => x.toLowerCase().replace(/[^a-z0-9äöüß\- ]/g, '').trim().replace(/\s+/g, '-'))
+        .filter((x: string) => x.length >= 2 && x.length <= 32)
+        .slice(0, 8)
+      : [];
 
     // Try to link order_id via first matched order_number
     let matchedOrderId: string | null = null;
