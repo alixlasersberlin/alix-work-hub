@@ -103,7 +103,7 @@ export default function AlixDocsSearch() {
     }
     if (custQ.trim()) {
       const { data: cs } = await supabase.from('customers')
-        .select('id').or(`name.ilike.%${custQ}%,customer_number.ilike.%${custQ}%`).limit(100);
+        .select('id').or(`company_name.ilike.%${custQ}%,contact_name.ilike.%${custQ}%,external_customer_id.ilike.%${custQ}%`).limit(100);
       const ids = (cs ?? []).map((c: any) => c.id);
       if (ids.length === 0) { setDocs([]); setLoading(false); return; }
       query = query.in('customer_id', ids);
