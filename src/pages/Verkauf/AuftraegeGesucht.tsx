@@ -33,6 +33,17 @@ const SOURCE_LABEL: Record<string, string> = {
   zoho_eu_2: "🇦🇹 Alix Austria",
 };
 
+type ZohoHit = {
+  salesorder_id: string;
+  salesorder_number: string;
+  date?: string;
+  status?: string;
+  customer_name?: string;
+  total?: number;
+  exists_local?: boolean;
+};
+type SearchGroup = { source: string; mode?: string; error?: string; results: ZohoHit[] };
+
 export default function AuftraegeGesucht() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,6 +52,62 @@ export default function AuftraegeGesucht() {
   const [status, setStatus] = useState<string>("pending");
   const [source, setSource] = useState<string>("all");
   const [q, setQ] = useState("");
+
+  // Zoho manual search
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchMode, setSearchMode] = useState<"auto" | "number" | "customer">("auto");
+  const [searchSource, setSearchSource] = useState<"all" | "zoho_eu_1" | "zoho_eu_2">("all");
+  const [searching, setSearching] = useState(false);
+  const [searchGroups, setSearchGroups] = useState<SearchGroup[] | null>(null);
+  const [importingHit, setImportingHit] = useState<string | null>(null);
+
+  async function runZohoSearch() {
+    const term = searchTerm.trim();
+    if (term.length < 2) {
+      toast({ title: "Bitte mindestens 2 Zeichen eingeben", variant: "destructive" });
+      return;
+    }
+    setSearching(true);
+    setSearchGroups(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("zoho-orders-search", {
+        body: {
+          query: term,
+          mode: searchMode,
+          sources: searchSource === "all" ? ["zoho_eu_1", "zoho_eu_2"] : [searchSource],
+        },
+      });
+      if (error) throw error;
+      const groups = (data?.results ?? []) as SearchGroup[];
+      setSearchGroups(groups);
+      const total = groups.reduce((s, g) => s + (g.results?.length ?? 0), 0);
+      toast({ title: `${total} Treffer in Zoho`, description: total === 0 ? "Keine passenden Aufträge gefunden." : undefined });
+    } catch (e: any) {
+      toast({ title: "Suche fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  async function importZohoHit(source_system: string, hit: ZohoHit) {
+    setImportingHit(hit.salesorder_id);
+    try {
+      const { error } = await supabase.functions.invoke("sync-single-order", {
+        body: { source_system, external_order_id: hit.salesorder_id },
+      });
+      if (error) throw error;
+      toast({ title: "Import erfolgreich", description: hit.salesorder_number || hit.salesorder_id });
+      // mark local
+      setSearchGroups((prev) => prev?.map((g) => g.source === source_system
+        ? { ...g, results: g.results.map((r) => r.salesorder_id === hit.salesorder_id ? { ...r, exists_local: true } : r) }
+        : g) ?? null);
+      await load();
+    } catch (e: any) {
+      toast({ title: "Import fehlgeschlagen", description: e?.message ?? String(e), variant: "destructive" });
+    } finally {
+      setImportingHit(null);
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -166,6 +233,112 @@ export default function AuftraegeGesucht() {
           </Card>
         ))}
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Zoho manuell suchen</CardTitle>
+          <CardDescription>
+            Gezielte Suche in beiden Zoho-Mandanten nach Auftragsnummer (z. B. <span className="font-mono">SO-3540</span>) oder Kundenname. Treffer können direkt importiert werden.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-[220px] max-w-md">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pl-8"
+                placeholder="Auftragsnr. oder Kundenname…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") runZohoSearch(); }}
+              />
+            </div>
+            <Select value={searchMode} onValueChange={(v) => setSearchMode(v as any)}>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto erkennen</SelectItem>
+                <SelectItem value="number">Auftragsnummer</SelectItem>
+                <SelectItem value="customer">Kundenname</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={searchSource} onValueChange={(v) => setSearchSource(v as any)}>
+              <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Beide Mandanten</SelectItem>
+                <SelectItem value="zoho_eu_1">🇩🇪 Alix Deutschland</SelectItem>
+                <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={runZohoSearch} disabled={searching}>
+              {searching ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+              In Zoho suchen
+            </Button>
+          </div>
+
+          {searchGroups && (
+            <div className="space-y-4">
+              {searchGroups.map((g) => (
+                <div key={g.source} className="rounded-md border">
+                  <div className="flex items-center justify-between px-3 py-2 bg-muted/30 border-b">
+                    <div className="text-sm font-medium">{SOURCE_LABEL[g.source] ?? g.source}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {g.error ? <span className="text-red-500">{g.error}</span> : `${g.results.length} Treffer`}
+                    </div>
+                  </div>
+                  {g.results.length > 0 && (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Auftragsnr.</TableHead>
+                          <TableHead>Kunde</TableHead>
+                          <TableHead>Datum</TableHead>
+                          <TableHead>Zoho-Status</TableHead>
+                          <TableHead className="text-right">Betrag</TableHead>
+                          <TableHead className="text-right">Aktion</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {g.results.map((h) => (
+                          <TableRow key={h.salesorder_id}>
+                            <TableCell className="font-mono text-xs">
+                              <div className="font-medium">{h.salesorder_number || "—"}</div>
+                              <div className="text-muted-foreground">{h.salesorder_id}</div>
+                            </TableCell>
+                            <TableCell>{h.customer_name ?? "—"}</TableCell>
+                            <TableCell>{h.date ?? "—"}</TableCell>
+                            <TableCell>{h.status ?? "—"}</TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {typeof h.total === "number" ? h.total.toLocaleString("de-DE", { style: "currency", currency: "EUR" }) : "—"}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {h.exists_local ? (
+                                <Badge variant="outline" className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30">
+                                  bereits in AlixWork
+                                </Badge>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  onClick={() => importZohoHit(g.source, h)}
+                                  disabled={importingHit === h.salesorder_id}
+                                >
+                                  {importingHit === h.salesorder_id
+                                    ? <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                    : <Download className="h-3 w-3 mr-1" />}
+                                  Importieren
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
