@@ -574,6 +574,14 @@ export default function AuftraegeGesucht() {
                 <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={searchEntity} onValueChange={(v) => setSearchEntity(v as any)}>
+              <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="salesorder">Aufträge</SelectItem>
+                <SelectItem value="estimate">Angebote</SelectItem>
+                <SelectItem value="both">Aufträge + Angebote</SelectItem>
+              </SelectContent>
+            </Select>
             <Button onClick={runZohoSearch} disabled={searching}>
               {searching ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
               In Zoho suchen
