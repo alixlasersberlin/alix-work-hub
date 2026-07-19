@@ -318,7 +318,7 @@ export default function AuftraegeGesucht() {
                                 <Badge variant="outline" className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30">
                                   bereits in AlixWork
                                 </Badge>
-                              ) : (
+                              ) : canImport ? (
                                 <Button
                                   size="sm"
                                   onClick={() => importZohoHit(g.source, h)}
@@ -329,6 +329,8 @@ export default function AuftraegeGesucht() {
                                     : <Download className="h-3 w-3 mr-1" />}
                                   Importieren
                                 </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">nur Admin</span>
                               )}
                             </TableCell>
                           </TableRow>
