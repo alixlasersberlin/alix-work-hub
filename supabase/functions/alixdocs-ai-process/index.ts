@@ -89,7 +89,8 @@ Deno.serve(async (req) => {
   "category_code": "einer von: ${CATEGORY_CODES.join(', ')}",
   "serial_numbers": ["z.B. AL-2024-1234"],
   "order_numbers": ["Auftragsnummer, Angebotsnummer, Rechnungsnummer wie SO-1234, AB-2024-001, INV-…"],
-  "expiry_date": "YYYY-MM-DD oder null (Ablauf/Garantie/Vertragsende)"
+  "expiry_date": "YYYY-MM-DD oder null (Ablauf/Garantie/Vertragsende)",
+  "tags": ["3-6 knappe deutsche Schlagworte, kleingeschrieben, ohne Sonderzeichen"]
 }`;
 
     const content: any[] = [
