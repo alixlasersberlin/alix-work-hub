@@ -226,12 +226,16 @@ async function processSource(
         const r = await importOne(source, m.salesorder_id);
         if (r.ok) {
           result.imported += 1;
+          const now = new Date().toISOString();
           await supabase.from("orders_missing").update({
             import_status: "imported",
-            imported_at: new Date().toISOString(),
-            resolved_at: new Date().toISOString(),
+            imported_at: now,
+            resolved_at: now,
             import_error: null,
           }).eq("source_system", source).eq("external_order_id", m.salesorder_id);
+          // Mark the freshly imported order so it shows up as "NEU Import"
+          await supabase.from("orders").update({ imported_via_reconcile_at: now })
+            .eq("source_system", source).eq("external_order_id", m.salesorder_id);
         } else {
           result.failed += 1;
           const msg = (r.body as any)?.message || (r.body as any)?.error || `HTTP ${r.status}`;
