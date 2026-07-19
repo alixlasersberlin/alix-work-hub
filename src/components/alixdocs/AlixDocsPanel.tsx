@@ -265,14 +265,29 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
   };
 
   return (
-    <div className="space-y-4">
+    <div
+      className={`space-y-4 relative rounded-lg transition-colors ${isDragOver ? 'ring-2 ring-primary/60 bg-primary/5' : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragOver && (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-primary/10 border-2 border-dashed border-primary rounded-lg">
+          <div className="text-center">
+            <Upload className="w-10 h-10 text-primary mx-auto mb-2" />
+            <p className="font-medium">Datei hier ablegen zum Hochladen</p>
+          </div>
+        </div>
+      )}
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-2 mr-auto">
           <Files className="w-5 h-5 text-primary" />
           <div>
             <h2 className="text-lg font-semibold">AlixDocs — Dokumente</h2>
-            <p className="text-xs text-muted-foreground">Auftrag {orderNumber ?? ''} · privat · max {MAX_MB} MB · PDF/JPG/PNG/WEBP/HEIC</p>
+            <p className="text-xs text-muted-foreground">
+              {effectiveScope === 'order' ? `Auftrag ${orderNumber ?? ''}` : 'Kunde'} · privat · max {MAX_MB} MB · PDF/JPG/PNG/WEBP/HEIC · Drag & Drop
+            </p>
           </div>
         </div>
         <div className="relative">
