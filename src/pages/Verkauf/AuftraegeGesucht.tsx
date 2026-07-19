@@ -150,6 +150,7 @@ export default function AuftraegeGesucht() {
   }, [rows]);
 
   async function runReconcile(doImport: boolean) {
+    if (doImport && !canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setRunning(doImport ? "import" : "scan");
     try {
       const { data, error } = await supabase.functions.invoke("zoho-orders-reconcile", {
