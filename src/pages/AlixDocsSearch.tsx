@@ -47,7 +47,7 @@ export default function AlixDocsSearch() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [catFilter, setCatFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('entwurf');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [custQ, setCustQ] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -413,6 +413,36 @@ export default function AlixDocsSearch() {
           <CardTitle className="flex items-center gap-2"><Files className="w-5 h-5" /> AlixDocs — Globale Dokumentensuche</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="inline-flex items-center rounded-lg border border-border bg-secondary p-0.5">
+            <Button
+              type="button"
+              size="sm"
+              variant={statusFilter === 'entwurf' ? 'default' : 'ghost'}
+              className="h-8 px-4"
+              onClick={() => setStatusFilter('entwurf')}
+            >
+              Entwurf
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={statusFilter === 'freigegeben' ? 'default' : 'ghost'}
+              className="h-8 px-4"
+              onClick={() => setStatusFilter('freigegeben')}
+            >
+              Freigegeben
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={statusFilter === 'all' ? 'default' : 'ghost'}
+              className="h-8 px-3"
+              onClick={() => setStatusFilter('all')}
+            >
+              Alle
+            </Button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
             <div className="md:col-span-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
