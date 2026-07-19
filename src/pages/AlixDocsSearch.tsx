@@ -40,6 +40,8 @@ export default function AlixDocsSearch() {
   const [q, setQ] = useState('');
   const [catFilter, setCatFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
+  const [custQ, setCustQ] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -56,8 +58,16 @@ export default function AlixDocsSearch() {
       if (cat) query = query.eq('category_id', cat.id);
     }
     if (statusFilter !== 'all') query = query.eq('status', statusFilter);
+    if (sourceFilter !== 'all') query = query.eq('source', sourceFilter);
     if (dateFrom) query = query.gte('created_at', dateFrom);
     if (dateTo) query = query.lte('created_at', dateTo + 'T23:59:59');
+    if (custQ.trim()) {
+      const { data: cs } = await supabase.from('customers')
+        .select('id').or(`name.ilike.%${custQ}%,customer_number.ilike.%${custQ}%`).limit(100);
+      const ids = (cs ?? []).map((c: any) => c.id);
+      if (ids.length === 0) { setDocs([]); setLoading(false); return; }
+      query = query.in('customer_id', ids);
+    }
     if (q) {
       const s = `%${q}%`;
       query = query.or(`title.ilike.${s},description.ilike.${s},original_filename.ilike.${s},serial_number.ilike.${s},ocr_text.ilike.${s},ai_summary.ilike.${s}`);
@@ -85,7 +95,7 @@ export default function AlixDocsSearch() {
   useEffect(() => {
     supabase.from('alixdocs_categories').select('id, code, name').order('sort_order').then(({ data }) => setCats((data ?? []) as Cat[]));
   }, []);
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [catFilter, statusFilter, dateFrom, dateTo]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [catFilter, statusFilter, sourceFilter, dateFrom, dateTo]);
 
   const catMap = useMemo(() => Object.fromEntries(cats.map(c => [c.id, c])), [cats]);
 
