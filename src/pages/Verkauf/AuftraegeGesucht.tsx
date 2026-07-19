@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, RefreshCw, Download, Search, ExternalLink, Trash2, Mail } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 type Row = {
   id: string;
@@ -45,6 +46,8 @@ type ZohoHit = {
 type SearchGroup = { source: string; mode?: string; error?: string; results: ZohoHit[] };
 
 export default function AuftraegeGesucht() {
+  const { hasRole } = useAuth();
+  const canImport = hasRole("Super Admin") || hasRole("Admin");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -90,6 +93,7 @@ export default function AuftraegeGesucht() {
   }
 
   async function importZohoHit(source_system: string, hit: ZohoHit) {
+    if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setImportingHit(hit.salesorder_id);
     try {
       const { error } = await supabase.functions.invoke("sync-single-order", {
@@ -146,6 +150,7 @@ export default function AuftraegeGesucht() {
   }, [rows]);
 
   async function runReconcile(doImport: boolean) {
+    if (doImport && !canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setRunning(doImport ? "import" : "scan");
     try {
       const { data, error } = await supabase.functions.invoke("zoho-orders-reconcile", {
@@ -167,6 +172,7 @@ export default function AuftraegeGesucht() {
   }
 
   async function importOne(r: Row) {
+    if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setBusy(r.id);
     try {
       const { data, error } = await supabase.functions.invoke("sync-single-order", {
@@ -315,7 +321,7 @@ export default function AuftraegeGesucht() {
                                 <Badge variant="outline" className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30">
                                   bereits in AlixWork
                                 </Badge>
-                              ) : (
+                              ) : canImport ? (
                                 <Button
                                   size="sm"
                                   onClick={() => importZohoHit(g.source, h)}
@@ -326,6 +332,8 @@ export default function AuftraegeGesucht() {
                                     : <Download className="h-3 w-3 mr-1" />}
                                   Importieren
                                 </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">nur Admin</span>
                               )}
                             </TableCell>
                           </TableRow>
@@ -378,10 +386,12 @@ export default function AuftraegeGesucht() {
               {running === "scan" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
               Jetzt prüfen
             </Button>
-            <Button onClick={() => runReconcile(true)} disabled={running !== null}>
-              {running === "import" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
-              Alle fehlenden importieren
-            </Button>
+            {canImport && (
+              <Button onClick={() => runReconcile(true)} disabled={running !== null}>
+                {running === "import" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                Alle fehlenden importieren
+              </Button>
+            )}
           </div>
 
         </CardHeader>
@@ -457,7 +467,7 @@ export default function AuftraegeGesucht() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        {r.import_status !== "imported" && r.import_status !== "resolved" && (
+                        {r.import_status !== "imported" && r.import_status !== "resolved" && canImport && (
                           <Button size="sm" variant="outline" onClick={() => importOne(r)} disabled={busy === r.id}>
                             {busy === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                             <span className="ml-1">Import</span>
