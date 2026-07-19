@@ -196,17 +196,26 @@ export default function AuftraegeGesucht() {
       }
       return fallback;
     };
-    const maxRetries = 3;
+    const maxRetries = 4;
     let attempt = 0;
     let lastMsg = "";
     try {
       while (attempt <= maxRetries) {
-        const { data, error } = await supabase.functions.invoke("sync-single-order", {
-          body: { source_system: r.source_system, external_order_id: r.external_order_id },
-        });
-        const msg = (error?.message || (data as any)?.message || (data as any)?.error || "") as string;
-        const rateLimited = /rate limit/i.test(msg) || /429/.test(msg);
-        if (!error && !(data as any)?.error) {
+        let data: any = null;
+        let error: any = null;
+        try {
+          const res = await supabase.functions.invoke("sync-single-order", {
+            body: { source_system: r.source_system, external_order_id: r.external_order_id },
+          });
+          data = res.data; error = res.error;
+        } catch (invokeErr: any) {
+          error = { message: invokeErr?.message ?? String(invokeErr) };
+        }
+        const rawMsg = (error?.message || data?.message || data?.error || "") as string;
+        const msg = typeof rawMsg === "string" ? rawMsg : JSON.stringify(rawMsg);
+        const tokenRefreshRL = /token refresh/i.test(msg) && /too many requests|rate/i.test(msg);
+        const rateLimited = tokenRefreshRL || /rate limit/i.test(msg) || /429/.test(msg) || /too many requests/i.test(msg);
+        if (!error && !data?.error) {
           const now = new Date().toISOString();
           await supabase.from("orders_missing").update({
             import_status: "imported",
@@ -223,12 +232,15 @@ export default function AuftraegeGesucht() {
         }
         lastMsg = msg || "Unbekannter Fehler";
         if (!rateLimited || attempt === maxRetries) throw new Error(lastMsg);
-        const waitMs = Math.min(parseRetryMs(lastMsg, 15000 * (attempt + 1)), 60000);
+        // Token-refresh rate limit needs much longer backoff (Zoho throttles the /token endpoint for ~1 min)
+        const base = tokenRefreshRL ? 60000 : 15000;
+        const waitMs = Math.min(parseRetryMs(lastMsg, base * (attempt + 1)), 120000);
         toast({ title: `Rate limit – warte ${Math.round(waitMs/1000)}s (Versuch ${attempt + 1}/${maxRetries})` });
         await new Promise((res) => setTimeout(res, waitMs));
         attempt += 1;
       }
       throw new Error(lastMsg || "Rate limit");
+
     } catch (e: any) {
       const msg = e?.message ?? String(e);
       await supabase.from("orders_missing").update({
