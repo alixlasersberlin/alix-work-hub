@@ -628,6 +628,7 @@ export const navItems: NavItem[] = [
           { path: '/signaturen/bulk', label: 'Serien-Versand', icon: Send, roles: ['Admin', 'Super Admin'] },
           { path: '/signaturen/genehmigungen', label: 'Genehmigungen', icon: CheckCircle2, roles: ['Admin', 'Super Admin'] },
           { path: '/admin/sign-marketplace', label: 'Marketplace & White-Label', icon: Settings, roles: ['Super Admin'] },
+          { path: '/admin/sign-api-docs', label: 'Partner-API (Docs & Keys)', icon: Settings, roles: ['Admin', 'Super Admin'] },
           { path: '/admin/signaturen', label: 'Admin (Stempel & Templates)', icon: Settings, roles: ['Admin', 'Super Admin'] },
           { path: '/admin/signaturen/facsimile', label: 'Facsimile-Unterschrift', icon: Settings, roles: ['Super Admin'] },
           { path: '/dokumente', label: 'AlixDocs — Suche', icon: Files, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Buchhaltung', 'Order'] },
