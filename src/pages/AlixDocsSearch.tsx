@@ -395,7 +395,19 @@ export default function AlixDocsSearch() {
                               </Link>
                             </Button>
                           )}
+                          {d.status === 'entwurf' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 px-2 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                              onClick={() => releaseDoc(d)}
+                              title="Intern freigeben"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Freigeben
+                            </Button>
+                          )}
                           <Button size="sm" variant="ghost" onClick={() => openDoc(d)} title="Öffnen"><Eye className="w-4 h-4" /></Button>
+
                         </TableCell>
                       </TableRow>
                     );
