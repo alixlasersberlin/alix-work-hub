@@ -93,6 +93,7 @@ export default function AuftraegeGesucht() {
   }
 
   async function importZohoHit(source_system: string, hit: ZohoHit) {
+    if (!canImport) { toast({ title: "Nur Admin/Super Admin darf importieren", variant: "destructive" }); return; }
     setImportingHit(hit.salesorder_id);
     try {
       const { error } = await supabase.functions.invoke("sync-single-order", {
