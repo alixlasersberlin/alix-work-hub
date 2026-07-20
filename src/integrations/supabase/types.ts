@@ -112,6 +112,98 @@ export type Database = {
           },
         ]
       }
+      ac_automation_rules: {
+        Row: {
+          action: string
+          action_value: string
+          active: boolean
+          channel: string
+          created_at: string
+          created_by: string | null
+          id: string
+          keyword: string | null
+          last_run_at: string | null
+          name: string
+          run_count: number
+          tenant_id: string | null
+          trigger: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          action_value: string
+          active?: boolean
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          keyword?: string | null
+          last_run_at?: string | null
+          name: string
+          run_count?: number
+          tenant_id?: string | null
+          trigger: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          action_value?: string
+          active?: boolean
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          keyword?: string | null
+          last_run_at?: string | null
+          name?: string
+          run_count?: number
+          tenant_id?: string | null
+          trigger?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ac_automation_runs: {
+        Row: {
+          action: string
+          conversation_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          message_id: string | null
+          rule_id: string | null
+          status: string
+        }
+        Insert: {
+          action: string
+          conversation_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          message_id?: string | null
+          rule_id?: string | null
+          status: string
+        }
+        Update: {
+          action?: string
+          conversation_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          message_id?: string | null
+          rule_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_automation_runs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "ac_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ac_campaign_recipients: {
         Row: {
           address: string
