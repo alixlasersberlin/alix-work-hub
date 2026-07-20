@@ -258,3 +258,15 @@ verify_jwt = false
 
 [functions.ac-chat]
 verify_jwt = false
+
+[functions.ac-send-message]
+verify_jwt = false
+
+[functions.ac-webhook-whatsapp]
+verify_jwt = false
+
+[functions.ac-webhook-twilio]
+verify_jwt = false
+
+[functions.ac-webhook-meta]
+verify_jwt = false

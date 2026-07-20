@@ -119,15 +119,14 @@ export default function InboxPage() {
     if (!reply.trim() || !activeId || !me) return;
     const text = reply.trim();
     setReply("");
-    const { error } = await supabase.from("ac_messages").insert({
-      conversation_id: activeId,
-      body: text,
-      sender_user_id: me,
-      sender_type: "user",
-      direction: internal ? "internal" : "outbound",
-      is_internal_note: internal,
+    const { data, error } = await supabase.functions.invoke("ac-send-message", {
+      body: { conversation_id: activeId, body: text, internal_note: internal },
     });
-    if (error) toast.error("Antwort fehlgeschlagen: " + error.message);
+    if (error) {
+      toast.error("Antwort fehlgeschlagen");
+    } else if (data && (data as any).ok === false) {
+      toast.error("Provider-Fehler: " + ((data as any).error ?? "unbekannt"));
+    }
   }
 
   async function setStatus(status: "open" | "pending" | "resolved" | "closed" | "snoozed") {
