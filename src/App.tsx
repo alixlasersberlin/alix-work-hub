@@ -296,6 +296,14 @@ const AlixConnectAnalytics = lazy(() => import("./pages/AlixConnect/AnalyticsOve
 const AlixConnectContacts = lazy(() => import("./pages/AlixConnect/Contacts"));
 const AlixConnectSettings = lazy(() => import("./pages/AlixConnect/Settings"));
 const AlixConnectCampaigns = lazy(() => import("./pages/AlixConnect/Campaigns"));
+const AlixConnectDashboard = lazy(() => import("./pages/AlixConnect/Dashboard"));
+const AlixConnectPortal = lazy(() => import("./pages/AlixConnect/Portal"));
+const AlixConnectAiAgents = lazy(() => import("./pages/AlixConnect/AiAgents"));
+const AlixConnectSurveys = lazy(() => import("./pages/AlixConnect/Surveys"));
+const AlixConnectAutomation = lazy(() => import("./pages/AlixConnect/StubPhase").then(m => ({ default: m.AutomationPage })));
+const AlixConnectReporting = lazy(() => import("./pages/AlixConnect/StubPhase").then(m => ({ default: m.ReportingPage })));
+const AlixConnectAdmin = lazy(() => import("./pages/AlixConnect/StubPhase").then(m => ({ default: m.AdminConsolePage })));
+const AlixConnectMobile = lazy(() => import("./pages/AlixConnect/StubPhase").then(m => ({ default: m.MobilePage })));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
