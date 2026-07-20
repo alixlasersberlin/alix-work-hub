@@ -205,9 +205,14 @@ export default function InboxPage() {
       <section className="flex-1 flex flex-col">
         {active ? (
           <>
-            <header className="border-b border-border/60 px-4 py-3 flex items-center justify-between">
+            <header className="border-b border-border/60 px-4 py-3 flex items-center justify-between gap-3">
               <div>
-                <div className="font-semibold">{active.subject || "Konversation"}</div>
+                <div className="font-semibold flex items-center gap-2">
+                  {active.subject || "Konversation"}
+                  {!online && (
+                    <Badge variant="destructive" className="gap-1 text-[10px]"><WifiOff className="h-3 w-3" /> Offline</Badge>
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground">{active.channel_type} · Priorität: {active.priority}</div>
               </div>
               <div className="flex gap-2">
@@ -216,6 +221,36 @@ export default function InboxPage() {
                 <Button size="sm" variant="outline" onClick={() => setStatus("closed")}>Schließen</Button>
               </div>
             </header>
+            {(() => {
+              const convOutbox = outboxItems.filter((o) => o.conversation_id === active.id);
+              if (convOutbox.length === 0) return null;
+              return (
+                <div className="border-b border-amber-500/40 bg-amber-500/5 px-4 py-2 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                      <Clock className="h-3 w-3" /> {convOutbox.length} Antwort(en) in Warteschlange
+                    </span>
+                    <Button size="sm" variant="ghost" className="h-6 gap-1 text-xs" onClick={() => flushOutbox().then((r) => toast.success(`Sync: ${r.ok} versendet, ${r.failed} fehlgeschlagen`))}>
+                      <RefreshCw className="h-3 w-3" /> Jetzt senden
+                    </Button>
+                  </div>
+                  {convOutbox.map((o) => (
+                    <div key={o.id} className="flex items-start gap-2 rounded border border-amber-500/30 bg-background/60 p-2 text-xs">
+                      <div className="flex-1 min-w-0">
+                        <div className="line-clamp-2 whitespace-pre-wrap">{o.body}</div>
+                        {o.last_error && <div className="mt-0.5 text-[10px] text-destructive">Fehler: {o.last_error} (Versuch {o.attempts})</div>}
+                      </div>
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" title="Erneut versuchen" onClick={() => o.id && retryOutbox(o.id).then(() => flushOutbox())}>
+                        <RefreshCw className="h-3 w-3" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive" title="Verwerfen" onClick={() => o.id && removeOutbox(o.id)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map((m) => (
                 <div
