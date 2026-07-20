@@ -3,6 +3,10 @@ project_id = "xmrmkgfgpoundfwhnxfs"
 [functions.ac-track]
 verify_jwt = false
 
+[functions.ac-alerts-check]
+verify_jwt = false
+
+
 
 [functions.orders-inbox]
 verify_jwt = false
