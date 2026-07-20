@@ -32,12 +32,21 @@ type Run = {
   created_at: string;
 };
 
-const emptyDraft = {
+type Draft = {
+  name: string;
+  trigger: Rule["trigger"];
+  channel: string;
+  keyword: string;
+  action: Rule["action"];
+  action_value: string;
+  active: boolean;
+};
+const emptyDraft: Draft = {
   name: "",
-  trigger: "message.received" as const,
+  trigger: "message.received",
   channel: "any",
   keyword: "",
-  action: "auto_reply" as const,
+  action: "auto_reply",
   action_value: "",
   active: true,
 };
