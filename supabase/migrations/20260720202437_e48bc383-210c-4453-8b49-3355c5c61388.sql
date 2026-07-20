@@ -1,0 +1,1 @@
+ALTER TABLE public.ac_conversations ADD COLUMN IF NOT EXISTS sla_notified_at timestamptz;
