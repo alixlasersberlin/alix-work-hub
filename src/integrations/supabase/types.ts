@@ -833,6 +833,71 @@ export type Database = {
         }
         Relationships: []
       }
+      ac_web_alerts: {
+        Row: {
+          cooldown_minutes: number
+          created_at: string
+          created_by: string | null
+          goal_id: string | null
+          id: string
+          is_active: boolean
+          kind: string
+          last_checked_at: string | null
+          last_triggered_at: string | null
+          name: string
+          recipient_email: string
+          tenant_id: string | null
+          threshold: number
+          updated_at: string
+          website_id: string
+          window_minutes: number
+        }
+        Insert: {
+          cooldown_minutes?: number
+          created_at?: string
+          created_by?: string | null
+          goal_id?: string | null
+          id?: string
+          is_active?: boolean
+          kind: string
+          last_checked_at?: string | null
+          last_triggered_at?: string | null
+          name: string
+          recipient_email: string
+          tenant_id?: string | null
+          threshold?: number
+          updated_at?: string
+          website_id: string
+          window_minutes?: number
+        }
+        Update: {
+          cooldown_minutes?: number
+          created_at?: string
+          created_by?: string | null
+          goal_id?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          last_checked_at?: string | null
+          last_triggered_at?: string | null
+          name?: string
+          recipient_email?: string
+          tenant_id?: string | null
+          threshold?: number
+          updated_at?: string
+          website_id?: string
+          window_minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_web_alerts_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "ac_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ac_web_goals: {
         Row: {
           created_at: string
