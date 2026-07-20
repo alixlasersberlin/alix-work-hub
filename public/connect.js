@@ -212,6 +212,22 @@
     flush(true);
   });
 
+  // ---- Experiment assignment (Phase 16) ----
+  var expCache = {}; // name -> variant
+  function hashStr(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h |= 0; } return Math.abs(h); }
+  function pickVariant(name, variants) {
+    var vid = null;
+    try { vid = getCookie(COOKIE_NAME); } catch (_) {}
+    var seed = (vid || (navigator.userAgent + "|" + name)) + "|" + name;
+    var bucket = hashStr(seed) % 100;
+    var acc = 0;
+    for (var i = 0; i < variants.length; i++) {
+      acc += Number(variants[i].weight || 0);
+      if (bucket < acc) return variants[i].key;
+    }
+    return variants[0] ? variants[0].key : "A";
+  }
+
   window.AlixConnect = {
     __ready: true,
     key: KEY,
@@ -219,11 +235,16 @@
     track: function (type, meta) { enqueue(String(type || "custom"), meta || {}); },
     identify: function (info) { enqueue("identify", info || {}); },
     consent: consent,
+    experiment: function (name, variants) {
+      if (!name || !Array.isArray(variants) || !variants.length) return "A";
+      if (expCache[name]) return expCache[name];
+      var v = pickVariant(String(name), variants);
+      expCache[name] = v;
+      enqueue("experiment_exposure", { experiment: String(name), variant: v });
+      return v;
+    },
     chat: {
-      open: function () {
-        // Placeholder — the visible chat widget iframe ships in Phase 12.
-        enqueue("chat_open_request");
-      },
+      open: function () { enqueue("chat_open_request"); },
     },
     _flush: flush,
   };
