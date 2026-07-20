@@ -296,6 +296,14 @@ const AlixConnectAnalytics = lazy(() => import("./pages/AlixConnect/AnalyticsOve
 const AlixConnectContacts = lazy(() => import("./pages/AlixConnect/Contacts"));
 const AlixConnectSettings = lazy(() => import("./pages/AlixConnect/Settings"));
 const AlixConnectCampaigns = lazy(() => import("./pages/AlixConnect/Campaigns"));
+const AlixConnectDashboard = lazy(() => import("./pages/AlixConnect/Dashboard"));
+const AlixConnectPortal = lazy(() => import("./pages/AlixConnect/Portal"));
+const AlixConnectAiAgents = lazy(() => import("./pages/AlixConnect/AiAgents"));
+const AlixConnectSurveys = lazy(() => import("./pages/AlixConnect/Surveys"));
+const AlixConnectAutomation = lazy(() => import("./pages/AlixConnect/StubPhase").then(m => ({ default: m.AutomationPage })));
+const AlixConnectReporting = lazy(() => import("./pages/AlixConnect/StubPhase").then(m => ({ default: m.ReportingPage })));
+const AlixConnectAdmin = lazy(() => import("./pages/AlixConnect/StubPhase").then(m => ({ default: m.AdminConsolePage })));
+const AlixConnectMobile = lazy(() => import("./pages/AlixConnect/StubPhase").then(m => ({ default: m.MobilePage })));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1161,11 +1169,19 @@ function AppRoutes() {
           
           <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
           <Route path="/connect" element={<ProtectedRoute><AlixConnectLayout /></ProtectedRoute>}>
-            <Route index element={<AlixConnectTeamChat />} />
+            <Route index element={<AlixConnectDashboard />} />
+            <Route path="dashboard" element={<AlixConnectDashboard />} />
+            <Route path="portal" element={<AlixConnectPortal />} />
             <Route path="team" element={<AlixConnectTeamChat />} />
             <Route path="inbox" element={<AlixConnectInbox />} />
             <Route path="contacts" element={<AlixConnectContacts />} />
             <Route path="campaigns" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectCampaigns /></ProtectedRoute>} />
+            <Route path="ai" element={<AlixConnectAiAgents />} />
+            <Route path="surveys" element={<AlixConnectSurveys />} />
+            <Route path="automation" element={<AlixConnectAutomation />} />
+            <Route path="reporting" element={<AlixConnectReporting />} />
+            <Route path="admin" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectAdmin /></ProtectedRoute>} />
+            <Route path="mobile" element={<AlixConnectMobile />} />
             <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
             <Route path="analytics" element={<AlixConnectAnalytics />} />
             <Route path="settings" element={<AlixConnectSettings />} />
