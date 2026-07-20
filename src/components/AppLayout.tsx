@@ -543,6 +543,18 @@ export const navItems: NavItem[] = [
   },
 
   {
+    path: '/connect', label: 'ALIX CONNECT', icon: MessageSquare, roles: null,
+    children: [
+      { path: '/connect/team', label: 'Team Chat', icon: MessageSquare, roles: null },
+      { path: '/connect/inbox', label: 'Unified Inbox', icon: Inbox, roles: null },
+      { path: '/connect/contacts', label: 'Kontakte', icon: Users, roles: null },
+      { path: '/connect/websites', label: 'Webseiten', icon: Globe, roles: ['Admin','Super Admin'] },
+      { path: '/connect/analytics', label: 'Website Analytics', icon: BarChart3, roles: null },
+      { path: '/connect/settings', label: 'Rollout Status', icon: Settings, roles: ['Admin','Super Admin'] },
+    ],
+  },
+
+  {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin'],
     children: [
       // Stats

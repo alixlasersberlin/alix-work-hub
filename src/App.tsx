@@ -288,6 +288,13 @@ const SignSlaDashboard = lazy(() => import("./pages/SignSlaDashboard"));
 const MobileSignaturen = lazy(() => import("./pages/Mobile/Signaturen"));
 const CustomerPortalSignaturen = lazy(() => import("./pages/CustomerPortal/Signaturen"));
 const SignDocPublic = lazy(() => import("./pages/SignDocPublic"));
+const AlixConnectLayout = lazy(() => import("./pages/AlixConnect/Layout"));
+const AlixConnectTeamChat = lazy(() => import("./pages/AlixConnect/TeamChat"));
+const AlixConnectInbox = lazy(() => import("./pages/AlixConnect/Inbox"));
+const AlixConnectWebsites = lazy(() => import("./pages/AlixConnect/Websites"));
+const AlixConnectAnalytics = lazy(() => import("./pages/AlixConnect/AnalyticsOverview"));
+const AlixConnectContacts = lazy(() => import("./pages/AlixConnect/Contacts"));
+const AlixConnectSettings = lazy(() => import("./pages/AlixConnect/Settings"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1152,6 +1159,15 @@ function AppRoutes() {
           <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><AnfragenOffen /></ProtectedRoute>} />
           
           <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
+          <Route path="/connect" element={<ProtectedRoute><AlixConnectLayout /></ProtectedRoute>}>
+            <Route index element={<AlixConnectTeamChat />} />
+            <Route path="team" element={<AlixConnectTeamChat />} />
+            <Route path="inbox" element={<AlixConnectInbox />} />
+            <Route path="contacts" element={<AlixConnectContacts />} />
+            <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
+            <Route path="analytics" element={<AlixConnectAnalytics />} />
+            <Route path="settings" element={<AlixConnectSettings />} />
+          </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
           <Route path="/signaturen/cockpit" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenCockpit /></ProtectedRoute>} />

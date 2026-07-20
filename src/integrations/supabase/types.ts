@@ -14,6 +14,659 @@ export type Database = {
   }
   public: {
     Tables: {
+      ac_analytics_events: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          device_type: string | null
+          duration_ms: number | null
+          event_type: string
+          id: number
+          is_bot: boolean | null
+          language: string | null
+          metadata: Json | null
+          os: string | null
+          page_title: string | null
+          page_url: string | null
+          referrer: string | null
+          region: string | null
+          screen_size: string | null
+          scroll_depth: number | null
+          session_hash: string | null
+          tenant_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          visitor_hash: string | null
+          website_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          duration_ms?: number | null
+          event_type: string
+          id?: number
+          is_bot?: boolean | null
+          language?: string | null
+          metadata?: Json | null
+          os?: string | null
+          page_title?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          region?: string | null
+          screen_size?: string | null
+          scroll_depth?: number | null
+          session_hash?: string | null
+          tenant_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_hash?: string | null
+          website_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          duration_ms?: number | null
+          event_type?: string
+          id?: number
+          is_bot?: boolean | null
+          language?: string | null
+          metadata?: Json | null
+          os?: string | null
+          page_title?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          region?: string | null
+          screen_size?: string | null
+          scroll_depth?: number | null
+          session_hash?: string | null
+          tenant_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_hash?: string | null
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_analytics_events_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "ac_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_channel_members: {
+        Row: {
+          channel_id: string
+          id: string
+          is_favorite: boolean | null
+          joined_at: string | null
+          last_read_at: string | null
+          notifications_muted: boolean | null
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          channel_id: string
+          id?: string
+          is_favorite?: boolean | null
+          joined_at?: string | null
+          last_read_at?: string | null
+          notifications_muted?: boolean | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          channel_id?: string
+          id?: string
+          is_favorite?: boolean | null
+          joined_at?: string | null
+          last_read_at?: string | null
+          notifications_muted?: boolean | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_channel_members_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "ac_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_channels: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          created_by: string | null
+          department_id: string | null
+          description: string | null
+          external_config: Json | null
+          icon: string | null
+          id: string
+          is_archived: boolean | null
+          is_private: boolean | null
+          name: string
+          tenant_id: string | null
+          type: Database["public"]["Enums"]["ac_channel_type"]
+          updated_at: string | null
+          website_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          department_id?: string | null
+          description?: string | null
+          external_config?: Json | null
+          icon?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_private?: boolean | null
+          name: string
+          tenant_id?: string | null
+          type: Database["public"]["Enums"]["ac_channel_type"]
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          department_id?: string | null
+          description?: string | null
+          external_config?: Json | null
+          icon?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_private?: boolean | null
+          name?: string
+          tenant_id?: string | null
+          type?: Database["public"]["Enums"]["ac_channel_type"]
+          updated_at?: string | null
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_channels_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_channels_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "ac_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_contacts: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          customer_id: string | null
+          email: string | null
+          external_ids: Json | null
+          first_seen_at: string | null
+          full_name: string | null
+          id: string
+          language: string | null
+          last_seen_at: string | null
+          lead_id: string | null
+          metadata: Json | null
+          phone: string | null
+          tenant_id: string | null
+          updated_at: string | null
+          visitor_fingerprint: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          email?: string | null
+          external_ids?: Json | null
+          first_seen_at?: string | null
+          full_name?: string | null
+          id?: string
+          language?: string | null
+          last_seen_at?: string | null
+          lead_id?: string | null
+          metadata?: Json | null
+          phone?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          visitor_fingerprint?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          email?: string | null
+          external_ids?: Json | null
+          first_seen_at?: string | null
+          full_name?: string | null
+          id?: string
+          language?: string | null
+          last_seen_at?: string | null
+          lead_id?: string | null
+          metadata?: Json | null
+          phone?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          visitor_fingerprint?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_contacts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_contacts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "ac_contacts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "sales_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_contacts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_conversations: {
+        Row: {
+          ai_sentiment: string | null
+          ai_summary: string | null
+          assigned_department_id: string | null
+          assigned_to: string | null
+          channel_id: string | null
+          channel_type: Database["public"]["Enums"]["ac_channel_type"]
+          closed_at: string | null
+          contact_id: string | null
+          created_at: string | null
+          csat_score: number | null
+          customer_id: string | null
+          external_meta: Json | null
+          external_thread_id: string | null
+          id: string
+          last_message_at: string | null
+          last_message_preview: string | null
+          lead_id: string | null
+          priority: string | null
+          status: Database["public"]["Enums"]["ac_conversation_status"]
+          subject: string | null
+          tags: string[] | null
+          tenant_id: string | null
+          unread_count: number | null
+          updated_at: string | null
+          visitor_meta: Json | null
+          website_id: string | null
+        }
+        Insert: {
+          ai_sentiment?: string | null
+          ai_summary?: string | null
+          assigned_department_id?: string | null
+          assigned_to?: string | null
+          channel_id?: string | null
+          channel_type: Database["public"]["Enums"]["ac_channel_type"]
+          closed_at?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          csat_score?: number | null
+          customer_id?: string | null
+          external_meta?: Json | null
+          external_thread_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          lead_id?: string | null
+          priority?: string | null
+          status?: Database["public"]["Enums"]["ac_conversation_status"]
+          subject?: string | null
+          tags?: string[] | null
+          tenant_id?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+          visitor_meta?: Json | null
+          website_id?: string | null
+        }
+        Update: {
+          ai_sentiment?: string | null
+          ai_summary?: string | null
+          assigned_department_id?: string | null
+          assigned_to?: string | null
+          channel_id?: string | null
+          channel_type?: Database["public"]["Enums"]["ac_channel_type"]
+          closed_at?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          csat_score?: number | null
+          customer_id?: string | null
+          external_meta?: Json | null
+          external_thread_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          lead_id?: string | null
+          priority?: string | null
+          status?: Database["public"]["Enums"]["ac_conversation_status"]
+          subject?: string | null
+          tags?: string[] | null
+          tenant_id?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+          visitor_meta?: Json | null
+          website_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_conversations_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "ac_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_conversations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_conversations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "ac_conversations_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "sales_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_conversations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_conversations_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "ac_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_messages: {
+        Row: {
+          attachments: Json | null
+          body: string | null
+          body_html: string | null
+          channel_id: string | null
+          conversation_id: string | null
+          created_at: string | null
+          direction: Database["public"]["Enums"]["ac_message_direction"]
+          external_message_id: string | null
+          id: string
+          is_deleted: boolean | null
+          is_edited: boolean | null
+          is_internal_note: boolean | null
+          mentions: string[] | null
+          metadata: Json | null
+          parent_id: string | null
+          reactions: Json | null
+          read_by: Json | null
+          sender_contact_id: string | null
+          sender_name: string | null
+          sender_type: Database["public"]["Enums"]["ac_sender_type"]
+          sender_user_id: string | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          body?: string | null
+          body_html?: string | null
+          channel_id?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          direction?: Database["public"]["Enums"]["ac_message_direction"]
+          external_message_id?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_edited?: boolean | null
+          is_internal_note?: boolean | null
+          mentions?: string[] | null
+          metadata?: Json | null
+          parent_id?: string | null
+          reactions?: Json | null
+          read_by?: Json | null
+          sender_contact_id?: string | null
+          sender_name?: string | null
+          sender_type?: Database["public"]["Enums"]["ac_sender_type"]
+          sender_user_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          body?: string | null
+          body_html?: string | null
+          channel_id?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          direction?: Database["public"]["Enums"]["ac_message_direction"]
+          external_message_id?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_edited?: boolean | null
+          is_internal_note?: boolean | null
+          mentions?: string[] | null
+          metadata?: Json | null
+          parent_id?: string | null
+          reactions?: Json | null
+          read_by?: Json | null
+          sender_contact_id?: string | null
+          sender_name?: string | null
+          sender_type?: Database["public"]["Enums"]["ac_sender_type"]
+          sender_user_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "ac_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ac_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_messages_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "ac_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_user_presence: {
+        Row: {
+          custom_status: string | null
+          last_seen_at: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          custom_status?: string | null
+          last_seen_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          custom_status?: string | null
+          last_seen_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ac_websites: {
+        Row: {
+          analytics_enabled: boolean | null
+          api_key: string
+          business_hours: Json | null
+          chat_enabled: boolean | null
+          cookieless_analytics: boolean | null
+          created_at: string | null
+          created_by: string | null
+          default_department_id: string | null
+          domain: string
+          id: string
+          imprint_url: string | null
+          language: string | null
+          logo_url: string | null
+          operator: string | null
+          primary_color: string | null
+          privacy_url: string | null
+          project_name: string
+          secondary_color: string | null
+          status: string | null
+          surveys_enabled: boolean | null
+          tenant_id: string | null
+          updated_at: string | null
+          welcome_message: string | null
+          widget_config: Json | null
+          widget_position: string | null
+        }
+        Insert: {
+          analytics_enabled?: boolean | null
+          api_key?: string
+          business_hours?: Json | null
+          chat_enabled?: boolean | null
+          cookieless_analytics?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          default_department_id?: string | null
+          domain: string
+          id?: string
+          imprint_url?: string | null
+          language?: string | null
+          logo_url?: string | null
+          operator?: string | null
+          primary_color?: string | null
+          privacy_url?: string | null
+          project_name: string
+          secondary_color?: string | null
+          status?: string | null
+          surveys_enabled?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          welcome_message?: string | null
+          widget_config?: Json | null
+          widget_position?: string | null
+        }
+        Update: {
+          analytics_enabled?: boolean | null
+          api_key?: string
+          business_hours?: Json | null
+          chat_enabled?: boolean | null
+          cookieless_analytics?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          default_department_id?: string | null
+          domain?: string
+          id?: string
+          imprint_url?: string | null
+          language?: string | null
+          logo_url?: string | null
+          operator?: string | null
+          primary_color?: string | null
+          privacy_url?: string | null
+          project_name?: string
+          secondary_color?: string | null
+          status?: string | null
+          surveys_enabled?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          welcome_message?: string | null
+          widget_config?: Json | null
+          widget_position?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_websites_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academy_bookings: {
         Row: {
           academy_session_id: string | null
@@ -25858,6 +26511,10 @@ export type Database = {
       }
     }
     Functions: {
+      ac_is_channel_member: {
+        Args: { _channel: string; _user: string }
+        Returns: boolean
+      }
       activate_break_glass: {
         Args: {
           _duration_minutes?: number
@@ -26329,6 +26986,26 @@ export type Database = {
       user_mailboxes: { Args: never; Returns: string[] }
     }
     Enums: {
+      ac_channel_type:
+        | "team"
+        | "direct"
+        | "department"
+        | "website"
+        | "email"
+        | "whatsapp"
+        | "sms"
+        | "voice"
+        | "facebook"
+        | "instagram"
+        | "telegram"
+      ac_conversation_status:
+        | "open"
+        | "pending"
+        | "resolved"
+        | "closed"
+        | "snoozed"
+      ac_message_direction: "inbound" | "outbound" | "internal"
+      ac_sender_type: "user" | "contact" | "bot" | "system"
       as_case_status:
         | "open"
         | "in_progress"
@@ -26601,6 +27278,28 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ac_channel_type: [
+        "team",
+        "direct",
+        "department",
+        "website",
+        "email",
+        "whatsapp",
+        "sms",
+        "voice",
+        "facebook",
+        "instagram",
+        "telegram",
+      ],
+      ac_conversation_status: [
+        "open",
+        "pending",
+        "resolved",
+        "closed",
+        "snoozed",
+      ],
+      ac_message_direction: ["inbound", "outbound", "internal"],
+      ac_sender_type: ["user", "contact", "bot", "system"],
       as_case_status: [
         "open",
         "in_progress",
