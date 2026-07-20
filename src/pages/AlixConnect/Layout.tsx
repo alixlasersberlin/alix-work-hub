@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { MessageSquare, Inbox, Globe, BarChart3, Users, Settings } from "lucide-react";
+import { MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { to: "/connect/team", label: "Team Chat", icon: MessageSquare },
   { to: "/connect/inbox", label: "Unified Inbox", icon: Inbox },
   { to: "/connect/contacts", label: "Kontakte", icon: Users },
+  { to: "/connect/campaigns", label: "Kampagnen", icon: Megaphone },
   { to: "/connect/websites", label: "Webseiten", icon: Globe },
   { to: "/connect/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/connect/settings", label: "Einstellungen", icon: Settings },
@@ -21,7 +22,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 1 · Foundation
+            Phase 4 · CRM &amp; Campaigns
           </span>
         </div>
         <nav className="mt-3 flex gap-1 overflow-x-auto">
