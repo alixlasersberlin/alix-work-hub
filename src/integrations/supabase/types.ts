@@ -112,6 +112,128 @@ export type Database = {
           },
         ]
       }
+      ac_campaign_recipients: {
+        Row: {
+          address: string
+          campaign_id: string
+          contact_id: string | null
+          created_at: string
+          customer_id: string | null
+          error: string | null
+          id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          address: string
+          campaign_id: string
+          contact_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          error?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          address?: string
+          campaign_id?: string
+          contact_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          error?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_campaign_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "ac_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_campaign_recipients_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "ac_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_campaign_recipients_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_campaign_recipients_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+        ]
+      }
+      ac_campaigns: {
+        Row: {
+          audience_filter: Json
+          body: string
+          channel_type: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          failed_count: number
+          id: string
+          name: string
+          scheduled_at: string | null
+          sent_count: number
+          started_at: string | null
+          status: string
+          subject: string | null
+          total_count: number
+          updated_at: string
+        }
+        Insert: {
+          audience_filter?: Json
+          body: string
+          channel_type: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          failed_count?: number
+          id?: string
+          name: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          subject?: string | null
+          total_count?: number
+          updated_at?: string
+        }
+        Update: {
+          audience_filter?: Json
+          body?: string
+          channel_type?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          failed_count?: number
+          id?: string
+          name?: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          subject?: string | null
+          total_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ac_channel_members: {
         Row: {
           channel_id: string
@@ -218,6 +340,38 @@ export type Database = {
             columns: ["website_id"]
             isOneToOne: false
             referencedRelation: "ac_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_contact_notes: {
+        Row: {
+          author_id: string | null
+          contact_id: string
+          created_at: string
+          id: string
+          note: string
+        }
+        Insert: {
+          author_id?: string | null
+          contact_id: string
+          created_at?: string
+          id?: string
+          note: string
+        }
+        Update: {
+          author_id?: string | null
+          contact_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_contact_notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "ac_contacts"
             referencedColumns: ["id"]
           },
         ]
