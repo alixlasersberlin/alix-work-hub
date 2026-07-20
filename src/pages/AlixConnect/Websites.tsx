@@ -71,8 +71,9 @@ export default function WebsitesPage() {
     load();
   }
 
+  const SUPA_URL = (import.meta as any).env.VITE_SUPABASE_URL as string;
   function embedSnippet(w: Website) {
-    return `<script async src="https://alixwork.de/connect.js" data-key="${w.api_key}"></script>`;
+    return `<script async src="${SUPA_URL}/functions/v1/ac-widget?k=${w.api_key}"></script>`;
   }
 
   return (
