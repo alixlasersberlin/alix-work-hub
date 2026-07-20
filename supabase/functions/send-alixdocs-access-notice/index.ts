@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
           html,
           text,
           purpose: 'transactional',
-          idempotency_key: `alixdocs-access-${r.email}-${t.key}`,
+          idempotency_key: `alixdocs-access-${r.email}-${t.key}-${crypto.randomUUID()}`,
           unsubscribe_token: unsubscribeToken,
         }, { apiKey })
         results.push({ to: t.to, ok: true })
