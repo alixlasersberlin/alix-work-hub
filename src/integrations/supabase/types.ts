@@ -18,13 +18,16 @@ export type Database = {
         Row: {
           browser: string | null
           city: string | null
+          conversion_value_cents: number | null
           country: string | null
           created_at: string | null
           device_type: string | null
           duration_ms: number | null
           event_type: string
+          goal_id: string | null
           id: number
           is_bot: boolean | null
+          is_conversion: boolean
           language: string | null
           metadata: Json | null
           os: string | null
@@ -47,13 +50,16 @@ export type Database = {
         Insert: {
           browser?: string | null
           city?: string | null
+          conversion_value_cents?: number | null
           country?: string | null
           created_at?: string | null
           device_type?: string | null
           duration_ms?: number | null
           event_type: string
+          goal_id?: string | null
           id?: number
           is_bot?: boolean | null
+          is_conversion?: boolean
           language?: string | null
           metadata?: Json | null
           os?: string | null
@@ -76,13 +82,16 @@ export type Database = {
         Update: {
           browser?: string | null
           city?: string | null
+          conversion_value_cents?: number | null
           country?: string | null
           created_at?: string | null
           device_type?: string | null
           duration_ms?: number | null
           event_type?: string
+          goal_id?: string | null
           id?: number
           is_bot?: boolean | null
+          is_conversion?: boolean
           language?: string | null
           metadata?: Json | null
           os?: string | null
@@ -823,6 +832,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ac_web_goals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_name: string | null
+          goal_type: string
+          id: string
+          is_active: boolean
+          match_mode: string
+          match_pattern: string | null
+          name: string
+          tenant_id: string | null
+          threshold_value: number | null
+          updated_at: string
+          value_cents: number
+          website_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_name?: string | null
+          goal_type: string
+          id?: string
+          is_active?: boolean
+          match_mode?: string
+          match_pattern?: string | null
+          name: string
+          tenant_id?: string | null
+          threshold_value?: number | null
+          updated_at?: string
+          value_cents?: number
+          website_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_name?: string | null
+          goal_type?: string
+          id?: string
+          is_active?: boolean
+          match_mode?: string
+          match_pattern?: string | null
+          name?: string
+          tenant_id?: string | null
+          threshold_value?: number | null
+          updated_at?: string
+          value_cents?: number
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_web_goals_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "ac_websites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ac_websites: {
         Row: {
@@ -26778,6 +26849,18 @@ export type Database = {
           day: string
           uniques: number
           views: number
+        }[]
+      }
+      ac_web_goals_summary: {
+        Args: { _from: string; _to: string; _website_id: string }
+        Returns: {
+          conversion_rate: number
+          conversions: number
+          goal_id: string
+          goal_type: string
+          name: string
+          revenue_cents: number
+          unique_visitors: number
         }[]
       }
       ac_web_live: { Args: { _website_id: string }; Returns: Json }
