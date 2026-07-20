@@ -58,16 +58,9 @@ export const navItems: NavItem[] = [
     children: [
       { path: '/dokumente/dashboard', label: 'Dashboard', icon: SearchCheck, roles: null },
       { path: '/dokumente', label: 'Dokumentensuche', icon: SearchCheck, roles: null },
-      { path: '/dokumente/freigaben', label: 'Freigaben-Inbox', icon: CheckCircle2, roles: null },
-      { path: '/dokumente/smart-review', label: 'Smart Review', icon: SearchCheck, roles: null },
       { path: '/dokumente/bulk-import', label: 'Bulk Import', icon: CheckCircle2, roles: null },
-      { path: '/dokumente/lernregeln', label: 'Lern-Regeln 🧠', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
       { path: '/dokumente/ai-suche', label: 'AI-Suche ✨', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
-      { path: '/dokumente/duplikate', label: 'Duplikate', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },
-      { path: '/admin/alixdocs/chains', label: 'Approval-Chains (Admin)', icon: Workflow, roles: ['Admin', 'Super Admin'] },
-      { path: '/admin/alixdocs/reindex', label: 'KI-Reindex & Duplikate', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
-      { path: '/admin/alixdocs/reports', label: 'Reporting & Audit-Export', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },
-      { path: '/m/alixdocs', label: 'Mobile Erfassung 📱', icon: SearchCheck, roles: null },
+
     ],
   },
 
@@ -646,13 +639,16 @@ export const navItems: NavItem[] = [
       {
         path: '#alixdocs-setup', label: 'ALIXDOCS SETUP', icon: FolderTree, roles: ['Admin', 'Super Admin'],
         children: [
-          { path: '/dokumente/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin'] },
-          { path: '/admin/alixdocs/chains', label: 'Approval-Chains', icon: Workflow, roles: ['Admin', 'Super Admin'] },
+          { path: '/dokumente/freigaben', label: 'Freigaben-Inbox', icon: CheckCircle2, roles: ['Admin', 'Super Admin'] },
+          { path: '/dokumente/smart-review', label: 'Smart Review', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },
+          { path: '/dokumente/lernregeln', label: 'Lern-Regeln 🧠', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
+          { path: '/dokumente/duplikate', label: 'Duplikate', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },
+          { path: '/admin/alixdocs/chains', label: 'Approval-Chains (Admin)', icon: Workflow, roles: ['Admin', 'Super Admin'] },
           { path: '/admin/alixdocs/reindex', label: 'KI-Reindex & Duplikate', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
           { path: '/admin/alixdocs/reports', label: 'Reporting & Audit-Export', icon: FileDown, roles: ['Admin', 'Super Admin'] },
-          { path: '/dokumente/lernregeln', label: 'Lern-Regeln', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
-          { path: '/dokumente/duplikate', label: 'Duplikate', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },
+          { path: '/m/alixdocs', label: 'Mobile Erfassung 📱', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },
         ],
+
       },
 
 
