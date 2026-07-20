@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Mail, MessageCircle, Phone, Send, Globe as GlobeIcon, MessageSquare, WifiOff, Clock, RefreshCw, Trash2 } from "lucide-react";
 import { enqueue as enqueueOutbox, flush as flushOutbox, remove as removeOutbox, retryNow as retryOutbox } from "@/lib/connect/offline-outbox";
 import { useAcOutbox } from "@/hooks/useAcOutbox";
+import { VoiceDictateButton } from "@/components/connect/VoiceDictateButton";
 
 type Conversation = {
   id: string;
@@ -277,10 +278,15 @@ export default function InboxPage() {
                 Interne Notiz (nicht an Kunden sichtbar)
               </label>
               <div className="flex gap-2">
-                <Textarea value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Antwort verfassen…" className="min-h-[60px]" />
-                <Button onClick={sendReply} disabled={!reply.trim()}>
-                  <Send className="h-4 w-4" />
-                </Button>
+                <Textarea value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Antwort verfassen oder diktieren…" className="min-h-[60px]" />
+                <div className="flex flex-col gap-2">
+                  <VoiceDictateButton
+                    onTranscript={(t) => setReply((cur) => (cur ? `${cur.trim()} ${t}` : t))}
+                  />
+                  <Button onClick={sendReply} disabled={!reply.trim()} size="icon" className="h-9 w-9">
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </>
