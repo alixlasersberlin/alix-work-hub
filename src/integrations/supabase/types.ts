@@ -580,6 +580,7 @@ export type Database = {
           last_message_preview: string | null
           lead_id: string | null
           priority: string | null
+          sla_notified_at: string | null
           status: Database["public"]["Enums"]["ac_conversation_status"]
           subject: string | null
           tags: string[] | null
@@ -608,6 +609,7 @@ export type Database = {
           last_message_preview?: string | null
           lead_id?: string | null
           priority?: string | null
+          sla_notified_at?: string | null
           status?: Database["public"]["Enums"]["ac_conversation_status"]
           subject?: string | null
           tags?: string[] | null
@@ -636,6 +638,7 @@ export type Database = {
           last_message_preview?: string | null
           lead_id?: string | null
           priority?: string | null
+          sla_notified_at?: string | null
           status?: Database["public"]["Enums"]["ac_conversation_status"]
           subject?: string | null
           tags?: string[] | null

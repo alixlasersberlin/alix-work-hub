@@ -72,6 +72,52 @@ Deno.serve(async (req) => {
             metadata: { automation_rule_id: r.id },
           });
           if (error) throw error;
+        } else if (r.action === 'ai_reply' && conversation_id) {
+          // Kontext: letzte 6 Nachrichten laden
+          const { data: hist } = await admin
+            .from('ac_messages')
+            .select('body, direction, sender_name, created_at')
+            .eq('conversation_id', conversation_id)
+            .order('created_at', { ascending: false })
+            .limit(6);
+          const historyText = (hist ?? [])
+            .reverse()
+            .map((m: any) => `[${m.direction === 'inbound' ? 'Kunde' : 'Agent'}] ${m.body ?? ''}`)
+            .join('\n');
+          const systemPrompt = (r.action_value && r.action_value.trim().length > 0)
+            ? r.action_value
+            : 'Du bist ein professioneller Kundenservice-Agent von Alix. Antworte kurz, freundlich und konkret auf Deutsch. Keine erfundenen Fakten.';
+
+          const key = Deno.env.get('LOVABLE_API_KEY');
+          if (!key) throw new Error('LOVABLE_API_KEY missing');
+          const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash',
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: `Konversationsverlauf:\n${historyText}\n\nAntworte als Agent auf die letzte Kundennachricht.` },
+              ],
+            }),
+          });
+          if (aiRes.status === 429) throw new Error('AI Rate limit');
+          if (aiRes.status === 402) throw new Error('AI Credits erschöpft');
+          if (!aiRes.ok) throw new Error(`AI ${aiRes.status}`);
+          const aiJson = await aiRes.json();
+          const replyText = aiJson?.choices?.[0]?.message?.content ?? '';
+          if (!replyText) throw new Error('AI leere Antwort');
+          const { error } = await admin.from('ac_messages').insert({
+            tenant_id,
+            conversation_id,
+            direction: 'outbound',
+            sender_type: 'bot',
+            sender_name: 'KI-Assistent',
+            body: replyText,
+            metadata: { automation_rule_id: r.id, ai_generated: true },
+          });
+          if (error) throw error;
+          details.reply_length = replyText.length;
         } else if (r.action === 'tag' && conversation_id) {
           const { data: conv } = await admin
             .from('ac_conversations')

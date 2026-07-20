@@ -16,7 +16,7 @@ type Rule = {
   trigger: "message.received" | "conversation.created" | "sla.breached" | "keyword.matched";
   channel: string;
   keyword: string | null;
-  action: "assign" | "tag" | "auto_reply" | "escalate" | "webhook";
+  action: "assign" | "tag" | "auto_reply" | "ai_reply" | "escalate" | "webhook";
   action_value: string;
   active: boolean;
   run_count: number;
@@ -162,6 +162,7 @@ export default function AlixConnectAutomation() {
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="auto_reply">Auto-Antwort senden</SelectItem>
+              <SelectItem value="ai_reply">✨ KI-Antwort (Gemini)</SelectItem>
               <SelectItem value="assign">Zuweisen an User (E-Mail)</SelectItem>
               <SelectItem value="tag">Tag hinzufügen</SelectItem>
               <SelectItem value="escalate">Priorität = hoch</SelectItem>
@@ -170,6 +171,7 @@ export default function AlixConnectAutomation() {
           </Select>
           <Textarea rows={2} placeholder={
             draft.action === "auto_reply" ? "Antworttext…"
+              : draft.action === "ai_reply" ? "Optionaler System-Prompt (leer = Standard-Kundenservice-Prompt)"
               : draft.action === "webhook" ? "https://…"
               : draft.action === "assign" ? "user@alix-operation.de"
               : "Wert…"
