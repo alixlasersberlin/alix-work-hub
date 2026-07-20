@@ -1169,11 +1169,19 @@ function AppRoutes() {
           
           <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
           <Route path="/connect" element={<ProtectedRoute><AlixConnectLayout /></ProtectedRoute>}>
-            <Route index element={<AlixConnectTeamChat />} />
+            <Route index element={<AlixConnectDashboard />} />
+            <Route path="dashboard" element={<AlixConnectDashboard />} />
+            <Route path="portal" element={<AlixConnectPortal />} />
             <Route path="team" element={<AlixConnectTeamChat />} />
             <Route path="inbox" element={<AlixConnectInbox />} />
             <Route path="contacts" element={<AlixConnectContacts />} />
             <Route path="campaigns" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectCampaigns /></ProtectedRoute>} />
+            <Route path="ai" element={<AlixConnectAiAgents />} />
+            <Route path="surveys" element={<AlixConnectSurveys />} />
+            <Route path="automation" element={<AlixConnectAutomation />} />
+            <Route path="reporting" element={<AlixConnectReporting />} />
+            <Route path="admin" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectAdmin /></ProtectedRoute>} />
+            <Route path="mobile" element={<AlixConnectMobile />} />
             <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
             <Route path="analytics" element={<AlixConnectAnalytics />} />
             <Route path="settings" element={<AlixConnectSettings />} />
