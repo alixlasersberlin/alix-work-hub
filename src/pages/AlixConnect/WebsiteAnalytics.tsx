@@ -14,6 +14,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import GoalsPanel from "@/components/connect/GoalsPanel";
 import AlertsPanel from "@/components/connect/AlertsPanel";
+import FunnelsPanel from "@/components/connect/FunnelsPanel";
+import HeatmapPanel from "@/components/connect/HeatmapPanel";
 
 const COLORS = ["#D4AF37", "#8B5CF6", "#0EA5E9", "#22C55E", "#F97316", "#EC4899", "#64748B"];
 const DIMS = [
@@ -222,6 +224,8 @@ export default function WebsiteAnalytics() {
       </Card>
 
       {id && <GoalsPanel websiteId={id} from={from} to={to} />}
+      {id && <FunnelsPanel websiteId={id} from={from} to={to} />}
+      {id && <HeatmapPanel websiteId={id} from={from} to={to} />}
       {id && <AlertsPanel websiteId={id} />}
     </div>
   );
