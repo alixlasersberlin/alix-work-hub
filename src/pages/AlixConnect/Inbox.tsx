@@ -130,7 +130,7 @@ export default function InboxPage() {
     if (error) toast.error("Antwort fehlgeschlagen: " + error.message);
   }
 
-  async function setStatus(status: string) {
+  async function setStatus(status: "open" | "pending" | "resolved" | "closed" | "snoozed") {
     if (!activeId) return;
     const { error } = await supabase
       .from("ac_conversations")
