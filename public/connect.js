@@ -178,6 +178,23 @@
   }
   window.addEventListener("scroll", onScroll, { passive: true });
 
+  // Click heatmap: capture x/y as % of viewport + target info
+  document.addEventListener("click", function (e) {
+    try {
+      var t = (e.target && e.target.closest)
+        ? (e.target.closest("a,button,[role=button],input,textarea,select") || e.target)
+        : e.target;
+      var vw = window.innerWidth || 1;
+      var vh = window.innerHeight || 1;
+      var xPct = Math.max(0, Math.min(100, Math.round((e.clientX / vw) * 100)));
+      var yPct = Math.max(0, Math.min(100, Math.round((e.clientY / vh) * 100)));
+      var tag = t && t.tagName ? String(t.tagName).toLowerCase() : "";
+      var text = safe((t && (t.innerText || t.value || t.alt)) || "", 120);
+      var href = (t && t.href) ? safe(t.href, 512) : null;
+      enqueue("click", { x_pct: xPct, y_pct: yPct, tag: tag, text: text, href: href, vw: vw, vh: vh });
+    } catch (_) {}
+  }, { passive: true, capture: true });
+
   // Heartbeat every 60s while tab visible, so "online now" stays fresh
   setInterval(function () {
     if (document.visibilityState === "visible") enqueue("heartbeat");
