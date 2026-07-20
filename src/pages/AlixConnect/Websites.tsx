@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Copy, Globe, Plus, Trash2 } from "lucide-react";
+import { Copy, Globe, Plus, Trash2, BarChart3 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type Website = {
   id: string;
@@ -72,7 +73,7 @@ export default function WebsitesPage() {
   }
 
   function embedSnippet(w: Website) {
-    return `<script async src="https://alixwork.de/connect.js" data-key="${w.api_key}"></script>`;
+    return `<script async src="${window.location.origin}/connect.js" data-key="${w.api_key}"></script>`;
   }
 
   return (
@@ -158,9 +159,14 @@ export default function WebsitesPage() {
                     </Button>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="icon" variant="ghost" onClick={() => remove(s.id)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Link to={`/connect/websites/${s.id}/analytics`}>
+                        <Button size="icon" variant="ghost" title="Analytics öffnen"><BarChart3 className="h-4 w-4" /></Button>
+                      </Link>
+                      <Button size="icon" variant="ghost" onClick={() => remove(s.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

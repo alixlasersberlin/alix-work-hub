@@ -293,6 +293,7 @@ const AlixConnectTeamChat = lazy(() => import("./pages/AlixConnect/TeamChat"));
 const AlixConnectInbox = lazy(() => import("./pages/AlixConnect/Inbox"));
 const AlixConnectWebsites = lazy(() => import("./pages/AlixConnect/Websites"));
 const AlixConnectAnalytics = lazy(() => import("./pages/AlixConnect/AnalyticsOverview"));
+const AlixConnectWebsiteAnalytics = lazy(() => import("./pages/AlixConnect/WebsiteAnalytics"));
 const AlixConnectContacts = lazy(() => import("./pages/AlixConnect/Contacts"));
 const AlixConnectSettings = lazy(() => import("./pages/AlixConnect/Settings"));
 const AlixConnectCampaigns = lazy(() => import("./pages/AlixConnect/Campaigns"));
@@ -1183,6 +1184,7 @@ function AppRoutes() {
             <Route path="admin" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectAdmin /></ProtectedRoute>} />
             <Route path="mobile" element={<AlixConnectMobile />} />
             <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
+            <Route path="websites/:id/analytics" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsiteAnalytics /></ProtectedRoute>} />
             <Route path="analytics" element={<AlixConnectAnalytics />} />
             <Route path="settings" element={<AlixConnectSettings />} />
           </Route>
