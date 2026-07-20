@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Mail, MessageCircle, Phone, Send, Globe as GlobeIcon, MessageSquare, WifiOff, Clock, RefreshCw, Trash2 } from "lucide-react";
+import { Mail, MessageCircle, Phone, Send, Globe as GlobeIcon, MessageSquare, WifiOff, Clock, RefreshCw, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { enqueue as enqueueOutbox, flush as flushOutbox, remove as removeOutbox, retryNow as retryOutbox } from "@/lib/connect/offline-outbox";
 import { useAcOutbox } from "@/hooks/useAcOutbox";
 import { VoiceDictateButton } from "@/components/connect/VoiceDictateButton";
@@ -55,9 +55,29 @@ export default function InboxPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [reply, setReply] = useState("");
   const [internal, setInternal] = useState(false);
+  const [drafting, setDrafting] = useState(false);
   const [filter, setFilter] = useState<"open" | "pending" | "resolved" | "all">("open");
   const [me, setMe] = useState<string | null>(null);
   const { items: outboxItems, online } = useAcOutbox();
+
+  async function generateDraft() {
+    if (!activeId || drafting) return;
+    setDrafting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ac-draft-reply", {
+        body: { conversation_id: activeId, hint: reply.trim() || undefined },
+      });
+      if (error) throw error;
+      const d = (data as any)?.draft as string | undefined;
+      if (!d) throw new Error((data as any)?.error || "Leere Antwort");
+      setReply(d);
+      toast.success("Entwurf eingefügt — bitte prüfen");
+    } catch (e: any) {
+      toast.error(e?.message || "Entwurf fehlgeschlagen");
+    } finally {
+      setDrafting(false);
+    }
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
@@ -273,12 +293,26 @@ export default function InboxPage() {
               {messages.length === 0 && <div className="text-center text-sm text-muted-foreground py-10">Noch keine Nachrichten.</div>}
             </div>
             <div className="border-t border-border/60 p-3">
-              <label className="mb-2 flex items-center gap-2 text-xs">
-                <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} />
-                Interne Notiz (nicht an Kunden sichtbar)
-              </label>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} />
+                  Interne Notiz (nicht an Kunden sichtbar)
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={generateDraft}
+                  disabled={drafting || !activeId}
+                  title="KI-Entwurf aus Konversationsverlauf (Gemini)"
+                >
+                  {drafting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  KI-Entwurf
+                </Button>
+              </div>
               <div className="flex gap-2">
-                <Textarea value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Antwort verfassen oder diktieren…" className="min-h-[60px]" />
+                <Textarea value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Antwort verfassen, diktieren oder KI-Entwurf nutzen…" className="min-h-[60px]" />
                 <div className="flex flex-col gap-2">
                   <VoiceDictateButton
                     onTranscript={(t) => setReply((cur) => (cur ? `${cur.trim()} ${t}` : t))}
