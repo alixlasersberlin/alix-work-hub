@@ -38,6 +38,8 @@ Deno.serve(async (req) => {
     const html = await renderAsync(React.createElement(alixdocsAccessGranted.component, { recipientName: r.name }))
     const text = await renderAsync(React.createElement(alixdocsAccessGranted.component, { recipientName: r.name }), { plainText: true })
     const idem = crypto.randomUUID()
+    const unsubBytes = new Uint8Array(32); crypto.getRandomValues(unsubBytes)
+    const unsubscribeToken = Array.from(unsubBytes).map(b => b.toString(16).padStart(2, '0')).join('')
     const targets = [{ to: r.email, key: 'primary' }, ...ARCHIVE_BCC.map((b, i) => ({ to: b, key: `bcc-${i}` }))]
     for (const t of targets) {
       try {
@@ -50,6 +52,7 @@ Deno.serve(async (req) => {
           text,
           purpose: 'transactional',
           idempotency_key: `alixdocs-access-${r.email}-${t.key}`,
+          unsubscribe_token: unsubscribeToken,
         }, { apiKey })
         results.push({ to: t.to, ok: true })
       } catch (e: any) {
