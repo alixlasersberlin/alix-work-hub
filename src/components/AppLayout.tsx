@@ -643,6 +643,19 @@ export const navItems: NavItem[] = [
       },
 
 
+      {
+        path: '#alixdocs-setup', label: 'ALIXDOCS SETUP', icon: FolderTree, roles: ['Admin', 'Super Admin'],
+        children: [
+          { path: '/dokumente/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin'] },
+          { path: '/admin/alixdocs/chains', label: 'Approval-Chains', icon: Workflow, roles: ['Admin', 'Super Admin'] },
+          { path: '/admin/alixdocs/reindex', label: 'KI-Reindex & Duplikate', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
+          { path: '/admin/alixdocs/reports', label: 'Reporting & Audit-Export', icon: FileDown, roles: ['Admin', 'Super Admin'] },
+          { path: '/dokumente/lernregeln', label: 'Lern-Regeln', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
+          { path: '/dokumente/duplikate', label: 'Duplikate', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },
+        ],
+      },
+
+
 
       {
         path: '#system', label: 'SYSTEM', icon: Cog, roles: ['Super Admin'],
