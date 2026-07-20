@@ -7,7 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Mail, MessageCircle, Phone, Send, Globe as GlobeIcon, MessageSquare } from "lucide-react";
+import { Mail, MessageCircle, Phone, Send, Globe as GlobeIcon, MessageSquare, WifiOff, Clock, RefreshCw, Trash2 } from "lucide-react";
+import { enqueue as enqueueOutbox, flush as flushOutbox, remove as removeOutbox, retryNow as retryOutbox } from "@/lib/connect/offline-outbox";
+import { useAcOutbox } from "@/hooks/useAcOutbox";
 
 type Conversation = {
   id: string;
@@ -54,6 +56,7 @@ export default function InboxPage() {
   const [internal, setInternal] = useState(false);
   const [filter, setFilter] = useState<"open" | "pending" | "resolved" | "all">("open");
   const [me, setMe] = useState<string | null>(null);
+  const { items: outboxItems, online } = useAcOutbox();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
@@ -119,13 +122,26 @@ export default function InboxPage() {
     if (!reply.trim() || !activeId || !me) return;
     const text = reply.trim();
     setReply("");
-    const { data, error } = await supabase.functions.invoke("ac-send-message", {
-      body: { conversation_id: activeId, body: text, internal_note: internal },
-    });
-    if (error) {
-      toast.error("Antwort fehlgeschlagen");
-    } else if (data && (data as any).ok === false) {
-      toast.error("Provider-Fehler: " + ((data as any).error ?? "unbekannt"));
+
+    // Offline → sofort in Outbox
+    if (!navigator.onLine) {
+      await enqueueOutbox({ conversation_id: activeId, body: text, internal_note: internal });
+      toast.info("Offline – Antwort in Warteschlange gespeichert");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke("ac-send-message", {
+        body: { conversation_id: activeId, body: text, internal_note: internal },
+      });
+      if (error) throw error;
+      if (data && (data as any).ok === false) {
+        throw new Error((data as any).error ?? "unbekannt");
+      }
+    } catch (err: any) {
+      // Netzwerkfehler → in Outbox parken
+      await enqueueOutbox({ conversation_id: activeId, body: text, internal_note: internal });
+      toast.warning("Versand fehlgeschlagen – in Outbox gespeichert (" + (err?.message || "Fehler") + ")");
     }
   }
 
