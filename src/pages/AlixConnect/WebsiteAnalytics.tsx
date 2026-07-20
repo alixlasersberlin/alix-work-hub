@@ -227,8 +227,12 @@ export default function WebsiteAnalytics() {
         </CardContent>
       </Card>
 
+      {id && <LiveMapPanel websiteId={id} />}
       {id && <GoalsPanel websiteId={id} from={from} to={to} />}
       {id && <FunnelsPanel websiteId={id} from={from} to={to} />}
+      {id && <ExperimentsPanel websiteId={id} from={from} to={to} />}
+      {id && <SegmentsPanel websiteId={id} from={from} to={to} />}
+      {id && <SessionsPanel websiteId={id} from={from} to={to} />}
       {id && <HeatmapPanel websiteId={id} from={from} to={to} />}
       {id && <AlertsPanel websiteId={id} />}
     </div>
