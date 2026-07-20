@@ -1159,6 +1159,15 @@ function AppRoutes() {
           <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><AnfragenOffen /></ProtectedRoute>} />
           
           <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
+          <Route path="/connect" element={<ProtectedRoute><AlixConnectLayout /></ProtectedRoute>}>
+            <Route index element={<AlixConnectTeamChat />} />
+            <Route path="team" element={<AlixConnectTeamChat />} />
+            <Route path="inbox" element={<AlixConnectInbox />} />
+            <Route path="contacts" element={<AlixConnectContacts />} />
+            <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
+            <Route path="analytics" element={<AlixConnectAnalytics />} />
+            <Route path="settings" element={<AlixConnectSettings />} />
+          </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
           <Route path="/signaturen/cockpit" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenCockpit /></ProtectedRoute>} />
