@@ -26764,6 +26764,36 @@ export type Database = {
         Args: { _channel: string; _user: string }
         Returns: boolean
       }
+      ac_web_breakdown: {
+        Args: { _dim: string; _from: string; _to: string; _website_id: string }
+        Returns: {
+          label: string
+          uniques: number
+          views: number
+        }[]
+      }
+      ac_web_daily_series: {
+        Args: { _from: string; _to: string; _website_id: string }
+        Returns: {
+          day: string
+          uniques: number
+          views: number
+        }[]
+      }
+      ac_web_live: { Args: { _website_id: string }; Returns: Json }
+      ac_web_top_pages: {
+        Args: {
+          _from: string
+          _limit?: number
+          _to: string
+          _website_id: string
+        }
+        Returns: {
+          page_url: string
+          uniques: number
+          views: number
+        }[]
+      }
       activate_break_glass: {
         Args: {
           _duration_minutes?: number
