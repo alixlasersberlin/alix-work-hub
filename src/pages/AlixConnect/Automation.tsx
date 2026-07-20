@@ -6,64 +6,115 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Zap, Plus, Trash2 } from "lucide-react";
+import { Zap, Plus, Trash2, PlayCircle, History } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 type Rule = {
   id: string;
   name: string;
   trigger: "message.received" | "conversation.created" | "sla.breached" | "keyword.matched";
-  channel: "any" | "website_chat" | "whatsapp" | "sms" | "email" | "messenger" | "instagram";
-  keyword?: string;
+  channel: string;
+  keyword: string | null;
   action: "assign" | "tag" | "auto_reply" | "escalate" | "webhook";
-  actionValue: string;
+  action_value: string;
   active: boolean;
+  run_count: number;
+  last_run_at: string | null;
 };
 
-const KEY = "ac_automation_rules";
+type Run = {
+  id: string;
+  rule_id: string;
+  action: string;
+  status: string;
+  details: any;
+  created_at: string;
+};
+
+const emptyDraft = {
+  name: "",
+  trigger: "message.received" as const,
+  channel: "any",
+  keyword: "",
+  action: "auto_reply" as const,
+  action_value: "",
+  active: true,
+};
 
 export default function AlixConnectAutomation() {
   const [rules, setRules] = useState<Rule[]>([]);
-  const [draft, setDraft] = useState<Rule>({
-    id: "",
-    name: "",
-    trigger: "message.received",
-    channel: "any",
-    action: "auto_reply",
-    actionValue: "",
-    active: true,
-  });
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [draft, setDraft] = useState<typeof emptyDraft>(emptyDraft);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    try { setRules(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch { setRules([]); }
-  }, []);
-
-  const save = (next: Rule[]) => {
-    setRules(next);
-    localStorage.setItem(KEY, JSON.stringify(next));
+  const load = async () => {
+    setLoading(true);
+    const [r, l] = await Promise.all([
+      supabase.from("ac_automation_rules").select("*").order("created_at", { ascending: false }),
+      supabase.from("ac_automation_runs").select("*").order("created_at", { ascending: false }).limit(20),
+    ]);
+    if (r.error) toast.error("Regeln laden fehlgeschlagen: " + r.error.message);
+    setRules((r.data as any) ?? []);
+    setRuns((l.data as any) ?? []);
+    setLoading(false);
   };
 
-  const add = () => {
-    if (!draft.name.trim() || !draft.actionValue.trim()) {
+  useEffect(() => { load(); }, []);
+
+  const add = async () => {
+    if (!draft.name.trim() || !draft.action_value.trim()) {
       toast.error("Name und Aktion erforderlich");
       return;
     }
-    save([...rules, { ...draft, id: crypto.randomUUID() }]);
-    setDraft({ ...draft, name: "", actionValue: "", keyword: "" });
+    const { error } = await supabase.from("ac_automation_rules").insert({
+      name: draft.name,
+      trigger: draft.trigger,
+      channel: draft.channel,
+      keyword: draft.trigger === "keyword.matched" ? draft.keyword : null,
+      action: draft.action,
+      action_value: draft.action_value,
+      active: draft.active,
+    });
+    if (error) { toast.error(error.message); return; }
+    setDraft(emptyDraft);
     toast.success("Regel gespeichert");
+    load();
   };
 
-  const remove = (id: string) => save(rules.filter((r) => r.id !== id));
-  const toggle = (id: string) => save(rules.map((r) => (r.id === id ? { ...r, active: !r.active } : r)));
+  const remove = async (id: string) => {
+    await supabase.from("ac_automation_rules").delete().eq("id", id);
+    load();
+  };
+
+  const toggle = async (r: Rule) => {
+    await supabase.from("ac_automation_rules").update({ active: !r.active }).eq("id", r.id);
+    load();
+  };
+
+  const test = async (r: Rule) => {
+    const { error } = await supabase.functions.invoke("ac-automation-run", {
+      body: {
+        event: r.trigger,
+        body: r.keyword || "TEST",
+        conversation_id: null,
+        message_id: null,
+      },
+    });
+    if (error) toast.error("Test fehlgeschlagen: " + error.message);
+    else { toast.success("Test ausgeführt"); load(); }
+  };
 
   return (
     <div className="h-full overflow-auto p-6 space-y-4">
       <div>
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Zap className="h-4 w-4 text-primary" /> Automation &amp; Workflows
-          <Badge variant="outline" className="ml-2">Phase 7</Badge>
+          <Badge variant="default" className="ml-2">Server-Engine live</Badge>
         </h2>
-        <p className="text-sm text-muted-foreground">Wenn/Dann-Regeln für alle Kanäle — Auto-Reply, Tagging, Eskalation, Webhooks.</p>
+        <p className="text-sm text-muted-foreground">
+          Regeln laufen serverseitig via Postgres-Trigger + Edge Function. Alle eingehenden Kundennachrichten werden geprüft.
+        </p>
       </div>
 
       <Card className="p-4 space-y-3">
@@ -95,46 +146,54 @@ export default function AlixConnectAutomation() {
           </div>
         </div>
         {draft.trigger === "keyword.matched" && (
-          <Input placeholder="Keyword (z.B. Preis, Rechnung, Reklamation)" value={draft.keyword || ""} onChange={(e) => setDraft({ ...draft, keyword: e.target.value })} />
+          <Input placeholder="Keyword (z.B. Preis, Rechnung, Reklamation)" value={draft.keyword} onChange={(e) => setDraft({ ...draft, keyword: e.target.value })} />
         )}
         <div className="grid md:grid-cols-[220px_1fr] gap-2">
           <Select value={draft.action} onValueChange={(v: any) => setDraft({ ...draft, action: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="auto_reply">Auto-Antwort senden</SelectItem>
-              <SelectItem value="assign">Zuweisen an User</SelectItem>
+              <SelectItem value="assign">Zuweisen an User (E-Mail)</SelectItem>
               <SelectItem value="tag">Tag hinzufügen</SelectItem>
-              <SelectItem value="escalate">Eskalieren an Team</SelectItem>
+              <SelectItem value="escalate">Priorität = hoch</SelectItem>
               <SelectItem value="webhook">Webhook URL aufrufen</SelectItem>
             </SelectContent>
           </Select>
           <Textarea rows={2} placeholder={
             draft.action === "auto_reply" ? "Antworttext…"
               : draft.action === "webhook" ? "https://…"
-              : draft.action === "assign" ? "User-E-Mail"
+              : draft.action === "assign" ? "user@alix-operation.de"
               : "Wert…"
-          } value={draft.actionValue} onChange={(e) => setDraft({ ...draft, actionValue: e.target.value })} />
+          } value={draft.action_value} onChange={(e) => setDraft({ ...draft, action_value: e.target.value })} />
         </div>
         <div className="flex justify-end">
-          <Button onClick={add}><Plus className="h-4 w-4 mr-1" /> Regel hinzufügen</Button>
+          <Button onClick={add}><Plus className="h-4 w-4 mr-1" /> Regel speichern</Button>
         </div>
       </Card>
 
       <Card className="p-4">
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Aktive Regeln ({rules.length})</div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Regeln ({rules.length}) {loading && "…"}
+        </div>
         {rules.length === 0 ? (
           <div className="text-sm text-muted-foreground">Noch keine Regeln definiert.</div>
         ) : (
           <div className="space-y-2">
             {rules.map((r) => (
               <div key={r.id} className="flex items-center gap-3 rounded border border-border/60 p-3">
-                <Switch checked={r.active} onCheckedChange={() => toggle(r.id)} />
+                <Switch checked={r.active} onCheckedChange={() => toggle(r)} />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{r.name}</div>
                   <div className="text-[11px] text-muted-foreground truncate">
-                    {r.trigger} · {r.channel}{r.keyword ? ` · "${r.keyword}"` : ""} → {r.action}: {r.actionValue}
+                    {r.trigger} · {r.channel}{r.keyword ? ` · "${r.keyword}"` : ""} → {r.action}: {r.action_value}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                    {r.run_count} Ausführungen{r.last_run_at ? ` · letzte ${new Date(r.last_run_at).toLocaleString("de-DE")}` : ""}
                   </div>
                 </div>
+                <Button size="icon" variant="ghost" onClick={() => test(r)} title="Testen">
+                  <PlayCircle className="h-4 w-4 text-primary" />
+                </Button>
                 <Button size="icon" variant="ghost" onClick={() => remove(r.id)}>
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
@@ -144,8 +203,27 @@ export default function AlixConnectAutomation() {
         )}
       </Card>
 
-      <Card className="p-4 text-xs text-muted-foreground">
-        Regeln werden lokal gespeichert und dienen als Blueprint. Der Engine-Rollout (Server-Side Trigger via Postgres-Trigger + Edge Function) erfolgt schrittweise anhand der aktivsten Regeln.
+      <Card className="p-4">
+        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+          <History className="h-3.5 w-3.5" /> Letzte Ausführungen ({runs.length})
+        </div>
+        {runs.length === 0 ? (
+          <div className="text-sm text-muted-foreground">Noch keine Ausführungen.</div>
+        ) : (
+          <div className="space-y-1.5">
+            {runs.map((run) => (
+              <div key={run.id} className="flex items-center justify-between rounded border border-border/60 px-3 py-1.5 text-xs">
+                <div className="flex items-center gap-2">
+                  <Badge variant={run.status === "ok" ? "default" : run.status === "error" ? "destructive" : "outline"}>
+                    {run.status}
+                  </Badge>
+                  <span className="font-mono">{run.action}</span>
+                </div>
+                <span className="text-muted-foreground">{new Date(run.created_at).toLocaleString("de-DE")}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   );
