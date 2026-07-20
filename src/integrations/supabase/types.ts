@@ -898,6 +898,56 @@ export type Database = {
           },
         ]
       }
+      ac_web_funnels: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          steps: Json
+          tenant_id: string | null
+          updated_at: string
+          website_id: string
+          window_hours: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          steps?: Json
+          tenant_id?: string | null
+          updated_at?: string
+          website_id: string
+          window_hours?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          steps?: Json
+          tenant_id?: string | null
+          updated_at?: string
+          website_id?: string
+          window_hours?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_web_funnels_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "ac_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ac_web_goals: {
         Row: {
           created_at: string
@@ -26908,12 +26958,36 @@ export type Database = {
           views: number
         }[]
       }
+      ac_web_click_heatmap: {
+        Args: { _from: string; _page: string; _to: string; _website_id: string }
+        Returns: {
+          hits: number
+          x_pct: number
+          y_pct: number
+        }[]
+      }
+      ac_web_click_pages: {
+        Args: { _from: string; _to: string; _website_id: string }
+        Returns: {
+          clicks: number
+          page_url: string
+        }[]
+      }
       ac_web_daily_series: {
         Args: { _from: string; _to: string; _website_id: string }
         Returns: {
           day: string
           uniques: number
           views: number
+        }[]
+      }
+      ac_web_funnel_stats: {
+        Args: { _from: string; _funnel_id: string; _to: string }
+        Returns: {
+          conversion_pct: number
+          step_index: number
+          step_label: string
+          visitors: number
         }[]
       }
       ac_web_goals_summary: {
