@@ -28,6 +28,7 @@ import { template as anzahlungMahnung } from './anzahlung-mahnung.tsx'
 import { template as asCustomerReminder } from './as-customer-reminder.tsx'
 import { template as ticketCsat } from './ticket-csat.tsx'
 import { template as ordersMissingAlert } from './orders-missing-alert.tsx'
+import { template as alixdocsAccessGranted } from './alixdocs-access-granted.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -49,4 +50,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'as-customer-reminder': asCustomerReminder,
   'ticket-csat': ticketCsat,
   'orders-missing-alert': ordersMissingAlert,
+  'alixdocs-access-granted': alixdocsAccessGranted,
 }
