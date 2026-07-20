@@ -16,6 +16,10 @@ import GoalsPanel from "@/components/connect/GoalsPanel";
 import AlertsPanel from "@/components/connect/AlertsPanel";
 import FunnelsPanel from "@/components/connect/FunnelsPanel";
 import HeatmapPanel from "@/components/connect/HeatmapPanel";
+import SessionsPanel from "@/components/connect/SessionsPanel";
+import ExperimentsPanel from "@/components/connect/ExperimentsPanel";
+import SegmentsPanel from "@/components/connect/SegmentsPanel";
+import LiveMapPanel from "@/components/connect/LiveMapPanel";
 
 const COLORS = ["#D4AF37", "#8B5CF6", "#0EA5E9", "#22C55E", "#F97316", "#EC4899", "#64748B"];
 const DIMS = [
