@@ -898,6 +898,56 @@ export type Database = {
           },
         ]
       }
+      ac_web_experiments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          goal_event: string | null
+          id: string
+          is_active: boolean
+          name: string
+          tenant_id: string | null
+          updated_at: string
+          variants: Json
+          website_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          goal_event?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          tenant_id?: string | null
+          updated_at?: string
+          variants?: Json
+          website_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          goal_event?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          tenant_id?: string | null
+          updated_at?: string
+          variants?: Json
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_web_experiments_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "ac_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ac_web_funnels: {
         Row: {
           created_at: string
@@ -1003,6 +1053,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ac_web_goals_website_id_fkey"
+            columns: ["website_id"]
+            isOneToOne: false
+            referencedRelation: "ac_websites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_web_segments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          filters: Json
+          id: string
+          name: string
+          tenant_id: string | null
+          updated_at: string
+          website_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          filters?: Json
+          id?: string
+          name: string
+          tenant_id?: string | null
+          updated_at?: string
+          website_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          filters?: Json
+          id?: string
+          name?: string
+          tenant_id?: string | null
+          updated_at?: string
+          website_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_web_segments_website_id_fkey"
             columns: ["website_id"]
             isOneToOne: false
             referencedRelation: "ac_websites"
@@ -26981,6 +27072,15 @@ export type Database = {
           views: number
         }[]
       }
+      ac_web_experiment_stats: {
+        Args: { _experiment_id: string; _from: string; _to: string }
+        Returns: {
+          conversion_pct: number
+          conversions: number
+          exposures: number
+          variant: string
+        }[]
+      }
       ac_web_funnel_stats: {
         Args: { _from: string; _funnel_id: string; _to: string }
         Returns: {
@@ -27003,6 +27103,61 @@ export type Database = {
         }[]
       }
       ac_web_live: { Args: { _website_id: string }; Returns: Json }
+      ac_web_live_map: {
+        Args: { _website_id: string }
+        Returns: {
+          country: string
+          last_seen: string
+          visitors: number
+        }[]
+      }
+      ac_web_segment_stats: {
+        Args: {
+          _filters: Json
+          _from: string
+          _to: string
+          _website_id: string
+        }
+        Returns: {
+          conversions: number
+          pageviews: number
+          sessions: number
+          visitors: number
+        }[]
+      }
+      ac_web_session_events: {
+        Args: { _session_hash: string }
+        Returns: {
+          created_at: string
+          duration_ms: number
+          event_type: string
+          metadata: Json
+          page_title: string
+          page_url: string
+          scroll_depth: number
+        }[]
+      }
+      ac_web_sessions: {
+        Args: {
+          _from: string
+          _limit?: number
+          _to: string
+          _website_id: string
+        }
+        Returns: {
+          browser: string
+          country: string
+          device_type: string
+          entry_url: string
+          events: number
+          last_seen: string
+          pageviews: number
+          referrer: string
+          session_hash: string
+          started_at: string
+          visitor_hash: string
+        }[]
+      }
       ac_web_top_pages: {
         Args: {
           _from: string
