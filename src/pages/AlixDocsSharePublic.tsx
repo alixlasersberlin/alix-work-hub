@@ -8,7 +8,18 @@ import { Files, Lock, Loader2, Download, Archive, ShieldCheck } from 'lucide-rea
 import { toast } from 'sonner';
 
 const FN_URL = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/alixdocs-share-access`;
+const TRACK_URL = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/alixdocs-widget-track`;
 const ANON = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+const track = (token: string, event_type: string, extra: Record<string, any> = {}) => {
+  try {
+    fetch(TRACK_URL, {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json', apikey: ANON, Authorization: `Bearer ${ANON}` },
+      body: JSON.stringify({ token, event_type, ...extra }),
+    }).catch(() => {});
+  } catch {}
+};
 
 type DocMeta = { id: string; title: string; filename: string | null; mime_type: string; size: number; version: number };
 
@@ -38,6 +49,7 @@ export default function AlixDocsSharePublic() {
         });
         const d = await res.json();
         setMeta(d);
+        track(token, 'view');
         if (!d.requires_password && !d.error) {
           const list = await request('list');
           const j = await list.json();
@@ -56,6 +68,7 @@ export default function AlixDocsSharePublic() {
       const j = await res.json();
       if (j.error) { toast.error(j.error === 'invalid_password' ? 'Falsches Passwort' : j.error); return; }
       setDocs(j.documents);
+      track(token, 'unlock');
     } finally { setUnlocking(false); }
   };
 
@@ -65,6 +78,8 @@ export default function AlixDocsSharePublic() {
       const res = await request('signed_url', { document_id: d.id });
       const j = await res.json();
       if (j.error) throw new Error(j.error);
+      track(token, 'open', { document_id: d.id });
+      track(token, 'download', { document_id: d.id });
       window.open(j.url, '_blank');
     } catch (e: any) { toast.error(e?.message || 'Download fehlgeschlagen'); }
     finally { setBusy(false); }
@@ -75,6 +90,7 @@ export default function AlixDocsSharePublic() {
     try {
       const res = await request('zip');
       if (!res.ok) throw new Error(await res.text());
+      track(token, 'zip');
       const blob = await res.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);

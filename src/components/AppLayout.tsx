@@ -35,7 +35,7 @@ import alixLogo from '@/assets/alix-logo-gold.png';
 
 
 
-const APP_VERSION = '5.05';
+const APP_VERSION = '5.06';
 
 type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 type NavItem = NavChild & { children?: NavChild[] };
@@ -657,6 +657,7 @@ export const navItems: NavItem[] = [
           { path: '/admin/alixdocs/chains', label: 'Approval-Chains (Admin)', icon: Workflow, roles: ['Super Admin'] },
           { path: '/admin/alixdocs/reindex', label: 'KI-Reindex & Duplikate', icon: Sparkles, roles: ['Super Admin'] },
           { path: '/admin/alixdocs/reports', label: 'Reporting & Audit-Export', icon: FileDown, roles: ['Super Admin'] },
+          { path: '/admin/alixdocs/heatmap', label: 'Share Heatmap 🔥', icon: Flame, roles: ['Admin','Super Admin'] },
           { path: '/m/alixdocs', label: 'Mobile Erfassung 📱', icon: SearchCheck, roles: ['Super Admin'] },
         ],
 

@@ -5457,6 +5457,66 @@ export type Database = {
           },
         ]
       }
+      alixdocs_share_events: {
+        Row: {
+          country: string | null
+          created_at: string
+          document_id: string | null
+          dwell_ms: number | null
+          event_type: string
+          id: string
+          ip_hash: string | null
+          meta: Json
+          page_no: number | null
+          referer: string | null
+          share_link_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          document_id?: string | null
+          dwell_ms?: number | null
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          meta?: Json
+          page_no?: number | null
+          referer?: string | null
+          share_link_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          document_id?: string | null
+          dwell_ms?: number | null
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          meta?: Json
+          page_no?: number | null
+          referer?: string | null
+          share_link_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs_share_events_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixdocs_share_events_share_link_id_fkey"
+            columns: ["share_link_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs_share_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixdocs_share_links: {
         Row: {
           created_at: string
