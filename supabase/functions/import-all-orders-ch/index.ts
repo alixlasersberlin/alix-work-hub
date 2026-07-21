@@ -121,96 +121,118 @@ Deno.serve(async (req) => {
     }
   }
 
-  let page = 1;
-  const MAX_PAGES = 50;
-  let imported = 0, updated = 0, skipped = 0, failed = 0, fetched = 0;
-  const errors: any[] = [];
+  // Run the long-running import in the background so we don't hit the 150s idle timeout.
+  const runImport = async () => {
+    let page = 1;
+    const MAX_PAGES = 50;
+    const BG_LIMIT_MS = 25 * 60_000;
+    let imported = 0, updated = 0, skipped = 0, failed = 0, fetched = 0;
+    const errors: any[] = [];
 
-  while (page <= MAX_PAGES) {
-    if (Date.now() - t0 > HARD_LIMIT_MS) break;
-    const url = `${API}/salesorders?organization_id=${ORG_ID}&branch_id=${CH_BRANCH_ID}&page=${page}&per_page=200`;
-    const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
-    if (!res.ok) {
-      const txt = await res.text();
-      errors.push({ page, zoho_error: txt.slice(0, 500) });
-      break;
-    }
-    const json = await res.json();
-    const list = json.salesorders ?? [];
-    const hasMore = json.page_context?.has_more_page === true;
-    if (list.length === 0) break;
-    fetched += list.length;
-
-    for (const so of list) {
-      const externalOrderId = so.salesorder_id?.toString();
-      const externalCustomerId = so.customer_id?.toString();
-      if (!externalOrderId || !externalCustomerId) { skipped++; continue; }
-      try {
-        const customerId = await ensureCustomer(externalCustomerId);
-        if (!customerId) { skipped++; errors.push({ id: externalOrderId, message: "customer missing" }); continue; }
-
-        let detail = so;
-        try {
-          const dRes = await fetch(`${API}/salesorders/${externalOrderId}?organization_id=${ORG_ID}`,
-            { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
-          if (dRes.ok) {
-            const dJson = await dRes.json();
-            if (dJson.salesorder) detail = dJson.salesorder;
-          }
-        } catch { /* ignore */ }
-
-        const nullIfEmpty = (v: any) => (v == null || v === "" ? null : v);
-        const orderPayload: any = {
-          external_order_id: externalOrderId,
-          source_system: SOURCE,
-          customer_id: customerId,
-          order_number: detail.salesorder_number ?? so.salesorder_number ?? externalOrderId,
-          order_date: nullIfEmpty(detail.date ?? so.date),
-          expected_shipment_date: nullIfEmpty(detail.shipment_date ?? so.shipment_date),
-          order_status: detail.status ?? so.status ?? "offen",
-          total_amount: detail.total ?? so.total ?? null,
-          currency: detail.currency_code ?? so.currency_code ?? null,
-          salesperson_name: detail.salesperson_name ?? so.salesperson_name ?? null,
-          shipping_address: detail.shipping_address ?? null,
-          billing_address: detail.billing_address ?? null,
-          raw_data: detail,
-        };
-
-        const { data: ex } = await admin.from("orders")
-          .select("id, raw_data")
-          .eq("external_order_id", externalOrderId)
-          .eq("source_system", SOURCE).maybeSingle();
-
-        let orderId: string | null = null;
-        if (ex) {
-          const { error: e } = await admin.from("orders").update(orderPayload).eq("id", ex.id);
-          if (e) { failed++; errors.push({ id: externalOrderId, message: e.message }); continue; }
-          orderId = ex.id; updated++;
-        } else {
-          const { data: ins, error: e } = await admin.from("orders").insert(orderPayload).select("id").single();
-          if (e || !ins) { failed++; errors.push({ id: externalOrderId, message: e?.message ?? "insert failed" }); continue; }
-          orderId = ins.id; imported++;
-        }
-
-        if (orderId && Array.isArray(detail.line_items)) {
-          await syncLineItems(orderId, detail.line_items);
-        }
-      } catch (err: any) {
-        failed++;
-        errors.push({ id: externalOrderId, message: err?.message ?? "unknown" });
+    while (page <= MAX_PAGES) {
+      if (Date.now() - t0 > BG_LIMIT_MS) break;
+      const url = `${API}/salesorders?organization_id=${ORG_ID}&branch_id=${CH_BRANCH_ID}&page=${page}&per_page=200`;
+      const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+      if (!res.ok) {
+        const txt = await res.text();
+        errors.push({ page, zoho_error: txt.slice(0, 500) });
+        break;
       }
+      const json = await res.json();
+      const list = json.salesorders ?? [];
+      const hasMore = json.page_context?.has_more_page === true;
+      if (list.length === 0) break;
+      fetched += list.length;
+
+      for (const so of list) {
+        const externalOrderId = so.salesorder_id?.toString();
+        const externalCustomerId = so.customer_id?.toString();
+        if (!externalOrderId || !externalCustomerId) { skipped++; continue; }
+        try {
+          const customerId = await ensureCustomer(externalCustomerId);
+          if (!customerId) { skipped++; errors.push({ id: externalOrderId, message: "customer missing" }); continue; }
+
+          let detail = so;
+          try {
+            const dRes = await fetch(`${API}/salesorders/${externalOrderId}?organization_id=${ORG_ID}`,
+              { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+            if (dRes.ok) {
+              const dJson = await dRes.json();
+              if (dJson.salesorder) detail = dJson.salesorder;
+            }
+          } catch { /* ignore */ }
+
+          const nullIfEmpty = (v: any) => (v == null || v === "" ? null : v);
+          const orderPayload: any = {
+            external_order_id: externalOrderId,
+            source_system: SOURCE,
+            customer_id: customerId,
+            order_number: detail.salesorder_number ?? so.salesorder_number ?? externalOrderId,
+            order_date: nullIfEmpty(detail.date ?? so.date),
+            expected_shipment_date: nullIfEmpty(detail.shipment_date ?? so.shipment_date),
+            order_status: detail.status ?? so.status ?? "offen",
+            total_amount: detail.total ?? so.total ?? null,
+            currency: detail.currency_code ?? so.currency_code ?? null,
+            salesperson_name: detail.salesperson_name ?? so.salesperson_name ?? null,
+            shipping_address: detail.shipping_address ?? null,
+            billing_address: detail.billing_address ?? null,
+            raw_data: detail,
+          };
+
+          const { data: ex } = await admin.from("orders")
+            .select("id, raw_data")
+            .eq("external_order_id", externalOrderId)
+            .eq("source_system", SOURCE).maybeSingle();
+
+          let orderId: string | null = null;
+          if (ex) {
+            const { error: e } = await admin.from("orders").update(orderPayload).eq("id", ex.id);
+            if (e) { failed++; errors.push({ id: externalOrderId, message: e.message }); continue; }
+            orderId = ex.id; updated++;
+          } else {
+            const { data: ins, error: e } = await admin.from("orders").insert(orderPayload).select("id").single();
+            if (e || !ins) { failed++; errors.push({ id: externalOrderId, message: e?.message ?? "insert failed" }); continue; }
+            orderId = ins.id; imported++;
+          }
+
+          if (orderId && Array.isArray(detail.line_items)) {
+            await syncLineItems(orderId, detail.line_items);
+          }
+        } catch (err: any) {
+          failed++;
+          errors.push({ id: externalOrderId, message: err?.message ?? "unknown" });
+        }
+      }
+
+      if (!hasMore) break;
+      page++;
     }
 
-    if (!hasMore) break;
-    page++;
-  }
+    try {
+      await admin.from("sync_logs").insert({
+        source_system: SOURCE,
+        sync_type: "import-all-orders-ch",
+        status: failed > 0 ? "partial" : "success",
+        records_processed: fetched,
+        records_created: imported,
+        records_updated: updated,
+        records_failed: failed,
+        error_message: errors.length ? JSON.stringify(errors.slice(0, 20)) : null,
+        completed_at: new Date().toISOString(),
+      });
+    } catch { /* sync_logs optional */ }
+
+    console.log(`[import-all-orders-ch] done`, { fetched, imported, updated, skipped, failed, duration_ms: Date.now() - t0 });
+  };
+
+  // @ts-ignore EdgeRuntime available in Supabase edge functions
+  EdgeRuntime.waitUntil(runImport());
 
   return new Response(JSON.stringify({
     success: true,
+    started: true,
     branch_id: CH_BRANCH_ID,
     source_system: SOURCE,
-    totals: { fetched, imported, updated, skipped, failed },
-    duration_ms: Date.now() - t0,
-    errors: errors.slice(0, 20),
-  }, null, 2), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 });
+    message: "Import läuft im Hintergrund. Ergebnis wird in sync_logs protokolliert.",
+  }, null, 2), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 202 });
 });
