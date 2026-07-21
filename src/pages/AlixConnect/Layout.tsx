@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import {
   MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone,
-  LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone,
+  LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +18,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
     items: [
       { to: "/connect/team", label: "Team Chat", icon: MessageSquare },
       { to: "/connect/inbox", label: "Unified Inbox", icon: Inbox },
+      { to: "/connect/telefonie", label: "Telefonie (3CX)", icon: PhoneCall },
       { to: "/connect/contacts", label: "Kontakte", icon: Users },
       { to: "/connect/campaigns", label: "Kampagnen", icon: Megaphone },
     ],
@@ -58,7 +59,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 19 · Journey, Experiments & WhatsApp Cloud
+            Phase 20 · 3CX Telefonie
           </span>
         </div>
         <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
