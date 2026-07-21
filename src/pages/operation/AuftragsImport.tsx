@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Workflow } from 'lucide-react';
 
-const NAME_KEYS = ['kunde', 'kundenname', 'customer', 'name', 'firma', 'company', 'customer_name'];
+const NAME_KEYS = ['kunde', 'kundenname', 'customer', 'name', 'firma', 'company', 'customer_name', 'kontakt', 'kontaktname', 'contact', 'contact_name', 'ansprechpartner'];
 
 function pickKey(row: Record<string, any>, candidates: string[]): string | null {
   const keys = Object.keys(row);
@@ -153,8 +153,8 @@ export default function AuftragsImport() {
 
   function downloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['Kunde'],
-      ['Beispiel Kunde GmbH'],
+      ['Kunde', 'Kontaktname'],
+      ['Beispiel Kunde GmbH', 'Max Mustermann'],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Kunden');
@@ -179,7 +179,7 @@ export default function AuftragsImport() {
         <CardContent className="space-y-3">
           <Input type="file" accept=".xlsx,.xls,.csv" onChange={onFile} />
           <p className="text-xs text-muted-foreground">
-            Spalte: <Badge variant="outline">Kunde</Badge> (bzw. Kundenname/Firma). Abgleich erfolgt ausschließlich anhand des Kundennamens.
+            Spalte: <Badge variant="outline">Kunde</Badge> oder <Badge variant="outline">Kontaktname</Badge> (bzw. Firma/Ansprechpartner). Abgleich erfolgt anhand des Namens.
           </p>
           {filename && <p className="text-xs">Datei: <span className="font-mono">{filename}</span> · {rows.length} Zeilen</p>}
         </CardContent>
