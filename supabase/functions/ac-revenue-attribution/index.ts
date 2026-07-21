@@ -1,107 +1,108 @@
-// ALIX CONNECT — Phase 26 Revenue Attribution
-// Rechnet Aufträge auf Touchpoints/Kanäle zu (First/Last/Linear/Time-Decay/Position-Based)
-// und schreibt Ergebnisse nach ac_revenue_attributions.
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+// ALIX CONNECT Phase 45 — Revenue Attribution
+// End-to-End Touchpoint-Tracking von First-Touch bis Abschluss
+// Actions:
+//  - report { from?, to?, model?: 'first'|'last'|'linear' } -> aggregierte Attribution
+//  - order_touchpoints { order_id } -> Timeline aller Touchpoints eines Auftrags
+import { createClient } from "npm:@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+function json(status: number, body: unknown) {
+  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+}
 
-const MODELS = ['first', 'last', 'linear', 'time_decay', 'position'] as const;
-type Model = typeof MODELS[number];
+type Touch = { at: string; channel: string; source?: string | null; ref?: string | null; label?: string | null };
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  try {
-    const body = await req.json().catch(() => ({}));
-    const days = Math.min(Number(body?.days ?? 90), 365);
-    const modelsSel: Model[] = Array.isArray(body?.models) ? body.models : (MODELS as unknown as Model[]);
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const auth = req.headers.get("Authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return json(401, { error: "unauthorized" });
 
-    const since = new Date(Date.now() - days * 86_400_000).toISOString();
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const userClient = createClient(url, anon, { global: { headers: { Authorization: auth } } });
+  const { data: u } = await userClient.auth.getUser();
+  if (!u?.user) return json(401, { error: "unauthorized" });
+  const { data: isAdmin } = await userClient.rpc("has_role", { check_role: "Admin" });
+  const { data: isSuper } = await userClient.rpc("has_role", { check_role: "Super Admin" });
+  if (!isAdmin && !isSuper) return json(403, { error: "forbidden" });
 
-    const { data: orders } = await sb.from('orders').select('id, customer_id, order_total, currency, created_at').gte('created_at', since).limit(5000);
-    if (!orders?.length) return json({ ok: true, orders: 0 });
+  const svc = createClient(url, service);
+  const body = await req.json().catch(() => ({}));
+  const action = body?.action ?? "report";
 
-    // Reset window
-    await sb.from('ac_revenue_attributions').delete().gte('order_date', since);
-
-    const inserts: any[] = [];
-    for (const o of orders) {
-      const amount = Number(o.order_total ?? 0);
-      if (!amount || !o.customer_id) continue;
-      const cutoff = new Date(new Date(o.created_at as any).getTime() - 60 * 86_400_000).toISOString();
-
-      // touchpoints from ac_messages + ac_calls + ac_analytics_events
-      const [{ data: msgs }, { data: calls }, { data: evts }] = await Promise.all([
-        sb.from('ac_messages').select('id, channel, created_at').eq('customer_id', o.customer_id).gte('created_at', cutoff).lte('created_at', o.created_at).order('created_at').limit(200),
-        sb.from('ac_calls').select('id, direction, created_at').eq('customer_id', o.customer_id).gte('created_at', cutoff).lte('created_at', o.created_at).order('created_at').limit(200),
-        sb.from('ac_analytics_events').select('id, channel, created_at').eq('customer_id', o.customer_id).gte('created_at', cutoff).lte('created_at', o.created_at).order('created_at').limit(200),
+  const collectTouches = async (customer_id: string | null, email: string | null): Promise<Touch[]> => {
+    const touches: Touch[] = [];
+    if (customer_id) {
+      const [leads, tickets, calls] = await Promise.all([
+        svc.from("sales_leads").select("id, source, created_at").eq("customer_id", customer_id).limit(200),
+        svc.from("tickets").select("id, channel, subject, created_at").eq("customer_id", customer_id).limit(200),
+        svc.from("call_journal").select("id, direction, created_at").eq("customer_id", customer_id).limit(200).then(r => r).catch(() => ({ data: [] as any[] })),
       ]);
-
-      const tps: Array<{ id: string, channel: string, at: string }> = [];
-      (msgs ?? []).forEach((m: any) => tps.push({ id: m.id, channel: m.channel || 'message', at: m.created_at }));
-      (calls ?? []).forEach((c: any) => tps.push({ id: c.id, channel: 'call', at: c.created_at }));
-      (evts ?? []).forEach((e: any) => tps.push({ id: e.id, channel: e.channel || 'web', at: e.created_at }));
-      tps.sort((a, b) => a.at.localeCompare(b.at));
-      if (!tps.length) continue;
-
-      for (const model of modelsSel) {
-        const weights = computeWeights(model, tps, o.created_at as string);
-        tps.forEach((tp, i) => {
-          const w = weights[i] || 0;
-          if (w <= 0) return;
-          inserts.push({
-            order_id: o.id,
-            customer_id: o.customer_id,
-            amount,
-            currency: o.currency ?? 'EUR',
-            order_date: o.created_at,
-            model,
-            channel: tp.channel,
-            touchpoint_id: tp.id,
-            weight: w,
-            attributed_amount: +(amount * w).toFixed(2),
-          });
-        });
-      }
+      for (const l of leads.data ?? []) touches.push({ at: l.created_at, channel: "lead", source: l.source, ref: l.id, label: "Lead erstellt" });
+      for (const t of tickets.data ?? []) touches.push({ at: t.created_at, channel: t.channel ?? "ticket", ref: t.id, label: t.subject });
+      for (const c of (calls as any).data ?? []) touches.push({ at: c.created_at, channel: "call", source: c.direction, ref: c.id, label: "Anruf" });
     }
-
-    // Chunked insert
-    for (let i = 0; i < inserts.length; i += 500) {
-      const { error } = await sb.from('ac_revenue_attributions').insert(inserts.slice(i, i + 500));
-      if (error) throw error;
+    if (email) {
+      const em = await svc.from("email_messages").select("id, subject, direction, created_at").ilike("from_address", email).limit(200).then(r => r).catch(() => ({ data: [] as any[] }));
+      for (const m of (em as any).data ?? []) touches.push({ at: m.created_at, channel: "email", source: m.direction, ref: m.id, label: m.subject });
     }
+    return touches.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+  };
 
-    return json({ ok: true, orders: orders.length, rows: inserts.length });
-  } catch (e: any) {
-    return json({ error: e?.message || String(e) }, 500);
+  if (action === "order_touchpoints") {
+    const orderId = String(body?.order_id ?? "");
+    if (!orderId) return json(400, { error: "order_id_required" });
+    const { data: order } = await svc.from("orders").select("id, order_number, customer_id, customer_name, customer_email, total, created_at").eq("id", orderId).maybeSingle();
+    if (!order) return json(404, { error: "order_not_found" });
+    const touches = await collectTouches(order.customer_id, order.customer_email);
+    return json(200, { order, touches });
   }
+
+  // report
+  const to = body?.to ? new Date(body.to) : new Date();
+  const from = body?.from ? new Date(body.from) : new Date(to.getTime() - 90 * 86400_000);
+  const model = (body?.model ?? "linear") as "first" | "last" | "linear";
+
+  const { data: orders } = await svc
+    .from("orders")
+    .select("id, order_number, customer_id, customer_email, total, created_at")
+    .gte("created_at", from.toISOString())
+    .lte("created_at", to.toISOString())
+    .not("total", "is", null)
+    .limit(500);
+
+  const perChannel: Record<string, { revenue: number; orders: number }> = {};
+  const perSource: Record<string, { revenue: number; orders: number }> = {};
+  let attributed = 0;
+  let untracked = 0;
+
+  for (const o of orders ?? []) {
+    const rev = Number(o.total ?? 0);
+    const touches = (await collectTouches(o.customer_id, o.customer_email)).filter(t => new Date(t.at) <= new Date(o.created_at));
+    if (touches.length === 0) { untracked += rev; continue; }
+    attributed += rev;
+    let contribs: Array<{ channel: string; source?: string | null; weight: number }> = [];
+    if (model === "first") contribs = [{ channel: touches[0].channel, source: touches[0].source, weight: 1 }];
+    else if (model === "last") contribs = [{ channel: touches[touches.length - 1].channel, source: touches[touches.length - 1].source, weight: 1 }];
+    else contribs = touches.map(t => ({ channel: t.channel, source: t.source, weight: 1 / touches.length }));
+    for (const c of contribs) {
+      perChannel[c.channel] ??= { revenue: 0, orders: 0 };
+      perChannel[c.channel].revenue += rev * c.weight;
+      perChannel[c.channel].orders += c.weight;
+      const s = c.source || "—";
+      perSource[s] ??= { revenue: 0, orders: 0 };
+      perSource[s].revenue += rev * c.weight;
+      perSource[s].orders += c.weight;
+    }
+  }
+
+  return json(200, {
+    generated_at: new Date().toISOString(),
+    range: { from: from.toISOString(), to: to.toISOString() },
+    model,
+    totals: { orders: orders?.length ?? 0, attributed_revenue: attributed, untracked_revenue: untracked },
+    per_channel: Object.entries(perChannel).map(([channel, v]) => ({ channel, revenue: Math.round(v.revenue * 100) / 100, orders: Math.round(v.orders * 100) / 100 })).sort((a, b) => b.revenue - a.revenue),
+    per_source: Object.entries(perSource).map(([source, v]) => ({ source, revenue: Math.round(v.revenue * 100) / 100, orders: Math.round(v.orders * 100) / 100 })).sort((a, b) => b.revenue - a.revenue).slice(0, 25),
+  });
 });
-
-function computeWeights(model: Model, tps: Array<{ at: string }>, orderAt: string): number[] {
-  const n = tps.length;
-  if (n === 0) return [];
-  if (model === 'first') { const w = new Array(n).fill(0); w[0] = 1; return w; }
-  if (model === 'last') { const w = new Array(n).fill(0); w[n - 1] = 1; return w; }
-  if (model === 'linear') return new Array(n).fill(1 / n);
-  if (model === 'position') {
-    if (n === 1) return [1];
-    if (n === 2) return [0.5, 0.5];
-    const w = new Array(n).fill(0.2 / (n - 2));
-    w[0] = 0.4; w[n - 1] = 0.4;
-    return w;
-  }
-  // time_decay: half-life 7 days back from order
-  const halflife = 7 * 86_400_000;
-  const oT = new Date(orderAt).getTime();
-  const raw = tps.map(t => Math.pow(0.5, (oT - new Date(t.at).getTime()) / halflife));
-  const sum = raw.reduce((s, x) => s + x, 0) || 1;
-  return raw.map(x => x / sum);
-}
-
-function json(body: any, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-}
