@@ -313,6 +313,11 @@ const AlixConnectTelephonyForwarding = lazy(() => import("./pages/AlixConnect/Te
 const AlixConnectTelephonyAnalytics = lazy(() => import("./pages/AlixConnect/TelephonyAnalytics"));
 const AlixConnectTelephonyCompliance = lazy(() => import("./pages/AlixConnect/TelephonyCompliance"));
 const AlixConnectTelephonyJournal = lazy(() => import("./pages/AlixConnect/TelephonyJournal"));
+const AlixConnectSmsTemplates = lazy(() => import("./pages/AlixConnect/SmsTemplates"));
+const AlixConnectOptOut = lazy(() => import("./pages/AlixConnect/OptOut"));
+const AlixConnectEmailSync = lazy(() => import("./pages/AlixConnect/EmailSync"));
+const AlixConnectMarketplace = lazy(() => import("./pages/AlixConnect/Marketplace"));
+const AlixConnectCustomer360 = lazy(() => import("./pages/AlixConnect/Customer360"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
