@@ -1,4 +1,4 @@
-import { Workflow, Mail, FileText, ChevronRight, Database, MessageSquare, Shield, ShieldCheck, Activity } from 'lucide-react';
+import { Workflow, Mail, FileText, ChevronRight, Database, MessageSquare, Shield, ShieldCheck, Activity, FileUp, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -13,6 +13,8 @@ const tiles = [
   { to: '/operation/alixsmart-migration', icon: Database, title: 'AlixSmart Migration', desc: 'Import Engine: Verbindung, Dry-Run und Wellen-Import.' },
   { to: '/operation/health-check', icon: Activity, title: 'Supabase Health Check', desc: 'Auth- und REST-Endpunkte live testen (Status, Latenz, Fehler).' },
   { to: '/operation/pdf-import-konfiguration', icon: FileText, title: 'PDF-Auftragsimport', desc: 'Limits, Konfidenz-Schwellen, aktive Dokumenttypen und Standard-Folgeprozesse.' },
+  { to: '/operation/auftrags-import', icon: FileUp, title: 'Auftragsabgleich – Import', desc: 'XLSX/CSV hochladen und Aufträge mit dem System abgleichen.' },
+  { to: '/operation/auftrags-abgleich', icon: ListChecks, title: 'Auftragsabgleich', desc: 'Ergebnisliste des letzten Imports – grün = OK, rot = fehlt.' },
 ];
 
 const SECURITY_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung'];

@@ -236,6 +236,8 @@ const AlixCopilotConfig = lazy(() => import("./pages/Operation/AlixCopilotConfig
 const KundenportalKonfiguration = lazy(() => import("./pages/Operation/KundenportalKonfiguration"));
 const Datensicherung = lazy(() => import("./pages/operation/Datensicherung"));
 const FortKnox = lazy(() => import("./pages/operation/FortKnox"));
+const AuftragsImport = lazy(() => import("./pages/operation/AuftragsImport"));
+const AuftragsAbgleich = lazy(() => import("./pages/operation/AuftragsAbgleich"));
 const Mandanten = lazy(() => import("./pages/Mandanten"));
 const TicketDepartments = lazy(() => import("./pages/Operation/TicketDepartments"));
 const AppointmentAction = lazy(() => import("./pages/PublicAppointment/AppointmentAction"));
@@ -1095,6 +1097,8 @@ function AppRoutes() {
           <Route path="/operation/security-center" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><SecurityCenter /></ProtectedRoute>} />
           <Route path="/operation/datensicherung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Datensicherung /></ProtectedRoute>} />
           <Route path="/operation/fort-knox" element={<ProtectedRoute requiredRoles={['Super Admin']}><FortKnox /></ProtectedRoute>} />
+          <Route path="/operation/auftrags-import" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AuftragsImport /></ProtectedRoute>} />
+          <Route path="/operation/auftrags-abgleich" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AuftragsAbgleich /></ProtectedRoute>} />
           <Route path="/mandanten" element={<ProtectedRoute requiredRoles={['Super Admin']}><Mandanten /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><AdminAuditLog /></ProtectedRoute>} />
           <Route path="/admin/geraete" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><GeraeteVerwaltung /></ProtectedRoute>} />
