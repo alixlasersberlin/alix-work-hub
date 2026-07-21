@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2 } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck } from 'lucide-react';
+import EscBookings from '@/pages/ESC/Bookings';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -211,7 +212,35 @@ export default function TicketsList() {
     () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'reklamation'),
     [filtered],
   );
-  const [tab, setTab] = useState<'open' | 'closed' | 'wartung' | 'reklamation'>('open');
+  const neueRows = useMemo(
+    () => filtered.filter(r => !isClosed(r.status) && ['offen', 'open', 'neu', 'Neu'].includes(r.status)),
+    [filtered],
+  );
+  const overdueRows = useMemo(() => {
+    const now = Date.now();
+    return filtered.filter(r => !isClosed(r.status) && r.due_at && new Date(r.due_at).getTime() < now);
+  }, [filtered]);
+  const escalatedRows = useMemo(
+    () => filtered.filter(r => !isClosed(r.status) && (r.escalation_count || 0) > 0),
+    [filtered],
+  );
+  const wartetKundeRows = useMemo(
+    () => filtered.filter(r => ['wartet_kunde', 'wartet_Kunde'].includes(r.status)),
+    [filtered],
+  );
+
+  type TabKey = 'open' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
+  const initialTab: TabKey = (() => {
+    const s = searchParams.get('status');
+    const d = searchParams.get('due');
+    if (searchParams.get('escalated') === '1') return 'escalated';
+    if (d === 'overdue') return 'overdue';
+    if (s === 'Neu' || s === 'neu' || s === 'offen' || s === 'open') return 'neu';
+    if (s && s.toLowerCase().startsWith('warten')) return 'wartet';
+    if (searchParams.get('view') === 'bookings') return 'bookings';
+    return 'open';
+  })();
+  const [tab, setTab] = useState<TabKey>(initialTab);
 
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
@@ -386,25 +415,42 @@ export default function TicketsList() {
 
 
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'open' | 'closed' | 'wartung' | 'reklamation')}>
-        <TabsList className="mb-3">
-          <TabsTrigger value="open">Offene Tickets ({openRows.length})</TabsTrigger>
-          <TabsTrigger value="closed">Geschlossene Tickets ({closedRows.length})</TabsTrigger>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
+        <TabsList className="mb-3 flex-wrap h-auto">
+          <TabsTrigger value="open">Offene ({openRows.length})</TabsTrigger>
+          <TabsTrigger value="neu"><Inbox className="w-3.5 h-3.5 mr-1" />Neue / Eingang ({neueRows.length})</TabsTrigger>
+          <TabsTrigger value="overdue"><AlertTriangle className="w-3.5 h-3.5 mr-1 text-red-400" />Überfällig ({overdueRows.length})</TabsTrigger>
+          <TabsTrigger value="escalated"><Flame className="w-3.5 h-3.5 mr-1 text-orange-400" />Eskaliert ({escalatedRows.length})</TabsTrigger>
+          <TabsTrigger value="wartet"><Pause className="w-3.5 h-3.5 mr-1" />Warten auf Kunde ({wartetKundeRows.length})</TabsTrigger>
           <TabsTrigger value="wartung">Wartung ({wartungRows.length})</TabsTrigger>
           <TabsTrigger value="reklamation">Reklamation ({reklamationRows.length})</TabsTrigger>
+          <TabsTrigger value="closed">Geschlossen ({closedRows.length})</TabsTrigger>
+          <TabsTrigger value="bookings"><CalendarCheck className="w-3.5 h-3.5 mr-1" />Öffentliche Buchungen</TabsTrigger>
         </TabsList>
 
-        {(['open', 'closed', 'wartung', 'reklamation'] as const).map((key) => {
+        <TabsContent value="bookings">
+          <EscBookings />
+        </TabsContent>
+
+        {(['open', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
           const list =
             key === 'open' ? openRows
               : key === 'closed' ? closedRows
               : key === 'wartung' ? wartungRows
-              : reklamationRows;
+              : key === 'reklamation' ? reklamationRows
+              : key === 'neu' ? neueRows
+              : key === 'overdue' ? overdueRows
+              : key === 'escalated' ? escalatedRows
+              : wartetKundeRows;
           const emptyTitle =
             key === 'open' ? 'Keine offenen Tickets'
               : key === 'closed' ? 'Keine geschlossenen Tickets'
               : key === 'wartung' ? 'Keine Wartungs-Tickets'
-              : 'Keine Reklamations-Tickets';
+              : key === 'reklamation' ? 'Keine Reklamations-Tickets'
+              : key === 'neu' ? 'Keine neuen Tickets im Eingang'
+              : key === 'overdue' ? 'Keine überfälligen Tickets'
+              : key === 'escalated' ? 'Keine eskalierten Tickets'
+              : 'Keine Tickets warten auf Kundenrückmeldung';
           return (
             <TabsContent key={key} value={key}>
               <div className="rounded-xl border border-border bg-card overflow-hidden">
