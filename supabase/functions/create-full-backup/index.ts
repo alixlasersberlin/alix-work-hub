@@ -20,6 +20,9 @@ type BackupState = {
   storageIndexFiles: string[];
   totalSize: number;
   storageFileCount: number;
+  // Keyset-Pagination: letzte gelesene id der aktuellen Tabelle.
+  // Vermeidet Deep-OFFSET-Timeouts bei großen Tabellen (audit_logs & Co.).
+  lastId?: string | null;
 };
 
 const corsHeaders = {
@@ -659,15 +662,23 @@ async function processBackupStep(params: {
         }
 
         const pageSize = pageSizeFor(table);
+        // Für schwere Tabellen: Keyset-Pagination statt Deep-OFFSET.
+        // Deep OFFSET (range 200000+) läuft in `statement_timeout` — Keyset
+        // nutzt den PK-Index und bleibt konstant schnell.
+        const useKeyset = HEAVY_TABLES.has(table);
         // Retry mit Backoff — fängt transiente Cloudflare-5xx (520/521/522/524) ab.
         let data: unknown[] | null = null;
         let lastErr: string | null = null;
         for (let attempt = 1; attempt <= 5; attempt++) {
           try {
-            const res = await adminClient
-              .from(table)
-              .select("*")
-              .range(state.rowOffset, state.rowOffset + pageSize - 1);
+            let q = adminClient.from(table).select("*");
+            if (useKeyset) {
+              q = q.order("id", { ascending: true }).limit(pageSize);
+              if (state.lastId) q = q.gt("id", state.lastId);
+            } else {
+              q = q.range(state.rowOffset, state.rowOffset + pageSize - 1);
+            }
+            const res = await q;
             if (res.error) {
               lastErr = res.error.message;
               const transient = /502|503|504|520|521|522|524|<!DOCTYPE|<html|Web server|Cloudflare|fetch failed|network|timeout|Unexpected token|not valid JSON/i.test(lastErr);
@@ -690,6 +701,7 @@ async function processBackupStep(params: {
           state.tableIndex += 1;
           state.rowOffset = 0;
           state.partIndex = 0;
+          state.lastId = null;
         } else {
           const partName = `part-${String(state.partIndex).padStart(5, "0")}.ndjson`;
           const partPath = `${folderPath}/tables/${table}/${partName}`;
@@ -709,8 +721,13 @@ async function processBackupStep(params: {
             state.tableIndex += 1;
             state.rowOffset = 0;
             state.partIndex = 0;
+            state.lastId = null;
           } else {
             state.rowOffset += pageRows;
+            if (useKeyset) {
+              const lastRow = (data as Record<string, unknown>[])[pageRows - 1];
+              state.lastId = (lastRow?.id as string | undefined) ?? state.lastId ?? null;
+            }
           }
         }
 
