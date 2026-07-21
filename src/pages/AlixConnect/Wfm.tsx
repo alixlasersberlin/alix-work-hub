@@ -103,7 +103,10 @@ export default function AlixConnectWfm() {
           <h2 className="text-lg font-semibold flex items-center gap-2"><Users className="h-4 w-4 text-primary" /> Workforce Management <Badge variant="outline">Phase 25</Badge></h2>
           <p className="text-sm text-muted-foreground">Forecasting, Schichtplanung, Adherence.</p>
         </div>
-        <Button size="sm" onClick={generateForecast}><TrendingUp className="h-4 w-4 mr-1" />Forecast 24h erzeugen</Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={generateForecast}><TrendingUp className="h-4 w-4 mr-1" />Forecast 24h</Button>
+          <Button size="sm" onClick={autoSchedule}><Calendar className="h-4 w-4 mr-1" />Auto-Scheduler</Button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-3">
