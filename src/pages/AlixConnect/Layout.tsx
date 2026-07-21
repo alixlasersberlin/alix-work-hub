@@ -62,6 +62,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/voice-analytics", label: "Voice Analytics", icon: Mic },
       { to: "/connect/customer-health", label: "Customer Health", icon: HeartPulse },
       { to: "/connect/playbooks", label: "Playbook Automation", icon: Rocket },
+      { to: "/connect/journey-orchestrator", label: "Journey Orchestrator 2.0", icon: Workflow },
       { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
       { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
