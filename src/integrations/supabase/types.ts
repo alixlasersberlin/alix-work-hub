@@ -1256,42 +1256,51 @@ export type Database = {
           contact_id: string
           context: Json
           created_at: string
+          current_node_id: string | null
           current_step: number
           id: string
           journey_id: string
           last_error: string | null
           next_action_at: string
+          path: Json
           started_at: string
           status: string
           updated_at: string
+          variant: string | null
         }
         Insert: {
           completed_at?: string | null
           contact_id: string
           context?: Json
           created_at?: string
+          current_node_id?: string | null
           current_step?: number
           id?: string
           journey_id: string
           last_error?: string | null
           next_action_at?: string
+          path?: Json
           started_at?: string
           status?: string
           updated_at?: string
+          variant?: string | null
         }
         Update: {
           completed_at?: string | null
           contact_id?: string
           context?: Json
           created_at?: string
+          current_node_id?: string | null
           current_step?: number
           id?: string
           journey_id?: string
           last_error?: string | null
           next_action_at?: string
+          path?: Json
           started_at?: string
           status?: string
           updated_at?: string
+          variant?: string | null
         }
         Relationships: [
           {
@@ -1390,37 +1399,49 @@ export type Database = {
       }
       ac_journeys: {
         Row: {
+          ab_config: Json
+          analytics: Json
           created_at: string
           created_by: string | null
           description: string | null
+          graph: Json
           id: string
           name: string
           status: string
           trigger_event: string
           trigger_filter: Json
           updated_at: string
+          version: number
         }
         Insert: {
+          ab_config?: Json
+          analytics?: Json
           created_at?: string
           created_by?: string | null
           description?: string | null
+          graph?: Json
           id?: string
           name: string
           status?: string
           trigger_event: string
           trigger_filter?: Json
           updated_at?: string
+          version?: number
         }
         Update: {
+          ab_config?: Json
+          analytics?: Json
           created_at?: string
           created_by?: string | null
           description?: string | null
+          graph?: Json
           id?: string
           name?: string
           status?: string
           trigger_event?: string
           trigger_filter?: Json
           updated_at?: string
+          version?: number
         }
         Relationships: []
       }
