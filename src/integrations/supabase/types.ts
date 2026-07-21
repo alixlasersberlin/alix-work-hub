@@ -251,7 +251,9 @@ export type Database = {
       }
       ac_calls: {
         Row: {
+          action_items: Json | null
           agent_user_id: string | null
+          ai_processed_at: string | null
           answered_at: string | null
           consent_status: string
           contact_id: string | null
@@ -273,11 +275,17 @@ export type Database = {
           recording_deleted_at: string | null
           recording_retention_until: string | null
           recording_url: string | null
+          sentiment: string | null
+          sentiment_score: number | null
           started_at: string
           status: string
+          summary: string | null
           tags: string[]
           ticket_id: string | null
           to_number: string | null
+          transcript: string | null
+          transcript_language: string | null
+          transcript_status: string | null
           updated_at: string
           voicemail_transcribed_at: string | null
           voicemail_transcript: string | null
@@ -285,7 +293,9 @@ export type Database = {
           voicemail_url: string | null
         }
         Insert: {
+          action_items?: Json | null
           agent_user_id?: string | null
+          ai_processed_at?: string | null
           answered_at?: string | null
           consent_status?: string
           contact_id?: string | null
@@ -307,11 +317,17 @@ export type Database = {
           recording_deleted_at?: string | null
           recording_retention_until?: string | null
           recording_url?: string | null
+          sentiment?: string | null
+          sentiment_score?: number | null
           started_at?: string
           status?: string
+          summary?: string | null
           tags?: string[]
           ticket_id?: string | null
           to_number?: string | null
+          transcript?: string | null
+          transcript_language?: string | null
+          transcript_status?: string | null
           updated_at?: string
           voicemail_transcribed_at?: string | null
           voicemail_transcript?: string | null
@@ -319,7 +335,9 @@ export type Database = {
           voicemail_url?: string | null
         }
         Update: {
+          action_items?: Json | null
           agent_user_id?: string | null
+          ai_processed_at?: string | null
           answered_at?: string | null
           consent_status?: string
           contact_id?: string | null
@@ -341,11 +359,17 @@ export type Database = {
           recording_deleted_at?: string | null
           recording_retention_until?: string | null
           recording_url?: string | null
+          sentiment?: string | null
+          sentiment_score?: number | null
           started_at?: string
           status?: string
+          summary?: string | null
           tags?: string[]
           ticket_id?: string | null
           to_number?: string | null
+          transcript?: string | null
+          transcript_language?: string | null
+          transcript_status?: string | null
           updated_at?: string
           voicemail_transcribed_at?: string | null
           voicemail_transcript?: string | null
@@ -1109,6 +1133,139 @@ export type Database = {
         }
         Relationships: []
       }
+      ac_meeting_notes: {
+        Row: {
+          author_user_id: string | null
+          content: string
+          created_at: string
+          id: string
+          kind: string
+          meeting_id: string
+        }
+        Insert: {
+          author_user_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          kind?: string
+          meeting_id: string
+        }
+        Update: {
+          author_user_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          meeting_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_meeting_notes_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "ac_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_meeting_participants: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          joined_at: string | null
+          left_at: string | null
+          meeting_id: string
+          role: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          meeting_id: string
+          role?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          meeting_id?: string
+          role?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_meeting_participants_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "ac_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_meetings: {
+        Row: {
+          action_items: Json | null
+          ai_summary: string | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          ends_at: string | null
+          host_user_id: string
+          id: string
+          recording_url: string | null
+          room_code: string
+          starts_at: string
+          status: string
+          ticket_id: string | null
+          title: string
+          transcript: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_items?: Json | null
+          ai_summary?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          ends_at?: string | null
+          host_user_id: string
+          id?: string
+          recording_url?: string | null
+          room_code?: string
+          starts_at?: string
+          status?: string
+          ticket_id?: string | null
+          title: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_items?: Json | null
+          ai_summary?: string | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          ends_at?: string | null
+          host_user_id?: string
+          id?: string
+          recording_url?: string | null
+          room_code?: string
+          starts_at?: string
+          status?: string
+          ticket_id?: string | null
+          title?: string
+          transcript?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ac_messages: {
         Row: {
           attachments: Json | null
@@ -1476,6 +1633,39 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           webhook_secret?: string | null
+        }
+        Relationships: []
+      }
+      ac_report_snapshots: {
+        Row: {
+          channel: string
+          created_at: string
+          created_by: string | null
+          granularity: string
+          id: string
+          kpis: Json
+          period_end: string
+          period_start: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          granularity?: string
+          id?: string
+          kpis?: Json
+          period_end: string
+          period_start: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          granularity?: string
+          id?: string
+          kpis?: Json
+          period_end?: string
+          period_start?: string
         }
         Relationships: []
       }
@@ -28261,6 +28451,10 @@ export type Database = {
           revenue_at: number
           revenue_de: number
         }[]
+      }
+      is_ac_meeting_member: {
+        Args: { _meeting_id: string; _user: string }
+        Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
       is_device_active: { Args: { _sub_id: string }; Returns: boolean }
