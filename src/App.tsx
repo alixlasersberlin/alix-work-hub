@@ -367,6 +367,11 @@ const AlixConnectComplianceGovernance = lazy(() => import("./pages/AlixConnect/C
 const AlixConnectInboxTwo = lazy(() => import("./pages/AlixConnect/InboxTwo"));
 const AlixConnectKnowledgeHub = lazy(() => import("./pages/AlixConnect/KnowledgeHub"));
 const AlixConnectPartnerPortal = lazy(() => import("./pages/AlixConnect/PartnerPortal"));
+const AlixConnectMarketplace2 = lazy(() => import("./pages/AlixConnect/Marketplace2"));
+const AlixConnectFieldDispatch = lazy(() => import("./pages/AlixConnect/FieldDispatch"));
+const AlixConnectVoiceAgentStudio = lazy(() => import("./pages/AlixConnect/VoiceAgentStudio"));
+const AlixConnectCustomerSuccess = lazy(() => import("./pages/AlixConnect/CustomerSuccess"));
+const AlixConnectAdvancedBi = lazy(() => import("./pages/AlixConnect/AdvancedBi"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1311,6 +1316,11 @@ function AppRoutes() {
             <Route path="inbox-2" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectInboxTwo /></ProtectedRoute>} />
             <Route path="knowledge-hub" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectKnowledgeHub /></ProtectedRoute>} />
             <Route path="partner-portal" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectPartnerPortal /></ProtectedRoute>} />
+            <Route path="marketplace-2" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectMarketplace2 /></ProtectedRoute>} />
+            <Route path="field-dispatch" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectFieldDispatch /></ProtectedRoute>} />
+            <Route path="voice-agent-studio" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectVoiceAgentStudio /></ProtectedRoute>} />
+            <Route path="customer-success" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectCustomerSuccess /></ProtectedRoute>} />
+            <Route path="advanced-bi" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectAdvancedBi /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
