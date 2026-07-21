@@ -75,7 +75,7 @@ export default function WorkflowStudio() {
       <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Wand2 className="h-4 w-4" /> AI-Generator</CardTitle></CardHeader>
         <CardContent className="space-y-2">
-          <Input placeholder="z. B. „Wenn Ticket überfällig, sende WhatsApp und eskaliere an Teamlead"" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
+          <Input placeholder="z. B. Wenn Ticket überfällig, sende WhatsApp und eskaliere an Teamlead" value={prompt} onChange={(e) => setPrompt(e.target.value)} />
           <Button onClick={generate} disabled={loading === "gen" || !prompt.trim()}>
             {loading === "gen" ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Generiere…</> : "Workflow generieren"}
           </Button>
