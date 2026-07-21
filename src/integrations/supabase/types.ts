@@ -1075,6 +1075,39 @@ export type Database = {
           },
         ]
       }
+      ac_copilot_actions: {
+        Row: {
+          action_type: string
+          created_at: string
+          error: string | null
+          id: string
+          params: Json
+          result: Json | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          params?: Json
+          result?: Json | null
+          status?: string
+          user_id?: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          params?: Json
+          result?: Json | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ac_copilot_suggestions: {
         Row: {
           accepted: boolean | null
@@ -2905,6 +2938,92 @@ export type Database = {
           id?: string
           last_computed_at?: string | null
           name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ac_sla_breaches: {
+        Row: {
+          breach_type: string
+          breached_at: string
+          conversation_id: string | null
+          created_at: string
+          id: string
+          meta: Json
+          notified: boolean
+          policy_id: string | null
+          resolved_at: string | null
+        }
+        Insert: {
+          breach_type: string
+          breached_at?: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json
+          notified?: boolean
+          policy_id?: string | null
+          resolved_at?: string | null
+        }
+        Update: {
+          breach_type?: string
+          breached_at?: string
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json
+          notified?: boolean
+          policy_id?: string | null
+          resolved_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_sla_breaches_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "ac_sla_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_sla_policies: {
+        Row: {
+          business_hours_only: boolean
+          channel: string | null
+          created_at: string
+          escalate_to: string | null
+          first_response_min: number
+          id: string
+          is_active: boolean
+          name: string
+          priority: string | null
+          resolution_min: number
+          updated_at: string
+        }
+        Insert: {
+          business_hours_only?: boolean
+          channel?: string | null
+          created_at?: string
+          escalate_to?: string | null
+          first_response_min?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          priority?: string | null
+          resolution_min?: number
+          updated_at?: string
+        }
+        Update: {
+          business_hours_only?: boolean
+          channel?: string | null
+          created_at?: string
+          escalate_to?: string | null
+          first_response_min?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          priority?: string | null
+          resolution_min?: number
           updated_at?: string
         }
         Relationships: []
