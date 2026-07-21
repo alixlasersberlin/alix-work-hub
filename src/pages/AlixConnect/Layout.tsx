@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import {
   MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone,
-  LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone,
+  LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
