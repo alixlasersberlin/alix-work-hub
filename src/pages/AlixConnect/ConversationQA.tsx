@@ -41,17 +41,18 @@ export default function ConversationQA() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('ac_conversation_qa' as any)
+    const sb: any = supabase;
+    const { data, error } = await sb
+      .from('ac_conversation_qa')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(200);
     if (error) toast.error(error.message);
-    const list = ((data ?? []) as any as QaRow[]);
+    const list = ((data ?? []) as QaRow[]);
     setRows(list);
     const ids = Array.from(new Set(list.map((r) => r.agent_user_id).filter(Boolean))) as string[];
     if (ids.length) {
-      const { data: p } = await supabase.from('user_profiles').select('user_id, full_name, email').in('user_id', ids);
+      const { data: p } = await sb.from('user_profiles').select('user_id, full_name, email').in('user_id', ids);
       const map: Record<string, string> = {};
       (p ?? []).forEach((r: any) => { map[r.user_id] = r.full_name || r.email || r.user_id.slice(0, 8); });
       setProfiles(map);
