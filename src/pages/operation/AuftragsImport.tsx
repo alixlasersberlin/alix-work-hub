@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Workflow } from 'lucide-react';
 
-const NAME_KEYS = ['kunde', 'kundenname', 'customer', 'name', 'firma', 'company', 'customer_name'];
+const NAME_KEYS = ['kunde', 'kundenname', 'customer', 'name', 'firma', 'company', 'customer_name', 'kontakt', 'kontaktname', 'contact', 'contact_name', 'ansprechpartner'];
 
 function pickKey(row: Record<string, any>, candidates: string[]): string | null {
   const keys = Object.keys(row);
