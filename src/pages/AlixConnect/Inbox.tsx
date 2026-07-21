@@ -99,7 +99,14 @@ export default function InboxPage() {
 
     const ch = supabase
       .channel("ac-inbox-list")
-      .on("postgres_changes", { event: "*", schema: "public", table: "ac_conversations" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "ac_conversations" }, (payload) => {
+        const n = payload.new as any;
+        const o = payload.old as any;
+        if (n?.ai_sentiment === "negative" && o?.ai_sentiment !== "negative") {
+          toast.warning(`⚠️ Negative Stimmung erkannt: ${n.subject || "Konversation"}`, {
+            action: { label: "Öffnen", onClick: () => setActiveId(n.id) },
+          });
+        }
         // refetch lightweight
         supabase
           .from("ac_conversations")
@@ -211,6 +218,8 @@ export default function InboxPage() {
                 <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium truncate flex-1">{c.subject || "(kein Betreff)"}</span>
+                  {c.ai_sentiment === "negative" && <span title="Negative Stimmung" className="h-2 w-2 rounded-full bg-red-500" />}
+                  {c.ai_sentiment === "positive" && <span title="Positive Stimmung" className="h-2 w-2 rounded-full bg-emerald-500" />}
                   {c.unread_count > 0 && <Badge className="h-4 px-1 text-[10px]">{c.unread_count}</Badge>}
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{c.last_message_preview || "…"}</p>
@@ -233,6 +242,19 @@ export default function InboxPage() {
                   {active.subject || "Konversation"}
                   {!online && (
                     <Badge variant="destructive" className="gap-1 text-[10px]"><WifiOff className="h-3 w-3" /> Offline</Badge>
+                  )}
+                  {active.ai_sentiment && (
+                    <Badge
+                      className={cn(
+                        "text-[10px] capitalize",
+                        active.ai_sentiment === "negative" && "bg-red-500/15 text-red-500 border-red-500/30",
+                        active.ai_sentiment === "positive" && "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
+                        active.ai_sentiment === "neutral" && "bg-muted text-muted-foreground",
+                      )}
+                      variant="outline"
+                    >
+                      {active.ai_sentiment === "negative" ? "😠" : active.ai_sentiment === "positive" ? "😊" : "😐"} {active.ai_sentiment}
+                    </Badge>
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground">{active.channel_type} · Priorität: {active.priority}</div>

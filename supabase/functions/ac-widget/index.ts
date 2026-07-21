@@ -85,12 +85,49 @@ const script = (apiKey: string) => `
       footer.appendChild(form);
     }
 
+    if (cfg.online === false) {
+      var badge = h('div','margin-left:auto;font-size:11px;background:rgba(255,255,255,0.15);color:'+accent+';padding:2px 8px;border-radius:10px;','Außerhalb Geschäftszeiten');
+      header.insertBefore(badge, closeBtn);
+    }
+
     function renderChat(){
       footer.innerHTML = '';
-      var row = h('div','display:flex;gap:6px;');
+      var row = h('div','display:flex;gap:6px;align-items:center;');
       var input = h('input'); input.placeholder='Nachricht schreiben...'; input.setAttribute('style','flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;');
+      var micBtn = null;
+      if (cfg.voice_notes_enabled !== false && navigator.mediaDevices && window.MediaRecorder) {
+        micBtn = h('button','padding:8px 10px;background:transparent;color:#666;border:1px solid #ddd;border-radius:8px;font-size:16px;cursor:pointer;','🎤');
+        micBtn.type='button'; micBtn.title='Sprachnachricht aufnehmen';
+        var recording=false, rec=null, chunks=[];
+        micBtn.onclick = function(){
+          if (recording) { rec && rec.stop(); return; }
+          navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+            recording=true; chunks=[]; micBtn.style.background=primary; micBtn.style.color=accent; micBtn.textContent='⏹';
+            rec = new MediaRecorder(stream);
+            rec.ondataavailable = function(e){ if(e.data && e.data.size>0) chunks.push(e.data); };
+            rec.onstop = function(){
+              stream.getTracks().forEach(function(t){t.stop();});
+              recording=false; micBtn.style.background='transparent'; micBtn.style.color='#666'; micBtn.textContent='🎤';
+              var blob = new Blob(chunks,{type:'audio/webm'});
+              if (blob.size < 2048) return;
+              var fd = new FormData(); fd.append('file', blob, 'voice.webm');
+              input.placeholder='Transkribiere…'; input.disabled=true;
+              fetch(${JSON.stringify(FN_BASE + '/ac-portal-transcribe')},{method:'POST',body:fd})
+                .then(function(r){return r.json();}).then(function(d){
+                  input.disabled=false; input.placeholder='Nachricht schreiben...';
+                  var t = (d && d.text ? String(d.text).trim() : '');
+                  if (!t) return;
+                  input.value=''; bubble('🎤 '+t,true);
+                  fetch(CHAT+'?action=send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:API_KEY,conversation_id:conv.id,message:t,name:conv.name,visitor_hash:sess()})}).catch(function(){});
+                }).catch(function(){ input.disabled=false; input.placeholder='Nachricht schreiben...'; });
+            };
+            rec.start();
+            setTimeout(function(){ if(recording && rec) rec.stop(); }, 60000);
+          }).catch(function(){ alert('Mikrofonzugriff verweigert'); });
+        };
+      }
       var btn = h('button','padding:8px 12px;background:'+primary+';color:'+accent+';border:none;border-radius:8px;font-weight:600;cursor:pointer;','Senden');
-      row.appendChild(input); row.appendChild(btn); footer.appendChild(row);
+      row.appendChild(input); if(micBtn) row.appendChild(micBtn); row.appendChild(btn); footer.appendChild(row);
       function send(){var t=input.value.trim(); if(!t) return; input.value=''; bubble(t,true);
         fetch(CHAT+'?action=send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:API_KEY,conversation_id:conv.id,message:t,name:conv.name,visitor_hash:sess()})}).catch(function(){});
       }
