@@ -52,12 +52,14 @@ Deno.serve(async (req) => {
       payload: { clv_score: clv, segment: p.segment, next_best_offer: p.next_best_offer, cross_sell: p.cross_sell, reasoning: p.reasoning, auto_tags: p.auto_tags, model: 'google/gemini-3-flash-preview' },
     });
 
-    if (health) {
-      await sb.from('ac_customer_health').update({
-        churn_risk: churn,
-        health_score: Math.round((1 - churn) * 100),
-        updated_at: new Date().toISOString(),
-      }).eq('contact_id', contact_id);
+    if ((contact as any).customer_id) {
+      await sb.from('ac_customer_health').upsert({
+        customer_id: (contact as any).customer_id,
+        score: Math.round((1 - churn) * 100),
+        lifecycle_stage: p.segment ?? 'unknown',
+        factors: { churn_risk: churn, clv_score: clv, segment: p.segment, source: 'customer-intel' },
+        computed_at: new Date().toISOString(),
+      }, { onConflict: 'customer_id' });
     }
 
     return new Response(JSON.stringify({ success: true, ...p }),
