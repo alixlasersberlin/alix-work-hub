@@ -18,6 +18,7 @@ export default function AlixConnectJourneyAnalytics() {
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
   const [newSeg, setNewSeg] = useState({ name: '', description: '', minTouchpoints: 3 });
+  const [deflection, setDeflection] = useState<any>(null);
 
   const load = async () => {
     setLoading(true);
