@@ -60,6 +60,33 @@ export default function AlixConnectWfm() {
     toast.success(`${rows.length} Prognose-Intervalle erzeugt`); load();
   };
 
+  const autoSchedule = async () => {
+    if (agents.length === 0) return toast.error('Keine Agenten gefunden');
+    if (forecasts.length === 0) return toast.error('Erst Forecast erzeugen');
+    // Gruppiere Bedarf pro Intervall, verteile round-robin auf Agents in 8h-Blöcken
+    const byInterval = new Map<string, number>();
+    forecasts.forEach(f => byInterval.set(f.interval_start, Math.max(byInterval.get(f.interval_start) ?? 0, f.required_agents)));
+    const sorted = Array.from(byInterval.entries()).sort(([a], [b]) => a.localeCompare(b));
+    const rows: any[] = [];
+    let idx = 0;
+    // Für jeden 4h-Block einen Schichtblock pro benötigtem Agent
+    for (let i = 0; i < sorted.length; i += 8) {
+      const block = sorted.slice(i, i + 8);
+      if (block.length === 0) continue;
+      const need = Math.max(...block.map(([, n]) => n));
+      const startISO = block[0][0];
+      const endISO = new Date(new Date(block[block.length - 1][0]).getTime() + 30 * 60 * 1000).toISOString();
+      for (let k = 0; k < need; k++) {
+        const agent = agents[(idx++) % agents.length];
+        rows.push({ agent_id: agent.id, shift_start: startISO, shift_end: endISO, shift_type: 'auto', status: 'scheduled', notes: 'Auto-Scheduler' });
+      }
+    }
+    if (rows.length === 0) return toast.error('Keine Schichten generiert');
+    const { error } = await supabase.from('ac_wfm_shifts').insert(rows);
+    if (error) return toast.error(error.message);
+    toast.success(`${rows.length} Schichten automatisch geplant`); load();
+  };
+
   const agentName = (id: string) => agents.find(a => a.id === id)?.name ?? id.slice(0, 8);
 
   const kpi = useMemo(() => {
@@ -76,7 +103,10 @@ export default function AlixConnectWfm() {
           <h2 className="text-lg font-semibold flex items-center gap-2"><Users className="h-4 w-4 text-primary" /> Workforce Management <Badge variant="outline">Phase 25</Badge></h2>
           <p className="text-sm text-muted-foreground">Forecasting, Schichtplanung, Adherence.</p>
         </div>
-        <Button size="sm" onClick={generateForecast}><TrendingUp className="h-4 w-4 mr-1" />Forecast 24h erzeugen</Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={generateForecast}><TrendingUp className="h-4 w-4 mr-1" />Forecast 24h</Button>
+          <Button size="sm" onClick={autoSchedule}><Calendar className="h-4 w-4 mr-1" />Auto-Scheduler</Button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-3 gap-3">

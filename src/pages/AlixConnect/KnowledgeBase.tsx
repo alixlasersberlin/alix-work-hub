@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { BookOpen, Sparkles, Eye, EyeOff, Plus, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Article = { id: string; title: string; content: string; category: string | null; tags: string[]; status: string; public_visible: boolean; version: number; updated_at: string };
+type Article = { id: string; title: string; content: string; category: string | null; tags: string[]; status: string; public_visible: boolean; version: number; updated_at: string; submitted_for_review_at?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; review_notes?: string | null };
 
 export default function AlixConnectKnowledgeBase() {
   const [items, setItems] = useState<Article[]>([]);
@@ -41,6 +41,25 @@ export default function AlixConnectKnowledgeBase() {
     try { await supabase.functions.invoke('ac-kb-embed', { body: { article_id: id } }); } catch (_) {}
     toast.success('Gespeichert & indiziert');
     setEditing(null); load();
+  };
+
+  const submitForReview = async (a: Article) => {
+    const { error } = await supabase.from('ac_kb_articles').update({ status: 'review', submitted_for_review_at: new Date().toISOString() }).eq('id', a.id);
+    if (error) return toast.error(error.message);
+    toast.success('Zur Prüfung eingereicht'); load();
+  };
+  const approveArticle = async (a: Article, notes?: string) => {
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase.from('ac_kb_articles').update({ status: 'published', reviewed_by: u.user?.id ?? null, reviewed_at: new Date().toISOString(), review_notes: notes ?? null }).eq('id', a.id);
+    if (error) return toast.error(error.message);
+    toast.success('Freigegeben & veröffentlicht'); load();
+  };
+  const rejectArticle = async (a: Article) => {
+    const notes = prompt('Ablehnungsgrund (optional):') ?? '';
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase.from('ac_kb_articles').update({ status: 'draft', reviewed_by: u.user?.id ?? null, reviewed_at: new Date().toISOString(), review_notes: notes }).eq('id', a.id);
+    if (error) return toast.error(error.message);
+    toast.success('Zurück auf Entwurf'); load();
   };
 
   const filtered = items.filter(i => !q || i.title.toLowerCase().includes(q.toLowerCase()) || (i.content ?? '').toLowerCase().includes(q.toLowerCase()));
@@ -77,6 +96,8 @@ export default function AlixConnectKnowledgeBase() {
               <option value="archived">Archiviert</option>
             </select>
             <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={editing.public_visible} onChange={e => setEditing({ ...editing, public_visible: e.target.checked })} />öffentlich sichtbar</label>
+            {editing.id && editing.status === 'draft' && <Button size="sm" variant="outline" onClick={() => submitForReview(editing)}>Zur Prüfung einreichen</Button>}
+            {editing.id && editing.status === 'review' && (<><Button size="sm" variant="outline" onClick={() => rejectArticle(editing)}>Ablehnen</Button><Button size="sm" onClick={() => approveArticle(editing)}>Freigeben</Button></>)}
             <Button size="sm" className="ml-auto" onClick={save}><Save className="h-4 w-4 mr-1" />Speichern & Indizieren</Button>
           </div>
         </Card>
@@ -100,6 +121,28 @@ export default function AlixConnectKnowledgeBase() {
           ))}
           {filtered.length === 0 && <div className="text-xs text-muted-foreground col-span-2">Keine Artikel.</div>}
         </div>
+      )}
+
+      {/* Review-Queue */}
+      {items.some(i => i.status === 'review') && (
+        <Card className="p-4 border-primary/40">
+          <div className="text-sm font-semibold mb-2">📋 Review-Queue ({items.filter(i => i.status === 'review').length})</div>
+          <div className="space-y-2">
+            {items.filter(i => i.status === 'review').map(a => (
+              <div key={a.id} className="flex items-center justify-between border-b pb-2 last:border-0">
+                <div>
+                  <div className="text-sm font-medium">{a.title}</div>
+                  <div className="text-xs text-muted-foreground">Eingereicht {a.submitted_for_review_at ? new Date(a.submitted_for_review_at).toLocaleString('de-DE') : '—'}</div>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setEditing(a)}>Ansehen</Button>
+                  <Button size="sm" variant="outline" onClick={() => rejectArticle(a)}>Ablehnen</Button>
+                  <Button size="sm" onClick={() => approveArticle(a)}>Freigeben</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
       )}
 
       <Card className="p-3 text-xs text-muted-foreground flex items-center gap-2">
