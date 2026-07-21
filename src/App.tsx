@@ -1204,6 +1204,11 @@ function AppRoutes() {
             <Route path="analytics-anrufe" element={<AlixConnectTelephonyAnalytics />} />
             <Route path="compliance" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectTelephonyCompliance /></ProtectedRoute>} />
             <Route path="journal" element={<AlixConnectTelephonyJournal />} />
+            <Route path="sms-templates" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectSmsTemplates /></ProtectedRoute>} />
+            <Route path="opt-out" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectOptOut /></ProtectedRoute>} />
+            <Route path="email" element={<AlixConnectEmailSync />} />
+            <Route path="marketplace" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectMarketplace /></ProtectedRoute>} />
+            <Route path="customer-360" element={<AlixConnectCustomer360 />} />
             <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
             <Route path="websites/:id/analytics" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsiteAnalytics /></ProtectedRoute>} />
             <Route path="analytics" element={<AlixConnectAnalytics />} />
