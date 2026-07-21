@@ -96,6 +96,28 @@ export default function AlixConnectJourneyAnalytics() {
           ))}
         </div>
       </Card>
+
+      <Card className="p-4">
+        <div className="text-sm font-semibold mb-3 flex items-center gap-2"><Layers className="h-4 w-4 text-primary" /> Journey-Segmente ({segments.length})</div>
+        <div className="grid md:grid-cols-4 gap-2 mb-3">
+          <Input placeholder="Segment-Name" value={newSeg.name} onChange={e => setNewSeg({ ...newSeg, name: e.target.value })} />
+          <Input placeholder="Beschreibung" value={newSeg.description} onChange={e => setNewSeg({ ...newSeg, description: e.target.value })} />
+          <Input type="number" min={1} placeholder="Min. Touchpoints" value={newSeg.minTouchpoints} onChange={e => setNewSeg({ ...newSeg, minTouchpoints: Number(e.target.value) })} />
+          <Button onClick={addSegment}><Plus className="h-4 w-4 mr-1" />Anlegen</Button>
+        </div>
+        <div className="space-y-1">
+          {segments.length === 0 && <div className="text-xs text-muted-foreground">Keine Segmente definiert.</div>}
+          {segments.map(s => (
+            <div key={s.id} className="flex items-center justify-between border-b py-1.5 text-sm">
+              <div>
+                <div className="font-medium">{s.name} <Badge variant="outline" className="ml-2">{s.member_count} Mitglieder</Badge></div>
+                <div className="text-xs text-muted-foreground">{s.description || '—'} · Kriterien: {JSON.stringify(s.criteria)}</div>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => deleteSegment(s.id)}><Trash2 className="h-4 w-4" /></Button>
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }
