@@ -106,30 +106,35 @@ export default function AuftragsAbgleich() {
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
-              {visible.map(r => (
-                <div key={r.idx} className={`flex items-center gap-3 p-3 rounded-lg border ${r.found ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-red-500/40 bg-red-500/5'}`}>
+              {visible.map(r => {
+                const hits = r.matches ?? (r.match ? [r.match] : []);
+                return (
+                <div key={r.idx} className={`flex items-start gap-3 p-3 rounded-lg border ${r.found ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-red-500/40 bg-red-500/5'}`}>
                   {r.found ? (
-                    <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> OK !</Badge>
+                    <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white gap-1 mt-0.5"><CheckCircle2 className="h-3.5 w-3.5" /> OK !</Badge>
                   ) : (
-                    <Badge className="bg-red-600 hover:bg-red-600 text-white gap-1"><AlertCircle className="h-3.5 w-3.5" /> !</Badge>
+                    <Badge className="bg-red-600 hover:bg-red-600 text-white gap-1 mt-0.5"><AlertCircle className="h-3.5 w-3.5" /> !</Badge>
                   )}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 space-y-1">
                     <div className="text-sm font-medium truncate">
-                      {r.input.num || '—'} {r.input.name && <span className="text-muted-foreground font-normal">· {r.input.name}</span>}
+                      {r.input.name || '—'}
+                      {hits.length > 1 && <span className="ml-2 text-xs text-muted-foreground">({hits.length} Treffer)</span>}
                     </div>
-                    {r.match && (
-                      <div className="text-xs text-muted-foreground truncate">
-                        Treffer: {r.match.order_number} · {r.match.customer_name} {r.match.status && `· ${r.match.status}`}
+                    {hits.map((h, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Badge variant="outline" className="text-[10px] py-0">{h.source_kind || 'Auftrag'}</Badge>
+                        <span className="truncate">{h.order_number} · {h.customer_name}{h.status ? ` · ${h.status}` : ''}</span>
+                        {h.id && h.source_route && (
+                          <Link to={`${h.source_route}/${h.id}`}>
+                            <Button size="sm" variant="ghost" className="h-6 px-2"><ExternalLink className="h-3.5 w-3.5" /></Button>
+                          </Link>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
-                  {r.found && r.match?.id && (
-                    <Link to={`/orders/${r.match.id}`}>
-                      <Button size="sm" variant="ghost"><ExternalLink className="h-4 w-4" /></Button>
-                    </Link>
-                  )}
                 </div>
-              ))}
+                );
+              })}
               {!visible.length && <p className="text-sm text-muted-foreground text-center p-6">Keine Einträge.</p>}
             </CardContent>
           </Card>
