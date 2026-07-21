@@ -8,7 +8,18 @@ import { Files, Lock, Loader2, Download, Archive, ShieldCheck } from 'lucide-rea
 import { toast } from 'sonner';
 
 const FN_URL = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/alixdocs-share-access`;
+const TRACK_URL = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/alixdocs-widget-track`;
 const ANON = (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+const track = (token: string, event_type: string, extra: Record<string, any> = {}) => {
+  try {
+    fetch(TRACK_URL, {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json', apikey: ANON, Authorization: `Bearer ${ANON}` },
+      body: JSON.stringify({ token, event_type, ...extra }),
+    }).catch(() => {});
+  } catch {}
+};
 
 type DocMeta = { id: string; title: string; filename: string | null; mime_type: string; size: number; version: number };
 
