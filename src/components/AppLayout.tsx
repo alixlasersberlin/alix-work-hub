@@ -116,9 +116,6 @@ export const navItems: NavItem[] = [
       { path: '/tickets?status=Eskaliert', label: 'Eskaliert', icon: Flame, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
       { path: '/tickets?status=Warten%20auf%20Kunde', label: 'Warten auf Kunde', icon: Pause, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
       { path: '/esc/buchungen', label: 'Öffentliche Buchungen', icon: CalendarClock, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Serviceleitung', 'Service'] },
-      { path: '/operation/ticket-abteilungen', label: 'Abteilungen (Routing)', icon: FolderTree, roles: ['Super Admin'] },
-      { path: '/tickets/sync', label: 'Sync-Monitor', icon: Activity, roles: ['Super Admin', 'Admin'] },
-      { path: '/tickets/api-sync', label: 'API-Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
     ],
   },
   {
@@ -666,6 +663,15 @@ export const navItems: NavItem[] = [
           { path: '/esc/mitarbeiter',   label: 'Mitarbeiter',   icon: Users,       roles: ['Admin', 'Super Admin'] },
           { path: '/esc/abteilungen',   label: 'Abteilungen',   icon: Building2,   roles: ['Admin', 'Super Admin'] },
           { path: '/esc/einstellungen', label: 'Einstellungen', icon: Settings,    roles: ['Admin', 'Super Admin'] },
+        ],
+      },
+
+      {
+        path: '#tickets-setup', label: 'TICKETS SETUP', icon: Ticket, roles: ['Admin', 'Super Admin'],
+        children: [
+          { path: '/operation/ticket-abteilungen', label: 'Abteilungen (Routing)', icon: FolderTree, roles: ['Super Admin'] },
+          { path: '/tickets/sync',                 label: 'Sync-Monitor',           icon: Activity,   roles: ['Super Admin', 'Admin'] },
+          { path: '/tickets/api-sync',             label: 'API-Sync Einstellungen', icon: Settings,   roles: ['Super Admin'] },
         ],
       },
 
