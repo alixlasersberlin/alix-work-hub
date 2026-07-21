@@ -43,6 +43,25 @@ export default function AlixConnectKnowledgeBase() {
     setEditing(null); load();
   };
 
+  const submitForReview = async (a: Article) => {
+    const { error } = await supabase.from('ac_kb_articles').update({ status: 'review', submitted_for_review_at: new Date().toISOString() }).eq('id', a.id);
+    if (error) return toast.error(error.message);
+    toast.success('Zur Prüfung eingereicht'); load();
+  };
+  const approveArticle = async (a: Article, notes?: string) => {
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase.from('ac_kb_articles').update({ status: 'published', reviewed_by: u.user?.id ?? null, reviewed_at: new Date().toISOString(), review_notes: notes ?? null }).eq('id', a.id);
+    if (error) return toast.error(error.message);
+    toast.success('Freigegeben & veröffentlicht'); load();
+  };
+  const rejectArticle = async (a: Article) => {
+    const notes = prompt('Ablehnungsgrund (optional):') ?? '';
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase.from('ac_kb_articles').update({ status: 'draft', reviewed_by: u.user?.id ?? null, reviewed_at: new Date().toISOString(), review_notes: notes }).eq('id', a.id);
+    if (error) return toast.error(error.message);
+    toast.success('Zurück auf Entwurf'); load();
+  };
+
   const filtered = items.filter(i => !q || i.title.toLowerCase().includes(q.toLowerCase()) || (i.content ?? '').toLowerCase().includes(q.toLowerCase()));
 
   return (
