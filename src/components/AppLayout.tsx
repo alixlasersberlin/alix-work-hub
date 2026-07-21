@@ -24,6 +24,7 @@ import { TicketNotificationBell } from '@/components/tickets/TicketNotificationB
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
 import CommandPalette from '@/components/CommandPalette';
+import CallScreenPop from '@/components/telephony/CallScreenPop';
 import { useDesignVariant } from '@/hooks/useDesignVariant';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
@@ -1310,6 +1311,7 @@ export default function AppLayout() {
       <div className="flex-1 flex overflow-hidden">
       {/* Globale Cmd+K Suche (per Tastatur erreichbar) */}
       <CommandPalette />
+      <CallScreenPop />
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <button
