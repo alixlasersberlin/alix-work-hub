@@ -3,7 +3,7 @@ import {
   MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone,
   LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall, Activity, PhoneForwarded,
   Mail, Ban, Webhook, FileText, Layers, Workflow, Mic, Video, Route as RouteIcon, Bot, FlaskConical, Scale, GraduationCap,
-  CalendarClock, BookOpen, GitBranch, LifeBuoy, Brain, Rocket, Euro, HeartPulse, TrendingUp, LayoutGrid, Languages, Handshake,
+  CalendarClock, BookOpen, GitBranch, LifeBuoy, Brain, Rocket, Euro, HeartPulse, TrendingUp, LayoutGrid, Languages, Handshake, Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -91,6 +91,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/customer-success", label: "Customer Success", icon: HeartPulse },
       { to: "/connect/advanced-bi", label: "Advanced BI", icon: BarChart3 },
       { to: "/connect/field-dispatch", label: "Field Dispatch 2.0", icon: RouteIcon },
+      { to: "/connect/realtime-collab", label: "Realtime Collab", icon: Radio },
       { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
       { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
@@ -125,7 +126,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 42 · Marketplace 2.0 · Field Dispatch · Voice Studio · Customer Success · BI
+            Phase 43 · Realtime Collaboration · Multi-Agent · Live-Handover
           </span>
         </div>
         <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
