@@ -374,6 +374,7 @@ const AlixConnectCustomerSuccess = lazy(() => import("./pages/AlixConnect/Custom
 const AlixConnectAdvancedBi = lazy(() => import("./pages/AlixConnect/AdvancedBi"));
 const AlixConnectRealtimeCollab = lazy(() => import("./pages/AlixConnect/RealtimeCollab"));
 const AlixConnectComplianceAutomation = lazy(() => import("./pages/AlixConnect/ComplianceAutomation"));
+const AlixConnectSalesForecast = lazy(() => import("./pages/AlixConnect/SalesForecast"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
