@@ -108,7 +108,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 32 · Conversational Intel 2.0 · Journey Optimizer · Agent Workspace
+            Phase 33 · Agent Assist Live · Customer Intelligence · Autonomous Agents
           </span>
         </div>
         <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
