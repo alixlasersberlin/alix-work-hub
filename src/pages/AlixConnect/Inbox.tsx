@@ -234,6 +234,19 @@ export default function InboxPage() {
                   {!online && (
                     <Badge variant="destructive" className="gap-1 text-[10px]"><WifiOff className="h-3 w-3" /> Offline</Badge>
                   )}
+                  {active.ai_sentiment && (
+                    <Badge
+                      className={cn(
+                        "text-[10px] capitalize",
+                        active.ai_sentiment === "negative" && "bg-red-500/15 text-red-500 border-red-500/30",
+                        active.ai_sentiment === "positive" && "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
+                        active.ai_sentiment === "neutral" && "bg-muted text-muted-foreground",
+                      )}
+                      variant="outline"
+                    >
+                      {active.ai_sentiment === "negative" ? "😠" : active.ai_sentiment === "positive" ? "😊" : "😐"} {active.ai_sentiment}
+                    </Badge>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground">{active.channel_type} · Priorität: {active.priority}</div>
               </div>
