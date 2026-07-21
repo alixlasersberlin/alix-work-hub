@@ -318,9 +318,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user]);
 
-  const hasRole = (role: string) => roles.includes(role);
-  const hasAnyRole = (checkRoles: string[]) => checkRoles.some(r => roles.includes(r));
-  const isAdmin = hasRole('Super Admin') || hasRole('Admin');
+  // Admin inherits all Super Admin privileges (mirrors DB has_role()).
+  const hasRoleRaw = (role: string) => roles.includes(role);
+  const hasRole = (role: string) =>
+    hasRoleRaw(role) || (role === 'Super Admin' && hasRoleRaw('Admin'));
+  const hasAnyRole = (checkRoles: string[]) => checkRoles.some(r => hasRole(r));
+  const isAdmin = hasRoleRaw('Super Admin') || hasRoleRaw('Admin');
   const blockReason = getBlockReason(profile);
   const isOtpVerified = mfaState === 'verified';
 
