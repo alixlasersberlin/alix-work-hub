@@ -525,7 +525,7 @@ export const navItems: NavItem[] = [
 
 
   {
-    path: '/connect', label: 'ALIX CONNECT', icon: MessageSquare, roles: null,
+    path: '/connect', label: 'ALIX CONNECT', icon: MessageSquare, roles: ['Super Admin'],
     children: [
       { path: '/connect/team', label: 'Team Chat', icon: MessageSquare, roles: null },
       { path: '/connect/inbox', label: 'Unified Inbox', icon: Inbox, roles: null },
