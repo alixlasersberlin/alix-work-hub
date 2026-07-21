@@ -99,7 +99,14 @@ export default function InboxPage() {
 
     const ch = supabase
       .channel("ac-inbox-list")
-      .on("postgres_changes", { event: "*", schema: "public", table: "ac_conversations" }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "ac_conversations" }, (payload) => {
+        const n = payload.new as any;
+        const o = payload.old as any;
+        if (n?.ai_sentiment === "negative" && o?.ai_sentiment !== "negative") {
+          toast.warning(`⚠️ Negative Stimmung erkannt: ${n.subject || "Konversation"}`, {
+            action: { label: "Öffnen", onClick: () => setActiveId(n.id) },
+          });
+        }
         // refetch lightweight
         supabase
           .from("ac_conversations")
