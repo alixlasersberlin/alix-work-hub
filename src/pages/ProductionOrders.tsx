@@ -430,19 +430,20 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     y += 6;
 
     // Columns
+    // Column widths sum to pageW - 2*marginX = 277mm (A4 landscape)
     const cols = [
-      { key: 'bestellnummer',  label: 'Bestell-Nr.', w: 28 },
-      { key: 'auftragsnummer', label: 'Auftrag',     w: 26 },
-      { key: 'kunde',          label: 'Kunde',       w: 38 },
-      { key: 'modell',         label: 'Modell',      w: 30 },
-      { key: 'farbe',          label: 'Farbe',       w: 18 },
-      { key: 'seriennummer',   label: 'SN',          w: 22 },
-      { key: 'bearbeiter',     label: 'Bearbeiter',  w: 22 },
-      { key: 'zulieferer',     label: 'Zulieferer',  w: 30 },
-      { key: 'liefertermin',   label: 'Liefertermin', w: 22 },
-      { key: 'status',         label: 'Status',      w: 25 },
-      { key: 'payment',        label: 'Payment',     w: 16 },
-      { key: 'freigabe',       label: 'Freigabe',    w: 20 },
+      { key: 'bestellnummer',  label: 'Bestell-Nr.',  w: 26 },
+      { key: 'auftragsnummer', label: 'Auftrag',      w: 24 },
+      { key: 'kunde',          label: 'Kunde',        w: 34 },
+      { key: 'modell',         label: 'Modell',       w: 28 },
+      { key: 'farbe',          label: 'Farbe',        w: 16 },
+      { key: 'seriennummer',   label: 'SN',           w: 20 },
+      { key: 'bearbeiter',     label: 'Bearbeiter',   w: 20 },
+      { key: 'zulieferer',     label: 'Zulieferer',   w: 28 },
+      { key: 'liefertermin',   label: 'Liefertermin', w: 20 },
+      { key: 'status',         label: 'Status',       w: 22 },
+      { key: 'payment',        label: 'Payment',      w: 15 },
+      { key: 'freigabe',       label: 'Freigabe',     w: 24 },
     ] as const;
 
     const drawHeader = () => {
