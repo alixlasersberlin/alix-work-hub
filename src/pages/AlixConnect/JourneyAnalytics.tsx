@@ -125,6 +125,43 @@ export default function AlixConnectJourneyAnalytics() {
           ))}
         </div>
       </Card>
+
+      <Card className="p-4">
+        <div className="text-sm font-semibold mb-3">Attribution ({days} Tage) – First / Last / Linear-Touch</div>
+        {attribution.length === 0 ? <div className="text-xs text-muted-foreground">Keine Conversions im Zeitraum.</div> : (
+          <div className="space-y-2">
+            {attribution.map((a: any) => (
+              <div key={a.source}>
+                <div className="flex justify-between text-xs mb-1"><span className="font-medium">{a.source}</span><span>First {a.first_touch} · Last {a.last_touch} · Linear {a.linear_touch}</span></div>
+                <div className="h-2 bg-muted rounded"><div className="h-2 bg-primary rounded" style={{ width: `${(Number(a.last_touch) / maxAttr) * 100}%` }} /></div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card className="p-4">
+        <div className="text-sm font-semibold mb-3">Kohorten-Retention (wöchentlich, letzte 8 Wochen)</div>
+        {cohorts.length === 0 ? <div className="text-xs text-muted-foreground">Keine Kohorten-Daten.</div> : (
+          <div className="overflow-x-auto">
+            <table className="text-xs w-full border-collapse">
+              <thead><tr><th className="text-left p-1">Kohorte</th><th className="text-left p-1">Größe</th>{[0,1,2,3,4,5,6,7].map(w => <th key={w} className="p-1 text-center">W+{w}</th>)}</tr></thead>
+              <tbody>
+                {Object.values(cohorts.reduce((acc: any, r: any) => { (acc[r.cohort_week] ??= { cohort: r.cohort_week, size: r.cohort_size, cells: {} }).cells[r.week_offset] = r.retention_pct; return acc; }, {})).map((row: any) => (
+                  <tr key={row.cohort} className="border-t">
+                    <td className="p-1 font-medium">{row.cohort}</td>
+                    <td className="p-1">{row.size}</td>
+                    {[0,1,2,3,4,5,6,7].map(w => {
+                      const v = row.cells[w]; const bg = v ? `hsl(var(--primary) / ${Math.min(1, Number(v)/100)})` : 'transparent';
+                      return <td key={w} className="p-1 text-center" style={{ backgroundColor: bg }}>{v ? `${v}%` : '—'}</td>;
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
