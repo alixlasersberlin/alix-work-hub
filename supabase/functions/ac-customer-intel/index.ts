@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
         model: 'google/gemini-3-flash-preview',
         messages: [
           { role: 'system', content: 'Du bist Customer-Intelligence-Analyst. Antworte NUR mit JSON: {"churn_risk":number(0-1),"clv_score":number(0-100),"segment":string,"next_best_offer":string,"cross_sell":[string],"reasoning":string,"auto_tags":[string]}' },
-          { role: 'user', content: `Kontakt: ${JSON.stringify(contact)}\nHealth: ${JSON.stringify(health)}\nRecent Messages (${msgs?.length ?? 0}): ${JSON.stringify((msgs ?? []).slice(0, 10))}\nRecent Calls (${calls?.length ?? 0}): ${JSON.stringify((calls ?? []).slice(0, 10))}` },
+          { role: 'user', content: `Kontakt: ${JSON.stringify(contact)}\nRecent Messages (${msgs?.length ?? 0}): ${JSON.stringify((msgs ?? []).slice(0, 10))}\nRecent Calls (${calls?.length ?? 0}): ${JSON.stringify((calls ?? []).slice(0, 10))}` },
         ],
         response_format: { type: 'json_object' },
       }),
