@@ -43,12 +43,11 @@ Deno.serve(async (req) => {
 
     // Record the AI-proposed action set for audit
     await sb.from('ac_copilot_actions').insert({
-      user_id: executor_user_id ?? null,
+      user_id: executor_user_id ?? '00000000-0000-0000-0000-000000000000',
       action_type: 'autonomous_resolve',
-      context_type: 'ticket',
-      context_id: ticket_id,
       status: needsApproval ? 'proposed' : 'executed',
-      payload: p,
+      params: { ticket_id, proposal: p },
+      result: null,
     });
 
     if (!needsApproval) {
@@ -56,15 +55,15 @@ Deno.serve(async (req) => {
         try {
           if (a.kind === 'send_reply' && p.proposed_reply) {
             await sb.from('ticket_messages').insert({
-              ticket_id, sender: 'agent', body: p.proposed_reply, is_internal: false,
-              user_id: executor_user_id ?? null,
+              ticket_id, sender_type: 'agent', message: p.proposed_reply, is_internal: false,
+              source_system: 'ac_autonomous',
             });
             executed.push({ kind: 'send_reply', ok: true });
           } else if (a.kind === 'set_status') {
             await sb.from('tickets').update({ status: a.payload?.status ?? 'in_progress' }).eq('id', ticket_id);
             executed.push({ kind: 'set_status', ok: true });
           } else if (a.kind === 'close_ticket') {
-            await sb.from('tickets').update({ status: 'closed', closed_at: new Date().toISOString() }).eq('id', ticket_id);
+            await sb.from('tickets').update({ status: 'closed', resolved_at: new Date().toISOString() }).eq('id', ticket_id);
             executed.push({ kind: 'close_ticket', ok: true });
           } else if (a.kind === 'assign' && a.payload?.user_id) {
             await sb.from('tickets').update({ assigned_to: a.payload.user_id }).eq('id', ticket_id);
