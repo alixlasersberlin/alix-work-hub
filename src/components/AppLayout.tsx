@@ -657,6 +657,7 @@ export const navItems: NavItem[] = [
           { path: '/admin/alixdocs/chains', label: 'Approval-Chains (Admin)', icon: Workflow, roles: ['Super Admin'] },
           { path: '/admin/alixdocs/reindex', label: 'KI-Reindex & Duplikate', icon: Sparkles, roles: ['Super Admin'] },
           { path: '/admin/alixdocs/reports', label: 'Reporting & Audit-Export', icon: FileDown, roles: ['Super Admin'] },
+          { path: '/admin/alixdocs/heatmap', label: 'Share Heatmap 🔥', icon: Flame, roles: ['Admin','Super Admin'] },
           { path: '/m/alixdocs', label: 'Mobile Erfassung 📱', icon: SearchCheck, roles: ['Super Admin'] },
         ],
 
