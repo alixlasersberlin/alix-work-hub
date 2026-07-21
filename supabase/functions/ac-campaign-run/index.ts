@@ -62,19 +62,36 @@ Deno.serve(async (req) => {
 
     await admin.from('ac_campaigns').update({ status: 'running', started_at: new Date().toISOString() }).eq('id', campaign_id);
 
+    // A/B-Varianten vorbereiten
+    const variants: Array<{ label: string; subject?: string; body: string; weight: number }> =
+      Array.isArray(camp.ab_variants) && camp.is_ab_test && camp.ab_variants.length > 0
+        ? camp.ab_variants
+        : [{ label: 'A', subject: camp.subject ?? '', body: camp.body, weight: 1 }];
+    const totalWeight = variants.reduce((s, v) => s + (Number(v.weight) || 1), 0);
+    function pickVariant() {
+      let r = Math.random() * totalWeight;
+      for (const v of variants) { r -= (Number(v.weight) || 1); if (r <= 0) return v; }
+      return variants[0];
+    }
+
     const { data: recs } = await admin
       .from('ac_campaign_recipients')
-      .select('id, address')
+      .select('id, address, variant')
       .eq('campaign_id', campaign_id)
       .eq('status', 'pending');
 
     let sent = 0, failed = 0;
     for (const r of recs ?? []) {
       try {
-        if (camp.channel_type === 'whatsapp') await sendWhatsApp(r.address, camp.body);
-        else if (camp.channel_type === 'sms') await sendSms(r.address, camp.body);
-        else if (camp.channel_type === 'email') await sendEmail(r.address, camp.subject ?? '', camp.body);
-        await admin.from('ac_campaign_recipients').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', r.id);
+        const v = (r as any).variant
+          ? (variants.find((x) => x.label === (r as any).variant) ?? pickVariant())
+          : pickVariant();
+        if (camp.channel_type === 'whatsapp') await sendWhatsApp(r.address, v.body);
+        else if (camp.channel_type === 'sms') await sendSms(r.address, v.body);
+        else if (camp.channel_type === 'email') await sendEmail(r.address, v.subject ?? '', v.body);
+        await admin.from('ac_campaign_recipients').update({
+          status: 'sent', sent_at: new Date().toISOString(), variant: v.label,
+        }).eq('id', r.id);
         sent++;
       } catch (e) {
         await admin.from('ac_campaign_recipients').update({ status: 'failed', error: String((e as Error).message ?? e) }).eq('id', r.id);
@@ -89,7 +106,7 @@ Deno.serve(async (req) => {
       failed_count: failed,
     }).eq('id', campaign_id);
 
-    return json({ ok: true, sent, failed });
+    return json({ ok: true, sent, failed, variants: variants.length });
   } catch (e) {
     console.error('ac-campaign-run', e);
     return json({ error: String((e as Error).message ?? e) }, 500);
