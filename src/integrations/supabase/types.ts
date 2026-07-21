@@ -1142,6 +1142,7 @@ export type Database = {
       }
       ac_journey_segments: {
         Row: {
+          auto_enroll_journey_id: string | null
           created_at: string
           created_by: string | null
           criteria: Json
@@ -1153,6 +1154,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_enroll_journey_id?: string | null
           created_at?: string
           created_by?: string | null
           criteria?: Json
@@ -1164,6 +1166,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_enroll_journey_id?: string | null
           created_at?: string
           created_by?: string | null
           criteria?: Json
@@ -1174,7 +1177,15 @@ export type Database = {
           name?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ac_journey_segments_auto_enroll_journey_id_fkey"
+            columns: ["auto_enroll_journey_id"]
+            isOneToOne: false
+            referencedRelation: "ac_journeys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ac_journey_steps: {
         Row: {
@@ -1250,9 +1261,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ac_kb_article_versions: {
+        Row: {
+          article_id: string
+          category: string | null
+          change_note: string | null
+          changed_by: string | null
+          content: string | null
+          created_at: string
+          id: string
+          tags: string[] | null
+          title: string | null
+          version: number
+        }
+        Insert: {
+          article_id: string
+          category?: string | null
+          change_note?: string | null
+          changed_by?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          title?: string | null
+          version: number
+        }
+        Update: {
+          article_id?: string
+          category?: string | null
+          change_note?: string | null
+          changed_by?: string | null
+          content?: string | null
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          title?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_kb_article_versions_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "ac_kb_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ac_kb_articles: {
         Row: {
           author_id: string | null
+          auto_publish_threshold: number | null
           category: string | null
           content: string
           created_at: string
@@ -1271,9 +1330,11 @@ export type Database = {
           updated_at: string
           version: number
           view_count: number
+          visible_segment_ids: string[] | null
         }
         Insert: {
           author_id?: string | null
+          auto_publish_threshold?: number | null
           category?: string | null
           content: string
           created_at?: string
@@ -1292,9 +1353,11 @@ export type Database = {
           updated_at?: string
           version?: number
           view_count?: number
+          visible_segment_ids?: string[] | null
         }
         Update: {
           author_id?: string | null
+          auto_publish_threshold?: number | null
           category?: string | null
           content?: string
           created_at?: string
@@ -1313,6 +1376,7 @@ export type Database = {
           updated_at?: string
           version?: number
           view_count?: number
+          visible_segment_ids?: string[] | null
         }
         Relationships: []
       }
@@ -1825,6 +1889,9 @@ export type Database = {
           contact_phone: string | null
           conversation_id: string | null
           created_at: string
+          csat_at: string | null
+          csat_comment: string | null
+          csat_rating: number | null
           customer_id: string | null
           handoff_channel: string | null
           handoff_completed_at: string | null
@@ -1835,12 +1902,17 @@ export type Database = {
           session_token: string
           ticket_id: string | null
           updated_at: string
+          video_callback_at: string | null
+          video_callback_requested: boolean
         }
         Insert: {
           contact_email?: string | null
           contact_phone?: string | null
           conversation_id?: string | null
           created_at?: string
+          csat_at?: string | null
+          csat_comment?: string | null
+          csat_rating?: number | null
           customer_id?: string | null
           handoff_channel?: string | null
           handoff_completed_at?: string | null
@@ -1851,12 +1923,17 @@ export type Database = {
           session_token: string
           ticket_id?: string | null
           updated_at?: string
+          video_callback_at?: string | null
+          video_callback_requested?: boolean
         }
         Update: {
           contact_email?: string | null
           contact_phone?: string | null
           conversation_id?: string | null
           created_at?: string
+          csat_at?: string | null
+          csat_comment?: string | null
+          csat_rating?: number | null
           customer_id?: string | null
           handoff_channel?: string | null
           handoff_completed_at?: string | null
@@ -1867,6 +1944,8 @@ export type Database = {
           session_token?: string
           ticket_id?: string | null
           updated_at?: string
+          video_callback_at?: string | null
+          video_callback_requested?: boolean
         }
         Relationships: []
       }
@@ -2875,6 +2954,10 @@ export type Database = {
       ac_wfm_shifts: {
         Row: {
           agent_id: string
+          approval_note: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           created_by: string | null
           id: string
@@ -2887,6 +2970,10 @@ export type Database = {
         }
         Insert: {
           agent_id: string
+          approval_note?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -2899,6 +2986,10 @@ export type Database = {
         }
         Update: {
           agent_id?: string
+          approval_note?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           created_by?: string | null
           id?: string
@@ -28777,6 +28868,13 @@ export type Database = {
           source: string
         }[]
       }
+      ac_journey_attribution_ext: {
+        Args: { _from: string; _model?: string; _to: string }
+        Returns: {
+          channel: string
+          conversions: number
+        }[]
+      }
       ac_journey_cohorts: {
         Args: { weeks?: number }
         Returns: {
@@ -28816,6 +28914,16 @@ export type Database = {
           deflection_pct: number
           handoff_sessions: number
           total_sessions: number
+        }[]
+      }
+      ac_portal_deflection_breakdown: {
+        Args: { _from: string; _to: string }
+        Returns: {
+          avg_csat: number
+          bucket: string
+          deflection_rate: number
+          handoffs: number
+          sessions: number
         }[]
       }
       ac_web_breakdown: {
