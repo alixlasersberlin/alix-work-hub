@@ -1097,6 +1097,8 @@ function AppRoutes() {
           <Route path="/operation/security-center" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><SecurityCenter /></ProtectedRoute>} />
           <Route path="/operation/datensicherung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Datensicherung /></ProtectedRoute>} />
           <Route path="/operation/fort-knox" element={<ProtectedRoute requiredRoles={['Super Admin']}><FortKnox /></ProtectedRoute>} />
+          <Route path="/operation/auftrags-import" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AuftragsImport /></ProtectedRoute>} />
+          <Route path="/operation/auftrags-abgleich" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AuftragsAbgleich /></ProtectedRoute>} />
           <Route path="/mandanten" element={<ProtectedRoute requiredRoles={['Super Admin']}><Mandanten /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><AdminAuditLog /></ProtectedRoute>} />
           <Route path="/admin/geraete" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><GeraeteVerwaltung /></ProtectedRoute>} />
