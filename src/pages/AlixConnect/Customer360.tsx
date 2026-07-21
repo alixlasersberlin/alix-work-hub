@@ -39,7 +39,7 @@ export default function Customer360() {
       supabase.from("ac_customer_scores" as any).select("*").eq("contact_id", c.id).maybeSingle(),
     ]);
     const items: TimelineItem[] = [];
-    (msgs.data ?? []).forEach((m: any) => items.push({ at: m.created_at, type: "message", title: `${m.channel?.toUpperCase()} · ${m.direction}`, detail: m.body }));
+    (msgs.data ?? []).forEach((m: any) => items.push({ at: m.created_at, type: "message", title: `Chat · ${m.direction}`, detail: m.body }));
     (calls.data ?? []).forEach((c: any) => items.push({ at: c.started_at, type: "call", title: `Anruf ${c.direction} · ${c.status}`, detail: `${c.duration_seconds ?? 0}s` }));
     (mails.data ?? []).forEach((m: any) => items.push({ at: m.received_at, type: "email", title: `Email · ${m.from_address ?? ""}`, detail: m.subject }));
     (tickets.data ?? []).forEach((t: any) => items.push({ at: t.created_at, type: "ticket", title: `Ticket · ${t.status}`, detail: t.subject }));
