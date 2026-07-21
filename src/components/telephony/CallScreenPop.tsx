@@ -24,7 +24,7 @@ type ContactInfo = {
   customer_id: string | null;
   customer_name?: string | null;
   customer_number?: string | null;
-  recent_orders?: Array<{ id: string; order_number: string | null; total: number | null; status: string | null }>;
+  recent_orders?: Array<{ id: string; order_number: string | null; total_amount: number | null; order_status: string | null }>;
 };
 
 /**
