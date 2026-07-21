@@ -1241,7 +1241,7 @@ function AppRoutes() {
           <Route path="/finanzierungen/anfragen-offen" element={<ProtectedRoute requiredRoles={FINANCING_ROLES}><AnfragenOffen /></ProtectedRoute>} />
           
           <Route path="/benutzer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><UserManagement /></ProtectedRoute>} />
-          <Route path="/connect" element={<ProtectedRoute><AlixConnectLayout /></ProtectedRoute>}>
+          <Route path="/connect" element={<ProtectedRoute requiredRoles={['Super Admin']}><AlixConnectLayout /></ProtectedRoute>}>
             <Route index element={<AlixConnectDashboard />} />
             <Route path="dashboard" element={<AlixConnectDashboard />} />
             <Route path="portal" element={<AlixConnectPortal />} />
