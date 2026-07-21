@@ -49,6 +49,7 @@ export default function AlixDocsSharePublic() {
         });
         const d = await res.json();
         setMeta(d);
+        track(token, 'view');
         if (!d.requires_password && !d.error) {
           const list = await request('list');
           const j = await list.json();
@@ -67,6 +68,7 @@ export default function AlixDocsSharePublic() {
       const j = await res.json();
       if (j.error) { toast.error(j.error === 'invalid_password' ? 'Falsches Passwort' : j.error); return; }
       setDocs(j.documents);
+      track(token, 'unlock');
     } finally { setUnlocking(false); }
   };
 
@@ -76,6 +78,8 @@ export default function AlixDocsSharePublic() {
       const res = await request('signed_url', { document_id: d.id });
       const j = await res.json();
       if (j.error) throw new Error(j.error);
+      track(token, 'open', { document_id: d.id });
+      track(token, 'download', { document_id: d.id });
       window.open(j.url, '_blank');
     } catch (e: any) { toast.error(e?.message || 'Download fehlgeschlagen'); }
     finally { setBusy(false); }
@@ -86,6 +90,7 @@ export default function AlixDocsSharePublic() {
     try {
       const res = await request('zip');
       if (!res.ok) throw new Error(await res.text());
+      track(token, 'zip');
       const blob = await res.blob();
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
