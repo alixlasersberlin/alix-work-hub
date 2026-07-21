@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 type Decision = {
   id: string;
   created_at: string;
-  queue_id: string | null;
-  agent_id: string | null;
-  strategy: string | null;
-  wait_ms: number | null;
+  chosen_queue_id: string | null;
+  chosen_user_id: string | null;
+  channel: string | null;
+  score: number | null;
   reason: string | null;
+  fallback_used: boolean | null;
 };
 type Queue = { id: string; name: string; strategy: string; enabled: boolean };
 type Conv = { id: string; status: string; priority: string; channel_type: string; assigned_to: string | null; last_message_at: string };
