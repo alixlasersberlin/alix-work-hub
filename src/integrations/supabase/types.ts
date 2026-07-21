@@ -228,6 +228,7 @@ export type Database = {
           from_number: string | null
           id: string
           metadata: Json
+          missed_sms_sent_at: string | null
           notes: string | null
           recording_url: string | null
           started_at: string
@@ -254,6 +255,7 @@ export type Database = {
           from_number?: string | null
           id?: string
           metadata?: Json
+          missed_sms_sent_at?: string | null
           notes?: string | null
           recording_url?: string | null
           started_at?: string
@@ -280,6 +282,7 @@ export type Database = {
           from_number?: string | null
           id?: string
           metadata?: Json
+          missed_sms_sent_at?: string | null
           notes?: string | null
           recording_url?: string | null
           started_at?: string
@@ -1091,6 +1094,10 @@ export type Database = {
           enabled: boolean
           extension: string | null
           id: string
+          missed_call_sms_business_hours_only: boolean
+          missed_call_sms_cooldown_minutes: number
+          missed_call_sms_enabled: boolean
+          missed_call_sms_template: string
           pbx_url: string | null
           updated_at: string
           user_id: string | null
@@ -1102,6 +1109,10 @@ export type Database = {
           enabled?: boolean
           extension?: string | null
           id?: string
+          missed_call_sms_business_hours_only?: boolean
+          missed_call_sms_cooldown_minutes?: number
+          missed_call_sms_enabled?: boolean
+          missed_call_sms_template?: string
           pbx_url?: string | null
           updated_at?: string
           user_id?: string | null
@@ -1113,6 +1124,10 @@ export type Database = {
           enabled?: boolean
           extension?: string | null
           id?: string
+          missed_call_sms_business_hours_only?: boolean
+          missed_call_sms_cooldown_minutes?: number
+          missed_call_sms_enabled?: boolean
+          missed_call_sms_template?: string
           pbx_url?: string | null
           updated_at?: string
           user_id?: string | null
