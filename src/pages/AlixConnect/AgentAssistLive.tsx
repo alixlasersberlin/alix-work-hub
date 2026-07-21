@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Sparkles, MessageSquare, AlertTriangle, BookOpen, Loader2 } from "lucide-react";
 
-type Conv = { id: string; subject: string | null; channel: string | null; status: string | null; last_message_at: string | null };
+type Conv = { id: string; subject: string | null; channel_type: string | null; status: string | null; last_message_at: string | null };
 
 export default function AgentAssistLive() {
   const [conversations, setConversations] = useState<Conv[]>([]);
@@ -18,11 +18,11 @@ export default function AgentAssistLive() {
     (async () => {
       const { data } = await supabase
         .from("ac_conversations")
-        .select("id, subject, channel, status, last_message_at")
-        .in("status", ["open", "pending"])
+        .select("id, subject, channel_type, status, last_message_at")
+        .in("status", ["open", "pending"] as any)
         .order("last_message_at", { ascending: false })
         .limit(50);
-      setConversations(data ?? []);
+      setConversations((data ?? []) as any);
     })();
   }, []);
 
