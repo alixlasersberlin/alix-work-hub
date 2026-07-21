@@ -4,7 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Send, MessageCircle, Search, HandshakeIcon } from 'lucide-react';
+import { Bot, Send, MessageCircle, Search, HandshakeIcon, Mail, Ticket } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
