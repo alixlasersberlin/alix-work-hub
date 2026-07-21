@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Bot, CheckCircle2, AlertTriangle, Loader2, Play } from "lucide-react";
 
-type Ticket = { id: string; subject: string | null; status: string | null; priority: string | null; created_at: string };
+type Ticket = { id: string; subject: string | null; status: string; priority: string; created_at: string };
 
 export default function AutonomousAgents() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
