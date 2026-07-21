@@ -320,6 +320,10 @@ const AlixConnectMarketplace = lazy(() => import("./pages/AlixConnect/Marketplac
 const AlixConnectCustomer360 = lazy(() => import("./pages/AlixConnect/Customer360"));
 const AlixConnectSegments = lazy(() => import("./pages/AlixConnect/Segments"));
 const AlixConnectJourneys = lazy(() => import("./pages/AlixConnect/Journeys"));
+const AlixConnectVoiceAi = lazy(() => import("./pages/AlixConnect/VoiceAi"));
+const AlixConnectCockpit = lazy(() => import("./pages/AlixConnect/Cockpit"));
+const AlixConnectMeetings = lazy(() => import("./pages/AlixConnect/Meetings"));
+const AlixConnectMeetingRoom = lazy(() => import("./pages/AlixConnect/MeetingRoom"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
