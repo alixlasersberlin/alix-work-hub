@@ -14401,6 +14401,10 @@ export type Database = {
           notes: string | null
           order_id: string | null
           remaining_amount: number | null
+          signature_last_reminder_at: string | null
+          signature_reminder_count: number
+          signature_reminder_max: number
+          signature_requested_at: string | null
           signature_status: string | null
           signed_pdf_path: string | null
           start_date: string | null
@@ -14422,6 +14426,10 @@ export type Database = {
           notes?: string | null
           order_id?: string | null
           remaining_amount?: number | null
+          signature_last_reminder_at?: string | null
+          signature_reminder_count?: number
+          signature_reminder_max?: number
+          signature_requested_at?: string | null
           signature_status?: string | null
           signed_pdf_path?: string | null
           start_date?: string | null
@@ -14443,6 +14451,10 @@ export type Database = {
           notes?: string | null
           order_id?: string | null
           remaining_amount?: number | null
+          signature_last_reminder_at?: string | null
+          signature_reminder_count?: number
+          signature_reminder_max?: number
+          signature_requested_at?: string | null
           signature_status?: string | null
           signed_pdf_path?: string | null
           start_date?: string | null
