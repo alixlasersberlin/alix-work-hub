@@ -41,6 +41,12 @@ Deno.serve(async (req) => {
     payload: { contract_id: contractId, version: c.contract_version ?? 1, expires_at: expiresAt },
   });
 
+  // Mark signature as requested (idempotent) so reminder scheduler picks it up.
+  await admin.from('finance_contracts').update({
+    signature_status: c.signature_status === 'signed' ? c.signature_status : 'requested',
+    signature_requested_at: new Date().toISOString(),
+  }).eq('id', contractId).is('signature_requested_at', null);
+
   await audit(admin, {
     customer_id: customerId, auth_user_id: user.id,
     action: 'contract_otp_requested',
