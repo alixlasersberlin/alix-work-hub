@@ -19,9 +19,9 @@ export default function AutonomousAgents() {
   const load = async () => {
     const { data } = await supabase.from("tickets")
       .select("id, subject, status, priority, created_at")
-      .in("status", ["new", "open"])
+      .in("status", ["new", "open"] as any)
       .order("created_at", { ascending: false }).limit(50);
-    setTickets(data ?? []);
+    setTickets((data ?? []) as any);
   };
   useEffect(() => { load(); }, []);
 
