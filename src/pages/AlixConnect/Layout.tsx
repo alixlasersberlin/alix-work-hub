@@ -54,6 +54,9 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/meetings", label: "Meetings", icon: Video },
       { to: "/connect/surveys", label: "Surveys", icon: ClipboardCheck },
       { to: "/connect/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/connect/journey", label: "Journey Analytics", icon: GitBranch },
+      { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
+      { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
   },
   {
