@@ -9,11 +9,13 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Workflow } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
+type Hit = { id: string; order_number: string; customer_name: string; status?: string | null; source_kind?: string; source_route?: string };
 type Row = {
   idx: number;
   input: { num: string; name: string; raw: Record<string, any> };
   found: boolean;
-  match: any | null;
+  match: Hit | null;
+  matches?: Hit[];
 };
 type Payload = { filename: string; at: string; rows: Row[] };
 
