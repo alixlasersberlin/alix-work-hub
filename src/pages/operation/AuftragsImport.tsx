@@ -66,11 +66,11 @@ export default function AuftragsImport() {
         foundNames.set(key, arr);
       };
 
-      const sources: Array<{ table: string; label: string; numCol: string; select: string; route: string }> = [
-        { table: 'orders', label: 'Auftrag', numCol: 'order_number', select: 'id, order_number, customer_name, source_system, total, status', route: '/orders' },
-        { table: 'offers', label: 'Angebot', numCol: 'offer_number', select: 'id, offer_number, customer_name, status, total', route: '/offers' },
-        { table: 'finance_contracts', label: 'Vertrag', numCol: 'contract_number', select: 'id, contract_number, customer_name, status', route: '/finance/contracts' },
-        { table: 'repair_orders', label: 'Reparatur', numCol: 'repair_number', select: 'id, repair_number, customer_name, status', route: '/repair' },
+      const sources: Array<{ table: string; label: string; numCol: string; select: string; route: string; fields: string[] }> = [
+        { table: 'orders', label: 'Auftrag', numCol: 'order_number', select: 'id, order_number, customer_name, contact_name, source_system, total, status, customer_id', route: '/orders', fields: ['customer_name', 'contact_name'] },
+        { table: 'offers', label: 'Angebot', numCol: 'offer_number', select: 'id, offer_number, customer_name, contact_name, status, total, customer_id', route: '/offers', fields: ['customer_name', 'contact_name'] },
+        { table: 'finance_contracts', label: 'Vertrag', numCol: 'contract_number', select: 'id, contract_number, customer_name, status, customer_id', route: '/finance/contracts', fields: ['customer_name'] },
+        { table: 'repair_orders', label: 'Reparatur', numCol: 'repair_number', select: 'id, repair_number, customer_name, contact_name, status, customer_id', route: '/repair', fields: ['customer_name', 'contact_name'] },
       ];
 
       // Per-name token search — matches regardless of word order ("Jogl, Michelle" vs "Michelle Jogl").
@@ -80,23 +80,47 @@ export default function AuftragsImport() {
         if (!key) continue;
         const tokens = key.split(' ').map(cleanTok).filter(t => t.length >= 3);
         if (!tokens.length) continue;
+
+        // Also resolve matching customers (company_name / contact_name) → their IDs
+        let customerIds: string[] = [];
+        try {
+          let cq: any = (supabase as any).from('customers').select('id').limit(50);
+          for (const t of tokens) cq = cq.or(`company_name.ilike.%${t}%,contact_name.ilike.%${t}%`);
+          const { data: cs } = await cq;
+          customerIds = (cs ?? []).map((c: any) => c.id);
+        } catch { /* ignore */ }
+
         for (const src of sources) {
-          try {
-            let q: any = (supabase as any).from(src.table).select(src.select).limit(200);
-            for (const t of tokens) q = q.ilike('customer_name', `%${t}%`);
-            const { data } = await q;
-            (data ?? []).forEach((o: any) => {
-              addHit(key, {
-                id: o.id,
-                order_number: o[src.numCol] ?? '',
-                customer_name: o.customer_name,
-                status: o.status,
-                source_system: o.source_system,
-                source_kind: src.label,
-                source_route: src.route,
-              });
+          const runQuery = async (field: string) => {
+            try {
+              let q: any = (supabase as any).from(src.table).select(src.select).limit(200);
+              for (const t of tokens) q = q.ilike(field, `%${t}%`);
+              const { data } = await q;
+              return data ?? [];
+            } catch { return []; }
+          };
+          const perSource: any[] = [];
+          for (const f of src.fields) perSource.push(...await runQuery(f));
+          if (customerIds.length) {
+            try {
+              const { data } = await (supabase as any).from(src.table).select(src.select).in('customer_id', customerIds).limit(200);
+              perSource.push(...(data ?? []));
+            } catch { /* ignore */ }
+          }
+          const seen = new Set<string>();
+          for (const o of perSource) {
+            if (seen.has(o.id)) continue;
+            seen.add(o.id);
+            addHit(key, {
+              id: o.id,
+              order_number: o[src.numCol] ?? '',
+              customer_name: o.customer_name ?? o.contact_name,
+              status: o.status,
+              source_system: o.source_system,
+              source_kind: src.label,
+              source_route: src.route,
             });
-          } catch { /* table may be RLS-restricted */ }
+          }
         }
       }
 
