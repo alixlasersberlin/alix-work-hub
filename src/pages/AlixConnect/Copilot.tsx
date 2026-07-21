@@ -98,7 +98,61 @@ export default function Copilot() {
             </CardContent>
           </Card>
         )}
+
+        <InlineAutoSuggest />
       </div>
     </div>
+  );
+}
+
+function InlineAutoSuggest() {
+  const [context, setContext] = useState('');
+  const [draft, setDraft] = useState('');
+  const [ghost, setGhost] = useState('');
+  const [busy, setBusy] = useState(false);
+  const timer = useRef<any>(null);
+  const seq = useRef(0);
+
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current);
+    if (!draft.trim() || draft.length < 3) { setGhost(''); return; }
+    timer.current = setTimeout(async () => {
+      const my = ++seq.current;
+      setBusy(true);
+      const { data, error } = await supabase.functions.invoke('ac-copilot', {
+        body: { suggestion_type: 'autocomplete', context_type: 'chat', input: draft, conversation_history: context || undefined },
+      });
+      if (my !== seq.current) return;
+      setBusy(false);
+      if (error || (data as any)?.error) return;
+      const suggestion = String((data as any)?.content ?? '').trim();
+      setGhost(suggestion.startsWith(draft) ? suggestion.slice(draft.length) : suggestion);
+    }, 700);
+    return () => timer.current && clearTimeout(timer.current);
+  }, [draft, context]);
+
+  return (
+    <Card className="border-dashed">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
+        <CardTitle className="text-sm flex items-center gap-2"><Zap className="w-4 h-4 text-primary" />Inline Auto-Suggest</CardTitle>
+        <span className="text-[10px] text-muted-foreground">{busy ? 'denke…' : 'debounced 700ms'}</span>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <Textarea rows={3} placeholder="Verlauf (Kunde/Agent, optional)…" value={context} onChange={(e) => setContext(e.target.value)} />
+        <div className="relative">
+          <Textarea rows={4} placeholder="Beginne zu tippen — Vorschlag erscheint unten…" value={draft} onChange={(e) => setDraft(e.target.value)} />
+        </div>
+        {ghost && (
+          <div className="rounded border border-primary/40 bg-primary/5 p-2 text-sm space-y-2">
+            <div className="text-[10px] uppercase text-muted-foreground">Vorschlag (Tab-Ergänzung)</div>
+            <div className="whitespace-pre-wrap"><span className="text-muted-foreground">{draft}</span><span className="text-primary font-medium">{ghost}</span></div>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => { setDraft(draft + ghost); setGhost(''); }}>Übernehmen</Button>
+              <Button size="sm" variant="ghost" onClick={() => setGhost('')}>Verwerfen</Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
