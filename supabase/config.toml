@@ -293,3 +293,12 @@ verify_jwt = false
 
 [functions.ac-autonomous-resolve]
 verify_jwt = false
+
+[functions.ac-omnichannel-orchestrate]
+verify_jwt = false
+
+[functions.ac-voice-ai-studio]
+verify_jwt = false
+
+[functions.ac-revenue-intel-v2]
+verify_jwt = false
