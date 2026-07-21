@@ -84,7 +84,7 @@ export default function RoutingLive() {
           <CardContent className="space-y-2">
             {queues.length === 0 && <p className="text-xs text-muted-foreground">Keine Queues konfiguriert.</p>}
             {queues.map((q) => {
-              const inQ = decisions.filter((d) => d.queue_id === q.id).length;
+              const inQ = decisions.filter((d) => d.chosen_queue_id === q.id).length;
               return (
                 <div key={q.id} className="flex items-center justify-between text-sm border-b border-border/40 pb-1">
                   <div className="flex items-center gap-2">
