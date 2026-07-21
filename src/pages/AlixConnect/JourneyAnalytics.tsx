@@ -84,6 +84,19 @@ export default function AlixConnectJourneyAnalytics() {
         <Card className="p-4"><div className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" />Aktive Kanäle</div><div className="text-2xl font-semibold">{Object.keys(byChannel).length}</div></Card>
       </div>
 
+      {deflection && (
+        <Card className="p-4">
+          <div className="text-sm font-semibold mb-3">Self-Service Portal – Deflection ({days} Tage)</div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+            <div><div className="text-xs text-muted-foreground">Sessions</div><div className="text-xl font-semibold">{deflection.total_sessions}</div></div>
+            <div><div className="text-xs text-muted-foreground">Deflected</div><div className="text-xl font-semibold text-green-500">{deflection.deflected_sessions}</div></div>
+            <div><div className="text-xs text-muted-foreground">Handoff → Ticket</div><div className="text-xl font-semibold">{deflection.handoff_sessions}</div></div>
+            <div><div className="text-xs text-muted-foreground">Deflection-Rate</div><div className="text-xl font-semibold text-primary">{deflection.deflection_pct ?? 0}%</div></div>
+            <div><div className="text-xs text-muted-foreground">Ø Messages/Session</div><div className="text-xl font-semibold">{deflection.avg_messages ?? 0}</div></div>
+          </div>
+        </Card>
+      )}
+
       <Card className="p-4">
         <div className="text-sm font-semibold mb-3">Event-Funnel (Top-Stages, {days} Tage)</div>
         {loading ? <div className="text-xs text-muted-foreground">Lade…</div> : funnel.length === 0 ? <div className="text-xs text-muted-foreground">Keine Events.</div> : (
