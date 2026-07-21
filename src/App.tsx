@@ -352,6 +352,9 @@ const AlixConnectOmnichannelCampaigns = lazy(() => import("./pages/AlixConnect/O
 const AlixConnectConvIntel = lazy(() => import("./pages/AlixConnect/ConversationalIntelligence"));
 const AlixConnectJourneyOptimizer = lazy(() => import("./pages/AlixConnect/JourneyOptimizer"));
 const AlixConnectAgentWorkspace = lazy(() => import("./pages/AlixConnect/AgentWorkspace"));
+const AlixConnectAgentAssistLive = lazy(() => import("./pages/AlixConnect/AgentAssistLive"));
+const AlixConnectCustomerIntel = lazy(() => import("./pages/AlixConnect/CustomerIntelligence"));
+const AlixConnectAutonomousAgents = lazy(() => import("./pages/AlixConnect/AutonomousAgents"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
