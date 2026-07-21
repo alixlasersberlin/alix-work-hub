@@ -75,6 +75,9 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/agent-assist-live", label: "Agent Assist Live 2.0", icon: Sparkles },
       { to: "/connect/customer-intelligence", label: "Customer Intelligence Hub", icon: Sparkles },
       { to: "/connect/autonomous-agents", label: "Autonomous Agents", icon: Bot },
+      { to: "/connect/omnichannel-orchestrator", label: "Omnichannel Orchestrator", icon: Sparkles },
+      { to: "/connect/voice-ai-studio", label: "Voice AI Studio", icon: Mic },
+      { to: "/connect/revenue-intel-v2", label: "Revenue Intel 2.0", icon: Sparkles },
       { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
       { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
@@ -108,7 +111,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 33 · Agent Assist Live · Customer Intelligence · Autonomous Agents
+            Phase 34 · Omnichannel Orchestrator · Voice AI Studio · Revenue Intel 2.0
           </span>
         </div>
         <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
