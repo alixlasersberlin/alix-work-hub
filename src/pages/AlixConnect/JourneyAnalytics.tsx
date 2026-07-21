@@ -12,21 +12,41 @@ type Funnel = { stage: string; count: number };
 export default function AlixConnectJourneyAnalytics() {
   const [funnel, setFunnel] = useState<Funnel[]>([]);
   const [convos, setConvos] = useState<any[]>([]);
+  const [segments, setSegments] = useState<any[]>([]);
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
+  const [newSeg, setNewSeg] = useState({ name: '', description: '', minTouchpoints: 3 });
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const [f, c] = await Promise.all([
-        supabase.rpc('ac_journey_funnel', { days_back: days }),
-        supabase.from('ac_conversations').select('id, channel, status, created_at, closed_at, sentiment').order('created_at', { ascending: false }).limit(500),
-      ]);
-      setFunnel(((f.data as any) ?? []).map((r: any) => ({ stage: r.stage, count: Number(r.count) })));
-      setConvos((c.data as any) ?? []);
-      setLoading(false);
-    })();
-  }, [days]);
+  const load = async () => {
+    setLoading(true);
+    const [f, c, s] = await Promise.all([
+      supabase.rpc('ac_journey_funnel', { days_back: days }),
+      supabase.from('ac_conversations').select('id, channel, status, created_at, closed_at, sentiment').order('created_at', { ascending: false }).limit(500),
+      supabase.from('ac_journey_segments').select('*').order('updated_at', { ascending: false }),
+    ]);
+    setFunnel(((f.data as any) ?? []).map((r: any) => ({ stage: r.stage, count: Number(r.count) })));
+    setConvos((c.data as any) ?? []);
+    setSegments((s.data as any) ?? []);
+    setLoading(false);
+  };
+  useEffect(() => { load(); }, [days]);
+
+  const addSegment = async () => {
+    if (!newSeg.name.trim()) return toast.error('Name fehlt');
+    const { error } = await supabase.from('ac_journey_segments').insert({
+      name: newSeg.name, description: newSeg.description,
+      criteria: { min_touchpoints: newSeg.minTouchpoints },
+    });
+    if (error) return toast.error(error.message);
+    setNewSeg({ name: '', description: '', minTouchpoints: 3 });
+    toast.success('Segment angelegt'); load();
+  };
+  const deleteSegment = async (id: string) => {
+    if (!confirm('Segment löschen?')) return;
+    const { error } = await supabase.from('ac_journey_segments').delete().eq('id', id);
+    if (error) return toast.error(error.message);
+    load();
+  };
 
   const max = Math.max(1, ...funnel.map(f => f.count));
   const byChannel = convos.reduce((acc: any, c: any) => { acc[c.channel ?? 'unknown'] = (acc[c.channel ?? 'unknown'] ?? 0) + 1; return acc; }, {});
