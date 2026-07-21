@@ -1,6 +1,6 @@
-// One-off: imports ALL Alix Lasers Schweiz sales orders from Zoho EU 1
+// Imports ALL Alix Lasers Schweiz sales orders from Zoho EU 1
 // (branch_id = 598077000000065075). Reuses ZOHO_EU_1_* credentials.
-// Stays on source_system='zoho_eu_1' — CH is distinguished via raw_data.branch_id.
+// Runs in background via EdgeRuntime.waitUntil.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -21,7 +21,12 @@ const CLIENT_ID = Deno.env.get("ZOHO_EU_1_CLIENT_ID") ?? "";
 const CLIENT_SECRET = Deno.env.get("ZOHO_EU_1_CLIENT_SECRET") ?? "";
 const REFRESH_TOKEN = Deno.env.get("ZOHO_EU_1_REFRESH_TOKEN") ?? "";
 
-async function getAccessToken(): Promise<string> {
+// Token cache so we can refresh mid-run
+let cachedToken: { value: string; expires: number } | null = null;
+async function getAccessToken(force = false): Promise<string> {
+  if (!force && cachedToken && cachedToken.expires > Date.now() + 60_000) {
+    return cachedToken.value;
+  }
   const res = await fetch(`${ACCOUNTS}/oauth/v2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -34,7 +39,26 @@ async function getAccessToken(): Promise<string> {
   });
   const j = await res.json();
   if (!j.access_token) throw new Error(`Token error: ${JSON.stringify(j)}`);
-  return j.access_token;
+  cachedToken = { value: j.access_token, expires: Date.now() + 45 * 60_000 };
+  return cachedToken.value;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Zoho fetch with retry on 401 (token expired) and 429 (rate limit)
+async function zohoFetch(url: string, attempt = 0): Promise<Response> {
+  const token = await getAccessToken();
+  const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${token}` } });
+  if (res.status === 401 && attempt < 2) {
+    await getAccessToken(true);
+    return zohoFetch(url, attempt + 1);
+  }
+  if (res.status === 429 && attempt < 5) {
+    const retryAfter = Number(res.headers.get("Retry-After")) || 30;
+    await sleep(retryAfter * 1000);
+    return zohoFetch(url, attempt + 1);
+  }
+  return res;
 }
 
 Deno.serve(async (req) => {
@@ -42,27 +66,33 @@ Deno.serve(async (req) => {
 
   const auth = req.headers.get("Authorization") ?? "";
   const token = auth.replace(/^Bearer\s+/i, "").trim();
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  if (!token || (token !== cronSecret && token !== SERVICE_KEY)) {
-    // Allow logged-in users (token will be a JWT verified by Supabase elsewhere)
-    if (!token) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+  if (!token) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const t0 = Date.now();
-  const HARD_LIMIT_MS = 250_000;
   const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  let accessToken: string;
-  try { accessToken = await getAccessToken(); } catch (e: any) {
+  // Prime the token before backgrounding so we can fail fast on bad creds
+  try { await getAccessToken(true); } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message ?? "token failed" }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+  }
+
+  async function logProgress(status: string, extra: Record<string, any>) {
+    try {
+      await admin.from("order_import_logs").insert({
+        source_system: SOURCE,
+        status,
+        message: `import-all-orders-ch: ${JSON.stringify(extra).slice(0, 2000)}`,
+        created_at: new Date().toISOString(),
+      });
+    } catch { /* table shape may differ, ignore */ }
   }
 
   async function ensureCustomer(externalCustomerId: string): Promise<string | null> {
@@ -70,8 +100,7 @@ Deno.serve(async (req) => {
       .eq("external_customer_id", externalCustomerId).eq("source_system", SOURCE).maybeSingle();
     if (ex) return ex.id;
     try {
-      const r = await fetch(`${API}/contacts/${externalCustomerId}?organization_id=${ORG_ID}`,
-        { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+      const r = await zohoFetch(`${API}/contacts/${externalCustomerId}?organization_id=${ORG_ID}`);
       if (!r.ok) return null;
       const c = (await r.json()).contact;
       if (!c) return null;
@@ -121,21 +150,29 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Run the long-running import in the background so we don't hit the 150s idle timeout.
   const runImport = async () => {
     let page = 1;
-    const MAX_PAGES = 50;
+    const MAX_PAGES = 200;         // 50 * 200 = 10.000 Aufträge Deckel
+    const PER_PAGE = 50;           // kleinere Seiten, schonender für Rate-Limit
     const BG_LIMIT_MS = 25 * 60_000;
+    const DETAIL_DELAY_MS = 350;   // ~170 req/min, unter Zoho-Limit
     let imported = 0, updated = 0, skipped = 0, failed = 0, fetched = 0;
     const errors: any[] = [];
 
+    await logProgress("running", { message: "started" });
+
     while (page <= MAX_PAGES) {
-      if (Date.now() - t0 > BG_LIMIT_MS) break;
-      const url = `${API}/salesorders?organization_id=${ORG_ID}&branch_id=${CH_BRANCH_ID}&page=${page}&per_page=200`;
-      const res = await fetch(url, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+      if (Date.now() - t0 > BG_LIMIT_MS) {
+        errors.push({ note: "bg time limit reached", page });
+        break;
+      }
+      const url = `${API}/salesorders?organization_id=${ORG_ID}&branch_id=${CH_BRANCH_ID}&page=${page}&per_page=${PER_PAGE}`;
+      const res = await zohoFetch(url);
       if (!res.ok) {
         const txt = await res.text();
-        errors.push({ page, zoho_error: txt.slice(0, 500) });
+        errors.push({ page, status: res.status, zoho_error: txt.slice(0, 500) });
+        // Bei 5xx kurz warten und weiter; sonst abbrechen
+        if (res.status >= 500) { await sleep(5000); continue; }
         break;
       }
       const json = await res.json();
@@ -154,13 +191,13 @@ Deno.serve(async (req) => {
 
           let detail = so;
           try {
-            const dRes = await fetch(`${API}/salesorders/${externalOrderId}?organization_id=${ORG_ID}`,
-              { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
+            const dRes = await zohoFetch(`${API}/salesorders/${externalOrderId}?organization_id=${ORG_ID}`);
             if (dRes.ok) {
               const dJson = await dRes.json();
               if (dJson.salesorder) detail = dJson.salesorder;
             }
           } catch { /* ignore */ }
+          await sleep(DETAIL_DELAY_MS);
 
           const nullIfEmpty = (v: any) => (v == null || v === "" ? null : v);
           const orderPayload: any = {
@@ -204,23 +241,17 @@ Deno.serve(async (req) => {
         }
       }
 
+      await logProgress("progress", { page, fetched, imported, updated, failed, skipped });
+
       if (!hasMore) break;
       page++;
     }
 
-    try {
-      await admin.from("sync_logs").insert({
-        source_system: SOURCE,
-        sync_type: "import-all-orders-ch",
-        status: failed > 0 ? "partial" : "success",
-        records_processed: fetched,
-        records_created: imported,
-        records_updated: updated,
-        records_failed: failed,
-        error_message: errors.length ? JSON.stringify(errors.slice(0, 20)) : null,
-        completed_at: new Date().toISOString(),
-      });
-    } catch { /* sync_logs optional */ }
+    await logProgress(failed > 0 ? "partial" : "success", {
+      fetched, imported, updated, skipped, failed,
+      duration_ms: Date.now() - t0,
+      errors: errors.slice(0, 20),
+    });
 
     console.log(`[import-all-orders-ch] done`, { fetched, imported, updated, skipped, failed, duration_ms: Date.now() - t0 });
   };
@@ -233,6 +264,6 @@ Deno.serve(async (req) => {
     started: true,
     branch_id: CH_BRANCH_ID,
     source_system: SOURCE,
-    message: "Import läuft im Hintergrund. Ergebnis wird in sync_logs protokolliert.",
+    message: "Import läuft im Hintergrund. Fortschritt wird in order_import_logs protokolliert.",
   }, null, 2), { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 202 });
 });
