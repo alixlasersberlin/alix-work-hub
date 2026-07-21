@@ -2,7 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import {
   MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone,
   LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall, Activity, PhoneForwarded,
-  Mail, Ban, Webhook, FileText,
+  Mail, Ban, Webhook, FileText, Layers, Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +33,8 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/compliance", label: "Recording Compliance", icon: PhoneCall },
       { to: "/connect/contacts", label: "Kontakte", icon: Users },
       { to: "/connect/campaigns", label: "Kampagnen", icon: Megaphone },
+      { to: "/connect/segmente", label: "Segmente", icon: Layers },
+      { to: "/connect/journeys", label: "Journeys", icon: Workflow },
     ],
   },
   {
@@ -72,7 +74,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 21 · Multi-Channel & Intelligence
+            Phase 22 · Kampagnen-Engine 2.0
           </span>
         </div>
         <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">

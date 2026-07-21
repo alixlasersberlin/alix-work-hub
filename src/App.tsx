@@ -318,6 +318,8 @@ const AlixConnectOptOut = lazy(() => import("./pages/AlixConnect/OptOut"));
 const AlixConnectEmailSync = lazy(() => import("./pages/AlixConnect/EmailSync"));
 const AlixConnectMarketplace = lazy(() => import("./pages/AlixConnect/Marketplace"));
 const AlixConnectCustomer360 = lazy(() => import("./pages/AlixConnect/Customer360"));
+const AlixConnectSegments = lazy(() => import("./pages/AlixConnect/Segments"));
+const AlixConnectJourneys = lazy(() => import("./pages/AlixConnect/Journeys"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1209,6 +1211,8 @@ function AppRoutes() {
             <Route path="email" element={<AlixConnectEmailSync />} />
             <Route path="marketplace" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectMarketplace /></ProtectedRoute>} />
             <Route path="customer-360" element={<AlixConnectCustomer360 />} />
+            <Route path="segmente" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectSegments /></ProtectedRoute>} />
+            <Route path="journeys" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectJourneys /></ProtectedRoute>} />
             <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
             <Route path="websites/:id/analytics" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsiteAnalytics /></ProtectedRoute>} />
             <Route path="analytics" element={<AlixConnectAnalytics />} />
