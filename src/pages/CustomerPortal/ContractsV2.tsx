@@ -4,9 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, FileSignature } from 'lucide-react';
+import { Loader2, FileSignature, Download } from 'lucide-react';
 import { logPortalAudit } from '@/lib/portal/audit';
 import { ContractSignDialog } from './ContractSignDialog';
+import { toast } from 'sonner';
 
 type Ctx = { customerId: string; companyName: string | null; email: string | null };
 
@@ -31,6 +32,22 @@ export default function CustomerPortalContractsV2() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [signContract, setSignContract] = useState<Contract | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [certBusy, setCertBusy] = useState<string | null>(null);
+
+  const downloadCertificate = async (contractId: string) => {
+    setCertBusy(contractId);
+    try {
+      const { data, error } = await supabase.functions.invoke('portal-contract-certificate', {
+        body: { contract_id: contractId },
+      });
+      if (error) throw error;
+      const url = (data as any)?.url;
+      if (!url) throw new Error('Kein Download-Link');
+      window.open(url, '_blank', 'noopener');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Zertifikat konnte nicht erstellt werden.');
+    } finally { setCertBusy(null); }
+  };
 
   useEffect(() => {
     (async () => {
@@ -78,6 +95,20 @@ export default function CustomerPortalContractsV2() {
                 {c.customer_visible && c.signature_status && c.signature_status !== 'signed' && (
                   <Button size="sm" className="w-full mt-2" onClick={() => setSignContract(c)}>
                     <FileSignature className="w-4 h-4 mr-1" /> Jetzt signieren
+                  </Button>
+                )}
+                {c.signature_status === 'signed' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full mt-2"
+                    disabled={certBusy === c.id}
+                    onClick={() => downloadCertificate(c.id)}
+                  >
+                    {certBusy === c.id
+                      ? <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                      : <Download className="w-4 h-4 mr-1" />}
+                    Signaturzertifikat herunterladen
                   </Button>
                 )}
               </CardContent>
