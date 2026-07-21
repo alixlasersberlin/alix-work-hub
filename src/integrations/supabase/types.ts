@@ -1629,6 +1629,110 @@ export type Database = {
           },
         ]
       }
+      ac_outreach_runs: {
+        Row: {
+          channel: string
+          contact_id: string | null
+          created_at: string
+          customer_id: string | null
+          error: string | null
+          id: string
+          payload: Json
+          result: Json | null
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          trigger_id: string | null
+        }
+        Insert: {
+          channel: string
+          contact_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          error?: string | null
+          id?: string
+          payload?: Json
+          result?: Json | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          trigger_id?: string | null
+        }
+        Update: {
+          channel?: string
+          contact_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          error?: string | null
+          id?: string
+          payload?: Json
+          result?: Json | null
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          trigger_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_outreach_runs_trigger_id_fkey"
+            columns: ["trigger_id"]
+            isOneToOne: false
+            referencedRelation: "ac_outreach_triggers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_outreach_triggers: {
+        Row: {
+          channel: string
+          conditions: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          enabled: boolean
+          event_type: string
+          id: string
+          message_template: string | null
+          name: string
+          send_hour_local: number | null
+          template_id: string | null
+          throttle_per_customer_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          event_type: string
+          id?: string
+          message_template?: string | null
+          name: string
+          send_hour_local?: number | null
+          template_id?: string | null
+          throttle_per_customer_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          enabled?: boolean
+          event_type?: string
+          id?: string
+          message_template?: string | null
+          name?: string
+          send_hour_local?: number | null
+          template_id?: string | null
+          throttle_per_customer_days?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ac_pbx_business_hours: {
         Row: {
           closed_action: string
@@ -1949,6 +2053,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ac_predictions: {
+        Row: {
+          computed_at: string
+          contact_id: string | null
+          created_at: string
+          customer_id: string | null
+          expires_at: string | null
+          id: string
+          kind: string
+          payload: Json
+          reason: string | null
+          risk_level: string | null
+          score: number
+          suggested_action: string | null
+        }
+        Insert: {
+          computed_at?: string
+          contact_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          expires_at?: string | null
+          id?: string
+          kind: string
+          payload?: Json
+          reason?: string | null
+          risk_level?: string | null
+          score?: number
+          suggested_action?: string | null
+        }
+        Update: {
+          computed_at?: string
+          contact_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          payload?: Json
+          reason?: string | null
+          risk_level?: string | null
+          score?: number
+          suggested_action?: string | null
+        }
+        Relationships: []
+      }
       ac_qm_calibration_scores: {
         Row: {
           breakdown: Json | null
@@ -2253,6 +2402,57 @@ export type Database = {
           kpis?: Json
           period_end?: string
           period_start?: string
+        }
+        Relationships: []
+      }
+      ac_revenue_attributions: {
+        Row: {
+          amount: number
+          attributed_amount: number
+          campaign_id: string | null
+          channel: string | null
+          computed_at: string
+          currency: string | null
+          customer_id: string | null
+          id: string
+          journey_id: string | null
+          model: string
+          order_date: string | null
+          order_id: string | null
+          touchpoint_id: string | null
+          weight: number
+        }
+        Insert: {
+          amount?: number
+          attributed_amount?: number
+          campaign_id?: string | null
+          channel?: string | null
+          computed_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          journey_id?: string | null
+          model: string
+          order_date?: string | null
+          order_id?: string | null
+          touchpoint_id?: string | null
+          weight?: number
+        }
+        Update: {
+          amount?: number
+          attributed_amount?: number
+          campaign_id?: string | null
+          channel?: string | null
+          computed_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          journey_id?: string | null
+          model?: string
+          order_date?: string | null
+          order_id?: string | null
+          touchpoint_id?: string | null
+          weight?: number
         }
         Relationships: []
       }

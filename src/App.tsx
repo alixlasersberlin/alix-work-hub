@@ -335,6 +335,9 @@ const AlixConnectJourneyAnalytics = lazy(() => import("./pages/AlixConnect/Journ
 const SelfServicePortal = lazy(() => import("./pages/Public/SelfServicePortal"));
 const AlixConnectQmCalibration = lazy(() => import("./pages/AlixConnect/QmCalibration"));
 const AlixConnectQmCoaching = lazy(() => import("./pages/AlixConnect/QmCoaching"));
+const AlixConnectPredictiveCx = lazy(() => import("./pages/AlixConnect/PredictiveCx"));
+const AlixConnectProactiveOutreach = lazy(() => import("./pages/AlixConnect/ProactiveOutreach"));
+const AlixConnectRevenueAttribution = lazy(() => import("./pages/AlixConnect/RevenueAttribution"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1247,6 +1250,9 @@ function AppRoutes() {
             <Route path="wfm" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM']}><AlixConnectWfm /></ProtectedRoute>} />
             <Route path="knowledge" element={<ProtectedRoute><AlixConnectKnowledgeBase /></ProtectedRoute>} />
             <Route path="journey" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectJourneyAnalytics /></ProtectedRoute>} />
+            <Route path="predictive-cx" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM','Order']}><AlixConnectPredictiveCx /></ProtectedRoute>} />
+            <Route path="outreach" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectProactiveOutreach /></ProtectedRoute>} />
+            <Route path="revenue-attribution" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRevenueAttribution /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
