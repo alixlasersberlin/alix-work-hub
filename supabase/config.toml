@@ -278,3 +278,9 @@ verify_jwt = false
 
 [functions.ac-webhook-meta]
 verify_jwt = false
+
+[functions.ac-conv-intel-analyze]
+verify_jwt = false
+
+[functions.ac-journey-optimize]
+verify_jwt = false
