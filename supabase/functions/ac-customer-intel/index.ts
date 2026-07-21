@@ -14,11 +14,10 @@ Deno.serve(async (req) => {
     const { contact_id } = await req.json();
     if (!contact_id) throw new Error('contact_id required');
 
-    const [{ data: contact }, { data: msgs }, { data: calls }, { data: health }] = await Promise.all([
+    const [{ data: contact }, { data: msgs }, { data: calls }] = await Promise.all([
       sb.from('ac_contacts').select('*').eq('id', contact_id).single(),
       sb.from('ac_messages').select('sender_type, created_at, body').eq('contact_id', contact_id).order('created_at', { ascending: false }).limit(50),
       sb.from('ac_calls').select('direction, sentiment, sentiment_score, duration_sec, created_at').eq('contact_id', contact_id).order('created_at', { ascending: false }).limit(30),
-      sb.from('ac_customer_health').select('*').eq('contact_id', contact_id).maybeSingle(),
     ]);
     if (!contact) throw new Error('contact not found');
 
