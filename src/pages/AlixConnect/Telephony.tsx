@@ -28,6 +28,11 @@ type Call = {
   duration_seconds: number | null;
   recording_url: string | null;
   voicemail_url: string | null;
+  voicemail_transcript?: string | null;
+  voicemail_transcript_status?: string | null;
+  ticket_id?: string | null;
+  conversation_id?: string | null;
+  notes?: string | null;
 };
 
 type PbxSettings = {
