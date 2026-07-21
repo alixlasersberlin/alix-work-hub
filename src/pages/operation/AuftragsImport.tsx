@@ -48,62 +48,44 @@ export default function AuftragsImport() {
     if (!rows.length) return;
     setRunning(true);
     try {
-      const orderKey = pickKey(rows[0], ORDER_KEYS);
       const nameKey = pickKey(rows[0], NAME_KEYS);
-      if (!orderKey && !nameKey) {
-        toast.error('Keine Spalte "Auftragsnummer" oder "Kunde" gefunden.');
+      if (!nameKey) {
+        toast.error('Keine Spalte "Kunde"/"Kundenname" gefunden.');
         setRunning(false);
         return;
       }
 
-      const orderNumbers = Array.from(new Set(rows
-        .map(r => orderKey ? stripAt(String(r[orderKey] ?? '')) : '')
-        .filter(Boolean)));
       const names = Array.from(new Set(rows
-        .map(r => nameKey ? String(r[nameKey] ?? '').trim() : '')
+        .map(r => String(r[nameKey] ?? '').trim())
         .filter(Boolean)));
 
-      const foundNumbers = new Map<string, any>();
-      for (let i = 0; i < orderNumbers.length; i += 200) {
-        const chunk = orderNumbers.slice(i, i + 200);
+      const foundNames = new Map<string, any>();
+      for (let i = 0; i < names.length; i += 50) {
+        const chunk = names.slice(i, i + 50);
+        const orFilter = chunk.map(n => `customer_name.ilike.%${n.replace(/[,()%]/g, '')}%`).join(',');
         const { data } = await (supabase as any)
           .from('orders')
           .select('id, order_number, customer_name, source_system, total, status')
-          .in('order_number', chunk);
-        (data ?? []).forEach((o: any) => foundNumbers.set(String(o.order_number), o));
-      }
-
-      const foundNames = new Map<string, any>();
-      if (nameKey && names.length) {
-        for (let i = 0; i < names.length; i += 50) {
-          const chunk = names.slice(i, i + 50);
-          const orFilter = chunk.map(n => `customer_name.ilike.%${n.replace(/[,()]/g, '')}%`).join(',');
-          const { data } = await (supabase as any)
-            .from('orders')
-            .select('id, order_number, customer_name, source_system, total, status')
-            .or(orFilter)
-            .limit(500);
-          (data ?? []).forEach((o: any) => {
-            const key = String(o.customer_name ?? '').toLowerCase();
-            if (!foundNames.has(key)) foundNames.set(key, o);
-          });
-        }
+          .or(orFilter)
+          .limit(1000);
+        (data ?? []).forEach((o: any) => {
+          const key = normName(String(o.customer_name ?? ''));
+          if (key && !foundNames.has(key)) foundNames.set(key, o);
+        });
       }
 
       const results = rows.map((r, idx) => {
-        const num = orderKey ? stripAt(String(r[orderKey] ?? '')) : '';
-        const name = nameKey ? String(r[nameKey] ?? '').trim() : '';
+        const name = String(r[nameKey] ?? '').trim();
+        const nameL = normName(name);
         let match: any = null;
-        if (num && foundNumbers.has(num)) match = foundNumbers.get(num);
-        if (!match && name) {
-          const nameL = name.toLowerCase();
+        if (nameL) {
           for (const [k, v] of foundNames) {
-            if (k.includes(nameL) || nameL.includes(k)) { match = v; break; }
+            if (k === nameL || k.includes(nameL) || nameL.includes(k)) { match = v; break; }
           }
         }
         return {
           idx,
-          input: { num, name, raw: r },
+          input: { num: '', name, raw: r },
           found: !!match,
           match,
         };
