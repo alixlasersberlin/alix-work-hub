@@ -1256,6 +1256,9 @@ function AppRoutes() {
             <Route path="predictive-cx" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM','Order']}><AlixConnectPredictiveCx /></ProtectedRoute>} />
             <Route path="outreach" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectProactiveOutreach /></ProtectedRoute>} />
             <Route path="revenue-attribution" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRevenueAttribution /></ProtectedRoute>} />
+            <Route path="bot-studio" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectBotStudio /></ProtectedRoute>} />
+            <Route path="voice-analytics" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM']}><AlixConnectVoiceAnalytics /></ProtectedRoute>} />
+            <Route path="customer-health" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Order','QM']}><AlixConnectCustomerHealth /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
