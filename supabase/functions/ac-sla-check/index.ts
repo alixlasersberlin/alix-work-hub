@@ -1,90 +1,73 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-// SLA-Grenzwerte pro Priorität (Minuten bis zur Erst-Antwort)
-const SLA_MINUTES: Record<string, number> = {
-  urgent: 15,
-  high: 30,
-  normal: 60,
-  low: 240,
-};
-
+/**
+ * SLA Watchdog (Cron alle 10 Min).
+ * Prüft offene Conversations gegen aktive ac_sla_policies.
+ * Erzeugt Breaches (first_response, resolution) und benachrichtigt escalate_to.
+ */
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-
-  const admin = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  );
-
+  const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   try {
-    const nowIso = new Date().toISOString();
+    const { data: policies } = await sb.from('ac_sla_policies').select('*').eq('is_active', true);
+    if (!policies?.length) return json({ policies: 0, breaches: 0 });
 
-    // Alle offenen Konversationen mit letzter Nachricht
-    const { data: convs, error } = await admin
-      .from('ac_conversations')
-      .select('id, tenant_id, priority, status, last_message_at, sla_notified_at, channel_type')
+    const nowMs = Date.now();
+    let created = 0;
+    const { data: convs } = await sb.from('ac_conversations')
+      .select('id,channel,priority,status,first_response_at,resolved_at,created_at')
       .in('status', ['open', 'pending'])
       .limit(500);
-    if (error) throw error;
-
-    let breached = 0;
-    const errors: string[] = [];
 
     for (const c of convs ?? []) {
-      const prio = (c as any).priority || 'normal';
-      const limitMin = SLA_MINUTES[prio] ?? 60;
-      const last = new Date((c as any).last_message_at || 0).getTime();
-      const ageMin = (Date.now() - last) / 60000;
-      if (ageMin < limitMin) continue;
+      const policy = policies.find((p: any) =>
+        (!p.channel || p.channel === (c as any).channel) &&
+        (!p.priority || p.priority === (c as any).priority)
+      );
+      if (!policy) continue;
+      const createdMs = new Date((c as any).created_at).getTime();
+      const ageMin = (nowMs - createdMs) / 60000;
 
-      // Bereits benachrichtigt in diesem SLA-Fenster?
-      const notifiedAt = (c as any).sla_notified_at ? new Date((c as any).sla_notified_at).getTime() : 0;
-      if (notifiedAt > last) continue;
-
-      // Prüfen ob letzte Nachricht wirklich inbound war (sonst hat Agent geantwortet)
-      const { data: lastMsg } = await admin
-        .from('ac_messages')
-        .select('direction, is_internal_note')
-        .eq('conversation_id', (c as any).id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!lastMsg) continue;
-      if ((lastMsg as any).direction !== 'inbound') continue;
-
-      // Fire event
-      try {
-        await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/ac-automation-run`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-            apikey: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-          },
-          body: JSON.stringify({
-            event: 'sla.breached',
-            conversation_id: (c as any).id,
-            tenant_id: (c as any).tenant_id,
-          }),
-        });
-        breached++;
-        await admin
-          .from('ac_conversations')
-          .update({ sla_notified_at: nowIso })
-          .eq('id', (c as any).id);
-      } catch (e) {
-        errors.push(`${(c as any).id}: ${e instanceof Error ? e.message : String(e)}`);
+      // first_response breach
+      if (!(c as any).first_response_at && ageMin > policy.first_response_min) {
+        const { data: exists } = await sb.from('ac_sla_breaches').select('id')
+          .eq('conversation_id', (c as any).id).eq('breach_type', 'first_response')
+          .is('resolved_at', null).limit(1);
+        if (!exists?.length) {
+          await sb.from('ac_sla_breaches').insert({
+            policy_id: policy.id, conversation_id: (c as any).id,
+            breach_type: 'first_response', meta: { age_min: Math.round(ageMin) },
+          });
+          created++;
+          if (policy.escalate_to) {
+            await sb.from('app_notifications').insert({
+              user_id: policy.escalate_to, kind: 'sla_breach', severity: 'warning',
+              title: 'SLA-Verstoß: First Response', message: `Konversation ${(c as any).id.slice(0,8)} überfällig (${Math.round(ageMin)} Min)`,
+              link: `/connect/inbox?c=${(c as any).id}`,
+            }).select();
+          }
+        }
+      }
+      // resolution breach
+      if (!(c as any).resolved_at && ageMin > policy.resolution_min) {
+        const { data: exists } = await sb.from('ac_sla_breaches').select('id')
+          .eq('conversation_id', (c as any).id).eq('breach_type', 'resolution')
+          .is('resolved_at', null).limit(1);
+        if (!exists?.length) {
+          await sb.from('ac_sla_breaches').insert({
+            policy_id: policy.id, conversation_id: (c as any).id,
+            breach_type: 'resolution', meta: { age_min: Math.round(ageMin) },
+          });
+          created++;
+        }
       }
     }
-
-    return new Response(JSON.stringify({ ok: true, checked: convs?.length ?? 0, breached, errors }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return json({ policies: policies.length, scanned: convs?.length ?? 0, breaches: created });
+  } catch (e: any) {
+    return json({ error: e?.message ?? 'internal' }, 500);
   }
 });
+function json(b: unknown, s = 200) {
+  return new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+}
