@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Loader2, Copy, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Sparkles, Loader2, Copy, ThumbsUp, ThumbsDown, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 const types = [
