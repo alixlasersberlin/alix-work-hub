@@ -213,6 +213,75 @@ export type Database = {
           },
         ]
       }
+      ac_calls: {
+        Row: {
+          agent_user_id: string | null
+          answered_at: string | null
+          contact_id: string | null
+          conversation_id: string | null
+          created_at: string
+          direction: string
+          duration_seconds: number | null
+          ended_at: string | null
+          extension: string | null
+          external_call_id: string | null
+          from_number: string | null
+          id: string
+          metadata: Json
+          notes: string | null
+          recording_url: string | null
+          started_at: string
+          status: string
+          to_number: string | null
+          updated_at: string
+          voicemail_url: string | null
+        }
+        Insert: {
+          agent_user_id?: string | null
+          answered_at?: string | null
+          contact_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          direction: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          extension?: string | null
+          external_call_id?: string | null
+          from_number?: string | null
+          id?: string
+          metadata?: Json
+          notes?: string | null
+          recording_url?: string | null
+          started_at?: string
+          status?: string
+          to_number?: string | null
+          updated_at?: string
+          voicemail_url?: string | null
+        }
+        Update: {
+          agent_user_id?: string | null
+          answered_at?: string | null
+          contact_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          direction?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          extension?: string | null
+          external_call_id?: string | null
+          from_number?: string | null
+          id?: string
+          metadata?: Json
+          notes?: string | null
+          recording_url?: string | null
+          started_at?: string
+          status?: string
+          to_number?: string | null
+          updated_at?: string
+          voicemail_url?: string | null
+        }
+        Relationships: []
+      }
       ac_campaign_recipients: {
         Row: {
           address: string
@@ -808,6 +877,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ac_pbx_settings: {
+        Row: {
+          api_token: string | null
+          created_at: string
+          enabled: boolean
+          extension: string | null
+          id: string
+          pbx_url: string | null
+          updated_at: string
+          user_id: string | null
+          webhook_secret: string | null
+        }
+        Insert: {
+          api_token?: string | null
+          created_at?: string
+          enabled?: boolean
+          extension?: string | null
+          id?: string
+          pbx_url?: string | null
+          updated_at?: string
+          user_id?: string | null
+          webhook_secret?: string | null
+        }
+        Update: {
+          api_token?: string | null
+          created_at?: string
+          enabled?: boolean
+          extension?: string | null
+          id?: string
+          pbx_url?: string | null
+          updated_at?: string
+          user_id?: string | null
+          webhook_secret?: string | null
+        }
+        Relationships: []
       }
       ac_user_presence: {
         Row: {
