@@ -236,6 +236,8 @@ const AlixCopilotConfig = lazy(() => import("./pages/Operation/AlixCopilotConfig
 const KundenportalKonfiguration = lazy(() => import("./pages/Operation/KundenportalKonfiguration"));
 const Datensicherung = lazy(() => import("./pages/operation/Datensicherung"));
 const FortKnox = lazy(() => import("./pages/operation/FortKnox"));
+const AuftragsImport = lazy(() => import("./pages/operation/AuftragsImport"));
+const AuftragsAbgleich = lazy(() => import("./pages/operation/AuftragsAbgleich"));
 const Mandanten = lazy(() => import("./pages/Mandanten"));
 const TicketDepartments = lazy(() => import("./pages/Operation/TicketDepartments"));
 const AppointmentAction = lazy(() => import("./pages/PublicAppointment/AppointmentAction"));
