@@ -176,26 +176,69 @@ export default function AlixConnectTelephony() {
           <div className="divide-y">
             {filtered.length === 0 && <div className="p-6 text-sm text-muted-foreground text-center">Keine Anrufe.</div>}
             {filtered.map((c) => (
-              <div key={c.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30">
-                {iconFor(c)}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
-                    {c.direction === "inbound" ? (c.from_number ?? "Unbekannt") : (c.to_number ?? "—")}
+              <details key={c.id} className="group">
+                <summary className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 cursor-pointer list-none">
+                  {iconFor(c)}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {c.direction === "inbound" ? (c.from_number ?? "Unbekannt") : (c.to_number ?? "—")}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(c.started_at), { addSuffix: true, locale: de })} · {fmtDur(c.duration_seconds)}
+                      {c.extension ? ` · Nst. ${c.extension}` : ""}
+                      {c.voicemail_transcript_status === "processing" && " · Transkription läuft…"}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(c.started_at), { addSuffix: true, locale: de })} · {fmtDur(c.duration_seconds)}
-                    {c.extension ? ` · Nst. ${c.extension}` : ""}
+                  <Badge variant="secondary" className="text-[10px]">{c.status}</Badge>
+                  {c.ticket_id && <Badge variant="outline" className="text-[10px]">Ticket</Badge>}
+                  {c.status === "ringing" && (
+                    <Button variant="ghost" size="sm" onClick={async (e) => { e.preventDefault(); await supabase.from("ac_calls").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", c.id); }}>
+                      <PhoneOff className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </summary>
+                <div className="px-6 pb-4 pt-2 space-y-3 bg-muted/10 border-t">
+                  {c.recording_url && (
+                    <div>
+                      <Label className="text-xs">Gesprächsaufnahme</Label>
+                      <audio controls src={c.recording_url} className="w-full mt-1" />
+                    </div>
+                  )}
+                  {c.voicemail_url && (
+                    <div>
+                      <Label className="text-xs">Voicemail</Label>
+                      <audio controls src={c.voicemail_url} className="w-full mt-1" />
+                      {c.voicemail_transcript ? (
+                        <div className="mt-2 p-2 bg-background rounded text-sm border">{c.voicemail_transcript}</div>
+                      ) : (
+                        <Button variant="outline" size="sm" className="mt-2" onClick={async () => {
+                          toast.info("Transkription gestartet…");
+                          const { error } = await supabase.functions.invoke("ac-voicemail-transcribe", { body: { call_id: c.id } });
+                          if (error) toast.error("Transkription fehlgeschlagen"); else toast.success("Transkript verfügbar");
+                        }}>✨ KI-Transkription</Button>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex gap-2 items-end">
+                    <div className="flex-1">
+                      <Label className="text-xs">Notiz</Label>
+                      <Input defaultValue={c.notes ?? ""} onBlur={async (e) => {
+                        if (e.target.value !== (c.notes ?? "")) await supabase.from("ac_calls").update({ notes: e.target.value }).eq("id", c.id);
+                      }} />
+                    </div>
+                    <Button variant="outline" size="sm" onClick={async () => {
+                      const { data, error } = await supabase.from("tickets").insert({
+                        subject: `Anruf ${c.direction === "inbound" ? "von" : "an"} ${c.from_number ?? c.to_number ?? "unbekannt"}`,
+                        description: c.voicemail_transcript ?? c.notes ?? `Anruf am ${new Date(c.started_at).toLocaleString("de-DE")}`,
+                        status: "open", priority: "normal", channel: "phone",
+                      }).select().single();
+                      if (error || !data) { toast.error("Ticket konnte nicht erstellt werden"); return; }
+                      await supabase.from("ac_calls").update({ ticket_id: (data as any).id }).eq("id", c.id);
+                      toast.success("Ticket erstellt");
+                    }} disabled={!!c.ticket_id}>→ Ticket erstellen</Button>
                   </div>
                 </div>
-                <Badge variant="secondary" className="text-[10px]">{c.status}</Badge>
-                {c.recording_url && <a href={c.recording_url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">Aufnahme</a>}
-                {c.voicemail_url && <a href={c.voicemail_url} target="_blank" rel="noreferrer" className="text-xs text-amber-500 hover:underline">Voicemail</a>}
-                {c.status === "ringing" && (
-                  <Button variant="ghost" size="sm" onClick={async () => { await supabase.from("ac_calls").update({ status: "ended", ended_at: new Date().toISOString() }).eq("id", c.id); }}>
-                    <PhoneOff className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
+              </details>
             ))}
           </div>
         </CardContent>
