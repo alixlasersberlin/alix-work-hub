@@ -81,6 +81,9 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/predictive-engagement", label: "Predictive Engagement", icon: Brain },
       { to: "/connect/knowledge-rag", label: "Knowledge & RAG 2.0", icon: BookOpen },
       { to: "/connect/translation-hub", label: "Translation Hub", icon: Languages },
+      { to: "/connect/sentiment-emotion", label: "Sentiment & Emotion 2.0", icon: HeartPulse },
+      { to: "/connect/workflow-studio", label: "Workflow Studio", icon: Workflow },
+      { to: "/connect/compliance-governance", label: "Compliance Cockpit", icon: Shield },
       { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
       { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
@@ -114,7 +117,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 35 · Predictive Engagement · Knowledge & RAG 2.0 · Translation Hub
+            Phase 36 · Sentiment & Emotion 2.0 · Workflow Studio · Compliance Cockpit
           </span>
         </div>
         <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">

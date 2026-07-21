@@ -311,3 +311,12 @@ verify_jwt = false
 
 [functions.ac-translate-live]
 verify_jwt = false
+
+[functions.ac-sentiment-emotion]
+verify_jwt = false
+
+[functions.ac-workflow-studio]
+verify_jwt = false
+
+[functions.ac-compliance-governance]
+verify_jwt = false
