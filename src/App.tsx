@@ -328,6 +328,7 @@ const AlixConnectRouting = lazy(() => import("./pages/AlixConnect/Routing"));
 const AlixConnectCopilot = lazy(() => import("./pages/AlixConnect/Copilot"));
 const AlixConnectQualityMgmt = lazy(() => import("./pages/AlixConnect/QualityMgmt"));
 const AlixConnectRoutingSimulator = lazy(() => import("./pages/AlixConnect/RoutingSimulator"));
+const AlixConnectRoutingLive = lazy(() => import("./pages/AlixConnect/RoutingLive"));
 const AlixConnectQmCalibration = lazy(() => import("./pages/AlixConnect/QmCalibration"));
 const AlixConnectQmCoaching = lazy(() => import("./pages/AlixConnect/QmCoaching"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
