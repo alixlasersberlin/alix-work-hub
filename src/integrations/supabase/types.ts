@@ -1140,6 +1140,42 @@ export type Database = {
           },
         ]
       }
+      ac_journey_segments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          criteria: Json
+          description: string | null
+          id: string
+          last_computed_at: string | null
+          member_count: number
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          criteria?: Json
+          description?: string | null
+          id?: string
+          last_computed_at?: string | null
+          member_count?: number
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          criteria?: Json
+          description?: string | null
+          id?: string
+          last_computed_at?: string | null
+          member_count?: number
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ac_journey_steps: {
         Row: {
           config: Json
@@ -1225,7 +1261,11 @@ export type Database = {
           id: string
           language: string
           public_visible: boolean
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           status: string
+          submitted_for_review_at: string | null
           tags: string[] | null
           title: string
           updated_at: string
@@ -1242,7 +1282,11 @@ export type Database = {
           id?: string
           language?: string
           public_visible?: boolean
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           status?: string
+          submitted_for_review_at?: string | null
           tags?: string[] | null
           title: string
           updated_at?: string
@@ -1259,7 +1303,11 @@ export type Database = {
           id?: string
           language?: string
           public_visible?: boolean
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           status?: string
+          submitted_for_review_at?: string | null
           tags?: string[] | null
           title?: string
           updated_at?: string
@@ -1779,10 +1827,13 @@ export type Database = {
           created_at: string
           customer_id: string | null
           handoff_channel: string | null
+          handoff_completed_at: string | null
           handoff_requested: boolean
+          handoff_status: string | null
           id: string
           messages: Json
           session_token: string
+          ticket_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1792,10 +1843,13 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           handoff_channel?: string | null
+          handoff_completed_at?: string | null
           handoff_requested?: boolean
+          handoff_status?: string | null
           id?: string
           messages?: Json
           session_token: string
+          ticket_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1805,10 +1859,13 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           handoff_channel?: string | null
+          handoff_completed_at?: string | null
           handoff_requested?: boolean
+          handoff_status?: string | null
           id?: string
           messages?: Json
           session_token?: string
+          ticket_id?: string | null
           updated_at?: string
         }
         Relationships: []
