@@ -11,6 +11,7 @@ import { Mail, MessageCircle, Phone, Send, Globe as GlobeIcon, MessageSquare, Wi
 import { enqueue as enqueueOutbox, flush as flushOutbox, remove as removeOutbox, retryNow as retryOutbox } from "@/lib/connect/offline-outbox";
 import { useAcOutbox } from "@/hooks/useAcOutbox";
 import { VoiceDictateButton } from "@/components/connect/VoiceDictateButton";
+import { useCopilotAutoSuggest } from "@/hooks/useCopilotAutoSuggest";
 
 type Conversation = {
   id: string;
