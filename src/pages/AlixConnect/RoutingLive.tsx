@@ -57,7 +57,7 @@ export default function RoutingLive() {
   const online = Object.values(presence).filter((s) => s === "online").length;
   const busy = Object.values(presence).filter((s) => s === "busy").length;
   const unassigned = convs.filter((c) => !c.assigned_to).length;
-  const avgWait = decisions.length ? Math.round(decisions.reduce((a, d) => a + (d.wait_ms ?? 0), 0) / decisions.length) : 0;
+  const avgScore = decisions.length ? (decisions.reduce((a, d) => a + (d.score ?? 0), 0) / decisions.length).toFixed(2) : "0";
 
   return (
     <div className="p-6 space-y-4 overflow-auto h-full">
