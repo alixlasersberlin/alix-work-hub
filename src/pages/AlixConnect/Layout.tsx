@@ -87,6 +87,10 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/inbox-2", label: "Inbox 2.0", icon: Inbox },
       { to: "/connect/knowledge-hub", label: "Knowledge Hub", icon: BookOpen },
       { to: "/connect/partner-portal", label: "Partner Portal", icon: Handshake },
+      { to: "/connect/voice-agent-studio", label: "Voice Agent Studio", icon: Mic },
+      { to: "/connect/customer-success", label: "Customer Success", icon: HeartPulse },
+      { to: "/connect/advanced-bi", label: "Advanced BI", icon: BarChart3 },
+      { to: "/connect/field-dispatch", label: "Field Dispatch 2.0", icon: RouteIcon },
       { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
       { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
@@ -95,6 +99,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
     label: "Integrationen",
     items: [
       { to: "/connect/marketplace", label: "Marketplace / API", icon: Webhook },
+      { to: "/connect/marketplace-2", label: "Marketplace 2.0", icon: Webhook },
       { to: "/connect/automation", label: "Automation", icon: Zap },
       { to: "/connect/reporting", label: "Reporting", icon: FileBarChart },
       { to: "/connect/admin", label: "Admin", icon: Shield },
@@ -120,7 +125,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 37 · Inbox 2.0 · Knowledge Hub · Partner Portal
+            Phase 42 · Marketplace 2.0 · Field Dispatch · Voice Studio · Customer Success · BI
           </span>
         </div>
         <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">

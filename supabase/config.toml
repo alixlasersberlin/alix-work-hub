@@ -329,3 +329,18 @@ verify_jwt = false
 
 [functions.ac-partner-portal]
 verify_jwt = false
+
+[functions.ac-marketplace]
+verify_jwt = false
+
+[functions.ac-field-dispatch]
+verify_jwt = false
+
+[functions.ac-voice-agent-studio]
+verify_jwt = false
+
+[functions.ac-customer-success]
+verify_jwt = false
+
+[functions.ac-advanced-bi]
+verify_jwt = false
