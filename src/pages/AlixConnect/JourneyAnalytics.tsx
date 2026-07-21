@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { GitBranch, TrendingDown, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { GitBranch, TrendingDown, Users, Layers, Plus, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 type Funnel = { stage: string; count: number };
 
