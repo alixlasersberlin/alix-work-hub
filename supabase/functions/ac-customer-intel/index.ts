@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
 
     const [{ data: contact }, { data: msgs }, { data: calls }] = await Promise.all([
       sb.from('ac_contacts').select('*').eq('id', contact_id).single(),
-      sb.from('ac_messages').select('sender_type, created_at, body').eq('contact_id', contact_id).order('created_at', { ascending: false }).limit(50),
+      sb.from('ac_messages').select('direction, created_at, body').eq('contact_id', contact_id).order('created_at', { ascending: false }).limit(50),
       sb.from('ac_calls').select('direction, sentiment, sentiment_score, duration_sec, created_at').eq('contact_id', contact_id).order('created_at', { ascending: false }).limit(30),
     ]);
     if (!contact) throw new Error('contact not found');
