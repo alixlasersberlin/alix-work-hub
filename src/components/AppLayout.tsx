@@ -35,7 +35,7 @@ import alixLogo from '@/assets/alix-logo-gold.png';
 
 
 
-const APP_VERSION = '5.06';
+const APP_VERSION = '5.07';
 
 type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 type NavItem = NavChild & { children?: NavChild[] };
