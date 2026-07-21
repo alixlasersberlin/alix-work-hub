@@ -73,7 +73,7 @@ export default function ComplianceGovernance() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
               {Object.entries(audit.metrics || {}).map(([k, v]) => (
                 <div key={k} className="rounded border p-3">
-                  <div className="text-xs text-muted-foreground uppercase">{k.replaceAll("_", " ")}</div>
+                  <div className="text-xs text-muted-foreground uppercase">{k.replace(/_/g, " ")}</div>
                   <div className="text-2xl font-semibold mt-1">{String(v)}</div>
                 </div>
               ))}
