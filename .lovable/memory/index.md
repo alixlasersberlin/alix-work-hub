@@ -58,3 +58,4 @@
 - [ALIX CONNECT Phase 32](mem://features/alix-connect-phase32) — Conversational Intel 2.0, Journey AI-Optimizer, Unified Agent Workspace (/connect/conv-intel, /connect/journey-optimizer, /connect/workspace)
 - [ALIX CONNECT Phase 33](mem://features/alix-connect-phase33) — Agent Assist Live 2.0, Customer Intelligence Hub, Autonomous Service Agents (/connect/agent-assist-live, /connect/customer-intelligence, /connect/autonomous-agents)
 - [ALIX CONNECT Phase 34](mem://features/alix-connect-phase34) — Omnichannel Orchestrator, Voice AI Studio, Revenue Intelligence 2.0
+- [Alix Connect Phase 36](mem://features/alix-connect-phase36) — Sentiment & Emotion 2.0, Workflow Studio, Compliance Cockpit
