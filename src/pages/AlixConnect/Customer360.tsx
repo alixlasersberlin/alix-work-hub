@@ -32,7 +32,7 @@ export default function Customer360() {
   async function open(c: Contact) {
     setSelected(c); setScore(null); setTimeline([]);
     const [msgs, calls, mails, tickets, sc] = await Promise.all([
-      supabase.from("ac_messages").select("id,body,channel,created_at,direction").eq("contact_id", c.id).order("created_at", { ascending: false }).limit(50),
+      supabase.from("ac_messages").select("id,body,channel_id,created_at,direction").eq("sender_contact_id", c.id).order("created_at", { ascending: false }).limit(50),
       supabase.from("ac_calls" as any).select("id,direction,duration_seconds,started_at,status").eq("contact_id", c.id).order("started_at", { ascending: false }).limit(50),
       supabase.from("mail_messages" as any).select("id,subject,received_at,from_address").eq("ac_contact_id", c.id).order("received_at", { ascending: false }).limit(50),
       supabase.from("tickets" as any).select("id,subject,created_at,status").eq("customer_email", c.email ?? "___").order("created_at", { ascending: false }).limit(20),
