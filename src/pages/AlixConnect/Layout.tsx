@@ -3,6 +3,7 @@ import {
   MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone,
   LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall, Activity, PhoneForwarded,
   Mail, Ban, Webhook, FileText, Layers, Workflow, Mic, Video, Route as RouteIcon, Bot, FlaskConical, Scale, GraduationCap,
+  CalendarClock, BookOpen, GitBranch, LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,9 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/meetings", label: "Meetings", icon: Video },
       { to: "/connect/surveys", label: "Surveys", icon: ClipboardCheck },
       { to: "/connect/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/connect/journey", label: "Journey Analytics", icon: GitBranch },
+      { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
+      { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
   },
   {

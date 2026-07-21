@@ -1214,6 +1214,60 @@ export type Database = {
         }
         Relationships: []
       }
+      ac_kb_articles: {
+        Row: {
+          author_id: string | null
+          category: string | null
+          content: string
+          created_at: string
+          embedding: string | null
+          helpful_count: number
+          id: string
+          language: string
+          public_visible: boolean
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          version: number
+          view_count: number
+        }
+        Insert: {
+          author_id?: string | null
+          category?: string | null
+          content: string
+          created_at?: string
+          embedding?: string | null
+          helpful_count?: number
+          id?: string
+          language?: string
+          public_visible?: boolean
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          version?: number
+          view_count?: number
+        }
+        Update: {
+          author_id?: string | null
+          category?: string | null
+          content?: string
+          created_at?: string
+          embedding?: string | null
+          helpful_count?: number
+          id?: string
+          language?: string
+          public_visible?: boolean
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          version?: number
+          view_count?: number
+        }
+        Relationships: []
+      }
       ac_meeting_notes: {
         Row: {
           author_user_id: string | null
@@ -1714,6 +1768,48 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           webhook_secret?: string | null
+        }
+        Relationships: []
+      }
+      ac_portal_chat_sessions: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          conversation_id: string | null
+          created_at: string
+          customer_id: string | null
+          handoff_channel: string | null
+          handoff_requested: boolean
+          id: string
+          messages: Json
+          session_token: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          handoff_channel?: string | null
+          handoff_requested?: boolean
+          id?: string
+          messages?: Json
+          session_token: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          handoff_channel?: string | null
+          handoff_requested?: boolean
+          id?: string
+          messages?: Json
+          session_token?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2641,6 +2737,122 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ac_wfm_adherence: {
+        Row: {
+          agent_id: string
+          duration_sec: number | null
+          event_at: string
+          event_type: string
+          id: string
+          meta: Json | null
+          shift_id: string | null
+        }
+        Insert: {
+          agent_id: string
+          duration_sec?: number | null
+          event_at?: string
+          event_type: string
+          id?: string
+          meta?: Json | null
+          shift_id?: string | null
+        }
+        Update: {
+          agent_id?: string
+          duration_sec?: number | null
+          event_at?: string
+          event_type?: string
+          id?: string
+          meta?: Json | null
+          shift_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_wfm_adherence_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "ac_wfm_shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_wfm_forecasts: {
+        Row: {
+          actual_aht_sec: number | null
+          actual_volume: number | null
+          channel: string
+          created_at: string
+          forecast_date: string
+          id: string
+          interval_start: string
+          predicted_aht_sec: number
+          predicted_volume: number
+          required_agents: number
+        }
+        Insert: {
+          actual_aht_sec?: number | null
+          actual_volume?: number | null
+          channel: string
+          created_at?: string
+          forecast_date: string
+          id?: string
+          interval_start: string
+          predicted_aht_sec?: number
+          predicted_volume?: number
+          required_agents?: number
+        }
+        Update: {
+          actual_aht_sec?: number | null
+          actual_volume?: number | null
+          channel?: string
+          created_at?: string
+          forecast_date?: string
+          id?: string
+          interval_start?: string
+          predicted_aht_sec?: number
+          predicted_volume?: number
+          required_agents?: number
+        }
+        Relationships: []
+      }
+      ac_wfm_shifts: {
+        Row: {
+          agent_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          shift_end: string
+          shift_start: string
+          shift_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          shift_end: string
+          shift_start: string
+          shift_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          shift_end?: string
+          shift_start?: string
+          shift_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       academy_bookings: {
         Row: {
@@ -28498,6 +28710,27 @@ export type Database = {
       ac_is_channel_member: {
         Args: { _channel: string; _user: string }
         Returns: boolean
+      }
+      ac_journey_funnel: {
+        Args: { days_back?: number }
+        Returns: {
+          count: number
+          stage: string
+        }[]
+      }
+      ac_kb_search: {
+        Args: {
+          match_count?: number
+          only_public?: boolean
+          query_embedding: string
+        }
+        Returns: {
+          category: string
+          content: string
+          id: string
+          similarity: number
+          title: string
+        }[]
       }
       ac_web_breakdown: {
         Args: { _dim: string; _from: string; _to: string; _website_id: string }

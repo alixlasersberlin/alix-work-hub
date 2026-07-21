@@ -329,6 +329,10 @@ const AlixConnectCopilot = lazy(() => import("./pages/AlixConnect/Copilot"));
 const AlixConnectQualityMgmt = lazy(() => import("./pages/AlixConnect/QualityMgmt"));
 const AlixConnectRoutingSimulator = lazy(() => import("./pages/AlixConnect/RoutingSimulator"));
 const AlixConnectRoutingLive = lazy(() => import("./pages/AlixConnect/RoutingLive"));
+const AlixConnectWfm = lazy(() => import("./pages/AlixConnect/Wfm"));
+const AlixConnectKnowledgeBase = lazy(() => import("./pages/AlixConnect/KnowledgeBase"));
+const AlixConnectJourneyAnalytics = lazy(() => import("./pages/AlixConnect/JourneyAnalytics"));
+const SelfServicePortal = lazy(() => import("./pages/Public/SelfServicePortal"));
 const AlixConnectQmCalibration = lazy(() => import("./pages/AlixConnect/QmCalibration"));
 const AlixConnectQmCoaching = lazy(() => import("./pages/AlixConnect/QmCoaching"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
@@ -1240,6 +1244,9 @@ function AppRoutes() {
 
             <Route path="qm-kalibrierung" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM']}><AlixConnectQmCalibration /></ProtectedRoute>} />
             <Route path="qm-coaching" element={<ProtectedRoute><AlixConnectQmCoaching /></ProtectedRoute>} />
+            <Route path="wfm" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM']}><AlixConnectWfm /></ProtectedRoute>} />
+            <Route path="knowledge" element={<ProtectedRoute><AlixConnectKnowledgeBase /></ProtectedRoute>} />
+            <Route path="journey" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectJourneyAnalytics /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
@@ -1520,6 +1527,7 @@ function AppRoutes() {
         <Route path="/bewertung/danke" element={<ReviewThanks />} />
         <Route path="/bewertung/:token" element={<PublicReviewForm />} />
         <Route path="/csat/:token" element={<TicketCsat />} />
+        <Route path="/help" element={<SelfServicePortal />} />
         <Route path="/portal" element={<PortalLookup />} />
         <Route path="/portal/status" element={<PortalStatus />} />
         <Route path="/sign/:token" element={<AlixSignPublic />} />
