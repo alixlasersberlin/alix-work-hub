@@ -285,6 +285,127 @@ export type Database = {
           },
         ]
       }
+      ac_bot_flows: {
+        Row: {
+          channels: string[]
+          created_at: string
+          description: string | null
+          enabled: boolean
+          handoff_rules: Json
+          id: string
+          name: string
+          steps: Json
+          trigger_intent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          channels?: string[]
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          handoff_rules?: Json
+          id?: string
+          name: string
+          steps?: Json
+          trigger_intent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          channels?: string[]
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          handoff_rules?: Json
+          id?: string
+          name?: string
+          steps?: Json
+          trigger_intent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_bot_flows_trigger_intent_id_fkey"
+            columns: ["trigger_intent_id"]
+            isOneToOne: false
+            referencedRelation: "ac_bot_intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_bot_intents: {
+        Row: {
+          channels: string[]
+          created_at: string
+          description: string | null
+          enabled: boolean
+          handoff_to_human: boolean
+          id: string
+          name: string
+          response_template: string | null
+          training_phrases: Json
+          updated_at: string
+        }
+        Insert: {
+          channels?: string[]
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          handoff_to_human?: boolean
+          id?: string
+          name: string
+          response_template?: string | null
+          training_phrases?: Json
+          updated_at?: string
+        }
+        Update: {
+          channels?: string[]
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          handoff_to_human?: boolean
+          id?: string
+          name?: string
+          response_template?: string | null
+          training_phrases?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ac_bot_training_log: {
+        Row: {
+          correct_response: string | null
+          created_at: string
+          id: string
+          intent_id: string | null
+          trained_by: string | null
+          utterance: string
+        }
+        Insert: {
+          correct_response?: string | null
+          created_at?: string
+          id?: string
+          intent_id?: string | null
+          trained_by?: string | null
+          utterance: string
+        }
+        Update: {
+          correct_response?: string | null
+          created_at?: string
+          id?: string
+          intent_id?: string | null
+          trained_by?: string | null
+          utterance?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_bot_training_log_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "ac_bot_intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ac_calls: {
         Row: {
           action_items: Json | null
@@ -999,6 +1120,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ac_customer_health: {
+        Row: {
+          computed_at: string
+          created_at: string
+          customer_id: string
+          factors: Json
+          id: string
+          lifecycle_stage: string
+          payment_score: number | null
+          score: number
+          sentiment_score: number | null
+          support_score: number | null
+          usage_score: number | null
+        }
+        Insert: {
+          computed_at?: string
+          created_at?: string
+          customer_id: string
+          factors?: Json
+          id?: string
+          lifecycle_stage?: string
+          payment_score?: number | null
+          score: number
+          sentiment_score?: number | null
+          support_score?: number | null
+          usage_score?: number | null
+        }
+        Update: {
+          computed_at?: string
+          created_at?: string
+          customer_id?: string
+          factors?: Json
+          id?: string
+          lifecycle_stage?: string
+          payment_score?: number | null
+          score?: number
+          sentiment_score?: number | null
+          support_score?: number | null
+          usage_score?: number | null
+        }
+        Relationships: []
+      }
       ac_customer_scores: {
         Row: {
           churn_score: number
@@ -1379,6 +1542,80 @@ export type Database = {
           visible_segment_ids?: string[] | null
         }
         Relationships: []
+      }
+      ac_lifecycle_playbooks: {
+        Row: {
+          actions: Json
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          name: string
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name: string
+          stage: string
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          name?: string
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ac_lifecycle_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          playbook_id: string | null
+          result: Json | null
+          stage: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          playbook_id?: string | null
+          result?: Json | null
+          stage: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          playbook_id?: string | null
+          result?: Json | null
+          stage?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_lifecycle_runs_playbook_id_fkey"
+            columns: ["playbook_id"]
+            isOneToOne: false
+            referencedRelation: "ac_lifecycle_playbooks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ac_meeting_notes: {
         Row: {
@@ -2671,6 +2908,107 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ac_voice_compliance_rules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          forbidden_phrases: string[]
+          id: string
+          language: string
+          name: string
+          required_phrases: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          forbidden_phrases?: string[]
+          id?: string
+          language?: string
+          name: string
+          required_phrases?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          forbidden_phrases?: string[]
+          id?: string
+          language?: string
+          name?: string
+          required_phrases?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ac_voice_insights: {
+        Row: {
+          agent_user_id: string | null
+          call_id: string
+          compliance_phrases_found: string[]
+          compliance_phrases_missing: string[]
+          created_at: string
+          duration_seconds: number | null
+          emotion_agent: string | null
+          emotion_customer: string | null
+          id: string
+          keywords: string[]
+          language: string | null
+          raw_payload: Json | null
+          silence_ratio: number | null
+          speaker_turns: number | null
+          talk_ratio_agent: number | null
+          talk_ratio_customer: number | null
+          topics: string[]
+        }
+        Insert: {
+          agent_user_id?: string | null
+          call_id: string
+          compliance_phrases_found?: string[]
+          compliance_phrases_missing?: string[]
+          created_at?: string
+          duration_seconds?: number | null
+          emotion_agent?: string | null
+          emotion_customer?: string | null
+          id?: string
+          keywords?: string[]
+          language?: string | null
+          raw_payload?: Json | null
+          silence_ratio?: number | null
+          speaker_turns?: number | null
+          talk_ratio_agent?: number | null
+          talk_ratio_customer?: number | null
+          topics?: string[]
+        }
+        Update: {
+          agent_user_id?: string | null
+          call_id?: string
+          compliance_phrases_found?: string[]
+          compliance_phrases_missing?: string[]
+          created_at?: string
+          duration_seconds?: number | null
+          emotion_agent?: string | null
+          emotion_customer?: string | null
+          id?: string
+          keywords?: string[]
+          language?: string | null
+          raw_payload?: Json | null
+          silence_ratio?: number | null
+          speaker_turns?: number | null
+          talk_ratio_agent?: number | null
+          talk_ratio_customer?: number | null
+          topics?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_voice_insights_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "ac_calls"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ac_web_alerts: {
         Row: {
