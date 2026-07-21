@@ -312,17 +312,12 @@ export default function InboxPage() {
                   KI-Entwurf
                 </Button>
               </div>
-              <div className="flex gap-2">
-                <Textarea value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Antwort verfassen, diktieren oder KI-Entwurf nutzen…" className="min-h-[60px]" />
-                <div className="flex flex-col gap-2">
-                  <VoiceDictateButton
-                    onTranscript={(t) => setReply((cur) => (cur ? `${cur.trim()} ${t}` : t))}
-                  />
-                  <Button onClick={sendReply} disabled={!reply.trim()} size="icon" className="h-9 w-9">
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
+              <InboxComposer
+                reply={reply}
+                setReply={setReply}
+                onSend={sendReply}
+                activeId={activeId}
+              />
             </div>
           </>
         ) : (
