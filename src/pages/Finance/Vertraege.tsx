@@ -97,10 +97,28 @@ export default function FinanceVertraege() {
                   <td className="px-4 py-2 text-right">{fmt(r.monthly_rate)}</td>
                   <td className="px-4 py-2 text-right">{fmt(r.remaining_amount)}</td>
                   <td className="px-4 py-2 text-right">
-                    {r.signature_status === 'signed' && (
+                    {r.signature_status === 'signed' ? (
                       <Button size="sm" variant="ghost" onClick={() => setSigContract(r)}>
                         <FileSignature className="w-3.5 h-3.5 mr-1" /> Details
                       </Button>
+                    ) : (
+                      <div className="flex items-center gap-2 justify-end">
+                        {typeof r.signature_reminder_count === 'number' && r.signature_reminder_count > 0 && (
+                          <span className="text-[11px] text-muted-foreground">{r.signature_reminder_count}/{r.signature_reminder_max ?? 3}</span>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={remindingId === r.id || (r.signature_reminder_count ?? 0) >= (r.signature_reminder_max ?? 3)}
+                          onClick={() => sendReminder(r)}
+                          title="Kunde per E-Mail erinnern"
+                        >
+                          {remindingId === r.id
+                            ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                            : <BellRing className="w-3.5 h-3.5 mr-1" />}
+                          Erinnern
+                        </Button>
+                      </div>
                     )}
                   </td>
                 </tr>
