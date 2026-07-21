@@ -358,6 +358,9 @@ const AlixConnectAutonomousAgents = lazy(() => import("./pages/AlixConnect/Auton
 const AlixConnectOmnichannelOrchestrator = lazy(() => import("./pages/AlixConnect/OmnichannelOrchestrator"));
 const AlixConnectVoiceAiStudio = lazy(() => import("./pages/AlixConnect/VoiceAiStudio"));
 const AlixConnectRevenueIntelV2 = lazy(() => import("./pages/AlixConnect/RevenueIntelligenceV2"));
+const AlixConnectPredictiveEngagement = lazy(() => import("./pages/AlixConnect/PredictiveEngagement"));
+const AlixConnectKnowledgeRag = lazy(() => import("./pages/AlixConnect/KnowledgeRag"));
+const AlixConnectTranslationHub = lazy(() => import("./pages/AlixConnect/TranslationHub"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1293,6 +1296,9 @@ function AppRoutes() {
             <Route path="omnichannel-orchestrator" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectOmnichannelOrchestrator /></ProtectedRoute>} />
             <Route path="voice-ai-studio" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectVoiceAiStudio /></ProtectedRoute>} />
             <Route path="revenue-intel-v2" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRevenueIntelV2 /></ProtectedRoute>} />
+            <Route path="predictive-engagement" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectPredictiveEngagement /></ProtectedRoute>} />
+            <Route path="knowledge-rag" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectKnowledgeRag /></ProtectedRoute>} />
+            <Route path="translation-hub" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectTranslationHub /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
