@@ -28768,6 +28768,25 @@ export type Database = {
         Args: { _channel: string; _user: string }
         Returns: boolean
       }
+      ac_journey_attribution: {
+        Args: { days_back?: number }
+        Returns: {
+          first_touch: number
+          last_touch: number
+          linear_touch: number
+          source: string
+        }[]
+      }
+      ac_journey_cohorts: {
+        Args: { weeks?: number }
+        Returns: {
+          cohort_size: number
+          cohort_week: string
+          retained_visitors: number
+          retention_pct: number
+          week_offset: number
+        }[]
+      }
       ac_journey_funnel: {
         Args: { days_back?: number }
         Returns: {
@@ -28787,6 +28806,16 @@ export type Database = {
           id: string
           similarity: number
           title: string
+        }[]
+      }
+      ac_portal_deflection: {
+        Args: { days_back?: number }
+        Returns: {
+          avg_messages: number
+          deflected_sessions: number
+          deflection_pct: number
+          handoff_sessions: number
+          total_sessions: number
         }[]
       }
       ac_web_breakdown: {
@@ -28917,6 +28946,25 @@ export type Database = {
           page_url: string
           uniques: number
           views: number
+        }[]
+      }
+      ac_wfm_adherence_live: {
+        Args: never
+        Returns: {
+          actual_minutes: number
+          adherence_pct: number
+          agent_id: string
+          agent_name: string
+          scheduled_minutes: number
+        }[]
+      }
+      ac_wfm_auto_forecast: {
+        Args: { horizon_hours?: number }
+        Returns: {
+          channel: string
+          interval_start: string
+          predicted_volume: number
+          required_agents: number
         }[]
       }
       activate_break_glass: {

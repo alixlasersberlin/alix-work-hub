@@ -13,20 +13,29 @@ export default function AlixConnectJourneyAnalytics() {
   const [funnel, setFunnel] = useState<Funnel[]>([]);
   const [convos, setConvos] = useState<any[]>([]);
   const [segments, setSegments] = useState<any[]>([]);
+  const [attribution, setAttribution] = useState<any[]>([]);
+  const [cohorts, setCohorts] = useState<any[]>([]);
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
   const [newSeg, setNewSeg] = useState({ name: '', description: '', minTouchpoints: 3 });
+  const [deflection, setDeflection] = useState<any>(null);
 
   const load = async () => {
     setLoading(true);
-    const [f, c, s] = await Promise.all([
+    const [f, c, s, at, co, dfl] = await Promise.all([
       supabase.rpc('ac_journey_funnel', { days_back: days }),
-      supabase.from('ac_conversations').select('id, channel, status, created_at, closed_at, sentiment').order('created_at', { ascending: false }).limit(500),
+      supabase.from('ac_conversations').select('id, channel_type, status, created_at, closed_at, ai_sentiment').order('created_at', { ascending: false }).limit(500),
       supabase.from('ac_journey_segments').select('*').order('updated_at', { ascending: false }),
+      supabase.rpc('ac_journey_attribution', { days_back: days }),
+      supabase.rpc('ac_journey_cohorts', { weeks: 8 }),
+      supabase.rpc('ac_portal_deflection', { days_back: days }),
     ]);
     setFunnel(((f.data as any) ?? []).map((r: any) => ({ stage: r.stage, count: Number(r.count) })));
     setConvos((c.data as any) ?? []);
     setSegments((s.data as any) ?? []);
+    setAttribution((at.data as any) ?? []);
+    setCohorts((co.data as any) ?? []);
+    setDeflection(((dfl.data as any) ?? [])[0] ?? null);
     setLoading(false);
   };
   useEffect(() => { load(); }, [days]);
@@ -49,11 +58,12 @@ export default function AlixConnectJourneyAnalytics() {
   };
 
   const max = Math.max(1, ...funnel.map(f => f.count));
-  const byChannel = convos.reduce((acc: any, c: any) => { acc[c.channel ?? 'unknown'] = (acc[c.channel ?? 'unknown'] ?? 0) + 1; return acc; }, {});
+  const byChannel = convos.reduce((acc: any, c: any) => { acc[c.channel_type ?? 'unknown'] = (acc[c.channel_type ?? 'unknown'] ?? 0) + 1; return acc; }, {});
   const closed = convos.filter(c => c.closed_at).length;
   const closeRate = convos.length ? Math.round((closed / convos.length) * 100) : 0;
-  const negSent = convos.filter(c => c.sentiment && c.sentiment < 0).length;
+  const negSent = convos.filter(c => c.ai_sentiment === 'negative').length;
   const churnRisk = convos.length ? Math.round((negSent / convos.length) * 100) : 0;
+  const maxAttr = Math.max(1, ...attribution.map((a: any) => Number(a.last_touch) || 0));
 
   return (
     <div className="h-full overflow-auto p-6 space-y-4">
@@ -73,6 +83,19 @@ export default function AlixConnectJourneyAnalytics() {
         <Card className="p-4"><div className="text-xs text-muted-foreground flex items-center gap-1"><TrendingDown className="h-3 w-3" />Churn-Risiko (neg. Sentiment)</div><div className="text-2xl font-semibold">{churnRisk}%</div></Card>
         <Card className="p-4"><div className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" />Aktive Kanäle</div><div className="text-2xl font-semibold">{Object.keys(byChannel).length}</div></Card>
       </div>
+
+      {deflection && (
+        <Card className="p-4">
+          <div className="text-sm font-semibold mb-3">Self-Service Portal – Deflection ({days} Tage)</div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+            <div><div className="text-xs text-muted-foreground">Sessions</div><div className="text-xl font-semibold">{deflection.total_sessions}</div></div>
+            <div><div className="text-xs text-muted-foreground">Deflected</div><div className="text-xl font-semibold text-green-500">{deflection.deflected_sessions}</div></div>
+            <div><div className="text-xs text-muted-foreground">Handoff → Ticket</div><div className="text-xl font-semibold">{deflection.handoff_sessions}</div></div>
+            <div><div className="text-xs text-muted-foreground">Deflection-Rate</div><div className="text-xl font-semibold text-primary">{deflection.deflection_pct ?? 0}%</div></div>
+            <div><div className="text-xs text-muted-foreground">Ø Messages/Session</div><div className="text-xl font-semibold">{deflection.avg_messages ?? 0}</div></div>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-4">
         <div className="text-sm font-semibold mb-3">Event-Funnel (Top-Stages, {days} Tage)</div>
@@ -117,6 +140,43 @@ export default function AlixConnectJourneyAnalytics() {
             </div>
           ))}
         </div>
+      </Card>
+
+      <Card className="p-4">
+        <div className="text-sm font-semibold mb-3">Attribution ({days} Tage) – First / Last / Linear-Touch</div>
+        {attribution.length === 0 ? <div className="text-xs text-muted-foreground">Keine Conversions im Zeitraum.</div> : (
+          <div className="space-y-2">
+            {attribution.map((a: any) => (
+              <div key={a.source}>
+                <div className="flex justify-between text-xs mb-1"><span className="font-medium">{a.source}</span><span>First {a.first_touch} · Last {a.last_touch} · Linear {a.linear_touch}</span></div>
+                <div className="h-2 bg-muted rounded"><div className="h-2 bg-primary rounded" style={{ width: `${(Number(a.last_touch) / maxAttr) * 100}%` }} /></div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card className="p-4">
+        <div className="text-sm font-semibold mb-3">Kohorten-Retention (wöchentlich, letzte 8 Wochen)</div>
+        {cohorts.length === 0 ? <div className="text-xs text-muted-foreground">Keine Kohorten-Daten.</div> : (
+          <div className="overflow-x-auto">
+            <table className="text-xs w-full border-collapse">
+              <thead><tr><th className="text-left p-1">Kohorte</th><th className="text-left p-1">Größe</th>{[0,1,2,3,4,5,6,7].map(w => <th key={w} className="p-1 text-center">W+{w}</th>)}</tr></thead>
+              <tbody>
+                {Object.values(cohorts.reduce((acc: any, r: any) => { (acc[r.cohort_week] ??= { cohort: r.cohort_week, size: r.cohort_size, cells: {} }).cells[r.week_offset] = r.retention_pct; return acc; }, {})).map((row: any) => (
+                  <tr key={row.cohort} className="border-t">
+                    <td className="p-1 font-medium">{row.cohort}</td>
+                    <td className="p-1">{row.size}</td>
+                    {[0,1,2,3,4,5,6,7].map(w => {
+                      const v = row.cells[w]; const bg = v ? `hsl(var(--primary) / ${Math.min(1, Number(v)/100)})` : 'transparent';
+                      return <td key={w} className="p-1 text-center" style={{ backgroundColor: bg }}>{v ? `${v}%` : '—'}</td>;
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   );
