@@ -11,8 +11,7 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Workflow } from 'lucide-react';
 
-const ORDER_KEYS = ['auftragsnummer', 'auftrag', 'auftrags-nr', 'auftrags nr', 'ordernumber', 'order_number', 'order', 'nummer', 'order no', 'order-no'];
-const NAME_KEYS = ['kunde', 'kundenname', 'customer', 'name', 'firma', 'company'];
+const NAME_KEYS = ['kunde', 'kundenname', 'customer', 'name', 'firma', 'company', 'customer_name'];
 
 function pickKey(row: Record<string, any>, candidates: string[]): string | null {
   const keys = Object.keys(row);
@@ -23,8 +22,8 @@ function pickKey(row: Record<string, any>, candidates: string[]): string | null 
   return null;
 }
 
-function stripAt(s: string): string {
-  return s.replace(/-AT$/i, '').trim();
+function normName(s: string): string {
+  return s.toLowerCase().replace(/\s+/g, ' ').replace(/[.,;:()"']/g, '').trim();
 }
 
 export default function AuftragsImport() {
