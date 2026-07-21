@@ -327,6 +327,9 @@ const AlixConnectMeetingRoom = lazy(() => import("./pages/AlixConnect/MeetingRoo
 const AlixConnectRouting = lazy(() => import("./pages/AlixConnect/Routing"));
 const AlixConnectCopilot = lazy(() => import("./pages/AlixConnect/Copilot"));
 const AlixConnectQualityMgmt = lazy(() => import("./pages/AlixConnect/QualityMgmt"));
+const AlixConnectRoutingSimulator = lazy(() => import("./pages/AlixConnect/RoutingSimulator"));
+const AlixConnectQmCalibration = lazy(() => import("./pages/AlixConnect/QmCalibration"));
+const AlixConnectQmCoaching = lazy(() => import("./pages/AlixConnect/QmCoaching"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1231,6 +1234,9 @@ function AppRoutes() {
             <Route path="routing" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRouting /></ProtectedRoute>} />
             <Route path="copilot" element={<AlixConnectCopilot />} />
             <Route path="qm" element={<ProtectedRoute><AlixConnectQualityMgmt /></ProtectedRoute>} />
+            <Route path="routing-sim" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRoutingSimulator /></ProtectedRoute>} />
+            <Route path="qm-kalibrierung" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM']}><AlixConnectQmCalibration /></ProtectedRoute>} />
+            <Route path="qm-coaching" element={<ProtectedRoute><AlixConnectQmCoaching /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
