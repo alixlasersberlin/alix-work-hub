@@ -1236,6 +1236,8 @@ function AppRoutes() {
             <Route path="copilot" element={<AlixConnectCopilot />} />
             <Route path="qm" element={<ProtectedRoute><AlixConnectQualityMgmt /></ProtectedRoute>} />
             <Route path="routing-sim" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRoutingSimulator /></ProtectedRoute>} />
+            <Route path="routing-live" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRoutingLive /></ProtectedRoute>} />
+
             <Route path="qm-kalibrierung" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM']}><AlixConnectQmCalibration /></ProtectedRoute>} />
             <Route path="qm-coaching" element={<ProtectedRoute><AlixConnectQmCoaching /></ProtectedRoute>} />
           </Route>
