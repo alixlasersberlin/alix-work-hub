@@ -320,3 +320,12 @@ verify_jwt = false
 
 [functions.ac-compliance-governance]
 verify_jwt = false
+
+[functions.ac-inbox-2]
+verify_jwt = false
+
+[functions.ac-knowledge-hub]
+verify_jwt = false
+
+[functions.ac-partner-portal]
+verify_jwt = false
