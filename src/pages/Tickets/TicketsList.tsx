@@ -415,25 +415,42 @@ export default function TicketsList() {
 
 
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as 'open' | 'closed' | 'wartung' | 'reklamation')}>
-        <TabsList className="mb-3">
-          <TabsTrigger value="open">Offene Tickets ({openRows.length})</TabsTrigger>
-          <TabsTrigger value="closed">Geschlossene Tickets ({closedRows.length})</TabsTrigger>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
+        <TabsList className="mb-3 flex-wrap h-auto">
+          <TabsTrigger value="open">Offene ({openRows.length})</TabsTrigger>
+          <TabsTrigger value="neu"><Inbox className="w-3.5 h-3.5 mr-1" />Neue / Eingang ({neueRows.length})</TabsTrigger>
+          <TabsTrigger value="overdue"><AlertTriangle className="w-3.5 h-3.5 mr-1 text-red-400" />Überfällig ({overdueRows.length})</TabsTrigger>
+          <TabsTrigger value="escalated"><Flame className="w-3.5 h-3.5 mr-1 text-orange-400" />Eskaliert ({escalatedRows.length})</TabsTrigger>
+          <TabsTrigger value="wartet"><Pause className="w-3.5 h-3.5 mr-1" />Warten auf Kunde ({wartetKundeRows.length})</TabsTrigger>
           <TabsTrigger value="wartung">Wartung ({wartungRows.length})</TabsTrigger>
           <TabsTrigger value="reklamation">Reklamation ({reklamationRows.length})</TabsTrigger>
+          <TabsTrigger value="closed">Geschlossen ({closedRows.length})</TabsTrigger>
+          <TabsTrigger value="bookings"><CalendarCheck className="w-3.5 h-3.5 mr-1" />Öffentliche Buchungen</TabsTrigger>
         </TabsList>
 
-        {(['open', 'closed', 'wartung', 'reklamation'] as const).map((key) => {
+        <TabsContent value="bookings">
+          <EscBookings />
+        </TabsContent>
+
+        {(['open', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
           const list =
             key === 'open' ? openRows
               : key === 'closed' ? closedRows
               : key === 'wartung' ? wartungRows
-              : reklamationRows;
+              : key === 'reklamation' ? reklamationRows
+              : key === 'neu' ? neueRows
+              : key === 'overdue' ? overdueRows
+              : key === 'escalated' ? escalatedRows
+              : wartetKundeRows;
           const emptyTitle =
             key === 'open' ? 'Keine offenen Tickets'
               : key === 'closed' ? 'Keine geschlossenen Tickets'
               : key === 'wartung' ? 'Keine Wartungs-Tickets'
-              : 'Keine Reklamations-Tickets';
+              : key === 'reklamation' ? 'Keine Reklamations-Tickets'
+              : key === 'neu' ? 'Keine neuen Tickets im Eingang'
+              : key === 'overdue' ? 'Keine überfälligen Tickets'
+              : key === 'escalated' ? 'Keine eskalierten Tickets'
+              : 'Keine Tickets warten auf Kundenrückmeldung';
           return (
             <TabsContent key={key} value={key}>
               <div className="rounded-xl border border-border bg-card overflow-hidden">
