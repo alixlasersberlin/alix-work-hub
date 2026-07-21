@@ -663,6 +663,16 @@ export const navItems: NavItem[] = [
 
       },
 
+      {
+        path: '#teamk-setup', label: 'TEAMK SETUP', icon: CalendarDays, roles: ['Admin', 'Super Admin'],
+        children: [
+          { path: '/esc/ressourcen',    label: 'Ressourcen',    icon: Boxes,       roles: ['Admin', 'Super Admin'] },
+          { path: '/esc/mitarbeiter',   label: 'Mitarbeiter',   icon: Users,       roles: ['Admin', 'Super Admin'] },
+          { path: '/esc/abteilungen',   label: 'Abteilungen',   icon: Building2,   roles: ['Admin', 'Super Admin'] },
+          { path: '/esc/einstellungen', label: 'Einstellungen', icon: Settings,    roles: ['Admin', 'Super Admin'] },
+        ],
+      },
+
 
 
       {
