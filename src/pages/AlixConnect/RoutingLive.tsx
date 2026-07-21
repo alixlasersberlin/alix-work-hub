@@ -107,8 +107,9 @@ export default function RoutingLive() {
               <div key={d.id} className="text-xs flex items-center justify-between border-b border-border/40 py-1">
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground font-mono">{new Date(d.created_at).toLocaleTimeString("de-DE")}</span>
-                  <Badge variant="outline" className="text-[10px]">{d.strategy ?? "—"}</Badge>
-                  {d.agent_id && <span className="font-mono">{d.agent_id.slice(0, 8)}</span>}
+                  <Badge variant="outline" className="text-[10px]">{d.channel ?? "—"}</Badge>
+                  {d.chosen_user_id && <span className="font-mono">{d.chosen_user_id.slice(0, 8)}</span>}
+                  {d.fallback_used && <Badge variant="destructive" className="text-[9px]">fallback</Badge>}
                 </div>
                 <span className="text-muted-foreground truncate max-w-[50%]">{d.reason ?? "—"}</span>
               </div>
