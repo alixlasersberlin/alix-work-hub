@@ -532,6 +532,7 @@ export const navItems: NavItem[] = [
       { path: '/connect/telefonie', label: 'Telefonie (3CX)', icon: PhoneCall, roles: null },
       { path: '/connect/wallboard', label: 'Wallboard', icon: Activity, roles: null },
       { path: '/connect/queues', label: 'Warteschlangen & Agenten', icon: Users, roles: null },
+      { path: '/connect/ivr', label: 'IVR & Öffnungszeiten', icon: PhoneCall, roles: ['Admin','Super Admin'] },
       { path: '/connect/contacts', label: 'Kontakte', icon: Users, roles: null },
       { path: '/connect/websites', label: 'Webseiten', icon: Globe, roles: ['Admin','Super Admin'] },
       { path: '/connect/analytics', label: 'Website Analytics', icon: BarChart3, roles: null },

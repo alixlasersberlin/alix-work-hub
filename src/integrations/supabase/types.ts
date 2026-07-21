@@ -890,6 +890,87 @@ export type Database = {
           },
         ]
       }
+      ac_pbx_business_hours: {
+        Row: {
+          closed_action: string
+          closed_greeting_path: string | null
+          closed_target: string | null
+          created_at: string
+          enabled: boolean
+          holidays: Json
+          id: string
+          name: string
+          timezone: string
+          updated_at: string
+          weekly: Json
+        }
+        Insert: {
+          closed_action?: string
+          closed_greeting_path?: string | null
+          closed_target?: string | null
+          created_at?: string
+          enabled?: boolean
+          holidays?: Json
+          id?: string
+          name: string
+          timezone?: string
+          updated_at?: string
+          weekly?: Json
+        }
+        Update: {
+          closed_action?: string
+          closed_greeting_path?: string | null
+          closed_target?: string | null
+          created_at?: string
+          enabled?: boolean
+          holidays?: Json
+          id?: string
+          name?: string
+          timezone?: string
+          updated_at?: string
+          weekly?: Json
+        }
+        Relationships: []
+      }
+      ac_pbx_ivr_menus: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          extension: string | null
+          greeting_path: string | null
+          id: string
+          invalid_action: string
+          name: string
+          options: Json
+          timeout_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          extension?: string | null
+          greeting_path?: string | null
+          id?: string
+          invalid_action?: string
+          name: string
+          options?: Json
+          timeout_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          extension?: string | null
+          greeting_path?: string | null
+          id?: string
+          invalid_action?: string
+          name?: string
+          options?: Json
+          timeout_seconds?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ac_pbx_queue_agents: {
         Row: {
           created_at: string
