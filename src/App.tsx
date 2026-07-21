@@ -1244,6 +1244,9 @@ function AppRoutes() {
 
             <Route path="qm-kalibrierung" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM']}><AlixConnectQmCalibration /></ProtectedRoute>} />
             <Route path="qm-coaching" element={<ProtectedRoute><AlixConnectQmCoaching /></ProtectedRoute>} />
+            <Route path="wfm" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM']}><AlixConnectWfm /></ProtectedRoute>} />
+            <Route path="knowledge" element={<ProtectedRoute><AlixConnectKnowledgeBase /></ProtectedRoute>} />
+            <Route path="journey" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectJourneyAnalytics /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
