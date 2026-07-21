@@ -46,6 +46,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/qm", label: "Quality Mgmt", icon: ClipboardCheck },
       { to: "/connect/routing", label: "Routing 2.0", icon: RouteIcon },
       { to: "/connect/routing-sim", label: "Routing-Simulator", icon: FlaskConical },
+      { to: "/connect/routing-live", label: "Routing Live", icon: Activity },
       { to: "/connect/qm-kalibrierung", label: "QM Kalibrierung", icon: Scale },
       { to: "/connect/qm-coaching", label: "QM Coaching", icon: GraduationCap },
       { to: "/connect/cockpit", label: "Cockpit", icon: FileBarChart },
