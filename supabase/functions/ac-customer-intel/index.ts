@@ -46,10 +46,11 @@ Deno.serve(async (req) => {
 
     await sb.from('ac_predictions').insert({
       contact_id,
-      prediction_type: 'customer_intelligence',
+      kind: 'customer_intelligence',
       score: churn,
-      metadata: { clv_score: clv, segment: p.segment, next_best_offer: p.next_best_offer, cross_sell: p.cross_sell, reasoning: p.reasoning, auto_tags: p.auto_tags },
-      model: 'google/gemini-3-flash-preview',
+      risk_level: churn >= 0.7 ? 'high' : churn >= 0.4 ? 'medium' : 'low',
+      suggested_action: p.next_best_offer ?? null,
+      payload: { clv_score: clv, segment: p.segment, next_best_offer: p.next_best_offer, cross_sell: p.cross_sell, reasoning: p.reasoning, auto_tags: p.auto_tags, model: 'google/gemini-3-flash-preview' },
     });
 
     if (health) {
