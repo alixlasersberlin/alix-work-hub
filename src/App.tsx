@@ -1272,6 +1272,9 @@ function AppRoutes() {
             <Route path="insights-cockpit" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectInsightsCockpit /></ProtectedRoute>} />
             <Route path="sla-engine" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectSlaEngine /></ProtectedRoute>} />
             <Route path="copilot-actions" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectCopilotActions /></ProtectedRoute>} />
+            <Route path="revenue-intelligence" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRevenueIntelligence /></ProtectedRoute>} />
+            <Route path="quality-coaching" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectQualityCoaching /></ProtectedRoute>} />
+            <Route path="omnichannel-campaigns" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectOmnichannelCampaigns /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
