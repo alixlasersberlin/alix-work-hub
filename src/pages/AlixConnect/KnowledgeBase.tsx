@@ -121,6 +121,28 @@ export default function AlixConnectKnowledgeBase() {
         </div>
       )}
 
+      {/* Review-Queue */}
+      {items.some(i => i.status === 'review') && (
+        <Card className="p-4 border-primary/40">
+          <div className="text-sm font-semibold mb-2">📋 Review-Queue ({items.filter(i => i.status === 'review').length})</div>
+          <div className="space-y-2">
+            {items.filter(i => i.status === 'review').map(a => (
+              <div key={a.id} className="flex items-center justify-between border-b pb-2 last:border-0">
+                <div>
+                  <div className="text-sm font-medium">{a.title}</div>
+                  <div className="text-xs text-muted-foreground">Eingereicht {a.submitted_for_review_at ? new Date(a.submitted_for_review_at).toLocaleString('de-DE') : '—'}</div>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setEditing(a)}>Ansehen</Button>
+                  <Button size="sm" variant="outline" onClick={() => rejectArticle(a)}>Ablehnen</Button>
+                  <Button size="sm" onClick={() => approveArticle(a)}>Freigeben</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <Card className="p-3 text-xs text-muted-foreground flex items-center gap-2">
         <Sparkles className="h-3.5 w-3.5 text-primary" /> Beim Speichern werden Titel &amp; Inhalt automatisch als Vektor indiziert und im Copilot &amp; Self-Service-Portal per semantischer Suche gefunden.
       </Card>
