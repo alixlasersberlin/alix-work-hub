@@ -18,6 +18,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
     items: [
       { to: "/connect/team", label: "Team Chat", icon: MessageSquare },
       { to: "/connect/inbox", label: "Unified Inbox", icon: Inbox },
+      { to: "/connect/telefonie", label: "Telefonie (3CX)", icon: PhoneCall },
       { to: "/connect/contacts", label: "Kontakte", icon: Users },
       { to: "/connect/campaigns", label: "Kampagnen", icon: Megaphone },
     ],
