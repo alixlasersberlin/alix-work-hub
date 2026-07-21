@@ -56,9 +56,21 @@ export default function AlixConnectWfm() {
 
   const addShift = async () => {
     if (!agentId || !start || !end) return toast.error('Alle Felder ausfüllen');
-    const { error } = await supabase.from('ac_wfm_shifts').insert({ agent_id: agentId, shift_start: start, shift_end: end });
+    const { error } = await supabase.from('ac_wfm_shifts').insert({ agent_id: agentId, shift_start: start, shift_end: end, approval_status: 'pending' });
     if (error) return toast.error(error.message);
-    toast.success('Schicht angelegt'); setAgentId(''); setStart(''); setEnd(''); load();
+    toast.success('Schicht beantragt (wartet auf Freigabe)'); setAgentId(''); setStart(''); setEnd(''); load();
+  };
+
+  const approveShift = async (id: string, ok: boolean) => {
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase.from('ac_wfm_shifts').update({
+      approval_status: ok ? 'approved' : 'rejected',
+      approved_by: u.user?.id ?? null,
+      approved_at: new Date().toISOString(),
+      status: ok ? 'scheduled' : 'cancelled',
+    }).eq('id', id);
+    if (error) return toast.error(error.message);
+    toast.success(ok ? 'Schicht genehmigt' : 'Schicht abgelehnt'); load();
   };
 
   const generateForecast = async () => {
@@ -156,9 +168,17 @@ export default function AlixConnectWfm() {
           {loading ? <div className="text-xs text-muted-foreground">Lade…</div> : shifts.length === 0 ? <div className="text-xs text-muted-foreground">Keine Schichten.</div> : (
             <div className="space-y-1 max-h-96 overflow-auto">
               {shifts.map(s => (
-                <div key={s.id} className="flex items-center justify-between text-xs border-b py-1.5">
-                  <div><div className="font-medium">{agentName(s.agent_id)}</div><div className="text-muted-foreground">{new Date(s.shift_start).toLocaleString('de-DE')} → {new Date(s.shift_end).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</div></div>
-                  <Badge variant={s.status === 'scheduled' ? 'outline' : 'secondary'}>{s.status}</Badge>
+                <div key={s.id} className="flex items-center justify-between text-xs border-b py-1.5 gap-2">
+                  <div className="min-w-0"><div className="font-medium truncate">{agentName(s.agent_id)}</div><div className="text-muted-foreground">{new Date(s.shift_start).toLocaleString('de-DE')} → {new Date(s.shift_end).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</div></div>
+                  <div className="flex items-center gap-1">
+                    <Badge variant={s.approval_status === 'approved' ? 'default' : s.approval_status === 'pending' ? 'outline' : 'secondary'}>{s.approval_status ?? 'approved'}</Badge>
+                    {s.approval_status === 'pending' && (
+                      <>
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-green-500" onClick={() => approveShift(s.id, true)}>✓</Button>
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-red-500" onClick={() => approveShift(s.id, false)}>✕</Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
