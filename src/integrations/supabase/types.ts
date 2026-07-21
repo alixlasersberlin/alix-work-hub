@@ -27264,6 +27264,7 @@ export type Database = {
         Args: { p_case: string }
         Returns: undefined
       }
+      backup_watchdog_mark_stuck: { Args: never; Returns: undefined }
       calc_media_package_progress: { Args: { _mp_id: string }; Returns: number }
       can_access_ai_service: { Args: never; Returns: boolean }
       can_access_esc_module: { Args: never; Returns: boolean }
