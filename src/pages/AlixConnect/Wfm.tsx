@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Users, TrendingUp, Calendar, Activity, Zap, Gauge } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Shift = { id: string; agent_id: string; shift_start: string; shift_end: string; shift_type: string; status: string; notes: string | null };
+type Shift = { id: string; agent_id: string; shift_start: string; shift_end: string; shift_type: string; status: string; notes: string | null; approval_status?: string; approved_by?: string | null; approved_at?: string | null };
 type Forecast = { id: string; forecast_date: string; channel: string; interval_start: string; predicted_volume: number; predicted_aht_sec: number; required_agents: number };
 
 export default function AlixConnectWfm() {
