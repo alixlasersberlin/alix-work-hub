@@ -22,18 +22,20 @@ export default function AlixConnectJourneyAnalytics() {
 
   const load = async () => {
     setLoading(true);
-    const [f, c, s, at, co] = await Promise.all([
+    const [f, c, s, at, co, dfl] = await Promise.all([
       supabase.rpc('ac_journey_funnel', { days_back: days }),
       supabase.from('ac_conversations').select('id, channel_type, status, created_at, closed_at, ai_sentiment').order('created_at', { ascending: false }).limit(500),
       supabase.from('ac_journey_segments').select('*').order('updated_at', { ascending: false }),
       supabase.rpc('ac_journey_attribution', { days_back: days }),
       supabase.rpc('ac_journey_cohorts', { weeks: 8 }),
+      supabase.rpc('ac_portal_deflection', { days_back: days }),
     ]);
     setFunnel(((f.data as any) ?? []).map((r: any) => ({ stage: r.stage, count: Number(r.count) })));
     setConvos((c.data as any) ?? []);
     setSegments((s.data as any) ?? []);
     setAttribution((at.data as any) ?? []);
     setCohorts((co.data as any) ?? []);
+    setDeflection(((dfl.data as any) ?? [])[0] ?? null);
     setLoading(false);
   };
   useEffect(() => { load(); }, [days]);
