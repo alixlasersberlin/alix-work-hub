@@ -932,6 +932,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ac_pbx_forwarding_rules: {
+        Row: {
+          condition: string
+          created_at: string
+          destination: string
+          destination_type: string
+          enabled: boolean
+          id: string
+          name: string
+          notes: string | null
+          priority: number
+          ring_timeout_seconds: number
+          schedule: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          condition?: string
+          created_at?: string
+          destination: string
+          destination_type: string
+          enabled?: boolean
+          id?: string
+          name: string
+          notes?: string | null
+          priority?: number
+          ring_timeout_seconds?: number
+          schedule?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          condition?: string
+          created_at?: string
+          destination?: string
+          destination_type?: string
+          enabled?: boolean
+          id?: string
+          name?: string
+          notes?: string | null
+          priority?: number
+          ring_timeout_seconds?: number
+          schedule?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ac_pbx_ivr_menus: {
         Row: {
           created_at: string
