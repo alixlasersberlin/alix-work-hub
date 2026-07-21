@@ -232,8 +232,12 @@ export type Database = {
           recording_url: string | null
           started_at: string
           status: string
+          ticket_id: string | null
           to_number: string | null
           updated_at: string
+          voicemail_transcribed_at: string | null
+          voicemail_transcript: string | null
+          voicemail_transcript_status: string | null
           voicemail_url: string | null
         }
         Insert: {
@@ -254,8 +258,12 @@ export type Database = {
           recording_url?: string | null
           started_at?: string
           status?: string
+          ticket_id?: string | null
           to_number?: string | null
           updated_at?: string
+          voicemail_transcribed_at?: string | null
+          voicemail_transcript?: string | null
+          voicemail_transcript_status?: string | null
           voicemail_url?: string | null
         }
         Update: {
@@ -276,8 +284,12 @@ export type Database = {
           recording_url?: string | null
           started_at?: string
           status?: string
+          ticket_id?: string | null
           to_number?: string | null
           updated_at?: string
+          voicemail_transcribed_at?: string | null
+          voicemail_transcript?: string | null
+          voicemail_transcript_status?: string | null
           voicemail_url?: string | null
         }
         Relationships: []
