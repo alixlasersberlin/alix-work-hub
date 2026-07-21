@@ -313,6 +313,11 @@ const AlixConnectTelephonyForwarding = lazy(() => import("./pages/AlixConnect/Te
 const AlixConnectTelephonyAnalytics = lazy(() => import("./pages/AlixConnect/TelephonyAnalytics"));
 const AlixConnectTelephonyCompliance = lazy(() => import("./pages/AlixConnect/TelephonyCompliance"));
 const AlixConnectTelephonyJournal = lazy(() => import("./pages/AlixConnect/TelephonyJournal"));
+const AlixConnectSmsTemplates = lazy(() => import("./pages/AlixConnect/SmsTemplates"));
+const AlixConnectOptOut = lazy(() => import("./pages/AlixConnect/OptOut"));
+const AlixConnectEmailSync = lazy(() => import("./pages/AlixConnect/EmailSync"));
+const AlixConnectMarketplace = lazy(() => import("./pages/AlixConnect/Marketplace"));
+const AlixConnectCustomer360 = lazy(() => import("./pages/AlixConnect/Customer360"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1199,6 +1204,11 @@ function AppRoutes() {
             <Route path="analytics-anrufe" element={<AlixConnectTelephonyAnalytics />} />
             <Route path="compliance" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectTelephonyCompliance /></ProtectedRoute>} />
             <Route path="journal" element={<AlixConnectTelephonyJournal />} />
+            <Route path="sms-templates" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectSmsTemplates /></ProtectedRoute>} />
+            <Route path="opt-out" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectOptOut /></ProtectedRoute>} />
+            <Route path="email" element={<AlixConnectEmailSync />} />
+            <Route path="marketplace" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectMarketplace /></ProtectedRoute>} />
+            <Route path="customer-360" element={<AlixConnectCustomer360 />} />
             <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
             <Route path="websites/:id/analytics" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsiteAnalytics /></ProtectedRoute>} />
             <Route path="analytics" element={<AlixConnectAnalytics />} />

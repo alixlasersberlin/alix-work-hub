@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import {
   MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone,
   LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall, Activity, PhoneForwarded,
+  Mail, Ban, Webhook, FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +12,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
     items: [
       { to: "/connect/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { to: "/connect/portal", label: "360°-Portal", icon: UserSquare2 },
+      { to: "/connect/customer-360", label: "Customer 360°", icon: Sparkles },
     ],
   },
   {
@@ -18,6 +20,9 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
     items: [
       { to: "/connect/team", label: "Team Chat", icon: MessageSquare },
       { to: "/connect/inbox", label: "Unified Inbox", icon: Inbox },
+      { to: "/connect/email", label: "Email", icon: Mail },
+      { to: "/connect/sms-templates", label: "SMS-Templates", icon: FileText },
+      { to: "/connect/opt-out", label: "Opt-out", icon: Ban },
       { to: "/connect/telefonie", label: "Telefonie (3CX)", icon: PhoneCall },
       { to: "/connect/wallboard", label: "Wallboard", icon: Activity },
       { to: "/connect/queues", label: "Warteschlangen", icon: Users },
@@ -39,8 +44,9 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
     ],
   },
   {
-    label: "Roadmap",
+    label: "Integrationen",
     items: [
+      { to: "/connect/marketplace", label: "Marketplace / API", icon: Webhook },
       { to: "/connect/automation", label: "Automation", icon: Zap },
       { to: "/connect/reporting", label: "Reporting", icon: FileBarChart },
       { to: "/connect/admin", label: "Admin", icon: Shield },
@@ -66,7 +72,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 20 · 3CX Telefonie
+            Phase 21 · Multi-Channel & Intelligence
           </span>
         </div>
         <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
