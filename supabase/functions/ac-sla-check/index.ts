@@ -16,41 +16,46 @@ Deno.serve(async (req) => {
     const nowMs = Date.now();
     let created = 0;
     const { data: convs } = await sb.from('ac_conversations')
-      .select('id,channel,priority,status,first_response_at,resolved_at,created_at')
-      .in('status', ['open', 'pending'])
+      .select('id,channel_type,priority,status,closed_at,created_at')
+      .neq('status', 'closed')
       .limit(500);
 
     for (const c of convs ?? []) {
       const policy = policies.find((p: any) =>
-        (!p.channel || p.channel === (c as any).channel) &&
+        (!p.channel || p.channel === (c as any).channel_type) &&
         (!p.priority || p.priority === (c as any).priority)
       );
       if (!policy) continue;
       const createdMs = new Date((c as any).created_at).getTime();
       const ageMin = (nowMs - createdMs) / 60000;
 
-      // first_response breach
-      if (!(c as any).first_response_at && ageMin > policy.first_response_min) {
-        const { data: exists } = await sb.from('ac_sla_breaches').select('id')
-          .eq('conversation_id', (c as any).id).eq('breach_type', 'first_response')
-          .is('resolved_at', null).limit(1);
-        if (!exists?.length) {
-          await sb.from('ac_sla_breaches').insert({
-            policy_id: policy.id, conversation_id: (c as any).id,
-            breach_type: 'first_response', meta: { age_min: Math.round(ageMin) },
-          });
-          created++;
-          if (policy.escalate_to) {
-            await sb.from('app_notifications').insert({
-              user_id: policy.escalate_to, kind: 'sla_breach', severity: 'warning',
-              title: 'SLA-Verstoß: First Response', message: `Konversation ${(c as any).id.slice(0,8)} überfällig (${Math.round(ageMin)} Min)`,
-              link: `/connect/inbox?c=${(c as any).id}`,
-            }).select();
+      // first_response breach: check first outbound message
+      if (ageMin > policy.first_response_min) {
+        const { count } = await sb.from('ac_messages').select('id', { count: 'exact', head: true })
+          .eq('conversation_id', (c as any).id).eq('direction', 'outbound');
+        if (!count || count === 0) {
+          const { data: exists } = await sb.from('ac_sla_breaches').select('id')
+            .eq('conversation_id', (c as any).id).eq('breach_type', 'first_response')
+            .is('resolved_at', null).limit(1);
+          if (!exists?.length) {
+            await sb.from('ac_sla_breaches').insert({
+              policy_id: policy.id, conversation_id: (c as any).id,
+              breach_type: 'first_response', meta: { age_min: Math.round(ageMin) },
+            });
+            created++;
+            if (policy.escalate_to) {
+              await sb.from('app_notifications').insert({
+                user_id: policy.escalate_to, kind: 'sla_breach', severity: 'warning',
+                title: 'SLA-Verstoß: First Response',
+                message: `Konversation ${(c as any).id.slice(0, 8)} überfällig (${Math.round(ageMin)} Min)`,
+                link: `/connect/inbox?c=${(c as any).id}`,
+              });
+            }
           }
         }
       }
       // resolution breach
-      if (!(c as any).resolved_at && ageMin > policy.resolution_min) {
+      if (!(c as any).closed_at && ageMin > policy.resolution_min) {
         const { data: exists } = await sb.from('ac_sla_breaches').select('id')
           .eq('conversation_id', (c as any).id).eq('breach_type', 'resolution')
           .is('resolved_at', null).limit(1);
