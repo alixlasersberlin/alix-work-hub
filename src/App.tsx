@@ -1188,6 +1188,7 @@ function AppRoutes() {
             <Route path="mobile" element={<AlixConnectMobile />} />
             <Route path="telefonie" element={<AlixConnectTelephony />} />
             <Route path="wallboard" element={<AlixConnectTelephonyWallboard />} />
+            <Route path="queues" element={<AlixConnectTelephonyQueues />} />
             <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
             <Route path="websites/:id/analytics" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsiteAnalytics /></ProtectedRoute>} />
             <Route path="analytics" element={<AlixConnectAnalytics />} />

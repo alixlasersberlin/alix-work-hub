@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import {
   MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone,
-  LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall,
+  LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall, Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,8 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/team", label: "Team Chat", icon: MessageSquare },
       { to: "/connect/inbox", label: "Unified Inbox", icon: Inbox },
       { to: "/connect/telefonie", label: "Telefonie (3CX)", icon: PhoneCall },
+      { to: "/connect/wallboard", label: "Wallboard", icon: Activity },
+      { to: "/connect/queues", label: "Warteschlangen", icon: Users },
       { to: "/connect/contacts", label: "Kontakte", icon: Users },
       { to: "/connect/campaigns", label: "Kampagnen", icon: Megaphone },
     ],
