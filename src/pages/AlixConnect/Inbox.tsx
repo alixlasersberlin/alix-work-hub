@@ -329,3 +329,75 @@ export default function InboxPage() {
     </div>
   );
 }
+
+function InboxComposer({
+  reply,
+  setReply,
+  onSend,
+  activeId,
+}: {
+  reply: string;
+  setReply: (v: string | ((cur: string) => string)) => void;
+  onSend: () => void;
+  activeId: string | null;
+}) {
+  const { suggestion, loading } = useCopilotAutoSuggest({
+    text: reply,
+    contextId: activeId ?? undefined,
+    contextType: "chat",
+    enabled: !!activeId,
+  });
+  const accept = () => {
+    if (!suggestion) return;
+    setReply((cur) => (cur.endsWith(" ") ? cur + suggestion : cur + " " + suggestion));
+  };
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Tab" && suggestion) {
+      e.preventDefault();
+      accept();
+    }
+  };
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Textarea
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Antwort verfassen, diktieren oder KI-Entwurf nutzen…"
+            className="min-h-[60px]"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <VoiceDictateButton
+            onTranscript={(t) => setReply((cur) => (cur ? `${cur.trim()} ${t}` : t))}
+          />
+          <Button onClick={onSend} disabled={!reply.trim()} size="icon" className="h-9 w-9">
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      {(suggestion || loading) && (
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground pl-1">
+          <Sparkles className="h-3 w-3 text-primary" />
+          {loading ? (
+            <span className="italic opacity-70">Copilot denkt…</span>
+          ) : (
+            <>
+              <span className="italic truncate max-w-[70%]">→ {suggestion}</span>
+              <button
+                type="button"
+                onClick={accept}
+                className="ml-auto rounded border border-border/60 px-1.5 py-0.5 hover:bg-muted"
+                title="Tab drücken zum Übernehmen"
+              >
+                Tab · übernehmen
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
