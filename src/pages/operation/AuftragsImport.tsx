@@ -59,35 +59,62 @@ export default function AuftragsImport() {
         .map(r => String(r[nameKey] ?? '').trim())
         .filter(Boolean)));
 
-      const foundNames = new Map<string, any>();
+      const foundNames = new Map<string, any[]>();
+      const addHit = (name: string, hit: any) => {
+        const key = normName(name);
+        if (!key) return;
+        const arr = foundNames.get(key) ?? [];
+        arr.push(hit);
+        foundNames.set(key, arr);
+      };
+
+      const sources: Array<{ table: string; label: string; numCol: string; select: string; route: string }> = [
+        { table: 'orders', label: 'Auftrag', numCol: 'order_number', select: 'id, order_number, customer_name, source_system, total, status', route: '/orders' },
+        { table: 'offers', label: 'Angebot', numCol: 'offer_number', select: 'id, offer_number, customer_name, status, total', route: '/offers' },
+        { table: 'finance_contracts', label: 'Vertrag', numCol: 'contract_number', select: 'id, contract_number, customer_name, status', route: '/finance/contracts' },
+        { table: 'repair_orders', label: 'Reparatur', numCol: 'repair_number', select: 'id, repair_number, customer_name, status', route: '/repair' },
+      ];
+
       for (let i = 0; i < names.length; i += 50) {
         const chunk = names.slice(i, i + 50);
         const orFilter = chunk.map(n => `customer_name.ilike.%${n.replace(/[,()%]/g, '')}%`).join(',');
-        const { data } = await (supabase as any)
-          .from('orders')
-          .select('id, order_number, customer_name, source_system, total, status')
-          .or(orFilter)
-          .limit(1000);
-        (data ?? []).forEach((o: any) => {
-          const key = normName(String(o.customer_name ?? ''));
-          if (key && !foundNames.has(key)) foundNames.set(key, o);
-        });
+        for (const src of sources) {
+          try {
+            const { data } = await (supabase as any)
+              .from(src.table)
+              .select(src.select)
+              .or(orFilter)
+              .limit(1000);
+            (data ?? []).forEach((o: any) => {
+              addHit(String(o.customer_name ?? ''), {
+                id: o.id,
+                order_number: o[src.numCol] ?? '',
+                customer_name: o.customer_name,
+                status: o.status,
+                source_system: o.source_system,
+                source_kind: src.label,
+                source_route: src.route,
+              });
+            });
+          } catch { /* table may be RLS-restricted */ }
+        }
       }
 
       const results = rows.map((r, idx) => {
         const name = String(r[nameKey] ?? '').trim();
         const nameL = normName(name);
-        let match: any = null;
+        const matches: any[] = [];
         if (nameL) {
-          for (const [k, v] of foundNames) {
-            if (k === nameL || k.includes(nameL) || nameL.includes(k)) { match = v; break; }
+          for (const [k, arr] of foundNames) {
+            if (k === nameL || k.includes(nameL) || nameL.includes(k)) matches.push(...arr);
           }
         }
         return {
           idx,
           input: { num: '', name, raw: r },
-          found: !!match,
-          match,
+          found: matches.length > 0,
+          match: matches[0] ?? null,
+          matches,
         };
       });
 
