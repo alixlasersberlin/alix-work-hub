@@ -133,7 +133,7 @@ export default function AuftragsImport() {
         <CardContent className="space-y-3">
           <Input type="file" accept=".xlsx,.xls,.csv" onChange={onFile} />
           <p className="text-xs text-muted-foreground">
-            Spalten: <Badge variant="outline">Auftragsnummer</Badge> und/oder <Badge variant="outline">Kunde</Badge>. Suffix „-AT" wird automatisch ignoriert.
+            Spalte: <Badge variant="outline">Kunde</Badge> (bzw. Kundenname/Firma). Abgleich erfolgt ausschließlich anhand des Kundennamens.
           </p>
           {filename && <p className="text-xs">Datei: <span className="font-mono">{filename}</span> · {rows.length} Zeilen</p>}
         </CardContent>
