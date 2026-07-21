@@ -54,3 +54,4 @@
 - [ALIX CONNECT Phase 27](mem://features/alix-connect-phase27) — Conversational AI Studio, Voice Analytics, Customer Health & Lifecycle
 - [ALIX CONNECT Phase 28](mem://features/alix-connect-phase28) — Playbook Automation Engine (ac-playbook-run, /connect/playbooks)
 - [ALIX CONNECT Phase 29](mem://features/alix-connect-phase29) — Journey Orchestrator 2.0 mit Flow-Graph, A/B-Splits, Wait/Condition (/connect/journey-orchestrator)
+- [ALIX CONNECT Phase 31](mem://features/alix-connect-phase31) — Revenue Intelligence, AI Quality & Coaching, Omnichannel Campaigns (/connect/revenue-intelligence, /connect/quality-coaching, /connect/omnichannel-campaigns)
