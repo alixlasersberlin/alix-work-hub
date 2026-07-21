@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Send, MessageCircle, Search, HandshakeIcon, Mail, Ticket } from 'lucide-react';
+import { Bot, Send, MessageCircle, Search, HandshakeIcon, Mail, Ticket, Mic, Square } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -26,6 +26,38 @@ export default function SelfServicePortal() {
   const [q, setQ] = useState('');
   const [kb, setKb] = useState<any[]>([]);
   const scroll = useRef<HTMLDivElement>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+
+  const startRec = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const mr = new MediaRecorder(stream, { mimeType: mime });
+      chunksRef.current = [];
+      mr.ondataavailable = e => e.data.size > 0 && chunksRef.current.push(e.data);
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunksRef.current, { type: mime });
+        if (blob.size < 2048) { toast.error('Aufnahme zu kurz'); return; }
+        setTranscribing(true);
+        try {
+          const fd = new FormData();
+          fd.append('file', blob, mime.includes('mp4') ? 'rec.m4a' : 'rec.webm');
+          const { data, error } = await supabase.functions.invoke('ac-portal-transcribe', { body: fd });
+          if (error) throw error;
+          setInput(prev => (prev ? prev + ' ' : '') + ((data as any)?.text ?? ''));
+        } catch (e: any) { toast.error(e?.message ?? 'Transkription fehlgeschlagen'); }
+        finally { setTranscribing(false); }
+      };
+      mr.start();
+      recorderRef.current = mr;
+      setRecording(true);
+    } catch { toast.error('Mikrofon-Zugriff verweigert'); }
+  };
+  const stopRec = () => { recorderRef.current?.stop(); setRecording(false); };
 
   useEffect(() => {
     supabase.from('ac_kb_articles').select('id,title,content,category').eq('status', 'published').eq('public_visible', true).limit(20)
@@ -91,7 +123,10 @@ export default function SelfServicePortal() {
                 {sending && <div className="text-xs text-muted-foreground">…</div>}
               </div>
               <div className="flex gap-2">
-                <Input placeholder="Nachricht…" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !sending && send()} />
+                <Input placeholder={transcribing ? 'Transkribiere…' : 'Nachricht…'} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !sending && send()} disabled={transcribing} />
+                <Button variant={recording ? 'destructive' : 'outline'} size="icon" onClick={recording ? stopRec : startRec} disabled={sending || transcribing} title={recording ? 'Aufnahme stoppen' : 'Spracheingabe'}>
+                  {recording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </Button>
                 <Button onClick={() => send()} disabled={sending || !input.trim()}><Send className="h-4 w-4" /></Button>
               </div>
               <div className="grid grid-cols-3 gap-2">
