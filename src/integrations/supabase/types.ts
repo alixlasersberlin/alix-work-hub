@@ -1717,6 +1717,173 @@ export type Database = {
         }
         Relationships: []
       }
+      ac_qm_calibration_scores: {
+        Row: {
+          breakdown: Json | null
+          comment: string | null
+          id: string
+          rater_id: string
+          score: number
+          session_id: string
+          submitted_at: string
+        }
+        Insert: {
+          breakdown?: Json | null
+          comment?: string | null
+          id?: string
+          rater_id: string
+          score: number
+          session_id: string
+          submitted_at?: string
+        }
+        Update: {
+          breakdown?: Json | null
+          comment?: string | null
+          id?: string
+          rater_id?: string
+          score?: number
+          session_id?: string
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_qm_calibration_scores_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ac_qm_calibration_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_qm_calibration_sessions: {
+        Row: {
+          call_id: string | null
+          closed_at: string | null
+          conversation_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          scorecard_id: string | null
+          status: string
+          target_variance: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          call_id?: string | null
+          closed_at?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          scorecard_id?: string | null
+          status?: string
+          target_variance?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          call_id?: string | null
+          closed_at?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          scorecard_id?: string | null
+          status?: string
+          target_variance?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_qm_calibration_sessions_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "ac_calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_qm_calibration_sessions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ac_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ac_qm_calibration_sessions_scorecard_id_fkey"
+            columns: ["scorecard_id"]
+            isOneToOne: false
+            referencedRelation: "ac_qm_scorecards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_qm_coaching_sessions: {
+        Row: {
+          actions: Json | null
+          agent_id: string
+          agent_signed_at: string | null
+          coach_id: string | null
+          created_at: string
+          duration_min: number | null
+          evaluation_id: string | null
+          followup_at: string | null
+          id: string
+          improvements: string | null
+          scheduled_at: string | null
+          status: string
+          strengths: string | null
+          topics: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json | null
+          agent_id: string
+          agent_signed_at?: string | null
+          coach_id?: string | null
+          created_at?: string
+          duration_min?: number | null
+          evaluation_id?: string | null
+          followup_at?: string | null
+          id?: string
+          improvements?: string | null
+          scheduled_at?: string | null
+          status?: string
+          strengths?: string | null
+          topics?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json | null
+          agent_id?: string
+          agent_signed_at?: string | null
+          coach_id?: string | null
+          created_at?: string
+          duration_min?: number | null
+          evaluation_id?: string | null
+          followup_at?: string | null
+          id?: string
+          improvements?: string | null
+          scheduled_at?: string | null
+          status?: string
+          strengths?: string | null
+          topics?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_qm_coaching_sessions_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "ac_qm_evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ac_qm_evaluations: {
         Row: {
           agent_user_id: string | null
@@ -1968,6 +2135,42 @@ export type Database = {
           target_queue_id?: string | null
           target_user_ids?: string[] | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ac_routing_simulations: {
+        Row: {
+          assigned_agent_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          input_payload: Json
+          matched_rule_id: string | null
+          name: string
+          result: Json
+          rules_snapshot: Json
+        }
+        Insert: {
+          assigned_agent_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          input_payload?: Json
+          matched_rule_id?: string | null
+          name: string
+          result?: Json
+          rules_snapshot?: Json
+        }
+        Update: {
+          assigned_agent_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          input_payload?: Json
+          matched_rule_id?: string | null
+          name?: string
+          result?: Json
+          rules_snapshot?: Json
         }
         Relationships: []
       }
