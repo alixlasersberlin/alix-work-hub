@@ -56,3 +56,4 @@
 - [ALIX CONNECT Phase 29](mem://features/alix-connect-phase29) — Journey Orchestrator 2.0 mit Flow-Graph, A/B-Splits, Wait/Condition (/connect/journey-orchestrator)
 - [ALIX CONNECT Phase 31](mem://features/alix-connect-phase31) — Revenue Intelligence, AI Quality & Coaching, Omnichannel Campaigns (/connect/revenue-intelligence, /connect/quality-coaching, /connect/omnichannel-campaigns)
 - [ALIX CONNECT Phase 32](mem://features/alix-connect-phase32) — Conversational Intel 2.0, Journey AI-Optimizer, Unified Agent Workspace (/connect/conv-intel, /connect/journey-optimizer, /connect/workspace)
+- [ALIX CONNECT Phase 33](mem://features/alix-connect-phase33) — Agent Assist Live 2.0, Customer Intelligence Hub, Autonomous Service Agents (/connect/agent-assist-live, /connect/customer-intelligence, /connect/autonomous-agents)

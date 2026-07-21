@@ -284,3 +284,12 @@ verify_jwt = false
 
 [functions.ac-journey-optimize]
 verify_jwt = false
+
+[functions.ac-agent-assist-live]
+verify_jwt = false
+
+[functions.ac-customer-intel]
+verify_jwt = false
+
+[functions.ac-autonomous-resolve]
+verify_jwt = false
