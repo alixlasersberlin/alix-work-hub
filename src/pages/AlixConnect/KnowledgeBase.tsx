@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { BookOpen, Sparkles, Eye, EyeOff, Plus, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Article = { id: string; title: string; content: string; category: string | null; tags: string[]; status: string; public_visible: boolean; version: number; updated_at: string };
+type Article = { id: string; title: string; content: string; category: string | null; tags: string[]; status: string; public_visible: boolean; version: number; updated_at: string; submitted_for_review_at?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; review_notes?: string | null };
 
 export default function AlixConnectKnowledgeBase() {
   const [items, setItems] = useState<Article[]>([]);
