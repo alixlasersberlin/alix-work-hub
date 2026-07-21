@@ -1230,7 +1230,7 @@ function AppRoutes() {
             <Route path="meetings/:code" element={<AlixConnectMeetingRoom />} />
             <Route path="routing" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRouting /></ProtectedRoute>} />
             <Route path="copilot" element={<AlixConnectCopilot />} />
-            <Route path="qm" element={<AlixConnectQualityMgmt /></ProtectedRoute>} />
+            <Route path="qm" element={<ProtectedRoute><AlixConnectQualityMgmt /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
