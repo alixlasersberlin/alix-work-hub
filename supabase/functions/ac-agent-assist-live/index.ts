@@ -17,14 +17,14 @@ Deno.serve(async (req) => {
 
     const [{ data: conv }, { data: messages }] = await Promise.all([
       sb.from('ac_conversations').select('*').eq('id', conversation_id).single(),
-      sb.from('ac_messages').select('sender_type, body, created_at').eq('conversation_id', conversation_id).order('created_at', { ascending: false }).limit(20),
+      sb.from('ac_messages').select('direction, body, created_at').eq('conversation_id', conversation_id).order('created_at', { ascending: false }).limit(20),
     ]);
     if (!conv) throw new Error('conversation not found');
 
-    const history = (messages ?? []).reverse().map((m: any) => `[${m.sender_type}] ${m.body ?? ''}`).join('\n');
+    const history = (messages ?? []).reverse().map((m: any) => `[${m.direction}] ${m.body ?? ''}`).join('\n');
 
-    // Simple KB retrieval via keywords from last customer message
-    const lastCustomer = (messages ?? []).find((m: any) => m.sender_type === 'customer')?.body ?? '';
+    // Simple KB retrieval via keywords from last inbound message
+    const lastCustomer = (messages ?? []).find((m: any) => m.direction === 'inbound')?.body ?? '';
     const words = String(lastCustomer).split(/\s+/).filter((w) => w.length > 4).slice(0, 3);
     let kb: any[] = [];
     if (words.length) {
