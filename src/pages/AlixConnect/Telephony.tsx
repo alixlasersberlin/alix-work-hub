@@ -53,8 +53,8 @@ const fmtDur = (s?: number | null) => {
 };
 
 export default function AlixConnectTelephony() {
-  const { profile } = useAuth();
-  const isAdmin = profile?.role === "Admin" || profile?.role === "Super Admin";
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole("Admin") || hasRole("Super Admin");
   const [calls, setCalls] = useState<Call[]>([]);
   const [dial, setDial] = useState("");
   const [dialing, setDialing] = useState(false);
