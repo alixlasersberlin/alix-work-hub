@@ -6,6 +6,9 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
 );
 
+const FN_BASE = `${Deno.env.get('SUPABASE_URL')}/functions/v1`;
+const SR_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
 async function getWebsite(api_key: string) {
   const { data } = await supabase
     .from('ac_websites')
@@ -16,9 +19,117 @@ async function getWebsite(api_key: string) {
 
 async function loadConversation(conversation_id: string, website_id: string) {
   const { data } = await supabase
-    .from('ac_conversations').select('id, tenant_id, website_id, status')
+    .from('ac_conversations').select('id, tenant_id, website_id, status, assigned_to')
     .eq('id', conversation_id).eq('website_id', website_id).maybeSingle();
   return data;
+}
+
+// Business hours check: returns { open: boolean, message?: string }
+function isWithinBusinessHours(bh: any): { open: boolean; message?: string } {
+  if (!bh || typeof bh !== 'object' || bh.enabled === false) return { open: true };
+  try {
+    const tz = bh.timezone || 'Europe/Berlin';
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
+    const parts = Object.fromEntries(fmt.formatToParts(now).map((p) => [p.type, p.value]));
+    const dayMap: Record<string, string> = { Mon: 'mon', Tue: 'tue', Wed: 'wed', Thu: 'thu', Fri: 'fri', Sat: 'sat', Sun: 'sun' };
+    const day = dayMap[parts.weekday] || 'mon';
+    const hh = parseInt(parts.hour, 10);
+    const mm = parseInt(parts.minute, 10);
+    const cur = hh * 60 + mm;
+    const cfg = bh.days?.[day];
+    if (!cfg || cfg.closed) return { open: false, message: bh.closed_message };
+    const [oh, om] = String(cfg.open || '09:00').split(':').map(Number);
+    const [ch, cm] = String(cfg.close || '18:00').split(':').map(Number);
+    const open = cur >= oh * 60 + om && cur < ch * 60 + cm;
+    return { open, message: open ? undefined : bh.closed_message };
+  } catch { return { open: true }; }
+}
+
+// Fire-and-forget background AI processing
+async function processInboundAsync(opts: {
+  site: any;
+  conversation_id: string;
+  tenant_id: string;
+  message: string;
+  is_after_hours: boolean;
+}) {
+  const { site, conversation_id, tenant_id, message, is_after_hours } = opts;
+  try {
+    // 1) Sentiment analysis
+    fetch(`${FN_BASE}/ac-sentiment-emotion`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SR_KEY}` },
+      body: JSON.stringify({ text: message, conversation_id, channel: 'website_chat' }),
+    }).then(async (r) => {
+      if (!r.ok) return;
+      const j = await r.json().catch(() => ({}));
+      const sentiment = j?.sentiment || j?.label;
+      if (sentiment) {
+        await supabase.from('ac_conversations').update({ ai_sentiment: sentiment }).eq('id', conversation_id);
+      }
+    }).catch(() => {});
+
+    // 2) Out-of-hours auto-reply
+    if (is_after_hours) {
+      const msg = site.business_hours?.closed_message ||
+        'Vielen Dank für Ihre Nachricht. Wir sind aktuell außerhalb unserer Geschäftszeiten. Wir melden uns schnellstmöglich bei Ihnen.';
+      await supabase.from('ac_messages').insert({
+        tenant_id, conversation_id, direction: 'outbound', sender_type: 'bot',
+        sender_name: site.operator || site.project_name || 'Alix Bot',
+        body: msg, metadata: { auto: 'business_hours' },
+      });
+      await supabase.from('ac_conversations').update({ status: 'pending' }).eq('id', conversation_id);
+      return;
+    }
+
+    // 3) Autonomous AI reply (opt-in via widget_config.autonomy_enabled)
+    const autonomy = site.widget_config?.autonomy_enabled === true;
+    if (!autonomy) return;
+
+    // Skip if human agent is already assigned
+    const { data: conv } = await supabase.from('ac_conversations')
+      .select('assigned_to').eq('id', conversation_id).maybeSingle();
+    if (conv?.assigned_to) return;
+
+    const r = await fetch(`${FN_BASE}/ac-ai-reply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SR_KEY}` },
+      body: JSON.stringify({ message, tone: 'professional-friendly', locale: site.language || 'de' }),
+    });
+    if (!r.ok) return;
+    const j = await r.json();
+    const reply = String(j?.reply || '').trim();
+    if (!reply || reply.length < 3) return;
+
+    const confidence = reply.length > 30 && !/nicht sicher|weiß nicht|kann nicht|unable|not sure/i.test(reply) ? 0.85 : 0.3;
+    const threshold = site.widget_config?.autonomy_threshold ?? 0.7;
+
+    if (confidence >= threshold) {
+      await supabase.from('ac_messages').insert({
+        tenant_id, conversation_id, direction: 'outbound', sender_type: 'bot',
+        sender_name: `${site.operator || 'Alix'} · AI`,
+        body: reply, metadata: { auto: 'ai_autonomy', confidence },
+      });
+    } else {
+      // Low confidence → handoff to human
+      await supabase.from('ac_conversations').update({ status: 'pending', priority: 'high' }).eq('id', conversation_id);
+      await supabase.from('ac_messages').insert({
+        tenant_id, conversation_id, direction: 'outbound', sender_type: 'bot',
+        sender_name: site.operator || 'Alix',
+        body: 'Einen Moment bitte, ich verbinde Sie mit einem Mitarbeiter.',
+        metadata: { auto: 'handoff', confidence },
+      });
+    }
+  } catch (e) { console.error('processInboundAsync error', e); }
+}
+
+function scheduleBackground(p: Promise<unknown>) {
+  // @ts-ignore Edge Runtime helper if present
+  if (typeof EdgeRuntime !== 'undefined' && (EdgeRuntime as any).waitUntil) {
+    // @ts-ignore
+    EdgeRuntime.waitUntil(p);
+  }
 }
 
 Deno.serve(async (req) => {
@@ -33,6 +144,7 @@ Deno.serve(async (req) => {
       const api_key = url.searchParams.get('api_key') ?? '';
       const site = await getWebsite(api_key);
       if (!site || site.status !== 'active') return json({ error: 'not found' }, 404);
+      const bh = isWithinBusinessHours(site.business_hours);
       return json({
         chat_enabled: site.chat_enabled,
         welcome_message: site.welcome_message,
@@ -47,6 +159,8 @@ Deno.serve(async (req) => {
         widget_config: site.widget_config,
         privacy_url: site.privacy_url,
         imprint_url: site.imprint_url,
+        online: bh.open,
+        voice_notes_enabled: site.widget_config?.voice_notes_enabled !== false,
       });
     }
 
@@ -70,15 +184,16 @@ Deno.serve(async (req) => {
           contact_id = newC?.id ?? null;
         }
       }
+      const bh = isWithinBusinessHours(site.business_hours);
       const { data: conv, error } = await supabase.from('ac_conversations').insert({
         tenant_id: site.tenant_id,
         website_id: site.id,
         channel_type: 'website_chat',
-        status: 'open',
+        status: bh.open ? 'open' : 'pending',
         subject: subject ?? 'Website Chat',
         contact_id,
         priority: 'normal',
-        visitor_meta: { name, email, page_url, visitor_hash },
+        visitor_meta: { name, email, page_url, visitor_hash, after_hours: !bh.open },
         last_message_preview: initial_message ?? null,
       }).select('id').single();
       if (error) throw error;
@@ -93,14 +208,19 @@ Deno.serve(async (req) => {
           sender_name: name ?? 'Website Besucher',
           body: String(initial_message).slice(0, 4000),
         });
+        scheduleBackground(processInboundAsync({
+          site, conversation_id: conv.id, tenant_id: site.tenant_id,
+          message: String(initial_message), is_after_hours: !bh.open,
+        }));
       }
-      return json({ conversation_id: conv?.id });
+      return json({ conversation_id: conv?.id, online: bh.open });
     }
 
     if (action === 'send') {
       const { conversation_id, message, name, visitor_hash } = body;
       const conv = await loadConversation(conversation_id, site.id);
       if (!conv) return json({ error: 'conversation not found' }, 404);
+      const bh = isWithinBusinessHours(site.business_hours);
       const { data, error } = await supabase.from('ac_messages').insert({
         tenant_id: conv.tenant_id,
         conversation_id: conv.id,
@@ -111,7 +231,11 @@ Deno.serve(async (req) => {
         metadata: { visitor_hash },
       }).select('id, created_at').single();
       if (error) throw error;
-      return json({ id: data.id, created_at: data.created_at });
+      scheduleBackground(processInboundAsync({
+        site, conversation_id: conv.id, tenant_id: conv.tenant_id,
+        message: String(message ?? ''), is_after_hours: !bh.open,
+      }));
+      return json({ id: data.id, created_at: data.created_at, online: bh.open });
     }
 
     if (action === 'poll') {
@@ -119,7 +243,7 @@ Deno.serve(async (req) => {
       const conv = await loadConversation(conversation_id, site.id);
       if (!conv) return json({ error: 'conversation not found' }, 404);
       let q = supabase.from('ac_messages')
-        .select('id, direction, sender_name, body, created_at')
+        .select('id, direction, sender_name, sender_type, body, created_at')
         .eq('conversation_id', conv.id)
         .eq('is_internal_note', false)
         .order('created_at', { ascending: true }).limit(100);
