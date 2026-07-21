@@ -96,6 +96,8 @@ export default function AlixConnectKnowledgeBase() {
               <option value="archived">Archiviert</option>
             </select>
             <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={editing.public_visible} onChange={e => setEditing({ ...editing, public_visible: e.target.checked })} />öffentlich sichtbar</label>
+            {editing.id && editing.status === 'draft' && <Button size="sm" variant="outline" onClick={() => submitForReview(editing)}>Zur Prüfung einreichen</Button>}
+            {editing.id && editing.status === 'review' && (<><Button size="sm" variant="outline" onClick={() => rejectArticle(editing)}>Ablehnen</Button><Button size="sm" onClick={() => approveArticle(editing)}>Freigeben</Button></>)}
             <Button size="sm" className="ml-auto" onClick={save}><Save className="h-4 w-4 mr-1" />Speichern & Indizieren</Button>
           </div>
         </Card>
