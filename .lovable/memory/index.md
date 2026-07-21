@@ -50,3 +50,5 @@
 - [Finance Phase 13 Konzern-Konsolidierung](mem://features/finance-phase13) — Monatskonsolidierung mit IC-Eliminierung + FX-Umrechnung
 - [Finance Phase 14 Treasury+P2P+Meldewesen](mem://features/finance-phase14) — Bankkonten/Liquidität/Freigaben, PR→PO→Wareneingang→3-Way-Match, UStVA/ZM/OSS/Intrastat/E-Bilanz Export
 - [Customer SMS Versand](mem://features/customer-sms) — Tab in Kundenakte sendet PDF-Dokumente per Twilio-SMS mit signiertem /d/:token-Link, Tabelle customer_sms_logs, Edge Function send-customer-sms
+- [ALIX CONNECT Phase 26](mem://features/alix-connect-phase26) — Predictive CX, Proactive Outreach, Revenue Attribution
+- [ALIX CONNECT Phase 27](mem://features/alix-connect-phase27) — Conversational AI Studio, Voice Analytics, Customer Health & Lifecycle
