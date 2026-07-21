@@ -153,8 +153,8 @@ export default function AuftragsImport() {
 
   function downloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['Kunde'],
-      ['Beispiel Kunde GmbH'],
+      ['Kunde', 'Kontaktname'],
+      ['Beispiel Kunde GmbH', 'Max Mustermann'],
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Kunden');
