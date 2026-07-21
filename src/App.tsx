@@ -346,6 +346,9 @@ const AlixConnectJourneyOrchestrator = lazy(() => import("./pages/AlixConnect/Jo
 const AlixConnectInsightsCockpit = lazy(() => import("./pages/AlixConnect/InsightsCockpit"));
 const AlixConnectSlaEngine = lazy(() => import("./pages/AlixConnect/SlaEngine"));
 const AlixConnectCopilotActions = lazy(() => import("./pages/AlixConnect/CopilotActions"));
+const AlixConnectRevenueIntelligence = lazy(() => import("./pages/AlixConnect/RevenueIntelligence"));
+const AlixConnectQualityCoaching = lazy(() => import("./pages/AlixConnect/QualityCoaching"));
+const AlixConnectOmnichannelCampaigns = lazy(() => import("./pages/AlixConnect/OmnichannelCampaigns"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
