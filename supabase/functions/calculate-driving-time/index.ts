@@ -161,21 +161,40 @@ serve(async (req) => {
       // 2) Matrix request: locations[0] = origin, rest = destinations
       const locations = [ORIGIN_COORDS, ...valid.map((v) => v.coords)];
       const matrixUrl = `${ORS_BASE}/v2/matrix/driving-car`;
-      const matrixResp = await fetch(matrixUrl, {
-        method: "POST",
-        headers: {
-          "Authorization": ORS_API_KEY,
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-        body: JSON.stringify({
-          locations,
-          sources: [0],
-          destinations: valid.map((_, idx) => idx + 1),
-          metrics: ["duration", "distance"],
-          units: "m",
-        }),
+      const body = JSON.stringify({
+        locations,
+        sources: [0],
+        destinations: valid.map((_, idx) => idx + 1),
+        metrics: ["duration", "distance"],
+        units: "m",
       });
+
+      let matrixResp: Response | null = null;
+      let lastErr: unknown = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          matrixResp = await fetch(matrixUrl, {
+            method: "POST",
+            headers: {
+              "Authorization": ORS_API_KEY,
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+            },
+            body,
+          });
+          break;
+        } catch (e) {
+          lastErr = e;
+          console.warn(`ORS Matrix fetch attempt ${attempt + 1} failed:`, (e as Error).message);
+          await sleep(500 * (attempt + 1));
+        }
+      }
+
+      if (!matrixResp) {
+        console.error("ORS Matrix unreachable after retries:", (lastErr as Error)?.message);
+        valid.forEach((v) => { results[v.id] = null; });
+        continue;
+      }
 
       if (!matrixResp.ok) {
         const txt = await matrixResp.text();
