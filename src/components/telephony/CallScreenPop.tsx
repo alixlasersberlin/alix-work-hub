@@ -178,7 +178,7 @@ export default function CallScreenPop() {
                       <Link to={`/verkauf/auftraege/${o.id}`} className="font-mono text-xs text-primary hover:underline" onClick={dismiss}>
                         {o.order_number ?? o.id.slice(0, 8)}
                       </Link>
-                      <span className="text-xs text-muted-foreground">{o.status ?? '—'}</span>
+                      <span className="text-xs text-muted-foreground">{o.order_status ?? '—'}</span>
                     </li>
                   ))}
                 </ul>
