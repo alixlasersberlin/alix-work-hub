@@ -93,6 +93,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/field-dispatch", label: "Field Dispatch 2.0", icon: RouteIcon },
       { to: "/connect/realtime-collab", label: "Realtime Collab", icon: Radio },
       { to: "/connect/compliance-automation", label: "Compliance Automation", icon: Shield },
+      { to: "/connect/sales-forecast", label: "Sales Forecast", icon: TrendingUp },
       { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
       { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
