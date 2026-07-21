@@ -60,9 +60,7 @@ export default function AuftragsImport() {
         .filter(Boolean)));
 
       const foundNames = new Map<string, any[]>();
-      const addHit = (name: string, hit: any) => {
-        const key = normName(name);
-        if (!key) return;
+      const addHit = (key: string, hit: any) => {
         const arr = foundNames.get(key) ?? [];
         arr.push(hit);
         foundNames.set(key, arr);
@@ -75,18 +73,20 @@ export default function AuftragsImport() {
         { table: 'repair_orders', label: 'Reparatur', numCol: 'repair_number', select: 'id, repair_number, customer_name, status', route: '/repair' },
       ];
 
-      for (let i = 0; i < names.length; i += 50) {
-        const chunk = names.slice(i, i + 50);
-        const orFilter = chunk.map(n => `customer_name.ilike.%${n.replace(/[,()%]/g, '')}%`).join(',');
+      // Per-name token search — matches regardless of word order ("Jogl, Michelle" vs "Michelle Jogl").
+      const cleanTok = (s: string) => s.replace(/[,%()]/g, ' ').replace(/\s+/g, ' ').trim();
+      for (const name of names) {
+        const key = normName(name);
+        if (!key) continue;
+        const tokens = key.split(' ').map(cleanTok).filter(t => t.length >= 3);
+        if (!tokens.length) continue;
         for (const src of sources) {
           try {
-            const { data } = await (supabase as any)
-              .from(src.table)
-              .select(src.select)
-              .or(orFilter)
-              .limit(1000);
+            let q: any = (supabase as any).from(src.table).select(src.select).limit(200);
+            for (const t of tokens) q = q.ilike('customer_name', `%${t}%`);
+            const { data } = await q;
             (data ?? []).forEach((o: any) => {
-              addHit(String(o.customer_name ?? ''), {
+              addHit(key, {
                 id: o.id,
                 order_number: o[src.numCol] ?? '',
                 customer_name: o.customer_name,
@@ -103,12 +103,7 @@ export default function AuftragsImport() {
       const results = rows.map((r, idx) => {
         const name = String(r[nameKey] ?? '').trim();
         const nameL = normName(name);
-        const matches: any[] = [];
-        if (nameL) {
-          for (const [k, arr] of foundNames) {
-            if (k === nameL || k.includes(nameL) || nameL.includes(k)) matches.push(...arr);
-          }
-        }
+        const matches = nameL ? (foundNames.get(nameL) ?? []) : [];
         return {
           idx,
           input: { num: '', name, raw: r },
