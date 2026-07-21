@@ -55,11 +55,12 @@ export default function AlixConnectJourneyAnalytics() {
   };
 
   const max = Math.max(1, ...funnel.map(f => f.count));
-  const byChannel = convos.reduce((acc: any, c: any) => { acc[c.channel ?? 'unknown'] = (acc[c.channel ?? 'unknown'] ?? 0) + 1; return acc; }, {});
+  const byChannel = convos.reduce((acc: any, c: any) => { acc[c.channel_type ?? 'unknown'] = (acc[c.channel_type ?? 'unknown'] ?? 0) + 1; return acc; }, {});
   const closed = convos.filter(c => c.closed_at).length;
   const closeRate = convos.length ? Math.round((closed / convos.length) * 100) : 0;
-  const negSent = convos.filter(c => c.sentiment && c.sentiment < 0).length;
+  const negSent = convos.filter(c => c.ai_sentiment === 'negative').length;
   const churnRisk = convos.length ? Math.round((negSent / convos.length) * 100) : 0;
+  const maxAttr = Math.max(1, ...attribution.map((a: any) => Number(a.last_touch) || 0));
 
   return (
     <div className="h-full overflow-auto p-6 space-y-4">
