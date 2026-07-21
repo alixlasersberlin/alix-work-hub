@@ -230,7 +230,8 @@ export default function AlixConnectTelephony() {
                       const { data, error } = await supabase.from("tickets").insert({
                         subject: `Anruf ${c.direction === "inbound" ? "von" : "an"} ${c.from_number ?? c.to_number ?? "unbekannt"}`,
                         description: c.voicemail_transcript ?? c.notes ?? `Anruf am ${new Date(c.started_at).toLocaleString("de-DE")}`,
-                        status: "open", priority: "normal", channel: "phone",
+                        status: "open", priority: "normal", source: "phone",
+                        customer_phone: c.from_number ?? c.to_number,
                       }).select().single();
                       if (error || !data) { toast.error("Ticket konnte nicht erstellt werden"); return; }
                       await supabase.from("ac_calls").update({ ticket_id: (data as any).id }).eq("id", c.id);
