@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Sparkles, Eye, EyeOff, Plus, Save } from 'lucide-react';
+import { BookOpen, Sparkles, Eye, EyeOff, Plus, Save, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Article = { id: string; title: string; content: string; category: string | null; tags: string[]; status: string; public_visible: boolean; version: number; updated_at: string; submitted_for_review_at?: string | null; reviewed_by?: string | null; reviewed_at?: string | null; review_notes?: string | null };
