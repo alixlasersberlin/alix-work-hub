@@ -71,7 +71,17 @@ export default function AlixConnectKnowledgeBase() {
           <h2 className="text-lg font-semibold flex items-center gap-2"><BookOpen className="h-4 w-4 text-primary" /> Knowledge Base 2.0 <Badge variant="outline">AI-Search</Badge></h2>
           <p className="text-sm text-muted-foreground">Redaktion, Versionen, semantische Suche (Embeddings).</p>
         </div>
-        <Button size="sm" onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />Neuer Artikel</Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={async () => {
+            const t = toast.loading('AI erzeugt Entwürfe aus Konversationen…');
+            const { data, error } = await supabase.functions.invoke('ac-kb-ai-draft', { body: { limit: 5, days_back: 7 } });
+            toast.dismiss(t);
+            if (error) return toast.error(error.message);
+            const n = (data as any)?.drafts?.length ?? 0;
+            toast.success(`${n} Entwürfe erzeugt (Status: Review)`); load();
+          }}><Wand2 className="h-4 w-4 mr-1" />AI-Draft aus Konversationen</Button>
+          <Button size="sm" onClick={() => setEditing(empty)}><Plus className="h-4 w-4 mr-1" />Neuer Artikel</Button>
+        </div>
       </div>
 
       <Input placeholder="Suche…" value={q} onChange={e => setQ(e.target.value)} className="max-w-md" />

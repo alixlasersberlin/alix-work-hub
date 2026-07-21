@@ -13,20 +13,26 @@ export default function AlixConnectJourneyAnalytics() {
   const [funnel, setFunnel] = useState<Funnel[]>([]);
   const [convos, setConvos] = useState<any[]>([]);
   const [segments, setSegments] = useState<any[]>([]);
+  const [attribution, setAttribution] = useState<any[]>([]);
+  const [cohorts, setCohorts] = useState<any[]>([]);
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
   const [newSeg, setNewSeg] = useState({ name: '', description: '', minTouchpoints: 3 });
 
   const load = async () => {
     setLoading(true);
-    const [f, c, s] = await Promise.all([
+    const [f, c, s, at, co] = await Promise.all([
       supabase.rpc('ac_journey_funnel', { days_back: days }),
-      supabase.from('ac_conversations').select('id, channel, status, created_at, closed_at, sentiment').order('created_at', { ascending: false }).limit(500),
+      supabase.from('ac_conversations').select('id, channel_type, status, created_at, closed_at, ai_sentiment').order('created_at', { ascending: false }).limit(500),
       supabase.from('ac_journey_segments').select('*').order('updated_at', { ascending: false }),
+      supabase.rpc('ac_journey_attribution', { days_back: days }),
+      supabase.rpc('ac_journey_cohorts', { weeks: 8 }),
     ]);
     setFunnel(((f.data as any) ?? []).map((r: any) => ({ stage: r.stage, count: Number(r.count) })));
     setConvos((c.data as any) ?? []);
     setSegments((s.data as any) ?? []);
+    setAttribution((at.data as any) ?? []);
+    setCohorts((co.data as any) ?? []);
     setLoading(false);
   };
   useEffect(() => { load(); }, [days]);
