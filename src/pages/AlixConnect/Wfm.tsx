@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Users, TrendingUp, Calendar, Activity } from 'lucide-react';
+import { Users, TrendingUp, Calendar, Activity, Zap, Gauge } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Shift = { id: string; agent_id: string; shift_start: string; shift_end: string; shift_type: string; status: string; notes: string | null };
@@ -18,18 +18,39 @@ export default function AlixConnectWfm() {
   const [agentId, setAgentId] = useState('');
   const [start, setStart] = useState('');
   const [end, setEnd] = useState('');
+  const [adherence, setAdherence] = useState<any[]>([]);
+  const [autoForecast, setAutoForecast] = useState<any[]>([]);
 
   const load = async () => {
     setLoading(true);
-    const [s, f, a] = await Promise.all([
+    const [s, f, a, ad, af] = await Promise.all([
       supabase.from('ac_wfm_shifts').select('*').order('shift_start', { ascending: false }).limit(50),
       supabase.from('ac_wfm_forecasts').select('*').order('interval_start', { ascending: true }).limit(48),
       supabase.from('user_profiles').select('id, full_name').limit(200),
+      supabase.rpc('ac_wfm_adherence_live'),
+      supabase.rpc('ac_wfm_auto_forecast', { horizon_hours: 24 }),
     ]);
     setShifts((s.data as any) ?? []);
     setForecasts((f.data as any) ?? []);
     setAgents(((a.data as any) ?? []).map((u: any) => ({ id: u.id, name: u.full_name ?? u.id })));
+    setAdherence((ad.data as any) ?? []);
+    setAutoForecast((af.data as any) ?? []);
     setLoading(false);
+  };
+
+  const applyAutoForecast = async () => {
+    if (autoForecast.length === 0) return toast.error('Keine Auto-Prognose vorhanden');
+    const rows = autoForecast.map((r: any) => ({
+      forecast_date: r.interval_start.slice(0, 10),
+      channel: r.channel,
+      interval_start: r.interval_start,
+      predicted_volume: r.predicted_volume,
+      predicted_aht_sec: 300,
+      required_agents: r.required_agents,
+    }));
+    const { error } = await supabase.from('ac_wfm_forecasts').insert(rows);
+    if (error) return toast.error(error.message);
+    toast.success(`${rows.length} Auto-Prognose-Intervalle übernommen`); load();
   };
   useEffect(() => { load(); }, []);
 
@@ -105,6 +126,7 @@ export default function AlixConnectWfm() {
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={generateForecast}><TrendingUp className="h-4 w-4 mr-1" />Forecast 24h</Button>
+          <Button size="sm" variant="outline" onClick={applyAutoForecast}><Zap className="h-4 w-4 mr-1" />Auto-Forecast (30d)</Button>
           <Button size="sm" onClick={autoSchedule}><Calendar className="h-4 w-4 mr-1" />Auto-Scheduler</Button>
         </div>
       </div>
@@ -156,6 +178,20 @@ export default function AlixConnectWfm() {
           )}
         </Card>
       </div>
+
+      <Card className="p-4">
+        <div className="text-sm font-semibold mb-3 flex items-center gap-2"><Gauge className="h-4 w-4 text-primary" /> Live-Adherence (letzte 24h)</div>
+        {adherence.length === 0 ? <div className="text-xs text-muted-foreground">Keine Adherence-Daten – erfordert geplante Schichten und Presence-Events.</div> : (
+          <div className="grid md:grid-cols-2 gap-2">
+            {adherence.slice(0, 20).map((a: any) => (
+              <div key={a.agent_id} className="border rounded p-2">
+                <div className="flex justify-between text-xs mb-1"><span className="font-medium">{a.agent_name ?? a.agent_id?.slice(0,8)}</span><span>{a.adherence_pct}% · {a.actual_minutes}/{a.scheduled_minutes} min</span></div>
+                <div className="h-2 bg-muted rounded"><div className={`h-2 rounded ${Number(a.adherence_pct) >= 80 ? 'bg-green-500' : Number(a.adherence_pct) >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${Math.min(100, Number(a.adherence_pct))}%` }} /></div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }
