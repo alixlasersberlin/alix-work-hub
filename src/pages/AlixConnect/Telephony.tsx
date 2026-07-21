@@ -42,6 +42,10 @@ type PbxSettings = {
   extension: string;
   webhook_secret: string;
   enabled: boolean;
+  missed_call_sms_enabled?: boolean;
+  missed_call_sms_template?: string;
+  missed_call_sms_business_hours_only?: boolean;
+  missed_call_sms_cooldown_minutes?: number;
 };
 
 const iconFor = (c: Call) => {
@@ -276,6 +280,47 @@ export default function AlixConnectTelephony() {
               <div><strong>Webhook-URL für 3CX:</strong> <code className="text-primary">{webhookUrl}</code></div>
               <div>Sende Call-Events (ringing/answered/ended/voicemail) als JSON POST mit Header <code>x-3cx-signature: &lt;secret&gt;</code>.</div>
             </div>
+
+            <Separator />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">SMS bei verpasstem Anruf</Label>
+                  <p className="text-xs text-muted-foreground">Sendet automatisch eine SMS an eingehende Anrufer, deren Anruf verpasst wurde.</p>
+                </div>
+                <Switch
+                  checked={!!settings.missed_call_sms_enabled}
+                  onCheckedChange={(v) => setSettings({ ...settings, missed_call_sms_enabled: v })}
+                />
+              </div>
+              <div>
+                <Label>Nachrichten-Template</Label>
+                <textarea
+                  className="mt-1 w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={settings.missed_call_sms_template ?? ""}
+                  onChange={(e) => setSettings({ ...settings, missed_call_sms_template: e.target.value })}
+                  placeholder="Hallo, wir haben Ihren Anruf leider verpasst…"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={!!settings.missed_call_sms_business_hours_only}
+                    onCheckedChange={(v) => setSettings({ ...settings, missed_call_sms_business_hours_only: v })}
+                  />
+                  <Label>Nur innerhalb der Öffnungszeiten senden</Label>
+                </div>
+                <div>
+                  <Label>Cooldown pro Nummer (Minuten)</Label>
+                  <Input
+                    type="number"
+                    value={settings.missed_call_sms_cooldown_minutes ?? 60}
+                    onChange={(e) => setSettings({ ...settings, missed_call_sms_cooldown_minutes: parseInt(e.target.value || "60") })}
+                  />
+                </div>
+              </div>
+            </div>
+
             <Button onClick={saveSettings} disabled={saving}><Save className="h-4 w-4 mr-2" />Speichern</Button>
           </CardContent>
         </Card>
