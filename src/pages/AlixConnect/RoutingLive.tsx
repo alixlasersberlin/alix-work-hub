@@ -74,7 +74,7 @@ export default function RoutingLive() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Kpi icon={Users} label="Agenten online" value={online} sub={`${busy} beschäftigt`} />
         <Kpi icon={Zap} label="Routing-Events / 1h" value={decisions.length} />
-        <Kpi icon={Clock} label="Ø Wartezeit" value={`${(avgWait / 1000).toFixed(1)}s`} />
+        <Kpi icon={Clock} label="Ø Routing-Score" value={avgScore} />
         <Kpi icon={Activity} label="Unassigned" value={unassigned} sub={`${convs.length} offen`} accent={unassigned > 5} />
       </div>
 
