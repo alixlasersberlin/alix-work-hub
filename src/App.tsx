@@ -1329,6 +1329,7 @@ function AppRoutes() {
             <Route path="realtime-collab" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRealtimeCollab /></ProtectedRoute>} />
             <Route path="compliance-automation" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectComplianceAutomation /></ProtectedRoute>} />
             <Route path="sales-forecast" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectSalesForecast /></ProtectedRoute>} />
+            <Route path="conversation-qa" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectConversationQA /></ProtectedRoute>} />
 
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />

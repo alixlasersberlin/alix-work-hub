@@ -35,7 +35,7 @@ import alixLogo from '@/assets/alix-logo-gold.png';
 
 
 
-const APP_VERSION = '5.11';
+const APP_VERSION = '5.12';
 
 type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 type NavItem = NavChild & { children?: NavChild[] };
@@ -544,6 +544,8 @@ export const navItems: NavItem[] = [
       { path: '/connect/realtime-collab', label: 'Realtime Collab', icon: Users, roles: ['Admin','Super Admin'] },
       { path: '/connect/compliance-automation', label: 'Compliance Automation', icon: ShieldCheck, roles: ['Admin','Super Admin'] },
       { path: '/connect/revenue-attribution', label: 'Revenue Attribution', icon: TrendingUp, roles: ['Admin','Super Admin'] },
+      { path: '/connect/sales-forecast', label: 'Sales Forecast', icon: TrendingUp, roles: ['Admin','Super Admin'] },
+      { path: '/connect/conversation-qa', label: 'Conversation QA', icon: ShieldCheck, roles: ['Admin','Super Admin'] },
     ],
   },
 
