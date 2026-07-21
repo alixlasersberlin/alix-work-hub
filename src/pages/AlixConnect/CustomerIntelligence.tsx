@@ -19,9 +19,9 @@ export default function CustomerIntelligence() {
 
   useEffect(() => {
     (async () => {
-      const query = supabase.from("ac_contacts").select("id, name, email, phone").order("updated_at", { ascending: false }).limit(50);
-      const { data } = q ? await query.ilike("name", `%${q}%`) : await query;
-      setContacts(data ?? []);
+      const query = supabase.from("ac_contacts").select("id, full_name, email, phone").order("updated_at", { ascending: false }).limit(50);
+      const { data } = q ? await query.ilike("full_name", `%${q}%`) : await query;
+      setContacts(((data ?? []) as any[]).map((c) => ({ id: c.id, name: c.full_name, email: c.email, phone: c.phone })));
     })();
   }, [q]);
 
@@ -34,9 +34,9 @@ export default function CustomerIntelligence() {
       if (error) throw error;
       setResult(data);
       const { data: hist } = await supabase.from("ac_predictions")
-        .select("created_at, score, metadata").eq("contact_id", c.id).eq("prediction_type", "customer_intelligence")
+        .select("created_at, score, payload").eq("contact_id", c.id).eq("kind", "customer_intelligence")
         .order("created_at", { ascending: false }).limit(10);
-      setHistory(hist ?? []);
+      setHistory((hist ?? []).map((h: any) => ({ ...h, metadata: h.payload })));
     } catch (e: any) {
       toast.error(e.message ?? "Fehler");
     } finally { setLoading(false); }
