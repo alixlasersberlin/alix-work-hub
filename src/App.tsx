@@ -1221,6 +1221,10 @@ function AppRoutes() {
             <Route path="websites/:id/analytics" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsiteAnalytics /></ProtectedRoute>} />
             <Route path="analytics" element={<AlixConnectAnalytics />} />
             <Route path="settings" element={<AlixConnectSettings />} />
+            <Route path="voice-ai" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectVoiceAi /></ProtectedRoute>} />
+            <Route path="cockpit" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectCockpit /></ProtectedRoute>} />
+            <Route path="meetings" element={<AlixConnectMeetings />} />
+            <Route path="meetings/:code" element={<AlixConnectMeetingRoom />} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
