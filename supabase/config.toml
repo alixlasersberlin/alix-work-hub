@@ -302,3 +302,12 @@ verify_jwt = false
 
 [functions.ac-revenue-intel-v2]
 verify_jwt = false
+
+[functions.ac-predictive-engagement]
+verify_jwt = false
+
+[functions.ac-knowledge-rag]
+verify_jwt = false
+
+[functions.ac-translate-live]
+verify_jwt = false
