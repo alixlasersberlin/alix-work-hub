@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2 } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck } from 'lucide-react';
+import EscBookings from '@/pages/ESC/Bookings';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -211,7 +212,35 @@ export default function TicketsList() {
     () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'reklamation'),
     [filtered],
   );
-  const [tab, setTab] = useState<'open' | 'closed' | 'wartung' | 'reklamation'>('open');
+  const neueRows = useMemo(
+    () => filtered.filter(r => !isClosed(r.status) && ['offen', 'open', 'neu', 'Neu'].includes(r.status)),
+    [filtered],
+  );
+  const overdueRows = useMemo(() => {
+    const now = Date.now();
+    return filtered.filter(r => !isClosed(r.status) && r.due_at && new Date(r.due_at).getTime() < now);
+  }, [filtered]);
+  const escalatedRows = useMemo(
+    () => filtered.filter(r => !isClosed(r.status) && (r.escalation_count || 0) > 0),
+    [filtered],
+  );
+  const wartetKundeRows = useMemo(
+    () => filtered.filter(r => ['wartet_kunde', 'wartet_Kunde'].includes(r.status)),
+    [filtered],
+  );
+
+  type TabKey = 'open' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
+  const initialTab: TabKey = (() => {
+    const s = searchParams.get('status');
+    const d = searchParams.get('due');
+    if (searchParams.get('escalated') === '1') return 'escalated';
+    if (d === 'overdue') return 'overdue';
+    if (s === 'Neu' || s === 'neu' || s === 'offen' || s === 'open') return 'neu';
+    if (s && s.toLowerCase().startsWith('warten')) return 'wartet';
+    if (searchParams.get('view') === 'bookings') return 'bookings';
+    return 'open';
+  })();
+  const [tab, setTab] = useState<TabKey>(initialTab);
 
 
   const sources = useMemo(() => Array.from(new Set(rows.map(r => r.source_system).filter(Boolean))) as string[], [rows]);
