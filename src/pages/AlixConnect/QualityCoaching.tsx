@@ -74,7 +74,7 @@ export default function QualityCoaching() {
       <PageHeader
         title="AI Quality & Coaching"
         subtitle="Auto-QA für 100% aller Gespräche · Scorecards · Skill-Gaps · KI-Coaching-Empfehlungen"
-        icon={<GraduationCap className="h-5 w-5" />}
+        icon={GraduationCap}
       />
 
       <div className="flex flex-wrap items-center gap-2">

@@ -80,7 +80,7 @@ export default function OmnichannelCampaigns() {
       <PageHeader
         title="Omnichannel Campaigns"
         subtitle="Email · SMS · WhatsApp · Voice · A/B-Testing · Attribution"
-        icon={<Megaphone className="h-5 w-5" />}
+        icon={Megaphone}
       />
 
       <Card>

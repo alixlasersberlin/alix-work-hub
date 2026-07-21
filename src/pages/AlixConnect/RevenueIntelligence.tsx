@@ -67,7 +67,7 @@ export default function RevenueIntelligence() {
       <PageHeader
         title="Revenue Intelligence"
         subtitle="Pipeline-Impact, ROI-Cockpit & Forecast pro Kanal / Kampagne / Journey"
-        icon={<TrendingUp className="h-5 w-5" />}
+        icon={TrendingUp}
       />
 
       <div className="flex flex-wrap items-center gap-2">
