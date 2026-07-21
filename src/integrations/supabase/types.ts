@@ -1550,8 +1550,11 @@ export type Database = {
           description: string | null
           enabled: boolean
           id: string
+          max_score: number | null
+          min_score: number | null
           name: string
           stage: string
+          throttle_days: number
           updated_at: string
         }
         Insert: {
@@ -1560,8 +1563,11 @@ export type Database = {
           description?: string | null
           enabled?: boolean
           id?: string
+          max_score?: number | null
+          min_score?: number | null
           name: string
           stage: string
+          throttle_days?: number
           updated_at?: string
         }
         Update: {
@@ -1570,8 +1576,11 @@ export type Database = {
           description?: string | null
           enabled?: boolean
           id?: string
+          max_score?: number | null
+          min_score?: number | null
           name?: string
           stage?: string
+          throttle_days?: number
           updated_at?: string
         }
         Relationships: []

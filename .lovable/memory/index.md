@@ -52,3 +52,4 @@
 - [Customer SMS Versand](mem://features/customer-sms) — Tab in Kundenakte sendet PDF-Dokumente per Twilio-SMS mit signiertem /d/:token-Link, Tabelle customer_sms_logs, Edge Function send-customer-sms
 - [ALIX CONNECT Phase 26](mem://features/alix-connect-phase26) — Predictive CX, Proactive Outreach, Revenue Attribution
 - [ALIX CONNECT Phase 27](mem://features/alix-connect-phase27) — Conversational AI Studio, Voice Analytics, Customer Health & Lifecycle
+- [ALIX CONNECT Phase 28](mem://features/alix-connect-phase28) — Playbook Automation Engine (ac-playbook-run, /connect/playbooks)
