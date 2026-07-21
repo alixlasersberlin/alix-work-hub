@@ -30,8 +30,8 @@ const fmt = (n: number | null | undefined, c = 'EUR') =>
 
 export default function FinanceEingangsrechnungen() {
   const { roles } = useAuth();
-  const canApprove = roles.includes('Super Admin') || roles.includes('Geschäftsführung');
-  const isSuperAdmin = roles.includes('Super Admin');
+  const canApprove = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Geschäftsführung');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const fileRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

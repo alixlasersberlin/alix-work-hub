@@ -38,7 +38,7 @@ type Customer = { id: string; company_name: string | null; contact_name: string 
 
 export default function AlixDocsSearch() {
   const { roles } = useAuth();
-  const canDelete = roles.includes('Super Admin') || roles.includes('Admin');
+  const canDelete = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin');
 
   const [docs, setDocs] = useState<Doc[]>([]);
   const [cats, setCats] = useState<Cat[]>([]);

@@ -7,9 +7,9 @@
 - Supabase backend. NEVER create new tables; strictly use existing schema.
 - Role-Based Access Control (RBAC): Admins have full access, specialists have scoped access.
 - Zoho `orders.order_number` is immutable — never overwrite in DB or sync; combine only for display.
-- Production-Bestellungen (inkl. Reklamationen) müssen von Super Admin genehmigt werden, bevor PDF gesendet/heruntergeladen werden kann und bevor Lieferanten sie sehen.
+- Production-Bestellungen (inkl. Reklamationen) müssen von Super Admin/Admin genehmigt werden, bevor PDF gesendet/heruntergeladen werden kann und bevor Lieferanten sie sehen.
 - Alix Austria (`source_system='zoho_eu_2'`): UI-Suffix "-AT" für Kunden- und Auftragsnummer; bei Artikeln (item_name+sku) wird "-AT" direkt beim Sync in die DB geschrieben.
-- DELETE auf allen Tabellen ist ausschließlich Super Admin erlaubt (RLS via `has_role('Super Admin')`).
+- **Rolle Admin = Rolle Super Admin**: `has_role('Super Admin')` (DB & Frontend) liefert für Admin-Nutzer ebenfalls true. Damit haben Admins volle Rechte inkl. Löschen, OPERATIONS-Menü, Wartungsmodus, Order-Approval, Alix Sign Pro, Facsimile-Sign, Finance-Sync.
 - Neue Rolle **QM** existiert ausschließlich für das Bug & CAPA Modul (`/bug-capa`).
 - Versionierung: `APP_VERSION` in `src/components/AppLayout.tsx` bei jedem Publish um 0.01 erhöhen (Start 5.0 → 5.01 → 5.02 …). Details: [App Versioning](mem://features/app-versioning)
 

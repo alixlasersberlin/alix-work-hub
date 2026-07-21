@@ -70,7 +70,7 @@ const ROLLOUT = [
 
 export default function Schulungscenter() {
   const { roles } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rollout, setRollout] = useState(ROLLOUT);
   const [pilotFeedback, setPilotFeedback] = useState('');
 

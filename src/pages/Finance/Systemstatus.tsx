@@ -19,7 +19,7 @@ const STATUS = [
 
 export default function FinanceSystemstatus() {
   const { roles } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [running, setRunning] = useState(false);
   const [last, setLast] = useState<any>(null);
 

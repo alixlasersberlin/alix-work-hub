@@ -18,7 +18,7 @@ const DEFAULT_CFG = {
 
 export default function FinanceDatev() {
   const { roles } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const today = new Date().toISOString().slice(0, 10);
   const monthStart = today.slice(0, 8) + '01';
   const [from, setFrom] = useState(monthStart);

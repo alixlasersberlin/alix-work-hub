@@ -28,8 +28,8 @@ const fmtEUR = (n: any) => new Intl.NumberFormat('de-DE', { style: 'currency', c
 
 export default function FinanceAnlagen() {
   const { roles } = useAuth();
-  const canEdit = roles.includes('Super Admin') || roles.includes('Admin') || roles.includes('Finance');
-  const isSuperAdmin = roles.includes('Super Admin');
+  const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<any[]>([]);

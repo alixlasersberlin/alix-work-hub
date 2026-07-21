@@ -28,7 +28,7 @@ const LABELS = ['—', 'Zahlungserinnerung', '1. Mahnung', '2. Mahnung', 'Letzte
 
 export default function FinanceMahnwesenSettings() {
   const { roles } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [cfg, setCfg] = useState<Cfg>(DEFAULT_CFG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

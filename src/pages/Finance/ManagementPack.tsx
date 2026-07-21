@@ -25,8 +25,8 @@ const SECTIONS = [
 
 export default function FinanceManagementPack() {
   const { roles } = useAuth();
-  const canEdit = roles.includes('Super Admin') || roles.includes('Admin') || roles.includes('Finance');
-  const isSuper = roles.includes('Super Admin');
+  const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
+  const isSuper = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [show, setShow] = useState(false);

@@ -886,7 +886,7 @@ function HomeRoute() {
     return <Navigate to="/finanzierungen" replace />;
   }
   // Rolle Österreich (ohne Admin) bekommt dediziertes AT-Dashboard
-  if (roles.includes('Österreich') && !roles.includes('Super Admin') && !roles.includes('Admin')) {
+  if (roles.includes('Österreich') && !(roles.includes('Super Admin') || roles.includes('Admin')) && !roles.includes('Admin')) {
     return <Navigate to="/at-dashboard" replace />;
   }
   return <Dashboard />;

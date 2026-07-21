@@ -86,7 +86,7 @@ interface Row {
 export default function ProductionOrderIn() {
   const navigate = useNavigate();
   const { roles } = useAuth();
-  const isAdmin = roles.includes('Admin') || roles.includes('Super Admin');
+  const isAdmin = roles.includes('Admin') || (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
