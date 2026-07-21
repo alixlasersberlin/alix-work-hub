@@ -666,6 +666,15 @@ export const navItems: NavItem[] = [
         ],
       },
 
+      {
+        path: '#tickets-setup', label: 'TICKETS SETUP', icon: Ticket, roles: ['Admin', 'Super Admin'],
+        children: [
+          { path: '/operation/ticket-abteilungen', label: 'Abteilungen (Routing)', icon: FolderTree, roles: ['Super Admin'] },
+          { path: '/tickets/sync',                 label: 'Sync-Monitor',           icon: Activity,   roles: ['Super Admin', 'Admin'] },
+          { path: '/tickets/api-sync',             label: 'API-Sync Einstellungen', icon: Settings,   roles: ['Super Admin'] },
+        ],
+      },
+
 
 
       {
