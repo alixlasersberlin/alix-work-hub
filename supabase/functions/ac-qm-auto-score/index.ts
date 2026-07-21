@@ -54,6 +54,7 @@ Deno.serve(async (req) => {
     }
     const percent = maxPossible > 0 ? Number(((weighted / maxPossible) * 100).toFixed(1)) : 0;
 
+    const coachingRequired = !!parsed.coaching_required || percent < 70;
     const { data: evalRow, error } = await sb.from('ac_qm_evaluations').insert({
       scorecard_id, call_id, agent_user_id: call.agent_user_id ?? null,
       scores: parsed.scores ?? {},
@@ -61,11 +62,43 @@ Deno.serve(async (req) => {
       notes: parsed.notes ?? null,
       ai_generated: true,
       status: 'completed',
-      coaching_required: !!parsed.coaching_required || percent < 70,
+      coaching_required: coachingRequired,
     }).select().single();
     if (error) throw error;
 
-    return new Response(JSON.stringify({ ok: true, evaluation: evalRow, percent }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    // Auto-Coaching: bei 2 aufeinanderfolgenden schlechten Scores (<70) Session anlegen
+    let coachingCreated = false;
+    if (coachingRequired && call.agent_user_id) {
+      const { data: recent } = await sb
+        .from('ac_qm_evaluations')
+        .select('percent, created_at')
+        .eq('agent_user_id', call.agent_user_id)
+        .order('created_at', { ascending: false })
+        .limit(2);
+      const bothBad = (recent ?? []).length >= 2 && recent!.every((r: any) => Number(r.percent) < 70);
+      if (bothBad) {
+        const { data: existing } = await sb
+          .from('ac_qm_coaching_sessions')
+          .select('id')
+          .eq('agent_id', call.agent_user_id)
+          .in('status', ['scheduled', 'in_progress'])
+          .limit(1);
+        if (!existing?.length) {
+          await sb.from('ac_qm_coaching_sessions').insert({
+            agent_id: call.agent_user_id,
+            evaluation_id: evalRow.id,
+            scheduled_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+            duration_min: 30,
+            topics: ['auto-generated'],
+            improvements: parsed.notes ?? `Auto-Trigger: 2× Score < 70% (zuletzt ${percent}%)`,
+            status: 'scheduled',
+          });
+          coachingCreated = true;
+        }
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true, evaluation: evalRow, percent, coaching_created: coachingCreated }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message || String(e) }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }

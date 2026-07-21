@@ -328,6 +328,7 @@ const AlixConnectRouting = lazy(() => import("./pages/AlixConnect/Routing"));
 const AlixConnectCopilot = lazy(() => import("./pages/AlixConnect/Copilot"));
 const AlixConnectQualityMgmt = lazy(() => import("./pages/AlixConnect/QualityMgmt"));
 const AlixConnectRoutingSimulator = lazy(() => import("./pages/AlixConnect/RoutingSimulator"));
+const AlixConnectRoutingLive = lazy(() => import("./pages/AlixConnect/RoutingLive"));
 const AlixConnectQmCalibration = lazy(() => import("./pages/AlixConnect/QmCalibration"));
 const AlixConnectQmCoaching = lazy(() => import("./pages/AlixConnect/QmCoaching"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
@@ -1235,6 +1236,8 @@ function AppRoutes() {
             <Route path="copilot" element={<AlixConnectCopilot />} />
             <Route path="qm" element={<ProtectedRoute><AlixConnectQualityMgmt /></ProtectedRoute>} />
             <Route path="routing-sim" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRoutingSimulator /></ProtectedRoute>} />
+            <Route path="routing-live" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRoutingLive /></ProtectedRoute>} />
+
             <Route path="qm-kalibrierung" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM']}><AlixConnectQmCalibration /></ProtectedRoute>} />
             <Route path="qm-coaching" element={<ProtectedRoute><AlixConnectQmCoaching /></ProtectedRoute>} />
           </Route>
