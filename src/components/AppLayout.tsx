@@ -1311,6 +1311,7 @@ export default function AppLayout() {
       <div className="flex-1 flex overflow-hidden">
       {/* Globale Cmd+K Suche (per Tastatur erreichbar) */}
       <CommandPalette />
+      <CallScreenPop />
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <button
