@@ -3,7 +3,7 @@ import {
   MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone,
   LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall, Activity, PhoneForwarded,
   Mail, Ban, Webhook, FileText, Layers, Workflow, Mic, Video, Route as RouteIcon, Bot, FlaskConical, Scale, GraduationCap,
-  CalendarClock, BookOpen, GitBranch, LifeBuoy, Brain, Rocket, Euro, HeartPulse, TrendingUp, LayoutGrid,
+  CalendarClock, BookOpen, GitBranch, LifeBuoy, Brain, Rocket, Euro, HeartPulse, TrendingUp, LayoutGrid, Languages,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +78,9 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/omnichannel-orchestrator", label: "Omnichannel Orchestrator", icon: Sparkles },
       { to: "/connect/voice-ai-studio", label: "Voice AI Studio", icon: Mic },
       { to: "/connect/revenue-intel-v2", label: "Revenue Intel 2.0", icon: Sparkles },
+      { to: "/connect/predictive-engagement", label: "Predictive Engagement", icon: Brain },
+      { to: "/connect/knowledge-rag", label: "Knowledge & RAG 2.0", icon: BookOpen },
+      { to: "/connect/translation-hub", label: "Translation Hub", icon: Languages },
       { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
       { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
@@ -111,7 +114,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 34 · Omnichannel Orchestrator · Voice AI Studio · Revenue Intel 2.0
+            Phase 35 · Predictive Engagement · Knowledge & RAG 2.0 · Translation Hub
           </span>
         </div>
         <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
