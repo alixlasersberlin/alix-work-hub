@@ -307,6 +307,7 @@ const AlixConnectAdmin = lazy(() => import("./pages/AlixConnect/Admin"));
 const AlixConnectMobile = lazy(() => import("./pages/AlixConnect/Mobile"));
 const AlixConnectTelephony = lazy(() => import("./pages/AlixConnect/Telephony"));
 const AlixConnectTelephonyWallboard = lazy(() => import("./pages/AlixConnect/TelephonyWallboard"));
+const AlixConnectTelephonyQueues = lazy(() => import("./pages/AlixConnect/TelephonyQueues"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1187,6 +1188,7 @@ function AppRoutes() {
             <Route path="mobile" element={<AlixConnectMobile />} />
             <Route path="telefonie" element={<AlixConnectTelephony />} />
             <Route path="wallboard" element={<AlixConnectTelephonyWallboard />} />
+            <Route path="queues" element={<AlixConnectTelephonyQueues />} />
             <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
             <Route path="websites/:id/analytics" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsiteAnalytics /></ProtectedRoute>} />
             <Route path="analytics" element={<AlixConnectAnalytics />} />

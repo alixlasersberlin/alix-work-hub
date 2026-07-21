@@ -890,6 +890,71 @@ export type Database = {
           },
         ]
       }
+      ac_pbx_queue_agents: {
+        Row: {
+          created_at: string
+          id: string
+          priority: number
+          queue_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          priority?: number
+          queue_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          priority?: number
+          queue_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_pbx_queue_agents_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "ac_pbx_queues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_pbx_queues: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          extension: string | null
+          id: string
+          name: string
+          required_skills: string[]
+          strategy: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          extension?: string | null
+          id?: string
+          name: string
+          required_skills?: string[]
+          strategy?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          extension?: string | null
+          id?: string
+          name?: string
+          required_skills?: string[]
+          strategy?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ac_pbx_settings: {
         Row: {
           api_token: string | null
@@ -928,22 +993,28 @@ export type Database = {
       }
       ac_user_presence: {
         Row: {
+          active_queue_id: string | null
           custom_status: string | null
           last_seen_at: string | null
+          skills: string[]
           status: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          active_queue_id?: string | null
           custom_status?: string | null
           last_seen_at?: string | null
+          skills?: string[]
           status?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          active_queue_id?: string | null
           custom_status?: string | null
           last_seen_at?: string | null
+          skills?: string[]
           status?: string | null
           updated_at?: string | null
           user_id?: string
