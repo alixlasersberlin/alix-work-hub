@@ -20,6 +20,9 @@ type BackupState = {
   storageIndexFiles: string[];
   totalSize: number;
   storageFileCount: number;
+  // Keyset-Pagination: letzte gelesene id der aktuellen Tabelle.
+  // Vermeidet Deep-OFFSET-Timeouts bei großen Tabellen (audit_logs & Co.).
+  lastId?: string | null;
 };
 
 const corsHeaders = {
