@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ac_agent_skills: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_available: boolean | null
+          languages: string[] | null
+          max_concurrent: number | null
+          proficiency: number
+          skill: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_available?: boolean | null
+          languages?: string[] | null
+          max_concurrent?: number | null
+          proficiency?: number
+          skill: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_available?: boolean | null
+          languages?: string[] | null
+          max_concurrent?: number | null
+          proficiency?: number
+          skill?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ac_analytics_events: {
         Row: {
           browser: string | null
@@ -918,6 +954,51 @@ export type Database = {
           },
         ]
       }
+      ac_copilot_suggestions: {
+        Row: {
+          accepted: boolean | null
+          content: string
+          context_id: string | null
+          context_type: string
+          created_at: string | null
+          id: string
+          input_snippet: string | null
+          kb_source: string | null
+          latency_ms: number | null
+          model: string | null
+          suggestion_type: string
+          user_id: string
+        }
+        Insert: {
+          accepted?: boolean | null
+          content: string
+          context_id?: string | null
+          context_type: string
+          created_at?: string | null
+          id?: string
+          input_snippet?: string | null
+          kb_source?: string | null
+          latency_ms?: number | null
+          model?: string | null
+          suggestion_type: string
+          user_id: string
+        }
+        Update: {
+          accepted?: boolean | null
+          content?: string
+          context_id?: string | null
+          context_type?: string
+          created_at?: string | null
+          id?: string
+          input_snippet?: string | null
+          kb_source?: string | null
+          latency_ms?: number | null
+          model?: string | null
+          suggestion_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ac_customer_scores: {
         Row: {
           churn_score: number
@@ -1636,6 +1717,113 @@ export type Database = {
         }
         Relationships: []
       }
+      ac_qm_evaluations: {
+        Row: {
+          agent_user_id: string | null
+          ai_generated: boolean | null
+          call_id: string | null
+          coaching_done_at: string | null
+          coaching_notes: string | null
+          coaching_required: boolean | null
+          conversation_id: string | null
+          created_at: string | null
+          evaluator_user_id: string | null
+          id: string
+          max_possible: number | null
+          notes: string | null
+          percent: number | null
+          scorecard_id: string
+          scores: Json
+          status: string | null
+          updated_at: string | null
+          weighted_total: number | null
+        }
+        Insert: {
+          agent_user_id?: string | null
+          ai_generated?: boolean | null
+          call_id?: string | null
+          coaching_done_at?: string | null
+          coaching_notes?: string | null
+          coaching_required?: boolean | null
+          conversation_id?: string | null
+          created_at?: string | null
+          evaluator_user_id?: string | null
+          id?: string
+          max_possible?: number | null
+          notes?: string | null
+          percent?: number | null
+          scorecard_id: string
+          scores?: Json
+          status?: string | null
+          updated_at?: string | null
+          weighted_total?: number | null
+        }
+        Update: {
+          agent_user_id?: string | null
+          ai_generated?: boolean | null
+          call_id?: string | null
+          coaching_done_at?: string | null
+          coaching_notes?: string | null
+          coaching_required?: boolean | null
+          conversation_id?: string | null
+          created_at?: string | null
+          evaluator_user_id?: string | null
+          id?: string
+          max_possible?: number | null
+          notes?: string | null
+          percent?: number | null
+          scorecard_id?: string
+          scores?: Json
+          status?: string | null
+          updated_at?: string | null
+          weighted_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_qm_evaluations_scorecard_id_fkey"
+            columns: ["scorecard_id"]
+            isOneToOne: false
+            referencedRelation: "ac_qm_scorecards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_qm_scorecards: {
+        Row: {
+          channel: string
+          created_at: string | null
+          created_by: string | null
+          criteria: Json
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          channel?: string
+          created_at?: string | null
+          created_by?: string | null
+          criteria?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string | null
+          created_by?: string | null
+          criteria?: Json
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       ac_report_snapshots: {
         Row: {
           channel: string
@@ -1666,6 +1854,120 @@ export type Database = {
           kpis?: Json
           period_end?: string
           period_start?: string
+        }
+        Relationships: []
+      }
+      ac_routing_decisions: {
+        Row: {
+          channel: string | null
+          chosen_queue_id: string | null
+          chosen_user_id: string | null
+          created_at: string | null
+          fallback_used: boolean | null
+          id: string
+          metadata: Json | null
+          reason: string | null
+          rule_id: string | null
+          score: number | null
+          source_id: string | null
+          source_type: string | null
+        }
+        Insert: {
+          channel?: string | null
+          chosen_queue_id?: string | null
+          chosen_user_id?: string | null
+          created_at?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          rule_id?: string | null
+          score?: number | null
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Update: {
+          channel?: string | null
+          chosen_queue_id?: string | null
+          chosen_user_id?: string | null
+          created_at?: string | null
+          fallback_used?: boolean | null
+          id?: string
+          metadata?: Json | null
+          reason?: string | null
+          rule_id?: string | null
+          score?: number | null
+          source_id?: string | null
+          source_type?: string | null
+        }
+        Relationships: []
+      }
+      ac_routing_rules: {
+        Row: {
+          boost_by_customer_score: boolean | null
+          channel: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          match_conditions: Json
+          min_customer_score: number | null
+          name: string
+          overflow_after_sec: number | null
+          overflow_target_queue_id: string | null
+          overflow_target_user_ids: string[] | null
+          priority: number
+          required_language: string | null
+          required_skills: string[] | null
+          sla_first_response_sec: number | null
+          sla_resolution_sec: number | null
+          target_queue_id: string | null
+          target_user_ids: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          boost_by_customer_score?: boolean | null
+          channel: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          match_conditions?: Json
+          min_customer_score?: number | null
+          name: string
+          overflow_after_sec?: number | null
+          overflow_target_queue_id?: string | null
+          overflow_target_user_ids?: string[] | null
+          priority?: number
+          required_language?: string | null
+          required_skills?: string[] | null
+          sla_first_response_sec?: number | null
+          sla_resolution_sec?: number | null
+          target_queue_id?: string | null
+          target_user_ids?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          boost_by_customer_score?: boolean | null
+          channel?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          match_conditions?: Json
+          min_customer_score?: number | null
+          name?: string
+          overflow_after_sec?: number | null
+          overflow_target_queue_id?: string | null
+          overflow_target_user_ids?: string[] | null
+          priority?: number
+          required_language?: string | null
+          required_skills?: string[] | null
+          sla_first_response_sec?: number | null
+          sla_resolution_sec?: number | null
+          target_queue_id?: string | null
+          target_user_ids?: string[] | null
+          updated_at?: string | null
         }
         Relationships: []
       }
