@@ -1250,6 +1250,9 @@ function AppRoutes() {
             <Route path="wfm" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM']}><AlixConnectWfm /></ProtectedRoute>} />
             <Route path="knowledge" element={<ProtectedRoute><AlixConnectKnowledgeBase /></ProtectedRoute>} />
             <Route path="journey" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectJourneyAnalytics /></ProtectedRoute>} />
+            <Route path="predictive-cx" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','QM','Order']}><AlixConnectPredictiveCx /></ProtectedRoute>} />
+            <Route path="outreach" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectProactiveOutreach /></ProtectedRoute>} />
+            <Route path="revenue-attribution" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRevenueAttribution /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
