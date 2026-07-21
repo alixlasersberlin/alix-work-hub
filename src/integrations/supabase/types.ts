@@ -217,10 +217,13 @@ export type Database = {
         Row: {
           agent_user_id: string | null
           answered_at: string | null
+          consent_status: string
           contact_id: string | null
           conversation_id: string | null
           created_at: string
+          customer_id: string | null
           direction: string
+          dsgvo_announced: boolean
           duration_seconds: number | null
           ended_at: string | null
           extension: string | null
@@ -230,9 +233,13 @@ export type Database = {
           metadata: Json
           missed_sms_sent_at: string | null
           notes: string | null
+          order_id: string | null
+          recording_deleted_at: string | null
+          recording_retention_until: string | null
           recording_url: string | null
           started_at: string
           status: string
+          tags: string[]
           ticket_id: string | null
           to_number: string | null
           updated_at: string
@@ -244,10 +251,13 @@ export type Database = {
         Insert: {
           agent_user_id?: string | null
           answered_at?: string | null
+          consent_status?: string
           contact_id?: string | null
           conversation_id?: string | null
           created_at?: string
+          customer_id?: string | null
           direction: string
+          dsgvo_announced?: boolean
           duration_seconds?: number | null
           ended_at?: string | null
           extension?: string | null
@@ -257,9 +267,13 @@ export type Database = {
           metadata?: Json
           missed_sms_sent_at?: string | null
           notes?: string | null
+          order_id?: string | null
+          recording_deleted_at?: string | null
+          recording_retention_until?: string | null
           recording_url?: string | null
           started_at?: string
           status?: string
+          tags?: string[]
           ticket_id?: string | null
           to_number?: string | null
           updated_at?: string
@@ -271,10 +285,13 @@ export type Database = {
         Update: {
           agent_user_id?: string | null
           answered_at?: string | null
+          consent_status?: string
           contact_id?: string | null
           conversation_id?: string | null
           created_at?: string
+          customer_id?: string | null
           direction?: string
+          dsgvo_announced?: boolean
           duration_seconds?: number | null
           ended_at?: string | null
           extension?: string | null
@@ -284,9 +301,13 @@ export type Database = {
           metadata?: Json
           missed_sms_sent_at?: string | null
           notes?: string | null
+          order_id?: string | null
+          recording_deleted_at?: string | null
+          recording_retention_until?: string | null
           recording_url?: string | null
           started_at?: string
           status?: string
+          tags?: string[]
           ticket_id?: string | null
           to_number?: string | null
           updated_at?: string
@@ -563,6 +584,8 @@ export type Database = {
       }
       ac_contacts: {
         Row: {
+          call_recording_opt_out: boolean
+          call_recording_opt_out_at: string | null
           city: string | null
           country: string | null
           created_at: string | null
@@ -583,6 +606,8 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          call_recording_opt_out?: boolean
+          call_recording_opt_out_at?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
@@ -603,6 +628,8 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          call_recording_opt_out?: boolean
+          call_recording_opt_out_at?: string | null
           city?: string | null
           country?: string | null
           created_at?: string | null
@@ -1091,6 +1118,8 @@ export type Database = {
         Row: {
           api_token: string | null
           created_at: string
+          dsgvo_announcement_enabled: boolean
+          dsgvo_announcement_text: string
           enabled: boolean
           extension: string | null
           id: string
@@ -1099,6 +1128,8 @@ export type Database = {
           missed_call_sms_enabled: boolean
           missed_call_sms_template: string
           pbx_url: string | null
+          recording_enabled: boolean
+          recording_retention_days: number
           updated_at: string
           user_id: string | null
           webhook_secret: string | null
@@ -1106,6 +1137,8 @@ export type Database = {
         Insert: {
           api_token?: string | null
           created_at?: string
+          dsgvo_announcement_enabled?: boolean
+          dsgvo_announcement_text?: string
           enabled?: boolean
           extension?: string | null
           id?: string
@@ -1114,6 +1147,8 @@ export type Database = {
           missed_call_sms_enabled?: boolean
           missed_call_sms_template?: string
           pbx_url?: string | null
+          recording_enabled?: boolean
+          recording_retention_days?: number
           updated_at?: string
           user_id?: string | null
           webhook_secret?: string | null
@@ -1121,6 +1156,8 @@ export type Database = {
         Update: {
           api_token?: string | null
           created_at?: string
+          dsgvo_announcement_enabled?: boolean
+          dsgvo_announcement_text?: string
           enabled?: boolean
           extension?: string | null
           id?: string
@@ -1129,6 +1166,8 @@ export type Database = {
           missed_call_sms_enabled?: boolean
           missed_call_sms_template?: string
           pbx_url?: string | null
+          recording_enabled?: boolean
+          recording_retention_days?: number
           updated_at?: string
           user_id?: string | null
           webhook_secret?: string | null
