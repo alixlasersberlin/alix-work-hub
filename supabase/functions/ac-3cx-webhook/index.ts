@@ -76,6 +76,17 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase.from('ac_calls').upsert(payload, { onConflict: 'external_call_id' }).select().single();
     if (error) throw error;
+
+    // Auto-trigger voicemail transcription (fire-and-forget)
+    if (data?.voicemail_url && !data?.voicemail_transcript) {
+      const fnUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/ac-voicemail-transcribe`;
+      fetch(fnUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+        body: JSON.stringify({ call_id: data.id }),
+      }).catch((e) => console.error('voicemail transcribe trigger failed', e));
+    }
+
     return new Response(JSON.stringify({ ok: true, call: data }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     console.error('ac-3cx-webhook error', e);
