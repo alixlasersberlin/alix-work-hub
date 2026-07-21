@@ -358,35 +358,47 @@ export type Database = {
         Row: {
           address: string
           campaign_id: string
+          clicked_at: string | null
           contact_id: string | null
           created_at: string
           customer_id: string | null
           error: string | null
           id: string
+          opened_at: string | null
+          replied_at: string | null
           sent_at: string | null
           status: string
+          variant: string | null
         }
         Insert: {
           address: string
           campaign_id: string
+          clicked_at?: string | null
           contact_id?: string | null
           created_at?: string
           customer_id?: string | null
           error?: string | null
           id?: string
+          opened_at?: string | null
+          replied_at?: string | null
           sent_at?: string | null
           status?: string
+          variant?: string | null
         }
         Update: {
           address?: string
           campaign_id?: string
+          clicked_at?: string | null
           contact_id?: string | null
           created_at?: string
           customer_id?: string | null
           error?: string | null
           id?: string
+          opened_at?: string | null
+          replied_at?: string | null
           sent_at?: string | null
           status?: string
+          variant?: string | null
         }
         Relationships: [
           {
@@ -421,6 +433,7 @@ export type Database = {
       }
       ac_campaigns: {
         Row: {
+          ab_variants: Json
           audience_filter: Json
           body: string
           channel_type: string
@@ -429,16 +442,21 @@ export type Database = {
           created_by: string | null
           failed_count: number
           id: string
+          is_ab_test: boolean
+          journey_id: string | null
           name: string
           scheduled_at: string | null
+          segment_id: string | null
           sent_count: number
           started_at: string | null
           status: string
           subject: string | null
           total_count: number
           updated_at: string
+          winner_metric: string | null
         }
         Insert: {
+          ab_variants?: Json
           audience_filter?: Json
           body: string
           channel_type: string
@@ -447,16 +465,21 @@ export type Database = {
           created_by?: string | null
           failed_count?: number
           id?: string
+          is_ab_test?: boolean
+          journey_id?: string | null
           name: string
           scheduled_at?: string | null
+          segment_id?: string | null
           sent_count?: number
           started_at?: string | null
           status?: string
           subject?: string | null
           total_count?: number
           updated_at?: string
+          winner_metric?: string | null
         }
         Update: {
+          ab_variants?: Json
           audience_filter?: Json
           body?: string
           channel_type?: string
@@ -465,14 +488,18 @@ export type Database = {
           created_by?: string | null
           failed_count?: number
           id?: string
+          is_ab_test?: boolean
+          journey_id?: string | null
           name?: string
           scheduled_at?: string | null
+          segment_id?: string | null
           sent_count?: number
           started_at?: string | null
           status?: string
           subject?: string | null
           total_count?: number
           updated_at?: string
+          winner_metric?: string | null
         }
         Relationships: []
       }
@@ -955,6 +982,133 @@ export type Database = {
           },
         ]
       }
+      ac_journey_runs: {
+        Row: {
+          completed_at: string | null
+          contact_id: string
+          context: Json
+          created_at: string
+          current_step: number
+          id: string
+          journey_id: string
+          last_error: string | null
+          next_action_at: string
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_id: string
+          context?: Json
+          created_at?: string
+          current_step?: number
+          id?: string
+          journey_id: string
+          last_error?: string | null
+          next_action_at?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          contact_id?: string
+          context?: Json
+          created_at?: string
+          current_step?: number
+          id?: string
+          journey_id?: string
+          last_error?: string | null
+          next_action_at?: string
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_journey_runs_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "ac_journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_journey_steps: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          journey_id: string
+          kind: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          journey_id: string
+          kind: string
+          position: number
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          journey_id?: string
+          kind?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_journey_steps_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "ac_journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_journeys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          status: string
+          trigger_event: string
+          trigger_filter: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          trigger_event: string
+          trigger_filter?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          trigger_event?: string
+          trigger_filter?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ac_messages: {
         Row: {
           attachments: Json | null
@@ -1322,6 +1476,42 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           webhook_secret?: string | null
+        }
+        Relationships: []
+      }
+      ac_segments: {
+        Row: {
+          contact_count: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          filter: Json
+          id: string
+          last_computed_at: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          contact_count?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          filter?: Json
+          id?: string
+          last_computed_at?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          contact_count?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          filter?: Json
+          id?: string
+          last_computed_at?: string | null
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
