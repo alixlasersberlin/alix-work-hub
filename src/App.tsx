@@ -324,6 +324,9 @@ const AlixConnectVoiceAi = lazy(() => import("./pages/AlixConnect/VoiceAi"));
 const AlixConnectCockpit = lazy(() => import("./pages/AlixConnect/Cockpit"));
 const AlixConnectMeetings = lazy(() => import("./pages/AlixConnect/Meetings"));
 const AlixConnectMeetingRoom = lazy(() => import("./pages/AlixConnect/MeetingRoom"));
+const AlixConnectRouting = lazy(() => import("./pages/AlixConnect/Routing"));
+const AlixConnectCopilot = lazy(() => import("./pages/AlixConnect/Copilot"));
+const AlixConnectQualityMgmt = lazy(() => import("./pages/AlixConnect/QualityMgmt"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1225,6 +1228,9 @@ function AppRoutes() {
             <Route path="cockpit" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectCockpit /></ProtectedRoute>} />
             <Route path="meetings" element={<AlixConnectMeetings />} />
             <Route path="meetings/:code" element={<AlixConnectMeetingRoom />} />
+            <Route path="routing" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRouting /></ProtectedRoute>} />
+            <Route path="copilot" element={<AlixConnectCopilot />} />
+            <Route path="qm" element={<AlixConnectQualityMgmt /></ProtectedRoute>} />
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
