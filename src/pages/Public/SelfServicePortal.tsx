@@ -94,7 +94,22 @@ export default function SelfServicePortal() {
                 <Input placeholder="Nachricht…" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !sending && send()} />
                 <Button onClick={() => send()} disabled={sending || !input.trim()}><Send className="h-4 w-4" /></Button>
               </div>
-              <Button variant="outline" size="sm" onClick={() => send(true)} disabled={sending}><HandshakeIcon className="h-4 w-4 mr-1" />An echten Berater weiterleiten (WhatsApp)</Button>
+              <div className="grid grid-cols-3 gap-2">
+                <Button variant="outline" size="sm" onClick={() => send(true)} disabled={sending}><HandshakeIcon className="h-4 w-4 mr-1" />WhatsApp</Button>
+                <Button variant="outline" size="sm" onClick={async () => {
+                  if (!email) return toast.error('E-Mail eingeben');
+                  const { data, error } = await supabase.functions.invoke('ac-portal-handoff', { body: { session_token: token, channel: 'email', contact_email: email } });
+                  if (error) return toast.error(error.message);
+                  toast.success('Ticket erstellt – wir melden uns per E-Mail');
+                  setMessages(m => [...m, { role: 'assistant', content: `Ticket #${(data as any)?.ticket_id?.slice(0, 8)} wurde erstellt. Wir kontaktieren dich per E-Mail.` }]);
+                }} disabled={sending}><Mail className="h-4 w-4 mr-1" />E-Mail</Button>
+                <Button variant="outline" size="sm" onClick={async () => {
+                  const { data, error } = await supabase.functions.invoke('ac-portal-handoff', { body: { session_token: token, channel: 'portal', contact_email: email || undefined } });
+                  if (error) return toast.error(error.message);
+                  toast.success(`Ticket #${(data as any)?.ticket_id?.slice(0, 8)} erstellt`);
+                  setMessages(m => [...m, { role: 'assistant', content: `Ticket #${(data as any)?.ticket_id?.slice(0, 8)} wurde angelegt.` }]);
+                }} disabled={sending}><Ticket className="h-4 w-4 mr-1" />Ticket</Button>
+              </div>
             </CardContent>
           </Card>
         </div>
