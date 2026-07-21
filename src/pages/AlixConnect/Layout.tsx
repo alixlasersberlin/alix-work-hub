@@ -3,7 +3,7 @@ import {
   MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone,
   LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall, Activity, PhoneForwarded,
   Mail, Ban, Webhook, FileText, Layers, Workflow, Mic, Video, Route as RouteIcon, Bot, FlaskConical, Scale, GraduationCap,
-  CalendarClock, BookOpen, GitBranch, LifeBuoy, Brain, Rocket, Euro,
+  CalendarClock, BookOpen, GitBranch, LifeBuoy, Brain, Rocket, Euro, HeartPulse,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
