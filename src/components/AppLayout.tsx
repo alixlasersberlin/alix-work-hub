@@ -111,11 +111,6 @@ export const navItems: NavItem[] = [
       { path: '/tickets?new=1', label: 'Neues Ticket', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
       { path: '/tickets/kalender', label: 'Ticket-Kalender', icon: CalendarDays, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
       { path: '/tickets?mine=1', label: 'Meine Tickets', icon: User, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Vertrieb'] },
-      { path: '/tickets?status=Neu', label: 'Neue (Eingang)', icon: Inbox, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/tickets?due=overdue', label: 'Überfällig', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/tickets?status=Eskaliert', label: 'Eskaliert', icon: Flame, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/tickets?status=Warten%20auf%20Kunde', label: 'Warten auf Kunde', icon: Pause, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-      { path: '/esc/buchungen', label: 'Öffentliche Buchungen', icon: CalendarClock, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Serviceleitung', 'Service'] },
     ],
   },
   {
