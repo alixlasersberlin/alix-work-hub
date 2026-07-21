@@ -21,7 +21,7 @@ export default function AlixConnectInsightsCockpit() {
       supabase.from('ac_customer_health').select('score,stage'),
       supabase.from('ac_journey_runs').select('id,status').gte('created_at', since),
       supabase.from('ac_lifecycle_runs').select('id,status').gte('created_at', since),
-      supabase.from('ac_report_snapshots').select('*').eq('report_type', 'weekly_exec').order('created_at', { ascending: false }).limit(8),
+      supabase.from('ac_report_snapshots').select('*').eq('granularity', 'weekly').order('created_at', { ascending: false }).limit(8),
     ]);
     const bucket = (arr: any[] | null, key: string) => {
       const m: Record<string, number> = {};
@@ -119,10 +119,10 @@ export default function AlixConnectInsightsCockpit() {
               {snaps.map((s: any) => (
                 <tr key={s.id} className="border-t">
                   <td className="py-1">{new Date(s.created_at).toLocaleString('de-DE')}</td>
-                  <td className="text-right">{s.data?.conversations ?? '—'}</td>
-                  <td className="text-right">{s.data?.sla_breaches ?? '—'}</td>
-                  <td className="text-right">{s.data?.journey_runs ?? '—'}</td>
-                  <td className="text-right">{s.data?.playbook_runs ?? '—'}</td>
+                  <td className="text-right">{s.kpis?.conversations ?? '—'}</td>
+                  <td className="text-right">{s.kpis?.sla_breaches ?? '—'}</td>
+                  <td className="text-right">{s.kpis?.journey_runs ?? '—'}</td>
+                  <td className="text-right">{s.kpis?.playbook_runs ?? '—'}</td>
                 </tr>
               ))}
             </tbody>

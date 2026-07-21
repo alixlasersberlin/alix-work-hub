@@ -55,8 +55,8 @@ Deno.serve(async (req) => {
       </div>`;
 
     await sb.from('ac_report_snapshots').insert({
-      report_type: 'weekly_exec', period_start: since, period_end: new Date().toISOString(),
-      data: kpi,
+      granularity: 'weekly', period_start: since, period_end: new Date().toISOString(),
+      kpis: kpi,
     });
 
     const { data: admins } = await sb.from('user_roles').select('user_id').in('role', ['Super Admin', 'Admin']);
