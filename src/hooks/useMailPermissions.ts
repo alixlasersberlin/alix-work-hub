@@ -62,7 +62,7 @@ export function useMailPermissions() {
       // Read-only-Rollen dürfen keinerlei schreibende Aktionen
       if (isReadOnly) return false;
       // Löschen ist immer Super Admin
-      if (action === 'delete') return roles.includes('Super Admin');
+      if (action === 'delete') return (roles.includes('Super Admin') || roles.includes('Admin'));
 
       switch (area) {
         case 'emails':

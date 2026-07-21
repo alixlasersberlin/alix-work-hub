@@ -33,7 +33,7 @@ type Row = {
 
 export default function MailCenterAbmeldungen() {
   const { roles } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
 
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);

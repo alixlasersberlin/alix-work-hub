@@ -18,7 +18,7 @@ const fmt = (n: number | null | undefined) => typeof n === 'number'
 export default function FinanceMahnwesenDetail() {
   const { customerId } = useParams<{ customerId: string }>();
   const { roles } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [customer, setCustomer] = useState<any>(null);
   const [account, setAccount] = useState<any>(null);
   const [reminders, setReminders] = useState<any[]>([]);

@@ -31,8 +31,8 @@ const ACTIONS = [
 
 export default function FinanceAutomations() {
   const { roles } = useAuth();
-  const canEdit = roles.includes('Super Admin') || roles.includes('Admin');
-  const isSuper = roles.includes('Super Admin');
+  const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin');
+  const isSuper = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<any[]>([]);
   const [runs, setRuns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

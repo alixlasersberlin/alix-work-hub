@@ -30,7 +30,7 @@ const fmt = (n: number | null) => typeof n === 'number'
 
 export default function FinanceMahnwesen() {
   const { roles } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [accounts, setAccounts] = useState<AccRow[]>([]);
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
   const [loading, setLoading] = useState(true);

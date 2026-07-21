@@ -36,7 +36,7 @@ export function useNotificationFeed() {
 
   useEffect(() => {
     if (!user) return;
-    const isAdmin = roles.includes('Super Admin') || roles.includes('Admin');
+    const isAdmin = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin');
     const isFinance = isAdmin || roles.includes('Finance');
     const isTicketUser = isAdmin || roles.includes('Order') || roles.includes('QM');
     const isMediapaketUser = isAdmin || roles.includes('Order') || roles.includes('QM');
@@ -50,7 +50,7 @@ export function useNotificationFeed() {
       const tasks: Promise<void>[] = [];
 
       // 1) Pending production-order approvals (Super Admin only)
-      if (roles.includes('Super Admin')) {
+      if ((roles.includes('Super Admin') || roles.includes('Admin'))) {
         tasks.push((async () => {
           const { data } = await supabase
             .from('production_orders' as any)

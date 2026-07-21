@@ -38,7 +38,7 @@ interface Row {
 
 export default function OrderApprovalQueue() {
   const { user, roles } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

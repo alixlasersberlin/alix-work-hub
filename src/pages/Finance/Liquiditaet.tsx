@@ -31,7 +31,7 @@ function monthsRange(startISO: string, count: number): string[] {
 
 export default function FinanceLiquiditaet() {
   const { roles } = useAuth();
-  const canEdit = roles.includes('Super Admin') || roles.includes('Admin') || roles.includes('Finance');
+  const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
 
   const [loading, setLoading] = useState(true);
   const [plans, setPlans] = useState<any[]>([]);

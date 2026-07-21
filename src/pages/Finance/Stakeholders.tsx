@@ -15,8 +15,8 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function FinanceStakeholders() {
   const { roles } = useAuth();
-  const canEdit = roles.includes('Super Admin') || roles.includes('Geschäftsführung');
-  const isSuper = roles.includes('Super Admin');
+  const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Geschäftsführung');
+  const isSuper = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

@@ -93,7 +93,7 @@ function emptyTpl(): Partial<Tpl> {
 
 export default function MailCenterVorlagen() {
   const { roles } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const isAdmin = isSuperAdmin || roles.includes('Admin');
   const isGF = roles.includes('Geschäftsführung');
   const isMarketing = roles.includes('Marketing');

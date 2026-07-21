@@ -18,7 +18,7 @@ const fmtEUR = (n: any) => new Intl.NumberFormat('de-DE', { style: 'currency', c
 export default function FinanceAfaLauf() {
   const { roles } = useAuth();
   const nav = useNavigate();
-  const canRun = roles.includes('Super Admin') || roles.includes('Admin') || roles.includes('Finance');
+  const canRun = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
 
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
   const [busy, setBusy] = useState(false);

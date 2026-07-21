@@ -16,7 +16,7 @@ const fmt = (n: number | null | undefined) => typeof n === 'number'
 
 export default function FinanceBank() {
   const { roles } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const fileRef = useRef<HTMLInputElement>(null);
   const [statements, setStatements] = useState<any[]>([]);
   const [lines, setLines] = useState<any[]>([]);

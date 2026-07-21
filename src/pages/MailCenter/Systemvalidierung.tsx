@@ -68,7 +68,7 @@ type Release = { date: string; responsible: string; version: string; decision: s
 
 export default function Systemvalidierung() {
   const { roles, user } = useAuth();
-  const isSuperAdmin = roles.includes('Super Admin');
+  const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [val, setVal] = useState<ValRow[]>(INITIAL_VAL);
   const [changes, setChanges] = useState<Change[]>([
     { id: 'CR-001', title: 'MailCenter Produktivfreigabe', owner: 'Super Admin', risk: 'mid', approved: false, testRequired: true, goLive: '' },
