@@ -66,7 +66,7 @@ export default function AgentAssistLive() {
                 className={`w-full text-left p-3 border-b border-border/50 hover:bg-muted/50 ${active?.id === c.id ? "bg-muted" : ""}`}>
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium truncate">{c.subject || "(ohne Betreff)"}</span>
-                  <Badge variant="outline" className="text-[10px]">{c.channel}</Badge>
+                  <Badge variant="outline" className="text-[10px]">{c.channel_type}</Badge>
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">{c.last_message_at ? new Date(c.last_message_at).toLocaleString("de-DE") : "—"}</div>
               </button>
