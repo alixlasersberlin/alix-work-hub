@@ -55,3 +55,4 @@
 - [ALIX CONNECT Phase 28](mem://features/alix-connect-phase28) — Playbook Automation Engine (ac-playbook-run, /connect/playbooks)
 - [ALIX CONNECT Phase 29](mem://features/alix-connect-phase29) — Journey Orchestrator 2.0 mit Flow-Graph, A/B-Splits, Wait/Condition (/connect/journey-orchestrator)
 - [ALIX CONNECT Phase 31](mem://features/alix-connect-phase31) — Revenue Intelligence, AI Quality & Coaching, Omnichannel Campaigns (/connect/revenue-intelligence, /connect/quality-coaching, /connect/omnichannel-campaigns)
+- [ALIX CONNECT Phase 32](mem://features/alix-connect-phase32) — Conversational Intel 2.0, Journey AI-Optimizer, Unified Agent Workspace (/connect/conv-intel, /connect/journey-optimizer, /connect/workspace)
