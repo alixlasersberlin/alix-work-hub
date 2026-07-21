@@ -121,6 +121,42 @@ export type Database = {
           },
         ]
       }
+      ac_api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          last_used_at: string | null
+          name: string
+          prefix: string
+          revoked_at: string | null
+          scopes: string[]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          last_used_at?: string | null
+          name: string
+          prefix: string
+          revoked_at?: string | null
+          scopes?: string[]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          last_used_at?: string | null
+          name?: string
+          prefix?: string
+          revoked_at?: string | null
+          scopes?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
       ac_automation_rules: {
         Row: {
           action: string
@@ -591,15 +627,21 @@ export type Database = {
           created_at: string | null
           customer_id: string | null
           email: string | null
+          email_opt_out: boolean
+          email_opt_out_at: string | null
           external_ids: Json | null
           first_seen_at: string | null
           full_name: string | null
           id: string
           language: string | null
+          last_interaction_at: string | null
           last_seen_at: string | null
           lead_id: string | null
+          lifetime_value: number | null
           metadata: Json | null
           phone: string | null
+          sms_opt_out: boolean
+          sms_opt_out_at: string | null
           tenant_id: string | null
           updated_at: string | null
           visitor_fingerprint: string | null
@@ -613,15 +655,21 @@ export type Database = {
           created_at?: string | null
           customer_id?: string | null
           email?: string | null
+          email_opt_out?: boolean
+          email_opt_out_at?: string | null
           external_ids?: Json | null
           first_seen_at?: string | null
           full_name?: string | null
           id?: string
           language?: string | null
+          last_interaction_at?: string | null
           last_seen_at?: string | null
           lead_id?: string | null
+          lifetime_value?: number | null
           metadata?: Json | null
           phone?: string | null
+          sms_opt_out?: boolean
+          sms_opt_out_at?: string | null
           tenant_id?: string | null
           updated_at?: string | null
           visitor_fingerprint?: string | null
@@ -635,15 +683,21 @@ export type Database = {
           created_at?: string | null
           customer_id?: string | null
           email?: string | null
+          email_opt_out?: boolean
+          email_opt_out_at?: string | null
           external_ids?: Json | null
           first_seen_at?: string | null
           full_name?: string | null
           id?: string
           language?: string | null
+          last_interaction_at?: string | null
           last_seen_at?: string | null
           lead_id?: string | null
+          lifetime_value?: number | null
           metadata?: Json | null
           phone?: string | null
+          sms_opt_out?: boolean
+          sms_opt_out_at?: string | null
           tenant_id?: string | null
           updated_at?: string | null
           visitor_fingerprint?: string | null
@@ -813,6 +867,94 @@ export type Database = {
           },
         ]
       }
+      ac_customer_scores: {
+        Row: {
+          churn_score: number
+          computed_at: string
+          contact_id: string
+          engagement_score: number
+          next_best_action: string | null
+          reasoning: string | null
+          segment: string | null
+        }
+        Insert: {
+          churn_score?: number
+          computed_at?: string
+          contact_id: string
+          engagement_score?: number
+          next_best_action?: string | null
+          reasoning?: string | null
+          segment?: string | null
+        }
+        Update: {
+          churn_score?: number
+          computed_at?: string
+          contact_id?: string
+          engagement_score?: number
+          next_best_action?: string | null
+          reasoning?: string | null
+          segment?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_customer_scores_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: true
+            referencedRelation: "ac_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ac_event_bus: {
+        Row: {
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          event_type: string
+          id: string
+          last_response_body: string | null
+          last_response_code: number | null
+          next_retry_at: string | null
+          payload: Json
+          status: string
+          subscription_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          last_response_body?: string | null
+          last_response_code?: number | null
+          next_retry_at?: string | null
+          payload?: Json
+          status?: string
+          subscription_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          last_response_body?: string | null
+          last_response_code?: number | null
+          next_retry_at?: string | null
+          payload?: Json
+          status?: string
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ac_event_bus_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "ac_webhook_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ac_messages: {
         Row: {
           attachments: Json | null
@@ -821,8 +963,11 @@ export type Database = {
           channel_id: string | null
           conversation_id: string | null
           created_at: string | null
+          delivered_at: string | null
+          delivery_status: string | null
           direction: Database["public"]["Enums"]["ac_message_direction"]
           external_message_id: string | null
+          failed_reason: string | null
           id: string
           is_deleted: boolean | null
           is_edited: boolean | null
@@ -846,8 +991,11 @@ export type Database = {
           channel_id?: string | null
           conversation_id?: string | null
           created_at?: string | null
+          delivered_at?: string | null
+          delivery_status?: string | null
           direction?: Database["public"]["Enums"]["ac_message_direction"]
           external_message_id?: string | null
+          failed_reason?: string | null
           id?: string
           is_deleted?: boolean | null
           is_edited?: boolean | null
@@ -871,8 +1019,11 @@ export type Database = {
           channel_id?: string | null
           conversation_id?: string | null
           created_at?: string | null
+          delivered_at?: string | null
+          delivery_status?: string | null
           direction?: Database["public"]["Enums"]["ac_message_direction"]
           external_message_id?: string | null
+          failed_reason?: string | null
           id?: string
           is_deleted?: boolean | null
           is_edited?: boolean | null
@@ -1471,6 +1622,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ac_webhook_subscriptions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          events: string[]
+          id: string
+          is_active: boolean
+          last_error: string | null
+          last_success_at: string | null
+          name: string
+          secret: string | null
+          target_url: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          events?: string[]
+          id?: string
+          is_active?: boolean
+          last_error?: string | null
+          last_success_at?: string | null
+          name: string
+          secret?: string | null
+          target_url: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          events?: string[]
+          id?: string
+          is_active?: boolean
+          last_error?: string | null
+          last_success_at?: string | null
+          name?: string
+          secret?: string | null
+          target_url?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       ac_websites: {
         Row: {
@@ -15968,6 +16161,7 @@ export type Database = {
       }
       mail_messages: {
         Row: {
+          ac_contact_id: string | null
           assigned_to: string | null
           body_html: string | null
           body_text: string | null
@@ -15987,6 +16181,8 @@ export type Database = {
           in_reply_to: string | null
           invoice_id: string | null
           is_read: boolean | null
+          linked_order_id: string | null
+          linked_ticket_id: string | null
           mailbox: string | null
           opened_at: string | null
           order_id: string | null
@@ -16006,6 +16202,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ac_contact_id?: string | null
           assigned_to?: string | null
           body_html?: string | null
           body_text?: string | null
@@ -16025,6 +16222,8 @@ export type Database = {
           in_reply_to?: string | null
           invoice_id?: string | null
           is_read?: boolean | null
+          linked_order_id?: string | null
+          linked_ticket_id?: string | null
           mailbox?: string | null
           opened_at?: string | null
           order_id?: string | null
@@ -16044,6 +16243,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ac_contact_id?: string | null
           assigned_to?: string | null
           body_html?: string | null
           body_text?: string | null
@@ -16063,6 +16263,8 @@ export type Database = {
           in_reply_to?: string | null
           invoice_id?: string | null
           is_read?: boolean | null
+          linked_order_id?: string | null
+          linked_ticket_id?: string | null
           mailbox?: string | null
           opened_at?: string | null
           order_id?: string | null
