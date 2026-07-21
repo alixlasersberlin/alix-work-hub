@@ -63,6 +63,9 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/customer-health", label: "Customer Health", icon: HeartPulse },
       { to: "/connect/playbooks", label: "Playbook Automation", icon: Rocket },
       { to: "/connect/journey-orchestrator", label: "Journey Orchestrator 2.0", icon: Workflow },
+      { to: "/connect/insights-cockpit", label: "Insights Cockpit", icon: FileBarChart },
+      { to: "/connect/sla-engine", label: "SLA & Escalation", icon: Shield },
+      { to: "/connect/copilot-actions", label: "Copilot Actions", icon: Bot },
       { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
       { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
@@ -96,7 +99,7 @@ export default function AlixConnectLayout() {
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
           <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 29 · Journey Orchestrator 2.0
+            Phase 30 · Insights · SLA · Copilot Actions
           </span>
         </div>
         <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
