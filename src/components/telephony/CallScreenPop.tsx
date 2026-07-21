@@ -66,16 +66,16 @@ export default function CallScreenPop() {
     // 2) customer + recent orders
     if (info.customer_id) {
       const [{ data: cust }, { data: orders }] = await Promise.all([
-        supabase.from('customers').select('customer_name, customer_number').eq('id', info.customer_id).maybeSingle(),
+        supabase.from('customers').select('company_name, contact_name, external_customer_id').eq('id', info.customer_id).maybeSingle(),
         supabase
           .from('orders')
-          .select('id, order_number, total, status')
+          .select('id, order_number, total_amount, order_status')
           .eq('customer_id', info.customer_id)
           .order('created_at', { ascending: false })
           .limit(5),
       ]);
-      info.customer_name = cust?.customer_name ?? null;
-      info.customer_number = cust?.customer_number ?? null;
+      info.customer_name = cust?.company_name ?? cust?.contact_name ?? null;
+      info.customer_number = cust?.external_customer_id ?? null;
       info.recent_orders = (orders ?? []) as any;
     }
 
