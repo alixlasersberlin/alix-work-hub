@@ -21,6 +21,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/telefonie", label: "Telefonie (3CX)", icon: PhoneCall },
       { to: "/connect/wallboard", label: "Wallboard", icon: Activity },
       { to: "/connect/queues", label: "Warteschlangen", icon: Users },
+      { to: "/connect/ivr", label: "IVR & Öffnungszeiten", icon: PhoneCall },
       { to: "/connect/contacts", label: "Kontakte", icon: Users },
       { to: "/connect/campaigns", label: "Kampagnen", icon: Megaphone },
     ],
