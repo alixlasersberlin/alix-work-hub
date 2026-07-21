@@ -107,11 +107,11 @@ export default function AuftragsImport() {
 
   function downloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['Auftragsnummer', 'Kunde'],
-      ['2026-04226', 'Beispiel Kunde GmbH'],
+      ['Kunde'],
+      ['Beispiel Kunde GmbH'],
     ]);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Aufträge');
+    XLSX.utils.book_append_sheet(wb, ws, 'Kunden');
     XLSX.writeFile(wb, 'auftragsabgleich-vorlage.xlsx');
   }
 
