@@ -306,6 +306,7 @@ const AlixConnectReporting = lazy(() => import("./pages/AlixConnect/Reporting"))
 const AlixConnectAdmin = lazy(() => import("./pages/AlixConnect/Admin"));
 const AlixConnectMobile = lazy(() => import("./pages/AlixConnect/Mobile"));
 const AlixConnectTelephony = lazy(() => import("./pages/AlixConnect/Telephony"));
+const AlixConnectTelephonyWallboard = lazy(() => import("./pages/AlixConnect/TelephonyWallboard"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
