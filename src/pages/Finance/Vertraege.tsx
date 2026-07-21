@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileText, Plus, FileSignature } from 'lucide-react';
+import { FileText, Plus, FileSignature, BellRing, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
@@ -9,12 +9,34 @@ import { listContracts } from '@/lib/finance/api';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 import { Badge } from '@/components/ui/badge';
 import { ContractSignatureDetailsDialog } from './ContractSignatureDetailsDialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export default function FinanceVertraege() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { canWrite } = useFinancePermissions();
   const [sigContract, setSigContract] = useState<any | null>(null);
+  const [remindingId, setRemindingId] = useState<string | null>(null);
+
+  async function sendReminder(r: any) {
+    setRemindingId(r.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('portal-contract-remind-now', {
+        body: { contract_id: r.id },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(`Erinnerung ${(data as any).reminder_number}/${(data as any).max} gesendet`);
+      setRows(prev => prev.map(x => x.id === r.id
+        ? { ...x, signature_reminder_count: (data as any).reminder_number, signature_last_reminder_at: new Date().toISOString(), signature_status: x.signature_status ?? 'requested' }
+        : x));
+    } catch (e: any) {
+      toast.error(e?.message === 'cooldown' ? 'Bitte warten (Cool-down aktiv)' : `Fehler: ${e?.message || 'unbekannt'}`);
+    } finally {
+      setRemindingId(null);
+    }
+  }
 
   useEffect(() => {
     listContracts().then(r => { setRows(r); setLoading(false); }).catch(() => setLoading(false));
