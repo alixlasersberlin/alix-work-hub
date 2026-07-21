@@ -522,13 +522,6 @@ export const navItems: NavItem[] = [
     ],
   },
 
-  {
-    path: '/mdr-ce', label: 'MDR CE & ISO 13485', icon: ShieldCheck, roles: null,
-    children: [
-      
-      { path: '/iso', label: 'ISO Audit Center', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'QM'] },
-    ],
-  },
 
   {
     path: '/connect', label: 'ALIX CONNECT', icon: MessageSquare, roles: null,
@@ -545,6 +538,12 @@ export const navItems: NavItem[] = [
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin'],
     children: [
+      {
+        path: '#mdr-ce', label: 'MDR CE & ISO 13485', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'QM'],
+        children: [
+          { path: '/iso', label: 'ISO Audit Center', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'QM'] },
+        ],
+      },
       // Stats
       {
         path: '#stats', label: 'STATS', icon: BarChart3, roles: ['Super Admin'],
