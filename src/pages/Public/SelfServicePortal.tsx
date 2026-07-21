@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Bot, Send, MessageCircle, Search, HandshakeIcon, Mail, Ticket, Mic, Square } from 'lucide-react';
+import { Bot, Send, MessageCircle, Search, HandshakeIcon, Mail, Ticket, Mic, Square, Video, Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -30,6 +30,31 @@ export default function SelfServicePortal() {
   const chunksRef = useRef<Blob[]>([]);
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [csatRating, setCsatRating] = useState(0);
+  const [csatComment, setCsatComment] = useState('');
+  const [csatSent, setCsatSent] = useState(false);
+  const [videoRequested, setVideoRequested] = useState(false);
+
+  const requestVideoCallback = async () => {
+    if (!email) return toast.error('E-Mail für Rückruf angeben');
+    const { error } = await supabase.from('ac_portal_chat_sessions').update({
+      video_callback_requested: true, video_callback_at: new Date().toISOString(), contact_email: email,
+    }).eq('session_token', token);
+    if (error) return toast.error(error.message);
+    setVideoRequested(true);
+    toast.success('Video-Callback beantragt – wir melden uns per E-Mail mit dem Link.');
+    setMessages(m => [...m, { role: 'assistant', content: `Video-Callback beantragt. Du bekommst gleich eine E-Mail mit dem Meeting-Link.` }]);
+  };
+
+  const submitCsat = async () => {
+    if (!csatRating) return toast.error('Bitte Sterne wählen');
+    const { error } = await supabase.from('ac_portal_chat_sessions').update({
+      csat_rating: csatRating, csat_comment: csatComment || null, csat_at: new Date().toISOString(),
+    }).eq('session_token', token);
+    if (error) return toast.error(error.message);
+    setCsatSent(true);
+    toast.success('Danke für dein Feedback!');
+  };
 
   const startRec = async () => {
     try {
@@ -129,14 +154,14 @@ export default function SelfServicePortal() {
                 </Button>
                 <Button onClick={() => send()} disabled={sending || !input.trim()}><Send className="h-4 w-4" /></Button>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <Button variant="outline" size="sm" onClick={() => send(true)} disabled={sending}><HandshakeIcon className="h-4 w-4 mr-1" />WhatsApp</Button>
                 <Button variant="outline" size="sm" onClick={async () => {
                   if (!email) return toast.error('E-Mail eingeben');
                   const { data, error } = await supabase.functions.invoke('ac-portal-handoff', { body: { session_token: token, channel: 'email', contact_email: email } });
                   if (error) return toast.error(error.message);
                   toast.success('Ticket erstellt – wir melden uns per E-Mail');
-                  setMessages(m => [...m, { role: 'assistant', content: `Ticket #${(data as any)?.ticket_id?.slice(0, 8)} wurde erstellt. Wir kontaktieren dich per E-Mail.` }]);
+                  setMessages(m => [...m, { role: 'assistant', content: `Ticket #${(data as any)?.ticket_id?.slice(0, 8)} wurde erstellt.` }]);
                 }} disabled={sending}><Mail className="h-4 w-4 mr-1" />E-Mail</Button>
                 <Button variant="outline" size="sm" onClick={async () => {
                   const { data, error } = await supabase.functions.invoke('ac-portal-handoff', { body: { session_token: token, channel: 'portal', contact_email: email || undefined } });
@@ -144,7 +169,24 @@ export default function SelfServicePortal() {
                   toast.success(`Ticket #${(data as any)?.ticket_id?.slice(0, 8)} erstellt`);
                   setMessages(m => [...m, { role: 'assistant', content: `Ticket #${(data as any)?.ticket_id?.slice(0, 8)} wurde angelegt.` }]);
                 }} disabled={sending}><Ticket className="h-4 w-4 mr-1" />Ticket</Button>
+                <Button variant="outline" size="sm" onClick={requestVideoCallback} disabled={sending || videoRequested}><Video className="h-4 w-4 mr-1" />{videoRequested ? 'Video ✓' : 'Video'}</Button>
               </div>
+
+              {messages.length >= 2 && !csatSent && (
+                <div className="border-t pt-2 mt-1">
+                  <div className="text-xs font-medium mb-1">Wie zufrieden bist du mit dem Chat?</div>
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map(n => (
+                      <button key={n} onClick={() => setCsatRating(n)} className="p-1 hover:scale-110 transition">
+                        <Star className={`h-5 w-5 ${csatRating >= n ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
+                      </button>
+                    ))}
+                    <Input placeholder="Kommentar (optional)" value={csatComment} onChange={e => setCsatComment(e.target.value)} className="ml-2 h-8 text-xs" />
+                    <Button size="sm" onClick={submitCsat} disabled={!csatRating}>Senden</Button>
+                  </div>
+                </div>
+              )}
+              {csatSent && <div className="text-xs text-center text-green-600 border-t pt-2">Danke für dein Feedback! ⭐</div>}
             </CardContent>
           </Card>
         </div>
