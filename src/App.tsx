@@ -375,6 +375,7 @@ const AlixConnectAdvancedBi = lazy(() => import("./pages/AlixConnect/AdvancedBi"
 const AlixConnectRealtimeCollab = lazy(() => import("./pages/AlixConnect/RealtimeCollab"));
 const AlixConnectComplianceAutomation = lazy(() => import("./pages/AlixConnect/ComplianceAutomation"));
 const AlixConnectSalesForecast = lazy(() => import("./pages/AlixConnect/SalesForecast"));
+const AlixConnectConversationQA = lazy(() => import("./pages/AlixConnect/ConversationQA"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1328,6 +1329,7 @@ function AppRoutes() {
             <Route path="realtime-collab" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectRealtimeCollab /></ProtectedRoute>} />
             <Route path="compliance-automation" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectComplianceAutomation /></ProtectedRoute>} />
             <Route path="sales-forecast" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectSalesForecast /></ProtectedRoute>} />
+            <Route path="conversation-qa" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectConversationQA /></ProtectedRoute>} />
 
           </Route>
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />

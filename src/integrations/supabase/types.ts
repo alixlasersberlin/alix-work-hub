@@ -942,6 +942,63 @@ export type Database = {
           },
         ]
       }
+      ac_conversation_qa: {
+        Row: {
+          agent_user_id: string | null
+          compliance_score: number | null
+          conversation_id: string
+          created_at: string
+          empathy_score: number | null
+          first_response_seconds: number | null
+          greeting_score: number | null
+          id: string
+          improvements: Json
+          model: string
+          overall_score: number
+          resolution_score: number | null
+          resolution_seconds: number | null
+          strengths: Json
+          summary: string | null
+          tone_score: number | null
+        }
+        Insert: {
+          agent_user_id?: string | null
+          compliance_score?: number | null
+          conversation_id: string
+          created_at?: string
+          empathy_score?: number | null
+          first_response_seconds?: number | null
+          greeting_score?: number | null
+          id?: string
+          improvements?: Json
+          model?: string
+          overall_score?: number
+          resolution_score?: number | null
+          resolution_seconds?: number | null
+          strengths?: Json
+          summary?: string | null
+          tone_score?: number | null
+        }
+        Update: {
+          agent_user_id?: string | null
+          compliance_score?: number | null
+          conversation_id?: string
+          created_at?: string
+          empathy_score?: number | null
+          first_response_seconds?: number | null
+          greeting_score?: number | null
+          id?: string
+          improvements?: Json
+          model?: string
+          overall_score?: number
+          resolution_score?: number | null
+          resolution_seconds?: number | null
+          strengths?: Json
+          summary?: string | null
+          tone_score?: number | null
+        }
+        Relationships: []
+      }
       ac_conversations: {
         Row: {
           ai_sentiment: string | null
