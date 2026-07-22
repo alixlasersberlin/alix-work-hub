@@ -116,8 +116,6 @@ export default function CustomerImportDialog({ open, onOpenChange, onImported }:
     const src = overrideRows ?? rows;
     if (!src.length) return;
 
-  async function runCompare() {
-    if (!rows.length) return;
     setBusy(true); setCompare(null); setSummary(null);
     try {
       // Load existing customers for duplicate detection
@@ -150,7 +148,7 @@ export default function CustomerImportDialog({ open, onOpenChange, onImported }:
         if (e.name) nameIx.set(e.name, e);
       }
 
-      const out: CompareRow[] = rows.map((raw, i) => {
+      const out: CompareRow[] = src.map((raw, i) => {
         const mapped = mapRow(raw);
         const label = mapped.company_name || mapped.contact_name || mapped.email || `Zeile ${i + 2}`;
         if (!mapped.company_name && !mapped.contact_name && !mapped.email) {
