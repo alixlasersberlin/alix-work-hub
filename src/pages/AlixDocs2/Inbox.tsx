@@ -92,6 +92,15 @@ export default function AlixDocs2Inbox() {
                     {busy[d.id] ? <Loader2 className="w-3 h-3 animate-spin"/> : '🧠 Analyse'}
                   </Button>
                   <Button size="sm" variant="ghost" disabled={busy[d.id]} onClick={() => match(d.id)}>🎯 Zuordnen</Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-primary/40 text-primary hover:bg-primary/10"
+                    onClick={() => setUebernahmeDoc(d)}
+                    title="Neuen CH-Auftrag aus diesem Dokument anlegen"
+                  >
+                    <FilePlus2 className="w-3 h-3 mr-1" />🇨🇭 Übernahme Auftrag
+                  </Button>
                   <Link to={`/alixdocs2/dokument/${d.id}`}><Button size="sm" variant="outline">👁 Öffnen</Button></Link>
                 </div>
                 {suggestions[d.id] && (
