@@ -98,7 +98,7 @@ export default function AlixDocs2Nextcloud() {
     setTesting(null);
     if (error) return toast.error(error.message);
     if ((data as any)?.ok) toast.success(`Verbindung OK (HTTP ${(data as any).status})`);
-    else toast.error(`Verbindung fehlgeschlagen: ${(data as any)?.error ?? (data as any)?.hint ?? 'Unbekannt'}`);
+    else toast.error(`Verbindung fehlgeschlagen: ${(data as any)?.hint ?? (data as any)?.error ?? 'Unbekannt'}`);
   };
 
   const scanFolder = async (folder_id: string) => {
