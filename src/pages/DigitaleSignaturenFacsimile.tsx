@@ -47,10 +47,10 @@ const DEFAULTS: Omit<Settings, "doc_type" | "image_path"> = {
 
 export default function DigitaleSignaturenFacsimile() {
   const [rows, setRows] = useState<Record<DocType, Settings | null>>({
-    invoice: null, offer: null, order_confirmation: null, service_report: null,
+    invoice: null, offer: null, order_confirmation: null, service_report: null, lease_purchase: null,
   });
   const [previews, setPreviews] = useState<Record<DocType, string | null>>({
-    invoice: null, offer: null, order_confirmation: null, service_report: null,
+    invoice: null, offer: null, order_confirmation: null, service_report: null, lease_purchase: null,
   });
   const [saving, setSaving] = useState<DocType | null>(null);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -62,7 +62,7 @@ export default function DigitaleSignaturenFacsimile() {
   async function load() {
     const { data, error } = await supabase.from("sig_facsimile_settings").select("*");
     if (error) { toast.error(error.message); return; }
-    const next: any = { invoice: null, offer: null, order_confirmation: null, service_report: null };
+    const next: any = { invoice: null, offer: null, order_confirmation: null, service_report: null, lease_purchase: null };
     (data || []).forEach((r: any) => { next[r.doc_type] = r; });
     setRows(next);
     // fetch preview URLs
