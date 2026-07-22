@@ -30373,6 +30373,7 @@ export type Database = {
           title: string
         }[]
       }
+      alixdocs2_purge_deleted: { Args: never; Returns: number }
       alixsmart_emit: {
         Args: { _data: Json; _event: string }
         Returns: undefined
