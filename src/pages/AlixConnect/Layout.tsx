@@ -3,7 +3,7 @@ import {
   MessageSquare, Inbox, Globe, BarChart3, Users, Settings, Megaphone,
   LayoutDashboard, UserSquare2, Sparkles, ClipboardCheck, Zap, FileBarChart, Shield, Smartphone, PhoneCall, Activity, PhoneForwarded,
   Mail, Ban, Webhook, FileText, Layers, Workflow, Mic, Video, Route as RouteIcon, Bot, FlaskConical, Scale, GraduationCap,
-  CalendarClock, BookOpen, GitBranch, LifeBuoy, Brain, Rocket, Euro, HeartPulse, TrendingUp, LayoutGrid, Languages, Handshake, Radio,
+  CalendarClock, BookOpen, GitBranch, LifeBuoy, Brain, Rocket, Euro, HeartPulse, TrendingUp, LayoutGrid, Languages, Handshake, Radio, TrendingDown, GitMerge,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -94,6 +94,9 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
       { to: "/connect/realtime-collab", label: "Realtime Collab", icon: Radio },
       { to: "/connect/compliance-automation", label: "Compliance Automation", icon: Shield },
       { to: "/connect/sales-forecast", label: "Sales Forecast", icon: TrendingUp },
+      { to: "/connect/churn-detection", label: "Churn Detection", icon: TrendingDown },
+      { to: "/connect/omnichannel-merge", label: "Omnichannel Merge", icon: GitMerge },
+      { to: "/connect/voice-bot-twilio", label: "Voice-Bot (Twilio)", icon: PhoneCall },
       { to: "/connect/knowledge", label: "Knowledge Base", icon: BookOpen },
       { to: "/connect/wfm", label: "Workforce", icon: CalendarClock },
     ],
