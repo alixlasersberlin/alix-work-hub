@@ -14,7 +14,15 @@ import { useNavigate } from 'react-router-dom';
 
 const CH_BRANCH_ID = '598077000000065075';
 
-type Customer = { id: string; company_name?: string | null; contact_name?: string | null; email?: string | null };
+type Customer = {
+  id: string;
+  company_name?: string | null;
+  contact_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  billing_address?: any;
+  shipping_address?: any;
+};
 
 type AiEntities = {
   kunde_name?: string | null;
@@ -96,7 +104,7 @@ export function UebernahmeAuftragChDialog({
     return `${y}-CH-${rnd}`;
   }
 
-  function applyEntities(ent: AiEntities, txt?: string) {
+  async function applyEntities(ent: AiEntities, txt?: string) {
     setEntities(ent);
     if (txt !== undefined) setOcrText(txt);
     if (ent.auftrag_nr) setOrderNumber(ent.auftrag_nr);
@@ -125,12 +133,34 @@ export function UebernahmeAuftragChDialog({
       }
     }
     if (noteParts.length) setNotes(noteParts.join('\n'));
-    // Auto-Kundensuche
-    const q = ent.kunde_nr || ent.email || ent.kunde_name;
+    // Auto-Kundensuche: Email hat höchste Priorität für exakten Adress-Match
+    if (ent.email) {
+      const found = await findCustomerByEmail(ent.email);
+      if (found) {
+        setCustomer(found);
+        setCustomers([found]);
+        setCustomerSearch(ent.email);
+        toast.success(`Kunde per E-Mail gefunden: ${found.company_name ?? found.contact_name ?? found.email}`);
+        return;
+      }
+    }
+    const q = ent.kunde_nr || ent.kunde_name;
     if (q) {
       setCustomerSearch(q);
       setTimeout(() => doSearch(q), 0);
     }
+  }
+
+  async function findCustomerByEmail(email: string): Promise<Customer | null> {
+    const clean = email.trim().toLowerCase();
+    if (!clean) return null;
+    const { data } = await supabase
+      .from('customers')
+      .select('id, company_name, contact_name, email, phone, billing_address, shipping_address')
+      .ilike('email', clean)
+      .limit(1)
+      .maybeSingle();
+    return (data as Customer) ?? null;
   }
 
   async function runScan() {
@@ -159,7 +189,7 @@ export function UebernahmeAuftragChDialog({
     const q = `%${term}%`;
     const { data } = await supabase
       .from('customers')
-      .select('id, company_name, contact_name, email')
+      .select('id, company_name, contact_name, email, phone, billing_address, shipping_address')
       .or(`company_name.ilike.${q},contact_name.ilike.${q},email.ilike.${q}`)
       .limit(20);
     const list = (data as Customer[]) ?? [];
@@ -175,16 +205,28 @@ export function UebernahmeAuftragChDialog({
     const { data: userRes } = await supabase.auth.getUser();
     const uid = userRes?.user?.id;
 
+    // Vollständigen Kundendatensatz laden (Adresse, Telefon) — Adresse aus Bestand wird übernommen
+    const { data: fullCust } = await supabase
+      .from('customers')
+      .select('id, company_name, contact_name, email, phone, billing_address, shipping_address')
+      .eq('id', customer.id)
+      .maybeSingle();
+    const c = (fullCust as Customer) ?? customer;
+    const billing = c.billing_address ?? null;
+    const shipping = c.shipping_address ?? billing;
+
     const { data: inserted, error } = await supabase
       .from('orders')
       .insert({
-        customer_id: customer.id,
+        customer_id: c.id,
         order_number: orderNumber.trim(),
         source_system: 'zoho_eu_1',
         order_status: 'offen',
         currency: currency || 'CHF',
         total_amount: amount ? Number(amount) : null,
         order_date: orderDate ? new Date(orderDate).toISOString() : new Date().toISOString(),
+        billing_address: billing,
+        shipping_address: shipping,
         raw_data: {
           branch_id: CH_BRANCH_ID,
           created_from_alixdocs2: documentId,
@@ -192,6 +234,14 @@ export function UebernahmeAuftragChDialog({
           title: defaultTitle ?? null,
           notes: notes || null,
           ai_entities: entities ?? null,
+          customer_snapshot: {
+            company_name: c.company_name,
+            contact_name: c.contact_name,
+            email: c.email,
+            phone: c.phone,
+            billing_address: billing,
+            shipping_address: shipping,
+          },
         },
       })
       .select('id')
@@ -307,9 +357,22 @@ export function UebernahmeAuftragChDialog({
               </div>
             )}
             {customer && (
-              <p className="text-xs mt-2 text-muted-foreground">
-                Ausgewählt: <strong>{customer.company_name ?? customer.contact_name}</strong>
-              </p>
+              <div className="text-xs mt-2 text-muted-foreground space-y-0.5">
+                <div>Ausgewählt: <strong className="text-foreground">{customer.company_name ?? customer.contact_name}</strong></div>
+                {customer.email && <div>E-Mail: {customer.email}</div>}
+                {customer.phone && <div>Tel: {customer.phone}</div>}
+                {customer.billing_address && (
+                  <div>
+                    Rechnungsadresse: {[
+                      customer.billing_address.street ?? customer.billing_address.address,
+                      customer.billing_address.postal_code ?? customer.billing_address.zip,
+                      customer.billing_address.city,
+                      customer.billing_address.country,
+                    ].filter(Boolean).join(', ') || '—'}
+                  </div>
+                )}
+                <div className="text-[10px] opacity-70">✓ Adresse aus Bestand wird in den Auftrag übernommen</div>
+              </div>
             )}
           </div>
 
