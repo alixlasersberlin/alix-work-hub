@@ -175,12 +175,12 @@ export function UebernahmeAuftragChDialog({
         currency: currency || 'CHF',
         total_amount: amount ? Number(amount) : null,
         order_date: orderDate ? new Date(orderDate).toISOString() : new Date().toISOString(),
-        internal_notes: notes || null,
         raw_data: {
           branch_id: CH_BRANCH_ID,
           created_from_alixdocs2: documentId,
           created_manually: true,
           title: defaultTitle ?? null,
+          notes: notes || null,
           ai_entities: entities ?? null,
         },
       })
