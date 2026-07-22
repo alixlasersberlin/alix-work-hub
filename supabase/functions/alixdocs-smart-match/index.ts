@@ -215,20 +215,24 @@ Deno.serve(async (req) => {
 
   const { data: doc, error: docErr } = await supabase
     .from("alixdocs_documents")
-    .select("id, file_name, ocr_text, extracted_entities, order_id, customer_id, device_id")
+    .select("id, original_filename, title, ocr_text, ai_order_numbers, ai_serial_numbers, order_id, customer_id, device_id")
     .eq("id", document_id)
     .maybeSingle();
-  if (docErr || !doc) return json(404, { error: "document not found" });
+  if (docErr || !doc) return json(404, { error: "document not found", details: docErr?.message });
 
   const config = await loadConfig(supabase);
-  const fromName = parseFilename(doc.file_name ?? "");
-  const fromEntities: ExtractedFields = (doc.extracted_entities as any) ?? {};
+  const fileName = (doc.original_filename ?? doc.title ?? "") as string;
+  const fromName = parseFilename(fileName);
+  const fromEntities: ExtractedFields = {
+    orderNumbers: (doc.ai_order_numbers as string[] | null) ?? [],
+    serials: (doc.ai_serial_numbers as string[] | null) ?? [],
+  } as any;
   const seed = merge(fromName, fromEntities);
-  const fromAI = await extractFieldsAI(doc.ocr_text ?? "", doc.file_name ?? "");
+  const fromAI = await extractFieldsAI(doc.ocr_text ?? "", fileName);
   const fields = merge(seed, fromAI);
 
   const candidates = await findCandidates(supabase, fields, config.weights);
-  const rules = await applyRules(supabase, doc.file_name ?? "", doc.ocr_text ?? "", fields);
+  const rules = await applyRules(supabase, fileName, doc.ocr_text ?? "", fields);
   for (const b of rules.bonuses) {
     const c = candidates.find(c => `${c.entity_type}:${c.entity_id}` === b.key);
     if (c) { c.score += b.points; c.hits.push(`rule:${b.rule_id}`); }
