@@ -129,7 +129,19 @@ Deno.serve(async (req) => {
     if (resp.ok || resp.status === 207 || resp.status !== 401) break;
   }
   if (!resp || (!resp.ok && resp.status !== 207)) {
-    return json(502, { error: `PROPFIND ${resp?.status ?? "?"}` });
+    const status = resp?.status ?? 0;
+    const preview = resp ? (await resp.text()).slice(0, 300) : "";
+    return json(200, {
+      ok: false,
+      error: `PROPFIND ${status || "unreachable"}`,
+      hint: status === 404
+        ? `Ordner nicht gefunden in Nextcloud. Bitte den Pfad des überwachten Ordners prüfen (aktuell: "${folder.path || "/"}"). Er muss relativ zum User-Root von "${server.username}" existieren.`
+        : status === 401
+          ? "Nextcloud lehnt die Zugangsdaten ab. Bitte App-Passwort erneuern."
+          : "Nextcloud antwortet nicht wie erwartet.",
+      dav_url: davUrl,
+      response_preview: preview,
+    });
   }
   const xml = await resp.text();
   const entries = parsePropfind(xml);
