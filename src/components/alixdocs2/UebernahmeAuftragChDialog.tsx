@@ -203,6 +203,20 @@ export function UebernahmeAuftragChDialog({
       return;
     }
 
+    if (positions.length) {
+      const rows = positions.map((p, i) => ({
+        order_id: inserted.id,
+        item_order: i + 1,
+        item_name: p.beschreibung || `Position ${i + 1}`,
+        description: p.beschreibung || null,
+        quantity: p.menge,
+        rate: p.einzelpreis,
+        amount: Number((p.menge * p.einzelpreis).toFixed(2)),
+      }));
+      const { error: itemsErr } = await supabase.from('order_items').insert(rows);
+      if (itemsErr) toast.warning('Positionen konnten nicht gespeichert werden: ' + itemsErr.message);
+    }
+
     await supabase.from('alixdocs2_relations').insert({
       document_id: documentId,
       linked_type: 'order',
