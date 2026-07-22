@@ -113,9 +113,15 @@ export function UebernahmeAuftragChDialog({
     if (ent.telefon) noteParts.push(`Tel: ${ent.telefon}`);
     if (ent.email) noteParts.push(`E-Mail: ${ent.email}`);
     if (Array.isArray(ent.positionen) && ent.positionen.length) {
-      noteParts.push('Positionen:');
-      for (const p of ent.positionen.slice(0, 20)) {
-        noteParts.push(`  · ${p.menge ?? ''}× ${p.beschreibung ?? ''} @ ${p.einzelpreis ?? ''}`);
+      const pos = ent.positionen.map(p => ({
+        beschreibung: String(p.beschreibung ?? '').trim(),
+        menge: Number(p.menge ?? 1) || 1,
+        einzelpreis: Number(p.einzelpreis ?? 0) || 0,
+      })).filter(p => p.beschreibung || p.einzelpreis > 0);
+      setPositions(pos);
+      if (autoTotal && pos.length) {
+        const sum = pos.reduce((s, p) => s + p.menge * p.einzelpreis, 0);
+        if (sum > 0) setAmount(sum.toFixed(2));
       }
     }
     if (noteParts.length) setNotes(noteParts.join('\n'));
