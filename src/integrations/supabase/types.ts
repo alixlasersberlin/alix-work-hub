@@ -5743,6 +5743,44 @@ export type Database = {
           },
         ]
       }
+      alixdocs2_comments: {
+        Row: {
+          body: string
+          created_at: string
+          document_id: string
+          id: string
+          kind: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          document_id: string
+          id?: string
+          kind?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          kind?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_comments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixdocs2_doctypes: {
         Row: {
           code: string
@@ -5751,6 +5789,7 @@ export type Database = {
           description: string | null
           label: string
           required: boolean
+          requires_approval: boolean
           sort_order: number
         }
         Insert: {
@@ -5760,6 +5799,7 @@ export type Database = {
           description?: string | null
           label: string
           required?: boolean
+          requires_approval?: boolean
           sort_order?: number
         }
         Update: {
@@ -5769,6 +5809,7 @@ export type Database = {
           description?: string | null
           label?: string
           required?: boolean
+          requires_approval?: boolean
           sort_order?: number
         }
         Relationships: []
@@ -5779,6 +5820,8 @@ export type Database = {
           ai_entities: Json
           ai_processed_at: string | null
           ai_tags: string[]
+          approval_note: string | null
+          approval_status: string
           approved_at: string | null
           approved_by: string | null
           created_at: string
@@ -5804,6 +5847,8 @@ export type Database = {
           ai_entities?: Json
           ai_processed_at?: string | null
           ai_tags?: string[]
+          approval_note?: string | null
+          approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
@@ -5829,6 +5874,8 @@ export type Database = {
           ai_entities?: Json
           ai_processed_at?: string | null
           ai_tags?: string[]
+          approval_note?: string | null
+          approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string
