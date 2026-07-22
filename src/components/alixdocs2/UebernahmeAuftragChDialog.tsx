@@ -119,7 +119,7 @@ export function UebernahmeAuftragChDialog({
     if (ent.serien_nr) noteParts.push(`Serien-Nr: ${ent.serien_nr}`);
     if (ent.adresse) noteParts.push(`Adresse: ${ent.adresse}`);
     if (ent.telefon) noteParts.push(`Tel: ${ent.telefon}`);
-    if (ent.email) noteParts.push(`E-Mail: ${ent.email}`);
+    // E-Mail aus OCR wird bewusst NICHT übernommen — meist Absender-/Firmenmail, nicht Kundenmail
     if (Array.isArray(ent.positionen) && ent.positionen.length) {
       const pos = ent.positionen.map(p => ({
         beschreibung: String(p.beschreibung ?? '').trim(),
@@ -133,17 +133,6 @@ export function UebernahmeAuftragChDialog({
       }
     }
     if (noteParts.length) setNotes(noteParts.join('\n'));
-    // Auto-Kundensuche: Email hat höchste Priorität für exakten Adress-Match
-    if (ent.email) {
-      const found = await findCustomerByEmail(ent.email);
-      if (found) {
-        setCustomer(found);
-        setCustomers([found]);
-        setCustomerSearch(ent.email);
-        toast.success(`Kunde per E-Mail gefunden: ${found.company_name ?? found.contact_name ?? found.email}`);
-        return;
-      }
-    }
     const q = ent.kunde_nr || ent.kunde_name;
     if (q) {
       setCustomerSearch(q);
@@ -324,7 +313,7 @@ export function UebernahmeAuftragChDialog({
           </div>
 
           <div>
-            <Label>Kunde suchen {(entities?.kunde_name || entities?.email) && <span className="text-xs text-muted-foreground">· KI: {entities?.kunde_name}{entities?.kunde_nr ? ` (${entities.kunde_nr})` : ''}{entities?.email ? ` · ${entities.email}` : ''}</span>}</Label>
+            <Label>Kunde suchen {(entities?.kunde_name || entities?.kunde_nr) && <span className="text-xs text-muted-foreground">· KI: {entities?.kunde_name}{entities?.kunde_nr ? ` (${entities.kunde_nr})` : ''}</span>}</Label>
             <div className="flex gap-2">
               <Input
                 placeholder="Firma / Kontakt / E-Mail / Kunden-Nr…"
