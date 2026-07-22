@@ -10,13 +10,14 @@ import { toast } from "sonner";
 import { Upload, ImageIcon, Save, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
-type DocType = "invoice" | "offer" | "order_confirmation" | "service_report";
+type DocType = "invoice" | "offer" | "order_confirmation" | "service_report" | "lease_purchase";
 
 const DOC_TYPES: { key: DocType; label: string; hint: string }[] = [
   { key: "invoice", label: "Ausgangsrechnungen", hint: "Finance & Zoho Rechnungs-PDFs" },
   { key: "offer", label: "Angebote", hint: "Angebots-PDFs" },
   { key: "order_confirmation", label: "Auftragsbestätigungen", hint: "OC-PDFs" },
   { key: "service_report", label: "Serviceberichte / Wartung", hint: "Service- & Wartungsprotokolle" },
+  { key: "lease_purchase", label: "Mietkauf-Verträge", hint: "Mietkauf-PDFs" },
 ];
 
 interface Settings {
