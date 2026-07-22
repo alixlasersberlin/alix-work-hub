@@ -125,6 +125,10 @@ export default function AlixDocs2Nextcloud() {
     if (error) return toast.error(error.message);
     const d = data as any;
     setReconcileResult(d);
+    if (d?.ok === false) {
+      toast.error(`${d.error ?? 'Fehler'} — ${d.hint ?? ''}`);
+      return;
+    }
     toast.success(`Abgleich fertig · ${d.existing_count} vorhanden · ${d.imported_count} importiert · ${d.not_found_count} nicht gefunden`);
   };
 
