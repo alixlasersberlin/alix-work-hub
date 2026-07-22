@@ -216,8 +216,12 @@ export default function AlixDocs2Nextcloud() {
                           {f.last_scanned_at && <> · letzter Scan {new Date(f.last_scanned_at).toLocaleString('de-DE')}</>}
                         </div>
                       </div>
-                      <Button size="sm" variant="ghost" onClick={() => scanFolder(f.id)} disabled={scanning === f.id}>
+                      <Button size="sm" variant="ghost" title="Dateien scannen" onClick={() => scanFolder(f.id)} disabled={scanning === f.id}>
                         {scanning === f.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                      </Button>
+                      <Button size="sm" variant="outline" title="Aufträge abgleichen & fehlende importieren" onClick={() => reconcileOrders(f.id)} disabled={reconciling === f.id}>
+                        {reconciling === f.id ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <ClipboardCheck className="w-3 h-3 mr-1" />}
+                        Aufträge abgleichen
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => deleteFolder(f.id)}><XCircle className="w-3 h-3" /></Button>
                     </div>
