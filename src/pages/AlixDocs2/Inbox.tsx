@@ -16,6 +16,7 @@ export default function AlixDocs2Inbox() {
   const [loading, setLoading] = useState(true);
   const [suggestions, setSuggestions] = useState<Record<string, Suggestion[]>>({});
   const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [uebernahmeDoc, setUebernahmeDoc] = useState<Doc | null>(null);
 
   const load = async () => {
     setLoading(true);
