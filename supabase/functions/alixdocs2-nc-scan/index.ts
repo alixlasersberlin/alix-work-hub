@@ -160,6 +160,18 @@ Deno.serve(async (req) => {
           });
           filesNew++;
         } else if (existing.etag !== e.etag) {
+          // Vorherige Version archivieren
+          const { count } = await admin
+            .from("alixdocs2_versions")
+            .select("id", { count: "exact", head: true })
+            .eq("document_id", existing.id);
+          await admin.from("alixdocs2_versions").insert({
+            document_id: existing.id,
+            version: (count ?? 0) + 1,
+            etag: existing.etag,
+            nc_path: relPath,
+            note: "auto: etag changed",
+          });
           await admin
             .from("alixdocs2_documents")
             .update({ etag: e.etag, size_bytes: e.size, mime: e.mime, status: "importiert" })
