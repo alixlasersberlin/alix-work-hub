@@ -35,7 +35,7 @@ import alixLogo from '@/assets/alix-logo-gold.png';
 
 
 
-const APP_VERSION = '5.13';
+const APP_VERSION = '5.14';
 
 type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 type NavItem = NavChild & { children?: NavChild[] };
@@ -61,6 +61,7 @@ export const navItems: NavItem[] = [
       { path: '/dokumente', label: 'Dokumentensuche', icon: SearchCheck, roles: null },
       { path: '/dokumente/bulk-import', label: 'Bulk Import', icon: CheckCircle2, roles: null },
       { path: '/dokumente/ai-suche', label: 'AI-Suche ✨', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
+      { path: '/dokumente/compliance-export', label: 'Compliance-Export', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
 
     ],
   },
