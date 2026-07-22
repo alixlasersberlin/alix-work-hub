@@ -392,7 +392,7 @@ export default function CustomerImportDialog({ open, onOpenChange, onImported }:
         <DialogFooter className="pt-2">
           <Button variant="ghost" onClick={() => { setRows([]); setCompare(null); setSummary(null); setFilename(''); onOpenChange(false); }}>Schließen</Button>
           {!compare && (
-            <Button onClick={runCompare} disabled={busy || !rows.length} className="gold-gradient text-primary-foreground">
+            <Button onClick={() => runCompare()} disabled={busy || !rows.length} className="gold-gradient text-primary-foreground">
               {busy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Vergleiche…</> : <><Search className="w-4 h-4 mr-2" />{rows.length} Zeilen vergleichen</>}
             </Button>
           )}
