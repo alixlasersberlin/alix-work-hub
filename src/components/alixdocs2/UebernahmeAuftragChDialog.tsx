@@ -104,7 +104,7 @@ export function UebernahmeAuftragChDialog({
     return `${y}-CH-${rnd}`;
   }
 
-  function applyEntities(ent: AiEntities, txt?: string) {
+  async function applyEntities(ent: AiEntities, txt?: string) {
     setEntities(ent);
     if (txt !== undefined) setOcrText(txt);
     if (ent.auftrag_nr) setOrderNumber(ent.auftrag_nr);
