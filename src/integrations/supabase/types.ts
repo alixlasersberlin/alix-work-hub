@@ -30316,6 +30316,16 @@ export type Database = {
         }[]
       }
       alixdocs_soft_delete: { Args: { _doc_id: string }; Returns: undefined }
+      alixdocs2_fts_search: {
+        Args: { _limit?: number; _query: string }
+        Returns: {
+          doc_type: string
+          id: string
+          rank: number
+          snippet: string
+          title: string
+        }[]
+      }
       alixsmart_emit: {
         Args: { _data: Json; _event: string }
         Returns: undefined
