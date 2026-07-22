@@ -133,12 +133,34 @@ export function UebernahmeAuftragChDialog({
       }
     }
     if (noteParts.length) setNotes(noteParts.join('\n'));
-    // Auto-Kundensuche
-    const q = ent.kunde_nr || ent.email || ent.kunde_name;
+    // Auto-Kundensuche: Email hat höchste Priorität für exakten Adress-Match
+    if (ent.email) {
+      const found = await findCustomerByEmail(ent.email);
+      if (found) {
+        setCustomer(found);
+        setCustomers([found]);
+        setCustomerSearch(ent.email);
+        toast.success(`Kunde per E-Mail gefunden: ${found.company_name ?? found.contact_name ?? found.email}`);
+        return;
+      }
+    }
+    const q = ent.kunde_nr || ent.kunde_name;
     if (q) {
       setCustomerSearch(q);
       setTimeout(() => doSearch(q), 0);
     }
+  }
+
+  async function findCustomerByEmail(email: string): Promise<Customer | null> {
+    const clean = email.trim().toLowerCase();
+    if (!clean) return null;
+    const { data } = await supabase
+      .from('customers')
+      .select('id, company_name, contact_name, email, phone, billing_address, shipping_address')
+      .ilike('email', clean)
+      .limit(1)
+      .maybeSingle();
+    return (data as Customer) ?? null;
   }
 
   async function runScan() {
@@ -167,7 +189,7 @@ export function UebernahmeAuftragChDialog({
     const q = `%${term}%`;
     const { data } = await supabase
       .from('customers')
-      .select('id, company_name, contact_name, email')
+      .select('id, company_name, contact_name, email, phone, billing_address, shipping_address')
       .or(`company_name.ilike.${q},contact_name.ilike.${q},email.ilike.${q}`)
       .limit(20);
     const list = (data as Customer[]) ?? [];
