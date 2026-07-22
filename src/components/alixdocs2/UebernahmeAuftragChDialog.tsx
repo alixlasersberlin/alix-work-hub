@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 
 const CH_BRANCH_ID = '598077000000065075';
 
-type Customer = { id: string; company_name?: string | null; contact_name?: string | null; email?: string | null; customer_number?: string | null };
+type Customer = { id: string; company_name?: string | null; contact_name?: string | null; email?: string | null };
 
 type AiEntities = {
   kunde_name?: string | null;
