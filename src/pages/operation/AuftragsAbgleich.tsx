@@ -25,6 +25,26 @@ export default function AuftragsAbgleich() {
   const [data, setData] = useState<Payload | null>(null);
   const [filter, setFilter] = useState<'all' | 'ok' | 'missing'>('all');
   const [q, setQ] = useState('');
+  const [importing, setImporting] = useState(false);
+
+  async function autoImportMissing() {
+    if (!data) return;
+    const missing = data.rows.filter(r => !r.found);
+    if (!missing.length) { toast.info('Keine fehlenden Vorgänge'); return; }
+    setImporting(true);
+    try {
+      const { data: res, error } = await supabase.functions.invoke('zoho-orders-reconcile', {
+        body: { sources: ['zoho_eu_1', 'zoho_eu_2'], import: true },
+      });
+      if (error) throw error;
+      const totalImported = (res?.results ?? []).reduce((s: number, r: any) => s + (r.imported ?? 0), 0);
+      toast.success(`${totalImported ?? 0} Aufträge importiert · Bitte Datei neu abgleichen`);
+    } catch (e: any) {
+      toast.error(e?.message ?? String(e));
+    } finally {
+      setImporting(false);
+    }
+  }
 
   useEffect(() => {
     const raw = sessionStorage.getItem('auftragsabgleich:results');
