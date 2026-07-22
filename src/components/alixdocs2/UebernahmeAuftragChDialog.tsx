@@ -357,9 +357,22 @@ export function UebernahmeAuftragChDialog({
               </div>
             )}
             {customer && (
-              <p className="text-xs mt-2 text-muted-foreground">
-                Ausgewählt: <strong>{customer.company_name ?? customer.contact_name}</strong>
-              </p>
+              <div className="text-xs mt-2 text-muted-foreground space-y-0.5">
+                <div>Ausgewählt: <strong className="text-foreground">{customer.company_name ?? customer.contact_name}</strong></div>
+                {customer.email && <div>E-Mail: {customer.email}</div>}
+                {customer.phone && <div>Tel: {customer.phone}</div>}
+                {customer.billing_address && (
+                  <div>
+                    Rechnungsadresse: {[
+                      customer.billing_address.street ?? customer.billing_address.address,
+                      customer.billing_address.postal_code ?? customer.billing_address.zip,
+                      customer.billing_address.city,
+                      customer.billing_address.country,
+                    ].filter(Boolean).join(', ') || '—'}
+                  </div>
+                )}
+                <div className="text-[10px] opacity-70">✓ Adresse aus Bestand wird in den Auftrag übernommen</div>
+              </div>
             )}
           </div>
 
