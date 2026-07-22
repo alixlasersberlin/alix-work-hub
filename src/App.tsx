@@ -1381,6 +1381,8 @@ function AppRoutes() {
           <Route path="/alixdocs2/dokument/:id" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocs2Viewer /></ProtectedRoute>} />
           <Route path="/alixdocs2/workflows" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocs2Workflows /></ProtectedRoute>} />
           <Route path="/alixdocs2/compliance" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocs2Compliance /></ProtectedRoute>} />
+          <Route path="/alixdocs2/papierkorb" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocs2Papierkorb /></ProtectedRoute>} />
+          <Route path="/alixdocs2/doctypes" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocs2DocTypes /></ProtectedRoute>} />
           <Route path="/admin/sign-api-docs" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><SignApiDocs /></ProtectedRoute>} />
           <Route path="/dokumente/freigaben" element={<ProtectedRoute><AlixDocsApprovals /></ProtectedRoute>} />
           <Route path="/admin/alixdocs/chains" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixDocsChainsAdmin /></ProtectedRoute>} />
