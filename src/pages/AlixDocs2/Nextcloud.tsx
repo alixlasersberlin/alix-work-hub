@@ -34,6 +34,8 @@ export default function AlixDocs2Nextcloud() {
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState<string | null>(null);
   const [testing, setTesting] = useState<string | null>(null);
+  const [reconciling, setReconciling] = useState<string | null>(null);
+  const [reconcileResult, setReconcileResult] = useState<any | null>(null);
   const [newServerOpen, setNewServerOpen] = useState(false);
   const [newFolderOpen, setNewFolderOpen] = useState<string | null>(null);
 
