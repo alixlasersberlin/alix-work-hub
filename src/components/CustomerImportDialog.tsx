@@ -98,15 +98,24 @@ export default function CustomerImportDialog({ open, onOpenChange, onImported }:
     try {
       const parsed = await parseFile(f);
       setRows(parsed);
-      toast.success(`${parsed.length} Zeilen erkannt`);
+      toast.success(`${parsed.length} Zeilen erkannt – starte Vergleich…`);
+      // Auto-run comparison so the user immediately sees the full result
+      setTimeout(() => runCompareWith(parsed), 50);
     } catch (err: any) {
       toast.error('Parsen fehlgeschlagen: ' + err.message);
       setRows([]);
     }
   }
 
-  async function runCompare() {
-    if (!rows.length) return;
+  async function runCompareWith(sourceRows: Row[]) {
+    if (!sourceRows.length) return;
+    await runCompare(sourceRows);
+  }
+
+  async function runCompare(overrideRows?: Row[]) {
+    const src = overrideRows ?? rows;
+    if (!src.length) return;
+
     setBusy(true); setCompare(null); setSummary(null);
     try {
       // Load existing customers for duplicate detection
@@ -139,7 +148,7 @@ export default function CustomerImportDialog({ open, onOpenChange, onImported }:
         if (e.name) nameIx.set(e.name, e);
       }
 
-      const out: CompareRow[] = rows.map((raw, i) => {
+      const out: CompareRow[] = src.map((raw, i) => {
         const mapped = mapRow(raw);
         const label = mapped.company_name || mapped.contact_name || mapped.email || `Zeile ${i + 2}`;
         if (!mapped.company_name && !mapped.contact_name && !mapped.email) {
@@ -383,7 +392,7 @@ export default function CustomerImportDialog({ open, onOpenChange, onImported }:
         <DialogFooter className="pt-2">
           <Button variant="ghost" onClick={() => { setRows([]); setCompare(null); setSummary(null); setFilename(''); onOpenChange(false); }}>Schließen</Button>
           {!compare && (
-            <Button onClick={runCompare} disabled={busy || !rows.length} className="gold-gradient text-primary-foreground">
+            <Button onClick={() => runCompare()} disabled={busy || !rows.length} className="gold-gradient text-primary-foreground">
               {busy ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Vergleiche…</> : <><Search className="w-4 h-4 mr-2" />{rows.length} Zeilen vergleichen</>}
             </Button>
           )}
