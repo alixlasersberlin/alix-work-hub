@@ -5708,6 +5708,388 @@ export type Database = {
           },
         ]
       }
+      alixdocs2_audit: {
+        Row: {
+          action: string
+          actor: string | null
+          created_at: string
+          document_id: string | null
+          id: string
+          meta: Json
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          meta?: Json
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          created_at?: string
+          document_id?: string | null
+          id?: string
+          meta?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_audit_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs2_doctypes: {
+        Row: {
+          code: string
+          color: string | null
+          created_at: string
+          description: string | null
+          label: string
+          required: boolean
+          sort_order: number
+        }
+        Insert: {
+          code: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          label: string
+          required?: boolean
+          sort_order?: number
+        }
+        Update: {
+          code?: string
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          label?: string
+          required?: boolean
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      alixdocs2_documents: {
+        Row: {
+          ai_confidence: number | null
+          ai_entities: Json
+          ai_processed_at: string | null
+          ai_tags: string[]
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          doc_type: string | null
+          etag: string | null
+          id: string
+          language: string | null
+          mime: string | null
+          nc_path: string
+          nc_server_id: string | null
+          ocr_text: string | null
+          search_tsv: unknown
+          sha256: string | null
+          size_bytes: number | null
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_entities?: Json
+          ai_processed_at?: string | null
+          ai_tags?: string[]
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          doc_type?: string | null
+          etag?: string | null
+          id?: string
+          language?: string | null
+          mime?: string | null
+          nc_path: string
+          nc_server_id?: string | null
+          ocr_text?: string | null
+          search_tsv?: unknown
+          sha256?: string | null
+          size_bytes?: number | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_entities?: Json
+          ai_processed_at?: string | null
+          ai_tags?: string[]
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          doc_type?: string | null
+          etag?: string | null
+          id?: string
+          language?: string | null
+          mime?: string | null
+          nc_path?: string
+          nc_server_id?: string | null
+          ocr_text?: string | null
+          search_tsv?: unknown
+          sha256?: string | null
+          size_bytes?: number | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_documents_nc_server_id_fkey"
+            columns: ["nc_server_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_nc_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs2_nc_servers: {
+        Row: {
+          active: boolean
+          app_password_secret_name: string
+          base_url: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+          username: string
+          verify_ssl: boolean
+        }
+        Insert: {
+          active?: boolean
+          app_password_secret_name: string
+          base_url: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+          username: string
+          verify_ssl?: boolean
+        }
+        Update: {
+          active?: boolean
+          app_password_secret_name?: string
+          base_url?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+          username?: string
+          verify_ssl?: boolean
+        }
+        Relationships: []
+      }
+      alixdocs2_nc_sync_runs: {
+        Row: {
+          error: string | null
+          files_new: number
+          files_seen: number
+          files_updated: number
+          finished_at: string | null
+          folder_id: string | null
+          id: string
+          server_id: string | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          error?: string | null
+          files_new?: number
+          files_seen?: number
+          files_updated?: number
+          finished_at?: string | null
+          folder_id?: string | null
+          id?: string
+          server_id?: string | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          error?: string | null
+          files_new?: number
+          files_seen?: number
+          files_updated?: number
+          finished_at?: string | null
+          folder_id?: string | null
+          id?: string
+          server_id?: string | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_nc_sync_runs_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_nc_watched_folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixdocs2_nc_sync_runs_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_nc_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs2_nc_watched_folders: {
+        Row: {
+          active: boolean
+          created_at: string
+          doc_type_hint: string | null
+          id: string
+          last_scanned_at: string | null
+          path: string
+          poll_interval_min: number
+          recursive: boolean
+          server_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          doc_type_hint?: string | null
+          id?: string
+          last_scanned_at?: string | null
+          path: string
+          poll_interval_min?: number
+          recursive?: boolean
+          server_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          doc_type_hint?: string | null
+          id?: string
+          last_scanned_at?: string | null
+          path?: string
+          poll_interval_min?: number
+          recursive?: boolean
+          server_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_nc_watched_folders_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_nc_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs2_relations: {
+        Row: {
+          confidence: number | null
+          created_at: string
+          created_by: string | null
+          document_id: string
+          id: string
+          linked_id: string
+          linked_type: string
+          source: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          id?: string
+          linked_id: string
+          linked_type: string
+          source?: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          id?: string
+          linked_id?: string
+          linked_type?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_relations_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs2_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document_id: string
+          etag: string | null
+          id: string
+          nc_path: string | null
+          note: string | null
+          sha256: string | null
+          size_bytes: number | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          etag?: string | null
+          id?: string
+          nc_path?: string | null
+          note?: string | null
+          sha256?: string | null
+          size_bytes?: number | null
+          version: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          etag?: string | null
+          id?: string
+          nc_path?: string | null
+          note?: string | null
+          sha256?: string | null
+          size_bytes?: number | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixsmart_customer_links: {
         Row: {
           alixsmart_email: string | null
@@ -30339,6 +30721,8 @@ export type Database = {
         Args: { _order_id: string; _reason: string }
         Returns: undefined
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       sig_can_send: { Args: never; Returns: boolean }
       sig_is_admin: { Args: never; Returns: boolean }
       sod_conflict_report: {
