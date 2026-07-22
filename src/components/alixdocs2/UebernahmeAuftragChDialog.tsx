@@ -205,16 +205,28 @@ export function UebernahmeAuftragChDialog({
     const { data: userRes } = await supabase.auth.getUser();
     const uid = userRes?.user?.id;
 
+    // Vollständigen Kundendatensatz laden (Adresse, Telefon) — Adresse aus Bestand wird übernommen
+    const { data: fullCust } = await supabase
+      .from('customers')
+      .select('id, company_name, contact_name, email, phone, billing_address, shipping_address')
+      .eq('id', customer.id)
+      .maybeSingle();
+    const c = (fullCust as Customer) ?? customer;
+    const billing = c.billing_address ?? null;
+    const shipping = c.shipping_address ?? billing;
+
     const { data: inserted, error } = await supabase
       .from('orders')
       .insert({
-        customer_id: customer.id,
+        customer_id: c.id,
         order_number: orderNumber.trim(),
         source_system: 'zoho_eu_1',
         order_status: 'offen',
         currency: currency || 'CHF',
         total_amount: amount ? Number(amount) : null,
         order_date: orderDate ? new Date(orderDate).toISOString() : new Date().toISOString(),
+        billing_address: billing,
+        shipping_address: shipping,
         raw_data: {
           branch_id: CH_BRANCH_ID,
           created_from_alixdocs2: documentId,
@@ -222,6 +234,14 @@ export function UebernahmeAuftragChDialog({
           title: defaultTitle ?? null,
           notes: notes || null,
           ai_entities: entities ?? null,
+          customer_snapshot: {
+            company_name: c.company_name,
+            contact_name: c.contact_name,
+            email: c.email,
+            phone: c.phone,
+            billing_address: billing,
+            shipping_address: shipping,
+          },
         },
       })
       .select('id')
