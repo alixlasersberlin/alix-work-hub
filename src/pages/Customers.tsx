@@ -61,6 +61,7 @@ export default function Customers() {
   const queryClient = useQueryClient();
   const [editCustomer, setEditCustomer] = useState<any>(null);
   const [deleteCustomer, setDeleteCustomer] = useState<any>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data: customers = [], isPending: loading, error: queryError, refetch } = useQuery({
     queryKey: qk.customers.list({ atOnly, sortField, sortDir }),
