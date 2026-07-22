@@ -72,6 +72,8 @@ export function UebernahmeAuftragChDialog({
     setCustomer(null);
     setEntities(null);
     setOcrText('');
+    setPositions([]);
+    setAutoTotal(true);
     // Auto: bestehende OCR/Entities laden — falls leer, direkt scannen
     (async () => {
       const { data } = await supabase
