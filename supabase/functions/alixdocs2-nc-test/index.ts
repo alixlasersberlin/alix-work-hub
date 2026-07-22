@@ -6,6 +6,20 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+const base64Utf8 = (value: string) => {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+};
+
+const authHeaderFor = (username: string, password: string) => `Basic ${base64Utf8(`${username}:${password}`)}`;
+
+const passwordCandidates = (password: string) => {
+  const values = [password, password.trim(), password.replace(/\s+/g, ""), password.trim().replace(/\s+/g, "")];
+  return [...new Set(values)].filter(Boolean);
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "method_not_allowed" });
@@ -46,21 +60,39 @@ Deno.serve(async (req) => {
   }
 
   const davUrl = `${server.base_url.replace(/\/$/, "")}/remote.php/dav/files/${encodeURIComponent(server.username)}/`;
-  const basic = btoa(`${server.username}:${password}`);
 
   try {
-    const resp = await fetch(davUrl, {
-      method: "PROPFIND",
-      headers: {
-        Authorization: `Basic ${basic}`,
-        Depth: "0",
-        "Content-Type": "application/xml",
-      },
-    });
-    const text = await resp.text();
-    return json(resp.ok || resp.status === 207 ? 200 : 400, {
-      ok: resp.ok || resp.status === 207,
-      status: resp.status,
+    let resp: Response | null = null;
+    let text = "";
+    for (const candidate of passwordCandidates(password)) {
+      resp = await fetch(davUrl, {
+        method: "PROPFIND",
+        headers: {
+          Authorization: authHeaderFor(server.username, candidate),
+          Depth: "0",
+          "Content-Type": "application/xml",
+          "User-Agent": "AlixWork-AlixDocs/2.0",
+        },
+      });
+      text = await resp.text();
+      if (resp.ok || resp.status === 207 || resp.status !== 401) break;
+    }
+
+    const ok = !!resp && (resp.ok || resp.status === 207);
+    const status = resp?.status ?? 0;
+    const authFailed = status === 401;
+
+    // Ein fehlgeschlagener Nextcloud-Login ist kein Edge-Function-Fehler:
+    // die UI soll die Diagnose anzeigen statt als Runtime-Error abzubrechen.
+    return json(200, {
+      ok,
+      status,
+      error: ok ? undefined : authFailed ? "nextcloud_auth_failed" : "nextcloud_connection_failed",
+      hint: ok
+        ? undefined
+        : authFailed
+          ? "Nextcloud lehnt Benutzer/App-Passwort ab. Bitte Username und ein neues Nextcloud App-Passwort prüfen. Leerzeichen im Secret werden automatisch mitgetestet."
+          : "Nextcloud antwortet nicht erfolgreich. Bitte Base URL und WebDAV-Zugriff prüfen.",
       dav_url: davUrl,
       response_preview: text.slice(0, 500),
     });
