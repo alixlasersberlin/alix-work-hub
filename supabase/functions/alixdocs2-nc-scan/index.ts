@@ -7,6 +7,27 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+const base64Utf8 = (value: string) => {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+};
+
+const authHeaderFor = (username: string, password: string) => `Basic ${base64Utf8(`${username}:${password}`)}`;
+
+const passwordCandidates = (password: string) => {
+  const values = [password, password.trim(), password.replace(/\s+/g, ""), password.trim().replace(/\s+/g, "")];
+  return [...new Set(values)].filter(Boolean);
+};
+
+const encodePath = (path: string) =>
+  path
+    .split("/")
+    .filter(Boolean)
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+
 interface NcEntry {
   href: string;
   is_dir: boolean;
@@ -109,9 +130,10 @@ Deno.serve(async (req) => {
     }
 
     const cleanPath = folder.path.replace(/^\/+/, "").replace(/\/+$/, "");
-    const davBase = `/remote.php/dav/files/${server.username}/${cleanPath}/`;
+    const encodedUser = encodeURIComponent(server.username);
+    const encodedPath = encodePath(cleanPath);
+    const davBase = `/remote.php/dav/files/${encodedUser}/${encodedPath ? `${encodedPath}/` : ""}`;
     const davUrl = `${server.base_url.replace(/\/$/, "")}${davBase}`;
-    const basic = btoa(`${server.username}:${password}`);
 
     const runRow = await admin
       .from("alixdocs2_nc_sync_runs")
@@ -121,14 +143,20 @@ Deno.serve(async (req) => {
     const runId = runRow.data?.id;
 
     try {
-      const resp = await fetch(davUrl, {
-        method: "PROPFIND",
-        headers: {
-          Authorization: `Basic ${basic}`,
-          Depth: folder.recursive ? "infinity" : "1",
-          "Content-Type": "application/xml",
-        },
-      });
+      let resp: Response | null = null;
+      for (const candidate of passwordCandidates(password)) {
+        resp = await fetch(davUrl, {
+          method: "PROPFIND",
+          headers: {
+            Authorization: authHeaderFor(server.username, candidate),
+            Depth: folder.recursive ? "infinity" : "1",
+            "Content-Type": "application/xml",
+            "User-Agent": "AlixWork-AlixDocs/2.0",
+          },
+        });
+        if (resp.ok || resp.status === 207 || resp.status !== 401) break;
+      }
+      if (!resp) throw new Error("PROPFIND fehlgeschlagen");
       if (!resp.ok && resp.status !== 207) throw new Error(`PROPFIND ${resp.status}`);
       const xml = await resp.text();
       const entries = parsePropfind(xml, davBase);
@@ -138,7 +166,9 @@ Deno.serve(async (req) => {
 
       for (const e of entries) {
         // e.href is full absolute path incl. /remote.php/dav/files/<user>/...
-        const relPath = e.href.split(`/remote.php/dav/files/${server.username}/`)[1] ?? e.href;
+        const relPath = e.href.split(`/remote.php/dav/files/${server.username}/`)[1]
+          ?? e.href.split(`/remote.php/dav/files/${encodedUser}/`)[1]
+          ?? e.href;
         const title = e.display_name || relPath.split("/").pop() || relPath;
 
         const { data: existing } = await admin

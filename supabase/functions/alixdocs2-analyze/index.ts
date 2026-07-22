@@ -12,6 +12,27 @@ const MODEL = "google/gemini-3-flash-preview";
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB Text-Pfad; darüber nur Metadaten
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
+const base64Utf8 = (value: string) => {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+};
+
+const authHeaderFor = (username: string, password: string) => `Basic ${base64Utf8(`${username}:${password}`)}`;
+
+const passwordCandidates = (password: string) => {
+  const values = [password, password.trim(), password.replace(/\s+/g, ""), password.trim().replace(/\s+/g, "")];
+  return [...new Set(values)].filter(Boolean);
+};
+
+const encodePath = (path: string) =>
+  path
+    .split("/")
+    .filter(Boolean)
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+
 async function callAI(key: string, messages: any[], jsonMode = false) {
   const r = await fetch(GATEWAY, {
     method: "POST",
@@ -67,9 +88,18 @@ Deno.serve(async (req) => {
   if (!password) return json(500, { error: `secret_missing:${srv.app_password_secret_name}` });
 
   try {
-    const davUrl = `${srv.base_url.replace(/\/$/, "")}/remote.php/dav/files/${srv.username}/${doc.nc_path}`;
-    const basic = btoa(`${srv.username}:${password}`);
-    const fr = await fetch(davUrl, { headers: { Authorization: `Basic ${basic}` } });
+    const davUrl = `${srv.base_url.replace(/\/$/, "")}/remote.php/dav/files/${encodeURIComponent(srv.username)}/${encodePath(doc.nc_path)}`;
+    let fr: Response | null = null;
+    for (const candidate of passwordCandidates(password)) {
+      fr = await fetch(davUrl, {
+        headers: {
+          Authorization: authHeaderFor(srv.username, candidate),
+          "User-Agent": "AlixWork-AlixDocs/2.0",
+        },
+      });
+      if (fr.ok || fr.status !== 401) break;
+    }
+    if (!fr) throw new Error("download unreachable");
     if (!fr.ok) throw new Error(`download ${fr.status}`);
     const buf = new Uint8Array(await fr.arrayBuffer());
 

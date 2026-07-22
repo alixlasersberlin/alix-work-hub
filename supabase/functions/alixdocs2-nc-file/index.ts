@@ -6,6 +6,27 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+const base64Utf8 = (value: string) => {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+};
+
+const authHeaderFor = (username: string, password: string) => `Basic ${base64Utf8(`${username}:${password}`)}`;
+
+const passwordCandidates = (password: string) => {
+  const values = [password, password.trim(), password.replace(/\s+/g, ""), password.trim().replace(/\s+/g, "")];
+  return [...new Set(values)].filter(Boolean);
+};
+
+const encodePath = (path: string) =>
+  path
+    .split("/")
+    .filter(Boolean)
+    .map((part) => encodeURIComponent(part))
+    .join("/");
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -47,17 +68,22 @@ Deno.serve(async (req) => {
   const password = Deno.env.get(server.app_password_secret_name);
   if (!password) return json(500, { error: "secret_missing" });
 
-  const davUrl = `${server.base_url.replace(/\/$/, "")}/remote.php/dav/files/${server.username}/${doc.nc_path.replace(/^\/+/, "")}`;
-  const basic = btoa(`${server.username}:${password}`);
+  const davUrl = `${server.base_url.replace(/\/$/, "")}/remote.php/dav/files/${encodeURIComponent(server.username)}/${encodePath(doc.nc_path.replace(/^\/+/, ""))}`;
   const range = req.headers.get("Range");
 
-  const resp = await fetch(davUrl, {
-    method: "GET",
-    headers: {
-      Authorization: `Basic ${basic}`,
-      ...(range ? { Range: range } : {}),
-    },
-  });
+  let resp: Response | null = null;
+  for (const candidate of passwordCandidates(password)) {
+    resp = await fetch(davUrl, {
+      method: "GET",
+      headers: {
+        Authorization: authHeaderFor(server.username, candidate),
+        "User-Agent": "AlixWork-AlixDocs/2.0",
+        ...(range ? { Range: range } : {}),
+      },
+    });
+    if (resp.ok || resp.status === 206 || resp.status !== 401) break;
+  }
+  if (!resp) return json(502, { error: "webdav_unreachable" });
   if (!resp.ok && resp.status !== 206) {
     return json(resp.status, { error: `webdav_${resp.status}` });
   }
