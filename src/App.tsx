@@ -408,6 +408,8 @@ const AlixDocs2AiSearch = lazy(() => import("./pages/AlixDocs2/AiSearch"));
 const AlixDocs2Viewer = lazy(() => import("./pages/AlixDocs2/Viewer"));
 const AlixDocs2Workflows = lazy(() => import("./pages/AlixDocs2/Workflows"));
 const AlixDocs2Compliance = lazy(() => import("./pages/AlixDocs2/Compliance"));
+const AlixDocs2Papierkorb = lazy(() => import("./pages/AlixDocs2/Papierkorb"));
+const AlixDocs2DocTypes = lazy(() => import("./pages/AlixDocs2/DocTypes"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
