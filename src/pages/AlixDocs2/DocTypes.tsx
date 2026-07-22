@@ -18,14 +18,14 @@ export default function AlixDocs2DocTypes() {
   }
   useEffect(() => { load(); }, []);
 
-  async function toggle(id: string, requires_approval: boolean) {
-    const { error } = await supabase.from('alixdocs2_doctypes').update({ requires_approval }).eq('id', id);
+  async function toggle(code: string, requires_approval: boolean) {
+    const { error } = await supabase.from('alixdocs2_doctypes').update({ requires_approval }).eq('code', code);
     if (error) return toast.error(error.message);
     load();
   }
   async function add() {
     if (!newKey.trim() || !newLabel.trim()) return;
-    const { error } = await supabase.from('alixdocs2_doctypes').insert({ key: newKey.trim(), label: newLabel.trim() });
+    const { error } = await supabase.from('alixdocs2_doctypes').insert({ code: newKey.trim(), label: newLabel.trim() });
     if (error) return toast.error(error.message);
     setNewKey(''); setNewLabel(''); load();
   }
