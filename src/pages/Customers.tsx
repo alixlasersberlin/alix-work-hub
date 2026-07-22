@@ -147,6 +147,9 @@ export default function Customers() {
         meta={<InfinityStatusBadge kind="done" label={`${totalFiltered}`} />}
         actions={
           <>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" /> Import
+            </Button>
             <Button variant="outline" onClick={() => navigate('/kunden/doppelte')}>
               <Users className="w-4 h-4 mr-2" /> Doppelte suchen
             </Button>
@@ -156,6 +159,7 @@ export default function Customers() {
           </>
         }
       />
+      <CustomerImportDialog open={importOpen} onOpenChange={setImportOpen} onImported={invalidateCustomers} />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">
