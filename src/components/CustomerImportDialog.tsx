@@ -109,10 +109,12 @@ export default function CustomerImportDialog({ open, onOpenChange, onImported }:
 
   async function runCompareWith(sourceRows: Row[]) {
     if (!sourceRows.length) return;
-    // Temporarily swap rows so runCompare uses the just-parsed data
-    setRows(sourceRows);
-    await runCompareInternal(sourceRows);
+    await runCompare(sourceRows);
   }
+
+  async function runCompare(overrideRows?: Row[]) {
+    const src = overrideRows ?? rows;
+    if (!src.length) return;
 
   async function runCompare() {
     if (!rows.length) return;
