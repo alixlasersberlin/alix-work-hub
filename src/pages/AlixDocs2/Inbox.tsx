@@ -124,6 +124,15 @@ export default function AlixDocs2Inbox() {
           }
         </CardContent>
       </Card>
+
+      {uebernahmeDoc && (
+        <UebernahmeAuftragChDialog
+          open={!!uebernahmeDoc}
+          onOpenChange={(v) => !v && setUebernahmeDoc(null)}
+          documentId={uebernahmeDoc.id}
+          defaultTitle={uebernahmeDoc.title ?? uebernahmeDoc.nc_path}
+        />
+      )}
     </div>
   );
 }
