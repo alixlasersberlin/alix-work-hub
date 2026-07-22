@@ -3,9 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, FileText, Sparkles, Check } from 'lucide-react';
+import { Loader2, FileText, Sparkles, Check, FilePlus2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { UebernahmeAuftragChDialog } from '@/components/alixdocs2/UebernahmeAuftragChDialog';
 
 type Doc = { id: string; title?: string; nc_path: string; status: string; doc_type?: string; ai_confidence?: number; ai_tags?: string[]; created_at: string; };
 type Suggestion = { linked_type: string; linked_id: string; label: string; confidence: number; reason: string };
@@ -15,6 +16,7 @@ export default function AlixDocs2Inbox() {
   const [loading, setLoading] = useState(true);
   const [suggestions, setSuggestions] = useState<Record<string, Suggestion[]>>({});
   const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [uebernahmeDoc, setUebernahmeDoc] = useState<Doc | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -90,6 +92,15 @@ export default function AlixDocs2Inbox() {
                     {busy[d.id] ? <Loader2 className="w-3 h-3 animate-spin"/> : '🧠 Analyse'}
                   </Button>
                   <Button size="sm" variant="ghost" disabled={busy[d.id]} onClick={() => match(d.id)}>🎯 Zuordnen</Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-primary/40 text-primary hover:bg-primary/10"
+                    onClick={() => setUebernahmeDoc(d)}
+                    title="Neuen CH-Auftrag aus diesem Dokument anlegen"
+                  >
+                    <FilePlus2 className="w-3 h-3 mr-1" />🇨🇭 Übernahme Auftrag
+                  </Button>
                   <Link to={`/alixdocs2/dokument/${d.id}`}><Button size="sm" variant="outline">👁 Öffnen</Button></Link>
                 </div>
                 {suggestions[d.id] && (
@@ -113,6 +124,15 @@ export default function AlixDocs2Inbox() {
           }
         </CardContent>
       </Card>
+
+      {uebernahmeDoc && (
+        <UebernahmeAuftragChDialog
+          open={!!uebernahmeDoc}
+          onOpenChange={(v) => !v && setUebernahmeDoc(null)}
+          documentId={uebernahmeDoc.id}
+          defaultTitle={uebernahmeDoc.title ?? uebernahmeDoc.nc_path}
+        />
+      )}
     </div>
   );
 }
