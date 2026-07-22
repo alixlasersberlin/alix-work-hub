@@ -263,7 +263,18 @@ export default function AlixDocs2Nextcloud() {
               <ClipboardCheck className="w-5 h-5" /> Auftrags-Abgleich · Ergebnis
             </DialogTitle>
           </DialogHeader>
-          {reconcileResult && (
+          {reconcileResult?.ok === false && (
+            <div className="space-y-2 text-sm">
+              <div className="rounded border border-destructive/40 bg-destructive/10 p-3">
+                <div className="font-medium text-destructive">{reconcileResult.error}</div>
+                {reconcileResult.hint && <div className="text-xs mt-1">{reconcileResult.hint}</div>}
+                {reconcileResult.dav_url && (
+                  <div className="text-[10px] mt-2 break-all opacity-70">URL: {reconcileResult.dav_url}</div>
+                )}
+              </div>
+            </div>
+          )}
+          {reconcileResult && reconcileResult.ok !== false && (
             <div className="space-y-3 text-sm">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 <Badge variant="outline">Dateien: {reconcileResult.files_scanned}</Badge>
