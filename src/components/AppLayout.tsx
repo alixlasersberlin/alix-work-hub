@@ -671,6 +671,8 @@ export const navItems: NavItem[] = [
         children: [
           { path: '/alixdocs2', label: 'Dashboard', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
           { path: '/alixdocs2/inbox', label: 'Posteingang', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/suche', label: 'Suche', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/ai', label: 'KI-Suche ✨', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
           { path: '/alixdocs2/nextcloud', label: 'Nextcloud (Server & Ordner)', icon: FolderTree, roles: ['Super Admin'] },
         ],
       },
