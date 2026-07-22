@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, Plus, Server, FolderTree, Play, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2, Plus, Server, FolderTree, Play, CheckCircle2, XCircle, RefreshCw, ClipboardCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
@@ -33,6 +34,8 @@ export default function AlixDocs2Nextcloud() {
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState<string | null>(null);
   const [testing, setTesting] = useState<string | null>(null);
+  const [reconciling, setReconciling] = useState<string | null>(null);
+  const [reconcileResult, setReconcileResult] = useState<any | null>(null);
   const [newServerOpen, setNewServerOpen] = useState(false);
   const [newFolderOpen, setNewFolderOpen] = useState<string | null>(null);
 
@@ -110,6 +113,19 @@ export default function AlixDocs2Nextcloud() {
     if (r?.error) toast.error(`Scan-Fehler: ${r.error}`);
     else toast.success(`Scan OK: ${r?.files_seen ?? 0} Dateien, ${r?.files_new ?? 0} neu, ${r?.files_updated ?? 0} aktualisiert`);
     load();
+  };
+
+  const reconcileOrders = async (folder_id: string) => {
+    setReconciling(folder_id);
+    setReconcileResult(null);
+    const { data, error } = await supabase.functions.invoke('alixdocs2-nc-order-reconcile', {
+      body: { folder_id, import: true },
+    });
+    setReconciling(null);
+    if (error) return toast.error(error.message);
+    const d = data as any;
+    setReconcileResult(d);
+    toast.success(`Abgleich fertig · ${d.existing_count} vorhanden · ${d.imported_count} importiert · ${d.not_found_count} nicht gefunden`);
   };
 
   return (
@@ -200,8 +216,12 @@ export default function AlixDocs2Nextcloud() {
                           {f.last_scanned_at && <> · letzter Scan {new Date(f.last_scanned_at).toLocaleString('de-DE')}</>}
                         </div>
                       </div>
-                      <Button size="sm" variant="ghost" onClick={() => scanFolder(f.id)} disabled={scanning === f.id}>
+                      <Button size="sm" variant="ghost" title="Dateien scannen" onClick={() => scanFolder(f.id)} disabled={scanning === f.id}>
                         {scanning === f.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                      </Button>
+                      <Button size="sm" variant="outline" title="Aufträge abgleichen & fehlende importieren" onClick={() => reconcileOrders(f.id)} disabled={reconciling === f.id}>
+                        {reconciling === f.id ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <ClipboardCheck className="w-3 h-3 mr-1" />}
+                        Aufträge abgleichen
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => deleteFolder(f.id)}><XCircle className="w-3 h-3" /></Button>
                     </div>
@@ -231,6 +251,82 @@ export default function AlixDocs2Nextcloud() {
       <p className="text-xs text-muted-foreground text-center pt-4">
         <Link to="/alixdocs2" className="underline">Zurück zum ALIXDocs AI 2.0 Dashboard</Link>
       </p>
+
+      <Dialog open={!!reconcileResult} onOpenChange={(o) => !o && setReconcileResult(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardCheck className="w-5 h-5" /> Auftrags-Abgleich · Ergebnis
+            </DialogTitle>
+          </DialogHeader>
+          {reconcileResult && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <Badge variant="outline">Dateien: {reconcileResult.files_scanned}</Badge>
+                <Badge variant="outline">Nummern: {reconcileResult.numbers_found}</Badge>
+                <Badge className="bg-green-500/20 text-green-500 border-green-500/40">Vorhanden: {reconcileResult.existing_count}</Badge>
+                <Badge className="bg-primary/20 text-primary border-primary/40">Importiert: {reconcileResult.imported_count}</Badge>
+                <Badge variant="destructive">Nicht gefunden: {reconcileResult.not_found_count}</Badge>
+              </div>
+
+              <ScrollArea className="h-[420px] pr-3">
+                {reconcileResult.imported?.length > 0 && (
+                  <div className="mb-3">
+                    <h4 className="font-medium text-primary mb-1">Neu importiert ({reconcileResult.imported.length})</h4>
+                    {reconcileResult.imported.map((it: any) => (
+                      <div key={it.number} className="text-xs border-l-2 border-primary pl-2 py-1">
+                        <div className="font-mono">{it.number}</div>
+                        <div className="text-muted-foreground truncate">{it.source} · {it.files.join(', ')}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {reconcileResult.existing?.length > 0 && (
+                  <div className="mb-3">
+                    <h4 className="font-medium text-green-500 mb-1">Vorhanden — übersprungen ({reconcileResult.existing.length})</h4>
+                    {reconcileResult.existing.slice(0, 200).map((it: any) => (
+                      <div key={it.number} className="text-xs border-l-2 border-green-500/50 pl-2 py-1">
+                        <div className="font-mono">{it.number}</div>
+                        <div className="text-muted-foreground truncate">{it.files.join(', ')}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {reconcileResult.not_found?.length > 0 && (
+                  <div className="mb-3">
+                    <h4 className="font-medium text-destructive mb-1">Nicht in Zoho gefunden ({reconcileResult.not_found.length})</h4>
+                    {reconcileResult.not_found.slice(0, 200).map((it: any) => (
+                      <div key={it.number} className="text-xs border-l-2 border-destructive pl-2 py-1">
+                        <div className="font-mono">{it.number}</div>
+                        <div className="text-muted-foreground truncate">{it.files.join(', ')}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {reconcileResult.failed?.length > 0 && (
+                  <div className="mb-3">
+                    <h4 className="font-medium text-destructive mb-1">Import-Fehler ({reconcileResult.failed.length})</h4>
+                    {reconcileResult.failed.map((it: any) => (
+                      <div key={it.number} className="text-xs border-l-2 border-destructive pl-2 py-1">
+                        <div className="font-mono">{it.number}</div>
+                        <div className="text-destructive">{it.message}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {reconcileResult.files_without_number > 0 && (
+                  <p className="text-xs italic text-muted-foreground">
+                    {reconcileResult.files_without_number} Datei(en) enthielten kein erkennbares Auftrags-Muster (z. B. 2026-04226).
+                  </p>
+                )}
+              </ScrollArea>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReconcileResult(null)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
