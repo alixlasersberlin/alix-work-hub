@@ -11,7 +11,7 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const ALLOWED_TYPES = new Set(['invoice', 'offer', 'order_confirmation', 'service_report']);
+const ALLOWED_TYPES = new Set(['invoice', 'offer', 'order_confirmation', 'service_report', 'lease_purchase']);
 
 function b64ToBytes(b64: string): Uint8Array {
   const clean = b64.replace(/^data:.*;base64,/, '');

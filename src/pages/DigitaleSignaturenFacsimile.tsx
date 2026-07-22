@@ -10,13 +10,14 @@ import { toast } from "sonner";
 import { Upload, ImageIcon, Save, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
-type DocType = "invoice" | "offer" | "order_confirmation" | "service_report";
+type DocType = "invoice" | "offer" | "order_confirmation" | "service_report" | "lease_purchase";
 
 const DOC_TYPES: { key: DocType; label: string; hint: string }[] = [
   { key: "invoice", label: "Ausgangsrechnungen", hint: "Finance & Zoho Rechnungs-PDFs" },
   { key: "offer", label: "Angebote", hint: "Angebots-PDFs" },
   { key: "order_confirmation", label: "Auftragsbestätigungen", hint: "OC-PDFs" },
   { key: "service_report", label: "Serviceberichte / Wartung", hint: "Service- & Wartungsprotokolle" },
+  { key: "lease_purchase", label: "Mietkauf-Verträge", hint: "Mietkauf-PDFs" },
 ];
 
 interface Settings {
@@ -46,10 +47,10 @@ const DEFAULTS: Omit<Settings, "doc_type" | "image_path"> = {
 
 export default function DigitaleSignaturenFacsimile() {
   const [rows, setRows] = useState<Record<DocType, Settings | null>>({
-    invoice: null, offer: null, order_confirmation: null, service_report: null,
+    invoice: null, offer: null, order_confirmation: null, service_report: null, lease_purchase: null,
   });
   const [previews, setPreviews] = useState<Record<DocType, string | null>>({
-    invoice: null, offer: null, order_confirmation: null, service_report: null,
+    invoice: null, offer: null, order_confirmation: null, service_report: null, lease_purchase: null,
   });
   const [saving, setSaving] = useState<DocType | null>(null);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -61,7 +62,7 @@ export default function DigitaleSignaturenFacsimile() {
   async function load() {
     const { data, error } = await supabase.from("sig_facsimile_settings").select("*");
     if (error) { toast.error(error.message); return; }
-    const next: any = { invoice: null, offer: null, order_confirmation: null, service_report: null };
+    const next: any = { invoice: null, offer: null, order_confirmation: null, service_report: null, lease_purchase: null };
     (data || []).forEach((r: any) => { next[r.doc_type] = r; });
     setRows(next);
     // fetch preview URLs

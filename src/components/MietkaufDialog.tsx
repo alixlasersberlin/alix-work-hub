@@ -10,6 +10,7 @@ import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-logo-gold-mietkauf.png.asset.json';
 import templateAsset from '@/assets/mietkauf-template.jpg.asset.json';
 import { supabase } from '@/integrations/supabase/client';
+import { downloadStampedPdf } from '@/lib/facsimile/jsPdfHelpers';
 
 export type MietkaufDialogHandle = { open: () => void };
 
@@ -429,7 +430,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
       { align: 'center' }
     );
 
-    doc.save(`Mietkauf_${order.order_number}.pdf`);
+    await downloadStampedPdf(doc, 'lease_purchase', `Mietkauf_${order.order_number}.pdf`, order.order_number, { order_id: (order as any).id ?? null, customer_id: (order as any).customer_id ?? null, title: `Mietkauf ${order.order_number}` });
   }
 
   return (

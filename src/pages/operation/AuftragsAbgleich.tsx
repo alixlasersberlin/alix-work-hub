@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, AlertCircle, FileUp, ExternalLink, Download } from 'lucide-react';
+import { CheckCircle2, AlertCircle, FileUp, ExternalLink, Download, Loader2, PlayCircle } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Workflow } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 type Hit = { id: string; order_number: string; customer_name: string; status?: string | null; source_kind?: string; source_route?: string };
 type Row = {
@@ -23,6 +25,26 @@ export default function AuftragsAbgleich() {
   const [data, setData] = useState<Payload | null>(null);
   const [filter, setFilter] = useState<'all' | 'ok' | 'missing'>('all');
   const [q, setQ] = useState('');
+  const [importing, setImporting] = useState(false);
+
+  async function autoImportMissing() {
+    if (!data) return;
+    const missing = data.rows.filter(r => !r.found);
+    if (!missing.length) { toast.info('Keine fehlenden Vorgänge'); return; }
+    setImporting(true);
+    try {
+      const { data: res, error } = await supabase.functions.invoke('zoho-orders-reconcile', {
+        body: { sources: ['zoho_eu_1', 'zoho_eu_2'], import: true },
+      });
+      if (error) throw error;
+      const totalImported = (res?.results ?? []).reduce((s: number, r: any) => s + (r.imported ?? 0), 0);
+      toast.success(`${totalImported ?? 0} Aufträge importiert · Bitte Datei neu abgleichen`);
+    } catch (e: any) {
+      toast.error(e?.message ?? String(e));
+    } finally {
+      setImporting(false);
+    }
+  }
 
   useEffect(() => {
     const raw = sessionStorage.getItem('auftragsabgleich:results');
@@ -103,6 +125,7 @@ export default function AuftragsAbgleich() {
                 <Button size="sm" variant={filter === 'ok' ? 'default' : 'outline'} onClick={() => setFilter('ok')}>OK</Button>
                 <Button size="sm" variant={filter === 'missing' ? 'default' : 'outline'} onClick={() => setFilter('missing')}>Fehlend</Button>
                 {missingCount > 0 && <Button size="sm" variant="outline" onClick={exportMissing}><Download className="h-4 w-4 mr-2" />Fehlende exportieren</Button>}
+                {missingCount > 0 && <Button size="sm" onClick={autoImportMissing} disabled={importing}>{importing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <PlayCircle className="h-4 w-4 mr-2" />}Fehlende automatisch importieren</Button>}
               </div>
             </CardHeader>
             <CardContent className="space-y-2">

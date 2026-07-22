@@ -4,7 +4,8 @@ export type FacsimileDocType =
   | "invoice"
   | "offer"
   | "order_confirmation"
-  | "service_report";
+  | "service_report"
+  | "lease_purchase";
 
 /**
  * Sendet ein PDF an die Edge Function und erhält ein PDF mit eingebetteter

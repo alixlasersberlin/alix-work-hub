@@ -378,6 +378,10 @@ const AlixConnectRealtimeCollab = lazy(() => import("./pages/AlixConnect/Realtim
 const AlixConnectComplianceAutomation = lazy(() => import("./pages/AlixConnect/ComplianceAutomation"));
 const AlixConnectSalesForecast = lazy(() => import("./pages/AlixConnect/SalesForecast"));
 const AlixConnectConversationQA = lazy(() => import("./pages/AlixConnect/ConversationQA"));
+const AlixConnectChurnDetection = lazy(() => import("./pages/AlixConnect/ChurnDetection"));
+const AlixConnectVoiceBotTwilio = lazy(() => import("./pages/AlixConnect/VoiceBotTwilio"));
+const AlixConnectOmnichannelMerge = lazy(() => import("./pages/AlixConnect/OmnichannelMerge"));
+const AlixDocsComplianceExport = lazy(() => import("./pages/AlixDocsComplianceExport"));
 const OrderDocDownload = lazy(() => import("./pages/OrderDocDownload"));
 const AlixDocsSearch = lazy(() => import("./pages/AlixDocsSearch"));
 const AlixDocsApprovals = lazy(() => import("./pages/AlixDocsApprovals"));
@@ -1334,8 +1338,12 @@ function AppRoutes() {
             <Route path="compliance-automation" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectComplianceAutomation /></ProtectedRoute>} />
             <Route path="sales-forecast" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectSalesForecast /></ProtectedRoute>} />
             <Route path="conversation-qa" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectConversationQA /></ProtectedRoute>} />
+            <Route path="churn-detection" element={<ProtectedRoute requiredRoles={['Super Admin']}><AlixConnectChurnDetection /></ProtectedRoute>} />
+            <Route path="voice-bot-twilio" element={<ProtectedRoute requiredRoles={['Super Admin']}><AlixConnectVoiceBotTwilio /></ProtectedRoute>} />
+            <Route path="omnichannel-merge" element={<ProtectedRoute requiredRoles={['Super Admin']}><AlixConnectOmnichannelMerge /></ProtectedRoute>} />
 
           </Route>
+          <Route path="/dokumente/compliance-export" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocsComplianceExport /></ProtectedRoute>} />
           <Route path="/signaturen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturen /></ProtectedRoute>} />
           <Route path="/signaturen/neu" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturNeu /></ProtectedRoute>} />
           <Route path="/signaturen/cockpit" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><DigitaleSignaturenCockpit /></ProtectedRoute>} />
