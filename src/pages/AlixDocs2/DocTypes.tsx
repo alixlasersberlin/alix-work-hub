@@ -51,14 +51,14 @@ export default function AlixDocs2DocTypes() {
         <CardContent className="space-y-2">
           {items.length === 0 && <p className="text-sm text-muted-foreground">Noch keine Typen definiert.</p>}
           {items.map(t => (
-            <div key={t.id} className="flex items-center justify-between border rounded p-2 text-sm">
+            <div key={t.code} className="flex items-center justify-between border rounded p-2 text-sm">
               <div>
                 <p className="font-medium">{t.label}</p>
-                <p className="text-xs text-muted-foreground font-mono">{t.key}</p>
+                <p className="text-xs text-muted-foreground font-mono">{t.code}</p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs">Vier-Augen</span>
-                <Switch checked={!!t.requires_approval} onCheckedChange={v => toggle(t.id, v)} />
+                <Switch checked={!!t.requires_approval} onCheckedChange={v => toggle(t.code, v)} />
               </div>
             </div>
           ))}
