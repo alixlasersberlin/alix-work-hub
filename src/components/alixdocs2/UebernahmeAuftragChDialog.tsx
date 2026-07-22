@@ -149,8 +149,8 @@ export function UebernahmeAuftragChDialog({
     const q = `%${term}%`;
     const { data } = await supabase
       .from('customers')
-      .select('id, company_name, contact_name, email, customer_number')
-      .or(`company_name.ilike.${q},contact_name.ilike.${q},email.ilike.${q},customer_number.ilike.${q}`)
+      .select('id, company_name, contact_name, email')
+      .or(`company_name.ilike.${q},contact_name.ilike.${q},email.ilike.${q}`)
       .limit(20);
     const list = (data as Customer[]) ?? [];
     setCustomers(list);
