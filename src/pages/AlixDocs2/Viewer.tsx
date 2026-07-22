@@ -6,6 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { ArrowLeft, Download, RefreshCw, History } from "lucide-react";
+import { CommentsPanel } from "@/components/alixdocs2/CommentsPanel";
+import { ApprovalPanel } from "@/components/alixdocs2/ApprovalPanel";
+import { SoftDeleteButtons } from "@/components/alixdocs2/SoftDeleteButtons";
 
 export default function AlixDocs2Viewer() {
   const { id } = useParams<{ id: string }>();
@@ -90,6 +93,7 @@ export default function AlixDocs2Viewer() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={reanalyze}><RefreshCw className="w-4 h-4 mr-1" /> Analyse</Button>
           <Button variant="outline" size="sm" onClick={download}><Download className="w-4 h-4 mr-1" /> Download</Button>
+          {doc && <SoftDeleteButtons doc={doc} onChange={load} />}
         </div>
       </div>
 
@@ -155,6 +159,8 @@ export default function AlixDocs2Viewer() {
               ))}
             </CardContent>
           </Card>
+          {doc && <ApprovalPanel doc={doc} onChange={load} />}
+          {doc && <CommentsPanel documentId={doc.id} />}
         </div>
       </div>
     </div>
