@@ -115,6 +115,19 @@ export default function AlixDocs2Nextcloud() {
     load();
   };
 
+  const reconcileOrders = async (folder_id: string) => {
+    setReconciling(folder_id);
+    setReconcileResult(null);
+    const { data, error } = await supabase.functions.invoke('alixdocs2-nc-order-reconcile', {
+      body: { folder_id, import: true },
+    });
+    setReconciling(null);
+    if (error) return toast.error(error.message);
+    const d = data as any;
+    setReconcileResult(d);
+    toast.success(`Abgleich fertig · ${d.existing_count} vorhanden · ${d.imported_count} importiert · ${d.not_found_count} nicht gefunden`);
+  };
+
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
       <div className="flex items-start justify-between">
