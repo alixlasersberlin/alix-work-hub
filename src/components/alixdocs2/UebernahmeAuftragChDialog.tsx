@@ -324,7 +324,7 @@ export function UebernahmeAuftragChDialog({
           </div>
 
           <div>
-            <Label>Kunde suchen {entities?.kunde_name && <span className="text-xs text-muted-foreground">· KI: {entities.kunde_name}{entities.kunde_nr ? ` (${entities.kunde_nr})` : ''}</span>}</Label>
+            <Label>Kunde suchen {(entities?.kunde_name || entities?.email) && <span className="text-xs text-muted-foreground">· KI: {entities?.kunde_name}{entities?.kunde_nr ? ` (${entities.kunde_nr})` : ''}{entities?.email ? ` · ${entities.email}` : ''}</span>}</Label>
             <div className="flex gap-2">
               <Input
                 placeholder="Firma / Kontakt / E-Mail / Kunden-Nr…"
