@@ -98,11 +98,20 @@ export default function CustomerImportDialog({ open, onOpenChange, onImported }:
     try {
       const parsed = await parseFile(f);
       setRows(parsed);
-      toast.success(`${parsed.length} Zeilen erkannt`);
+      toast.success(`${parsed.length} Zeilen erkannt – starte Vergleich…`);
+      // Auto-run comparison so the user immediately sees the full result
+      setTimeout(() => runCompareWith(parsed), 50);
     } catch (err: any) {
       toast.error('Parsen fehlgeschlagen: ' + err.message);
       setRows([]);
     }
+  }
+
+  async function runCompareWith(sourceRows: Row[]) {
+    if (!sourceRows.length) return;
+    // Temporarily swap rows so runCompare uses the just-parsed data
+    setRows(sourceRows);
+    await runCompareInternal(sourceRows);
   }
 
   async function runCompare() {
