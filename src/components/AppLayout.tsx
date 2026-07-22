@@ -676,6 +676,8 @@ export const navItems: NavItem[] = [
           { path: '/alixdocs2/nextcloud', label: 'Nextcloud (Server & Ordner)', icon: FolderTree, roles: ['Super Admin'] },
           { path: '/alixdocs2/workflows', label: 'Workflows (Ablauf-Warnungen)', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
           { path: '/alixdocs2/compliance', label: 'Compliance-Export', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/doctypes', label: 'Dokumententypen', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/papierkorb', label: 'Papierkorb', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
         ],
       },
 
