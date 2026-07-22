@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Check, Sparkles } from 'lucide-react';
+import { Loader2, Search, Check, Sparkles, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -57,6 +57,8 @@ export function UebernahmeAuftragChDialog({
   const [scanning, setScanning] = useState(false);
   const [entities, setEntities] = useState<AiEntities | null>(null);
   const [ocrText, setOcrText] = useState<string>('');
+  const [positions, setPositions] = useState<Array<{ beschreibung: string; menge: number; einzelpreis: number }>>([]);
+  const [autoTotal, setAutoTotal] = useState(true);
 
   useEffect(() => {
     if (!open) return;
@@ -70,6 +72,8 @@ export function UebernahmeAuftragChDialog({
     setCustomer(null);
     setEntities(null);
     setOcrText('');
+    setPositions([]);
+    setAutoTotal(true);
     // Auto: bestehende OCR/Entities laden — falls leer, direkt scannen
     (async () => {
       const { data } = await supabase
@@ -109,9 +113,15 @@ export function UebernahmeAuftragChDialog({
     if (ent.telefon) noteParts.push(`Tel: ${ent.telefon}`);
     if (ent.email) noteParts.push(`E-Mail: ${ent.email}`);
     if (Array.isArray(ent.positionen) && ent.positionen.length) {
-      noteParts.push('Positionen:');
-      for (const p of ent.positionen.slice(0, 20)) {
-        noteParts.push(`  · ${p.menge ?? ''}× ${p.beschreibung ?? ''} @ ${p.einzelpreis ?? ''}`);
+      const pos = ent.positionen.map(p => ({
+        beschreibung: String(p.beschreibung ?? '').trim(),
+        menge: Number(p.menge ?? 1) || 1,
+        einzelpreis: Number(p.einzelpreis ?? 0) || 0,
+      })).filter(p => p.beschreibung || p.einzelpreis > 0);
+      setPositions(pos);
+      if (autoTotal && pos.length) {
+        const sum = pos.reduce((s, p) => s + p.menge * p.einzelpreis, 0);
+        if (sum > 0) setAmount(sum.toFixed(2));
       }
     }
     if (noteParts.length) setNotes(noteParts.join('\n'));
@@ -191,6 +201,20 @@ export function UebernahmeAuftragChDialog({
       setSaving(false);
       toast.error('Auftrag konnte nicht angelegt werden: ' + (error?.message ?? ''));
       return;
+    }
+
+    if (positions.length) {
+      const rows = positions.map((p, i) => ({
+        order_id: inserted.id,
+        item_order: i + 1,
+        item_name: p.beschreibung || `Position ${i + 1}`,
+        description: p.beschreibung || null,
+        quantity: p.menge,
+        rate: p.einzelpreis,
+        amount: Number((p.menge * p.einzelpreis).toFixed(2)),
+      }));
+      const { error: itemsErr } = await supabase.from('order_items').insert(rows);
+      if (itemsErr) toast.warning('Positionen konnten nicht gespeichert werden: ' + itemsErr.message);
     }
 
     await supabase.from('alixdocs2_relations').insert({
@@ -289,9 +313,69 @@ export function UebernahmeAuftragChDialog({
             )}
           </div>
 
+          <div className="rounded border p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">Positionen ({positions.length})</Label>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <input type="checkbox" checked={autoTotal} onChange={(e) => {
+                    setAutoTotal(e.target.checked);
+                    if (e.target.checked && positions.length) {
+                      const sum = positions.reduce((s, p) => s + p.menge * p.einzelpreis, 0);
+                      setAmount(sum.toFixed(2));
+                    }
+                  }} />
+                  Betrag aus Positionen
+                </label>
+                <Button type="button" size="sm" variant="outline"
+                  onClick={() => setPositions([...positions, { beschreibung: '', menge: 1, einzelpreis: 0 }])}>
+                  <Plus className="w-3 h-3 mr-1" />Position
+                </Button>
+              </div>
+            </div>
+            {positions.length === 0 && (
+              <p className="text-xs text-muted-foreground">Keine Positionen erkannt. Manuell hinzufügen oder OCR erneut ausführen.</p>
+            )}
+            {positions.map((p, idx) => (
+              <div key={idx} className="grid grid-cols-12 gap-1.5 items-center">
+                <Input className="col-span-6 h-8 text-xs" placeholder="Beschreibung"
+                  value={p.beschreibung}
+                  onChange={(e) => {
+                    const next = [...positions]; next[idx] = { ...p, beschreibung: e.target.value }; setPositions(next);
+                  }} />
+                <Input className="col-span-2 h-8 text-xs text-right" type="number" step="0.01" placeholder="Menge"
+                  value={p.menge}
+                  onChange={(e) => {
+                    const next = [...positions]; next[idx] = { ...p, menge: Number(e.target.value) || 0 }; setPositions(next);
+                    if (autoTotal) setAmount(next.reduce((s, x) => s + x.menge * x.einzelpreis, 0).toFixed(2));
+                  }} />
+                <Input className="col-span-3 h-8 text-xs text-right" type="number" step="0.01" placeholder="Einzelpreis"
+                  value={p.einzelpreis}
+                  onChange={(e) => {
+                    const next = [...positions]; next[idx] = { ...p, einzelpreis: Number(e.target.value) || 0 }; setPositions(next);
+                    if (autoTotal) setAmount(next.reduce((s, x) => s + x.menge * x.einzelpreis, 0).toFixed(2));
+                  }} />
+                <Button type="button" size="sm" variant="ghost" className="col-span-1 h-8 px-0"
+                  onClick={() => {
+                    const next = positions.filter((_, i) => i !== idx); setPositions(next);
+                    if (autoTotal) setAmount(next.reduce((s, x) => s + x.menge * x.einzelpreis, 0).toFixed(2));
+                  }}>
+                  <Trash2 className="w-3 h-3 text-destructive" />
+                </Button>
+              </div>
+            ))}
+            {positions.length > 0 && (
+              <div className="flex justify-end text-xs text-muted-foreground pt-1 border-t">
+                Summe: <strong className="ml-2 text-foreground">
+                  {positions.reduce((s, p) => s + p.menge * p.einzelpreis, 0).toFixed(2)} {currency}
+                </strong>
+              </div>
+            )}
+          </div>
+
           <div>
             <Label>Notizen (OCR-Daten)</Label>
-            <Textarea rows={6} value={notes} onChange={(e) => setNotes(e.target.value)} className="font-mono text-xs" />
+            <Textarea rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} className="font-mono text-xs" />
           </div>
 
           {ocrText && (
