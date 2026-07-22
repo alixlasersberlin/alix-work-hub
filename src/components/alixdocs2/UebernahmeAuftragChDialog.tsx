@@ -313,9 +313,69 @@ export function UebernahmeAuftragChDialog({
             )}
           </div>
 
+          <div className="rounded border p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm">Positionen ({positions.length})</Label>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-muted-foreground flex items-center gap-1">
+                  <input type="checkbox" checked={autoTotal} onChange={(e) => {
+                    setAutoTotal(e.target.checked);
+                    if (e.target.checked && positions.length) {
+                      const sum = positions.reduce((s, p) => s + p.menge * p.einzelpreis, 0);
+                      setAmount(sum.toFixed(2));
+                    }
+                  }} />
+                  Betrag aus Positionen
+                </label>
+                <Button type="button" size="sm" variant="outline"
+                  onClick={() => setPositions([...positions, { beschreibung: '', menge: 1, einzelpreis: 0 }])}>
+                  <Plus className="w-3 h-3 mr-1" />Position
+                </Button>
+              </div>
+            </div>
+            {positions.length === 0 && (
+              <p className="text-xs text-muted-foreground">Keine Positionen erkannt. Manuell hinzufügen oder OCR erneut ausführen.</p>
+            )}
+            {positions.map((p, idx) => (
+              <div key={idx} className="grid grid-cols-12 gap-1.5 items-center">
+                <Input className="col-span-6 h-8 text-xs" placeholder="Beschreibung"
+                  value={p.beschreibung}
+                  onChange={(e) => {
+                    const next = [...positions]; next[idx] = { ...p, beschreibung: e.target.value }; setPositions(next);
+                  }} />
+                <Input className="col-span-2 h-8 text-xs text-right" type="number" step="0.01" placeholder="Menge"
+                  value={p.menge}
+                  onChange={(e) => {
+                    const next = [...positions]; next[idx] = { ...p, menge: Number(e.target.value) || 0 }; setPositions(next);
+                    if (autoTotal) setAmount(next.reduce((s, x) => s + x.menge * x.einzelpreis, 0).toFixed(2));
+                  }} />
+                <Input className="col-span-3 h-8 text-xs text-right" type="number" step="0.01" placeholder="Einzelpreis"
+                  value={p.einzelpreis}
+                  onChange={(e) => {
+                    const next = [...positions]; next[idx] = { ...p, einzelpreis: Number(e.target.value) || 0 }; setPositions(next);
+                    if (autoTotal) setAmount(next.reduce((s, x) => s + x.menge * x.einzelpreis, 0).toFixed(2));
+                  }} />
+                <Button type="button" size="sm" variant="ghost" className="col-span-1 h-8 px-0"
+                  onClick={() => {
+                    const next = positions.filter((_, i) => i !== idx); setPositions(next);
+                    if (autoTotal) setAmount(next.reduce((s, x) => s + x.menge * x.einzelpreis, 0).toFixed(2));
+                  }}>
+                  <Trash2 className="w-3 h-3 text-destructive" />
+                </Button>
+              </div>
+            ))}
+            {positions.length > 0 && (
+              <div className="flex justify-end text-xs text-muted-foreground pt-1 border-t">
+                Summe: <strong className="ml-2 text-foreground">
+                  {positions.reduce((s, p) => s + p.menge * p.einzelpreis, 0).toFixed(2)} {currency}
+                </strong>
+              </div>
+            )}
+          </div>
+
           <div>
             <Label>Notizen (OCR-Daten)</Label>
-            <Textarea rows={6} value={notes} onChange={(e) => setNotes(e.target.value)} className="font-mono text-xs" />
+            <Textarea rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} className="font-mono text-xs" />
           </div>
 
           {ocrText && (
