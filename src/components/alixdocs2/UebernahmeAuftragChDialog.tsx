@@ -276,7 +276,6 @@ export function UebernahmeAuftragChDialog({
                     {customer?.id === c.id && <Check className="w-3 h-3 text-primary" />}
                     <span className="flex-1 truncate">
                       {c.company_name ?? c.contact_name ?? '—'}
-                      {c.customer_number ? <span className="text-muted-foreground"> · {c.customer_number}</span> : null}
                       {c.email ? <span className="text-muted-foreground"> · {c.email}</span> : null}
                     </span>
                   </button>
