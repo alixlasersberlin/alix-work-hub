@@ -93,6 +93,7 @@ export default function AlixDocs2Viewer() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={reanalyze}><RefreshCw className="w-4 h-4 mr-1" /> Analyse</Button>
           <Button variant="outline" size="sm" onClick={download}><Download className="w-4 h-4 mr-1" /> Download</Button>
+          {doc && <SoftDeleteButtons doc={doc} onChange={load} />}
         </div>
       </div>
 
