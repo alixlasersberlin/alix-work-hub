@@ -125,6 +125,7 @@ export default function AuftragsAbgleich() {
                 <Button size="sm" variant={filter === 'ok' ? 'default' : 'outline'} onClick={() => setFilter('ok')}>OK</Button>
                 <Button size="sm" variant={filter === 'missing' ? 'default' : 'outline'} onClick={() => setFilter('missing')}>Fehlend</Button>
                 {missingCount > 0 && <Button size="sm" variant="outline" onClick={exportMissing}><Download className="h-4 w-4 mr-2" />Fehlende exportieren</Button>}
+                {missingCount > 0 && <Button size="sm" onClick={autoImportMissing} disabled={importing}>{importing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <PlayCircle className="h-4 w-4 mr-2" />}Fehlende automatisch importieren</Button>}
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
