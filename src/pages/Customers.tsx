@@ -4,12 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Building2, ArrowUpDown, Loader2, Inbox, Pencil, Trash2, UserPlus, Users } from 'lucide-react';
+import { Search, Building2, ArrowUpDown, Loader2, Inbox, Pencil, Trash2, UserPlus, Users, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
+import CustomerImportDialog from '@/components/CustomerImportDialog';
 import { VipBadge } from '@/components/VipBadge';
 import { isCustomerVip, vipFirst } from '@/lib/vip';
 import { SourceBadge, sourceLabel, sourceFlag } from '@/lib/source-system';
@@ -60,6 +61,7 @@ export default function Customers() {
   const queryClient = useQueryClient();
   const [editCustomer, setEditCustomer] = useState<any>(null);
   const [deleteCustomer, setDeleteCustomer] = useState<any>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const { data: customers = [], isPending: loading, error: queryError, refetch } = useQuery({
     queryKey: qk.customers.list({ atOnly, sortField, sortDir }),
@@ -145,6 +147,9 @@ export default function Customers() {
         meta={<InfinityStatusBadge kind="done" label={`${totalFiltered}`} />}
         actions={
           <>
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" /> Import
+            </Button>
             <Button variant="outline" onClick={() => navigate('/kunden/doppelte')}>
               <Users className="w-4 h-4 mr-2" /> Doppelte suchen
             </Button>
@@ -154,6 +159,7 @@ export default function Customers() {
           </>
         }
       />
+      <CustomerImportDialog open={importOpen} onOpenChange={setImportOpen} onImported={invalidateCustomers} />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">
