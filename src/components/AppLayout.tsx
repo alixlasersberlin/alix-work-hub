@@ -667,6 +667,15 @@ export const navItems: NavItem[] = [
       },
 
       {
+        path: '#alixdocs2', label: 'ALIXDOCS AI 2.0', icon: FolderTree, roles: ['Super Admin', 'Admin'],
+        children: [
+          { path: '/alixdocs2', label: 'Dashboard', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/inbox', label: 'Posteingang', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/nextcloud', label: 'Nextcloud (Server & Ordner)', icon: FolderTree, roles: ['Super Admin'] },
+        ],
+      },
+
+      {
         path: '#teamk-setup', label: 'TEAMK SETUP', icon: CalendarDays, roles: ['Super Admin'],
         children: [
           { path: '/esc/ressourcen',    label: 'Ressourcen',    icon: Boxes,       roles: ['Super Admin'] },

@@ -400,6 +400,9 @@ const AlixDocsBulkImport = lazy(() => import("./pages/AlixDocsBulkImport"));
 const AlixDocsLearnRules = lazy(() => import("./pages/AlixDocsLearnRules"));
 const AlixDocsAiSearch = lazy(() => import("./pages/AlixDocsAiSearch"));
 const AlixDocsDuplicates = lazy(() => import("./pages/AlixDocsDuplicates"));
+const AlixDocs2Dashboard = lazy(() => import("./pages/AlixDocs2/Dashboard"));
+const AlixDocs2Nextcloud = lazy(() => import("./pages/AlixDocs2/Nextcloud"));
+const AlixDocs2Inbox = lazy(() => import("./pages/AlixDocs2/Inbox"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
@@ -1363,6 +1366,9 @@ function AppRoutes() {
 
 
           <Route path="/dokumente/dashboard" element={<ProtectedRoute><AlixDocsDashboardPage /></ProtectedRoute>} />
+          <Route path="/alixdocs2" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocs2Dashboard /></ProtectedRoute>} />
+          <Route path="/alixdocs2/nextcloud" element={<ProtectedRoute requiredRoles={['Super Admin']}><AlixDocs2Nextcloud /></ProtectedRoute>} />
+          <Route path="/alixdocs2/inbox" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocs2Inbox /></ProtectedRoute>} />
           <Route path="/admin/sign-api-docs" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><SignApiDocs /></ProtectedRoute>} />
           <Route path="/dokumente/freigaben" element={<ProtectedRoute><AlixDocsApprovals /></ProtectedRoute>} />
           <Route path="/admin/alixdocs/chains" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixDocsChainsAdmin /></ProtectedRoute>} />

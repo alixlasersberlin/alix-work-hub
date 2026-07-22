@@ -1,101 +1,71 @@
-# ALIX CONNECT · Web Suite (Phase 11)
+# ALIXDocs AI 2.0 – Umsetzungsplan
 
-Selbst-gehostetes Analyse- und Widget-System für beliebig viele Firmen-Webseiten. Alles auf Basis der bereits existierenden Tabellen `ac_websites` (25 Spalten inkl. `api_key`, `cookieless_analytics`, Branding, Öffnungszeiten) und `ac_analytics_events` (27 Spalten inkl. `visitor_hash`, `session_hash`, UTM, Geo, Device). Keine neuen Kern-Tabellen nötig.
+Riesiges Modul — wird strikt **additiv** aufgebaut. Bestehende AlixDocs-Funktionen (Bulk Import, AI-Suche, Sharing, Compliance-Export, Smart-Match, RLS) bleiben unverändert. Alle neuen Tabellen haben Prefix `alixdocs2_` und laufen parallel zu `alixdocs_*`, sodass wir Schritt für Schritt migrieren können.
 
-## Umfang
+## Phase 1 — Nextcloud-Anbindung (Foundation)
+- Neue Tabellen: `alixdocs2_nc_servers` (mehrere Server: WebDAV-URL, App-Password, TLS), `alixdocs2_nc_watched_folders` (Server + Pfad + Doku-Kategorie + Polling-Intervall), `alixdocs2_nc_sync_runs` (Audit).
+- Edge Function `alixdocs2-nc-scan` (Cron alle 5 Min): listet via WebDAV `PROPFIND`, vergleicht ETag/mtime, legt neue Dateien in `alixdocs2_documents` mit Status `neu` an. Datei bleibt in Nextcloud; nur ein signierter Download-Token wird gecached für OCR/Vorschau.
+- Admin-UI `/operation/alixdocs2/nextcloud` — CRUD für Server & überwachte Ordner, Test-Verbindung-Button, letzte Sync-Runs.
+- App-Password wird über `add_secret` pro Server abgelegt, nie im Klartext in DB.
 
-1. Öffentlicher Tracker-Loader `connect.js` unter `/public`
-2. Edge Function `ac-track` (öffentliche, gehashte Event-Aufnahme + Bot-Filter + Rate-Limit)
-3. Aggregations-RPCs für Live/Historie
-4. Website-Management UI mit CRUD und Snippet-Generator
-5. Analytics-Dashboard pro Website
-6. Datenschutz-Modus pro Website umschaltbar (Cookieless ↔ Consent)
+## Phase 2 — Metadaten-Store & Beziehungen
+- `alixdocs2_documents` (nc_server_id, nc_path, etag, size, mime, sha256, status, doc_type, ai_confidence, JSONB `ai_entities`, JSONB `ai_tags[]`).
+- `alixdocs2_relations` (document_id + linked_type: kunde/geraet/auftrag/rechnung/service/garantie/ticket/techniker/vertrag + linked_id + confidence + source: ai/manuell). Ein Dokument → n Beziehungen, keine Duplikate.
+- `alixdocs2_versions` (SHA256-Dedupe: gleiche Datei erzeugt neue Version am selben logischen Dokument, Historie unveränderlich).
+- `alixdocs2_audit` (view, edit, download, delete, relation_change) — append-only, RLS read-only.
+- RLS: `has_role` gestuft (Super Admin voll, Admin Lesen+Zuordnen, Fachrollen nur eigene Kunden/Aufträge).
 
-## Datenschutz-Modell
+## Phase 3 — OCR & KI-Analyse-Pipeline
+- Edge Function `alixdocs2-analyze` wird pro neuem Dokument getriggert (DB-Trigger → `pg_net` → Function).
+- Ablauf: Download aus Nextcloud → PDF-Text via `pdf-parse` (bestehende Lib) → falls leer → OCR via Gemini Vision (mehrsprachig DE/EN/TR/AR/RU/VI) → Entity-Extraktion via `google/gemini-3-flash-preview` mit strikter JSON-Schema-Antwort (alle geforderten Felder: Kunde, Auftrag, Serien-Nr., Rechnungs-Nr., Beträge, MwSt., Positionen, QR/Barcode-Text …) → Klassifizierung Doku-Typ.
+- Alle KI-Ausgaben validiert (zod) und in `ai_entities`/`ai_tags` gespeichert. Confidence pro Feld.
+- Große Dateien >8 MB: OCR nur seitenweise (Reuse der Logik aus `alixdocs-ai-process`).
 
-Pro Website (Feld `cookieless_analytics`):
+## Phase 4 — Auto-Zuordnung mit Wahrscheinlichkeiten
+- Edge Function `alixdocs2-match` scored gegen `customers`, `orders`, `lager_devices`, `zoho_invoices`, `finance_contracts`, `repair_orders`, `tickets`. Reihenfolge: Auftrags-Nr → Serien-Nr → Kunden-Nr → Rechnungs-Nr → Email → Telefon → Adresse → Firmenname (Token-Match wie Auftragsabgleich).
+- UI `/alixdocs2/inbox`: Karten pro Dokument mit Top-3-Vorschlägen (z. B. „96 % Auftrag 24018"), 1-Klick-Übernahme, Multi-Zuordnung möglich.
+- Dokumententypen als Stammdaten-Tabelle `alixdocs2_doctypes` (Admin kann Typen ergänzen).
 
-- **Cookieless (Default empfohlen):** Kein Cookie, `visitor_hash = sha256(ip + user_agent + daily_salt + website_id)`. Salt rotiert täglich, ist nicht rückrechenbar. Kein Consent-Banner nötig. Kein „wiederkehrender Besucher" über Tage.
-- **Consent-Cookie:** Frontend setzt `_ac_vid` (1 Jahr, First-Party, SameSite=Lax) erst nach `AlixConnect.consent('granted')`. Erlaubt wiederkehrende Besucher und Cross-Session-Journey. Konsens muss die einbindende Webseite liefern (z. B. via Cookie-Banner-Callback).
+## Phase 5 — Suche
+- Postgres FTS auf `alixdocs2_documents.search_tsv` (title + ocr_text + ai_entities + tags), Trigram-Index für Tippfehler (`pg_trgm`).
+- Klassische Suchseite `/alixdocs2/suche` — Filter nach Typ, Kunde, Gerät, Zeitraum, Techniker.
+- KI-Suche `/alixdocs2/ai` — Edge Function `alixdocs2-ai-search` (RAG, wie bestehende `alixdocs-ai-search`, aber mit Zitier-Quellen und Fußnoten). Antwort nur aus indexierten Dokumenten, keine Halluzinationen.
 
-Die Edge Function respektiert den Modus der Website: bekommt sie im Consent-Modus keinen Cookie-Wert, fällt sie automatisch auf Cookieless-Hash zurück.
+## Phase 6 — Viewer & Versionierung
+- `AlixDocs2Viewer.tsx` erweitert bestehende `PdfPreview` um Rotation, Miniaturen, Kommentare (`alixdocs2_comments`), Notizen, Versions-Vergleich (Split-View), Druck.
+- Signed URLs direkt aus Nextcloud, kein Storage-Duplikat außer Cache-Vorschau (`nc-cache` Bucket, TTL 7 Tage).
 
-## Module
+## Phase 7 — Workflow & Automatik
+- Status-Flow: neu → importiert → analysiert → zugeordnet → geprüft → freigegeben → archiviert (`alixdocs2_status_history`).
+- Trigger:
+  - Garantie-Ende in `ai_entities.garantie_bis` < 30 Tage → Task in `finance_reminders` oder neue `alixdocs2_tasks`.
+  - Wartung fällig → Techniker-Benachrichtigung via bestehendes `app_notifications`.
+  - Vertragsende → Erinnerung.
+  - Fehlendes Pflichtdokument je Auftrag → Ticket in `tickets`.
+- Vier-Augen-Prinzip als optionales Flag pro Doku-Typ (nutzt vorhandene `sig_approval_chains`-Idee, aber leichtgewichtig).
 
-### 1. Tracker-Loader `public/connect.js`
+## Phase 8 — Dashboard & Sicherheit-Feinschliff
+- `/alixdocs2` Dashboard: Importe heute/Woche, Nicht zugeordnet, OCR-Fehler, offene Freigaben, Top-Doku-Typen, Docs pro Kunde/Mitarbeiter, Ø Importdauer, Speicherverbrauch pro Server.
+- Watermark-Option bei Export, Download-Audit vollständig, DSGVO-Löschkonzept (Soft-Delete + 30-Tage Wiederherstellung, dann Hard-Delete nur durch Super Admin).
+- Aurora-Design (Weiß / Hellgrau / Alix-Rot, Glaskarten, Dark-Mode-kompatibel via bestehende Tokens).
 
-Vanilla-JS (~4 KB minified), SPA-fähig, keine Fremd-Deps.
+## Phase 9 — Plugin-Architektur (Vorbereitung)
+- Source-Adapter-Interface in Edge-Function-Shared-Lib (`nextcloud`, später `imap`, `graph`, `gdrive`, `dropbox`, `sharepoint`, `scanner`, `whatsapp`).
+- Neue Quellen implementieren nur das Adapter-Interface, Kern-Pipeline (Analyse → Match → Store) bleibt gleich.
 
-- Init über `<script async src="…/connect.js" data-key="pub_…"></script>` oder `AlixConnect.init({ key })`.
-- Auto-Tracking: `pageview` beim Laden und bei `history.pushState`/`popstate`, `scroll_depth` (25/50/75/100 %), `session_end` via `visibilitychange` + `sendBeacon`.
-- API: `AlixConnect.track(event, meta)`, `AlixConnect.identify({ email, customer_id })`, `AlixConnect.consent('granted'|'denied')`, `AlixConnect.chat.open()`.
-- Chat/Umfrage-Widget-Iframe wird bei `chat_enabled`/`surveys_enabled` lazy geladen (Hostet `/connect/widget?key=…`, folgt in Phase 12).
-- DoNotTrack respektieren, Bots per UA-Heuristik nicht senden, `navigator.sendBeacon` für Session-Ende.
+## Menü & Routing
+- Neue Gruppe **OPERATIONS → ALIXDocs AI 2.0** (nur Admin/Super Admin sichtbar):
+  - Dashboard
+  - Posteingang
+  - Suche
+  - KI-Suche
+  - Nextcloud-Server
+  - Doku-Typen
+- Bestehende ALIXDOCS-Menüs bleiben unverändert erhalten.
 
-### 2. Edge Function `ac-track` (public, verify_jwt=false)
+## Umfang / Vorgehen
+Das ist mehrere Wochen Arbeit. Ich empfehle Phasen-Rollout: **jetzt Phase 1 + 2** (Nextcloud-Anbindung + Metadaten-Struktur), damit wir echte Dateien im System haben und die KI-Pipeline in Phase 3 daran validieren können. Danach Phase für Phase.
 
-- POST-Body: `{ key, events: [...] }`. Öffentlicher `api_key` identifiziert die Website; niemals Service-Role exposed.
-- Schritte pro Request: Website via `api_key` laden → wenn `status != active`: 200 no-op. Rate-Limit 60 req/min/IP über bestehendes `api_rate_limits`. Bot-Check (UA + `is_bot` Feld). IP hashen mit Tagessalt aus `app_settings` (Key `ac_track_salt_YYYYMMDD`, wird lazy erzeugt). Events batch-insert in `ac_analytics_events` mit `tenant_id` der Website. Geo/Device leicht aus Headern (`accept-language`, `cf-ipcountry`/`x-forwarded-*`, UA-Parsing via einfachem Regex).
-- CORS offen (`*`), da Third-Party-Websites tracken.
-
-### 3. Aggregations-RPCs
-
-Als `SECURITY DEFINER` mit RLS-Check über `tenant_id`:
-
-- `ac_web_live(_website_id uuid)` → `{ online_now, today, yesterday, week, month, year }` (online = distinct `visitor_hash` letzte 5 Min).
-- `ac_web_top_pages(_website_id, _from, _to, _limit)` → Top-Seiten mit Views/Unique.
-- `ac_web_top_referrers(_website_id, _from, _to)` und `ac_web_utm_breakdown(_website_id, _from, _to)`.
-- `ac_web_daily_series(_website_id, _from, _to)` → Zeitreihe für Charts.
-
-Bestehende SLA-/Reporting-Muster im Projekt werden wiederverwendet.
-
-### 4. Website-Management UI `/connect/websites`
-
-- Liste aller Domains der Mandanten (RLS-scoped), Status-Badge, Live-Besucher-Kachel.
-- Dialog „Website hinzufügen": Domain, Projektname, Betreiber, Sprache, Farben, Logo, Öffnungszeiten (JSON-Editor), Datenschutz-/Impressum-URL, Toggles `chat_enabled` / `surveys_enabled` / `analytics_enabled` / `cookieless_analytics`.
-- Auto-Generierung `api_key = 'pub_' || encode(gen_random_bytes(24),'base64')` beim Insert (DB-Trigger).
-- Snippet-Panel mit One-Click-Copy:
-
-```text
-<script async src="https://alix-pro-hub.lovable.app/connect.js" data-key="pub_XXXX"></script>
-```
-
-### 5. Analytics-Dashboard `/connect/websites/:id/analytics`
-
-Recharts + KPI-Tiles wie im bestehenden Reporting:
-
-- KPI-Cockpit: Live-Besucher, Heute/Gestern/Woche/Monat/Jahr, Bounce, Ø Sitzungsdauer, Chat-Starts.
-- Zeitreihe (Line): Besucher/Views 30 Tage.
-- Top-Seiten, Top-Referrer, UTM-Breakdown (Table).
-- Geräte / OS / Browser / Länder (Donuts).
-- Live-Feed: letzte 20 Events (Realtime-Kanal auf `ac_analytics_events`).
-- CSV-Export vorhanden über bestehendes Muster.
-- Heatmap/Funnel als Platzhalter-Card („folgt in Phase 12 mit Widget"), nicht implementiert, um Scope zu halten.
-
-### 6. Navigation
-
-`/connect/websites` bekommt in `AlixConnectLayout` einen zweiten Sub-Eintrag „Analytics", damit das Menü nicht neu strukturiert werden muss. Layout-Badge bleibt Phase 10 → wird nach Rollout auf „Phase 11 · Web Suite" gesetzt.
-
-## Technisches
-
-- Neue Edge Function: `supabase/functions/ac-track/index.ts` (verify_jwt=false, CORS `*`, Zod-Validierung, Batch-Insert, IP-Hash mit Tagessalt aus `app_settings`).
-- Neue RPCs via Migration: `ac_web_live`, `ac_web_top_pages`, `ac_web_top_referrers`, `ac_web_utm_breakdown`, `ac_web_daily_series` (SECURITY DEFINER, `search_path=public`, Tenant-Check über `has_role`/`user_tenant_access`).
-- Trigger auf `ac_websites`: `BEFORE INSERT` erzeugt `api_key` wenn NULL.
-- Realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE public.ac_analytics_events;` (nur für Live-Feed im Admin).
-- Neue Datei `public/connect.js` (Vanilla, keine Bundler-Abhängigkeit) + Route-Handler nicht nötig, Vite serviert `public/` direkt.
-- Neue Pages `src/pages/AlixConnect/Websites.tsx` (Liste + Detail-Dialog) und `WebsiteAnalytics.tsx`.
-- Routing in bestehender Router-Datei `src/pages/AlixConnect/*` registrieren.
-
-## Nicht Teil dieser Phase
-
-- Chat-/Umfrage-Widget als sichtbares Iframe (Phase 12: `connect/widget`).
-- Heatmap-Rendering (Client-Recording), Funnel-Editor, Bot-Verifikation via reCAPTCHA.
-- WhatsApp Cloud API, 3CX (separate Folgephasen).
-
-## Verifikation vor Abschluss
-
-- Test-Snippet auf einer Preview-Domain einbinden, `pageview`/`scroll_depth` prüfen.
-- Rate-Limit greift bei > 60 req/min.
-- Umschalten `cookieless_analytics` an einer Website: kein `_ac_vid`-Cookie wird gesetzt, Events landen weiterhin mit Hash.
-- Analytics-Dashboard zeigt Live-Besucher innerhalb 5 s (Realtime + Polling-Fallback 15 s).
-- Security-Scan nach der Migration ausführen und nur Findings der Web Suite fixen.
+Frage:
+- Startet mit **Phase 1 + 2** (empfohlen) oder soll ich alles in einem Rutsch bauen (deutlich länger, höheres Risiko)?
+- Welche Nextcloud-URL / Test-Server soll ich für Phase 1 hinterlegen?
