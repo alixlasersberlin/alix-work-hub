@@ -12,7 +12,12 @@ const corsHeaders = {
 
 const ALLOWED_MIMES = new Set([
   'application/pdf',
-  'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif',
+  'image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'image/gif',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain', 'text/csv',
 ]);
 const MAX_SIZE = 50 * 1024 * 1024; // 50 MB
 const BUCKET = 'alixdocs-private';
