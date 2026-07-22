@@ -57,6 +57,8 @@ export function UebernahmeAuftragChDialog({
   const [scanning, setScanning] = useState(false);
   const [entities, setEntities] = useState<AiEntities | null>(null);
   const [ocrText, setOcrText] = useState<string>('');
+  const [positions, setPositions] = useState<Array<{ beschreibung: string; menge: number; einzelpreis: number }>>([]);
+  const [autoTotal, setAutoTotal] = useState(true);
 
   useEffect(() => {
     if (!open) return;
