@@ -90,6 +90,7 @@ export default function AlixDocs2Inbox() {
                     {busy[d.id] ? <Loader2 className="w-3 h-3 animate-spin"/> : '🧠 Analyse'}
                   </Button>
                   <Button size="sm" variant="ghost" disabled={busy[d.id]} onClick={() => match(d.id)}>🎯 Zuordnen</Button>
+                  <Link to={`/alixdocs2/dokument/${d.id}`}><Button size="sm" variant="outline">👁 Öffnen</Button></Link>
                 </div>
                 {suggestions[d.id] && (
                   <div className="pl-6 space-y-1">
