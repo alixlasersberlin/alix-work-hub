@@ -159,6 +159,8 @@ export default function AlixDocs2Viewer() {
               ))}
             </CardContent>
           </Card>
+          {doc && <ApprovalPanel doc={doc} onChange={load} />}
+          {doc && <CommentsPanel documentId={doc.id} />}
         </div>
       </div>
     </div>
