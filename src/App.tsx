@@ -405,6 +405,7 @@ const AlixDocs2Nextcloud = lazy(() => import("./pages/AlixDocs2/Nextcloud"));
 const AlixDocs2Inbox = lazy(() => import("./pages/AlixDocs2/Inbox"));
 const AlixDocs2Suche = lazy(() => import("./pages/AlixDocs2/Suche"));
 const AlixDocs2AiSearch = lazy(() => import("./pages/AlixDocs2/AiSearch"));
+const AlixDocs2Viewer = lazy(() => import("./pages/AlixDocs2/Viewer"));
 const WhatsAppServiceCenter = lazy(() => import("./pages/WhatsAppServiceCenter"));
 const BugCapaLayoutLazy = lazy(() => import("./pages/BugCapa/_shared").then(m => ({ default: m.BugCapaLayout })));
 const BugCapaDashboard = lazy(() => import("./pages/BugCapa/BugCapaDashboard"));
