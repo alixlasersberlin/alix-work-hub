@@ -648,11 +648,21 @@ export default function TicketDetail() {
             variant="outline"
             onClick={() => {
               setActiveTab('messages');
-              setTimeout(() => {
-                const el = document.getElementById('ticket-new-message');
-                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                (el as HTMLTextAreaElement | null)?.focus();
-              }, 100);
+              setMsgInternal(true);
+              const tryFocus = (attempt = 0) => {
+                const el = document.getElementById('ticket-new-message') as HTMLTextAreaElement | null;
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  el.focus({ preventScroll: true });
+                  el.classList.add('ring-2', 'ring-amber-500');
+                  setTimeout(() => el.classList.remove('ring-2', 'ring-amber-500'), 1500);
+                } else if (attempt < 10) {
+                  setTimeout(() => tryFocus(attempt + 1), 80);
+                } else {
+                  toast.error('Kommentar-Feld nicht verfügbar (fehlende Berechtigung).');
+                }
+              };
+              tryFocus();
             }}
           >
             <MessageSquare className="w-4 h-4 mr-1" /> Kommentar
