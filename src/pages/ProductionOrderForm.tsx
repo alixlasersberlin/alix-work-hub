@@ -71,6 +71,9 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     reclamation_reason: '',
   });
 
+  // Ersatzteil-Modus: Farbe und Power sind bei reinen Ersatzteilbestellungen nicht sinnvoll.
+  const [isSpareParts, setIsSpareParts] = useState(false);
+
   // Load suppliers
   useEffect(() => {
     supabase.from('suppliers').select('*').eq('is_active', true).order('name')
