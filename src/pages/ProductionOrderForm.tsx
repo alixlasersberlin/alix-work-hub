@@ -71,6 +71,9 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     reclamation_reason: '',
   });
 
+  // Ersatzteil-Modus: Farbe und Power sind bei reinen Ersatzteilbestellungen nicht sinnvoll.
+  const [isSpareParts, setIsSpareParts] = useState(false);
+
   // Load suppliers
   useEffect(() => {
     supabase.from('suppliers').select('*').eq('is_active', true).order('name')
@@ -124,6 +127,10 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         payment_status: (po as any).payment_status || 'Nein',
         reclamation_reason: (po as any).reclamation_reason || '',
       });
+      // Ersatzteil-Modus aus vorhandenen Daten ableiten (kein Modell + keine Farbe + keine Power)
+      if (!(po as any).is_reclamation && !po.farbe && !po.power_handstueck && !po.modellname) {
+        setIsSpareParts(true);
+      }
       // Load source order (falls vorhanden)
       if (po.order_id) {
         const { data: order } = await supabase.from('orders').select('*, customer:customers(company_name, contact_name)').eq('id', po.order_id).single();
@@ -454,8 +461,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const validate = () => {
     if (!selectedOrder && !selectedCustomer) { toast.error('Bitte einen Auftrag oder Kunden auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
-    if (!isReclamation && !form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
-    if (!isReclamation && !form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
+    if (!isReclamation && !isSpareParts && !form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
+    if (!isReclamation && !isSpareParts && !form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
     if (!form.bearbeiter.trim()) { toast.error('Bearbeiter ist Pflichtfeld'); return false; }
     if (!form.liefertermin) { toast.error('Liefertermin ist Pflichtfeld'); return false; }
     if (isReclamation && !form.reclamation_reason.trim()) { toast.error('Reklamationsgrund ist Pflichtfeld'); return false; }
@@ -758,6 +765,21 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
             ? (isEdit ? 'Reklamation bearbeiten' : 'Neue Reklamation')
             : (isEdit ? 'Bestellung bearbeiten' : 'Neue Produktionsbestellung')}
         </h1>
+        {!isReclamation && (
+          <label className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-border accent-primary"
+              checked={isSpareParts}
+              onChange={e => {
+                const on = e.target.checked;
+                setIsSpareParts(on);
+                if (on) setForm(f => ({ ...f, farbe: '', power_handstueck: '' }));
+              }}
+            />
+            <span>Ersatzteilbestellung (ohne Farbe / Power Handstück)</span>
+          </label>
+        )}
       </div>
 
       {/* Auftrag oder Kunde */}
@@ -1094,6 +1116,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               Tipp: Tippen zum Suchen oder neuen Artikelnamen eingeben und übernehmen.
             </p>
           </div>
+          {!isSpareParts && (
           <div>
             <Label>Farbe {!isReclamation && '*'}</Label>
             {(() => {
@@ -1123,6 +1146,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               );
             })()}
           </div>
+          )}
+          {!isSpareParts && (
           <div>
             <Label>Power Handstück {!isReclamation && '*'}</Label>
             <Select value={form.power_handstueck} onValueChange={v => setForm({ ...form, power_handstueck: v })}>
@@ -1134,6 +1159,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               </SelectContent>
             </Select>
           </div>
+          )}
           <div><Label>Bearbeiter *</Label><Input value={form.bearbeiter} onChange={e => setForm({ ...form, bearbeiter: e.target.value })} /></div>
           <div><Label>Liefertermin *</Label><Input type="date" value={form.liefertermin} onChange={e => setForm({ ...form, liefertermin: e.target.value })} /></div>
           <div><Label>Seriennummer</Label><Input value={form.seriennummer} onChange={e => setForm({ ...form, seriennummer: e.target.value })} /></div>
