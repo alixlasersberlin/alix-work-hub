@@ -5,8 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import PdfPreview from "@/components/alixdocs/PdfPreview";
 import { toast } from "sonner";
-import { Loader2, Sparkles, FileText, ExternalLink, Check, X, RefreshCw } from "lucide-react";
+import { Loader2, Sparkles, FileText, ExternalLink, Check, X, RefreshCw, Eye } from "lucide-react";
 
 type Candidate = {
   entity_type: "order" | "customer" | "device" | string;
@@ -51,6 +53,25 @@ export default function AlixDocsSmartReview() {
   const [busy, setBusy] = useState<string | null>(null);
   const [labels, setLabels] = useState<Record<string, string>>({});
   const [ruleLabels, setRuleLabels] = useState<Record<string, { pattern: string; bonus: number }>>({});
+  const [previewDoc, setPreviewDoc] = useState<Doc | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  async function openPreview(doc: Doc) {
+    setPreviewDoc(doc);
+    setPreviewUrl(null);
+    setPreviewLoading(true);
+    const { data, error } = await supabase.functions.invoke("alixdocs-signed-url", {
+      body: { document_id: doc.id },
+    });
+    setPreviewLoading(false);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Vorschau fehlgeschlagen");
+      setPreviewDoc(null);
+      return;
+    }
+    setPreviewUrl((data as any).url);
+  }
 
   async function load() {
     setLoading(true);
@@ -205,6 +226,9 @@ export default function AlixDocsSmartReview() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Badge variant="outline" className={conf.cls}>{conf.text}</Badge>
+                      <Button size="sm" variant="outline" onClick={() => openPreview(doc)}>
+                        <Eye className="w-4 h-4 mr-1" />PDF
+                      </Button>
                       <Link to={`/dokumente/vorschau?id=${doc.id}`}><Button size="sm" variant="ghost"><ExternalLink className="w-4 h-4" /></Button></Link>
                     </div>
                   </div>
@@ -260,6 +284,26 @@ export default function AlixDocsSmartReview() {
           })}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!previewDoc} onOpenChange={(o) => { if (!o) { setPreviewDoc(null); setPreviewUrl(null); } }}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 flex flex-col">
+          <DialogHeader className="px-4 py-3 border-b">
+            <DialogTitle className="truncate flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              {previewDoc?.title || previewDoc?.original_filename || "PDF Vorschau"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0">
+            {previewLoading || !previewUrl ? (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                <Loader2 className="w-6 h-6 animate-spin" />
+              </div>
+            ) : (
+              <PdfPreview url={previewUrl} />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
