@@ -53,6 +53,25 @@ export default function AlixDocsSmartReview() {
   const [busy, setBusy] = useState<string | null>(null);
   const [labels, setLabels] = useState<Record<string, string>>({});
   const [ruleLabels, setRuleLabels] = useState<Record<string, { pattern: string; bonus: number }>>({});
+  const [previewDoc, setPreviewDoc] = useState<Doc | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  async function openPreview(doc: Doc) {
+    setPreviewDoc(doc);
+    setPreviewUrl(null);
+    setPreviewLoading(true);
+    const { data, error } = await supabase.functions.invoke("alixdocs-signed-url", {
+      body: { document_id: doc.id },
+    });
+    setPreviewLoading(false);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error || error?.message || "Vorschau fehlgeschlagen");
+      setPreviewDoc(null);
+      return;
+    }
+    setPreviewUrl((data as any).url);
+  }
 
   async function load() {
     setLoading(true);
