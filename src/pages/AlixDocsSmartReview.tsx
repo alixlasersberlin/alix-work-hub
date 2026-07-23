@@ -226,6 +226,9 @@ export default function AlixDocsSmartReview() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Badge variant="outline" className={conf.cls}>{conf.text}</Badge>
+                      <Button size="sm" variant="outline" onClick={() => openPreview(doc)}>
+                        <Eye className="w-4 h-4 mr-1" />PDF
+                      </Button>
                       <Link to={`/dokumente/vorschau?id=${doc.id}`}><Button size="sm" variant="ghost"><ExternalLink className="w-4 h-4" /></Button></Link>
                     </div>
                   </div>
