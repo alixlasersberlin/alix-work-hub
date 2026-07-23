@@ -278,7 +278,7 @@ export default function OrdersFreiBestellung() {
     // sie liegen jetzt bei „Factory Orders". Ausnahme: Restbestellung-Marker
     // (Teilgeliefert) sollen weiterhin sichtbar bleiben.
     const baseFiltered = (data ?? []).filter((o: any) =>
-      !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id) && !usedOrderIds.has(o.id) && !isFullyReserved(o.id)
+      !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id) && !usedOrderIds.has(o.id) && !isFullyReserved(o.id) && !deliveredOrderIds.has(o.id)
     );
     const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true })).filter((o: any) => !hiddenOrderIds.has(o.id) && !isFullyReserved(o.id));
     const combined = [...restMapped, ...baseFiltered];
