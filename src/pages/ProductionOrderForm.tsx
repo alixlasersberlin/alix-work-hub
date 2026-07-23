@@ -461,8 +461,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const validate = () => {
     if (!selectedOrder && !selectedCustomer) { toast.error('Bitte einen Auftrag oder Kunden auswählen'); return false; }
     if (!form.supplier_id) { toast.error('Bitte einen Zulieferer wählen'); return false; }
-    if (!isReclamation && !form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
-    if (!isReclamation && !form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
+    if (!isReclamation && !isSpareParts && !form.farbe.trim()) { toast.error('Farbe ist Pflichtfeld'); return false; }
+    if (!isReclamation && !isSpareParts && !form.power_handstueck.trim()) { toast.error('Power Handstück ist Pflichtfeld'); return false; }
     if (!form.bearbeiter.trim()) { toast.error('Bearbeiter ist Pflichtfeld'); return false; }
     if (!form.liefertermin) { toast.error('Liefertermin ist Pflichtfeld'); return false; }
     if (isReclamation && !form.reclamation_reason.trim()) { toast.error('Reklamationsgrund ist Pflichtfeld'); return false; }
