@@ -765,6 +765,21 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
             ? (isEdit ? 'Reklamation bearbeiten' : 'Neue Reklamation')
             : (isEdit ? 'Bestellung bearbeiten' : 'Neue Produktionsbestellung')}
         </h1>
+        {!isReclamation && (
+          <label className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-border accent-primary"
+              checked={isSpareParts}
+              onChange={e => {
+                const on = e.target.checked;
+                setIsSpareParts(on);
+                if (on) setForm(f => ({ ...f, farbe: '', power_handstueck: '' }));
+              }}
+            />
+            <span>Ersatzteilbestellung (ohne Farbe / Power Handstück)</span>
+          </label>
+        )}
       </div>
 
       {/* Auftrag oder Kunde */}
