@@ -534,18 +534,29 @@ export default function Lagergeraete({
     let cancelled = false;
     const t = setTimeout(async () => {
       setLoadingCustomers(true);
-      let query = supabase
+      // Kunden suchen — Namenssuche in company_name UND contact_name über
+      // zwei getrennte Queries (escape-sicher, keine .or()-Parsing-Fehler
+      // bei Kommas/Klammern/Umlauten). source_system NICHT einschränken,
+      // damit auch manuell angelegte Kunden (Elena Janßen etc.) auftauchen.
+      const base = () => supabase
         .from('customers')
         .select('id, company_name, contact_name, email, source_system')
-        .in('source_system', ['zoho_eu_1', 'zoho_eu_2'])
         .order('company_name', { ascending: true })
         .limit(50);
+      let data: any[] = [];
       if (q.length >= 1) {
-        query = query.or(
-          `company_name.ilike.%${q}%,contact_name.ilike.%${q}%,email.ilike.%${q}%`,
-        );
+        const [a, b, c] = await Promise.all([
+          base().ilike('company_name', `%${q}%`),
+          base().ilike('contact_name', `%${q}%`),
+          base().ilike('email', `%${q}%`),
+        ]);
+        const map = new Map<string, any>();
+        for (const r of [...(a.data || []), ...(b.data || []), ...(c.data || [])]) map.set(r.id, r);
+        data = Array.from(map.values()).slice(0, 50);
+      } else {
+        const { data: d } = await base();
+        data = d || [];
       }
-      const { data } = await query;
       if (cancelled) return;
       const opts = (data ?? []).map((c: any) => {
         const flag = c.source_system === 'zoho_eu_2' ? '🇦🇹' : c.source_system === 'zoho_eu_1' ? '🇩🇪' : '';
