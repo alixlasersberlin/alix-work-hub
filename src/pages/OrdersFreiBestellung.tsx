@@ -229,14 +229,19 @@ export default function OrdersFreiBestellung() {
     if (err) setError(err.message);
 
     // Exclude orders that already have a production order — außer für teilgelieferte Rest-Aufträge.
-    const [{ data: existing }, { data: reservedDevs }, { data: freeDevs }, { data: hiddenNotes }] = await Promise.all([
+    const [{ data: existing }, { data: reservedDevs }, { data: freeDevs }, { data: hiddenNotes }, { data: deliveredDevs }] = await Promise.all([
       supabase.from('production_orders').select('order_id'),
       supabase.from('lager_devices').select('id, serial_number, model_name, notes, reserved_order_id').not('reserved_order_id', 'is', null),
       supabase.from('lager_devices').select('id, serial_number, model_name, notes, delivered_order_id').is('reserved_order_id', null).is('delivered_order_id', null),
       supabase.from('order_notes').select('order_id').eq('note_type', FREI_HIDDEN_NOTE),
+      supabase.from('lager_devices').select('delivered_order_id').not('delivered_order_id', 'is', null),
     ]);
     const usedOrderIds = new Set(((existing ?? []).map((p: any) => p.order_id)));
     const hiddenOrderIds = new Set(((hiddenNotes ?? []) as any[]).map(n => n.order_id));
+    // Aufträge, bei denen bereits mindestens ein Gerät ausgeliefert wurde,
+    // gelten als (teil-)geliefert und werden aus „Bestellung möglich"
+    // ausgeblendet — Ausnahme: aktiver Restbestellungs-Marker (pendingRestIds).
+    const deliveredOrderIds = new Set(((deliveredDevs ?? []) as any[]).map((d: any) => d.delivered_order_id).filter(Boolean));
     // Reservierte Gerätezählung pro Auftrag (Leihgeräte ausgenommen).
     const reservedCountByOrder = new Map<string, number>();
     for (const d of (reservedDevs ?? []) as any[]) {
@@ -273,7 +278,7 @@ export default function OrdersFreiBestellung() {
     // sie liegen jetzt bei „Factory Orders". Ausnahme: Restbestellung-Marker
     // (Teilgeliefert) sollen weiterhin sichtbar bleiben.
     const baseFiltered = (data ?? []).filter((o: any) =>
-      !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id) && !usedOrderIds.has(o.id) && !isFullyReserved(o.id)
+      !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id) && !usedOrderIds.has(o.id) && !isFullyReserved(o.id) && !deliveredOrderIds.has(o.id)
     );
     const restMapped = (restData ?? []).map((o: any) => ({ ...o, _isRestbestellung: true })).filter((o: any) => !hiddenOrderIds.has(o.id) && !isFullyReserved(o.id));
     const combined = [...restMapped, ...baseFiltered];
