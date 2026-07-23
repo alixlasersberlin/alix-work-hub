@@ -1101,6 +1101,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               Tipp: Tippen zum Suchen oder neuen Artikelnamen eingeben und übernehmen.
             </p>
           </div>
+          {!isSpareParts && (
           <div>
             <Label>Farbe {!isReclamation && '*'}</Label>
             {(() => {
@@ -1130,6 +1131,8 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               );
             })()}
           </div>
+          )}
+          {!isSpareParts && (
           <div>
             <Label>Power Handstück {!isReclamation && '*'}</Label>
             <Select value={form.power_handstueck} onValueChange={v => setForm({ ...form, power_handstueck: v })}>
@@ -1141,6 +1144,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
               </SelectContent>
             </Select>
           </div>
+          )}
           <div><Label>Bearbeiter *</Label><Input value={form.bearbeiter} onChange={e => setForm({ ...form, bearbeiter: e.target.value })} /></div>
           <div><Label>Liefertermin *</Label><Input type="date" value={form.liefertermin} onChange={e => setForm({ ...form, liefertermin: e.target.value })} /></div>
           <div><Label>Seriennummer</Label><Input value={form.seriennummer} onChange={e => setForm({ ...form, seriennummer: e.target.value })} /></div>
