@@ -50,6 +50,10 @@ export const ALIX_BEAUTY_MODELS = [
   'VelvetVac Ultra',
   'DermiX 12 RF',
   'CelluEX Pro',
+  'Alix HIFU 12D Pro',
+  'Alix HIFU 12D Pro Blue/Gold',
+  'Alix HIFU 12D Pro Weiß',
+  'Alix HIFU 12D Pro White/Gold',
 ] as const;
 
 export const ALIX_MODEL_GROUPS: { label: string; models: readonly string[] }[] = [
