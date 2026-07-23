@@ -85,11 +85,11 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     (async () => {
       const { data } = await supabase
         .from('zoho_items')
-        .select('item_name, sku')
-        .not('item_name', 'is', null)
-        .order('item_name')
+        .select('name, sku')
+        .not('name', 'is', null)
+        .order('name')
         .limit(5000);
-      setZohoItems((data || []) as any);
+      setZohoItems(((data || []) as any[]).map((r) => ({ item_name: r.name, sku: r.sku })));
     })();
   }, []);
 
