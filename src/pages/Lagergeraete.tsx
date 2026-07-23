@@ -957,11 +957,28 @@ export default function Lagergeraete({
       .replace(/\s*\[Reparatur:\s*[^\]]+\]\s*/g, ' ')
       .trim();
     const effectiveStatus = deviceType === 'Leihgerät' ? 'Bestand' : deviceStatus;
+    // Auto-Fallback: Bei Leihgerät mit Auftrags-Reservierung aber ohne
+    // gewählten Kunden → Kunde automatisch aus dem Auftrag übernehmen,
+    // damit der Standort (Kunde) nie „vergessen" wird.
+    let autoLeihCustomerId = leihCustomerId;
+    let autoLeihCustomerName = leihCustomerName.trim();
+    if (deviceType === 'Leihgerät' && finalReservedOrderId && !autoLeihCustomerName) {
+      const { data: ord } = await supabase
+        .from('orders')
+        .select('customer_id, customers(company_name, contact_name)')
+        .eq('id', finalReservedOrderId)
+        .maybeSingle();
+      const c: any = (ord as any)?.customers;
+      const name = c?.company_name || c?.contact_name || '';
+      if (name) {
+        autoLeihCustomerId = (ord as any)?.customer_id ?? null;
+        autoLeihCustomerName = name;
+      }
+    }
     const leihTags: string[] = [];
     if (deviceType === 'Leihgerät') {
-      const trimmedCustomer = leihCustomerName.trim();
-      if (trimmedCustomer) {
-        leihTags.push(`[Kunde: ${trimmedCustomer}${leihCustomerId ? '|' + leihCustomerId : ''}]`);
+      if (autoLeihCustomerName) {
+        leihTags.push(`[Kunde: ${autoLeihCustomerName}${autoLeihCustomerId ? '|' + autoLeihCustomerId : ''}]`);
         const startDate = leihStart || today;
         leihTags.push(`[Leihstart: ${startDate}]`);
       }
@@ -969,6 +986,7 @@ export default function Lagergeraete({
       if (shot) leihTags.push(`[Schusszahl: ${shot}]`);
       if (leihRepairId) leihTags.push(`[Reparatur: ${leihRepairId}]`);
     }
+
     const tagPrefix = `[Typ: ${deviceType}] [Status: ${effectiveStatus}]${leihTags.length ? ' ' + leihTags.join(' ') : ''}`;
     const notesWithType = `${tagPrefix}${cleanedNotes ? ' ' + cleanedNotes : ''}`;
     const payload = {
