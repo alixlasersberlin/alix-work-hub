@@ -284,6 +284,26 @@ export default function AlixDocsSmartReview() {
           })}
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!previewDoc} onOpenChange={(o) => { if (!o) { setPreviewDoc(null); setPreviewUrl(null); } }}>
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 flex flex-col">
+          <DialogHeader className="px-4 py-3 border-b">
+            <DialogTitle className="truncate flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              {previewDoc?.title || previewDoc?.original_filename || "PDF Vorschau"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0">
+            {previewLoading || !previewUrl ? (
+              <div className="h-full flex items-center justify-center text-muted-foreground">
+                <Loader2 className="w-6 h-6 animate-spin" />
+              </div>
+            ) : (
+              <PdfPreview url={previewUrl} />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
