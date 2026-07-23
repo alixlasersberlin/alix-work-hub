@@ -127,6 +127,10 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         payment_status: (po as any).payment_status || 'Nein',
         reclamation_reason: (po as any).reclamation_reason || '',
       });
+      // Ersatzteil-Modus aus vorhandenen Daten ableiten (kein Modell + keine Farbe + keine Power)
+      if (!(po as any).is_reclamation && !po.farbe && !po.power_handstueck && !po.modellname) {
+        setIsSpareParts(true);
+      }
       // Load source order (falls vorhanden)
       if (po.order_id) {
         const { data: order } = await supabase.from('orders').select('*, customer:customers(company_name, contact_name)').eq('id', po.order_id).single();
