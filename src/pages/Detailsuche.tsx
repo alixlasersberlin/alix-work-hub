@@ -375,18 +375,36 @@ export default function Detailsuche() {
 
 
       // 2) Kunden-IDs nach Name / Telefon
+      // Wichtig: Für den Namen führen wir ZWEI getrennte ilike-Queries
+      // (company_name + contact_name) aus und mergen die IDs. So vermeiden
+      // wir Escape-Probleme mit `.or()` (Kommas, Klammern, Anführungszeichen,
+      // Ampersand in Firmennamen wie „Meier, Schmidt & Co, GmbH").
       let customerIds: Set<string> | null = null;
       if (trimmed.name || trimmed.phone) {
-        let q = supabase.from('customers').select('id').limit(2000);
+        customerIds = new Set<string>();
         if (trimmed.name) {
-          q = q.or(`company_name.ilike.%${trimmed.name}%,contact_name.ilike.%${trimmed.name}%`);
+          const name = trimmed.name;
+          const [cn, kn] = await Promise.all([
+            supabase.from('customers').select('id').ilike('company_name', `%${name}%`).limit(2000),
+            supabase.from('customers').select('id').ilike('contact_name', `%${name}%`).limit(2000),
+          ]);
+          if (cn.error) throw cn.error;
+          if (kn.error) throw kn.error;
+          for (const r of (cn.data || []) as any[]) customerIds.add(r.id);
+          for (const r of (kn.data || []) as any[]) customerIds.add(r.id);
         }
         if (trimmed.phone) {
-          q = q.ilike('phone', `%${trimmed.phone}%`);
+          const { data, error } = await supabase
+            .from('customers').select('id').ilike('phone', `%${trimmed.phone}%`).limit(2000);
+          if (error) throw error;
+          if (trimmed.name) {
+            // Name UND Telefon → Schnittmenge
+            const phoneSet = new Set(((data || []) as any[]).map(r => r.id));
+            customerIds = new Set(Array.from(customerIds).filter(id => phoneSet.has(id)));
+          } else {
+            for (const r of (data || []) as any[]) customerIds.add(r.id);
+          }
         }
-        const { data, error } = await q;
-        if (error) throw error;
-        customerIds = new Set((data || []).map((r: any) => r.id));
         if (customerIds.size === 0) { setHits([]); setLoading(false); return; }
       }
 
