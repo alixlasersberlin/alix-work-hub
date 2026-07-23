@@ -557,7 +557,6 @@ export default function Lagergeraete({
         const { data: d } = await base();
         data = d || [];
       }
-      const { data } = await query;
       if (cancelled) return;
       const opts = (data ?? []).map((c: any) => {
         const flag = c.source_system === 'zoho_eu_2' ? '🇦🇹' : c.source_system === 'zoho_eu_1' ? '🇩🇪' : '';
