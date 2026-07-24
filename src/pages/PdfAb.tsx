@@ -51,7 +51,7 @@ export default function PdfAb() {
       }
     })();
     return () => { if (revoke) URL.revokeObjectURL(revoke); };
-  }, [orderId, signatureId, token]);
+  }, [orderId, signatureId, token, modeParam]);
 
   if (error) {
     return (
