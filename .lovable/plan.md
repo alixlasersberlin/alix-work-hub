@@ -1,71 +1,79 @@
-# ALIXDocs AI 2.0 – Umsetzungsplan
 
-Riesiges Modul — wird strikt **additiv** aufgebaut. Bestehende AlixDocs-Funktionen (Bulk Import, AI-Suche, Sharing, Compliance-Export, Smart-Match, RLS) bleiben unverändert. Alle neuen Tabellen haben Prefix `alixdocs2_` und laufen parallel zu `alixdocs_*`, sodass wir Schritt für Schritt migrieren können.
+# ALIX CREDIT SCORE® – Umsetzungsplan
 
-## Phase 1 — Nextcloud-Anbindung (Foundation)
-- Neue Tabellen: `alixdocs2_nc_servers` (mehrere Server: WebDAV-URL, App-Password, TLS), `alixdocs2_nc_watched_folders` (Server + Pfad + Doku-Kategorie + Polling-Intervall), `alixdocs2_nc_sync_runs` (Audit).
-- Edge Function `alixdocs2-nc-scan` (Cron alle 5 Min): listet via WebDAV `PROPFIND`, vergleicht ETag/mtime, legt neue Dateien in `alixdocs2_documents` mit Status `neu` an. Datei bleibt in Nextcloud; nur ein signierter Download-Token wird gecached für OCR/Vorschau.
-- Admin-UI `/operation/alixdocs2/nextcloud` — CRUD für Server & überwachte Ordner, Test-Verbindung-Button, letzte Sync-Runs.
-- App-Password wird über `add_secret` pro Server abgelegt, nie im Klartext in DB.
+Neues Modul unter **VERKAUF → Bonität & Finanzierung** (`/bonitaet`). DSGVO-konform, revisionssicher, mit KI-gestützter Score-Berechnung und Freigabe-Workflow.
 
-## Phase 2 — Metadaten-Store & Beziehungen
-- `alixdocs2_documents` (nc_server_id, nc_path, etag, size, mime, sha256, status, doc_type, ai_confidence, JSONB `ai_entities`, JSONB `ai_tags[]`).
-- `alixdocs2_relations` (document_id + linked_type: kunde/geraet/auftrag/rechnung/service/garantie/ticket/techniker/vertrag + linked_id + confidence + source: ai/manuell). Ein Dokument → n Beziehungen, keine Duplikate.
-- `alixdocs2_versions` (SHA256-Dedupe: gleiche Datei erzeugt neue Version am selben logischen Dokument, Historie unveränderlich).
-- `alixdocs2_audit` (view, edit, download, delete, relation_change) — append-only, RLS read-only.
-- RLS: `has_role` gestuft (Super Admin voll, Admin Lesen+Zuordnen, Fachrollen nur eigene Kunden/Aufträge).
+## Umfang (Phasen)
 
-## Phase 3 — OCR & KI-Analyse-Pipeline
-- Edge Function `alixdocs2-analyze` wird pro neuem Dokument getriggert (DB-Trigger → `pg_net` → Function).
-- Ablauf: Download aus Nextcloud → PDF-Text via `pdf-parse` (bestehende Lib) → falls leer → OCR via Gemini Vision (mehrsprachig DE/EN/TR/AR/RU/VI) → Entity-Extraktion via `google/gemini-3-flash-preview` mit strikter JSON-Schema-Antwort (alle geforderten Felder: Kunde, Auftrag, Serien-Nr., Rechnungs-Nr., Beträge, MwSt., Positionen, QR/Barcode-Text …) → Klassifizierung Doku-Typ.
-- Alle KI-Ausgaben validiert (zod) und in `ai_entities`/`ai_tags` gespeichert. Confidence pro Feld.
-- Große Dateien >8 MB: OCR nur seitenweise (Reuse der Logik aus `alixdocs-ai-process`).
+### Phase 1 – Datenmodell & Basis (Fundament)
+Neue Tabellen (alle mit RLS, GRANTs, Audit):
+- `credit_assessments` – Bonitätsprüfung pro Kunde/Vorgang (score, ampel, empfehlung, status, workflow_stage, entscheider, entscheidung_am, gültig_bis)
+- `credit_score_factors` – berechnete Einzelfaktoren pro Assessment (kategorie, punkte, gewicht, quelle, evidenz_ref)
+- `credit_documents` – Dokumentenreferenzen (verweist auf `alixdocs2_documents`, Typ: schufa, lohnabrechnung, bwa, gewerbe, perso, hr_auszug, sonstiges)
+- `credit_external_checks` – manuelle Einträge (Creditreform, Northdata, Bundesanzeiger, Handelsregister, USt-ID, LinkedIn, Google-Bewertung)
+- `credit_decision_log` – Audit aller Freigaben/Ablehnungen/Eskalationen mit Begründung
+- `credit_policies` – konfigurierbare Score-Schwellen und Gewichte (Super Admin editiert)
 
-## Phase 4 — Auto-Zuordnung mit Wahrscheinlichkeiten
-- Edge Function `alixdocs2-match` scored gegen `customers`, `orders`, `lager_devices`, `zoho_invoices`, `finance_contracts`, `repair_orders`, `tickets`. Reihenfolge: Auftrags-Nr → Serien-Nr → Kunden-Nr → Rechnungs-Nr → Email → Telefon → Adresse → Firmenname (Token-Match wie Auftragsabgleich).
-- UI `/alixdocs2/inbox`: Karten pro Dokument mit Top-3-Vorschlägen (z. B. „96 % Auftrag 24018"), 1-Klick-Übernahme, Multi-Zuordnung möglich.
-- Dokumententypen als Stammdaten-Tabelle `alixdocs2_doctypes` (Admin kann Typen ergänzen).
+### Phase 2 – Score-Engine (Edge Function `credit-score-calculate`)
+Deterministisch + KI. Berechnung 0–1000 aus 8 Kategorien mit den vorgegebenen Gewichten. Zieht automatisch:
+- Kundenhistorie aus `orders`, `finance_transactions`, `finance_reminders`, `finance_sepa_runs` (Rücklastschriften), `finance_contracts`
+- Offene Forderungen und Mahnstufe
+- AlixSmart-Nutzung aus `alixsmart_customer_links`
+- Dokumentenvollständigkeit aus `credit_documents`
+- Externe Prüfungen aus `credit_external_checks`
+Liefert: `score`, `ampel` (grün/gelb/rot), `ausfallwahrscheinlichkeit_pct`, `empfehlung` (Anzahlung %, Laufzeit, max. Kredit, empfohlene Geräteklasse), `flags[]`.
 
-## Phase 5 — Suche
-- Postgres FTS auf `alixdocs2_documents.search_tsv` (title + ocr_text + ai_entities + tags), Trigram-Index für Tippfehler (`pg_trgm`).
-- Klassische Suchseite `/alixdocs2/suche` — Filter nach Typ, Kunde, Gerät, Zeitraum, Techniker.
-- KI-Suche `/alixdocs2/ai` — Edge Function `alixdocs2-ai-search` (RAG, wie bestehende `alixdocs-ai-search`, aber mit Zitier-Quellen und Fußnoten). Antwort nur aus indexierten Dokumenten, keine Halluzinationen.
+### Phase 3 – KI-Risikoanalyse (Edge Function `credit-score-ai`)
+Lovable AI Gateway (`google/gemini-3.6-flash`, strukturierter Output). Bewertet weiche Faktoren:
+- Adresswechsel, junges Unternehmen, Privatanschrift, Gmail statt Firmendomain, fehlende Webseite/Impressum, negative Bewertungen, GF-Wechsel, Insolvenz/Steuerhinweise (aus hochgeladenen PDFs).
+- Nutzt OCR-Ergebnisse aus `alixdocs2_documents` (SCHUFA, BWA, Lohnabrechnung, HR-Auszug).
+- Liefert Textbegründung + Zusatz-Punktabzüge, die in die Engine einfließen.
 
-## Phase 6 — Viewer & Versionierung
-- `AlixDocs2Viewer.tsx` erweitert bestehende `PdfPreview` um Rotation, Miniaturen, Kommentare (`alixdocs2_comments`), Notizen, Versions-Vergleich (Split-View), Druck.
-- Signed URLs direkt aus Nextcloud, kein Storage-Duplikat außer Cache-Vorschau (`nc-cache` Bucket, TTL 7 Tage).
+### Phase 4 – UI (`/bonitaet`)
+- **Übersicht**: KPI-Cards (offene Prüfungen, Ampelverteilung, avg. Score, Eskalationen), Liste aller Assessments mit Filter/Suche.
+- **Neue Prüfung**: Kundenauswahl (bestehend/neu), Datenerfassung Firmen-/Privatkunde, Dokumenten-Upload (via `alixdocs2` → `credit` Kategorie), externe Checks eingeben.
+- **Detailansicht**: Ampel-Karte, Score-Breakdown pro Kategorie mit Balken, KI-Analysetext, Empfehlungs-Panel (Anzahlung/Laufzeit/max. Kredit), Dokumentenliste mit Preview, Entscheidungshistorie.
+- **Freigabe-Aktionen**: „Freigeben" / „Mit Auflagen freigeben" / „Ablehnen" / „Zur Eskalation" – abhängig von Rolle und Score-Band.
 
-## Phase 7 — Workflow & Automatik
-- Status-Flow: neu → importiert → analysiert → zugeordnet → geprüft → freigegeben → archiviert (`alixdocs2_status_history`).
-- Trigger:
-  - Garantie-Ende in `ai_entities.garantie_bis` < 30 Tage → Task in `finance_reminders` oder neue `alixdocs2_tasks`.
-  - Wartung fällig → Techniker-Benachrichtigung via bestehendes `app_notifications`.
-  - Vertragsende → Erinnerung.
-  - Fehlendes Pflichtdokument je Auftrag → Ticket in `tickets`.
-- Vier-Augen-Prinzip als optionales Flag pro Doku-Typ (nutzt vorhandene `sig_approval_chains`-Idee, aber leichtgewichtig).
+### Phase 5 – Automatische Sperren & Order-Integration
+- Trigger/Check in `orders` und `production_orders`: vor Auslieferung wird geprüft, ob ein gültiges (nicht abgelaufenes) grünes Assessment existiert. Wenn nicht → Banner + Sperre für Auslieferung.
+- Automatische Sperren, wenn: offene Forderungen > Schwelle, Rücklastschriften vorhanden, Pflichtdokumente fehlen, Score < 550, Wunschfinanzierung > interne Risikogrenze.
+- „Bonität prüfen"-Button in Auftrags-, Angebots- und Finanzierungs-Detailseiten.
 
-## Phase 8 — Dashboard & Sicherheit-Feinschliff
-- `/alixdocs2` Dashboard: Importe heute/Woche, Nicht zugeordnet, OCR-Fehler, offene Freigaben, Top-Doku-Typen, Docs pro Kunde/Mitarbeiter, Ø Importdauer, Speicherverbrauch pro Server.
-- Watermark-Option bei Export, Download-Audit vollständig, DSGVO-Löschkonzept (Soft-Delete + 30-Tage Wiederherstellung, dann Hard-Delete nur durch Super Admin).
-- Aurora-Design (Weiß / Hellgrau / Alix-Rot, Glaskarten, Dark-Mode-kompatibel via bestehende Tokens).
+### Phase 6 – Genehmigungsworkflow
+- 900–1000: auto-freigegeben.
+- 750–899: Verkäufer (Rolle `Vertrieb`) darf freigeben.
+- 650–749: Verkaufsleiter (`Vertriebsleitung`).
+- 550–649: Geschäftsführung (`Geschäftsführung` / `Super Admin`).
+- <550: auto-abgelehnt.
+- Eskalations-Benachrichtigung per E-Mail (`send-transactional-email`) und `app_notifications` an nächste Freigabestufe. Vier-Augen-Log in `credit_decision_log`.
 
-## Phase 9 — Plugin-Architektur (Vorbereitung)
-- Source-Adapter-Interface in Edge-Function-Shared-Lib (`nextcloud`, später `imap`, `graph`, `gdrive`, `dropbox`, `sharepoint`, `scanner`, `whatsapp`).
-- Neue Quellen implementieren nur das Adapter-Interface, Kern-Pipeline (Analyse → Match → Store) bleibt gleich.
+### Phase 7 – Compliance & DSGVO
+- Zweckbindung + Einwilligung: Pflicht-Checkbox „Einwilligung Bonitätsprüfung eingeholt" beim Anlegen.
+- Vollprotokollierung aller Lese-/Schreibzugriffe in `audit_logs`.
+- Verschlüsselte Speicherung: Dokumente in `alixdocs2` Storage-Bucket (bereits privat).
+- Löschfristen: konfigurierbar in `credit_policies` (Default 3 Jahre nach Ablauf/Ablehnung), Cron `credit-retention-purge` täglich.
+- Menschliche Letztentscheidung: kein 🟢-Ergebnis führt ohne Klick eines berechtigten Users zur Auslieferungsfreigabe (Art. 22 DSGVO).
 
-## Menü & Routing
-- Neue Gruppe **OPERATIONS → ALIXDocs AI 2.0** (nur Admin/Super Admin sichtbar):
-  - Dashboard
-  - Posteingang
-  - Suche
-  - KI-Suche
-  - Nextcloud-Server
-  - Doku-Typen
-- Bestehende ALIXDOCS-Menüs bleiben unverändert erhalten.
+### Phase 8 – Rollen & Rechte
+- Sichtbar für: `Super Admin`, `Admin`, `Geschäftsführung`, `Vertriebsleitung`, `Vertrieb`, `Finance`.
+- Löschen ausschließlich `Super Admin` (Core-Regel).
+- Score-Policy-Editor nur `Super Admin`.
 
-## Umfang / Vorgehen
-Das ist mehrere Wochen Arbeit. Ich empfehle Phasen-Rollout: **jetzt Phase 1 + 2** (Nextcloud-Anbindung + Metadaten-Struktur), damit wir echte Dateien im System haben und die KI-Pipeline in Phase 3 daran validieren können. Danach Phase für Phase.
+## Technische Details
 
-Frage:
-- Startet mit **Phase 1 + 2** (empfohlen) oder soll ich alles in einem Rutsch bauen (deutlich länger, höheres Risiko)?
-- Welche Nextcloud-URL / Test-Server soll ich für Phase 1 hinterlegen?
+- Edge Functions: `credit-score-calculate`, `credit-score-ai`, `credit-decision`, `credit-retention-purge` (Cron 04:15 UTC).
+- Client-Hooks: `useCreditAssessment`, `useCreditPolicies`, `useCreditDocuments`.
+- Wiederverwendung von `alixdocs2` für Upload/OCR/Preview – keine parallele Datei-Infrastruktur.
+- Menü: Eintrag „Bonität & Finanzierung" unter **VERKAUF**; Sub-Item „Score-Policies" unter **OPERATIONS/System** (nur Super Admin).
+- Alle neuen Public-Tabellen mit `GRANT ... TO authenticated` + `service_role`, RLS mit `has_role`-Checks, `updated_at`-Trigger.
+
+## Nicht enthalten (bewusst)
+- Automatisierte SCHUFA-API-Anbindung (kein Vertrag vorhanden) → PDF-Upload + OCR-Extraktion.
+- Automatischer Creditreform/Northdata-API-Call → manuelle Eingabe mit Feldstruktur, spätere API-Anbindung möglich.
+- Änderungen an bestehenden Zoho-Import-Flows.
+
+## Umsetzungsreihenfolge
+Ich baue Phase 1–4 in einem Durchgang (Fundament + funktionierende UI mit Score-Engine + KI), danach Phase 5–8. Zwischenstände bleiben lauffähig.
+
+Bestätige den Plan, dann starte ich mit Phase 1 (Migration).
