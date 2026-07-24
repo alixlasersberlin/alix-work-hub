@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, FileText, Send, ExternalLink, Inbox, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { useOrderVatState } from '@/components/OrderVatPanel';
 
 interface Props {
   orderId: string;
@@ -33,6 +34,8 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
   const [sending, setSending] = useState(false);
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [vatState] = useOrderVatState(orderId);
+  const modeQs = `&mode=${vatState.priceMode}`;
 
   useEffect(() => {
     if (!customerId) { setLoading(false); return; }
@@ -53,10 +56,10 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
   const selected = sigs.find(s => s.id === selectedId) || null;
   const token = (selected?.alix_sign_requests as any)?.token as string | undefined;
   const pdfFetchUrl = selected && token
-    ? `${SUPABASE_URL}/functions/v1/order-confirmation-pdf?signature_id=${selected.id}&token=${encodeURIComponent(token)}`
+    ? `${SUPABASE_URL}/functions/v1/order-confirmation-pdf?signature_id=${selected.id}&token=${encodeURIComponent(token)}${modeQs}`
     : null;
   const previewUrl = selected && token
-    ? `${PUBLIC_BASE}/pdf/ab?signature_id=${selected.id}&token=${encodeURIComponent(token)}`
+    ? `${PUBLIC_BASE}/pdf/ab?signature_id=${selected.id}&token=${encodeURIComponent(token)}&mode=${vatState.priceMode}`
     : null;
 
   // Lade PDF als Blob für die Vorschau (umgeht Cross-Origin-iframe-Probleme im Preview)
