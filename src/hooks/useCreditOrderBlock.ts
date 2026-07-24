@@ -27,12 +27,16 @@ export function useCreditOrderBlock(customerId: string | null | undefined, amoun
     let cancel = false;
     if (!customerId) { setData(null); return; }
     setLoading(true);
-    supabase.rpc('credit_check_order_block' as any, {
-      _customer_id: customerId,
-      _amount: amount ?? null,
-    }).then(({ data }) => {
-      if (!cancel) setData((data as unknown as CreditOrderBlockResult) ?? null);
-    }).finally(() => { if (!cancel) setLoading(false); });
+    (async () => {
+      const { data } = await supabase.rpc('credit_check_order_block' as any, {
+        _customer_id: customerId,
+        _amount: amount ?? null,
+      });
+      if (!cancel) {
+        setData((data as unknown as CreditOrderBlockResult) ?? null);
+        setLoading(false);
+      }
+    })();
     return () => { cancel = true; };
   }, [customerId, amount]);
 
