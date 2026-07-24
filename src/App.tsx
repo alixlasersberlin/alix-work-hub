@@ -290,6 +290,7 @@ const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk
 const DigitaleSignaturenTemplateEditor = lazy(() => import("./pages/DigitaleSignaturenTemplateEditor"));
 const SignMarketplace = lazy(() => import("./pages/SignMarketplace"));
 const SignApprovals = lazy(() => import("./pages/SignApprovals"));
+const Freigaben = lazy(() => import("./pages/Freigaben"));
 const SignSlaDashboard = lazy(() => import("./pages/SignSlaDashboard"));
 const MobileSignaturen = lazy(() => import("./pages/Mobile/Signaturen"));
 const CustomerPortalSignaturen = lazy(() => import("./pages/CustomerPortal/Signaturen"));
@@ -1071,6 +1072,7 @@ function AppRoutes() {
           <Route path="/auftraege/pdf-import/:id/review" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Geschäftsführung']}><PdfOrderImportReview /></ProtectedRoute>} />
           <Route path="/operation/pdf-import-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin']}><PdfOrderImportKonfiguration /></ProtectedRoute>} />
           <Route path="/auftraege/:id" element={<ProtectedRoute requiredRoles={[...ORDER_ROLES, 'Finanzierungen', 'Order']}><OrderDetail /></ProtectedRoute>} />
+          <Route path="/freigaben" element={<ProtectedRoute><Freigaben /></ProtectedRoute>} />
           <Route path="/mediapaket" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Order', 'Mediapaket', 'Auftragsverwaltung', 'SACHBEARBEITUNG']}><MediapaketOverview /></ProtectedRoute>} />
           <Route path="/mediapaket/admin" element={<ProtectedRoute requiredRoles={['Super Admin']}><MediapaketAdmin /></ProtectedRoute>} />
           <Route path="/mediapaket/templates" element={<ProtectedRoute requiredRoles={['Super Admin']}><MediapaketTemplates /></ProtectedRoute>} />

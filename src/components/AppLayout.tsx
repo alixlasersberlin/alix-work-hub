@@ -597,6 +597,9 @@ export const navItems: NavItem[] = [
 
         ],
       },
+      {
+        path: '/freigaben', label: 'Auftrags-Freigaben', icon: ShieldCheck, roles: ['Super Admin'],
+      },
 
       // Kommunikation & Portale
       {

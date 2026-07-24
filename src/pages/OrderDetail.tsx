@@ -63,6 +63,7 @@ import MediapaketOrderTab from '@/components/MediapaketOrderTab';
 import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
 import { SignatureRequestButton } from '@/components/signaturen/SignatureRequestButton';
 import AlixDocsPanel from '@/components/alixdocs/AlixDocsPanel';
+import OrderChangeRequestDialog from '@/components/OrderChangeRequestDialog';
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
@@ -116,6 +117,7 @@ export default function OrderDetail() {
   const [editingShipDate, setEditingShipDate] = useState(false);
   const [shipDateValue, setShipDateValue] = useState('');
   const [editOpen, setEditOpen] = useState(false);
+  const [changeRequestOpen, setChangeRequestOpen] = useState(false);
   const [itemsEditOpen, setItemsEditOpen] = useState(false);
   const [editItem, setEditItem] = useState<any | null>(null);
   const [fullEditOpen, setFullEditOpen] = useState(false);
@@ -678,6 +680,11 @@ export default function OrderDetail() {
               title={`Auftrag ${primaryDisplayNumber}`}
               customerId={(order as any).customer_id}
             />
+          )}
+          {!canWrite && (
+            <Button size="sm" variant="outline" onClick={() => setChangeRequestOpen(true)}>
+              <PenLine className="w-3.5 h-3.5 mr-1.5" /> Änderung vorschlagen
+            </Button>
           )}
           {/* Headless mounts für Aktionen aus den Menüs */}
           <SepaMandatButton ref={sepaRef} order={order} hideTrigger />
@@ -1763,6 +1770,9 @@ export default function OrderDetail() {
 
       {deferOpen && order && (
         <OrderDeferDialog order={order} open onClose={() => setDeferOpen(false)} onSaved={loadAll} />
+      )}
+      {changeRequestOpen && order && (
+        <OrderChangeRequestDialog order={order} open onClose={() => setChangeRequestOpen(false)} />
       )}
     </div>
   );
