@@ -115,7 +115,9 @@ Deno.serve(async (req) => {
       ? await admin.from('customers').select('company_name, contact_name, email').eq('id', ord.customer_id).maybeSingle()
       : { data: null as any }
     const token = await signOrderToken(ord.id, SUPABASE_SERVICE_ROLE_KEY)
-    download_url = `${PUBLIC_BASE}/pdf/ab?order_id=${ord.id}&token=${token}`
+    const modeQs = vatMode ? `&mode=${vatMode}` : ''
+    download_url = `${PUBLIC_BASE}/pdf/ab?order_id=${ord.id}&token=${token}${modeQs}`
+
     orderNumber = ord.internal_number || ord.order_number || undefined
     customer_name = cust?.company_name || cust?.contact_name || (ord.billing_address as any)?.name || undefined
     customer_email_fallback = cust?.email || undefined
