@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, FileText, Send, ExternalLink, Inbox, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { useOrderVatState } from '@/components/OrderVatPanel';
 
 interface Props {
   orderId: string;
