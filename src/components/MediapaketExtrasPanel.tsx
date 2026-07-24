@@ -100,10 +100,10 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
     setShowcaseCfg({ enabled: !!(data as any).enabled, token: (data as any).token });
     toast.success(enabled ? 'Showcase aktiviert' : 'Showcase deaktiviert');
   };
+  const showcaseUrl = showcaseCfg.token ? `https://alixwork.de/mediapaket/showcase/${showcaseCfg.token}` : '';
   const copyShowcaseLink = () => {
-    if (!showcaseCfg.token) return;
-    const url = `${window.location.origin}/mediapaket/showcase/${showcaseCfg.token}`;
-    navigator.clipboard.writeText(url);
+    if (!showcaseUrl) return;
+    navigator.clipboard.writeText(showcaseUrl);
     toast.success('Showcase-Link kopiert');
   };
   const gdprExport = async () => {
@@ -539,7 +539,7 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
             </div>
             {showcaseCfg.enabled && showcaseCfg.token && (
               <div className="flex items-center gap-2">
-                <code className="text-[10px] bg-background/60 px-2 py-1 rounded flex-1 truncate">{window.location.origin}/mediapaket/showcase/{showcaseCfg.token}</code>
+                <code className="text-[10px] bg-background/60 px-2 py-1 rounded flex-1 truncate">{showcaseUrl}</code>
                 <Button size="sm" variant="ghost" onClick={copyShowcaseLink}><CopyIcon className="w-3 h-3" /></Button>
               </div>
             )}
