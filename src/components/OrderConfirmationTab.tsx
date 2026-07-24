@@ -342,9 +342,9 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         cy += wrapped.length * 4.4 + 4;
       }
 
-      // Items table
+      // Items table – Preise bleiben unverändert; nur MwSt-Spalte wird ein-/ausgeblendet
       const tableHead = isNetto
-        ? [['Pos', 'Artikel', 'Menge', 'Einzelpreis netto', 'Summe netto']]
+        ? [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'Summe']]
         : [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']];
       autoTable(doc, {
         startY: cy,
@@ -366,22 +366,15 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
               taxPct = 19;
             }
           }
-          const netRow = [
+          const base = [
             idx + 1,
             `${name}${sku}${desc}`,
             qty,
             fmtMoney(rate, currency),
-            fmtMoney(lineNet, currency),
           ];
-          const grossRow = [
-            idx + 1,
-            `${name}${sku}${desc}`,
-            qty,
-            fmtMoney(rate, currency),
-            `${taxPct}%`,
-            fmtMoney(lineNet, currency),
-          ];
-          return isNetto ? netRow : grossRow;
+          return isNetto
+            ? [...base, fmtMoney(lineNet, currency)]
+            : [...base, `${taxPct}%`, fmtMoney(lineNet, currency)];
         }),
         styles: { fontSize: 9, cellPadding: 2, valign: 'top' },
         headStyles: { fillColor: [183, 217, 255], textColor: [20, 60, 110] },
@@ -407,29 +400,29 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
         finalY = TOP_CONTENT;
       }
 
-      // Totals box
+      // Totals – Summen bleiben unverändert; nur MwSt-Zeile wird ein-/ausgeblendet
       const totalsX = 130;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 60);
+      const displayTotal = totals.gross || totals.net || 0;
       if (isNetto) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
         doc.setTextColor(20, 60, 110);
         doc.text('Gesamt (netto):', totalsX, finalY);
-        doc.text(fmtMoney(totals.net, currency), RIGHT, finalY, { align: 'right' });
+        doc.text(fmtMoney(displayTotal, currency), RIGHT, finalY, { align: 'right' });
       } else {
-        doc.text('Netto:', totalsX, finalY);
-        doc.text(fmtMoney(totals.net, currency), RIGHT, finalY, { align: 'right' });
-        doc.text('MwSt:', totalsX, finalY + 5);
-        doc.text(fmtMoney(totals.tax, currency), RIGHT, finalY + 5, { align: 'right' });
+        const taxInfo = displayTotal * 0.19;
+        doc.text('zzgl. MwSt (19%):', totalsX, finalY);
+        doc.text(fmtMoney(taxInfo, currency), RIGHT, finalY, { align: 'right' });
         doc.setDrawColor(20, 60, 110);
-        doc.line(totalsX, finalY + 8, RIGHT, finalY + 8);
+        doc.line(totalsX, finalY + 3, RIGHT, finalY + 3);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(12);
         doc.setTextColor(20, 60, 110);
-        doc.text('Gesamt:', totalsX, finalY + 14);
-        doc.text(fmtMoney(totals.gross, currency), RIGHT, finalY + 14, { align: 'right' });
+        doc.text('Gesamt:', totalsX, finalY + 9);
+        doc.text(fmtMoney(displayTotal, currency), RIGHT, finalY + 9, { align: 'right' });
       }
 
       // Confirmation block (oben über den Artikeln bereits gesetzt)

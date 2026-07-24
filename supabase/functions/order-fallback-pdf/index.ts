@@ -238,9 +238,9 @@ Deno.serve(async (req) => {
     page.drawText('#', { x: cols.idx, y, size: 9, font: helvB, color: headerBlue })
     page.drawText('Position', { x: cols.name, y, size: 9, font: helvB, color: headerBlue })
     page.drawText('Menge', { x: cols.qty, y, size: 9, font: helvB, color: headerBlue })
-    page.drawText(isNetto ? 'Preis (netto)' : 'Preis (brutto)', { x: cols.rate, y, size: 9, font: helvB, color: headerBlue })
+    page.drawText('Preis', { x: cols.rate, y, size: 9, font: helvB, color: headerBlue })
     if (!isNetto) page.drawText('MwSt', { x: cols.tax, y, size: 9, font: helvB, color: headerBlue })
-    page.drawText(isNetto ? 'Summe (netto)' : 'Summe (brutto)', { x: cols.sum, y, size: 9, font: helvB, color: headerBlue })
+    page.drawText('Summe', { x: cols.sum, y, size: 9, font: helvB, color: headerBlue })
     y -= 16
 
     const truncate = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
@@ -256,7 +256,8 @@ Deno.serve(async (req) => {
       const qty = Number(l.quantity ?? 1)
       const rateNet = Number(l.rate ?? 0)
       const taxPct = Number(l.tax_percentage ?? 0)
-      const rateDisp = isNetto ? rateNet : rateNet * (1 + taxPct / 100)
+      // Preise bleiben unverändert (keine Umrechnung); nur MwSt-Anzeige ein/aus
+      const rateDisp = rateNet
       const sumDisp = qty * rateDisp
       page.drawText(String(i++), { x: cols.idx, y, size: 9, font: helv, color: black })
       page.drawText(truncate(name, 45), { x: cols.name, y, size: 9, font: helvB, color: black })
@@ -285,23 +286,21 @@ Deno.serve(async (req) => {
       y -= 4
     }
 
-    // Totals
+    // Totals – Summen bleiben unverändert; nur MwSt-Zeile wird ein-/ausgeblendet
     if (y < 120) { page = newPage(); y = PAGE_H - 80 }
     y -= 10
     const lblX = RIGHT - 160
+    const displayTotal = (totals.net || totals.gross || 0)
     if (isNetto) {
-      // Netto-Anzeige: keine MwSt ausweisen
       page.drawText('Gesamt (netto):', { x: lblX - 20, y, size: 12, font: helvB, color: headerBlue })
-      page.drawText(fmt(totals.net || totals.gross, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
+      page.drawText(fmt(displayTotal, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
     } else {
-      page.drawText('Netto:', { x: lblX, y, size: 10, font: helv, color: black })
-      page.drawText(fmt(totals.net, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
-      y -= 14
-      page.drawText('MwSt:', { x: lblX, y, size: 10, font: helv, color: black })
-      page.drawText(fmt(totals.tax, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
+      const taxInfo = displayTotal * 0.19
+      page.drawText('zzgl. MwSt (19%):', { x: lblX, y, size: 10, font: helv, color: black })
+      page.drawText(fmt(taxInfo, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
       y -= 16
       page.drawText('Gesamt:', { x: lblX, y, size: 12, font: helvB, color: headerBlue })
-      page.drawText(fmt(totals.gross, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
+      page.drawText(fmt(displayTotal, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
     }
     y -= 24
 
