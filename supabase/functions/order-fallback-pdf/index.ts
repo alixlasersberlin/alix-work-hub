@@ -224,15 +224,18 @@ Deno.serve(async (req) => {
     }
     y -= 10
 
+    const isNetto = mode === 'netto'
     // Table header
-    const cols = { idx: LEFT, name: LEFT + 22, qty: RIGHT - 250, rate: RIGHT - 190, tax: RIGHT - 110, sum: RIGHT - 70 }
+    const cols = isNetto
+      ? { idx: LEFT, name: LEFT + 22, qty: RIGHT - 250, rate: RIGHT - 190, tax: RIGHT - 110, sum: RIGHT - 70 }
+      : { idx: LEFT, name: LEFT + 22, qty: RIGHT - 220, rate: RIGHT - 150, tax: RIGHT - 110, sum: RIGHT - 70 }
     page.drawRectangle({ x: LEFT - 4, y: y - 4, width: RIGHT - LEFT + 8, height: 16, color: rgb(0.72, 0.85, 1) })
     page.drawText('#', { x: cols.idx, y, size: 9, font: helvB, color: headerBlue })
     page.drawText('Position', { x: cols.name, y, size: 9, font: helvB, color: headerBlue })
     page.drawText('Menge', { x: cols.qty, y, size: 9, font: helvB, color: headerBlue })
-    page.drawText('Preis', { x: cols.rate, y, size: 9, font: helvB, color: headerBlue })
-    page.drawText('MwSt', { x: cols.tax, y, size: 9, font: helvB, color: headerBlue })
-    page.drawText('Summe', { x: cols.sum, y, size: 9, font: helvB, color: headerBlue })
+    page.drawText(isNetto ? 'Preis (netto)' : 'Preis', { x: cols.rate, y, size: 9, font: helvB, color: headerBlue })
+    if (isNetto) page.drawText('MwSt', { x: cols.tax, y, size: 9, font: helvB, color: headerBlue })
+    page.drawText(isNetto ? 'Summe (netto)' : 'Summe', { x: cols.sum, y, size: 9, font: helvB, color: headerBlue })
     y -= 16
 
     const truncate = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
@@ -246,15 +249,16 @@ Deno.serve(async (req) => {
       const name = String(l.name || l.item_name || '')
       const desc = String(l.description || '')
       const qty = Number(l.quantity ?? 1)
-      const rate = Number(l.rate ?? 0)
+      const rateNet = Number(l.rate ?? 0)
       const taxPct = Number(l.tax_percentage ?? 0)
-      const sum = qty * rate
+      const rateDisp = isNetto ? rateNet : rateNet * (1 + taxPct / 100)
+      const sumDisp = qty * rateDisp
       page.drawText(String(i++), { x: cols.idx, y, size: 9, font: helv, color: black })
       page.drawText(truncate(name, 45), { x: cols.name, y, size: 9, font: helvB, color: black })
       page.drawText(String(qty), { x: cols.qty, y, size: 9, font: helv, color: black })
-      page.drawText(fmt(rate, currency), { x: cols.rate, y, size: 9, font: helv, color: black })
-      page.drawText(`${taxPct}%`, { x: cols.tax, y, size: 9, font: helv, color: black })
-      page.drawText(fmt(sum, currency), { x: cols.sum, y, size: 9, font: helv, color: black })
+      page.drawText(fmt(rateDisp, currency), { x: cols.rate, y, size: 9, font: helv, color: black })
+      if (isNetto) page.drawText(`${taxPct}%`, { x: cols.tax, y, size: 9, font: helv, color: black })
+      page.drawText(fmt(sumDisp, currency), { x: cols.sum, y, size: 9, font: helv, color: black })
       y -= 12
       if (desc && desc !== name) {
         // Wrap description
@@ -280,14 +284,19 @@ Deno.serve(async (req) => {
     if (y < 120) { page = newPage(); y = PAGE_H - 80 }
     y -= 10
     const lblX = RIGHT - 160
-    page.drawText('Netto:', { x: lblX, y, size: 10, font: helv, color: black })
-    page.drawText(fmt(totals.net, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
-    y -= 14
-    page.drawText('MwSt:', { x: lblX, y, size: 10, font: helv, color: black })
-    page.drawText(fmt(totals.tax, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
-    y -= 16
-    page.drawText('Gesamt:', { x: lblX, y, size: 12, font: helvB, color: headerBlue })
-    page.drawText(fmt(totals.gross, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
+    if (isNetto) {
+      page.drawText('Netto:', { x: lblX, y, size: 10, font: helv, color: black })
+      page.drawText(fmt(totals.net, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
+      y -= 14
+      page.drawText('MwSt:', { x: lblX, y, size: 10, font: helv, color: black })
+      page.drawText(fmt(totals.tax, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
+      y -= 16
+      page.drawText('Gesamt:', { x: lblX, y, size: 12, font: helvB, color: headerBlue })
+      page.drawText(fmt(totals.gross, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
+    } else {
+      page.drawText('Gesamt (inkl. MwSt.):', { x: lblX - 20, y, size: 12, font: helvB, color: headerBlue })
+      page.drawText(fmt(totals.gross, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
+    }
     y -= 24
 
     // Payment block
