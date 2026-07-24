@@ -931,8 +931,9 @@ export default function Lagergeraete({
     const { data: userData } = await supabase.auth.getUser();
     const finalReservedOrderId = reservedOrderId;
 
-    // Sperre: Pro Auftrag entweder Lager-Reservierung ODER Produktions-Bestellung.
-    if (finalReservedOrderId && finalReservedOrderId !== originalReservedOrderId) {
+    // Sperre gilt NUR für Neugeräte: Pro Auftrag entweder Lager-Reservierung ODER Produktions-Bestellung.
+    // Leihgeräte dürfen unabhängig von einer bestehenden Bestellung jederzeit reserviert werden.
+    if (deviceType !== 'Leihgerät' && finalReservedOrderId && finalReservedOrderId !== originalReservedOrderId) {
       const { data: existingPo } = await supabase
         .from('production_orders')
         .select('production_order_number')
