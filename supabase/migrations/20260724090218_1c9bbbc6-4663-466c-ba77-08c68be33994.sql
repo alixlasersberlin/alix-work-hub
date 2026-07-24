@@ -1,0 +1,2 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS vat_display_mode TEXT CHECK (vat_display_mode IN ('netto','brutto'));
+UPDATE public.orders SET vat_display_mode='netto' WHERE order_number='2026-04267';

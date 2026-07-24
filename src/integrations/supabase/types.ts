@@ -22005,6 +22005,7 @@ export type Database = {
           source_system: string
           total_amount: number | null
           updated_at: string
+          vat_display_mode: string | null
         }
         Insert: {
           az_tax_percentage?: number | null
@@ -22046,6 +22047,7 @@ export type Database = {
           source_system: string
           total_amount?: number | null
           updated_at?: string
+          vat_display_mode?: string | null
         }
         Update: {
           az_tax_percentage?: number | null
@@ -22087,6 +22089,7 @@ export type Database = {
           source_system?: string
           total_amount?: number | null
           updated_at?: string
+          vat_display_mode?: string | null
         }
         Relationships: [
           {
