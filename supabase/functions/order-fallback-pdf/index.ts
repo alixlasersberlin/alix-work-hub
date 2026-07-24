@@ -238,9 +238,9 @@ Deno.serve(async (req) => {
     page.drawText('#', { x: cols.idx, y, size: 9, font: helvB, color: headerBlue })
     page.drawText('Position', { x: cols.name, y, size: 9, font: helvB, color: headerBlue })
     page.drawText('Menge', { x: cols.qty, y, size: 9, font: helvB, color: headerBlue })
-    page.drawText(isNetto ? 'Preis (netto)' : 'Preis (brutto)', { x: cols.rate, y, size: 9, font: helvB, color: headerBlue })
+    page.drawText('Preis', { x: cols.rate, y, size: 9, font: helvB, color: headerBlue })
     if (!isNetto) page.drawText('MwSt', { x: cols.tax, y, size: 9, font: helvB, color: headerBlue })
-    page.drawText(isNetto ? 'Summe (netto)' : 'Summe (brutto)', { x: cols.sum, y, size: 9, font: helvB, color: headerBlue })
+    page.drawText('Summe', { x: cols.sum, y, size: 9, font: helvB, color: headerBlue })
     y -= 16
 
     const truncate = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
