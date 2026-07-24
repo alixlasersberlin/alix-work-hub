@@ -58,6 +58,7 @@ import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice'
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
+import OrderVatPanel, { useOrderVatState } from '@/components/OrderVatPanel';
 import MediapaketOrderTab from '@/components/MediapaketOrderTab';
 import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
 import { SignatureRequestButton } from '@/components/signaturen/SignatureRequestButton';
@@ -78,6 +79,11 @@ export default function OrderDetail() {
   const [customer, setCustomer] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
+  const [vatState] = useOrderVatState(id);
+  const totalTax = items.reduce((s, i) => s + (Number(i.tax_amount) || 0), 0);
+  const applyMode = (grossAmount: number, taxAmount: number) =>
+    vatState.priceMode === 'netto' ? grossAmount - (Number(taxAmount) || 0) : grossAmount;
+  const priceLabel = vatState.priceMode === 'netto' ? 'netto' : 'brutto';
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -821,7 +827,7 @@ export default function OrderDetail() {
                 ['Auftragsnummer', displayOrderNumbers.join(', ')],
                 ['Rechnungsnummer', displayOrderNumbers.join(', ')],
                 ['Status', order.order_status || 'offen'],
-                ['Betrag', order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'],
+                ['Betrag', order.total_amount != null ? `${Number(applyMode(Number(order.total_amount), totalTax)).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) })} ${priceLabel}` : '—'],
                 ['Vereinbarte Anzahlung', order.deposit_amount != null ? Number(order.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'],
                 ['Anzahlung geleistet am', order.deposit_booking_date ? new Date(order.deposit_booking_date).toLocaleDateString('de-DE') : (order.deposit_ok && order.deposit_ok_at ? new Date(order.deposit_ok_at).toLocaleDateString('de-DE') : '—')],
                 ['Währung', order.currency],
@@ -909,6 +915,7 @@ export default function OrderDetail() {
                 <Button variant="ghost" className="mt-4 text-primary text-sm" onClick={() => navigate(`/kunden/${customer.id}`)}>
                   Kunde anzeigen →
                 </Button>
+                <OrderVatPanel orderId={id!} />
               </>
             ) : (
               <p className="text-muted-foreground text-sm">Keine Kundendaten verfügbar.</p>
@@ -967,7 +974,7 @@ export default function OrderDetail() {
                       <TableCell className="text-right">{item.rate != null ? Number(item.rate).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'}</TableCell>
                       <TableCell className="text-right">{item.discount != null && Number(item.discount) > 0 ? Number(item.discount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'}</TableCell>
                       <TableCell className="text-right">{item.tax_amount != null && Number(item.tax_amount) > 0 ? Number(item.tax_amount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'}</TableCell>
-                      <TableCell className="text-right font-medium">{item.amount != null ? Number(item.amount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'}</TableCell>
+                      <TableCell className="text-right font-medium">{item.amount != null ? Number(applyMode(Number(item.amount), item.tax_amount)).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'}</TableCell>
                       {hasRole('Super Admin') && (
                         <TableCell className="text-right">
                           <Button
@@ -987,7 +994,7 @@ export default function OrderDetail() {
               </Table>
               <div className="flex justify-end mt-4 pt-3 border-t border-border">
                 <div className="text-sm font-medium text-foreground">
-                  Gesamt: {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) })}
+                  Gesamt ({priceLabel}): {items.reduce((s, i) => s + applyMode(Number(i.amount) || 0, i.tax_amount), 0).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) })}
                 </div>
               </div>
             </div>
