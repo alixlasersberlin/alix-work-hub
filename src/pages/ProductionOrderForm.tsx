@@ -886,6 +886,9 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         )}
       </Card>
 
+      {/* ALIX CREDIT SCORE® – Bonitätsstatus */}
+      <CreditBlockBanner customerId={selectedOrder?.customer_id ?? selectedCustomer?.id ?? null} />
+
       {/* Positionen */}
       {(selectedOrder || selectedCustomer) && (
         <Card className="p-4 space-y-3">
