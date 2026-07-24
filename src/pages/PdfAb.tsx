@@ -19,6 +19,7 @@ export default function PdfAb() {
   const orderId = params.get('order_id');
   const signatureId = params.get('signature_id');
   const token = params.get('token');
+  const modeParam = params.get('mode');
 
   useEffect(() => {
     let revoke: string | null = null;
@@ -26,9 +27,18 @@ export default function PdfAb() {
       try {
         if (!token || (!orderId && !signatureId)) throw new Error('Fehlende Parameter');
         const fn = signatureId ? 'order-confirmation-pdf' : 'order-fallback-pdf';
+        // Resolve MwSt.-Anzeige (netto|brutto) – URL-Param hat Vorrang, sonst localStorage
+        let mode = modeParam;
+        if (!mode && orderId) {
+          try {
+            const raw = localStorage.getItem(`order-vat:${orderId}`);
+            if (raw) mode = (JSON.parse(raw)?.priceMode || null);
+          } catch {}
+        }
+        const modeQs = mode === 'netto' || mode === 'brutto' ? `&mode=${mode}` : '';
         const qs = signatureId
-          ? `signature_id=${encodeURIComponent(signatureId)}&token=${encodeURIComponent(token)}`
-          : `order_id=${encodeURIComponent(orderId!)}&token=${encodeURIComponent(token)}`;
+          ? `signature_id=${encodeURIComponent(signatureId)}&token=${encodeURIComponent(token)}${modeQs}`
+          : `order_id=${encodeURIComponent(orderId!)}&token=${encodeURIComponent(token)}${modeQs}`;
         const res = await fetch(`${SUPABASE_URL}/functions/v1/${fn}?${qs}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const blob = await res.blob();
