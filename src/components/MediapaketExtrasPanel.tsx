@@ -100,10 +100,10 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
     setShowcaseCfg({ enabled: !!(data as any).enabled, token: (data as any).token });
     toast.success(enabled ? 'Showcase aktiviert' : 'Showcase deaktiviert');
   };
+  const showcaseUrl = showcaseCfg.token ? `https://alixwork.de/mediapaket/showcase/${showcaseCfg.token}` : '';
   const copyShowcaseLink = () => {
-    if (!showcaseCfg.token) return;
-    const url = `${window.location.origin}/mediapaket/showcase/${showcaseCfg.token}`;
-    navigator.clipboard.writeText(url);
+    if (!showcaseUrl) return;
+    navigator.clipboard.writeText(showcaseUrl);
     toast.success('Showcase-Link kopiert');
   };
   const gdprExport = async () => {
