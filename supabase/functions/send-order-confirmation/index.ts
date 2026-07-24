@@ -103,16 +103,21 @@ Deno.serve(async (req) => {
   } else {
     // Fallback: PDF from order data
     const { data: ord } = await admin.from('orders')
-      .select('id, customer_id, order_number, internal_number, total_amount, currency, billing_address, salesperson_name')
+      .select('id, customer_id, order_number, internal_number, total_amount, currency, billing_address, salesperson_name, vat_display_mode')
       .eq('id', orderId!).maybeSingle()
     if (!ord) return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     salespersonName = (ord as any).salesperson_name || undefined
+    const m = (ord as any).vat_display_mode
+    if (m === 'netto' || m === 'brutto') vatMode = m
+
 
     const { data: cust } = ord.customer_id
       ? await admin.from('customers').select('company_name, contact_name, email').eq('id', ord.customer_id).maybeSingle()
       : { data: null as any }
     const token = await signOrderToken(ord.id, SUPABASE_SERVICE_ROLE_KEY)
-    download_url = `${PUBLIC_BASE}/pdf/ab?order_id=${ord.id}&token=${token}`
+    const modeQs = vatMode ? `&mode=${vatMode}` : ''
+    download_url = `${PUBLIC_BASE}/pdf/ab?order_id=${ord.id}&token=${token}${modeQs}`
+
     orderNumber = ord.internal_number || ord.order_number || undefined
     customer_name = cust?.company_name || cust?.contact_name || (ord.billing_address as any)?.name || undefined
     customer_email_fallback = cust?.email || undefined
