@@ -344,3 +344,7 @@ verify_jwt = false
 
 [functions.ac-advanced-bi]
 verify_jwt = false
+
+[functions.vies-check]
+verify_jwt = false
+
