@@ -91,12 +91,12 @@ export default function OrderVatPanel({ orderId }: Props) {
   const [state, setState] = useOrderVatState(orderId);
   const [checking, setChecking] = useState(false);
 
-  // priceMode-Änderungen nach DB spiegeln
-  useEffect(() => {
-    if (!orderId) return;
-    supabase.from('orders').update({ vat_display_mode: state.priceMode }).eq('id', orderId).then(() => {});
-  }, [orderId, state.priceMode]);
-
+  const setPriceMode = (priceMode: PriceMode) => {
+    setState((s) => ({ ...s, priceMode }));
+    supabase.from('orders').update({ vat_display_mode: priceMode }).eq('id', orderId).then(({ error }) => {
+      if (error) toast.error('MwSt.-Anzeige konnte nicht gespeichert werden');
+    });
+  };
 
   const runCheck = async (country?: string, number?: string) => {
     const c = (country ?? state.vatCountry).toUpperCase();
@@ -152,7 +152,7 @@ export default function OrderVatPanel({ orderId }: Props) {
           <span className={`text-xs font-medium ${state.priceMode === 'netto' ? 'text-primary' : 'text-muted-foreground'}`}>Netto</span>
           <Switch
             checked={state.priceMode === 'brutto'}
-            onCheckedChange={(v) => setState((s) => ({ ...s, priceMode: v ? 'brutto' : 'netto' }))}
+            onCheckedChange={(v) => setPriceMode(v ? 'brutto' : 'netto')}
           />
           <span className={`text-xs font-medium ${state.priceMode === 'brutto' ? 'text-primary' : 'text-muted-foreground'}`}>Brutto</span>
         </div>
