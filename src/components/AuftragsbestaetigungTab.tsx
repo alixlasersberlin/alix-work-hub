@@ -34,6 +34,8 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
   const [sending, setSending] = useState(false);
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [vatState] = useOrderVatState(orderId);
+  const modeQs = `&mode=${vatState.priceMode}`;
 
   useEffect(() => {
     if (!customerId) { setLoading(false); return; }
