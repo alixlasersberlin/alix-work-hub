@@ -79,8 +79,7 @@ export default function OrderDetail() {
   const [customer, setCustomer] = useState<any>(null);
   const [notes, setNotes] = useState<any[]>([]);
   const [items, setItems] = useState<any[]>([]);
-  const { id: routeOrderId } = useParams();
-  const [vatState] = useOrderVatState(routeOrderId);
+  const [vatState] = useOrderVatState(id);
   const totalTax = items.reduce((s, i) => s + (Number(i.tax_amount) || 0), 0);
   const applyMode = (grossAmount: number, taxAmount: number) =>
     vatState.priceMode === 'netto' ? grossAmount - (Number(taxAmount) || 0) : grossAmount;
