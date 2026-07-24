@@ -146,6 +146,9 @@ const FinanceReportSchedules = lazy(() => import("./pages/Finance/ReportSchedule
 const FinanceManagementPack = lazy(() => import("./pages/Finance/ManagementPack"));
 const FinanceStakeholders = lazy(() => import("./pages/Finance/Stakeholders"));
 const StakeholderPortal = lazy(() => import("./pages/StakeholderPortal"));
+const CreditIndex = lazy(() => import("./pages/Credit/Index"));
+const CreditNew = lazy(() => import("./pages/Credit/New"));
+const CreditDetail = lazy(() => import("./pages/Credit/Detail"));
 const PdfAb = lazy(() => import("./pages/PdfAb"));
 const FinanceKonsolidierung = lazy(() => import("./pages/Finance/Konsolidierung"));
 const FinanceKonsolidierungDetail = lazy(() => import("./pages/Finance/KonsolidierungDetail"));
