@@ -539,7 +539,7 @@ export default function MediapaketExtrasPanel({ mpId, status, onChanged }: Props
             </div>
             {showcaseCfg.enabled && showcaseCfg.token && (
               <div className="flex items-center gap-2">
-                <code className="text-[10px] bg-background/60 px-2 py-1 rounded flex-1 truncate">{window.location.origin}/mediapaket/showcase/{showcaseCfg.token}</code>
+                <code className="text-[10px] bg-background/60 px-2 py-1 rounded flex-1 truncate">{showcaseUrl}</code>
                 <Button size="sm" variant="ghost" onClick={copyShowcaseLink}><CopyIcon className="w-3 h-3" /></Button>
               </div>
             )}
