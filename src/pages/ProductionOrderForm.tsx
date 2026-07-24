@@ -17,6 +17,8 @@ import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { useAuth } from '@/hooks/useAuth';
 import { markRestbestellungDone } from '@/lib/restbestellung';
 import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalog/KatalogPickerDialog';
+import { useCreditOrderBlock } from '@/hooks/useCreditOrderBlock';
+import { ShieldCheck, ShieldAlert } from 'lucide-react';
 
 type Mode = 'order' | 'reclamation';
 
@@ -884,6 +886,9 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         )}
       </Card>
 
+      {/* ALIX CREDIT SCORE® – Bonitätsstatus */}
+      <CreditBlockBanner customerId={selectedOrder?.customer_id ?? selectedCustomer?.id ?? null} />
+
       {/* Positionen */}
       {(selectedOrder || selectedCustomer) && (
         <Card className="p-4 space-y-3">
@@ -1301,6 +1306,35 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           toast.success(`${picked.length} Position(en) aus Katalog übernommen`);
         }}
       />
+    </div>
+  );
+}
+
+function CreditBlockBanner({ customerId }: { customerId: string | null }) {
+  const { data, loading } = useCreditOrderBlock(customerId);
+  if (!customerId || loading || !data) return null;
+  const ampel = data.ampel;
+  const bg = data.block
+    ? 'border-red-500/50 bg-red-500/10 text-red-200'
+    : ampel === 'gelb' || ampel === 'orange'
+      ? 'border-amber-500/50 bg-amber-500/10 text-amber-100'
+      : ampel === 'gruen'
+        ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100'
+        : 'border-border bg-muted/30 text-muted-foreground';
+  const Icon = data.block ? ShieldAlert : ShieldCheck;
+  const label = data.block ? 'Bonität sperrt Auslieferung' : data.has_assessment ? `Bonität geprüft · Score ${data.score ?? '–'}` : 'Keine Bonitätsprüfung vorhanden';
+  return (
+    <div className={`rounded-md border p-3 text-sm flex items-start gap-3 ${bg}`}>
+      <Icon className="w-5 h-5 mt-0.5 shrink-0" />
+      <div className="flex-1">
+        <div className="font-semibold">{label}</div>
+        {data.reason && <div className="text-xs mt-1 opacity-90">{data.reason}</div>}
+        {data.hint && !data.reason && <div className="text-xs mt-1 opacity-80">{data.hint}</div>}
+      </div>
+      <a href={data.assessment_id ? `/bonitaet/${data.assessment_id}` : '/bonitaet/neu'}
+         className="text-xs underline whitespace-nowrap self-center">
+        {data.assessment_id ? 'Öffnen' : 'Prüfung anlegen'}
+      </a>
     </div>
   );
 }
