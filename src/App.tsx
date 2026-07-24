@@ -146,6 +146,9 @@ const FinanceReportSchedules = lazy(() => import("./pages/Finance/ReportSchedule
 const FinanceManagementPack = lazy(() => import("./pages/Finance/ManagementPack"));
 const FinanceStakeholders = lazy(() => import("./pages/Finance/Stakeholders"));
 const StakeholderPortal = lazy(() => import("./pages/StakeholderPortal"));
+const CreditIndex = lazy(() => import("./pages/Credit/Index"));
+const CreditNew = lazy(() => import("./pages/Credit/New"));
+const CreditDetail = lazy(() => import("./pages/Credit/Detail"));
 const PdfAb = lazy(() => import("./pages/PdfAb"));
 const FinanceKonsolidierung = lazy(() => import("./pages/Finance/Konsolidierung"));
 const FinanceKonsolidierungDetail = lazy(() => import("./pages/Finance/KonsolidierungDetail"));
@@ -1364,6 +1367,9 @@ function AppRoutes() {
           <Route path="/signaturen/genehmigungen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignApprovals /></ProtectedRoute>} />
           <Route path="/signaturen/dashboard" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignSlaDashboard /></ProtectedRoute>} />
           <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />
+          <Route path="/bonitaet" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Vertriebsleitung','Vertrieb','Finance']}><CreditIndex /></ProtectedRoute>} />
+          <Route path="/bonitaet/neu" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Vertriebsleitung','Vertrieb','Finance']}><CreditNew /></ProtectedRoute>} />
+          <Route path="/bonitaet/:id" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Vertriebsleitung','Vertrieb','Finance']}><CreditDetail /></ProtectedRoute>} />
           <Route path="/dokumente/vorschau" element={<ProtectedRoute><AlixDocsPreview /></ProtectedRoute>} />
           <Route path="/dokumente/smart-review" element={<ProtectedRoute><AlixDocsSmartReview /></ProtectedRoute>} />
           <Route path="/dokumente/bulk-import" element={<ProtectedRoute><AlixDocsBulkImport /></ProtectedRoute>} />

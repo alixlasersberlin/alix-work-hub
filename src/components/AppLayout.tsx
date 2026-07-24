@@ -280,6 +280,14 @@ export const navItems: NavItem[] = [
           { path: '/crm/after-sales/reports', label: 'Reports & Export', icon: BarChart3, roles: ['Admin','Super Admin','After Sales','Vertrieb','Marketing','Service','Geschäftsführung','Order','SACHBEARBEITUNG','Kundenservice','Auftragsverwaltung'] },
         ],
       },
+      {
+        path: '/bonitaet', label: 'BONITÄT & FINANZIERUNG', icon: ShieldCheck,
+        roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Vertriebsleitung', 'Vertrieb', 'Finance'],
+        children: [
+          { path: '/bonitaet', label: 'ALIX CREDIT SCORE®', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Vertriebsleitung', 'Vertrieb', 'Finance'] },
+          { path: '/bonitaet/neu', label: 'Neue Prüfung', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Vertriebsleitung', 'Vertrieb', 'Finance'] },
+        ],
+      },
     ],
   },
   {

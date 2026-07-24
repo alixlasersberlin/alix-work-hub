@@ -10215,6 +10215,377 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_assessments: {
+        Row: {
+          ai_model: string | null
+          ai_summary: string | null
+          ampel: string | null
+          consent_at: string | null
+          consent_by: string | null
+          consent_given: boolean
+          created_at: string
+          created_by: string
+          customer_id: string | null
+          customer_snapshot: Json
+          customer_type: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_notes: string | null
+          default_probability_pct: number | null
+          flags: Json
+          id: string
+          offer_id: string | null
+          order_id: string | null
+          purpose: string | null
+          recommendation: Json
+          requested_amount: number | null
+          requested_downpayment_pct: number | null
+          requested_term_months: number | null
+          score: number | null
+          score_max: number
+          status: string
+          updated_at: string
+          valid_until: string | null
+          workflow_stage: string
+        }
+        Insert: {
+          ai_model?: string | null
+          ai_summary?: string | null
+          ampel?: string | null
+          consent_at?: string | null
+          consent_by?: string | null
+          consent_given?: boolean
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          customer_snapshot?: Json
+          customer_type?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_notes?: string | null
+          default_probability_pct?: number | null
+          flags?: Json
+          id?: string
+          offer_id?: string | null
+          order_id?: string | null
+          purpose?: string | null
+          recommendation?: Json
+          requested_amount?: number | null
+          requested_downpayment_pct?: number | null
+          requested_term_months?: number | null
+          score?: number | null
+          score_max?: number
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+          workflow_stage?: string
+        }
+        Update: {
+          ai_model?: string | null
+          ai_summary?: string | null
+          ampel?: string | null
+          consent_at?: string | null
+          consent_by?: string | null
+          consent_given?: boolean
+          created_at?: string
+          created_by?: string
+          customer_id?: string | null
+          customer_snapshot?: Json
+          customer_type?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_notes?: string | null
+          default_probability_pct?: number | null
+          flags?: Json
+          id?: string
+          offer_id?: string | null
+          order_id?: string | null
+          purpose?: string | null
+          recommendation?: Json
+          requested_amount?: number | null
+          requested_downpayment_pct?: number | null
+          requested_term_months?: number | null
+          score?: number | null
+          score_max?: number
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+          workflow_stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_assessments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_assessments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "credit_assessments_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_assessments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_decision_log: {
+        Row: {
+          action: string
+          actor: string
+          actor_email: string | null
+          assessment_id: string
+          created_at: string
+          from_stage: string | null
+          from_status: string | null
+          id: string
+          meta: Json
+          reason: string | null
+          to_stage: string | null
+          to_status: string | null
+        }
+        Insert: {
+          action: string
+          actor?: string
+          actor_email?: string | null
+          assessment_id: string
+          created_at?: string
+          from_stage?: string | null
+          from_status?: string | null
+          id?: string
+          meta?: Json
+          reason?: string | null
+          to_stage?: string | null
+          to_status?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string
+          actor_email?: string | null
+          assessment_id?: string
+          created_at?: string
+          from_stage?: string | null
+          from_status?: string | null
+          id?: string
+          meta?: Json
+          reason?: string | null
+          to_stage?: string | null
+          to_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_decision_log_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "credit_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_documents: {
+        Row: {
+          assessment_id: string
+          created_at: string
+          created_by: string
+          doc_type: string
+          document_id: string | null
+          id: string
+          notes: string | null
+          title: string | null
+          updated_at: string
+          verified: boolean
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          assessment_id: string
+          created_at?: string
+          created_by?: string
+          doc_type: string
+          document_id?: string | null
+          id?: string
+          notes?: string | null
+          title?: string | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          assessment_id?: string
+          created_at?: string
+          created_by?: string
+          doc_type?: string
+          document_id?: string | null
+          id?: string
+          notes?: string | null
+          title?: string | null
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_documents_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "credit_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_documents_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_external_checks: {
+        Row: {
+          assessment_id: string
+          checked_at: string
+          checked_by: string
+          created_at: string
+          data: Json
+          id: string
+          provider: string
+          reference: string | null
+          score_numeric: number | null
+          score_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          assessment_id: string
+          checked_at?: string
+          checked_by?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          provider: string
+          reference?: string | null
+          score_numeric?: number | null
+          score_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assessment_id?: string
+          checked_at?: string
+          checked_by?: string
+          created_at?: string
+          data?: Json
+          id?: string
+          provider?: string
+          reference?: string | null
+          score_numeric?: number | null
+          score_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_external_checks_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "credit_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_policies: {
+        Row: {
+          active: boolean
+          auto_block_rules: Json
+          bands: Json
+          created_at: string
+          id: string
+          name: string
+          retention_years: number
+          updated_at: string
+          weights: Json
+        }
+        Insert: {
+          active?: boolean
+          auto_block_rules?: Json
+          bands?: Json
+          created_at?: string
+          id?: string
+          name: string
+          retention_years?: number
+          updated_at?: string
+          weights?: Json
+        }
+        Update: {
+          active?: boolean
+          auto_block_rules?: Json
+          bands?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          retention_years?: number
+          updated_at?: string
+          weights?: Json
+        }
+        Relationships: []
+      }
+      credit_score_factors: {
+        Row: {
+          assessment_id: string
+          category: string
+          created_at: string
+          evidence: Json
+          id: string
+          label: string
+          points: number
+          source: string | null
+          weight_pct: number
+        }
+        Insert: {
+          assessment_id: string
+          category: string
+          created_at?: string
+          evidence?: Json
+          id?: string
+          label: string
+          points?: number
+          source?: string | null
+          weight_pct?: number
+        }
+        Update: {
+          assessment_id?: string
+          category?: string
+          created_at?: string
+          evidence?: Json
+          id?: string
+          label?: string
+          points?: number
+          source?: string | null
+          weight_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_score_factors_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "credit_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_bank_details: {
         Row: {
           bank_name: string | null
@@ -30515,6 +30886,8 @@ export type Database = {
         Args: { p_token: string }
         Returns: string
       }
+      credit_can_access: { Args: never; Returns: boolean }
+      credit_is_super_admin: { Args: never; Returns: boolean }
       current_alix_identity_id: { Args: never; Returns: string }
       current_portal_customer_id: { Args: never; Returns: string }
       current_supplier_id: { Args: never; Returns: string }
