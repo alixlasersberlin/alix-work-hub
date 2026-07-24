@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
   let totalAmountStr: string | undefined
   let createdBy: string | undefined
   let salespersonName: string | undefined
+  let vatMode: string | undefined
 
   const fmt = (n: number, c = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: c }).format(n)
 
@@ -81,7 +82,6 @@ Deno.serve(async (req) => {
       .eq('id', sig.sign_request_id).maybeSingle()
     if (!r) return new Response(JSON.stringify({ error: 'Sign request not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
-    download_url = `${PUBLIC_BASE}/pdf/ab?signature_id=${sig.id}&token=${encodeURIComponent(r.token)}`
     customer_name = r.customer_name || undefined
     customer_email_fallback = r.customer_email || sig.signer_email || undefined
     offerNumber = r.offer_number || sig.offer_number || undefined
@@ -91,10 +91,14 @@ Deno.serve(async (req) => {
     createdBy = r.created_by || undefined
 
     if (orderId) {
-      const { data: ord } = await admin.from('orders').select('order_number, internal_number, salesperson_name').eq('id', orderId).maybeSingle()
+      const { data: ord } = await admin.from('orders').select('order_number, internal_number, salesperson_name, vat_display_mode').eq('id', orderId).maybeSingle()
       orderNumber = ord?.internal_number || ord?.order_number || undefined
       salespersonName = (ord as any)?.salesperson_name || undefined
+      const m = (ord as any)?.vat_display_mode
+      if (m === 'netto' || m === 'brutto') vatMode = m
     }
+    const modeQs = vatMode ? `&mode=${vatMode}` : ''
+    download_url = `${PUBLIC_BASE}/pdf/ab?signature_id=${sig.id}&token=${encodeURIComponent(r.token)}${modeQs}`
 
   } else {
     // Fallback: PDF from order data
