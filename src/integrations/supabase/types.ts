@@ -21711,6 +21711,71 @@ export type Database = {
         }
         Relationships: []
       }
+      order_change_requests: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          id: string
+          order_id: string
+          order_number: string | null
+          original_snapshot: Json
+          proposed_changes: Json
+          reason: string | null
+          requested_by: string
+          requested_by_name: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          order_number?: string | null
+          original_snapshot?: Json
+          proposed_changes?: Json
+          reason?: string | null
+          requested_by: string
+          requested_by_name?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          order_number?: string | null
+          original_snapshot?: Json
+          proposed_changes?: Json
+          reason?: string | null
+          requested_by?: string
+          requested_by_name?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewed_by_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_change_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_documents: {
         Row: {
           created_at: string
@@ -30754,6 +30819,33 @@ export type Database = {
       }
       alixsmart_norm_email: { Args: { e: string }; Returns: string }
       alixsmart_norm_phone: { Args: { p: string }; Returns: string }
+      apply_order_change_request: {
+        Args: { _id: string; _note?: string }
+        Returns: {
+          applied_at: string | null
+          created_at: string
+          id: string
+          order_id: string
+          order_number: string | null
+          original_snapshot: Json
+          proposed_changes: Json
+          reason: string | null
+          requested_by: string
+          requested_by_name: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "order_change_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       apply_role_change_request: {
         Args: { _request_id: string }
         Returns: Json
@@ -31116,6 +31208,33 @@ export type Database = {
       refresh_warranty_and_maintenance_status: {
         Args: never
         Returns: undefined
+      }
+      reject_order_change_request: {
+        Args: { _id: string; _note?: string }
+        Returns: {
+          applied_at: string | null
+          created_at: string
+          id: string
+          order_id: string
+          order_number: string | null
+          original_snapshot: Json
+          proposed_changes: Json
+          reason: string | null
+          requested_by: string
+          requested_by_name: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewed_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "order_change_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       requires_reauth: { Args: never; Returns: boolean }
       resolve_frei_bestellung_assignment: {
