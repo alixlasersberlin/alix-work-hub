@@ -56,10 +56,10 @@ export default function AuftragsbestaetigungTab({ orderId, customerId, customerE
   const selected = sigs.find(s => s.id === selectedId) || null;
   const token = (selected?.alix_sign_requests as any)?.token as string | undefined;
   const pdfFetchUrl = selected && token
-    ? `${SUPABASE_URL}/functions/v1/order-confirmation-pdf?signature_id=${selected.id}&token=${encodeURIComponent(token)}`
+    ? `${SUPABASE_URL}/functions/v1/order-confirmation-pdf?signature_id=${selected.id}&token=${encodeURIComponent(token)}${modeQs}`
     : null;
   const previewUrl = selected && token
-    ? `${PUBLIC_BASE}/pdf/ab?signature_id=${selected.id}&token=${encodeURIComponent(token)}`
+    ? `${PUBLIC_BASE}/pdf/ab?signature_id=${selected.id}&token=${encodeURIComponent(token)}&mode=${vatState.priceMode}`
     : null;
 
   // Lade PDF als Blob für die Vorschau (umgeht Cross-Origin-iframe-Probleme im Preview)
