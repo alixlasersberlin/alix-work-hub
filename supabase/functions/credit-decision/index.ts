@@ -62,6 +62,42 @@ Deno.serve(async (req) => {
       reason: reason ?? null, actor: user.id, actor_email: user.email ?? null,
     });
 
+    // E-Mail-Benachrichtigung an Ersteller + BCC rde@alix-lasers.com
+    try {
+      const { data: creator } = await sb.auth.admin.getUserById(a.created_by);
+      const to = creator?.user?.email;
+      if (to) {
+        const snap = (a.customer_snapshot ?? {}) as Record<string, any>;
+        const kunde = snap.name ?? snap.company_name ?? 'Kunde';
+        const labelMap: Record<string, string> = {
+          approved: 'freigegeben ✅',
+          approved_with_conditions: 'mit Auflagen freigegeben ⚠️',
+          rejected: 'abgelehnt ❌',
+          escalated: `eskaliert an Stufe „${to_stage}"`,
+          cancelled: 'zurückgezogen',
+        };
+        const subj = `ALIX CREDIT SCORE – Bonitätsprüfung ${kunde}: ${labelMap[action] ?? action}`;
+        const html = `
+          <div style="font-family:Arial,sans-serif;max-width:600px">
+            <h2>ALIX CREDIT SCORE® – Entscheidung</h2>
+            <p>Deine Bonitätsprüfung für <strong>${kunde}</strong> wurde <strong>${labelMap[action] ?? action}</strong>.</p>
+            <ul>
+              <li>Score: <strong>${a.score ?? '–'}</strong> / 1000 (${a.ampel ?? '–'})</li>
+              <li>Neuer Status: <strong>${to_status}</strong></li>
+              <li>Stufe: <strong>${to_stage}</strong></li>
+              ${reason ? `<li>Begründung: ${reason}</li>` : ''}
+              <li>Entschieden von: ${user.email ?? user.id}</li>
+            </ul>
+            <p><a href="https://app.alixwork.de/bonitaet/${assessment_id}">Zur Bonitätsprüfung öffnen</a></p>
+          </div>`;
+        await sb.functions.invoke('send-transactional-email', {
+          body: { to, subject: subj, html, bcc: 'rde@alix-lasers.com', category: 'credit_decision' },
+        });
+      }
+    } catch (mailErr) {
+      console.warn('credit-decision mail failed:', mailErr);
+    }
+
     return json({ ok: true, status: to_status, workflow_stage: to_stage });
   } catch (e: any) {
     console.error(e);
