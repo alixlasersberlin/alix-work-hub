@@ -827,7 +827,7 @@ export default function OrderDetail() {
                 ['Auftragsnummer', displayOrderNumbers.join(', ')],
                 ['Rechnungsnummer', displayOrderNumbers.join(', ')],
                 ['Status', order.order_status || 'offen'],
-                ['Betrag', order.total_amount != null ? Number(order.total_amount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'],
+                ['Betrag', order.total_amount != null ? `${Number(applyMode(Number(order.total_amount), totalTax)).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) })} ${priceLabel}` : '—'],
                 ['Vereinbarte Anzahlung', order.deposit_amount != null ? Number(order.deposit_amount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'],
                 ['Anzahlung geleistet am', order.deposit_booking_date ? new Date(order.deposit_booking_date).toLocaleDateString('de-DE') : (order.deposit_ok && order.deposit_ok_at ? new Date(order.deposit_ok_at).toLocaleDateString('de-DE') : '—')],
                 ['Währung', order.currency],
