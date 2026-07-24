@@ -54,6 +54,18 @@ export function useOrderVatState(orderId?: string) {
   useEffect(() => { if (orderId) setState(loadVatState(orderId)); }, [orderId]);
   useEffect(() => {
     if (!orderId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from('orders').select('vat_display_mode').eq('id', orderId).maybeSingle();
+      const m = (data as any)?.vat_display_mode;
+      if (!cancelled && (m === 'netto' || m === 'brutto')) {
+        setState((s) => (s.priceMode === m ? s : { ...s, priceMode: m }));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [orderId]);
+  useEffect(() => {
+    if (!orderId) return;
     try { localStorage.setItem(STORAGE_KEY(orderId), JSON.stringify(state)); } catch {}
     // notify same-tab listeners
     window.dispatchEvent(new CustomEvent('order-vat-changed', { detail: { orderId, state } }));
@@ -78,20 +90,6 @@ interface Props {
 export default function OrderVatPanel({ orderId }: Props) {
   const [state, setState] = useOrderVatState(orderId);
   const [checking, setChecking] = useState(false);
-
-  // Persistenter Modus aus DB laden (überschreibt localStorage-Default)
-  useEffect(() => {
-    if (!orderId) return;
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.from('orders').select('vat_display_mode').eq('id', orderId).maybeSingle();
-      const m = (data as any)?.vat_display_mode;
-      if (!cancelled && (m === 'netto' || m === 'brutto')) {
-        setState((s) => (s.priceMode === m ? s : { ...s, priceMode: m }));
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [orderId, setState]);
 
   // priceMode-Änderungen nach DB spiegeln
   useEffect(() => {
