@@ -286,6 +286,7 @@ export const navItems: NavItem[] = [
         children: [
           { path: '/bonitaet', label: 'ALIX CREDIT SCORE®', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Vertriebsleitung', 'Vertrieb', 'Finance'] },
           { path: '/bonitaet/neu', label: 'Neue Prüfung', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Geschäftsführung', 'Vertriebsleitung', 'Vertrieb', 'Finance'] },
+          { path: '/bonitaet/richtlinien', label: 'Richtlinien', icon: ShieldCheck, roles: ['Super Admin'] },
         ],
       },
     ],
