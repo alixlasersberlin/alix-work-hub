@@ -915,6 +915,7 @@ export default function OrderDetail() {
                 <Button variant="ghost" className="mt-4 text-primary text-sm" onClick={() => navigate(`/kunden/${customer.id}`)}>
                   Kunde anzeigen →
                 </Button>
+                <OrderVatPanel orderId={id!} />
               </>
             ) : (
               <p className="text-muted-foreground text-sm">Keine Kundendaten verfügbar.</p>
@@ -973,7 +974,7 @@ export default function OrderDetail() {
                       <TableCell className="text-right">{item.rate != null ? Number(item.rate).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'}</TableCell>
                       <TableCell className="text-right">{item.discount != null && Number(item.discount) > 0 ? Number(item.discount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'}</TableCell>
                       <TableCell className="text-right">{item.tax_amount != null && Number(item.tax_amount) > 0 ? Number(item.tax_amount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'}</TableCell>
-                      <TableCell className="text-right font-medium">{item.amount != null ? Number(item.amount).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'}</TableCell>
+                      <TableCell className="text-right font-medium">{item.amount != null ? Number(applyMode(Number(item.amount), item.tax_amount)).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) }) : '—'}</TableCell>
                       {hasRole('Super Admin') && (
                         <TableCell className="text-right">
                           <Button
@@ -993,7 +994,7 @@ export default function OrderDetail() {
               </Table>
               <div className="flex justify-end mt-4 pt-3 border-t border-border">
                 <div className="text-sm font-medium text-foreground">
-                  Gesamt: {items.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) })}
+                  Gesamt ({priceLabel}): {items.reduce((s, i) => s + applyMode(Number(i.amount) || 0, i.tax_amount), 0).toLocaleString('de-DE', { style: 'currency', currency: normalizeCurrency(order.currency) })}
                 </div>
               </div>
             </div>
