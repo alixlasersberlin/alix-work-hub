@@ -286,23 +286,21 @@ Deno.serve(async (req) => {
       y -= 4
     }
 
-    // Totals
+    // Totals – Summen bleiben unverändert; nur MwSt-Zeile wird ein-/ausgeblendet
     if (y < 120) { page = newPage(); y = PAGE_H - 80 }
     y -= 10
     const lblX = RIGHT - 160
+    const displayTotal = (totals.net || totals.gross || 0)
     if (isNetto) {
-      // Netto-Anzeige: keine MwSt ausweisen
       page.drawText('Gesamt (netto):', { x: lblX - 20, y, size: 12, font: helvB, color: headerBlue })
-      page.drawText(fmt(totals.net || totals.gross, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
+      page.drawText(fmt(displayTotal, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
     } else {
-      page.drawText('Netto:', { x: lblX, y, size: 10, font: helv, color: black })
-      page.drawText(fmt(totals.net, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
-      y -= 14
-      page.drawText('MwSt:', { x: lblX, y, size: 10, font: helv, color: black })
-      page.drawText(fmt(totals.tax, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
+      const taxInfo = displayTotal * 0.19
+      page.drawText('zzgl. MwSt (19%):', { x: lblX, y, size: 10, font: helv, color: black })
+      page.drawText(fmt(taxInfo, currency), { x: RIGHT - 60, y, size: 10, font: helv, color: black })
       y -= 16
       page.drawText('Gesamt:', { x: lblX, y, size: 12, font: helvB, color: headerBlue })
-      page.drawText(fmt(totals.gross, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
+      page.drawText(fmt(displayTotal, currency), { x: RIGHT - 60, y, size: 12, font: helvB, color: headerBlue })
     }
     y -= 24
 
