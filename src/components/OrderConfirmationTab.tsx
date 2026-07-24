@@ -15,6 +15,7 @@ import autoTable from 'jspdf-autotable';
 import templateAsset from '@/assets/angebot-template.jpg.asset.json';
 import logoAsset from '@/assets/alix-logo-gold.png.asset.json';
 import { downloadStampedPdf, openStampedPdf, stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
+import { useOrderVatState } from '@/components/OrderVatPanel';
 
 interface Props {
   order: any;
@@ -206,6 +207,9 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
     return { net: finalNet, tax: finalTax, gross: finalGross };
   }, [items, order]);
 
+  const [vatState] = useOrderVatState(order?.id);
+  const isNetto = vatState.priceMode === 'netto';
+
   async function generate(mode: 'download' | 'print' | 'view' = 'download') {
     if (!items || items.length === 0) {
       toast.error('Keine Artikel im Auftrag vorhanden.');
@@ -339,10 +343,13 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       }
 
       // Items table
+      const tableHead = isNetto
+        ? [['Pos', 'Artikel', 'Menge', 'Einzelpreis netto', 'Summe netto']]
+        : [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']];
       autoTable(doc, {
         startY: cy,
         margin: { left: LEFT, right: PAGE_W - RIGHT, top: TOP_CONTENT, bottom: PAGE_H - BOTTOM_LIMIT },
-        head: [['Pos', 'Artikel', 'Menge', 'Einzelpreis', 'MwSt', 'Summe']],
+        head: tableHead,
         body: items.map((i, idx) => {
           const name = String(i.item_name || '—');
           const sku = i.sku ? ` (${i.sku})` : '';
@@ -359,7 +366,14 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
               taxPct = 19;
             }
           }
-          return [
+          const netRow = [
+            idx + 1,
+            `${name}${sku}${desc}`,
+            qty,
+            fmtMoney(rate, currency),
+            fmtMoney(lineNet, currency),
+          ];
+          const grossRow = [
             idx + 1,
             `${name}${sku}${desc}`,
             qty,
@@ -367,6 +381,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
             `${taxPct}%`,
             fmtMoney(lineNet, currency),
           ];
+          return isNetto ? netRow : grossRow;
         }),
         styles: { fontSize: 9, cellPadding: 2, valign: 'top' },
         headStyles: { fillColor: [183, 217, 255], textColor: [20, 60, 110] },
@@ -375,7 +390,7 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
           0: { cellWidth: 10, halign: 'center' },
           2: { halign: 'right', cellWidth: 16 },
           3: { halign: 'right', cellWidth: 25 },
-          4: { halign: 'right', cellWidth: 16 },
+          4: { halign: 'right', cellWidth: isNetto ? 30 : 16 },
           5: { halign: 'right', cellWidth: 25 },
         },
         rowPageBreak: 'auto',
@@ -397,20 +412,28 @@ export default function OrderConfirmationTab({ order, customer, items }: Props) 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 60);
-      doc.text('Netto:', totalsX, finalY);
-      doc.text(fmtMoney(totals.net, currency), RIGHT, finalY, { align: 'right' });
-      doc.text('MwSt:', totalsX, finalY + 5);
-      doc.text(fmtMoney(totals.tax, currency), RIGHT, finalY + 5, { align: 'right' });
-      doc.setDrawColor(20, 60, 110);
-      doc.line(totalsX, finalY + 8, RIGHT, finalY + 8);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(12);
-      doc.setTextColor(20, 60, 110);
-      doc.text('Gesamt:', totalsX, finalY + 14);
-      doc.text(fmtMoney(totals.gross, currency), RIGHT, finalY + 14, { align: 'right' });
+      if (isNetto) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(20, 60, 110);
+        doc.text('Gesamt (netto):', totalsX, finalY);
+        doc.text(fmtMoney(totals.net, currency), RIGHT, finalY, { align: 'right' });
+      } else {
+        doc.text('Netto:', totalsX, finalY);
+        doc.text(fmtMoney(totals.net, currency), RIGHT, finalY, { align: 'right' });
+        doc.text('MwSt:', totalsX, finalY + 5);
+        doc.text(fmtMoney(totals.tax, currency), RIGHT, finalY + 5, { align: 'right' });
+        doc.setDrawColor(20, 60, 110);
+        doc.line(totalsX, finalY + 8, RIGHT, finalY + 8);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(20, 60, 110);
+        doc.text('Gesamt:', totalsX, finalY + 14);
+        doc.text(fmtMoney(totals.gross, currency), RIGHT, finalY + 14, { align: 'right' });
+      }
 
       // Confirmation block (oben über den Artikeln bereits gesetzt)
-      let py = finalY + 20;
+      let py = finalY + (isNetto ? 10 : 20);
 
       // Zahlungsweise / Zahlungsbedingungen
       if (paymentTerms && paymentTerms.trim()) {

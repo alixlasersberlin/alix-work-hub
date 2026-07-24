@@ -54,6 +54,18 @@ export function useOrderVatState(orderId?: string) {
   useEffect(() => { if (orderId) setState(loadVatState(orderId)); }, [orderId]);
   useEffect(() => {
     if (!orderId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from('orders').select('vat_display_mode').eq('id', orderId).maybeSingle();
+      const m = (data as any)?.vat_display_mode;
+      if (!cancelled && (m === 'netto' || m === 'brutto')) {
+        setState((s) => (s.priceMode === m ? s : { ...s, priceMode: m }));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [orderId]);
+  useEffect(() => {
+    if (!orderId) return;
     try { localStorage.setItem(STORAGE_KEY(orderId), JSON.stringify(state)); } catch {}
     // notify same-tab listeners
     window.dispatchEvent(new CustomEvent('order-vat-changed', { detail: { orderId, state } }));
@@ -79,26 +91,12 @@ export default function OrderVatPanel({ orderId }: Props) {
   const [state, setState] = useOrderVatState(orderId);
   const [checking, setChecking] = useState(false);
 
-  // Persistenter Modus aus DB laden (überschreibt localStorage-Default)
-  useEffect(() => {
-    if (!orderId) return;
-    let cancelled = false;
-    (async () => {
-      const { data } = await supabase.from('orders').select('vat_display_mode').eq('id', orderId).maybeSingle();
-      const m = (data as any)?.vat_display_mode;
-      if (!cancelled && (m === 'netto' || m === 'brutto')) {
-        setState((s) => (s.priceMode === m ? s : { ...s, priceMode: m }));
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [orderId, setState]);
-
-  // priceMode-Änderungen nach DB spiegeln
-  useEffect(() => {
-    if (!orderId) return;
-    supabase.from('orders').update({ vat_display_mode: state.priceMode }).eq('id', orderId).then(() => {});
-  }, [orderId, state.priceMode]);
-
+  const setPriceMode = (priceMode: PriceMode) => {
+    setState((s) => ({ ...s, priceMode }));
+    supabase.from('orders').update({ vat_display_mode: priceMode }).eq('id', orderId).then(({ error }) => {
+      if (error) toast.error('MwSt.-Anzeige konnte nicht gespeichert werden');
+    });
+  };
 
   const runCheck = async (country?: string, number?: string) => {
     const c = (country ?? state.vatCountry).toUpperCase();
@@ -154,7 +152,7 @@ export default function OrderVatPanel({ orderId }: Props) {
           <span className={`text-xs font-medium ${state.priceMode === 'netto' ? 'text-primary' : 'text-muted-foreground'}`}>Netto</span>
           <Switch
             checked={state.priceMode === 'brutto'}
-            onCheckedChange={(v) => setState((s) => ({ ...s, priceMode: v ? 'brutto' : 'netto' }))}
+            onCheckedChange={(v) => setPriceMode(v ? 'brutto' : 'netto')}
           />
           <span className={`text-xs font-medium ${state.priceMode === 'brutto' ? 'text-primary' : 'text-muted-foreground'}`}>Brutto</span>
         </div>
