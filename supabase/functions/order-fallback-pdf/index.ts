@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url)
     const orderId = url.searchParams.get('order_id')
     const token = url.searchParams.get('token')
+    const mode = (url.searchParams.get('mode') || 'brutto').toLowerCase() === 'netto' ? 'netto' : 'brutto'
     if (!orderId || !token) return new Response('order_id and token required', { status: 400, headers: corsHeaders })
 
     const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
