@@ -256,7 +256,8 @@ Deno.serve(async (req) => {
       const qty = Number(l.quantity ?? 1)
       const rateNet = Number(l.rate ?? 0)
       const taxPct = Number(l.tax_percentage ?? 0)
-      const rateDisp = isNetto ? rateNet : rateNet * (1 + taxPct / 100)
+      // Preise bleiben unverändert (keine Umrechnung); nur MwSt-Anzeige ein/aus
+      const rateDisp = rateNet
       const sumDisp = qty * rateDisp
       page.drawText(String(i++), { x: cols.idx, y, size: 9, font: helv, color: black })
       page.drawText(truncate(name, 45), { x: cols.name, y, size: 9, font: helvB, color: black })
