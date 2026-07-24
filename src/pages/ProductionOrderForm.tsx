@@ -17,6 +17,8 @@ import { ALIX_MODEL_GROUPS } from '@/lib/alix-models';
 import { useAuth } from '@/hooks/useAuth';
 import { markRestbestellungDone } from '@/lib/restbestellung';
 import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalog/KatalogPickerDialog';
+import { useCreditOrderBlock } from '@/hooks/useCreditOrderBlock';
+import { ShieldCheck, ShieldAlert } from 'lucide-react';
 
 type Mode = 'order' | 'reclamation';
 
