@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url)
     const orderId = url.searchParams.get('order_id')
     const token = url.searchParams.get('token')
-    const mode = (url.searchParams.get('mode') || 'brutto').toLowerCase() === 'netto' ? 'netto' : 'brutto'
+    const modeParam = (url.searchParams.get('mode') || '').toLowerCase()
     if (!orderId || !token) return new Response('order_id and token required', { status: 400, headers: corsHeaders })
 
     const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -85,6 +85,11 @@ Deno.serve(async (req) => {
     const admin = createClient(Deno.env.get('SUPABASE_URL')!, secret)
     const { data: order } = await admin.from('orders').select('*').eq('id', orderId).maybeSingle()
     if (!order) return new Response('Order not found', { status: 404, headers: corsHeaders })
+    // MwSt.-Anzeige: URL-Param > DB (orders.vat_display_mode) > Default brutto
+    const dbMode = (order as any)?.vat_display_mode
+    const mode = (modeParam === 'netto' || modeParam === 'brutto')
+      ? modeParam
+      : (dbMode === 'netto' || dbMode === 'brutto' ? dbMode : 'brutto')
 
     const { data: orderItems } = await admin
       .from('order_items')

@@ -79,6 +79,27 @@ export default function OrderVatPanel({ orderId }: Props) {
   const [state, setState] = useOrderVatState(orderId);
   const [checking, setChecking] = useState(false);
 
+  // Persistenter Modus aus DB laden (überschreibt localStorage-Default)
+  useEffect(() => {
+    if (!orderId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from('orders').select('vat_display_mode').eq('id', orderId).maybeSingle();
+      const m = (data as any)?.vat_display_mode;
+      if (!cancelled && (m === 'netto' || m === 'brutto')) {
+        setState((s) => (s.priceMode === m ? s : { ...s, priceMode: m }));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [orderId, setState]);
+
+  // priceMode-Änderungen nach DB spiegeln
+  useEffect(() => {
+    if (!orderId) return;
+    supabase.from('orders').update({ vat_display_mode: state.priceMode }).eq('id', orderId).then(() => {});
+  }, [orderId, state.priceMode]);
+
+
   const runCheck = async (country?: string, number?: string) => {
     const c = (country ?? state.vatCountry).toUpperCase();
     const n = (number ?? state.vatNumber).replace(/[^A-Za-z0-9]/g, '');
