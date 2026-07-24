@@ -30887,6 +30887,11 @@ export type Database = {
         Returns: string
       }
       credit_can_access: { Args: never; Returns: boolean }
+      credit_check_order_block: {
+        Args: { _amount?: number; _customer_id: string }
+        Returns: Json
+      }
+      credit_daily_maintenance: { Args: never; Returns: undefined }
       credit_is_super_admin: { Args: never; Returns: boolean }
       current_alix_identity_id: { Args: never; Returns: string }
       current_portal_customer_id: { Args: never; Returns: string }
