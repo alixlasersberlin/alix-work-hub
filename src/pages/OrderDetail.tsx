@@ -58,6 +58,7 @@ import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice'
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
+import OrderVatPanel, { useOrderVatState } from '@/components/OrderVatPanel';
 import MediapaketOrderTab from '@/components/MediapaketOrderTab';
 import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
 import { SignatureRequestButton } from '@/components/signaturen/SignatureRequestButton';
