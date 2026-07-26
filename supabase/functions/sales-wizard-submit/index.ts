@@ -379,6 +379,35 @@ Deno.serve(async (req) => {
     console.warn("confirmation email failed", e);
   }
 
+  // SMS-Benachrichtigung an Vertrieb (Twilio) über neue Angebotsanfrage
+  try {
+    const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const token = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const from = Deno.env.get("TWILIO_SMS_FROM_NUMBER") ?? Deno.env.get("TWILIO_FROM_NUMBER");
+    if (sid && token && from) {
+      const res = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Basic " + btoa(`${sid}:${token}`),
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            To: "+491711651000",
+            From: from,
+            Body: "Angebot Anfrage",
+          }).toString(),
+        },
+      );
+      if (!res.ok) console.warn("twilio sms failed", res.status, await res.text());
+    } else {
+      console.warn("twilio sms skipped: secrets missing");
+    }
+  } catch (e) {
+    console.warn("twilio sms error", e);
+  }
+
 
   return Response.json(
     { ok: true, lead_id: lead.id, score: ai.score, category: ai.category },
