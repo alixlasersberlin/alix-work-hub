@@ -977,15 +977,14 @@ function AppRoutes() {
         <Route path="/mfa-challenge" element={<MfaGate expect="challenge_required"><MfaChallenge /></MfaGate>} />
         <Route path="/mfa-recovery" element={<MfaGate expect="any"><MfaRecovery /></MfaGate>} />
         {/* ESC – öffentliche Routen (kein Login) */}
-        <Route path="/book" element={<EscBookingPortal />} />
-        {/* ESC – öffentliche Routen (kein Login) */}
-        <Route path="/book" element={<EscBookingPortal />} />
+        {/* /book → permanenter Redirect auf das Ticket-Portal */}
+        <Route path="/book" element={<BookRedirect />} />
         <Route path="/book/mediapaket" element={<MediapaketWizard />} />
         <Route path="/preview/mediapaket" element={<MediapaketPreview />} />
         <Route path="/mediapaket/showcase/:token" element={<MediapaketShowcase />} />
-        <Route path="/book/confirmation" element={<EscBookingPortal />} />
-        <Route path="/book/:department" element={<EscBookingPortal />} />
-        <Route path="/book/:department/:service" element={<EscBookingPortal />} />
+        <Route path="/book/confirmation" element={<BookRedirect />} />
+        <Route path="/book/:department" element={<BookRedirect />} />
+        <Route path="/book/:department/:service" element={<BookRedirect />} />
         <Route path="/appointment/:token" element={<EscConfirmAppointment />} />
         <Route path="/appointment/reschedule/:token" element={<EscRescheduleAppointment />} />
         <Route path="/appointment/cancel/:token" element={<EscCancelAppointment />} />
