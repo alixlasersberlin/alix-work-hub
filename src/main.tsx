@@ -16,6 +16,15 @@ bootA11yPrefs();
 bootAIBackground();
 bootPageFade();
 
+// ticket.alix-operation.de → dedizierte Buchungs-/Ticket-Domain.
+// Leitet hart auf https://alixwork.de/book weiter (Pfad/Query/Hash bleiben erhalten,
+// wenn der Nutzer einen Deep-Link öffnet).
+if (typeof window !== 'undefined' && window.location.hostname === 'ticket.alix-operation.de') {
+  const path = window.location.pathname === '/' ? '/book' : window.location.pathname;
+  const target = 'https://alixwork.de' + path + window.location.search + window.location.hash;
+  window.location.replace(target);
+}
+
 // app.alixwork.de → dedizierte Teamkalender-Domain.
 // Ohne aktive Supabase-Session direkt auf /alix-control (Login), sonst auf /esc/kalender.
 if (typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de') {
