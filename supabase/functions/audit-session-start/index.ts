@@ -1,10 +1,5 @@
 // ALIX Audit Center — session start
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders, createAuditServiceClient, jsonResponse, requireAuditUser } from "../_shared/audit-auth.ts";
 
 async function geoLookup(ip: string) {
   try {
@@ -22,16 +17,10 @@ async function sha256(text: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const url = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    // Auth client uses the caller's JWT (anon key) to resolve the user
-    const authClient = createClient(url, anonKey, { global: { headers: { Authorization: authHeader } } });
-    // Writer client uses service role and MUST NOT forward the user's Authorization header
-    const supabase = createClient(url, serviceKey);
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const auth = await requireAuditUser(req);
+    if ("response" in auth) return auth.response;
+    const { user } = auth;
+    const supabase = createAuditServiceClient();
 
 
     const body = await req.json().catch(() => ({} as any));
@@ -85,8 +74,6 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message ?? String(e) }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: e?.message ?? String(e) }, 500);
   }
 });
