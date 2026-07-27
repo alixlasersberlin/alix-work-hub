@@ -435,6 +435,7 @@ const AuditChanges = lazy(() => import("./pages/AuditCenter/Changes"));
 const AuditSecurity = lazy(() => import("./pages/AuditCenter/Security"));
 const AuditLive = lazy(() => import("./pages/AuditCenter/Live"));
 const AuditEmployees = lazy(() => import("./pages/AuditCenter/Employees"));
+const AuditEmployeeDetail = lazy(() => import("./pages/AuditCenter/EmployeeDetail"));
 const AuditUps = lazy(() => import("./pages/AuditCenter/Ups"));
 const AuditReports = lazy(() => import("./pages/AuditCenter/Reports"));
 const AuditPlaceholder = lazy(() => import("./pages/AuditCenter/Placeholder"));
@@ -1518,6 +1519,7 @@ function AppRoutes() {
             <Route path="timeline" element={<AuditTimeline />} />
             <Route path="live" element={<AuditLive />} />
             <Route path="employees" element={<AuditEmployees />} />
+            <Route path="employees/:userId" element={<AuditEmployeeDetail />} />
             <Route path="changes" element={<AuditChanges />} />
             <Route path="security" element={<AuditSecurity />} />
             <Route path="ups" element={<AuditUps />} />
