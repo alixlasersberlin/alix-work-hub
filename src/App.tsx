@@ -432,6 +432,8 @@ const AuditCenterLayout = lazy(() => import("./pages/AuditCenter/Layout"));
 const AuditOverview = lazy(() => import("./pages/AuditCenter/Overview"));
 const AuditTimeline = lazy(() => import("./pages/AuditCenter/Timeline"));
 const AuditChanges = lazy(() => import("./pages/AuditCenter/Changes"));
+const AuditSecurity = lazy(() => import("./pages/AuditCenter/Security"));
+const AuditLive = lazy(() => import("./pages/AuditCenter/Live"));
 const AuditPlaceholder = lazy(() => import("./pages/AuditCenter/Placeholder"));
 const IsoLayoutLazy = lazy(() => import("./pages/Iso/_shared").then(m => ({ default: m.IsoLayout })));
 const IsoDashboard = lazy(() => import("./pages/Iso/Dashboard"));
@@ -1511,10 +1513,10 @@ function AppRoutes() {
           <Route path="/audit-center" element={<AuditCenterLayout />}>
             <Route index element={<AuditOverview />} />
             <Route path="timeline" element={<AuditTimeline />} />
-            <Route path="live" element={<AuditPlaceholder title="Live-Monitor" phase="Phase 4" />} />
+            <Route path="live" element={<AuditLive />} />
             <Route path="employees" element={<AuditPlaceholder title="Mitarbeiter-Profile" phase="Phase 4" />} />
             <Route path="changes" element={<AuditChanges />} />
-            <Route path="security" element={<AuditPlaceholder title="Sicherheits-Alerts" phase="Phase 3" />} />
+            <Route path="security" element={<AuditSecurity />} />
             <Route path="ups" element={<AuditPlaceholder title="Ultimate Productivity Score" phase="Phase 5" />} />
             <Route path="reports" element={<AuditPlaceholder title="Compliance Reports" phase="Phase 4" />} />
           </Route>
