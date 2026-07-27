@@ -10,11 +10,12 @@ export default function AuditLive() {
   const [recent, setRecent] = useState<any[]>([]);
 
   const load = async () => {
-    const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
     const [s, a] = await Promise.all([
       supabase
         .from("audit_sessions")
         .select("id, user_id, started_at, last_heartbeat_at, device_id, meta")
+        .is("ended_at", null)
         .gte("last_heartbeat_at", since)
         .order("last_heartbeat_at", { ascending: false })
         .limit(200),
