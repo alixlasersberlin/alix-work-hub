@@ -9,7 +9,7 @@ export async function logAuditAccess(section: string, filter: Record<string, unk
       viewer_email: user.email ?? null,
       section,
       target_user_id: targetUserId ?? null,
-      filter,
+      filter: filter as any,
     });
   } catch {}
 }
