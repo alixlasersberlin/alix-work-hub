@@ -21,7 +21,7 @@ export default function AuditChanges() {
     (async () => {
       const { data } = await supabase
         .from("audit_changes")
-        .select("id, ts, user_email, module, object_type, object_id, field, old_value, new_value, reason")
+        .select("id, ts, user_id, table_name, record_id, field_name, operation, old_value, new_value, meta")
         .order("ts", { ascending: false })
         .limit(500);
       setRows(data ?? []);
@@ -46,7 +46,7 @@ export default function AuditChanges() {
             WORM-Protokoll aller Feldänderungen · vorher/nachher · letzte 500
           </p>
         </div>
-        <Input placeholder="Filter (Modul, Feld, User, ID…)" value={q} onChange={(e) => setQ(e.target.value)} className="w-72" />
+        <Input placeholder="Filter (Tabelle, Feld, User, ID…)" value={q} onChange={(e) => setQ(e.target.value)} className="w-72" />
       </div>
       <Card className="border-border/60 bg-card/40 backdrop-blur-xl">
         <CardHeader><CardTitle className="text-sm">{filtered.length} Einträge</CardTitle></CardHeader>
@@ -56,28 +56,37 @@ export default function AuditChanges() {
               <tr>
                 <th className="text-left px-4 py-2">Zeit</th>
                 <th className="text-left px-4 py-2">Benutzer</th>
-                <th className="text-left px-4 py-2">Modul / Objekt</th>
+                <th className="text-left px-4 py-2">Tabelle / Datensatz</th>
                 <th className="text-left px-4 py-2">Feld</th>
+                <th className="text-left px-4 py-2">Op</th>
                 <th className="text-left px-4 py-2">Vorher</th>
                 <th className="text-left px-4 py-2">Nachher</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(r => (
-                <tr key={r.id} className="border-b border-border/30 align-top">
-                  <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">{new Date(r.ts).toLocaleString("de-DE")}</td>
-                  <td className="px-4 py-2">{r.user_email ?? "—"}</td>
-                  <td className="px-4 py-2">
-                    <div>{r.module}</div>
-                    <div className="text-xs text-muted-foreground">{r.object_type}:{r.object_id?.slice(0, 12) ?? "—"}</div>
-                  </td>
-                  <td className="px-4 py-2"><Badge variant="secondary">{r.field}</Badge></td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground max-w-[240px] break-words">{preview(r.old_value)}</td>
-                  <td className="px-4 py-2 text-xs max-w-[240px] break-words">{preview(r.new_value)}</td>
-                </tr>
-              ))}
+              {filtered.map(r => {
+                const meta = (r.meta ?? {}) as any;
+                return (
+                  <tr key={r.id} className="border-b border-border/30 align-top">
+                    <td className="px-4 py-2 text-muted-foreground whitespace-nowrap">{new Date(r.ts).toLocaleString("de-DE")}</td>
+                    <td className="px-4 py-2">
+                      <div>{meta.user_email ?? "—"}</div>
+                      <div className="text-xs text-muted-foreground">{r.user_id?.slice(0, 8) ?? "—"}</div>
+                    </td>
+                    <td className="px-4 py-2">
+                      <div>{r.table_name}</div>
+                      <div className="text-xs text-muted-foreground">{r.record_id?.slice(0, 16) ?? "—"}</div>
+                      {meta.module && <div className="text-[10px] text-muted-foreground/60">Modul: {meta.module}</div>}
+                    </td>
+                    <td className="px-4 py-2"><Badge variant="secondary">{r.field_name}</Badge></td>
+                    <td className="px-4 py-2 text-xs">{r.operation}</td>
+                    <td className="px-4 py-2 text-xs text-muted-foreground max-w-[240px] break-words">{preview(r.old_value)}</td>
+                    <td className="px-4 py-2 text-xs max-w-[240px] break-words">{preview(r.new_value)}</td>
+                  </tr>
+                );
+              })}
               {!loading && filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Keine Einträge</td></tr>
+                <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Keine Einträge</td></tr>
               )}
             </tbody>
           </table>
