@@ -18,7 +18,7 @@ export default function AuditEmployeeDetail() {
 
   useEffect(() => {
     if (!userId) return;
-    logAuditAccess("employee-detail", userId);
+    logAuditAccess("employee-detail", {}, userId);
     (async () => {
       const since = new Date(Date.now() - 90 * 86400000).toISOString();
       const [p, a, s, d, g] = await Promise.all([
