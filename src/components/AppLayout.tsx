@@ -644,6 +644,11 @@ export const navItems: NavItem[] = [
       },
 
       {
+        path: '/audit-center', label: 'Audit Center', icon: ShieldCheck, roles: ['Super Admin'],
+      },
+
+
+      {
         path: '#alix-sign-pro', label: 'ALIX SIGN PRO', icon: FileSignature, roles: ['Super Admin'],
         children: [
           { path: '/signaturen', label: 'Übersicht', icon: LayoutDashboard, roles: ['Super Admin'] },
