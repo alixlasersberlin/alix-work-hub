@@ -644,7 +644,17 @@ export const navItems: NavItem[] = [
       },
 
       {
-        path: '/audit-center', label: 'Audit Center', icon: ShieldCheck, roles: ['Super Admin'],
+        path: '#audit-center', label: 'Audit Center', icon: ShieldCheck, roles: ['Super Admin'],
+        children: [
+          { path: '/audit-center', label: 'Übersicht', icon: LayoutDashboard, roles: ['Super Admin'] },
+          { path: '/audit-center/live', label: 'Live-Monitor', icon: Radio, roles: ['Super Admin'] },
+          { path: '/audit-center/timeline', label: 'Activity Timeline', icon: Activity, roles: ['Super Admin'] },
+          { path: '/audit-center/changes', label: 'Änderungs-Log', icon: FileText, roles: ['Super Admin'] },
+          { path: '/audit-center/security', label: 'Sicherheits-Alerts', icon: ShieldAlert, roles: ['Super Admin'] },
+          { path: '/audit-center/employees', label: 'Mitarbeiter-Profile', icon: Users, roles: ['Super Admin'] },
+          { path: '/audit-center/ups', label: 'Ultimate Productivity Score', icon: Trophy, roles: ['Super Admin'] },
+          { path: '/audit-center/reports', label: 'Compliance Reports', icon: FileDown, roles: ['Super Admin'] },
+        ],
       },
 
 
