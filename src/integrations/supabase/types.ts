@@ -7477,6 +7477,188 @@ export type Database = {
           },
         ]
       }
+      audit_access_log: {
+        Row: {
+          filter: Json | null
+          id: number
+          ip_hash: string | null
+          section: string
+          target_user_id: string | null
+          ts: string
+          viewer_email: string | null
+          viewer_id: string
+        }
+        Insert: {
+          filter?: Json | null
+          id?: number
+          ip_hash?: string | null
+          section: string
+          target_user_id?: string | null
+          ts?: string
+          viewer_email?: string | null
+          viewer_id: string
+        }
+        Update: {
+          filter?: Json | null
+          id?: number
+          ip_hash?: string | null
+          section?: string
+          target_user_id?: string | null
+          ts?: string
+          viewer_email?: string | null
+          viewer_id?: string
+        }
+        Relationships: []
+      }
+      audit_actions: {
+        Row: {
+          action: string
+          duration_ms: number | null
+          id: number
+          meta: Json | null
+          module: string
+          object_id: string | null
+          object_type: string | null
+          path: string | null
+          session_id: string | null
+          ts: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          duration_ms?: number | null
+          id?: number
+          meta?: Json | null
+          module: string
+          object_id?: string | null
+          object_type?: string | null
+          path?: string | null
+          session_id?: string | null
+          ts?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          duration_ms?: number | null
+          id?: number
+          meta?: Json | null
+          module?: string
+          object_id?: string | null
+          object_type?: string | null
+          path?: string | null
+          session_id?: string | null
+          ts?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      audit_changes: {
+        Row: {
+          field_name: string
+          id: number
+          meta: Json | null
+          new_value: string | null
+          old_value: string | null
+          operation: string
+          record_id: string
+          table_name: string
+          ts: string
+          user_id: string | null
+        }
+        Insert: {
+          field_name: string
+          id?: number
+          meta?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+          operation?: string
+          record_id: string
+          table_name: string
+          ts?: string
+          user_id?: string | null
+        }
+        Update: {
+          field_name?: string
+          id?: number
+          meta?: Json | null
+          new_value?: string | null
+          old_value?: string | null
+          operation?: string
+          record_id?: string
+          table_name?: string
+          ts?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      audit_devices: {
+        Row: {
+          browser: string | null
+          browser_version: string | null
+          cookie_id: string | null
+          created_at: string
+          device_id: string
+          first_seen_at: string
+          id: string
+          is_mobile: boolean | null
+          language: string | null
+          last_seen_at: string
+          os: string | null
+          os_version: string | null
+          screen_resolution: string | null
+          session_id: string | null
+          timezone: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          browser_version?: string | null
+          cookie_id?: string | null
+          created_at?: string
+          device_id: string
+          first_seen_at?: string
+          id?: string
+          is_mobile?: boolean | null
+          language?: string | null
+          last_seen_at?: string
+          os?: string | null
+          os_version?: string | null
+          screen_resolution?: string | null
+          session_id?: string | null
+          timezone?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          browser_version?: string | null
+          cookie_id?: string | null
+          created_at?: string
+          device_id?: string
+          first_seen_at?: string
+          id?: string
+          is_mobile?: boolean | null
+          language?: string | null
+          last_seen_at?: string
+          os?: string | null
+          os_version?: string | null
+          screen_resolution?: string | null
+          session_id?: string | null
+          timezone?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_devices_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "audit_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_findings: {
         Row: {
           area: string | null
@@ -7546,6 +7728,77 @@ export type Database = {
           },
         ]
       }
+      audit_geo: {
+        Row: {
+          asn: string | null
+          captured_at: string
+          city: string | null
+          country: string | null
+          gps_latitude: number | null
+          gps_longitude: number | null
+          id: string
+          ipv4: string | null
+          ipv6: string | null
+          latitude: number | null
+          longitude: number | null
+          provider: string | null
+          proxy_detected: boolean | null
+          region: string | null
+          session_id: string | null
+          tor_detected: boolean | null
+          user_id: string
+          vpn_detected: boolean | null
+        }
+        Insert: {
+          asn?: string | null
+          captured_at?: string
+          city?: string | null
+          country?: string | null
+          gps_latitude?: number | null
+          gps_longitude?: number | null
+          id?: string
+          ipv4?: string | null
+          ipv6?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          provider?: string | null
+          proxy_detected?: boolean | null
+          region?: string | null
+          session_id?: string | null
+          tor_detected?: boolean | null
+          user_id: string
+          vpn_detected?: boolean | null
+        }
+        Update: {
+          asn?: string | null
+          captured_at?: string
+          city?: string | null
+          country?: string | null
+          gps_latitude?: number | null
+          gps_longitude?: number | null
+          id?: string
+          ipv4?: string | null
+          ipv6?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          provider?: string | null
+          proxy_detected?: boolean | null
+          region?: string | null
+          session_id?: string | null
+          tor_detected?: boolean | null
+          user_id?: string
+          vpn_detected?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_geo_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "audit_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -7589,6 +7842,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      audit_sessions: {
+        Row: {
+          active_seconds: number
+          click_count: number
+          created_at: string
+          device_id: string | null
+          ended_at: string | null
+          id: string
+          idle_seconds: number
+          ip_hash: string | null
+          keystroke_count: number
+          last_heartbeat_at: string
+          scroll_count: number
+          session_token: string | null
+          started_at: string
+          updated_at: string
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          active_seconds?: number
+          click_count?: number
+          created_at?: string
+          device_id?: string | null
+          ended_at?: string | null
+          id?: string
+          idle_seconds?: number
+          ip_hash?: string | null
+          keystroke_count?: number
+          last_heartbeat_at?: string
+          scroll_count?: number
+          session_token?: string | null
+          started_at?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          active_seconds?: number
+          click_count?: number
+          created_at?: string
+          device_id?: string | null
+          ended_at?: string | null
+          id?: string
+          idle_seconds?: number
+          ip_hash?: string | null
+          keystroke_count?: number
+          last_heartbeat_at?: string
+          scroll_count?: number
+          session_token?: string | null
+          started_at?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       backup_notifications: {
         Row: {

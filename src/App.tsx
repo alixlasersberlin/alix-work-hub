@@ -13,6 +13,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
 import { ExperienceModeProvider } from "@/hooks/useExperienceMode";
 import AuroraSpotlight from "@/components/AuroraSpotlight";
+import AuditMount from "@/components/audit/AuditMount";
 import { CursorSpotlight } from "@/components/aurora/CursorSpotlight";
 import { GlobalCommandBar } from "@/components/infinity/GlobalCommandBar";
 import { CopilotBar } from "@/components/infinity/CopilotBar";
@@ -426,6 +427,11 @@ const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
 const BugCapaBerichte = lazy(() => import("./pages/BugCapa/Berichte"));
 const BugCapaAnalytics = lazy(() => import("./pages/BugCapa/Analytics"));
 const BugCapaIsoReport = lazy(() => import("./pages/BugCapa/IsoReport"));
+
+const AuditCenterLayout = lazy(() => import("./pages/AuditCenter/Layout"));
+const AuditOverview = lazy(() => import("./pages/AuditCenter/Overview"));
+const AuditTimeline = lazy(() => import("./pages/AuditCenter/Timeline"));
+const AuditPlaceholder = lazy(() => import("./pages/AuditCenter/Placeholder"));
 const IsoLayoutLazy = lazy(() => import("./pages/Iso/_shared").then(m => ({ default: m.IsoLayout })));
 const IsoDashboard = lazy(() => import("./pages/Iso/Dashboard"));
 const IsoAudits = lazy(() => import("./pages/Iso/Audits"));
@@ -1501,6 +1507,17 @@ function AppRoutes() {
             <Route path="iso-report" element={<BugCapaIsoReport />} />
           </Route>
 
+          <Route path="/audit-center" element={<AuditCenterLayout />}>
+            <Route index element={<AuditOverview />} />
+            <Route path="timeline" element={<AuditTimeline />} />
+            <Route path="live" element={<AuditPlaceholder title="Live-Monitor" phase="Phase 4" />} />
+            <Route path="employees" element={<AuditPlaceholder title="Mitarbeiter-Profile" phase="Phase 4" />} />
+            <Route path="changes" element={<AuditPlaceholder title="Änderungs-Log (Diff)" phase="Phase 2" />} />
+            <Route path="security" element={<AuditPlaceholder title="Sicherheits-Alerts" phase="Phase 3" />} />
+            <Route path="ups" element={<AuditPlaceholder title="Ultimate Productivity Score" phase="Phase 5" />} />
+            <Route path="reports" element={<AuditPlaceholder title="Compliance Reports" phase="Phase 4" />} />
+          </Route>
+
           <Route path="/katalog" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Katalog','Katalog Preise','Vertrieb','Vertriebsleitung','Marketing','Service','Geschäftsführung']}><KatalogLayoutLazy /></ProtectedRoute>}>
             <Route index element={<KatalogDashboard />} />
             <Route path="artikel" element={<KatalogArtikel />} />
@@ -1950,6 +1967,7 @@ const App = () => (
                   <MaintenanceGate>
                     <AIBackground />
                     <AppRoutes />
+                    <AuditMount />
                     <AuroraSpotlight />
                     <CursorSpotlight />
                     <GlobalCommandBar />
