@@ -1951,6 +1951,7 @@ const App = () => (
                   <MaintenanceGate>
                     <AIBackground />
                     <AppRoutes />
+                    <AuditMount />
                     <AuroraSpotlight />
                     <CursorSpotlight />
                     <GlobalCommandBar />
