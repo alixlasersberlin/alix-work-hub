@@ -1507,6 +1507,17 @@ function AppRoutes() {
             <Route path="iso-report" element={<BugCapaIsoReport />} />
           </Route>
 
+          <Route path="/audit-center" element={<AuditCenterLayout />}>
+            <Route index element={<AuditOverview />} />
+            <Route path="timeline" element={<AuditTimeline />} />
+            <Route path="live" element={<AuditPlaceholder title="Live-Monitor" phase="Phase 4" />} />
+            <Route path="employees" element={<AuditPlaceholder title="Mitarbeiter-Profile" phase="Phase 4" />} />
+            <Route path="changes" element={<AuditPlaceholder title="Änderungs-Log (Diff)" phase="Phase 2" />} />
+            <Route path="security" element={<AuditPlaceholder title="Sicherheits-Alerts" phase="Phase 3" />} />
+            <Route path="ups" element={<AuditPlaceholder title="Ultimate Productivity Score" phase="Phase 5" />} />
+            <Route path="reports" element={<AuditPlaceholder title="Compliance Reports" phase="Phase 4" />} />
+          </Route>
+
           <Route path="/katalog" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Katalog','Katalog Preise','Vertrieb','Vertriebsleitung','Marketing','Service','Geschäftsführung']}><KatalogLayoutLazy /></ProtectedRoute>}>
             <Route index element={<KatalogDashboard />} />
             <Route path="artikel" element={<KatalogArtikel />} />
