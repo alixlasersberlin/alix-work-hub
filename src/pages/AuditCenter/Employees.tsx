@@ -110,7 +110,8 @@ export default function AuditEmployees() {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.slice(0, 60).map((r) => (
-          <Card key={r.user_id} className="border-border/60 bg-card/40 backdrop-blur-xl">
+          <Card key={r.user_id} asChild className="border-border/60 bg-card/40 backdrop-blur-xl hover:border-amber-500/40 cursor-pointer transition">
+            <Link to={`/audit-center/employees/${r.user_id}`}>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <User className="h-4 w-4 text-amber-400" />
