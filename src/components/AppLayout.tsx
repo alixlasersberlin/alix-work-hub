@@ -30,7 +30,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck } from 'lucide-react';
+import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
@@ -644,7 +644,17 @@ export const navItems: NavItem[] = [
       },
 
       {
-        path: '/audit-center', label: 'Audit Center', icon: ShieldCheck, roles: ['Super Admin'],
+        path: '#audit-center', label: 'Audit Center', icon: ShieldCheck, roles: ['Super Admin'],
+        children: [
+          { path: '/audit-center', label: 'Übersicht', icon: LayoutDashboard, roles: ['Super Admin'] },
+          { path: '/audit-center/live', label: 'Live-Monitor', icon: Radio, roles: ['Super Admin'] },
+          { path: '/audit-center/timeline', label: 'Activity Timeline', icon: Activity, roles: ['Super Admin'] },
+          { path: '/audit-center/changes', label: 'Änderungs-Log', icon: FileText, roles: ['Super Admin'] },
+          { path: '/audit-center/security', label: 'Sicherheits-Alerts', icon: ShieldAlert, roles: ['Super Admin'] },
+          { path: '/audit-center/employees', label: 'Mitarbeiter-Profile', icon: Users, roles: ['Super Admin'] },
+          { path: '/audit-center/ups', label: 'Ultimate Productivity Score', icon: Trophy, roles: ['Super Admin'] },
+          { path: '/audit-center/reports', label: 'Compliance Reports', icon: FileDown, roles: ['Super Admin'] },
+        ],
       },
 
 
