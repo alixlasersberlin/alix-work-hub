@@ -13,6 +13,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
 import { ExperienceModeProvider } from "@/hooks/useExperienceMode";
 import AuroraSpotlight from "@/components/AuroraSpotlight";
+import AuditMount from "@/components/audit/AuditMount";
 import { CursorSpotlight } from "@/components/aurora/CursorSpotlight";
 import { GlobalCommandBar } from "@/components/infinity/GlobalCommandBar";
 import { CopilotBar } from "@/components/infinity/CopilotBar";
