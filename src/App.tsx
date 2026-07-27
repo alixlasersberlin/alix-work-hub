@@ -427,6 +427,11 @@ const BugCapaMassnahmen = lazy(() => import("./pages/BugCapa/Massnahmen"));
 const BugCapaBerichte = lazy(() => import("./pages/BugCapa/Berichte"));
 const BugCapaAnalytics = lazy(() => import("./pages/BugCapa/Analytics"));
 const BugCapaIsoReport = lazy(() => import("./pages/BugCapa/IsoReport"));
+
+const AuditCenterLayout = lazy(() => import("./pages/AuditCenter/Layout"));
+const AuditOverview = lazy(() => import("./pages/AuditCenter/Overview"));
+const AuditTimeline = lazy(() => import("./pages/AuditCenter/Timeline"));
+const AuditPlaceholder = lazy(() => import("./pages/AuditCenter/Placeholder"));
 const IsoLayoutLazy = lazy(() => import("./pages/Iso/_shared").then(m => ({ default: m.IsoLayout })));
 const IsoDashboard = lazy(() => import("./pages/Iso/Dashboard"));
 const IsoAudits = lazy(() => import("./pages/Iso/Audits"));
