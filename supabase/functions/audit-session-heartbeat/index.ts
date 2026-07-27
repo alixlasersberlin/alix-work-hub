@@ -1,20 +1,13 @@
 // ALIX Audit Center — heartbeat (idle/active + counters)
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders, createAuditServiceClient, jsonResponse, requireAuditUser } from "../_shared/audit-auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const url = Deno.env.get("SUPABASE_URL")!;
-    const authClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authHeader } } });
-    const supabase = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const auth = await requireAuditUser(req);
+    if ("response" in auth) return auth.response;
+    const { user } = auth;
+    const supabase = createAuditServiceClient();
 
 
     const { session_id, active_delta = 0, idle_delta = 0, clicks = 0, scrolls = 0, keystrokes = 0 } = await req.json();
@@ -36,8 +29,8 @@ Deno.serve(async (req) => {
       keystroke_count: (cur.keystroke_count ?? 0) + Number(keystrokes || 0),
     }).eq("id", session_id);
 
-    return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return jsonResponse({ ok: true });
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message ?? String(e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return jsonResponse({ error: e?.message ?? String(e) }, 500);
   }
 });

@@ -1,10 +1,5 @@
 // ALIX Audit Center — action tracker (batch)
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders, createAuditServiceClient, jsonResponse, requireAuditUser } from "../_shared/audit-auth.ts";
 
 type Action = {
   ts?: string;
@@ -20,18 +15,29 @@ type Action = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const url = Deno.env.get("SUPABASE_URL")!;
-    const authClient = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: authHeader } } });
-    const supabase = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: { user } } = await authClient.auth.getUser();
-    if (!user) return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const auth = await requireAuditUser(req);
+    if ("response" in auth) return auth.response;
+    const { user } = auth;
+    const supabase = createAuditServiceClient();
 
 
     const { session_id, actions } = await req.json() as { session_id?: string; actions: Action[] };
     if (!Array.isArray(actions) || actions.length === 0) {
-      return new Response(JSON.stringify({ ok: true, inserted: 0 }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return jsonResponse({ ok: true, inserted: 0 });
     }
+
+    if (session_id) {
+      const { data: session, error: sessionError } = await supabase
+        .from("audit_sessions")
+        .select("id, user_id")
+        .eq("id", session_id)
+        .single();
+      if (sessionError) throw sessionError;
+      if (session.user_id !== user.id) {
+        return jsonResponse({ error: "session mismatch" }, 403);
+      }
+    }
+
     // Rate limit: max 200 per call
     const rows = actions.slice(0, 200).map((a) => ({
       ts: a.ts ?? new Date().toISOString(),
@@ -49,8 +55,8 @@ Deno.serve(async (req) => {
     const { error } = await supabase.from("audit_actions").insert(rows);
     if (error) throw error;
 
-    return new Response(JSON.stringify({ ok: true, inserted: rows.length }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return jsonResponse({ ok: true, inserted: rows.length });
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e?.message ?? String(e) }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return jsonResponse({ error: e?.message ?? String(e) }, 500);
   }
 });
