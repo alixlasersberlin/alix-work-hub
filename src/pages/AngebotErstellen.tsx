@@ -1538,45 +1538,46 @@ export default function AngebotErstellen() {
             </div>
 
             {editingCustomer ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm" data-1p-ignore="true" data-lpignore="true" data-bwignore="true" data-form-type="other">
                 <div>
                   <Label className="text-[11px] uppercase">Firma</Label>
-                  <Input value={draft.company_name} onChange={e => setDraft({ ...draft, company_name: e.target.value })} className="bg-card border-border h-8 mt-1" />
+                  <Input {...noAutofillInputProps('edit-company')} value={draft.company_name ?? ''} onChange={e => setDraft({ ...draft, company_name: e.target.value })} className="bg-card border-border h-8 mt-1" />
                 </div>
                 <div>
                   <Label className="text-[11px] uppercase">Ansprechpartner</Label>
-                  <Input value={draft.contact_name} onChange={e => setDraft({ ...draft, contact_name: e.target.value })} className="bg-card border-border h-8 mt-1" />
+                  <Input {...noAutofillInputProps('edit-contact')} value={draft.contact_name ?? ''} onChange={e => setDraft({ ...draft, contact_name: e.target.value })} className="bg-card border-border h-8 mt-1" />
                 </div>
                 <div>
                   <Label className="text-[11px] uppercase">E-Mail</Label>
-                  <Input value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} className="bg-card border-border h-8 mt-1" />
+                  <Input {...noAutofillInputProps('edit-mail')} type="text" inputMode="email" value={draft.email ?? ''} onChange={e => setDraft({ ...draft, email: e.target.value })} className="bg-card border-border h-8 mt-1" />
                 </div>
                 <div>
                   <Label className="text-[11px] uppercase">Telefon</Label>
-                  <Input value={draft.phone} onChange={e => setDraft({ ...draft, phone: e.target.value })} className="bg-card border-border h-8 mt-1" />
+                  <Input {...noAutofillInputProps('edit-phone')} type="tel" value={draft.phone ?? ''} onChange={e => setDraft({ ...draft, phone: e.target.value })} className="bg-card border-border h-8 mt-1" />
                 </div>
 
                 <div className="sm:col-span-2 mt-2 text-[11px] uppercase tracking-wide text-muted-foreground">Rechnungsadresse</div>
                 <div className="sm:col-span-2">
-                  <Input placeholder="Straße / Adresse" value={draft.ba_address} onChange={e => setDraft({ ...draft, ba_address: e.target.value })} className="bg-card border-border h-8" />
+                  <Input {...noAutofillInputProps('edit-ba-street')} placeholder="Straße / Adresse" value={draft.ba_address ?? ''} onChange={e => setDraft({ ...draft, ba_address: e.target.value })} className="bg-card border-border h-8" />
                 </div>
                 <div className="sm:col-span-2">
-                  <Input placeholder="Adresszusatz" value={draft.ba_street2} onChange={e => setDraft({ ...draft, ba_street2: e.target.value })} className="bg-card border-border h-8" />
+                  <Input {...noAutofillInputProps('edit-ba-extra')} placeholder="Adresszusatz" value={draft.ba_street2 ?? ''} onChange={e => setDraft({ ...draft, ba_street2: e.target.value })} className="bg-card border-border h-8" />
                 </div>
-                <Input placeholder="PLZ" value={draft.ba_zip} onChange={e => setDraft({ ...draft, ba_zip: e.target.value })} className="bg-card border-border h-8" />
-                <Input placeholder="Ort" value={draft.ba_city} onChange={e => setDraft({ ...draft, ba_city: e.target.value })} className="bg-card border-border h-8" />
-                <Input placeholder="Land" value={draft.ba_country} onChange={e => setDraft({ ...draft, ba_country: e.target.value })} className="bg-card border-border h-8 sm:col-span-2" />
+                <Input {...noAutofillInputProps('edit-ba-zip')} placeholder="PLZ" value={draft.ba_zip ?? ''} onChange={e => setDraft({ ...draft, ba_zip: e.target.value })} className="bg-card border-border h-8" />
+                <Input {...noAutofillInputProps('edit-ba-city')} placeholder="Ort" value={draft.ba_city ?? ''} onChange={e => setDraft({ ...draft, ba_city: e.target.value })} className="bg-card border-border h-8" />
+                <Input {...noAutofillInputProps('edit-ba-country')} placeholder="Land" value={draft.ba_country ?? ''} onChange={e => setDraft({ ...draft, ba_country: e.target.value })} className="bg-card border-border h-8 sm:col-span-2" />
 
                 <div className="sm:col-span-2 mt-2 text-[11px] uppercase tracking-wide text-muted-foreground">Lieferadresse (optional)</div>
                 <div className="sm:col-span-2">
-                  <Input placeholder="Straße / Adresse" value={draft.sa_address} onChange={e => setDraft({ ...draft, sa_address: e.target.value })} className="bg-card border-border h-8" />
+                  <Input {...noAutofillInputProps('edit-sa-street')} placeholder="Straße / Adresse" value={draft.sa_address ?? ''} onChange={e => setDraft({ ...draft, sa_address: e.target.value })} className="bg-card border-border h-8" />
                 </div>
                 <div className="sm:col-span-2">
-                  <Input placeholder="Adresszusatz" value={draft.sa_street2} onChange={e => setDraft({ ...draft, sa_street2: e.target.value })} className="bg-card border-border h-8" />
+                  <Input {...noAutofillInputProps('edit-sa-extra')} placeholder="Adresszusatz" value={draft.sa_street2 ?? ''} onChange={e => setDraft({ ...draft, sa_street2: e.target.value })} className="bg-card border-border h-8" />
                 </div>
-                <Input placeholder="PLZ" value={draft.sa_zip} onChange={e => setDraft({ ...draft, sa_zip: e.target.value })} className="bg-card border-border h-8" />
-                <Input placeholder="Ort" value={draft.sa_city} onChange={e => setDraft({ ...draft, sa_city: e.target.value })} className="bg-card border-border h-8" />
-                <Input placeholder="Land" value={draft.sa_country} onChange={e => setDraft({ ...draft, sa_country: e.target.value })} className="bg-card border-border h-8 sm:col-span-2" />
+                <Input {...noAutofillInputProps('edit-sa-zip')} placeholder="PLZ" value={draft.sa_zip ?? ''} onChange={e => setDraft({ ...draft, sa_zip: e.target.value })} className="bg-card border-border h-8" />
+                <Input {...noAutofillInputProps('edit-sa-city')} placeholder="Ort" value={draft.sa_city ?? ''} onChange={e => setDraft({ ...draft, sa_city: e.target.value })} className="bg-card border-border h-8" />
+                <Input {...noAutofillInputProps('edit-sa-country')} placeholder="Land" value={draft.sa_country ?? ''} onChange={e => setDraft({ ...draft, sa_country: e.target.value })} className="bg-card border-border h-8 sm:col-span-2" />
+
 
                 <div className="sm:col-span-2 flex flex-wrap justify-end gap-2 pt-2 border-t border-border">
                   <Button variant="ghost" size="sm" onClick={() => setEditingCustomer(false)}>
