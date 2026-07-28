@@ -177,8 +177,12 @@ export default function CustomerDetail() {
             customerName={customer.company_name || customer.contact_name || '—'}
             customerEmail={customer.email}
             customerPhone={customer.phone}
+            customerContactName={customer.contact_name}
+            customerBillingAddress={customer.billing_address}
+            customerRawData={customer.raw_data}
           />
         </TabsContent>
+
       </Tabs>
 
       {/* Dialogs */}
