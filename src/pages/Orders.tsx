@@ -93,7 +93,7 @@ export default function Orders() {
   const [regionFilter, setRegionFilter] = useState<'all' | 'de' | 'at'>(
     atOnly ? 'at' : (initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all')
   );
-  const [depositFilter, setDepositFilter] = useState<'all' | 'partial'>('all');
+  const [depositFilter, setDepositFilter] = useState<'all' | 'partial' | 'paid_full' | 'paid_partial' | 'invoice_missing' | 'unpaid'>('all');
   const [newImportFilter, setNewImportFilter] = useState<'all' | 'new'>(
     (searchParams.get('filter') === 'new-import' ? 'new' : 'all')
   );
