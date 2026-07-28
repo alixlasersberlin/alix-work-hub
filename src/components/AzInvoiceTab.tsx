@@ -365,8 +365,13 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setFontSize(9.5);
       doc.setTextColor(40, 40, 40);
       let y = ay + 5;
-      if (customer?.company_name) { doc.text(String(customer.company_name), LEFT, y); y += 4.4; }
-      if (customer?.contact_name) { doc.text(String(customer.contact_name), LEFT, y); y += 4.4; }
+      const compName = customer?.company_name ? String(customer.company_name).trim() : '';
+      const contName = customer?.contact_name ? String(customer.contact_name).trim() : '';
+      if (compName) { doc.text(compName, LEFT, y); y += 4.4; }
+      // Kontaktname nur ausgeben, wenn er sich vom Firmennamen unterscheidet.
+      if (contName && contName.toLowerCase() !== compName.toLowerCase()) {
+        doc.text(contName, LEFT, y); y += 4.4;
+      }
       for (const ln of addrLines(billing)) { doc.text(ln, LEFT, y); y += 4.4; }
       if (customer?.email) { doc.text(String(customer.email), LEFT, y); y += 4.4; }
       let cy = y + 6;
