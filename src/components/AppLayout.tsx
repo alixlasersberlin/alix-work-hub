@@ -30,7 +30,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon } from 'lucide-react';
+import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
@@ -671,6 +671,9 @@ export const navItems: NavItem[] = [
           { path: '/social/medien', label: 'Medien-Bibliothek', icon: ImageIcon, roles: ['Super Admin','Admin','Marketing','Grafiker'] },
           { path: '/social/analytics', label: 'Analytics', icon: BarChart3, roles: ['Super Admin','Admin','Marketing','Grafiker'] },
           { path: '/social/veroeffentlichung', label: 'Publishing-Queue', icon: Send, roles: ['Super Admin','Admin','Marketing'] },
+          { path: '/social/kampagnen', label: 'Kampagnen & Ads', icon: Target, roles: ['Super Admin','Admin','Marketing'] },
+          { path: '/social/wettbewerber', label: 'Wettbewerber & Trends', icon: TrendingUp, roles: ['Super Admin','Admin','Marketing','Grafiker'] },
+          { path: '/social/reports', label: 'Reports & Kundenlinks', icon: FileText, roles: ['Super Admin','Admin','Marketing'] },
         ],
       },
 

@@ -27308,6 +27308,68 @@ export type Database = {
           },
         ]
       }
+      social_ads: {
+        Row: {
+          campaign_id: string
+          clicks: number | null
+          conversions: number | null
+          cpc: number | null
+          created_at: string
+          ctr: number | null
+          external_ad_id: string | null
+          id: string
+          impressions: number | null
+          last_synced_at: string | null
+          name: string
+          platform: string
+          spend: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          clicks?: number | null
+          conversions?: number | null
+          cpc?: number | null
+          created_at?: string
+          ctr?: number | null
+          external_ad_id?: string | null
+          id?: string
+          impressions?: number | null
+          last_synced_at?: string | null
+          name: string
+          platform: string
+          spend?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          clicks?: number | null
+          conversions?: number | null
+          cpc?: number | null
+          created_at?: string
+          ctr?: number | null
+          external_ad_id?: string | null
+          id?: string
+          impressions?: number | null
+          last_synced_at?: string | null
+          name?: string
+          platform?: string
+          spend?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_ads_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "social_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_ai_generations: {
         Row: {
           client_id: string
@@ -27395,6 +27457,39 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "social_approvals_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_campaign_posts: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          post_id: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          post_id: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_campaign_posts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "social_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_campaign_posts_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "social_posts"
@@ -27587,6 +27682,94 @@ export type Database = {
           },
         ]
       }
+      social_competitor_snapshots: {
+        Row: {
+          avg_engagement_rate: number | null
+          competitor_id: string
+          created_at: string
+          followers: number | null
+          id: string
+          posts_count: number | null
+          raw: Json | null
+          snapshot_date: string
+          top_hashtags: string[] | null
+        }
+        Insert: {
+          avg_engagement_rate?: number | null
+          competitor_id: string
+          created_at?: string
+          followers?: number | null
+          id?: string
+          posts_count?: number | null
+          raw?: Json | null
+          snapshot_date?: string
+          top_hashtags?: string[] | null
+        }
+        Update: {
+          avg_engagement_rate?: number | null
+          competitor_id?: string
+          created_at?: string
+          followers?: number | null
+          id?: string
+          posts_count?: number | null
+          raw?: Json | null
+          snapshot_date?: string
+          top_hashtags?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_competitor_snapshots_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "social_competitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_competitors: {
+        Row: {
+          client_id: string
+          created_at: string
+          display_name: string | null
+          handle: string
+          id: string
+          last_snapshot_at: string | null
+          notes: string | null
+          platform: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          display_name?: string | null
+          handle: string
+          id?: string
+          last_snapshot_at?: string | null
+          notes?: string | null
+          platform: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          display_name?: string | null
+          handle?: string
+          id?: string
+          last_snapshot_at?: string | null
+          notes?: string | null
+          platform?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_competitors_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_credentials: {
         Row: {
           account_id: string
@@ -27624,6 +27807,53 @@ export type Database = {
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "social_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_hashtag_research: {
+        Row: {
+          ai_notes: string | null
+          client_id: string
+          created_at: string
+          difficulty: number | null
+          hashtag: string
+          id: string
+          platform: string
+          suggested_best_time: string | null
+          trend: string | null
+          volume: number | null
+        }
+        Insert: {
+          ai_notes?: string | null
+          client_id: string
+          created_at?: string
+          difficulty?: number | null
+          hashtag: string
+          id?: string
+          platform: string
+          suggested_best_time?: string | null
+          trend?: string | null
+          volume?: number | null
+        }
+        Update: {
+          ai_notes?: string | null
+          client_id?: string
+          created_at?: string
+          difficulty?: number | null
+          hashtag?: string
+          id?: string
+          platform?: string
+          suggested_best_time?: string | null
+          trend?: string | null
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_hashtag_research_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
             referencedColumns: ["id"]
           },
         ]
@@ -27721,6 +27951,109 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "social_notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_oauth_tokens: {
+        Row: {
+          access_token_ct: string
+          access_token_iv: string
+          account_id: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          external_account_id: string | null
+          external_user_id: string | null
+          id: string
+          provider: string
+          refresh_token_ct: string | null
+          refresh_token_iv: string | null
+          scopes: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          access_token_ct: string
+          access_token_iv: string
+          account_id: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          external_account_id?: string | null
+          external_user_id?: string | null
+          id?: string
+          provider: string
+          refresh_token_ct?: string | null
+          refresh_token_iv?: string | null
+          scopes?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          access_token_ct?: string
+          access_token_iv?: string
+          account_id?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          external_account_id?: string | null
+          external_user_id?: string | null
+          id?: string
+          provider?: string
+          refresh_token_ct?: string | null
+          refresh_token_iv?: string | null
+          scopes?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_oauth_tokens_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: true
+            referencedRelation: "social_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_portal_links: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          disabled_at: string | null
+          expires_at: string | null
+          id: string
+          last_viewed_at: string | null
+          token: string
+          view_count: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          disabled_at?: string | null
+          expires_at?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          token: string
+          view_count?: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          disabled_at?: string | null
+          expires_at?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          token?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_portal_links_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "social_clients"
@@ -27984,6 +28317,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "social_questionnaire_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_reports: {
+        Row: {
+          client_id: string
+          created_at: string
+          generated_by: string | null
+          id: string
+          pdf_path: string | null
+          period_end: string
+          period_start: string
+          status: string
+          summary: Json | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          pdf_path?: string | null
+          period_end: string
+          period_start: string
+          status?: string
+          summary?: Json | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          pdf_path?: string | null
+          period_end?: string
+          period_start?: string
+          status?: string
+          summary?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_reports_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "social_clients"

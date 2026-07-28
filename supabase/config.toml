@@ -1,5 +1,8 @@
 project_id = "xmrmkgfgpoundfwhnxfs"
 
+[functions.social-portal]
+verify_jwt = false
+
 [functions.ac-track]
 verify_jwt = false
 
