@@ -19,10 +19,10 @@ type CustomerHit = {
   contact_name: string | null;
   email: string | null;
   phone: string | null;
-  mobile: string | null;
-  website: string | null;
+  external_customer_id: string | null;
   source_system: string | null;
 };
+
 
 
 export default function SocialOnboarding() {
