@@ -161,8 +161,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }, [confirm]);
 
   useEffect(() => {
+    if (hasDraft) return;
     if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
-  }, [orderDeposit]);
+  }, [orderDeposit, hasDraft]);
 
   // Fallback: Wenn im Auftrag kein deposit_amount hinterlegt ist, aus finance_deposits ziehen.
   useEffect(() => {
