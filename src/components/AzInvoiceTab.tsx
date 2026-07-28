@@ -354,8 +354,17 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         metaY += 5;
       }
 
+      // Absenderzeile (Pflichtangaben §14 UStG) – klein über der Rechnungsadresse
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(90, 90, 90);
+      doc.text(
+        'Alix Lasers GmbH · Otto-Hahn-Str. 43 · 63303 Dreieich · USt-IdNr. DE327063823',
+        LEFT, TOP_CONTENT + 8,
+      );
+
       // Rechnungsadresse
-      let ay = TOP_CONTENT + 12;
+      let ay = TOP_CONTENT + 16;
       const billing = customer?.billing_address || customer?.shipping_address || {};
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
