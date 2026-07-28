@@ -355,3 +355,7 @@ verify_jwt = false
 [functions.vies-check]
 verify_jwt = false
 
+[functions.audit-session-end]
+verify_jwt = false
+
+
