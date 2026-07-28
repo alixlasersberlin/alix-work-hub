@@ -1403,6 +1403,8 @@ function AppRoutes() {
           <Route path="/social/beitrag/:id" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing','Grafiker']}><SocialBeitragEditor /></ProtectedRoute>} />
           <Route path="/social/freigaben" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialFreigaben /></ProtectedRoute>} />
           <Route path="/social/medien" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing','Grafiker']}><SocialMedien /></ProtectedRoute>} />
+          <Route path="/social/analytics" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing','Grafiker']}><SocialAnalytics /></ProtectedRoute>} />
+          <Route path="/social/veroeffentlichung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialVeroeffentlichung /></ProtectedRoute>} />
 
           <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />
           <Route path="/bonitaet" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Vertriebsleitung','Vertrieb','Finance']}><CreditIndex /></ProtectedRoute>} />
