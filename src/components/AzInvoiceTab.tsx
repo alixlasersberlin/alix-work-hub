@@ -582,6 +582,13 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       toast.error(`Für diesen Auftrag wurde bereits die Anzahlungsrechnung ${currentIsDuplicate.invoice_number} gestellt. Ein erneutes Ausstellen ist nicht möglich.`);
       return true;
     }
+    if (exceedsDeposit) {
+      toast.error(
+        `Die Summe aller Anzahlungsraten (${fmtMoney(projectedSum, currency)}) überschreitet die Anzahlung lt. Auftrag (${fmtMoney(orderDeposit, currency)}). ` +
+        `Offener Restbetrag: ${fmtMoney(openRestDeposit, currency)}.`,
+      );
+      return true;
+    }
     return false;
   }
 
