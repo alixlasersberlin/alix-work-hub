@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Link2, Link2Off, Plus, Search, Sparkles, ExternalLink, Loader2, Mail, Copy } from 'lucide-react';
+import { Link2, Link2Off, Plus, Search, Sparkles, ExternalLink, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 type SocialClient = {
