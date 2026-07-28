@@ -905,6 +905,15 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
               : <Mail className="w-4 h-4 mr-2" />}
             {currentIsDuplicate ? 'Rechnung per E-Mail versenden' : 'Anzahlung per E-Mail versenden'}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addNewRate}
+            title="Weitere Anzahlungsrate anlegen – Rechnungsnummer wird hochgezählt und Restbetrag vorbelegt."
+          >
+            + Weitere Anzahlung
+          </Button>
+
         </div>
       </div>
 
