@@ -70,6 +70,20 @@ const DRAFT_PREFIX = 'az-draft:';
 const draftKey = (orderId?: string | null, orderNo?: string) =>
   `${DRAFT_PREFIX}${orderId || orderNo || 'neu'}`;
 
+const MODE_PREFIX = 'az-mode:';
+const modeKeyFn = (orderId?: string | null, orderNo?: string) =>
+  `${MODE_PREFIX}${orderId || orderNo || 'neu'}`;
+type SplitMode = 'single' | 'multi';
+function readMode(key: string): SplitMode | null {
+  try {
+    const v = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+    return v === 'single' || v === 'multi' ? v : null;
+  } catch { return null; }
+}
+function writeMode(key: string, m: SplitMode) {
+  try { window.localStorage.setItem(key, m); } catch { /* ignore */ }
+}
+
 type AzDraft = {
   invoiceNumber: string;
   invoiceDate: string;
@@ -99,8 +113,11 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const currency = order?.currency || 'EUR';
   const orderNo = String(order?.order_number || '');
   const dKey = draftKey(order?.id, orderNo);
+  const mKey = modeKeyFn(order?.id, orderNo);
   const initialDraft = useMemo(() => readDraft(dKey), [dKey]);
   const [hasDraft, setHasDraft] = useState<boolean>(!!initialDraft);
+  const [splitMode, setSplitModeState] = useState<SplitMode | null>(() => readMode(mKey));
+  const setSplitMode = (m: SplitMode) => { writeMode(mKey, m); setSplitModeState(m); };
 
   // Anzahlung aus Auftrag übernehmen
   const orderDeposit = Number(order?.deposit_amount) || 0;
@@ -234,13 +251,27 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             status: row.status ?? null,
           }));
           setExistingInvoices(list);
-          // Vorschlag für nächste Rate: AZ-{orderNo}-{n+1} und Restbetrag als Vorbelegung
-          // ABER: nur wenn kein lokaler Entwurf besteht (sonst überschreiben wir die Eingaben des Users).
-          if (list.length > 0 && !hasDraft) {
-            const base = `AZ-${orderNo}`;
-            const next = list.length + 1;
-            const candidate = `${base}-${next}`;
-            setInvoiceNumber(candidate);
+          const base = `AZ-${orderNo}`;
+          // Split-Mode aus bestehenden Rechnungen ableiten (falls noch nicht gesetzt).
+          let effectiveMode: SplitMode | null = readMode(mKey);
+          if (list.length > 0 && !effectiveMode) {
+            const hasSuffixed = list.some(inv => /-\d+$/.test((inv.invoice_number || '').trim()));
+            effectiveMode = hasSuffixed ? 'multi' : 'single';
+            writeMode(mKey, effectiveMode);
+            setSplitModeState(effectiveMode);
+          }
+          // Vorschlag nur für Multi-Modus (durchgängige Nummerierung mit Suffix)
+          if (list.length > 0 && !hasDraft && effectiveMode === 'multi') {
+            // höchsten vorhandenen Suffix ermitteln (statt list.length, robust bei Lücken)
+            const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const rx = new RegExp(`^${esc}-(\\d+)$`);
+            let maxN = 0;
+            for (const inv of list) {
+              const m = (inv.invoice_number || '').trim().match(rx);
+              if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+            }
+            const next = Math.max(maxN + 1, list.length + 1);
+            setInvoiceNumber(`${base}-${next}`);
             setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
             const sum = list.reduce((s, r: any) => s + (Number(r.gross_amount) || 0), 0);
             const rest = Math.max(0, (Number(orderDeposit) || 0) - sum);
@@ -323,8 +354,17 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         metaY += 5;
       }
 
+      // Absenderzeile (Pflichtangaben §14 UStG) – klein über der Rechnungsadresse
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(90, 90, 90);
+      doc.text(
+        'Alix Lasers GmbH · Otto-Hahn-Str. 43 · 63303 Dreieich · USt-IdNr. DE327063823',
+        LEFT, TOP_CONTENT + 8,
+      );
+
       // Rechnungsadresse
-      let ay = TOP_CONTENT + 12;
+      let ay = TOP_CONTENT + 16;
       const billing = customer?.billing_address || customer?.shipping_address || {};
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9);
@@ -334,8 +374,13 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setFontSize(9.5);
       doc.setTextColor(40, 40, 40);
       let y = ay + 5;
-      if (customer?.company_name) { doc.text(String(customer.company_name), LEFT, y); y += 4.4; }
-      if (customer?.contact_name) { doc.text(String(customer.contact_name), LEFT, y); y += 4.4; }
+      const compName = customer?.company_name ? String(customer.company_name).trim() : '';
+      const contName = customer?.contact_name ? String(customer.contact_name).trim() : '';
+      if (compName) { doc.text(compName, LEFT, y); y += 4.4; }
+      // Kontaktname nur ausgeben, wenn er sich vom Firmennamen unterscheidet.
+      if (contName && contName.toLowerCase() !== compName.toLowerCase()) {
+        doc.text(contName, LEFT, y); y += 4.4;
+      }
       for (const ln of addrLines(billing)) { doc.text(ln, LEFT, y); y += 4.4; }
       if (customer?.email) { doc.text(String(customer.email), LEFT, y); y += 4.4; }
       let cy = y + 6;
@@ -410,7 +455,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setTextColor(60, 60, 60);
       const hint =
         `Dies ist eine Anzahlungsrechnung zum Auftrag ${orderNo}. Der Betrag von ` +
-        `${fmtMoney(grossDeposit, currency)} (brutto) wird mit der Schlussrechnung verrechnet. ` +
+        `${fmtMoney(grossDeposit, currency)} (brutto) wird auf die im Mietkaufvertrag vereinbarte Gesamtanzahlung angerechnet. ` +
         `Bitte überweisen Sie den Rechnungsbetrag bis zum ${fmtDate(dueDate)} unter Angabe der ` +
         `Rechnungsnummer ${invoiceNumber}.`;
       const wrapped = doc.splitTextToSize(hint, CONTENT_W);
@@ -463,8 +508,14 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           doc.line(LEFT, TOP_CONTENT - 5, RIGHT, TOP_CONTENT - 5);
         }
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
+        doc.setFontSize(7.5);
         doc.setTextColor(120, 120, 120);
+        // Absender-Pflichtangaben im Footer auf jeder Seite
+        doc.text(
+          'Alix Lasers GmbH · Otto-Hahn-Str. 43 · 63303 Dreieich · USt-IdNr. DE327063823',
+          LEFT, PAGE_H - 8,
+        );
+        doc.setFontSize(8);
         doc.text(
           `Anzahlungsrechnung ${invoiceNumber}  ·  Seite ${i} von ${totalPages}`,
           RIGHT, PAGE_H - 4, { align: 'right' },
@@ -889,17 +940,27 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     let hasBase = false;
     for (const inv of existingInvoices) {
       const n = (inv.invoice_number || '').trim();
-      if (n === base) { hasBase = true; if (maxN < 1) maxN = 1; continue; }
+      if (n === base) { hasBase = true; continue; }
       const m = n.match(rx);
       if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
     }
-    const cur = invoiceNumber.trim();
-    if (cur === base) { hasBase = true; if (maxN < 1) maxN = 1; }
-    const mCur = cur.match(rx);
-    if (mCur) maxN = Math.max(maxN, parseInt(mCur[1], 10));
-    const next = Math.max(maxN + 1, existingInvoices.length + 1, hasBase ? 2 : 2);
+    // Edge Case „nachträglicher Sinneswandel":
+    // wenn bereits eine unsuffigierte Rechnung existiert (Single-Modus),
+    // startet die neue Rate bei -2 (die -1 wird nie vergeben, um die bereits
+    // versendete Rechnung ohne Suffix nicht zu tangieren).
+    let next: number;
+    if (hasBase && maxN === 0) {
+      next = 2;
+    } else {
+      next = Math.max(maxN + 1, 2);
+    }
+    setSplitMode('multi');
     setInvoiceNumber(`${base}-${next}`);
-    setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
+    setPositionLabel(
+      hasBase && next === 2
+        ? `Anzahlung Rate 2 (nachträglich) gemäß Auftrag ${orderNo}`.trim()
+        : `Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim()
+    );
     const d = new Date();
     setInvoiceDate(d.toISOString().slice(0, 10));
     const due = new Date(d); due.setDate(due.getDate() + 14);
@@ -963,14 +1024,20 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
               : <Mail className="w-4 h-4 mr-2" />}
             {currentIsDuplicate ? 'Rechnung per E-Mail versenden' : 'Anzahlung per E-Mail versenden'}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addNewRate}
-            title="Weitere Anzahlungsrate anlegen – Rechnungsnummer wird hochgezählt und Restbetrag vorbelegt."
-          >
-            + Weitere Anzahlung
-          </Button>
+          {(splitMode === 'multi' || (splitMode === 'single' && existingInvoices.length > 0)) && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addNewRate}
+              title={
+                splitMode === 'single'
+                  ? 'Nachträglich eine weitere Rate ergänzen (startet bei -2, die bereits versendete Rechnung bleibt unverändert ohne Suffix).'
+                  : 'Weitere Anzahlungsrate anlegen – Rechnungsnummer wird hochgezählt und Restbetrag vorbelegt.'
+              }
+            >
+              + Weitere Anzahlung
+            </Button>
+          )}
           {hasDraft && (
             <Button
               type="button"
@@ -988,6 +1055,50 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
         </div>
       </div>
+
+      {/* Mode-Chooser: nur solange keine Anzahlungsrechnung existiert UND noch keine Wahl getroffen wurde. */}
+      {!checkingExisting && !splitMode && existingInvoices.length === 0 && (
+        <div className="rounded-lg border border-primary/40 bg-primary/5 p-4 space-y-3">
+          <div className="text-sm font-semibold text-primary">
+            Wie soll die Anzahlung gestellt werden?
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Bitte einmalig festlegen. Diese Wahl bestimmt die Rechnungsnummerierung:
+            <br />
+            <strong>Eine Rechnung</strong> → <span className="font-mono">AZ-{orderNo || '…'}</span> (ohne Suffix).
+            <br />
+            <strong>Mehrere Raten</strong> → <span className="font-mono">AZ-{orderNo || '…'}-1</span>, <span className="font-mono">-2</span>, …
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className="gold-gradient text-primary-foreground"
+              onClick={() => {
+                setSplitMode('single');
+                const base = `AZ-${orderNo}`;
+                setInvoiceNumber(base);
+                setPositionLabel(`Anzahlung gemäß Auftrag ${orderNo}`.trim());
+                if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
+              }}
+            >
+              Anzahlung in einer Rechnung stellen
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setSplitMode('multi');
+                const base = `AZ-${orderNo}`;
+                setInvoiceNumber(`${base}-1`);
+                setPositionLabel(`Anzahlung Rate 1 gemäß Auftrag ${orderNo}`.trim());
+              }}
+            >
+              Anzahlung in mehreren Raten stellen
+            </Button>
+          </div>
+        </div>
+      )}
+
 
       {confirm && typeof document !== 'undefined' && createPortal(
         <div
@@ -1070,17 +1181,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
               variant="outline"
               disabled={openRestDeposit <= 0}
               title={openRestDeposit <= 0 ? 'Anzahlung lt. Auftrag ist vollständig in Raten aufgeteilt.' : 'Neue Rate anlegen – Restbetrag wird vorbelegt.'}
-              onClick={() => {
-                const next = existingInvoices.length + 1;
-                const base = `AZ-${orderNo}`;
-                setInvoiceNumber(`${base}-${next}`);
-                setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
-                const d = new Date();
-                setInvoiceDate(d.toISOString().slice(0, 10));
-                const due = new Date(d); due.setDate(due.getDate() + 14);
-                setDueDate(due.toISOString().slice(0, 10));
-                setDepositAmount(openRestDeposit > 0 ? String(openRestDeposit) : '');
-              }}
+              onClick={addNewRate}
             >
               + Weitere Anzahlungsrate hinzufügen
             </Button>
@@ -1154,39 +1255,20 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         <div>
           <div className="flex items-center justify-between gap-2">
             <Label className="text-xs text-muted-foreground">Rechnungsnummer</Label>
-            <button
-              type="button"
-              className="text-[11px] text-primary hover:underline"
-              title="Nächste Rate anlegen – Nummer wird hochgezählt und Restbetrag vorbelegt."
-              onClick={() => {
-                const base = `AZ-${orderNo}`;
-                const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                const rx = new RegExp(`^${esc}-(\\d+)$`);
-                let maxN = 0;
-                let hasBase = false;
-                for (const inv of existingInvoices) {
-                  const n = (inv.invoice_number || '').trim();
-                  if (n === base) { hasBase = true; if (maxN < 1) maxN = 1; continue; }
-                  const m = n.match(rx);
-                  if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+            {(splitMode === 'multi' || (splitMode === 'single' && existingInvoices.length > 0)) && (
+              <button
+                type="button"
+                className="text-[11px] text-primary hover:underline"
+                title={
+                  splitMode === 'single'
+                    ? 'Nachträglich eine weitere Rate ergänzen (startet bei -2).'
+                    : 'Nächste Rate anlegen – Nummer wird hochgezählt und Restbetrag vorbelegt.'
                 }
-                const cur = invoiceNumber.trim();
-                if (cur === base) { hasBase = true; if (maxN < 1) maxN = 1; }
-                const mCur = cur.match(rx);
-                if (mCur) maxN = Math.max(maxN, parseInt(mCur[1], 10));
-                const next = Math.max(maxN + 1, existingInvoices.length + 1, hasBase ? 2 : 2);
-                setInvoiceNumber(`${base}-${next}`);
-                setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
-                const d = new Date();
-                setInvoiceDate(d.toISOString().slice(0, 10));
-                const due = new Date(d); due.setDate(due.getDate() + 14);
-                setDueDate(due.toISOString().slice(0, 10));
-                if (openRestDeposit > 0) setDepositAmount(String(openRestDeposit));
-                else setDepositAmount('');
-              }}
-            >
-              + Weitere Rate
-            </button>
+                onClick={addNewRate}
+              >
+                + Weitere Rate
+              </button>
+            )}
           </div>
           <Input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} className="bg-secondary border-border mt-1 font-mono" />
         </div>
