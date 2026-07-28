@@ -1417,6 +1417,7 @@ function AppRoutes() {
           <Route path="/social/reports" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialReports /></ProtectedRoute>} />
           <Route path="/social-portal/:token" element={<SocialPortalView />} />
           <Route path="/social-onboarding/:token" element={<SocialOnboardingPortal />} />
+          <Route path="/social/showcase/:token" element={<SocialShowcase />} />
 
 
           <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />
