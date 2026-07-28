@@ -356,7 +356,7 @@ export default function Orders() {
         orderIds.length > 0
           ? supabase
               .from('finance_deposits' as any)
-              .select('order_id, invoice_number, issue_date')
+              .select('order_id, invoice_number, issue_date, due_date, gross_amount, paid_amount, status')
               .in('order_id', orderIds)
           : Promise.resolve({ data: [] as any[] }),
         orderNumbers.length > 0
