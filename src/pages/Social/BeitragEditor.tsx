@@ -123,6 +123,17 @@ export default function SocialBeitragEditor() {
     toast.success('Zur Freigabe gesendet');
   }
 
+  async function enqueuePublish() {
+    if (isNew) return toast.error('Erst speichern');
+    await save();
+    const { data, error } = await supabase.functions.invoke('social-publish', {
+      body: { action: 'enqueue', post_id: id, scheduled_for: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : undefined },
+    });
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error);
+    toast.success('Veröffentlichung geplant');
+    setForm((f: any) => ({ ...f, status: 'scheduled' }));
+  }
+
   if (loading) return <div className="p-6 text-muted-foreground">Lade…</div>;
 
   return (
