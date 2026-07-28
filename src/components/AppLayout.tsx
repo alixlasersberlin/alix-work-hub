@@ -30,7 +30,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy } from 'lucide-react';
+import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
@@ -665,6 +665,10 @@ export const navItems: NavItem[] = [
           { path: '/social/onboarding', label: 'Onboarding-Wizard', icon: Rocket, roles: ['Super Admin','Admin','Marketing'] },
           { path: '/social/plattformen', label: 'Plattformen & Zugangsdaten', icon: Users, roles: ['Super Admin','Admin','Marketing'] },
           { path: '/social/fragebogen', label: 'Marketing-Fragebogen', icon: FileText, roles: ['Super Admin','Admin','Marketing'] },
+          { path: '/social/kalender', label: 'Content-Kalender', icon: Calendar, roles: ['Super Admin','Admin','Marketing','Grafiker'] },
+          { path: '/social/beitrag/neu', label: 'Neuer Beitrag', icon: Plus, roles: ['Super Admin','Admin','Marketing','Grafiker'] },
+          { path: '/social/freigaben', label: 'Freigaben', icon: CheckCircle2, roles: ['Super Admin','Admin','Marketing'] },
+          { path: '/social/medien', label: 'Medien-Bibliothek', icon: ImageIcon, roles: ['Super Admin','Admin','Marketing','Grafiker'] },
         ],
       },
 
