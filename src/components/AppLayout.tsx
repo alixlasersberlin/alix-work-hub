@@ -715,9 +715,11 @@ export const navItems: NavItem[] = [
       },
 
       {
-        path: '#alixdocs2', label: 'ALIXDOCS AI 2.0', icon: FolderTree, roles: ['Super Admin', 'Admin'],
+        path: '#alixdocs2', label: 'ALIXDOCS Enterprise 3.0', icon: FolderTree, roles: ['Super Admin', 'Admin'],
         children: [
-          { path: '/alixdocs2', label: 'Dashboard', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs', label: '🚀 Enterprise Hub', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs/aufgaben', label: 'Aufgaben', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2', label: 'Klassisches Dashboard', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
           { path: '/alixdocs2/inbox', label: 'Posteingang', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
           { path: '/alixdocs2/suche', label: 'Suche', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
           { path: '/alixdocs2/ai', label: 'KI-Suche ✨', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
