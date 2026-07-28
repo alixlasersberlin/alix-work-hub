@@ -1181,17 +1181,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
               variant="outline"
               disabled={openRestDeposit <= 0}
               title={openRestDeposit <= 0 ? 'Anzahlung lt. Auftrag ist vollständig in Raten aufgeteilt.' : 'Neue Rate anlegen – Restbetrag wird vorbelegt.'}
-              onClick={() => {
-                const next = existingInvoices.length + 1;
-                const base = `AZ-${orderNo}`;
-                setInvoiceNumber(`${base}-${next}`);
-                setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
-                const d = new Date();
-                setInvoiceDate(d.toISOString().slice(0, 10));
-                const due = new Date(d); due.setDate(due.getDate() + 14);
-                setDueDate(due.toISOString().slice(0, 10));
-                setDepositAmount(openRestDeposit > 0 ? String(openRestDeposit) : '');
-              }}
+              onClick={addNewRate}
             >
               + Weitere Anzahlungsrate hinzufügen
             </Button>
