@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Save, Send, CheckCircle2, XCircle, Calendar as CalIcon } from 'lucide-react';
+import { Save, Send, CheckCircle2, XCircle, Calendar as CalIcon, Sparkles, ImagePlus, Loader2 } from 'lucide-react';
 
 const PLATFORMS = ['facebook','instagram','tiktok','linkedin','youtube','x','pinterest'];
 
@@ -24,8 +24,44 @@ export default function SocialBeitragEditor() {
   const [approvals, setApprovals] = useState<any[]>([]);
   const [form, setForm] = useState<any>({
     client_id: '', platform: 'instagram', title: '', body: '',
-    hashtags: [], scheduled_at: '', status: 'draft',
+    hashtags: [], scheduled_at: '', status: 'draft', media_ids: [] as string[],
   });
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiBusy, setAiBusy] = useState<null | 'caption' | 'image'>(null);
+  const [aiPreviews, setAiPreviews] = useState<string[]>([]);
+
+  async function aiCaption() {
+    if (!aiPrompt.trim()) return toast.error('Bitte Idee/Prompt eingeben');
+    if (!form.client_id) return toast.error('Bitte Kunde wählen');
+    setAiBusy('caption');
+    const { data, error } = await supabase.functions.invoke('social-ai-generate', {
+      body: { action: 'caption', client_id: form.client_id, platform: form.platform, prompt: aiPrompt },
+    });
+    setAiBusy(null);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error);
+    setForm((f: any) => ({
+      ...f,
+      title: (data as any).title || f.title,
+      body: (data as any).caption || f.body,
+      hashtags: Array.isArray((data as any).hashtags) && (data as any).hashtags.length ? (data as any).hashtags : f.hashtags,
+    }));
+    toast.success('Text generiert');
+  }
+
+  async function aiImage() {
+    if (!aiPrompt.trim()) return toast.error('Bitte Bild-Prompt eingeben');
+    if (!form.client_id) return toast.error('Bitte Kunde wählen');
+    setAiBusy('image');
+    const { data, error } = await supabase.functions.invoke('social-ai-generate', {
+      body: { action: 'image', client_id: form.client_id, prompt: aiPrompt },
+    });
+    setAiBusy(null);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error);
+    const d = data as any;
+    setAiPreviews(p => [d.signed_url, ...p].filter(Boolean));
+    setForm((f: any) => ({ ...f, media_ids: [...(f.media_ids ?? []), d.asset_id] }));
+    toast.success('Bild generiert und angehängt');
+  }
 
   useEffect(() => {
     supabase.from('social_clients').select('id,company_name').is('deleted_at', null).order('company_name').then(({ data }) => setClients(data ?? []));
@@ -60,6 +96,7 @@ export default function SocialBeitragEditor() {
       hashtags: typeof form.hashtags === 'string' ? form.hashtags.split(/[\s,]+/).filter(Boolean) : form.hashtags,
       scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null,
       status: nextStatus ?? form.status,
+      media_ids: form.media_ids ?? [],
     };
     const q = isNew
       ? supabase.from('social_posts').insert(payload).select('id').single()
@@ -100,6 +137,35 @@ export default function SocialBeitragEditor() {
           {!isNew && form.status === 'draft' && <Button onClick={requestApproval}><Send className="mr-2 h-4 w-4" />Freigabe anfordern</Button>}
         </div>
       </div>
+
+      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />KI-Assistent</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Label>Idee / Prompt</Label>
+          <Textarea rows={2} value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}
+            placeholder="z.B. Neues Produkt X, Fokus auf Premium-Qualität, Ton locker" />
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={aiCaption} disabled={aiBusy !== null}>
+              {aiBusy === 'caption' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              Text + Hashtags generieren
+            </Button>
+            <Button type="button" variant="outline" onClick={aiImage} disabled={aiBusy !== null}>
+              {aiBusy === 'image' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImagePlus className="mr-2 h-4 w-4" />}
+              Bild generieren & anhängen
+            </Button>
+          </div>
+          {aiPreviews.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              {aiPreviews.map((u, i) => (
+                <img key={i} src={u} className="rounded-lg border border-border/50 aspect-square object-cover" alt="AI-generiert" />
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">Nutzt Marken-Kontext aus dem Marketing-Fragebogen.</p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle>Inhalt</CardTitle></CardHeader>
