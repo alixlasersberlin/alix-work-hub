@@ -1045,7 +1045,42 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
       <div className="grid sm:grid-cols-3 gap-4">
         <div>
-          <Label className="text-xs text-muted-foreground">Rechnungsnummer</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label className="text-xs text-muted-foreground">Rechnungsnummer</Label>
+            <button
+              type="button"
+              className="text-[11px] text-primary hover:underline"
+              title="Nächste Rate anlegen – Nummer wird hochgezählt und Restbetrag vorbelegt."
+              onClick={() => {
+                const base = `AZ-${orderNo}`;
+                const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const rx = new RegExp(`^${esc}-(\\d+)$`);
+                let maxN = 0;
+                let hasBase = false;
+                for (const inv of existingInvoices) {
+                  const n = (inv.invoice_number || '').trim();
+                  if (n === base) { hasBase = true; if (maxN < 1) maxN = 1; continue; }
+                  const m = n.match(rx);
+                  if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+                }
+                const cur = invoiceNumber.trim();
+                if (cur === base) { hasBase = true; if (maxN < 1) maxN = 1; }
+                const mCur = cur.match(rx);
+                if (mCur) maxN = Math.max(maxN, parseInt(mCur[1], 10));
+                const next = Math.max(maxN + 1, existingInvoices.length + 1, hasBase ? 2 : 2);
+                setInvoiceNumber(`${base}-${next}`);
+                setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
+                const d = new Date();
+                setInvoiceDate(d.toISOString().slice(0, 10));
+                const due = new Date(d); due.setDate(due.getDate() + 14);
+                setDueDate(due.toISOString().slice(0, 10));
+                if (openRestDeposit > 0) setDepositAmount(String(openRestDeposit));
+                else setDepositAmount('');
+              }}
+            >
+              + Weitere Rate
+            </button>
+          </div>
           <Input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} className="bg-secondary border-border mt-1 font-mono" />
         </div>
         <div>
