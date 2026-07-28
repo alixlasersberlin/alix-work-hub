@@ -662,7 +662,7 @@ export const navItems: NavItem[] = [
         path: '#social-media', label: 'SOCIAL MEDIA', icon: Megaphone, roles: ['Super Admin','Admin','Marketing','Grafiker'],
         children: [
           { path: '/social/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Super Admin','Admin','Marketing','Grafiker'] },
-          { path: '/social/onboarding', label: 'Onboarding-Wizard', icon: Plus as any, roles: ['Super Admin','Admin','Marketing'] },
+          { path: '/social/onboarding', label: 'Onboarding-Wizard', icon: Rocket, roles: ['Super Admin','Admin','Marketing'] },
           { path: '/social/plattformen', label: 'Plattformen & Zugangsdaten', icon: Users, roles: ['Super Admin','Admin','Marketing'] },
           { path: '/social/fragebogen', label: 'Marketing-Fragebogen', icon: FileText, roles: ['Super Admin','Admin','Marketing'] },
         ],
