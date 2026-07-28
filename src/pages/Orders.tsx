@@ -340,7 +340,7 @@ export default function Orders() {
       const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
       if (orderIds.length === 0 && orderNumbers.length === 0) return;
 
-      const [itemsRes, posRes, depRes, zohoInvRes, addDepRes] = await Promise.all([
+      const [itemsRes, posRes, depRes, depByNumberRes, zohoInvRes, zohoAzRes, addDepRes] = await Promise.all([
         orderIds.length > 0
           ? supabase
               .from('order_items')
@@ -356,14 +356,27 @@ export default function Orders() {
         orderIds.length > 0
           ? supabase
               .from('finance_deposits' as any)
-              .select('order_id, invoice_number, issue_date, due_date, gross_amount, paid_amount, status')
+              .select('order_id, order_number, invoice_number, issue_date, due_date, gross_amount, paid_amount, status')
               .in('order_id', orderIds)
+          : Promise.resolve({ data: [] as any[] }),
+        orderNumbers.length > 0
+          ? supabase
+              .from('finance_deposits' as any)
+              .select('order_id, order_number, invoice_number, issue_date, due_date, gross_amount, paid_amount, status')
+              .in('order_number', orderNumbers)
           : Promise.resolve({ data: [] as any[] }),
         orderNumbers.length > 0
           ? supabase
               .from('zoho_invoices')
               .select('invoice_number, reference_number')
               .in('reference_number', orderNumbers)
+          : Promise.resolve({ data: [] as any[] }),
+        orderNumbers.length > 0
+          ? supabase
+              .from('zoho_invoices')
+              .select('invoice_number, reference_number, total, balance, due_date, status')
+              .in('reference_number', orderNumbers)
+              .or('invoice_number.ilike.AZ%,invoice_number.ilike.anzahlung%')
           : Promise.resolve({ data: [] as any[] }),
         orderIds.length > 0
           ? supabase
@@ -388,15 +401,25 @@ export default function Orders() {
 
       const azInvoiceByOrder: Record<string, string> = {};
       const azRatesByOrder: Record<string, Array<{ invoice_number: string; issue_date: string | null; due_date: string | null; gross_amount: number; paid_amount: number; status: string | null; isPaid: boolean }>> = {};
-      (depRes.data || []).forEach((d: any) => {
-        if (!d?.order_id) return;
-        if (d.invoice_number && !azInvoiceByOrder[d.order_id]) azInvoiceByOrder[d.order_id] = d.invoice_number;
-        const gross = Number(d.gross_amount) || 0;
-        const paid = Number(d.paid_amount) || 0;
+      // Map order_number -> order_id für Zoho-basierte AZ-Einträge
+      const orderIdByNumber: Record<string, string> = {};
+      loaded.forEach((o: any) => { if (o.order_number && o.id) orderIdByNumber[o.order_number] = o.id; });
+      const seenRateKey = new Set<string>(); // orderId|invoiceNumber gegen Dupletten
+
+      const addRate = (orderId: string | null | undefined, d: any) => {
+        if (!orderId) return;
+        const invNum = d.invoice_number || '—';
+        const key = `${orderId}|${invNum}`;
+        if (seenRateKey.has(key)) return;
+        seenRateKey.add(key);
+        const gross = Number(d.gross_amount ?? d.total) || 0;
+        const balance = Number(d.balance);
+        const paid = Number(d.paid_amount) || (!isNaN(balance) ? Math.max(gross - balance, 0) : 0);
         const st = (d.status || '').toString().toLowerCase();
-        const isPaid = paid + 0.005 >= gross && gross > 0 || ['bezahlt', 'paid', 'ausgeglichen'].includes(st);
-        (azRatesByOrder[d.order_id] ||= []).push({
-          invoice_number: d.invoice_number || '—',
+        const isPaid = (paid + 0.005 >= gross && gross > 0) || ['bezahlt', 'paid', 'ausgeglichen', 'closed'].includes(st);
+        if (d.invoice_number && !azInvoiceByOrder[orderId]) azInvoiceByOrder[orderId] = d.invoice_number;
+        (azRatesByOrder[orderId] ||= []).push({
+          invoice_number: invNum,
           issue_date: d.issue_date ?? null,
           due_date: d.due_date ?? null,
           gross_amount: gross,
@@ -404,6 +427,18 @@ export default function Orders() {
           status: d.status ?? null,
           isPaid,
         });
+      };
+
+      (depRes.data || []).forEach((d: any) => addRate(d.order_id, d));
+      (depByNumberRes.data || []).forEach((d: any) => {
+        const oid = d.order_id || (d.order_number ? orderIdByNumber[d.order_number] : null);
+        addRate(oid, d);
+      });
+      // Fallback: Zoho-AZ-Rechnungen, die (noch) nicht in finance_deposits gesynct sind
+      (zohoAzRes.data || []).forEach((z: any) => {
+        const oid = z.reference_number ? orderIdByNumber[z.reference_number] : null;
+        if (!oid) return;
+        addRate(oid, z);
       });
       // Nach Ausstellungsdatum sortieren (Rate 1 zuerst)
       Object.values(azRatesByOrder).forEach(arr => arr.sort((a, b) => (a.issue_date || '').localeCompare(b.issue_date || '')));
