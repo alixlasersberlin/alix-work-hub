@@ -29738,6 +29738,7 @@ export type Database = {
           auto_category: string | null
           auto_notify_customer: boolean | null
           auto_priority: string | null
+          case_number: string | null
           category: string | null
           classified_at: string | null
           comm_status: Database["public"]["Enums"]["ticket_comm_status"]
@@ -29797,6 +29798,7 @@ export type Database = {
           auto_category?: string | null
           auto_notify_customer?: boolean | null
           auto_priority?: string | null
+          case_number?: string | null
           category?: string | null
           classified_at?: string | null
           comm_status?: Database["public"]["Enums"]["ticket_comm_status"]
@@ -29856,6 +29858,7 @@ export type Database = {
           auto_category?: string | null
           auto_notify_customer?: boolean | null
           auto_priority?: string | null
+          case_number?: string | null
           category?: string | null
           classified_at?: string | null
           comm_status?: Database["public"]["Enums"]["ticket_comm_status"]
