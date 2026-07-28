@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { ArrowLeft, Download, RefreshCw, History } from "lucide-react";
+import { ArrowLeft, Download, RefreshCw, History, Pencil } from "lucide-react";
 import { CommentsPanel } from "@/components/alixdocs2/CommentsPanel";
 import { ApprovalPanel } from "@/components/alixdocs2/ApprovalPanel";
 import { SoftDeleteButtons } from "@/components/alixdocs2/SoftDeleteButtons";
+import { CopilotPanel } from "@/components/alixdocs2/CopilotPanel";
+import { VersionDiff } from "@/components/alixdocs2/VersionDiff";
 
 export default function AlixDocs2Viewer() {
   const { id } = useParams<{ id: string }>();
@@ -160,6 +162,13 @@ export default function AlixDocs2Viewer() {
             </CardContent>
           </Card>
           {doc && <ApprovalPanel doc={doc} onChange={load} />}
+          {doc && <CopilotPanel documentId={doc.id} />}
+          {doc && <VersionDiff documentId={doc.id} versions={versions} />}
+          {doc && (
+            <Button asChild variant="outline" size="sm" className="w-full">
+              <Link to={`/alixdocs/edit/${doc.id}`}><Pencil className="w-4 h-4 mr-1" /> Im Editor öffnen</Link>
+            </Button>
+          )}
           {doc && <CommentsPanel documentId={doc.id} />}
         </div>
       </div>

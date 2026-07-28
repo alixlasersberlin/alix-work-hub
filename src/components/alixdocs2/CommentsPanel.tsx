@@ -28,11 +28,29 @@ export function CommentsPanel({ documentId }: { documentId: string }) {
   async function add() {
     if (!body.trim() || !me) return;
     setBusy(true);
+    const text = body.trim();
     const { error } = await supabase.from('alixdocs2_comments').insert({
-      document_id: documentId, user_id: me, body: body.trim(), kind,
+      document_id: documentId, user_id: me, body: text, kind,
     });
+    if (error) { setBusy(false); return toast.error(error.message); }
+
+    // @mentions → app_notifications
+    const mentions = Array.from(new Set((text.match(/@([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g) ?? []).map(m => m.slice(1).toLowerCase())));
+    if (mentions.length) {
+      const { data: users } = await supabase
+        .from('user_profiles')
+        .select('id,email')
+        .in('email', mentions);
+      const rows = (users ?? []).map((u: any) => ({
+        user_id: u.id,
+        title: 'Neue Erwähnung in ALIXDocs',
+        body: text.slice(0, 200),
+        link: `/alixdocs2/dokument/${documentId}`,
+        kind: 'mention',
+      }));
+      if (rows.length) await supabase.from('app_notifications').insert(rows as any);
+    }
     setBusy(false);
-    if (error) return toast.error(error.message);
     setBody(''); load();
   }
   async function del(id: string) {
@@ -50,7 +68,7 @@ export function CommentsPanel({ documentId }: { documentId: string }) {
             <button onClick={() => setKind('comment')} className={`px-2 py-1 rounded ${kind === 'comment' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>Kommentar</button>
             <button onClick={() => setKind('note')} className={`px-2 py-1 rounded ${kind === 'note' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>Notiz</button>
           </div>
-          <Textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Kommentar oder Notiz…" rows={2} />
+          <Textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Kommentar oder Notiz… (@email erwähnt Kollegen)" rows={2} />
           <Button size="sm" onClick={add} disabled={busy || !body.trim()}>Hinzufügen</Button>
         </div>
         <div className="space-y-2 max-h-72 overflow-auto">
