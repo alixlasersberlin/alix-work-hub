@@ -113,8 +113,11 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const currency = order?.currency || 'EUR';
   const orderNo = String(order?.order_number || '');
   const dKey = draftKey(order?.id, orderNo);
+  const mKey = modeKeyFn(order?.id, orderNo);
   const initialDraft = useMemo(() => readDraft(dKey), [dKey]);
   const [hasDraft, setHasDraft] = useState<boolean>(!!initialDraft);
+  const [splitMode, setSplitModeState] = useState<SplitMode | null>(() => readMode(mKey));
+  const setSplitMode = (m: SplitMode) => { writeMode(mKey, m); setSplitModeState(m); };
 
   // Anzahlung aus Auftrag übernehmen
   const orderDeposit = Number(order?.deposit_amount) || 0;
