@@ -27728,6 +27728,81 @@ export type Database = {
           },
         ]
       }
+      social_post_metrics: {
+        Row: {
+          clicks: number
+          client_id: string
+          comments: number
+          created_at: string
+          engagement_rate: number
+          id: string
+          impressions: number
+          likes: number
+          meta: Json
+          metric_date: string
+          platform: string
+          post_id: string
+          reach: number
+          saves: number
+          shares: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          clicks?: number
+          client_id: string
+          comments?: number
+          created_at?: string
+          engagement_rate?: number
+          id?: string
+          impressions?: number
+          likes?: number
+          meta?: Json
+          metric_date?: string
+          platform: string
+          post_id: string
+          reach?: number
+          saves?: number
+          shares?: number
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          clicks?: number
+          client_id?: string
+          comments?: number
+          created_at?: string
+          engagement_rate?: number
+          id?: string
+          impressions?: number
+          likes?: number
+          meta?: Json
+          metric_date?: string
+          platform?: string
+          post_id?: string
+          reach?: number
+          saves?: number
+          shares?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_metrics_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_metrics_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_posts: {
         Row: {
           author_id: string | null
@@ -27799,6 +27874,81 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_publish_jobs: {
+        Row: {
+          attempts: number
+          client_id: string
+          created_at: string
+          external_post_id: string | null
+          external_url: string | null
+          finished_at: string | null
+          id: string
+          last_error: string | null
+          max_attempts: number
+          meta: Json
+          platform: string
+          post_id: string
+          requested_by: string | null
+          scheduled_for: string
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          client_id: string
+          created_at?: string
+          external_post_id?: string | null
+          external_url?: string | null
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          meta?: Json
+          platform: string
+          post_id: string
+          requested_by?: string | null
+          scheduled_for?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          client_id?: string
+          created_at?: string
+          external_post_id?: string | null
+          external_url?: string | null
+          finished_at?: string | null
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          meta?: Json
+          platform?: string
+          post_id?: string
+          requested_by?: string | null
+          scheduled_for?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_publish_jobs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_publish_jobs_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
             referencedColumns: ["id"]
           },
         ]
