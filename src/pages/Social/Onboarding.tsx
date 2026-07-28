@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,21 +7,76 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Search, X } from 'lucide-react';
 
 const PLATFORMS = ['Facebook', 'Instagram', 'TikTok', 'YouTube', 'LinkedIn', 'X (Twitter)', 'Pinterest', 'Snapchat', 'Threads'];
+
+type CustomerHit = {
+  id: string;
+  company_name: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  external_customer_id: string | null;
+  source_system: string | null;
+};
+
+
 
 export default function SocialOnboarding() {
   const nav = useNavigate();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [company, setCompany] = useState({ company_name: '', contact_person: '', phone: '', mobile: '', email: '', website: '', industry: '' });
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [linkedLabel, setLinkedLabel] = useState<string | null>(null);
+  const [q, setQ] = useState('');
+  const [hits, setHits] = useState<CustomerHit[]>([]);
+  const [searching, setSearching] = useState(false);
   const [locations, setLocations] = useState<string[]>(['']);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [colors, setColors] = useState('');
   const [fonts, setFonts] = useState('');
+
+  useEffect(() => {
+    const term = q.trim();
+    if (customerId || term.length < 2) { setHits([]); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const like = `%${term}%`;
+      const { data } = await supabase
+        .from('customers')
+        .select('id,company_name,contact_name,email,phone,external_customer_id,source_system')
+        .or(`company_name.ilike.${like},contact_name.ilike.${like},email.ilike.${like},external_customer_id.ilike.${like}`)
+        .limit(15);
+      setHits((data ?? []) as CustomerHit[]);
+      setSearching(false);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [q, customerId]);
+
+  function pickCustomer(c: CustomerHit) {
+    setCustomerId(c.id);
+    setLinkedLabel(c.company_name || c.contact_name || c.email || c.id);
+    setCompany(prev => ({
+      ...prev,
+      company_name: prev.company_name || c.company_name || '',
+      contact_person: prev.contact_person || c.contact_name || '',
+      phone: prev.phone || c.phone || '',
+      email: prev.email || c.email || '',
+    }));
+    setHits([]);
+    setQ('');
+  }
+
+  function clearCustomer() {
+    setCustomerId(null);
+    setLinkedLabel(null);
+  }
+
 
   const togglePlatform = (p: string) => setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
   const setLoc = (i: number, v: string) => setLocations(l => l.map((x, idx) => idx === i ? v : x));
@@ -33,6 +88,7 @@ export default function SocialOnboarding() {
       const { data: user } = await supabase.auth.getUser();
       const { data: client, error } = await supabase.from('social_clients').insert({
         ...company,
+        customer_id: customerId,
         locations: locations.filter(l => l.trim()).map(name => ({ name })),
         corporate_colors: colors.split(',').map(c => c.trim()).filter(Boolean),
         corporate_fonts: fonts.split(',').map(f => f.trim()).filter(Boolean),
@@ -41,6 +97,7 @@ export default function SocialOnboarding() {
         created_by: user.user?.id,
         owner_user_id: user.user?.id,
       }).select().single();
+
       if (error) throw error;
       if (platforms.length > 0) {
         await supabase.from('social_accounts').insert(platforms.map(p => ({ client_id: client.id, platform: p, auth_type: 'password' })));
@@ -76,7 +133,55 @@ export default function SocialOnboarding() {
         </CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {step === 1 && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-4">
+              <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Bestehenden Alix-Kunden übernehmen</Label>
+                {linkedLabel ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="secondary" className="text-xs">Verknüpft: {linkedLabel}</Badge>
+                    <Button type="button" size="sm" variant="ghost" onClick={clearCustomer}>
+                      <X className="mr-1 h-3 w-3" /> Trennen
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Firma, Kontakt, E-Mail oder Kundennr. suchen…"
+                        className="pl-9"
+                      />
+                    </div>
+                    {q.trim().length >= 2 && (
+                      <div className="max-h-64 overflow-y-auto divide-y divide-border border border-border rounded-md bg-background">
+                        {searching && <div className="p-3 text-xs text-muted-foreground">Suche…</div>}
+                        {!searching && hits.length === 0 && (
+                          <div className="p-3 text-xs text-muted-foreground">Keine Treffer.</div>
+                        )}
+                        {hits.map(h => (
+                          <button
+                            key={h.id}
+                            type="button"
+                            onClick={() => pickCustomer(h)}
+                            className="w-full text-left p-2 hover:bg-muted/60 flex items-center justify-between gap-2"
+                          >
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium truncate">{h.company_name ?? h.contact_name ?? '—'}</div>
+                              <div className="text-xs text-muted-foreground truncate">{[h.contact_name, h.email, h.external_customer_id].filter(Boolean).join(' · ')}</div>
+                            </div>
+                            {h.source_system && <Badge variant="outline" className="text-[10px] shrink-0">{h.source_system}</Badge>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-[11px] text-muted-foreground">Optional — Stammdaten werden vorausgefüllt.</p>
+                  </>
+                )}
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+
               <div><Label>Firmenname *</Label><Input value={company.company_name} onChange={e => setCompany({ ...company, company_name: e.target.value })} /></div>
               <div><Label>Ansprechpartner</Label><Input value={company.contact_person} onChange={e => setCompany({ ...company, contact_person: e.target.value })} /></div>
               <div><Label>Telefon</Label><Input value={company.phone} onChange={e => setCompany({ ...company, phone: e.target.value })} /></div>
@@ -84,8 +189,10 @@ export default function SocialOnboarding() {
               <div><Label>E-Mail</Label><Input type="email" value={company.email} onChange={e => setCompany({ ...company, email: e.target.value })} /></div>
               <div><Label>Website</Label><Input value={company.website} onChange={e => setCompany({ ...company, website: e.target.value })} /></div>
               <div className="md:col-span-2"><Label>Branche</Label><Input value={company.industry} onChange={e => setCompany({ ...company, industry: e.target.value })} /></div>
+              </div>
             </div>
           )}
+
           {step === 2 && (
             <div className="space-y-3">
               {locations.map((loc, i) => (
