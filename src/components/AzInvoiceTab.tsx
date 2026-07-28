@@ -153,7 +153,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     return () => { cancelled = true; };
   }, [order?.id, orderNo, orderDeposit]);
 
-  // Duplikatscheck: existiert bereits eine AZ-Rechnung für diesen Auftrag?
+  // Alle bereits gestellten AZ-Rechnungen für diesen Auftrag laden
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -162,23 +162,31 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       try {
         let query = supabase
           .from('finance_deposits' as any)
-          .select('invoice_number, deposit_number, issue_date, order_id, order_number')
-          .limit(1);
+          .select('invoice_number, deposit_number, issue_date, order_id, order_number, gross_amount, status')
+          .order('issue_date', { ascending: true });
         const orFilters: string[] = [];
         if (order?.id) orFilters.push(`order_id.eq.${order.id}`);
         if (orderNo) {
           orFilters.push(`order_number.eq.${orderNo}`);
-          orFilters.push(`invoice_number.eq.AZ-${orderNo}`);
-          orFilters.push(`deposit_number.eq.AZ-${orderNo}`);
         }
         if (orFilters.length) query = query.or(orFilters.join(','));
         const { data } = await query;
-        if (!cancelled && data && data.length > 0) {
-          const row: any = data[0];
-          setExistingInvoice({
+        if (!cancelled) {
+          const list = (data || []).map((row: any) => ({
             invoice_number: row.invoice_number || row.deposit_number || `AZ-${orderNo}`,
             issue_date: row.issue_date ?? null,
-          });
+            gross_amount: row.gross_amount ?? null,
+            status: row.status ?? null,
+          }));
+          setExistingInvoices(list);
+          // Vorschlag für nächste Rechnungsnummer: AZ-{orderNo}-{n+1}
+          if (list.length > 0) {
+            const base = `AZ-${orderNo}`;
+            const next = list.length + 1;
+            const candidate = `${base}-${next}`;
+            setInvoiceNumber(candidate);
+            setPositionLabel(`Anzahlung ${next} gemäß Auftrag ${orderNo}`.trim());
+          }
         }
       } catch { /* ignore */ }
       finally { if (!cancelled) setCheckingExisting(false); }
