@@ -162,6 +162,13 @@ export default function AlixDocs2Viewer() {
             </CardContent>
           </Card>
           {doc && <ApprovalPanel doc={doc} onChange={load} />}
+          {doc && <CopilotPanel documentId={doc.id} />}
+          {doc && <VersionDiff documentId={doc.id} versions={versions} />}
+          {doc && (
+            <Button asChild variant="outline" size="sm" className="w-full">
+              <Link to={`/alixdocs/edit/${doc.id}`}><Pencil className="w-4 h-4 mr-1" /> Im Editor öffnen</Link>
+            </Button>
+          )}
           {doc && <CommentsPanel documentId={doc.id} />}
         </div>
       </div>
