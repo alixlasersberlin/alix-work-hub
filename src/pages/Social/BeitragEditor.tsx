@@ -24,8 +24,44 @@ export default function SocialBeitragEditor() {
   const [approvals, setApprovals] = useState<any[]>([]);
   const [form, setForm] = useState<any>({
     client_id: '', platform: 'instagram', title: '', body: '',
-    hashtags: [], scheduled_at: '', status: 'draft',
+    hashtags: [], scheduled_at: '', status: 'draft', media_ids: [] as string[],
   });
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiBusy, setAiBusy] = useState<null | 'caption' | 'image'>(null);
+  const [aiPreviews, setAiPreviews] = useState<string[]>([]);
+
+  async function aiCaption() {
+    if (!aiPrompt.trim()) return toast.error('Bitte Idee/Prompt eingeben');
+    if (!form.client_id) return toast.error('Bitte Kunde wählen');
+    setAiBusy('caption');
+    const { data, error } = await supabase.functions.invoke('social-ai-generate', {
+      body: { action: 'caption', client_id: form.client_id, platform: form.platform, prompt: aiPrompt },
+    });
+    setAiBusy(null);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error);
+    setForm((f: any) => ({
+      ...f,
+      title: (data as any).title || f.title,
+      body: (data as any).caption || f.body,
+      hashtags: Array.isArray((data as any).hashtags) && (data as any).hashtags.length ? (data as any).hashtags : f.hashtags,
+    }));
+    toast.success('Text generiert');
+  }
+
+  async function aiImage() {
+    if (!aiPrompt.trim()) return toast.error('Bitte Bild-Prompt eingeben');
+    if (!form.client_id) return toast.error('Bitte Kunde wählen');
+    setAiBusy('image');
+    const { data, error } = await supabase.functions.invoke('social-ai-generate', {
+      body: { action: 'image', client_id: form.client_id, prompt: aiPrompt },
+    });
+    setAiBusy(null);
+    if (error || (data as any)?.error) return toast.error(error?.message ?? (data as any)?.error);
+    const d = data as any;
+    setAiPreviews(p => [d.signed_url, ...p].filter(Boolean));
+    setForm((f: any) => ({ ...f, media_ids: [...(f.media_ids ?? []), d.asset_id] }));
+    toast.success('Bild generiert und angehängt');
+  }
 
   useEffect(() => {
     supabase.from('social_clients').select('id,company_name').is('deleted_at', null).order('company_name').then(({ data }) => setClients(data ?? []));
