@@ -60,3 +60,4 @@
 - [ALIX CONNECT Phase 34](mem://features/alix-connect-phase34) — Omnichannel Orchestrator, Voice AI Studio, Revenue Intelligence 2.0
 - [Alix Connect Phase 36](mem://features/alix-connect-phase36) — Sentiment & Emotion 2.0, Workflow Studio, Compliance Cockpit
 - [ALIX CONNECT Phase 48-50 + AlixDocs 13-14](mem://features/alix-connect-phase48-50) — Churn Detection, Voice-Bot Twilio, Omnichannel-Merge, AlixDocs Compliance-Export (GoBD/DSGVO), Facsimile Mietkauf, Auftragsabgleich Auto-Import
+- [Social Media](mem://features/social-media) — /social/*, Onboarding+Content+KI+Analytics+Publishing, Tabellen social_*, Edge Functions social-ai-generate/social-publish/social-metrics-sync, Cron 5min/daily
