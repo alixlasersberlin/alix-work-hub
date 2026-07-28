@@ -612,6 +612,49 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     return true;
   }
 
+  async function saveDraftDeposit(): Promise<void> {
+    if (!hasDeposit) return;
+    try {
+      const netAmt = Number(netDeposit.toFixed(2));
+      const vatAmt = Number(taxAmount.toFixed(2));
+      const grossAmt = Number(grossDeposit.toFixed(2));
+      const sourceRef = order?.id ? `order:${order.id}:${invoiceNumber}` : `inv:${invoiceNumber}`;
+      const { data: existing } = await supabase
+        .from('finance_deposits' as any)
+        .select('id, status')
+        .eq('source', 'alixwork')
+        .eq('source_ref', sourceRef)
+        .limit(1);
+      if (existing && existing.length > 0) return; // Bereits Entwurf/Offen vorhanden
+      const payload: any = {
+        source: 'alixwork',
+        source_ref: sourceRef,
+        deposit_number: invoiceNumber,
+        invoice_number: invoiceNumber,
+        customer_id: customer?.id ?? null,
+        customer_name: customer?.company_name || customer?.contact_name || null,
+        company_name: customer?.company_name ?? null,
+        contact_name: customer?.contact_name ?? null,
+        order_id: order?.id ?? null,
+        order_number: orderNo || null,
+        currency,
+        net_amount: netAmt,
+        vat_amount: vatAmt,
+        gross_amount: grossAmt,
+        paid_amount: 0,
+        issue_date: invoiceDate,
+        due_date: dueDate,
+        status: 'entwurf',
+        release_status: 'nicht_freigegeben',
+        note: `Entwurf Anzahlungsrechnung ${invoiceNumber} – ${positionLabel || `Anzahlung Auftrag ${orderNo}`} (MwSt ${taxPercentage}%).`,
+      };
+      const { error } = await supabase.from('finance_deposits' as any).insert(payload);
+      if (error) console.warn('[AzInvoice] saveDraftDeposit failed:', error.message);
+    } catch (e: any) {
+      console.warn('[AzInvoice] saveDraftDeposit exception:', e?.message);
+    }
+  }
+
   async function postToBuchhaltung(): Promise<boolean> {
     if (blockIfDuplicate()) return false;
     if (!hasDeposit) {
@@ -620,14 +663,16 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
     setPostingToBuchhaltung(true);
     try {
-      // Duplikate vermeiden
+      const sourceRef = order?.id ? `order:${order.id}:${invoiceNumber}` : `inv:${invoiceNumber}`;
+      // Bestehenden Datensatz suchen – ggf. Entwurf zu "Offen" hochstufen
       const { data: existing } = await supabase
         .from('finance_deposits' as any)
-        .select('id')
+        .select('id, status')
         .eq('source', 'alixwork')
-        .eq('invoice_number', invoiceNumber)
+        .eq('source_ref', sourceRef)
         .limit(1);
-      if (existing && existing.length > 0) {
+      const existingRow: any = existing?.[0];
+      if (existingRow && existingRow.status !== 'entwurf') {
         toast.info(`Anzahlung ${invoiceNumber} ist bereits in der Buchhaltung erfasst.`);
         return true;
       }
@@ -638,7 +683,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
       const payload: any = {
         source: 'alixwork',
-        source_ref: order?.id ? `order:${order.id}:${invoiceNumber}` : `inv:${invoiceNumber}`,
+        source_ref: sourceRef,
         deposit_number: invoiceNumber,
         invoice_number: invoiceNumber,
         customer_id: customer?.id ?? null,
@@ -658,8 +703,18 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         release_status: 'nicht_freigegeben',
         note: `Anzahlungsrechnung ${invoiceNumber} – ${positionLabel || `Anzahlung Auftrag ${orderNo}`} (MwSt ${taxPercentage}%).`,
       };
-      const { data: inserted, error } = await supabase.from('finance_deposits' as any).insert(payload).select('id').maybeSingle();
-      if (error) throw error;
+      let insertedId: string | null = null;
+      if (existingRow) {
+        const { error: updErr } = await supabase.from('finance_deposits' as any)
+          .update({ ...payload, status: 'offen' })
+          .eq('id', existingRow.id);
+        if (updErr) throw updErr;
+        insertedId = existingRow.id;
+      } else {
+        const { data: inserted, error } = await supabase.from('finance_deposits' as any).insert(payload).select('id').maybeSingle();
+        if (error) throw error;
+        insertedId = (inserted as any)?.id ?? null;
+      }
       await postPaymentToJournal({
         order_id: order?.id ?? null,
         order_number: orderNo || null,
@@ -672,7 +727,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         booking_date: invoiceDate,
         description: `Anzahlungsrechnung ${invoiceNumber} · Auftrag ${orderNo || '—'} (MwSt ${taxPercentage}%)`,
         source_table: 'finance_deposits',
-        source_id: (inserted as any)?.id ?? null,
+        source_id: insertedId,
         vorgang: 'Anzahlungsrechnung',
       });
       toast.success(`In Buchhaltung übernommen: ${invoiceNumber} wurde unter Offene Anzahlungen erfasst.`);
@@ -714,9 +769,10 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     try {
       await buildPdf('download');
       await recordNoteAndOrderDeposit();
+      await saveDraftDeposit();
       toast.success(currentIsDuplicate
         ? `PDF neu erzeugt (${invoiceNumber}). Es wurde keine zweite Rechnung angelegt.`
-        : `Entwurf ${invoiceNumber} gespeichert – bleibt bei erneutem Öffnen erhalten.`);
+        : `Entwurf ${invoiceNumber} gespeichert – erscheint als „Entwurf" in „Offene Anzahlungen".`);
       onReload?.();
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));

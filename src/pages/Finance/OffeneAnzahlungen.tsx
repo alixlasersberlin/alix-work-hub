@@ -38,7 +38,7 @@ type Deposit = {
   open_amount: number;
   issue_date: string | null;
   due_date: string | null;
-  status: 'offen' | 'ueberfaellig' | 'teilweise' | 'gebucht';
+  status: 'entwurf' | 'offen' | 'ueberfaellig' | 'teilweise' | 'gebucht' | 'bezahlt';
   release_status: 'nicht_freigegeben' | 'wartet' | 'teilweise' | 'auto_freigegeben' | 'manuell_freigegeben' | 'gesperrt';
   finance_lock: boolean;
   released_at: string | null;
@@ -63,17 +63,21 @@ type HistoryRow = {
 };
 
 const statusLabel: Record<Deposit['status'], string> = {
-  offen: 'Offen',
+  entwurf: 'Entwurf',
+  offen: 'Versendet / Offen',
   ueberfaellig: 'Überfällig',
   teilweise: 'Teilweise bezahlt',
-  gebucht: 'Gebucht',
+  gebucht: 'Bezahlt',
+  bezahlt: 'Bezahlt',
 };
 
 const statusBadge: Record<Deposit['status'], string> = {
+  entwurf: 'bg-blue-500/15 text-blue-300 border border-blue-500/30',
   offen: 'bg-muted text-muted-foreground border border-border',
   ueberfaellig: 'bg-destructive/15 text-destructive border border-destructive/30',
   teilweise: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
   gebucht: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+  bezahlt: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
 };
 
 const releaseLabel: Record<Deposit['release_status'], string> = {
@@ -119,7 +123,7 @@ export default function OffeneAnzahlungen() {
     const { data, error } = await supabase
       .from('finance_deposits')
       .select('*')
-      .neq('status', 'gebucht')
+      .not('status', 'in', '("gebucht","bezahlt")')
       .order('created_at', { ascending: false, nullsFirst: false })
       .limit(2000);
     if (error) toast.error('Laden fehlgeschlagen: ' + error.message);
@@ -375,10 +379,11 @@ export default function OffeneAnzahlungen() {
             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="alle">Alle</SelectItem>
-              <SelectItem value="offen">Offen</SelectItem>
+              <SelectItem value="entwurf">Entwurf</SelectItem>
+              <SelectItem value="offen">Versendet / Offen</SelectItem>
               <SelectItem value="ueberfaellig">Überfällig</SelectItem>
               <SelectItem value="teilweise">Teilweise bezahlt</SelectItem>
-              <SelectItem value="gebucht">Gebucht</SelectItem>
+              <SelectItem value="gebucht">Bezahlt</SelectItem>
             </SelectContent>
           </Select>
         </div>
