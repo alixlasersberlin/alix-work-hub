@@ -1056,6 +1056,50 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         </div>
       </div>
 
+      {/* Mode-Chooser: nur solange keine Anzahlungsrechnung existiert UND noch keine Wahl getroffen wurde. */}
+      {!checkingExisting && !splitMode && existingInvoices.length === 0 && (
+        <div className="rounded-lg border border-primary/40 bg-primary/5 p-4 space-y-3">
+          <div className="text-sm font-semibold text-primary">
+            Wie soll die Anzahlung gestellt werden?
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Bitte einmalig festlegen. Diese Wahl bestimmt die Rechnungsnummerierung:
+            <br />
+            <strong>Eine Rechnung</strong> → <span className="font-mono">AZ-{orderNo || '…'}</span> (ohne Suffix).
+            <br />
+            <strong>Mehrere Raten</strong> → <span className="font-mono">AZ-{orderNo || '…'}-1</span>, <span className="font-mono">-2</span>, …
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              className="gold-gradient text-primary-foreground"
+              onClick={() => {
+                setSplitMode('single');
+                const base = `AZ-${orderNo}`;
+                setInvoiceNumber(base);
+                setPositionLabel(`Anzahlung gemäß Auftrag ${orderNo}`.trim());
+                if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
+              }}
+            >
+              Anzahlung in einer Rechnung stellen
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setSplitMode('multi');
+                const base = `AZ-${orderNo}`;
+                setInvoiceNumber(`${base}-1`);
+                setPositionLabel(`Anzahlung Rate 1 gemäß Auftrag ${orderNo}`.trim());
+              }}
+            >
+              Anzahlung in mehreren Raten stellen
+            </Button>
+          </div>
+        </div>
+      )}
+
+
       {confirm && typeof document !== 'undefined' && createPortal(
         <div
           role="dialog"
