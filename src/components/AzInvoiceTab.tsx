@@ -661,7 +661,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       await recordNoteAndOrderDeposit();
       toast.success(currentIsDuplicate
         ? `PDF neu erzeugt (${invoiceNumber}). Es wurde keine zweite Rechnung angelegt.`
-        : 'Anzahlungsrechnung erstellt und im Auftrag vermerkt.');
+        : `Entwurf ${invoiceNumber} gespeichert – bleibt bei erneutem Öffnen erhalten.`);
       onReload?.();
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
