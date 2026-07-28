@@ -96,6 +96,7 @@ export default function SocialBeitragEditor() {
       hashtags: typeof form.hashtags === 'string' ? form.hashtags.split(/[\s,]+/).filter(Boolean) : form.hashtags,
       scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null,
       status: nextStatus ?? form.status,
+      media_ids: form.media_ids ?? [],
     };
     const q = isNew
       ? supabase.from('social_posts').insert(payload).select('id').single()
