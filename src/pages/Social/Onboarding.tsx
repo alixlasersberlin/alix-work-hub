@@ -189,8 +189,10 @@ export default function SocialOnboarding() {
               <div><Label>E-Mail</Label><Input type="email" value={company.email} onChange={e => setCompany({ ...company, email: e.target.value })} /></div>
               <div><Label>Website</Label><Input value={company.website} onChange={e => setCompany({ ...company, website: e.target.value })} /></div>
               <div className="md:col-span-2"><Label>Branche</Label><Input value={company.industry} onChange={e => setCompany({ ...company, industry: e.target.value })} /></div>
+              </div>
             </div>
           )}
+
           {step === 2 && (
             <div className="space-y-3">
               {locations.map((loc, i) => (
