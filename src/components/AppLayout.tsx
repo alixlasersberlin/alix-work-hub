@@ -669,6 +669,8 @@ export const navItems: NavItem[] = [
           { path: '/social/beitrag/neu', label: 'Neuer Beitrag', icon: Plus, roles: ['Super Admin','Admin','Marketing','Grafiker'] },
           { path: '/social/freigaben', label: 'Freigaben', icon: CheckCircle2, roles: ['Super Admin','Admin','Marketing'] },
           { path: '/social/medien', label: 'Medien-Bibliothek', icon: ImageIcon, roles: ['Super Admin','Admin','Marketing','Grafiker'] },
+          { path: '/social/analytics', label: 'Analytics', icon: BarChart3, roles: ['Super Admin','Admin','Marketing','Grafiker'] },
+          { path: '/social/veroeffentlichung', label: 'Publishing-Queue', icon: Send, roles: ['Super Admin','Admin','Marketing'] },
         ],
       },
 
