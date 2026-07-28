@@ -93,7 +93,7 @@ export default function Orders() {
   const [regionFilter, setRegionFilter] = useState<'all' | 'de' | 'at'>(
     atOnly ? 'at' : (initialRegion === 'de' || initialRegion === 'at' ? initialRegion : 'all')
   );
-  const [depositFilter, setDepositFilter] = useState<'all' | 'partial'>('all');
+  const [depositFilter, setDepositFilter] = useState<'all' | 'partial' | 'paid_full' | 'paid_partial' | 'invoice_missing' | 'unpaid'>('all');
   const [newImportFilter, setNewImportFilter] = useState<'all' | 'new'>(
     (searchParams.get('filter') === 'new-import' ? 'new' : 'all')
   );
@@ -356,7 +356,7 @@ export default function Orders() {
         orderIds.length > 0
           ? supabase
               .from('finance_deposits' as any)
-              .select('order_id, invoice_number, issue_date')
+              .select('order_id, invoice_number, issue_date, due_date, gross_amount, paid_amount, status')
               .in('order_id', orderIds)
           : Promise.resolve({ data: [] as any[] }),
         orderNumbers.length > 0
@@ -387,10 +387,26 @@ export default function Orders() {
       });
 
       const azInvoiceByOrder: Record<string, string> = {};
+      const azRatesByOrder: Record<string, Array<{ invoice_number: string; issue_date: string | null; due_date: string | null; gross_amount: number; paid_amount: number; status: string | null; isPaid: boolean }>> = {};
       (depRes.data || []).forEach((d: any) => {
-        if (!d?.order_id || !d?.invoice_number) return;
-        if (!azInvoiceByOrder[d.order_id]) azInvoiceByOrder[d.order_id] = d.invoice_number;
+        if (!d?.order_id) return;
+        if (d.invoice_number && !azInvoiceByOrder[d.order_id]) azInvoiceByOrder[d.order_id] = d.invoice_number;
+        const gross = Number(d.gross_amount) || 0;
+        const paid = Number(d.paid_amount) || 0;
+        const st = (d.status || '').toString().toLowerCase();
+        const isPaid = paid + 0.005 >= gross && gross > 0 || ['bezahlt', 'paid', 'ausgeglichen'].includes(st);
+        (azRatesByOrder[d.order_id] ||= []).push({
+          invoice_number: d.invoice_number || '—',
+          issue_date: d.issue_date ?? null,
+          due_date: d.due_date ?? null,
+          gross_amount: gross,
+          paid_amount: paid,
+          status: d.status ?? null,
+          isPaid,
+        });
       });
+      // Nach Ausstellungsdatum sortieren (Rate 1 zuerst)
+      Object.values(azRatesByOrder).forEach(arr => arr.sort((a, b) => (a.issue_date || '').localeCompare(b.issue_date || '')));
 
       const fullInvoiceByOrderNumber: Record<string, string> = {};
       (zohoInvRes.data || []).forEach((z: any) => {
@@ -413,6 +429,7 @@ export default function Orders() {
         order_items: itemsByOrder[o.id] || o.order_items || [],
         _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
         _azInvoiceNumber: azInvoiceByOrder[o.id] || o._azInvoiceNumber || null,
+        _azRates: azRatesByOrder[o.id] || [],
         _fullInvoiceNumber: (o.order_number ? fullInvoiceByOrderNumber[o.order_number] : null) || o._fullInvoiceNumber || null,
         _additionalDeposits: addDepositsByOrder[o.id] || [],
       }) : o));
@@ -507,6 +524,22 @@ export default function Orders() {
     return addr.city || addr.state || '';
   };
 
+  // Anzahlungs-Raten-Fortschritt (basierend auf finance_deposits + geplanten additional_deposits)
+  const computeInstallments = (o: any) => {
+    const rates: Array<{ invoice_number: string; issue_date: string | null; due_date: string | null; gross_amount: number; isPaid: boolean; status: string | null }> = o._azRates || [];
+    const invoicedCount = rates.length;
+    const paidRatesCount = rates.filter(r => r.isPaid).length;
+    const addPlanned = (o._additionalDeposits || []).length;
+    // Geplante Raten: entweder Haupt-Anzahlung (1) + zusätzliche geplante Raten
+    // oder mindestens so viele wie schon fakturiert wurden.
+    const plannedBase = Number(o.deposit_amount) > 0 ? 1 + addPlanned : addPlanned;
+    const plannedCount = Math.max(plannedBase, invoicedCount);
+    // Bezahlt: fakturierte Raten mit paid_amount + Legacy deposit_ok Flag
+    const paidCount = Math.max(paidRatesCount, o.deposit_ok ? 1 : 0);
+    const invoiceMissing = plannedCount > invoicedCount;
+    return { plannedCount, invoicedCount, paidCount, invoiceMissing, rates };
+  };
+
   const filtered = orders.filter(o => {
     const q = search.toLowerCase();
     const modelMatch = o.order_items?.some((it: any) =>
@@ -532,10 +565,15 @@ export default function Orders() {
     const isAt = o.source_system === 'zoho_eu_2';
     const matchRegion = regionFilter === 'all' || (regionFilter === 'at' ? isAt : !isAt);
     let matchDeposit = true;
-    if (depositFilter === 'partial') {
+    if (depositFilter !== 'all') {
       if (Number(o.deposit_amount) > 0) {
+        const inst = computeInstallments(o);
         const ds = computeDepositStatus(o, o._additionalDeposits);
-        matchDeposit = ds.isPartial;
+        if (depositFilter === 'partial') matchDeposit = ds.isPartial;
+        else if (depositFilter === 'paid_full') matchDeposit = inst.plannedCount > 0 && inst.paidCount >= inst.plannedCount;
+        else if (depositFilter === 'paid_partial') matchDeposit = inst.paidCount > 0 && inst.paidCount < inst.plannedCount;
+        else if (depositFilter === 'invoice_missing') matchDeposit = inst.invoiceMissing;
+        else if (depositFilter === 'unpaid') matchDeposit = inst.paidCount === 0;
       } else {
         matchDeposit = false;
       }
@@ -692,13 +730,17 @@ export default function Orders() {
                 </SelectContent>
               </Select>
             )}
-            <Select value={depositFilter} onValueChange={(v) => setDepositFilter(v as 'all' | 'partial')}>
-              <SelectTrigger className="w-56 bg-secondary border-border">
+            <Select value={depositFilter} onValueChange={(v) => setDepositFilter(v as any)}>
+              <SelectTrigger className="w-64 bg-secondary border-border">
                 <SelectValue placeholder="Anzahlung filtern" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Anzahlungen</SelectItem>
-                <SelectItem value="partial">⚠ Offene Teilzahlung</SelectItem>
+                <SelectItem value="paid_full">✓ Anzahlung vollständig bezahlt</SelectItem>
+                <SelectItem value="paid_partial">◐ Anzahlung teilweise bezahlt</SelectItem>
+                <SelectItem value="partial">⚠ Offene Teilzahlung (Restbetrag)</SelectItem>
+                <SelectItem value="invoice_missing">✗ Anzahlungsrechnung(en) fehlen</SelectItem>
+                <SelectItem value="unpaid">— Keine Anzahlung bezahlt</SelectItem>
               </SelectContent>
             </Select>
             <Select value={newImportFilter} onValueChange={(v) => setNewImportFilter(v as 'all' | 'new')}>
@@ -1003,23 +1045,46 @@ export default function Orders() {
                             <td key={colId} className="px-4 py-3">
                               <div className="flex items-center gap-1 flex-wrap">
                                 <StatusBadge status={o.order_status || 'offen'} />
-                                {(o as any)._azInvoiceNumber ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title={`Anzahlungsrechnung ${(o as any)._azInvoiceNumber} gestellt`}>
-                                    RE-AZ OK
-                                  </span>
-                                ) : ((o as any).invoiced_flag || (o as any)._fullInvoiceNumber) ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title={`Rechnung ${(o as any)._fullInvoiceNumber || ''} gestellt`.trim()}>
-                                    Rechnung
-                                  </span>
-                                ) : (o as any).deposit_ok ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title="Anzahlung bestätigt (ohne separate AZ-Rechnungsnummer)">
-                                    Anzahlung OK
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-red-500/10 text-red-500 border-red-500/30" title="Für diesen Auftrag wurde noch keine Anzahlungsrechnung gestellt">
-                                    RE-AZ FEHLT
-                                  </span>
-                                )}
+                                {(() => {
+                                  const hasFullInvoice = (o as any).invoiced_flag || (o as any)._fullInvoiceNumber;
+                                  const inst = computeInstallments(o);
+                                  const hasPlan = inst.plannedCount > 0;
+                                  if (hasFullInvoice) {
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title={`Rechnung ${(o as any)._fullInvoiceNumber || ''} gestellt`.trim()}>
+                                        Rechnung
+                                      </span>
+                                    );
+                                  }
+                                  if (hasPlan && inst.invoiceMissing) {
+                                    const label = inst.invoicedCount > 0
+                                      ? `RE-AZ ${inst.invoicedCount}/${inst.plannedCount} FEHLT`
+                                      : 'RE-AZ FEHLT';
+                                    return (
+                                      <span
+                                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-red-500/10 text-red-500 border-red-500/30"
+                                        title={`Es fehlen noch ${inst.plannedCount - inst.invoicedCount} von ${inst.plannedCount} Anzahlungsrechnung(en).`}
+                                      >
+                                        {label}
+                                      </span>
+                                    );
+                                  }
+                                  if (hasPlan && !inst.invoiceMissing) {
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title={`${inst.invoicedCount}/${inst.plannedCount} Anzahlungsrechnung(en) gestellt`}>
+                                        RE-AZ OK
+                                      </span>
+                                    );
+                                  }
+                                  if ((o as any).deposit_ok) {
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title="Anzahlung bestätigt (ohne separate AZ-Rechnungsnummer)">
+                                        Anzahlung OK
+                                      </span>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                             </td>
                           );
@@ -1071,13 +1136,41 @@ export default function Orders() {
                           );
                           if (colId === 'anzahlung_ok') return (
                             <td key={colId} className="px-4 py-3 text-xs">
-                              {o.deposit_ok ? (
-                                <span className="inline-flex items-center gap-1 text-emerald-500 font-medium">
-                                  ✓ {o.deposit_ok_by || 'Ja'}
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground">—</span>
-                              )}
+                              {(() => {
+                                const inst = computeInstallments(o);
+                                if (inst.plannedCount === 0 && !o.deposit_ok) {
+                                  return <span className="text-muted-foreground">—</span>;
+                                }
+                                const total = Math.max(inst.plannedCount, 1);
+                                const paid = Math.min(inst.paidCount, total);
+                                const color = paid === 0
+                                  ? 'bg-red-500/10 text-red-400 border-red-500/30'
+                                  : paid >= total
+                                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                    : 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+                                const tooltip = inst.rates.length > 0
+                                  ? inst.rates.map((r, i) => {
+                                      const amt = r.gross_amount.toLocaleString('de-DE', { style: 'currency', currency: cur(o.currency) });
+                                      const due = r.due_date ? new Date(r.due_date).toLocaleDateString('de-DE') : '—';
+                                      const st = r.isPaid ? '✓ bezahlt' : (r.status || 'offen');
+                                      return `Rate ${i + 1} · ${r.invoice_number} · ${amt} · fällig ${due} · ${st}`;
+                                    }).join('\n')
+                                  : `Anzahlung geplant: ${total} Rate(n), ${paid} bezahlt`;
+                                return (
+                                  <div className="flex flex-col gap-0.5">
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border ${color}`}
+                                      title={tooltip}
+                                    >
+                                      {paid}/{total}
+                                      {paid >= total && <CheckCircle2 className="w-3 h-3" />}
+                                    </span>
+                                    {o.deposit_ok_by && paid >= total && (
+                                      <span className="text-[10px] text-muted-foreground">✓ {o.deposit_ok_by}</span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
                           );
                           if (colId === 'bestellung') return (
