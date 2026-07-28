@@ -730,13 +730,17 @@ export default function Orders() {
                 </SelectContent>
               </Select>
             )}
-            <Select value={depositFilter} onValueChange={(v) => setDepositFilter(v as 'all' | 'partial')}>
-              <SelectTrigger className="w-56 bg-secondary border-border">
+            <Select value={depositFilter} onValueChange={(v) => setDepositFilter(v as any)}>
+              <SelectTrigger className="w-64 bg-secondary border-border">
                 <SelectValue placeholder="Anzahlung filtern" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Anzahlungen</SelectItem>
-                <SelectItem value="partial">⚠ Offene Teilzahlung</SelectItem>
+                <SelectItem value="paid_full">✓ Anzahlung vollständig bezahlt</SelectItem>
+                <SelectItem value="paid_partial">◐ Anzahlung teilweise bezahlt</SelectItem>
+                <SelectItem value="partial">⚠ Offene Teilzahlung (Restbetrag)</SelectItem>
+                <SelectItem value="invoice_missing">✗ Anzahlungsrechnung(en) fehlen</SelectItem>
+                <SelectItem value="unpaid">— Keine Anzahlung bezahlt</SelectItem>
               </SelectContent>
             </Select>
             <Select value={newImportFilter} onValueChange={(v) => setNewImportFilter(v as 'all' | 'new')}>
