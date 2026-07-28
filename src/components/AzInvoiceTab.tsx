@@ -108,7 +108,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const [confirm, setConfirm] = useState<null | 'saveSend' | 'sendOnly'>(null);
 
   // Prüft, ob die aktuell eingegebene Rechnungsnummer bereits vergeben ist
-  const currentIsDuplicate = existingInvoices.some(
+  const currentIsDuplicate = existingInvoices.find(
     (x) => (x.invoice_number || '').trim().toLowerCase() === invoiceNumber.trim().toLowerCase()
   );
 
