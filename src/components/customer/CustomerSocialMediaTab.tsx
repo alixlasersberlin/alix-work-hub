@@ -22,11 +22,17 @@ export default function CustomerSocialMediaTab({
   customerName,
   customerEmail,
   customerPhone,
+  customerContactName,
+  customerBillingAddress,
+  customerRawData,
 }: {
   customerId: string;
   customerName: string;
   customerEmail: string | null;
   customerPhone: string | null;
+  customerContactName?: string | null;
+  customerBillingAddress?: any;
+  customerRawData?: any;
 }) {
   const [loading, setLoading] = useState(true);
   const [client, setClient] = useState<SocialClient | null>(null);
@@ -96,28 +102,60 @@ export default function CustomerSocialMediaTab({
 
   async function createFromCustomer() {
     setCreating(true);
+    // Bestehende Kundendaten übernehmen — keine Neueingabe nötig.
+    const raw = (customerRawData ?? {}) as Record<string, any>;
+    const website =
+      raw.website ?? raw.web ?? raw.contact_person_details?.website ?? null;
+    const industry = raw.industry ?? raw.cf_branche ?? raw.branche ?? null;
+    const mobile = raw.mobile ?? raw.cf_mobile ?? null;
+    const billing = (customerBillingAddress ?? raw.billing_address ?? {}) as Record<string, any>;
+    const shipping = (raw.shipping_address ?? {}) as Record<string, any>;
+    const location =
+      billing && (billing.street || billing.city || billing.address)
+        ? {
+            label: 'Hauptsitz',
+            street: billing.street ?? billing.address ?? null,
+            zip: billing.zip ?? billing.postal_code ?? billing.zip_code ?? null,
+            city: billing.city ?? null,
+            country: billing.country ?? null,
+          }
+        : null;
+    const locations: any[] = location ? [location] : [];
+    if (shipping && shipping.city && shipping.city !== billing?.city) {
+      locations.push({
+        label: 'Lieferadresse',
+        street: shipping.street ?? shipping.address ?? null,
+        zip: shipping.zip ?? shipping.postal_code ?? null,
+        city: shipping.city ?? null,
+        country: shipping.country ?? null,
+      });
+    }
+
     const { data, error } = await supabase
       .from('social_clients')
       .insert({
         customer_id: customerId,
         company_name: customerName,
-        contact_person: customerEmail ?? null,
+        contact_person: customerContactName ?? null,
         email: customerEmail,
         phone: customerPhone,
-        locations: [],
+        mobile,
+        website,
+        industry,
+        locations,
         corporate_colors: {},
         corporate_fonts: {},
-        onboarding_status: 'in_progress',
-        onboarding_step: 1,
+        onboarding_status: 'completed',
+        onboarding_step: 99,
       })
       .select('id')
       .single();
     setCreating(false);
     if (error) return toast.error(error.message);
-    toast.success('Social-Kunde angelegt');
-    if (data?.id) window.location.href = `/social/onboarding?client=${data.id}`;
-    else load();
+    toast.success('Social-Kunde aus Kundendaten übernommen');
+    load();
   }
+
 
   if (loading) {
     return (
