@@ -302,6 +302,7 @@ const SocialWettbewerber = lazy(() => import("./pages/Social/Wettbewerber"));
 const SocialReports = lazy(() => import("./pages/Social/Reports"));
 const SocialPortalView = lazy(() => import("./pages/Social/PortalView"));
 const SocialOnboardingPortal = lazy(() => import("./pages/Social/OnboardingPortal"));
+const SocialShowcase = lazy(() => import("./pages/Social/Showcase"));
 
 const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk"));
 const DigitaleSignaturenTemplateEditor = lazy(() => import("./pages/DigitaleSignaturenTemplateEditor"));
@@ -1416,6 +1417,7 @@ function AppRoutes() {
           <Route path="/social/reports" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialReports /></ProtectedRoute>} />
           <Route path="/social-portal/:token" element={<SocialPortalView />} />
           <Route path="/social-onboarding/:token" element={<SocialOnboardingPortal />} />
+          <Route path="/social/showcase/:token" element={<SocialShowcase />} />
 
 
           <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />

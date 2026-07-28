@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.social-onboarding-portal]
 verify_jwt = false
 
+[functions.social-showcase-public]
+verify_jwt = false
+
 
 [functions.ac-track]
 verify_jwt = false
