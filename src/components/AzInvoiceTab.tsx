@@ -251,13 +251,27 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             status: row.status ?? null,
           }));
           setExistingInvoices(list);
-          // Vorschlag für nächste Rate: AZ-{orderNo}-{n+1} und Restbetrag als Vorbelegung
-          // ABER: nur wenn kein lokaler Entwurf besteht (sonst überschreiben wir die Eingaben des Users).
-          if (list.length > 0 && !hasDraft) {
-            const base = `AZ-${orderNo}`;
-            const next = list.length + 1;
-            const candidate = `${base}-${next}`;
-            setInvoiceNumber(candidate);
+          const base = `AZ-${orderNo}`;
+          // Split-Mode aus bestehenden Rechnungen ableiten (falls noch nicht gesetzt).
+          let effectiveMode: SplitMode | null = readMode(mKey);
+          if (list.length > 0 && !effectiveMode) {
+            const hasSuffixed = list.some(inv => /-\d+$/.test((inv.invoice_number || '').trim()));
+            effectiveMode = hasSuffixed ? 'multi' : 'single';
+            writeMode(mKey, effectiveMode);
+            setSplitModeState(effectiveMode);
+          }
+          // Vorschlag nur für Multi-Modus (durchgängige Nummerierung mit Suffix)
+          if (list.length > 0 && !hasDraft && effectiveMode === 'multi') {
+            // höchsten vorhandenen Suffix ermitteln (statt list.length, robust bei Lücken)
+            const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const rx = new RegExp(`^${esc}-(\\d+)$`);
+            let maxN = 0;
+            for (const inv of list) {
+              const m = (inv.invoice_number || '').trim().match(rx);
+              if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+            }
+            const next = Math.max(maxN + 1, list.length + 1);
+            setInvoiceNumber(`${base}-${next}`);
             setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
             const sum = list.reduce((s, r: any) => s + (Number(r.gross_amount) || 0), 0);
             const rest = Math.max(0, (Number(orderDeposit) || 0) - sum);
