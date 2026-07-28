@@ -66,9 +66,41 @@ async function loadLogo(): Promise<string> {
   return _logoCache;
 }
 
+const DRAFT_PREFIX = 'az-draft:';
+const draftKey = (orderId?: string | null, orderNo?: string) =>
+  `${DRAFT_PREFIX}${orderId || orderNo || 'neu'}`;
+
+type AzDraft = {
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string;
+  depositAmount: string;
+  taxPercentage: number;
+  positionLabel: string;
+  intro: string;
+  savedAt: string;
+};
+
+function readDraft(key: string): AzDraft | null {
+  try {
+    const raw = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+    if (!raw) return null;
+    return JSON.parse(raw) as AzDraft;
+  } catch { return null; }
+}
+function writeDraft(key: string, d: AzDraft) {
+  try { window.localStorage.setItem(key, JSON.stringify(d)); } catch { /* ignore */ }
+}
+function removeDraft(key: string) {
+  try { window.localStorage.removeItem(key); } catch { /* ignore */ }
+}
+
 export default function AzInvoiceTab({ order, customer, items, onReload }: Props) {
   const currency = order?.currency || 'EUR';
   const orderNo = String(order?.order_number || '');
+  const dKey = draftKey(order?.id, orderNo);
+  const initialDraft = useMemo(() => readDraft(dKey), [dKey]);
+  const [hasDraft, setHasDraft] = useState<boolean>(!!initialDraft);
 
   // Anzahlung aus Auftrag übernehmen
   const orderDeposit = Number(order?.deposit_amount) || 0;
@@ -80,24 +112,28 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     return sum;
   }, [order, items]);
 
-  const [invoiceNumber, setInvoiceNumber] = useState<string>(`AZ-${orderNo || 'NEU'}`);
-  const [invoiceDate, setInvoiceDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [dueDate, setDueDate] = useState<string>(() => {
+  const [invoiceNumber, setInvoiceNumber] = useState<string>(initialDraft?.invoiceNumber || `AZ-${orderNo || 'NEU'}`);
+  const [invoiceDate, setInvoiceDate] = useState<string>(initialDraft?.invoiceDate || new Date().toISOString().slice(0, 10));
+  const [dueDate, setDueDate] = useState<string>(initialDraft?.dueDate || (() => {
     const d = new Date();
     d.setDate(d.getDate() + 14);
     return d.toISOString().slice(0, 10);
-  });
-  const [depositAmount, setDepositAmount] = useState<string>(orderDeposit > 0 ? String(orderDeposit) : '');
+  })());
+  const [depositAmount, setDepositAmount] = useState<string>(
+    initialDraft?.depositAmount ?? (orderDeposit > 0 ? String(orderDeposit) : ''),
+  );
   const [taxPercentage, setTaxPercentage] = useState<number>(() => {
+    if (initialDraft) return Number(initialDraft.taxPercentage);
     const saved = order?.az_tax_percentage;
     return saved === null || saved === undefined ? 19 : Number(saved);
   });
   const [savingTax, setSavingTax] = useState(false);
   const [positionLabel, setPositionLabel] = useState<string>(
-    `Anzahlung gemäß Auftrag ${orderNo}`.trim()
+    initialDraft?.positionLabel || `Anzahlung gemäß Auftrag ${orderNo}`.trim(),
   );
   const [intro, setIntro] = useState<string>(
-    'Vielen Dank für Ihre Bestellung. Vereinbarungsgemäß stellen wir Ihnen hiermit die Anzahlung in Rechnung.'
+    initialDraft?.intro ||
+    'Vielen Dank für Ihre Bestellung. Vereinbarungsgemäß stellen wir Ihnen hiermit die Anzahlung in Rechnung.',
   );
   const [generating, setGenerating] = useState(false);
   const [booking, setBooking] = useState(false);
