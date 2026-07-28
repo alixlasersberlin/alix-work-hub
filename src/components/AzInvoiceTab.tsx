@@ -823,6 +823,32 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     setConfirm(mode);
   }
 
+  function addNewRate() {
+    const base = `AZ-${orderNo}`;
+    const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rx = new RegExp(`^${esc}-(\\d+)$`);
+    let maxN = 0;
+    let hasBase = false;
+    for (const inv of existingInvoices) {
+      const n = (inv.invoice_number || '').trim();
+      if (n === base) { hasBase = true; if (maxN < 1) maxN = 1; continue; }
+      const m = n.match(rx);
+      if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
+    }
+    const cur = invoiceNumber.trim();
+    if (cur === base) { hasBase = true; if (maxN < 1) maxN = 1; }
+    const mCur = cur.match(rx);
+    if (mCur) maxN = Math.max(maxN, parseInt(mCur[1], 10));
+    const next = Math.max(maxN + 1, existingInvoices.length + 1, hasBase ? 2 : 2);
+    setInvoiceNumber(`${base}-${next}`);
+    setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
+    const d = new Date();
+    setInvoiceDate(d.toISOString().slice(0, 10));
+    const due = new Date(d); due.setDate(due.getDate() + 14);
+    setDueDate(due.toISOString().slice(0, 10));
+    if (openRestDeposit > 0) setDepositAmount(String(openRestDeposit));
+    else setDepositAmount('');
+  }
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 card-glow space-y-6">
@@ -879,6 +905,15 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
               : <Mail className="w-4 h-4 mr-2" />}
             {currentIsDuplicate ? 'Rechnung per E-Mail versenden' : 'Anzahlung per E-Mail versenden'}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addNewRate}
+            title="Weitere Anzahlungsrate anlegen – Rechnungsnummer wird hochgezählt und Restbetrag vorbelegt."
+          >
+            + Weitere Anzahlung
+          </Button>
+
         </div>
       </div>
 
