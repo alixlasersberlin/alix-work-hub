@@ -1442,6 +1442,7 @@ function AppRoutes() {
           <Route path="/dokumente/dashboard" element={<ProtectedRoute><AlixDocsDashboardPage /></ProtectedRoute>} />
           <Route path="/alixdocs" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocsEnterpriseHub /></ProtectedRoute>} />
           <Route path="/alixdocs/aufgaben" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocsTasks /></ProtectedRoute>} />
+          <Route path="/alixdocs/edit/:id" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocs2Editor /></ProtectedRoute>} />
           <Route path="/alixdocs2" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocs2Dashboard /></ProtectedRoute>} />
           <Route path="/alixdocs2/nextcloud" element={<ProtectedRoute requiredRoles={['Super Admin']}><AlixDocs2Nextcloud /></ProtectedRoute>} />
           <Route path="/alixdocs2/inbox" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AlixDocs2Inbox /></ProtectedRoute>} />
