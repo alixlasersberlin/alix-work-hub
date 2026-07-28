@@ -5863,6 +5863,7 @@ export type Database = {
           created_by: string | null
           deleted_at: string | null
           doc_type: string | null
+          editor_html: string | null
           etag: string | null
           id: string
           language: string | null
@@ -5890,6 +5891,7 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           doc_type?: string | null
+          editor_html?: string | null
           etag?: string | null
           id?: string
           language?: string | null
@@ -5917,6 +5919,7 @@ export type Database = {
           created_by?: string | null
           deleted_at?: string | null
           doc_type?: string | null
+          editor_html?: string | null
           etag?: string | null
           id?: string
           language?: string | null
@@ -32711,6 +32714,15 @@ export type Database = {
           rank: number
           snippet: string
           title: string
+        }[]
+      }
+      alixdocs2_match_embeddings: {
+        Args: { match_count?: number; query_embedding: string }
+        Returns: {
+          chunk_index: number
+          content: string
+          doc_id: string
+          similarity: number
         }[]
       }
       alixdocs2_purge_deleted: { Args: never; Returns: number }
