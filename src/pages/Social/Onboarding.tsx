@@ -88,6 +88,7 @@ export default function SocialOnboarding() {
       const { data: user } = await supabase.auth.getUser();
       const { data: client, error } = await supabase.from('social_clients').insert({
         ...company,
+        customer_id: customerId,
         locations: locations.filter(l => l.trim()).map(name => ({ name })),
         corporate_colors: colors.split(',').map(c => c.trim()).filter(Boolean),
         corporate_fonts: fonts.split(',').map(f => f.trim()).filter(Boolean),
@@ -96,6 +97,7 @@ export default function SocialOnboarding() {
         created_by: user.user?.id,
         owner_user_id: user.user?.id,
       }).select().single();
+
       if (error) throw error;
       if (platforms.length > 0) {
         await supabase.from('social_accounts').insert(platforms.map(p => ({ client_id: client.id, platform: p, auth_type: 'password' })));
