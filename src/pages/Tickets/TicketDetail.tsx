@@ -526,6 +526,11 @@ export default function TicketDetail() {
             {ticket.title || ticket.external_ticket_id || 'Ticket'}
           </h1>
           <Badge variant="outline">{ticket.external_ticket_id || ticket.id.slice(0, 8)}</Badge>
+          {(ticket as any).case_number && (
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/40" title="Bearbeitungs-/Vorgangsnummer">
+              Vorgang {(ticket as any).case_number}
+            </Badge>
+          )}
           <Badge variant="outline">{ticket.source_system}</Badge>
           {ticket.auto_category && (
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/40">
