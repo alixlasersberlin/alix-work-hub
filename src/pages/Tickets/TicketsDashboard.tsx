@@ -78,11 +78,18 @@ export default function TicketsDashboard() {
     });
 
 
-    // Priority breakdown (offene Tickets)
-    const { data: prio } = await supabase
-      .from("tickets").select("priority").in("status", OPEN_STATUS).limit(1000);
+    // Charts + history parallel laden
+    const from14 = subDays(startOfDay(now), 13);
+    const [prioRes, deptRes, createdRes, closedRes, histRes] = await Promise.all([
+      supabase.from("tickets").select("priority").in("status", OPEN_STATUS).limit(1000),
+      supabase.from("tickets").select("department").in("status", OPEN_STATUS).limit(1000),
+      supabase.from("tickets").select("created_at").gte("created_at", from14.toISOString()).limit(2000),
+      supabase.from("tickets").select("updated_at").gte("updated_at", from14.toISOString()).in("status", CLOSED_STATUS).limit(2000),
+      supabase.from("ticket_history").select("id, ticket_id, action, field, new_value, created_at").order("created_at", { ascending: false }).limit(15),
+    ]);
+
     const prioAgg: Record<string, number> = {};
-    (prio ?? []).forEach((r: any) => {
+    (prioRes.data ?? []).forEach((r: any) => {
       const k = r.priority ?? "Normal";
       prioAgg[k] = (prioAgg[k] ?? 0) + 1;
     });
@@ -90,11 +97,8 @@ export default function TicketsDashboard() {
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value, color: PRIO_COLORS[name?.toLowerCase()] ?? "hsl(215 15% 55%)" })));
 
-    // Department breakdown
-    const { data: dept } = await supabase
-      .from("tickets").select("department").in("status", OPEN_STATUS).limit(1000);
     const deptAgg: Record<string, number> = {};
-    (dept ?? []).forEach((r: any) => {
+    (deptRes.data ?? []).forEach((r: any) => {
       const k = r.department ?? "—";
       deptAgg[k] = (deptAgg[k] ?? 0) + 1;
     });
@@ -103,22 +107,16 @@ export default function TicketsDashboard() {
       .slice(0, 8)
       .map(([name, value], i) => ({ name, value, color: DEPT_PALETTE[i % DEPT_PALETTE.length] })));
 
-    // 14-Tage-Trend (created vs closed)
-    const from14 = subDays(startOfDay(now), 13);
-    const [{ data: created }, { data: closed }] = await Promise.all([
-      supabase.from("tickets").select("created_at").gte("created_at", from14.toISOString()).limit(2000),
-      supabase.from("tickets").select("updated_at").gte("updated_at", from14.toISOString()).in("status", CLOSED_STATUS).limit(2000),
-    ]);
     const days: Record<string, { neu: number; geschlossen: number }> = {};
     for (let i = 0; i < 14; i++) {
       const k = format(subDays(now, 13 - i), "yyyy-MM-dd");
       days[k] = { neu: 0, geschlossen: 0 };
     }
-    (created ?? []).forEach((r: any) => {
+    (createdRes.data ?? []).forEach((r: any) => {
       const k = format(new Date(r.created_at), "yyyy-MM-dd");
       if (days[k]) days[k].neu++;
     });
-    (closed ?? []).forEach((r: any) => {
+    (closedRes.data ?? []).forEach((r: any) => {
       const k = format(new Date(r.updated_at), "yyyy-MM-dd");
       if (days[k]) days[k].geschlossen++;
     });
@@ -126,12 +124,8 @@ export default function TicketsDashboard() {
       date: format(new Date(date), "dd.MM.", { locale: de }), ...v,
     })));
 
-    // Recent activity
-    const { data: hist } = await supabase
-      .from("ticket_history")
-      .select("id, ticket_id, action, field, new_value, created_at")
-      .order("created_at", { ascending: false }).limit(15);
-    setHistory((hist as any) ?? []);
+    setHistory((histRes.data as any) ?? []);
+
 
     setLoading(false);
   };
