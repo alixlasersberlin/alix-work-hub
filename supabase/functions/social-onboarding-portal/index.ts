@@ -116,6 +116,31 @@ Deno.serve(async (req) => {
         entity_id: clientId,
       }).then(() => null, () => null);
 
+      // Notify staff on completion
+      if (completed) {
+        const link = `https://alixwork.de/social/fragebogen?client=${clientId}`;
+        const html = `
+          <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#0b0b0b;">
+            <h2 style="margin:0 0 12px 0;">Social-Media Fragebogen eingegangen</h2>
+            <p><strong>${(client as any).company_name}</strong> hat den Onboarding-Fragebogen ausgefüllt und übermittelt.</p>
+            <p style="margin:20px 0;">
+              <a href="${link}" style="background:#0b0b0b;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;">
+                Fragebogen im AlixWork öffnen
+              </a>
+            </p>
+            <p style="color:#555;font-size:13px;">Kunde: ${(client as any).contact_person ?? '—'} &lt;${(client as any).email ?? '—'}&gt;</p>
+          </div>
+        `;
+        await svc.functions.invoke('send-mail', {
+          body: {
+            to: 'social@alix-operation.de',
+            subject: `Social Onboarding abgeschlossen – ${(client as any).company_name}`,
+            html,
+            from: 'news@alixwork.de',
+          },
+        }).catch(() => null);
+      }
+
       return jr({ ok: true, completed });
     }
 
