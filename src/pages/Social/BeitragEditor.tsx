@@ -138,6 +138,35 @@ export default function SocialBeitragEditor() {
         </div>
       </div>
 
+      <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />KI-Assistent</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Label>Idee / Prompt</Label>
+          <Textarea rows={2} value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}
+            placeholder="z.B. Neues Produkt X, Fokus auf Premium-Qualität, Ton locker" />
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={aiCaption} disabled={aiBusy !== null}>
+              {aiBusy === 'caption' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              Text + Hashtags generieren
+            </Button>
+            <Button type="button" variant="outline" onClick={aiImage} disabled={aiBusy !== null}>
+              {aiBusy === 'image' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImagePlus className="mr-2 h-4 w-4" />}
+              Bild generieren & anhängen
+            </Button>
+          </div>
+          {aiPreviews.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              {aiPreviews.map((u, i) => (
+                <img key={i} src={u} className="rounded-lg border border-border/50 aspect-square object-cover" alt="AI-generiert" />
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">Nutzt Marken-Kontext aus dem Marketing-Fragebogen.</p>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader><CardTitle>Inhalt</CardTitle></CardHeader>
         <CardContent className="space-y-4">
