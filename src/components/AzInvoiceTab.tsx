@@ -971,6 +971,20 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           >
             + Weitere Anzahlung
           </Button>
+          {hasDraft && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                clearDraft();
+                toast.info('Entwurf verworfen. Felder werden beim nächsten Öffnen neu vorbelegt.');
+              }}
+              title="Gespeicherten lokalen Entwurf löschen"
+            >
+              Entwurf verwerfen
+            </Button>
+          )}
 
         </div>
       </div>
