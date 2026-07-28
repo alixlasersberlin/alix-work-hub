@@ -527,7 +527,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
       const payload: any = {
         source: 'alixwork',
-        source_ref: order?.id ?? null,
+        source_ref: order?.id ? `order:${order.id}:${invoiceNumber}` : `inv:${invoiceNumber}`,
         deposit_number: invoiceNumber,
         invoice_number: invoiceNumber,
         customer_id: customer?.id ?? null,
