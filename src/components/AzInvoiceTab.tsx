@@ -179,13 +179,17 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             status: row.status ?? null,
           }));
           setExistingInvoices(list);
-          // Vorschlag für nächste Rechnungsnummer: AZ-{orderNo}-{n+1}
+          // Vorschlag für nächste Rate: AZ-{orderNo}-{n+1} und Restbetrag als Vorbelegung
           if (list.length > 0) {
             const base = `AZ-${orderNo}`;
             const next = list.length + 1;
             const candidate = `${base}-${next}`;
             setInvoiceNumber(candidate);
-            setPositionLabel(`Anzahlung ${next} gemäß Auftrag ${orderNo}`.trim());
+            setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
+            const sum = list.reduce((s, r: any) => s + (Number(r.gross_amount) || 0), 0);
+            const rest = Math.max(0, (Number(orderDeposit) || 0) - sum);
+            if (rest > 0) setDepositAmount(String(Number(rest.toFixed(2))));
+            else setDepositAmount('');
           }
         }
       } catch { /* ignore */ }
