@@ -379,10 +379,11 @@ export default function OffeneAnzahlungen() {
             <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="alle">Alle</SelectItem>
-              <SelectItem value="offen">Offen</SelectItem>
+              <SelectItem value="entwurf">Entwurf</SelectItem>
+              <SelectItem value="offen">Versendet / Offen</SelectItem>
               <SelectItem value="ueberfaellig">Überfällig</SelectItem>
               <SelectItem value="teilweise">Teilweise bezahlt</SelectItem>
-              <SelectItem value="gebucht">Gebucht</SelectItem>
+              <SelectItem value="gebucht">Bezahlt</SelectItem>
             </SelectContent>
           </Select>
         </div>
