@@ -359,7 +359,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setFontSize(7.5);
       doc.setTextColor(90, 90, 90);
       doc.text(
-        'Alix Lasers GmbH · Otto-Hahn-Str. 43 · 63303 Dreieich · USt-IdNr. DE327063823',
+        'Alix Lasers GmbH · Buchsbaumweg 53 · 12357 Berlin · USt-IdNr. DE321691012',
         LEFT, TOP_CONTENT + 8,
       );
 
