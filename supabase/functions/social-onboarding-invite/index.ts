@@ -72,7 +72,8 @@ Deno.serve(async (req) => {
       if (upErr) return jr({ error: upErr.message }, 500);
     }
 
-    const origin = (base_url && String(base_url).replace(/\/+$/, '')) || 'https://alixwork.de';
+    // Öffentliche Links müssen IMMER auf alixwork.de zeigen — nie auf Preview-/Lovable-Domains.
+    const origin = 'https://alixwork.de';
     const link = `${origin}/social-onboarding/${token}`;
 
     const greeting = client.contact_person ? `Hallo ${client.contact_person},` : 'Hallo,';
@@ -95,15 +96,20 @@ Deno.serve(async (req) => {
       </div>
     `;
 
-    const { error: mailErr } = await userClient.functions.invoke('send-mail', {
+    const { data: mailData, error: mailErr } = await userClient.functions.invoke('send-mail', {
       body: {
-        to,
+        to_email: to,
+        to_name: client.contact_person ?? client.company_name ?? null,
+        from_email: 'news@alixwork.de',
+        from_name: 'Alix Lasers Social-Team',
         subject: `Social-Media Onboarding – ${client.company_name}`,
-        html,
-        from: 'news@alixwork.de',
+        body_html: html,
       },
     });
     if (mailErr) return jr({ error: `Mailversand fehlgeschlagen: ${mailErr.message}` }, 500);
+    if ((mailData as any)?.error) {
+      return jr({ error: `Mailversand fehlgeschlagen: ${(mailData as any).error}` }, 500);
+    }
 
     return jr({ ok: true, link, sent_to: to });
   } catch (e) {
