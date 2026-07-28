@@ -1,79 +1,64 @@
-# ALIX Audit Center — 5-Phasen-Plan
+# ALIXDocs Enterprise 3.0
 
-Neues Modul unter `/audit-center`, Menüpunkt in **OPERATIONS**, ausschließlich **Super Admin**. 24 Monate Aufbewahrung, volle Erfassung (Geo, Device-Fingerprint, Maus/Tastatur-Zähler), Write-Once/Read-Many, revisionssicher.
+## Entscheidungen (bestätigt)
+- **Editor**: Lightweight — TipTap (Rich Text/Word-Like), Univer (Excel-Like Sheets), einfache PPT-Slide-Ansicht mit TipTap-Slides. Kein voller .docx-Roundtrip; .docx/.xlsx werden als PDF-Vorschau + editierbare Konvertierung angeboten.
+- **Konsolidierung**: `alixdocs2_*` wird die einzige Basis. `alixdocs_*` (Legacy) wird per Migration in `alixdocs2_*` überführt und danach schreibgeschützt.
+- **Scope**: Alle 7 Phasen (E1–E7).
 
-DSGVO-Hinweis: Vor Go-Live muss ein Info-Text im Login + Betriebsvereinbarung erfolgen. Das Tracking wird per Feature-Flag scharf geschaltet.
+## Konsolidierungs-Schritt (vor E1)
+1. Migration `alixdocs_documents` → `alixdocs2_documents` (Mapping IDs, Kategorien, Versionen, Approval-States, Shares).
+2. Legacy-Views bleiben lesbar; alle neuen Writes gehen in `alixdocs2_*`.
+3. Routen `/alixdocs` und `/alixdocs2` → einheitlich unter `/alixdocs` (E1-Dashboard), Legacy-Reader unter `/alixdocs/legacy`.
 
----
+## Phase E1 — Enterprise Dashboard & Globale Suche
+- Neue Landing `/alixdocs`: KPI-Kacheln (Dokumente gesamt, offene Freigaben, meine Aufgaben, letzte Aktivität, Speicherverbrauch).
+- Global Search Bar (Header): Volltext (bestehendes `alixdocs2_fts_search`) + Filter (Doctype, Owner, Datum, Tag, Modul).
+- Recent/Pinned/Favorites-Sektionen.
 
-## Phase 1 — Fundament (Erfassung)
+## Phase E2 — Chat, Comments, @Mentions, Tasks
+- Nutzt bestehendes `alixdocs2_comments`.
+- Neu: `alixdocs2_tasks` (Titel, Assignee, Due, Status, doc_id).
+- @Mentions triggern `app_notifications` + Email.
+- Sidebar-Panel „Diskussion & Aufgaben" in jedem Doc.
 
-**Tabellen (WORM, RLS: nur Super Admin SELECT, keine UPDATE/DELETE außer Retention-Job)**
-- `audit_sessions` — Login/Logout, Session-Dauer, Idle-Zeit, aktive Zeit
-- `audit_devices` — Device-Fingerprint (UA, OS, Auflösung, Sprache, TZ, Device-ID Cookie)
-- `audit_geo` — IPv4/IPv6, ASN, Provider, Land/Stadt, VPN/Proxy/TOR-Flags, GPS (opt.)
-- `audit_actions` — sekundengenaue Timeline: user_id, ts, module, action, object_type, object_id, duration_ms, meta
-- `audit_changes` — Alt/Neu-Diffs: table, record_id, field, old_value, new_value, user_id, ts
-- `audit_access_log` — jede Einsicht ins Audit Center wird selbst geloggt
+## Phase E3 — Workflow Engine & Version Diff
+- Konfigurierbare Workflows (`alixdocs2_workflows`, `_workflow_steps`, `_workflow_runs`): sequentiell/parallel, Reminder, Fristen.
+- Version-Diff (Text via `diff-match-patch`) für TipTap-Dokumente; für PDFs Side-by-Side-Vergleich.
 
-**Edge Functions**
-- `audit-session-start` — schreibt Session inkl. Geo-Lookup (ipapi/ipinfo)
-- `audit-session-heartbeat` — jede 30s Idle/Active-Tracking
-- `audit-session-end` — Logout/Beacon
-- `audit-track` — Batch-Endpoint für Frontend-Actions
+## Phase E4 — AI Copilot
+- Edge Function `alixdocs-copilot` (Lovable AI Gateway, `openai/gpt-5.6-sol`, reasoningEffort none).
+- Aktionen: Zusammenfassen, Klassifizieren, Risiken, Fragen-zum-Dokument (RAG über OCR-Text).
+- UI-Panel „Copilot" im Doc-Viewer.
 
-**Frontend**
-- `useAuditTracker()` Hook — hookt in Router, klick/scroll/keyboard-Zähler, Tab-Focus
-- Globaler DB-Trigger `audit_trigger_fn` (existiert bereits!) auf relevante Tabellen erweitern für Alt/Neu-Diffs
+## Phase E5 — Semantic Search & OCR-Ausbau
+- OCR bestehend (Tesseract via Edge Function) auf alle neuen Uploads ausrollen; Backfill-Job.
+- Embeddings (`text-embedding-3-small` via Gateway) in `alixdocs2_embeddings` (pgvector).
+- Hybrid Search: BM25 (FTS) + Vektor-Rerank.
 
-## Phase 2 — Kunden-, Dokument- & KI-Protokoll
+## Phase E6 — Office Editor
+- TipTap Editor Route `/alixdocs/edit/:id` mit Auto-Save (Versionen).
+- Univer Sheets Route `/alixdocs/sheet/:id`.
+- Import: .docx via Mammoth → HTML → TipTap; .xlsx via SheetJS → Univer.
+- Export: PDF (bestehend), HTML, .docx (best-effort via html-docx-js).
 
-- `audit_customer_touches` — wer öffnete welchen Kunden, wie lange, was geändert
-- `audit_document_events` — PDF geöffnet/gedruckt/geladen/gelöscht/signiert
-- `audit_ai_usage` — Modell, Prompt-Hash, Tokens, Kosten, Ergebnis übernommen ja/nein
-- Integration in `OrderDetail.tsx`, `AlixDocs2Detail`, `AiCenter.tsx`
+## Phase E7 — Live Collaboration & Mobile
+- Y.js + Supabase Realtime Provider für TipTap (Presence, Cursor, CRDT).
+- Für Univer analog mit dessen Collab-Plugin.
+- Mobile: Responsive Doc-Viewer, Kommentare, Freigaben, Signaturen mobil.
 
-## Phase 3 — Sicherheitscenter
+## Technische Details
+- Neue Tabellen (alle mit RLS + GRANT): `alixdocs2_tasks`, `alixdocs2_workflows`, `alixdocs2_workflow_steps`, `alixdocs2_workflow_runs`, `alixdocs2_embeddings (vector(1536))`, `alixdocs2_favorites`, `alixdocs2_activity`.
+- Neue Edge Functions: `alixdocs-copilot`, `alixdocs-embed`, `alixdocs-ocr-backfill`, `alixdocs-workflow-tick` (Cron).
+- Neue Client-Deps: `@tiptap/*`, `@univerjs/*`, `yjs`, `y-supabase`, `mammoth`, `xlsx`, `diff-match-patch`, `html-docx-js`.
+- Bestehende Menüs: „Dokumente" → zeigt nur noch neuen Hub `/alixdocs`.
 
-- `audit_security_alerts` — Regel-Engine (Cron alle 5 min):
-  - Mehrfachlogin, neues Gerät, Login Ausland, VPN, Nachtarbeit, ≥5 Fehlversuche, Massen-Export, Massen-Änderung
-- Alert-Feed + E-Mail an Super Admin bei Severity ≥ warn
+## Rollout-Reihenfolge (bitte bestätigen)
+1. Konsolidierungs-Migration + neuer Hub (E1)  ← **Start jetzt**
+2. E2 Tasks/Mentions
+3. E3 Workflow + Diff
+4. E4 Copilot
+5. E5 Semantik + OCR-Backfill
+6. E6 Editors
+7. E7 Live Collab + Mobile
 
-## Phase 4 — Management Dashboard + Live Monitor
-
-Neue Seiten unter `/audit-center`:
-- `Overview.tsx` — KPIs (online/aktiv/Pause/offline), Produktivität heute, Stunden-Heatmap
-- `LiveMonitor.tsx` — Leitstand-Ansicht, Realtime via Supabase Channel `audit_presence`
-- `Employee.tsx` — Profil je Mitarbeiter: Arbeitszeit, Top-Module, Top-Kunden, Ø-Bearbeitungszeit
-- `Timeline.tsx` — sekundengenaue Timeline (filterbar), Export PDF/Excel/CSV
-- `Changes.tsx` — Alt/Neu-Diff-Browser
-- `Security.tsx` — Alert-Feed
-- `Reports.tsx` — Tages/Wochen/Monats/Jahresreports
-
-## Phase 5 — UPS (Ultimate Productivity Score)
-
-- Nightly Cron `ups-calculate` (03:00 UTC):
-  - Berechnet 0-100 Score pro Mitarbeiter/Tag aus:
-    Arbeitszeit vs. Produktivzeit, erledigte Aufgaben, Reaktionszeiten, Kundenkontakte, Ticket-Durchlauf, Angebote/Rechnungen, Serviceeinsätze, Doku-Qualität, KI-Nutzung, Termintreue
-- `audit_ups_scores` (user_id, date, score, breakdown_json, trend_pct)
-- Dashboard-Widget mit Vergleichen (Vortag/Vorwoche/Vormonat) und KI-Erkennung von Verbesserungspotenzialen (Gemini via Lovable AI)
-
----
-
-## Compliance & Technik
-
-- **RLS**: Alle Tabellen nur Super Admin SELECT via `has_role(auth.uid(),'Super Admin')`; INSERT nur via Edge Function mit Service Role; UPDATE/DELETE **generell verboten** außer Retention-Job.
-- **Retention**: Cron `audit-retention` (täglich 04:00 UTC) anonymisiert Datensätze > 24 Monate (IP/UA → NULL, Content-Hash bleibt).
-- **Verschlüsselung**: `pgcrypto` für IP-Adressen und Device-IDs at rest.
-- **Menü**: Neuer Eintrag "Audit Center" in `AppLayout.tsx` unter OPERATIONS, sichtbar nur bei `Super Admin`.
-- **Rate Limits**: `audit-track` gedrosselt auf 100 req/min/user.
-
-## Reihenfolge der Umsetzung
-
-Phase 1 in dieser Session (Tabellen + Edge Functions + Tracker-Hook + minimales `/audit-center` Overview mit Session-Liste).
-Phasen 2-5 in Folge-Prompts, jeweils klar abgegrenzt.
-
-## Was ich **nicht** anfasse
-
-- Bestehendes `audit_logs` bleibt unverändert (wird zusätzlich in `audit_actions` gespiegelt).
-- Kein Umbau bestehender Module — Tracker hookt sich nur ein.
+Ich fange nach Deiner Bestätigung mit **Konsolidierung + E1** an. Sag „go", oder nenne eine andere Startphase.
