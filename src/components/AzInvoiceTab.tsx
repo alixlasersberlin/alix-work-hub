@@ -70,6 +70,20 @@ const DRAFT_PREFIX = 'az-draft:';
 const draftKey = (orderId?: string | null, orderNo?: string) =>
   `${DRAFT_PREFIX}${orderId || orderNo || 'neu'}`;
 
+const MODE_PREFIX = 'az-mode:';
+const modeKeyFn = (orderId?: string | null, orderNo?: string) =>
+  `${MODE_PREFIX}${orderId || orderNo || 'neu'}`;
+type SplitMode = 'single' | 'multi';
+function readMode(key: string): SplitMode | null {
+  try {
+    const v = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+    return v === 'single' || v === 'multi' ? v : null;
+  } catch { return null; }
+}
+function writeMode(key: string, m: SplitMode) {
+  try { window.localStorage.setItem(key, m); } catch { /* ignore */ }
+}
+
 type AzDraft = {
   invoiceNumber: string;
   invoiceDate: string;
