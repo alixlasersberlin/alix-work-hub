@@ -1136,13 +1136,41 @@ export default function Orders() {
                           );
                           if (colId === 'anzahlung_ok') return (
                             <td key={colId} className="px-4 py-3 text-xs">
-                              {o.deposit_ok ? (
-                                <span className="inline-flex items-center gap-1 text-emerald-500 font-medium">
-                                  ✓ {o.deposit_ok_by || 'Ja'}
-                                </span>
-                              ) : (
-                                <span className="text-muted-foreground">—</span>
-                              )}
+                              {(() => {
+                                const inst = computeInstallments(o);
+                                if (inst.plannedCount === 0 && !o.deposit_ok) {
+                                  return <span className="text-muted-foreground">—</span>;
+                                }
+                                const total = Math.max(inst.plannedCount, 1);
+                                const paid = Math.min(inst.paidCount, total);
+                                const color = paid === 0
+                                  ? 'bg-red-500/10 text-red-400 border-red-500/30'
+                                  : paid >= total
+                                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                    : 'bg-amber-500/15 text-amber-400 border-amber-500/30';
+                                const tooltip = inst.rates.length > 0
+                                  ? inst.rates.map((r, i) => {
+                                      const amt = r.gross_amount.toLocaleString('de-DE', { style: 'currency', currency: cur(o.currency) });
+                                      const due = r.due_date ? new Date(r.due_date).toLocaleDateString('de-DE') : '—';
+                                      const st = r.isPaid ? '✓ bezahlt' : (r.status || 'offen');
+                                      return `Rate ${i + 1} · ${r.invoice_number} · ${amt} · fällig ${due} · ${st}`;
+                                    }).join('\n')
+                                  : `Anzahlung geplant: ${total} Rate(n), ${paid} bezahlt`;
+                                return (
+                                  <div className="flex flex-col gap-0.5">
+                                    <span
+                                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold border ${color}`}
+                                      title={tooltip}
+                                    >
+                                      {paid}/{total}
+                                      {paid >= total && <CheckCircle2 className="w-3 h-3" />}
+                                    </span>
+                                    {o.deposit_ok_by && paid >= total && (
+                                      <span className="text-[10px] text-muted-foreground">✓ {o.deposit_ok_by}</span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
                           );
                           if (colId === 'bestellung') return (
