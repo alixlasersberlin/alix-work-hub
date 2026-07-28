@@ -471,6 +471,7 @@ export default function TicketsList() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Vorgang</TableHead>
                         <TableHead>Kategorie</TableHead>
                         <TableHead>Ticket</TableHead>
                         <TableHead>Kunde</TableHead>
@@ -482,6 +483,7 @@ export default function TicketsList() {
                         <TableHead>Letzter Sync</TableHead>
                         <TableHead className="text-right">Aktion</TableHead>
                       </TableRow>
+
                     </TableHeader>
                     <TableBody>
                       {list.map(r => (
@@ -490,7 +492,13 @@ export default function TicketsList() {
                           onClick={() => navigate(`/tickets/${r.id}`)}
                           className="cursor-pointer hover:bg-muted/40"
                         >
+                          <TableCell className="text-xs font-mono whitespace-nowrap">
+                            {(r as any).case_number
+                              ? <Badge variant="outline" className="border-primary/40 text-primary">{(r as any).case_number}</Badge>
+                              : <span className="text-muted-foreground">—</span>}
+                          </TableCell>
                           <TableCell className="text-sm" onClick={(e) => e.stopPropagation()}>
+
                             <div className="relative min-w-40">
                               <select
                                 value={r.category || ''}
