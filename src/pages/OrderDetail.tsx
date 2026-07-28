@@ -60,6 +60,7 @@ import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
 import OrderVatPanel, { useOrderVatState } from '@/components/OrderVatPanel';
 import MediapaketOrderTab from '@/components/MediapaketOrderTab';
+import SocialOnboardingOrderTab from '@/components/SocialOnboardingOrderTab';
 import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
 import { SignatureRequestButton } from '@/components/signaturen/SignatureRequestButton';
 import AlixDocsPanel from '@/components/alixdocs/AlixDocsPanel';
