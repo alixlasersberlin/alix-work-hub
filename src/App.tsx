@@ -302,6 +302,7 @@ const SocialWettbewerber = lazy(() => import("./pages/Social/Wettbewerber"));
 const SocialReports = lazy(() => import("./pages/Social/Reports"));
 const SocialPortalView = lazy(() => import("./pages/Social/PortalView"));
 const SocialOnboardingPortal = lazy(() => import("./pages/Social/OnboardingPortal"));
+const SocialShowcase = lazy(() => import("./pages/Social/Showcase"));
 
 const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk"));
 const DigitaleSignaturenTemplateEditor = lazy(() => import("./pages/DigitaleSignaturenTemplateEditor"));
