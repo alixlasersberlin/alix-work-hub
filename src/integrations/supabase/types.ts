@@ -32926,6 +32926,7 @@ export type Database = {
         Returns: Json
       }
       ticket_sla_check_and_escalate: { Args: never; Returns: Json }
+      tickets_dashboard_counts: { Args: { _user_id: string }; Returns: Json }
       user_has_tenant: { Args: { _tenant_id: string }; Returns: boolean }
       user_mailboxes: { Args: never; Returns: string[] }
     }

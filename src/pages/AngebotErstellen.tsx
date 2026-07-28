@@ -178,36 +178,43 @@ export default function AngebotErstellen() {
   useEffect(() => {
     async function load() {
       setLoading(true);
-      // Load ALL customers in chunks (Supabase caps single queries at 1000 rows)
       const CHUNK = 1000;
-      const allCustomers: any[] = [];
-      for (let from = 0; ; from += CHUNK) {
-        const { data: chunk, error: chunkErr } = await supabase
-          .from('customers')
-          .select('id, company_name, contact_name, email, phone, billing_address, shipping_address, external_customer_id, source_system')
-          .order('company_name')
-          .range(from, from + CHUNK - 1);
-        if (chunkErr || !chunk || chunk.length === 0) break;
-        allCustomers.push(...chunk);
-        if (chunk.length < CHUNK) break;
-      }
-      // Load ALL active items in chunks (Supabase caps single queries at 1000 rows)
-      const allItems: any[] = [];
-      for (let from = 0; ; from += CHUNK) {
-        const { data: chunk, error: itemErr } = await supabase
-          .from('zoho_items')
-          .select('id, name, sku, description, rate, tax_percentage, unit')
-          .eq('status', 'active')
-          .order('name')
-          .range(from, from + CHUNK - 1);
-        if (itemErr || !chunk || chunk.length === 0) break;
-        allItems.push(...chunk);
-        if (chunk.length < CHUNK) break;
-      }
+      // Kunden + Artikel PARALLEL laden (statt sequenziell) – halbiert die Wartezeit.
+      const loadAllCustomers = async () => {
+        const out: any[] = [];
+        for (let from = 0; ; from += CHUNK) {
+          const { data: chunk, error } = await supabase
+            .from('customers')
+            .select('id, company_name, contact_name, email, phone, billing_address, shipping_address, external_customer_id, source_system')
+            .order('company_name')
+            .range(from, from + CHUNK - 1);
+          if (error || !chunk || chunk.length === 0) break;
+          out.push(...chunk);
+          if (chunk.length < CHUNK) break;
+        }
+        return out;
+      };
+      const loadAllItems = async () => {
+        const out: any[] = [];
+        for (let from = 0; ; from += CHUNK) {
+          const { data: chunk, error } = await supabase
+            .from('zoho_items')
+            .select('id, name, sku, description, rate, tax_percentage, unit')
+            .eq('status', 'active')
+            .order('name')
+            .range(from, from + CHUNK - 1);
+          if (error || !chunk || chunk.length === 0) break;
+          out.push(...chunk);
+          if (chunk.length < CHUNK) break;
+        }
+        return out;
+      };
+      const [allCustomers, allItems] = await Promise.all([loadAllCustomers(), loadAllItems()]);
       const c = allCustomers;
       setCustomers(c);
       setItems(allItems);
       setLoading(false);
+
 
 
       const params = new URLSearchParams(window.location.search);
