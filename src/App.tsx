@@ -1028,6 +1028,10 @@ function AppRoutes() {
         <Route path="/termin/verschieben/:token" element={<AppointmentAction action="reschedule" />} />
         <Route path="/termin/ablehnen/:token" element={<AppointmentAction action="cancel" />} />
         <Route path="/simulate/:userId" element={<ProtectedRoute requiredRoles={['Super Admin']}><SimulateEntry /></ProtectedRoute>} />
+        {/* Öffentliche Kundenportale – KEIN Login, KEIN AppLayout */}
+        <Route path="/social-portal/:token" element={<SocialPortalView />} />
+        <Route path="/social-onboarding/:token" element={<SocialOnboardingPortal />} />
+        <Route path="/social/showcase/:token" element={<SocialShowcase />} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/start" element={<Startseite />} />
           <Route path="/dashboard" element={<HomeRoute />} />
