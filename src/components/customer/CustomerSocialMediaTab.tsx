@@ -261,11 +261,15 @@ export default function CustomerSocialMediaTab({
             </Badge>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="default" size="sm" onClick={sendOnboardingLink}>
+              <Mail className="mr-2 h-4 w-4" />Onboarding-Link an Kunden senden
+            </Button>
             <Button asChild variant="outline" size="sm"><Link to="/social/plattformen"><ExternalLink className="mr-2 h-4 w-4" />Plattformen</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to="/social/kalender"><ExternalLink className="mr-2 h-4 w-4" />Kalender</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to={`/social/onboarding?client=${client.id}`}><ExternalLink className="mr-2 h-4 w-4" />Onboarding</Link></Button>
             <Button variant="ghost" size="sm" onClick={unlink}><Link2Off className="mr-2 h-4 w-4" />Trennen</Button>
           </div>
+
         </CardContent>
       </Card>
 
