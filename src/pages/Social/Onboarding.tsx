@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,10 +7,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, Search, X } from 'lucide-react';
 
 const PLATFORMS = ['Facebook', 'Instagram', 'TikTok', 'YouTube', 'LinkedIn', 'X (Twitter)', 'Pinterest', 'Snapchat', 'Threads'];
+
+type CustomerHit = {
+  id: string;
+  company_name: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  mobile: string | null;
+  website: string | null;
+  source_system: string | null;
+};
+
 
 export default function SocialOnboarding() {
   const nav = useNavigate();
