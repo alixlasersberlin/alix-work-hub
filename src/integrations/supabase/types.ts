@@ -27187,6 +27187,778 @@ export type Database = {
         }
         Relationships: []
       }
+      social_accounts: {
+        Row: {
+          auth_type: string
+          client_id: string
+          connected: boolean
+          created_at: string
+          deleted_at: string | null
+          email: string | null
+          has_2fa: boolean
+          id: string
+          last_check_at: string | null
+          note: string | null
+          oauth_connected_at: string | null
+          oauth_provider: string | null
+          platform: string
+          status: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          auth_type?: string
+          client_id: string
+          connected?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          has_2fa?: boolean
+          id?: string
+          last_check_at?: string | null
+          note?: string | null
+          oauth_connected_at?: string | null
+          oauth_provider?: string | null
+          platform: string
+          status?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          auth_type?: string
+          client_id?: string
+          connected?: boolean
+          created_at?: string
+          deleted_at?: string | null
+          email?: string | null
+          has_2fa?: boolean
+          id?: string
+          last_check_at?: string | null
+          note?: string | null
+          oauth_connected_at?: string | null
+          oauth_provider?: string | null
+          platform?: string
+          status?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_accounts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_activity_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          after_data: Json | null
+          before_data: Json | null
+          client_id: string | null
+          country: string | null
+          created_at: string
+          device: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          ip: unknown
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          client_id?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip?: unknown
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          after_data?: Json | null
+          before_data?: Json | null
+          client_id?: string | null
+          country?: string | null
+          created_at?: string
+          device?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip?: unknown
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_activity_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_ai_generations: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          meta: Json
+          model: string | null
+          prompt: string
+          result_text: string | null
+          result_url: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          meta?: Json
+          model?: string | null
+          prompt: string
+          result_text?: string | null
+          result_url?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          meta?: Json
+          model?: string | null
+          prompt?: string
+          result_text?: string | null
+          result_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_ai_generations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_approvals: {
+        Row: {
+          comment: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision: string
+          id: string
+          post_id: string
+          requested_by: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string
+          id?: string
+          post_id: string
+          requested_by?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision?: string
+          id?: string
+          post_id?: string
+          requested_by?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_approvals_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_campaigns: {
+        Row: {
+          budget_cents: number | null
+          client_id: string
+          conversions: number | null
+          cost_cents: number | null
+          created_at: string
+          deleted_at: string | null
+          ends_at: string | null
+          goal: string | null
+          id: string
+          leads: number | null
+          meta: Json
+          name: string
+          platform: string | null
+          roi: number | null
+          starts_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          budget_cents?: number | null
+          client_id: string
+          conversions?: number | null
+          cost_cents?: number | null
+          created_at?: string
+          deleted_at?: string | null
+          ends_at?: string | null
+          goal?: string | null
+          id?: string
+          leads?: number | null
+          meta?: Json
+          name: string
+          platform?: string | null
+          roi?: number | null
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          budget_cents?: number | null
+          client_id?: string
+          conversions?: number | null
+          cost_cents?: number | null
+          created_at?: string
+          deleted_at?: string | null
+          ends_at?: string | null
+          goal?: string | null
+          id?: string
+          leads?: number | null
+          meta?: Json
+          name?: string
+          platform?: string | null
+          roi?: number | null
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_clients: {
+        Row: {
+          company_name: string
+          contact_person: string | null
+          corporate_colors: Json
+          corporate_fonts: Json
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          deleted_at: string | null
+          email: string | null
+          id: string
+          industry: string | null
+          locations: Json
+          logo_url: string | null
+          mobile: string | null
+          onboarding_status: string
+          onboarding_step: number
+          owner_user_id: string | null
+          phone: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          company_name: string
+          contact_person?: string | null
+          corporate_colors?: Json
+          corporate_fonts?: Json
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          id?: string
+          industry?: string | null
+          locations?: Json
+          logo_url?: string | null
+          mobile?: string | null
+          onboarding_status?: string
+          onboarding_step?: number
+          owner_user_id?: string | null
+          phone?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          company_name?: string
+          contact_person?: string | null
+          corporate_colors?: Json
+          corporate_fonts?: Json
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          deleted_at?: string | null
+          email?: string | null
+          id?: string
+          industry?: string | null
+          locations?: Json
+          logo_url?: string | null
+          mobile?: string | null
+          onboarding_status?: string
+          onboarding_step?: number
+          owner_user_id?: string | null
+          phone?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      social_comments: {
+        Row: {
+          attachments: Json
+          author_id: string | null
+          body: string
+          channel: string
+          client_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+        }
+        Insert: {
+          attachments?: Json
+          author_id?: string | null
+          body: string
+          channel?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+        }
+        Update: {
+          attachments?: Json
+          author_id?: string | null
+          body?: string
+          channel?: string
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_comments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_credentials: {
+        Row: {
+          account_id: string
+          algo: string
+          ciphertext: string
+          created_at: string
+          created_by: string | null
+          id: string
+          iv: string
+          updated_at: string
+        }
+        Insert: {
+          account_id: string
+          algo?: string
+          ciphertext: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          iv: string
+          updated_at?: string
+        }
+        Update: {
+          account_id?: string
+          algo?: string
+          ciphertext?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          iv?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_credentials_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "social_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_media_library: {
+        Row: {
+          category: string | null
+          client_id: string
+          created_at: string
+          deleted_at: string | null
+          file_name: string
+          id: string
+          metadata: Json
+          mime_type: string | null
+          size_bytes: number | null
+          storage_path: string
+          tags: string[]
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          client_id: string
+          created_at?: string
+          deleted_at?: string | null
+          file_name: string
+          id?: string
+          metadata?: Json
+          mime_type?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          tags?: string[]
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          client_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          file_name?: string
+          id?: string
+          metadata?: Json
+          mime_type?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          tags?: string[]
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_media_library_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_notifications: {
+        Row: {
+          body: string | null
+          client_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          link: string | null
+          read_at: string | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          client_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_notifications_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_posts: {
+        Row: {
+          author_id: string | null
+          body: string | null
+          campaign_id: string | null
+          client_id: string
+          created_at: string
+          deleted_at: string | null
+          hashtags: string[]
+          id: string
+          media_ids: string[]
+          meta: Json
+          platform: string
+          published_at: string | null
+          scheduled_at: string | null
+          status: string
+          title: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          author_id?: string | null
+          body?: string | null
+          campaign_id?: string | null
+          client_id: string
+          created_at?: string
+          deleted_at?: string | null
+          hashtags?: string[]
+          id?: string
+          media_ids?: string[]
+          meta?: Json
+          platform: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          author_id?: string | null
+          body?: string | null
+          campaign_id?: string | null
+          client_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          hashtags?: string[]
+          id?: string
+          media_ids?: string[]
+          meta?: Json
+          platform?: string
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string
+          title?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "social_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_posts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_questionnaire: {
+        Row: {
+          answers: Json
+          client_id: string
+          created_at: string
+          deleted_at: string | null
+          id: string
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          answers?: Json
+          client_id: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          answers?: Json
+          client_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_questionnaire_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_statistics: {
+        Row: {
+          captured_on: string
+          clicks: number | null
+          client_id: string
+          comments: number | null
+          cost_cents: number | null
+          created_at: string
+          engagement: number | null
+          followers: number | null
+          id: string
+          leads: number | null
+          likes: number | null
+          meta: Json
+          platform: string
+          reach: number | null
+          roi: number | null
+          shares: number | null
+        }
+        Insert: {
+          captured_on?: string
+          clicks?: number | null
+          client_id: string
+          comments?: number | null
+          cost_cents?: number | null
+          created_at?: string
+          engagement?: number | null
+          followers?: number | null
+          id?: string
+          leads?: number | null
+          likes?: number | null
+          meta?: Json
+          platform: string
+          reach?: number | null
+          roi?: number | null
+          shares?: number | null
+        }
+        Update: {
+          captured_on?: string
+          clicks?: number | null
+          client_id?: string
+          comments?: number | null
+          cost_cents?: number | null
+          created_at?: string
+          engagement?: number | null
+          followers?: number | null
+          id?: string
+          leads?: number | null
+          likes?: number | null
+          meta?: Json
+          platform?: string
+          reach?: number | null
+          roi?: number | null
+          shares?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_statistics_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_tasks: {
+        Row: {
+          assignee_id: string | null
+          attachments: Json
+          client_id: string
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          due_at: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          attachments?: Json
+          client_id: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          attachments?: Json
+          client_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          due_at?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "social_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spare_part_consumption: {
         Row: {
           consumed_at: string
@@ -31223,6 +31995,7 @@ export type Database = {
       can_access_repair: { Args: never; Returns: boolean }
       can_access_tickets: { Args: never; Returns: boolean }
       can_access_warranty: { Args: never; Returns: boolean }
+      can_admin_social: { Args: never; Returns: boolean }
       can_approve_role_request: {
         Args: {
           _approver_role_name: string
@@ -31243,6 +32016,7 @@ export type Database = {
       can_manage_orders: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
       can_manage_repair: { Args: never; Returns: boolean }
+      can_manage_social: { Args: never; Returns: boolean }
       can_manage_tickets: { Args: never; Returns: boolean }
       can_manage_warranty: { Args: never; Returns: boolean }
       can_manage_whatsapp_automation: { Args: never; Returns: boolean }
