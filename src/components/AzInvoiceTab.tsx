@@ -955,31 +955,33 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         <div className="rounded-lg border border-border bg-secondary/40 p-3 text-sm">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold tracking-wide text-primary">
-              BEREITS GESTELLTE ANZAHLUNGSRECHNUNGEN ({existingInvoices.length})
+              ANZAHLUNGSRATEN ({existingInvoices.length})
             </div>
             <Button
               type="button"
               size="sm"
               variant="outline"
+              disabled={openRestDeposit <= 0}
+              title={openRestDeposit <= 0 ? 'Anzahlung lt. Auftrag ist vollständig in Raten aufgeteilt.' : 'Neue Rate anlegen – Restbetrag wird vorbelegt.'}
               onClick={() => {
                 const next = existingInvoices.length + 1;
                 const base = `AZ-${orderNo}`;
                 setInvoiceNumber(`${base}-${next}`);
-                setPositionLabel(`Anzahlung ${next} gemäß Auftrag ${orderNo}`.trim());
+                setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
                 const d = new Date();
                 setInvoiceDate(d.toISOString().slice(0, 10));
                 const due = new Date(d); due.setDate(due.getDate() + 14);
                 setDueDate(due.toISOString().slice(0, 10));
-                setDepositAmount('');
+                setDepositAmount(openRestDeposit > 0 ? String(openRestDeposit) : '');
               }}
             >
-              + Neue Anzahlungsrechnung
+              + Weitere Anzahlungsrate hinzufügen
             </Button>
           </div>
           <ul className="space-y-1">
             {existingInvoices.map((inv, i) => (
               <li key={`${inv.invoice_number}-${i}`} className="flex items-center justify-between text-xs">
-                <span className="font-mono text-foreground">{inv.invoice_number}</span>
+                <span className="font-mono text-foreground">Rate {i + 1} · {inv.invoice_number}</span>
                 <span className="text-muted-foreground">
                   {inv.issue_date ? fmtDate(inv.issue_date) : '—'}
                   {inv.gross_amount != null ? ` · ${fmtMoney(Number(inv.gross_amount), currency)}` : ''}
@@ -988,9 +990,33 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
               </li>
             ))}
           </ul>
+          <div className="mt-2 grid sm:grid-cols-3 gap-2 text-[11px]">
+            <div className="rounded bg-background/60 border border-border px-2 py-1">
+              <div className="text-muted-foreground">Anzahlung lt. Auftrag</div>
+              <div className="font-semibold text-foreground">{fmtMoney(orderDeposit, currency)}</div>
+            </div>
+            <div className="rounded bg-background/60 border border-border px-2 py-1">
+              <div className="text-muted-foreground">Bereits in Raten</div>
+              <div className="font-semibold text-foreground">{fmtMoney(sumExistingRates, currency)}</div>
+            </div>
+            <div className={`rounded border px-2 py-1 ${openRestDeposit > 0 ? 'bg-primary/10 border-primary/40' : 'bg-background/60 border-border'}`}>
+              <div className="text-muted-foreground">Offener Restbetrag</div>
+              <div className={`font-semibold ${openRestDeposit > 0 ? 'text-primary' : 'text-foreground'}`}>{fmtMoney(openRestDeposit, currency)}</div>
+            </div>
+          </div>
           <p className="text-[11px] text-muted-foreground mt-2">
-            Mehrere Anzahlungsrechnungen sind erlaubt. Rechnungsdatum darf in der Zukunft liegen.
+            Mehrere Anzahlungsraten sind erlaubt. Rechnungsdatum darf in der Zukunft liegen. Die Summe aller Raten darf die Anzahlung lt. Auftrag nicht überschreiten.
           </p>
+        </div>
+      )}
+
+      {exceedsDeposit && (
+        <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          <AlertCircle className="w-4 h-4 mt-0.5" />
+          <div>
+            Die geplante Rate ({fmtMoney(grossDeposit, currency)}) übersteigt zusammen mit den bereits erfassten Raten ({fmtMoney(sumExistingRates, currency)}) die Anzahlung lt. Auftrag ({fmtMoney(orderDeposit, currency)}).
+            Offener Restbetrag: <strong>{fmtMoney(openRestDeposit, currency)}</strong>.
+          </div>
         </div>
       )}
 
@@ -1000,7 +1026,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           <div>
             Die Rechnungsnummer <strong>{currentIsDuplicate.invoice_number}</strong>
             {currentIsDuplicate.issue_date ? <> vom <strong>{fmtDate(currentIsDuplicate.issue_date)}</strong></> : null}{' '}
-            ist bereits vergeben. Bitte eine andere Nummer wählen (z. B. „+ Neue Anzahlungsrechnung").
+            ist bereits vergeben. Bitte eine andere Nummer wählen (z. B. „+ Weitere Anzahlungsrate hinzufügen").
           </div>
         </div>
       )}
