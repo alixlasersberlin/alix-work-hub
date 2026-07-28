@@ -30,11 +30,53 @@ export default function SocialOnboarding() {
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [company, setCompany] = useState({ company_name: '', contact_person: '', phone: '', mobile: '', email: '', website: '', industry: '' });
+  const [customerId, setCustomerId] = useState<string | null>(null);
+  const [linkedLabel, setLinkedLabel] = useState<string | null>(null);
+  const [q, setQ] = useState('');
+  const [hits, setHits] = useState<CustomerHit[]>([]);
+  const [searching, setSearching] = useState(false);
   const [locations, setLocations] = useState<string[]>(['']);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [colors, setColors] = useState('');
   const [fonts, setFonts] = useState('');
+
+  useEffect(() => {
+    const term = q.trim();
+    if (customerId || term.length < 2) { setHits([]); return; }
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const like = `%${term}%`;
+      const { data } = await supabase
+        .from('customers')
+        .select('id,company_name,contact_name,email,phone,external_customer_id,source_system')
+        .or(`company_name.ilike.${like},contact_name.ilike.${like},email.ilike.${like},external_customer_id.ilike.${like}`)
+        .limit(15);
+      setHits((data ?? []) as CustomerHit[]);
+      setSearching(false);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [q, customerId]);
+
+  function pickCustomer(c: CustomerHit) {
+    setCustomerId(c.id);
+    setLinkedLabel(c.company_name || c.contact_name || c.email || c.id);
+    setCompany(prev => ({
+      ...prev,
+      company_name: prev.company_name || c.company_name || '',
+      contact_person: prev.contact_person || c.contact_name || '',
+      phone: prev.phone || c.phone || '',
+      email: prev.email || c.email || '',
+    }));
+    setHits([]);
+    setQ('');
+  }
+
+  function clearCustomer() {
+    setCustomerId(null);
+    setLinkedLabel(null);
+  }
+
 
   const togglePlatform = (p: string) => setPlatforms(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
   const setLoc = (i: number, v: string) => setLocations(l => l.map((x, idx) => idx === i ? v : x));
