@@ -295,6 +295,8 @@ const SocialKalender = lazy(() => import("./pages/Social/Kalender"));
 const SocialBeitragEditor = lazy(() => import("./pages/Social/BeitragEditor"));
 const SocialFreigaben = lazy(() => import("./pages/Social/Freigaben"));
 const SocialMedien = lazy(() => import("./pages/Social/Medien"));
+const SocialAnalytics = lazy(() => import("./pages/Social/Analytics"));
+const SocialVeroeffentlichung = lazy(() => import("./pages/Social/Veroeffentlichung"));
 const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk"));
 const DigitaleSignaturenTemplateEditor = lazy(() => import("./pages/DigitaleSignaturenTemplateEditor"));
 const SignMarketplace = lazy(() => import("./pages/SignMarketplace"));
