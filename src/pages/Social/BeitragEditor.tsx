@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Save, Send, CheckCircle2, XCircle, Calendar as CalIcon } from 'lucide-react';
+import { Save, Send, CheckCircle2, XCircle, Calendar as CalIcon, Sparkles, ImagePlus, Loader2 } from 'lucide-react';
 
 const PLATFORMS = ['facebook','instagram','tiktok','linkedin','youtube','x','pinterest'];
 
