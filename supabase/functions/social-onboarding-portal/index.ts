@@ -1,5 +1,6 @@
 // Public onboarding portal for social_clients. Auth via onboarding_token in body.
-// GET-style (action=load) returns current data; action=save updates whitelisted fields.
+// action=load returns client + questionnaire; action=save updates whitelisted fields;
+// action=save_questionnaire persists the platform + questionnaire answers.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -34,9 +35,17 @@ Deno.serve(async (req) => {
       return jr({ error: 'expired' }, 410);
     }
 
+    const clientId = (client as any).id as string;
+
     if (action === 'load') {
       const { deleted_at: _d, ...safe } = client as any;
-      return jr({ client: safe });
+      const { data: q } = await svc
+        .from('social_questionnaire')
+        .select('id, answers, submitted_at')
+        .eq('client_id', clientId)
+        .is('deleted_at', null)
+        .maybeSingle();
+      return jr({ client: safe, questionnaire: q ?? null });
     }
 
     if (action === 'save') {
@@ -56,14 +65,55 @@ Deno.serve(async (req) => {
         patch.onboarding_status = 'in_progress';
       }
 
-      const { error: upErr } = await svc.from('social_clients').update(patch).eq('id', (client as any).id);
+      const { error: upErr } = await svc.from('social_clients').update(patch).eq('id', clientId);
       if (upErr) return jr({ error: upErr.message }, 500);
 
       await svc.from('social_activity_logs').insert({
         actor_id: null,
         action: completed ? 'onboarding_portal_complete' : 'onboarding_portal_save',
         entity_type: 'social_clients',
-        entity_id: (client as any).id,
+        entity_id: clientId,
+      }).then(() => null, () => null);
+
+      return jr({ ok: true, completed });
+    }
+
+    if (action === 'save_questionnaire') {
+      const answers = (body.answers && typeof body.answers === 'object') ? body.answers : {};
+      const completed = body.complete === true;
+      const nowIso = new Date().toISOString();
+
+      const { data: existing } = await svc
+        .from('social_questionnaire')
+        .select('id')
+        .eq('client_id', clientId)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      const payload: Record<string, unknown> = {
+        client_id: clientId,
+        answers,
+      };
+      if (completed) payload.submitted_at = nowIso;
+
+      const q = existing?.id
+        ? svc.from('social_questionnaire').update(payload).eq('id', existing.id)
+        : svc.from('social_questionnaire').insert(payload);
+      const { error: qErr } = await q;
+      if (qErr) return jr({ error: qErr.message }, 500);
+
+      if (completed) {
+        await svc.from('social_clients').update({
+          onboarding_status: 'completed',
+          onboarding_completed_at: nowIso,
+        }).eq('id', clientId);
+      }
+
+      await svc.from('social_activity_logs').insert({
+        actor_id: null,
+        action: completed ? 'questionnaire_complete' : 'questionnaire_save',
+        entity_type: 'social_questionnaire',
+        entity_id: clientId,
       }).then(() => null, () => null);
 
       return jr({ ok: true, completed });
