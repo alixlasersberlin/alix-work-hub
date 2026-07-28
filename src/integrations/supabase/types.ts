@@ -27581,8 +27581,11 @@ export type Database = {
           locations: Json
           logo_url: string | null
           mobile: string | null
+          onboarding_completed_at: string | null
           onboarding_status: string
           onboarding_step: number
+          onboarding_token: string | null
+          onboarding_token_expires_at: string | null
           owner_user_id: string | null
           phone: string | null
           updated_at: string
@@ -27603,8 +27606,11 @@ export type Database = {
           locations?: Json
           logo_url?: string | null
           mobile?: string | null
+          onboarding_completed_at?: string | null
           onboarding_status?: string
           onboarding_step?: number
+          onboarding_token?: string | null
+          onboarding_token_expires_at?: string | null
           owner_user_id?: string | null
           phone?: string | null
           updated_at?: string
@@ -27625,8 +27631,11 @@ export type Database = {
           locations?: Json
           logo_url?: string | null
           mobile?: string | null
+          onboarding_completed_at?: string | null
           onboarding_status?: string
           onboarding_step?: number
+          onboarding_token?: string | null
+          onboarding_token_expires_at?: string | null
           owner_user_id?: string | null
           phone?: string | null
           updated_at?: string
