@@ -131,7 +131,7 @@ export default function TicketsList() {
       setLoading(true);
       const { data, error } = await supabase
         .from('tickets')
-        .select('id, external_ticket_id, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at')
+        .select('id, external_ticket_id, case_number, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at')
         .order('created_at', { ascending: false })
         .limit(500);
       if (!cancelled) {
@@ -513,7 +513,10 @@ export default function TicketsList() {
                                 <span className="ml-1 text-[10px] text-red-400">·{r.escalation_count}×esk.</span>
                               )}
                             </div>
-                            <div className="text-xs text-muted-foreground">{r.external_ticket_id || r.source_system}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {r.external_ticket_id || r.source_system}
+                              {(r as any).case_number && <span className="ml-2 text-primary">Vorgang {(r as any).case_number}</span>}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">{r.customer_name || '—'}</div>
