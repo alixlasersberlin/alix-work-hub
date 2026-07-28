@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { KeyRound, Eye, Trash2, Plus, Link2 } from 'lucide-react';
 import { CustomerLinkDialog } from '@/components/social/CustomerLinkDialog';
+import { SocialShowcaseToggle } from '@/components/social/ShowcaseToggle';
 
 type Client = { id: string; company_name: string; contact_person: string | null; onboarding_status: string; customer_id: string | null };
 type LinkedCustomer = { id: string; company_name: string | null; source_system: string | null };
@@ -113,7 +114,8 @@ export default function SocialPlattformen() {
               <Badge variant={c.onboarding_status === 'completed' ? 'default' : 'secondary'}>{c.onboarding_status}</Badge>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            <SocialShowcaseToggle clientId={c.id} />
             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
               {(accounts[c.id] ?? []).map(a => (
                 <div key={a.id} className="border border-border rounded-lg p-3 flex items-center justify-between">
