@@ -1045,23 +1045,46 @@ export default function Orders() {
                             <td key={colId} className="px-4 py-3">
                               <div className="flex items-center gap-1 flex-wrap">
                                 <StatusBadge status={o.order_status || 'offen'} />
-                                {(o as any)._azInvoiceNumber ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title={`Anzahlungsrechnung ${(o as any)._azInvoiceNumber} gestellt`}>
-                                    RE-AZ OK
-                                  </span>
-                                ) : ((o as any).invoiced_flag || (o as any)._fullInvoiceNumber) ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title={`Rechnung ${(o as any)._fullInvoiceNumber || ''} gestellt`.trim()}>
-                                    Rechnung
-                                  </span>
-                                ) : (o as any).deposit_ok ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title="Anzahlung bestätigt (ohne separate AZ-Rechnungsnummer)">
-                                    Anzahlung OK
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-red-500/10 text-red-500 border-red-500/30" title="Für diesen Auftrag wurde noch keine Anzahlungsrechnung gestellt">
-                                    RE-AZ FEHLT
-                                  </span>
-                                )}
+                                {(() => {
+                                  const hasFullInvoice = (o as any).invoiced_flag || (o as any)._fullInvoiceNumber;
+                                  const inst = computeInstallments(o);
+                                  const hasPlan = inst.plannedCount > 0;
+                                  if (hasFullInvoice) {
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title={`Rechnung ${(o as any)._fullInvoiceNumber || ''} gestellt`.trim()}>
+                                        Rechnung
+                                      </span>
+                                    );
+                                  }
+                                  if (hasPlan && inst.invoiceMissing) {
+                                    const label = inst.invoicedCount > 0
+                                      ? `RE-AZ ${inst.invoicedCount}/${inst.plannedCount} FEHLT`
+                                      : 'RE-AZ FEHLT';
+                                    return (
+                                      <span
+                                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-red-500/10 text-red-500 border-red-500/30"
+                                        title={`Es fehlen noch ${inst.plannedCount - inst.invoicedCount} von ${inst.plannedCount} Anzahlungsrechnung(en).`}
+                                      >
+                                        {label}
+                                      </span>
+                                    );
+                                  }
+                                  if (hasPlan && !inst.invoiceMissing) {
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title={`${inst.invoicedCount}/${inst.plannedCount} Anzahlungsrechnung(en) gestellt`}>
+                                        RE-AZ OK
+                                      </span>
+                                    );
+                                  }
+                                  if ((o as any).deposit_ok) {
+                                    return (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border bg-green-500/15 text-green-400 border-green-500/30" title="Anzahlung bestätigt (ohne separate AZ-Rechnungsnummer)">
+                                        Anzahlung OK
+                                      </span>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                             </td>
                           );
