@@ -66,9 +66,41 @@ async function loadLogo(): Promise<string> {
   return _logoCache;
 }
 
+const DRAFT_PREFIX = 'az-draft:';
+const draftKey = (orderId?: string | null, orderNo?: string) =>
+  `${DRAFT_PREFIX}${orderId || orderNo || 'neu'}`;
+
+type AzDraft = {
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string;
+  depositAmount: string;
+  taxPercentage: number;
+  positionLabel: string;
+  intro: string;
+  savedAt: string;
+};
+
+function readDraft(key: string): AzDraft | null {
+  try {
+    const raw = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+    if (!raw) return null;
+    return JSON.parse(raw) as AzDraft;
+  } catch { return null; }
+}
+function writeDraft(key: string, d: AzDraft) {
+  try { window.localStorage.setItem(key, JSON.stringify(d)); } catch { /* ignore */ }
+}
+function removeDraft(key: string) {
+  try { window.localStorage.removeItem(key); } catch { /* ignore */ }
+}
+
 export default function AzInvoiceTab({ order, customer, items, onReload }: Props) {
   const currency = order?.currency || 'EUR';
   const orderNo = String(order?.order_number || '');
+  const dKey = draftKey(order?.id, orderNo);
+  const initialDraft = useMemo(() => readDraft(dKey), [dKey]);
+  const [hasDraft, setHasDraft] = useState<boolean>(!!initialDraft);
 
   // Anzahlung aus Auftrag übernehmen
   const orderDeposit = Number(order?.deposit_amount) || 0;
@@ -80,24 +112,28 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     return sum;
   }, [order, items]);
 
-  const [invoiceNumber, setInvoiceNumber] = useState<string>(`AZ-${orderNo || 'NEU'}`);
-  const [invoiceDate, setInvoiceDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
-  const [dueDate, setDueDate] = useState<string>(() => {
+  const [invoiceNumber, setInvoiceNumber] = useState<string>(initialDraft?.invoiceNumber || `AZ-${orderNo || 'NEU'}`);
+  const [invoiceDate, setInvoiceDate] = useState<string>(initialDraft?.invoiceDate || new Date().toISOString().slice(0, 10));
+  const [dueDate, setDueDate] = useState<string>(initialDraft?.dueDate || (() => {
     const d = new Date();
     d.setDate(d.getDate() + 14);
     return d.toISOString().slice(0, 10);
-  });
-  const [depositAmount, setDepositAmount] = useState<string>(orderDeposit > 0 ? String(orderDeposit) : '');
+  })());
+  const [depositAmount, setDepositAmount] = useState<string>(
+    initialDraft?.depositAmount ?? (orderDeposit > 0 ? String(orderDeposit) : ''),
+  );
   const [taxPercentage, setTaxPercentage] = useState<number>(() => {
+    if (initialDraft) return Number(initialDraft.taxPercentage);
     const saved = order?.az_tax_percentage;
     return saved === null || saved === undefined ? 19 : Number(saved);
   });
   const [savingTax, setSavingTax] = useState(false);
   const [positionLabel, setPositionLabel] = useState<string>(
-    `Anzahlung gemäß Auftrag ${orderNo}`.trim()
+    initialDraft?.positionLabel || `Anzahlung gemäß Auftrag ${orderNo}`.trim(),
   );
   const [intro, setIntro] = useState<string>(
-    'Vielen Dank für Ihre Bestellung. Vereinbarungsgemäß stellen wir Ihnen hiermit die Anzahlung in Rechnung.'
+    initialDraft?.intro ||
+    'Vielen Dank für Ihre Bestellung. Vereinbarungsgemäß stellen wir Ihnen hiermit die Anzahlung in Rechnung.',
   );
   const [generating, setGenerating] = useState(false);
   const [booking, setBooking] = useState(false);
@@ -125,13 +161,15 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }, [confirm]);
 
   useEffect(() => {
+    if (hasDraft) return;
     if (orderDeposit > 0) setDepositAmount(String(orderDeposit));
-  }, [orderDeposit]);
+  }, [orderDeposit, hasDraft]);
 
   // Fallback: Wenn im Auftrag kein deposit_amount hinterlegt ist, aus finance_deposits ziehen.
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (hasDraft) return;
       if (orderDeposit > 0) return;
       if (!order?.id && !orderNo) return;
       try {
@@ -151,7 +189,24 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       } catch { /* ignore */ }
     })();
     return () => { cancelled = true; };
-  }, [order?.id, orderNo, orderDeposit]);
+  }, [order?.id, orderNo, orderDeposit, hasDraft]);
+
+  // Entwurf automatisch speichern (persistiert alle Formularfelder pro Auftrag).
+  useEffect(() => {
+    if (checkingExisting) return; // erst nach initialem Load, sonst überschreiben wir mit Defaults
+    const d: AzDraft = {
+      invoiceNumber, invoiceDate, dueDate, depositAmount,
+      taxPercentage, positionLabel, intro,
+      savedAt: new Date().toISOString(),
+    };
+    writeDraft(dKey, d);
+    if (!hasDraft) setHasDraft(true);
+  }, [dKey, invoiceNumber, invoiceDate, dueDate, depositAmount, taxPercentage, positionLabel, intro, checkingExisting]);
+
+  function clearDraft() {
+    removeDraft(dKey);
+    setHasDraft(false);
+  }
 
   // Alle bereits gestellten AZ-Rechnungen für diesen Auftrag laden
   useEffect(() => {
@@ -180,7 +235,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           }));
           setExistingInvoices(list);
           // Vorschlag für nächste Rate: AZ-{orderNo}-{n+1} und Restbetrag als Vorbelegung
-          if (list.length > 0) {
+          // ABER: nur wenn kein lokaler Entwurf besteht (sonst überschreiben wir die Eingaben des Users).
+          if (list.length > 0 && !hasDraft) {
             const base = `AZ-${orderNo}`;
             const next = list.length + 1;
             const candidate = `${base}-${next}`;
@@ -565,6 +621,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         vorgang: 'Anzahlungsrechnung',
       });
       toast.success(`In Buchhaltung übernommen: ${invoiceNumber} wurde unter Offene Anzahlungen erfasst.`);
+      clearDraft();
       onReload?.();
       return true;
 
@@ -604,7 +661,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       await recordNoteAndOrderDeposit();
       toast.success(currentIsDuplicate
         ? `PDF neu erzeugt (${invoiceNumber}). Es wurde keine zweite Rechnung angelegt.`
-        : 'Anzahlungsrechnung erstellt und im Auftrag vermerkt.');
+        : `Entwurf ${invoiceNumber} gespeichert – bleibt bei erneutem Öffnen erhalten.`);
       onReload?.();
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
@@ -746,6 +803,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       } catch { /* nicht kritisch */ }
 
       toast.success(`Anzahlungsrechnung an ${customer.email} versendet (BCC: k.trinh, natalia.p).`);
+      clearDraft();
       onReload?.();
       return true;
     } catch (e: any) {
@@ -913,6 +971,20 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           >
             + Weitere Anzahlung
           </Button>
+          {hasDraft && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                clearDraft();
+                toast.info('Entwurf verworfen. Felder werden beim nächsten Öffnen neu vorbelegt.');
+              }}
+              title="Gespeicherten lokalen Entwurf löschen"
+            >
+              Entwurf verwerfen
+            </Button>
+          )}
 
         </div>
       </div>
