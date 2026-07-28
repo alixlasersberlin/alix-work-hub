@@ -135,6 +135,11 @@ export default function SocialBeitragEditor() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => save()} disabled={saving}><Save className="mr-2 h-4 w-4" />Speichern</Button>
           {!isNew && form.status === 'draft' && <Button onClick={requestApproval}><Send className="mr-2 h-4 w-4" />Freigabe anfordern</Button>}
+          {!isNew && (form.status === 'approved' || form.status === 'draft') && (
+            <Button variant="secondary" onClick={enqueuePublish} disabled={saving}>
+              <Send className="mr-2 h-4 w-4" />Veröffentlichung planen
+            </Button>
+          )}
         </div>
       </div>
 
