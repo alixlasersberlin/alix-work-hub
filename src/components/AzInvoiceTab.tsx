@@ -565,8 +565,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   }
 
   function blockIfDuplicate(): boolean {
-    if (existingInvoice) {
-      toast.error(`Für diesen Auftrag wurde bereits die Anzahlungsrechnung ${existingInvoice.invoice_number} gestellt. Ein erneutes Ausstellen ist nicht möglich.`);
+    if (currentIsDuplicate) {
+      toast.error(`Für diesen Auftrag wurde bereits die Anzahlungsrechnung ${currentIsDuplicate.invoice_number} gestellt. Ein erneutes Ausstellen ist nicht möglich.`);
       return true;
     }
     return false;
@@ -582,7 +582,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     try {
       await buildPdf('download');
       await recordNoteAndOrderDeposit();
-      toast.success(existingInvoice
+      toast.success(currentIsDuplicate
         ? `PDF neu erzeugt (${invoiceNumber}). Es wurde keine zweite Rechnung angelegt.`
         : 'Anzahlungsrechnung erstellt und im Auftrag vermerkt.');
       onReload?.();
@@ -615,9 +615,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
   async function sendByEmail(): Promise<boolean> {
     console.log('[AzInvoice] sendByEmail called', {
-      hasDeposit, existingInvoice, customerEmail: customer?.email,
+      hasDeposit, currentIsDuplicate, customerEmail: customer?.email,
     });
-    if (!hasDeposit && !existingInvoice) {
+    if (!hasDeposit && !currentIsDuplicate) {
       toast.error('Keine Anzahlung vereinbart.');
       return false;
     }
@@ -738,7 +738,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
 
   async function saveAndSendEmail() {
     console.log('[AzInvoice] saveAndSendEmail clicked', {
-      existingInvoice, hasDeposit, grossDeposit, customerEmail: customer?.email,
+      currentIsDuplicate, hasDeposit, grossDeposit, customerEmail: customer?.email,
     });
     if (blockIfDuplicate()) return;
     if (!hasDeposit) {
@@ -772,7 +772,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       sending,
       postingToBuchhaltung,
       hasDeposit,
-      existingInvoice,
+      currentIsDuplicate,
       checkingExisting,
       customerEmail: customer?.email,
     });
@@ -790,12 +790,12 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         toast.error('Keine Anzahlung vereinbart.');
         return;
       }
-      if (existingInvoice) {
-        toast.error(`Anzahlungsrechnung ${existingInvoice.invoice_number} wurde bereits gestellt. Bitte „Rechnung per E-Mail versenden" nutzen.`);
+      if (currentIsDuplicate) {
+        toast.error(`Anzahlungsrechnung ${currentIsDuplicate.invoice_number} wurde bereits gestellt. Bitte „Rechnung per E-Mail versenden" nutzen.`);
         return;
       }
     }
-    if (mode === 'sendOnly' && !hasDeposit && !existingInvoice) {
+    if (mode === 'sendOnly' && !hasDeposit && !currentIsDuplicate) {
       toast.error('Keine Anzahlung vereinbart.');
       return;
     }
@@ -809,10 +809,10 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
           <Receipt className="w-4 h-4 text-primary" /> AZ Rechnung (Anzahlungsrechnung)
-          {existingInvoice && (
+          {currentIsDuplicate && (
             <span
               className="ml-2 inline-flex items-center gap-1.5 rounded-md bg-red-600 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm ring-1 ring-red-700"
-              title={`Anzahlungsrechnung ${existingInvoice.invoice_number}${existingInvoice.issue_date ? ` vom ${fmtDate(existingInvoice.issue_date)}` : ''} wurde bereits gestellt.`}
+              title={`Anzahlungsrechnung ${currentIsDuplicate.invoice_number}${currentIsDuplicate.issue_date ? ` vom ${fmtDate(currentIsDuplicate.issue_date)}` : ''} wurde bereits gestellt.`}
             >
               <Ban className="w-3.5 h-3.5" />
               RECHNUNG GESTELLT
@@ -824,7 +824,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             variant="outline"
             onClick={generate}
             disabled={generating || booking || sending || postingToBuchhaltung || !hasDeposit || checkingExisting}
-            title={existingInvoice ? 'Rechnung bereits gestellt – PDF kann neu erzeugt werden (kein neuer Buchungssatz).' : undefined}
+            title={currentIsDuplicate ? 'Rechnung bereits gestellt – PDF kann neu erzeugt werden (kein neuer Buchungssatz).' : undefined}
           >
             {generating
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -851,13 +851,13 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             onMouseDown={() => releaseStalePointerLock()}
             onClick={(e) => openConfirm('sendOnly', e)}
             disabled={generating || booking || sending || postingToBuchhaltung}
-            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : (existingInvoice ? 'Bereits gestellte Rechnung erneut per E-Mail versenden (kein neuer Buchungssatz).' : (!hasDeposit ? 'Keine Anzahlung vereinbart.' : undefined))}
+            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : (currentIsDuplicate ? 'Bereits gestellte Rechnung erneut per E-Mail versenden (kein neuer Buchungssatz).' : (!hasDeposit ? 'Keine Anzahlung vereinbart.' : undefined))}
             style={{ pointerEvents: 'auto' }}
           >
             {sending
               ? <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               : <Mail className="w-4 h-4 mr-2" />}
-            {existingInvoice ? 'Rechnung per E-Mail versenden' : 'Anzahlung per E-Mail versenden'}
+            {currentIsDuplicate ? 'Rechnung per E-Mail versenden' : 'Anzahlung per E-Mail versenden'}
           </Button>
         </div>
       </div>
@@ -931,13 +931,13 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       )}
 
 
-      {existingInvoice && (
+      {currentIsDuplicate && (
         <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
           <Ban className="w-4 h-4 mt-0.5" />
           <div>
             Für diesen Auftrag wurde bereits die Anzahlungsrechnung{' '}
-            <strong>{existingInvoice.invoice_number}</strong>
-            {existingInvoice.issue_date ? <> vom <strong>{fmtDate(existingInvoice.issue_date)}</strong></> : null}{' '}
+            <strong>{currentIsDuplicate.invoice_number}</strong>
+            {currentIsDuplicate.issue_date ? <> vom <strong>{fmtDate(currentIsDuplicate.issue_date)}</strong></> : null}{' '}
             gestellt. Ein erneutes Ausstellen ist gesperrt, um Doppelrechnungen zu vermeiden.
           </div>
         </div>
