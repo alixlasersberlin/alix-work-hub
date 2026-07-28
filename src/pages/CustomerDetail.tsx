@@ -12,6 +12,7 @@ import CustomerCommunication from '@/components/CustomerCommunication';
 import FinanceAccountTab from '@/components/finance/FinanceAccountTab';
 import PortalAccessTab from '@/components/customer/PortalAccessTab';
 import AlixDocsPanel from '@/components/alixdocs/AlixDocsPanel';
+import CustomerSocialMediaTab from '@/components/customer/CustomerSocialMediaTab';
 import { withAt } from '@/lib/atSuffix';
 
 export default function CustomerDetail() {
@@ -85,6 +86,7 @@ export default function CustomerDetail() {
           <TabsTrigger value="finance">Finanzakte</TabsTrigger>
           <TabsTrigger value="portal">Kundenportal</TabsTrigger>
           <TabsTrigger value="alixdocs">AlixDocs</TabsTrigger>
+          <TabsTrigger value="social">Social Media</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="mt-4">
@@ -167,6 +169,15 @@ export default function CustomerDetail() {
 
         <TabsContent value="alixdocs" className="mt-4">
           <AlixDocsPanel scope="customer" customerId={customer.id} />
+        </TabsContent>
+
+        <TabsContent value="social" className="mt-4">
+          <CustomerSocialMediaTab
+            customerId={customer.id}
+            customerName={customer.company_name || customer.contact_name || '—'}
+            customerEmail={customer.email}
+            customerPhone={customer.phone}
+          />
         </TabsContent>
       </Tabs>
 
