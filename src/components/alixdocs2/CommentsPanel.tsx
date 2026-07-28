@@ -68,7 +68,7 @@ export function CommentsPanel({ documentId }: { documentId: string }) {
             <button onClick={() => setKind('comment')} className={`px-2 py-1 rounded ${kind === 'comment' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>Kommentar</button>
             <button onClick={() => setKind('note')} className={`px-2 py-1 rounded ${kind === 'note' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>Notiz</button>
           </div>
-          <Textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Kommentar oder Notiz…" rows={2} />
+          <Textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Kommentar oder Notiz… (@email erwähnt Kollegen)" rows={2} />
           <Button size="sm" onClick={add} disabled={busy || !body.trim()}>Hinzufügen</Button>
         </div>
         <div className="space-y-2 max-h-72 overflow-auto">
