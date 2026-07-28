@@ -217,7 +217,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           }));
           setExistingInvoices(list);
           // Vorschlag für nächste Rate: AZ-{orderNo}-{n+1} und Restbetrag als Vorbelegung
-          if (list.length > 0) {
+          // ABER: nur wenn kein lokaler Entwurf besteht (sonst überschreiben wir die Eingaben des Users).
+          if (list.length > 0 && !hasDraft) {
             const base = `AZ-${orderNo}`;
             const next = list.length + 1;
             const candidate = `${base}-${next}`;
