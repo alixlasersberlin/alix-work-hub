@@ -152,6 +152,15 @@ export default function SocialPlattformen() {
           <div className="p-4 bg-muted rounded font-mono break-all">{revealed}</div>
         </DialogContent>
       </Dialog>
+
+      {linkClient && (
+        <CustomerLinkDialog
+          clientId={linkClient.id}
+          currentCustomerId={linkClient.customer_id}
+          onClose={() => setLinkClient(null)}
+          onLinked={load}
+        />
+      )}
     </div>
   );
 }
