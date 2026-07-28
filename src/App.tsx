@@ -287,6 +287,10 @@ const DigitaleSignaturenAdmin = lazy(() => import("./pages/DigitaleSignaturenAdm
 const DigitaleSignaturenFacsimile = lazy(() => import("./pages/DigitaleSignaturenFacsimile"));
 const DigitaleSignaturNeu = lazy(() => import("./pages/DigitaleSignaturNeu"));
 const DigitaleSignaturenCockpit = lazy(() => import("./pages/DigitaleSignaturenCockpit"));
+const SocialDashboard = lazy(() => import("./pages/Social/Dashboard"));
+const SocialOnboarding = lazy(() => import("./pages/Social/Onboarding"));
+const SocialPlattformen = lazy(() => import("./pages/Social/Plattformen"));
+const SocialFragebogen = lazy(() => import("./pages/Social/Fragebogen"));
 const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk"));
 const DigitaleSignaturenTemplateEditor = lazy(() => import("./pages/DigitaleSignaturenTemplateEditor"));
 const SignMarketplace = lazy(() => import("./pages/SignMarketplace"));
@@ -1383,6 +1387,12 @@ function AppRoutes() {
           <Route path="/admin/signaturen/facsimile" element={<ProtectedRoute requiredRoles={['Super Admin']}><DigitaleSignaturenFacsimile /></ProtectedRoute>} />
           <Route path="/signaturen/genehmigungen" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignApprovals /></ProtectedRoute>} />
           <Route path="/signaturen/dashboard" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><SignSlaDashboard /></ProtectedRoute>} />
+          <Route path="/social" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing','Grafiker']}><SocialDashboard /></ProtectedRoute>} />
+          <Route path="/social/dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing','Grafiker']}><SocialDashboard /></ProtectedRoute>} />
+          <Route path="/social/onboarding" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialOnboarding /></ProtectedRoute>} />
+          <Route path="/social/plattformen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialPlattformen /></ProtectedRoute>} />
+          <Route path="/social/fragebogen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialFragebogen /></ProtectedRoute>} />
+
           <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />
           <Route path="/bonitaet" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Vertriebsleitung','Vertrieb','Finance']}><CreditIndex /></ProtectedRoute>} />
           <Route path="/bonitaet/neu" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Vertriebsleitung','Vertrieb','Finance']}><CreditNew /></ProtectedRoute>} />
