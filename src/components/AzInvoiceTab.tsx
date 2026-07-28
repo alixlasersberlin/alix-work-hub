@@ -455,7 +455,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setTextColor(60, 60, 60);
       const hint =
         `Dies ist eine Anzahlungsrechnung zum Auftrag ${orderNo}. Der Betrag von ` +
-        `${fmtMoney(grossDeposit, currency)} (brutto) wird mit der Schlussrechnung verrechnet. ` +
+        `${fmtMoney(grossDeposit, currency)} (brutto) wird auf die im Mietkaufvertrag vereinbarte Gesamtanzahlung angerechnet. ` +
         `Bitte überweisen Sie den Rechnungsbetrag bis zum ${fmtDate(dueDate)} unter Angabe der ` +
         `Rechnungsnummer ${invoiceNumber}.`;
       const wrapped = doc.splitTextToSize(hint, CONTENT_W);
