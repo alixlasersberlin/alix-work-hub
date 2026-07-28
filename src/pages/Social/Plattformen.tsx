@@ -8,27 +8,40 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { KeyRound, Eye, Trash2, Plus } from 'lucide-react';
+import { KeyRound, Eye, Trash2, Plus, Link2 } from 'lucide-react';
+import { CustomerLinkDialog } from '@/components/social/CustomerLinkDialog';
 
-type Client = { id: string; company_name: string; contact_person: string | null; onboarding_status: string };
+type Client = { id: string; company_name: string; contact_person: string | null; onboarding_status: string; customer_id: string | null };
+type LinkedCustomer = { id: string; company_name: string | null; source_system: string | null };
 type Account = { id: string; client_id: string; platform: string; username: string | null; connected: boolean; status: string };
 
 export default function SocialPlattformen() {
   const [clients, setClients] = useState<Client[]>([]);
   const [accounts, setAccounts] = useState<Record<string, Account[]>>({});
+  const [linkedCustomers, setLinkedCustomers] = useState<Record<string, LinkedCustomer>>({});
   const [openCred, setOpenCred] = useState<Account | null>(null);
+  const [linkClient, setLinkClient] = useState<Client | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [revealed, setRevealed] = useState<string | null>(null);
 
   const load = async () => {
-    const { data: cs } = await supabase.from('social_clients').select('id,company_name,contact_person,onboarding_status').is('deleted_at', null).order('created_at', { ascending: false });
-    setClients(cs ?? []);
+    const { data: cs } = await supabase.from('social_clients').select('id,company_name,contact_person,onboarding_status,customer_id').is('deleted_at', null).order('created_at', { ascending: false });
+    setClients((cs ?? []) as Client[]);
     if (cs?.length) {
       const { data: acs } = await supabase.from('social_accounts').select('*').in('client_id', cs.map(c => c.id)).is('deleted_at', null);
       const grouped: Record<string, Account[]> = {};
       (acs ?? []).forEach(a => { (grouped[a.client_id] ||= []).push(a as Account); });
       setAccounts(grouped);
+      const custIds = Array.from(new Set((cs as Client[]).map(c => c.customer_id).filter(Boolean) as string[]));
+      if (custIds.length) {
+        const { data: custs } = await supabase.from('customers').select('id,company_name,source_system').in('id', custIds);
+        const map: Record<string, LinkedCustomer> = {};
+        (custs ?? []).forEach((c: any) => { map[c.id] = c; });
+        setLinkedCustomers(map);
+      } else {
+        setLinkedCustomers({});
+      }
     }
   };
   useEffect(() => { load(); }, []);
@@ -79,8 +92,26 @@ export default function SocialPlattformen() {
             <div>
               <CardTitle>{c.company_name}</CardTitle>
               <div className="text-sm text-muted-foreground">{c.contact_person}</div>
+              <div className="mt-1 text-xs">
+                {c.customer_id && linkedCustomers[c.customer_id] ? (
+                  <span className="inline-flex items-center gap-1 text-primary">
+                    <Link2 className="h-3 w-3" />
+                    Alix-Kunde: {linkedCustomers[c.customer_id].company_name}
+                    {linkedCustomers[c.customer_id].source_system && (
+                      <Badge variant="secondary" className="ml-1 text-[10px]">{linkedCustomers[c.customer_id].source_system}</Badge>
+                    )}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Nicht mit Alix-Kunde verknüpft</span>
+                )}
+              </div>
             </div>
-            <Badge variant={c.onboarding_status === 'completed' ? 'default' : 'secondary'}>{c.onboarding_status}</Badge>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => setLinkClient(c)}>
+                <Link2 className="mr-2 h-4 w-4" />{c.customer_id ? 'Ändern' : 'Verknüpfen'}
+              </Button>
+              <Badge variant={c.onboarding_status === 'completed' ? 'default' : 'secondary'}>{c.onboarding_status}</Badge>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
@@ -121,6 +152,15 @@ export default function SocialPlattformen() {
           <div className="p-4 bg-muted rounded font-mono break-all">{revealed}</div>
         </DialogContent>
       </Dialog>
+
+      {linkClient && (
+        <CustomerLinkDialog
+          clientId={linkClient.id}
+          currentCustomerId={linkClient.customer_id}
+          onClose={() => setLinkClient(null)}
+          onLinked={load}
+        />
+      )}
     </div>
   );
 }
