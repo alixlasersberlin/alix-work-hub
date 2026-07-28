@@ -769,9 +769,10 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     try {
       await buildPdf('download');
       await recordNoteAndOrderDeposit();
+      await saveDraftDeposit();
       toast.success(currentIsDuplicate
         ? `PDF neu erzeugt (${invoiceNumber}). Es wurde keine zweite Rechnung angelegt.`
-        : `Entwurf ${invoiceNumber} gespeichert – bleibt bei erneutem Öffnen erhalten.`);
+        : `Entwurf ${invoiceNumber} gespeichert – erscheint als „Entwurf" in „Offene Anzahlungen".`);
       onReload?.();
     } catch (e: any) {
       toast.error('Fehler: ' + (e?.message || 'Unbekannter Fehler'));
