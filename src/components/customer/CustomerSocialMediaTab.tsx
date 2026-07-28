@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Link2, Link2Off, Plus, Search, Sparkles, ExternalLink, Loader2 } from 'lucide-react';
+import { Link2, Link2Off, Plus, Search, Sparkles, ExternalLink, Loader2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 type SocialClient = {
@@ -145,16 +145,46 @@ export default function CustomerSocialMediaTab({
         locations,
         corporate_colors: {},
         corporate_fonts: {},
-        onboarding_status: 'completed',
-        onboarding_step: 99,
+        onboarding_status: 'in_progress',
+        onboarding_step: 1,
       })
       .select('id')
       .single();
-    setCreating(false);
-    if (error) return toast.error(error.message);
+    if (error) { setCreating(false); return toast.error(error.message); }
     toast.success('Social-Kunde aus Kundendaten übernommen');
+
+    // Direkt Onboarding-Link an Kunden mailen
+    if (data?.id && customerEmail) {
+      const { data: inv, error: invErr } = await supabase.functions.invoke('social-onboarding-invite', {
+        body: { client_id: data.id, recipient_email: customerEmail, base_url: window.location.origin },
+      });
+      if (invErr || (inv as any)?.error) {
+        toast.warning(`Kunde angelegt, aber Mailversand fehlgeschlagen: ${(inv as any)?.error ?? invErr?.message ?? ''}`);
+      } else {
+        toast.success(`Onboarding-Link an ${customerEmail} versendet`);
+      }
+    } else if (data?.id) {
+      toast.warning('Kunde angelegt – keine E-Mail hinterlegt, bitte Link manuell versenden.');
+    }
+    setCreating(false);
     load();
   }
+
+  async function sendOnboardingLink() {
+    if (!client) return;
+    const { data, error } = await supabase.functions.invoke('social-onboarding-invite', {
+      body: { client_id: client.id, base_url: window.location.origin },
+    });
+    if (error || (data as any)?.error) {
+      return toast.error((data as any)?.error ?? error?.message ?? 'Fehler');
+    }
+    const info = data as any;
+    toast.success(`Link an ${info?.sent_to} versendet`);
+    if (info?.link) {
+      try { await navigator.clipboard.writeText(info.link); toast.info('Link wurde außerdem in die Zwischenablage kopiert'); } catch {}
+    }
+  }
+
 
 
   if (loading) {
@@ -231,11 +261,15 @@ export default function CustomerSocialMediaTab({
             </Badge>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="default" size="sm" onClick={sendOnboardingLink}>
+              <Mail className="mr-2 h-4 w-4" />Onboarding-Link an Kunden senden
+            </Button>
             <Button asChild variant="outline" size="sm"><Link to="/social/plattformen"><ExternalLink className="mr-2 h-4 w-4" />Plattformen</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to="/social/kalender"><ExternalLink className="mr-2 h-4 w-4" />Kalender</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to={`/social/onboarding?client=${client.id}`}><ExternalLink className="mr-2 h-4 w-4" />Onboarding</Link></Button>
             <Button variant="ghost" size="sm" onClick={unlink}><Link2Off className="mr-2 h-4 w-4" />Trennen</Button>
           </div>
+
         </CardContent>
       </Card>
 
