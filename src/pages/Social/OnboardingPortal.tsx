@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, CheckCircle2, Sparkles, Plus, Trash2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, CheckCircle2, Sparkles, Plus, Trash2, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Client = {
@@ -24,12 +25,55 @@ type Client = {
   onboarding_completed_at: string | null;
 };
 
+const PLATFORMS: Array<{ key: string; label: string }> = [
+  { key: 'facebook_page', label: 'Facebook-Seite' },
+  { key: 'x_profile', label: 'X-Profil (Twitter)' },
+  { key: 'linkedin_personal', label: 'LinkedIn-Profil' },
+  { key: 'linkedin_company', label: 'LinkedIn-Unternehmensseite' },
+  { key: 'instagram', label: 'Instagram-Profil' },
+  { key: 'google_business', label: 'Google-Unternehmensprofil' },
+  { key: 'youtube', label: 'YouTube-Kanal' },
+  { key: 'pinterest', label: 'Pinterest-Profil' },
+  { key: 'tiktok', label: 'TikTok-Business-Profil' },
+  { key: 'mastodon', label: 'Mastodon-Profil' },
+  { key: 'threads', label: 'Threads-Profil' },
+  { key: 'bluesky', label: 'Bluesky-Profil' },
+];
+
+const QUESTIONS: Array<{ key: string; label: string }> = [
+  { key: 'q1_ads', label: '1. Welche Werbemaßnahmen finden aktuell statt?' },
+  { key: 'q2_presence', label: '2. Wo sind Sie derzeit online vertreten?' },
+  { key: 'q3_goals', label: '3. Was sind Ihre wichtigsten Ziele im Social Media Marketing?' },
+  { key: 'q4_audience', label: '4. Wer ist Ihre Zielgruppe?' },
+  { key: 'q5_focus_products', label: '5. Welche Produkte/Dienstleistungen sollen besonders beworben werden?' },
+  { key: 'q6_promotions', label: '6. Gibt es aktuelle Aktionen oder Angebote?' },
+  { key: 'q7_ci_guidelines', label: '7. Haben Sie Corporate-Design-Richtlinien (Logo, Farben, Schriften)?' },
+  { key: 'q8_content_types', label: '8. Welche Inhalte möchten Sie regelmäßig veröffentlichen?' },
+  { key: 'q9_frequency', label: '9. Wie häufig sollen Beiträge veröffentlicht werden?' },
+  { key: 'q10_competitors', label: '10. Welche Mitbewerber gefallen Ihnen im Social Media besonders?' },
+  { key: 'q11_hashtags', label: '11. Welche Hashtags oder Suchbegriffe sind wichtig?' },
+  { key: 'q12_regions', label: '12. Welche Regionen oder Länder möchten Sie erreichen?' },
+  { key: 'q13_avoid', label: '13. Welche Themen sollen vermieden werden?' },
+  { key: 'q14_contact', label: '14. Wer ist unser Ansprechpartner (Name, Telefon, E-Mail)?' },
+  { key: 'q15_extra_access', label: '15. Welche weiteren Zugänge (Meta Business Manager, Canva, Analytics …) stehen zur Verfügung?' },
+];
+
+type PlatformCreds = { username?: string; password?: string; twofa?: string; admin_invited?: boolean };
+type Answers = {
+  platforms?: Record<string, PlatformCreds>;
+  questions?: Record<string, string>;
+  materials_note?: string;
+};
+
 export default function SocialOnboardingPortal() {
   const { token = '' } = useParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingQ, setSavingQ] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [c, setC] = useState<Client | null>(null);
+  const [answers, setAnswers] = useState<Answers>({});
+  const [submittedAt, setSubmittedAt] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -42,6 +86,9 @@ export default function SocialOnboardingPortal() {
         setErr(code);
       } else {
         setC((data as any).client as Client);
+        const q = (data as any).questionnaire;
+        setAnswers((q?.answers as Answers) ?? {});
+        setSubmittedAt(q?.submitted_at ?? null);
       }
       setLoading(false);
     })();
@@ -49,6 +96,19 @@ export default function SocialOnboardingPortal() {
 
   function update<K extends keyof Client>(k: K, v: Client[K]) {
     setC((prev) => (prev ? { ...prev, [k]: v } : prev));
+  }
+
+  const platforms = useMemo<Record<string, PlatformCreds>>(() => answers.platforms ?? {}, [answers]);
+  const questions = useMemo<Record<string, string>>(() => answers.questions ?? {}, [answers]);
+
+  function setPlatform(key: string, patch: PlatformCreds) {
+    setAnswers((a) => ({
+      ...a,
+      platforms: { ...(a.platforms ?? {}), [key]: { ...(a.platforms?.[key] ?? {}), ...patch } },
+    }));
+  }
+  function setQuestion(key: string, val: string) {
+    setAnswers((a) => ({ ...a, questions: { ...(a.questions ?? {}), [key]: val } }));
   }
 
   async function save(complete: boolean) {
@@ -82,6 +142,25 @@ export default function SocialOnboardingPortal() {
       toast.success('Vielen Dank – Ihre Angaben sind bei uns eingegangen.');
     } else {
       toast.success('Zwischenstand gespeichert');
+    }
+  }
+
+  async function saveQuestionnaire(complete: boolean) {
+    setSavingQ(true);
+    const { data, error } = await supabase.functions.invoke('social-onboarding-portal', {
+      body: { action: 'save_questionnaire', token, complete, answers },
+    });
+    setSavingQ(false);
+    if (error || (data as any)?.error) {
+      toast.error((data as any)?.error ?? error?.message ?? 'Fehler');
+      return;
+    }
+    if (complete) {
+      setSubmittedAt(new Date().toISOString());
+      update('onboarding_completed_at', new Date().toISOString());
+      toast.success('Fragebogen übermittelt – vielen Dank!');
+    } else {
+      toast.success('Fragebogen zwischengespeichert');
     }
   }
 
@@ -125,7 +204,7 @@ export default function SocialOnboardingPortal() {
           <p className="text-muted-foreground">
             Bitte prüfen und ergänzen Sie Ihre Angaben. Sie können jederzeit zwischenspeichern.
           </p>
-          {c.onboarding_completed_at && (
+          {(c.onboarding_completed_at || submittedAt) && (
             <div className="inline-flex items-center gap-2 text-emerald-600 text-sm">
               <CheckCircle2 className="h-4 w-4" /> Onboarding abgeschlossen
             </div>
@@ -254,14 +333,100 @@ export default function SocialOnboardingPortal() {
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-2 pb-8">
+        <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => save(false)} disabled={saving}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Zwischenspeichern
+            Stammdaten zwischenspeichern
           </Button>
           <Button onClick={() => save(true)} disabled={saving}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
-            Angaben absenden
+            Stammdaten absenden
+          </Button>
+        </div>
+
+        {/* ============ Fragebogen ============ */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Zu betreuende Plattformen &amp; Zugangsdaten</CardTitle>
+            <p className="text-sm text-muted-foreground pt-2 flex items-start gap-2">
+              <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span>
+                Bitte tragen Sie die Zugangsdaten der zu betreuenden Kanäle ein. Alternativ können Sie einen
+                zusätzlichen Benutzer mit Administratorrechten für Alix Lasers® anlegen und dies unten
+                ankreuzen. Ihre Daten werden vertraulich behandelt.
+              </span>
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {PLATFORMS.map((p) => {
+              const v = platforms[p.key] ?? {};
+              return (
+                <div key={p.key} className="border border-border rounded-lg p-3 space-y-3">
+                  <div className="font-medium">{p.label}</div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <div>
+                      <Label>Benutzername / E-Mail</Label>
+                      <Input value={v.username ?? ''} onChange={(e) => setPlatform(p.key, { username: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Passwort</Label>
+                      <Input type="password" value={v.password ?? ''} onChange={(e) => setPlatform(p.key, { password: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>2FA-Code / Backup</Label>
+                      <Input value={v.twofa ?? ''} onChange={(e) => setPlatform(p.key, { twofa: e.target.value })} />
+                    </div>
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Checkbox
+                      checked={!!v.admin_invited}
+                      onCheckedChange={(checked) => setPlatform(p.key, { admin_invited: !!checked })}
+                    />
+                    Alix Lasers® wurde als Administrator eingeladen (statt Zugangsdaten)
+                  </label>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Fragen zu Ihrem Social-Media Auftritt</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            {QUESTIONS.map((q) => (
+              <div key={q.key}>
+                <Label>{q.label}</Label>
+                <Textarea rows={2} value={questions[q.key] ?? ''} onChange={(e) => setQuestion(q.key, e.target.value)} />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Benötigte Unterlagen</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Bitte senden Sie uns zusätzlich: Logo, Bilder, Videos, Preislisten, Broschüren,
+              Designrichtlinien, Kundenbewertungen und weiteres Marketingmaterial per E-Mail an
+              Ihren Ansprechpartner.
+            </p>
+            <Textarea
+              placeholder="Anmerkungen zu den Unterlagen (z.B. Freigaben, Bildrechte, Cloud-Link…)"
+              rows={3}
+              value={answers.materials_note ?? ''}
+              onChange={(e) => setAnswers((a) => ({ ...a, materials_note: e.target.value }))}
+            />
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end gap-2 pb-8">
+          <Button variant="outline" onClick={() => saveQuestionnaire(false)} disabled={savingQ}>
+            {savingQ ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Fragebogen zwischenspeichern
+          </Button>
+          <Button onClick={() => saveQuestionnaire(true)} disabled={savingQ}>
+            {savingQ ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+            Fragebogen absenden
           </Button>
         </div>
       </div>
