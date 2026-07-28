@@ -169,6 +169,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (hasDraft) return;
       if (orderDeposit > 0) return;
       if (!order?.id && !orderNo) return;
       try {
@@ -188,7 +189,24 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       } catch { /* ignore */ }
     })();
     return () => { cancelled = true; };
-  }, [order?.id, orderNo, orderDeposit]);
+  }, [order?.id, orderNo, orderDeposit, hasDraft]);
+
+  // Entwurf automatisch speichern (persistiert alle Formularfelder pro Auftrag).
+  useEffect(() => {
+    if (checkingExisting) return; // erst nach initialem Load, sonst überschreiben wir mit Defaults
+    const d: AzDraft = {
+      invoiceNumber, invoiceDate, dueDate, depositAmount,
+      taxPercentage, positionLabel, intro,
+      savedAt: new Date().toISOString(),
+    };
+    writeDraft(dKey, d);
+    if (!hasDraft) setHasDraft(true);
+  }, [dKey, invoiceNumber, invoiceDate, dueDate, depositAmount, taxPercentage, positionLabel, intro, checkingExisting]);
+
+  function clearDraft() {
+    removeDraft(dKey);
+    setHasDraft(false);
+  }
 
   // Alle bereits gestellten AZ-Rechnungen für diesen Auftrag laden
   useEffect(() => {
