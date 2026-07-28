@@ -60,25 +60,23 @@ export default function TicketsDashboard() {
     const now = new Date();
     const start = startOfDay(now).toISOString();
     const end = endOfDay(now).toISOString();
-    const c = (q: any) => q.then((r: any) => r.count ?? 0);
 
-    const [neu, meine, heute, ueberfaellig, termine_heute, warten_kunde, eskaliert, total_offen, sla_warning, sla_breach] = await Promise.all([
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("status", ["open", "offen", "Neu"])),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true })
-        .eq("assigned_to", user?.id ?? "").in("status", OPEN_STATUS)),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true })
-        .gte("due_at", start).lt("due_at", end).in("status", OPEN_STATUS)),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true })
-        .lt("due_at", now.toISOString()).in("status", OPEN_STATUS)),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true })
-        .gte("appointment_at", start).lt("appointment_at", end)),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("status", ["wartet_kunde", "wartet_Kunde", "Warten auf Kunde"])),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).gt("escalation_count", 0).in("status", OPEN_STATUS)),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("status", OPEN_STATUS)),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).in("sla_status", ["warning", "warn_response", "warn_progress"]).in("status", OPEN_STATUS)),
-      c(supabase.from("tickets").select("id", { count: "exact", head: true }).eq("sla_status", "breach").in("status", OPEN_STATUS)),
-    ]);
-    setCounts({ neu, meine, heute, ueberfaellig, termine_heute, warten_kunde, eskaliert, total_offen, sla_warning, sla_breach });
+    // One-shot RPC statt 10 einzelner count(exact)-Queries.
+    const { data: countsRow } = await supabase.rpc('tickets_dashboard_counts', { _user_id: user?.id ?? '00000000-0000-0000-0000-000000000000' });
+    const c0 = (countsRow ?? {}) as any;
+    setCounts({
+      neu: c0.neu ?? 0,
+      meine: c0.meine ?? 0,
+      heute: c0.heute ?? 0,
+      ueberfaellig: c0.ueberfaellig ?? 0,
+      termine_heute: c0.termine_heute ?? 0,
+      warten_kunde: c0.warten_kunde ?? 0,
+      eskaliert: c0.eskaliert ?? 0,
+      total_offen: c0.total_offen ?? 0,
+      sla_warning: c0.sla_warning ?? 0,
+      sla_breach: c0.sla_breach ?? 0,
+    });
+
 
     // Priority breakdown (offene Tickets)
     const { data: prio } = await supabase
