@@ -387,10 +387,26 @@ export default function Orders() {
       });
 
       const azInvoiceByOrder: Record<string, string> = {};
+      const azRatesByOrder: Record<string, Array<{ invoice_number: string; issue_date: string | null; due_date: string | null; gross_amount: number; paid_amount: number; status: string | null; isPaid: boolean }>> = {};
       (depRes.data || []).forEach((d: any) => {
-        if (!d?.order_id || !d?.invoice_number) return;
-        if (!azInvoiceByOrder[d.order_id]) azInvoiceByOrder[d.order_id] = d.invoice_number;
+        if (!d?.order_id) return;
+        if (d.invoice_number && !azInvoiceByOrder[d.order_id]) azInvoiceByOrder[d.order_id] = d.invoice_number;
+        const gross = Number(d.gross_amount) || 0;
+        const paid = Number(d.paid_amount) || 0;
+        const st = (d.status || '').toString().toLowerCase();
+        const isPaid = paid + 0.005 >= gross && gross > 0 || ['bezahlt', 'paid', 'ausgeglichen'].includes(st);
+        (azRatesByOrder[d.order_id] ||= []).push({
+          invoice_number: d.invoice_number || '—',
+          issue_date: d.issue_date ?? null,
+          due_date: d.due_date ?? null,
+          gross_amount: gross,
+          paid_amount: paid,
+          status: d.status ?? null,
+          isPaid,
+        });
       });
+      // Nach Ausstellungsdatum sortieren (Rate 1 zuerst)
+      Object.values(azRatesByOrder).forEach(arr => arr.sort((a, b) => (a.issue_date || '').localeCompare(b.issue_date || '')));
 
       const fullInvoiceByOrderNumber: Record<string, string> = {};
       (zohoInvRes.data || []).forEach((z: any) => {
@@ -413,6 +429,7 @@ export default function Orders() {
         order_items: itemsByOrder[o.id] || o.order_items || [],
         _productionOrderCount: o.order_number ? (poCountMap[o.order_number] || 0) : 0,
         _azInvoiceNumber: azInvoiceByOrder[o.id] || o._azInvoiceNumber || null,
+        _azRates: azRatesByOrder[o.id] || [],
         _fullInvoiceNumber: (o.order_number ? fullInvoiceByOrderNumber[o.order_number] : null) || o._fullInvoiceNumber || null,
         _additionalDeposits: addDepositsByOrder[o.id] || [],
       }) : o));
