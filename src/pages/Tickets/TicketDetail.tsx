@@ -62,7 +62,9 @@ interface Ticket {
   first_response_at?: string | null;
   merged_into_ticket_id?: string | null;
   ticket_number?: string | null;
+  case_number?: string | null;
 }
+
 interface LinkedRepair {
   id: string;
   repair_number: string | null;
