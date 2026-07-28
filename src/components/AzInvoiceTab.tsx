@@ -931,14 +931,56 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       )}
 
 
+      {existingInvoices.length > 0 && (
+        <div className="rounded-lg border border-border bg-secondary/40 p-3 text-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-semibold tracking-wide text-primary">
+              BEREITS GESTELLTE ANZAHLUNGSRECHNUNGEN ({existingInvoices.length})
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const next = existingInvoices.length + 1;
+                const base = `AZ-${orderNo}`;
+                setInvoiceNumber(`${base}-${next}`);
+                setPositionLabel(`Anzahlung ${next} gemäß Auftrag ${orderNo}`.trim());
+                const d = new Date();
+                setInvoiceDate(d.toISOString().slice(0, 10));
+                const due = new Date(d); due.setDate(due.getDate() + 14);
+                setDueDate(due.toISOString().slice(0, 10));
+                setDepositAmount('');
+              }}
+            >
+              + Neue Anzahlungsrechnung
+            </Button>
+          </div>
+          <ul className="space-y-1">
+            {existingInvoices.map((inv, i) => (
+              <li key={`${inv.invoice_number}-${i}`} className="flex items-center justify-between text-xs">
+                <span className="font-mono text-foreground">{inv.invoice_number}</span>
+                <span className="text-muted-foreground">
+                  {inv.issue_date ? fmtDate(inv.issue_date) : '—'}
+                  {inv.gross_amount != null ? ` · ${fmtMoney(Number(inv.gross_amount), currency)}` : ''}
+                  {inv.status ? ` · ${inv.status}` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-muted-foreground mt-2">
+            Mehrere Anzahlungsrechnungen sind erlaubt. Rechnungsdatum darf in der Zukunft liegen.
+          </p>
+        </div>
+      )}
+
       {currentIsDuplicate && (
         <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
           <Ban className="w-4 h-4 mt-0.5" />
           <div>
-            Für diesen Auftrag wurde bereits die Anzahlungsrechnung{' '}
-            <strong>{currentIsDuplicate.invoice_number}</strong>
+            Die Rechnungsnummer <strong>{currentIsDuplicate.invoice_number}</strong>
             {currentIsDuplicate.issue_date ? <> vom <strong>{fmtDate(currentIsDuplicate.issue_date)}</strong></> : null}{' '}
-            gestellt. Ein erneutes Ausstellen ist gesperrt, um Doppelrechnungen zu vermeiden.
+            ist bereits vergeben. Bitte eine andere Nummer wählen (z. B. „+ Neue Anzahlungsrechnung").
           </div>
         </div>
       )}
