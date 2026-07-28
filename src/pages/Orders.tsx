@@ -340,7 +340,7 @@ export default function Orders() {
       const orderNumbers = Array.from(new Set(loaded.map(o => o.order_number).filter(Boolean)));
       if (orderIds.length === 0 && orderNumbers.length === 0) return;
 
-      const [itemsRes, posRes, depRes, zohoInvRes, addDepRes] = await Promise.all([
+      const [itemsRes, posRes, depRes, depByNumberRes, zohoInvRes, zohoAzRes, addDepRes] = await Promise.all([
         orderIds.length > 0
           ? supabase
               .from('order_items')
@@ -356,14 +356,27 @@ export default function Orders() {
         orderIds.length > 0
           ? supabase
               .from('finance_deposits' as any)
-              .select('order_id, invoice_number, issue_date, due_date, gross_amount, paid_amount, status')
+              .select('order_id, order_number, invoice_number, issue_date, due_date, gross_amount, paid_amount, status')
               .in('order_id', orderIds)
+          : Promise.resolve({ data: [] as any[] }),
+        orderNumbers.length > 0
+          ? supabase
+              .from('finance_deposits' as any)
+              .select('order_id, order_number, invoice_number, issue_date, due_date, gross_amount, paid_amount, status')
+              .in('order_number', orderNumbers)
           : Promise.resolve({ data: [] as any[] }),
         orderNumbers.length > 0
           ? supabase
               .from('zoho_invoices')
               .select('invoice_number, reference_number')
               .in('reference_number', orderNumbers)
+          : Promise.resolve({ data: [] as any[] }),
+        orderNumbers.length > 0
+          ? supabase
+              .from('zoho_invoices')
+              .select('invoice_number, reference_number, total, balance, due_date, status')
+              .in('reference_number', orderNumbers)
+              .or('invoice_number.ilike.AZ%,invoice_number.ilike.anzahlung%')
           : Promise.resolve({ data: [] as any[] }),
         orderIds.length > 0
           ? supabase
