@@ -5708,6 +5708,41 @@ export type Database = {
           },
         ]
       }
+      alixdocs2_activity: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          detail: Json | null
+          doc_id: string | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          doc_id?: string | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          doc_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_activity_doc_id_fkey"
+            columns: ["doc_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixdocs2_audit: {
         Row: {
           action: string
@@ -5906,6 +5941,70 @@ export type Database = {
           },
         ]
       }
+      alixdocs2_embeddings: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string
+          doc_id: string
+          embedding: string
+          id: string
+          model: string
+        }
+        Insert: {
+          chunk_index?: number
+          content: string
+          created_at?: string
+          doc_id: string
+          embedding: string
+          id?: string
+          model?: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string
+          doc_id?: string
+          embedding?: string
+          id?: string
+          model?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_embeddings_doc_id_fkey"
+            columns: ["doc_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs2_favorites: {
+        Row: {
+          created_at: string
+          doc_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          doc_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          doc_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_favorites_doc_id_fkey"
+            columns: ["doc_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixdocs2_nc_servers: {
         Row: {
           active: boolean
@@ -6090,6 +6189,56 @@ export type Database = {
           },
         ]
       }
+      alixdocs2_tasks: {
+        Row: {
+          assignee: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          doc_id: string | null
+          due_at: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          doc_id?: string | null
+          due_at?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          doc_id?: string | null
+          due_at?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_tasks_doc_id_fkey"
+            columns: ["doc_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alixdocs2_versions: {
         Row: {
           created_at: string
@@ -6136,6 +6285,137 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      alixdocs2_workflow_runs: {
+        Row: {
+          current_step: number
+          doc_id: string
+          finished_at: string | null
+          history: Json
+          id: string
+          started_at: string
+          started_by: string | null
+          status: string
+          workflow_id: string
+        }
+        Insert: {
+          current_step?: number
+          doc_id: string
+          finished_at?: string | null
+          history?: Json
+          id?: string
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          workflow_id: string
+        }
+        Update: {
+          current_step?: number
+          doc_id?: string
+          finished_at?: string | null
+          history?: Json
+          id?: string
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_workflow_runs_doc_id_fkey"
+            columns: ["doc_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixdocs2_workflow_runs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs2_workflow_steps: {
+        Row: {
+          approver_role: string | null
+          approver_user: string | null
+          created_at: string
+          due_hours: number | null
+          id: string
+          name: string
+          parallel: boolean
+          reminder_hours: number | null
+          step_order: number
+          workflow_id: string
+        }
+        Insert: {
+          approver_role?: string | null
+          approver_user?: string | null
+          created_at?: string
+          due_hours?: number | null
+          id?: string
+          name: string
+          parallel?: boolean
+          reminder_hours?: number | null
+          step_order: number
+          workflow_id: string
+        }
+        Update: {
+          approver_role?: string | null
+          approver_user?: string | null
+          created_at?: string
+          due_hours?: number | null
+          id?: string
+          name?: string
+          parallel?: boolean
+          reminder_hours?: number | null
+          step_order?: number
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alixdocs2_workflow_steps_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "alixdocs2_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alixdocs2_workflows: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          doctype_code: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          doctype_code?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          doctype_code?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       alixsmart_customer_links: {
         Row: {
