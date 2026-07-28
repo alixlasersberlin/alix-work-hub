@@ -145,16 +145,46 @@ export default function CustomerSocialMediaTab({
         locations,
         corporate_colors: {},
         corporate_fonts: {},
-        onboarding_status: 'completed',
-        onboarding_step: 99,
+        onboarding_status: 'in_progress',
+        onboarding_step: 1,
       })
       .select('id')
       .single();
-    setCreating(false);
-    if (error) return toast.error(error.message);
+    if (error) { setCreating(false); return toast.error(error.message); }
     toast.success('Social-Kunde aus Kundendaten übernommen');
+
+    // Direkt Onboarding-Link an Kunden mailen
+    if (data?.id && customerEmail) {
+      const { data: inv, error: invErr } = await supabase.functions.invoke('social-onboarding-invite', {
+        body: { client_id: data.id, recipient_email: customerEmail, base_url: window.location.origin },
+      });
+      if (invErr || (inv as any)?.error) {
+        toast.warning(`Kunde angelegt, aber Mailversand fehlgeschlagen: ${(inv as any)?.error ?? invErr?.message ?? ''}`);
+      } else {
+        toast.success(`Onboarding-Link an ${customerEmail} versendet`);
+      }
+    } else if (data?.id) {
+      toast.warning('Kunde angelegt – keine E-Mail hinterlegt, bitte Link manuell versenden.');
+    }
+    setCreating(false);
     load();
   }
+
+  async function sendOnboardingLink() {
+    if (!client) return;
+    const { data, error } = await supabase.functions.invoke('social-onboarding-invite', {
+      body: { client_id: client.id, base_url: window.location.origin },
+    });
+    if (error || (data as any)?.error) {
+      return toast.error((data as any)?.error ?? error?.message ?? 'Fehler');
+    }
+    const info = data as any;
+    toast.success(`Link an ${info?.sent_to} versendet`);
+    if (info?.link) {
+      try { await navigator.clipboard.writeText(info.link); toast.info('Link wurde außerdem in die Zwischenablage kopiert'); } catch {}
+    }
+  }
+
 
 
   if (loading) {
