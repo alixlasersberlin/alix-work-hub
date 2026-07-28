@@ -471,6 +471,7 @@ export default function TicketsList() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Vorgang</TableHead>
                         <TableHead>Kategorie</TableHead>
                         <TableHead>Ticket</TableHead>
                         <TableHead>Kunde</TableHead>
@@ -482,6 +483,7 @@ export default function TicketsList() {
                         <TableHead>Letzter Sync</TableHead>
                         <TableHead className="text-right">Aktion</TableHead>
                       </TableRow>
+
                     </TableHeader>
                     <TableBody>
                       {list.map(r => (
