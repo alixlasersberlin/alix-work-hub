@@ -297,6 +297,10 @@ const SocialFreigaben = lazy(() => import("./pages/Social/Freigaben"));
 const SocialMedien = lazy(() => import("./pages/Social/Medien"));
 const SocialAnalytics = lazy(() => import("./pages/Social/Analytics"));
 const SocialVeroeffentlichung = lazy(() => import("./pages/Social/Veroeffentlichung"));
+const SocialKampagnen = lazy(() => import("./pages/Social/Kampagnen"));
+const SocialWettbewerber = lazy(() => import("./pages/Social/Wettbewerber"));
+const SocialReports = lazy(() => import("./pages/Social/Reports"));
+const SocialPortalView = lazy(() => import("./pages/Social/PortalView"));
 const DigitaleSignaturenBulk = lazy(() => import("./pages/DigitaleSignaturenBulk"));
 const DigitaleSignaturenTemplateEditor = lazy(() => import("./pages/DigitaleSignaturenTemplateEditor"));
 const SignMarketplace = lazy(() => import("./pages/SignMarketplace"));
@@ -1405,6 +1409,10 @@ function AppRoutes() {
           <Route path="/social/medien" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing','Grafiker']}><SocialMedien /></ProtectedRoute>} />
           <Route path="/social/analytics" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing','Grafiker']}><SocialAnalytics /></ProtectedRoute>} />
           <Route path="/social/veroeffentlichung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialVeroeffentlichung /></ProtectedRoute>} />
+          <Route path="/social/kampagnen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialKampagnen /></ProtectedRoute>} />
+          <Route path="/social/wettbewerber" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing','Grafiker']}><SocialWettbewerber /></ProtectedRoute>} />
+          <Route path="/social/reports" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialReports /></ProtectedRoute>} />
+          <Route path="/social-portal/:token" element={<SocialPortalView />} />
 
           <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />
           <Route path="/bonitaet" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Vertriebsleitung','Vertrieb','Finance']}><CreditIndex /></ProtectedRoute>} />
