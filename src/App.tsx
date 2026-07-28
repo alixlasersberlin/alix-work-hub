@@ -1415,9 +1415,7 @@ function AppRoutes() {
           <Route path="/social/kampagnen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialKampagnen /></ProtectedRoute>} />
           <Route path="/social/wettbewerber" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing','Grafiker']}><SocialWettbewerber /></ProtectedRoute>} />
           <Route path="/social/reports" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Marketing']}><SocialReports /></ProtectedRoute>} />
-          <Route path="/social-portal/:token" element={<SocialPortalView />} />
-          <Route path="/social-onboarding/:token" element={<SocialOnboardingPortal />} />
-          <Route path="/social/showcase/:token" element={<SocialShowcase />} />
+          {/* Public social portal routes moved outside ProtectedRoute – siehe oberhalb von /simulate */}
 
 
           <Route path="/dokumente" element={<ProtectedRoute><AlixDocsSearch /></ProtectedRoute>} />
