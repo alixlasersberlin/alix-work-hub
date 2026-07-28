@@ -621,6 +621,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         vorgang: 'Anzahlungsrechnung',
       });
       toast.success(`In Buchhaltung übernommen: ${invoiceNumber} wurde unter Offene Anzahlungen erfasst.`);
+      clearDraft();
       onReload?.();
       return true;
 
