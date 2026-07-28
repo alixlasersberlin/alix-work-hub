@@ -204,6 +204,15 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const taxAmount = grossDeposit - netDeposit;
   const hasDeposit = grossDeposit > 0.0001;
 
+  // Summe aller bereits erfassten Anzahlungsraten (ohne die aktuell im Formular offene neue Rate)
+  const sumExistingRates = existingInvoices.reduce((s, r: any) => s + (Number(r.gross_amount) || 0), 0);
+  // Restbetrag lt. Auftragsanzahlung
+  const openRestDeposit = Math.max(0, Number((orderDeposit - sumExistingRates).toFixed(2)));
+  // Aktuelle Rate wird geprüft, sofern sie nicht bereits in existingInvoices geführt wird (currentIsDuplicate)
+  const currentCountsTowardsSum = !currentIsDuplicate;
+  const projectedSum = sumExistingRates + (currentCountsTowardsSum ? grossDeposit : 0);
+  const exceedsDeposit = orderDeposit > 0 && projectedSum - orderDeposit > 0.01;
+
   async function buildPdf(mode: BuildMode): Promise<{ doc: any; fileName: string; blob?: Blob }> {
     const doc = createPDF({ unit: 'mm', format: 'a4' });
       const PAGE_W = 210;
