@@ -508,11 +508,15 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           doc.line(LEFT, TOP_CONTENT - 5, RIGHT, TOP_CONTENT - 5);
         }
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
+        doc.setFontSize(7);
         doc.setTextColor(120, 120, 120);
         // Absender-Pflichtangaben im Footer auf jeder Seite
         doc.text(
-          'Alix Lasers GmbH · Otto-Hahn-Str. 43 · 63303 Dreieich · USt-IdNr. DE327063823',
+          'Alix Lasers GmbH · Buchsbaumweg 53 · 12357 Berlin · USt-IdNr. DE321691012',
+          LEFT, PAGE_H - 12,
+        );
+        doc.text(
+          'Amtsgericht Berlin-Charlottenburg · HRB 245388 · Geschäftsführerin: ABLM Management UG (haftungsbeschränkt)',
           LEFT, PAGE_H - 8,
         );
         doc.setFontSize(8);
