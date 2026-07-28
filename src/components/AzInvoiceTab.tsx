@@ -940,17 +940,27 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     let hasBase = false;
     for (const inv of existingInvoices) {
       const n = (inv.invoice_number || '').trim();
-      if (n === base) { hasBase = true; if (maxN < 1) maxN = 1; continue; }
+      if (n === base) { hasBase = true; continue; }
       const m = n.match(rx);
       if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
     }
-    const cur = invoiceNumber.trim();
-    if (cur === base) { hasBase = true; if (maxN < 1) maxN = 1; }
-    const mCur = cur.match(rx);
-    if (mCur) maxN = Math.max(maxN, parseInt(mCur[1], 10));
-    const next = Math.max(maxN + 1, existingInvoices.length + 1, hasBase ? 2 : 2);
+    // Edge Case „nachträglicher Sinneswandel":
+    // wenn bereits eine unsuffigierte Rechnung existiert (Single-Modus),
+    // startet die neue Rate bei -2 (die -1 wird nie vergeben, um die bereits
+    // versendete Rechnung ohne Suffix nicht zu tangieren).
+    let next: number;
+    if (hasBase && maxN === 0) {
+      next = 2;
+    } else {
+      next = Math.max(maxN + 1, 2);
+    }
+    setSplitMode('multi');
     setInvoiceNumber(`${base}-${next}`);
-    setPositionLabel(`Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim());
+    setPositionLabel(
+      hasBase && next === 2
+        ? `Anzahlung Rate 2 (nachträglich) gemäß Auftrag ${orderNo}`.trim()
+        : `Anzahlung Rate ${next} gemäß Auftrag ${orderNo}`.trim()
+    );
     const d = new Date();
     setInvoiceDate(d.toISOString().slice(0, 10));
     const due = new Date(d); due.setDate(due.getDate() + 14);
