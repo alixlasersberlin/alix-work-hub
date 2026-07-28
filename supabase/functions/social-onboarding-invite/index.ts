@@ -36,9 +36,9 @@ Deno.serve(async (req) => {
     if (!client_id) return jr({ error: 'client_id required' }, 400);
 
     const svc = createClient(SUPABASE_URL, SERVICE_KEY);
-    const { data: canAdmin } = await svc.rpc('can_manage_social');
+    const { data: canAdmin } = await userClient.rpc('can_manage_social');
     if (!canAdmin) {
-      const { data: canAdmin2 } = await svc.rpc('can_admin_social');
+      const { data: canAdmin2 } = await userClient.rpc('can_admin_social');
       if (!canAdmin2) return jr({ error: 'Forbidden' }, 403);
     }
 
