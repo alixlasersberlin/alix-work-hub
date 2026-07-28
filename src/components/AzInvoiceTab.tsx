@@ -803,6 +803,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       } catch { /* nicht kritisch */ }
 
       toast.success(`Anzahlungsrechnung an ${customer.email} versendet (BCC: k.trinh, natalia.p).`);
+      clearDraft();
       onReload?.();
       return true;
     } catch (e: any) {
