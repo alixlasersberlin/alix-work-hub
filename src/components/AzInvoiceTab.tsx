@@ -508,8 +508,14 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           doc.line(LEFT, TOP_CONTENT - 5, RIGHT, TOP_CONTENT - 5);
         }
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
+        doc.setFontSize(7.5);
         doc.setTextColor(120, 120, 120);
+        // Absender-Pflichtangaben im Footer auf jeder Seite
+        doc.text(
+          'Alix Lasers GmbH · Otto-Hahn-Str. 43 · 63303 Dreieich · USt-IdNr. DE327063823',
+          LEFT, PAGE_H - 8,
+        );
+        doc.setFontSize(8);
         doc.text(
           `Anzahlungsrechnung ${invoiceNumber}  ·  Seite ${i} von ${totalPages}`,
           RIGHT, PAGE_H - 4, { align: 'right' },
