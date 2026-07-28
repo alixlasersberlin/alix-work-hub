@@ -524,6 +524,22 @@ export default function Orders() {
     return addr.city || addr.state || '';
   };
 
+  // Anzahlungs-Raten-Fortschritt (basierend auf finance_deposits + geplanten additional_deposits)
+  const computeInstallments = (o: any) => {
+    const rates: Array<{ invoice_number: string; issue_date: string | null; due_date: string | null; gross_amount: number; isPaid: boolean; status: string | null }> = o._azRates || [];
+    const invoicedCount = rates.length;
+    const paidRatesCount = rates.filter(r => r.isPaid).length;
+    const addPlanned = (o._additionalDeposits || []).length;
+    // Geplante Raten: entweder Haupt-Anzahlung (1) + zusätzliche geplante Raten
+    // oder mindestens so viele wie schon fakturiert wurden.
+    const plannedBase = Number(o.deposit_amount) > 0 ? 1 + addPlanned : addPlanned;
+    const plannedCount = Math.max(plannedBase, invoicedCount);
+    // Bezahlt: fakturierte Raten mit paid_amount + Legacy deposit_ok Flag
+    const paidCount = Math.max(paidRatesCount, o.deposit_ok ? 1 : 0);
+    const invoiceMissing = plannedCount > invoicedCount;
+    return { plannedCount, invoicedCount, paidCount, invoiceMissing, rates };
+  };
+
   const filtered = orders.filter(o => {
     const q = search.toLowerCase();
     const modelMatch = o.order_items?.some((it: any) =>
@@ -549,10 +565,15 @@ export default function Orders() {
     const isAt = o.source_system === 'zoho_eu_2';
     const matchRegion = regionFilter === 'all' || (regionFilter === 'at' ? isAt : !isAt);
     let matchDeposit = true;
-    if (depositFilter === 'partial') {
+    if (depositFilter !== 'all') {
       if (Number(o.deposit_amount) > 0) {
+        const inst = computeInstallments(o);
         const ds = computeDepositStatus(o, o._additionalDeposits);
-        matchDeposit = ds.isPartial;
+        if (depositFilter === 'partial') matchDeposit = ds.isPartial;
+        else if (depositFilter === 'paid_full') matchDeposit = inst.plannedCount > 0 && inst.paidCount >= inst.plannedCount;
+        else if (depositFilter === 'paid_partial') matchDeposit = inst.paidCount > 0 && inst.paidCount < inst.plannedCount;
+        else if (depositFilter === 'invoice_missing') matchDeposit = inst.invoiceMissing;
+        else if (depositFilter === 'unpaid') matchDeposit = inst.paidCount === 0;
       } else {
         matchDeposit = false;
       }
