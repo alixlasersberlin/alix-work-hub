@@ -65,6 +65,12 @@ type Group = {
   nextInvoiceDate: string | null;
   newestCreatedAt: string | null;
   currency: string;
+  hasSepa: boolean;
+};
+
+const isSepaProfile = (p: Profile) => {
+  const hay = `${p.recurrence_name ?? ''} ${p.reference_number ?? ''}`.toLowerCase();
+  return /\bsepa\b|lastschrift/.test(hay);
 };
 
 const monthsFactor = (freq: string | null, every: number | null) => {
