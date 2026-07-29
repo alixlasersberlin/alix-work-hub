@@ -114,6 +114,7 @@ export default function FinanceP2P() {
       invoiced_amount: 0,
       currency: po.currency,
       matched_at: new Date().toISOString(),
+      accounting_region: region,
     });
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     else { toast({ title: '3-Way-Match erzeugt' }); load(); }
