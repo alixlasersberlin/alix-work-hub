@@ -7,11 +7,13 @@ import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Receipt } from 'lucide-react';
-
-const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
-const fmt = (n: number) => maskRevenueString(_fmtBase(n));
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 export default function FinanceGuV() {
+  const { region } = useAccountingRegion();
+  const cur = region === 'CH' ? 'CHF' : 'EUR';
+  const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
+  const fmt = (n: number) => maskRevenueString(_fmtBase(n));
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
   const [tx, setTx] = useState<any[]>([]);
@@ -23,7 +25,7 @@ export default function FinanceGuV() {
       setLoading(true);
       const s = `${year}-01-01`, e = `${year}-12-31`;
       const [t, a, ii] = await Promise.all([
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e).eq('accounting_region', region),
         supabase.from('finance_asset_depreciations').select('amount, period').gte('period', s).lte('period', e),
         supabase.from('finance_incoming_invoices').select('amount_gross, amount_net, description').gte('invoice_date', s).lte('invoice_date', e),
       ]);
@@ -32,7 +34,8 @@ export default function FinanceGuV() {
       setIncoming(ii.data ?? []);
       setLoading(false);
     })();
-  }, [year]);
+  }, [year, region]);
+
 
   const data = useMemo(() => {
     const lower = (s: string) => (s || '').toLowerCase();
