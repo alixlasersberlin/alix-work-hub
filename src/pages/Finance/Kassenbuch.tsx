@@ -86,6 +86,7 @@ export default function Kassenbuch() {
         document_number: form.document_number || null,
         cost_center: form.cost_center || null,
         attachment_path,
+        accounting_region: region,
         user_id: (await supabase.auth.getUser()).data.user?.id,
       });
       if (error) throw error;
