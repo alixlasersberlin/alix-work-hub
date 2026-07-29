@@ -17,12 +17,12 @@ bootAIBackground();
 bootPageFade();
 
 // ticket.alix-operation.de → dedizierte Buchungs-/Ticket-Domain.
-// Leitet hart auf https://alixwork.de/book weiter (Pfad/Query/Hash bleiben erhalten,
-// wenn der Nutzer einen Deep-Link öffnet).
+// Die Adresse im Browser bleibt ticket.alix-operation.de; wir mappen nur intern
+// den Root-Pfad auf /book, damit die Buchungsseite gerendert wird.
 if (typeof window !== 'undefined' && window.location.hostname === 'ticket.alix-operation.de') {
-  const path = window.location.pathname === '/' ? '/book' : window.location.pathname;
-  const target = 'https://alixwork.de' + path + window.location.search + window.location.hash;
-  window.location.replace(target);
+  if (window.location.pathname === '/' || window.location.pathname === '') {
+    window.history.replaceState(null, '', '/book' + window.location.search + window.location.hash);
+  }
 }
 
 // app.alixwork.de → dedizierte Teamkalender-Domain.
