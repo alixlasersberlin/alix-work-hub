@@ -564,10 +564,27 @@ export default function OffenePosten() {
                 return (
                   <TableRow key={rowKey} className={style.row}>
                     <TableCell className="font-mono">
-                      {i.invoice_number ?? '—'}
-                      {i.source === 'recurring' && (
-                        <Badge variant="outline" className="ml-2 text-[10px]">Abo</Badge>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {i.zoho_invoice_id && i.invoice_number ? (
+                          <button
+                            type="button"
+                            onClick={() => openInvoicePdf(i)}
+                            disabled={pdfLoadingKey === rowKey}
+                            title="Rechnung als PDF öffnen"
+                            className="inline-flex items-center gap-1 text-primary hover:underline disabled:opacity-60"
+                          >
+                            {i.invoice_number}
+                            {pdfLoadingKey === rowKey
+                              ? <Loader2 className="w-3 h-3 animate-spin" />
+                              : <ExternalLink className="w-3 h-3 opacity-70" />}
+                          </button>
+                        ) : (
+                          <span>{i.invoice_number ?? '—'}</span>
+                        )}
+                        {i.source === 'recurring' && (
+                          <Badge variant="outline" className="ml-1 text-[10px]">Abo</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>{i.customer_name ?? '—'}</TableCell>
                     <TableCell>
