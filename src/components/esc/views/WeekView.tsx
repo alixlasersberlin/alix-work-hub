@@ -5,6 +5,16 @@ import { AppointmentCard } from '../AppointmentCard';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
+function hueFromId(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
+function subtleTint(id: string) {
+  const h = hueFromId(id);
+  return { bg: `hsla(${h} 60% 55% / 0.12)`, border: `hsla(${h} 60% 55% / 0.55)` };
+}
+
 export function WeekView({
   date, appointments, departments, onSlotClick, onAppointmentClick, onDropAppointment,
 }: {
