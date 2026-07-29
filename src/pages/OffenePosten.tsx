@@ -328,8 +328,11 @@ export default function OffenePosten() {
 
   const statusFor = useCallback((i: OpenItem): WorkflowFilter => {
     const key = `${i.source}-${i.id}`;
+    const wf = workflows[key]?.workflow_status;
+    // Manuell gesetzter Bearbeitungsstand hat Vorrang vor der Buchung
+    if (wf && wf !== 'offen') return wf;
     if (bookedRefs[key]) return 'gebucht';
-    return workflows[key]?.workflow_status ?? 'offen';
+    return wf ?? 'offen';
   }, [workflows, bookedRefs]);
 
   const counts = useMemo(() => {
