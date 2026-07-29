@@ -45,7 +45,7 @@ export default function FinanceAiInsights() {
 
       const { data, error } = await supabase.functions.invoke('finance-ai-analyze', {
         body: {
-          scope, period_start: s, period_end: e,
+          scope, period_start: s, period_end: e, accounting_region: region,
           kpis: { kategorien: byCat, offene_posten_eur: openSum, overdue_eur: overdueSum, anzahl_transaktionen: tx?.length ?? 0 },
         },
       });
