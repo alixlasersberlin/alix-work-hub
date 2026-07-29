@@ -25,7 +25,7 @@ export default function FinanceZahlungen() {
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
-        title="Zahlungen"
+        title={`Zahlungen · ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`}
         subtitle={`${rows.length} Zahlungseingänge`}
         icon={ArrowDownToLine}
         noBreadcrumbs
