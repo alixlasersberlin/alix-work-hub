@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/infinity/EmptyState';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { ScrollText, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 type Row = {
   id: string;
