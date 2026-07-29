@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 const SECTIONS = [
   { v: 'executive_summary', l: 'Executive Summary' },
@@ -25,6 +26,7 @@ const SECTIONS = [
 
 export default function FinanceManagementPack() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
   const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
   const isSuper = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<any[]>([]);

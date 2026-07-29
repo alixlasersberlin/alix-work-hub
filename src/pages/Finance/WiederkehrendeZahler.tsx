@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 // Beträge auf dieser Seite werden bewusst NICHT durch die Revenue-Mask (Super Admin)
 // ausgeblendet — Vertragssummen sind für Finance-Auswertung essentiell.
@@ -85,6 +86,8 @@ const monthsFactor = (freq: string | null, every: number | null) => {
 };
 
 export default function WiederkehrendeZahler() {
+  const { region } = useAccountingRegion();
+  const sourceSystem = region === 'CH' ? 'zoho_ch' : 'zoho_eu_1';
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,13 +104,13 @@ export default function WiederkehrendeZahler() {
       supabase
         .from('zoho_recurring_profiles')
         .select('*')
-        .eq('source_system', 'zoho_eu_1')
+        .eq('source_system', sourceSystem)
         .order('created_at', { ascending: false, nullsFirst: false })
         .limit(5000),
       supabase
         .from('zoho_recurring_invoices')
         .select('*')
-        .eq('source_system', 'zoho_eu_1')
+        .eq('source_system', sourceSystem)
         .order('invoice_date', { ascending: false, nullsFirst: false })
         .limit(5000),
     ]);
@@ -117,7 +120,7 @@ export default function WiederkehrendeZahler() {
     setInvoices((i.data ?? []) as Invoice[]);
     setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [region]);
 
   async function runSync() {
     setSyncing(true);

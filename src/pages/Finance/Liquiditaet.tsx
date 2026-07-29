@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, LineChart, Line } from 'recharts';
 
 const fmtEUR = (n: any) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Number(n || 0));
@@ -31,6 +32,7 @@ function monthsRange(startISO: string, count: number): string[] {
 
 export default function FinanceLiquiditaet() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
   const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
 
   const [loading, setLoading] = useState(true);
@@ -45,7 +47,7 @@ export default function FinanceLiquiditaet() {
   const loadPlans = async () => {
     setLoading(true);
     const [{ data: p }, { data: t }] = await Promise.all([
-      supabase.from('finance_cashflow_plans' as any).select('*').order('created_at', { ascending: false }),
+      supabase.from('finance_cashflow_plans' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }),
       supabase.from('tenants').select('id, name'),
     ]);
     setPlans((p ?? []) as any[]);
@@ -59,7 +61,7 @@ export default function FinanceLiquiditaet() {
     setItems((data ?? []) as any[]);
   };
 
-  useEffect(() => { loadPlans(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { loadPlans(); /* eslint-disable-next-line */ }, [region]);
   useEffect(() => { if (selectedPlan?.id) loadItems(selectedPlan.id); }, [selectedPlan?.id]);
 
   const monthsList = useMemo(() => {
@@ -118,6 +120,7 @@ export default function FinanceLiquiditaet() {
       period_start: start, period_end: end,
       opening_balance: Number(newPlan.opening_balance || 0),
       status: 'aktiv',
+      accounting_region: region,
     }).select().single();
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Plan angelegt' });
@@ -145,27 +148,27 @@ export default function FinanceLiquiditaet() {
       const { data: rec } = await supabase.from('zoho_recurring_profiles' as any).select('amount, next_invoice_date, customer_name').gte('next_invoice_date', start).lte('next_invoice_date', end);
 
       // Ausgaben: Eingangsrechnungen
-      let inQ = supabase.from('finance_incoming_invoices' as any).select('amount_gross, due_date, supplier_name, tenant_id, status').gte('due_date', start).lte('due_date', end).not('status', 'in', '("bezahlt","storniert","abgelehnt")');
+      let inQ = supabase.from('finance_incoming_invoices' as any).select('amount_gross, due_date, supplier_name, tenant_id, status').eq('accounting_region', region).gte('due_date', start).lte('due_date', end).not('status', 'in', '("bezahlt","storniert","abgelehnt")');
       if (tenantFilter) inQ = inQ.eq('tenant_id', tenantFilter);
       const { data: incoming } = await inQ;
 
       // Geplante AfA (informativ)
-      const { data: assets } = await supabase.from('finance_assets' as any).select('acquisition_value, useful_life_months, depreciation_method, book_value, tenant_id').eq('status', 'aktiv');
+      const { data: assets } = await supabase.from('finance_assets' as any).select('acquisition_value, useful_life_months, depreciation_method, book_value, tenant_id').eq('accounting_region', region).eq('status', 'aktiv');
 
       const inserts: any[] = [];
       const monthKey = (d: string) => d.slice(0, 7) + '-01';
 
       for (const i of (invs ?? []) as any[]) {
         if (!i.due_date) continue;
-        inserts.push({ plan_id: selectedPlan.id, month: monthKey(i.due_date), category: 'Forderungen Zoho', flow_type: 'einnahme', planned_amount: Number(i.balance), source: 'auto_zoho', description: i.customer_name });
+        inserts.push({ plan_id: selectedPlan.id, month: monthKey(i.due_date), category: 'Forderungen Zoho', flow_type: 'einnahme', planned_amount: Number(i.balance), source: 'auto_zoho', description: i.customer_name, accounting_region: region });
       }
       for (const r of (rec ?? []) as any[]) {
         if (!r.next_invoice_date) continue;
-        inserts.push({ plan_id: selectedPlan.id, month: monthKey(r.next_invoice_date), category: 'Wiederkehrend', flow_type: 'einnahme', planned_amount: Number(r.amount), source: 'auto_recurring', description: r.customer_name });
+        inserts.push({ plan_id: selectedPlan.id, month: monthKey(r.next_invoice_date), category: 'Wiederkehrend', flow_type: 'einnahme', planned_amount: Number(r.amount), source: 'auto_recurring', description: r.customer_name, accounting_region: region });
       }
       for (const x of (incoming ?? []) as any[]) {
         if (!x.due_date) continue;
-        inserts.push({ plan_id: selectedPlan.id, month: monthKey(x.due_date), category: 'Eingangsrechnungen', flow_type: 'ausgabe', planned_amount: Number(x.amount_gross || 0), source: 'auto_incoming', description: x.supplier_name });
+        inserts.push({ plan_id: selectedPlan.id, month: monthKey(x.due_date), category: 'Eingangsrechnungen', flow_type: 'ausgabe', planned_amount: Number(x.amount_gross || 0), source: 'auto_incoming', description: x.supplier_name, accounting_region: region });
       }
       // AfA monatlich (informativ) – über alle Planmonate verteilen
       const afaMonthly = ((assets ?? []) as any[]).reduce((sum: number, a: any) => {
@@ -175,7 +178,7 @@ export default function FinanceLiquiditaet() {
       }, 0);
       if (afaMonthly > 0) {
         for (const m of monthsList) {
-          inserts.push({ plan_id: selectedPlan.id, month: m + '-01', category: 'AfA (kalkulatorisch)', flow_type: 'ausgabe', planned_amount: Math.round(afaMonthly * 100) / 100, source: 'auto_afa', description: 'Monatliche Abschreibung' });
+          inserts.push({ plan_id: selectedPlan.id, month: m + '-01', category: 'AfA (kalkulatorisch)', flow_type: 'ausgabe', planned_amount: Math.round(afaMonthly * 100) / 100, source: 'auto_afa', description: 'Monatliche Abschreibung', accounting_region: region });
         }
       }
 

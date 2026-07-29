@@ -8,8 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Scale } from 'lucide-react';
 import { BUDGET_CATEGORIES, MONTH_NAMES, fmt, classifyTx, mapIncomingCategory } from './_controlling';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 export default function FinanceSollIst() {
+  const { region } = useAccountingRegion();
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
   const [budget, setBudget] = useState<Record<string, number[]>>({});
@@ -21,9 +23,9 @@ export default function FinanceSollIst() {
       setLoading(true);
       const s = `${year}-01-01`, e = `${year}-12-31`;
       const [b, t, ii, a] = await Promise.all([
-        supabase.from('finance_budgets' as any).select('*').eq('fiscal_year', year),
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e),
-        supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').gte('invoice_date', s).lte('invoice_date', e),
+        supabase.from('finance_budgets' as any).select('*').eq('accounting_region', region).eq('fiscal_year', year),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').eq('accounting_region', region).gte('booking_date', s).lte('booking_date', e),
+        supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').eq('accounting_region', region).gte('invoice_date', s).lte('invoice_date', e),
         supabase.from('finance_asset_depreciations').select('amount, period').gte('period', s).lte('period', e),
       ]);
       const bMap: Record<string, number[]> = {};
@@ -56,7 +58,7 @@ export default function FinanceSollIst() {
       setAfa(afaArr);
       setLoading(false);
     })();
-  }, [year]);
+  }, [year, region]);
 
   function ampel(plan: number, ist: number) {
     if (plan === 0 && ist === 0) return 'bg-muted';

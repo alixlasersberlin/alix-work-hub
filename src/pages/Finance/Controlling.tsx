@@ -8,8 +8,10 @@ import { KpiTile } from '@/components/infinity/KpiTile';
 import { Gauge, TrendingUp, TrendingDown, Wallet, Clock, Flame, Timer, Activity } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { fmt, MONTH_NAMES, classifyTx } from './_controlling';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 export default function FinanceControlling() {
+  const { region } = useAccountingRegion();
   const [loading, setLoading] = useState(true);
   const [tx, setTx] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -22,10 +24,10 @@ export default function FinanceControlling() {
       const start = new Date(); start.setMonth(start.getMonth() - 11); start.setDate(1);
       const s = start.toISOString().slice(0, 10);
       const [t, a, ii, bl] = await Promise.all([
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s),
-        supabase.from('finance_accounts').select('current_balance, overdue_balance, last_payment_at'),
-        supabase.from('finance_incoming_invoices').select('amount_gross, invoice_date, due_date, paid_at'),
-        supabase.from('finance_bank_lines').select('amount, value_date'),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').eq('accounting_region', region).gte('booking_date', s),
+        supabase.from('finance_accounts').select('current_balance, overdue_balance, last_payment_at').eq('accounting_region', region),
+        supabase.from('finance_incoming_invoices').select('amount_gross, invoice_date, due_date, paid_at').eq('accounting_region', region),
+        supabase.from('finance_bank_lines').select('amount, value_date').eq('accounting_region', region),
       ]);
       setTx(t.data ?? []);
       setAccounts(a.data ?? []);
@@ -33,7 +35,7 @@ export default function FinanceControlling() {
       setBankLines(bl.data ?? []);
       setLoading(false);
     })();
-  }, []);
+  }, [region]);
 
   const kpis = useMemo(() => {
     const ytd = tx.filter(r => classifyTx(r) === 'Umsatz').reduce((s, r) => s + Math.abs(Number(r.amount) || 0), 0);

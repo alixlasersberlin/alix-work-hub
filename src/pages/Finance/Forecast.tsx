@@ -10,10 +10,12 @@ import { Sparkles, Save, Bot, Loader2, LineChart as LineChartIcon } from 'lucide
 import { toast } from 'sonner';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
 import { BUDGET_CATEGORIES, MONTH_NAMES, fmt, classifyTx, mapIncomingCategory } from './_controlling';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 type Scenario = 'base' | 'best' | 'worst' | 'ai';
 
 export default function FinanceForecast() {
+  const { region } = useAccountingRegion();
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
   const [scenario, setScenario] = useState<Scenario>('base');
@@ -37,9 +39,9 @@ export default function FinanceForecast() {
     setLoading(true);
     const s = `${year}-01-01`, e = `${year}-12-31`;
     const [f, t, ii] = await Promise.all([
-      supabase.from('finance_forecasts' as any).select('*').eq('scenario', scenario).gte('period_date', s).lte('period_date', e),
-      supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e),
-      supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').gte('invoice_date', s).lte('invoice_date', e),
+      supabase.from('finance_forecasts' as any).select('*').eq('accounting_region', region).eq('scenario', scenario).gte('period_date', s).lte('period_date', e),
+      supabase.from('finance_transactions').select('amount, transaction_type, booking_date').eq('accounting_region', region).gte('booking_date', s).lte('booking_date', e),
+      supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').eq('accounting_region', region).gte('invoice_date', s).lte('invoice_date', e),
     ]);
     const fMap: Record<string, number[]> = {};
     for (const cat of BUDGET_CATEGORIES) fMap[cat] = Array(12).fill(0);
@@ -65,7 +67,7 @@ export default function FinanceForecast() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, [year, scenario]);
+  useEffect(() => { load(); }, [year, scenario, region]);
 
   function update(cat: string, m: number, v: string) {
     const n = Number(v.replace(',', '.')) || 0;
@@ -101,10 +103,11 @@ export default function FinanceForecast() {
           category: cat,
           scenario,
           forecast_amount: forecast[cat][m] || 0,
+          accounting_region: region,
         });
       }
     }
-    const { error } = await supabase.from('finance_forecasts' as any).upsert(rows, { onConflict: 'tenant_id,period_date,category,scenario' });
+    const { error } = await supabase.from('finance_forecasts' as any).upsert(rows, { onConflict: 'tenant_id,period_date,category,scenario,accounting_region' });
     if (error) return toast.error(error.message);
     toast.success('Forecast gespeichert');
   }

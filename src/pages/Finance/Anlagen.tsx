@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 const CATEGORIES = ['Fuhrpark', 'IT', 'Werkstattausstattung', 'Geräte', 'Software', 'Büroausstattung', 'Sonstiges'];
 const METHODS = [
@@ -24,10 +25,13 @@ const METHODS = [
   { v: 'degressiv', l: 'Degressiv' },
 ];
 
-const fmtEUR = (n: any) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(Number(n || 0));
+const fmtCur = (n: any, cur: 'EUR' | 'CHF' = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(Number(n || 0));
 
 export default function FinanceAnlagen() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
+  const cur: 'EUR' | 'CHF' = region === 'CH' ? 'CHF' : 'EUR';
+  const fmtEUR = (n: any) => fmtCur(n, cur);
   const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
 
@@ -41,7 +45,7 @@ export default function FinanceAnlagen() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_assets' as any).select('*').order('acquisition_date', { ascending: false }).limit(1000);
+    let q = supabase.from('finance_assets' as any).select('*').eq('accounting_region', region).order('acquisition_date', { ascending: false }).limit(1000);
     if (catFilter !== 'alle') q = q.eq('category', catFilter);
     if (statusFilter !== 'alle') q = q.eq('status', statusFilter);
     const { data, error } = await q;
@@ -49,7 +53,7 @@ export default function FinanceAnlagen() {
     setItems((data ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [catFilter, statusFilter]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [catFilter, statusFilter, region]);
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
@@ -96,6 +100,7 @@ export default function FinanceAnlagen() {
       disposal_reason: editing.disposal_reason || null,
       disposal_value: editing.disposal_value ? Number(editing.disposal_value) : null,
       notes: editing.notes ?? null,
+      accounting_region: region,
     };
     let res;
     if (editing.id) {
