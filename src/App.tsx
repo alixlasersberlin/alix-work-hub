@@ -2017,6 +2017,7 @@ const App = () => (
             <BrowserRouter>
               <AuthProvider>
                 <TenantProvider>
+                  <AccountingRegionProvider>
                   <MaintenanceGate>
                     <AIBackground />
                     <AppRoutes />
