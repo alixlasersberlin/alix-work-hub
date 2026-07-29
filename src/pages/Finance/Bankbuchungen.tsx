@@ -72,7 +72,7 @@ export default function Bankbuchungen() {
                     <TableCell><Badge variant="outline">{r.posting_type}</Badge></TableCell>
                     <TableCell>{r.counterparty}</TableCell>
                     <TableCell className="max-w-xs truncate">{r.purpose}</TableCell>
-                    <TableCell className="text-right font-semibold">{fmt(r.amount)}</TableCell>
+                    <TableCell className="text-right font-semibold">{fmt(r.amount, cur)}</TableCell>
                     <TableCell className="font-mono text-xs">{r.reference}</TableCell>
                     <TableCell><Badge variant={r.status === 'aktiv' ? 'outline' : 'destructive'}>{r.status}</Badge></TableCell>
                   </TableRow>
