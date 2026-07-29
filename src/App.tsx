@@ -120,6 +120,9 @@ const FinanceMahnwesenSettings = lazy(() => import("./pages/Finance/MahnwesenSet
 const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
 const FinanceBank = lazy(() => import("./pages/Finance/Bank"));
 const FinanceSepa = lazy(() => import("./pages/Finance/Sepa"));
+const FinanceQrRechnung = lazy(() => import("./pages/Finance/QrRechnung"));
+const FinanceChLastschriften = lazy(() => import("./pages/Finance/ChLastschriften"));
+const FinanceCamt054 = lazy(() => import("./pages/Finance/Camt054"));
 const FinanceSteuer = lazy(() => import("./pages/Finance/Steuer"));
 const FinanceCockpit = lazy(() => import("./pages/Finance/Cockpit"));
 const FinanceCockpitMandant = lazy(() => import("./pages/Finance/MandantDrilldown"));
@@ -1244,6 +1247,9 @@ function AppRoutes() {
           <Route path="/finance/datev" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatev /></ProtectedRoute>} />
           <Route path="/finance/bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBank /></ProtectedRoute>} />
           <Route path="/finance/sepa" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSepa /></ProtectedRoute>} />
+          <Route path="/finance/qr-rechnung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceQrRechnung /></ProtectedRoute>} />
+          <Route path="/finance/ch-lastschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceChLastschriften /></ProtectedRoute>} />
+          <Route path="/finance/camt054" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCamt054 /></ProtectedRoute>} />
           <Route path="/finance/steuer" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuer /></ProtectedRoute>} />
           <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
           <Route path="/finance/cockpit/mandant/:code" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpitMandant /></ProtectedRoute>} />
