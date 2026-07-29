@@ -1294,6 +1294,7 @@ function AppRoutes() {
           <Route path="/finance/fx" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceFxRates /></ProtectedRoute>} />
           <Route path="/finance/konzern-guv" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKonzernGuv /></ProtectedRoute>} />
           <Route path="/finance/konzern-bilanz" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKonzernBilanz /></ProtectedRoute>} />
+          <Route path="/finance/ausgeliefert" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAusgeliefert /></ProtectedRoute>} />
           <Route path="/finance/treasury" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceTreasury /></ProtectedRoute>} />
           <Route path="/finance/p2p" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceP2P /></ProtectedRoute>} />
           <Route path="/finance/meldewesen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMeldewesen /></ProtectedRoute>} />
