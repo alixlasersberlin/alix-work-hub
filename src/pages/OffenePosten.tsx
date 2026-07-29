@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2 } from 'lucide-react';
+import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2, ExternalLink } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +48,8 @@ type OpenItem = {
   balance: number | null;
   currency: string | null;
   status: string | null;
+  zoho_invoice_id: string | null;
+  source_system: string | null;
 };
 
 type WorkflowState = {
@@ -104,6 +106,52 @@ export default function OffenePosten() {
   const [pageSize, setPageSize] = useState<PageSize>(50);
   const [dateFrom, setDateFrom] = useState<Date>(new Date(new Date().getFullYear(), 0, 1));
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [pdfLoadingKey, setPdfLoadingKey] = useState<string | null>(null);
+
+  const openInvoicePdf = useCallback(async (item: OpenItem) => {
+    if (!item.zoho_invoice_id) {
+      toast.error('Für diese Rechnung ist keine Zoho-ID hinterlegt.');
+      return;
+    }
+    const key = `${item.source}-${item.id}`;
+    setPdfLoadingKey(key);
+    // Fenster synchron öffnen (Popup-Blocker), Inhalt später setzen
+    const win = window.open('', '_blank');
+    try {
+      const { data, error } = await supabase.functions.invoke('zoho-invoice-pdf', {
+        body: {
+          zoho_invoice_id: item.zoho_invoice_id,
+          source_system: item.source_system ?? 'zoho_eu_1',
+          recurring: item.source === 'recurring',
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const b64 = (data as any)?.pdf_base64;
+      if (!b64) throw new Error('Kein PDF erhalten');
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      if (win) {
+        win.location.href = url;
+      } else {
+        // Fallback wenn Popup blockiert
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e: any) {
+      if (win) win.close();
+      toast.error('PDF fehlgeschlagen: ' + (e?.message ?? 'Unbekannter Fehler'));
+    } finally {
+      setPdfLoadingKey(null);
+    }
+  }, []);
 
   const [editItem, setEditItem] = useState<OpenItem | null>(null);
   const [editStatus, setEditStatus] = useState<WorkflowStatus>('offen');
@@ -125,13 +173,13 @@ export default function OffenePosten() {
       await Promise.all([
         supabase
           .from('zoho_invoices')
-          .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status')
+          .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status, zoho_invoice_id, source_system')
           .gt('balance', 0)
           .order('due_date', { ascending: true })
           .limit(2000),
         supabase
           .from('zoho_recurring_invoices')
-          .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status')
+          .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status, zoho_invoice_id, source_system')
           .gt('balance', 0)
           .order('due_date', { ascending: true })
           .limit(2000),
@@ -516,10 +564,27 @@ export default function OffenePosten() {
                 return (
                   <TableRow key={rowKey} className={style.row}>
                     <TableCell className="font-mono">
-                      {i.invoice_number ?? '—'}
-                      {i.source === 'recurring' && (
-                        <Badge variant="outline" className="ml-2 text-[10px]">Abo</Badge>
-                      )}
+                      <div className="flex items-center gap-1">
+                        {i.zoho_invoice_id && i.invoice_number ? (
+                          <button
+                            type="button"
+                            onClick={() => openInvoicePdf(i)}
+                            disabled={pdfLoadingKey === rowKey}
+                            title="Rechnung als PDF öffnen"
+                            className="inline-flex items-center gap-1 text-primary hover:underline disabled:opacity-60"
+                          >
+                            {i.invoice_number}
+                            {pdfLoadingKey === rowKey
+                              ? <Loader2 className="w-3 h-3 animate-spin" />
+                              : <ExternalLink className="w-3 h-3 opacity-70" />}
+                          </button>
+                        ) : (
+                          <span>{i.invoice_number ?? '—'}</span>
+                        )}
+                        {i.source === 'recurring' && (
+                          <Badge variant="outline" className="ml-1 text-[10px]">Abo</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>{i.customer_name ?? '—'}</TableCell>
                     <TableCell>
