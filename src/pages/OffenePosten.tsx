@@ -33,7 +33,7 @@ import { cn } from '@/lib/utils';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 
-type WorkflowStatus = 'offen' | 'rueckstellung' | 'in_klaerung' | 'inkasso' | 'erledigt';
+type WorkflowStatus = 'offen' | 'rueckstellung' | 'in_klaerung' | 'anwalt' | 'inkasso' | 'erledigt';
 
 type OpenItem = {
   id: string;
