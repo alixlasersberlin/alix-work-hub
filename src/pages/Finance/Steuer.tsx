@@ -85,7 +85,7 @@ export default function FinanceSteuer() {
     })();
   }, []);
 
-  useEffect(() => { load(); }, [period, month, year, quarter, tenantId, tenants.length]);
+  useEffect(() => { load(); }, [period, month, year, quarter, tenantId, tenants.length, region]);
 
   // Aggregate
   const groups: Record<string, { brutto: number; netto19: number; ust19: number; netto7: number; ust7: number; count: number }> = {
