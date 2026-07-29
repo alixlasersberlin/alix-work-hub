@@ -13,11 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const fmt = (n: number) => (n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+const fmt = (n: number, cur = 'EUR') => (n || 0).toLocaleString('de-DE', { style: 'currency', currency: cur });
 
 export default function Bankbuchungen() {
   const { canWrite } = useFinancePermissions();
+  const { region } = useAccountingRegion();
+  const cur = region === 'CH' ? 'CHF' : 'EUR';
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -26,15 +29,16 @@ export default function Bankbuchungen() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await (supabase as any).from('finance_bank_postings').select('*').order('posting_date', { ascending: false }).limit(500);
+    const { data, error } = await (supabase as any).from('finance_bank_postings').select('*').eq('accounting_region', region).order('posting_date', { ascending: false }).limit(500);
     if (error) toast.error(error.message); else setRows(data || []);
     setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   async function save() {
     const { error } = await (supabase as any).from('finance_bank_postings').insert({
       ...form,
+      accounting_region: region,
       user_id: (await supabase.auth.getUser()).data.user?.id,
     });
     if (error) toast.error(error.message); else { toast.success('Buchung gespeichert'); setOpen(false); setForm(empty); load(); }
@@ -42,7 +46,7 @@ export default function Bankbuchungen() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
-      <PageHeader icon={Landmark} title="Bankbuchungen" subtitle="Manuelle Erfassung von Bankbewegungen"
+      <PageHeader icon={Landmark} title={`Bankbuchungen · ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`} subtitle="Manuelle Erfassung von Bankbewegungen"
         actions={<div className="flex gap-2">
           <Button variant="outline" onClick={load}><RefreshCw className="mr-2 h-4 w-4" /></Button>
           {canWrite && <Button onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />Neu</Button>}
