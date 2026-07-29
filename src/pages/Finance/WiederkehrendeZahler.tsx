@@ -264,7 +264,21 @@ export default function WiederkehrendeZahler() {
         </div>
       </div>
 
-      <DataCard title={`Kundenkonten (${filtered.length})`}>
+      <DataCard
+        title={`Kundenkonten (${filtered.length})`}
+        actions={
+          <div className="flex items-center gap-4 text-sm">
+            <div className="text-muted-foreground">
+              Σ Verträge monatlich:{' '}
+              <span className="font-semibold text-primary tabular-nums">{fmt(totals.monthly)}</span>
+            </div>
+            <div className="text-muted-foreground">
+              Aktive Verträge:{' '}
+              <span className="font-semibold text-foreground tabular-nums">{totals.activeProfiles}</span>
+            </div>
+          </div>
+        }
+      >
         <div className="divide-y divide-border -mx-5">
           {filtered.length === 0 && (
             <div className="px-5 py-12 text-center text-muted-foreground text-sm">Keine Treffer.</div>
@@ -349,6 +363,18 @@ export default function WiederkehrendeZahler() {
                                 );
                               })}
                             </tbody>
+                            <tfoot>
+                              <tr className="border-t-2 border-border bg-muted/30 font-semibold">
+                                <td className="px-3 py-2" colSpan={7}>Summe ({g.profiles.length} Verträge, davon {activeP} aktiv)</td>
+                                <td className="px-3 py-2 text-right tabular-nums">
+                                  {fmt(g.profiles.reduce((s, p) => s + Number(p.total || 0), 0), g.currency)}
+                                </td>
+                                <td className="px-3 py-2 text-right tabular-nums text-primary">
+                                  {fmt(g.monthly, g.currency)}
+                                </td>
+                                <td />
+                              </tr>
+                            </tfoot>
                           </table>
                         </div>
                       </div>
