@@ -25,10 +25,13 @@ const METHODS = [
   { v: 'degressiv', l: 'Degressiv' },
 ];
 
-const fmtEUR = (n: any) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(Number(n || 0));
+const fmtCur = (n: any, cur: 'EUR' | 'CHF' = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(Number(n || 0));
 
 export default function FinanceAnlagen() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
+  const cur: 'EUR' | 'CHF' = region === 'CH' ? 'CHF' : 'EUR';
+  const fmtEUR = (n: any) => fmtCur(n, cur);
   const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
 
