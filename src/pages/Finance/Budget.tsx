@@ -15,6 +15,7 @@ import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 type BudgetMap = Record<string, Record<number, number>>; // category -> month -> amount
 
 export default function FinanceBudget() {
+  const { region } = useAccountingRegion();
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
   const [data, setData] = useState<BudgetMap>({});
@@ -22,7 +23,7 @@ export default function FinanceBudget() {
 
   async function load() {
     setLoading(true);
-    const { data: rows } = await supabase.from('finance_budgets' as any).select('*').eq('fiscal_year', year);
+    const { data: rows } = await supabase.from('finance_budgets' as any).select('*').eq('accounting_region', region).eq('fiscal_year', year);
     const map: BudgetMap = {};
     for (const cat of BUDGET_CATEGORIES) map[cat] = {};
     for (const r of (rows ?? []) as any[]) {
@@ -34,7 +35,7 @@ export default function FinanceBudget() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, [year]);
+  useEffect(() => { load(); }, [year, region]);
 
   function update(cat: string, month: number, value: string) {
     const n = Number(value.replace(',', '.')) || 0;
@@ -46,10 +47,10 @@ export default function FinanceBudget() {
     const rows: any[] = [];
     for (const cat of Object.keys(data)) {
       for (let m = 1; m <= 12; m++) {
-        rows.push({ fiscal_year: year, month: m, category: cat, planned_amount: data[cat]?.[m] || 0 });
+        rows.push({ fiscal_year: year, month: m, category: cat, planned_amount: data[cat]?.[m] || 0, accounting_region: region });
       }
     }
-    const { error } = await supabase.from('finance_budgets' as any).upsert(rows, { onConflict: 'tenant_id,fiscal_year,month,category' });
+    const { error } = await supabase.from('finance_budgets' as any).upsert(rows, { onConflict: 'tenant_id,fiscal_year,month,category,accounting_region' });
     if (error) return toast.error(error.message);
     toast.success('Budget gespeichert');
     setDirty(false);
@@ -58,8 +59,8 @@ export default function FinanceBudget() {
   async function copyFromPriorYearActual() {
     const s = `${year - 1}-01-01`, e = `${year - 1}-12-31`;
     const [tx, ii] = await Promise.all([
-      supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e),
-      supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').gte('invoice_date', s).lte('invoice_date', e),
+      supabase.from('finance_transactions').select('amount, transaction_type, booking_date').eq('accounting_region', region).gte('booking_date', s).lte('booking_date', e),
+      supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').eq('accounting_region', region).gte('invoice_date', s).lte('invoice_date', e),
     ]);
     const map: BudgetMap = {};
     for (const cat of BUDGET_CATEGORIES) map[cat] = {};
