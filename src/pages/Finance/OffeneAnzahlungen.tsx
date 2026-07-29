@@ -125,13 +125,14 @@ export default function OffeneAnzahlungen() {
     const { data, error } = await supabase
       .from('finance_deposits')
       .select('*')
+      .eq('accounting_region', region)
       .not('status', 'in', '("gebucht","bezahlt")')
       .order('created_at', { ascending: false, nullsFirst: false })
       .limit(2000);
     if (error) toast.error('Laden fehlgeschlagen: ' + error.message);
     setRows((data ?? []) as any);
     setLoading(false);
-  }, []);
+  }, [region]);
 
   useEffect(() => { load(); }, [load]);
 
