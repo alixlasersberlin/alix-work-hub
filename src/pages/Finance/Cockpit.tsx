@@ -32,16 +32,17 @@ export default function FinanceCockpit() {
       setLoading(true);
       const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
       const [t, a, r] = await Promise.all([
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date, customer:customer_id(source_system, company_name, contact_name)').gte('booking_date', yearStart).order('booking_date'),
-        supabase.from('finance_accounts').select('customer_id, current_balance, overdue_balance, customers:customer_id(company_name, contact_name, source_system)').order('overdue_balance', { ascending: false }).limit(50),
-        supabase.from('finance_reminders' as any).select('id, status').neq('status', 'erledigt'),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date, customer:customer_id(source_system, company_name, contact_name)').eq('accounting_region', region).gte('booking_date', yearStart).order('booking_date'),
+        supabase.from('finance_accounts').select('customer_id, current_balance, overdue_balance, customers:customer_id(company_name, contact_name, source_system)').eq('accounting_region', region).order('overdue_balance', { ascending: false }).limit(50),
+        supabase.from('finance_reminders' as any).select('id, status').eq('accounting_region', region).neq('status', 'erledigt'),
       ]);
       setTx(t.data ?? []);
       setAccounts(a.data ?? []);
       setReminders((r.data ?? []) as any[]);
       setLoading(false);
     })();
-  }, []);
+  }, [region]);
+
 
   // loading handled inline via skeletons
 
