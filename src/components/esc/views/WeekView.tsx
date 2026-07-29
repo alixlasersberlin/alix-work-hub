@@ -89,6 +89,7 @@ export function WeekView({
             <div key={ri} className="grid grid-cols-7 gap-1">
               {row.map((sp) => {
                 const dept = deptOf(sp.a.departmentId);
+                const tint = subtleTint(sp.a.id);
                 return (
                   <button
                     key={sp.a.id}
@@ -97,14 +98,16 @@ export function WeekView({
                     onDragStart={(e) => { e.dataTransfer.setData('text/esc-id', sp.a.id); e.dataTransfer.effectAllowed = 'move'; }}
                     onClick={(e) => { e.stopPropagation(); onAppointmentClick?.(sp.a); }}
                     className={cn(
-                      'text-left text-[11px] px-2 py-1 rounded-md border border-l-4 bg-card hover:bg-accent/40 transition-colors truncate',
+                      'text-left text-[11px] px-2 py-1 rounded-md border border-l-4 hover:brightness-110 transition truncate',
                       sp.continuesLeft && 'rounded-l-none',
                       sp.continuesRight && 'rounded-r-none',
                     )}
                     style={{
                       gridColumnStart: sp.colStart + 1,
                       gridColumnEnd: sp.colEnd + 2,
-                      borderLeftColor: dept?.color || 'hsl(var(--primary))',
+                      backgroundColor: tint.bg,
+                      borderColor: tint.border,
+                      borderLeftColor: dept?.color || tint.border,
                     }}
                     title={`${sp.a.title} · ${format(new Date(sp.a.startAt), 'dd.MM. HH:mm', { locale: de })} – ${format(new Date(sp.a.endAt), 'dd.MM. HH:mm', { locale: de })}`}
                   >
