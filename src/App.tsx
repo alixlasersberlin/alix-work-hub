@@ -107,6 +107,9 @@ const FinanceAnzahlungen = lazy(() => import("./pages/Finance/Anzahlungen"));
 const FinanceOffeneAnzahlungen = lazy(() => import("./pages/Finance/OffeneAnzahlungen"));
 const FinanceKassenbuch = lazy(() => import("./pages/Finance/Kassenbuch"));
 const FinanceStammdaten = lazy(() => import("./pages/Finance/Stammdaten"));
+const FinanceKostenstellenReport = lazy(() => import("./pages/Finance/KostenstellenReport"));
+const FinanceDeckungsbeitrag = lazy(() => import("./pages/Finance/Deckungsbeitrag"));
+const FinanceSegmentbericht = lazy(() => import("./pages/Finance/Segmentbericht"));
 const FinanceBuchungsjournal = lazy(() => import("./pages/Finance/Buchungsjournal"));
 const FinanceBankbuchungen = lazy(() => import("./pages/Finance/Bankbuchungen"));
 const FinanceZahlungsuebersicht = lazy(() => import("./pages/Finance/Zahlungsuebersicht"));
@@ -1251,6 +1254,9 @@ function AppRoutes() {
           <Route path="/finance/ch-lastschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceChLastschriften /></ProtectedRoute>} />
           <Route path="/finance/camt054" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCamt054 /></ProtectedRoute>} />
           <Route path="/finance/steuer" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuer /></ProtectedRoute>} />
+          <Route path="/finance/kostenstellen-report" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKostenstellenReport /></ProtectedRoute>} />
+          <Route path="/finance/deckungsbeitrag" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDeckungsbeitrag /></ProtectedRoute>} />
+          <Route path="/finance/segmentbericht" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSegmentbericht /></ProtectedRoute>} />
           <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
           <Route path="/finance/cockpit/mandant/:code" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpitMandant /></ProtectedRoute>} />
           <Route path="/finance/wiederkehrende-zahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><WiederkehrendeZahler /></ProtectedRoute>} />

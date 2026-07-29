@@ -18326,6 +18326,42 @@ export type Database = {
           },
         ]
       }
+      finance_segments: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_sepa_mandates: {
         Row: {
           account_holder: string | null
@@ -18907,6 +18943,8 @@ export type Database = {
           amount: number
           booking_date: string
           contract_id: string | null
+          cost_center_id: string | null
+          cost_unit_id: string | null
           counterparty_tenant_id: string | null
           created_at: string
           currency: string
@@ -18914,9 +18952,11 @@ export type Database = {
           device_id: string | null
           id: string
           is_intercompany: boolean
+          line_category: string | null
           notes: string | null
           order_id: string | null
           reference: string | null
+          segment_id: string | null
           tenant_id: string | null
           transaction_type: string
         }
@@ -18925,6 +18965,8 @@ export type Database = {
           amount?: number
           booking_date?: string
           contract_id?: string | null
+          cost_center_id?: string | null
+          cost_unit_id?: string | null
           counterparty_tenant_id?: string | null
           created_at?: string
           currency?: string
@@ -18932,9 +18974,11 @@ export type Database = {
           device_id?: string | null
           id?: string
           is_intercompany?: boolean
+          line_category?: string | null
           notes?: string | null
           order_id?: string | null
           reference?: string | null
+          segment_id?: string | null
           tenant_id?: string | null
           transaction_type?: string
         }
@@ -18943,6 +18987,8 @@ export type Database = {
           amount?: number
           booking_date?: string
           contract_id?: string | null
+          cost_center_id?: string | null
+          cost_unit_id?: string | null
           counterparty_tenant_id?: string | null
           created_at?: string
           currency?: string
@@ -18950,9 +18996,11 @@ export type Database = {
           device_id?: string | null
           id?: string
           is_intercompany?: boolean
+          line_category?: string | null
           notes?: string | null
           order_id?: string | null
           reference?: string | null
+          segment_id?: string | null
           tenant_id?: string | null
           transaction_type?: string
         }
@@ -18962,6 +19010,20 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "finance_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_cost_center_id_fkey"
+            columns: ["cost_center_id"]
+            isOneToOne: false
+            referencedRelation: "finance_cost_centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_cost_unit_id_fkey"
+            columns: ["cost_unit_id"]
+            isOneToOne: false
+            referencedRelation: "finance_cost_units"
             referencedColumns: ["id"]
           },
           {
@@ -19004,6 +19066,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_transactions_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "finance_segments"
             referencedColumns: ["id"]
           },
           {
@@ -33826,6 +33895,37 @@ export type Database = {
       expire_break_glass_sessions: { Args: never; Returns: number }
       expire_temporary_role_grants: { Args: never; Returns: number }
       finance_can_write: { Args: never; Returns: boolean }
+      finance_cost_center_report: {
+        Args: {
+          p_from: string
+          p_region: Database["public"]["Enums"]["accounting_region"]
+          p_to: string
+        }
+        Returns: {
+          code: string
+          cost_center_id: string
+          db1: number
+          db2: number
+          fixed_cost: number
+          name: string
+          revenue: number
+          variable_cost: number
+        }[]
+      }
+      finance_db_summary: {
+        Args: {
+          p_from: string
+          p_region: Database["public"]["Enums"]["accounting_region"]
+          p_to: string
+        }
+        Returns: {
+          db1: number
+          db2: number
+          fixed_cost: number
+          revenue: number
+          variable_cost: number
+        }[]
+      }
       finance_deposit_book: {
         Args: {
           p_amount: number
@@ -33856,6 +33956,22 @@ export type Database = {
           _region: Database["public"]["Enums"]["accounting_region"]
         }
         Returns: boolean
+      }
+      finance_segment_report: {
+        Args: {
+          p_from: string
+          p_region: Database["public"]["Enums"]["accounting_region"]
+          p_to: string
+        }
+        Returns: {
+          code: string
+          fixed_cost: number
+          name: string
+          result: number
+          revenue: number
+          segment_id: string
+          variable_cost: number
+        }[]
       }
       format_document_number: {
         Args: {
