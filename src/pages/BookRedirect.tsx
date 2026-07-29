@@ -9,6 +9,8 @@ const TARGET = 'https://ticket.alix-operation.de';
 
 export default function BookRedirect() {
   useEffect(() => {
+    // Auf der Ticket-Domain selbst NICHT umleiten – sonst Endlosschleife.
+    if (window.location.hostname === 'ticket.alix-operation.de') return;
     window.location.replace(TARGET);
   }, []);
 
