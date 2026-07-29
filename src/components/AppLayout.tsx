@@ -2009,6 +2009,7 @@ export default function AppLayout() {
             <div className="hidden md:block min-w-0 flex-1">
               <SidebarInfoBar />
             </div>
+            <AccountingRegionSwitcher className="hidden md:flex" />
             
 
 
