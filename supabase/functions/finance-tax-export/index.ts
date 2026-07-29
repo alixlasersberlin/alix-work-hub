@@ -12,9 +12,10 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
 const BodySchema = z.object({
-  filing_type: z.enum(["ustva", "zm", "oss", "intrastat", "ebilanz"]),
+  filing_type: z.enum(["ustva", "zm", "oss", "intrastat", "ebilanz", "estv_mwst"]),
   period_value: z.string().min(4).max(20),
   tenant_id: z.string().uuid().nullable().optional(),
+  accounting_region: z.enum(["EU", "CH"]).optional().default("EU"),
   notes: z.string().max(500).optional(),
 });
 
