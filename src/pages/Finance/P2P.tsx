@@ -80,6 +80,7 @@ export default function FinanceP2P() {
       total_amount: pr.total_amount,
       currency: pr.currency,
       ordered_at: new Date().toISOString().slice(0, 10),
+      accounting_region: region,
     }).select('id').single();
     if (error || !po) return toast({ title: 'Fehler', description: error?.message, variant: 'destructive' });
     if (items && items.length) {
