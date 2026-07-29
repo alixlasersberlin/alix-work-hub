@@ -62,7 +62,7 @@ export default function FinanceFreigaben() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance Freigaben" subtitle={loading ? 'Lädt…' : `${pending} offene Genehmigungen`} icon={CheckSquare} noBreadcrumbs
+      <PageHeader title={`Finance Freigaben · ${region === "CH" ? "🇨🇭 CH" : "🇪🇺 EU"}`} subtitle={loading ? 'Lädt…' : `${pending} offene Genehmigungen`} icon={CheckSquare} noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : pending ? 'warning' : 'done'} label={loading ? 'Lädt' : pending ? `${pending} offen` : 'Aktuell'} pulse={loading} />}
         actions={<>
           <Select value={filter} onValueChange={setFilter}>
