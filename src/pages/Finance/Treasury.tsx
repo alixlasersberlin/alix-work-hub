@@ -10,10 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 type Tenant = { id: string; name: string; flag_emoji?: string };
 
 export default function FinanceTreasury() {
+  const { region } = useAccountingRegion();
   const [loading, setLoading] = useState(true);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -34,9 +36,9 @@ export default function FinanceTreasury() {
     setLoading(true);
     const [{ data: t }, { data: a }, { data: l }, { data: p }] = await Promise.all([
       supabase.from('tenants' as any).select('id,name,flag_emoji').eq('is_active', true).order('sort_order'),
-      supabase.from('finance_bank_accounts' as any).select('*').order('created_at', { ascending: false }),
-      supabase.from('finance_liquidity_entries' as any).select('*').order('entry_date', { ascending: false }).limit(60),
-      supabase.from('finance_payment_approvals' as any).select('*').order('created_at', { ascending: false }).limit(80),
+      supabase.from('finance_bank_accounts' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }),
+      supabase.from('finance_liquidity_entries' as any).select('*').eq('accounting_region', region).order('entry_date', { ascending: false }).limit(60),
+      supabase.from('finance_payment_approvals' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(80),
     ]);
     setTenants((t ?? []) as any);
     setAccounts((a ?? []) as any);
@@ -44,7 +46,7 @@ export default function FinanceTreasury() {
     setApprovals((p ?? []) as any);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   const addAccount = async () => {
     if (!newAcc.account_name) return toast({ title: 'Kontoname fehlt', variant: 'destructive' });
@@ -53,10 +55,11 @@ export default function FinanceTreasury() {
       account_name: newAcc.account_name,
       bank_name: newAcc.bank_name || null,
       iban: newAcc.iban || null,
-      currency: newAcc.currency || 'EUR',
+      currency: newAcc.currency || (region === 'CH' ? 'CHF' : 'EUR'),
+      accounting_region: region,
     });
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
-    else { setNewAcc({ tenant_id: '', account_name: '', bank_name: '', iban: '', currency: 'EUR' }); load(); }
+    else { setNewAcc({ tenant_id: '', account_name: '', bank_name: '', iban: '', currency: region === 'CH' ? 'CHF' : 'EUR' }); load(); }
   };
 
   const requestApproval = async () => {
@@ -67,6 +70,7 @@ export default function FinanceTreasury() {
       purpose: newApr.purpose || null,
       due_date: newApr.due_date || null,
       status: 'pending',
+      accounting_region: region,
     });
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     else { setNewApr({ payee_name: '', amount: '', purpose: '', due_date: '' }); load(); }

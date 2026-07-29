@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 const DIMENSIONS = [
   { v: 'tenant', l: 'Mandant' },
@@ -41,6 +42,7 @@ const VISUALIZATIONS = [
 
 export default function FinanceReports() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
   const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
   const isSuper = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<any[]>([]);
@@ -58,15 +60,15 @@ export default function FinanceReports() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from('finance_reports' as any).select('*').order('created_at', { ascending: false });
+    const { data } = await supabase.from('finance_reports' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false });
     setRows((data ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   const save = async () => {
     try {
-      const payload: any = { ...form, filters: JSON.parse(form.filters || '{}') };
+      const payload: any = { ...form, filters: JSON.parse(form.filters || '{}'), accounting_region: region };
       const { error } = await supabase.from('finance_reports' as any).insert(payload);
       if (error) throw error;
       toast({ title: 'Bericht gespeichert' });

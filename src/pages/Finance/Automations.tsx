@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 const TRIGGERS = [
   { v: 'invoice_threshold', l: 'Eingangsrechnung ab Schwellwert' },
@@ -31,6 +32,7 @@ const ACTIONS = [
 
 export default function FinanceAutomations() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
   const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin');
   const isSuper = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<any[]>([]);
@@ -47,18 +49,18 @@ export default function FinanceAutomations() {
   const load = async () => {
     setLoading(true);
     const [{ data: r1 }, { data: r2 }] = await Promise.all([
-      supabase.from('finance_automations' as any).select('*').order('created_at', { ascending: false }),
-      supabase.from('finance_automation_runs' as any).select('*').order('executed_at', { ascending: false }).limit(50),
+      supabase.from('finance_automations' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }),
+      supabase.from('finance_automation_runs' as any).select('*').eq('accounting_region', region).order('executed_at', { ascending: false }).limit(50),
     ]);
     setRows((r1 ?? []) as any[]);
     setRuns((r2 ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   const save = async () => {
     try {
-      const payload: any = { ...form };
+      const payload: any = { ...form, accounting_region: region };
       payload.condition_json = JSON.parse(form.condition_json || '{}');
       payload.action_config = JSON.parse(form.action_config || '{}');
       const { error } = await supabase.from('finance_automations' as any).insert(payload);
