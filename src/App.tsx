@@ -106,6 +106,7 @@ const FinanceDashboardPhase1 = lazy(() => import("./pages/Finance/Dashboard"));
 const FinanceAnzahlungen = lazy(() => import("./pages/Finance/Anzahlungen"));
 const FinanceOffeneAnzahlungen = lazy(() => import("./pages/Finance/OffeneAnzahlungen"));
 const FinanceKassenbuch = lazy(() => import("./pages/Finance/Kassenbuch"));
+const FinanceStammdaten = lazy(() => import("./pages/Finance/Stammdaten"));
 const FinanceBuchungsjournal = lazy(() => import("./pages/Finance/Buchungsjournal"));
 const FinanceBankbuchungen = lazy(() => import("./pages/Finance/Bankbuchungen"));
 const FinanceZahlungsuebersicht = lazy(() => import("./pages/Finance/Zahlungsuebersicht"));
