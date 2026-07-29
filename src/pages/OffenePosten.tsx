@@ -317,10 +317,31 @@ export default function OffenePosten() {
     toast.success(`${cfg.label} gebucht${inserted?.journal_number ? ' · ' + inserted.journal_number : ''}`);
   };
 
-  const filtered = useMemo(
+  type WorkflowFilter = WorkflowStatus | 'alle' | 'gebucht';
+  const [wfFilter, setWfFilter] = useState<WorkflowFilter>('offen');
+
+  const searched = useMemo(
     () => items.filter((i) => matchesQuery(i, search)),
     [items, search],
   );
+
+  const statusFor = useCallback((i: OpenItem): WorkflowFilter => {
+    const key = `${i.source}-${i.id}`;
+    if (bookedRefs[key]) return 'gebucht';
+    return workflows[key]?.workflow_status ?? 'offen';
+  }, [workflows, bookedRefs]);
+
+  const counts = useMemo(() => {
+    const c: Record<WorkflowFilter, number> = { alle: searched.length, offen: 0, rueckstellung: 0, in_klaerung: 0, inkasso: 0, erledigt: 0, gebucht: 0 };
+    searched.forEach((i) => { c[statusFor(i)]++; });
+    return c;
+  }, [searched, statusFor]);
+
+  const filtered = useMemo(() => {
+    if (wfFilter === 'alle') return searched;
+    return searched.filter((i) => statusFor(i) === wfFilter);
+  }, [searched, wfFilter, statusFor]);
+
   const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
 
   const totals = useMemo(() => {
