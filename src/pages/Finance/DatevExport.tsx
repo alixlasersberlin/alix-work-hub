@@ -49,7 +49,7 @@ export default function DatevExport() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
-      <PageHeader icon={FileSpreadsheet} title="Export DATEV" subtitle="DATEV-Buchungsstapel (EXTF 700) & Journal-Export" />
+      <PageHeader icon={FileSpreadsheet} title={`Export DATEV ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`} subtitle="DATEV-Buchungsstapel (EXTF 700) & Journal-Export" />
       <Card>
         <CardHeader><CardTitle>Zeitraum</CardTitle></CardHeader>
         <CardContent className="space-y-4">
