@@ -12,9 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
-const fmt = (n: number) => maskRevenueString(_fmtBase(n));
+const _fmtBase = (n: number, cur: string) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
+
 
 // Tax rate per tenant: DE 19/7, AT 20/10
 const RATES: Record<string, { standard: number; reduced: number }> = {
