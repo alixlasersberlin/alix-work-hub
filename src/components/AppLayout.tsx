@@ -431,6 +431,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/bankbuchungen', label: 'Bankbuchungen', icon: Landmark, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/datev-export', label: 'Export DATEV', icon: FileDown, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/audit-revision', label: 'Audit & Revision', icon: ShieldCheck, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/stammdaten', label: 'Stammdaten (Kontenrahmen · Perioden)', icon: Database, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
         ],
       },
       {
