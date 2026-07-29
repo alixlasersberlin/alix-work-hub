@@ -152,10 +152,12 @@ export default function WiederkehrendeZahler() {
           customer_name: p.company_name || p.customer_name || 'Unbekannt',
           profiles: [], invoices: [], monthly: 0, ytdBilled: 0, openBalance: 0,
           lastInvoiceDate: null, nextInvoiceDate: null, newestCreatedAt: null, currency: p.currency || 'EUR',
+          hasSepa: false,
         });
       }
       const g = map.get(k)!;
       g.profiles.push(p);
+      if (isSepaProfile(p)) g.hasSepa = true;
       const isActive = (p.status ?? '').toLowerCase() === 'active';
       if (isActive && p.total) g.monthly += Number(p.total) * monthsFactor(p.recurrence_frequency, p.repeat_every);
       if (p.next_invoice_date && (!g.nextInvoiceDate || p.next_invoice_date < g.nextInvoiceDate)) g.nextInvoiceDate = p.next_invoice_date;
