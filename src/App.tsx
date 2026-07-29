@@ -120,6 +120,9 @@ const FinanceMahnwesenSettings = lazy(() => import("./pages/Finance/MahnwesenSet
 const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
 const FinanceBank = lazy(() => import("./pages/Finance/Bank"));
 const FinanceSepa = lazy(() => import("./pages/Finance/Sepa"));
+const FinanceQrRechnung = lazy(() => import("./pages/Finance/QrRechnung"));
+const FinanceChLastschriften = lazy(() => import("./pages/Finance/ChLastschriften"));
+const FinanceCamt054 = lazy(() => import("./pages/Finance/Camt054"));
 const FinanceSteuer = lazy(() => import("./pages/Finance/Steuer"));
 const FinanceCockpit = lazy(() => import("./pages/Finance/Cockpit"));
 const FinanceCockpitMandant = lazy(() => import("./pages/Finance/MandantDrilldown"));
