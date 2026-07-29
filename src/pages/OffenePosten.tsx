@@ -33,7 +33,7 @@ import { cn } from '@/lib/utils';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 
-type WorkflowStatus = 'offen' | 'rueckstellung' | 'in_klaerung' | 'inkasso' | 'erledigt';
+type WorkflowStatus = 'offen' | 'rueckstellung' | 'in_klaerung' | 'anwalt' | 'inkasso' | 'erledigt';
 
 type OpenItem = {
   id: string;
@@ -82,6 +82,7 @@ const workflowOptions: { value: WorkflowStatus; label: string; badge: string }[]
   { value: 'offen', label: 'Offen', badge: 'bg-muted text-muted-foreground' },
   { value: 'rueckstellung', label: 'Rückstellung', badge: 'bg-blue-500/15 text-blue-400 border border-blue-500/30' },
   { value: 'in_klaerung', label: 'In Klärung', badge: 'bg-amber-500/15 text-amber-400 border border-amber-500/30' },
+  { value: 'anwalt', label: 'Anwalt', badge: 'bg-rose-500/15 text-rose-400 border border-rose-500/30' },
   { value: 'inkasso', label: 'Übergabe Inkasso', badge: 'bg-violet-500/15 text-violet-300 border border-violet-500/30' },
   { value: 'erledigt', label: 'Erledigt', badge: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' },
 ];
@@ -332,7 +333,7 @@ export default function OffenePosten() {
   }, [workflows, bookedRefs]);
 
   const counts = useMemo(() => {
-    const c: Record<WorkflowFilter, number> = { alle: searched.length, offen: 0, rueckstellung: 0, in_klaerung: 0, inkasso: 0, erledigt: 0, gebucht: 0 };
+    const c: Record<WorkflowFilter, number> = { alle: searched.length, offen: 0, rueckstellung: 0, in_klaerung: 0, anwalt: 0, inkasso: 0, erledigt: 0, gebucht: 0 };
     searched.forEach((i) => { c[statusFor(i)]++; });
     return c;
   }, [searched, statusFor]);
@@ -432,6 +433,7 @@ export default function OffenePosten() {
           { value: 'offen', label: 'Offen', badge: 'bg-muted text-foreground border-border' },
           { value: 'rueckstellung', label: 'Rückstellung', badge: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
           { value: 'in_klaerung', label: 'In Klärung', badge: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+          { value: 'anwalt', label: 'Anwalt', badge: 'bg-rose-500/15 text-rose-400 border-rose-500/30' },
           { value: 'inkasso', label: 'Übergabe Inkasso', badge: 'bg-violet-500/15 text-violet-300 border-violet-500/30' },
           { value: 'erledigt', label: 'Erledigt', badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
           { value: 'gebucht', label: 'Gebucht', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
