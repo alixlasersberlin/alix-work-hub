@@ -61,10 +61,12 @@ export default function FinanceSteuer() {
     const { from, to } = range();
     let q = supabase.from('finance_transactions')
       .select('id, customer_id, amount, transaction_type, booking_date, reference, customer:customer_id(source_system)')
+      .eq('accounting_region', region)
       .gte('booking_date', from)
       .lte('booking_date', to)
       .order('booking_date');
     const { data } = await q;
+
     let rows = data ?? [];
     if (tenantId !== 'all') {
       const tenant = tenants.find(t => t.id === tenantId);
