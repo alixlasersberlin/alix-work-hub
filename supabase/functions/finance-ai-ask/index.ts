@@ -54,9 +54,10 @@ const TOOLS = [
   },
 ];
 
-async function execTool(supa: any, name: string, args: any) {
+async function execTool(supa: any, name: string, args: any, region: 'EU' | 'CH') {
   if (name === "sum_revenue") {
     let q = supa.from("finance_transactions").select("amount, transaction_type, customer_id, booking_date")
+      .eq("accounting_region", region)
       .gte("booking_date", args.start_date).lte("booking_date", args.end_date).limit(5000);
     if (args.customer_id) q = q.eq("customer_id", args.customer_id);
     const { data } = await q;
@@ -73,11 +74,12 @@ async function execTool(supa: any, name: string, args: any) {
     return { count: data?.length ?? 0, items: data ?? [] };
   }
   if (name === "customer_balance") {
-    const { data } = await supa.from("finance_accounts").select("*").eq("customer_id", args.customer_id).maybeSingle();
+    const { data } = await supa.from("finance_accounts").select("*").eq("customer_id", args.customer_id).eq("accounting_region", region).maybeSingle();
     return data ?? { found: false };
   }
   return { error: "unknown_tool" };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
