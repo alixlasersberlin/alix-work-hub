@@ -45,7 +45,7 @@ export default function FinanceBank() {
     setUploading(true);
     try {
       const content = await file.text();
-      const { data, error } = await supabase.functions.invoke('finance-bank-import', { body: { filename: file.name, content } });
+      const { data, error } = await supabase.functions.invoke("finance-bank-import", { body: { filename: file.name, content, accounting_region: region } });
       if (error) throw error;
       if (data?.duplicate) toast({ title: 'Bereits importiert', description: `Statement existiert (${data.lines} Buchungen).` });
       else toast({ title: 'Import erfolgreich', description: `${data.lines} Buchungen, ${data.matched} automatisch zugeordnet.` });
@@ -70,7 +70,7 @@ export default function FinanceBank() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={Banknote}
-        title="Bankimport & Reconciliation"
+        title={`Bankimport · ${region === "CH" ? "🇨🇭 CH" : "🇪🇺 EU"}`}
         subtitle="CAMT.053 (XML) oder MT940 hochladen, automatisches Matching gegen offene Rechnungen"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${lines.length} Buchungen`} pulse={loading} />}
