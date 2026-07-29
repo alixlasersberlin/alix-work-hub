@@ -63,7 +63,7 @@ export default function FinanceRaten() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={ScrollText}
-        title="Laufende Raten"
+        title={`Laufende Raten · ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`}
         subtitle="Periodische Rechnungs-Stammdaten (Quelle: Zoho)"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
