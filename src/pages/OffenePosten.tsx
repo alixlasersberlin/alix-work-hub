@@ -404,21 +404,6 @@ export default function OffenePosten() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Offene Posten</div>
-          <div className="text-2xl font-semibold mt-1">{totals.count}</div>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Offener Betrag</div>
-          <div className="text-2xl font-semibold mt-1">{formatCurrency(totals.sum, 'EUR')}</div>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-4">
-          <div className="text-xs text-muted-foreground">Davon überfällig</div>
-          <div className="text-2xl font-semibold mt-1 text-destructive">{formatCurrency(totals.overdue, 'EUR')}</div>
-        </div>
-      </div>
-
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -456,12 +441,43 @@ export default function OffenePosten() {
         })}
       </div>
 
+      {(() => {
+        const wfLabels: Record<WorkflowFilter, string> = {
+          alle: 'Alle',
+          offen: 'Offen',
+          rueckstellung: 'Rückstellung',
+          in_klaerung: 'In Klärung',
+          anwalt: 'Anwalt',
+          inkasso: 'Übergabe Inkasso',
+          erledigt: 'Erledigt',
+          gebucht: 'Gebucht',
+        };
+        const wfLabel = wfLabels[wfFilter];
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="text-xs text-muted-foreground">Posten · {wfLabel}</div>
+              <div className="text-2xl font-semibold mt-1">{totals.count}</div>
+            </div>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="text-xs text-muted-foreground">Betrag · {wfLabel}</div>
+              <div className="text-2xl font-semibold mt-1">{formatCurrency(totals.sum, 'EUR')}</div>
+            </div>
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="text-xs text-muted-foreground">Davon überfällig · {wfLabel}</div>
+              <div className="text-2xl font-semibold mt-1 text-destructive">{formatCurrency(totals.overdue, 'EUR')}</div>
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="flex flex-wrap gap-2 text-xs">
 
         {(Object.keys(bucketStyles) as Bucket[]).map((b) => (
           <span key={b} className={cn('px-2 py-1 rounded', bucketStyles[b].badge)}>{bucketStyles[b].label}</span>
         ))}
       </div>
+
 
       <div className="rounded-lg border border-border bg-card overflow-hidden">
         {loading ? (
