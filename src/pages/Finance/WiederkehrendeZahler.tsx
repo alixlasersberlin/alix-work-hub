@@ -349,6 +349,18 @@ export default function WiederkehrendeZahler() {
                                 );
                               })}
                             </tbody>
+                            <tfoot>
+                              <tr className="border-t-2 border-border bg-muted/30 font-semibold">
+                                <td className="px-3 py-2" colSpan={7}>Summe ({g.profiles.length} Verträge, davon {activeP} aktiv)</td>
+                                <td className="px-3 py-2 text-right tabular-nums">
+                                  {fmt(g.profiles.reduce((s, p) => s + Number(p.total || 0), 0), g.currency)}
+                                </td>
+                                <td className="px-3 py-2 text-right tabular-nums text-primary">
+                                  {fmt(g.monthly, g.currency)}
+                                </td>
+                                <td />
+                              </tr>
+                            </tfoot>
                           </table>
                         </div>
                       </div>
