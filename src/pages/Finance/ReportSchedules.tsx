@@ -23,6 +23,7 @@ const CRONS = [
 
 export default function FinanceReportSchedules() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
   const canEdit = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin') || roles.includes('Finance');
   const isSuper = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<any[]>([]);
@@ -37,20 +38,21 @@ export default function FinanceReportSchedules() {
   const load = async () => {
     setLoading(true);
     const [{ data: r1 }, { data: r2 }] = await Promise.all([
-      supabase.from('finance_report_schedules' as any).select('*, finance_reports(name)').order('created_at', { ascending: false }),
-      supabase.from('finance_reports' as any).select('id,name').order('name'),
+      supabase.from('finance_report_schedules' as any).select('*, finance_reports(name)').eq('accounting_region', region).order('created_at', { ascending: false }),
+      supabase.from('finance_reports' as any).select('id,name').eq('accounting_region', region).order('name'),
     ]);
     setRows((r1 ?? []) as any[]);
     setReports((r2 ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   const save = async () => {
     try {
       const payload: any = {
         ...form,
         recipients: form.recipients.split(',').map((s: string) => s.trim()).filter(Boolean),
+        accounting_region: region,
       };
       const { error } = await supabase.from('finance_report_schedules' as any).insert(payload);
       if (error) throw error;
