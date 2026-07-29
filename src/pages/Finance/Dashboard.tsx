@@ -51,7 +51,7 @@ export default function FinanceDashboard() {
     <div className="container mx-auto px-4 py-8">
       <PageHeader
         icon={Banknote}
-        title="Finance Dashboard"
+        title={`Finance Dashboard · Buchhaltung ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`}
         subtitle="Übersicht über Forderungen, Verträge und Zahlungen"
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Live'} pulse={!loading} dotOnly />}
       />
