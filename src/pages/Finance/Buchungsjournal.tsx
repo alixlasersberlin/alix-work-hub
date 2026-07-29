@@ -98,9 +98,9 @@ export default function Buchungsjournal() {
                     <TableCell><Badge variant="outline">{r.source_module}</Badge></TableCell>
                     <TableCell>{r.vorgang}</TableCell>
                     <TableCell className="font-mono text-xs">{r.reference || r.order_number || r.invoice_number}</TableCell>
-                    <TableCell className="text-right">{fmt(r.amount_net)}</TableCell>
-                    <TableCell className="text-right">{fmt(r.amount_vat)}</TableCell>
-                    <TableCell className="text-right font-semibold">{fmt(r.amount_gross)}</TableCell>
+                    <TableCell className="text-right">{fmt(r.amount_net, cur)}</TableCell>
+                    <TableCell className="text-right">{fmt(r.amount_vat, cur)}</TableCell>
+                    <TableCell className="text-right font-semibold">{fmt(r.amount_gross, cur)}</TableCell>
                     <TableCell className="font-mono text-xs">{r.account}</TableCell>
                     <TableCell className="font-mono text-xs">{r.contra_account}</TableCell>
                     <TableCell><Badge variant={r.status === 'aktiv' ? 'outline' : 'destructive'}>{r.status}</Badge></TableCell>
