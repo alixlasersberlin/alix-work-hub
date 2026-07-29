@@ -26,6 +26,7 @@ const REASON_LABEL: Record<string, string> = {
 };
 
 export default function FinanceAnomalien() {
+  const { region } = useAccountingRegion();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState<'open' | 'reviewed' | 'dismissed' | 'all'>('open');
@@ -33,13 +34,13 @@ export default function FinanceAnomalien() {
 
   async function load() {
     setLoading(true);
-    let q: any = supabase.from('finance_anomalies' as any).select('*').order('detected_at', { ascending: false }).limit(500);
+    let q: any = supabase.from('finance_anomalies' as any).select('*').eq('accounting_region', region).order('detected_at', { ascending: false }).limit(500);
     if (statusFilter !== 'all') q = q.eq('status', statusFilter);
     const { data } = await q;
     setRows((data as any[]) ?? []);
     setLoading(false);
   }
-  useEffect(() => { load(); }, [statusFilter]);
+  useEffect(() => { load(); }, [statusFilter, region]);
 
   async function runScan() {
     setScanning(true);
