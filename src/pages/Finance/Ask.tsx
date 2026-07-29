@@ -46,7 +46,7 @@ export default function FinanceAsk() {
     <div className="p-6 space-y-6 max-w-4xl">
       <PageHeader
         icon={MessageSquare}
-        title="Finanz-KI fragen"
+        title={`Finanz-KI fragen ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`}
         subtitle="Stelle Fragen zu Umsatz, offenen Posten, Kunden"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Denkt nach' : `${history.length} Fragen`} pulse={loading} />}
