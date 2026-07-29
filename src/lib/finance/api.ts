@@ -64,6 +64,7 @@ export async function updateContract(id: string, patch: Record<string, any>) {
 // ============ finance_transactions ============
 export async function getTransactions(filter?: {
   customer_id?: string; order_id?: string; device_id?: string; contract_id?: string; transaction_type?: string;
+  accounting_region?: 'EU' | 'CH';
 }) {
   let q: any = supabase.from('finance_transactions' as any).select('*').order('booking_date', { ascending: false }).limit(500);
   if (filter?.customer_id) q = q.eq('customer_id', filter.customer_id);
@@ -71,6 +72,7 @@ export async function getTransactions(filter?: {
   if (filter?.device_id) q = q.eq('device_id', filter.device_id);
   if (filter?.contract_id) q = q.eq('contract_id', filter.contract_id);
   if (filter?.transaction_type) q = q.eq('transaction_type', filter.transaction_type);
+  if (filter?.accounting_region) q = q.eq('accounting_region', filter.accounting_region);
   const { data, error } = await q;
   if (error) throw error;
   return (data ?? []) as any[];
