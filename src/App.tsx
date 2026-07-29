@@ -164,6 +164,8 @@ const FinanceKonsolidierung = lazy(() => import("./pages/Finance/Konsolidierung"
 const FinanceKonsolidierungDetail = lazy(() => import("./pages/Finance/KonsolidierungDetail"));
 const FinanceIntercompany = lazy(() => import("./pages/Finance/Intercompany"));
 const FinanceFxRates = lazy(() => import("./pages/Finance/FxRates"));
+const FinanceKonzernGuv = lazy(() => import("./pages/Finance/KonzernGuv"));
+const FinanceKonzernBilanz = lazy(() => import("./pages/Finance/KonzernBilanz"));
 const FinanceTreasury = lazy(() => import("./pages/Finance/Treasury"));
 const FinanceP2P = lazy(() => import("./pages/Finance/P2P"));
 const FinanceMeldewesen = lazy(() => import("./pages/Finance/Meldewesen"));
