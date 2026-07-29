@@ -75,7 +75,9 @@ class AuditTracker {
   private onMove = () => { this.lastActivity = Date.now(); };
 
   private async sendHeartbeat() {
-    if (!this.sessionId) return;
+    if (!this.sessionId || !this.started) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { await this.stop(); return; }
     const now = Date.now();
     const elapsedSec = Math.round((now - this.lastHeartbeat) / 1000);
     const idleThresholdMs = 60_000;
@@ -92,7 +94,15 @@ class AuditTracker {
     };
     this.counters = { clicks: 0, scrolls: 0, keystrokes: 0 };
     this.lastHeartbeat = now;
-    try { await supabase.functions.invoke("audit-session-heartbeat", { body: payload }); } catch {}
+    try {
+      const { error } = await supabase.functions.invoke("audit-session-heartbeat", { body: payload });
+      if (error) {
+        const msg = String((error as any)?.message ?? "");
+        if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
+          await this.stop();
+        }
+      }
+    } catch {}
   }
 
   private async flush() {
