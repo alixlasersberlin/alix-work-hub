@@ -1228,6 +1228,7 @@ function AppRoutes() {
           <Route path="/finance/anzahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnzahlungen /></ProtectedRoute>} />
           <Route path="/finance/offene-anzahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceOffeneAnzahlungen /></ProtectedRoute>} />
           <Route path="/finance/kassenbuch" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKassenbuch /></ProtectedRoute>} />
+          <Route path="/finance/stammdaten" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Finance','Buchhaltung Admin','Buchhaltung EU','Buchhaltung CH']}><FinanceStammdaten /></ProtectedRoute>} />
           <Route path="/finance/buchungsjournal" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBuchungsjournal /></ProtectedRoute>} />
           <Route path="/finance/bankbuchungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBankbuchungen /></ProtectedRoute>} />
           <Route path="/finance/zahlungsuebersicht" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceZahlungsuebersicht /></ProtectedRoute>} />
