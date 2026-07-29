@@ -45,7 +45,7 @@ export default function FinanceAnlagen() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_assets' as any).select('*').order('acquisition_date', { ascending: false }).limit(1000);
+    let q = supabase.from('finance_assets' as any).select('*').eq('accounting_region', region).order('acquisition_date', { ascending: false }).limit(1000);
     if (catFilter !== 'alle') q = q.eq('category', catFilter);
     if (statusFilter !== 'alle') q = q.eq('status', statusFilter);
     const { data, error } = await q;
@@ -53,7 +53,7 @@ export default function FinanceAnlagen() {
     setItems((data ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [catFilter, statusFilter]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [catFilter, statusFilter, region]);
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
