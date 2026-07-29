@@ -317,10 +317,31 @@ export default function OffenePosten() {
     toast.success(`${cfg.label} gebucht${inserted?.journal_number ? ' · ' + inserted.journal_number : ''}`);
   };
 
-  const filtered = useMemo(
+  type WorkflowFilter = WorkflowStatus | 'alle' | 'gebucht';
+  const [wfFilter, setWfFilter] = useState<WorkflowFilter>('offen');
+
+  const searched = useMemo(
     () => items.filter((i) => matchesQuery(i, search)),
     [items, search],
   );
+
+  const statusFor = useCallback((i: OpenItem): WorkflowFilter => {
+    const key = `${i.source}-${i.id}`;
+    if (bookedRefs[key]) return 'gebucht';
+    return workflows[key]?.workflow_status ?? 'offen';
+  }, [workflows, bookedRefs]);
+
+  const counts = useMemo(() => {
+    const c: Record<WorkflowFilter, number> = { alle: searched.length, offen: 0, rueckstellung: 0, in_klaerung: 0, inkasso: 0, erledigt: 0, gebucht: 0 };
+    searched.forEach((i) => { c[statusFor(i)]++; });
+    return c;
+  }, [searched, statusFor]);
+
+  const filtered = useMemo(() => {
+    if (wfFilter === 'alle') return searched;
+    return searched.filter((i) => statusFor(i) === wfFilter);
+  }, [searched, wfFilter, statusFor]);
+
   const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
 
   const totals = useMemo(() => {
@@ -406,7 +427,35 @@ export default function OffenePosten() {
         visible={visible.length}
       />
 
+      <div className="flex flex-wrap gap-2">
+        {([
+          { value: 'offen', label: 'Offen', badge: 'bg-muted text-foreground border-border' },
+          { value: 'rueckstellung', label: 'Rückstellung', badge: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
+          { value: 'in_klaerung', label: 'In Klärung', badge: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+          { value: 'inkasso', label: 'Übergabe Inkasso', badge: 'bg-violet-500/15 text-violet-300 border-violet-500/30' },
+          { value: 'erledigt', label: 'Erledigt', badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
+          { value: 'gebucht', label: 'Gebucht', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
+          { value: 'alle', label: 'Alle', badge: 'bg-primary/10 text-primary border-primary/30' },
+        ] as { value: WorkflowFilter; label: string; badge: string }[]).map((tab) => {
+          const active = wfFilter === tab.value;
+          return (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => setWfFilter(tab.value)}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-medium border transition-all',
+                active ? tab.badge + ' ring-2 ring-primary/40 scale-105' : 'bg-card text-muted-foreground border-border hover:bg-muted/50',
+              )}
+            >
+              {tab.label} <span className="ml-1 opacity-70">({counts[tab.value] ?? 0})</span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="flex flex-wrap gap-2 text-xs">
+
         {(Object.keys(bucketStyles) as Bucket[]).map((b) => (
           <span key={b} className={cn('px-2 py-1 rounded', bucketStyles[b].badge)}>{bucketStyles[b].label}</span>
         ))}
