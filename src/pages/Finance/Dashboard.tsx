@@ -6,19 +6,21 @@ import { KpiTile } from '@/components/infinity/KpiTile';
 import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 interface Kpi { label: string; value: string; icon: any; accent: 'gold' | 'sky' | 'emerald' | 'rose' | 'violet'; }
 
 export default function FinanceDashboard() {
+  const { region } = useAccountingRegion();
   const [kpis, setKpis] = useState<Kpi[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const fmt = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+    const fmt = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: region === 'CH' ? 'CHF' : 'EUR' });
     const [accountsRes, contractsRes, txRes] = await Promise.all([
-      supabase.from('finance_accounts' as any).select('current_balance, overdue_balance'),
-      supabase.from('finance_contracts' as any).select('id, status, monthly_rate, remaining_amount').eq('status', 'aktiv'),
-      supabase.from('finance_transactions' as any).select('amount, transaction_type'),
+      supabase.from('finance_accounts' as any).select('current_balance, overdue_balance').eq('accounting_region', region),
+      supabase.from('finance_contracts' as any).select('id, status, monthly_rate, remaining_amount').eq('status', 'aktiv').eq('accounting_region', region),
+      supabase.from('finance_transactions' as any).select('amount, transaction_type').eq('accounting_region', region),
     ]);
     const accounts = (accountsRes.data ?? []) as any[];
     const contracts = (contractsRes.data ?? []) as any[];
@@ -37,9 +39,9 @@ export default function FinanceDashboard() {
       { label: 'Zahlungseingänge', value: fmt(payments), icon: ArrowDownToLine, accent: 'emerald' },
     ]);
     setLoading(false);
-  }, []);
+  }, [region]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { setLoading(true); load(); }, [load]);
   useRealtimeRefresh(
     ['finance_accounts', 'finance_contracts', 'finance_transactions', 'finance_records'],
     load,
