@@ -1,64 +1,116 @@
-# ALIXDocs Enterprise 3.0
+# Buchhaltung CH – Eigenständiger Buchungskreis
 
-## Entscheidungen (bestätigt)
-- **Editor**: Lightweight — TipTap (Rich Text/Word-Like), Univer (Excel-Like Sheets), einfache PPT-Slide-Ansicht mit TipTap-Slides. Kein voller .docx-Roundtrip; .docx/.xlsx werden als PDF-Vorschau + editierbare Konvertierung angeboten.
-- **Konsolidierung**: `alixdocs2_*` wird die einzige Basis. `alixdocs_*` (Legacy) wird per Migration in `alixdocs2_*` überführt und danach schreibgeschützt.
-- **Scope**: Alle 7 Phasen (E1–E7).
+## Ziel
+Zweiter, vollständig getrennter Buchhaltungskreis „CH" neben der bestehenden „EU"-Buchhaltung. Gleiche UI, gleiche Workflows – aber Daten, RLS, Auswertungen, OP-Listen, Mahnungen und Exporte strikt getrennt.
 
-## Konsolidierungs-Schritt (vor E1)
-1. Migration `alixdocs_documents` → `alixdocs2_documents` (Mapping IDs, Kategorien, Versionen, Approval-States, Shares).
-2. Legacy-Views bleiben lesbar; alle neuen Writes gehen in `alixdocs2_*`.
-3. Routen `/alixdocs` und `/alixdocs2` → einheitlich unter `/alixdocs` (E1-Dashboard), Legacy-Reader unter `/alixdocs/legacy`.
+## 1. Datenbank – `accounting_region` als harter Trenner
 
-## Phase E1 — Enterprise Dashboard & Globale Suche
-- Neue Landing `/alixdocs`: KPI-Kacheln (Dokumente gesamt, offene Freigaben, meine Aufgaben, letzte Aktivität, Speicherverbrauch).
-- Global Search Bar (Header): Volltext (bestehendes `alixdocs2_fts_search`) + Filter (Doctype, Owner, Datum, Tag, Modul).
-- Recent/Pinned/Favorites-Sektionen.
+Neuer Enum `accounting_region` mit Werten `EU`, `CH`.
 
-## Phase E2 — Chat, Comments, @Mentions, Tasks
-- Nutzt bestehendes `alixdocs2_comments`.
-- Neu: `alixdocs2_tasks` (Titel, Assignee, Due, Status, doc_id).
-- @Mentions triggern `app_notifications` + Email.
-- Sidebar-Panel „Diskussion & Aufgaben" in jedem Doc.
+Pflichtspalte `accounting_region accounting_region NOT NULL DEFAULT 'EU'` in allen finanz-relevanten Tabellen (Backfill zuerst, dann NOT NULL):
 
-## Phase E3 — Workflow Engine & Version Diff
-- Konfigurierbare Workflows (`alixdocs2_workflows`, `_workflow_steps`, `_workflow_runs`): sequentiell/parallel, Reminder, Fristen.
-- Version-Diff (Text via `diff-match-patch`) für TipTap-Dokumente; für PDFs Side-by-Side-Vergleich.
+- `orders`, `customers`
+- `finance_accounts`, `finance_contracts`, `finance_transactions`, `finance_deposits`
+- `finance_journal`, `finance_cashbook`, `finance_cashbook_closures`, `finance_bank_postings`
+- `finance_reminders`, `finance_reminders_items`
+- `finance_sepa_mandates`, `finance_sepa_runs`, `finance_sepa_run_items`
+- `finance_bank_statements`, `finance_bank_lines`
+- `zoho_recurring_profiles`
 
-## Phase E4 — AI Copilot
-- Edge Function `alixdocs-copilot` (Lovable AI Gateway, `openai/gpt-5.6-sol`, reasoningEffort none).
-- Aktionen: Zusammenfassen, Klassifizieren, Risiken, Fragen-zum-Dokument (RAG über OCR-Text).
-- UI-Panel „Copilot" im Doc-Viewer.
+### Automatische Zuordnung (Backfill + Trigger)
+Ein Datensatz ist `CH`, wenn eines gilt:
+- Kunde: `country ILIKE 'schweiz'` / `country_code = 'CH'` / PLZ CH-Muster
+- Auftrag: `source_system` liefert CH-Branch (z.B. `raw_data->>'branch_id' = '598077000000065075'`) oder verknüpfter Kunde ist CH
+- Finanzobjekte erben Region vom Order/Customer via BEFORE INSERT/UPDATE Trigger `finance_set_region()`
 
-## Phase E5 — Semantic Search & OCR-Ausbau
-- OCR bestehend (Tesseract via Edge Function) auf alle neuen Uploads ausrollen; Backfill-Job.
-- Embeddings (`text-embedding-3-small` via Gateway) in `alixdocs2_embeddings` (pgvector).
-- Hybrid Search: BM25 (FTS) + Vektor-Rerank.
+Regel: ein Auftrag ist entweder EU oder CH – niemals beides. Trigger blockt Region-Wechsel wenn bereits gebuchte Transaktionen existieren.
 
-## Phase E6 — Office Editor
-- TipTap Editor Route `/alixdocs/edit/:id` mit Auto-Save (Versionen).
-- Univer Sheets Route `/alixdocs/sheet/:id`.
-- Import: .docx via Mammoth → HTML → TipTap; .xlsx via SheetJS → Univer.
-- Export: PDF (bestehend), HTML, .docx (best-effort via html-docx-js).
+### RLS
+Zusätzliche RLS-Predicates auf allen betroffenen Tabellen: nur Zeilen sichtbar, deren Region der User laut Rolle sehen darf. Security-Definer-Function `has_accounting_region(uid, region)`.
 
-## Phase E7 — Live Collaboration & Mobile
-- Y.js + Supabase Realtime Provider für TipTap (Presence, Cursor, CRDT).
-- Für Univer analog mit dessen Collab-Plugin.
-- Mobile: Responsive Doc-Viewer, Kommentare, Freigaben, Signaturen mobil.
+### Indizes
+Composite-Indizes `(accounting_region, <bestehender Sortier-/Filter-Key>)` auf allen Listen-Endpunkten (orders, transactions, journal, reminders, sepa_runs).
+
+## 2. Rollen & Rechte
+
+Neue App-Rollen (in `user_roles.role`-Enum ergänzen):
+- `buchhaltung_eu` – Zugriff nur auf Region EU
+- `buchhaltung_ch` – Zugriff nur auf Region CH
+- `buchhaltung_admin` – beide Regionen
+
+Super Admin / Admin behalten Vollzugriff. RLS-Function fragt Rollen ab, um Region-Sichtbarkeit zu bestimmen.
+
+## 3. Anwendungs-Layer
+
+### Region-Kontext
+Neuer React-Context `AccountingRegionContext` (`src/contexts/AccountingRegionContext.tsx`):
+- State: `region: 'EU' | 'CH'`, persistiert in `localStorage` (`alix.accounting.region`)
+- Hook `useAccountingRegion()` liefert Region + Setter
+- Erlaubte Regionen werden aus den Rollen des Users abgeleitet
+
+### Umschalter im Menü
+In `AppLayout.tsx` unter dem Menüpunkt „BUCHHALTUNG EU" wird der Eintrag zu „BUCHHALTUNG" mit Sub-Toggle:
+- ○ EU
+- ○ Schweiz (CH)
+
+Auswahl setzt Region im Context und routet auf `/finance` (gleiche Routen, andere Daten). Optional URL-Query `?region=ch` für Deeplinks.
+
+### Query-Layer
+Zentrale Helper `src/lib/finance/api.ts` + `src/lib/finance/journal.ts` etc.: jeder Supabase-Query bekommt automatisch `.eq('accounting_region', region)`. Ein neuer Wrapper `withRegion(query, region)` wird konsequent überall eingesetzt.
+
+Betroffene Seiten (jeweils regionsgefiltert):
+- `Finance/Dashboard.tsx` – KPIs nur Region
+- `Finance/Zahlungen.tsx`, `Zahlungsuebersicht.tsx`
+- `OffenePosten.tsx`, `Gutschriften.tsx`
+- `Finance/WiederkehrendeZahler.tsx`, `AlixFlex.tsx` (SEPA-Mandate)
+- `Finance/Raten.tsx`, `Kassenbuch`, `Buchungsjournal`, `Bankbuchungen`, `DATEV-Export`, `Audit-Revision`
+- `Finance/Reminders`, `Finance/SEPA`, `Finance/Steuer`, `Finance/Cockpit`, `Finance/Bank`
+
+### Suchen & Statistiken
+Alle Search-Endpunkte (Kunde, Rechnung, Seriennummer, Gerät, Telefon, Email, Firmenname, Auftrag) filtern nach `accounting_region`. Reports/Statistiken ebenso.
+
+### Exporte
+DATEV, CSV, Excel, PDF-Exports bekommen Region-Filter und Region im Dateinamen (`DATEV_CH_2026-01.txt`).
+
+## 4. Zoho-Sync
+
+Sync-Edge-Functions (`sync-zoho-*`, `sync-zoho-to-finance`, `finance-bank-import`, `finance-sepa-export`, `zoho-reconciliation`) setzen `accounting_region` beim Insert:
+- `source_system = 'zoho_eu_1'` + CH-Branch → `CH`
+- Kunde mit CH-Adresse → `CH`
+- sonst → `EU`
+
+Recurring-Profile / Verträge erben Region vom Kunden/Order.
+
+## 5. UI-Kennzeichnung
+
+- Kleiner Region-Chip (🇨🇭 CH / 🇪🇺 EU) im `PageHeader` aller Finance-Seiten.
+- Farbliche Akzentuierung im Sidebar-Bereich, wenn CH aktiv (dezent, kein Redesign).
+- Warnhinweis in Formularen, wenn Region-Wechsel ansteht.
+
+## 6. Migration – Rollout in Phasen
+
+1. **DB-Schema**: Enum + Spalten (nullable), Backfill-Skript, Trigger, Indizes.
+2. **NOT NULL** setzen nach erfolgreicher Verifikation.
+3. **RLS-Policies** & Rollen.
+4. **Region-Context + Umschalter** im Frontend.
+5. **API-Wrapper** in `src/lib/finance/*` – regionaler Filter überall.
+6. **Seiten-Rollout** Finance-Modul (Dashboard, OP, Zahlungen, Mahnwesen, SEPA, Raten, Kassenbuch, Journal, DATEV, Bank, Cockpit, Steuer).
+7. **Zoho-Sync-Anpassung** in Edge Functions.
+8. **Exporte** & Berichte.
+9. **Tests**: Cross-Region-Isolation, Sichtbarkeit pro Rolle, Backfill-Korrektheit anhand `raw_data.branch_id`.
 
 ## Technische Details
-- Neue Tabellen (alle mit RLS + GRANT): `alixdocs2_tasks`, `alixdocs2_workflows`, `alixdocs2_workflow_steps`, `alixdocs2_workflow_runs`, `alixdocs2_embeddings (vector(1536))`, `alixdocs2_favorites`, `alixdocs2_activity`.
-- Neue Edge Functions: `alixdocs-copilot`, `alixdocs-embed`, `alixdocs-ocr-backfill`, `alixdocs-workflow-tick` (Cron).
-- Neue Client-Deps: `@tiptap/*`, `@univerjs/*`, `yjs`, `y-supabase`, `mammoth`, `xlsx`, `diff-match-patch`, `html-docx-js`.
-- Bestehende Menüs: „Dokumente" → zeigt nur noch neuen Hub `/alixdocs`.
 
-## Rollout-Reihenfolge (bitte bestätigen)
-1. Konsolidierungs-Migration + neuer Hub (E1)  ← **Start jetzt**
-2. E2 Tasks/Mentions
-3. E3 Workflow + Diff
-4. E4 Copilot
-5. E5 Semantik + OCR-Backfill
-6. E6 Editors
-7. E7 Live Collab + Mobile
+- Erweiterung, kein neues Modul: gleiche Routen `/finance/*`, Region kommt aus Context.
+- Migrationen erfolgen inkrementell pro Tabellenblock, um Downtime zu vermeiden.
+- Bestehende Views (`security_invoker=on`) werden um `accounting_region` erweitert.
+- `finance_journal`-Trigger (`trg_cashbook_to_journal`, `trg_bankpost_to_journal`) übernehmen Region vom Quellsatz.
+- `useRealtimeRefresh` bleibt unverändert – Region-Filter in Query.
+- Kein Rewrite der EU-Buchhaltung; Default `EU` sichert Rückwärtskompatibilität.
 
-Ich fange nach Deiner Bestätigung mit **Konsolidierung + E1** an. Sag „go", oder nenne eine andere Startphase.
+## Offene Punkte / Bitte um Bestätigung
+
+1. **CH-Erkennung Aufträge**: reicht `raw_data.branch_id = '598077000000065075'` (bestehender CH-Branch aus `OrdersCh.tsx`) als Haupt-Kriterium, oder soll zusätzlich ein neues Feld `market/verkaufsland` bei Neuanlage gepflegt werden?
+2. **Bestandsdaten**: Backfill soll bestehende CH-Aufträge/-Kunden nachträglich als `CH` markieren – OK?
+3. **Rollen-Zuweisung**: sollen bestehende Finance-User automatisch `buchhaltung_eu` erhalten, damit sich für sie nichts ändert?
+4. **Umfang jetzt**: alles in einem Rollout, oder in Phasen (erst DB+Umschalter, dann Seite für Seite)?
