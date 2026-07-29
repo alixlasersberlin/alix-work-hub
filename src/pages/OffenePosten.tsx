@@ -106,6 +106,52 @@ export default function OffenePosten() {
   const [pageSize, setPageSize] = useState<PageSize>(50);
   const [dateFrom, setDateFrom] = useState<Date>(new Date(new Date().getFullYear(), 0, 1));
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [pdfLoadingKey, setPdfLoadingKey] = useState<string | null>(null);
+
+  const openInvoicePdf = useCallback(async (item: OpenItem) => {
+    if (!item.zoho_invoice_id) {
+      toast.error('Für diese Rechnung ist keine Zoho-ID hinterlegt.');
+      return;
+    }
+    const key = `${item.source}-${item.id}`;
+    setPdfLoadingKey(key);
+    // Fenster synchron öffnen (Popup-Blocker), Inhalt später setzen
+    const win = window.open('', '_blank');
+    try {
+      const { data, error } = await supabase.functions.invoke('zoho-invoice-pdf', {
+        body: {
+          zoho_invoice_id: item.zoho_invoice_id,
+          source_system: item.source_system ?? 'zoho_eu_1',
+          recurring: item.source === 'recurring',
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      const b64 = (data as any)?.pdf_base64;
+      if (!b64) throw new Error('Kein PDF erhalten');
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      if (win) {
+        win.location.href = url;
+      } else {
+        // Fallback wenn Popup blockiert
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e: any) {
+      if (win) win.close();
+      toast.error('PDF fehlgeschlagen: ' + (e?.message ?? 'Unbekannter Fehler'));
+    } finally {
+      setPdfLoadingKey(null);
+    }
+  }, []);
 
   const [editItem, setEditItem] = useState<OpenItem | null>(null);
   const [editStatus, setEditStatus] = useState<WorkflowStatus>('offen');
