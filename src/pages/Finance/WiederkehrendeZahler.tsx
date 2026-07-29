@@ -282,7 +282,12 @@ export default function WiederkehrendeZahler() {
                 >
                   {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{g.customer_name}</div>
+                    <div className="font-medium truncate flex items-center gap-2">
+                      {g.hasSepa && (
+                        <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">SEPA</Badge>
+                      )}
+                      <span className="truncate">{g.customer_name}</span>
+                    </div>
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 mt-0.5">
                       <span>{activeP} aktiv / {g.profiles.length} Verträge</span>
                       <span>{g.invoices.length} Rechnungen</span>
