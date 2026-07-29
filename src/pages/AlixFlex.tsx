@@ -285,6 +285,14 @@ export default function AlixFlex() {
                 <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Typ" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Typen</SelectItem>
+                <SelectItem value="sepa">SEPA</SelectItem>
+                <SelectItem value="zahler">Zahler</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={billingRunFilter} onValueChange={setBillingRunFilter}>
               <SelectTrigger className="w-[180px]"><SelectValue placeholder="Buchungslauf" /></SelectTrigger>
               <SelectContent>
