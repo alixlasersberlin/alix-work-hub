@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 export default function FinanceIntercompany() {
+  const { region } = useAccountingRegion();
   const [tenants, setTenants] = useState<any[]>([]);
   const [rels, setRels] = useState<any[]>([]);
   const [unmatched, setUnmatched] = useState<any[]>([]);
@@ -30,11 +32,12 @@ export default function FinanceIntercompany() {
     setLoading(true);
     const [{ data: t }, { data: r }, { data: u }] = await Promise.all([
       supabase.from('tenants' as any).select('id,name,flag_emoji').eq('is_active', true).order('sort_order'),
-      supabase.from('finance_intercompany_relations' as any).select('*').order('created_at', { ascending: false }),
+      supabase.from('finance_intercompany_relations' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }),
       supabase
         .from('finance_transactions' as any)
         .select('id, tenant_id, counterparty_tenant_id, amount, currency, booking_date, transaction_type, reference')
         .eq('is_intercompany', true)
+        .eq('accounting_region', region)
         .order('booking_date', { ascending: false })
         .limit(50),
     ]);
@@ -43,7 +46,7 @@ export default function FinanceIntercompany() {
     setUnmatched((u ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   const addRelation = async () => {
     if (!source || !target || source === target) {
@@ -51,7 +54,7 @@ export default function FinanceIntercompany() {
       return;
     }
     const { error } = await supabase.from('finance_intercompany_relations' as any).insert({
-      source_tenant_id: source, target_tenant_id: target, label: label || null,
+      source_tenant_id: source, target_tenant_id: target, label: label || null, accounting_region: region,
     });
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     else { setLabel(''); await load(); }
