@@ -20,6 +20,7 @@ import NewsAnnouncementDialog from '@/components/NewsAnnouncementDialog';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
+import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
 import { TicketNotificationBell } from '@/components/tickets/TicketNotificationBell';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
