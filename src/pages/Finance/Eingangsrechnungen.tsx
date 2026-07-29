@@ -113,7 +113,7 @@ export default function FinanceEingangsrechnungen() {
         amount_net: form.amount_net ? Number(form.amount_net) : null,
         amount_tax: form.amount_tax ? Number(form.amount_tax) : null,
         tax_rate: form.tax_rate ? Number(form.tax_rate) : null,
-        currency: form.currency || 'EUR',
+        currency: form.currency || cur, accounting_region: region,
         description: form.description || null,
         xml_path,
         is_einvoice: !!form._xml_file,
@@ -156,7 +156,7 @@ export default function FinanceEingangsrechnungen() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={Inbox}
-        title="Eingangsrechnungen"
+        title={`Eingangsrechnungen · ${region === "CH" ? "🇨🇭 CH" : "🇪🇺 EU"}`}
         subtitle="Kreditoren-Light mit XRechnung/ZUGFeRD-Erkennung und Freigabe-Workflow"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
