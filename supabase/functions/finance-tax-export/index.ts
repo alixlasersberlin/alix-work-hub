@@ -177,6 +177,54 @@ Deno.serve(async (req) => {
       lines.push({ line_code: "INTRA-E", line_label: "Eingänge", amount: 0, base_amount: 0 });
       exportFormat = "csv";
       exportContent = "Hinweis;Intrastat-Erstellung erfordert Warenstrom-Daten – Platzhalterdatei erzeugt.\n";
+    } else if (filing_type === "estv_mwst") {
+      // ESTV MwSt.-Abrechnung Schweiz (Formular effektiv) – vereinfacht: Ziffern 200/302/303/312/400
+      const normalRate = 8.1, reducedRate = 2.6, hotelRate = 3.8;
+      let umsatz200 = 0;              // Ziffer 200: Total steuerbarer Umsatz
+      let steuer302 = 0;              // 8.1 % Steuer
+      let steuer303 = 0;              // 2.6 % Steuer
+      let steuer312 = 0;              // 3.8 % Steuer
+      let vorsteuer400 = 0;           // Vorsteuer auf Material/Dienstleistungen
+      for (const tx of txs ?? []) {
+        const amt = Number(tx.amount ?? 0);
+        if (tx.transaction_type === "Rechnung" || tx.transaction_type === "Verkauf") {
+          umsatz200 += amt;
+          steuer302 += (amt / (100 + normalRate)) * normalRate;
+        } else if (tx.transaction_type === "Eingangsrechnung" || tx.transaction_type === "Ausgabe") {
+          vorsteuer400 += (amt / (100 + normalRate)) * normalRate;
+        }
+      }
+      const zahllast = steuer302 + steuer303 + steuer312 - vorsteuer400;
+      lines.push({ line_code: "200", line_label: "Total vereinbartes Entgelt", base_amount: umsatz200, amount: 0, tax_rate: 0 });
+      lines.push({ line_code: "302", line_label: "Normalsatz 8.1 %", base_amount: umsatz200, amount: steuer302, tax_rate: normalRate });
+      lines.push({ line_code: "303", line_label: "Reduzierter Satz 2.6 %", base_amount: 0, amount: steuer303, tax_rate: reducedRate });
+      lines.push({ line_code: "312", line_label: "Beherbergungssatz 3.8 %", base_amount: 0, amount: steuer312, tax_rate: hotelRate });
+      lines.push({ line_code: "400", line_label: "Vorsteuer Material/Dienstleistungen", base_amount: 0, amount: -vorsteuer400, tax_rate: 0 });
+      lines.push({ line_code: "500", line_label: "Zahllast an ESTV", base_amount: 0, amount: zahllast, tax_rate: 0 });
+      total = zahllast;
+      exportFormat = "xml";
+      exportContent = `<?xml version="1.0" encoding="UTF-8"?>
+<VATDeclaration xmlns="http://www.estv.admin.ch/xmlns/eCH-0217/2" period="${period_value}" currency="CHF">
+  <GeneralInformation>
+    <UID></UID>
+    <TaxPeriodFrom>${range.from}</TaxPeriodFrom>
+    <TaxPeriodTo>${range.to}</TaxPeriodTo>
+  </GeneralInformation>
+  <EffectiveReportingMethod>
+    <TurnoverComputation>
+      <Ziffer200>${umsatz200.toFixed(2)}</Ziffer200>
+    </TurnoverComputation>
+    <VATComputations>
+      <Ziffer302 rate="8.1">${steuer302.toFixed(2)}</Ziffer302>
+      <Ziffer303 rate="2.6">${steuer303.toFixed(2)}</Ziffer303>
+      <Ziffer312 rate="3.8">${steuer312.toFixed(2)}</Ziffer312>
+    </VATComputations>
+    <InputTax>
+      <Ziffer400>${vorsteuer400.toFixed(2)}</Ziffer400>
+    </InputTax>
+    <PayableTax>${zahllast.toFixed(2)}</PayableTax>
+  </EffectiveReportingMethod>
+</VATDeclaration>`;
     } else if (filing_type === "ebilanz") {
       let revenue = 0; let expense = 0;
       for (const tx of txs ?? []) {
