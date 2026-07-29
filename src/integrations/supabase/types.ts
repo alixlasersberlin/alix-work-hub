@@ -15788,6 +15788,54 @@ export type Database = {
           },
         ]
       }
+      finance_chart_of_accounts: {
+        Row: {
+          account_class: string
+          account_number: string
+          account_type: string | null
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          chart_framework: string
+          created_at: string
+          default_tax_code: string | null
+          default_vat_rate: number | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          account_class: string
+          account_number: string
+          account_type?: string | null
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          chart_framework?: string
+          created_at?: string
+          default_tax_code?: string | null
+          default_vat_rate?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          account_class?: string
+          account_number?: string
+          account_type?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          chart_framework?: string
+          created_at?: string
+          default_tax_code?: string | null
+          default_vat_rate?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_consolidation_items: {
         Row: {
           account_code: string | null
@@ -16006,6 +16054,89 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      finance_cost_centers: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_cost_centers_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "finance_cost_centers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_cost_units: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       finance_deposit_bookings: {
         Row: {
@@ -17052,6 +17183,48 @@ export type Database = {
           },
         ]
       }
+      finance_opening_balances: {
+        Row: {
+          account_number: string
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          created_at: string
+          created_by: string | null
+          credit: number
+          currency: string
+          debit: number
+          fiscal_year: number
+          id: string
+          note: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number: string
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          created_at?: string
+          created_by?: string | null
+          credit?: number
+          currency?: string
+          debit?: number
+          fiscal_year: number
+          id?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          created_at?: string
+          created_by?: string | null
+          credit?: number
+          currency?: string
+          debit?: number
+          fiscal_year?: number
+          id?: string
+          note?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_payment_approvals: {
         Row: {
           accounting_region: Database["public"]["Enums"]["accounting_region"]
@@ -17132,6 +17305,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      finance_periods: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          fiscal_year: number
+          id: string
+          note: string | null
+          period_month: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          fiscal_year: number
+          id?: string
+          note?: string | null
+          period_month: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          fiscal_year?: number
+          id?: string
+          note?: string | null
+          period_month?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       finance_purchase_order_items: {
         Row: {
@@ -33094,6 +33306,7 @@ export type Database = {
       }
       expire_break_glass_sessions: { Args: never; Returns: number }
       expire_temporary_role_grants: { Args: never; Returns: number }
+      finance_can_write: { Args: never; Returns: boolean }
       finance_deposit_book: {
         Args: {
           p_amount: number
@@ -33117,6 +33330,13 @@ export type Database = {
       finance_deposit_set_lock: {
         Args: { p_deposit_id: string; p_lock: boolean; p_note?: string }
         Returns: undefined
+      }
+      finance_period_is_postable: {
+        Args: {
+          _dt: string
+          _region: Database["public"]["Enums"]["accounting_region"]
+        }
+        Returns: boolean
       }
       format_document_number: {
         Args: {
@@ -33166,6 +33386,10 @@ export type Database = {
       }
       has_alix_id_permission: {
         Args: { _permission: string }
+        Returns: boolean
+      }
+      has_finance_region_access: {
+        Args: { _region: Database["public"]["Enums"]["accounting_region"] }
         Returns: boolean
       }
       has_role: { Args: { check_role: string }; Returns: boolean }
