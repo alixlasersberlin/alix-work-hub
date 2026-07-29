@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 const CATEGORIES = ['Fuhrpark', 'IT', 'Werkstattausstattung', 'Geräte', 'Software', 'Büroausstattung', 'Sonstiges'];
 const METHODS = [
