@@ -9,21 +9,23 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 export default function AuditRevision() {
+  const { region } = useAccountingRegion();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tbl, setTbl] = useState('alle');
 
   async function load() {
     setLoading(true);
-    let q: any = (supabase as any).from('finance_audit_trail').select('*').order('created_at', { ascending: false }).limit(500);
+    let q: any = (supabase as any).from('finance_audit_trail').select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(500);
     if (tbl !== 'alle') q = q.eq('entity_table', tbl);
     const { data, error } = await q;
     if (error) toast.error(error.message); else setRows(data || []);
     setLoading(false);
   }
-  useEffect(() => { load(); /* eslint-disable-line */ }, [tbl]);
+  useEffect(() => { load(); /* eslint-disable-line */ }, [tbl, region]);
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
