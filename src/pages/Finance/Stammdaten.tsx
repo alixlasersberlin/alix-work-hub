@@ -44,8 +44,9 @@ export default function Stammdaten() {
       />
 
       <Tabs defaultValue="coa" className="space-y-4">
-        <TabsList className="grid grid-cols-2 lg:grid-cols-5 gap-1">
+        <TabsList className="grid grid-cols-3 lg:grid-cols-6 gap-1">
           <TabsTrigger value="coa">Kontenrahmen</TabsTrigger>
+          <TabsTrigger value="tax">Steuern</TabsTrigger>
           <TabsTrigger value="cc">Kostenstellen</TabsTrigger>
           <TabsTrigger value="cu">Kostenträger</TabsTrigger>
           <TabsTrigger value="per">Perioden</TabsTrigger>
@@ -53,6 +54,7 @@ export default function Stammdaten() {
         </TabsList>
 
         <TabsContent value="coa"><CoaTab region={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
+        <TabsContent value="tax"><TaxTab region={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
         <TabsContent value="cc"><CcTab region={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
         <TabsContent value="cu"><CuTab region={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
         <TabsContent value="per"><PerTab region={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
@@ -542,5 +544,236 @@ function ObTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: b
         </DialogContent>
       </Dialog>
     </Card>
+  );
+}
+
+/* ================================ STEUERN ================================ */
+type TaxCode = {
+  id: string; accounting_region: 'EU'|'CH'; code: string; name: string; rate: number;
+  kind: string; account: string|null; valid_from: string; valid_to: string|null; is_active: boolean;
+};
+type WHT = {
+  id: string; booking_date: string; gross_amount: number; tax_rate: number;
+  tax_amount: number; net_amount: number; currency: string; counterparty: string|null;
+  reference: string|null; refund_status: string; refund_requested_at: string|null; refund_received_at: string|null;
+};
+
+function TaxTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: boolean; canDelete: boolean }) {
+  const [codes, setCodes] = useState<TaxCode[]>([]);
+  const [wht, setWht] = useState<WHT[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [openCode, setOpenCode] = useState(false);
+  const [openWht, setOpenWht] = useState(false);
+  const [codeForm, setCodeForm] = useState<Partial<TaxCode>>({ code:'', name:'', rate: 0, kind:'output', account:'', valid_from: new Date().toISOString().slice(0,10), is_active: true });
+  const [whtForm, setWhtForm] = useState<Partial<WHT>>({ booking_date: new Date().toISOString().slice(0,10), gross_amount: 0, tax_rate: 35, currency: 'CHF', counterparty:'', reference:'', refund_status:'offen' });
+
+  const load = async () => {
+    setLoading(true);
+    const [{ data: c }, { data: w }] = await Promise.all([
+      supabase.from('finance_tax_codes' as any).select('*').eq('accounting_region', region).order('code'),
+      region === 'CH'
+        ? supabase.from('finance_withholding_tax' as any).select('*').eq('accounting_region', 'CH').order('booking_date', { ascending: false }).limit(200)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    setCodes((c as any) || []); setWht((w as any) || []); setLoading(false);
+  };
+  useEffect(() => { load(); }, [region]);
+
+  const saveCode = async () => {
+    if (!codeForm.code || !codeForm.name) return toast.error('Code & Name erforderlich');
+    const { error } = await supabase.from('finance_tax_codes' as any).insert({ ...codeForm, accounting_region: region } as any);
+    if (error) return toast.error(error.message);
+    toast.success('Steuercode angelegt'); setOpenCode(false); load();
+  };
+  const toggleCode = async (r: TaxCode) => {
+    const { error } = await supabase.from('finance_tax_codes' as any).update({ is_active: !r.is_active }).eq('id', r.id);
+    if (error) return toast.error(error.message); load();
+  };
+  const delCode = async (r: TaxCode) => {
+    if (!confirm(`Steuercode ${r.code} löschen?`)) return;
+    const { error } = await supabase.from('finance_tax_codes' as any).delete().eq('id', r.id);
+    if (error) return toast.error(error.message); load();
+  };
+
+  const saveWht = async () => {
+    const gross = Number(whtForm.gross_amount || 0);
+    const rate = Number(whtForm.tax_rate || 35);
+    const tax = Math.round(gross * rate) / 100;
+    const net = Math.round((gross - tax) * 100) / 100;
+    const { error } = await supabase.from('finance_withholding_tax' as any).insert({
+      ...whtForm, tax_amount: tax, net_amount: net, accounting_region: 'CH',
+    } as any);
+    if (error) return toast.error(error.message);
+    toast.success('Verrechnungssteuer erfasst'); setOpenWht(false); load();
+  };
+  const updWhtStatus = async (r: WHT, status: string) => {
+    const patch: any = { refund_status: status };
+    if (status === 'beantragt') patch.refund_requested_at = new Date().toISOString().slice(0,10);
+    if (status === 'erstattet') patch.refund_received_at = new Date().toISOString().slice(0,10);
+    const { error } = await supabase.from('finance_withholding_tax' as any).update(patch).eq('id', r.id);
+    if (error) return toast.error(error.message); load();
+  };
+  const delWht = async (r: WHT) => {
+    if (!confirm('Eintrag löschen?')) return;
+    const { error } = await supabase.from('finance_withholding_tax' as any).delete().eq('id', r.id);
+    if (error) return toast.error(error.message); load();
+  };
+
+  const fmt = (n: number, ccy = region==='CH'?'CHF':'EUR') => n.toLocaleString(region==='CH'?'de-CH':'de-DE', { style:'currency', currency: ccy });
+  const kindLabel: Record<string,string> = { output:'Umsatzsteuer', input:'Vorsteuer', reverse_charge:'Bezugsteuer', exempt:'Steuerbefreit', withholding:'Quellensteuer' };
+  const whtOffen = wht.filter(w=>w.refund_status==='offen').reduce((s,w)=>s+Number(w.tax_amount),0);
+  const whtBeantragt = wht.filter(w=>w.refund_status==='beantragt').reduce((s,w)=>s+Number(w.tax_amount),0);
+  const whtErstattet = wht.filter(w=>w.refund_status==='erstattet').reduce((s,w)=>s+Number(w.tax_amount),0);
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Steuercodes {region==='CH' ? '· 🇨🇭 MwSt./VST' : '· 🇪🇺 USt./VSt.'} ({codes.length})</CardTitle>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={load}><RefreshCw className="w-4 h-4"/></Button>
+            {canWrite && <Button size="sm" onClick={()=>setOpenCode(true)}><Plus className="w-4 h-4 mr-1"/>Neu</Button>}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-md overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead className="w-32">Code</TableHead><TableHead>Bezeichnung</TableHead>
+                <TableHead>Typ</TableHead><TableHead className="text-right">Satz</TableHead>
+                <TableHead>Konto</TableHead><TableHead>Gültig ab</TableHead>
+                <TableHead className="w-24 text-right">Aktion</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {loading?<TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">Lädt…</TableCell></TableRow>
+                : codes.length===0?<TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">Keine Steuercodes</TableCell></TableRow>
+                : codes.map(r=>(
+                  <TableRow key={r.id} className={!r.is_active?'opacity-50':''}>
+                    <TableCell className="font-mono">{r.code}</TableCell>
+                    <TableCell>{r.name}</TableCell>
+                    <TableCell><Badge variant="outline">{kindLabel[r.kind]||r.kind}</Badge></TableCell>
+                    <TableCell className="text-right font-mono">{Number(r.rate).toFixed(2)}%</TableCell>
+                    <TableCell className="font-mono text-xs">{r.account||'—'}</TableCell>
+                    <TableCell className="text-xs">{r.valid_from}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        {canWrite && <Switch checked={r.is_active} onCheckedChange={()=>toggleCode(r)}/>}
+                        {canDelete && <Button variant="ghost" size="icon" onClick={()=>delCode(r)}><Trash2 className="w-4 h-4 text-destructive"/></Button>}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {region === 'CH' && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Verrechnungssteuer 35 % ({wht.length})</CardTitle>
+            {canWrite && <Button size="sm" onClick={()=>setOpenWht(true)}><Plus className="w-4 h-4 mr-1"/>Erfassen</Button>}
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-md border p-3"><div className="text-xs text-muted-foreground">Offen</div><div className="text-lg font-semibold">{fmt(whtOffen,'CHF')}</div></div>
+              <div className="rounded-md border p-3"><div className="text-xs text-muted-foreground">Beantragt</div><div className="text-lg font-semibold text-amber-500">{fmt(whtBeantragt,'CHF')}</div></div>
+              <div className="rounded-md border p-3"><div className="text-xs text-muted-foreground">Erstattet</div><div className="text-lg font-semibold text-emerald-500">{fmt(whtErstattet,'CHF')}</div></div>
+            </div>
+            <div className="border rounded-md overflow-x-auto">
+              <Table>
+                <TableHeader><TableRow>
+                  <TableHead>Datum</TableHead><TableHead>Gegenpartei</TableHead><TableHead>Referenz</TableHead>
+                  <TableHead className="text-right">Brutto</TableHead><TableHead className="text-right">VST</TableHead>
+                  <TableHead className="text-right">Netto</TableHead><TableHead>Status</TableHead><TableHead/>
+                </TableRow></TableHeader>
+                <TableBody>
+                  {wht.length===0?<TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground">Keine Einträge</TableCell></TableRow>
+                  : wht.map(r=>(
+                    <TableRow key={r.id}>
+                      <TableCell className="text-xs">{r.booking_date}</TableCell>
+                      <TableCell>{r.counterparty||'—'}</TableCell>
+                      <TableCell className="text-xs">{r.reference||'—'}</TableCell>
+                      <TableCell className="text-right font-mono">{fmt(Number(r.gross_amount), r.currency||'CHF')}</TableCell>
+                      <TableCell className="text-right font-mono">{fmt(Number(r.tax_amount), r.currency||'CHF')}</TableCell>
+                      <TableCell className="text-right font-mono">{fmt(Number(r.net_amount), r.currency||'CHF')}</TableCell>
+                      <TableCell>
+                        {canWrite ? (
+                          <Select value={r.refund_status} onValueChange={v=>updWhtStatus(r, v)}>
+                            <SelectTrigger className="h-8 w-32"><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="offen">Offen</SelectItem>
+                              <SelectItem value="beantragt">Beantragt</SelectItem>
+                              <SelectItem value="erstattet">Erstattet</SelectItem>
+                              <SelectItem value="verjaehrt">Verjährt</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : <Badge variant="outline">{r.refund_status}</Badge>}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {canDelete && <Button variant="ghost" size="icon" onClick={()=>delWht(r)}><Trash2 className="w-4 h-4 text-destructive"/></Button>}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={openCode} onOpenChange={setOpenCode}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Neuer Steuercode ({region})</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Code *</Label><Input value={codeForm.code||''} onChange={e=>setCodeForm({...codeForm,code:e.target.value})}/></div>
+            <div><Label>Satz % *</Label><Input type="number" step="0.001" value={codeForm.rate??0} onChange={e=>setCodeForm({...codeForm,rate:parseFloat(e.target.value)})}/></div>
+            <div className="col-span-2"><Label>Bezeichnung *</Label><Input value={codeForm.name||''} onChange={e=>setCodeForm({...codeForm,name:e.target.value})}/></div>
+            <div><Label>Typ</Label>
+              <Select value={codeForm.kind} onValueChange={v=>setCodeForm({...codeForm,kind:v})}>
+                <SelectTrigger><SelectValue/></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="output">Umsatzsteuer</SelectItem>
+                  <SelectItem value="input">Vorsteuer</SelectItem>
+                  <SelectItem value="reverse_charge">Bezugsteuer</SelectItem>
+                  <SelectItem value="exempt">Steuerbefreit</SelectItem>
+                  <SelectItem value="withholding">Quellensteuer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Konto</Label><Input value={codeForm.account||''} onChange={e=>setCodeForm({...codeForm,account:e.target.value})}/></div>
+            <div><Label>Gültig ab</Label><Input type="date" value={codeForm.valid_from||''} onChange={e=>setCodeForm({...codeForm,valid_from:e.target.value})}/></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=>setOpenCode(false)}>Abbrechen</Button>
+            <Button onClick={saveCode}><Save className="w-4 h-4 mr-1"/>Speichern</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openWht} onOpenChange={setOpenWht}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Verrechnungssteuer erfassen (CH)</DialogTitle></DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Datum</Label><Input type="date" value={whtForm.booking_date||''} onChange={e=>setWhtForm({...whtForm,booking_date:e.target.value})}/></div>
+            <div><Label>Währung</Label>
+              <Select value={whtForm.currency} onValueChange={v=>setWhtForm({...whtForm,currency:v})}>
+                <SelectTrigger><SelectValue/></SelectTrigger>
+                <SelectContent><SelectItem value="CHF">CHF</SelectItem><SelectItem value="EUR">EUR</SelectItem></SelectContent>
+              </Select>
+            </div>
+            <div><Label>Bruttobetrag *</Label><Input type="number" step="0.01" value={whtForm.gross_amount??0} onChange={e=>setWhtForm({...whtForm,gross_amount:parseFloat(e.target.value)})}/></div>
+            <div><Label>Steuersatz %</Label><Input type="number" step="0.01" value={whtForm.tax_rate??35} onChange={e=>setWhtForm({...whtForm,tax_rate:parseFloat(e.target.value)})}/></div>
+            <div className="col-span-2"><Label>Gegenpartei</Label><Input value={whtForm.counterparty||''} onChange={e=>setWhtForm({...whtForm,counterparty:e.target.value})}/></div>
+            <div className="col-span-2"><Label>Referenz</Label><Input value={whtForm.reference||''} onChange={e=>setWhtForm({...whtForm,reference:e.target.value})}/></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=>setOpenWht(false)}>Abbrechen</Button>
+            <Button onClick={saveWht}><Save className="w-4 h-4 mr-1"/>Speichern</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

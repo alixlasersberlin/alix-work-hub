@@ -18258,6 +18258,54 @@ export type Database = {
           },
         ]
       }
+      finance_tax_codes: {
+        Row: {
+          account: string | null
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          kind: string
+          name: string
+          notes: string | null
+          rate: number
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          account?: string | null
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name: string
+          notes?: string | null
+          rate: number
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Update: {
+          account?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name?: string
+          notes?: string | null
+          rate?: number
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
       finance_tax_filing_lines: {
         Row: {
           amount: number
@@ -18561,6 +18609,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      finance_withholding_tax: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          booking_date: string
+          counterparty: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          gross_amount: number
+          id: string
+          net_amount: number
+          notes: string | null
+          reference: string | null
+          refund_received_at: string | null
+          refund_requested_at: string | null
+          refund_status: string
+          tax_amount: number
+          tax_rate: number
+          tenant_id: string | null
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          booking_date: string
+          counterparty?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          gross_amount: number
+          id?: string
+          net_amount: number
+          notes?: string | null
+          reference?: string | null
+          refund_received_at?: string | null
+          refund_requested_at?: string | null
+          refund_status?: string
+          tax_amount: number
+          tax_rate?: number
+          tenant_id?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          booking_date?: string
+          counterparty?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          gross_amount?: number
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          reference?: string | null
+          refund_received_at?: string | null
+          refund_requested_at?: string | null
+          refund_status?: string
+          tax_amount?: number
+          tax_rate?: number
+          tenant_id?: string | null
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       finance_year_end_runs: {
         Row: {

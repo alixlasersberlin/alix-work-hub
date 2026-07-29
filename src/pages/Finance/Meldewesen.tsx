@@ -12,13 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-type FilingType = 'ustva' | 'zm' | 'oss' | 'intrastat' | 'ebilanz';
-const TYPES: { value: FilingType; label: string; period: string }[] = [
+type FilingType = 'ustva' | 'zm' | 'oss' | 'intrastat' | 'ebilanz' | 'estv_mwst';
+const TYPES_EU: { value: FilingType; label: string; period: string }[] = [
   { value: 'ustva', label: 'UStVA (ELSTER)', period: '2026-03' },
   { value: 'zm', label: 'Zusammenfassende Meldung', period: '2026-Q1' },
   { value: 'oss', label: 'OSS-Meldung', period: '2026-Q1' },
   { value: 'intrastat', label: 'Intrastat', period: '2026-03' },
   { value: 'ebilanz', label: 'E-Bilanz', period: '2026' },
+];
+const TYPES_CH: { value: FilingType; label: string; period: string }[] = [
+  { value: 'estv_mwst', label: 'MwSt.-Abrechnung ESTV', period: '2026-Q1' },
 ];
 
 export default function FinanceMeldewesen() {
@@ -26,8 +29,9 @@ export default function FinanceMeldewesen() {
   const [loading, setLoading] = useState(true);
   const [tenants, setTenants] = useState<any[]>([]);
   const [filings, setFilings] = useState<any[]>([]);
-  const [tab, setTab] = useState<FilingType>('ustva');
-  const [period, setPeriod] = useState('2026-03');
+  const TYPES = region === 'CH' ? TYPES_CH : TYPES_EU;
+  const [tab, setTab] = useState<FilingType>(TYPES[0].value);
+  const [period, setPeriod] = useState(TYPES[0].period);
   const [tenantId, setTenantId] = useState<string>('');
   const [busy, setBusy] = useState(false);
 
@@ -42,6 +46,9 @@ export default function FinanceMeldewesen() {
     setLoading(false);
   };
   useEffect(() => { load(); }, [region]);
+  useEffect(() => {
+    if (!TYPES.find(x => x.value === tab)) setTab(TYPES[0].value);
+  }, [region]);
   useEffect(() => {
     const def = TYPES.find((x) => x.value === tab)?.period;
     if (def) setPeriod(def);
