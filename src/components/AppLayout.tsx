@@ -31,7 +31,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target } from 'lucide-react';
+import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2 } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
@@ -500,6 +500,8 @@ export const navItems: NavItem[] = [
           { path: '/finance/konsolidierung', label: 'Konsolidierung', icon: BarChart3, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/intercompany', label: 'Intercompany', icon: Activity, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/fx', label: 'Devisenkurse', icon: Banknote, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/konzern-guv', label: 'Konzern-GuV (EU+CH)', icon: Globe2, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/konzern-bilanz', label: 'Konzern-Bilanz (EU+CH)', icon: Globe2, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/ai-insights', label: 'KI-Analyse', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/anomalien', label: 'Anomalien', icon: AlertTriangle, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/ask', label: 'KI-Assistent (Fragen)', icon: MessageCircle, roles: ['Admin', 'Super Admin'] },
