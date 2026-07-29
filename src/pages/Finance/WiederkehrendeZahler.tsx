@@ -297,33 +297,40 @@ export default function WiederkehrendeZahler() {
                             <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                               <tr>
                                 <th className="text-left px-3 py-2">Name / Referenz</th>
+                                <th className="text-left px-3 py-2">Erfasst</th>
                                 <th className="text-left px-3 py-2">Frequenz</th>
                                 <th className="text-left px-3 py-2">Start</th>
                                 <th className="text-left px-3 py-2">Ende</th>
                                 <th className="text-left px-3 py-2">Letzte</th>
                                 <th className="text-left px-3 py-2">Nächste</th>
                                 <th className="text-right px-3 py-2">Betrag</th>
+                                <th className="text-right px-3 py-2">Monatlich</th>
                                 <th className="text-left px-3 py-2">Status</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {g.profiles.map(p => (
+                              {g.profiles.map(p => {
+                                const monthly = Number(p.total || 0) * monthsFactor(p.recurrence_frequency, p.repeat_every);
+                                return (
                                 <tr key={p.id} className="border-t border-border">
                                   <td className="px-3 py-2">
                                     <div className="font-medium">{p.recurrence_name || '—'}</div>
                                     {p.reference_number && <div className="text-xs text-muted-foreground font-mono">{p.reference_number}</div>}
                                   </td>
+                                  <td className="px-3 py-2">{fmtDate(p.created_at)}</td>
                                   <td className="px-3 py-2">{p.repeat_every ?? 1}× {p.recurrence_frequency ?? '—'}</td>
                                   <td className="px-3 py-2">{fmtDate(p.start_date)}</td>
                                   <td className="px-3 py-2">{fmtDate(p.end_date)}</td>
                                   <td className="px-3 py-2">{fmtDate(p.last_sent_date)}</td>
                                   <td className="px-3 py-2">{fmtDate(p.next_invoice_date)}</td>
                                   <td className="px-3 py-2 text-right tabular-nums">{fmt(Number(p.total || 0), p.currency || 'EUR')}</td>
+                                  <td className="px-3 py-2 text-right tabular-nums font-medium">{fmt(monthly, p.currency || 'EUR')}</td>
                                   <td className="px-3 py-2">
                                     <Badge variant={(p.status ?? '').toLowerCase() === 'active' ? 'default' : 'secondary'} className="capitalize">{p.status ?? '—'}</Badge>
                                   </td>
                                 </tr>
-                              ))}
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
