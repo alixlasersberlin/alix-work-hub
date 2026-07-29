@@ -7,15 +7,18 @@ import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/Status
 import { getTransactions } from '@/lib/finance/api';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 export default function FinanceZahlungen() {
+  const { region } = useAccountingRegion();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(50);
   useEffect(() => {
-    getTransactions({ transaction_type: 'Zahlung' }).then(r => { setRows(r); setLoading(false); }).catch(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    getTransactions({ transaction_type: 'Zahlung', accounting_region: region }).then(r => { setRows(r); setLoading(false); }).catch(() => setLoading(false));
+  }, [region]);
   const fmt = (n: number) => Number(n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
   const filtered = useMemo(() => rows.filter((r) => matchesQuery({ ...r, total: r.amount, balance: r.amount }, search)), [rows, search]);
   const visible = useMemo(() => paginate(filtered, pageSize), [filtered, pageSize]);
