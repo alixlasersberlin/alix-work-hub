@@ -59,6 +59,11 @@ function fmtDate(d: string | null) {
   try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }
 }
 
+function isSepaRow(r: Pick<Row, 'recurrence_name' | 'reference_number'>) {
+  const hay = `${r.recurrence_name ?? ''} ${r.reference_number ?? ''}`.toLowerCase();
+  return /\bsepa\b|lastschrift/.test(hay);
+}
+
 export default function AlixFlex() {
   const { roles } = useAuth();
   const isAdmin = roles.includes('Admin') || (roles.includes('Super Admin') || roles.includes('Admin'));
@@ -69,6 +74,7 @@ export default function AlixFlex() {
   const [pageSize, setPageSize] = useState<PageSize>(20);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all'); // 'all' | 'sepa' | 'zahler'
   const [billingRunFilter, setBillingRunFilter] = useState<string>('all'); // 'all' | '1' | '15'
   const [dateRangeFilter, setDateRangeFilter] = useState<string>('all'); // 'all'|'current_month'|'last_month'|'last_3_months'|'current_year'|'last_year'|'custom'
   const [customFrom, setCustomFrom] = useState<string>('');
@@ -122,6 +128,8 @@ export default function AlixFlex() {
     let res = rows;
     if (statusFilter !== 'all') res = res.filter((r) => (r.status ?? '').toLowerCase() === statusFilter);
     if (sourceFilter !== 'all') res = res.filter((r) => r.source_system === sourceFilter);
+    if (typeFilter === 'sepa') res = res.filter((r) => isSepaRow(r));
+    else if (typeFilter === 'zahler') res = res.filter((r) => !isSepaRow(r));
     if (billingRunFilter !== 'all') {
       const targetDay = Number(billingRunFilter);
       res = res.filter((r) => {
@@ -170,7 +178,7 @@ export default function AlixFlex() {
       );
     }
     return res;
-  }, [rows, search, statusFilter, sourceFilter, billingRunFilter, dateRangeFilter, customFrom, customTo]);
+  }, [rows, search, statusFilter, sourceFilter, typeFilter, billingRunFilter, dateRangeFilter, customFrom, customTo]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -275,6 +283,14 @@ export default function AlixFlex() {
                 <SelectItem value="all">Alle Quellen</SelectItem>
                 <SelectItem value="zoho_eu_1">🇩🇪 Alix Deutschland</SelectItem>
                 <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[140px]"><SelectValue placeholder="Typ" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Typen</SelectItem>
+                <SelectItem value="sepa">SEPA</SelectItem>
+                <SelectItem value="zahler">Zahler</SelectItem>
               </SelectContent>
             </Select>
             <Select value={billingRunFilter} onValueChange={setBillingRunFilter}>
@@ -385,7 +401,16 @@ export default function AlixFlex() {
                       className="border-t border-border hover:bg-muted/30 cursor-pointer transition-colors"
                     >
                       <td className="px-3 py-3 whitespace-nowrap">{sourceLabel(r.source_system)}</td>
-                      <td className="px-3 py-3 font-medium">{r.recurrence_name ?? '–'}</td>
+                      <td className="px-3 py-3 font-medium">
+                        <div className="flex items-center gap-2">
+                          {isSepaRow(r) ? (
+                            <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">SEPA</Badge>
+                          ) : (
+                            <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">Zahler</Badge>
+                          )}
+                          <span>{r.recurrence_name ?? '–'}</span>
+                        </div>
+                      </td>
                       <td className="px-3 py-3">{r.reference_number ?? '–'}</td>
                       <td className="px-3 py-3">{r.company_name || r.customer_name || '–'}</td>
                       <td className="px-3 py-3 max-w-[260px] truncate" title={r.device_name ?? ''}>{r.device_name ?? '–'}</td>
