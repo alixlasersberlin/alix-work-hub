@@ -104,6 +104,7 @@ const fmtMoney = (n: number, c = 'EUR') =>
 
 export default function OffeneAnzahlungen() {
   const { canWrite } = useFinancePermissions();
+  const { region } = useAccountingRegion();
   const [rows, setRows] = useState<Deposit[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
