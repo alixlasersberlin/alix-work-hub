@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { maskRevenueString } from '@/lib/revenue-mask';
 import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
@@ -12,9 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 
-const _fmtBase = (n: number, c = 'EUR') =>
+// Beträge auf dieser Seite werden bewusst NICHT durch die Revenue-Mask (Super Admin)
+// ausgeblendet — Vertragssummen sind für Finance-Auswertung essentiell.
+const fmt = (n: number, c = 'EUR') =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: c, maximumFractionDigits: 2 }).format(n || 0);
-const fmt = (n: number, c = 'EUR') => maskRevenueString(_fmtBase(n, c));
 const fmtDate = (d?: string | null) => (d ? new Date(d).toLocaleDateString('de-DE') : '—');
 
 type Profile = {
