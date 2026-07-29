@@ -401,7 +401,16 @@ export default function AlixFlex() {
                       className="border-t border-border hover:bg-muted/30 cursor-pointer transition-colors"
                     >
                       <td className="px-3 py-3 whitespace-nowrap">{sourceLabel(r.source_system)}</td>
-                      <td className="px-3 py-3 font-medium">{r.recurrence_name ?? '–'}</td>
+                      <td className="px-3 py-3 font-medium">
+                        <div className="flex items-center gap-2">
+                          {isSepaRow(r) ? (
+                            <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">SEPA</Badge>
+                          ) : (
+                            <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">Zahler</Badge>
+                          )}
+                          <span>{r.recurrence_name ?? '–'}</span>
+                        </div>
+                      </td>
                       <td className="px-3 py-3">{r.reference_number ?? '–'}</td>
                       <td className="px-3 py-3">{r.company_name || r.customer_name || '–'}</td>
                       <td className="px-3 py-3 max-w-[260px] truncate" title={r.device_name ?? ''}>{r.device_name ?? '–'}</td>
