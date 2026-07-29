@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, Sparkles, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+
 
 type Turn = { q: string; a: string };
 
