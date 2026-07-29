@@ -96,7 +96,7 @@ export default function WiederkehrendeZahler() {
         .from('zoho_recurring_profiles')
         .select('*')
         .eq('source_system', 'zoho_eu_1')
-        .order('next_invoice_date', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: false, nullsFirst: false })
         .limit(5000),
       supabase
         .from('zoho_recurring_invoices')
