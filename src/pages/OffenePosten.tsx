@@ -127,13 +127,13 @@ export default function OffenePosten() {
       await Promise.all([
         supabase
           .from('zoho_invoices')
-          .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status')
+          .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status, zoho_invoice_id, source_system')
           .gt('balance', 0)
           .order('due_date', { ascending: true })
           .limit(2000),
         supabase
           .from('zoho_recurring_invoices')
-          .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status')
+          .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status, zoho_invoice_id, source_system')
           .gt('balance', 0)
           .order('due_date', { ascending: true })
           .limit(2000),
