@@ -1,4 +1,4 @@
-import { addDays, format, isSameDay, startOfWeek } from 'date-fns';
+import { addDays, differenceInCalendarDays, format, isSameDay, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import type { EscAppointment, EscDepartment } from '@/lib/esc/types';
 import { AppointmentCard } from '../AppointmentCard';
@@ -17,8 +17,50 @@ export function WeekView({
 }) {
   const start = startOfWeek(date, { weekStartsOn: 1 });
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const weekEnd = addDays(start, 6);
   const deptOf = (id: string) => departments.find((d) => d.id === id);
   const [dragOver, setDragOver] = useState<string | null>(null);
+
+  // Split multi-day (spanning >1 calendar day within week) from single-day
+  type Span = { a: EscAppointment; colStart: number; colEnd: number; continuesLeft: boolean; continuesRight: boolean };
+  const spans: Span[] = [];
+  const singleByDay = new Map<string, EscAppointment[]>();
+
+  for (const a of appointments) {
+    const s = new Date(a.startAt);
+    const e = new Date(a.endAt);
+    // Clamp into week
+    if (e < start || s > addDays(weekEnd, 1)) continue;
+    const sameDay = isSameDay(s, e) || differenceInCalendarDays(e, s) === 0;
+    if (sameDay) {
+      // single day: attach to its day if inside week
+      const d = days.find((x) => isSameDay(x, s));
+      if (!d) continue;
+      const key = d.toISOString();
+      if (!singleByDay.has(key)) singleByDay.set(key, []);
+      singleByDay.get(key)!.push(a);
+    } else {
+      const clampedStart = s < start ? start : s;
+      const clampedEnd = e > addDays(weekEnd, 1) ? weekEnd : e;
+      const colStart = Math.max(0, differenceInCalendarDays(clampedStart, start));
+      const colEnd = Math.min(6, differenceInCalendarDays(clampedEnd, start));
+      spans.push({
+        a,
+        colStart,
+        colEnd,
+        continuesLeft: s < start,
+        continuesRight: e > addDays(weekEnd, 1),
+      });
+    }
+  }
+
+  // Row-pack spans so overlapping bars stack
+  spans.sort((x, y) => x.colStart - y.colStart || y.colEnd - x.colEnd);
+  const rows: Span[][] = [];
+  for (const sp of spans) {
+    const row = rows.find((r) => r[r.length - 1].colEnd < sp.colStart);
+    if (row) row.push(sp); else rows.push([sp]);
+  }
 
   return (
     <div className="rounded-lg border bg-card overflow-hidden">
@@ -30,12 +72,50 @@ export function WeekView({
           </div>
         ))}
       </div>
+
+      {rows.length > 0 && (
+        <div className="border-b bg-muted/10 px-1 py-1 space-y-1">
+          {rows.map((row, ri) => (
+            <div key={ri} className="grid grid-cols-7 gap-1">
+              {row.map((sp) => {
+                const dept = deptOf(sp.a.departmentId);
+                return (
+                  <button
+                    key={sp.a.id}
+                    type="button"
+                    draggable={!!onDropAppointment}
+                    onDragStart={(e) => { e.dataTransfer.setData('text/esc-id', sp.a.id); e.dataTransfer.effectAllowed = 'move'; }}
+                    onClick={(e) => { e.stopPropagation(); onAppointmentClick?.(sp.a); }}
+                    className={cn(
+                      'text-left text-[11px] px-2 py-1 rounded-md border border-l-4 bg-card hover:bg-accent/40 transition-colors truncate',
+                      sp.continuesLeft && 'rounded-l-none',
+                      sp.continuesRight && 'rounded-r-none',
+                    )}
+                    style={{
+                      gridColumnStart: sp.colStart + 1,
+                      gridColumnEnd: sp.colEnd + 2,
+                      borderLeftColor: dept?.color || 'hsl(var(--primary))',
+                    }}
+                    title={`${sp.a.title} · ${format(new Date(sp.a.startAt), 'dd.MM. HH:mm', { locale: de })} – ${format(new Date(sp.a.endAt), 'dd.MM. HH:mm', { locale: de })}`}
+                  >
+                    <span className="font-medium truncate">
+                      {sp.continuesLeft ? '← ' : ''}{sp.a.title}{sp.continuesRight ? ' →' : ''}
+                    </span>
+                    <span className="ml-1 text-muted-foreground">
+                      {format(new Date(sp.a.startAt), 'dd.MM.', { locale: de })}–{format(new Date(sp.a.endAt), 'dd.MM.', { locale: de })}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-7 min-h-[420px]">
         {days.map((d) => {
-          const items = appointments
-            .filter((a) => isSameDay(new Date(a.startAt), d))
-            .sort((a, b) => a.startAt.localeCompare(b.startAt));
           const key = d.toISOString();
+          const items = (singleByDay.get(key) || []).sort((a, b) => a.startAt.localeCompare(b.startAt));
           return (
             <div
               key={key}
