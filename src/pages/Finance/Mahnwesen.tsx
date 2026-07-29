@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 type AccRow = {
   id: string;
