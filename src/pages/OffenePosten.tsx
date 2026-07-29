@@ -433,6 +433,7 @@ export default function OffenePosten() {
           { value: 'offen', label: 'Offen', badge: 'bg-muted text-foreground border-border' },
           { value: 'rueckstellung', label: 'Rückstellung', badge: 'bg-blue-500/15 text-blue-400 border-blue-500/30' },
           { value: 'in_klaerung', label: 'In Klärung', badge: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
+          { value: 'anwalt', label: 'Anwalt', badge: 'bg-rose-500/15 text-rose-400 border-rose-500/30' },
           { value: 'inkasso', label: 'Übergabe Inkasso', badge: 'bg-violet-500/15 text-violet-300 border-violet-500/30' },
           { value: 'erledigt', label: 'Erledigt', badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
           { value: 'gebucht', label: 'Gebucht', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
