@@ -500,6 +500,8 @@ export const navItems: NavItem[] = [
           { path: '/finance/konsolidierung', label: 'Konsolidierung', icon: BarChart3, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/intercompany', label: 'Intercompany', icon: Activity, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/fx', label: 'Devisenkurse', icon: Banknote, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/konzern-guv', label: 'Konzern-GuV (EU+CH)', icon: Globe2, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/konzern-bilanz', label: 'Konzern-Bilanz (EU+CH)', icon: Globe2, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/ai-insights', label: 'KI-Analyse', icon: Sparkles, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/anomalien', label: 'Anomalien', icon: AlertTriangle, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/ask', label: 'KI-Assistent (Fragen)', icon: MessageCircle, roles: ['Admin', 'Super Admin'] },
