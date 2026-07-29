@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Copy, Save, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { BUDGET_CATEGORIES, MONTH_NAMES, fmt, classifyTx, mapIncomingCategory } from './_controlling';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 type BudgetMap = Record<string, Record<number, number>>; // category -> month -> amount
 
