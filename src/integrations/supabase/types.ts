@@ -15503,6 +15503,135 @@ export type Database = {
           },
         ]
       }
+      finance_camt054_entries: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          amount: number
+          booking_date: string | null
+          created_at: string
+          currency: string | null
+          debtor_iban: string | null
+          debtor_name: string | null
+          end_to_end_id: string | null
+          id: string
+          match_status: string
+          matched_qr_invoice_id: string | null
+          notification_id: string
+          reference: string | null
+          remittance_info: string | null
+          updated_at: string
+          value_date: string | null
+        }
+        Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          amount: number
+          booking_date?: string | null
+          created_at?: string
+          currency?: string | null
+          debtor_iban?: string | null
+          debtor_name?: string | null
+          end_to_end_id?: string | null
+          id?: string
+          match_status?: string
+          matched_qr_invoice_id?: string | null
+          notification_id: string
+          reference?: string | null
+          remittance_info?: string | null
+          updated_at?: string
+          value_date?: string | null
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          amount?: number
+          booking_date?: string | null
+          created_at?: string
+          currency?: string | null
+          debtor_iban?: string | null
+          debtor_name?: string | null
+          end_to_end_id?: string | null
+          id?: string
+          match_status?: string
+          matched_qr_invoice_id?: string | null
+          notification_id?: string
+          reference?: string | null
+          remittance_info?: string | null
+          updated_at?: string
+          value_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_camt054_entries_matched_qr_invoice_id_fkey"
+            columns: ["matched_qr_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "finance_qr_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_camt054_entries_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "finance_camt054_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_camt054_notifications: {
+        Row: {
+          account_iban: string | null
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          booking_date: string | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          entry_count: number | null
+          file_hash: string
+          filename: string
+          id: string
+          matched_count: number | null
+          message_id: string | null
+          raw_xml: string | null
+          status: string
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          account_iban?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          booking_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          entry_count?: number | null
+          file_hash: string
+          filename: string
+          id?: string
+          matched_count?: number | null
+          message_id?: string | null
+          raw_xml?: string | null
+          status?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          account_iban?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          booking_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          entry_count?: number | null
+          file_hash?: string
+          filename?: string
+          id?: string
+          matched_count?: number | null
+          message_id?: string | null
+          raw_xml?: string | null
+          status?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_cashbook: {
         Row: {
           accounting_region: Database["public"]["Enums"]["accounting_region"]
@@ -15787,6 +15916,177 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      finance_ch_dd_mandates: {
+        Row: {
+          account_holder: string
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          bic: string | null
+          created_at: string
+          created_by: string | null
+          creditor_id: string | null
+          customer_id: string | null
+          iban: string
+          id: string
+          mandate_reference: string
+          notes: string | null
+          scheme: string
+          signed_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          account_holder: string
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          bic?: string | null
+          created_at?: string
+          created_by?: string | null
+          creditor_id?: string | null
+          customer_id?: string | null
+          iban: string
+          id?: string
+          mandate_reference: string
+          notes?: string | null
+          scheme?: string
+          signed_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          account_holder?: string
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          bic?: string | null
+          created_at?: string
+          created_by?: string | null
+          creditor_id?: string | null
+          customer_id?: string | null
+          iban?: string
+          id?: string
+          mandate_reference?: string
+          notes?: string | null
+          scheme?: string
+          signed_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_ch_dd_run_items: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          amount: number
+          created_at: string
+          customer_id: string | null
+          end_to_end_id: string | null
+          id: string
+          mandate_id: string
+          reference: string | null
+          remittance_info: string | null
+          run_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          amount: number
+          created_at?: string
+          customer_id?: string | null
+          end_to_end_id?: string | null
+          id?: string
+          mandate_id: string
+          reference?: string | null
+          remittance_info?: string | null
+          run_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          amount?: number
+          created_at?: string
+          customer_id?: string | null
+          end_to_end_id?: string | null
+          id?: string
+          mandate_id?: string
+          reference?: string | null
+          remittance_info?: string | null
+          run_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_ch_dd_run_items_mandate_id_fkey"
+            columns: ["mandate_id"]
+            isOneToOne: false
+            referencedRelation: "finance_ch_dd_mandates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_ch_dd_run_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "finance_ch_dd_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_ch_dd_runs: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          collection_date: string
+          created_at: string
+          created_by: string | null
+          creditor_bic: string | null
+          creditor_iban: string
+          creditor_id: string | null
+          creditor_name: string
+          exported_at: string | null
+          id: string
+          item_count: number | null
+          run_number: string
+          scheme: string
+          status: string
+          total_amount: number | null
+          updated_at: string
+        }
+        Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          collection_date: string
+          created_at?: string
+          created_by?: string | null
+          creditor_bic?: string | null
+          creditor_iban: string
+          creditor_id?: string | null
+          creditor_name: string
+          exported_at?: string | null
+          id?: string
+          item_count?: number | null
+          run_number: string
+          scheme?: string
+          status?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          collection_date?: string
+          created_at?: string
+          created_by?: string | null
+          creditor_bic?: string | null
+          creditor_iban?: string
+          creditor_id?: string | null
+          creditor_name?: string
+          exported_at?: string | null
+          id?: string
+          item_count?: number | null
+          run_number?: string
+          scheme?: string
+          status?: string
+          total_amount?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       finance_chart_of_accounts: {
         Row: {
@@ -17571,6 +17871,111 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      finance_qr_invoices: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          amount: number
+          bill_info: string | null
+          created_at: string
+          created_by: string | null
+          creditor_city: string | null
+          creditor_country: string | null
+          creditor_house_no: string | null
+          creditor_name: string
+          creditor_postal_code: string | null
+          creditor_street: string | null
+          currency: string
+          customer_id: string | null
+          debtor_city: string | null
+          debtor_country: string | null
+          debtor_house_no: string | null
+          debtor_name: string | null
+          debtor_postal_code: string | null
+          debtor_street: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          matched_entry_id: string | null
+          order_id: string | null
+          paid_at: string | null
+          pdf_path: string | null
+          qr_iban: string
+          reference: string | null
+          reference_type: string
+          status: string
+          unstructured_message: string | null
+          updated_at: string
+        }
+        Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          amount: number
+          bill_info?: string | null
+          created_at?: string
+          created_by?: string | null
+          creditor_city?: string | null
+          creditor_country?: string | null
+          creditor_house_no?: string | null
+          creditor_name: string
+          creditor_postal_code?: string | null
+          creditor_street?: string | null
+          currency?: string
+          customer_id?: string | null
+          debtor_city?: string | null
+          debtor_country?: string | null
+          debtor_house_no?: string | null
+          debtor_name?: string | null
+          debtor_postal_code?: string | null
+          debtor_street?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          matched_entry_id?: string | null
+          order_id?: string | null
+          paid_at?: string | null
+          pdf_path?: string | null
+          qr_iban: string
+          reference?: string | null
+          reference_type?: string
+          status?: string
+          unstructured_message?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          amount?: number
+          bill_info?: string | null
+          created_at?: string
+          created_by?: string | null
+          creditor_city?: string | null
+          creditor_country?: string | null
+          creditor_house_no?: string | null
+          creditor_name?: string
+          creditor_postal_code?: string | null
+          creditor_street?: string | null
+          currency?: string
+          customer_id?: string | null
+          debtor_city?: string | null
+          debtor_country?: string | null
+          debtor_house_no?: string | null
+          debtor_name?: string | null
+          debtor_postal_code?: string | null
+          debtor_street?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          matched_entry_id?: string | null
+          order_id?: string | null
+          paid_at?: string | null
+          pdf_path?: string | null
+          qr_iban?: string
+          reference?: string | null
+          reference_type?: string
+          status?: string
+          unstructured_message?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       finance_records: {
         Row: {
@@ -33597,6 +34002,7 @@ export type Database = {
       }
       peek_document_number: { Args: { p_code: string }; Returns: string }
       process_scheduled_grants: { Args: never; Returns: Json }
+      qr_reference_check_digit: { Args: { _body: string }; Returns: string }
       recompute_device_health: { Args: { _serial: string }; Returns: undefined }
       refresh_warranty_and_maintenance_status: {
         Args: never
