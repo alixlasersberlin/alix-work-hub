@@ -8,9 +8,8 @@ import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/Status
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, BarChart3, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
-const fmt = (n: number) => maskRevenueString(_fmtBase(n));
 
 type Row = { label: string; values: number[]; total: number; emphasize?: boolean };
 
@@ -27,6 +26,10 @@ function classify(tx: any): 'income' | 'expense' | 'deposit' | 'other' {
 }
 
 export default function FinanceBwa() {
+  const { region } = useAccountingRegion();
+  const cur = region === 'CH' ? 'CHF' : 'EUR';
+  const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur, maximumFractionDigits: 0 }).format(n || 0);
+  const fmt = (n: number) => maskRevenueString(_fmtBase(n));
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [tx, setTx] = useState<any[]>([]);
@@ -42,8 +45,8 @@ export default function FinanceBwa() {
       const startPrev = `${year - 1}-01-01`;
       const endPrev = `${year - 1}-12-31`;
       const [t, tp, a, ii] = await Promise.all([
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', start).lte('booking_date', end),
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', startPrev).lte('booking_date', endPrev),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', start).lte('booking_date', end).eq('accounting_region', region),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', startPrev).lte('booking_date', endPrev).eq('accounting_region', region),
         supabase.from('finance_asset_depreciations').select('amount, period').gte('period', start).lte('period', end),
         supabase.from('finance_incoming_invoices').select('amount_gross, amount_net, invoice_date, description').gte('invoice_date', start).lte('invoice_date', end),
       ]);
@@ -53,7 +56,8 @@ export default function FinanceBwa() {
       setIncoming(ii.data ?? []);
       setLoading(false);
     })();
-  }, [year]);
+  }, [year, region]);
+
 
   const rows = useMemo(() => {
     const monthIncome = Array(12).fill(0);
@@ -145,7 +149,7 @@ export default function FinanceBwa() {
     <div className="p-4 sm:p-6 space-y-6">
       <PageHeader
         icon={BarChart3}
-        title="BWA – Betriebswirtschaftliche Auswertung"
+        title={`BWA – Betriebswirtschaftliche Auswertung · ${region === 'CH' ? '🇨🇭' : '🇪🇺'}`}
         subtitle={`Geschäftsjahr ${year}`}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${tx.length} Buchungen`} pulse={loading} />}

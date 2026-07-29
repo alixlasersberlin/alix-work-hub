@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { useEffect } from 'react';
 
 const DEFAULT_CFG = {
@@ -18,6 +19,7 @@ const DEFAULT_CFG = {
 
 export default function FinanceDatev() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const today = new Date().toISOString().slice(0, 10);
   const monthStart = today.slice(0, 8) + '01';
@@ -42,13 +44,13 @@ export default function FinanceDatev() {
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/finance-datev-export`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
-        body: JSON.stringify({ date_from: from, date_to: to }),
+        body: JSON.stringify({ date_from: from, date_to: to, accounting_region: region }),
       });
       if (!res.ok) throw new Error(await res.text());
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `EXTF_${from}_${to}.csv`; a.click();
+      a.href = url; a.download = `EXTF_${region}_${from}_${to}.csv`; a.click();
       URL.revokeObjectURL(url);
       toast({ title: 'DATEV-Export erstellt' });
     } catch (e: any) {
@@ -71,7 +73,7 @@ export default function FinanceDatev() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title="DATEV-Export"
+        title={`DATEV-Export · ${region === 'CH' ? '🇨🇭 Schweiz' : '🇪🇺 Deutschland'}`}
         subtitle="EXTF Buchungsstapel 700 aus finance_transactions"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind="done" label={`SKR ${cfg.skr}`} />}
