@@ -6,8 +6,10 @@ import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Input } from '@/components/ui/input';
 import { Scale } from 'lucide-react';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const fmt = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
+const fmtCur = (n: number, cur: 'EUR' | 'CHF') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
+
 
 export default function FinanceBilanz() {
   const [loading, setLoading] = useState(true);
