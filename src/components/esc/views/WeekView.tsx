@@ -155,15 +155,20 @@ export function WeekView({
                 onDropAppointment?.(id, newStart);
               }}
             >
-              {items.map((a) => (
-                <div
-                  key={a.id}
-                  draggable={!!onDropAppointment}
-                  onDragStart={(e) => { e.dataTransfer.setData('text/esc-id', a.id); e.dataTransfer.effectAllowed = 'move'; }}
-                >
-                  <AppointmentCard appointment={a} department={deptOf(a.departmentId)} compact onClick={() => onAppointmentClick?.(a)} />
-                </div>
-              ))}
+              {items.map((a) => {
+                const tint = items.length > 1 ? subtleTint(a.id) : null;
+                return (
+                  <div
+                    key={a.id}
+                    draggable={!!onDropAppointment}
+                    onDragStart={(e) => { e.dataTransfer.setData('text/esc-id', a.id); e.dataTransfer.effectAllowed = 'move'; }}
+                    className="rounded-md"
+                    style={tint ? { backgroundColor: tint.bg } : undefined}
+                  >
+                    <AppointmentCard appointment={a} department={deptOf(a.departmentId)} compact onClick={() => onAppointmentClick?.(a)} />
+                  </div>
+                );
+              })}
             </div>
           );
         })}
