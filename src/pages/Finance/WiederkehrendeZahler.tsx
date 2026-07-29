@@ -191,8 +191,6 @@ export default function WiederkehrendeZahler() {
         return true;
       })
       .sort((a, b) => {
-        // SEPA-Zahler immer nach oben
-        if (a.hasSepa !== b.hasSepa) return a.hasSepa ? -1 : 1;
         const ac = a.newestCreatedAt || '';
         const bc = b.newestCreatedAt || '';
         if (ac !== bc) return bc.localeCompare(ac);
