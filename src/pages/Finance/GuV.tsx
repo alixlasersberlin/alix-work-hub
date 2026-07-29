@@ -63,7 +63,7 @@ export default function FinanceGuV() {
     <div className="p-4 sm:p-6 space-y-6">
       <PageHeader
         icon={Receipt}
-        title="Gewinn- und Verlustrechnung"
+        title={`Gewinn- und Verlustrechnung · ${region === 'CH' ? '🇨🇭' : '🇪🇺'}`}
         subtitle={`§ 275 HGB Gesamtkostenverfahren · ${year}`}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${tx.length} Buchungen`} pulse={loading} />}
