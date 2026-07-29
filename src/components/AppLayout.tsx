@@ -20,6 +20,7 @@ import NewsAnnouncementDialog from '@/components/NewsAnnouncementDialog';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
+import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
 import { TicketNotificationBell } from '@/components/tickets/TicketNotificationBell';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
@@ -405,7 +406,7 @@ export const navItems: NavItem[] = [
   },
 
   {
-    path: '/finance', label: 'BUCHHALTUNG EU', icon: Banknote, roles: ['Admin', 'Super Admin'],
+    path: '/finance', label: 'BUCHHALTUNG', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
     children: [
       {
         path: '/finance/dashboard', label: 'DASHBOARD', icon: Banknote, roles: ['Admin', 'Super Admin'],
@@ -2009,6 +2010,7 @@ export default function AppLayout() {
             <div className="hidden md:block min-w-0 flex-1">
               <SidebarInfoBar />
             </div>
+            <AccountingRegionSwitcher className="hidden md:flex" />
             
 
 

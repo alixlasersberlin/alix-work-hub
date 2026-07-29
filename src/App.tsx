@@ -32,6 +32,7 @@ import MfaSetup from "./pages/MfaSetup";
 import MfaChallenge from "./pages/MfaChallenge";
 import MfaRecovery from "./pages/MfaRecovery";
 import AppLayout from "./components/AppLayout";
+import { AccountingRegionProvider } from "./contexts/AccountingRegionContext";
 import NotFound from "./pages/NotFound";
 import { isMfaMandatory } from "@/lib/mfa-required";
 
@@ -2017,6 +2018,7 @@ const App = () => (
             <BrowserRouter>
               <AuthProvider>
                 <TenantProvider>
+                  <AccountingRegionProvider>
                   <MaintenanceGate>
                     <AIBackground />
                     <AppRoutes />
@@ -2030,6 +2032,7 @@ const App = () => (
                     <LeihgeraetReminder />
                     {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                   </MaintenanceGate>
+                  </AccountingRegionProvider>
                 </TenantProvider>
               </AuthProvider>
             </BrowserRouter>
