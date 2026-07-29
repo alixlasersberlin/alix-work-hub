@@ -36,6 +36,7 @@ const CHECKLIST_ITEMS = [
 
 export default function FinanceJahresabschluss() {
   const { hasRole } = useAuth() as any;
+  const { region } = useAccountingRegion();
   const isSuperAdmin = !!hasRole?.('Super Admin');
   const [loading, setLoading] = useState(true);
   const [runs, setRuns] = useState<Run[]>([]);
@@ -44,21 +45,21 @@ export default function FinanceJahresabschluss() {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase.from('finance_year_end_runs' as any).select('*').order('fiscal_year', { ascending: false });
+    const { data } = await supabase.from('finance_year_end_runs' as any).select('*').eq('accounting_region', region).order('fiscal_year', { ascending: false });
     const list = (data ?? []) as any as Run[];
     setRuns(list);
-    if (list.length && !selected) setSelected(list[0]);
+    setSelected(list[0] ?? null);
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   async function createRun() {
     if (runs.find(r => r.fiscal_year === newYear)) {
       toast.error('Geschäftsjahr existiert bereits');
       return;
     }
-    const { error } = await supabase.from('finance_year_end_runs' as any).insert({ fiscal_year: newYear, status: 'in_arbeit', checklist: {} });
+    const { error } = await supabase.from('finance_year_end_runs' as any).insert({ fiscal_year: newYear, status: 'in_arbeit', checklist: {}, accounting_region: region });
     if (error) return toast.error(error.message);
     toast.success(`Geschäftsjahr ${newYear} angelegt`);
     load();
