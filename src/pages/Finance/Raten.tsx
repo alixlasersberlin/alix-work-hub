@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/infinity/EmptyState';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { ScrollText, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 type Row = {
   id: string;
@@ -29,6 +30,7 @@ function fmtMoney(n: number | null, c: string | null) {
 function fmtDate(d: string | null) { if (!d) return '–'; try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; } }
 
 export default function FinanceRaten() {
+  const { region } = useAccountingRegion();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,13 +42,14 @@ export default function FinanceRaten() {
       const { data, error } = await supabase
         .from('zoho_recurring_profiles' as any)
         .select('id, recurring_invoice_id, customer_name, reference_number, status, amount, next_invoice_date, end_date, start_date, currency')
+        .eq('accounting_region', region)
         .order('next_invoice_date', { ascending: true })
         .limit(2000);
       if (error) { setError(error.message); setRows([]); }
       else setRows((data ?? []) as any as Row[]);
       setLoading(false);
     })();
-  }, []);
+  }, [region]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -60,7 +63,7 @@ export default function FinanceRaten() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={ScrollText}
-        title="Laufende Raten"
+        title={`Laufende Raten · ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`}
         subtitle="Periodische Rechnungs-Stammdaten (Quelle: Zoho)"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}

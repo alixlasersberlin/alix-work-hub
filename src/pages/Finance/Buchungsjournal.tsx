@@ -10,10 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const fmt = (n: number) => (n == null ? '' : Number(n).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }));
+const fmt = (n: number, cur = 'EUR') => (n == null ? '' : Number(n).toLocaleString('de-DE', { style: 'currency', currency: cur }));
 
 export default function Buchungsjournal() {
+  const { region } = useAccountingRegion();
+  const cur = region === 'CH' ? 'CHF' : 'EUR';
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10));
@@ -23,14 +26,14 @@ export default function Buchungsjournal() {
 
   async function load() {
     setLoading(true);
-    let q: any = (supabase as any).from('finance_journal').select('*').gte('booking_date', from).lte('booking_date', to).order('booking_date', { ascending: false }).order('created_at', { ascending: false }).limit(1000);
+    let q: any = (supabase as any).from('finance_journal').select('*').gte('booking_date', from).lte('booking_date', to).eq('accounting_region', region).order('booking_date', { ascending: false }).order('created_at', { ascending: false }).limit(1000);
     if (src !== 'alle') q = q.eq('source_module', src);
     if (status !== 'alle') q = q.eq('status', status);
     const { data, error } = await q;
     if (error) toast.error(error.message); else setRows(data || []);
     setLoading(false);
   }
-  useEffect(() => { load(); /* eslint-disable-line */ }, [from, to, src, status]);
+  useEffect(() => { load(); /* eslint-disable-line */ }, [from, to, src, status, region]);
 
   function exportCsv() {
     const cols = ['journal_number','booking_date','source_module','vorgang','reference','order_number','invoice_number','amount_net','amount_vat','amount_gross','account','contra_account','description','status'];
@@ -44,7 +47,7 @@ export default function Buchungsjournal() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
-      <PageHeader icon={ScrollText} title="Buchungsjournal" subtitle="Lückenlose Dokumentation aller Finanzbewegungen (GoBD)"
+      <PageHeader icon={ScrollText} title={`Buchungsjournal · ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`} subtitle="Lückenlose Dokumentation aller Finanzbewegungen (GoBD)"
         actions={<Button variant="outline" onClick={exportCsv}><Download className="mr-2 h-4 w-4" />CSV</Button>} />
 
       <Card>
@@ -95,9 +98,9 @@ export default function Buchungsjournal() {
                     <TableCell><Badge variant="outline">{r.source_module}</Badge></TableCell>
                     <TableCell>{r.vorgang}</TableCell>
                     <TableCell className="font-mono text-xs">{r.reference || r.order_number || r.invoice_number}</TableCell>
-                    <TableCell className="text-right">{fmt(r.amount_net)}</TableCell>
-                    <TableCell className="text-right">{fmt(r.amount_vat)}</TableCell>
-                    <TableCell className="text-right font-semibold">{fmt(r.amount_gross)}</TableCell>
+                    <TableCell className="text-right">{fmt(r.amount_net, cur)}</TableCell>
+                    <TableCell className="text-right">{fmt(r.amount_vat, cur)}</TableCell>
+                    <TableCell className="text-right font-semibold">{fmt(r.amount_gross, cur)}</TableCell>
                     <TableCell className="font-mono text-xs">{r.account}</TableCell>
                     <TableCell className="font-mono text-xs">{r.contra_account}</TableCell>
                     <TableCell><Badge variant={r.status === 'aktiv' ? 'outline' : 'destructive'}>{r.status}</Badge></TableCell>

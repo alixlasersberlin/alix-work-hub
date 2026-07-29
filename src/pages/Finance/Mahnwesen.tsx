@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 type AccRow = {
   id: string;
@@ -30,6 +31,7 @@ const fmt = (n: number | null) => typeof n === 'number'
 
 export default function FinanceMahnwesen() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [accounts, setAccounts] = useState<AccRow[]>([]);
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
@@ -42,18 +44,20 @@ export default function FinanceMahnwesen() {
       supabase.from('finance_accounts' as any)
         .select('id, customer_id, reminder_level, overdue_balance, last_reminder_at, customers(company_name, contact_name, email)')
         .gt('overdue_balance', 0)
+        .eq('accounting_region', region)
         .order('overdue_balance', { ascending: false })
         .limit(500),
       supabase.from('finance_reminders' as any)
         .select('id, customer_id, level, total, status, created_at')
         .eq('status', 'Entwurf')
+        .eq('accounting_region', region)
         .order('created_at', { ascending: false }),
     ]);
     setAccounts(((accRes.data ?? []) as any) as AccRow[]);
     setDrafts(((draftRes.data ?? []) as any) as DraftRow[]);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   const runEngine = async () => {
     setRunning(true);

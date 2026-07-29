@@ -17,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 type Deposit = {
   id: string;
@@ -103,6 +104,7 @@ const fmtMoney = (n: number, c = 'EUR') =>
 
 export default function OffeneAnzahlungen() {
   const { canWrite } = useFinancePermissions();
+  const { region } = useAccountingRegion();
   const [rows, setRows] = useState<Deposit[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -123,13 +125,14 @@ export default function OffeneAnzahlungen() {
     const { data, error } = await supabase
       .from('finance_deposits')
       .select('*')
+      .eq('accounting_region', region)
       .not('status', 'in', '("gebucht","bezahlt")')
       .order('created_at', { ascending: false, nullsFirst: false })
       .limit(2000);
     if (error) toast.error('Laden fehlgeschlagen: ' + error.message);
     setRows((data ?? []) as any);
     setLoading(false);
-  }, []);
+  }, [region]);
 
   useEffect(() => { load(); }, [load]);
 

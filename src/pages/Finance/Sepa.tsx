@@ -17,9 +17,10 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useReauthGate } from '@/hooks/useReauthGate';
 import ReauthDialog from '@/components/ReauthDialog';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const fmt = (n: number | null | undefined) => typeof n === 'number'
-  ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n) : '–';
+const fmt = (n: number | null | undefined, cur = 'EUR') => typeof n === 'number'
+  ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n) : '–';
 
 const statusVariant = (s: string): any => ({
   entwurf: 'secondary', exportiert: 'default', eingereicht: 'default', verbucht: 'default',
@@ -29,6 +30,8 @@ const statusVariant = (s: string): any => ({
 export default function FinanceSepa() {
   const { roles } = useAuth();
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
+  const { region } = useAccountingRegion();
+  const cur = region === 'CH' ? 'CHF' : 'EUR';
   const reauthDel = useReauthGate('finance.sepa.delete', 'Löschen von SEPA-Mandaten/Läufen');
   const reauthExp = useReauthGate('finance.sepa.export', 'SEPA pain.008-Export');
   const [tab, setTab] = useState<'runs' | 'mandates'>('runs');
@@ -49,8 +52,8 @@ export default function FinanceSepa() {
   const load = async () => {
     setLoading(true);
     const [m, r, c, t] = await Promise.all([
-      supabase.from('finance_sepa_mandates' as any).select('*, customer:customer_id(company_name, contact_name)').order('created_at', { ascending: false }),
-      supabase.from('finance_sepa_runs' as any).select('*').order('created_at', { ascending: false }).limit(100),
+      supabase.from('finance_sepa_mandates' as any).select('*, customer:customer_id(company_name, contact_name)').eq('accounting_region', region).order('created_at', { ascending: false }),
+      supabase.from('finance_sepa_runs' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(100),
       supabase.from('customers').select('id, company_name, contact_name').order('company_name').limit(1000),
       supabase.from('tenants').select('id, name, flag_emoji').eq('is_active', true).order('sort_order'),
     ]);
@@ -60,7 +63,7 @@ export default function FinanceSepa() {
     setTenants(t.data ?? []);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   const loadRunDetail = async (run: any) => {
     setActiveRun(run);
@@ -82,7 +85,7 @@ export default function FinanceSepa() {
       toast({ title: 'Fehlende Felder', description: 'Kunde, IBAN und Mandatsreferenz sind Pflicht', variant: 'destructive' });
       return;
     }
-    const payload = { ...mForm, iban: mForm.iban.replace(/\s+/g, '').toUpperCase() };
+    const payload = { ...mForm, iban: mForm.iban.replace(/\s+/g, '').toUpperCase(), accounting_region: region };
     const { error } = mForm.id
       ? await supabase.from('finance_sepa_mandates' as any).update(payload).eq('id', mForm.id)
       : await supabase.from('finance_sepa_mandates' as any).insert(payload);
@@ -104,7 +107,7 @@ export default function FinanceSepa() {
       toast({ title: 'Fehlende Felder', description: 'Gläubiger-Name, IBAN und Gläubiger-ID sind Pflicht', variant: 'destructive' });
       return;
     }
-    const { data, error } = await supabase.from('finance_sepa_runs' as any).insert({ ...rForm }).select().single();
+    const { data, error } = await supabase.from('finance_sepa_runs' as any).insert({ ...rForm, accounting_region: region }).select().single();
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     setRDlg(false);
     load();
@@ -166,7 +169,7 @@ export default function FinanceSepa() {
   return (
     <div className="space-y-6 p-4 sm:p-6">
       <PageHeader
-        title="SEPA Lastschriften"
+        title={`SEPA Lastschriften · ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`}
         subtitle="Mandate verwalten und pain.008-XML-Lastschriftläufe erstellen"
         icon={Banknote}
         noBreadcrumbs
