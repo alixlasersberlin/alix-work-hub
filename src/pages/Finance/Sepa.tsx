@@ -52,8 +52,8 @@ export default function FinanceSepa() {
   const load = async () => {
     setLoading(true);
     const [m, r, c, t] = await Promise.all([
-      supabase.from('finance_sepa_mandates' as any).select('*, customer:customer_id(company_name, contact_name)').order('created_at', { ascending: false }),
-      supabase.from('finance_sepa_runs' as any).select('*').order('created_at', { ascending: false }).limit(100),
+      supabase.from('finance_sepa_mandates' as any).select('*, customer:customer_id(company_name, contact_name)').eq('accounting_region', region).order('created_at', { ascending: false }),
+      supabase.from('finance_sepa_runs' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(100),
       supabase.from('customers').select('id, company_name, contact_name').order('company_name').limit(1000),
       supabase.from('tenants').select('id, name, flag_emoji').eq('is_active', true).order('sort_order'),
     ]);
@@ -63,7 +63,7 @@ export default function FinanceSepa() {
     setTenants(t.data ?? []);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   const loadRunDetail = async (run: any) => {
     setActiveRun(run);
