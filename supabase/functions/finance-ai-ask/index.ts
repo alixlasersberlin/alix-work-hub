@@ -97,13 +97,15 @@ Deno.serve(async (req) => {
     }
 
     const supa = createClient(SUPABASE_URL, SERVICE_ROLE);
-    const { question } = await req.json();
+    const { question, accounting_region } = await req.json();
     if (!question) return new Response(JSON.stringify({ error: "question required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const region: 'EU' | 'CH' = accounting_region === 'CH' ? 'CH' : 'EU';
 
     const messages: any[] = [
-      { role: "system", content: "Du bist Finanz-Assistent. Beantworte deutsche Fragen mithilfe der Tools. Antworte präzise auf Deutsch mit konkreten Zahlen. Heute ist " + new Date().toISOString().slice(0,10) + "." },
+      { role: "system", content: `Du bist Finanz-Assistent für den Buchungskreis ${region}. Alle Zahlen beziehen sich ausschließlich auf ${region}. Beantworte deutsche Fragen mithilfe der Tools. Antworte präzise auf Deutsch mit konkreten Zahlen. Heute ist ${new Date().toISOString().slice(0,10)}.` },
       { role: "user", content: String(question) },
     ];
+
 
     for (let i = 0; i < 5; i++) {
       const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
