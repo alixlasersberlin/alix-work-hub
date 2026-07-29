@@ -63,6 +63,7 @@ type Group = {
   openBalance: number;
   lastInvoiceDate: string | null;
   nextInvoiceDate: string | null;
+  newestCreatedAt: string | null;
   currency: string;
 };
 
