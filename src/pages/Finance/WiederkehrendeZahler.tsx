@@ -266,7 +266,7 @@ export default function WiederkehrendeZahler() {
 
       <DataCard
         title={`Kundenkonten (${filtered.length})`}
-        headerRight={
+        actions={
           <div className="flex items-center gap-4 text-sm">
             <div className="text-muted-foreground">
               Σ Verträge monatlich:{' '}
