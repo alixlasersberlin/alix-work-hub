@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 type Tenant = { id: string; name: string; flag_emoji?: string };
 
