@@ -2031,6 +2031,7 @@ const App = () => (
                     <LeihgeraetReminder />
                     {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                   </MaintenanceGate>
+                  </AccountingRegionProvider>
                 </TenantProvider>
               </AuthProvider>
             </BrowserRouter>
