@@ -93,17 +93,19 @@ Deno.serve(async (req) => {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
-  const { filing_type, period_value, tenant_id, notes } = parsed.data;
+  const { filing_type, period_value, tenant_id, notes, accounting_region } = parsed.data;
   let range; try { range = periodToRange(period_value); } catch (e) {
     return new Response(JSON.stringify({ error: (e as Error).message }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+  const currency = accounting_region === "CH" ? "CHF" : "EUR";
 
   try {
     let txq = admin.from("finance_transactions")
       .select("amount, currency, transaction_type, booking_date, tenant_id, counterparty_tenant_id, reference")
-      .gte("booking_date", range.from).lte("booking_date", range.to).limit(50000);
+      .gte("booking_date", range.from).lte("booking_date", range.to)
+      .eq("accounting_region", accounting_region).limit(50000);
     if (tenant_id) txq = txq.eq("tenant_id", tenant_id);
     const { data: txs, error: txErr } = await txq;
     if (txErr) throw txErr;
