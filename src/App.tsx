@@ -1247,6 +1247,9 @@ function AppRoutes() {
           <Route path="/finance/datev" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatev /></ProtectedRoute>} />
           <Route path="/finance/bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBank /></ProtectedRoute>} />
           <Route path="/finance/sepa" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSepa /></ProtectedRoute>} />
+          <Route path="/finance/qr-rechnung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceQrRechnung /></ProtectedRoute>} />
+          <Route path="/finance/ch-lastschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceChLastschriften /></ProtectedRoute>} />
+          <Route path="/finance/camt054" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCamt054 /></ProtectedRoute>} />
           <Route path="/finance/steuer" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuer /></ProtectedRoute>} />
           <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
           <Route path="/finance/cockpit/mandant/:code" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpitMandant /></ProtectedRoute>} />
