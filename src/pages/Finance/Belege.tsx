@@ -68,7 +68,7 @@ export default function FinanceBelege() {
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
-        hash_sha256: hash,
+        hash_sha256: hash, accounting_region: region,
       });
       if (error) throw error;
       toast({ title: 'Beleg hochgeladen', description: file.name });
@@ -105,7 +105,7 @@ export default function FinanceBelege() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={Files}
-        title="Belegarchiv"
+        title={`Belegarchiv · ${region === "CH" ? "🇨🇭 CH" : "🇪🇺 EU"}`}
         subtitle="GoBD-konforme Ablage aller Finanzbelege mit 10-Jahres Aufbewahrungsfrist"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${docs.length}`} pulse={!loading} />}
