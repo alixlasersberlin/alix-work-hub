@@ -17,9 +17,10 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useReauthGate } from '@/hooks/useReauthGate';
 import ReauthDialog from '@/components/ReauthDialog';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const fmt = (n: number | null | undefined) => typeof n === 'number'
-  ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n) : '–';
+const fmt = (n: number | null | undefined, cur = 'EUR') => typeof n === 'number'
+  ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n) : '–';
 
 const statusVariant = (s: string): any => ({
   entwurf: 'secondary', exportiert: 'default', eingereicht: 'default', verbucht: 'default',
