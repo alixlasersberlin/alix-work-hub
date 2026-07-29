@@ -145,7 +145,7 @@ export default function WiederkehrendeZahler() {
           customer_id: p.customer_id || k,
           customer_name: p.company_name || p.customer_name || 'Unbekannt',
           profiles: [], invoices: [], monthly: 0, ytdBilled: 0, openBalance: 0,
-          lastInvoiceDate: null, nextInvoiceDate: null, currency: p.currency || 'EUR',
+          lastInvoiceDate: null, nextInvoiceDate: null, newestCreatedAt: null, currency: p.currency || 'EUR',
         });
       }
       const g = map.get(k)!;
@@ -153,6 +153,7 @@ export default function WiederkehrendeZahler() {
       const isActive = (p.status ?? '').toLowerCase() === 'active';
       if (isActive && p.total) g.monthly += Number(p.total) * monthsFactor(p.recurrence_frequency, p.repeat_every);
       if (p.next_invoice_date && (!g.nextInvoiceDate || p.next_invoice_date < g.nextInvoiceDate)) g.nextInvoiceDate = p.next_invoice_date;
+      if (p.created_at && (!g.newestCreatedAt || p.created_at > g.newestCreatedAt)) g.newestCreatedAt = p.created_at;
     }
 
     const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
@@ -163,7 +164,7 @@ export default function WiederkehrendeZahler() {
           customer_id: inv.customer_id || k,
           customer_name: inv.customer_name || 'Unbekannt',
           profiles: [], invoices: [], monthly: 0, ytdBilled: 0, openBalance: 0,
-          lastInvoiceDate: null, nextInvoiceDate: null, currency: inv.currency || 'EUR',
+          lastInvoiceDate: null, nextInvoiceDate: null, newestCreatedAt: null, currency: inv.currency || 'EUR',
         });
       }
       const g = map.get(k)!;
@@ -179,7 +180,12 @@ export default function WiederkehrendeZahler() {
         if (statusFilter === 'stopped') return g.profiles.length > 0 && g.profiles.every(p => (p.status ?? '').toLowerCase() !== 'active');
         return true;
       })
-      .sort((a, b) => b.monthly - a.monthly || b.ytdBilled - a.ytdBilled);
+      .sort((a, b) => {
+        const ac = a.newestCreatedAt || '';
+        const bc = b.newestCreatedAt || '';
+        if (ac !== bc) return bc.localeCompare(ac);
+        return b.monthly - a.monthly;
+      });
   }, [profiles, invoices, statusFilter]);
 
   const filtered = useMemo(() => {
