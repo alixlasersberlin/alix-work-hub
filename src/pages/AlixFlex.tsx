@@ -128,6 +128,8 @@ export default function AlixFlex() {
     let res = rows;
     if (statusFilter !== 'all') res = res.filter((r) => (r.status ?? '').toLowerCase() === statusFilter);
     if (sourceFilter !== 'all') res = res.filter((r) => r.source_system === sourceFilter);
+    if (typeFilter === 'sepa') res = res.filter((r) => isSepaRow(r));
+    else if (typeFilter === 'zahler') res = res.filter((r) => !isSepaRow(r));
     if (billingRunFilter !== 'all') {
       const targetDay = Number(billingRunFilter);
       res = res.filter((r) => {
