@@ -11,8 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const fmt = (n: number | null) => n != null ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(Number(n)) : '–';
+const fmt = (n: number | null, cur = 'EUR') => n != null ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(Number(n)) : '–';
 const ENTITY_LABEL: Record<string, string> = {
   incoming_invoice: 'Eingangsrechnung',
   sepa_run: 'SEPA-Lauf',
@@ -21,6 +22,7 @@ const ENTITY_LABEL: Record<string, string> = {
 };
 
 export default function FinanceFreigaben() {
+  const { region } = useAccountingRegion();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('pending');
@@ -30,14 +32,14 @@ export default function FinanceFreigaben() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_approvals' as any).select('*').order('created_at', { ascending: false }).limit(300);
+    let q = supabase.from('finance_approvals' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(300);
     if (filter !== 'alle') q = q.eq('status', filter);
     const { data, error } = await q;
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     setRows((data ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [filter]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [filter, region]);
 
   const act = async (appr: any, action: 'approve' | 'reject') => {
     setBusy(true);
@@ -60,7 +62,7 @@ export default function FinanceFreigaben() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Finance Freigaben" subtitle={loading ? 'Lädt…' : `${pending} offene Genehmigungen`} icon={CheckSquare} noBreadcrumbs
+      <PageHeader title={`Finance Freigaben · ${region === "CH" ? "🇨🇭 CH" : "🇪🇺 EU"}`} subtitle={loading ? 'Lädt…' : `${pending} offene Genehmigungen`} icon={CheckSquare} noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : pending ? 'warning' : 'done'} label={loading ? 'Lädt' : pending ? `${pending} offen` : 'Aktuell'} pulse={loading} />}
         actions={<>
           <Select value={filter} onValueChange={setFilter}>

@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 const STATUSES = ['erfasst','geprueft','freigegeben','bezahlt','abgelehnt','storniert'] as const;
 type Status = typeof STATUSES[number];
@@ -30,6 +31,8 @@ const fmt = (n: number | null | undefined, c = 'EUR') =>
 
 export default function FinanceEingangsrechnungen() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
+  const cur = region === 'CH' ? 'CHF' : 'EUR';
   const canApprove = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Geschäftsführung');
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const fileRef = useRef<HTMLInputElement>(null);
@@ -43,14 +46,14 @@ export default function FinanceEingangsrechnungen() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_incoming_invoices' as any).select('*').order('invoice_date', { ascending: false }).limit(300);
+    let q = supabase.from('finance_incoming_invoices' as any).select('*').eq('accounting_region', region).order('invoice_date', { ascending: false }).limit(300);
     if (statusFilter !== 'alle') q = q.eq('status', statusFilter);
     const { data, error } = await q;
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     setRows((data ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [statusFilter]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [statusFilter, region]);
 
   const onXmlFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -110,7 +113,7 @@ export default function FinanceEingangsrechnungen() {
         amount_net: form.amount_net ? Number(form.amount_net) : null,
         amount_tax: form.amount_tax ? Number(form.amount_tax) : null,
         tax_rate: form.tax_rate ? Number(form.tax_rate) : null,
-        currency: form.currency || 'EUR',
+        currency: form.currency || cur, accounting_region: region,
         description: form.description || null,
         xml_path,
         is_einvoice: !!form._xml_file,
@@ -153,7 +156,7 @@ export default function FinanceEingangsrechnungen() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={Inbox}
-        title="Eingangsrechnungen"
+        title={`Eingangsrechnungen · ${region === "CH" ? "🇨🇭 CH" : "🇪🇺 EU"}`}
         subtitle="Kreditoren-Light mit XRechnung/ZUGFeRD-Erkennung und Freigabe-Workflow"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}

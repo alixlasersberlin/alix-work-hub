@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 const DOC_TYPES = ['Rechnung','Gutschrift','Lieferschein','Mahnung','Lastschriftavis','Kontoauszug','SteuerExport','DATEVExport','XRechnung','ZUGFeRD','Eingangsrechnung','Sonstiges'];
 
@@ -29,6 +30,7 @@ const sha256 = async (buf: ArrayBuffer) => {
 
 export default function FinanceBelege() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const fileRef = useRef<HTMLInputElement>(null);
   const [docs, setDocs] = useState<any[]>([]);
@@ -40,14 +42,14 @@ export default function FinanceBelege() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_documents' as any).select('*').order('document_date', { ascending: false }).limit(500);
+    let q = supabase.from('finance_documents' as any).select('*').eq('accounting_region', region).order('document_date', { ascending: false }).limit(500);
     if (typeFilter !== 'alle') q = q.eq('document_type', typeFilter);
     const { data, error } = await q;
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     setDocs((data ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [typeFilter]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [typeFilter, region]);
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,7 +68,7 @@ export default function FinanceBelege() {
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
-        hash_sha256: hash,
+        hash_sha256: hash, accounting_region: region,
       });
       if (error) throw error;
       toast({ title: 'Beleg hochgeladen', description: file.name });
@@ -103,7 +105,7 @@ export default function FinanceBelege() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={Files}
-        title="Belegarchiv"
+        title={`Belegarchiv · ${region === "CH" ? "🇨🇭 CH" : "🇪🇺 EU"}`}
         subtitle="GoBD-konforme Ablage aller Finanzbelege mit 10-Jahres Aufbewahrungsfrist"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${docs.length}`} pulse={!loading} />}

@@ -10,12 +10,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const fmt = (n: number | null | undefined) => typeof n === 'number'
-  ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n) : '–';
+const fmt = (n: number | null | undefined, cur = 'EUR') => typeof n === 'number'
+  ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n) : '–';
 
 export default function FinanceBank() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
+  const cur = region === 'CH' ? 'CHF' : 'EUR';
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const fileRef = useRef<HTMLInputElement>(null);
   const [statements, setStatements] = useState<any[]>([]);
@@ -27,14 +30,14 @@ export default function FinanceBank() {
   const load = async () => {
     setLoading(true);
     const [s, l] = await Promise.all([
-      supabase.from('finance_bank_statements' as any).select('*').order('created_at', { ascending: false }).limit(100),
-      supabase.from('finance_bank_lines' as any).select('*, customers:matched_customer_id(company_name, contact_name)').order('booking_date', { ascending: false }).limit(500),
+      supabase.from('finance_bank_statements' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(100),
+      supabase.from('finance_bank_lines' as any).select('*, customers:matched_customer_id(company_name, contact_name)').eq('accounting_region', region).order('booking_date', { ascending: false }).limit(500),
     ]);
     setStatements((s.data ?? []) as any[]);
     setLines((l.data ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,7 +45,7 @@ export default function FinanceBank() {
     setUploading(true);
     try {
       const content = await file.text();
-      const { data, error } = await supabase.functions.invoke('finance-bank-import', { body: { filename: file.name, content } });
+      const { data, error } = await supabase.functions.invoke("finance-bank-import", { body: { filename: file.name, content, accounting_region: region } });
       if (error) throw error;
       if (data?.duplicate) toast({ title: 'Bereits importiert', description: `Statement existiert (${data.lines} Buchungen).` });
       else toast({ title: 'Import erfolgreich', description: `${data.lines} Buchungen, ${data.matched} automatisch zugeordnet.` });
@@ -67,7 +70,7 @@ export default function FinanceBank() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={Banknote}
-        title="Bankimport & Reconciliation"
+        title={`Bankimport · ${region === "CH" ? "🇨🇭 CH" : "🇪🇺 EU"}`}
         subtitle="CAMT.053 (XML) oder MT940 hochladen, automatisches Matching gegen offene Rechnungen"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${lines.length} Buchungen`} pulse={loading} />}
