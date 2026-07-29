@@ -18,10 +18,14 @@ const _fmtBase = (n: number, cur: string) => new Intl.NumberFormat('de-DE', { st
 
 export default function FinanceCockpit() {
   const nav = useNavigate();
+  const { region } = useAccountingRegion();
+  const currency = region === 'CH' ? 'CHF' : 'EUR';
+  const fmt = (n: number) => maskRevenueString(_fmtBase(n, currency));
   const [loading, setLoading] = useState(true);
   const [tx, setTx] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [reminders, setReminders] = useState<any[]>([]);
+
 
   useEffect(() => {
     (async () => {
