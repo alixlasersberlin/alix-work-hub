@@ -173,6 +173,7 @@ export default function WiederkehrendeZahler() {
           customer_name: inv.customer_name || 'Unbekannt',
           profiles: [], invoices: [], monthly: 0, ytdBilled: 0, openBalance: 0,
           lastInvoiceDate: null, nextInvoiceDate: null, newestCreatedAt: null, currency: inv.currency || 'EUR',
+          hasSepa: false,
         });
       }
       const g = map.get(k)!;
@@ -184,11 +185,14 @@ export default function WiederkehrendeZahler() {
 
     return Array.from(map.values())
       .filter(g => {
+        if (statusFilter === 'sepa') return g.hasSepa;
         if (statusFilter === 'active') return g.profiles.some(p => (p.status ?? '').toLowerCase() === 'active');
         if (statusFilter === 'stopped') return g.profiles.length > 0 && g.profiles.every(p => (p.status ?? '').toLowerCase() !== 'active');
         return true;
       })
       .sort((a, b) => {
+        // SEPA-Zahler immer nach oben
+        if (a.hasSepa !== b.hasSepa) return a.hasSepa ? -1 : 1;
         const ac = a.newestCreatedAt || '';
         const bc = b.newestCreatedAt || '';
         if (ac !== bc) return bc.localeCompare(ac);
