@@ -23,10 +23,11 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
   try {
-    const { date_from, date_to } = await req.json();
+    const { date_from, date_to, accounting_region } = await req.json();
     if (!date_from || !date_to) {
       return new Response(JSON.stringify({ error: 'date_from und date_to erforderlich' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
+    const region = accounting_region === 'CH' ? 'CH' : 'EU';
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const { data: cfgRow } = await admin.from('app_settings').select('value').eq('key', 'finance.datev.config').maybeSingle();
@@ -38,8 +39,10 @@ Deno.serve(async (req) => {
       .select('id, transaction_type, amount, booking_date, notes, reference, customer_id, customers(company_name, contact_name)')
       .gte('booking_date', date_from)
       .lte('booking_date', date_to)
+      .eq('accounting_region', region)
       .order('booking_date', { ascending: true });
     if (error) throw error;
+
 
     const year = (date_from as string).slice(0, 4);
     const dateFromCmp = (date_from as string).replace(/-/g, '');
