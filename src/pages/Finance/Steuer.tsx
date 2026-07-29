@@ -25,6 +25,9 @@ const RATES: Record<string, { standard: number; reduced: number }> = {
 };
 
 export default function FinanceSteuer() {
+  const { region } = useAccountingRegion();
+  const currency = region === 'CH' ? 'CHF' : 'EUR';
+  const fmt = (n: number) => maskRevenueString(_fmtBase(n, currency));
   const today = new Date();
   const ym = today.toISOString().slice(0, 7);
   const [period, setPeriod] = useState<'month' | 'quarter' | 'year'>('month');
@@ -35,6 +38,7 @@ export default function FinanceSteuer() {
   const [tenantId, setTenantId] = useState<string>('all');
   const [tx, setTx] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
 
   const range = () => {
     if (period === 'month') {
