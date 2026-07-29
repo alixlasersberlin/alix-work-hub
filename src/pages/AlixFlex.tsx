@@ -73,6 +73,7 @@ export default function AlixFlex() {
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(20);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all'); // 'all' | 'sepa' | 'zahler'
   const [billingRunFilter, setBillingRunFilter] = useState<string>('all'); // 'all' | '1' | '15'
   const [dateRangeFilter, setDateRangeFilter] = useState<string>('all'); // 'all'|'current_month'|'last_month'|'last_3_months'|'current_year'|'last_year'|'custom'
