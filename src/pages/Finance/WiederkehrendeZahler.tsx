@@ -65,6 +65,12 @@ type Group = {
   nextInvoiceDate: string | null;
   newestCreatedAt: string | null;
   currency: string;
+  hasSepa: boolean;
+};
+
+const isSepaProfile = (p: Profile) => {
+  const hay = `${p.recurrence_name ?? ''} ${p.reference_number ?? ''}`.toLowerCase();
+  return /\bsepa\b|lastschrift/.test(hay);
 };
 
 const monthsFactor = (freq: string | null, every: number | null) => {
@@ -86,7 +92,7 @@ export default function WiederkehrendeZahler() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped'>('active');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>('active');
 
   async function load() {
     setLoading(true);
@@ -146,10 +152,12 @@ export default function WiederkehrendeZahler() {
           customer_name: p.company_name || p.customer_name || 'Unbekannt',
           profiles: [], invoices: [], monthly: 0, ytdBilled: 0, openBalance: 0,
           lastInvoiceDate: null, nextInvoiceDate: null, newestCreatedAt: null, currency: p.currency || 'EUR',
+          hasSepa: false,
         });
       }
       const g = map.get(k)!;
       g.profiles.push(p);
+      if (isSepaProfile(p)) g.hasSepa = true;
       const isActive = (p.status ?? '').toLowerCase() === 'active';
       if (isActive && p.total) g.monthly += Number(p.total) * monthsFactor(p.recurrence_frequency, p.repeat_every);
       if (p.next_invoice_date && (!g.nextInvoiceDate || p.next_invoice_date < g.nextInvoiceDate)) g.nextInvoiceDate = p.next_invoice_date;
@@ -165,6 +173,7 @@ export default function WiederkehrendeZahler() {
           customer_name: inv.customer_name || 'Unbekannt',
           profiles: [], invoices: [], monthly: 0, ytdBilled: 0, openBalance: 0,
           lastInvoiceDate: null, nextInvoiceDate: null, newestCreatedAt: null, currency: inv.currency || 'EUR',
+          hasSepa: false,
         });
       }
       const g = map.get(k)!;
@@ -176,11 +185,14 @@ export default function WiederkehrendeZahler() {
 
     return Array.from(map.values())
       .filter(g => {
+        if (statusFilter === 'sepa') return g.hasSepa;
         if (statusFilter === 'active') return g.profiles.some(p => (p.status ?? '').toLowerCase() === 'active');
         if (statusFilter === 'stopped') return g.profiles.length > 0 && g.profiles.every(p => (p.status ?? '').toLowerCase() !== 'active');
         return true;
       })
       .sort((a, b) => {
+        // SEPA-Zahler immer nach oben
+        if (a.hasSepa !== b.hasSepa) return a.hasSepa ? -1 : 1;
         const ac = a.newestCreatedAt || '';
         const bc = b.newestCreatedAt || '';
         if (ac !== bc) return bc.localeCompare(ac);
@@ -242,13 +254,13 @@ export default function WiederkehrendeZahler() {
           <Input placeholder="Kunde, Vertragsnr. oder Rechnungsnr. suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <div className="flex gap-1 border border-border rounded-md p-1">
-          {(['active', 'stopped', 'all'] as const).map(s => (
+          {(['sepa', 'active', 'stopped', 'all'] as const).map(s => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1 text-xs rounded ${statusFilter === s ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`px-3 py-1 text-xs rounded ${statusFilter === s ? (s === 'sepa' ? 'bg-emerald-600 text-white' : 'bg-primary text-primary-foreground') : 'text-muted-foreground hover:text-foreground'}`}
             >
-              {s === 'active' ? 'Aktiv' : s === 'stopped' ? 'Beendet' : 'Alle'}
+              {s === 'sepa' ? 'SEPA' : s === 'active' ? 'Aktiv' : s === 'stopped' ? 'Beendet' : 'Alle'}
             </button>
           ))}
         </div>
@@ -270,7 +282,12 @@ export default function WiederkehrendeZahler() {
                 >
                   {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{g.customer_name}</div>
+                    <div className="font-medium truncate flex items-center gap-2">
+                      {g.hasSepa && (
+                        <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">SEPA</Badge>
+                      )}
+                      <span className="truncate">{g.customer_name}</span>
+                    </div>
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 mt-0.5">
                       <span>{activeP} aktiv / {g.profiles.length} Verträge</span>
                       <span>{g.invoices.length} Rechnungen</span>
