@@ -11,9 +11,10 @@ import { KpiTile } from '@/components/infinity/KpiTile';
 import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
-const fmt = (n: number) => maskRevenueString(_fmtBase(n));
+const _fmtBase = (n: number, cur: string) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur, maximumFractionDigits: 0 }).format(n || 0);
+
 
 export default function FinanceCockpit() {
   const nav = useNavigate();
