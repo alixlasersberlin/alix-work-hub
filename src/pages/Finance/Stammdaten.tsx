@@ -44,8 +44,9 @@ export default function Stammdaten() {
       />
 
       <Tabs defaultValue="coa" className="space-y-4">
-        <TabsList className="grid grid-cols-2 lg:grid-cols-5 gap-1">
+        <TabsList className="grid grid-cols-3 lg:grid-cols-6 gap-1">
           <TabsTrigger value="coa">Kontenrahmen</TabsTrigger>
+          <TabsTrigger value="tax">Steuern</TabsTrigger>
           <TabsTrigger value="cc">Kostenstellen</TabsTrigger>
           <TabsTrigger value="cu">Kostenträger</TabsTrigger>
           <TabsTrigger value="per">Perioden</TabsTrigger>
@@ -53,6 +54,7 @@ export default function Stammdaten() {
         </TabsList>
 
         <TabsContent value="coa"><CoaTab region={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
+        <TabsContent value="tax"><TaxTab region={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
         <TabsContent value="cc"><CcTab region={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
         <TabsContent value="cu"><CuTab region={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
         <TabsContent value="per"><PerTab region={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
