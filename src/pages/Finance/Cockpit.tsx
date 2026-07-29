@@ -75,11 +75,12 @@ export default function FinanceCockpit() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Finance Cockpit"
+        title={`Finance Cockpit ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`}
         subtitle="Konsolidiertes Reporting für Geschäftsführung & Finance"
         icon={TrendingUp}
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Live'} pulse={!loading} dotOnly />}
       />
+
 
       {loading ? (
         <SkeletonKpiGrid count={4} />
