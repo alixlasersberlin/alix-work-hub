@@ -61,7 +61,7 @@ export default function FinanceBilanz() {
     <div className="p-4 sm:p-6 space-y-6">
       <PageHeader
         icon={Scale}
-        title="Bilanz (vereinfacht)"
+        title={`Bilanz (vereinfacht) · ${region === 'CH' ? '🇨🇭' : '🇪🇺'}`}
         subtitle={`Stichtag ${new Date(stichtag).toLocaleDateString('de-DE')}`}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Aktuell'} pulse={loading} />}
