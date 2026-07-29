@@ -118,7 +118,7 @@ export default function Kassenbuch() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
-      <PageHeader icon={BookOpen} title="Kassenbuch" subtitle="Revisionssichere Erfassung aller Barbewegungen (GoBD)"
+      <PageHeader icon={BookOpen} title={`Kassenbuch · ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`} subtitle="Revisionssichere Erfassung aller Barbewegungen (GoBD)"
         actions={canWrite ? (
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setOpenClose(true)}><FileText className="mr-2 h-4 w-4" />Tagesabschluss</Button>
@@ -127,9 +127,9 @@ export default function Kassenbuch() {
         ) : undefined} />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <KpiTile label="Einnahmen (Filter)" value={fmt(sums.ein)} icon={BookOpen} accent="emerald" />
-        <KpiTile label="Ausgaben (Filter)" value={fmt(sums.aus)} icon={BookOpen} accent="rose" />
-        <KpiTile label="Kassenbestand (rechnerisch)" value={fmt(sums.bestand)} icon={BookOpen} accent="gold" />
+        <KpiTile label="Einnahmen (Filter)" value={fmt(sums.ein, cur)} icon={BookOpen} accent="emerald" />
+        <KpiTile label="Ausgaben (Filter)" value={fmt(sums.aus, cur)} icon={BookOpen} accent="rose" />
+        <KpiTile label="Kassenbestand (rechnerisch)" value={fmt(sums.bestand, cur)} icon={BookOpen} accent="gold" />
       </div>
 
       <Card>
@@ -173,9 +173,9 @@ export default function Kassenbuch() {
                     <TableCell><Badge variant={r.booking_type === 'einnahme' ? 'default' : 'secondary'}>{r.booking_type}</Badge></TableCell>
                     <TableCell className="max-w-xs truncate">{r.description}</TableCell>
                     <TableCell>{r.payment_method}</TableCell>
-                    <TableCell className="text-right">{fmt(r.amount_net)}</TableCell>
-                    <TableCell className="text-right">{fmt(r.amount_vat)}</TableCell>
-                    <TableCell className="text-right font-semibold">{fmt(r.amount_gross)}</TableCell>
+                    <TableCell className="text-right">{fmt(r.amount_net, cur)}</TableCell>
+                    <TableCell className="text-right">{fmt(r.amount_vat, cur)}</TableCell>
+                    <TableCell className="text-right font-semibold">{fmt(r.amount_gross, cur)}</TableCell>
                     <TableCell><Badge variant={r.status === 'aktiv' ? 'outline' : 'destructive'}>{r.status}</Badge></TableCell>
                     <TableCell>
                       {canWrite && r.status === 'aktiv' && (
@@ -235,7 +235,7 @@ export default function Kassenbuch() {
         <DialogContent>
           <DialogHeader><DialogTitle>Tagesabschluss {todayISO()}</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <div className="text-sm">Sollbestand (rechnerisch): <strong>{fmt(sums.bestand)}</strong></div>
+            <div className="text-sm">Sollbestand (rechnerisch): <strong>{fmt(sums.bestand, cur)}</strong></div>
             <div><Label>Istbestand (Zählbestand €)</Label><Input type="number" step="0.01" value={closing.counted} onChange={e => setClosing({ ...closing, counted: Number(e.target.value) })} /></div>
             <div><Label>Differenz</Label><div className="font-semibold">{fmt(Number(closing.counted) - sums.bestand)}</div></div>
             <div><Label>Notiz</Label><Textarea value={closing.note} onChange={e => setClosing({ ...closing, note: e.target.value })} /></div>
