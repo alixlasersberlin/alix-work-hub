@@ -111,6 +111,7 @@ export default function Kassenbuch() {
       counted_balance: Number(closing.counted),
       note: closing.note,
       status: 'offen',
+      accounting_region: region,
     });
     if (error) toast.error(error.message); else { toast.success('Tagesabschluss gespeichert'); setOpenClose(false); setClosing({ counted: 0, note: '' }); }
   }
