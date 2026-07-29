@@ -107,6 +107,7 @@ export default function OffenePosten() {
   const [dateFrom, setDateFrom] = useState<Date>(new Date(new Date().getFullYear(), 0, 1));
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
   const [pdfLoadingKey, setPdfLoadingKey] = useState<string | null>(null);
+  const pdfCacheRef = useRef<Map<string, string>>(new Map());
 
   const openInvoicePdf = useCallback(async (item: OpenItem) => {
     if (!item.zoho_invoice_id) {
@@ -114,9 +115,24 @@ export default function OffenePosten() {
       return;
     }
     const key = `${item.source}-${item.id}`;
-    setPdfLoadingKey(key);
-    // Fenster synchron öffnen (Popup-Blocker), Inhalt später setzen
     const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(`<!doctype html><html><head><title>Rechnung ${item.invoice_number ?? ''} wird geladen…</title><style>
+        body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0a0a;color:#e5e5e5;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px}
+        .spinner{width:42px;height:42px;border:3px solid #333;border-top-color:#d4af37;border-radius:50%;animation:spin 0.8s linear infinite}
+        .lbl{font-size:14px;opacity:.75}
+        @keyframes spin{to{transform:rotate(360deg)}}
+      </style></head><body><div class="spinner"></div><div class="lbl">Rechnung ${item.invoice_number ?? ''} wird von Zoho geladen…</div></body></html>`);
+      win.document.close();
+    }
+
+    const cached = pdfCacheRef.current.get(key);
+    if (cached) {
+      if (win) win.location.href = cached;
+      return;
+    }
+
+    setPdfLoadingKey(key);
     try {
       const { data, error } = await supabase.functions.invoke('zoho-invoice-pdf', {
         body: {
@@ -134,17 +150,16 @@ export default function OffenePosten() {
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       const blob = new Blob([bytes], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
+      pdfCacheRef.current.set(key, url);
       if (win) {
         win.location.href = url;
       } else {
-        // Fallback wenn Popup blockiert
         const a = document.createElement('a');
         a.href = url;
         a.target = '_blank';
         a.rel = 'noopener';
         a.click();
       }
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (e: any) {
       if (win) win.close();
       toast.error('PDF fehlgeschlagen: ' + (e?.message ?? 'Unbekannter Fehler'));
