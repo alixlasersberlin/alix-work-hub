@@ -254,13 +254,13 @@ export default function WiederkehrendeZahler() {
           <Input placeholder="Kunde, Vertragsnr. oder Rechnungsnr. suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <div className="flex gap-1 border border-border rounded-md p-1">
-          {(['active', 'stopped', 'all'] as const).map(s => (
+          {(['sepa', 'active', 'stopped', 'all'] as const).map(s => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1 text-xs rounded ${statusFilter === s ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`px-3 py-1 text-xs rounded ${statusFilter === s ? (s === 'sepa' ? 'bg-emerald-600 text-white' : 'bg-primary text-primary-foreground') : 'text-muted-foreground hover:text-foreground'}`}
             >
-              {s === 'active' ? 'Aktiv' : s === 'stopped' ? 'Beendet' : 'Alle'}
+              {s === 'sepa' ? 'SEPA' : s === 'active' ? 'Aktiv' : s === 'stopped' ? 'Beendet' : 'Alle'}
             </button>
           ))}
         </div>
