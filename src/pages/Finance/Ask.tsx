@@ -19,6 +19,7 @@ const EXAMPLES = [
 ];
 
 export default function FinanceAsk() {
+  const { region } = useAccountingRegion();
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Turn[]>([]);
@@ -28,8 +29,9 @@ export default function FinanceAsk() {
     if (!text) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('finance-ai-ask', { body: { question: text } });
+      const { data, error } = await supabase.functions.invoke('finance-ai-ask', { body: { question: text, accounting_region: region } });
       if (error) throw error;
+
       if ((data as any)?.error) throw new Error((data as any).error);
       setHistory(prev => [{ q: text, a: (data as any)?.answer ?? '' }, ...prev]);
       setQ('');
