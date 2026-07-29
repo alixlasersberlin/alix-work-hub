@@ -9,8 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Sparkles, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { classifyTx, mapIncomingCategory, BUDGET_CATEGORIES } from './_controlling';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 export default function FinanceAiInsights() {
+  const { region } = useAccountingRegion();
   const [loading, setLoading] = useState(true);
   const [scope, setScope] = useState<'cockpit' | 'bwa' | 'soll_ist' | 'forecast'>('cockpit');
   const [generating, setGenerating] = useState(false);
@@ -18,11 +20,11 @@ export default function FinanceAiInsights() {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase.from('finance_ai_insights' as any).select('*').order('created_at', { ascending: false }).limit(50);
+    const { data } = await supabase.from('finance_ai_insights' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(50);
     setInsights((data as any[]) ?? []);
     setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
 
   async function generate() {
     setGenerating(true);
@@ -30,9 +32,9 @@ export default function FinanceAiInsights() {
       const year = new Date().getFullYear();
       const s = `${year}-01-01`, e = new Date().toISOString().slice(0, 10);
       const [{ data: tx }, { data: ii }, { data: acc }] = await Promise.all([
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e),
-        supabase.from('finance_incoming_invoices').select('amount_gross, invoice_date, paid_at, description').gte('invoice_date', s).lte('invoice_date', e),
-        supabase.from('finance_accounts').select('current_balance, overdue_balance'),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').eq('accounting_region', region).gte('booking_date', s).lte('booking_date', e),
+        supabase.from('finance_incoming_invoices').select('amount_gross, invoice_date, paid_at, description').eq('accounting_region', region).gte('invoice_date', s).lte('invoice_date', e),
+        supabase.from('finance_accounts').select('current_balance, overdue_balance').eq('accounting_region', region),
       ]);
       const byCat: Record<string, number> = {};
       for (const c of BUDGET_CATEGORIES) byCat[c] = 0;
