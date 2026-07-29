@@ -12,6 +12,9 @@ const fmtCur = (n: number, cur: 'EUR' | 'CHF') => new Intl.NumberFormat('de-DE',
 
 
 export default function FinanceBilanz() {
+  const { region } = useAccountingRegion();
+  const cur = region === 'CH' ? 'CHF' : 'EUR';
+  const fmt = (n: number) => fmtCur(n, cur);
   const [loading, setLoading] = useState(true);
   const [stichtag, setStichtag] = useState(new Date().toISOString().slice(0, 10));
   const [assets, setAssets] = useState<any[]>([]);
@@ -24,8 +27,8 @@ export default function FinanceBilanz() {
       setLoading(true);
       const [a, ac, bl, ii] = await Promise.all([
         supabase.from('finance_assets').select('book_value, acquisition_value, status, acquisition_date').lte('acquisition_date', stichtag),
-        supabase.from('finance_accounts').select('current_balance, overdue_balance'),
-        supabase.from('finance_bank_lines').select('amount, value_date, statement_id').lte('value_date', stichtag),
+        supabase.from('finance_accounts').select('current_balance, overdue_balance').eq('accounting_region', region),
+        supabase.from('finance_bank_lines').select('amount, value_date, statement_id').lte('value_date', stichtag).eq('accounting_region', region),
         supabase.from('finance_incoming_invoices').select('amount_gross, paid_at, invoice_date').lte('invoice_date', stichtag),
       ]);
       setAssets(a.data ?? []);
@@ -34,7 +37,8 @@ export default function FinanceBilanz() {
       setIncoming(ii.data ?? []);
       setLoading(false);
     })();
-  }, [stichtag]);
+  }, [stichtag, region]);
+
 
   const data = useMemo(() => {
     const anlagevermoegen = assets.filter(a => a.status !== 'abgegangen' && a.status !== 'verkauft' && a.status !== 'verschrottet').reduce((s, a) => s + Number(a.book_value || 0), 0);
