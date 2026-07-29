@@ -438,7 +438,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/vertraege', label: 'Verträge', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/raten', label: 'Laufende Raten', icon: ScrollText, roles: ['Admin', 'Super Admin'] },
-          { path: '/finance/alix-flex', label: 'ALIX FLEX', icon: Banknote, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/alix-flex', label: 'SEPA MANDAT', icon: Banknote, roles: ['Admin', 'Super Admin'] },
           {
             path: '/finanzierungen', label: 'FREMD LEASING', icon: Landmark, roles: ['Admin', 'Super Admin'],
             children: [

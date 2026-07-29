@@ -234,7 +234,7 @@ export default function AlixFlex() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={Zap}
-        title="ALIX FLEX"
+        title="SEPA MANDAT"
         subtitle={loading ? 'Lädt…' : 'Periodische Rechnungs-Stammdaten (Recurring Profile) aus Zoho Books'}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Profile`} pulse={loading} />}
