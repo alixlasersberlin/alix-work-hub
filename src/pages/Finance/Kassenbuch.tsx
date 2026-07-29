@@ -23,6 +23,8 @@ type Row = any;
 
 export default function Kassenbuch() {
   const { canWrite } = useFinancePermissions();
+  const { region } = useAccountingRegion();
+  const cur = region === 'CH' ? 'CHF' : 'EUR';
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState(todayISO().slice(0, 8) + '01');
@@ -42,13 +44,13 @@ export default function Kassenbuch() {
 
   async function load() {
     setLoading(true);
-    let q: any = (supabase as any).from('finance_cashbook').select('*').gte('booking_date', from).lte('booking_date', to).order('booking_date', { ascending: false }).order('booking_time', { ascending: false });
+    let q: any = (supabase as any).from('finance_cashbook').select('*').gte('booking_date', from).lte('booking_date', to).eq('accounting_region', region).order('booking_date', { ascending: false }).order('booking_time', { ascending: false });
     if (type !== 'alle') q = q.eq('booking_type', type);
     const { data, error } = await q;
     if (error) toast.error(error.message); else setRows(data || []);
     setLoading(false);
   }
-  useEffect(() => { load(); /* eslint-disable-line */ }, [from, to, type]);
+  useEffect(() => { load(); /* eslint-disable-line */ }, [from, to, type, region]);
 
   const sums = useMemo(() => {
     const active = rows.filter(r => r.status === 'aktiv');
