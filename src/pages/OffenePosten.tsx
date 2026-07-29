@@ -333,7 +333,7 @@ export default function OffenePosten() {
   }, [workflows, bookedRefs]);
 
   const counts = useMemo(() => {
-    const c: Record<WorkflowFilter, number> = { alle: searched.length, offen: 0, rueckstellung: 0, in_klaerung: 0, inkasso: 0, erledigt: 0, gebucht: 0 };
+    const c: Record<WorkflowFilter, number> = { alle: searched.length, offen: 0, rueckstellung: 0, in_klaerung: 0, anwalt: 0, inkasso: 0, erledigt: 0, gebucht: 0 };
     searched.forEach((i) => { c[statusFor(i)]++; });
     return c;
   }, [searched, statusFor]);
