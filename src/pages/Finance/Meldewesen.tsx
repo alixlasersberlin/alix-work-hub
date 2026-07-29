@@ -12,13 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-type FilingType = 'ustva' | 'zm' | 'oss' | 'intrastat' | 'ebilanz';
-const TYPES: { value: FilingType; label: string; period: string }[] = [
+type FilingType = 'ustva' | 'zm' | 'oss' | 'intrastat' | 'ebilanz' | 'estv_mwst';
+const TYPES_EU: { value: FilingType; label: string; period: string }[] = [
   { value: 'ustva', label: 'UStVA (ELSTER)', period: '2026-03' },
   { value: 'zm', label: 'Zusammenfassende Meldung', period: '2026-Q1' },
   { value: 'oss', label: 'OSS-Meldung', period: '2026-Q1' },
   { value: 'intrastat', label: 'Intrastat', period: '2026-03' },
   { value: 'ebilanz', label: 'E-Bilanz', period: '2026' },
+];
+const TYPES_CH: { value: FilingType; label: string; period: string }[] = [
+  { value: 'estv_mwst', label: 'MwSt.-Abrechnung ESTV', period: '2026-Q1' },
 ];
 
 export default function FinanceMeldewesen() {
