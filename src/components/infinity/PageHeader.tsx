@@ -43,7 +43,7 @@ const SLUG_LABELS: Record<string, string> = {
   einstellungen: "Einstellungen",
   bestellwesen: "Bestellwesen",
   ersatzteile: "Ersatzteile",
-  "alix-flex": "Alix Flex",
+  "alix-flex": "SEPA Mandat",
   raten: "Ratenzahlung",
   mahnwesen: "Mahnwesen",
   datev: "DATEV",
