@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
       for (const c of calls) {
         let args: any = {};
         try { args = JSON.parse(c.function.arguments || "{}"); } catch { /* */ }
-        const result = await execTool(supa, c.function.name, args);
+        const result = await execTool(supa, c.function.name, args, region);
         messages.push({ role: "tool", tool_call_id: c.id, content: JSON.stringify(result) });
       }
     }
