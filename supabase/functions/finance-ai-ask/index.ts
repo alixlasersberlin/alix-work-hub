@@ -54,9 +54,10 @@ const TOOLS = [
   },
 ];
 
-async function execTool(supa: any, name: string, args: any) {
+async function execTool(supa: any, name: string, args: any, region: 'EU' | 'CH') {
   if (name === "sum_revenue") {
     let q = supa.from("finance_transactions").select("amount, transaction_type, customer_id, booking_date")
+      .eq("accounting_region", region)
       .gte("booking_date", args.start_date).lte("booking_date", args.end_date).limit(5000);
     if (args.customer_id) q = q.eq("customer_id", args.customer_id);
     const { data } = await q;
@@ -73,11 +74,12 @@ async function execTool(supa: any, name: string, args: any) {
     return { count: data?.length ?? 0, items: data ?? [] };
   }
   if (name === "customer_balance") {
-    const { data } = await supa.from("finance_accounts").select("*").eq("customer_id", args.customer_id).maybeSingle();
+    const { data } = await supa.from("finance_accounts").select("*").eq("customer_id", args.customer_id).eq("accounting_region", region).maybeSingle();
     return data ?? { found: false };
   }
   return { error: "unknown_tool" };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -95,13 +97,15 @@ Deno.serve(async (req) => {
     }
 
     const supa = createClient(SUPABASE_URL, SERVICE_ROLE);
-    const { question } = await req.json();
+    const { question, accounting_region } = await req.json();
     if (!question) return new Response(JSON.stringify({ error: "question required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const region: 'EU' | 'CH' = accounting_region === 'CH' ? 'CH' : 'EU';
 
     const messages: any[] = [
-      { role: "system", content: "Du bist Finanz-Assistent. Beantworte deutsche Fragen mithilfe der Tools. Antworte präzise auf Deutsch mit konkreten Zahlen. Heute ist " + new Date().toISOString().slice(0,10) + "." },
+      { role: "system", content: `Du bist Finanz-Assistent für den Buchungskreis ${region}. Alle Zahlen beziehen sich ausschließlich auf ${region}. Beantworte deutsche Fragen mithilfe der Tools. Antworte präzise auf Deutsch mit konkreten Zahlen. Heute ist ${new Date().toISOString().slice(0,10)}.` },
       { role: "user", content: String(question) },
     ];
+
 
     for (let i = 0; i < 5; i++) {
       const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -124,7 +128,7 @@ Deno.serve(async (req) => {
       for (const c of calls) {
         let args: any = {};
         try { args = JSON.parse(c.function.arguments || "{}"); } catch { /* */ }
-        const result = await execTool(supa, c.function.name, args);
+        const result = await execTool(supa, c.function.name, args, region);
         messages.push({ role: "tool", tool_call_id: c.id, content: JSON.stringify(result) });
       }
     }

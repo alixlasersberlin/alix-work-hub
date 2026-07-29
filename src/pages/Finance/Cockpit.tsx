@@ -11,32 +11,38 @@ import { KpiTile } from '@/components/infinity/KpiTile';
 import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n || 0);
-const fmt = (n: number) => maskRevenueString(_fmtBase(n));
+const _fmtBase = (n: number, cur: string) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur, maximumFractionDigits: 0 }).format(n || 0);
+
 
 export default function FinanceCockpit() {
   const nav = useNavigate();
+  const { region } = useAccountingRegion();
+  const currency = region === 'CH' ? 'CHF' : 'EUR';
+  const fmt = (n: number) => maskRevenueString(_fmtBase(n, currency));
   const [loading, setLoading] = useState(true);
   const [tx, setTx] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [reminders, setReminders] = useState<any[]>([]);
+
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
       const [t, a, r] = await Promise.all([
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date, customer:customer_id(source_system, company_name, contact_name)').gte('booking_date', yearStart).order('booking_date'),
-        supabase.from('finance_accounts').select('customer_id, current_balance, overdue_balance, customers:customer_id(company_name, contact_name, source_system)').order('overdue_balance', { ascending: false }).limit(50),
-        supabase.from('finance_reminders' as any).select('id, status').neq('status', 'erledigt'),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date, customer:customer_id(source_system, company_name, contact_name)').eq('accounting_region', region).gte('booking_date', yearStart).order('booking_date'),
+        supabase.from('finance_accounts').select('customer_id, current_balance, overdue_balance, customers:customer_id(company_name, contact_name, source_system)').eq('accounting_region', region).order('overdue_balance', { ascending: false }).limit(50),
+        supabase.from('finance_reminders' as any).select('id, status').eq('accounting_region', region).neq('status', 'erledigt'),
       ]);
       setTx(t.data ?? []);
       setAccounts(a.data ?? []);
       setReminders((r.data ?? []) as any[]);
       setLoading(false);
     })();
-  }, []);
+  }, [region]);
+
 
   // loading handled inline via skeletons
 
@@ -69,11 +75,12 @@ export default function FinanceCockpit() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Finance Cockpit"
+        title={`Finance Cockpit ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`}
         subtitle="Konsolidiertes Reporting für Geschäftsführung & Finance"
         icon={TrendingUp}
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Live'} pulse={!loading} dotOnly />}
       />
+
 
       {loading ? (
         <SkeletonKpiGrid count={4} />

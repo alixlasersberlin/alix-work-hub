@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Send, Sparkles, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+
 
 type Turn = { q: string; a: string };
 
@@ -17,6 +19,7 @@ const EXAMPLES = [
 ];
 
 export default function FinanceAsk() {
+  const { region } = useAccountingRegion();
   const [q, setQ] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Turn[]>([]);
@@ -26,8 +29,9 @@ export default function FinanceAsk() {
     if (!text) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('finance-ai-ask', { body: { question: text } });
+      const { data, error } = await supabase.functions.invoke('finance-ai-ask', { body: { question: text, accounting_region: region } });
       if (error) throw error;
+
       if ((data as any)?.error) throw new Error((data as any).error);
       setHistory(prev => [{ q: text, a: (data as any)?.answer ?? '' }, ...prev]);
       setQ('');
@@ -42,7 +46,7 @@ export default function FinanceAsk() {
     <div className="p-6 space-y-6 max-w-4xl">
       <PageHeader
         icon={MessageSquare}
-        title="Finanz-KI fragen"
+        title={`Finanz-KI fragen ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`}
         subtitle="Stelle Fragen zu Umsatz, offenen Posten, Kunden"
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Denkt nach' : `${history.length} Fragen`} pulse={loading} />}

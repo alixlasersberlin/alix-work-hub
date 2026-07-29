@@ -12,9 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const _fmtBase = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0);
-const fmt = (n: number) => maskRevenueString(_fmtBase(n));
+const _fmtBase = (n: number, cur: string) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
+
 
 // Tax rate per tenant: DE 19/7, AT 20/10
 const RATES: Record<string, { standard: number; reduced: number }> = {
@@ -24,6 +25,9 @@ const RATES: Record<string, { standard: number; reduced: number }> = {
 };
 
 export default function FinanceSteuer() {
+  const { region } = useAccountingRegion();
+  const currency = region === 'CH' ? 'CHF' : 'EUR';
+  const fmt = (n: number) => maskRevenueString(_fmtBase(n, currency));
   const today = new Date();
   const ym = today.toISOString().slice(0, 7);
   const [period, setPeriod] = useState<'month' | 'quarter' | 'year'>('month');
@@ -34,6 +38,7 @@ export default function FinanceSteuer() {
   const [tenantId, setTenantId] = useState<string>('all');
   const [tx, setTx] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
 
   const range = () => {
     if (period === 'month') {
@@ -56,10 +61,12 @@ export default function FinanceSteuer() {
     const { from, to } = range();
     let q = supabase.from('finance_transactions')
       .select('id, customer_id, amount, transaction_type, booking_date, reference, customer:customer_id(source_system)')
+      .eq('accounting_region', region)
       .gte('booking_date', from)
       .lte('booking_date', to)
       .order('booking_date');
     const { data } = await q;
+
     let rows = data ?? [];
     if (tenantId !== 'all') {
       const tenant = tenants.find(t => t.id === tenantId);
@@ -78,7 +85,7 @@ export default function FinanceSteuer() {
     })();
   }, []);
 
-  useEffect(() => { load(); }, [period, month, year, quarter, tenantId, tenants.length]);
+  useEffect(() => { load(); }, [period, month, year, quarter, tenantId, tenants.length, region]);
 
   // Aggregate
   const groups: Record<string, { brutto: number; netto19: number; ust19: number; netto7: number; ust7: number; count: number }> = {
