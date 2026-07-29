@@ -12279,6 +12279,7 @@ export type Database = {
       }
       customers: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           billing_address: Json | null
           birth_date: string | null
           company_name: string | null
@@ -12299,6 +12300,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           billing_address?: Json | null
           birth_date?: string | null
           company_name?: string | null
@@ -12319,6 +12321,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           billing_address?: Json | null
           birth_date?: string | null
           company_name?: string | null
@@ -14511,6 +14514,7 @@ export type Database = {
       }
       finance_accounts: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           blocked: boolean
           created_at: string
           credit_limit: number | null
@@ -14528,6 +14532,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           blocked?: boolean
           created_at?: string
           credit_limit?: number | null
@@ -14545,6 +14550,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           blocked?: boolean
           created_at?: string
           credit_limit?: number | null
@@ -15167,6 +15173,7 @@ export type Database = {
       }
       finance_bank_lines: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount: number
           booking_date: string | null
           counterparty_iban: string | null
@@ -15190,6 +15197,7 @@ export type Database = {
           value_date: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount: number
           booking_date?: string | null
           counterparty_iban?: string | null
@@ -15213,6 +15221,7 @@ export type Database = {
           value_date?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number
           booking_date?: string | null
           counterparty_iban?: string | null
@@ -15268,6 +15277,7 @@ export type Database = {
       }
       finance_bank_postings: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount: number
           bank_account_id: string | null
           counterparty: string | null
@@ -15289,6 +15299,7 @@ export type Database = {
           value_date: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number
           bank_account_id?: string | null
           counterparty?: string | null
@@ -15310,6 +15321,7 @@ export type Database = {
           value_date?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number
           bank_account_id?: string | null
           counterparty?: string | null
@@ -15357,6 +15369,7 @@ export type Database = {
       finance_bank_statements: {
         Row: {
           account_name: string | null
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           closing_balance: number | null
           created_at: string
           currency: string | null
@@ -15375,6 +15388,7 @@ export type Database = {
         }
         Insert: {
           account_name?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           closing_balance?: number | null
           created_at?: string
           currency?: string | null
@@ -15393,6 +15407,7 @@ export type Database = {
         }
         Update: {
           account_name?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           closing_balance?: number | null
           created_at?: string
           currency?: string | null
@@ -15463,6 +15478,7 @@ export type Database = {
       }
       finance_cashbook: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount_gross: number
           amount_net: number
           amount_vat: number
@@ -15488,6 +15504,7 @@ export type Database = {
           vat_rate: number
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount_gross?: number
           amount_net?: number
           amount_vat?: number
@@ -15513,6 +15530,7 @@ export type Database = {
           vat_rate?: number
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount_gross?: number
           amount_net?: number
           amount_vat?: number
@@ -15570,6 +15588,7 @@ export type Database = {
       }
       finance_cashbook_closures: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           calculated_balance: number
           closure_date: string
           closure_number: string | null
@@ -15589,6 +15608,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           calculated_balance?: number
           closure_date: string
           closure_number?: string | null
@@ -15608,6 +15628,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           calculated_balance?: number
           closure_date?: string
           closure_number?: string | null
@@ -15838,6 +15859,7 @@ export type Database = {
       }
       finance_contracts: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           contract_number: string | null
           contract_type: string
           contract_version: number
@@ -15863,6 +15885,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           contract_number?: string | null
           contract_type?: string
           contract_version?: number
@@ -15888,6 +15911,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           contract_number?: string | null
           contract_type?: string
           contract_version?: number
@@ -16108,6 +16132,7 @@ export type Database = {
       }
       finance_deposits: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           company_name: string | null
           contact_name: string | null
           country: string | null
@@ -16146,6 +16171,7 @@ export type Database = {
           vat_amount: number
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           company_name?: string | null
           contact_name?: string | null
           country?: string | null
@@ -16184,6 +16210,7 @@ export type Database = {
           vat_amount?: number
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           company_name?: string | null
           contact_name?: string | null
           country?: string | null
@@ -16733,6 +16760,7 @@ export type Database = {
       finance_journal: {
         Row: {
           account: string | null
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount_gross: number | null
           amount_net: number | null
           amount_vat: number | null
@@ -16762,6 +16790,7 @@ export type Database = {
         }
         Insert: {
           account?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount_gross?: number | null
           amount_net?: number | null
           amount_vat?: number | null
@@ -16791,6 +16820,7 @@ export type Database = {
         }
         Update: {
           account?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount_gross?: number | null
           amount_net?: number | null
           amount_vat?: number | null
@@ -17352,6 +17382,7 @@ export type Database = {
       }
       finance_reminder_items: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount: number
           created_at: string
           days_overdue: number | null
@@ -17363,6 +17394,7 @@ export type Database = {
           transaction_id: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number
           created_at?: string
           days_overdue?: number | null
@@ -17374,6 +17406,7 @@ export type Database = {
           transaction_id?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number
           created_at?: string
           days_overdue?: number | null
@@ -17403,6 +17436,7 @@ export type Database = {
       }
       finance_reminders: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount: number
           created_at: string
           customer_id: string
@@ -17423,6 +17457,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number
           created_at?: string
           customer_id: string
@@ -17443,6 +17478,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number
           created_at?: string
           customer_id?: string
@@ -17607,6 +17643,7 @@ export type Database = {
       finance_sepa_mandates: {
         Row: {
           account_holder: string | null
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           bic: string | null
           created_at: string
           created_by: string | null
@@ -17625,6 +17662,7 @@ export type Database = {
         }
         Insert: {
           account_holder?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           bic?: string | null
           created_at?: string
           created_by?: string | null
@@ -17643,6 +17681,7 @@ export type Database = {
         }
         Update: {
           account_holder?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           bic?: string | null
           created_at?: string
           created_by?: string | null
@@ -17685,6 +17724,7 @@ export type Database = {
       }
       finance_sepa_run_items: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount: number
           created_at: string
           customer_id: string
@@ -17698,6 +17738,7 @@ export type Database = {
           transaction_id: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount: number
           created_at?: string
           customer_id: string
@@ -17711,6 +17752,7 @@ export type Database = {
           transaction_id?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number
           created_at?: string
           customer_id?: string
@@ -17763,6 +17805,7 @@ export type Database = {
       }
       finance_sepa_runs: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           collection_date: string
           created_at: string
           created_by: string | null
@@ -17784,6 +17827,7 @@ export type Database = {
           xml_path: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           collection_date: string
           created_at?: string
           created_by?: string | null
@@ -17805,6 +17849,7 @@ export type Database = {
           xml_path?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           collection_date?: string
           created_at?: string
           created_by?: string | null
@@ -18118,6 +18163,7 @@ export type Database = {
       }
       finance_transactions: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount: number
           booking_date: string
           contract_id: string | null
@@ -18135,6 +18181,7 @@ export type Database = {
           transaction_type: string
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number
           booking_date?: string
           contract_id?: string | null
@@ -18152,6 +18199,7 @@ export type Database = {
           transaction_type?: string
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number
           booking_date?: string
           contract_id?: string | null
@@ -22624,6 +22672,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           az_tax_percentage: number | null
           billing_address: Json | null
           case_number: string | null
@@ -22666,6 +22715,7 @@ export type Database = {
           vat_display_mode: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           az_tax_percentage?: number | null
           billing_address?: Json | null
           case_number?: string | null
@@ -22708,6 +22758,7 @@ export type Database = {
           vat_display_mode?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           az_tax_percentage?: number | null
           billing_address?: Json | null
           case_number?: string | null
@@ -31551,6 +31602,7 @@ export type Database = {
       }
       zoho_recurring_profiles: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           company_name: string | null
           created_at: string
           currency: string | null
@@ -31580,6 +31632,7 @@ export type Database = {
           zoho_recurring_invoice_id: string
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           company_name?: string | null
           created_at?: string
           currency?: string | null
@@ -31609,6 +31662,7 @@ export type Database = {
           zoho_recurring_invoice_id: string
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           company_name?: string | null
           created_at?: string
           currency?: string | null
@@ -33025,6 +33079,13 @@ export type Database = {
         }[]
       }
       get_table_columns: { Args: { _table: string }; Returns: string[] }
+      has_accounting_region: {
+        Args: {
+          _region: Database["public"]["Enums"]["accounting_region"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_alix_id_permission: {
         Args: { _permission: string }
         Returns: boolean
@@ -33246,6 +33307,7 @@ export type Database = {
         | "snoozed"
       ac_message_direction: "inbound" | "outbound" | "internal"
       ac_sender_type: "user" | "contact" | "bot" | "system"
+      accounting_region: "EU" | "CH"
       as_case_status:
         | "open"
         | "in_progress"
@@ -33540,6 +33602,7 @@ export const Constants = {
       ],
       ac_message_direction: ["inbound", "outbound", "internal"],
       ac_sender_type: ["user", "contact", "bot", "system"],
+      accounting_region: ["EU", "CH"],
       as_case_status: [
         "open",
         "in_progress",
