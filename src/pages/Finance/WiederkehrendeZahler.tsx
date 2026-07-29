@@ -264,7 +264,21 @@ export default function WiederkehrendeZahler() {
         </div>
       </div>
 
-      <DataCard title={`Kundenkonten (${filtered.length})`}>
+      <DataCard
+        title={`Kundenkonten (${filtered.length})`}
+        headerRight={
+          <div className="flex items-center gap-4 text-sm">
+            <div className="text-muted-foreground">
+              Σ Verträge monatlich:{' '}
+              <span className="font-semibold text-primary tabular-nums">{fmt(totals.monthly)}</span>
+            </div>
+            <div className="text-muted-foreground">
+              Aktive Verträge:{' '}
+              <span className="font-semibold text-foreground tabular-nums">{totals.activeProfiles}</span>
+            </div>
+          </div>
+        }
+      >
         <div className="divide-y divide-border -mx-5">
           {filtered.length === 0 && (
             <div className="px-5 py-12 text-center text-muted-foreground text-sm">Keine Treffer.</div>
