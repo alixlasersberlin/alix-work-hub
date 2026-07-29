@@ -31,6 +31,8 @@ const fmt = (n: number | null | undefined, c = 'EUR') =>
 
 export default function FinanceEingangsrechnungen() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
+  const cur = region === 'CH' ? 'CHF' : 'EUR';
   const canApprove = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Geschäftsführung');
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const fileRef = useRef<HTMLInputElement>(null);
@@ -44,14 +46,14 @@ export default function FinanceEingangsrechnungen() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_incoming_invoices' as any).select('*').order('invoice_date', { ascending: false }).limit(300);
+    let q = supabase.from('finance_incoming_invoices' as any).select('*').eq('accounting_region', region).order('invoice_date', { ascending: false }).limit(300);
     if (statusFilter !== 'alle') q = q.eq('status', statusFilter);
     const { data, error } = await q;
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     setRows((data ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [statusFilter]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [statusFilter, region]);
 
   const onXmlFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
