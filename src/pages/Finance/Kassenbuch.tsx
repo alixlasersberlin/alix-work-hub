@@ -14,8 +14,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
-const fmt = (n: number) => (n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+const fmt = (n: number, cur = 'EUR') => (n || 0).toLocaleString('de-DE', { style: 'currency', currency: cur });
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 type Row = any;
