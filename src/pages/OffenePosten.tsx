@@ -48,6 +48,8 @@ type OpenItem = {
   balance: number | null;
   currency: string | null;
   status: string | null;
+  zoho_invoice_id: string | null;
+  source_system: string | null;
 };
 
 type WorkflowState = {
