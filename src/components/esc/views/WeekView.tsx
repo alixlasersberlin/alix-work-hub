@@ -5,6 +5,16 @@ import { AppointmentCard } from '../AppointmentCard';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
+function hueFromId(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
+function subtleTint(id: string) {
+  const h = hueFromId(id);
+  return { bg: `hsla(${h} 60% 55% / 0.12)`, border: `hsla(${h} 60% 55% / 0.55)` };
+}
+
 export function WeekView({
   date, appointments, departments, onSlotClick, onAppointmentClick, onDropAppointment,
 }: {
@@ -79,6 +89,7 @@ export function WeekView({
             <div key={ri} className="grid grid-cols-7 gap-1">
               {row.map((sp) => {
                 const dept = deptOf(sp.a.departmentId);
+                const tint = subtleTint(sp.a.id);
                 return (
                   <button
                     key={sp.a.id}
@@ -87,14 +98,16 @@ export function WeekView({
                     onDragStart={(e) => { e.dataTransfer.setData('text/esc-id', sp.a.id); e.dataTransfer.effectAllowed = 'move'; }}
                     onClick={(e) => { e.stopPropagation(); onAppointmentClick?.(sp.a); }}
                     className={cn(
-                      'text-left text-[11px] px-2 py-1 rounded-md border border-l-4 bg-card hover:bg-accent/40 transition-colors truncate',
+                      'text-left text-[11px] px-2 py-1 rounded-md border border-l-4 hover:brightness-110 transition truncate',
                       sp.continuesLeft && 'rounded-l-none',
                       sp.continuesRight && 'rounded-r-none',
                     )}
                     style={{
                       gridColumnStart: sp.colStart + 1,
                       gridColumnEnd: sp.colEnd + 2,
-                      borderLeftColor: dept?.color || 'hsl(var(--primary))',
+                      backgroundColor: tint.bg,
+                      borderColor: tint.border,
+                      borderLeftColor: dept?.color || tint.border,
                     }}
                     title={`${sp.a.title} · ${format(new Date(sp.a.startAt), 'dd.MM. HH:mm', { locale: de })} – ${format(new Date(sp.a.endAt), 'dd.MM. HH:mm', { locale: de })}`}
                   >
@@ -142,15 +155,20 @@ export function WeekView({
                 onDropAppointment?.(id, newStart);
               }}
             >
-              {items.map((a) => (
-                <div
-                  key={a.id}
-                  draggable={!!onDropAppointment}
-                  onDragStart={(e) => { e.dataTransfer.setData('text/esc-id', a.id); e.dataTransfer.effectAllowed = 'move'; }}
-                >
-                  <AppointmentCard appointment={a} department={deptOf(a.departmentId)} compact onClick={() => onAppointmentClick?.(a)} />
-                </div>
-              ))}
+              {items.map((a) => {
+                const tint = items.length > 1 ? subtleTint(a.id) : null;
+                return (
+                  <div
+                    key={a.id}
+                    draggable={!!onDropAppointment}
+                    onDragStart={(e) => { e.dataTransfer.setData('text/esc-id', a.id); e.dataTransfer.effectAllowed = 'move'; }}
+                    className="rounded-md"
+                    style={tint ? { backgroundColor: tint.bg } : undefined}
+                  >
+                    <AppointmentCard appointment={a} department={deptOf(a.departmentId)} compact onClick={() => onAppointmentClick?.(a)} />
+                  </div>
+                );
+              })}
             </div>
           );
         })}
