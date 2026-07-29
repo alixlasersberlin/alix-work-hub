@@ -34,6 +34,7 @@ type Profile = {
   last_sent_date: string | null;
   total: number | null;
   currency: string | null;
+  created_at: string | null;
 };
 
 type Invoice = {
