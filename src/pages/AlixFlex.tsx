@@ -59,6 +59,11 @@ function fmtDate(d: string | null) {
   try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }
 }
 
+function isSepaRow(r: Pick<Row, 'recurrence_name' | 'reference_number'>) {
+  const hay = `${r.recurrence_name ?? ''} ${r.reference_number ?? ''}`.toLowerCase();
+  return /\bsepa\b|lastschrift/.test(hay);
+}
+
 export default function AlixFlex() {
   const { roles } = useAuth();
   const isAdmin = roles.includes('Admin') || (roles.includes('Super Admin') || roles.includes('Admin'));
