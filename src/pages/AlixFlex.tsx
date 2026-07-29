@@ -178,7 +178,7 @@ export default function AlixFlex() {
       );
     }
     return res;
-  }, [rows, search, statusFilter, sourceFilter, billingRunFilter, dateRangeFilter, customFrom, customTo]);
+  }, [rows, search, statusFilter, sourceFilter, typeFilter, billingRunFilter, dateRangeFilter, customFrom, customTo]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
