@@ -47,7 +47,7 @@ export default function Buchungsjournal() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
-      <PageHeader icon={ScrollText} title="Buchungsjournal" subtitle="Lückenlose Dokumentation aller Finanzbewegungen (GoBD)"
+      <PageHeader icon={ScrollText} title={`Buchungsjournal · ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`} subtitle="Lückenlose Dokumentation aller Finanzbewegungen (GoBD)"
         actions={<Button variant="outline" onClick={exportCsv}><Download className="mr-2 h-4 w-4" />CSV</Button>} />
 
       <Card>
