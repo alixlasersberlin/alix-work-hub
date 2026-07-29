@@ -22,6 +22,7 @@ const TYPES: { value: FilingType; label: string; period: string }[] = [
 ];
 
 export default function FinanceMeldewesen() {
+  const { region } = useAccountingRegion();
   const [loading, setLoading] = useState(true);
   const [tenants, setTenants] = useState<any[]>([]);
   const [filings, setFilings] = useState<any[]>([]);
@@ -34,13 +35,13 @@ export default function FinanceMeldewesen() {
     setLoading(true);
     const [{ data: t }, { data: f }] = await Promise.all([
       supabase.from('tenants' as any).select('id,name,flag_emoji').eq('is_active', true).order('sort_order'),
-      supabase.from('finance_tax_filings' as any).select('*').order('created_at', { ascending: false }).limit(100),
+      supabase.from('finance_tax_filings' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(100),
     ]);
     setTenants((t ?? []) as any);
     setFilings((f ?? []) as any);
     setLoading(false);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [region]);
   useEffect(() => {
     const def = TYPES.find((x) => x.value === tab)?.period;
     if (def) setPeriod(def);
@@ -55,7 +56,7 @@ export default function FinanceMeldewesen() {
     setBusy(true);
     try {
       const { data, error } = await supabase.functions.invoke('finance-tax-export', {
-        body: { filing_type: tab, period_value: period, tenant_id: tenantId || null },
+        body: { filing_type: tab, period_value: period, tenant_id: tenantId || null, accounting_region: region },
       });
       if (error) throw error;
       toast({ title: 'Meldung erzeugt', description: `${(data as any)?.filing_id?.slice(0, 8)}…` });
