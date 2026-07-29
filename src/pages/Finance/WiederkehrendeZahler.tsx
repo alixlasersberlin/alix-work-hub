@@ -92,7 +92,7 @@ export default function WiederkehrendeZahler() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped'>('active');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>('active');
 
   async function load() {
     setLoading(true);
