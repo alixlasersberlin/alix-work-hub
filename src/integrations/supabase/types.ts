@@ -14704,6 +14704,7 @@ export type Database = {
       }
       finance_approvals: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount: number | null
           approved_at: string | null
           approved_by: string | null
@@ -14727,6 +14728,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number | null
           approved_at?: string | null
           approved_by?: string | null
@@ -14750,6 +14752,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number | null
           approved_at?: string | null
           approved_by?: string | null
@@ -14847,6 +14850,7 @@ export type Database = {
       }
       finance_assets: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           accumulated_depreciation: number
           acquisition_date: string
           acquisition_value: number
@@ -14878,6 +14882,7 @@ export type Database = {
           useful_life_months: number
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           accumulated_depreciation?: number
           acquisition_date: string
           acquisition_value: number
@@ -14909,6 +14914,7 @@ export type Database = {
           useful_life_months?: number
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           accumulated_depreciation?: number
           acquisition_date?: string
           acquisition_value?: number
@@ -15428,6 +15434,7 @@ export type Database = {
       }
       finance_budgets: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           category: string
           created_at: string
           created_by: string | null
@@ -15441,6 +15448,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           category: string
           created_at?: string
           created_by?: string | null
@@ -15454,6 +15462,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           category?: string
           created_at?: string
           created_by?: string | null
@@ -15651,6 +15660,7 @@ export type Database = {
       }
       finance_cashflow_items: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           actual_amount: number
           category: string
           created_at: string
@@ -15666,6 +15676,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           actual_amount?: number
           category: string
           created_at?: string
@@ -15681,6 +15692,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           actual_amount?: number
           category?: string
           created_at?: string
@@ -15707,6 +15719,7 @@ export type Database = {
       }
       finance_cashflow_plans: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           created_at: string
           created_by: string | null
           id: string
@@ -15720,6 +15733,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           created_at?: string
           created_by?: string | null
           id?: string
@@ -15733,6 +15747,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           created_at?: string
           created_by?: string | null
           id?: string
@@ -16252,6 +16267,7 @@ export type Database = {
       }
       finance_documents: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount: number | null
           created_at: string
           created_by: string | null
@@ -16273,6 +16289,7 @@ export type Database = {
           tenant_id: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number | null
           created_at?: string
           created_by?: string | null
@@ -16294,6 +16311,7 @@ export type Database = {
           tenant_id?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount?: number | null
           created_at?: string
           created_by?: string | null
@@ -16347,6 +16365,7 @@ export type Database = {
       }
       finance_forecasts: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           category: string
           created_at: string
           created_by: string | null
@@ -16360,6 +16379,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           category: string
           created_at?: string
           created_by?: string | null
@@ -16373,6 +16393,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           category?: string
           created_at?: string
           created_by?: string | null
@@ -16508,6 +16529,7 @@ export type Database = {
       }
       finance_incoming_invoices: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           amount_gross: number
           amount_net: number | null
           amount_tax: number | null
@@ -16545,6 +16567,7 @@ export type Database = {
           xml_path: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount_gross: number
           amount_net?: number | null
           amount_tax?: number | null
@@ -16582,6 +16605,7 @@ export type Database = {
           xml_path?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           amount_gross?: number
           amount_net?: number | null
           amount_tax?: number | null
