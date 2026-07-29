@@ -32,6 +32,7 @@ import MfaSetup from "./pages/MfaSetup";
 import MfaChallenge from "./pages/MfaChallenge";
 import MfaRecovery from "./pages/MfaRecovery";
 import AppLayout from "./components/AppLayout";
+import { AccountingRegionProvider } from "./contexts/AccountingRegionContext";
 import NotFound from "./pages/NotFound";
 import { isMfaMandatory } from "@/lib/mfa-required";
 
