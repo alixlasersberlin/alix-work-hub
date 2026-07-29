@@ -29,8 +29,9 @@ export default function FinanceMeldewesen() {
   const [loading, setLoading] = useState(true);
   const [tenants, setTenants] = useState<any[]>([]);
   const [filings, setFilings] = useState<any[]>([]);
-  const [tab, setTab] = useState<FilingType>('ustva');
-  const [period, setPeriod] = useState('2026-03');
+  const TYPES = region === 'CH' ? TYPES_CH : TYPES_EU;
+  const [tab, setTab] = useState<FilingType>(TYPES[0].value);
+  const [period, setPeriod] = useState(TYPES[0].period);
   const [tenantId, setTenantId] = useState<string>('');
   const [busy, setBusy] = useState(false);
 
@@ -45,6 +46,9 @@ export default function FinanceMeldewesen() {
     setLoading(false);
   };
   useEffect(() => { load(); }, [region]);
+  useEffect(() => {
+    if (!TYPES.find(x => x.value === tab)) setTab(TYPES[0].value);
+  }, [region]);
   useEffect(() => {
     const def = TYPES.find((x) => x.value === tab)?.period;
     if (def) setPeriod(def);
