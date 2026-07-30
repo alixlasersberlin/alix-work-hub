@@ -10,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Search, Loader2, User } from 'lucide-react';
+
 
 export default function CreditNew() {
   const nav = useNavigate();
@@ -30,9 +31,54 @@ export default function CreditNew() {
   const [purpose, setPurpose] = useState('');
   const [consent, setConsent] = useState(false);
 
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState<any[]>([]);
+  const [linkedCustomer, setLinkedCustomer] = useState<any>(null);
+
   if (!canWrite) return <div className="p-8 text-center text-muted-foreground">Kein Zugriff.</div>;
 
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  const searchCustomers = async () => {
+    const q = query.trim();
+    if (q.length < 2) { toast.error('Bitte mindestens 2 Zeichen eingeben.'); return; }
+    setSearching(true);
+    try {
+      const like = `%${q}%`;
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id, contact_name, company_name, email, phone, billing_address, external_customer_id, source_system')
+        .or(`contact_name.ilike.${like},company_name.ilike.${like},email.ilike.${like}`)
+        .order('contact_name', { ascending: true })
+        .limit(25);
+      if (error) throw error;
+      setResults(data || []);
+      if (!data?.length) toast.info('Keine Kunden gefunden.');
+    } catch (e: any) {
+      toast.error('Suche fehlgeschlagen: ' + (e?.message || e));
+    } finally { setSearching(false); }
+  };
+
+  const applyCustomer = (c: any) => {
+    const ba = c.billing_address || {};
+    const addr = [ba.address || ba.street, [ba.zip, ba.city].filter(Boolean).join(' '), ba.country]
+      .filter(Boolean).join(', ');
+    setForm((f) => ({
+      ...f,
+      company_name: c.company_name || f.company_name,
+      name: c.contact_name || f.name,
+      email: c.email || f.email,
+      phone: c.phone || f.phone,
+      address: addr || f.address,
+    }));
+    if (c.company_name) setType('company');
+    setLinkedCustomer(c);
+    setResults([]);
+    setQuery('');
+    toast.success('Kundendaten übernommen.');
+  };
+
 
   const save = async (calculate = true) => {
     if (!consent) { toast.error('Bitte Einwilligung zur Bonitätsprüfung bestätigen.'); return; }
@@ -40,7 +86,7 @@ export default function CreditNew() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase.from('credit_assessments' as any).insert({
-        customer_type: type, customer_snapshot: form,
+        customer_type: type, customer_snapshot: { ...form, customer_id: linkedCustomer?.id || null, external_customer_id: linkedCustomer?.external_customer_id || null },
         requested_amount: amount, requested_term_months: term, requested_downpayment_pct: downpayment,
         purpose, consent_given: true, consent_at: new Date().toISOString(), consent_by: user?.id,
         status: 'draft',
@@ -69,7 +115,52 @@ export default function CreditNew() {
       </div>
 
       <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Search className="w-4 h-4" /> Kunde suchen</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Name, Firma oder E-Mail …"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); searchCustomers(); } }}
+            />
+            <Button onClick={searchCustomers} disabled={searching} className="gap-2">
+              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Suchen
+            </Button>
+          </div>
+          {linkedCustomer && (
+            <div className="flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+              <span className="flex items-center gap-2">
+                <User className="w-4 h-4 text-primary" />
+                Verknüpft: <strong>{linkedCustomer.company_name || linkedCustomer.contact_name}</strong>
+                {linkedCustomer.email && <span className="text-muted-foreground">· {linkedCustomer.email}</span>}
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => setLinkedCustomer(null)}>Entfernen</Button>
+            </div>
+          )}
+          {results.length > 0 && (
+            <div className="max-h-72 overflow-y-auto rounded-md border divide-y">
+              {results.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => applyCustomer(c)}
+                  className="w-full text-left px-3 py-2 hover:bg-muted/60 transition-colors"
+                >
+                  <div className="text-sm font-medium">{c.company_name || c.contact_name || '—'}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {[c.company_name ? c.contact_name : null, c.email, c.phone].filter(Boolean).join(' · ') || '—'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle>Kundendaten</CardTitle></CardHeader>
+
         <CardContent className="space-y-4">
           <div className="flex gap-4">
             <Label className="flex items-center gap-2"><input type="radio" checked={type === 'company'} onChange={() => setType('company')} /> Firma</Label>
