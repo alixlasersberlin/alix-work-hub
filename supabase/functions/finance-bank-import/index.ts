@@ -180,6 +180,30 @@ function extractRefs(text: string): string[] {
   return [...refs].slice(0, 10);
 }
 
+/** Schweizer QR-Referenzen: QRR (27 Ziffern, Modulo-10 rekursiv) und SCOR (RFxx…) */
+function extractQrRefs(text: string): string[] {
+  const out = new Set<string>();
+  const compact = String(text ?? '').replace(/\s+/g, '');
+  for (const m of compact.match(/\d{27}/g) ?? []) {
+    if (mod10Recursive(m.slice(0, 26)) === Number(m[26])) out.add(m);
+  }
+  for (const m of (String(text ?? '').match(/\bRF\d{2}[A-Z0-9]{1,21}\b/gi) ?? [])) {
+    out.add(m.toUpperCase().replace(/\s+/g, ''));
+  }
+  return [...out].slice(0, 10);
+}
+
+function mod10Recursive(body: string): number {
+  const table = [0, 9, 4, 6, 8, 2, 7, 1, 3, 5];
+  let carry = 0;
+  for (const ch of body) {
+    const d = Number(ch);
+    if (isNaN(d)) continue;
+    carry = table[(carry + d) % 10];
+  }
+  return (10 - carry) % 10;
+}
+
 // ============== CAMT.053 (very forgiving regex parser; works for typical Bundesbank format) ==============
 function parseCamt053(xml: string): Parsed {
   const iban = pick(xml, /<IBAN>([^<]+)<\/IBAN>/);
