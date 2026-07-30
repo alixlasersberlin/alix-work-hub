@@ -124,8 +124,8 @@ export default function FinanceMahnwesen() {
       <DataCard className="overflow-hidden">
         {loading ? (
           <div className="p-4"><SkeletonTable rows={8} cols={7} /></div>
-        ) : accounts.length === 0 ? (
-          <div className="p-8"><EmptyState compact icon={Inbox} title="Keine überfälligen Forderungen" description="Alle Debitoren sind im grünen Bereich." /></div>
+        ) : visibleAccounts.length === 0 ? (
+          <div className="p-8"><EmptyState compact icon={Inbox} title="Keine Einträge" description={onlyWithReminder ? `Keine Konten mit Mahnung im Status „${statusFilter}".` : 'Alle Debitoren sind im grünen Bereich.'} /></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -136,13 +136,14 @@ export default function FinanceMahnwesen() {
                   <th className="text-left px-4 py-3 font-medium">Aktuelle Stufe</th>
                   <th className="text-right px-4 py-3 font-medium">Überfällig</th>
                   <th className="text-left px-4 py-3 font-medium">Letzte Mahnung</th>
-                  <th className="text-left px-4 py-3 font-medium">Entwurf</th>
+                  <th className="text-left px-4 py-3 font-medium">Mahnung ({statusFilter === 'alle' ? 'alle' : statusFilter})</th>
                   <th className="text-right px-4 py-3 font-medium">Aktion</th>
                 </tr>
               </thead>
               <tbody>
-                {accounts.map(a => {
+                {visibleAccounts.map(a => {
                   const d = draftsByCustomer.get(a.customer_id);
+
                   return (
                     <tr key={a.id} className="border-t border-border hover:bg-muted/20">
                       <td className="px-4 py-3">{a.customers?.company_name || a.customers?.contact_name || a.customer_id.slice(0, 8)}</td>
