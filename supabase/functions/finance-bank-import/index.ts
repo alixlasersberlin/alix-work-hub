@@ -35,7 +35,8 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
   try {
-    const { filename, content } = await req.json();
+    const { filename, content, accounting_region } = await req.json();
+    const region: 'EU' | 'CH' = accounting_region === 'CH' ? 'CH' : 'EU';
     if (!content || typeof content !== 'string') {
       return new Response(JSON.stringify({ error: 'content (string) erforderlich' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -62,11 +63,16 @@ Deno.serve(async (req) => {
       uploaded_by = data?.user?.id ?? null;
     } catch { /* ignore */ }
 
+    const stmtCurrency = region === 'CH'
+      ? (parsed.currency === 'EUR' ? 'CHF' : parsed.currency)
+      : parsed.currency;
+
     const { data: stmt, error: sErr } = await admin.from('finance_bank_statements').insert({
       iban: parsed.iban, account_name: parsed.account_name, format, filename: filename ?? null,
       period_from: parsed.period_from, period_to: parsed.period_to,
       opening_balance: parsed.opening_balance, closing_balance: parsed.closing_balance,
-      currency: parsed.currency, line_count: parsed.lines.length, file_hash, uploaded_by,
+      currency: stmtCurrency, line_count: parsed.lines.length, file_hash, uploaded_by,
+      accounting_region: region,
     }).select('id').single();
     if (sErr || !stmt) throw new Error(sErr?.message ?? 'Statement insert failed');
 
@@ -74,18 +80,50 @@ Deno.serve(async (req) => {
     const lineRows = parsed.lines.map((l) => ({
       statement_id: stmt.id,
       booking_date: l.booking_date, value_date: l.value_date,
-      amount: l.amount, currency: l.currency,
+      amount: l.amount, currency: region === 'CH' && l.currency === 'EUR' ? 'CHF' : l.currency,
       purpose: l.purpose, counterparty_name: l.counterparty_name, counterparty_iban: l.counterparty_iban,
       end_to_end_id: l.end_to_end_id,
       status: 'offen',
       line_hash: hashLine(l),
+      accounting_region: region,
     }));
     if (lineRows.length) await admin.from('finance_bank_lines').insert(lineRows);
 
-    // Auto-match: positive amounts vs. open finance_transactions
-    const { data: lines } = await admin.from('finance_bank_lines').select('id, amount, purpose').eq('statement_id', stmt.id).eq('status', 'offen');
+    const { data: lines } = await admin.from('finance_bank_lines')
+      .select('id, amount, purpose, end_to_end_id').eq('statement_id', stmt.id).eq('status', 'offen');
     let matched = 0;
-    for (const l of (lines ?? []) as any[]) {
+
+    // --- Phase 6 CH: QR-Referenz (QRR/SCOR) Auto-Matching gegen finance_qr_invoices ---
+    if (region === 'CH') {
+      for (const l of (lines ?? []) as any[]) {
+        if (Number(l.amount) <= 0) continue;
+        const qrRefs = extractQrRefs(`${l.purpose ?? ''} ${l.end_to_end_id ?? ''}`);
+        if (qrRefs.length === 0) continue;
+        const { data: invs } = await admin
+          .from('finance_qr_invoices')
+          .select('id, amount, customer_id, reference, status')
+          .eq('accounting_region', 'CH')
+          .in('reference', qrRefs)
+          .limit(10);
+        const hit = (invs ?? []).find((c: any) => Math.abs(Number(c.amount) - Number(l.amount)) < 0.05);
+        if (!hit) continue;
+        await admin.from('finance_bank_lines').update({
+          status: 'zugeordnet',
+          matched_customer_id: hit.customer_id,
+          match_confidence: 0.99, match_method: 'auto:qr-ref',
+          matched_at: new Date().toISOString(),
+        }).eq('id', l.id);
+        await admin.from('finance_qr_invoices').update({
+          status: 'bezahlt', paid_at: new Date().toISOString(),
+        }).eq('id', hit.id);
+        matched++;
+      }
+    }
+
+    // Auto-match: positive amounts vs. open finance_transactions
+    const { data: rest } = await admin.from('finance_bank_lines')
+      .select('id, amount, purpose').eq('statement_id', stmt.id).eq('status', 'offen');
+    for (const l of (rest ?? []) as any[]) {
       if (Number(l.amount) <= 0) continue;
       const refs = extractRefs(String(l.purpose ?? ''));
       if (refs.length === 0) continue;
@@ -93,6 +131,7 @@ Deno.serve(async (req) => {
         .from('finance_transactions')
         .select('id, amount, customer_id, reference, notes')
         .eq('transaction_type', 'Rechnung')
+        .eq('accounting_region', region)
         .or(refs.map(r => `notes.ilike.%${r}%,reference.ilike.%${r}%`).join(','))
         .limit(20);
       const hit = (candidates ?? []).find((c: any) => Math.abs(Number(c.amount) - Number(l.amount)) < 0.01);
@@ -141,6 +180,30 @@ function extractRefs(text: string): string[] {
   return [...refs].slice(0, 10);
 }
 
+/** Schweizer QR-Referenzen: QRR (27 Ziffern, Modulo-10 rekursiv) und SCOR (RFxx…) */
+function extractQrRefs(text: string): string[] {
+  const out = new Set<string>();
+  const compact = String(text ?? '').replace(/\s+/g, '');
+  for (const m of compact.match(/\d{27}/g) ?? []) {
+    if (mod10Recursive(m.slice(0, 26)) === Number(m[26])) out.add(m);
+  }
+  for (const m of (String(text ?? '').match(/\bRF\d{2}[A-Z0-9]{1,21}\b/gi) ?? [])) {
+    out.add(m.toUpperCase().replace(/\s+/g, ''));
+  }
+  return [...out].slice(0, 10);
+}
+
+function mod10Recursive(body: string): number {
+  const table = [0, 9, 4, 6, 8, 2, 7, 1, 3, 5];
+  let carry = 0;
+  for (const ch of body) {
+    const d = Number(ch);
+    if (isNaN(d)) continue;
+    carry = table[(carry + d) % 10];
+  }
+  return (10 - carry) % 10;
+}
+
 // ============== CAMT.053 (very forgiving regex parser; works for typical Bundesbank format) ==============
 function parseCamt053(xml: string): Parsed {
   const iban = pick(xml, /<IBAN>([^<]+)<\/IBAN>/);
@@ -162,7 +225,9 @@ function parseCamt053(xml: string): Parsed {
     if (cdt === 'DBIT') amount = -amount;
     const booking_date = isoDate(pick(e, /<BookgDt>[\s\S]*?<Dt>([^<]+)<\/Dt>/)) ?? isoDate(pick(e, /<BookgDt>[\s\S]*?<DtTm>([^<]+)<\/DtTm>/));
     const value_date = isoDate(pick(e, /<ValDt>[\s\S]*?<Dt>([^<]+)<\/Dt>/));
-    const purpose = (pick(e, /<Ustrd>([^<]+)<\/Ustrd>/) ?? pick(e, /<AddtlNtryInf>([^<]+)<\/AddtlNtryInf>/) ?? '').trim();
+    const strdRef = pick(e, /<CdtrRefInf>[\s\S]*?<Ref>([^<]+)<\/Ref>/);
+    const purpose = [strdRef, pick(e, /<Ustrd>([^<]+)<\/Ustrd>/) ?? pick(e, /<AddtlNtryInf>([^<]+)<\/AddtlNtryInf>/)]
+      .filter(Boolean).join(' ').trim();
     const counterparty_name = pick(e, /<RltdPties>[\s\S]*?<Nm>([^<]+)<\/Nm>/);
     const counterparty_iban = pick(e, /<RltdPties>[\s\S]*?<IBAN>([^<]+)<\/IBAN>/);
     const end_to_end_id = pick(e, /<EndToEndId>([^<]+)<\/EndToEndId>/);

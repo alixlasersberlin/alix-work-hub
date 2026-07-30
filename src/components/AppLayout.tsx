@@ -469,6 +469,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/qr-rechnung', label: 'QR-Rechnung 🇨🇭', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung CH'] },
           { path: '/finance/ch-lastschriften', label: 'CH Lastschriften (LSV+/BDD) 🇨🇭', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung CH'] },
           { path: '/finance/camt054', label: 'CAMT.054 Import 🇨🇭', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung CH'] },
+          { path: '/finance/bank-abgleich-ch', label: 'Bank-Abgleich 🇨🇭', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung CH'] },
           { path: '/finance/treasury', label: 'Treasury', icon: Banknote, roles: ['Admin', 'Super Admin'] },
         ],
       },

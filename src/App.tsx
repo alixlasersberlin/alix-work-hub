@@ -125,6 +125,7 @@ const FinanceBank = lazy(() => import("./pages/Finance/Bank"));
 const FinanceSepa = lazy(() => import("./pages/Finance/Sepa"));
 const FinanceQrRechnung = lazy(() => import("./pages/Finance/QrRechnung"));
 const FinanceChLastschriften = lazy(() => import("./pages/Finance/ChLastschriften"));
+const FinanceBankAbgleichCh = lazy(() => import("./pages/Finance/BankAbgleichCh"));
 const FinanceCamt054 = lazy(() => import("./pages/Finance/Camt054"));
 const FinanceSteuer = lazy(() => import("./pages/Finance/Steuer"));
 const FinanceCockpit = lazy(() => import("./pages/Finance/Cockpit"));
@@ -1256,6 +1257,7 @@ function AppRoutes() {
           <Route path="/finance/qr-rechnung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceQrRechnung /></ProtectedRoute>} />
           <Route path="/finance/ch-lastschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceChLastschriften /></ProtectedRoute>} />
           <Route path="/finance/camt054" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCamt054 /></ProtectedRoute>} />
+          <Route path="/finance/bank-abgleich-ch" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBankAbgleichCh /></ProtectedRoute>} />
           <Route path="/finance/steuer" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuer /></ProtectedRoute>} />
           <Route path="/finance/kostenstellen-report" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKostenstellenReport /></ProtectedRoute>} />
           <Route path="/finance/deckungsbeitrag" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDeckungsbeitrag /></ProtectedRoute>} />
