@@ -10,15 +10,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { RegionChip } from '@/components/finance/RegionChip';
+import { regionCurrency } from '@/lib/finance/region';
 
 const LEVEL_LABEL = ['—', 'Zahlungserinnerung', '1. Mahnung', '2. Mahnung', 'Letzte Mahnung'];
-const fmt = (n: number | null | undefined) => typeof n === 'number'
-  ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n) : '–';
 
 export default function FinanceMahnwesenDetail() {
   const { customerId } = useParams<{ customerId: string }>();
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
+  const fmt = (n: number | null | undefined) => typeof n === 'number'
+    ? new Intl.NumberFormat(region === 'CH' ? 'de-CH' : 'de-DE', { style: 'currency', currency: regionCurrency(region) }).format(n) : '–';
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
+
   const [customer, setCustomer] = useState<any>(null);
   const [account, setAccount] = useState<any>(null);
   const [reminders, setReminders] = useState<any[]>([]);
