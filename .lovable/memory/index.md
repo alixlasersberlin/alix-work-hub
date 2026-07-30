@@ -63,3 +63,4 @@
 - [Social Media](mem://features/social-media) — /social/*, Onboarding+Content+KI+Analytics+Publishing, Tabellen social_*, Edge Functions social-ai-generate/social-publish/social-metrics-sync, Cron 5min/daily
 - [Finance Phase 10 Lohn](mem://features/finance-phase10-lohn) — Lohnläufe, Lohnjournal, Lohnarten, SV-Sätze (CH AHV/ALV/BVG, EU RV/KV/PV/AV) unter /finance/lohnbuchhaltung
 - [Finance Periodenabschluss](mem://features/finance-perioden) — Monats-Periodensperre EU/CH (finance_periods + enforce_period_lock), /finance/perioden, Region-Helper src/lib/finance/region.ts, RegionChip global
+- [AZ-Rechnung Status nach Versand](mem://features/az-invoice-status) — Anzahlungsrechnungen wechseln nach E-Mail-Versand automatisch von Entwurf auf Versendet / Offen
