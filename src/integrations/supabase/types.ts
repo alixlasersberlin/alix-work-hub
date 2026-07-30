@@ -32692,6 +32692,7 @@ export type Database = {
       }
       zoho_recurring_invoices: {
         Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
           balance: number | null
           billing_address: Json | null
           city: string | null
@@ -32718,6 +32719,7 @@ export type Database = {
           zoho_recurring_invoice_id: string | null
         }
         Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           balance?: number | null
           billing_address?: Json | null
           city?: string | null
@@ -32744,6 +32746,7 @@ export type Database = {
           zoho_recurring_invoice_id?: string | null
         }
         Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
           balance?: number | null
           billing_address?: Json | null
           city?: string | null
