@@ -492,6 +492,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/datev', label: 'DATEV', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/steuer', label: 'Steuer-Auswertung', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/meldewesen', label: 'Steuer & Meldewesen', icon: FileText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/steuerkonto', label: 'Steuerkonto & Zahllast', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/budget', label: 'Budgetplanung', icon: BarChart3, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/soll-ist', label: 'Soll-Ist-Vergleich', icon: TrendingUp, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/forecast', label: 'Rolling Forecast', icon: LineChart, roles: ['Admin', 'Super Admin'] },
