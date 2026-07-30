@@ -156,7 +156,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const [booking, setBooking] = useState(false);
   const [postingToBuchhaltung, setPostingToBuchhaltung] = useState(false);
   const [sending, setSending] = useState(false);
-  const [existingInvoices, setExistingInvoices] = useState<Array<{ invoice_number: string; issue_date?: string | null; gross_amount?: number | null; status?: string | null }>>([]);
+  const [existingInvoices, setExistingInvoices] = useState<Array<{ invoice_number: string; issue_date?: string | null; due_date?: string | null; gross_amount?: number | null; status?: string | null; net_amount?: number | null; vat_amount?: number | null; note?: string | null }>>([]);
   const [checkingExisting, setCheckingExisting] = useState(true);
   const [confirm, setConfirm] = useState<null | 'saveSend' | 'sendOnly'>(null);
 
@@ -234,7 +234,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       try {
         let query = supabase
           .from('finance_deposits' as any)
-          .select('invoice_number, deposit_number, issue_date, order_id, order_number, gross_amount, status')
+          .select('invoice_number, deposit_number, issue_date, due_date, order_id, order_number, gross_amount, net_amount, vat_amount, status, note')
           .order('issue_date', { ascending: true });
         const orFilters: string[] = [];
         if (order?.id) orFilters.push(`order_id.eq.${order.id}`);
@@ -247,6 +247,10 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           const list = (data || []).map((row: any) => ({
             invoice_number: row.invoice_number || row.deposit_number || `AZ-${orderNo}`,
             issue_date: row.issue_date ?? null,
+            due_date: row.due_date ?? null,
+            net_amount: row.net_amount ?? null,
+            vat_amount: row.vat_amount ?? null,
+            note: row.note ?? null,
             gross_amount: row.gross_amount ?? null,
             status: row.status ?? null,
           }));
