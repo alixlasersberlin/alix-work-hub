@@ -92,6 +92,33 @@ const monthsFactor = (freq: string | null, every: number | null) => {
   }
 };
 
+// Länge einer Periode in Tagen (für Restlaufzeit-Berechnung)
+const periodDays = (freq: string | null, every: number | null) => {
+  const e = every && every > 0 ? every : 1;
+  switch ((freq ?? '').toLowerCase()) {
+    case 'days': return 1 * e;
+    case 'weeks': return 7 * e;
+    case 'months': return 30.4375 * e;
+    case 'years': return 365.25 * e;
+    default: return 30.4375 * e;
+  }
+};
+
+/** Anzahl noch offener Rechnungen bis zum letzten Rechnungsdatum (end_date) */
+const remainingCount = (p: Profile) => {
+  if ((p.status ?? '').toLowerCase() !== 'active') return 0;
+  if (!p.end_date) return 0;
+  const end = new Date(p.end_date).getTime();
+  const startRef = new Date(p.next_invoice_date || new Date().toISOString().slice(0, 10)).getTime();
+  if (!isFinite(end) || !isFinite(startRef) || end < startRef) return 0;
+  const days = (end - startRef) / 86400000;
+  return Math.floor(days / periodDays(p.recurrence_frequency, p.repeat_every)) + 1;
+};
+
+/** Restsumme = offene Raten × Ratenbetrag */
+const remainingAmount = (p: Profile) => remainingCount(p) * Number(p.total || 0);
+
+
 export default function WiederkehrendeZahler() {
   const { region } = useAccountingRegion();
   
