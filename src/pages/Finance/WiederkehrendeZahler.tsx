@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
+import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw, Download, FileSpreadsheet, FileText, FileJson } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -9,8 +9,11 @@ import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/Status
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+
 
 // Beträge auf dieser Seite werden bewusst NICHT durch die Revenue-Mask (Super Admin)
 // ausgeblendet — Vertragssummen sind für Finance-Auswertung essentiell.
@@ -96,6 +99,8 @@ export default function WiederkehrendeZahler() {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>('active');
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+
 
   async function load() {
     setLoading(true);
@@ -221,6 +226,122 @@ export default function WiederkehrendeZahler() {
     };
   }, [filtered]);
 
+  // ---------- Auswahl & Export ----------
+  const selectedGroups = useMemo(() => filtered.filter(g => selected[g.customer_id]), [filtered, selected]);
+  const exportGroups = selectedGroups.length > 0 ? selectedGroups : filtered;
+  const allSelected = filtered.length > 0 && filtered.every(g => selected[g.customer_id]);
+  const someSelected = filtered.some(g => selected[g.customer_id]);
+
+  function toggleAll(v: boolean) {
+    setSelected(prev => {
+      const next = { ...prev };
+      filtered.forEach(g => { if (v) next[g.customer_id] = true; else delete next[g.customer_id]; });
+      return next;
+    });
+  }
+
+  type ExportRow = Record<string, string | number>;
+  function buildRows(): ExportRow[] {
+    const rows: ExportRow[] = [];
+    for (const g of exportGroups) {
+      if (g.profiles.length === 0) {
+        rows.push({
+          Kunde: g.customer_name, Vertrag: '—', Referenz: '', Status: '',
+          Frequenz: '', Erfasst: '', Start: '', Ende: '', 'Letzte Rechnung': fmtDate(g.lastInvoiceDate),
+          'Nächste Rechnung': fmtDate(g.nextInvoiceDate), Währung: g.currency,
+          Betrag: 0, Monatlich: 0, 'Abgerechnet YTD': Number(g.ytdBilled.toFixed(2)), 'Offener Betrag': Number(g.openBalance.toFixed(2)),
+          SEPA: g.hasSepa ? 'Ja' : 'Nein',
+        });
+        continue;
+      }
+      for (const p of g.profiles) {
+        rows.push({
+          Kunde: g.customer_name,
+          Vertrag: p.recurrence_name ?? '—',
+          Referenz: p.reference_number ?? '',
+          Status: p.status ?? '',
+          Frequenz: `${p.repeat_every ?? 1}x ${p.recurrence_frequency ?? ''}`.trim(),
+          Erfasst: fmtDate(p.created_at),
+          Start: fmtDate(p.start_date),
+          Ende: fmtDate(p.end_date),
+          'Letzte Rechnung': fmtDate(p.last_sent_date),
+          'Nächste Rechnung': fmtDate(p.next_invoice_date),
+          Währung: p.currency || g.currency,
+          Betrag: Number(Number(p.total || 0).toFixed(2)),
+          Monatlich: Number((Number(p.total || 0) * monthsFactor(p.recurrence_frequency, p.repeat_every)).toFixed(2)),
+          'Abgerechnet YTD': Number(g.ytdBilled.toFixed(2)),
+          'Offener Betrag': Number(g.openBalance.toFixed(2)),
+          SEPA: g.hasSepa ? 'Ja' : 'Nein',
+        });
+      }
+    }
+    return rows;
+  }
+
+  const fileBase = () => `wiederkehrende-zahler-${region}-${new Date().toISOString().slice(0, 10)}`;
+
+  function downloadBlob(blob: Blob, name: string) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportCsv() {
+    const rows = buildRows();
+    if (!rows.length) { toast({ title: 'Keine Daten', description: 'Nichts zu exportieren.', variant: 'destructive' }); return; }
+    const cols = Object.keys(rows[0]);
+    const esc = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = '\uFEFF' + [cols.join(';'), ...rows.map(r => cols.map(c => esc(r[c])).join(';'))].join('\n');
+    downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), `${fileBase()}.csv`);
+    toast({ title: 'CSV exportiert', description: `${rows.length} Zeilen` });
+  }
+
+  async function exportXlsx() {
+    const rows = buildRows();
+    if (!rows.length) { toast({ title: 'Keine Daten', description: 'Nichts zu exportieren.', variant: 'destructive' }); return; }
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0]).map(c => ({ wch: Math.max(12, c.length + 2) }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Wiederkehrende Zahler');
+    const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    downloadBlob(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `${fileBase()}.xlsx`);
+    toast({ title: 'Excel exportiert', description: `${rows.length} Zeilen` });
+  }
+
+  async function exportPdf() {
+    const rows = buildRows();
+    if (!rows.length) { toast({ title: 'Keine Daten', description: 'Nichts zu exportieren.', variant: 'destructive' }); return; }
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    const cols = ['Kunde', 'Vertrag', 'Referenz', 'Status', 'Frequenz', 'Erfasst', 'Start', 'Ende', 'Nächste Rechnung', 'Betrag', 'Monatlich'];
+    const sumMonthly = exportGroups.reduce((s, g) => s + g.monthly, 0);
+    doc.setFontSize(14);
+    doc.text(`Wiederkehrende Zahler · Buchhaltung ${region}`, 40, 40);
+    doc.setFontSize(9);
+    doc.text(
+      `${exportGroups.length} Kunden · ${rows.length} Verträge · Volumen/Monat ${fmt(sumMonthly)} · Stand ${new Date().toLocaleDateString('de-DE')}`,
+      40, 56,
+    );
+    autoTable(doc, {
+      startY: 72,
+      head: [cols],
+      body: rows.map(r => cols.map(c => (typeof r[c] === 'number' ? fmt(Number(r[c]), String(r['Währung'] || 'EUR')) : String(r[c] ?? '')))),
+      styles: { fontSize: 7, cellPadding: 3 },
+      headStyles: { fillColor: [30, 30, 30], textColor: [212, 175, 55] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: { 9: { halign: 'right' }, 10: { halign: 'right' } },
+    });
+    doc.save(`${fileBase()}.pdf`);
+    toast({ title: 'PDF exportiert', description: `${rows.length} Zeilen` });
+  }
+
+
   if (loading) return <div className="space-y-6"><SkeletonKpiGrid count={5} /></div>;
 
   return (
@@ -264,7 +385,30 @@ export default function WiederkehrendeZahler() {
             </button>
           ))}
         </div>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none border border-border rounded-md px-3 py-2">
+          <Checkbox checked={allSelected} onCheckedChange={(v) => toggleAll(!!v)} aria-label="Alle markieren" />
+          {allSelected ? 'Auswahl aufheben' : 'Alle markieren'}
+          {someSelected && <span className="text-primary font-medium">({selectedGroups.length})</span>}
+        </label>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export {someSelected ? `(${selectedGroups.length} markiert)` : `(alle ${filtered.length})`}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+              {exportGroups.length} Kunden werden exportiert
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={exportPdf}><FileText className="w-4 h-4 mr-2" />PDF</DropdownMenuItem>
+            <DropdownMenuItem onClick={exportXlsx}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel (XLSX)</DropdownMenuItem>
+            <DropdownMenuItem onClick={exportCsv}><FileJson className="w-4 h-4 mr-2" />CSV</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
 
       <DataCard
         title={`Kundenkonten (${filtered.length})`}
@@ -290,10 +434,17 @@ export default function WiederkehrendeZahler() {
             const activeP = g.profiles.filter(p => (p.status ?? '').toLowerCase() === 'active').length;
             return (
               <div key={g.customer_id} className="px-5">
+                <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={!!selected[g.customer_id]}
+                  onCheckedChange={(v) => setSelected(s => ({ ...s, [g.customer_id]: !!v }))}
+                  aria-label={`${g.customer_name} markieren`}
+                />
                 <button
-                  className="w-full py-3 flex items-center gap-3 hover:bg-muted/30 -mx-5 px-5 transition-colors text-left"
+                  className="flex-1 min-w-0 py-3 flex items-center gap-3 hover:bg-muted/30 px-2 rounded transition-colors text-left"
                   onClick={() => setOpen(s => ({ ...s, [g.customer_id]: !s[g.customer_id] }))}
                 >
+
                   {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate flex items-center gap-2">
@@ -319,6 +470,8 @@ export default function WiederkehrendeZahler() {
                     <Badge variant="destructive" className="ml-2 tabular-nums">{fmt(g.openBalance, g.currency)}</Badge>
                   )}
                 </button>
+                </div>
+
 
                 {isOpen && (
                   <div className="pb-4 pl-7 space-y-4 animate-fade-in">
