@@ -944,7 +944,28 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         } as any);
       } catch { /* nicht kritisch */ }
 
-      toast.success(`Anzahlungsrechnung an ${customer.email} versendet (BCC: k.trinh, natalia.p).`);
+      // Status nach erfolgreichem Versand von "Entwurf" auf "Versendet / Offen" setzen
+      try {
+        let upd: any = supabase
+          .from('finance_deposits' as any)
+          .update({ status: 'offen' })
+          .eq('status', 'entwurf')
+          .eq('invoice_number', invNo);
+        if (order?.id) upd = upd.eq('order_id', order.id);
+        const { error: statusErr } = await upd;
+        if (statusErr) {
+          console.warn('[AzInvoice] Statusupdate fehlgeschlagen:', statusErr.message);
+        } else {
+          setExistingInvoices(prev => prev.map(row =>
+            row.invoice_number === invNo && row.status === 'entwurf'
+              ? { ...row, status: 'offen' }
+              : row));
+        }
+      } catch (statusEx: any) {
+        console.warn('[AzInvoice] Statusupdate Exception:', statusEx?.message);
+      }
+
+      toast.success(`Anzahlungsrechnung an ${customer.email} versendet (BCC: k.trinh, natalia.p) – Status: versendet.`);
       if (!isResend) clearDraft();
       onReload?.();
       return true;
@@ -1333,7 +1354,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
                   <span className="text-muted-foreground">
                     {inv.issue_date ? fmtDate(inv.issue_date) : '—'}
                     {inv.gross_amount != null ? ` · ${fmtMoney(Number(inv.gross_amount), currency)}` : ''}
-                    {inv.status ? ` · ${inv.status}` : ''}
+                    {inv.status ? ` · ${inv.status === 'entwurf' ? 'Entwurf' : inv.status === 'offen' ? 'Versendet' : inv.status}` : ''}
                   </span>
                   <Button
                     type="button"
