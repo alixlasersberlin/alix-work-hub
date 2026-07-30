@@ -235,6 +235,8 @@ Deno.serve(async (req) => {
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
 
     let imported = 0, updated = 0, failed = 0, duplicates = 0;
+    let skippedRegion = 0, importedCh = 0;
+
     let profilesProcessed = 0;
     let pPage = profilesPage;
     let profilesHaveMore = true;
