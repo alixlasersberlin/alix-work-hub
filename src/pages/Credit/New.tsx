@@ -86,7 +86,7 @@ export default function CreditNew() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const { data, error } = await supabase.from('credit_assessments' as any).insert({
-        customer_type: type, customer_snapshot: form,
+        customer_type: type, customer_snapshot: { ...form, customer_id: linkedCustomer?.id || null, external_customer_id: linkedCustomer?.external_customer_id || null },
         requested_amount: amount, requested_term_months: term, requested_downpayment_pct: downpayment,
         purpose, consent_given: true, consent_at: new Date().toISOString(), consent_by: user?.id,
         status: 'draft',
