@@ -819,11 +819,17 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
   }
 
-  async function sendByEmail(): Promise<boolean> {
+  async function sendByEmail(override?: PdfOverride): Promise<boolean> {
+    const invNo = override?.invoiceNumber ?? invoiceNumber;
+    const invDate = override?.invoiceDate ?? invoiceDate;
+    const dDate = override?.dueDate ?? dueDate;
+    const taxPct = override?.taxPercentage ?? taxPercentage;
+    const gross = override?.gross ?? grossDeposit;
+    const isResend = !!override;
     console.log('[AzInvoice] sendByEmail called', {
-      hasDeposit, currentIsDuplicate, customerEmail: customer?.email,
+      hasDeposit, currentIsDuplicate, isResend, customerEmail: customer?.email,
     });
-    if (!hasDeposit && !currentIsDuplicate) {
+    if (!isResend && !hasDeposit && !currentIsDuplicate) {
       toast.error('Keine Anzahlung vereinbart.');
       return false;
     }
@@ -833,7 +839,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
     setSending(true);
     try {
-      const { blob, fileName } = await buildPdf('blob');
+      const { blob, fileName } = await buildPdf('blob', override);
+
       if (blob) {
         try {
           const u = URL.createObjectURL(blob);
