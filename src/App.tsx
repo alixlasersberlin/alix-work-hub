@@ -1256,6 +1256,7 @@ function AppRoutes() {
           <Route path="/finance/qr-rechnung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceQrRechnung /></ProtectedRoute>} />
           <Route path="/finance/ch-lastschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceChLastschriften /></ProtectedRoute>} />
           <Route path="/finance/camt054" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCamt054 /></ProtectedRoute>} />
+          <Route path="/finance/bank-abgleich-ch" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBankAbgleichCh /></ProtectedRoute>} />
           <Route path="/finance/steuer" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuer /></ProtectedRoute>} />
           <Route path="/finance/kostenstellen-report" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKostenstellenReport /></ProtectedRoute>} />
           <Route path="/finance/deckungsbeitrag" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDeckungsbeitrag /></ProtectedRoute>} />
