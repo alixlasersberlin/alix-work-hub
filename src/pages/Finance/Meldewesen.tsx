@@ -178,12 +178,24 @@ export default function FinanceMeldewesen() {
                             {new Intl.NumberFormat('de-DE', { style: 'currency', currency: f.currency || 'EUR' })
                               .format(Number(f.total_amount ?? 0))}
                           </td>
-                          <td className="p-3 text-center"><Badge variant="outline">{f.status}</Badge></td>
+                          <td className="p-3 text-center">
+                            <Badge variant={f.status === 'submitted' ? 'default' : 'outline'}>
+                              {f.status === 'submitted' ? 'eingereicht' : f.status}
+                            </Badge>
+                          </td>
                           <td className="p-3 uppercase text-xs">{f.export_format ?? '–'}</td>
-                          <td className="p-3 text-right">
+                          <td className="p-3 text-right space-x-2 whitespace-nowrap">
+                            <Button size="sm" variant="ghost" onClick={() => openDetail(f)}>
+                              <Eye className="w-4 h-4 mr-1.5" />Details
+                            </Button>
                             {f.export_content && (
                               <Button size="sm" variant="outline" onClick={() => downloadFiling(f)}>
                                 <Download className="w-4 h-4 mr-1.5" />Download
+                              </Button>
+                            )}
+                            {f.status !== 'submitted' && (
+                              <Button size="sm" onClick={() => markSubmitted(f)}>
+                                <CheckCircle2 className="w-4 h-4 mr-1.5" />Eingereicht
                               </Button>
                             )}
                           </td>
@@ -198,6 +210,62 @@ export default function FinanceMeldewesen() {
         ))}
       </Tabs>
       )}
+
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              Kennzahlen · {detail?.period_value} {detail?.submitted_at ? '· eingereicht' : ''}
+            </DialogTitle>
+          </DialogHeader>
+          {detailLines.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Keine Kennzahlen hinterlegt.</p>
+          ) : (
+            <div className="overflow-x-auto max-h-[60vh]">
+              <table className="w-full text-sm">
+                <thead className="border-b border-border/40 text-muted-foreground">
+                  <tr>
+                    <th className="text-left p-2">Ziffer</th>
+                    <th className="text-left p-2">Bezeichnung</th>
+                    <th className="text-right p-2">Bemessung</th>
+                    <th className="text-right p-2">Satz</th>
+                    <th className="text-right p-2">Betrag</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detailLines.map((l: any, i: number) => (
+                    <tr key={l.id ?? i} className="border-b border-border/20">
+                      <td className="p-2 font-mono">{l.line_code}</td>
+                      <td className="p-2">{l.line_label}</td>
+                      <td className="p-2 text-right">
+                        {new Intl.NumberFormat('de-DE', { style: 'currency', currency: detail?.currency || 'EUR' })
+                          .format(Number(l.base_amount ?? 0))}
+                      </td>
+                      <td className="p-2 text-right">{l.tax_rate ? `${l.tax_rate} %` : '–'}</td>
+                      <td className="p-2 text-right font-medium">
+                        {new Intl.NumberFormat('de-DE', { style: 'currency', currency: detail?.currency || 'EUR' })
+                          .format(Number(l.amount ?? 0))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            {detail?.export_content && (
+              <Button variant="outline" onClick={() => downloadFiling(detail)}>
+                <Download className="w-4 h-4 mr-1.5" />Datei herunterladen
+              </Button>
+            )}
+            {detail && detail.status !== 'submitted' && (
+              <Button onClick={() => markSubmitted(detail)}>
+                <CheckCircle2 className="w-4 h-4 mr-1.5" />Als eingereicht markieren
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
