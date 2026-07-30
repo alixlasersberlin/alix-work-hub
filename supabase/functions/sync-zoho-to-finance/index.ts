@@ -77,6 +77,7 @@ Deno.serve(async (req) => {
         booking_date: inv.invoice_date,
         reference,
         transaction_type: 'Rechnung',
+        accounting_region: detectRegion((inv as any).raw_data, inv.currency),
         notes: `Zoho ${inv.invoice_number ?? ''} • Status: ${inv.payment_status ?? '-'} • Saldo: ${inv.balance ?? 0}`,
       };
       const { data: existing } = await admin
