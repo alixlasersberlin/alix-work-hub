@@ -1081,6 +1081,19 @@ export default function Invoices() {
             </SelectContent>
           </Select>
         </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
+          <Select value={docStatusFilter} onValueChange={setDocStatusFilter}>
+            <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle</SelectItem>
+              <SelectItem value="draft">Entwurf</SelectItem>
+              <SelectItem value="sent">Versendet</SelectItem>
+              <SelectItem value="void">Storniert</SelectItem>
+            </SelectContent>
+          </Select>
+
+        </div>
         {viewMode === 'accounts' && (
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={expandAll}>Alle öffnen</Button>
