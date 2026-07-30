@@ -104,6 +104,9 @@ export default function WiederkehrendeZahler() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>('active');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
 
+  const { canWrite } = useFinancePermissions();
+  const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
+  const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
 
   async function load() {
     setLoading(true);
