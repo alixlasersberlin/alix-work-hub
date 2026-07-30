@@ -12,6 +12,8 @@ import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { RegionChip } from '@/components/finance/RegionChip';
+import { regionCurrency } from '@/lib/finance/region';
 
 type AccRow = {
   id: string;
@@ -26,8 +28,6 @@ type DraftRow = { id: string; customer_id: string; level: number; total: number;
 
 const LEVEL_LABEL = ['—', 'Zahlungserinnerung', '1. Mahnung', '2. Mahnung', 'Letzte Mahnung'];
 
-const fmt = (n: number | null) => typeof n === 'number'
-  ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n) : '–';
 
 export default function FinanceMahnwesen() {
   const { roles } = useAuth();
