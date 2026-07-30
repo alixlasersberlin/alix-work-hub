@@ -615,6 +615,19 @@ export default function WiederkehrendeZahler() {
       <p className="text-xs text-muted-foreground text-center">
         Quelle: Zoho Deutschland (zoho_eu_1) · Tägliche Synchronisation 23:45 Uhr · {profiles.length} Profile · {invoices.length} Rechnungen geladen
       </p>
+
+      <RecurringProfileEditDialog
+        profile={editProfile}
+        open={!!editProfile}
+        onOpenChange={(v) => { if (!v) setEditProfile(null); }}
+        onSaved={load}
+      />
+      <RecurringInvoiceBookDialog
+        invoice={bookInvoice}
+        open={!!bookInvoice}
+        onOpenChange={(v) => { if (!v) setBookInvoice(null); }}
+        onBooked={load}
+      />
     </div>
   );
 }
