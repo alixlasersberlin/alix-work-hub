@@ -104,13 +104,13 @@ export default function WiederkehrendeZahler() {
       supabase
         .from('zoho_recurring_profiles')
         .select('*')
-        .eq('source_system', sourceSystem)
+        .eq('accounting_region', region === 'CH' ? 'CH' : 'EU')
         .order('created_at', { ascending: false, nullsFirst: false })
         .limit(5000),
       supabase
         .from('zoho_recurring_invoices')
         .select('*')
-        .eq('source_system', sourceSystem)
+        .eq('accounting_region', region === 'CH' ? 'CH' : 'EU')
         .order('invoice_date', { ascending: false, nullsFirst: false })
         .limit(5000),
     ]);
