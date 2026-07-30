@@ -159,6 +159,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const [existingInvoices, setExistingInvoices] = useState<Array<{ invoice_number: string; issue_date?: string | null; due_date?: string | null; gross_amount?: number | null; status?: string | null; net_amount?: number | null; vat_amount?: number | null; note?: string | null }>>([]);
   const [checkingExisting, setCheckingExisting] = useState(true);
   const [confirm, setConfirm] = useState<null | 'saveSend' | 'sendOnly'>(null);
+  const [rowBusy, setRowBusy] = useState<string | null>(null);
+
 
   // Prüft, ob die aktuell eingegebene Rechnungsnummer bereits vergeben ist
   const currentIsDuplicate = existingInvoices.find(
