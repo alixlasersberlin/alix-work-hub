@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileSpreadsheet, Loader2, Download, Play } from 'lucide-react';
+import { FileSpreadsheet, Loader2, Download, Play, Eye, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageEmpty } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -8,6 +8,7 @@ import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
@@ -34,6 +35,9 @@ export default function FinanceMeldewesen() {
   const [period, setPeriod] = useState(TYPES[0].period);
   const [tenantId, setTenantId] = useState<string>('');
   const [busy, setBusy] = useState(false);
+  const [detail, setDetail] = useState<any | null>(null);
+  const [detailLines, setDetailLines] = useState<any[]>([]);
+
 
   const load = async () => {
     setLoading(true);
@@ -85,6 +89,28 @@ export default function FinanceMeldewesen() {
     a.download = `${f.filing_type}-${f.period_value}.${ext}`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const openDetail = async (f: any) => {
+    setDetail(f);
+    const payloadLines = Array.isArray(f?.payload?.lines) ? f.payload.lines : [];
+    setDetailLines(payloadLines);
+    const { data } = await supabase
+      .from('finance_tax_filing_lines' as any)
+      .select('*')
+      .eq('filing_id', f.id);
+    if (data && data.length) setDetailLines(data as any);
+  };
+
+  const markSubmitted = async (f: any) => {
+    const { error } = await supabase
+      .from('finance_tax_filings' as any)
+      .update({ status: 'submitted', submitted_at: new Date().toISOString() })
+      .eq('id', f.id);
+    if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    toast({ title: 'Als eingereicht markiert', description: `${f.period_value}` });
+    setDetail(null);
+    load();
   };
 
   const filtered = filings.filter((f) => f.filing_type === tab);
@@ -152,12 +178,24 @@ export default function FinanceMeldewesen() {
                             {new Intl.NumberFormat('de-DE', { style: 'currency', currency: f.currency || 'EUR' })
                               .format(Number(f.total_amount ?? 0))}
                           </td>
-                          <td className="p-3 text-center"><Badge variant="outline">{f.status}</Badge></td>
+                          <td className="p-3 text-center">
+                            <Badge variant={f.status === 'submitted' ? 'default' : 'outline'}>
+                              {f.status === 'submitted' ? 'eingereicht' : f.status}
+                            </Badge>
+                          </td>
                           <td className="p-3 uppercase text-xs">{f.export_format ?? '–'}</td>
-                          <td className="p-3 text-right">
+                          <td className="p-3 text-right space-x-2 whitespace-nowrap">
+                            <Button size="sm" variant="ghost" onClick={() => openDetail(f)}>
+                              <Eye className="w-4 h-4 mr-1.5" />Details
+                            </Button>
                             {f.export_content && (
                               <Button size="sm" variant="outline" onClick={() => downloadFiling(f)}>
                                 <Download className="w-4 h-4 mr-1.5" />Download
+                              </Button>
+                            )}
+                            {f.status !== 'submitted' && (
+                              <Button size="sm" onClick={() => markSubmitted(f)}>
+                                <CheckCircle2 className="w-4 h-4 mr-1.5" />Eingereicht
                               </Button>
                             )}
                           </td>
@@ -172,6 +210,62 @@ export default function FinanceMeldewesen() {
         ))}
       </Tabs>
       )}
+
+      <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              Kennzahlen · {detail?.period_value} {detail?.submitted_at ? '· eingereicht' : ''}
+            </DialogTitle>
+          </DialogHeader>
+          {detailLines.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Keine Kennzahlen hinterlegt.</p>
+          ) : (
+            <div className="overflow-x-auto max-h-[60vh]">
+              <table className="w-full text-sm">
+                <thead className="border-b border-border/40 text-muted-foreground">
+                  <tr>
+                    <th className="text-left p-2">Ziffer</th>
+                    <th className="text-left p-2">Bezeichnung</th>
+                    <th className="text-right p-2">Bemessung</th>
+                    <th className="text-right p-2">Satz</th>
+                    <th className="text-right p-2">Betrag</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detailLines.map((l: any, i: number) => (
+                    <tr key={l.id ?? i} className="border-b border-border/20">
+                      <td className="p-2 font-mono">{l.line_code}</td>
+                      <td className="p-2">{l.line_label}</td>
+                      <td className="p-2 text-right">
+                        {new Intl.NumberFormat('de-DE', { style: 'currency', currency: detail?.currency || 'EUR' })
+                          .format(Number(l.base_amount ?? 0))}
+                      </td>
+                      <td className="p-2 text-right">{l.tax_rate ? `${l.tax_rate} %` : '–'}</td>
+                      <td className="p-2 text-right font-medium">
+                        {new Intl.NumberFormat('de-DE', { style: 'currency', currency: detail?.currency || 'EUR' })
+                          .format(Number(l.amount ?? 0))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            {detail?.export_content && (
+              <Button variant="outline" onClick={() => downloadFiling(detail)}>
+                <Download className="w-4 h-4 mr-1.5" />Datei herunterladen
+              </Button>
+            )}
+            {detail && detail.status !== 'submitted' && (
+              <Button onClick={() => markSubmitted(detail)}>
+                <CheckCircle2 className="w-4 h-4 mr-1.5" />Als eingereicht markieren
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
