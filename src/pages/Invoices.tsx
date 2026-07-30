@@ -271,21 +271,22 @@ export default function Invoices() {
       }
     }
     return Array.from(map.values()).sort((a, b) => b.totalAmount - a.totalAmount);
-  }, [rows, search, statusFilter]);
+  }, [rows, search, statusFilter, docStatusFilter]);
 
   const kpi = useMemo(() => ({
     accounts: accounts.length,
     invoices: accounts.reduce((s, a) => s + a.totalInvoices + a.totalRecurring, 0),
     totalAmount: accounts.reduce((s, a) => s + a.totalAmount, 0),
     // Offene Beträge = Live-Summe der Salden aller aktuell sichtbaren Rechnungen
-    totalOpen: flatRowsForKpi(rows, search, statusFilter),
-  }), [accounts, rows, search, statusFilter]);
+    totalOpen: flatRowsForKpi(rows, search, statusFilter, docStatusFilter),
+  }), [accounts, rows, search, statusFilter, docStatusFilter]);
 
   const flatRows = useMemo<Row[]>(() => {
     let res = rows;
     if (statusFilter !== 'all') {
       res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
     }
+    res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
     const sorted = [...res].sort((a, b) => {
       if (listSort === 'number') {
@@ -294,7 +295,8 @@ export default function Invoices() {
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [rows, search, statusFilter, listSort]);
+  }, [rows, search, statusFilter, docStatusFilter, listSort]);
+
 
   const handleMove = async (r: Row) => {
     if (!isAdmin || r.source !== 'invoice') return;
