@@ -96,7 +96,9 @@ const formatCurrency = (n: number | null, currency: string | null) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: currency || 'EUR' }).format(n ?? 0);
 
 export default function OffenePosten() {
+  const { region } = useAccountingRegion();
   const [items, setItems] = useState<OpenItem[]>([]);
+
   const [workflows, setWorkflows] = useState<Record<string, WorkflowState>>({});
   const [bookedRefs, setBookedRefs] = useState<Record<string, { journal_number: string | null; booking_date: string }>>({});
   const [bookingKey, setBookingKey] = useState<string | null>(null);
