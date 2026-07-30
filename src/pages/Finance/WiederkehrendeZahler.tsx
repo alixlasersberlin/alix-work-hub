@@ -213,6 +213,7 @@ export default function WiederkehrendeZahler() {
 
     return Array.from(map.values())
       .filter(g => {
+        if (invoiceStatusFilter !== 'all' && g.invoices.length === 0) return false;
         if (statusFilter === 'sepa') return g.hasSepa;
         if (statusFilter === 'active') return g.profiles.some(p => (p.status ?? '').toLowerCase() === 'active');
         if (statusFilter === 'stopped') return g.profiles.length > 0 && g.profiles.every(p => (p.status ?? '').toLowerCase() !== 'active');
@@ -224,7 +225,8 @@ export default function WiederkehrendeZahler() {
         if (ac !== bc) return bc.localeCompare(ac);
         return b.monthly - a.monthly;
       });
-  }, [profiles, invoices, statusFilter]);
+  }, [profiles, invoices, statusFilter, invoiceStatusFilter]);
+
 
   const filtered = useMemo(() => {
     if (!search.trim()) return groups;
