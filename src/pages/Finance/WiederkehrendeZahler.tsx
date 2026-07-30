@@ -385,7 +385,30 @@ export default function WiederkehrendeZahler() {
             </button>
           ))}
         </div>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none border border-border rounded-md px-3 py-2">
+          <Checkbox checked={allSelected} onCheckedChange={(v) => toggleAll(!!v)} aria-label="Alle markieren" />
+          {allSelected ? 'Auswahl aufheben' : 'Alle markieren'}
+          {someSelected && <span className="text-primary font-medium">({selectedGroups.length})</span>}
+        </label>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="outline">
+              <Download className="w-4 h-4 mr-2" />
+              Export {someSelected ? `(${selectedGroups.length} markiert)` : `(alle ${filtered.length})`}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+              {exportGroups.length} Kunden werden exportiert
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={exportPdf}><FileText className="w-4 h-4 mr-2" />PDF</DropdownMenuItem>
+            <DropdownMenuItem onClick={exportXlsx}><FileSpreadsheet className="w-4 h-4 mr-2" />Excel (XLSX)</DropdownMenuItem>
+            <DropdownMenuItem onClick={exportCsv}><FileJson className="w-4 h-4 mr-2" />CSV</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
 
       <DataCard
         title={`Kundenkonten (${filtered.length})`}
