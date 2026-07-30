@@ -597,7 +597,7 @@ export default function OrderDetail() {
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-blue-500/10 text-blue-400 border-blue-500/20"
                 title="Zoho hat für diesen Auftrag eine Rechnung erstellt"
               >
-                Invoiced
+                geliefert
               </span>
             )}
           </h1>
