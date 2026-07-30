@@ -619,14 +619,44 @@ export default function OffenePosten() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="inline-flex rounded-lg border border-border bg-card p-1">
+          <Button
+            variant={viewMode === 'accounts' ? 'default' : 'ghost'}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setViewModePersist('accounts')}
+          >
+            <Users className="w-3.5 h-3.5" /> Nach Kundenkonto
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setViewModePersist('list')}
+          >
+            <FileText className="w-3.5 h-3.5" /> Rechnungsliste
+          </Button>
+        </div>
+        {viewMode === 'accounts' && (
+          <>
+            <Button variant="outline" size="sm" onClick={() => setExpanded(Object.fromEntries(accounts.map((a) => [a.key, true])))}>Alle aufklappen</Button>
+            <Button variant="outline" size="sm" onClick={() => setExpanded({})}>Alle zuklappen</Button>
+          </>
+        )}
+      </div>
+
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
-        total={filtered.length}
-        visible={visible.length}
+        total={viewMode === 'accounts' ? accounts.length : filtered.length}
+        visible={viewMode === 'accounts' ? visibleAccounts.length : visible.length}
+        placeholder={viewMode === 'accounts' ? 'Suche: Kunde, Rechnungsnr., Stadt, PLZ, Betrag…' : undefined}
       />
+
+
 
       <div className="flex flex-wrap gap-2">
         {([
