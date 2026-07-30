@@ -42,6 +42,8 @@ export default function FinanceMahnwesen() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('Entwurf');
+  const [onlyWithReminder, setOnlyWithReminder] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
