@@ -336,9 +336,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setFontSize(9);
       doc.setTextColor(60, 60, 60);
       const meta: Array<[string, string]> = [
-        ['Rechnungsnr.', invoiceNumber || '—'],
-        ['Rechnungsdatum', fmtDate(invoiceDate)],
-        ['Fällig am', fmtDate(dueDate)],
+        ['Rechnungsnr.', invNo || '—'],
+        ['Rechnungsdatum', fmtDate(invDate)],
+        ['Fällig am', fmtDate(dDate)],
         ['Auftragsnr.', orderNo || '—'],
         ['Kundennr.', (() => {
           const ext = customer?.external_customer_id;
@@ -404,9 +404,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           1,
           positionLabel || `Anzahlung Auftrag ${orderNo}`,
           1,
-          fmtMoney(netDeposit, currency),
-          `${taxPercentage}%`,
-          fmtMoney(netDeposit, currency),
+          fmtMoney(netAmtP, currency),
+          `${taxPct}%`,
+          fmtMoney(netAmtP, currency),
         ]],
         styles: { fontSize: 9, cellPadding: 2, valign: 'top' },
         headStyles: { fillColor: [183, 217, 255], textColor: [20, 60, 110] },
@@ -432,16 +432,16 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 60);
       doc.text('Netto:', totalsLabelX, finalY);
-      doc.text(fmtMoney(netDeposit, currency), totalsValueX, finalY, { align: 'right' });
-      doc.text(`MwSt (${taxPercentage}%):`, totalsLabelX, finalY + 5);
-      doc.text(fmtMoney(taxAmount, currency), totalsValueX, finalY + 5, { align: 'right' });
+      doc.text(fmtMoney(netAmtP, currency), totalsValueX, finalY, { align: 'right' });
+      doc.text(`MwSt (${taxPct}%):`, totalsLabelX, finalY + 5);
+      doc.text(fmtMoney(taxAmtP, currency), totalsValueX, finalY + 5, { align: 'right' });
       doc.setDrawColor(20, 60, 110);
       doc.line(totalsLabelX, finalY + 8, totalsValueX, finalY + 8);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.setTextColor(20, 60, 110);
       doc.text('Rechnungsbetrag (brutto):', totalsLabelX, finalY + 14);
-      doc.text(fmtMoney(grossDeposit, currency), totalsValueX, finalY + 14, { align: 'right' });
+      doc.text(fmtMoney(grossAmtP, currency), totalsValueX, finalY + 14, { align: 'right' });
 
       // Hinweisblock
       let py = finalY + 26;
@@ -455,9 +455,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setTextColor(60, 60, 60);
       const hint =
         `Dies ist eine Anzahlungsrechnung zum Auftrag ${orderNo}. Der Betrag von ` +
-        `${fmtMoney(grossDeposit, currency)} (brutto) wird auf die im Mietkaufvertrag vereinbarte Gesamtanzahlung angerechnet. ` +
-        `Bitte überweisen Sie den Rechnungsbetrag bis zum ${fmtDate(dueDate)} unter Angabe der ` +
-        `Rechnungsnummer ${invoiceNumber}.`;
+        `${fmtMoney(grossAmtP, currency)} (brutto) wird auf die im Mietkaufvertrag vereinbarte Gesamtanzahlung angerechnet. ` +
+        `Bitte überweisen Sie den Rechnungsbetrag bis zum ${fmtDate(dDate)} unter Angabe der ` +
+        `Rechnungsnummer ${invNo}.`;
       const wrapped = doc.splitTextToSize(hint, CONTENT_W);
       doc.text(wrapped, LEFT, py);
       py += wrapped.length * 4.6 + 6;
@@ -503,7 +503,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
           doc.setTextColor(60, 60, 60);
-          doc.text(`Anzahlungsrechnung ${invoiceNumber}`, LEFT, TOP_CONTENT - 8);
+          doc.text(`Anzahlungsrechnung ${invNo}`, LEFT, TOP_CONTENT - 8);
           doc.setDrawColor(200, 200, 200);
           doc.line(LEFT, TOP_CONTENT - 5, RIGHT, TOP_CONTENT - 5);
         }
@@ -521,18 +521,18 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         );
         doc.setFontSize(8);
         doc.text(
-          `Anzahlungsrechnung ${invoiceNumber}  ·  Seite ${i} von ${totalPages}`,
+          `Anzahlungsrechnung ${invNo}  ·  Seite ${i} von ${totalPages}`,
           RIGHT, PAGE_H - 4, { align: 'right' },
         );
       }
 
-    const fileName = `Anzahlungsrechnung_${invoiceNumber || orderNo}.pdf`;
-    const autoFile = { order_id: order?.id ?? null, customer_id: customer?.id ?? null, title: `Anzahlungsrechnung ${invoiceNumber ?? ''}`.trim() };
+    const fileName = `Anzahlungsrechnung_${invNo || orderNo}.pdf`;
+    const autoFile = { order_id: order?.id ?? null, customer_id: customer?.id ?? null, title: `Anzahlungsrechnung ${invNo ?? ''}`.trim() };
     if (mode === 'download') {
-      await downloadStampedPdf(doc, 'invoice', fileName, invoiceNumber ?? undefined, autoFile);
+      await downloadStampedPdf(doc, 'invoice', fileName, invNo ?? undefined, autoFile);
       return { doc, fileName };
     }
-    const blob: Blob = await stampedPdfBlob(doc, 'invoice', invoiceNumber ?? undefined, autoFile);
+    const blob: Blob = await stampedPdfBlob(doc, 'invoice', invNo ?? undefined, autoFile);
     return { doc, fileName, blob };
   }
 
