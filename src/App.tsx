@@ -1372,6 +1372,7 @@ function AppRoutes() {
             <Route path="segmente" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectSegments /></ProtectedRoute>} />
             <Route path="journeys" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectJourneys /></ProtectedRoute>} />
             <Route path="websites" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsites /></ProtectedRoute>} />
+            <Route path="widget-check" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWidgetCheck /></ProtectedRoute>} />
             <Route path="websites/:id/analytics" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><AlixConnectWebsiteAnalytics /></ProtectedRoute>} />
             <Route path="analytics" element={<AlixConnectAnalytics />} />
             <Route path="settings" element={<AlixConnectSettings />} />
