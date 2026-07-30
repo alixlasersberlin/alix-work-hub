@@ -1278,6 +1278,7 @@ function AppRoutes() {
           <Route path="/finance/eingangsrechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceEingangsrechnungen /></ProtectedRoute>} />
           <Route path="/finance/anlagen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnlagen /></ProtectedRoute>} />
           <Route path="/finance/anlagen/afa-lauf" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAfaLauf /></ProtectedRoute>} />
+          <Route path="/finance/anlagenspiegel" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnlagenspiegel /></ProtectedRoute>} />
           <Route path="/finance/liquiditaet" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceLiquiditaet /></ProtectedRoute>} />
           <Route path="/finance/bwa" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBwa /></ProtectedRoute>} />
           <Route path="/finance/guv" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGuV /></ProtectedRoute>} />
