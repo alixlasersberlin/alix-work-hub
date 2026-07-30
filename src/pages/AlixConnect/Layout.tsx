@@ -116,51 +116,80 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
     label: "System",
     items: [
       { to: "/connect/websites", label: "Webseiten", icon: Globe },
-      { to: "/connect/widget-check", label: "Widget-Check", icon: Globe },
+      { to: "/connect/widget-check", label: "Widget-Check", icon: ShieldCheck },
       { to: "/connect/settings", label: "Einstellungen", icon: Settings },
     ],
   },
 ];
 
 export default function AlixConnectLayout() {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+
+  const visibleGroups = useMemo(() => {
+    if (!q) return groups;
+    return groups
+      .map((g) => ({ ...g, items: g.items.filter((i) => i.label.toLowerCase().includes(q)) }))
+      .filter((g) => g.items.length > 0);
+  }, [q]);
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col">
       <div className="border-b border-border/60 bg-card/40 px-6 py-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold tracking-tight">ALIX CONNECT</h1>
             <p className="text-xs text-muted-foreground">Unified Communication &amp; Customer Intelligence</p>
           </div>
-          <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-            Phase 50 · Churn · Voice-Bot · Omnichannel Merge
-          </span>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Modul suchen…"
+                className="h-8 w-56 rounded-md border border-border bg-background pl-8 pr-2 text-xs outline-none focus:border-primary"
+              />
+            </div>
+            <span className="rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
+              Phase 50 · Churn · Voice-Bot · Omnichannel Merge
+            </span>
+          </div>
         </div>
-        <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-          {groups.map((g) => (
-            <div key={g.label} className="flex items-center gap-1">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-1">{g.label}</span>
-              {g.items.map((t) => (
-                <NavLink
-                  key={t.to}
-                  to={t.to}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap",
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                    )
-                  }
-                >
-                  <t.icon className="h-3.5 w-3.5" />
-                  {t.label}
-                </NavLink>
-              ))}
+
+        <nav className="mt-3 max-h-40 space-y-1 overflow-y-auto pr-1">
+          {visibleGroups.map((g) => (
+            <div key={g.label} className="flex items-start gap-3">
+              <span className="mt-1.5 w-28 shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground">
+                {g.label}
+              </span>
+              <div className="flex min-w-0 flex-1 flex-wrap gap-1">
+                {g.items.map((t) => (
+                  <NavLink
+                    key={t.to}
+                    to={t.to}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors whitespace-nowrap",
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )
+                    }
+                  >
+                    <t.icon className="h-3.5 w-3.5" />
+                    {t.label}
+                  </NavLink>
+                ))}
+              </div>
             </div>
           ))}
+          {visibleGroups.length === 0 && (
+            <p className="text-xs text-muted-foreground">Kein Modul gefunden für „{query}“.</p>
+          )}
         </nav>
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-auto">
         <Outlet />
       </div>
     </div>
