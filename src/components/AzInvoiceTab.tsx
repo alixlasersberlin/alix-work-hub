@@ -420,7 +420,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         head: [['Pos', 'Beschreibung', 'Menge', 'Einzelpreis netto', 'MwSt', 'Summe netto']],
         body: [[
           1,
-          positionLabel || `Anzahlung Auftrag ${orderNo}`,
+          posLabel || `Anzahlung Auftrag ${orderNo}`,
           1,
           fmtMoney(netAmtP, currency),
           `${taxPct}%`,
