@@ -270,7 +270,14 @@ export default function Invoices() {
         acc.lastInvoiceDate = r.invoice_date;
       }
     }
-    return Array.from(map.values()).sort((a, b) => b.totalAmount - a.totalAmount);
+    const accs = Array.from(map.values());
+    for (const a of accs) {
+      a.rows.sort((x, y) => String(y.invoice_date ?? '').localeCompare(String(x.invoice_date ?? '')));
+    }
+    // Sortierung: neueste Rechnung zuerst (absteigend nach Datum)
+    return accs.sort((a, b) =>
+      String(b.lastInvoiceDate ?? '').localeCompare(String(a.lastInvoiceDate ?? '')),
+    );
   }, [rows, search, statusFilter, docStatusFilter]);
 
   const kpi = useMemo(() => ({
