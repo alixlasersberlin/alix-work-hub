@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw } from 'lucide-react';
+import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw, Download, FileSpreadsheet, FileText, FileJson } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -9,8 +9,11 @@ import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/Status
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+
 
 // Beträge auf dieser Seite werden bewusst NICHT durch die Revenue-Mask (Super Admin)
 // ausgeblendet — Vertragssummen sind für Finance-Auswertung essentiell.
