@@ -55,7 +55,7 @@ export default function FinanceMahnwesenDetail() {
     }
     setLoading(false);
   };
-  useEffect(() => { load(); }, [customerId]);
+  useEffect(() => { load(); }, [customerId, region]);
 
   const send = async (id: string) => {
     setSendingId(id);
