@@ -244,8 +244,156 @@
       return v;
     },
     chat: {
-      open: function () { enqueue("chat_open_request"); },
+      open: function () { enqueue("chat_open_request"); openChat(); },
+      close: function () { closeChat(); },
     },
     _flush: flush,
   };
+
+  // ================= Live-Chat-Bubble (Branding pro Domain + Lead-Capture) =================
+  var FN_BASE = ENDPOINT.replace(/\/ac-track\/?$/, "");
+  var CHAT = FN_BASE + "/ac-chat";
+  var LS_CONV = "_ac_conv";
+  var cfg = null, conv = null, sinceIso = null, panel = null, launcher = null, bodyEl = null, footerEl = null, poller = null;
+
+  function chatSess() {
+    try { return getCookie(COOKIE_NAME) || "anon"; } catch (_) { return "anon"; }
+  }
+  try { conv = JSON.parse(localStorage.getItem(LS_CONV) || "null"); } catch (_) {}
+
+  function el(tag, style, text) {
+    var e = document.createElement(tag);
+    if (style) e.setAttribute("style", style);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function openChat() {
+    if (!panel) return;
+    panel.style.display = "flex";
+    if (!bodyEl.hasChildNodes()) { conv && conv.id ? renderChat() : renderStart(); }
+  }
+  function closeChat() { if (panel) panel.style.display = "none"; }
+
+  function mountWidget() {
+    var primary = cfg.primary_color || "#0a0a0a";
+    var accent = cfg.secondary_color || "#c9a24b";
+    var pos = cfg.widget_position === "bottom-left" ? "left:20px;" : "right:20px;";
+
+    launcher = el("button", "position:fixed;bottom:20px;" + pos + "z-index:2147483000;width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;background:" + primary + ";color:" + accent + ";box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:26px;line-height:1;");
+    launcher.setAttribute("aria-label", "Chat öffnen");
+    launcher.innerHTML = "\uD83D\uDCAC";
+
+    panel = el("div", "position:fixed;bottom:90px;" + pos + "z-index:2147483000;width:340px;max-width:calc(100vw - 40px);height:480px;max-height:calc(100vh - 120px);background:#fff;color:#111;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.3);display:none;flex-direction:column;overflow:hidden;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;");
+    var header = el("div", "background:" + primary + ";color:" + accent + ";padding:14px 16px;font-weight:600;display:flex;align-items:center;gap:10px;");
+    header.textContent = cfg.project_name || "Live Chat";
+    var closeBtn = el("button", "margin-left:auto;background:transparent;color:" + accent + ";border:none;font-size:20px;cursor:pointer;", "\u00D7");
+    closeBtn.onclick = closeChat;
+    if (cfg.online === false) header.appendChild(el("div", "margin-left:auto;font-size:11px;background:rgba(255,255,255,.15);color:" + accent + ";padding:2px 8px;border-radius:10px;", "Außerhalb Geschäftszeiten"));
+    header.appendChild(closeBtn);
+    bodyEl = el("div", "flex:1;padding:12px;overflow-y:auto;background:#f7f7f8;display:flex;flex-direction:column;gap:8px;");
+    footerEl = el("div", "border-top:1px solid #eee;padding:8px;background:#fff;");
+    panel.appendChild(header); panel.appendChild(bodyEl); panel.appendChild(footerEl);
+    document.body.appendChild(launcher); document.body.appendChild(panel);
+
+    launcher.onclick = function () {
+      if (panel.style.display === "flex") { closeChat(); return; }
+      enqueue("chat_open_request");
+      openChat();
+    };
+  }
+
+  function bubble(txt, mine) {
+    var primary = (cfg && cfg.primary_color) || "#0a0a0a";
+    var b = el("div", "max-width:80%;padding:8px 12px;border-radius:12px;line-height:1.4;white-space:pre-wrap;word-wrap:break-word;" + (mine ? "align-self:flex-end;background:" + primary + ";color:#fff;" : "align-self:flex-start;background:#fff;color:#111;border:1px solid #e5e7eb;"), txt);
+    bodyEl.appendChild(b);
+    bodyEl.scrollTop = bodyEl.scrollHeight;
+  }
+
+  function renderStart() {
+    var primary = cfg.primary_color || "#0a0a0a";
+    var accent = cfg.secondary_color || "#c9a24b";
+    footerEl.innerHTML = "";
+    if (cfg.welcome_message) bubble(cfg.welcome_message, false);
+    var form = el("form", "display:flex;flex-direction:column;gap:6px;");
+    var inp = "padding:8px;border:1px solid #ddd;border-radius:8px;font:inherit;";
+    var name = el("input", inp); name.placeholder = "Ihr Name"; name.required = true;
+    var email = el("input", inp); email.type = "email"; email.placeholder = "E-Mail"; email.required = true;
+    var msg = el("textarea", inp + "resize:none;"); msg.placeholder = "Ihre Nachricht"; msg.required = true; msg.rows = 3;
+    var submit = el("button", "padding:10px;background:" + primary + ";color:" + accent + ";border:none;border-radius:8px;font-weight:600;cursor:pointer;", "Chat starten");
+    submit.type = "submit";
+    form.appendChild(name); form.appendChild(email); form.appendChild(msg); form.appendChild(submit);
+    if (cfg.privacy_url) {
+      var p = el("a", "font-size:11px;color:#888;text-decoration:underline;margin-top:4px;", "Datenschutz");
+      p.href = cfg.privacy_url; p.target = "_blank"; p.rel = "noopener"; form.appendChild(p);
+    }
+    form.onsubmit = function (ev) {
+      ev.preventDefault(); submit.disabled = true; submit.textContent = "…";
+      fetch(CHAT + "?action=start", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_key: KEY, name: name.value, email: email.value, initial_message: msg.value, page_url: location.href, visitor_hash: chatSess() }),
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d || !d.conversation_id) { submit.disabled = false; submit.textContent = "Chat starten"; return; }
+        conv = { id: d.conversation_id, name: name.value };
+        try { localStorage.setItem(LS_CONV, JSON.stringify(conv)); } catch (_) {}
+        enqueue("chat_lead", { email: safe(email.value, 160), name: safe(name.value, 120) });
+        bodyEl.innerHTML = ""; bubble(msg.value, true); renderChat();
+      }).catch(function () { submit.disabled = false; submit.textContent = "Erneut versuchen"; });
+    };
+    footerEl.appendChild(form);
+  }
+
+  function renderChat() {
+    var primary = cfg.primary_color || "#0a0a0a";
+    var accent = cfg.secondary_color || "#c9a24b";
+    footerEl.innerHTML = "";
+    var row = el("div", "display:flex;gap:6px;align-items:center;");
+    var input = el("input", "flex:1;padding:8px;border:1px solid #ddd;border-radius:8px;font:inherit;");
+    input.placeholder = "Nachricht schreiben…";
+    var btn = el("button", "padding:8px 12px;background:" + primary + ";color:" + accent + ";border:none;border-radius:8px;font-weight:600;cursor:pointer;", "Senden");
+    row.appendChild(input); row.appendChild(btn); footerEl.appendChild(row);
+    function sendMsg() {
+      var t = input.value.trim(); if (!t) return;
+      input.value = ""; bubble(t, true);
+      fetch(CHAT + "?action=send", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_key: KEY, conversation_id: conv.id, message: t, name: conv.name, visitor_hash: chatSess() }),
+      }).catch(function () {});
+    }
+    btn.onclick = sendMsg;
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); sendMsg(); } });
+    startPolling();
+  }
+
+  function startPolling() {
+    if (poller) return;
+    var seen = {};
+    function tick() {
+      if (!conv || !conv.id) return;
+      fetch(CHAT + "?action=poll", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ api_key: KEY, conversation_id: conv.id, since: sinceIso }),
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        (d && d.messages ? d.messages : []).forEach(function (m) {
+          if (seen[m.id]) return; seen[m.id] = true;
+          sinceIso = m.created_at;
+          if (m.direction === "outbound") bubble(m.body, false);
+        });
+      }).catch(function () {});
+    }
+    poller = setInterval(tick, 4000); tick();
+  }
+
+  if (KEY) {
+    fetch(CHAT + "?action=config&api_key=" + encodeURIComponent(KEY))
+      .then(function (r) { return r.json(); })
+      .then(function (c) {
+        if (!c || c.error || c.chat_enabled === false) return;
+        cfg = c;
+        if (document.body) mountWidget();
+        else document.addEventListener("DOMContentLoaded", mountWidget);
+      })
+      .catch(function () {});
+  }
 })();
+
