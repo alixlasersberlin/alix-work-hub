@@ -31,9 +31,54 @@ export default function CreditNew() {
   const [purpose, setPurpose] = useState('');
   const [consent, setConsent] = useState(false);
 
+  const [query, setQuery] = useState('');
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState<any[]>([]);
+  const [linkedCustomer, setLinkedCustomer] = useState<any>(null);
+
   if (!canWrite) return <div className="p-8 text-center text-muted-foreground">Kein Zugriff.</div>;
 
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+
+  const searchCustomers = async () => {
+    const q = query.trim();
+    if (q.length < 2) { toast.error('Bitte mindestens 2 Zeichen eingeben.'); return; }
+    setSearching(true);
+    try {
+      const like = `%${q}%`;
+      const { data, error } = await supabase
+        .from('customers')
+        .select('id, contact_name, company_name, email, phone, billing_address, external_customer_id, source_system')
+        .or(`contact_name.ilike.${like},company_name.ilike.${like},email.ilike.${like}`)
+        .order('contact_name', { ascending: true })
+        .limit(25);
+      if (error) throw error;
+      setResults(data || []);
+      if (!data?.length) toast.info('Keine Kunden gefunden.');
+    } catch (e: any) {
+      toast.error('Suche fehlgeschlagen: ' + (e?.message || e));
+    } finally { setSearching(false); }
+  };
+
+  const applyCustomer = (c: any) => {
+    const ba = c.billing_address || {};
+    const addr = [ba.address || ba.street, [ba.zip, ba.city].filter(Boolean).join(' '), ba.country]
+      .filter(Boolean).join(', ');
+    setForm((f) => ({
+      ...f,
+      company_name: c.company_name || f.company_name,
+      name: c.contact_name || f.name,
+      email: c.email || f.email,
+      phone: c.phone || f.phone,
+      address: addr || f.address,
+    }));
+    if (c.company_name) setType('company');
+    setLinkedCustomer(c);
+    setResults([]);
+    setQuery('');
+    toast.success('Kundendaten übernommen.');
+  };
+
 
   const save = async (calculate = true) => {
     if (!consent) { toast.error('Bitte Einwilligung zur Bonitätsprüfung bestätigen.'); return; }
