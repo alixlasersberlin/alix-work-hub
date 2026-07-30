@@ -19,7 +19,7 @@ const phases: Phase[] = [
     done: true,
     note: "Datenbank, RLS, Team-Kanäle, Unified Inbox, Webseitenverwaltung, Cookieless Analytics-Store.",
     links: [
-      { label: "Team Chat", to: "/connect/team-chat" },
+      { label: "Team Chat", to: "/connect/team" },
       { label: "Inbox", to: "/connect/inbox" },
     ],
   },
@@ -39,7 +39,7 @@ const phases: Phase[] = [
     done: true,
     note: "WhatsApp Cloud API (ac-webhook-whatsapp), Twilio SMS/Voice (ac-webhook-twilio, ac-send-message), Meta FB/IG Webhooks (ac-webhook-meta). Secrets sind hinterlegt.",
     links: [
-      { label: "Telefonie", to: "/connect/telephony" },
+      { label: "Telefonie", to: "/connect/telefonie" },
       { label: "SMS-Vorlagen", to: "/connect/sms-templates" },
     ],
   },
@@ -50,7 +50,7 @@ const phases: Phase[] = [
     note: "Kundenlisten mit Filtern, Segment-Builder inkl. Live-Vorschau, Kampagnen-Runner (A/B + Tracking), Vorlagen-Manager.",
     links: [
       { label: "Kontakte", to: "/connect/contacts" },
-      { label: "Segmente", to: "/connect/segments" },
+      { label: "Segmente", to: "/connect/segmente" },
       { label: "Kampagnen", to: "/connect/campaigns" },
     ],
   },
@@ -72,7 +72,7 @@ const phases: Phase[] = [
     note: "ALIX SURVEYS (CSAT/NPS/Custom), Autopilot- und autonome KI-Agenten, Mobile PWA mit Web-Push (VAPID konfiguriert).",
     links: [
       { label: "Surveys", to: "/connect/surveys" },
-      { label: "KI-Agenten", to: "/connect/ai-agents" },
+      { label: "KI-Agenten", to: "/connect/ai" },
       { label: "Mobile PWA", to: "/connect/mobile" },
     ],
   },
