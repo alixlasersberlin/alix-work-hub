@@ -5,6 +5,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -39,9 +41,17 @@ export default function FinanceMahnwesen() {
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('Entwurf');
+  const [onlyWithReminder, setOnlyWithReminder] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
+    let remQ: any = supabase.from('finance_reminders' as any)
+      .select('id, customer_id, level, total, status, created_at')
+      .eq('accounting_region', region)
+      .order('created_at', { ascending: false });
+    if (statusFilter !== 'alle') remQ = remQ.eq('status', statusFilter);
     const [accRes, draftRes] = await Promise.all([
       supabase.from('finance_accounts' as any)
         .select('id, customer_id, reminder_level, overdue_balance, last_reminder_at, customers(company_name, contact_name, email)')
@@ -49,17 +59,14 @@ export default function FinanceMahnwesen() {
         .eq('accounting_region', region)
         .order('overdue_balance', { ascending: false })
         .limit(500),
-      supabase.from('finance_reminders' as any)
-        .select('id, customer_id, level, total, status, created_at')
-        .eq('status', 'Entwurf')
-        .eq('accounting_region', region)
-        .order('created_at', { ascending: false }),
+      remQ,
     ]);
     setAccounts(((accRes.data ?? []) as any) as AccRow[]);
     setDrafts(((draftRes.data ?? []) as any) as DraftRow[]);
     setLoading(false);
   };
-  useEffect(() => { load(); }, [region]);
+  useEffect(() => { load(); }, [region, statusFilter]);
+
 
   const runEngine = async () => {
     setRunning(true);
@@ -74,6 +81,7 @@ export default function FinanceMahnwesen() {
   };
 
   const draftsByCustomer = new Map(drafts.map(d => [d.customer_id, d]));
+  const visibleAccounts = onlyWithReminder ? accounts.filter(a => draftsByCustomer.has(a.customer_id)) : accounts;
 
   return (
     <div className="p-4 sm:p-6">
@@ -81,9 +89,25 @@ export default function FinanceMahnwesen() {
         icon={AlertTriangle}
         title={`Mahnwesen ${region}`}
         subtitle={`Buchungskreis ${region} • Überfällige Forderungen, automatische Stufenfindung & manueller Versand`}
-        meta={<div className="flex items-center gap-2"><RegionChip /><InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${accounts.length}`} pulse={!loading} /></div>}
+        meta={<div className="flex items-center gap-2"><RegionChip /><InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${visibleAccounts.length}`} pulse={!loading} /></div>}
         actions={
           <>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="alle">Alle</SelectItem>
+                  <SelectItem value="Entwurf">Entwurf</SelectItem>
+                  <SelectItem value="Versendet">Versendet</SelectItem>
+                  <SelectItem value="Bezahlt">Bezahlt</SelectItem>
+                  <SelectItem value="Storniert">Storniert</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant={onlyWithReminder ? 'default' : 'outline'} size="sm" onClick={() => setOnlyWithReminder(v => !v)}>
+              Nur mit Mahnung
+            </Button>
             <Button variant="outline" size="sm" asChild>
               <Link to="/finance/mahnwesen/einstellungen"><SettingsIcon className="w-4 h-4 mr-2" />Einstellungen</Link>
             </Button>
@@ -94,13 +118,14 @@ export default function FinanceMahnwesen() {
 
           </>
         }
+
       />
 
       <DataCard className="overflow-hidden">
         {loading ? (
           <div className="p-4"><SkeletonTable rows={8} cols={7} /></div>
-        ) : accounts.length === 0 ? (
-          <div className="p-8"><EmptyState compact icon={Inbox} title="Keine überfälligen Forderungen" description="Alle Debitoren sind im grünen Bereich." /></div>
+        ) : visibleAccounts.length === 0 ? (
+          <div className="p-8"><EmptyState compact icon={Inbox} title="Keine Einträge" description={onlyWithReminder ? `Keine Konten mit Mahnung im Status „${statusFilter}".` : 'Alle Debitoren sind im grünen Bereich.'} /></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -111,13 +136,14 @@ export default function FinanceMahnwesen() {
                   <th className="text-left px-4 py-3 font-medium">Aktuelle Stufe</th>
                   <th className="text-right px-4 py-3 font-medium">Überfällig</th>
                   <th className="text-left px-4 py-3 font-medium">Letzte Mahnung</th>
-                  <th className="text-left px-4 py-3 font-medium">Entwurf</th>
+                  <th className="text-left px-4 py-3 font-medium">Mahnung ({statusFilter === 'alle' ? 'alle' : statusFilter})</th>
                   <th className="text-right px-4 py-3 font-medium">Aktion</th>
                 </tr>
               </thead>
               <tbody>
-                {accounts.map(a => {
+                {visibleAccounts.map(a => {
                   const d = draftsByCustomer.get(a.customer_id);
+
                   return (
                     <tr key={a.id} className="border-t border-border hover:bg-muted/20">
                       <td className="px-4 py-3">{a.customers?.company_name || a.customers?.contact_name || a.customer_id.slice(0, 8)}</td>

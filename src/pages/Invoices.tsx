@@ -124,14 +124,25 @@ function isDraftInvoice(r: Pick<Row, 'status' | 'payment_status' | 'raw_data'>) 
   return status === 'draft' || status === 'entwurf' || paymentStatus === 'entwurf' || r.raw_data?.is_draft === true;
 }
 
-function flatRowsForKpi(rows: Row[], search: string, statusFilter: string): number {
+function matchesDocStatus(r: Row, docStatus: string) {
+  if (docStatus === 'all') return true;
+  const s = String(r.status ?? '').toLowerCase();
+  if (docStatus === 'draft') return isDraftInvoice(r);
+  if (docStatus === 'void') return s === 'void' || s === 'storniert' || s === 'cancelled';
+  // sent = alles andere (verschickt/offen/bezahlt)
+  return !isDraftInvoice(r) && !(s === 'void' || s === 'storniert' || s === 'cancelled');
+}
+
+function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docStatus = 'all'): number {
   let res = rows;
   if (statusFilter !== 'all') {
     res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
   }
+  res = res.filter((r) => matchesDocStatus(r, docStatus));
   res = res.filter((r) => matchesQuery(r, search));
   return res.reduce((s, r) => s + Number(r.balance ?? 0), 0);
 }
+
 
 export default function Invoices() {
   const { roles } = useAuth();
@@ -144,6 +155,8 @@ export default function Invoices() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [docStatusFilter, setDocStatusFilter] = useState<string>('all');
+
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -226,7 +239,9 @@ export default function Invoices() {
     if (statusFilter !== 'all') {
       res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
     }
+    res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
+
     const map = new Map<string, Account>();
     const today = new Date().toISOString().slice(0, 10);
     for (const r of res) {
@@ -256,21 +271,22 @@ export default function Invoices() {
       }
     }
     return Array.from(map.values()).sort((a, b) => b.totalAmount - a.totalAmount);
-  }, [rows, search, statusFilter]);
+  }, [rows, search, statusFilter, docStatusFilter]);
 
   const kpi = useMemo(() => ({
     accounts: accounts.length,
     invoices: accounts.reduce((s, a) => s + a.totalInvoices + a.totalRecurring, 0),
     totalAmount: accounts.reduce((s, a) => s + a.totalAmount, 0),
     // Offene Beträge = Live-Summe der Salden aller aktuell sichtbaren Rechnungen
-    totalOpen: flatRowsForKpi(rows, search, statusFilter),
-  }), [accounts, rows, search, statusFilter]);
+    totalOpen: flatRowsForKpi(rows, search, statusFilter, docStatusFilter),
+  }), [accounts, rows, search, statusFilter, docStatusFilter]);
 
   const flatRows = useMemo<Row[]>(() => {
     let res = rows;
     if (statusFilter !== 'all') {
       res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
     }
+    res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
     const sorted = [...res].sort((a, b) => {
       if (listSort === 'number') {
@@ -279,7 +295,8 @@ export default function Invoices() {
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [rows, search, statusFilter, listSort]);
+  }, [rows, search, statusFilter, docStatusFilter, listSort]);
+
 
   const handleMove = async (r: Row) => {
     if (!isAdmin || r.source !== 'invoice') return;
@@ -1063,6 +1080,19 @@ export default function Invoices() {
               <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
+          <Select value={docStatusFilter} onValueChange={setDocStatusFilter}>
+            <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle</SelectItem>
+              <SelectItem value="draft">Entwurf</SelectItem>
+              <SelectItem value="sent">Versendet</SelectItem>
+              <SelectItem value="void">Storniert</SelectItem>
+            </SelectContent>
+          </Select>
+
         </div>
         {viewMode === 'accounts' && (
           <div className="flex gap-2">
