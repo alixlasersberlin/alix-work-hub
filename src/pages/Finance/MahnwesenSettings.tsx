@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { RegionChip } from '@/components/finance/RegionChip';
+import { regionCurrency } from '@/lib/finance/region';
 
 type Lv = { level: number; days: number; fee: number; interest_pct: number };
 type Cfg = { levels: Lv[]; payment_window_days: number };
