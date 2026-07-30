@@ -853,7 +853,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       let downloadUrl = '';
       if (blob && order?.id) {
         try {
-          const safeNo = String(invoiceNumber || 'AZ').replace(/[^\w.-]+/g, '_');
+          const safeNo = String(invNo || 'AZ').replace(/[^\w.-]+/g, '_');
           const storagePath = `${order.id}/anzahlung/${Date.now()}_${safeNo}.pdf`;
           const up = await supabase.storage
             .from('order-invoices')
@@ -881,15 +881,15 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         }
       }
 
-      const subject = `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNo}`;
+      const subject = `Anzahlungsrechnung ${invNo} – Auftrag ${orderNo}`;
       const body = [
         `Sehr geehrte Damen und Herren${customer?.contact_name ? `, ${customer.contact_name}` : ''},`,
         '',
-        `anbei erhalten Sie die Anzahlungsrechnung ${invoiceNumber} zum Auftrag ${orderNo}.`,
+        `anbei erhalten Sie die Anzahlungsrechnung ${invNo} zum Auftrag ${orderNo}.`,
         '',
-        `Rechnungsbetrag (brutto): ${fmtMoney(grossDeposit, currency)} (MwSt ${taxPercentage}%)`,
-        `Rechnungsdatum: ${fmtDate(invoiceDate)}`,
-        `Fällig am: ${fmtDate(dueDate)}`,
+        `Rechnungsbetrag (brutto): ${fmtMoney(gross, currency)} (MwSt ${taxPct}%)`,
+        `Rechnungsdatum: ${fmtDate(invDate)}`,
+        `Fällig am: ${fmtDate(dDate)}`,
         '',
         'Bankverbindung:',
         'Kontoinhaber: Alix Lasers GmbH',
@@ -907,7 +907,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         body: {
           templateName: 'customer-shipping-notice',
           recipientEmail: customer.email,
-          idempotencyKey: `az-invoice-${order?.id || orderNo}-${invoiceNumber}-${Date.now()}`,
+          idempotencyKey: `az-invoice-${order?.id || orderNo}-${invNo}-${Date.now()}`,
           bcc: ['k.trinh@alix-operation.de', 'natalia.p@alix-operation.de'],
           templateData: {
             subject,
@@ -919,7 +919,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       });
       if (error) throw error;
 
-      await recordNoteAndOrderDeposit();
+      if (!isResend) await recordNoteAndOrderDeposit();
       try {
         const { data: userData } = await supabase.auth.getUser();
         await supabase.from('order_notes').insert({
@@ -927,7 +927,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           note_type: 'email',
           is_internal: true,
           note_text: [
-            `[Manuell versendet] Anzahlungsrechnung ${invoiceNumber}`,
+            `[Manuell versendet] Anzahlungsrechnung ${invNo}`,
             `An: ${customer.email}`,
             `BCC: k.trinh@alix-operation.de, natalia.p@alix-operation.de`,
             `Betreff: ${subject}`,
@@ -939,7 +939,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       } catch { /* nicht kritisch */ }
 
       toast.success(`Anzahlungsrechnung an ${customer.email} versendet (BCC: k.trinh, natalia.p).`);
-      clearDraft();
+      if (!isResend) clearDraft();
       onReload?.();
       return true;
     } catch (e: any) {
