@@ -115,7 +115,52 @@ export default function CreditNew() {
       </div>
 
       <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Search className="w-4 h-4" /> Kunde suchen</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Name, Firma oder E-Mail …"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); searchCustomers(); } }}
+            />
+            <Button onClick={searchCustomers} disabled={searching} className="gap-2">
+              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />} Suchen
+            </Button>
+          </div>
+          {linkedCustomer && (
+            <div className="flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm">
+              <span className="flex items-center gap-2">
+                <User className="w-4 h-4 text-primary" />
+                Verknüpft: <strong>{linkedCustomer.company_name || linkedCustomer.contact_name}</strong>
+                {linkedCustomer.email && <span className="text-muted-foreground">· {linkedCustomer.email}</span>}
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => setLinkedCustomer(null)}>Entfernen</Button>
+            </div>
+          )}
+          {results.length > 0 && (
+            <div className="max-h-72 overflow-y-auto rounded-md border divide-y">
+              {results.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => applyCustomer(c)}
+                  className="w-full text-left px-3 py-2 hover:bg-muted/60 transition-colors"
+                >
+                  <div className="text-sm font-medium">{c.company_name || c.contact_name || '—'}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {[c.company_name ? c.contact_name : null, c.email, c.phone].filter(Boolean).join(' · ') || '—'}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle>Kundendaten</CardTitle></CardHeader>
+
         <CardContent className="space-y-4">
           <div className="flex gap-4">
             <Label className="flex items-center gap-2"><input type="radio" checked={type === 'company'} onChange={() => setType('company')} /> Firma</Label>
