@@ -674,8 +674,8 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
     <div className="p-6 lg:p-8 animate-fade-in min-w-0 max-w-full overflow-x-hidden">
       <div className="flex items-start justify-between gap-4">
         <PageHeader
-          icon={ClipboardList}
-          title="Aufträge"
+          icon={deliveredOnly ? Truck : ClipboardList}
+          title={deliveredOnly ? 'Aufträge geliefert' : 'Aufträge'}
           subtitle={`${filtered.length} Aufträge`}
           noBreadcrumbs
           meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
