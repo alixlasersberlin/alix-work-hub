@@ -91,6 +91,28 @@ export default function FinanceMeldewesen() {
     URL.revokeObjectURL(url);
   };
 
+  const openDetail = async (f: any) => {
+    setDetail(f);
+    const payloadLines = Array.isArray(f?.payload?.lines) ? f.payload.lines : [];
+    setDetailLines(payloadLines);
+    const { data } = await supabase
+      .from('finance_tax_filing_lines' as any)
+      .select('*')
+      .eq('filing_id', f.id);
+    if (data && data.length) setDetailLines(data as any);
+  };
+
+  const markSubmitted = async (f: any) => {
+    const { error } = await supabase
+      .from('finance_tax_filings' as any)
+      .update({ status: 'submitted', submitted_at: new Date().toISOString() })
+      .eq('id', f.id);
+    if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    toast({ title: 'Als eingereicht markiert', description: `${f.period_value}` });
+    setDetail(null);
+    load();
+  };
+
   const filtered = filings.filter((f) => f.filing_type === tab);
 
   return (
