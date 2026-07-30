@@ -70,16 +70,27 @@ export async function requireAuditUser(req: Request): Promise<{ user: AuditUser 
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
 
+  // Primary: local/JWKS claim verification (asymmetric signing keys)
   const { data, error } = await authClient.auth.getClaims(token);
   const claims = data?.claims;
-  if (error || !claims?.sub) {
+  if (!error && claims?.sub) {
+    return {
+      user: {
+        id: String(claims.sub),
+        email: typeof claims.email === "string" ? claims.email : null,
+      },
+    };
+  }
+
+  // Fallback: ask the Auth server directly (works for legacy HS256 tokens and
+  // whenever JWKS verification is unavailable in the function runtime).
+  const { data: userData, error: userErr } = await authClient.auth.getUser(token);
+  if (userErr || !userData?.user?.id) {
+    console.warn("[audit-auth] unauthorized", error?.message ?? userErr?.message ?? "no claims");
     return { response: jsonResponse({ error: "Unauthorized" }, 401) };
   }
 
   return {
-    user: {
-      id: String(claims.sub),
-      email: typeof claims.email === "string" ? claims.email : null,
-    },
+    user: { id: userData.user.id, email: userData.user.email ?? null },
   };
 }
