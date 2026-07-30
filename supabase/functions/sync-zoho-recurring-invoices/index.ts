@@ -13,7 +13,22 @@ type Payload = {
   per_page?: number;
   fetch_details?: boolean; // if true, fetch each invoice's detail (line_items + address)
   max_pages?: number; // safety cap per call
+  /** 'all' = alle, 'CH' = nur Schweiz-Rechnungen, 'EU' = nur EU-Rechnungen */
+  region_filter?: "all" | "EU" | "CH";
 };
+
+const CH_BRANCH_ID = "116240000000287001";
+const CH_MARKERS = ["alix lasers ® schweiz", "alix lasers (r) schweiz", "alix lasers schweiz"];
+
+function detectInvoiceRegion(inv: any): "EU" | "CH" {
+  if (inv?.branch_id && String(inv.branch_id) === CH_BRANCH_ID) return "CH";
+  if ((inv?.currency_code ?? "").toString().toUpperCase() === "CHF") return "CH";
+  const hay = JSON.stringify(inv ?? {}).toLowerCase();
+  if (CH_MARKERS.some((m) => hay.includes(m))) return "CH";
+  const country = (inv?.billing_address?.country ?? inv?.billing_address?.country_code ?? "").toString().toLowerCase();
+  if (country === "ch" || country.includes("schweiz") || country.includes("switzerland")) return "CH";
+  return "EU";
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -21,6 +36,7 @@ function json(body: unknown, status = 200) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
 
 function getZohoConfig(source: string) {
   const map: Record<string, { prefix: string; accountsBase: string; apiBase: string }> = {
