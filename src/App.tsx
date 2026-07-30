@@ -1311,6 +1311,8 @@ function AppRoutes() {
           <Route path="/finance/treasury" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceTreasury /></ProtectedRoute>} />
           <Route path="/finance/p2p" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceP2P /></ProtectedRoute>} />
           <Route path="/finance/meldewesen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMeldewesen /></ProtectedRoute>} />
+          <Route path="/finance/steuerkonto" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuerkonto /></ProtectedRoute>} />
+
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />
