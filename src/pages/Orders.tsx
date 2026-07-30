@@ -82,7 +82,13 @@ const ALL_COLUMNS: { id: ColumnId; label: string; sortField?: SortField }[] = [
 ];
 const DEFAULT_COLUMN_ORDER: ColumnId[] = ALL_COLUMNS.map(c => c.id);
 
-export default function Orders() {
+/** Ein Auftrag gilt als „geliefert", wenn Status geliefert/invoiced ist oder Zoho eine Rechnung erzeugt hat. */
+const isDelivered = (o: any): boolean => {
+  const s = (o?.order_status || '').toLowerCase();
+  return s === 'geliefert' || s === 'invoiced' || !!o?.invoiced_flag;
+};
+
+export default function Orders({ deliveredOnly = false }: { deliveredOnly?: boolean } = {}) {
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
