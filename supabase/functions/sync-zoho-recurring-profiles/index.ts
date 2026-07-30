@@ -113,6 +113,7 @@ Deno.serve(async (req) => {
     const perPage = Math.min(Math.max(body.per_page ?? 100, 1), 200);
     const startPage = body.page ?? 1;
     const maxPages = Math.min(Math.max(body.max_pages ?? 5, 1), 20);
+    const regionFilter = body.region_filter ?? "all";
 
     const cfg = getZohoConfig(sourceSystem);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
@@ -121,6 +122,7 @@ Deno.serve(async (req) => {
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
 
     let imported = 0, updated = 0, failed = 0, processed = 0;
+    let skippedRegion = 0, importedCh = 0;
     let page = startPage;
     let hasMore = true;
     const startedAt = Date.now();
@@ -178,6 +180,7 @@ Deno.serve(async (req) => {
           device_name: deviceName,
           line_items: lineItems,
           raw_data: p,
+          accounting_region: region,
           synced_at: new Date().toISOString(),
         };
 
@@ -206,6 +209,9 @@ Deno.serve(async (req) => {
       failed,
       processed,
       last_page: page - 1,
+      region_filter: regionFilter,
+      skipped_region: skippedRegion,
+      imported_ch: importedCh,
       has_more: hasMore,
     });
   } catch (e: any) {
