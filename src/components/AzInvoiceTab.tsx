@@ -1277,16 +1277,49 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           </div>
           <ul className="space-y-1">
             {existingInvoices.map((inv, i) => (
-              <li key={`${inv.invoice_number}-${i}`} className="flex items-center justify-between text-xs">
+              <li key={`${inv.invoice_number}-${i}`} className="flex flex-wrap items-center justify-between gap-2 text-xs border-b border-border/50 last:border-0 py-1">
                 <span className="font-mono text-foreground">Rate {i + 1} · {inv.invoice_number}</span>
-                <span className="text-muted-foreground">
-                  {inv.issue_date ? fmtDate(inv.issue_date) : '—'}
-                  {inv.gross_amount != null ? ` · ${fmtMoney(Number(inv.gross_amount), currency)}` : ''}
-                  {inv.status ? ` · ${inv.status}` : ''}
+                <span className="flex items-center gap-2">
+                  <span className="text-muted-foreground">
+                    {inv.issue_date ? fmtDate(inv.issue_date) : '—'}
+                    {inv.gross_amount != null ? ` · ${fmtMoney(Number(inv.gross_amount), currency)}` : ''}
+                    {inv.status ? ` · ${inv.status}` : ''}
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2"
+                    disabled={rowBusy === inv.invoice_number}
+                    title={`PDF der Anzahlungsrechnung ${inv.invoice_number} erneut herunterladen`}
+                    onClick={() => downloadRate(inv, i)}
+                  >
+                    {rowBusy === `dl:${inv.invoice_number}`
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <FileDown className="w-3.5 h-3.5" />}
+                    <span className="ml-1">PDF</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2"
+                    disabled={!!rowBusy || !customer?.email}
+                    title={customer?.email
+                      ? `Anzahlungsrechnung ${inv.invoice_number} erneut an ${customer.email} senden`
+                      : 'Kunde hat keine E-Mail-Adresse hinterlegt.'}
+                    onClick={() => resendRate(inv, i)}
+                  >
+                    {rowBusy === `mail:${inv.invoice_number}`
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <Mail className="w-3.5 h-3.5" />}
+                    <span className="ml-1">E-Mail</span>
+                  </Button>
                 </span>
               </li>
             ))}
           </ul>
+
           <div className="mt-2 grid sm:grid-cols-3 gap-2 text-[11px]">
             <div className="rounded bg-background/60 border border-border px-2 py-1">
               <div className="text-muted-foreground">Anzahlung lt. Auftrag</div>
