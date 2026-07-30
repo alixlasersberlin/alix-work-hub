@@ -313,7 +313,9 @@ Deno.serve(async (req) => {
                 payment_status: payStatusFromInvoice(inv),
                 last_payment_date: inv.last_payment_date ?? null,
                 raw_data: inv,
+                accounting_region: region,
                 synced_at: new Date().toISOString(),
+
               };
 
               // Duplikatscheck: gleiche Rechnungsnummer bereits vorhanden?
