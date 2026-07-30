@@ -621,7 +621,7 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
       }
     }
     const matchNewImport = newImportFilter === 'all' || !!o.imported_via_reconcile_at;
-    return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && matchNewImport && notExcluded;
+    return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && matchNewImport && notExcluded && matchDelivered;
   });
 
   // Client-seitige Sortierung nach Anzahlungsstatus
