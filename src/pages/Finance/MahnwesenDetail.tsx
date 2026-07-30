@@ -88,7 +88,7 @@ export default function FinanceMahnwesenDetail() {
         title={loading ? 'Lädt…' : (customer?.company_name || customer?.contact_name || 'Kunde')}
         subtitle={loading ? 'Lädt…' : `E-Mail: ${customer?.email ?? '–'} • Überfällig: ${fmt(overdue)} • Aktuelle Stufe: ${LEVEL_LABEL[account?.reminder_level ?? 0]}`}
         noBreadcrumbs
-        meta={<InfinityStatusBadge kind={loading ? 'progress' : overdue ? 'warning' : 'done'} label={loading ? 'Lädt' : overdue ? fmt(overdue) : 'Aktuell'} pulse={loading} />}
+        meta={<div className="flex items-center gap-2"><RegionChip /><InfinityStatusBadge kind={loading ? 'progress' : overdue ? 'warning' : 'done'} label={loading ? 'Lädt' : overdue ? fmt(overdue) : 'Aktuell'} pulse={loading} /></div>}
       />
 
       {loading ? <DataCard><SkeletonTable rows={6} cols={4} /></DataCard> : (
