@@ -745,6 +745,29 @@ export default function OffenePosten() {
             <Button variant="outline" size="sm" onClick={() => setExpanded({})}>Alle zuklappen</Button>
           </>
         )}
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={toggleAll}>
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          {allSelected ? 'Markierung aufheben' : 'Alle markieren'}
+        </Button>
+        {selectedCount > 0 && (
+          <Badge variant="outline" className="text-xs">{selectedCount} markiert</Badge>
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" className="gap-1.5">
+              <Download className="w-3.5 h-3.5" /> Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>
+              {selectedCount > 0 ? `${selectedCount} markierte Posten` : `Alle ${filtered.length} gefilterten Posten`}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={exportPdf}><FileText className="w-4 h-4 mr-2" /> PDF</DropdownMenuItem>
+            <DropdownMenuItem onClick={exportExcel}><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel (XLSX)</DropdownMenuItem>
+            <DropdownMenuItem onClick={exportCsv}><FileJson className="w-4 h-4 mr-2" /> CSV</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <ListToolbar
