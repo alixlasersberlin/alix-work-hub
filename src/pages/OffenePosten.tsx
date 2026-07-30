@@ -1,6 +1,7 @@
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2, ExternalLink } from 'lucide-react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2, ExternalLink, Users } from 'lucide-react';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -423,6 +424,150 @@ export default function OffenePosten() {
     return { sum, overdue, count: filtered.length };
   }, [filtered]);
 
+  // ===== Ansicht: Kundenkonto vs. Rechnungsliste =====
+  const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'list';
+    return (localStorage.getItem('offene_posten_view_mode') as 'accounts' | 'list') || 'list';
+  });
+  const setViewModePersist = (m: 'accounts' | 'list') => {
+    setViewMode(m);
+    try { localStorage.setItem('offene_posten_view_mode', m); } catch { /* ignore */ }
+  };
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const toggleAccount = (key: string) => setExpanded((p) => ({ ...p, [key]: !p[key] }));
+
+  const accounts = useMemo(() => {
+    const map = new Map<string, { key: string; name: string; items: OpenItem[]; total: number; balance: number }>();
+    filtered.forEach((i) => {
+      const name = i.customer_name?.trim() || 'Ohne Kunde';
+      const key = name.toLowerCase();
+      const acc = map.get(key) ?? { key, name, items: [], total: 0, balance: 0 };
+      acc.items.push(i);
+      acc.total += Number(i.total) || 0;
+      acc.balance += Number(i.balance) || 0;
+      map.set(key, acc);
+    });
+    return Array.from(map.values()).sort((a, b) => b.balance - a.balance);
+  }, [filtered]);
+
+  const visibleAccounts = useMemo(() => paginate(accounts, pageSize), [accounts, pageSize]);
+
+  const renderRow = (i: OpenItem) => {
+    const b = bucketFor(i.due_date);
+    const style = bucketStyles[b];
+    const days = i.due_date ? differenceInCalendarDays(parseISO(i.due_date), new Date()) : null;
+    const wf = workflows[`${i.source}-${i.id}`];
+    const wfStatus: WorkflowStatus = wf?.workflow_status ?? 'offen';
+    const rowKey = `${i.source}-${i.id}`;
+    const booked = bookedRefs[rowKey];
+    const isBooking = bookingKey === rowKey;
+    return (
+      <TableRow key={rowKey} className={style.row}>
+        <TableCell className="font-mono">
+          <div className="flex items-center gap-1">
+            {i.zoho_invoice_id && i.invoice_number ? (
+              <button
+                type="button"
+                onClick={() => openInvoicePdf(i)}
+                disabled={pdfLoadingKey === rowKey}
+                title="Rechnung als PDF öffnen"
+                className="inline-flex items-center gap-1 text-primary hover:underline disabled:opacity-60"
+              >
+                {i.invoice_number}
+                {pdfLoadingKey === rowKey
+                  ? <Loader2 className="w-3 h-3 animate-spin" />
+                  : <ExternalLink className="w-3 h-3 opacity-70" />}
+              </button>
+            ) : (
+              <span>{i.invoice_number ?? '—'}</span>
+            )}
+            {i.source === 'recurring' && (
+              <Badge variant="outline" className="ml-1 text-[10px]">Abo</Badge>
+            )}
+          </div>
+        </TableCell>
+        <TableCell>{i.customer_name ?? '—'}</TableCell>
+        <TableCell>
+          {i.due_date ? format(parseISO(i.due_date), 'dd.MM.yyyy', { locale: de }) : '—'}
+          {days !== null && (
+            <div className="text-xs text-muted-foreground">
+              {days < 0 ? `${Math.abs(days)} Tage überfällig` : days === 0 ? 'heute fällig' : `in ${days} Tagen`}
+            </div>
+          )}
+        </TableCell>
+        <TableCell>
+          <span className={cn('px-2 py-0.5 rounded text-xs', style.badge)}>{style.label}</span>
+        </TableCell>
+        <TableCell>
+          <span className={cn('px-2 py-0.5 rounded text-xs', workflowBadge(wfStatus))}>
+            {workflowLabel(wfStatus)}
+          </span>
+          {wf?.note && (
+            <div className="text-xs text-muted-foreground mt-1 max-w-[220px] truncate" title={wf.note}>
+              {wf.note}
+            </div>
+          )}
+          {booked && (
+            <div className="text-[11px] text-emerald-500 mt-1 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Gebucht{booked.journal_number ? ` · ${booked.journal_number}` : ''}
+            </div>
+          )}
+        </TableCell>
+        <TableCell className="text-right">{formatCurrency(i.total, i.currency)}</TableCell>
+        <TableCell className="text-right font-medium">{formatCurrency(i.balance, i.currency)}</TableCell>
+        <TableCell className="text-right">
+          <div className="flex justify-end gap-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={booked ? 'outline' : 'default'}
+                  disabled={isBooking || !!booked}
+                  className="gap-1 relative z-10"
+                  title={booked ? 'Bereits in Buchhaltung gebucht' : 'Rechnung in Buchhaltung buchen'}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {isBooking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookCheck className="w-3.5 h-3.5" />}
+                  {booked ? 'Gebucht' : 'Buchen'}
+                  {!booked && <ChevronDown className="w-3.5 h-3.5 opacity-70" />}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="z-[10001]">
+                <DropdownMenuLabel>Zahlungsart wählen</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {(Object.keys(bookingMethodConfig) as Array<keyof typeof bookingMethodConfig>).map((m) => {
+                  const cfg = bookingMethodConfig[m];
+                  const Icon = cfg.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={m}
+                      onClick={(e) => { e.stopPropagation(); bookItem(i, m); }}
+                      className="gap-2"
+                    >
+                      <Icon className="w-4 h-4" /> {cfg.label}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={(e) => { e.stopPropagation(); openEdit(i); }}
+              className="gap-1 relative z-10"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Bearbeiten
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+
+
   return (
     <div className="p-4 sm:p-6 space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -474,14 +619,44 @@ export default function OffenePosten() {
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="inline-flex rounded-lg border border-border bg-card p-1">
+          <Button
+            variant={viewMode === 'accounts' ? 'default' : 'ghost'}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setViewModePersist('accounts')}
+          >
+            <Users className="w-3.5 h-3.5" /> Nach Kundenkonto
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setViewModePersist('list')}
+          >
+            <FileText className="w-3.5 h-3.5" /> Rechnungsliste
+          </Button>
+        </div>
+        {viewMode === 'accounts' && (
+          <>
+            <Button variant="outline" size="sm" onClick={() => setExpanded(Object.fromEntries(accounts.map((a) => [a.key, true])))}>Alle aufklappen</Button>
+            <Button variant="outline" size="sm" onClick={() => setExpanded({})}>Alle zuklappen</Button>
+          </>
+        )}
+      </div>
+
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
-        total={filtered.length}
-        visible={visible.length}
+        total={viewMode === 'accounts' ? accounts.length : filtered.length}
+        visible={viewMode === 'accounts' ? visibleAccounts.length : visible.length}
+        placeholder={viewMode === 'accounts' ? 'Suche: Kunde, Rechnungsnr., Stadt, PLZ, Betrag…' : undefined}
       />
+
+
 
       <div className="flex flex-wrap gap-2">
         {([
@@ -571,127 +746,28 @@ export default function OffenePosten() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visible.map((i) => {
-                const b = bucketFor(i.due_date);
-                const style = bucketStyles[b];
-                const days = i.due_date ? differenceInCalendarDays(parseISO(i.due_date), new Date()) : null;
-                const wf = workflows[`${i.source}-${i.id}`];
-                const wfStatus: WorkflowStatus = wf?.workflow_status ?? 'offen';
-                const rowKey = `${i.source}-${i.id}`;
-                const booked = bookedRefs[rowKey];
-                const isBooking = bookingKey === rowKey;
-                return (
-                  <TableRow key={rowKey} className={style.row}>
-                    <TableCell className="font-mono">
-                      <div className="flex items-center gap-1">
-                        {i.zoho_invoice_id && i.invoice_number ? (
-                          <button
-                            type="button"
-                            onClick={() => openInvoicePdf(i)}
-                            disabled={pdfLoadingKey === rowKey}
-                            title="Rechnung als PDF öffnen"
-                            className="inline-flex items-center gap-1 text-primary hover:underline disabled:opacity-60"
-                          >
-                            {i.invoice_number}
-                            {pdfLoadingKey === rowKey
-                              ? <Loader2 className="w-3 h-3 animate-spin" />
-                              : <ExternalLink className="w-3 h-3 opacity-70" />}
-                          </button>
-                        ) : (
-                          <span>{i.invoice_number ?? '—'}</span>
-                        )}
-                        {i.source === 'recurring' && (
-                          <Badge variant="outline" className="ml-1 text-[10px]">Abo</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{i.customer_name ?? '—'}</TableCell>
-                    <TableCell>
-                      {i.due_date ? format(parseISO(i.due_date), 'dd.MM.yyyy', { locale: de }) : '—'}
-                      {days !== null && (
-                        <div className="text-xs text-muted-foreground">
-                          {days < 0 ? `${Math.abs(days)} Tage überfällig` : days === 0 ? 'heute fällig' : `in ${days} Tagen`}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span className={cn('px-2 py-0.5 rounded text-xs', style.badge)}>{style.label}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={cn('px-2 py-0.5 rounded text-xs', workflowBadge(wfStatus))}>
-                        {workflowLabel(wfStatus)}
-                      </span>
-                      {wf?.note && (
-                        <div className="text-xs text-muted-foreground mt-1 max-w-[220px] truncate" title={wf.note}>
-                          {wf.note}
-                        </div>
-                      )}
-                      {booked && (
-                        <div className="text-[11px] text-emerald-500 mt-1 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Gebucht{booked.journal_number ? ` · ${booked.journal_number}` : ''}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">{formatCurrency(i.total, i.currency)}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(i.balance, i.currency)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={booked ? 'outline' : 'default'}
-                              disabled={isBooking || !!booked}
-                              className="gap-1 relative z-10"
-                              title={booked ? 'Bereits in Buchhaltung gebucht' : 'Rechnung in Buchhaltung buchen'}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {isBooking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookCheck className="w-3.5 h-3.5" />}
-                              {booked ? 'Gebucht' : 'Buchen'}
-                              {!booked && <ChevronDown className="w-3.5 h-3.5 opacity-70" />}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="z-[10001]">
-                            <DropdownMenuLabel>Zahlungsart wählen</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {(Object.keys(bookingMethodConfig) as Array<keyof typeof bookingMethodConfig>).map((m) => {
-                              const cfg = bookingMethodConfig[m];
-                              const Icon = cfg.icon;
-                              return (
-                                <DropdownMenuItem
-                                  key={m}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    bookItem(i, m);
-                                  }}
-                                  className="gap-2"
-                                >
-                                  <Icon className="w-4 h-4" /> {cfg.label}
-                                </DropdownMenuItem>
-                              );
-                            })}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEdit(i);
-                          }}
-                          className="gap-1 relative z-10"
-                        >
-                          <Pencil className="w-3.5 h-3.5" /> Bearbeiten
-                        </Button>
-                      </div>
-                    </TableCell>
-
-                  </TableRow>
-                );
-              })}
+              {viewMode === 'list'
+                ? visible.map((i) => renderRow(i))
+                : visibleAccounts.map((a) => (
+                    <Fragment key={a.key}>
+                      <TableRow className="bg-muted/40 cursor-pointer" onClick={() => toggleAccount(a.key)}>
+                        <TableCell colSpan={5}>
+                          <div className="flex items-center gap-2 font-medium">
+                            <ChevronDown className={cn('w-4 h-4 transition-transform', !expanded[a.key] && '-rotate-90')} />
+                            <Users className="w-4 h-4 text-primary" />
+                            {a.name}
+                            <Badge variant="outline" className="text-[10px]">{a.items.length} Rechnungen</Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(a.total, 'EUR')}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatCurrency(a.balance, 'EUR')}</TableCell>
+                        <TableCell />
+                      </TableRow>
+                      {expanded[a.key] && a.items.map((i) => renderRow(i))}
+                    </Fragment>
+                  ))}
             </TableBody>
+
           </Table>
         )}
       </div>
