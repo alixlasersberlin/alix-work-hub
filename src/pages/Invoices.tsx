@@ -155,6 +155,8 @@ export default function Invoices() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [docStatusFilter, setDocStatusFilter] = useState<string>('all');
+
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
