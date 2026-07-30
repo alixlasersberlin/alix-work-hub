@@ -6,20 +6,25 @@ import { cn } from '@/lib/utils';
 
 /**
  * Kompakter Umschalter zwischen Buchhaltung EU und CH.
- * Buchhaltung CH ist ausschließlich für Super Admin sichtbar/wählbar.
+ * Sichtbar für Super Admin, Admin, Buchhaltung Admin sowie Rollen mit
+ * regionalem Zugriff (Buchhaltung EU / Buchhaltung CH / Finance).
  */
 export function AccountingRegionSwitcher({ className }: { className?: string }) {
   const { region, setRegion } = useAccountingRegion();
   const { hasRole } = useAuth();
-  const isSuperAdmin = hasRole('Super Admin');
+  const isAdmin = hasRole('Super Admin') || hasRole('Admin') || hasRole('Buchhaltung Admin');
+  const canEu = isAdmin || hasRole('Buchhaltung EU') || hasRole('Finance');
+  const canCh = isAdmin || hasRole('Buchhaltung CH');
 
-  // Erzwinge EU für Nicht-Super-Admins, falls CH aus localStorage geladen wurde
+  // Erzwinge erlaubte Region, falls unerlaubte Region aus localStorage geladen wurde
   useEffect(() => {
-    if (!isSuperAdmin && region === 'CH') setRegion('EU');
-  }, [isSuperAdmin, region, setRegion]);
+    if (region === 'CH' && !canCh) setRegion('EU');
+    if (region === 'EU' && !canEu && canCh) setRegion('CH');
+  }, [canCh, canEu, region, setRegion]);
 
-  // Nicht-Super-Admins sehen keinen Umschalter (nur EU)
-  if (!isSuperAdmin) return null;
+  // Nur eine erlaubte Region → kein Umschalter
+  if (!(canEu && canCh)) return null;
+
 
   const Item = ({ value, label, flag }: { value: AccountingRegion; label: string; flag: string }) => (
     <button
