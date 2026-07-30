@@ -1340,7 +1340,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
                     size="sm"
                     variant="outline"
                     className="h-7 px-2"
-                    disabled={rowBusy === inv.invoice_number}
+                    disabled={!!rowBusy}
                     title={`PDF der Anzahlungsrechnung ${inv.invoice_number} erneut herunterladen`}
                     onClick={() => downloadRate(inv, i)}
                   >
