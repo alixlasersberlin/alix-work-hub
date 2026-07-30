@@ -132,6 +132,8 @@ function flatRowsForKpi(rows: Row[], search: string, statusFilter: string): numb
 
 export default function Invoices() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
+
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const isAdmin = roles.includes('Admin') || isSuperAdmin;
   const [rows, setRows] = useState<Row[]>([]);
