@@ -225,7 +225,9 @@ function parseCamt053(xml: string): Parsed {
     if (cdt === 'DBIT') amount = -amount;
     const booking_date = isoDate(pick(e, /<BookgDt>[\s\S]*?<Dt>([^<]+)<\/Dt>/)) ?? isoDate(pick(e, /<BookgDt>[\s\S]*?<DtTm>([^<]+)<\/DtTm>/));
     const value_date = isoDate(pick(e, /<ValDt>[\s\S]*?<Dt>([^<]+)<\/Dt>/));
-    const purpose = (pick(e, /<Ustrd>([^<]+)<\/Ustrd>/) ?? pick(e, /<AddtlNtryInf>([^<]+)<\/AddtlNtryInf>/) ?? '').trim();
+    const strdRef = pick(e, /<CdtrRefInf>[\s\S]*?<Ref>([^<]+)<\/Ref>/);
+    const purpose = [strdRef, pick(e, /<Ustrd>([^<]+)<\/Ustrd>/) ?? pick(e, /<AddtlNtryInf>([^<]+)<\/AddtlNtryInf>/)]
+      .filter(Boolean).join(' ').trim();
     const counterparty_name = pick(e, /<RltdPties>[\s\S]*?<Nm>([^<]+)<\/Nm>/);
     const counterparty_iban = pick(e, /<RltdPties>[\s\S]*?<IBAN>([^<]+)<\/IBAN>/);
     const end_to_end_id = pick(e, /<EndToEndId>([^<]+)<\/EndToEndId>/);
