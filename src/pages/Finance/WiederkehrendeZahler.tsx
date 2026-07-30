@@ -179,7 +179,19 @@ export default function WiederkehrendeZahler() {
     }
 
     const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
-    for (const inv of invoices) {
+    const today = new Date().toISOString().slice(0, 10);
+    const invMatches = (inv: Invoice) => {
+      if (invoiceStatusFilter === 'all') return true;
+      const s = (inv.status ?? '').toLowerCase();
+      const bal = Number(inv.balance || 0);
+      if (invoiceStatusFilter === 'paid') return s === 'paid' || bal <= 0;
+      if (invoiceStatusFilter === 'unpaid') return bal > 0 && s !== 'draft';
+      if (invoiceStatusFilter === 'overdue') return bal > 0 && !!(inv as any).due_date && String((inv as any).due_date) < today;
+      if (invoiceStatusFilter === 'draft') return s === 'draft' || s === 'entwurf';
+      return true;
+    };
+    for (const inv of invoices.filter(invMatches)) {
+
       const k = keyOf(inv.customer_id, inv.customer_name);
       if (!map.has(k)) {
         map.set(k, {
