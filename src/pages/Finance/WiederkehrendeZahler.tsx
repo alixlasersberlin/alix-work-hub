@@ -534,6 +534,7 @@ export default function WiederkehrendeZahler() {
                                   {fmt(g.monthly, g.currency)}
                                 </td>
                                 <td />
+                                <td />
                               </tr>
                             </tfoot>
                           </table>
