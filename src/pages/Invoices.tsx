@@ -124,14 +124,25 @@ function isDraftInvoice(r: Pick<Row, 'status' | 'payment_status' | 'raw_data'>) 
   return status === 'draft' || status === 'entwurf' || paymentStatus === 'entwurf' || r.raw_data?.is_draft === true;
 }
 
-function flatRowsForKpi(rows: Row[], search: string, statusFilter: string): number {
+function matchesDocStatus(r: Row, docStatus: string) {
+  if (docStatus === 'all') return true;
+  const s = String(r.status ?? '').toLowerCase();
+  if (docStatus === 'draft') return isDraftInvoice(r);
+  if (docStatus === 'void') return s === 'void' || s === 'storniert' || s === 'cancelled';
+  // sent = alles andere (verschickt/offen/bezahlt)
+  return !isDraftInvoice(r) && !(s === 'void' || s === 'storniert' || s === 'cancelled');
+}
+
+function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docStatus = 'all'): number {
   let res = rows;
   if (statusFilter !== 'all') {
     res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
   }
+  res = res.filter((r) => matchesDocStatus(r, docStatus));
   res = res.filter((r) => matchesQuery(r, search));
   return res.reduce((s, r) => s + Number(r.balance ?? 0), 0);
 }
+
 
 export default function Invoices() {
   const { roles } = useAuth();
