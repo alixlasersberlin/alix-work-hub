@@ -81,7 +81,7 @@ export function OrderCard({
               className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border bg-blue-500/10 text-blue-400 border-blue-500/20"
               title="Zoho hat für diesen Auftrag eine Rechnung erstellt"
             >
-              Invoiced
+              geliefert
             </span>
           )}
         </div>
