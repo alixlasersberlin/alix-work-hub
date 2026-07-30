@@ -102,6 +102,8 @@ export default function WiederkehrendeZahler() {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>('active');
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'all' | 'paid' | 'unpaid' | 'overdue' | 'draft'>('all');
+
   const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   const { canWrite } = useFinancePermissions();
