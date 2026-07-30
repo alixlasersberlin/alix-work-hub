@@ -176,7 +176,7 @@ export default function Anlagenspiegel() {
     <div className="p-6 space-y-6">
       <PageHeader
         title="Anlagenspiegel & Inventar"
-        description={`AfA-Spiegel und Inventarliste ${region === 'CH' ? '🇨🇭 Schweiz' : '🇪🇺 EU'} · Geschäftsjahr ${year}`}
+        subtitle={`AfA-Spiegel und Inventarliste ${region === 'CH' ? '🇨🇭 Schweiz' : '🇪🇺 EU'} · Geschäftsjahr ${year}`}
         icon={Building2}
         actions={
           <div className="flex items-center gap-2">

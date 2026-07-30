@@ -139,6 +139,7 @@ const FinanceBelege = lazy(() => import("./pages/Finance/Belege"));
 const FinanceEingangsrechnungen = lazy(() => import("./pages/Finance/Eingangsrechnungen"));
 const FinanceAnlagen = lazy(() => import("./pages/Finance/Anlagen"));
 const FinanceAfaLauf = lazy(() => import("./pages/Finance/AfaLauf"));
+const FinanceAnlagenspiegel = lazy(() => import("./pages/Finance/Anlagenspiegel"));
 const FinanceLiquiditaet = lazy(() => import("./pages/Finance/Liquiditaet"));
 const FinanceBwa = lazy(() => import("./pages/Finance/Bwa"));
 const FinanceGuV = lazy(() => import("./pages/Finance/GuV"));
