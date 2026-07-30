@@ -176,6 +176,7 @@ const FinanceAusgeliefert = lazy(() => import("./pages/Finance/Ausgeliefert"));
 const FinanceTreasury = lazy(() => import("./pages/Finance/Treasury"));
 const FinanceP2P = lazy(() => import("./pages/Finance/P2P"));
 const FinanceMeldewesen = lazy(() => import("./pages/Finance/Meldewesen"));
+const FinanceSteuerkonto = lazy(() => import("./pages/Finance/Steuerkonto"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const ZohoAbgleich = lazy(() => import("./pages/Admin/ZohoAbgleich"));
@@ -1310,6 +1311,8 @@ function AppRoutes() {
           <Route path="/finance/treasury" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceTreasury /></ProtectedRoute>} />
           <Route path="/finance/p2p" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceP2P /></ProtectedRoute>} />
           <Route path="/finance/meldewesen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMeldewesen /></ProtectedRoute>} />
+          <Route path="/finance/steuerkonto" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSteuerkonto /></ProtectedRoute>} />
+
           <Route path="/service-cockpit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Serviceleitung']}><ServiceCockpit /></ProtectedRoute>} />
           <Route path="/geraeteakte" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance']}><Geraeteakte /></ProtectedRoute>} />
           <Route path="/geraete-lebenslauf" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance']}><GeraeteLebenslauf /></ProtectedRoute>} />
