@@ -823,9 +823,9 @@ export default function Invoices() {
       const buf = await blob.arrayBuffer();
       const bytes = new Uint8Array(buf);
       let binary = '';
-      const chunk = 0x8000;
+      const chunk = 0x2000;
       for (let i = 0; i < bytes.length; i += chunk) {
-        binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)) as any);
       }
       const b64 = btoa(binary);
       const bccList = emailForm.bcc
@@ -841,7 +841,6 @@ export default function Invoices() {
           subject: emailForm.subject,
           body_text: emailForm.body_text,
           bcc: bccList.length ? bccList : null,
-          invoice_id: emailRow.id,
           customer_id: emailRow.customer_id ?? null,
           attachments: [{
             filename: `${emailRow.invoice_number ?? 'rechnung'}.pdf`,
@@ -850,8 +849,15 @@ export default function Invoices() {
           }],
         },
       });
-      if (error) throw error;
+      if (error) {
+        const ctx: any = (error as any)?.context;
+        let detail = error.message;
+        try { if (ctx?.text) detail = await ctx.text(); } catch { /* noop */ }
+        console.error('[Invoices] send-mail failed', detail);
+        throw new Error(detail);
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
+
       toast({ title: 'E-Mail versendet', description: `Rechnung ${emailRow.invoice_number ?? ''} an ${emailForm.to_email}` });
       setEmailRow(null);
     } catch (e: any) {

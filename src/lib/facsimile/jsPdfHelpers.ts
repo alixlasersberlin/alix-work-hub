@@ -25,18 +25,23 @@ async function maybeAutoFile(
   ref?: string,
   autoFile?: AutoFileOpts,
 ) {
-  if (!autoFile || (!autoFile.order_id && !autoFile.customer_id)) return;
-  // Fire-and-forget — darf den Haupt-Flow nie blockieren.
-  autoFileToAlixDocs({
-    blob,
-    filename,
-    category: docTypeToCategory(docType),
-    title: autoFile.title ?? ref ?? filename,
-    order_id: autoFile.order_id ?? null,
-    customer_id: autoFile.customer_id ?? null,
-    source: "auto_pdf",
-  }).catch((e) => console.warn("[AlixDocs auto-file] skipped:", e?.message));
+  try {
+    if (!autoFile || (!autoFile.order_id && !autoFile.customer_id)) return;
+    // Fire-and-forget — darf den Haupt-Flow nie blockieren.
+    await autoFileToAlixDocs({
+      blob,
+      filename,
+      category: docTypeToCategory(docType),
+      title: autoFile.title ?? ref ?? filename,
+      order_id: autoFile.order_id ?? null,
+      customer_id: autoFile.customer_id ?? null,
+      source: "auto_pdf",
+    });
+  } catch (e: any) {
+    console.warn("[AlixDocs auto-file] skipped:", e?.message ?? e);
+  }
 }
+
 
 /**
  * Nimmt ein jsPDF-Dokument, jagt es durch die Facsimile-Edge-Function
