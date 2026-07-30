@@ -239,7 +239,9 @@ export default function Invoices() {
     if (statusFilter !== 'all') {
       res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
     }
+    res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
+
     const map = new Map<string, Account>();
     const today = new Date().toISOString().slice(0, 10);
     for (const r of res) {
