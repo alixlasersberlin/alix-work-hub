@@ -17606,6 +17606,125 @@ export type Database = {
           },
         ]
       }
+      finance_payroll_lines: {
+        Row: {
+          account_number: string | null
+          amount: number
+          cost_center: string | null
+          created_at: string
+          employee_name: string
+          employee_number: string | null
+          id: string
+          kind: string
+          notes: string | null
+          run_id: string
+          updated_at: string
+          wage_type_code: string | null
+          wage_type_name: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          amount?: number
+          cost_center?: string | null
+          created_at?: string
+          employee_name: string
+          employee_number?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          run_id: string
+          updated_at?: string
+          wage_type_code?: string | null
+          wage_type_name?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          amount?: number
+          cost_center?: string | null
+          created_at?: string
+          employee_name?: string
+          employee_number?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          run_id?: string
+          updated_at?: string
+          wage_type_code?: string | null
+          wage_type_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_payroll_lines_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "finance_payroll_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_payroll_runs: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          created_at: string
+          created_by: string | null
+          currency: string
+          employee_count: number
+          id: string
+          label: string | null
+          notes: string | null
+          period_month: number
+          period_year: number
+          posted_at: string | null
+          posted_by: string | null
+          status: string
+          total_deductions: number
+          total_employer_cost: number
+          total_gross: number
+          total_net: number
+          updated_at: string
+        }
+        Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          employee_count?: number
+          id?: string
+          label?: string | null
+          notes?: string | null
+          period_month: number
+          period_year: number
+          posted_at?: string | null
+          posted_by?: string | null
+          status?: string
+          total_deductions?: number
+          total_employer_cost?: number
+          total_gross?: number
+          total_net?: number
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          employee_count?: number
+          id?: string
+          label?: string | null
+          notes?: string | null
+          period_month?: number
+          period_year?: number
+          posted_at?: string | null
+          posted_by?: string | null
+          status?: string
+          total_deductions?: number
+          total_employer_cost?: number
+          total_gross?: number
+          total_net?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_periods: {
         Row: {
           accounting_region: Database["public"]["Enums"]["accounting_region"]
@@ -18602,6 +18721,60 @@ export type Database = {
           },
         ]
       }
+      finance_social_rates: {
+        Row: {
+          account_number: string | null
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          base_max: number | null
+          base_min: number | null
+          code: string
+          created_at: string
+          created_by: string | null
+          employee_rate: number
+          employer_rate: number
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          valid_from: string
+          valid_to: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          base_max?: number | null
+          base_min?: number | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          employee_rate?: number
+          employer_rate?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          base_max?: number | null
+          base_min?: number | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          employee_rate?: number
+          employer_rate?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          valid_from?: string
+          valid_to?: string | null
+        }
+        Relationships: []
+      }
       finance_stakeholder_access_logs: {
         Row: {
           accessed_at: string
@@ -19083,6 +19256,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      finance_wage_types: {
+        Row: {
+          account_number: string | null
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          code: string
+          created_at: string
+          created_by: string | null
+          fixed_amount: number | null
+          id: string
+          is_active: boolean
+          kind: string
+          name: string
+          notes: string | null
+          percentage: number | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          code: string
+          created_at?: string
+          created_by?: string | null
+          fixed_amount?: number | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name: string
+          notes?: string | null
+          percentage?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          fixed_amount?: number | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name?: string
+          notes?: string | null
+          percentage?: number | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       finance_withholding_tax: {
         Row: {
@@ -33777,6 +34001,7 @@ export type Database = {
       can_manage_maintenance: { Args: never; Returns: boolean }
       can_manage_media_packages: { Args: never; Returns: boolean }
       can_manage_orders: { Args: never; Returns: boolean }
+      can_manage_payroll: { Args: never; Returns: boolean }
       can_manage_planning: { Args: never; Returns: boolean }
       can_manage_repair: { Args: never; Returns: boolean }
       can_manage_social: { Args: never; Returns: boolean }
