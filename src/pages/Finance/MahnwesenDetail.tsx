@@ -36,8 +36,8 @@ export default function FinanceMahnwesenDetail() {
     setLoading(true);
     const [c, a, r, bd] = await Promise.all([
       supabase.from('customers').select('id, company_name, contact_name, email').eq('id', customerId).maybeSingle(),
-      supabase.from('finance_accounts' as any).select('*').eq('customer_id', customerId).maybeSingle(),
-      supabase.from('finance_reminders' as any).select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
+      supabase.from('finance_accounts' as any).select('*').eq('customer_id', customerId).eq('accounting_region', region).maybeSingle(),
+      supabase.from('finance_reminders' as any).select('*').eq('customer_id', customerId).eq('accounting_region', region).order('created_at', { ascending: false }),
       supabase.from('customer_bank_details').select('iban, bic, bank_name').eq('customer_id', customerId).maybeSingle(),
     ]);
     setCustomer(c.data ? { ...c.data, ...(bd.data ?? { iban: null, bic: null, bank_name: null }) } : null);
