@@ -110,6 +110,8 @@ const FinanceStammdaten = lazy(() => import("./pages/Finance/Stammdaten"));
 const FinanceKostenstellenReport = lazy(() => import("./pages/Finance/KostenstellenReport"));
 const FinanceDeckungsbeitrag = lazy(() => import("./pages/Finance/Deckungsbeitrag"));
 const FinanceSegmentbericht = lazy(() => import("./pages/Finance/Segmentbericht"));
+const FinanceKontenblaetter = lazy(() => import("./pages/Finance/Kontenblaetter"));
+const FinanceRevisionsexport = lazy(() => import("./pages/Finance/Revisionsexport"));
 const FinanceBuchungsjournal = lazy(() => import("./pages/Finance/Buchungsjournal"));
 const FinanceBankbuchungen = lazy(() => import("./pages/Finance/Bankbuchungen"));
 const FinanceZahlungsuebersicht = lazy(() => import("./pages/Finance/Zahlungsuebersicht"));
