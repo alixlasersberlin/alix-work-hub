@@ -498,6 +498,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/deckungsbeitrag', label: 'Deckungsbeitrag DB1/DB2', icon: TrendingUp, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
           { path: '/finance/segmentbericht', label: 'Segmentbericht', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
           { path: '/finance/kontenblaetter', label: 'Kontenblätter', icon: FileText, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/saldenbilanz', label: 'Saldenbilanz', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
           { path: '/finance/revisionsexport', label: 'Revisionsexport', icon: FileText, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
           { path: '/finance/liquiditaet', label: 'Liquiditätsplanung', icon: Banknote, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/konsolidierung', label: 'Konsolidierung', icon: BarChart3, roles: ['Admin', 'Super Admin'] },
