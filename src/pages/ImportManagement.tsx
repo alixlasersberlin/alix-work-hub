@@ -1832,6 +1832,20 @@ export default function ImportManagement() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="space-y-2 max-w-md">
+                  <Label>Buchungskreis</Label>
+                  <Select value={flexRegionFilter} onValueChange={(v) => setFlexRegionFilter(v as 'all' | 'EU' | 'CH')}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Alle Profile (EU + CH)</SelectItem>
+                      <SelectItem value="EU">Nur Buchhaltung EU</SelectItem>
+                      <SelectItem value="CH">🇨🇭 Nur „Ort: Alix Lasers ® Schweiz“ (CH)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Profile werden anhand Branch, Währung (CHF), Schweiz-Vermerk oder Rechnungsadresse dem Buchungskreis zugeordnet und mit <code>accounting_region</code> gespeichert.
+                  </p>
+                </div>
                 <div className="flex items-center gap-3">
                   <Button
                     onClick={handleFlexImport}
@@ -1848,6 +1862,7 @@ export default function ImportManagement() {
                     Synct DE (zoho_eu_1) und AT (zoho_eu_2) nacheinander.
                   </span>
                 </div>
+
 
                 {flexResult && (
                   <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-2 text-sm">
