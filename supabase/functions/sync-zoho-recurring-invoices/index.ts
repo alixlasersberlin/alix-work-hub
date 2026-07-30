@@ -381,6 +381,10 @@ Deno.serve(async (req) => {
       updated,
       failed,
       duplicates,
+      region_filter: regionFilter,
+      skipped_region: skippedRegion,
+      ch_count: importedCh,
+
       profiles_processed: profilesProcessed,
       last_profile_page: pPage - 1,
       profiles_have_more: profilesHaveMore,
