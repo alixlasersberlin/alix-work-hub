@@ -290,6 +290,7 @@ export default function ImportManagement() {
   // ALIX FLEX (Recurring Profile Stammdaten) import state
   const [flexImporting, setFlexImporting] = useState(false);
   const [flexResult, setFlexResult] = useState<{ de: { imported: number; updated: number; failed: number }; at: { imported: number; updated: number; failed: number } } | null>(null);
+  const [flexRegionFilter, setFlexRegionFilter] = useState<'all' | 'EU' | 'CH'>('all');
 
   async function handleFlexImport() {
     setFlexImporting(true);
@@ -299,7 +300,7 @@ export default function ImportManagement() {
       const totals = { imported: 0, updated: 0, failed: 0 };
       for (let i = 0; i < 50; i++) {
         const { data, error } = await supabase.functions.invoke('sync-zoho-recurring-profiles', {
-          body: { source_system: source, page, max_pages: 5, per_page: 100 },
+          body: { source_system: source, page, max_pages: 5, per_page: 100, region_filter: flexRegionFilter },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
