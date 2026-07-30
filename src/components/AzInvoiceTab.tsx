@@ -1023,7 +1023,55 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     setConfirm(mode);
   }
 
+  /** Baut ein PdfOverride aus einer bereits erfassten Anzahlungsrate. */
+  function overrideFromRate(inv: typeof existingInvoices[number], index: number): PdfOverride {
+    const gross = Number(inv.gross_amount) || 0;
+    const net = Number(inv.net_amount) || 0;
+    const vat = Number(inv.vat_amount) || 0;
+    let taxPct = taxPercentage;
+    if (net > 0 && vat >= 0) taxPct = Math.round((vat / net) * 1000) / 10;
+    const hasSuffix = /-\d+$/.test((inv.invoice_number || '').trim());
+    return {
+      invoiceNumber: inv.invoice_number,
+      invoiceDate: inv.issue_date || invoiceDate,
+      dueDate: inv.due_date || dueDate,
+      gross,
+      taxPercentage: taxPct,
+      positionLabel: hasSuffix
+        ? `Anzahlung Rate ${index + 1} gemäß Auftrag ${orderNo}`.trim()
+        : `Anzahlung gemäß Auftrag ${orderNo}`.trim(),
+    };
+  }
+
+  async function downloadRate(inv: typeof existingInvoices[number], index: number) {
+    if (rowBusy) return;
+    setRowBusy(`dl:${inv.invoice_number}`);
+    try {
+      await buildPdf('download', overrideFromRate(inv, index));
+      toast.success(`PDF ${inv.invoice_number} heruntergeladen.`);
+    } catch (e: any) {
+      toast.error('PDF konnte nicht erzeugt werden: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setRowBusy(null);
+    }
+  }
+
+  async function resendRate(inv: typeof existingInvoices[number], index: number) {
+    if (rowBusy) return;
+    if (!customer?.email) {
+      toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.');
+      return;
+    }
+    setRowBusy(`mail:${inv.invoice_number}`);
+    try {
+      await sendByEmail(overrideFromRate(inv, index));
+    } finally {
+      setRowBusy(null);
+    }
+  }
+
   function addNewRate() {
+
     const base = `AZ-${orderNo}`;
     const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const rx = new RegExp(`^${esc}-(\\d+)$`);
