@@ -257,6 +257,8 @@ export default function ImportManagement() {
   const [invoiceCustomFrom, setInvoiceCustomFrom] = useState<Date | undefined>(undefined);
   const [invoiceCustomTo, setInvoiceCustomTo] = useState<Date | undefined>(undefined);
   const [invoiceSource, setInvoiceSource] = useState<SourceKey>('zoho_eu_1');
+  const [invoiceRegionFilter, setInvoiceRegionFilter] = useState<'all' | 'EU' | 'CH'>('all');
+
   const [invoiceImporting, setInvoiceImporting] = useState(false);
   const [packagesImporting, setPackagesImporting] = useState(false);
   const [packagesResult, setPackagesResult] = useState<{ packages_fetched: number; salesorders_with_packages: number; orders_updated: number; orders_missing_in_db: number } | null>(null);
@@ -422,7 +424,7 @@ export default function ImportManagement() {
       toast({ title: 'Rechnung-Import gestartet', description: `Ab ${dateFrom}` });
       for (let i = 0; i < 100; i++) {
         const { data, error } = await supabase.functions.invoke('sync-zoho-recurring-invoices', {
-          body: { source_system: invoiceSource, date_from: dateFrom, page, max_pages: 1, per_page: 50 },
+          body: { source_system: invoiceSource, date_from: dateFrom, page, max_pages: 1, per_page: 50, region_filter: invoiceRegionFilter },
         });
         if (error) throw error;
         if (data?.retryable || data?.error) {
@@ -1700,6 +1702,18 @@ export default function ImportManagement() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label>Buchungskreis</Label>
+                    <Select value={invoiceRegionFilter} onValueChange={(v) => setInvoiceRegionFilter(v as 'all' | 'EU' | 'CH')}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle Rechnungen (EU + CH)</SelectItem>
+                        <SelectItem value="EU">Nur Buchhaltung EU</SelectItem>
+                        <SelectItem value="CH">🇨🇭 Nur „Ort: Alix Lasers ® Schweiz“ (CH)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>Zeitraum</Label>
                     <Select value={invoicePreset} onValueChange={(v) => setInvoicePreset(v as InvoicePreset)}>

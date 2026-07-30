@@ -13,7 +13,22 @@ type Payload = {
   per_page?: number;
   fetch_details?: boolean; // if true, fetch each invoice's detail (line_items + address)
   max_pages?: number; // safety cap per call
+  /** 'all' = alle, 'CH' = nur Schweiz-Rechnungen, 'EU' = nur EU-Rechnungen */
+  region_filter?: "all" | "EU" | "CH";
 };
+
+const CH_BRANCH_ID = "116240000000287001";
+const CH_MARKERS = ["alix lasers ® schweiz", "alix lasers (r) schweiz", "alix lasers schweiz"];
+
+function detectInvoiceRegion(inv: any): "EU" | "CH" {
+  if (inv?.branch_id && String(inv.branch_id) === CH_BRANCH_ID) return "CH";
+  if ((inv?.currency_code ?? "").toString().toUpperCase() === "CHF") return "CH";
+  const hay = JSON.stringify(inv ?? {}).toLowerCase();
+  if (CH_MARKERS.some((m) => hay.includes(m))) return "CH";
+  const country = (inv?.billing_address?.country ?? inv?.billing_address?.country_code ?? "").toString().toLowerCase();
+  if (country === "ch" || country.includes("schweiz") || country.includes("switzerland")) return "CH";
+  return "EU";
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -21,6 +36,7 @@ function json(body: unknown, status = 200) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
 
 function getZohoConfig(source: string) {
   const map: Record<string, { prefix: string; accountsBase: string; apiBase: string }> = {
@@ -187,6 +203,8 @@ Deno.serve(async (req) => {
     const perPage = Math.min(Math.max(body.per_page ?? 50, 1), 100);
     const profilesPage = body.page ?? 1;
     const maxProfilePages = Math.min(Math.max(body.max_pages ?? 1, 1), 5);
+    const regionFilter = body.region_filter ?? "all";
+
 
     const cfg = getZohoConfig(sourceSystem);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
@@ -217,6 +235,8 @@ Deno.serve(async (req) => {
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
 
     let imported = 0, updated = 0, failed = 0, duplicates = 0;
+    let skippedRegion = 0, importedCh = 0;
+
     let profilesProcessed = 0;
     let pPage = profilesPage;
     let profilesHaveMore = true;
@@ -265,7 +285,11 @@ Deno.serve(async (req) => {
           iHasMore = iData.page_context?.has_more_page === true;
 
           for (const inv of invoices) {
+            const region = detectInvoiceRegion(inv);
+            if (regionFilter !== "all" && region !== regionFilter) { skippedRegion++; continue; }
+            if (region === "CH") importedCh++;
             try {
+
               const invId = String(inv.invoice_id);
               const invNumber: string | null = inv.invoice_number ?? null;
               const billing = inv.billing_address ?? null;
@@ -291,7 +315,9 @@ Deno.serve(async (req) => {
                 payment_status: payStatusFromInvoice(inv),
                 last_payment_date: inv.last_payment_date ?? null,
                 raw_data: inv,
+                accounting_region: region,
                 synced_at: new Date().toISOString(),
+
               };
 
               // Duplikatscheck: gleiche Rechnungsnummer bereits vorhanden?
@@ -357,6 +383,10 @@ Deno.serve(async (req) => {
       updated,
       failed,
       duplicates,
+      region_filter: regionFilter,
+      skipped_region: skippedRegion,
+      ch_count: importedCh,
+
       profiles_processed: profilesProcessed,
       last_profile_page: pPage - 1,
       profiles_have_more: profilesHaveMore,
