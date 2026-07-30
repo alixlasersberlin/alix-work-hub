@@ -453,6 +453,103 @@ export default function OffenePosten() {
 
   const visibleAccounts = useMemo(() => paginate(accounts, pageSize), [accounts, pageSize]);
 
+  // ===== Markierung & Export =====
+  const keyOf = (i: OpenItem) => `${i.source}-${i.id}`;
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const selectedCount = useMemo(() => Object.values(selected).filter(Boolean).length, [selected]);
+  const toggleRow = (i: OpenItem) =>
+    setSelected((p) => ({ ...p, [keyOf(i)]: !p[keyOf(i)] }));
+  const allSelected = filtered.length > 0 && filtered.every((i) => selected[keyOf(i)]);
+  const toggleAll = () => {
+    if (allSelected) { setSelected({}); return; }
+    setSelected(Object.fromEntries(filtered.map((i) => [keyOf(i), true])));
+  };
+  const toggleAccountSelection = (accItems: OpenItem[], on: boolean) =>
+    setSelected((p) => ({ ...p, ...Object.fromEntries(accItems.map((i) => [keyOf(i), on])) }));
+
+  const exportRows = useCallback(() => {
+    const base = selectedCount > 0 ? filtered.filter((i) => selected[keyOf(i)]) : filtered;
+    return base.map((i) => {
+      const days = i.due_date ? differenceInCalendarDays(parseISO(i.due_date), new Date()) : null;
+      const wf = workflows[keyOf(i)];
+      return {
+        Rechnungsnr: i.invoice_number ?? '',
+        Referenz: i.reference_number ?? '',
+        Kunde: i.customer_name ?? '',
+        Ort: i.city ?? '',
+        Typ: i.source === 'recurring' ? 'Abo' : 'Rechnung',
+        Faellig_am: i.due_date ? format(parseISO(i.due_date), 'dd.MM.yyyy', { locale: de }) : '',
+        Tage_ueberfaellig: days !== null && days < 0 ? Math.abs(days) : 0,
+        Status: bucketStyles[bucketFor(i.due_date)].label,
+        Bearbeitung: bookedRefs[keyOf(i)] ? 'Gebucht' : workflowLabel(wf?.workflow_status ?? 'offen'),
+        Notiz: wf?.note ?? '',
+        Waehrung: i.currency || 'EUR',
+        Gesamt: Number(i.total) || 0,
+        Offen: Number(i.balance) || 0,
+      };
+    });
+  }, [filtered, selected, selectedCount, workflows, bookedRefs]);
+
+  const exportBase = () => `offene-posten-${region}-${new Date().toISOString().slice(0, 10)}`;
+
+  const exportCsv = () => {
+    const rows = exportRows();
+    if (!rows.length) { toast.error('Keine Datensätze zum Export.'); return; }
+    const cols = Object.keys(rows[0]);
+    const esc = (v: unknown) => {
+      const s = v == null ? '' : String(v);
+      return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [cols.join(';'), ...rows.map((r) => cols.map((c) => esc((r as Record<string, unknown>)[c])).join(';'))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `${exportBase()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${rows.length} Datensätze als CSV exportiert`);
+  };
+
+  const exportExcel = async () => {
+    const rows = exportRows();
+    if (!rows.length) { toast.error('Keine Datensätze zum Export.'); return; }
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Offene Posten');
+    XLSX.writeFile(wb, `${exportBase()}.xlsx`);
+    toast.success(`${rows.length} Datensätze als Excel exportiert`);
+  };
+
+  const exportPdf = async () => {
+    const rows = exportRows();
+    if (!rows.length) { toast.error('Keine Datensätze zum Export.'); return; }
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable'),
+    ]);
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFontSize(14);
+    doc.text(`Offene Posten · Buchhaltung ${region}`, 14, 14);
+    doc.setFontSize(9);
+    doc.text(`Stand: ${format(new Date(), 'dd.MM.yyyy', { locale: de })} · ${rows.length} Datensätze`, 14, 20);
+    const sum = rows.reduce((a, r) => a + r.Offen, 0);
+    autoTable(doc, {
+      startY: 25,
+      styles: { fontSize: 7, cellPadding: 1.5 },
+      headStyles: { fillColor: [30, 30, 30] },
+      head: [['Rechnungsnr.', 'Kunde', 'Typ', 'Fällig am', 'Überf. Tage', 'Status', 'Bearbeitung', 'Gesamt', 'Offen']],
+      body: rows.map((r) => [
+        r.Rechnungsnr, r.Kunde, r.Typ, r.Faellig_am, String(r.Tage_ueberfaellig),
+        r.Status, r.Bearbeitung,
+        formatCurrency(r.Gesamt, r.Waehrung), formatCurrency(r.Offen, r.Waehrung),
+      ]),
+      foot: [['', '', '', '', '', '', 'Summe offen', '', formatCurrency(sum, 'EUR')]],
+      footStyles: { fillColor: [45, 45, 45] },
+    });
+    doc.save(`${exportBase()}.pdf`);
+    toast.success(`${rows.length} Datensätze als PDF exportiert`);
+  };
+
+
   const renderRow = (i: OpenItem) => {
     const b = bucketFor(i.due_date);
     const style = bucketStyles[b];
