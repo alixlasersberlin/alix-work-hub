@@ -16,6 +16,7 @@ import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { RecurringProfileEditDialog, type EditableProfile } from '@/components/finance/RecurringProfileEditDialog';
 import { RecurringInvoiceBookDialog, type BookableInvoice } from '@/components/finance/RecurringInvoiceBookDialog';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
+import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
 
 
 // Beträge auf dieser Seite werden bewusst NICHT durch die Revenue-Mask (Super Admin)
@@ -109,6 +110,7 @@ export default function WiederkehrendeZahler() {
   const { canWrite } = useFinancePermissions();
   const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
   const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
+  const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
 
   async function load() {
     setLoading(true);
@@ -601,7 +603,23 @@ export default function WiederkehrendeZahler() {
                             <tbody>
                               {g.invoices.slice(0, 50).map(inv => (
                                 <tr key={inv.id} className="border-t border-border">
-                                  <td className="px-3 py-2 font-mono">{inv.invoice_number || '—'}</td>
+                                  <td className="px-3 py-2 font-mono">
+                                    {inv.zoho_invoice_id ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => setPdfInvoice({
+                                          zoho_invoice_id: inv.zoho_invoice_id,
+                                          invoice_number: inv.invoice_number,
+                                          source_system: (inv as any).source_system ?? 'zoho_eu_1',
+                                          recurring: false,
+                                        })}
+                                        className="text-primary hover:underline"
+                                        title="Rechnung als PDF öffnen"
+                                      >
+                                        {inv.invoice_number || 'PDF'}
+                                      </button>
+                                    ) : (inv.invoice_number || '—')}
+                                  </td>
                                   <td className="px-3 py-2">{fmtDate(inv.invoice_date)}</td>
                                   <td className="px-3 py-2">{fmtDate(inv.due_date)}</td>
                                   <td className="px-3 py-2 text-right tabular-nums">{fmt(Number(inv.total || 0), inv.currency || 'EUR')}</td>
@@ -649,6 +667,11 @@ export default function WiederkehrendeZahler() {
         open={!!editProfile}
         onOpenChange={(v) => { if (!v) setEditProfile(null); }}
         onSaved={load}
+      />
+      <InvoicePdfDialog
+        invoice={pdfInvoice}
+        open={!!pdfInvoice}
+        onOpenChange={(v) => { if (!v) setPdfInvoice(null); }}
       />
       <RecurringInvoiceBookDialog
         invoice={bookInvoice}
