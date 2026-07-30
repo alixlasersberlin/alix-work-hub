@@ -1,6 +1,7 @@
 // Phase 3 Mahnwesen: erstellt Mahnungs-Entwürfe (Status "Entwurf") basierend auf
 // offenen finance_transactions (Typ "Rechnung") und der Mahn-Konfiguration in
-// app_settings.key = 'finance.reminder.config'. Versendet NICHTS automatisch.
+// app_settings. Getrennte Buchungskreise: EU -> 'finance.reminder.config',
+// CH -> 'finance.reminder.config.CH'. Versendet NICHTS automatisch.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -17,94 +18,115 @@ const DEFAULT_CFG = {
   payment_window_days: 7,
 };
 
+const cfgKey = (region: string) => region === 'CH' ? 'finance.reminder.config.CH' : 'finance.reminder.config';
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const started = Date.now();
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-
-    // Load config
-    const { data: cfgRow } = await admin.from('app_settings').select('value').eq('key', 'finance.reminder.config').maybeSingle();
-    let cfg = DEFAULT_CFG;
-    try { if (cfgRow?.value) cfg = { ...DEFAULT_CFG, ...JSON.parse(cfgRow.value) }; } catch { /* ignore */ }
-    const levels = (cfg.levels ?? DEFAULT_CFG.levels).sort((a: any, b: any) => a.level - b.level);
-
-    // Pull open invoices: finance_transactions of type "Rechnung" whose customer has overdue_balance > 0
-    const { data: accounts } = await admin
-      .from('finance_accounts')
-      .select('id, customer_id, reminder_level, overdue_balance')
-      .gt('overdue_balance', 0);
+    let body: any = {};
+    try { body = await req.json(); } catch { /* no body */ }
+    const requested = String(body?.region ?? '').toUpperCase();
+    const regions = requested === 'EU' || requested === 'CH' ? [requested] : ['EU', 'CH'];
 
     const today = new Date();
     const ymd = (d: Date) => d.toISOString().slice(0, 10);
+    let seen = 0, created = 0, skipped = 0;
+    const perRegion: Record<string, { accounts_seen: number; drafts_created: number; skipped: number }> = {};
 
-    let created = 0, skipped = 0;
-    for (const acc of accounts ?? []) {
-      // Skip if there is already an Entwurf or unsent reminder
-      const { data: pending } = await admin
-        .from('finance_reminders')
-        .select('id')
-        .eq('customer_id', acc.customer_id)
-        .eq('status', 'Entwurf')
-        .limit(1);
-      if (pending && pending.length > 0) { skipped++; continue; }
+    for (const region of regions) {
+      let rSeen = 0, rCreated = 0, rSkipped = 0;
 
-      // Get open invoices for this customer
-      const { data: txs } = await admin
-        .from('finance_transactions')
-        .select('id, amount, booking_date, notes, reference')
-        .eq('customer_id', acc.customer_id)
-        .eq('transaction_type', 'Rechnung');
-      const items = (txs ?? []).map((t) => {
-        const due = t.booking_date ? new Date(t.booking_date) : null;
-        const days_overdue = due ? Math.max(0, Math.floor((today.getTime() - due.getTime()) / 86400000)) : 0;
-        return { transaction_id: t.id, amount: Number(t.amount ?? 0), due_date: t.booking_date, days_overdue, invoice_number: extractInvoiceNumber(t.notes) };
-      }).filter((it) => it.days_overdue > 0);
-      if (items.length === 0) { skipped++; continue; }
+      // Load config for this accounting region
+      const { data: cfgRow } = await admin.from('app_settings').select('value').eq('key', cfgKey(region)).maybeSingle();
+      let cfg = DEFAULT_CFG;
+      try { if (cfgRow?.value) cfg = { ...DEFAULT_CFG, ...JSON.parse(cfgRow.value) }; } catch { /* ignore */ }
+      const levels = (cfg.levels ?? DEFAULT_CFG.levels).sort((a: any, b: any) => a.level - b.level);
 
-      const maxOverdue = Math.max(...items.map((i) => i.days_overdue));
-      const nextLevel = chooseLevel(levels, acc.reminder_level ?? 0, maxOverdue);
-      if (!nextLevel) { skipped++; continue; }
+      const { data: accounts } = await admin
+        .from('finance_accounts')
+        .select('id, customer_id, reminder_level, overdue_balance')
+        .eq('accounting_region', region)
+        .gt('overdue_balance', 0);
+      rSeen = accounts?.length ?? 0;
 
-      const amount = Number(acc.overdue_balance);
-      const fee = Number(nextLevel.fee ?? 0);
-      const interest = amount * (Number(nextLevel.interest_pct ?? 0) / 100) * (maxOverdue / 365);
-      const total = amount + fee + interest;
+      for (const acc of accounts ?? []) {
+        // Skip if there is already an Entwurf or unsent reminder in this region
+        const { data: pending } = await admin
+          .from('finance_reminders')
+          .select('id')
+          .eq('customer_id', acc.customer_id)
+          .eq('accounting_region', region)
+          .eq('status', 'Entwurf')
+          .limit(1);
+        if (pending && pending.length > 0) { rSkipped++; continue; }
 
-      const { data: rem, error: insErr } = await admin
-        .from('finance_reminders')
-        .insert({
-          customer_id: acc.customer_id,
-          level: nextLevel.level,
-          amount,
-          fee,
-          interest: Math.round(interest * 100) / 100,
-          total: Math.round(total * 100) / 100,
-          due_date: ymd(new Date(today.getTime() + (cfg.payment_window_days ?? 7) * 86400000)),
-          status: 'Entwurf',
-          notes: `Auto-generiert vom Mahn-Engine`,
-        })
-        .select('id')
-        .single();
-      if (insErr || !rem) { skipped++; continue; }
+        // Get open invoices for this customer within the region
+        const { data: txs } = await admin
+          .from('finance_transactions')
+          .select('id, amount, booking_date, notes, reference')
+          .eq('customer_id', acc.customer_id)
+          .eq('accounting_region', region)
+          .eq('transaction_type', 'Rechnung');
+        const items = (txs ?? []).map((t) => {
+          const due = t.booking_date ? new Date(t.booking_date) : null;
+          const days_overdue = due ? Math.max(0, Math.floor((today.getTime() - due.getTime()) / 86400000)) : 0;
+          return { transaction_id: t.id, amount: Number(t.amount ?? 0), due_date: t.booking_date, days_overdue, invoice_number: extractInvoiceNumber(t.notes) };
+        }).filter((it) => it.days_overdue > 0);
+        if (items.length === 0) { rSkipped++; continue; }
 
-      await admin.from('finance_reminder_items').insert(
-        items.map((it) => ({
-          reminder_id: rem.id,
-          transaction_id: it.transaction_id,
-          invoice_number: it.invoice_number,
-          amount: it.amount,
-          due_date: it.due_date,
-          days_overdue: it.days_overdue,
-        }))
-      );
-      created++;
+        const maxOverdue = Math.max(...items.map((i) => i.days_overdue));
+        const nextLevel = chooseLevel(levels, acc.reminder_level ?? 0, maxOverdue);
+        if (!nextLevel) { rSkipped++; continue; }
+
+        const amount = Number(acc.overdue_balance);
+        const fee = Number(nextLevel.fee ?? 0);
+        const interest = amount * (Number(nextLevel.interest_pct ?? 0) / 100) * (maxOverdue / 365);
+        const total = amount + fee + interest;
+
+        const { data: rem, error: insErr } = await admin
+          .from('finance_reminders')
+          .insert({
+            customer_id: acc.customer_id,
+            accounting_region: region,
+            level: nextLevel.level,
+            amount,
+            fee,
+            interest: Math.round(interest * 100) / 100,
+            total: Math.round(total * 100) / 100,
+            due_date: ymd(new Date(today.getTime() + (cfg.payment_window_days ?? 7) * 86400000)),
+            status: 'Entwurf',
+            notes: `Auto-generiert vom Mahn-Engine (${region})`,
+          })
+          .select('id')
+          .single();
+        if (insErr || !rem) { rSkipped++; continue; }
+
+        await admin.from('finance_reminder_items').insert(
+          items.map((it) => ({
+            reminder_id: rem.id,
+            accounting_region: region,
+            transaction_id: it.transaction_id,
+            invoice_number: it.invoice_number,
+            amount: it.amount,
+            due_date: it.due_date,
+            days_overdue: it.days_overdue,
+          }))
+        );
+        rCreated++;
+      }
+
+      perRegion[region] = { accounts_seen: rSeen, drafts_created: rCreated, skipped: rSkipped };
+      seen += rSeen; created += rCreated; skipped += rSkipped;
     }
 
     return new Response(JSON.stringify({
       success: true,
       duration_ms: Date.now() - started,
-      accounts_seen: accounts?.length ?? 0,
+      regions,
+      per_region: perRegion,
+      accounts_seen: seen,
       drafts_created: created,
       skipped,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

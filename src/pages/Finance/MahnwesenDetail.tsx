@@ -10,15 +10,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { RegionChip } from '@/components/finance/RegionChip';
+import { regionCurrency } from '@/lib/finance/region';
 
 const LEVEL_LABEL = ['—', 'Zahlungserinnerung', '1. Mahnung', '2. Mahnung', 'Letzte Mahnung'];
-const fmt = (n: number | null | undefined) => typeof n === 'number'
-  ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n) : '–';
 
 export default function FinanceMahnwesenDetail() {
   const { customerId } = useParams<{ customerId: string }>();
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
+  const fmt = (n: number | null | undefined) => typeof n === 'number'
+    ? new Intl.NumberFormat(region === 'CH' ? 'de-CH' : 'de-DE', { style: 'currency', currency: regionCurrency(region) }).format(n) : '–';
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
+
   const [customer, setCustomer] = useState<any>(null);
   const [account, setAccount] = useState<any>(null);
   const [reminders, setReminders] = useState<any[]>([]);
@@ -31,8 +36,8 @@ export default function FinanceMahnwesenDetail() {
     setLoading(true);
     const [c, a, r, bd] = await Promise.all([
       supabase.from('customers').select('id, company_name, contact_name, email').eq('id', customerId).maybeSingle(),
-      supabase.from('finance_accounts' as any).select('*').eq('customer_id', customerId).maybeSingle(),
-      supabase.from('finance_reminders' as any).select('*').eq('customer_id', customerId).order('created_at', { ascending: false }),
+      supabase.from('finance_accounts' as any).select('*').eq('customer_id', customerId).eq('accounting_region', region).maybeSingle(),
+      supabase.from('finance_reminders' as any).select('*').eq('customer_id', customerId).eq('accounting_region', region).order('created_at', { ascending: false }),
       supabase.from('customer_bank_details').select('iban, bic, bank_name').eq('customer_id', customerId).maybeSingle(),
     ]);
     setCustomer(c.data ? { ...c.data, ...(bd.data ?? { iban: null, bic: null, bank_name: null }) } : null);
@@ -50,7 +55,7 @@ export default function FinanceMahnwesenDetail() {
     }
     setLoading(false);
   };
-  useEffect(() => { load(); }, [customerId]);
+  useEffect(() => { load(); }, [customerId, region]);
 
   const send = async (id: string) => {
     setSendingId(id);
@@ -83,7 +88,7 @@ export default function FinanceMahnwesenDetail() {
         title={loading ? 'Lädt…' : (customer?.company_name || customer?.contact_name || 'Kunde')}
         subtitle={loading ? 'Lädt…' : `E-Mail: ${customer?.email ?? '–'} • Überfällig: ${fmt(overdue)} • Aktuelle Stufe: ${LEVEL_LABEL[account?.reminder_level ?? 0]}`}
         noBreadcrumbs
-        meta={<InfinityStatusBadge kind={loading ? 'progress' : overdue ? 'warning' : 'done'} label={loading ? 'Lädt' : overdue ? fmt(overdue) : 'Aktuell'} pulse={loading} />}
+        meta={<div className="flex items-center gap-2"><RegionChip /><InfinityStatusBadge kind={loading ? 'progress' : overdue ? 'warning' : 'done'} label={loading ? 'Lädt' : overdue ? fmt(overdue) : 'Aktuell'} pulse={loading} /></div>}
       />
 
       {loading ? <DataCard><SkeletonTable rows={6} cols={4} /></DataCard> : (

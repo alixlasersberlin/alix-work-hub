@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { RegionChip } from '@/components/finance/RegionChip';
+import { regionCurrency } from '@/lib/finance/region';
 
 type Lv = { level: number; days: number; fee: number; interest_pct: number };
 type Cfg = { levels: Lv[]; payment_window_days: number };
@@ -26,28 +29,37 @@ const DEFAULT_CFG: Cfg = {
 
 const LABELS = ['—', 'Zahlungserinnerung', '1. Mahnung', '2. Mahnung', 'Letzte Mahnung'];
 
+const cfgKey = (region: 'EU' | 'CH') => region === 'CH' ? 'finance.reminder.config.CH' : 'finance.reminder.config';
+
 export default function FinanceMahnwesenSettings() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [cfg, setCfg] = useState<Cfg>(DEFAULT_CFG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const { data } = await supabase.from('app_settings' as any).select('value').eq('key', 'finance.reminder.config').maybeSingle();
-      try { if ((data as any)?.value) setCfg({ ...DEFAULT_CFG, ...JSON.parse((data as any).value) }); } catch { /* ignore */ }
+      setLoading(true);
+      const { data } = await supabase.from('app_settings' as any).select('value').eq('key', cfgKey(region)).maybeSingle();
+      if (cancelled) return;
+      let next = DEFAULT_CFG;
+      try { if ((data as any)?.value) next = { ...DEFAULT_CFG, ...JSON.parse((data as any).value) }; } catch { /* ignore */ }
+      setCfg(next);
       setLoading(false);
     })();
-  }, []);
+    return () => { cancelled = true; };
+  }, [region]);
 
   const save = async () => {
     if (!isSuperAdmin) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from('app_settings' as any).upsert({ key: 'finance.reminder.config', value: JSON.stringify(cfg), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      const { error } = await supabase.from('app_settings' as any).upsert({ key: cfgKey(region), value: JSON.stringify(cfg), updated_at: new Date().toISOString() }, { onConflict: 'key' });
       if (error) throw error;
-      toast({ title: 'Gespeichert' });
+      toast({ title: `Gespeichert (${region})` });
     } catch (e: any) { toast({ title: 'Fehler', description: e?.message, variant: 'destructive' }); }
     finally { setSaving(false); }
   };
@@ -56,10 +68,11 @@ export default function FinanceMahnwesenSettings() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={SettingsIcon}
-        title="Mahnwesen Einstellungen"
-        subtitle={loading ? 'Lädt…' : 'Mahnstufen, Gebühren, Verzugszinsen und Zahlungsfrist'}
+        title={`Mahnwesen Einstellungen ${region}`}
+        subtitle={loading ? 'Lädt…' : `Buchungskreis ${region} • Mahnstufen, Gebühren, Verzugszinsen und Zahlungsfrist`}
         noBreadcrumbs
-        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Konfiguration'} pulse={loading} />}
+        meta={<div className="flex items-center gap-2"><RegionChip /><InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : 'Konfiguration'} pulse={loading} /></div>}
+
         actions={isSuperAdmin && (
           <Button onClick={save} disabled={saving || loading} className="gold-gradient text-primary-foreground">
             <Save className="w-4 h-4 mr-2" />{saving ? 'Speichert…' : 'Speichern'}
@@ -83,7 +96,7 @@ export default function FinanceMahnwesenSettings() {
               <th className="text-left px-4 py-3 font-medium">Stufe</th>
               <th className="text-left px-4 py-3 font-medium">Bezeichnung</th>
               <th className="text-left px-4 py-3 font-medium">Tage überfällig</th>
-              <th className="text-left px-4 py-3 font-medium">Mahngebühr (€)</th>
+              <th className="text-left px-4 py-3 font-medium">Mahngebühr ({regionCurrency(region) === 'CHF' ? 'CHF' : '€'})</th>
               <th className="text-left px-4 py-3 font-medium">Verzugszinsen (% p.a.)</th>
             </tr>
           </thead>
