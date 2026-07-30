@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 type Row = {
   id: string;
@@ -66,6 +67,7 @@ function isSepaRow(r: Pick<Row, 'recurrence_name' | 'reference_number'>) {
 
 export default function AlixFlex() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
   const isAdmin = roles.includes('Admin') || (roles.includes('Super Admin') || roles.includes('Admin'));
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,6 +116,7 @@ export default function AlixFlex() {
     const { data, error } = await supabase
       .from('zoho_recurring_profiles')
       .select('id, source_system, recurrence_name, reference_number, status, customer_name, company_name, recurrence_frequency, repeat_every, start_date, next_invoice_date, last_sent_date, total, currency, device_name, created_at')
+      .eq('accounting_region', region)
       .order('created_at', { ascending: false, nullsFirst: false })
       .limit(5000);
     if (error) { setError(error.message); setRows([]); }
@@ -121,7 +124,7 @@ export default function AlixFlex() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchRows(); }, []);
+  useEffect(() => { fetchRows(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [region]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -209,7 +212,7 @@ export default function AlixFlex() {
     let totals = { imported: 0, updated: 0, failed: 0 };
     for (let i = 0; i < 50; i++) {
       const { data, error } = await supabase.functions.invoke('sync-zoho-recurring-profiles', {
-        body: { source_system: source, page, max_pages: 5, per_page: 100 },
+        body: { source_system: source, page, max_pages: 5, per_page: 100, region_filter: region },
       });
       if (error) throw error;
       totals.imported += data?.imported ?? 0;
@@ -242,8 +245,8 @@ export default function AlixFlex() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={Zap}
-        title="SEPA MANDAT"
-        subtitle={loading ? 'Lädt…' : 'Periodische Rechnungs-Stammdaten (Recurring Profile) aus Zoho Books'}
+        title={`SEPA MANDAT · ${region === 'CH' ? '🇨🇭 Buchhaltung CH' : '🇩🇪 Buchhaltung DE'}`}
+        subtitle={loading ? 'Lädt…' : `Periodische Rechnungs-Stammdaten (Recurring Profile) aus Zoho Books · Buchungskreis ${region}`}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Profile`} pulse={loading} />}
         actions={
