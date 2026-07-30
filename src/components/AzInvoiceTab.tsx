@@ -1354,7 +1354,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
                   <span className="text-muted-foreground">
                     {inv.issue_date ? fmtDate(inv.issue_date) : '—'}
                     {inv.gross_amount != null ? ` · ${fmtMoney(Number(inv.gross_amount), currency)}` : ''}
-                    {inv.status ? ` · ${inv.status}` : ''}
+                    {inv.status ? ` · ${inv.status === 'entwurf' ? 'Entwurf' : inv.status === 'offen' ? 'Versendet' : inv.status}` : ''}
                   </span>
                   <Button
                     type="button"
