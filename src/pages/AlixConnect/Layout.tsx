@@ -116,6 +116,7 @@ const groups: { label: string; items: { to: string; label: string; icon: any }[]
     label: "System",
     items: [
       { to: "/connect/websites", label: "Webseiten", icon: Globe },
+      { to: "/connect/widget-check", label: "Widget-Check", icon: Globe },
       { to: "/connect/settings", label: "Einstellungen", icon: Settings },
     ],
   },
