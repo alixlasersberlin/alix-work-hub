@@ -77,6 +77,7 @@ export default function FinanceMahnwesen() {
   };
 
   const draftsByCustomer = new Map(drafts.map(d => [d.customer_id, d]));
+  const visibleAccounts = onlyWithReminder ? accounts.filter(a => draftsByCustomer.has(a.customer_id)) : accounts;
 
   return (
     <div className="p-4 sm:p-6">
@@ -84,9 +85,25 @@ export default function FinanceMahnwesen() {
         icon={AlertTriangle}
         title={`Mahnwesen ${region}`}
         subtitle={`Buchungskreis ${region} • Überfällige Forderungen, automatische Stufenfindung & manueller Versand`}
-        meta={<div className="flex items-center gap-2"><RegionChip /><InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${accounts.length}`} pulse={!loading} /></div>}
+        meta={<div className="flex items-center gap-2"><RegionChip /><InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${visibleAccounts.length}`} pulse={!loading} /></div>}
         actions={
           <>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="alle">Alle</SelectItem>
+                  <SelectItem value="Entwurf">Entwurf</SelectItem>
+                  <SelectItem value="Versendet">Versendet</SelectItem>
+                  <SelectItem value="Bezahlt">Bezahlt</SelectItem>
+                  <SelectItem value="Storniert">Storniert</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant={onlyWithReminder ? 'default' : 'outline'} size="sm" onClick={() => setOnlyWithReminder(v => !v)}>
+              Nur mit Mahnung
+            </Button>
             <Button variant="outline" size="sm" asChild>
               <Link to="/finance/mahnwesen/einstellungen"><SettingsIcon className="w-4 h-4 mr-2" />Einstellungen</Link>
             </Button>
@@ -97,6 +114,7 @@ export default function FinanceMahnwesen() {
 
           </>
         }
+
       />
 
       <DataCard className="overflow-hidden">
