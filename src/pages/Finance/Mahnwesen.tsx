@@ -39,9 +39,15 @@ export default function FinanceMahnwesen() {
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('Entwurf');
 
   const load = async () => {
     setLoading(true);
+    let remQ: any = supabase.from('finance_reminders' as any)
+      .select('id, customer_id, level, total, status, created_at')
+      .eq('accounting_region', region)
+      .order('created_at', { ascending: false });
+    if (statusFilter !== 'alle') remQ = remQ.eq('status', statusFilter);
     const [accRes, draftRes] = await Promise.all([
       supabase.from('finance_accounts' as any)
         .select('id, customer_id, reminder_level, overdue_balance, last_reminder_at, customers(company_name, contact_name, email)')
@@ -49,17 +55,14 @@ export default function FinanceMahnwesen() {
         .eq('accounting_region', region)
         .order('overdue_balance', { ascending: false })
         .limit(500),
-      supabase.from('finance_reminders' as any)
-        .select('id, customer_id, level, total, status, created_at')
-        .eq('status', 'Entwurf')
-        .eq('accounting_region', region)
-        .order('created_at', { ascending: false }),
+      remQ,
     ]);
     setAccounts(((accRes.data ?? []) as any) as AccRow[]);
     setDrafts(((draftRes.data ?? []) as any) as DraftRow[]);
     setLoading(false);
   };
-  useEffect(() => { load(); }, [region]);
+  useEffect(() => { load(); }, [region, statusFilter]);
+
 
   const runEngine = async () => {
     setRunning(true);
