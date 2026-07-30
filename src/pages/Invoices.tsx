@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -132,6 +134,8 @@ function flatRowsForKpi(rows: Row[], search: string, statusFilter: string): numb
 
 export default function Invoices() {
   const { roles } = useAuth();
+  const { region } = useAccountingRegion();
+
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const isAdmin = roles.includes('Admin') || isSuperAdmin;
   const [rows, setRows] = useState<Row[]>([]);
@@ -176,23 +180,27 @@ export default function Invoices() {
     setError(null);
     const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_data';
     const [inv, rec] = await Promise.all([
-      supabase.from('zoho_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
+      supabase.from('zoho_invoices').select(cols).eq('accounting_region', region).order('invoice_date', { ascending: false }).limit(10000),
       supabase.from('zoho_recurring_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
     ]);
     if (inv.error || rec.error) {
       setError(inv.error?.message || rec.error?.message || 'Fehler beim Laden');
       setRows([]);
     } else {
+      const isChCurrency = (c?: string | null) => (c ?? '').toUpperCase() === 'CHF';
       const merged: Row[] = [
         ...(inv.data ?? []).map((r: any) => ({ ...r, source: 'invoice' as const })),
-        ...(rec.data ?? []).map((r: any) => ({ ...r, source: 'recurring' as const })),
+        ...(rec.data ?? [])
+          .filter((r: any) => (region === 'CH' ? isChCurrency(r.currency) : !isChCurrency(r.currency)))
+          .map((r: any) => ({ ...r, source: 'recurring' as const })),
       ];
       setRows(merged);
     }
     setLoading(false);
   };
 
-  useEffect(() => { fetchRows(); }, []);
+  useEffect(() => { fetchRows(); }, [region]);
+
 
   // Realtime: aktualisiere Offene Beträge live, sobald sich Rechnungen ändern
   useEffect(() => {

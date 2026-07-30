@@ -1,3 +1,4 @@
+import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2, ExternalLink } from 'lucide-react';
 import {
@@ -96,7 +97,9 @@ const formatCurrency = (n: number | null, currency: string | null) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: currency || 'EUR' }).format(n ?? 0);
 
 export default function OffenePosten() {
+  const { region } = useAccountingRegion();
   const [items, setItems] = useState<OpenItem[]>([]);
+
   const [workflows, setWorkflows] = useState<Record<string, WorkflowState>>({});
   const [bookedRefs, setBookedRefs] = useState<Record<string, { journal_number: string | null; booking_date: string }>>({});
   const [bookingKey, setBookingKey] = useState<string | null>(null);
@@ -189,6 +192,7 @@ export default function OffenePosten() {
         supabase
           .from('zoho_invoices')
           .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status, zoho_invoice_id, source_system')
+          .eq('accounting_region', region)
           .gt('balance', 0)
           .order('due_date', { ascending: true })
           .limit(2000),
@@ -229,7 +233,7 @@ export default function OffenePosten() {
     });
     setBookedRefs(booked);
     setLoading(false);
-  }, []);
+  }, [region]);
 
   useEffect(() => { load(); }, [load]);
 
