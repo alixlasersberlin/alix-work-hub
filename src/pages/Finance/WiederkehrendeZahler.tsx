@@ -447,6 +447,8 @@ export default function WiederkehrendeZahler() {
                     <Badge variant="destructive" className="ml-2 tabular-nums">{fmt(g.openBalance, g.currency)}</Badge>
                   )}
                 </button>
+                </div>
+
 
                 {isOpen && (
                   <div className="pb-4 pl-7 space-y-4 animate-fade-in">
