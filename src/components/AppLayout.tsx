@@ -484,6 +484,7 @@ export const navItems: NavItem[] = [
         children: [
           { path: '/finance/anlagen', label: 'Anlagenbuchhaltung', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/anlagen/afa-lauf', label: 'AfA-Lauf', icon: FileText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/anlagenspiegel', label: 'Anlagenspiegel & Inventar', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/bwa', label: 'BWA', icon: BarChart3, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/guv', label: 'GuV', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/bilanz', label: 'Bilanz', icon: FileText, roles: ['Admin', 'Super Admin'] },
