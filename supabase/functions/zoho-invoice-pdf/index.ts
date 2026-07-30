@@ -104,10 +104,28 @@ Deno.serve(async (req) => {
     const finalDocType = doc_type || defaultDocType;
 
     const token = await getAccessToken(cfg);
-    const url = `${cfg.booksApiBaseUrl}/${res}/${id}?organization_id=${cfg.organizationId}&accept=pdf`;
-    const zohoRes = await fetch(url, {
-      headers: { Authorization: `Zoho-oauthtoken ${token}` },
-    });
+
+    // Zoho braucht sowohl ?accept=pdf als auch den Accept-Header.
+    // Für recurringinvoices gibt es keinen PDF-Endpunkt -> auf die zuletzt
+    // erzeugte reguläre Rechnung ausweichen.
+    const fetchPdf = (resource: string, docId: string) =>
+      fetch(`${cfg.booksApiBaseUrl}/${resource}/${docId}?organization_id=${cfg.organizationId}&accept=pdf`, {
+        headers: { Authorization: `Zoho-oauthtoken ${token}`, Accept: 'application/pdf' },
+      });
+
+    let zohoRes = await fetchPdf(res, id);
+
+    if (!zohoRes.ok && res === 'recurringinvoices') {
+      // letzte generierte Rechnung des Profils holen
+      const listRes = await fetch(
+        `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}&recurring_invoice_id=${id}&sort_column=date&sort_order=D&per_page=1`,
+        { headers: { Authorization: `Zoho-oauthtoken ${token}`, Accept: 'application/json' } },
+      );
+      const listJson = await listRes.json().catch(() => null);
+      const child = listJson?.invoices?.[0]?.invoice_id;
+      if (child) zohoRes = await fetchPdf('invoices', child);
+    }
+
     if (!zohoRes.ok) {
       const t = await zohoRes.text();
       return json({ error: `Zoho PDF fehler [${zohoRes.status}]: ${t}` }, zohoRes.status);
