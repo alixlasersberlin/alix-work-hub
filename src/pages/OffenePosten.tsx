@@ -571,127 +571,28 @@ export default function OffenePosten() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visible.map((i) => {
-                const b = bucketFor(i.due_date);
-                const style = bucketStyles[b];
-                const days = i.due_date ? differenceInCalendarDays(parseISO(i.due_date), new Date()) : null;
-                const wf = workflows[`${i.source}-${i.id}`];
-                const wfStatus: WorkflowStatus = wf?.workflow_status ?? 'offen';
-                const rowKey = `${i.source}-${i.id}`;
-                const booked = bookedRefs[rowKey];
-                const isBooking = bookingKey === rowKey;
-                return (
-                  <TableRow key={rowKey} className={style.row}>
-                    <TableCell className="font-mono">
-                      <div className="flex items-center gap-1">
-                        {i.zoho_invoice_id && i.invoice_number ? (
-                          <button
-                            type="button"
-                            onClick={() => openInvoicePdf(i)}
-                            disabled={pdfLoadingKey === rowKey}
-                            title="Rechnung als PDF öffnen"
-                            className="inline-flex items-center gap-1 text-primary hover:underline disabled:opacity-60"
-                          >
-                            {i.invoice_number}
-                            {pdfLoadingKey === rowKey
-                              ? <Loader2 className="w-3 h-3 animate-spin" />
-                              : <ExternalLink className="w-3 h-3 opacity-70" />}
-                          </button>
-                        ) : (
-                          <span>{i.invoice_number ?? '—'}</span>
-                        )}
-                        {i.source === 'recurring' && (
-                          <Badge variant="outline" className="ml-1 text-[10px]">Abo</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{i.customer_name ?? '—'}</TableCell>
-                    <TableCell>
-                      {i.due_date ? format(parseISO(i.due_date), 'dd.MM.yyyy', { locale: de }) : '—'}
-                      {days !== null && (
-                        <div className="text-xs text-muted-foreground">
-                          {days < 0 ? `${Math.abs(days)} Tage überfällig` : days === 0 ? 'heute fällig' : `in ${days} Tagen`}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span className={cn('px-2 py-0.5 rounded text-xs', style.badge)}>{style.label}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={cn('px-2 py-0.5 rounded text-xs', workflowBadge(wfStatus))}>
-                        {workflowLabel(wfStatus)}
-                      </span>
-                      {wf?.note && (
-                        <div className="text-xs text-muted-foreground mt-1 max-w-[220px] truncate" title={wf.note}>
-                          {wf.note}
-                        </div>
-                      )}
-                      {booked && (
-                        <div className="text-[11px] text-emerald-500 mt-1 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Gebucht{booked.journal_number ? ` · ${booked.journal_number}` : ''}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">{formatCurrency(i.total, i.currency)}</TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(i.balance, i.currency)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={booked ? 'outline' : 'default'}
-                              disabled={isBooking || !!booked}
-                              className="gap-1 relative z-10"
-                              title={booked ? 'Bereits in Buchhaltung gebucht' : 'Rechnung in Buchhaltung buchen'}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {isBooking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookCheck className="w-3.5 h-3.5" />}
-                              {booked ? 'Gebucht' : 'Buchen'}
-                              {!booked && <ChevronDown className="w-3.5 h-3.5 opacity-70" />}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="z-[10001]">
-                            <DropdownMenuLabel>Zahlungsart wählen</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {(Object.keys(bookingMethodConfig) as Array<keyof typeof bookingMethodConfig>).map((m) => {
-                              const cfg = bookingMethodConfig[m];
-                              const Icon = cfg.icon;
-                              return (
-                                <DropdownMenuItem
-                                  key={m}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    bookItem(i, m);
-                                  }}
-                                  className="gap-2"
-                                >
-                                  <Icon className="w-4 h-4" /> {cfg.label}
-                                </DropdownMenuItem>
-                              );
-                            })}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEdit(i);
-                          }}
-                          className="gap-1 relative z-10"
-                        >
-                          <Pencil className="w-3.5 h-3.5" /> Bearbeiten
-                        </Button>
-                      </div>
-                    </TableCell>
-
-                  </TableRow>
-                );
-              })}
+              {viewMode === 'list'
+                ? visible.map((i) => renderRow(i))
+                : visibleAccounts.map((a) => (
+                    <Fragment key={a.key}>
+                      <TableRow className="bg-muted/40 cursor-pointer" onClick={() => toggleAccount(a.key)}>
+                        <TableCell colSpan={5}>
+                          <div className="flex items-center gap-2 font-medium">
+                            <ChevronDown className={cn('w-4 h-4 transition-transform', !expanded[a.key] && '-rotate-90')} />
+                            <Users className="w-4 h-4 text-primary" />
+                            {a.name}
+                            <Badge variant="outline" className="text-[10px]">{a.items.length} Rechnungen</Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">{formatCurrency(a.total, 'EUR')}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatCurrency(a.balance, 'EUR')}</TableCell>
+                        <TableCell />
+                      </TableRow>
+                      {expanded[a.key] && a.items.map((i) => renderRow(i))}
+                    </Fragment>
+                  ))}
             </TableBody>
+
           </Table>
         )}
       </div>
