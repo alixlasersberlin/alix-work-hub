@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText, Send, Copy, XCircle, Zap, AlertCircle } from 'lucide-react';
+import { Search, ClipboardList, ArrowUpDown, Loader2, Inbox, CalendarDays, List, Car, Pencil, CalendarClock, MoveRight, CheckCircle2, PackageCheck, FileDown, FileText, Send, Copy, XCircle, Zap, AlertCircle, Truck } from 'lucide-react';
 import { computeDepositStatus } from '@/lib/deposit-status';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { createPDF } from '@/lib/pdf-utils';
@@ -82,7 +82,13 @@ const ALL_COLUMNS: { id: ColumnId; label: string; sortField?: SortField }[] = [
 ];
 const DEFAULT_COLUMN_ORDER: ColumnId[] = ALL_COLUMNS.map(c => c.id);
 
-export default function Orders() {
+/** Ein Auftrag gilt als „geliefert", wenn Status geliefert/invoiced ist oder Zoho eine Rechnung erzeugt hat. */
+const isDelivered = (o: any): boolean => {
+  const s = (o?.order_status || '').toLowerCase();
+  return s === 'geliefert' || s === 'invoiced' || !!o?.invoiced_flag;
+};
+
+export default function Orders({ deliveredOnly = false }: { deliveredOnly?: boolean } = {}) {
   const [orders, setOrders] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -597,6 +603,7 @@ export default function Orders() {
         it.sku?.toLowerCase().includes(m);
     });
     const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
+    const matchDelivered = deliveredOnly ? isDelivered(o) : !isDelivered(o);
     const isAt = o.source_system === 'zoho_eu_2';
     const matchRegion = regionFilter === 'all' || (regionFilter === 'at' ? isAt : !isAt);
     let matchDeposit = true;
@@ -614,7 +621,7 @@ export default function Orders() {
       }
     }
     const matchNewImport = newImportFilter === 'all' || !!o.imported_via_reconcile_at;
-    return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && matchNewImport && notExcluded;
+    return matchSearch && matchStatus && matchModel && matchRegion && matchDeposit && matchNewImport && notExcluded && matchDelivered;
   });
 
   // Client-seitige Sortierung nach Anzahlungsstatus
@@ -667,8 +674,8 @@ export default function Orders() {
     <div className="p-6 lg:p-8 animate-fade-in min-w-0 max-w-full overflow-x-hidden">
       <div className="flex items-start justify-between gap-4">
         <PageHeader
-          icon={ClipboardList}
-          title="Aufträge"
+          icon={deliveredOnly ? Truck : ClipboardList}
+          title={deliveredOnly ? 'Aufträge geliefert' : 'Aufträge'}
           subtitle={`${filtered.length} Aufträge`}
           noBreadcrumbs
           meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
