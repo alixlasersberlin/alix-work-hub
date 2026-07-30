@@ -11,7 +11,22 @@ type Payload = {
   page?: number;
   per_page?: number;
   max_pages?: number;
+  /** 'all' = alle, 'CH' = nur Schweiz-Profile, 'EU' = nur EU-Profile */
+  region_filter?: "all" | "EU" | "CH";
 };
+
+const CH_BRANCH_ID = "116240000000287001";
+const CH_MARKERS = ["alix lasers ® schweiz", "alix lasers (r) schweiz", "alix lasers schweiz"];
+
+function detectProfileRegion(p: any): "EU" | "CH" {
+  if (p?.branch_id && String(p.branch_id) === CH_BRANCH_ID) return "CH";
+  if ((p?.currency_code ?? "").toString().toUpperCase() === "CHF") return "CH";
+  const hay = JSON.stringify(p ?? {}).toLowerCase();
+  if (CH_MARKERS.some((m) => hay.includes(m))) return "CH";
+  const country = (p?.billing_address?.country ?? p?.billing_address?.country_code ?? "").toString().toLowerCase();
+  if (country === "ch" || country.includes("schweiz") || country.includes("switzerland")) return "CH";
+  return "EU";
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
