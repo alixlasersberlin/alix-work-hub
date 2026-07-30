@@ -555,6 +555,7 @@ export default function WiederkehrendeZahler() {
                                 <th className="text-right px-3 py-2">Offen</th>
                                 <th className="text-left px-3 py-2">Status</th>
                                 <th className="text-left px-3 py-2">Letzte Zahlung</th>
+                                <th className="text-right px-3 py-2">Aktion</th>
                               </tr>
                             </thead>
                             <tbody>
