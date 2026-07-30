@@ -336,6 +336,7 @@ const AlixConnectLayout = lazy(() => import("./pages/AlixConnect/Layout"));
 const AlixConnectTeamChat = lazy(() => import("./pages/AlixConnect/TeamChat"));
 const AlixConnectInbox = lazy(() => import("./pages/AlixConnect/Inbox"));
 const AlixConnectWebsites = lazy(() => import("./pages/AlixConnect/Websites"));
+const AlixConnectWidgetCheck = lazy(() => import("./pages/AlixConnect/WidgetCheck"));
 const AlixConnectAnalytics = lazy(() => import("./pages/AlixConnect/AnalyticsOverview"));
 const AlixConnectWebsiteAnalytics = lazy(() => import("./pages/AlixConnect/WebsiteAnalytics"));
 const AlixConnectContacts = lazy(() => import("./pages/AlixConnect/Contacts"));
