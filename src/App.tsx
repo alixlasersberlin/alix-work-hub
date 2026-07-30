@@ -140,6 +140,7 @@ const FinanceEingangsrechnungen = lazy(() => import("./pages/Finance/Eingangsrec
 const FinanceAnlagen = lazy(() => import("./pages/Finance/Anlagen"));
 const FinanceAfaLauf = lazy(() => import("./pages/Finance/AfaLauf"));
 const FinanceAnlagenspiegel = lazy(() => import("./pages/Finance/Anlagenspiegel"));
+const FinanceLohnbuchhaltung = lazy(() => import("./pages/Finance/Lohnbuchhaltung"));
 const FinanceLiquiditaet = lazy(() => import("./pages/Finance/Liquiditaet"));
 const FinanceBwa = lazy(() => import("./pages/Finance/Bwa"));
 const FinanceGuV = lazy(() => import("./pages/Finance/GuV"));
@@ -1279,6 +1280,7 @@ function AppRoutes() {
           <Route path="/finance/anlagen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnlagen /></ProtectedRoute>} />
           <Route path="/finance/anlagen/afa-lauf" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAfaLauf /></ProtectedRoute>} />
           <Route path="/finance/anlagenspiegel" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnlagenspiegel /></ProtectedRoute>} />
+          <Route path="/finance/lohnbuchhaltung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceLohnbuchhaltung /></ProtectedRoute>} />
           <Route path="/finance/liquiditaet" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceLiquiditaet /></ProtectedRoute>} />
           <Route path="/finance/bwa" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBwa /></ProtectedRoute>} />
           <Route path="/finance/guv" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceGuV /></ProtectedRoute>} />
