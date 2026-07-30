@@ -96,7 +96,7 @@ export default function FinanceMahnwesenSettings() {
               <th className="text-left px-4 py-3 font-medium">Stufe</th>
               <th className="text-left px-4 py-3 font-medium">Bezeichnung</th>
               <th className="text-left px-4 py-3 font-medium">Tage überfällig</th>
-              <th className="text-left px-4 py-3 font-medium">Mahngebühr (€)</th>
+              <th className="text-left px-4 py-3 font-medium">Mahngebühr ({regionCurrency(region) === 'CHF' ? 'CHF' : '€'})</th>
               <th className="text-left px-4 py-3 font-medium">Verzugszinsen (% p.a.)</th>
             </tr>
           </thead>
