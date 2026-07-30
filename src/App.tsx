@@ -1264,6 +1264,8 @@ function AppRoutes() {
           <Route path="/finance/kostenstellen-report" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKostenstellenReport /></ProtectedRoute>} />
           <Route path="/finance/deckungsbeitrag" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDeckungsbeitrag /></ProtectedRoute>} />
           <Route path="/finance/segmentbericht" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSegmentbericht /></ProtectedRoute>} />
+          <Route path="/finance/kontenblaetter" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceKontenblaetter /></ProtectedRoute>} />
+          <Route path="/finance/revisionsexport" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceRevisionsexport /></ProtectedRoute>} />
           <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
           <Route path="/finance/cockpit/mandant/:code" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpitMandant /></ProtectedRoute>} />
           <Route path="/finance/wiederkehrende-zahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><WiederkehrendeZahler /></ProtectedRoute>} />
