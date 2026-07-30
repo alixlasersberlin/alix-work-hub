@@ -571,6 +571,16 @@ export default function WiederkehrendeZahler() {
                                     <Badge variant={(inv.status ?? '').toLowerCase() === 'paid' ? 'default' : 'secondary'} className="capitalize">{inv.status ?? '—'}</Badge>
                                   </td>
                                   <td className="px-3 py-2">{fmtDate(inv.last_payment_date)}</td>
+                                  <td className="px-3 py-2 text-right">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={!canWrite}
+                                      onClick={() => setBookInvoice(inv as BookableInvoice)}
+                                    >
+                                      Buchen
+                                    </Button>
+                                  </td>
                                 </tr>
                               ))}
                               {g.invoices.length > 50 && (
