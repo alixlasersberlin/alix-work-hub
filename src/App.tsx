@@ -176,6 +176,7 @@ const FinanceAusgeliefert = lazy(() => import("./pages/Finance/Ausgeliefert"));
 const FinanceTreasury = lazy(() => import("./pages/Finance/Treasury"));
 const FinanceP2P = lazy(() => import("./pages/Finance/P2P"));
 const FinanceMeldewesen = lazy(() => import("./pages/Finance/Meldewesen"));
+const FinanceSteuerkonto = lazy(() => import("./pages/Finance/Steuerkonto"));
 const UserManagement = lazy(() => import("./pages/UserManagement"));
 const ImportManagement = lazy(() => import("./pages/ImportManagement"));
 const ZohoAbgleich = lazy(() => import("./pages/Admin/ZohoAbgleich"));
