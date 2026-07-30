@@ -19041,6 +19041,74 @@ export type Database = {
           },
         ]
       }
+      finance_tax_payments: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          due_date: string
+          filing_id: string | null
+          filing_type: string | null
+          id: string
+          notes: string | null
+          paid_amount: number
+          paid_date: string | null
+          payment_reference: string | null
+          period_value: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string
+          filing_id?: string | null
+          filing_type?: string | null
+          id?: string
+          notes?: string | null
+          paid_amount?: number
+          paid_date?: string | null
+          payment_reference?: string | null
+          period_value?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string
+          filing_id?: string | null
+          filing_type?: string | null
+          id?: string
+          notes?: string | null
+          paid_amount?: number
+          paid_date?: string | null
+          payment_reference?: string | null
+          period_value?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_tax_payments_filing_id_fkey"
+            columns: ["filing_id"]
+            isOneToOne: false
+            referencedRelation: "finance_tax_filings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_three_way_matches: {
         Row: {
           accounting_region: Database["public"]["Enums"]["accounting_region"]
