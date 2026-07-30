@@ -13,6 +13,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from '@/hooks/use-toast';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { RecurringProfileEditDialog, type EditableProfile } from '@/components/finance/RecurringProfileEditDialog';
+import { RecurringInvoiceBookDialog, type BookableInvoice } from '@/components/finance/RecurringInvoiceBookDialog';
+import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 
 
 // Beträge auf dieser Seite werden bewusst NICHT durch die Revenue-Mask (Super Admin)
@@ -101,6 +104,9 @@ export default function WiederkehrendeZahler() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>('active');
   const [selected, setSelected] = useState<Record<string, boolean>>({});
 
+  const { canWrite } = useFinancePermissions();
+  const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
+  const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
 
   async function load() {
     setLoading(true);
@@ -492,6 +498,7 @@ export default function WiederkehrendeZahler() {
                                 <th className="text-right px-3 py-2">Betrag</th>
                                 <th className="text-right px-3 py-2">Monatlich</th>
                                 <th className="text-left px-3 py-2">Status</th>
+                                <th className="text-right px-3 py-2">Aktion</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -514,6 +521,16 @@ export default function WiederkehrendeZahler() {
                                   <td className="px-3 py-2">
                                     <Badge variant={(p.status ?? '').toLowerCase() === 'active' ? 'default' : 'secondary'} className="capitalize">{p.status ?? '—'}</Badge>
                                   </td>
+                                  <td className="px-3 py-2 text-right">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={!canWrite}
+                                      onClick={() => setEditProfile(p as EditableProfile)}
+                                    >
+                                      Bearbeiten
+                                    </Button>
+                                  </td>
                                 </tr>
                                 );
                               })}
@@ -527,6 +544,7 @@ export default function WiederkehrendeZahler() {
                                 <td className="px-3 py-2 text-right tabular-nums text-primary">
                                   {fmt(g.monthly, g.currency)}
                                 </td>
+                                <td />
                                 <td />
                               </tr>
                             </tfoot>
@@ -549,6 +567,7 @@ export default function WiederkehrendeZahler() {
                                 <th className="text-right px-3 py-2">Offen</th>
                                 <th className="text-left px-3 py-2">Status</th>
                                 <th className="text-left px-3 py-2">Letzte Zahlung</th>
+                                <th className="text-right px-3 py-2">Aktion</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -565,10 +584,20 @@ export default function WiederkehrendeZahler() {
                                     <Badge variant={(inv.status ?? '').toLowerCase() === 'paid' ? 'default' : 'secondary'} className="capitalize">{inv.status ?? '—'}</Badge>
                                   </td>
                                   <td className="px-3 py-2">{fmtDate(inv.last_payment_date)}</td>
+                                  <td className="px-3 py-2 text-right">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={!canWrite}
+                                      onClick={() => setBookInvoice(inv as BookableInvoice)}
+                                    >
+                                      Buchen
+                                    </Button>
+                                  </td>
                                 </tr>
                               ))}
                               {g.invoices.length > 50 && (
-                                <tr><td colSpan={7} className="px-3 py-2 text-center text-xs text-muted-foreground">… {g.invoices.length - 50} weitere</td></tr>
+                                <tr><td colSpan={8} className="px-3 py-2 text-center text-xs text-muted-foreground">… {g.invoices.length - 50} weitere</td></tr>
                               )}
                             </tbody>
                           </table>
@@ -586,6 +615,19 @@ export default function WiederkehrendeZahler() {
       <p className="text-xs text-muted-foreground text-center">
         Quelle: Zoho Deutschland (zoho_eu_1) · Tägliche Synchronisation 23:45 Uhr · {profiles.length} Profile · {invoices.length} Rechnungen geladen
       </p>
+
+      <RecurringProfileEditDialog
+        profile={editProfile}
+        open={!!editProfile}
+        onOpenChange={(v) => { if (!v) setEditProfile(null); }}
+        onSaved={load}
+      />
+      <RecurringInvoiceBookDialog
+        invoice={bookInvoice}
+        open={!!bookInvoice}
+        onOpenChange={(v) => { if (!v) setBookInvoice(null); }}
+        onBooked={load}
+      />
     </div>
   );
 }
