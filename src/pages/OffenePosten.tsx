@@ -561,6 +561,9 @@ export default function OffenePosten() {
     const isBooking = bookingKey === rowKey;
     return (
       <TableRow key={rowKey} className={style.row}>
+        <TableCell className="w-8">
+          <Checkbox checked={!!selected[rowKey]} onCheckedChange={() => toggleRow(i)} aria-label="Datensatz markieren" />
+        </TableCell>
         <TableCell className="font-mono">
           <div className="flex items-center gap-1">
             {i.zoho_invoice_id && i.invoice_number ? (
