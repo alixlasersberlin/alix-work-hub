@@ -1703,6 +1703,18 @@ export default function ImportManagement() {
                     </Select>
                   </div>
                   <div className="space-y-2">
+                    <Label>Buchungskreis</Label>
+                    <Select value={invoiceRegionFilter} onValueChange={(v) => setInvoiceRegionFilter(v as 'all' | 'EU' | 'CH')}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Alle Rechnungen (EU + CH)</SelectItem>
+                        <SelectItem value="EU">Nur Buchhaltung EU</SelectItem>
+                        <SelectItem value="CH">🇨🇭 Nur „Ort: Alix Lasers ® Schweiz“ (CH)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label>Zeitraum</Label>
                     <Select value={invoicePreset} onValueChange={(v) => setInvoicePreset(v as InvoicePreset)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
