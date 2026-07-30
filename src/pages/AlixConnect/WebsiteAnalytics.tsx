@@ -20,6 +20,7 @@ import SessionsPanel from "@/components/connect/SessionsPanel";
 import ExperimentsPanel from "@/components/connect/ExperimentsPanel";
 import SegmentsPanel from "@/components/connect/SegmentsPanel";
 import LiveMapPanel from "@/components/connect/LiveMapPanel";
+import { buildEmbedSnippet } from "@/lib/embed-origin";
 
 const COLORS = ["#D4AF37", "#8B5CF6", "#0EA5E9", "#22C55E", "#F97316", "#EC4899", "#64748B"];
 const DIMS = [
@@ -91,7 +92,7 @@ export default function WebsiteAnalytics() {
 
   function copySnippet() {
     if (!site?.api_key) return;
-    const s = `<script async src="${window.location.origin}/connect.js" data-key="${site.api_key}"></script>`;
+    const s = buildEmbedSnippet(site.api_key);
     navigator.clipboard.writeText(s);
     toast.success("Snippet kopiert");
   }
