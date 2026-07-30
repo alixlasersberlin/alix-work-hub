@@ -35,6 +35,9 @@ export default function FinanceMeldewesen() {
   const [period, setPeriod] = useState(TYPES[0].period);
   const [tenantId, setTenantId] = useState<string>('');
   const [busy, setBusy] = useState(false);
+  const [detail, setDetail] = useState<any | null>(null);
+  const [detailLines, setDetailLines] = useState<any[]>([]);
+
 
   const load = async () => {
     setLoading(true);
