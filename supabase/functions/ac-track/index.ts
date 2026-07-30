@@ -82,8 +82,23 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const key = String(body?.key ?? '').trim();
-    const events: IncomingEvent[] = Array.isArray(body?.events) ? body.events.slice(0, 25) : [];
+    const key = String(body?.key ?? body?.api_key ?? '').trim();
+    // Akzeptiert beide Event-Formate: {type,url,title,...} und {event_type,page_url,page_title,...}
+    const rawEvents: Record<string, unknown>[] = Array.isArray(body?.events) ? body.events.slice(0, 25) : [];
+    const events: IncomingEvent[] = rawEvents.map((e) => ({
+      ...(e as IncomingEvent),
+      type: (e.type ?? e.event_type) as string | undefined,
+      url: (e.url ?? e.page_url) as string | undefined,
+      title: (e.title ?? e.page_title) as string | undefined,
+      screen: (e.screen ?? e.screen_size) as string | undefined,
+      utm: (e.utm as Record<string, string> | undefined) ?? {
+        source: e.utm_source as string,
+        medium: e.utm_medium as string,
+        campaign: e.utm_campaign as string,
+        term: e.utm_term as string,
+        content: e.utm_content as string,
+      },
+    }));
     if (!key || !events.length) {
       return new Response(JSON.stringify({ ok: false, error: 'key & events required' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

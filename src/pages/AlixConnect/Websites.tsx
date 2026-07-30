@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { Copy, Globe, Plus, Trash2, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { buildEmbedSnippet } from "@/lib/embed-origin";
 
 type Website = {
   id: string;
@@ -73,7 +74,7 @@ export default function WebsitesPage() {
   }
 
   function embedSnippet(w: Website) {
-    return `<script async src="${window.location.origin}/connect.js" data-key="${w.api_key}"></script>`;
+    return buildEmbedSnippet(w.api_key);
   }
 
   return (
