@@ -32,6 +32,8 @@ const LEVEL_LABEL = ['—', 'Zahlungserinnerung', '1. Mahnung', '2. Mahnung', 'L
 export default function FinanceMahnwesen() {
   const { roles } = useAuth();
   const { region } = useAccountingRegion();
+  const fmt = (n: number | null) => typeof n === 'number'
+    ? new Intl.NumberFormat(region === 'CH' ? 'de-CH' : 'de-DE', { style: 'currency', currency: regionCurrency(region) }).format(n) : '–';
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [accounts, setAccounts] = useState<AccRow[]>([]);
   const [drafts, setDrafts] = useState<DraftRow[]>([]);
