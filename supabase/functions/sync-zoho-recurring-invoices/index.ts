@@ -203,6 +203,8 @@ Deno.serve(async (req) => {
     const perPage = Math.min(Math.max(body.per_page ?? 50, 1), 100);
     const profilesPage = body.page ?? 1;
     const maxProfilePages = Math.min(Math.max(body.max_pages ?? 1, 1), 5);
+    const regionFilter = body.region_filter ?? "all";
+
 
     const cfg = getZohoConfig(sourceSystem);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
