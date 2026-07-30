@@ -233,7 +233,7 @@ export default function OffenePosten() {
     });
     setBookedRefs(booked);
     setLoading(false);
-  }, []);
+  }, [region]);
 
   useEffect(() => { load(); }, [load]);
 
