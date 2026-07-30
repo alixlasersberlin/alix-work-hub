@@ -411,10 +411,17 @@ export default function WiederkehrendeZahler() {
             const activeP = g.profiles.filter(p => (p.status ?? '').toLowerCase() === 'active').length;
             return (
               <div key={g.customer_id} className="px-5">
+                <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={!!selected[g.customer_id]}
+                  onCheckedChange={(v) => setSelected(s => ({ ...s, [g.customer_id]: !!v }))}
+                  aria-label={`${g.customer_name} markieren`}
+                />
                 <button
-                  className="w-full py-3 flex items-center gap-3 hover:bg-muted/30 -mx-5 px-5 transition-colors text-left"
+                  className="flex-1 min-w-0 py-3 flex items-center gap-3 hover:bg-muted/30 px-2 rounded transition-colors text-left"
                   onClick={() => setOpen(s => ({ ...s, [g.customer_id]: !s[g.customer_id] }))}
                 >
+
                   {isOpen ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate flex items-center gap-2">
