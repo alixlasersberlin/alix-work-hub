@@ -407,6 +407,18 @@ export default function WiederkehrendeZahler() {
             </button>
           ))}
         </div>
+        <div className="flex gap-1 border border-border rounded-md p-1">
+          {(['all', 'unpaid', 'overdue', 'paid', 'draft'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setInvoiceStatusFilter(s)}
+              className={`px-3 py-1 text-xs rounded ${invoiceStatusFilter === s ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              {s === 'all' ? 'Status: Alle' : s === 'unpaid' ? 'Offen' : s === 'overdue' ? 'Überfällig' : s === 'paid' ? 'Bezahlt' : 'Entwurf'}
+            </button>
+          ))}
+        </div>
+
         <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none border border-border rounded-md px-3 py-2">
           <Checkbox checked={allSelected} onCheckedChange={(v) => toggleAll(!!v)} aria-label="Alle markieren" />
           {allSelected ? 'Auswahl aufheben' : 'Alle markieren'}
