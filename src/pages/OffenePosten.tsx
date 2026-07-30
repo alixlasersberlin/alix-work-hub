@@ -855,6 +855,13 @@ export default function OffenePosten() {
                 : visibleAccounts.map((a) => (
                     <Fragment key={a.key}>
                       <TableRow className="bg-muted/40 cursor-pointer" onClick={() => toggleAccount(a.key)}>
+                        <TableCell className="w-8" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={a.items.every((i) => selected[keyOf(i)])}
+                            onCheckedChange={(v) => toggleAccountSelection(a.items, !!v)}
+                            aria-label="Kundenkonto markieren"
+                          />
+                        </TableCell>
                         <TableCell colSpan={5}>
                           <div className="flex items-center gap-2 font-medium">
                             <ChevronDown className={cn('w-4 h-4 transition-transform', !expanded[a.key] && '-rotate-90')} />
