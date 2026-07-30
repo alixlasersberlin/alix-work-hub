@@ -520,6 +520,16 @@ export default function WiederkehrendeZahler() {
                                   <td className="px-3 py-2">
                                     <Badge variant={(p.status ?? '').toLowerCase() === 'active' ? 'default' : 'secondary'} className="capitalize">{p.status ?? '—'}</Badge>
                                   </td>
+                                  <td className="px-3 py-2 text-right">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      disabled={!canWrite}
+                                      onClick={() => setEditProfile(p as EditableProfile)}
+                                    >
+                                      Bearbeiten
+                                    </Button>
+                                  </td>
                                 </tr>
                                 );
                               })}
