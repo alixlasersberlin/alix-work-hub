@@ -69,10 +69,18 @@ export async function setOfferApproval(
   if (error) throw error;
 }
 
+/**
+ * Schlanke Liste für Übersichten: lädt bewusst NICHT das große `payload`-JSON,
+ * das pro Angebot mehrere KB groß sein kann. Das reduziert die Ladezeit der
+ * Angebotsübersicht drastisch.
+ */
+const LIST_COLUMNS =
+  'id, offer_number, case_number, offer_date, valid_until, customer_id, customer_name, customer_email, total_net, total_tax, total_gross, status, signed_at, created_at, created_by_name, approval_status, approved_at, approved_by, approval_note';
+
 export async function listOffers(): Promise<OfferSnapshot[]> {
   const { data, error } = await supabase
     .from('offers')
-    .select('*')
+    .select(LIST_COLUMNS)
     .order('offer_date', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
     .limit(1000);
@@ -82,6 +90,7 @@ export async function listOffers(): Promise<OfferSnapshot[]> {
   }
   return (data || []).map(rowToSnapshot);
 }
+
 
 export async function getOffer(offerNumber: string): Promise<OfferSnapshot | null> {
   const { data, error } = await supabase
