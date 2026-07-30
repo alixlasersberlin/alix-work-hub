@@ -574,7 +574,7 @@ export default function WiederkehrendeZahler() {
                                 </tr>
                               ))}
                               {g.invoices.length > 50 && (
-                                <tr><td colSpan={7} className="px-3 py-2 text-center text-xs text-muted-foreground">… {g.invoices.length - 50} weitere</td></tr>
+                                <tr><td colSpan={8} className="px-3 py-2 text-center text-xs text-muted-foreground">… {g.invoices.length - 50} weitere</td></tr>
                               )}
                             </tbody>
                           </table>
