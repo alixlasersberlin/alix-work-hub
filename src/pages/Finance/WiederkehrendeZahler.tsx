@@ -110,6 +110,7 @@ export default function WiederkehrendeZahler() {
   const { canWrite } = useFinancePermissions();
   const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
   const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
+  const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
 
   async function load() {
     setLoading(true);
