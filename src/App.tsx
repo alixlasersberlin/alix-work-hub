@@ -111,6 +111,7 @@ const FinanceKostenstellenReport = lazy(() => import("./pages/Finance/Kostenstel
 const FinanceDeckungsbeitrag = lazy(() => import("./pages/Finance/Deckungsbeitrag"));
 const FinanceSegmentbericht = lazy(() => import("./pages/Finance/Segmentbericht"));
 const FinanceKontenblaetter = lazy(() => import("./pages/Finance/Kontenblaetter"));
+const FinanceSaldenbilanz = lazy(() => import("./pages/Finance/Saldenbilanz"));
 const FinanceRevisionsexport = lazy(() => import("./pages/Finance/Revisionsexport"));
 const FinanceBuchungsjournal = lazy(() => import("./pages/Finance/Buchungsjournal"));
 const FinanceBankbuchungen = lazy(() => import("./pages/Finance/Bankbuchungen"));
