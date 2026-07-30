@@ -42,6 +42,12 @@ const STATUS_VARIANTS: Record<string, string> = {
   error: 'bg-destructive/10 text-destructive border-destructive/20',
   failed: 'bg-destructive/10 text-destructive border-destructive/20',
   completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  invoiced: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+};
+
+/** Anzeige-Labels, die vom Rohstatus abweichen */
+const STATUS_LABELS: Record<string, string> = {
+  invoiced: 'geliefert',
 };
 
 interface StatusBadgeProps {
@@ -50,8 +56,8 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const label = status || '—';
-  const key = label.toLowerCase();
+  const key = (status || '').toLowerCase();
+  const label = status ? (STATUS_LABELS[key] || status) : '—';
   const variant = STATUS_VARIANTS[key] || 'bg-muted text-muted-foreground border-border';
 
   return (
