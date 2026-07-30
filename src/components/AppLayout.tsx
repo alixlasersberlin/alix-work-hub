@@ -489,6 +489,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/guv', label: 'GuV', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/bilanz', label: 'Bilanz', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/jahresabschluss', label: 'Jahresabschluss', icon: Lock, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/perioden', label: 'Periodenabschluss & Sperre', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
           { path: '/finance/datev', label: 'DATEV', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/steuer', label: 'Steuer-Auswertung', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/meldewesen', label: 'Steuer & Meldewesen', icon: FileText, roles: ['Admin', 'Super Admin'] },
