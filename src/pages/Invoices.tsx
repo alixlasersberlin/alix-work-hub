@@ -843,15 +843,16 @@ export default function Invoices() {
     }
   };
 
-  const handleImport = async () => {
+  const handleImport = async (regionFilter: 'all' | 'EU' | 'CH' = 'all') => {
     setImporting(true);
     setProgress('Starte Import…');
     try {
       let page = 1;
       let totalImported = 0, totalUpdated = 0, totalFailed = 0, totalSkipped = 0, totalDuplicates = 0;
+      let totalRegionSkipped = 0, totalCh = 0;
       for (let i = 0; i < 100; i++) {
         const { data, error } = await supabase.functions.invoke('sync-zoho-invoices', {
-          body: { source_system: 'zoho_eu_1', date_from: '2025-01-01', page, max_pages: 1, per_page: 100, exclude_profile_name: 'SEPA Ratenzahler' },
+          body: { source_system: 'zoho_eu_1', date_from: '2025-01-01', page, max_pages: 1, per_page: 100, exclude_profile_name: 'SEPA Ratenzahler', region_filter: regionFilter },
         });
         if (error) throw error;
         if (data?.retryable) {
@@ -863,14 +864,16 @@ export default function Invoices() {
         totalFailed += data?.failed ?? 0;
         totalSkipped += data?.skipped_sepa ?? 0;
         totalDuplicates += data?.duplicates ?? 0;
-        setProgress(`Seite ${page} • Neu: ${totalImported} • Aktualisiert: ${totalUpdated} • Duplikate: ${totalDuplicates} • SEPA übersprungen: ${totalSkipped}`);
+        totalRegionSkipped += data?.skipped_region ?? 0;
+        totalCh += data?.ch_count ?? 0;
+        setProgress(`${regionFilter === 'all' ? '' : regionFilter + ' • '}Seite ${page} • Neu: ${totalImported} • Aktualisiert: ${totalUpdated} • Duplikate: ${totalDuplicates} • SEPA übersprungen: ${totalSkipped}`);
         if (!data?.has_more) break;
         page = (data?.last_page ?? page) + 1;
         await new Promise((r) => setTimeout(r, 1500));
       }
       toast({
         title: 'Import abgeschlossen',
-        description: `Neu: ${totalImported} • Aktualisiert: ${totalUpdated} • Duplikate übersprungen: ${totalDuplicates} • SEPA übersprungen: ${totalSkipped} • Fehler: ${totalFailed}`,
+        description: `${regionFilter === 'CH' ? '🇨🇭 Nur Buchhaltung CH • ' : regionFilter === 'EU' ? 'Nur Buchhaltung EU • ' : ''}Neu: ${totalImported} • Aktualisiert: ${totalUpdated} • davon CH: ${totalCh} • Duplikate: ${totalDuplicates} • SEPA übersprungen: ${totalSkipped}${totalRegionSkipped ? ` • Andere Region übersprungen: ${totalRegionSkipped}` : ''} • Fehler: ${totalFailed}`,
       });
       await fetchRows();
     } catch (e: any) {
@@ -959,10 +962,24 @@ export default function Invoices() {
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
           isAdmin && (
-            <Button onClick={handleImport} disabled={importing} className="gold-gradient text-primary-foreground">
-              <RefreshCw className={`w-4 h-4 mr-2 ${importing ? 'animate-spin' : ''}`} />
-              {importing ? 'Import läuft…' : 'Aus Zoho importieren'}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button disabled={importing} className="gold-gradient text-primary-foreground">
+                  <RefreshCw className={`w-4 h-4 mr-2 ${importing ? 'animate-spin' : ''}`} />
+                  {importing ? 'Import läuft…' : 'Aus Zoho importieren'}
+                  <ChevronDown className="w-4 h-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuLabel>Import-Umfang</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleImport('all')}>Alle Rechnungen (EU + CH)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleImport('EU')}>Nur Buchhaltung EU</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleImport('CH')}>
+                  🇨🇭 Nur „Ort: Alix Lasers ® Schweiz" (CH)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )
         }
       />
