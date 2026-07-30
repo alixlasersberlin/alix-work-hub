@@ -11,7 +11,22 @@ type Payload = {
   page?: number;
   per_page?: number;
   max_pages?: number;
+  /** 'all' = alle, 'CH' = nur Schweiz-Profile, 'EU' = nur EU-Profile */
+  region_filter?: "all" | "EU" | "CH";
 };
+
+const CH_BRANCH_ID = "116240000000287001";
+const CH_MARKERS = ["alix lasers ® schweiz", "alix lasers (r) schweiz", "alix lasers schweiz"];
+
+function detectProfileRegion(p: any): "EU" | "CH" {
+  if (p?.branch_id && String(p.branch_id) === CH_BRANCH_ID) return "CH";
+  if ((p?.currency_code ?? "").toString().toUpperCase() === "CHF") return "CH";
+  const hay = JSON.stringify(p ?? {}).toLowerCase();
+  if (CH_MARKERS.some((m) => hay.includes(m))) return "CH";
+  const country = (p?.billing_address?.country ?? p?.billing_address?.country_code ?? "").toString().toLowerCase();
+  if (country === "ch" || country.includes("schweiz") || country.includes("switzerland")) return "CH";
+  return "EU";
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -98,6 +113,7 @@ Deno.serve(async (req) => {
     const perPage = Math.min(Math.max(body.per_page ?? 100, 1), 200);
     const startPage = body.page ?? 1;
     const maxPages = Math.min(Math.max(body.max_pages ?? 5, 1), 20);
+    const regionFilter = body.region_filter ?? "all";
 
     const cfg = getZohoConfig(sourceSystem);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
@@ -106,6 +122,7 @@ Deno.serve(async (req) => {
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
 
     let imported = 0, updated = 0, failed = 0, processed = 0;
+    let skippedRegion = 0, importedCh = 0;
     let page = startPage;
     let hasMore = true;
     const startedAt = Date.now();
@@ -129,6 +146,11 @@ Deno.serve(async (req) => {
         processed++;
         const recurringId = String(p.recurring_invoice_id ?? "");
         if (!recurringId) { failed++; continue; }
+
+        const region = detectProfileRegion(p);
+        if (regionFilter !== "all" && region !== regionFilter) { skippedRegion++; continue; }
+        if (region === "CH") importedCh++;
+
 
         const lineItems: any[] = p.line_items ?? [];
         const deviceName = lineItems.length > 0
@@ -158,6 +180,7 @@ Deno.serve(async (req) => {
           device_name: deviceName,
           line_items: lineItems,
           raw_data: p,
+          accounting_region: region,
           synced_at: new Date().toISOString(),
         };
 
@@ -186,6 +209,9 @@ Deno.serve(async (req) => {
       failed,
       processed,
       last_page: page - 1,
+      region_filter: regionFilter,
+      skipped_region: skippedRegion,
+      imported_ch: importedCh,
       has_more: hasMore,
     });
   } catch (e: any) {
