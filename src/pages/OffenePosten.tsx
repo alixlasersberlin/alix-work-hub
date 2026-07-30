@@ -836,6 +836,9 @@ export default function OffenePosten() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8">
+                  <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Alle markieren" />
+                </TableHead>
                 <TableHead>Rechnung</TableHead>
                 <TableHead>Kunde</TableHead>
                 <TableHead>Fällig am</TableHead>
