@@ -99,6 +99,8 @@ export default function WiederkehrendeZahler() {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>('active');
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+
 
   async function load() {
     setLoading(true);
