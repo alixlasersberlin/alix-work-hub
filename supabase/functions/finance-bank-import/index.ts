@@ -35,7 +35,8 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
   try {
-    const { filename, content } = await req.json();
+    const { filename, content, accounting_region } = await req.json();
+    const region: 'EU' | 'CH' = accounting_region === 'CH' ? 'CH' : 'EU';
     if (!content || typeof content !== 'string') {
       return new Response(JSON.stringify({ error: 'content (string) erforderlich' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
