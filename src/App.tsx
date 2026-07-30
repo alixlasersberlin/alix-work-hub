@@ -916,7 +916,7 @@ const queryClient = new QueryClient({
 
 const ORDER_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich'];
 const PLANNING_ROLES = ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Österreich'];
-const FINANCE_ROLES = ['Admin', 'Super Admin'];
+const FINANCE_ROLES = ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'];
 const FINANCING_ROLES = ['Admin', 'Super Admin', 'Finance', 'Finanzierungen', 'Order'];
 const ADMIN_ROLES = ['Admin', 'Super Admin'];
 const IMPORT_ROLES = ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Read Only Audit'];
