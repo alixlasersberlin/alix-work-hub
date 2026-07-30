@@ -294,6 +294,10 @@ Deno.serve(async (req) => {
               const invNumber: string | null = inv.invoice_number ?? null;
               const billing = inv.billing_address ?? null;
               const city = billing?.city ?? inv.billing_city ?? null;
+              const d = (v: unknown) => {
+                const s = typeof v === "string" ? v.trim() : v;
+                return s ? (s as string) : null;
+              };
 
               const payload = {
                 source_system: sourceSystem,
@@ -306,14 +310,14 @@ Deno.serve(async (req) => {
                 device_name: profileDeviceName,
                 city,
                 billing_address: billing,
-                invoice_date: inv.date ?? null,
-                due_date: inv.due_date ?? null,
+                invoice_date: d(inv.date),
+                due_date: d(inv.due_date),
                 currency: inv.currency_code ?? null,
                 total: Number(inv.total ?? 0),
                 balance: Number(inv.balance ?? 0),
                 status: inv.status ?? null,
                 payment_status: payStatusFromInvoice(inv),
-                last_payment_date: inv.last_payment_date ?? null,
+                last_payment_date: d(inv.last_payment_date),
                 raw_data: inv,
                 accounting_region: region,
                 synced_at: new Date().toISOString(),
