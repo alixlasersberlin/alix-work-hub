@@ -218,61 +218,82 @@ export default function Angebote() {
   const reload = async () => {
     const list = await listOffers();
     setOffers(list);
-    // Match offers to orders: order_number = offer_number ohne "ANG-" Prefix
-    const candidates = Array.from(new Set(list.map(o => (o.offerNumber || '').replace(/^ANG-/i, '')).filter(Boolean)));
-    if (candidates.length > 0) {
-      const { data } = await supabase
-        .from('orders')
-        .select('order_number')
-        .in('order_number', candidates);
-      setOrderNumbers(new Set((data || []).map((r: any) => r.order_number)));
-    } else {
-      setOrderNumbers(new Set());
-    }
-    // Match by customer name: any order for the same customer.
-    // The orders table has no customer_name column, so join via customer_id -> customers.
-    const custNamesFromOffers = new Set(
-      list.map(o => (o.customer?.company_name || o.customer?.contact_name || '').trim().toLowerCase()).filter(Boolean)
-    );
-    if (custNamesFromOffers.size > 0) {
-      const { data: orderRows } = await supabase
-        .from('orders')
-        .select('customer_id')
-        .not('customer_id', 'is', null)
-        .limit(5000);
-      const custIds = Array.from(new Set((orderRows || []).map((r: any) => r.customer_id).filter(Boolean)));
-      if (custIds.length > 0) {
-        const names = new Set<string>();
-        // Chunk to avoid URL length limits
-        const chunkSize = 500;
-        for (let i = 0; i < custIds.length; i += chunkSize) {
-          const chunk = custIds.slice(i, i + chunkSize);
-          const { data: custs } = await supabase
-            .from('customers')
-            .select('company_name, contact_name')
-            .in('id', chunk);
-          (custs || []).forEach((c: any) => {
-            const n = (c.company_name || c.contact_name || '').trim().toLowerCase();
-            if (n) names.add(n);
-          });
-        }
-        setOrderCustomerNames(names);
-      } else {
-        setOrderCustomerNames(new Set());
-      }
-    } else {
-      setOrderCustomerNames(new Set());
-    }
+    // Liste sofort anzeigen – die Auftrags-Verknüpfungen werden im Hintergrund nachgeladen.
     setLoading(false);
+    void enrichOrderMatches(list);
+  };
+
+  /** Ermittelt (im Hintergrund) welche Angebote bereits zu einem Auftrag gehören. */
+  const enrichOrderMatches = async (list: OfferSnapshot[]) => {
+    // 1) Direktes Matching über die Auftragsnummer (Angebotsnummer ohne "ANG-")
+    const candidates = Array.from(new Set(list.map(o => (o.offerNumber || '').replace(/^ANG-/i, '')).filter(Boolean)));
+
+    // 2) Matching über den Kunden: nur die Kunden auflösen, die in den Angeboten
+    //    vorkommen (statt bisher alle Aufträge + alle Kunden zu laden).
+    const offerCustomerIds = Array.from(new Set(list.map(o => o.customer?.id).filter(Boolean))) as string[];
+    const offerNames = Array.from(new Set(
+      list.map(o => (o.customer?.company_name || o.customer?.contact_name || '').trim()).filter(Boolean)
+    ));
+
+    const chunk = <T,>(arr: T[], size: number): T[][] => {
+      const out: T[][] = [];
+      for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+      return out;
+    };
+
+    const [orderNumRes, custRes] = await Promise.all([
+      candidates.length
+        ? Promise.all(chunk(candidates, 200).map(c =>
+            supabase.from('orders').select('order_number').in('order_number', c)))
+        : Promise.resolve([]),
+      offerNames.length
+        ? Promise.all(chunk(offerNames, 100).map(c =>
+            supabase.from('customers').select('id, company_name, contact_name').in('company_name', c)))
+        : Promise.resolve([]),
+    ]);
+
+    setOrderNumbers(new Set(
+      orderNumRes.flatMap((r: any) => (r.data || []).map((x: any) => x.order_number))
+    ));
+
+    const idToName = new Map<string, string>();
+    custRes.flatMap((r: any) => r.data || []).forEach((c: any) => {
+      const n = (c.company_name || c.contact_name || '').trim().toLowerCase();
+      if (n) idToName.set(c.id, n);
+    });
+    offerCustomerIds.forEach(id => {
+      if (idToName.has(id)) return;
+      const o = list.find(x => x.customer?.id === id);
+      const n = (o?.customer?.company_name || o?.customer?.contact_name || '').trim().toLowerCase();
+      if (n) idToName.set(id, n);
+    });
+
+    const ids = Array.from(idToName.keys());
+    if (!ids.length) { setOrderCustomerNames(new Set()); return; }
+
+    const ordersByCust = await Promise.all(
+      chunk(ids, 200).map(c => supabase.from('orders').select('customer_id').in('customer_id', c))
+    );
+    const names = new Set<string>();
+    ordersByCust.flatMap((r: any) => r.data || []).forEach((r: any) => {
+      const n = idToName.get(r.customer_id);
+      if (n) names.add(n);
+    });
+    setOrderCustomerNames(names);
   };
 
   useEffect(() => {
     (async () => {
-      const migrated = await migrateLegacyOffersOnce();
-      if (migrated > 0) toast.success(`${migrated} lokal gespeicherte Angebote in die zentrale Datenbank übernommen.`);
       await reload();
+      // Legacy-Migration blockiert den ersten Seitenaufbau nicht mehr.
+      const migrated = await migrateLegacyOffersOnce();
+      if (migrated > 0) {
+        toast.success(`${migrated} lokal gespeicherte Angebote in die zentrale Datenbank übernommen.`);
+        await reload();
+      }
     })();
   }, []);
+
 
   // Sync signed offers from alix_sign_requests
   useEffect(() => {
