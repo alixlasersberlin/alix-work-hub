@@ -257,6 +257,8 @@ export default function ImportManagement() {
   const [invoiceCustomFrom, setInvoiceCustomFrom] = useState<Date | undefined>(undefined);
   const [invoiceCustomTo, setInvoiceCustomTo] = useState<Date | undefined>(undefined);
   const [invoiceSource, setInvoiceSource] = useState<SourceKey>('zoho_eu_1');
+  const [invoiceRegionFilter, setInvoiceRegionFilter] = useState<'all' | 'EU' | 'CH'>('all');
+
   const [invoiceImporting, setInvoiceImporting] = useState(false);
   const [packagesImporting, setPackagesImporting] = useState(false);
   const [packagesResult, setPackagesResult] = useState<{ packages_fetched: number; salesorders_with_packages: number; orders_updated: number; orders_missing_in_db: number } | null>(null);
