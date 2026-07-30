@@ -300,8 +300,26 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const projectedSum = sumExistingRates + (currentCountsTowardsSum ? grossDeposit : 0);
   const exceedsDeposit = orderDeposit > 0 && projectedSum - orderDeposit > 0.01;
 
-  async function buildPdf(mode: BuildMode): Promise<{ doc: any; fileName: string; blob?: Blob }> {
+  type PdfOverride = {
+    invoiceNumber?: string;
+    invoiceDate?: string | null;
+    dueDate?: string | null;
+    gross?: number;
+    taxPercentage?: number;
+    positionLabel?: string;
+  };
+
+  async function buildPdf(mode: BuildMode, override?: PdfOverride): Promise<{ doc: any; fileName: string; blob?: Blob }> {
+    const invNo = override?.invoiceNumber ?? invoiceNumber;
+    const invDate = override?.invoiceDate ?? invoiceDate;
+    const dDate = override?.dueDate ?? dueDate;
+    const taxPct = override?.taxPercentage ?? taxPercentage;
+    const grossAmtP = override?.gross ?? grossDeposit;
+    const netAmtP = grossAmtP / (1 + (taxPct || 0) / 100);
+    const taxAmtP = grossAmtP - netAmtP;
+    const posLabel = override?.positionLabel ?? positionLabel;
     const doc = createPDF({ unit: 'mm', format: 'a4' });
+
       const PAGE_W = 210;
       const PAGE_H = 297;
       const LEFT = 30;
