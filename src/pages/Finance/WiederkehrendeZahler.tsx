@@ -87,7 +87,7 @@ const monthsFactor = (freq: string | null, every: number | null) => {
 
 export default function WiederkehrendeZahler() {
   const { region } = useAccountingRegion();
-  const sourceSystem = region === 'CH' ? 'zoho_ch' : 'zoho_eu_1';
+  
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
