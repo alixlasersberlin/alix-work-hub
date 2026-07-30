@@ -424,7 +424,7 @@ export default function ImportManagement() {
       toast({ title: 'Rechnung-Import gestartet', description: `Ab ${dateFrom}` });
       for (let i = 0; i < 100; i++) {
         const { data, error } = await supabase.functions.invoke('sync-zoho-recurring-invoices', {
-          body: { source_system: invoiceSource, date_from: dateFrom, page, max_pages: 1, per_page: 50 },
+          body: { source_system: invoiceSource, date_from: dateFrom, page, max_pages: 1, per_page: 50, region_filter: invoiceRegionFilter },
         });
         if (error) throw error;
         if (data?.retryable || data?.error) {
