@@ -283,7 +283,11 @@ Deno.serve(async (req) => {
           iHasMore = iData.page_context?.has_more_page === true;
 
           for (const inv of invoices) {
+            const region = detectInvoiceRegion(inv);
+            if (regionFilter !== "all" && region !== regionFilter) { skippedRegion++; continue; }
+            if (region === "CH") importedCh++;
             try {
+
               const invId = String(inv.invoice_id);
               const invNumber: string | null = inv.invoice_number ?? null;
               const billing = inv.billing_address ?? null;
