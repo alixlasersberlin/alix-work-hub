@@ -14,7 +14,23 @@ type Payload = {
   per_page?: number;
   max_pages?: number;
   exclude_profile_name?: string;
+  /** 'all' = alle, 'CH' = nur Schweiz-Rechnungen, 'EU' = nur EU-Rechnungen */
+  region_filter?: "all" | "EU" | "CH";
 };
+
+const CH_BRANCH_ID = "598077000000065075";
+const CH_MARKERS = ["alix lasers ® schweiz", "alix lasers (r) schweiz", "alix lasers schweiz"];
+
+/** Ermittelt den Buchungskreis einer Zoho-Rechnung. */
+function detectInvoiceRegion(inv: any): "EU" | "CH" {
+  if (inv?.branch_id && String(inv.branch_id) === CH_BRANCH_ID) return "CH";
+  if ((inv?.currency_code ?? "").toString().toUpperCase() === "CHF") return "CH";
+  const hay = JSON.stringify(inv ?? {}).toLowerCase();
+  if (CH_MARKERS.some((m) => hay.includes(m))) return "CH";
+  const country = (inv?.billing_address?.country ?? inv?.billing_address?.country_code ?? "").toString().toLowerCase();
+  if (country === "ch" || country.includes("schweiz") || country.includes("switzerland")) return "CH";
+  return "EU";
+}
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -164,6 +180,7 @@ Deno.serve(async (req) => {
     const startPage = body.page ?? 1;
     const maxPages = Math.min(Math.max(body.max_pages ?? 1, 1), 5);
     const excludeProfileName = body.exclude_profile_name ?? "SEPA Ratenzahler";
+    const regionFilter = body.region_filter ?? "all";
 
     const cfg = getZohoConfig(sourceSystem);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
@@ -183,6 +200,7 @@ Deno.serve(async (req) => {
     const excludedIds = await getExcludedRecurringIds(cfg, token, sourceSystem, excludeProfileName);
 
     let imported = 0, updated = 0, failed = 0, skippedSepa = 0, skippedRecurring = 0, processed = 0, duplicates = 0;
+    let skippedRegion = 0, importedCh = 0;
     let page = startPage;
     let hasMore = true;
     const startedAt = Date.now();
@@ -213,6 +231,9 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        const region = detectInvoiceRegion(inv);
+        if (regionFilter !== "all" && region !== regionFilter) { skippedRegion++; continue; }
+
         try {
           const invId = String(inv.invoice_id);
           const invNumber: string | null = inv.invoice_number ?? null;
@@ -236,6 +257,7 @@ Deno.serve(async (req) => {
             payment_status: payStatusFromInvoice(inv),
             last_payment_date: inv.last_payment_date ?? null,
             raw_data: inv,
+            accounting_region: region,
             synced_at: new Date().toISOString(),
           };
 
@@ -281,6 +303,7 @@ Deno.serve(async (req) => {
             .select("id, created_at, updated_at")
             .single();
           if (error) throw error;
+          if (region === "CH") importedCh++;
           if (upserted && upserted.created_at && upserted.updated_at
               && new Date(upserted.updated_at).getTime() - new Date(upserted.created_at).getTime() < 2000) {
             imported++;
@@ -297,6 +320,7 @@ Deno.serve(async (req) => {
 
     return json({
       success: true, imported, updated, failed, duplicates,
+      region_filter: regionFilter, skipped_region: skippedRegion, ch_count: importedCh,
       skipped_sepa: skippedSepa, skipped_recurring: skippedRecurring,
       processed, excluded_profile_count: excludedIds.size,
       last_page: page - 1, has_more: hasMore,
