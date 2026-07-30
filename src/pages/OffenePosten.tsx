@@ -1,6 +1,7 @@
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2, ExternalLink, Users } from 'lucide-react';
+import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2, ExternalLink, Users, Download, FileSpreadsheet, FileJson } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 import {
   DropdownMenu,
@@ -452,6 +453,103 @@ export default function OffenePosten() {
 
   const visibleAccounts = useMemo(() => paginate(accounts, pageSize), [accounts, pageSize]);
 
+  // ===== Markierung & Export =====
+  const keyOf = (i: OpenItem) => `${i.source}-${i.id}`;
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const selectedCount = useMemo(() => Object.values(selected).filter(Boolean).length, [selected]);
+  const toggleRow = (i: OpenItem) =>
+    setSelected((p) => ({ ...p, [keyOf(i)]: !p[keyOf(i)] }));
+  const allSelected = filtered.length > 0 && filtered.every((i) => selected[keyOf(i)]);
+  const toggleAll = () => {
+    if (allSelected) { setSelected({}); return; }
+    setSelected(Object.fromEntries(filtered.map((i) => [keyOf(i), true])));
+  };
+  const toggleAccountSelection = (accItems: OpenItem[], on: boolean) =>
+    setSelected((p) => ({ ...p, ...Object.fromEntries(accItems.map((i) => [keyOf(i), on])) }));
+
+  const exportRows = useCallback(() => {
+    const base = selectedCount > 0 ? filtered.filter((i) => selected[keyOf(i)]) : filtered;
+    return base.map((i) => {
+      const days = i.due_date ? differenceInCalendarDays(parseISO(i.due_date), new Date()) : null;
+      const wf = workflows[keyOf(i)];
+      return {
+        Rechnungsnr: i.invoice_number ?? '',
+        Referenz: i.reference_number ?? '',
+        Kunde: i.customer_name ?? '',
+        Ort: i.city ?? '',
+        Typ: i.source === 'recurring' ? 'Abo' : 'Rechnung',
+        Faellig_am: i.due_date ? format(parseISO(i.due_date), 'dd.MM.yyyy', { locale: de }) : '',
+        Tage_ueberfaellig: days !== null && days < 0 ? Math.abs(days) : 0,
+        Status: bucketStyles[bucketFor(i.due_date)].label,
+        Bearbeitung: bookedRefs[keyOf(i)] ? 'Gebucht' : workflowLabel(wf?.workflow_status ?? 'offen'),
+        Notiz: wf?.note ?? '',
+        Waehrung: i.currency || 'EUR',
+        Gesamt: Number(i.total) || 0,
+        Offen: Number(i.balance) || 0,
+      };
+    });
+  }, [filtered, selected, selectedCount, workflows, bookedRefs]);
+
+  const exportBase = () => `offene-posten-${region}-${new Date().toISOString().slice(0, 10)}`;
+
+  const exportCsv = () => {
+    const rows = exportRows();
+    if (!rows.length) { toast.error('Keine Datensätze zum Export.'); return; }
+    const cols = Object.keys(rows[0]);
+    const esc = (v: unknown) => {
+      const s = v == null ? '' : String(v);
+      return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [cols.join(';'), ...rows.map((r) => cols.map((c) => esc((r as Record<string, unknown>)[c])).join(';'))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `${exportBase()}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${rows.length} Datensätze als CSV exportiert`);
+  };
+
+  const exportExcel = async () => {
+    const rows = exportRows();
+    if (!rows.length) { toast.error('Keine Datensätze zum Export.'); return; }
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Offene Posten');
+    XLSX.writeFile(wb, `${exportBase()}.xlsx`);
+    toast.success(`${rows.length} Datensätze als Excel exportiert`);
+  };
+
+  const exportPdf = async () => {
+    const rows = exportRows();
+    if (!rows.length) { toast.error('Keine Datensätze zum Export.'); return; }
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import('jspdf'),
+      import('jspdf-autotable'),
+    ]);
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFontSize(14);
+    doc.text(`Offene Posten · Buchhaltung ${region}`, 14, 14);
+    doc.setFontSize(9);
+    doc.text(`Stand: ${format(new Date(), 'dd.MM.yyyy', { locale: de })} · ${rows.length} Datensätze`, 14, 20);
+    const sum = rows.reduce((a, r) => a + r.Offen, 0);
+    autoTable(doc, {
+      startY: 25,
+      styles: { fontSize: 7, cellPadding: 1.5 },
+      headStyles: { fillColor: [30, 30, 30] },
+      head: [['Rechnungsnr.', 'Kunde', 'Typ', 'Fällig am', 'Überf. Tage', 'Status', 'Bearbeitung', 'Gesamt', 'Offen']],
+      body: rows.map((r) => [
+        r.Rechnungsnr, r.Kunde, r.Typ, r.Faellig_am, String(r.Tage_ueberfaellig),
+        r.Status, r.Bearbeitung,
+        formatCurrency(r.Gesamt, r.Waehrung), formatCurrency(r.Offen, r.Waehrung),
+      ]),
+      foot: [['', '', '', '', '', '', 'Summe offen', '', formatCurrency(sum, 'EUR')]],
+      footStyles: { fillColor: [45, 45, 45] },
+    });
+    doc.save(`${exportBase()}.pdf`);
+    toast.success(`${rows.length} Datensätze als PDF exportiert`);
+  };
+
+
   const renderRow = (i: OpenItem) => {
     const b = bucketFor(i.due_date);
     const style = bucketStyles[b];
@@ -463,6 +561,9 @@ export default function OffenePosten() {
     const isBooking = bookingKey === rowKey;
     return (
       <TableRow key={rowKey} className={style.row}>
+        <TableCell className="w-8">
+          <Checkbox checked={!!selected[rowKey]} onCheckedChange={() => toggleRow(i)} aria-label="Datensatz markieren" />
+        </TableCell>
         <TableCell className="font-mono">
           <div className="flex items-center gap-1">
             {i.zoho_invoice_id && i.invoice_number ? (
@@ -644,6 +745,29 @@ export default function OffenePosten() {
             <Button variant="outline" size="sm" onClick={() => setExpanded({})}>Alle zuklappen</Button>
           </>
         )}
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={toggleAll}>
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          {allSelected ? 'Markierung aufheben' : 'Alle markieren'}
+        </Button>
+        {selectedCount > 0 && (
+          <Badge variant="outline" className="text-xs">{selectedCount} markiert</Badge>
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" className="gap-1.5">
+              <Download className="w-3.5 h-3.5" /> Export
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>
+              {selectedCount > 0 ? `${selectedCount} markierte Posten` : `Alle ${filtered.length} gefilterten Posten`}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={exportPdf}><FileText className="w-4 h-4 mr-2" /> PDF</DropdownMenuItem>
+            <DropdownMenuItem onClick={exportExcel}><FileSpreadsheet className="w-4 h-4 mr-2" /> Excel (XLSX)</DropdownMenuItem>
+            <DropdownMenuItem onClick={exportCsv}><FileJson className="w-4 h-4 mr-2" /> CSV</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <ListToolbar
@@ -735,6 +859,9 @@ export default function OffenePosten() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-8">
+                  <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Alle markieren" />
+                </TableHead>
                 <TableHead>Rechnung</TableHead>
                 <TableHead>Kunde</TableHead>
                 <TableHead>Fällig am</TableHead>
@@ -751,6 +878,13 @@ export default function OffenePosten() {
                 : visibleAccounts.map((a) => (
                     <Fragment key={a.key}>
                       <TableRow className="bg-muted/40 cursor-pointer" onClick={() => toggleAccount(a.key)}>
+                        <TableCell className="w-8" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={a.items.every((i) => selected[keyOf(i)])}
+                            onCheckedChange={(v) => toggleAccountSelection(a.items, !!v)}
+                            aria-label="Kundenkonto markieren"
+                          />
+                        </TableCell>
                         <TableCell colSpan={5}>
                           <div className="flex items-center gap-2 font-medium">
                             <ChevronDown className={cn('w-4 h-4 transition-transform', !expanded[a.key] && '-rotate-90')} />
