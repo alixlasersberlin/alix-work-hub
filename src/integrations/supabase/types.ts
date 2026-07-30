@@ -17735,6 +17735,8 @@ export type Database = {
           id: string
           note: string | null
           period_month: number
+          reopened_at: string | null
+          reopened_by: string | null
           status: string
           updated_at: string
         }
@@ -17747,6 +17749,8 @@ export type Database = {
           id?: string
           note?: string | null
           period_month: number
+          reopened_at?: string | null
+          reopened_by?: string | null
           status?: string
           updated_at?: string
         }
@@ -17759,6 +17763,8 @@ export type Database = {
           id?: string
           note?: string | null
           period_month?: number
+          reopened_at?: string | null
+          reopened_by?: string | null
           status?: string
           updated_at?: string
         }
