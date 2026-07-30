@@ -156,9 +156,11 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const [booking, setBooking] = useState(false);
   const [postingToBuchhaltung, setPostingToBuchhaltung] = useState(false);
   const [sending, setSending] = useState(false);
-  const [existingInvoices, setExistingInvoices] = useState<Array<{ invoice_number: string; issue_date?: string | null; gross_amount?: number | null; status?: string | null }>>([]);
+  const [existingInvoices, setExistingInvoices] = useState<Array<{ invoice_number: string; issue_date?: string | null; due_date?: string | null; gross_amount?: number | null; status?: string | null; net_amount?: number | null; vat_amount?: number | null; note?: string | null }>>([]);
   const [checkingExisting, setCheckingExisting] = useState(true);
   const [confirm, setConfirm] = useState<null | 'saveSend' | 'sendOnly'>(null);
+  const [rowBusy, setRowBusy] = useState<string | null>(null);
+
 
   // Prüft, ob die aktuell eingegebene Rechnungsnummer bereits vergeben ist
   const currentIsDuplicate = existingInvoices.find(
@@ -234,7 +236,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       try {
         let query = supabase
           .from('finance_deposits' as any)
-          .select('invoice_number, deposit_number, issue_date, order_id, order_number, gross_amount, status')
+          .select('invoice_number, deposit_number, issue_date, due_date, order_id, order_number, gross_amount, net_amount, vat_amount, status, note')
           .order('issue_date', { ascending: true });
         const orFilters: string[] = [];
         if (order?.id) orFilters.push(`order_id.eq.${order.id}`);
@@ -247,6 +249,10 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           const list = (data || []).map((row: any) => ({
             invoice_number: row.invoice_number || row.deposit_number || `AZ-${orderNo}`,
             issue_date: row.issue_date ?? null,
+            due_date: row.due_date ?? null,
+            net_amount: row.net_amount ?? null,
+            vat_amount: row.vat_amount ?? null,
+            note: row.note ?? null,
             gross_amount: row.gross_amount ?? null,
             status: row.status ?? null,
           }));
@@ -300,8 +306,26 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
   const projectedSum = sumExistingRates + (currentCountsTowardsSum ? grossDeposit : 0);
   const exceedsDeposit = orderDeposit > 0 && projectedSum - orderDeposit > 0.01;
 
-  async function buildPdf(mode: BuildMode): Promise<{ doc: any; fileName: string; blob?: Blob }> {
+  type PdfOverride = {
+    invoiceNumber?: string;
+    invoiceDate?: string | null;
+    dueDate?: string | null;
+    gross?: number;
+    taxPercentage?: number;
+    positionLabel?: string;
+  };
+
+  async function buildPdf(mode: BuildMode, override?: PdfOverride): Promise<{ doc: any; fileName: string; blob?: Blob }> {
+    const invNo = override?.invoiceNumber ?? invoiceNumber;
+    const invDate = override?.invoiceDate ?? invoiceDate;
+    const dDate = override?.dueDate ?? dueDate;
+    const taxPct = override?.taxPercentage ?? taxPercentage;
+    const grossAmtP = override?.gross ?? grossDeposit;
+    const netAmtP = grossAmtP / (1 + (taxPct || 0) / 100);
+    const taxAmtP = grossAmtP - netAmtP;
+    const posLabel = override?.positionLabel ?? positionLabel;
     const doc = createPDF({ unit: 'mm', format: 'a4' });
+
       const PAGE_W = 210;
       const PAGE_H = 297;
       const LEFT = 30;
@@ -336,9 +360,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setFontSize(9);
       doc.setTextColor(60, 60, 60);
       const meta: Array<[string, string]> = [
-        ['Rechnungsnr.', invoiceNumber || '—'],
-        ['Rechnungsdatum', fmtDate(invoiceDate)],
-        ['Fällig am', fmtDate(dueDate)],
+        ['Rechnungsnr.', invNo || '—'],
+        ['Rechnungsdatum', fmtDate(invDate)],
+        ['Fällig am', fmtDate(dDate)],
         ['Auftragsnr.', orderNo || '—'],
         ['Kundennr.', (() => {
           const ext = customer?.external_customer_id;
@@ -402,11 +426,11 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         head: [['Pos', 'Beschreibung', 'Menge', 'Einzelpreis netto', 'MwSt', 'Summe netto']],
         body: [[
           1,
-          positionLabel || `Anzahlung Auftrag ${orderNo}`,
+          posLabel || `Anzahlung Auftrag ${orderNo}`,
           1,
-          fmtMoney(netDeposit, currency),
-          `${taxPercentage}%`,
-          fmtMoney(netDeposit, currency),
+          fmtMoney(netAmtP, currency),
+          `${taxPct}%`,
+          fmtMoney(netAmtP, currency),
         ]],
         styles: { fontSize: 9, cellPadding: 2, valign: 'top' },
         headStyles: { fillColor: [183, 217, 255], textColor: [20, 60, 110] },
@@ -432,16 +456,16 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setFontSize(10);
       doc.setTextColor(60, 60, 60);
       doc.text('Netto:', totalsLabelX, finalY);
-      doc.text(fmtMoney(netDeposit, currency), totalsValueX, finalY, { align: 'right' });
-      doc.text(`MwSt (${taxPercentage}%):`, totalsLabelX, finalY + 5);
-      doc.text(fmtMoney(taxAmount, currency), totalsValueX, finalY + 5, { align: 'right' });
+      doc.text(fmtMoney(netAmtP, currency), totalsValueX, finalY, { align: 'right' });
+      doc.text(`MwSt (${taxPct}%):`, totalsLabelX, finalY + 5);
+      doc.text(fmtMoney(taxAmtP, currency), totalsValueX, finalY + 5, { align: 'right' });
       doc.setDrawColor(20, 60, 110);
       doc.line(totalsLabelX, finalY + 8, totalsValueX, finalY + 8);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(12);
       doc.setTextColor(20, 60, 110);
       doc.text('Rechnungsbetrag (brutto):', totalsLabelX, finalY + 14);
-      doc.text(fmtMoney(grossDeposit, currency), totalsValueX, finalY + 14, { align: 'right' });
+      doc.text(fmtMoney(grossAmtP, currency), totalsValueX, finalY + 14, { align: 'right' });
 
       // Hinweisblock
       let py = finalY + 26;
@@ -455,9 +479,9 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       doc.setTextColor(60, 60, 60);
       const hint =
         `Dies ist eine Anzahlungsrechnung zum Auftrag ${orderNo}. Der Betrag von ` +
-        `${fmtMoney(grossDeposit, currency)} (brutto) wird auf die im Mietkaufvertrag vereinbarte Gesamtanzahlung angerechnet. ` +
-        `Bitte überweisen Sie den Rechnungsbetrag bis zum ${fmtDate(dueDate)} unter Angabe der ` +
-        `Rechnungsnummer ${invoiceNumber}.`;
+        `${fmtMoney(grossAmtP, currency)} (brutto) wird auf die im Mietkaufvertrag vereinbarte Gesamtanzahlung angerechnet. ` +
+        `Bitte überweisen Sie den Rechnungsbetrag bis zum ${fmtDate(dDate)} unter Angabe der ` +
+        `Rechnungsnummer ${invNo}.`;
       const wrapped = doc.splitTextToSize(hint, CONTENT_W);
       doc.text(wrapped, LEFT, py);
       py += wrapped.length * 4.6 + 6;
@@ -503,7 +527,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
           doc.setTextColor(60, 60, 60);
-          doc.text(`Anzahlungsrechnung ${invoiceNumber}`, LEFT, TOP_CONTENT - 8);
+          doc.text(`Anzahlungsrechnung ${invNo}`, LEFT, TOP_CONTENT - 8);
           doc.setDrawColor(200, 200, 200);
           doc.line(LEFT, TOP_CONTENT - 5, RIGHT, TOP_CONTENT - 5);
         }
@@ -521,18 +545,18 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         );
         doc.setFontSize(8);
         doc.text(
-          `Anzahlungsrechnung ${invoiceNumber}  ·  Seite ${i} von ${totalPages}`,
+          `Anzahlungsrechnung ${invNo}  ·  Seite ${i} von ${totalPages}`,
           RIGHT, PAGE_H - 4, { align: 'right' },
         );
       }
 
-    const fileName = `Anzahlungsrechnung_${invoiceNumber || orderNo}.pdf`;
-    const autoFile = { order_id: order?.id ?? null, customer_id: customer?.id ?? null, title: `Anzahlungsrechnung ${invoiceNumber ?? ''}`.trim() };
+    const fileName = `Anzahlungsrechnung_${invNo || orderNo}.pdf`;
+    const autoFile = { order_id: order?.id ?? null, customer_id: customer?.id ?? null, title: `Anzahlungsrechnung ${invNo ?? ''}`.trim() };
     if (mode === 'download') {
-      await downloadStampedPdf(doc, 'invoice', fileName, invoiceNumber ?? undefined, autoFile);
+      await downloadStampedPdf(doc, 'invoice', fileName, invNo ?? undefined, autoFile);
       return { doc, fileName };
     }
-    const blob: Blob = await stampedPdfBlob(doc, 'invoice', invoiceNumber ?? undefined, autoFile);
+    const blob: Blob = await stampedPdfBlob(doc, 'invoice', invNo ?? undefined, autoFile);
     return { doc, fileName, blob };
   }
 
@@ -801,11 +825,17 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
   }
 
-  async function sendByEmail(): Promise<boolean> {
+  async function sendByEmail(override?: PdfOverride): Promise<boolean> {
+    const invNo = override?.invoiceNumber ?? invoiceNumber;
+    const invDate = override?.invoiceDate ?? invoiceDate;
+    const dDate = override?.dueDate ?? dueDate;
+    const taxPct = override?.taxPercentage ?? taxPercentage;
+    const gross = override?.gross ?? grossDeposit;
+    const isResend = !!override;
     console.log('[AzInvoice] sendByEmail called', {
-      hasDeposit, currentIsDuplicate, customerEmail: customer?.email,
+      hasDeposit, currentIsDuplicate, isResend, customerEmail: customer?.email,
     });
-    if (!hasDeposit && !currentIsDuplicate) {
+    if (!isResend && !hasDeposit && !currentIsDuplicate) {
       toast.error('Keine Anzahlung vereinbart.');
       return false;
     }
@@ -815,7 +845,8 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     }
     setSending(true);
     try {
-      const { blob, fileName } = await buildPdf('blob');
+      const { blob, fileName } = await buildPdf('blob', override);
+
       if (blob) {
         try {
           const u = URL.createObjectURL(blob);
@@ -828,7 +859,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       let downloadUrl = '';
       if (blob && order?.id) {
         try {
-          const safeNo = String(invoiceNumber || 'AZ').replace(/[^\w.-]+/g, '_');
+          const safeNo = String(invNo || 'AZ').replace(/[^\w.-]+/g, '_');
           const storagePath = `${order.id}/anzahlung/${Date.now()}_${safeNo}.pdf`;
           const up = await supabase.storage
             .from('order-invoices')
@@ -856,15 +887,15 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         }
       }
 
-      const subject = `Anzahlungsrechnung ${invoiceNumber} – Auftrag ${orderNo}`;
+      const subject = `Anzahlungsrechnung ${invNo} – Auftrag ${orderNo}`;
       const body = [
         `Sehr geehrte Damen und Herren${customer?.contact_name ? `, ${customer.contact_name}` : ''},`,
         '',
-        `anbei erhalten Sie die Anzahlungsrechnung ${invoiceNumber} zum Auftrag ${orderNo}.`,
+        `anbei erhalten Sie die Anzahlungsrechnung ${invNo} zum Auftrag ${orderNo}.`,
         '',
-        `Rechnungsbetrag (brutto): ${fmtMoney(grossDeposit, currency)} (MwSt ${taxPercentage}%)`,
-        `Rechnungsdatum: ${fmtDate(invoiceDate)}`,
-        `Fällig am: ${fmtDate(dueDate)}`,
+        `Rechnungsbetrag (brutto): ${fmtMoney(gross, currency)} (MwSt ${taxPct}%)`,
+        `Rechnungsdatum: ${fmtDate(invDate)}`,
+        `Fällig am: ${fmtDate(dDate)}`,
         '',
         'Bankverbindung:',
         'Kontoinhaber: Alix Lasers GmbH',
@@ -882,7 +913,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         body: {
           templateName: 'customer-shipping-notice',
           recipientEmail: customer.email,
-          idempotencyKey: `az-invoice-${order?.id || orderNo}-${invoiceNumber}-${Date.now()}`,
+          idempotencyKey: `az-invoice-${order?.id || orderNo}-${invNo}-${Date.now()}`,
           bcc: ['k.trinh@alix-operation.de', 'natalia.p@alix-operation.de'],
           templateData: {
             subject,
@@ -894,7 +925,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       });
       if (error) throw error;
 
-      await recordNoteAndOrderDeposit();
+      if (!isResend) await recordNoteAndOrderDeposit();
       try {
         const { data: userData } = await supabase.auth.getUser();
         await supabase.from('order_notes').insert({
@@ -902,7 +933,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           note_type: 'email',
           is_internal: true,
           note_text: [
-            `[Manuell versendet] Anzahlungsrechnung ${invoiceNumber}`,
+            `[Manuell versendet] Anzahlungsrechnung ${invNo}`,
             `An: ${customer.email}`,
             `BCC: k.trinh@alix-operation.de, natalia.p@alix-operation.de`,
             `Betreff: ${subject}`,
@@ -914,7 +945,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
       } catch { /* nicht kritisch */ }
 
       toast.success(`Anzahlungsrechnung an ${customer.email} versendet (BCC: k.trinh, natalia.p).`);
-      clearDraft();
+      if (!isResend) clearDraft();
       onReload?.();
       return true;
     } catch (e: any) {
@@ -992,7 +1023,55 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
     setConfirm(mode);
   }
 
+  /** Baut ein PdfOverride aus einer bereits erfassten Anzahlungsrate. */
+  function overrideFromRate(inv: typeof existingInvoices[number], index: number): PdfOverride {
+    const gross = Number(inv.gross_amount) || 0;
+    const net = Number(inv.net_amount) || 0;
+    const vat = Number(inv.vat_amount) || 0;
+    let taxPct = taxPercentage;
+    if (net > 0 && vat >= 0) taxPct = Math.round((vat / net) * 1000) / 10;
+    const hasSuffix = /-\d+$/.test((inv.invoice_number || '').trim());
+    return {
+      invoiceNumber: inv.invoice_number,
+      invoiceDate: inv.issue_date || invoiceDate,
+      dueDate: inv.due_date || dueDate,
+      gross,
+      taxPercentage: taxPct,
+      positionLabel: hasSuffix
+        ? `Anzahlung Rate ${index + 1} gemäß Auftrag ${orderNo}`.trim()
+        : `Anzahlung gemäß Auftrag ${orderNo}`.trim(),
+    };
+  }
+
+  async function downloadRate(inv: typeof existingInvoices[number], index: number) {
+    if (rowBusy) return;
+    setRowBusy(`dl:${inv.invoice_number}`);
+    try {
+      await buildPdf('download', overrideFromRate(inv, index));
+      toast.success(`PDF ${inv.invoice_number} heruntergeladen.`);
+    } catch (e: any) {
+      toast.error('PDF konnte nicht erzeugt werden: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setRowBusy(null);
+    }
+  }
+
+  async function resendRate(inv: typeof existingInvoices[number], index: number) {
+    if (rowBusy) return;
+    if (!customer?.email) {
+      toast.error('Kunde hat keine E-Mail-Adresse hinterlegt.');
+      return;
+    }
+    setRowBusy(`mail:${inv.invoice_number}`);
+    try {
+      await sendByEmail(overrideFromRate(inv, index));
+    } finally {
+      setRowBusy(null);
+    }
+  }
+
   function addNewRate() {
+
     const base = `AZ-${orderNo}`;
     const esc = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const rx = new RegExp(`^${esc}-(\\d+)$`);
@@ -1248,16 +1327,49 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           </div>
           <ul className="space-y-1">
             {existingInvoices.map((inv, i) => (
-              <li key={`${inv.invoice_number}-${i}`} className="flex items-center justify-between text-xs">
+              <li key={`${inv.invoice_number}-${i}`} className="flex flex-wrap items-center justify-between gap-2 text-xs border-b border-border/50 last:border-0 py-1">
                 <span className="font-mono text-foreground">Rate {i + 1} · {inv.invoice_number}</span>
-                <span className="text-muted-foreground">
-                  {inv.issue_date ? fmtDate(inv.issue_date) : '—'}
-                  {inv.gross_amount != null ? ` · ${fmtMoney(Number(inv.gross_amount), currency)}` : ''}
-                  {inv.status ? ` · ${inv.status}` : ''}
+                <span className="flex items-center gap-2">
+                  <span className="text-muted-foreground">
+                    {inv.issue_date ? fmtDate(inv.issue_date) : '—'}
+                    {inv.gross_amount != null ? ` · ${fmtMoney(Number(inv.gross_amount), currency)}` : ''}
+                    {inv.status ? ` · ${inv.status}` : ''}
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2"
+                    disabled={!!rowBusy}
+                    title={`PDF der Anzahlungsrechnung ${inv.invoice_number} erneut herunterladen`}
+                    onClick={() => downloadRate(inv, i)}
+                  >
+                    {rowBusy === `dl:${inv.invoice_number}`
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <FileDown className="w-3.5 h-3.5" />}
+                    <span className="ml-1">PDF</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2"
+                    disabled={!!rowBusy || !customer?.email}
+                    title={customer?.email
+                      ? `Anzahlungsrechnung ${inv.invoice_number} erneut an ${customer.email} senden`
+                      : 'Kunde hat keine E-Mail-Adresse hinterlegt.'}
+                    onClick={() => resendRate(inv, i)}
+                  >
+                    {rowBusy === `mail:${inv.invoice_number}`
+                      ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      : <Mail className="w-3.5 h-3.5" />}
+                    <span className="ml-1">E-Mail</span>
+                  </Button>
                 </span>
               </li>
             ))}
           </ul>
+
           <div className="mt-2 grid sm:grid-cols-3 gap-2 text-[11px]">
             <div className="rounded bg-background/60 border border-border px-2 py-1">
               <div className="text-muted-foreground">Anzahlung lt. Auftrag</div>
