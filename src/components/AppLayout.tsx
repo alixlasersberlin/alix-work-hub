@@ -21,6 +21,8 @@ import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay'
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
+import { RegionChip } from '@/components/finance/RegionChip';
+
 import { TicketNotificationBell } from '@/components/tickets/TicketNotificationBell';
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
@@ -489,6 +491,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/guv', label: 'GuV', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/bilanz', label: 'Bilanz', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/jahresabschluss', label: 'Jahresabschluss', icon: Lock, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/perioden', label: 'Periodenabschluss & Sperre', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
           { path: '/finance/datev', label: 'DATEV', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/steuer', label: 'Steuer-Auswertung', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/meldewesen', label: 'Steuer & Meldewesen', icon: FileText, roles: ['Admin', 'Super Admin'] },
@@ -2027,7 +2030,9 @@ export default function AppLayout() {
             <div className="hidden md:block min-w-0 flex-1">
               <SidebarInfoBar />
             </div>
+            {location.pathname.startsWith('/finance') && <RegionChip className="hidden lg:inline-flex" />}
             <AccountingRegionSwitcher className="hidden md:flex" />
+
             
 
 

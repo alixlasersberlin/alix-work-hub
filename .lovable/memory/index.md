@@ -62,3 +62,4 @@
 - [ALIX CONNECT Phase 48-50 + AlixDocs 13-14](mem://features/alix-connect-phase48-50) — Churn Detection, Voice-Bot Twilio, Omnichannel-Merge, AlixDocs Compliance-Export (GoBD/DSGVO), Facsimile Mietkauf, Auftragsabgleich Auto-Import
 - [Social Media](mem://features/social-media) — /social/*, Onboarding+Content+KI+Analytics+Publishing, Tabellen social_*, Edge Functions social-ai-generate/social-publish/social-metrics-sync, Cron 5min/daily
 - [Finance Phase 10 Lohn](mem://features/finance-phase10-lohn) — Lohnläufe, Lohnjournal, Lohnarten, SV-Sätze (CH AHV/ALV/BVG, EU RV/KV/PV/AV) unter /finance/lohnbuchhaltung
+- [Finance Periodenabschluss](mem://features/finance-perioden) — Monats-Periodensperre EU/CH (finance_periods + enforce_period_lock), /finance/perioden, Region-Helper src/lib/finance/region.ts, RegionChip global
