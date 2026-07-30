@@ -64,9 +64,9 @@ export default function FinanceMahnwesen() {
   const runEngine = async () => {
     setRunning(true);
     try {
-      const { data, error } = await supabase.functions.invoke('finance-reminder-engine', { body: {} });
+      const { data, error } = await supabase.functions.invoke('finance-reminder-engine', { body: { region } });
       if (error) throw error;
-      toast({ title: 'Mahn-Engine ausgeführt', description: `Konten: ${data?.accounts_seen ?? 0} • Entwürfe erstellt: ${data?.drafts_created ?? 0} • übersprungen: ${data?.skipped ?? 0}` });
+      toast({ title: `Mahn-Engine ausgeführt (${region})`, description: `Konten: ${data?.accounts_seen ?? 0} • Entwürfe erstellt: ${data?.drafts_created ?? 0} • übersprungen: ${data?.skipped ?? 0}` });
       await load();
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message ?? 'Unbekannt', variant: 'destructive' });
@@ -79,9 +79,9 @@ export default function FinanceMahnwesen() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={AlertTriangle}
-        title="Mahnwesen"
-        subtitle="Überfällige Forderungen, automatische Stufenfindung & manueller Versand"
-        meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${accounts.length}`} pulse={!loading} />}
+        title={`Mahnwesen ${region}`}
+        subtitle={`Buchungskreis ${region} • Überfällige Forderungen, automatische Stufenfindung & manueller Versand`}
+        meta={<div className="flex items-center gap-2"><RegionChip /><InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${accounts.length}`} pulse={!loading} /></div>}
         actions={
           <>
             <Button variant="outline" size="sm" asChild>
@@ -89,8 +89,9 @@ export default function FinanceMahnwesen() {
             </Button>
             <Button onClick={runEngine} disabled={running} size="sm" className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
               {running ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-2" />}
-              {running ? 'Lauf läuft…' : 'Mahn-Engine starten'}
+              {running ? 'Lauf läuft…' : `Mahn-Engine ${region} starten`}
             </Button>
+
           </>
         }
       />
