@@ -67,6 +67,7 @@ type Group = {
   profiles: Profile[];
   invoices: Invoice[];
   monthly: number;
+  remaining: number;
   ytdBilled: number;
   openBalance: number;
   lastInvoiceDate: string | null;
@@ -91,6 +92,33 @@ const monthsFactor = (freq: string | null, every: number | null) => {
     default: return 1 / e;
   }
 };
+
+// Länge einer Periode in Tagen (für Restlaufzeit-Berechnung)
+const periodDays = (freq: string | null, every: number | null) => {
+  const e = every && every > 0 ? every : 1;
+  switch ((freq ?? '').toLowerCase()) {
+    case 'days': return 1 * e;
+    case 'weeks': return 7 * e;
+    case 'months': return 30.4375 * e;
+    case 'years': return 365.25 * e;
+    default: return 30.4375 * e;
+  }
+};
+
+/** Anzahl noch offener Rechnungen bis zum letzten Rechnungsdatum (end_date) */
+const remainingCount = (p: Profile) => {
+  if ((p.status ?? '').toLowerCase() !== 'active') return 0;
+  if (!p.end_date) return 0;
+  const end = new Date(p.end_date).getTime();
+  const startRef = new Date(p.next_invoice_date || new Date().toISOString().slice(0, 10)).getTime();
+  if (!isFinite(end) || !isFinite(startRef) || end < startRef) return 0;
+  const days = (end - startRef) / 86400000;
+  return Math.floor(days / periodDays(p.recurrence_frequency, p.repeat_every)) + 1;
+};
+
+/** Restsumme = offene Raten × Ratenbetrag */
+const remainingAmount = (p: Profile) => remainingCount(p) * Number(p.total || 0);
+
 
 export default function WiederkehrendeZahler() {
   const { region } = useAccountingRegion();
@@ -168,7 +196,7 @@ export default function WiederkehrendeZahler() {
         map.set(k, {
           customer_id: p.customer_id || k,
           customer_name: p.company_name || p.customer_name || 'Unbekannt',
-          profiles: [], invoices: [], monthly: 0, ytdBilled: 0, openBalance: 0,
+          profiles: [], invoices: [], monthly: 0, remaining: 0, ytdBilled: 0, openBalance: 0,
           lastInvoiceDate: null, nextInvoiceDate: null, newestCreatedAt: null, currency: p.currency || 'EUR',
           hasSepa: false,
         });
@@ -178,6 +206,7 @@ export default function WiederkehrendeZahler() {
       if (isSepaProfile(p)) g.hasSepa = true;
       const isActive = (p.status ?? '').toLowerCase() === 'active';
       if (isActive && p.total) g.monthly += Number(p.total) * monthsFactor(p.recurrence_frequency, p.repeat_every);
+      g.remaining += remainingAmount(p);
       if (p.next_invoice_date && (!g.nextInvoiceDate || p.next_invoice_date < g.nextInvoiceDate)) g.nextInvoiceDate = p.next_invoice_date;
       if (p.created_at && (!g.newestCreatedAt || p.created_at > g.newestCreatedAt)) g.newestCreatedAt = p.created_at;
     }
@@ -201,7 +230,7 @@ export default function WiederkehrendeZahler() {
         map.set(k, {
           customer_id: inv.customer_id || k,
           customer_name: inv.customer_name || 'Unbekannt',
-          profiles: [], invoices: [], monthly: 0, ytdBilled: 0, openBalance: 0,
+          profiles: [], invoices: [], monthly: 0, remaining: 0, ytdBilled: 0, openBalance: 0,
           lastInvoiceDate: null, nextInvoiceDate: null, newestCreatedAt: null, currency: inv.currency || 'EUR',
           hasSepa: false,
         });
@@ -244,6 +273,7 @@ export default function WiederkehrendeZahler() {
     return {
       customers: filtered.length,
       monthly: filtered.reduce((s, g) => s + g.monthly, 0),
+      remaining: filtered.reduce((s, g) => s + g.remaining, 0),
       ytd: filtered.reduce((s, g) => s + g.ytdBilled, 0),
       open: filtered.reduce((s, g) => s + g.openBalance, 0),
       activeProfiles: filtered.reduce((s, g) => s + g.profiles.filter(p => (p.status ?? '').toLowerCase() === 'active').length, 0),
@@ -273,7 +303,7 @@ export default function WiederkehrendeZahler() {
           Kunde: g.customer_name, Vertrag: '—', Referenz: '', Status: '',
           Frequenz: '', Erfasst: '', Start: '', Ende: '', 'Letzte Rechnung': fmtDate(g.lastInvoiceDate),
           'Nächste Rechnung': fmtDate(g.nextInvoiceDate), Währung: g.currency,
-          Betrag: 0, Monatlich: 0, 'Abgerechnet YTD': Number(g.ytdBilled.toFixed(2)), 'Offener Betrag': Number(g.openBalance.toFixed(2)),
+          Betrag: 0, Monatlich: 0, 'Restraten': 0, Restsumme: 0, 'Abgerechnet YTD': Number(g.ytdBilled.toFixed(2)), 'Offener Betrag': Number(g.openBalance.toFixed(2)),
           SEPA: g.hasSepa ? 'Ja' : 'Nein',
         });
         continue;
@@ -293,6 +323,8 @@ export default function WiederkehrendeZahler() {
           Währung: p.currency || g.currency,
           Betrag: Number(Number(p.total || 0).toFixed(2)),
           Monatlich: Number((Number(p.total || 0) * monthsFactor(p.recurrence_frequency, p.repeat_every)).toFixed(2)),
+          'Restraten': remainingCount(p),
+          Restsumme: Number(remainingAmount(p).toFixed(2)),
           'Abgerechnet YTD': Number(g.ytdBilled.toFixed(2)),
           'Offener Betrag': Number(g.openBalance.toFixed(2)),
           SEPA: g.hasSepa ? 'Ja' : 'Nein',
@@ -343,7 +375,7 @@ export default function WiederkehrendeZahler() {
     const { default: jsPDF } = await import('jspdf');
     const { default: autoTable } = await import('jspdf-autotable');
     const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-    const cols = ['Kunde', 'Vertrag', 'Referenz', 'Status', 'Frequenz', 'Erfasst', 'Start', 'Ende', 'Nächste Rechnung', 'Betrag', 'Monatlich'];
+    const cols = ['Kunde', 'Vertrag', 'Referenz', 'Status', 'Frequenz', 'Erfasst', 'Start', 'Ende', 'Nächste Rechnung', 'Betrag', 'Monatlich', 'Restsumme'];
     const sumMonthly = exportGroups.reduce((s, g) => s + g.monthly, 0);
     doc.setFontSize(14);
     doc.text(`Wiederkehrende Zahler · Buchhaltung ${region}`, 40, 40);
@@ -359,7 +391,7 @@ export default function WiederkehrendeZahler() {
       styles: { fontSize: 7, cellPadding: 3 },
       headStyles: { fillColor: [30, 30, 30], textColor: [212, 175, 55] },
       alternateRowStyles: { fillColor: [245, 245, 245] },
-      columnStyles: { 9: { halign: 'right' }, 10: { halign: 'right' } },
+      columnStyles: { 9: { halign: 'right' }, 10: { halign: 'right' }, 11: { halign: 'right' } },
     });
     doc.save(`${fileBase()}.pdf`);
     toast({ title: 'PDF exportiert', description: `${rows.length} Zeilen` });
@@ -390,7 +422,7 @@ export default function WiederkehrendeZahler() {
         <KpiTile label="Kunden" value={totals.customers} icon={Repeat} accent="sky" />
         <KpiTile label="Aktive Verträge" value={totals.activeProfiles} icon={Repeat} accent="violet" />
         <KpiTile label="Volumen / Monat" value={fmt(totals.monthly)} icon={Repeat} accent="gold" />
-        <KpiTile label="Abgerechnet YTD" value={fmt(totals.ytd)} icon={Repeat} accent="emerald" />
+        <KpiTile label="Restsumme offen" value={fmt(totals.remaining)} icon={Repeat} accent="emerald" />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -455,6 +487,10 @@ export default function WiederkehrendeZahler() {
               <span className="font-semibold text-primary tabular-nums">{fmt(totals.monthly)}</span>
             </div>
             <div className="text-muted-foreground">
+              Σ Restsumme:{' '}
+              <span className="font-semibold text-emerald-500 tabular-nums">{fmt(totals.remaining)}</span>
+            </div>
+            <div className="text-muted-foreground">
               Aktive Verträge:{' '}
               <span className="font-semibold text-foreground tabular-nums">{totals.activeProfiles}</span>
             </div>
@@ -491,6 +527,12 @@ export default function WiederkehrendeZahler() {
                       )}
                       <span className="truncate">{g.customer_name}</span>
                     </div>
+                    {g.remaining > 0 && (
+                      <div className="text-[11px] mt-0.5">
+                        <span className="text-muted-foreground">Restsumme: </span>
+                        <span className="font-semibold text-primary tabular-nums">{fmt(g.remaining, g.currency)}</span>
+                      </div>
+                    )}
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 mt-0.5">
                       <span>{activeP} aktiv / {g.profiles.length} Verträge</span>
                       <span>{g.invoices.length} Rechnungen</span>
@@ -527,6 +569,7 @@ export default function WiederkehrendeZahler() {
                                 <th className="text-left px-3 py-2">Nächste</th>
                                 <th className="text-right px-3 py-2">Betrag</th>
                                 <th className="text-right px-3 py-2">Monatlich</th>
+                                <th className="text-right px-3 py-2">Restsumme</th>
                                 <th className="text-left px-3 py-2">Status</th>
                                 <th className="text-right px-3 py-2">Aktion</th>
                               </tr>
@@ -548,6 +591,14 @@ export default function WiederkehrendeZahler() {
                                   <td className="px-3 py-2">{fmtDate(p.next_invoice_date)}</td>
                                   <td className="px-3 py-2 text-right tabular-nums">{fmt(Number(p.total || 0), p.currency || 'EUR')}</td>
                                   <td className="px-3 py-2 text-right tabular-nums font-medium">{fmt(monthly, p.currency || 'EUR')}</td>
+                                  <td className="px-3 py-2 text-right tabular-nums text-primary">
+                                    {remainingCount(p) > 0 ? (
+                                      <>
+                                        {fmt(remainingAmount(p), p.currency || 'EUR')}
+                                        <div className="text-[10px] text-muted-foreground font-normal">{remainingCount(p)} Raten</div>
+                                      </>
+                                    ) : '—'}
+                                  </td>
                                   <td className="px-3 py-2">
                                     <Badge variant={(p.status ?? '').toLowerCase() === 'active' ? 'default' : 'secondary'} className="capitalize">{p.status ?? '—'}</Badge>
                                   </td>
@@ -573,6 +624,9 @@ export default function WiederkehrendeZahler() {
                                 </td>
                                 <td className="px-3 py-2 text-right tabular-nums text-primary">
                                   {fmt(g.monthly, g.currency)}
+                                </td>
+                                <td className="px-3 py-2 text-right tabular-nums text-primary">
+                                  {fmt(g.remaining, g.currency)}
                                 </td>
                                 <td />
                                 <td />
