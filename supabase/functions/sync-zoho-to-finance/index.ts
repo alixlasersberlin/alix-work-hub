@@ -6,7 +6,23 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+/** Zoho Branch-ID des Schweizer Buchungskreises */
+const CH_BRANCH_ID = '598077000000065075';
+const CH_COUNTRY_TOKENS = ['schweiz', 'switzerland', 'suisse', 'svizzera'];
+
+function detectRegion(raw: any, currency?: string | null): 'EU' | 'CH' {
+  const branch = String(raw?.branch_id ?? '');
+  if (branch === CH_BRANCH_ID) return 'CH';
+  const cc = String(raw?.billing_address?.country_code ?? raw?.country_code ?? '').toUpperCase();
+  if (cc === 'CH') return 'CH';
+  const country = String(raw?.billing_address?.country ?? raw?.country ?? '').toLowerCase();
+  if (country && CH_COUNTRY_TOKENS.some((t) => country.includes(t))) return 'CH';
+  if (String(currency ?? '').toUpperCase() === 'CHF') return 'CH';
+  return 'EU';
+}
+
 type Row = { customer_id: string | null; external_customer_id: string | null };
+
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
