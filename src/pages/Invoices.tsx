@@ -1264,14 +1264,14 @@ export default function Invoices() {
                       </Badge>
                     )}
                     {a.overdueCount > 0 && (
-                      <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30">
+                      <Badge className="bg-destructive text-destructive-foreground border-transparent font-semibold hover:bg-destructive">
                         {a.overdueCount} überfällig
                       </Badge>
                     )}
                   </div>
-                  <div className="text-right tabular-nums w-32">
+                  <div className="text-right tabular-nums w-40">
                     <div className="text-sm font-semibold">{fmtMoney(a.totalAmount)}</div>
-                    {a.totalOpen > 0 && <div className="text-xs text-amber-500">offen: {fmtMoney(a.totalOpen)}</div>}
+                    {a.totalOpen > 0 && <div className="text-xs font-medium text-amber-400">offen: {fmtMoney(a.totalOpen)}</div>}
                   </div>
                 </button>
                 {open && (
