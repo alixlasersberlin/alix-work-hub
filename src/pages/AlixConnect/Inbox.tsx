@@ -27,7 +27,20 @@ type Conversation = {
   contact_id: string | null;
   ai_summary: string | null;
   ai_sentiment: string | null;
+  visitor_meta: any;
 };
+
+type ContactInfo = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  city: string | null;
+  country: string | null;
+};
+
+const CONV_SELECT =
+  "id, subject, channel_type, status, priority, last_message_at, last_message_preview, unread_count, assigned_to, customer_id, contact_id, ai_summary, ai_sentiment, visitor_meta";
 
 type Message = {
   id: string;
@@ -59,6 +72,7 @@ export default function InboxPage() {
   const [drafting, setDrafting] = useState(false);
   const [filter, setFilter] = useState<"open" | "pending" | "resolved" | "all">("open");
   const [me, setMe] = useState<string | null>(null);
+  const [contact, setContact] = useState<ContactInfo | null>(null);
   const { items: outboxItems, online } = useAcOutbox();
 
   async function generateDraft() {
@@ -88,7 +102,7 @@ export default function InboxPage() {
     (async () => {
       let q = supabase
         .from("ac_conversations")
-        .select("id, subject, channel_type, status, priority, last_message_at, last_message_preview, unread_count, assigned_to, customer_id, contact_id, ai_summary, ai_sentiment")
+        .select(CONV_SELECT)
         .order("last_message_at", { ascending: false })
         .limit(100);
       if (filter !== "all") q = q.eq("status", filter);
@@ -110,7 +124,7 @@ export default function InboxPage() {
         // refetch lightweight
         supabase
           .from("ac_conversations")
-          .select("id, subject, channel_type, status, priority, last_message_at, last_message_preview, unread_count, assigned_to, customer_id, contact_id, ai_summary, ai_sentiment")
+          .select(CONV_SELECT)
           .order("last_message_at", { ascending: false })
           .limit(100)
           .then(({ data }) => data && setConvs(data as any));
@@ -146,6 +160,20 @@ export default function InboxPage() {
   }, [activeId]);
 
   const active = useMemo(() => convs.find((c) => c.id === activeId), [convs, activeId]);
+
+  useEffect(() => {
+    const cid = active?.contact_id;
+    if (!cid) { setContact(null); return; }
+    let cancelled = false;
+    supabase
+      .from("ac_contacts")
+      .select("id, full_name, email, phone, city, country")
+      .eq("id", cid)
+      .maybeSingle()
+      .then(({ data }) => { if (!cancelled) setContact((data as any) ?? null); });
+    return () => { cancelled = true; };
+  }, [active?.contact_id]);
+
 
   async function sendReply() {
     if (!reply.trim() || !activeId || !me) return;
@@ -217,11 +245,18 @@ export default function InboxPage() {
               >
                 <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium truncate flex-1">{c.subject || "(kein Betreff)"}</span>
+                  <span className="text-sm font-medium truncate flex-1">
+                    {c.visitor_meta?.name || c.visitor_meta?.email || c.subject || "(kein Betreff)"}
+                  </span>
                   {c.ai_sentiment === "negative" && <span title="Negative Stimmung" className="h-2 w-2 rounded-full bg-red-500" />}
                   {c.ai_sentiment === "positive" && <span title="Positive Stimmung" className="h-2 w-2 rounded-full bg-emerald-500" />}
                   {c.unread_count > 0 && <Badge className="h-4 px-1 text-[10px]">{c.unread_count}</Badge>}
                 </div>
+                {(c.visitor_meta?.email || c.visitor_meta?.phone) && (
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {[c.visitor_meta?.email, c.visitor_meta?.phone].filter(Boolean).join(" · ")}
+                  </p>
+                )}
                 <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{c.last_message_preview || "…"}</p>
                 <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
                   <Badge variant="outline" className="h-4 px-1">{c.status}</Badge>
@@ -265,6 +300,37 @@ export default function InboxPage() {
                 <Button size="sm" variant="outline" onClick={() => setStatus("closed")}>Schließen</Button>
               </div>
             </header>
+            {(() => {
+              const vm = (active.visitor_meta || {}) as any;
+              const name = contact?.full_name || vm.name;
+              const email = contact?.email || vm.email;
+              const phone = contact?.phone || vm.phone;
+              const rows = [
+                name && ["Name", name],
+                email && ["E-Mail", email],
+                phone && ["Telefon", phone],
+                vm.page_url && ["Seite", vm.page_url],
+                (contact?.city || contact?.country) && ["Ort", [contact?.city, contact?.country].filter(Boolean).join(", ")],
+                vm.visitor_hash && ["Besucher-ID", vm.visitor_hash],
+              ].filter(Boolean) as [string, string][];
+              if (rows.length === 0) {
+                return (
+                  <div className="border-b border-border/60 bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+                    Keine Kundendaten übermittelt (anonymer Besucher).
+                  </div>
+                );
+              }
+              return (
+                <div className="border-b border-border/60 bg-muted/30 px-4 py-2 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+                  {rows.map(([k, v]) => (
+                    <div key={k} className="flex gap-1 min-w-0">
+                      <span className="text-muted-foreground">{k}:</span>
+                      <span className="font-medium truncate max-w-[280px]">{v}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
             {(() => {
               const convOutbox = outboxItems.filter((o) => o.conversation_id === active.id);
               if (convOutbox.length === 0) return null;
