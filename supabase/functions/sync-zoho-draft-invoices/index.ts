@@ -4,7 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-token",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -69,6 +69,8 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const cronSecret = Deno.env.get("CRON_SECRET");
+    const draftCronToken = Deno.env.get("ZOHO_DRAFT_CRON_TOKEN");
+    const cronTokenHeader = req.headers.get("x-cron-token") ?? "";
     const authHeader = req.headers.get("Authorization") ?? "";
     const apiKeyHeader = req.headers.get("apikey") ?? "";
 
@@ -77,7 +79,8 @@ Deno.serve(async (req) => {
     const isMachine =
       authHeader === `Bearer ${serviceKey}` ||
       apiKeyHeader === serviceKey ||
-      (!!cronSecret && authHeader === `Bearer ${cronSecret}`);
+      (!!cronSecret && authHeader === `Bearer ${cronSecret}`) ||
+      (!!draftCronToken && cronTokenHeader === draftCronToken);
 
     if (!isMachine) {
       if (!authHeader) return json({ error: "Missing authorization" }, 401);
