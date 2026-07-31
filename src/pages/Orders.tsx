@@ -90,7 +90,7 @@ const isDelivered = (o: any): boolean => {
 
 export default function Orders({ deliveredOnly = false }: { deliveredOnly?: boolean } = {}) {
   const [orders, setOrders] = useState<any[]>([]);
-  const [deliveryView, setDeliveryView] = useState<'all' | 'delivered'>(deliveredOnly ? 'delivered' : 'all');
+  const [deliveryView, setDeliveryView] = useState<'all' | 'open' | 'delivered'>(deliveredOnly ? 'delivered' : 'all');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [modelFilter, setModelFilter] = useState('all');
@@ -604,7 +604,7 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
         it.sku?.toLowerCase().includes(m);
     });
     const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
-    const matchDelivered = deliveryView === 'delivered' ? isDelivered(o) : true;
+    const matchDelivered = deliveryView === 'delivered' ? isDelivered(o) : (deliveryView === 'open' ? !isDelivered(o) : true);
     const isAt = o.source_system === 'zoho_eu_2';
     const matchRegion = regionFilter === 'all' || (regionFilter === 'at' ? isAt : !isAt);
     let matchDeposit = true;
@@ -737,6 +737,18 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
               className="gap-1.5"
             >
               <ClipboardList className="w-3.5 h-3.5" /> Alle
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDeliveryView('open')}
+              className={
+                deliveryView === 'open'
+                  ? 'gap-1.5 bg-pink-600 hover:bg-pink-700 text-white border-pink-600'
+                  : 'gap-1.5 border-pink-500/50 text-pink-500 hover:bg-pink-500/10 hover:text-pink-400'
+              }
+            >
+              <ClipboardList className="w-3.5 h-3.5" /> Offen
             </Button>
             <Button
               size="sm"
