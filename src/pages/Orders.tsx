@@ -719,7 +719,6 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
       </div>
 
       <Tabs defaultValue="list" className="space-y-4 mt-4">
-      <Tabs defaultValue="list" className="space-y-4 mt-4">
         <div className="flex flex-wrap items-center gap-3">
           <TabsList className="bg-secondary">
             <TabsTrigger value="list" className="gap-1.5">
