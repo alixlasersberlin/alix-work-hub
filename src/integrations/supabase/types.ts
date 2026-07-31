@@ -34255,6 +34255,15 @@ export type Database = {
         Args: { p_deposit_id: string; p_lock: boolean; p_note?: string }
         Returns: undefined
       }
+      finance_move_region: {
+        Args: {
+          p_customer_names?: string[]
+          p_invoice_ids?: string[]
+          p_recurring_ids?: string[]
+          p_target: Database["public"]["Enums"]["accounting_region"]
+        }
+        Returns: Json
+      }
       finance_period_is_postable: {
         Args: {
           _dt: string
