@@ -34569,6 +34569,7 @@ export type Database = {
         | "facebook"
         | "instagram"
         | "telegram"
+        | "website_chat"
       ac_conversation_status:
         | "open"
         | "pending"
@@ -34862,6 +34863,7 @@ export const Constants = {
         "facebook",
         "instagram",
         "telegram",
+        "website_chat",
       ],
       ac_conversation_status: [
         "open",

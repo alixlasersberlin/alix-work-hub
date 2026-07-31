@@ -1,0 +1,1 @@
+ALTER TYPE public.ac_channel_type ADD VALUE IF NOT EXISTS 'website_chat';
