@@ -504,6 +504,23 @@ export default function OrderDetail() {
         }] : []),
         { key: 'sepa', label: 'SEPA Mandat', icon: FileText, onClick: () => sepaRef.current?.trigger() },
         { key: 'mietkauf', label: 'Mietkauf', icon: FileText, onClick: () => mietkaufRef.current?.open() },
+        {
+          key: 'mietkauf-buchen',
+          label: (order as any)?.is_mietkauf ? 'Vermietung lösen' : 'MIETKAUF buchen',
+          icon: FileText,
+          onClick: async () => {
+            const next = !(order as any)?.is_mietkauf;
+            const { data: auth } = await supabase.auth.getUser();
+            const { error } = await supabase.from('orders').update({
+              is_mietkauf: next,
+              mietkauf_booked_at: next ? new Date().toISOString() : null,
+              mietkauf_booked_by: next ? (auth?.user?.id ?? null) : null,
+            } as any).eq('id', order.id);
+            if (error) { toast.error(error.message); return; }
+            toast.success(next ? 'Auftrag nach „In Vermietung" gebucht' : 'Auftrag aus der Vermietung entfernt');
+            loadAll();
+          },
+        },
         { key: 'ratenplan', label: 'Ratenplan', icon: FileText, onClick: () => ratenplanRef.current?.open() },
         { key: 'wareneingang', label: 'Wareneingang', icon: Inbox, onClick: () => wareneingangRef.current?.generatePdf() },
         {
