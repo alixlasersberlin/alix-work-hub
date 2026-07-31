@@ -1256,6 +1256,20 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           >
                             <Mail className="w-3.5 h-3.5" /> Rechnung/Email
                           </Button>
+                          {isAdmin && r.source === 'invoice' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              type="button"
+                              title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als MIETKAUF buchen und nach „In Vermietung" verschieben'}
+                              disabled={mietkaufBusyId === r.id}
+                              className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMietkauf(r); }}
+                            >
+                              {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
+                              {mietkaufOnly ? 'Vermietung lösen' : 'MIETKAUF'}
+                            </Button>
+                          )}
                           {isSuperAdmin && (
                             <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
                               <Trash2 className="w-3.5 h-3.5" />
