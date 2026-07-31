@@ -145,7 +145,9 @@ function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docSt
 }
 
 
-export default function Invoices() {
+type InvoicesProps = { mietkaufOnly?: boolean };
+
+export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const { roles } = useAuth();
   const { region } = useAccountingRegion();
 
