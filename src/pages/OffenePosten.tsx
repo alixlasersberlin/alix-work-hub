@@ -593,6 +593,12 @@ export default function OffenePosten() {
     },
     [region, targetRegion, load],
   );
+  // Vollständig markierte Kundenkonten (für Mehrfach-Umzug)
+  const selectedAccounts = useMemo(
+    () => accounts.filter((a) => a.items.length > 0 && a.items.every((i) => selected[keyOf(i)])),
+    [accounts, selected],
+  );
+
 
 
   const renderRow = (i: OpenItem) => {
