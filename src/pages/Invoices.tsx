@@ -82,6 +82,7 @@ type Row = {
   payment_status: string | null;
   last_payment_date: string | null;
   raw_data?: any;
+  is_mietkauf?: boolean | null;
 };
 
 type Account = {
@@ -144,7 +145,9 @@ function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docSt
 }
 
 
-export default function Invoices() {
+type InvoicesProps = { mietkaufOnly?: boolean };
+
+export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const { roles } = useAuth();
   const { region } = useAccountingRegion();
 
@@ -194,8 +197,10 @@ export default function Invoices() {
     setError(null);
     const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_data';
     const [inv, rec] = await Promise.all([
-      supabase.from('zoho_invoices').select(cols).eq('accounting_region', region).order('invoice_date', { ascending: false }).limit(10000),
-      supabase.from('zoho_recurring_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
+      supabase.from('zoho_invoices').select(`${cols}, is_mietkauf`).eq('accounting_region', region).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
+      mietkaufOnly
+        ? Promise.resolve({ data: [], error: null } as any)
+        : supabase.from('zoho_recurring_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
     ]);
     if (inv.error || rec.error) {
       setError(inv.error?.message || rec.error?.message || 'Fehler beim Laden');
@@ -213,7 +218,37 @@ export default function Invoices() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchRows(); }, [region]);
+  const [mietkaufBusyId, setMietkaufBusyId] = useState<string | null>(null);
+  const toggleMietkauf = async (r: Row) => {
+    if (r.source !== 'invoice') {
+      toast({ title: 'Nicht möglich', description: 'Periodische Rechnungen können nicht als Mietkauf gebucht werden.', variant: 'destructive' });
+      return;
+    }
+    const next = !r.is_mietkauf;
+    setMietkaufBusyId(r.id);
+    const { data: auth } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('zoho_invoices')
+      .update({
+        is_mietkauf: next,
+        mietkauf_booked_at: next ? new Date().toISOString() : null,
+        mietkauf_booked_by: next ? (auth?.user?.id ?? null) : null,
+      } as any)
+      .eq('id', r.id);
+    setMietkaufBusyId(null);
+    if (error) {
+      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setRows((prev) => prev.filter((x) => !(x.id === r.id && x.source === 'invoice')));
+    toast({
+      title: next ? 'Nach „In Vermietung" verschoben' : 'Zurück zu Rechnungen',
+      description: `Rechnung ${r.invoice_number ?? ''} wurde ${next ? 'als Mietkauf gebucht' : 'aus der Vermietung entfernt'}.`,
+    });
+  };
+
+  useEffect(() => { fetchRows(); }, [region, mietkaufOnly]);
+
 
 
   // Realtime: aktualisiere Offene Beträge live, sobald sich Rechnungen ändern
@@ -987,8 +1022,8 @@ export default function Invoices() {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title={viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste'}
-        subtitle={viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer'}
+        title={mietkaufOnly ? (viewMode === 'accounts' ? 'In Vermietung nach Kundenkonto' : 'In Vermietung – Rechnungsliste') : (viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
+        subtitle={mietkaufOnly ? 'Alle als Mietkauf gebuchten Vorgänge und Geräte in der Vermietung' : (viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
@@ -1221,6 +1256,20 @@ export default function Invoices() {
                           >
                             <Mail className="w-3.5 h-3.5" /> Rechnung/Email
                           </Button>
+                          {isAdmin && r.source === 'invoice' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              type="button"
+                              title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als MIETKAUF buchen und nach „In Vermietung" verschieben'}
+                              disabled={mietkaufBusyId === r.id}
+                              className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMietkauf(r); }}
+                            >
+                              {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
+                              {mietkaufOnly ? 'Vermietung lösen' : 'MIETKAUF'}
+                            </Button>
+                          )}
                           {isSuperAdmin && (
                             <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1384,6 +1433,20 @@ export default function Invoices() {
                                 {isAdmin && r.source === 'invoice' && (
                                   <Button size="sm" variant="outline" onClick={() => handleMove(r)}>
                                     <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> Ratenzahler
+                                  </Button>
+                                )}
+                                {isAdmin && r.source === 'invoice' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    type="button"
+                                    title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als MIETKAUF buchen und nach „In Vermietung" verschieben'}
+                                    disabled={mietkaufBusyId === r.id}
+                                    className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMietkauf(r); }}
+                                  >
+                                    {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
+                                    {mietkaufOnly ? 'Vermietung lösen' : 'MIETKAUF'}
                                   </Button>
                                 )}
                                 {isSuperAdmin && (

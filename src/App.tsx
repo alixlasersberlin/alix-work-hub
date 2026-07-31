@@ -1240,6 +1240,7 @@ function AppRoutes() {
           <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
           <Route path="/finance/alix-flex" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixFlex /></ProtectedRoute>} />
           <Route path="/finance/rechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Invoices /></ProtectedRoute>} />
+          <Route path="/finance/vermietung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Invoices mietkaufOnly /></ProtectedRoute>} />
           <Route path="/finance/offene-posten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><OffenePosten /></ProtectedRoute>} />
           {/* /finance/unpaid-zoho deaktiviert – Daten bleiben in DB für andere Übersichten */}
           <Route path="/finance/rechnungsvorschlaege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Rechnungsvorschlaege /></ProtectedRoute>} />
