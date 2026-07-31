@@ -959,7 +959,21 @@ export default function OffenePosten() {
                         </TableCell>
                         <TableCell className="text-right">{formatCurrency(a.total, 'EUR')}</TableCell>
                         <TableCell className="text-right font-semibold">{formatCurrency(a.balance, 'EUR')}</TableCell>
-                        <TableCell />
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          {isAdmin && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5"
+                              disabled={moving}
+                              title={`Komplettes Kundenkonto nach ${regionLabel(targetRegion)} verschieben`}
+                              onClick={() => moveRegion({ names: [a.name], label: `Kundenkonto „${a.name}"` })}
+                            >
+                              {moving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowLeftRight className="w-3.5 h-3.5" />}
+                              → {targetRegion === 'CH' ? 'CH' : 'DE'}
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                       {expanded[a.key] && a.items.map((i) => renderRow(i))}
                     </Fragment>
