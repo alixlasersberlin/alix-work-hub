@@ -27,7 +27,19 @@ type Conversation = {
   contact_id: string | null;
   ai_summary: string | null;
   ai_sentiment: string | null;
+  visitor_meta: any;
 };
+
+type ContactInfo = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  company: string | null;
+};
+
+const CONV_SELECT =
+  "id, subject, channel_type, status, priority, last_message_at, last_message_preview, unread_count, assigned_to, customer_id, contact_id, ai_summary, ai_sentiment, visitor_meta";
 
 type Message = {
   id: string;
