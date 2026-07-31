@@ -301,6 +301,37 @@ export default function InboxPage() {
               </div>
             </header>
             {(() => {
+              const vm = (active.visitor_meta || {}) as any;
+              const name = contact?.full_name || vm.name;
+              const email = contact?.email || vm.email;
+              const phone = contact?.phone || vm.phone;
+              const rows = [
+                name && ["Name", name],
+                email && ["E-Mail", email],
+                phone && ["Telefon", phone],
+                vm.page_url && ["Seite", vm.page_url],
+                (contact?.city || contact?.country) && ["Ort", [contact?.city, contact?.country].filter(Boolean).join(", ")],
+                vm.visitor_hash && ["Besucher-ID", vm.visitor_hash],
+              ].filter(Boolean) as [string, string][];
+              if (rows.length === 0) {
+                return (
+                  <div className="border-b border-border/60 bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
+                    Keine Kundendaten übermittelt (anonymer Besucher).
+                  </div>
+                );
+              }
+              return (
+                <div className="border-b border-border/60 bg-muted/30 px-4 py-2 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+                  {rows.map(([k, v]) => (
+                    <div key={k} className="flex gap-1 min-w-0">
+                      <span className="text-muted-foreground">{k}:</span>
+                      <span className="font-medium truncate max-w-[280px]">{v}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+            {(() => {
               const convOutbox = outboxItems.filter((o) => o.conversation_id === active.id);
               if (convOutbox.length === 0) return null;
               return (
