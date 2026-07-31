@@ -1218,11 +1218,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           className="accent-primary"
                           aria-label="Alle markieren"
                           checked={(() => {
-                            const ids = paginate(flatRows, pageSize).filter((x) => x.source === 'invoice').map((x) => x.id);
+                            const ids = paginate(flatRows, pageSize).map((x) => x.id);
                             return ids.length > 0 && ids.every((id) => selectedIds.includes(id));
                           })()}
                           onChange={(e) => {
-                            const ids = paginate(flatRows, pageSize).filter((x) => x.source === 'invoice').map((x) => x.id);
+                            const ids = paginate(flatRows, pageSize).map((x) => x.id);
                             setSelectedIds(e.target.checked ? Array.from(new Set([...selectedIds, ...ids])) : selectedIds.filter((id) => !ids.includes(id)));
                           }}
                         />
@@ -1335,7 +1335,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           >
                             <Mail className="w-3.5 h-3.5" /> Rechnung/Email
                           </Button>
-                          {isAdmin && r.source === 'invoice' && (
+                          {isAdmin && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -1514,7 +1514,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                                     <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> Ratenzahler
                                   </Button>
                                 )}
-                                {isAdmin && r.source === 'invoice' && (
+                                {isAdmin && (
                                   <Button
                                     size="sm"
                                     variant="outline"
