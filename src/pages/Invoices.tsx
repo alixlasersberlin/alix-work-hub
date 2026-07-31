@@ -1245,15 +1245,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     <tr key={`${r.source}-${r.id}`} className="border-t border-border hover:bg-muted/10">
                       {isAdmin && (
                         <td className="px-3 py-2">
-                          {r.source === 'invoice' && (
-                            <input
-                              type="checkbox"
-                              className="accent-primary"
-                              aria-label={`Rechnung ${r.invoice_number ?? ''} markieren`}
-                              checked={selectedIds.includes(r.id)}
-                              onChange={() => toggleSelect(r.id)}
-                            />
-                          )}
+                          <input
+                            type="checkbox"
+                            className="accent-primary"
+                            aria-label={`Rechnung ${r.invoice_number ?? ''} markieren`}
+                            checked={selectedIds.includes(r.id)}
+                            onChange={() => toggleSelect(r.id)}
+                          />
                         </td>
                       )}
                       <td className="px-4 py-2">
