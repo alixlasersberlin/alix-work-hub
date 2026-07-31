@@ -198,9 +198,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_data';
     const [inv, rec] = await Promise.all([
       supabase.from('zoho_invoices').select(`${cols}, is_mietkauf`).eq('accounting_region', region).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
-      mietkaufOnly
-        ? Promise.resolve({ data: [], error: null } as any)
-        : supabase.from('zoho_recurring_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
+      supabase.from('zoho_recurring_invoices').select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
     ]);
     if (inv.error || rec.error) {
       setError(inv.error?.message || rec.error?.message || 'Fehler beim Laden');
