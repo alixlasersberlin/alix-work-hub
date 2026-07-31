@@ -23874,8 +23874,11 @@ export type Database = {
           imported_via_reconcile_at: string | null
           internal_number: string | null
           invoiced_flag: boolean
+          is_mietkauf: boolean
           is_vip: boolean
           lawyer_reason: string | null
+          mietkauf_booked_at: string | null
+          mietkauf_booked_by: string | null
           order_date: string | null
           order_number: string
           order_status: string | null
@@ -23917,8 +23920,11 @@ export type Database = {
           imported_via_reconcile_at?: string | null
           internal_number?: string | null
           invoiced_flag?: boolean
+          is_mietkauf?: boolean
           is_vip?: boolean
           lawyer_reason?: string | null
+          mietkauf_booked_at?: string | null
+          mietkauf_booked_by?: string | null
           order_date?: string | null
           order_number: string
           order_status?: string | null
@@ -23960,8 +23966,11 @@ export type Database = {
           imported_via_reconcile_at?: string | null
           internal_number?: string | null
           invoiced_flag?: boolean
+          is_mietkauf?: boolean
           is_vip?: boolean
           lawyer_reason?: string | null
+          mietkauf_booked_at?: string | null
+          mietkauf_booked_by?: string | null
           order_date?: string | null
           order_number?: string
           order_status?: string | null
@@ -32481,7 +32490,10 @@ export type Database = {
           id: string
           invoice_date: string | null
           invoice_number: string | null
+          is_mietkauf: boolean
           last_payment_date: string | null
+          mietkauf_booked_at: string | null
+          mietkauf_booked_by: string | null
           payment_status: string | null
           raw_data: Json | null
           reference_number: string | null
@@ -32506,7 +32518,10 @@ export type Database = {
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          is_mietkauf?: boolean
           last_payment_date?: string | null
+          mietkauf_booked_at?: string | null
+          mietkauf_booked_by?: string | null
           payment_status?: string | null
           raw_data?: Json | null
           reference_number?: string | null
@@ -32531,7 +32546,10 @@ export type Database = {
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          is_mietkauf?: boolean
           last_payment_date?: string | null
+          mietkauf_booked_at?: string | null
+          mietkauf_booked_by?: string | null
           payment_status?: string | null
           raw_data?: Json | null
           reference_number?: string | null
