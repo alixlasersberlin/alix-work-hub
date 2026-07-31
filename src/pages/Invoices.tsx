@@ -247,6 +247,38 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     });
   };
 
+  // ---- Mehrfachauswahl (Rechnungsliste) ----
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const bulkMietkauf = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkBusy(true);
+    const next = !mietkaufOnly;
+    const { data: auth } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('zoho_invoices')
+      .update({
+        is_mietkauf: next,
+        mietkauf_booked_at: next ? new Date().toISOString() : null,
+        mietkauf_booked_by: next ? (auth?.user?.id ?? null) : null,
+      } as any)
+      .in('id', selectedIds);
+    setBulkBusy(false);
+    if (error) {
+      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+      return;
+    }
+    const count = selectedIds.length;
+    setRows((prev) => prev.filter((x) => !(x.source === 'invoice' && selectedIds.includes(x.id))));
+    setSelectedIds([]);
+    toast({
+      title: next ? 'Nach „In Vermietung" verschoben' : 'Zurück zu Rechnungen',
+      description: `${count} Rechnung(en) ${next ? 'als MietKauf gebucht' : 'aus der Vermietung entfernt'}.`,
+    });
+  };
+
   useEffect(() => { fetchRows(); }, [region, mietkaufOnly]);
 
 
@@ -1159,9 +1191,44 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             <div className="p-12 text-center text-muted-foreground">Keine Daten gefunden.</div>
           ) : (
             <div className="overflow-x-auto">
+              {isAdmin && selectedIds.length > 0 && (
+                <div className="flex items-center justify-between gap-3 px-4 py-2 bg-violet-500/10 border-b border-violet-500/30">
+                  <span className="text-sm">{selectedIds.length} Rechnung(en) markiert</span>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>Auswahl aufheben</Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={bulkBusy}
+                      className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
+                      onClick={bulkMietkauf}
+                    >
+                      {bulkBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
+                      {mietkaufOnly ? 'Vermietung lösen' : 'MietKauf'}
+                    </Button>
+                  </div>
+                </div>
+              )}
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                   <tr>
+                    {isAdmin && (
+                      <th className="px-3 py-2 w-8">
+                        <input
+                          type="checkbox"
+                          className="accent-primary"
+                          aria-label="Alle markieren"
+                          checked={(() => {
+                            const ids = paginate(flatRows, pageSize).filter((x) => x.source === 'invoice').map((x) => x.id);
+                            return ids.length > 0 && ids.every((id) => selectedIds.includes(id));
+                          })()}
+                          onChange={(e) => {
+                            const ids = paginate(flatRows, pageSize).filter((x) => x.source === 'invoice').map((x) => x.id);
+                            setSelectedIds(e.target.checked ? Array.from(new Set([...selectedIds, ...ids])) : selectedIds.filter((id) => !ids.includes(id)));
+                          }}
+                        />
+                      </th>
+                    )}
                     <th className="text-left px-4 py-2 font-medium">Typ</th>
                     <th className="text-left px-4 py-2 font-medium">Rechnung</th>
                     <th className="text-left px-4 py-2 font-medium">Kunde</th>
@@ -1177,6 +1244,19 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 <tbody>
                   {paginate(flatRows, pageSize).map((r) => (
                     <tr key={`${r.source}-${r.id}`} className="border-t border-border hover:bg-muted/10">
+                      {isAdmin && (
+                        <td className="px-3 py-2">
+                          {r.source === 'invoice' && (
+                            <input
+                              type="checkbox"
+                              className="accent-primary"
+                              aria-label={`Rechnung ${r.invoice_number ?? ''} markieren`}
+                              checked={selectedIds.includes(r.id)}
+                              onChange={() => toggleSelect(r.id)}
+                            />
+                          )}
+                        </td>
+                      )}
                       <td className="px-4 py-2">
                         {r.source === 'recurring' ? (
                           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
@@ -1261,13 +1341,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                               size="sm"
                               variant="outline"
                               type="button"
-                              title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als MIETKAUF buchen und nach „In Vermietung" verschieben'}
+                              title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als MietKauf buchen und nach „In Vermietung" verschieben'}
                               disabled={mietkaufBusyId === r.id}
                               className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMietkauf(r); }}
                             >
                               {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
-                              {mietkaufOnly ? 'Vermietung lösen' : 'MIETKAUF'}
+                              {mietkaufOnly ? 'Vermietung lösen' : 'MietKauf'}
                             </Button>
                           )}
                           {isSuperAdmin && (
@@ -1440,13 +1520,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                                     size="sm"
                                     variant="outline"
                                     type="button"
-                                    title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als MIETKAUF buchen und nach „In Vermietung" verschieben'}
+                                    title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als MietKauf buchen und nach „In Vermietung" verschieben'}
                                     disabled={mietkaufBusyId === r.id}
                                     className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMietkauf(r); }}
                                   >
                                     {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
-                                    {mietkaufOnly ? 'Vermietung lösen' : 'MIETKAUF'}
+                                    {mietkaufOnly ? 'Vermietung lösen' : 'MietKauf'}
                                   </Button>
                                 )}
                                 {isSuperAdmin && (
