@@ -247,6 +247,38 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     });
   };
 
+  // ---- Mehrfachauswahl (Rechnungsliste) ----
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  const bulkMietkauf = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkBusy(true);
+    const next = !mietkaufOnly;
+    const { data: auth } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('zoho_invoices')
+      .update({
+        is_mietkauf: next,
+        mietkauf_booked_at: next ? new Date().toISOString() : null,
+        mietkauf_booked_by: next ? (auth?.user?.id ?? null) : null,
+      } as any)
+      .in('id', selectedIds);
+    setBulkBusy(false);
+    if (error) {
+      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+      return;
+    }
+    const count = selectedIds.length;
+    setRows((prev) => prev.filter((x) => !(x.source === 'invoice' && selectedIds.includes(x.id))));
+    setSelectedIds([]);
+    toast({
+      title: next ? 'Nach „In Vermietung" verschoben' : 'Zurück zu Rechnungen',
+      description: `${count} Rechnung(en) ${next ? 'als MietKauf gebucht' : 'aus der Vermietung entfernt'}.`,
+    });
+  };
+
   useEffect(() => { fetchRows(); }, [region, mietkaufOnly]);
 
 
