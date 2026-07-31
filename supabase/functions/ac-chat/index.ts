@@ -72,6 +72,19 @@ async function processInboundAsync(opts: {
 
     // 2) Out-of-hours auto-reply
     if (is_after_hours) {
+      const { data: existingReply, error: existingReplyError } = await supabase
+        .from('ac_messages')
+        .select('id')
+        .eq('conversation_id', conversation_id)
+        .eq('direction', 'outbound')
+        .eq('sender_type', 'bot')
+        .contains('metadata', { auto: 'business_hours' })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingReplyError) throw existingReplyError;
+      if (existingReply) return;
+
       const msg = site.business_hours?.closed_message ||
         'Vielen Dank für Ihre Nachricht. Wir sind aktuell außerhalb unserer Geschäftszeiten. Wir melden uns schnellstmöglich bei Ihnen.';
       await supabase.from('ac_messages').insert({
