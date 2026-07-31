@@ -90,6 +90,7 @@ const isDelivered = (o: any): boolean => {
 
 export default function Orders({ deliveredOnly = false }: { deliveredOnly?: boolean } = {}) {
   const [orders, setOrders] = useState<any[]>([]);
+  const [deliveryView, setDeliveryView] = useState<'all' | 'delivered'>(deliveredOnly ? 'delivered' : 'all');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [modelFilter, setModelFilter] = useState('all');
@@ -603,7 +604,7 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
         it.sku?.toLowerCase().includes(m);
     });
     const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
-    const matchDelivered = deliveredOnly ? isDelivered(o) : !isDelivered(o);
+    const matchDelivered = deliveryView === 'delivered' ? isDelivered(o) : true;
     const isAt = o.source_system === 'zoho_eu_2';
     const matchRegion = regionFilter === 'all' || (regionFilter === 'at' ? isAt : !isAt);
     let matchDeposit = true;
@@ -674,8 +675,8 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
     <div className="p-6 lg:p-8 animate-fade-in min-w-0 max-w-full overflow-x-hidden">
       <div className="flex items-start justify-between gap-4">
         <PageHeader
-          icon={deliveredOnly ? Truck : ClipboardList}
-          title={deliveredOnly ? 'Aufträge geliefert' : 'Aufträge'}
+          icon={deliveryView === 'delivered' ? Truck : ClipboardList}
+          title={deliveryView === 'delivered' ? 'Aufträge · Geliefert' : 'Aufträge'}
           subtitle={`${filtered.length} Aufträge`}
           noBreadcrumbs
           meta={<InfinityStatusBadge kind="done" label={`${filtered.length}`} />}
@@ -718,14 +719,40 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
       </div>
 
       <Tabs defaultValue="list" className="space-y-4 mt-4">
-        <TabsList className="bg-secondary">
-          <TabsTrigger value="list" className="gap-1.5">
-            <List className="w-3.5 h-3.5" /> Liste
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="gap-1.5">
-            <CalendarDays className="w-3.5 h-3.5" /> Kalender
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center gap-3">
+          <TabsList className="bg-secondary">
+            <TabsTrigger value="list" className="gap-1.5">
+              <List className="w-3.5 h-3.5" /> Liste
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-1.5">
+              <CalendarDays className="w-3.5 h-3.5" /> Kalender
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={deliveryView === 'all' ? 'default' : 'outline'}
+              onClick={() => setDeliveryView('all')}
+              className="gap-1.5"
+            >
+              <ClipboardList className="w-3.5 h-3.5" /> Alle
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDeliveryView('delivered')}
+              className={
+                deliveryView === 'delivered'
+                  ? 'gap-1.5 bg-destructive text-destructive-foreground border-destructive hover:bg-destructive/90'
+                  : 'gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10'
+              }
+            >
+              <Truck className="w-3.5 h-3.5" /> Geliefert
+            </Button>
+          </div>
+        </div>
+
 
         <TabsContent value="list" className="space-y-4">
           <div className="flex flex-col gap-3">
