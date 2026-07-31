@@ -6,6 +6,7 @@ const MASK = '•••';
 // Global flag mirrored from the current session's role set so that plain
 // module-level formatter functions (that cannot call hooks) can still respect
 // the "hide revenue for Super Admin" business rule.
+// Business rule updated 2026-07: Umsätze werden wieder im Klartext angezeigt.
 let hideRevenueGlobal = false;
 
 export function setHideRevenueGlobal(hide: boolean) {
@@ -31,7 +32,7 @@ const baseEUR = (n: number) =>
  */
 export function useRevenueMask() {
   const { hasRole } = useAuth();
-  const hide = hasRole('Super Admin');
+  const hide = false && hasRole('Super Admin');
   const mask = <T,>(formatted: T): T | string => (hide ? MASK : formatted);
   const fmtEUR = (n: number) => (hide ? MASK : baseEUR(n));
   return { hide, mask, fmtEUR, MASK };
@@ -43,7 +44,7 @@ export function useRevenueMask() {
  */
 export function useSyncRevenueMaskGlobal() {
   const { hasRole } = useAuth();
-  const hide = hasRole('Super Admin');
+  const hide = false && hasRole('Super Admin');
   useEffect(() => {
     setHideRevenueGlobal(hide);
   }, [hide]);
