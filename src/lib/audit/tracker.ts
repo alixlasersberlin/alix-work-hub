@@ -107,9 +107,18 @@ class AuditTracker {
 
   private async flush() {
     if (!this.sessionId || this.queue.length === 0) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { this.queue = []; await this.stop(); return; }
     const batch = this.queue.splice(0, 100);
     try {
-      await supabase.functions.invoke("audit-track", { body: { session_id: this.sessionId, actions: batch } });
+      const { error } = await supabase.functions.invoke("audit-track", { body: { session_id: this.sessionId, actions: batch } });
+      if (error) {
+        const msg = String((error as any)?.message ?? "");
+        if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
+          this.queue = [];
+          await this.stop();
+        }
+      }
     } catch {
       // Requeue on failure (bounded)
       this.queue.unshift(...batch.slice(0, 50));
