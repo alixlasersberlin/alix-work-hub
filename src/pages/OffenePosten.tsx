@@ -1,6 +1,6 @@
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2, ExternalLink, Users, Download, FileSpreadsheet, FileJson } from 'lucide-react';
+import { CalendarIcon, FileText, Loader2, RefreshCw, Pencil, X, BookCheck, CheckCircle2, ChevronDown, Banknote, Building2, Ban, Scale, Undo2, ExternalLink, Users, Download, FileSpreadsheet, FileJson, ArrowLeftRight } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
 import {
@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
+import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 
 type WorkflowStatus = 'offen' | 'rueckstellung' | 'in_klaerung' | 'anwalt' | 'inkasso' | 'erledigt';
 
@@ -549,6 +550,50 @@ export default function OffenePosten() {
     toast.success(`${rows.length} Datensätze als PDF exportiert`);
   };
 
+  // ===== Buchungskreis-Umzug (CH <-> EU/DE) =====
+  const { isAdmin } = useFinancePermissions();
+  const targetRegion: 'EU' | 'CH' = region === 'CH' ? 'EU' : 'CH';
+  const regionLabel = (r: 'EU' | 'CH') => (r === 'CH' ? 'Buchhaltung CH' : 'Buchhaltung DE/EU');
+  const [moving, setMoving] = useState(false);
+
+  const moveRegion = useCallback(
+    async (opts: { names?: string[]; items?: OpenItem[]; label: string }) => {
+      const invoiceIds = (opts.items ?? []).filter((i) => i.source === 'invoice').map((i) => i.id);
+      const recurringIds = (opts.items ?? []).filter((i) => i.source === 'recurring').map((i) => i.id);
+      if (!opts.names?.length && !invoiceIds.length && !recurringIds.length) {
+        toast.error('Nichts markiert.');
+        return;
+      }
+      const confirmed = window.confirm(
+        `${opts.label} von ${regionLabel(region)} nach ${regionLabel(targetRegion)} verschieben?\n\n` +
+          (opts.names?.length
+            ? 'Es werden Kundenkonto, Aufträge, alle Rechnungen, Abos, Forderungen, Anzahlungen, Mahnungen und Buchungen übernommen.'
+            : 'Es werden die markierten Rechnungen inkl. zugehöriger Buchungen übernommen.'),
+      );
+      if (!confirmed) return;
+      setMoving(true);
+      const { data, error } = await supabase.rpc('finance_move_region' as any, {
+        p_target: targetRegion,
+        p_customer_names: opts.names ?? null,
+        p_invoice_ids: invoiceIds.length ? invoiceIds : null,
+        p_recurring_ids: recurringIds.length ? recurringIds : null,
+      });
+      setMoving(false);
+      if (error) {
+        toast.error('Umzug fehlgeschlagen: ' + error.message);
+        return;
+      }
+      const r = (data ?? {}) as Record<string, number>;
+      toast.success(
+        `Verschoben nach ${regionLabel(targetRegion)}: ${r.invoices ?? 0} Rechnungen, ${r.recurring_invoices ?? 0} Abos` +
+          (r.customers ? `, ${r.customers} Kundenkonto/-konten` : ''),
+      );
+      setSelected({});
+      await load();
+    },
+    [region, targetRegion, load],
+  );
+
 
   const renderRow = (i: OpenItem) => {
     const b = bucketFor(i.due_date);
@@ -752,6 +797,25 @@ export default function OffenePosten() {
         {selectedCount > 0 && (
           <Badge variant="outline" className="text-xs">{selectedCount} markiert</Badge>
         )}
+        {isAdmin && selectedCount > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            disabled={moving}
+            onClick={() =>
+              moveRegion({
+                items: filtered.filter((i) => selected[keyOf(i)]),
+                label: `${selectedCount} markierte Rechnung(en)`,
+              })
+            }
+            title={`Markierte Posten nach ${regionLabel(targetRegion)} verschieben`}
+          >
+            {moving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowLeftRight className="w-3.5 h-3.5" />}
+            → {targetRegion === 'CH' ? 'Buchhaltung CH' : 'Buchhaltung DE'}
+          </Button>
+        )}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm" className="gap-1.5">
@@ -895,7 +959,21 @@ export default function OffenePosten() {
                         </TableCell>
                         <TableCell className="text-right">{formatCurrency(a.total, 'EUR')}</TableCell>
                         <TableCell className="text-right font-semibold">{formatCurrency(a.balance, 'EUR')}</TableCell>
-                        <TableCell />
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                          {isAdmin && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5"
+                              disabled={moving}
+                              title={`Komplettes Kundenkonto nach ${regionLabel(targetRegion)} verschieben`}
+                              onClick={() => moveRegion({ names: [a.name], label: `Kundenkonto „${a.name}"` })}
+                            >
+                              {moving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowLeftRight className="w-3.5 h-3.5" />}
+                              → {targetRegion === 'CH' ? 'CH' : 'DE'}
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                       {expanded[a.key] && a.items.map((i) => renderRow(i))}
                     </Fragment>
