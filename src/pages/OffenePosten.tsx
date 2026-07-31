@@ -550,6 +550,50 @@ export default function OffenePosten() {
     toast.success(`${rows.length} Datensätze als PDF exportiert`);
   };
 
+  // ===== Buchungskreis-Umzug (CH <-> EU/DE) =====
+  const { isAdmin } = useFinancePermissions();
+  const targetRegion: 'EU' | 'CH' = region === 'CH' ? 'EU' : 'CH';
+  const regionLabel = (r: 'EU' | 'CH') => (r === 'CH' ? 'Buchhaltung CH' : 'Buchhaltung DE/EU');
+  const [moving, setMoving] = useState(false);
+
+  const moveRegion = useCallback(
+    async (opts: { names?: string[]; items?: OpenItem[]; label: string }) => {
+      const invoiceIds = (opts.items ?? []).filter((i) => i.source === 'invoice').map((i) => i.id);
+      const recurringIds = (opts.items ?? []).filter((i) => i.source === 'recurring').map((i) => i.id);
+      if (!opts.names?.length && !invoiceIds.length && !recurringIds.length) {
+        toast.error('Nichts markiert.');
+        return;
+      }
+      const confirmed = window.confirm(
+        `${opts.label} von ${regionLabel(region)} nach ${regionLabel(targetRegion)} verschieben?\n\n` +
+          (opts.names?.length
+            ? 'Es werden Kundenkonto, Aufträge, alle Rechnungen, Abos, Forderungen, Anzahlungen, Mahnungen und Buchungen übernommen.'
+            : 'Es werden die markierten Rechnungen inkl. zugehöriger Buchungen übernommen.'),
+      );
+      if (!confirmed) return;
+      setMoving(true);
+      const { data, error } = await supabase.rpc('finance_move_region' as any, {
+        p_target: targetRegion,
+        p_customer_names: opts.names ?? null,
+        p_invoice_ids: invoiceIds.length ? invoiceIds : null,
+        p_recurring_ids: recurringIds.length ? recurringIds : null,
+      });
+      setMoving(false);
+      if (error) {
+        toast.error('Umzug fehlgeschlagen: ' + error.message);
+        return;
+      }
+      const r = (data ?? {}) as Record<string, number>;
+      toast.success(
+        `Verschoben nach ${regionLabel(targetRegion)}: ${r.invoices ?? 0} Rechnungen, ${r.recurring_invoices ?? 0} Abos` +
+          (r.customers ? `, ${r.customers} Kundenkonto/-konten` : ''),
+      );
+      setSelected({});
+      await load();
+    },
+    [region, targetRegion, load],
+  );
+
 
   const renderRow = (i: OpenItem) => {
     const b = bucketFor(i.due_date);
