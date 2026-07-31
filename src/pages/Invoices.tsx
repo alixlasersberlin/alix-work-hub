@@ -197,8 +197,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setError(null);
     const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_data';
     const [inv, rec] = await Promise.all([
-      supabase.from('zoho_invoices').select(cols).eq('accounting_region', region).order('invoice_date', { ascending: false }).limit(10000),
-      supabase.from('zoho_recurring_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
+      supabase.from('zoho_invoices').select(`${cols}, is_mietkauf`).eq('accounting_region', region).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
+      mietkaufOnly
+        ? Promise.resolve({ data: [], error: null } as any)
+        : supabase.from('zoho_recurring_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
     ]);
     if (inv.error || rec.error) {
       setError(inv.error?.message || rec.error?.message || 'Fehler beim Laden');
@@ -216,7 +218,37 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setLoading(false);
   };
 
-  useEffect(() => { fetchRows(); }, [region]);
+  const [mietkaufBusyId, setMietkaufBusyId] = useState<string | null>(null);
+  const toggleMietkauf = async (r: Row) => {
+    if (r.source !== 'invoice') {
+      toast({ title: 'Nicht möglich', description: 'Periodische Rechnungen können nicht als Mietkauf gebucht werden.', variant: 'destructive' });
+      return;
+    }
+    const next = !r.is_mietkauf;
+    setMietkaufBusyId(r.id);
+    const { data: auth } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('zoho_invoices')
+      .update({
+        is_mietkauf: next,
+        mietkauf_booked_at: next ? new Date().toISOString() : null,
+        mietkauf_booked_by: next ? (auth?.user?.id ?? null) : null,
+      } as any)
+      .eq('id', r.id);
+    setMietkaufBusyId(null);
+    if (error) {
+      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setRows((prev) => prev.filter((x) => !(x.id === r.id && x.source === 'invoice')));
+    toast({
+      title: next ? 'Nach „In Vermietung" verschoben' : 'Zurück zu Rechnungen',
+      description: `Rechnung ${r.invoice_number ?? ''} wurde ${next ? 'als Mietkauf gebucht' : 'aus der Vermietung entfernt'}.`,
+    });
+  };
+
+  useEffect(() => { fetchRows(); }, [region, mietkaufOnly]);
+
 
 
   // Realtime: aktualisiere Offene Beträge live, sobald sich Rechnungen ändern
