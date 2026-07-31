@@ -1191,9 +1191,44 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             <div className="p-12 text-center text-muted-foreground">Keine Daten gefunden.</div>
           ) : (
             <div className="overflow-x-auto">
+              {isAdmin && selectedIds.length > 0 && (
+                <div className="flex items-center justify-between gap-3 px-4 py-2 bg-violet-500/10 border-b border-violet-500/30">
+                  <span className="text-sm">{selectedIds.length} Rechnung(en) markiert</span>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>Auswahl aufheben</Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={bulkBusy}
+                      className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
+                      onClick={bulkMietkauf}
+                    >
+                      {bulkBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
+                      {mietkaufOnly ? 'Vermietung lösen' : 'MietKauf'}
+                    </Button>
+                  </div>
+                </div>
+              )}
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                   <tr>
+                    {isAdmin && (
+                      <th className="px-3 py-2 w-8">
+                        <input
+                          type="checkbox"
+                          className="accent-primary"
+                          aria-label="Alle markieren"
+                          checked={(() => {
+                            const ids = paginate(flatRows, pageSize).filter((x) => x.source === 'invoice').map((x) => x.id);
+                            return ids.length > 0 && ids.every((id) => selectedIds.includes(id));
+                          })()}
+                          onChange={(e) => {
+                            const ids = paginate(flatRows, pageSize).filter((x) => x.source === 'invoice').map((x) => x.id);
+                            setSelectedIds(e.target.checked ? Array.from(new Set([...selectedIds, ...ids])) : selectedIds.filter((id) => !ids.includes(id)));
+                          }}
+                        />
+                      </th>
+                    )}
                     <th className="text-left px-4 py-2 font-medium">Typ</th>
                     <th className="text-left px-4 py-2 font-medium">Rechnung</th>
                     <th className="text-left px-4 py-2 font-medium">Kunde</th>
@@ -1209,6 +1244,19 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 <tbody>
                   {paginate(flatRows, pageSize).map((r) => (
                     <tr key={`${r.source}-${r.id}`} className="border-t border-border hover:bg-muted/10">
+                      {isAdmin && (
+                        <td className="px-3 py-2">
+                          {r.source === 'invoice' && (
+                            <input
+                              type="checkbox"
+                              className="accent-primary"
+                              aria-label={`Rechnung ${r.invoice_number ?? ''} markieren`}
+                              checked={selectedIds.includes(r.id)}
+                              onChange={() => toggleSelect(r.id)}
+                            />
+                          )}
+                        </td>
+                      )}
                       <td className="px-4 py-2">
                         {r.source === 'recurring' ? (
                           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
