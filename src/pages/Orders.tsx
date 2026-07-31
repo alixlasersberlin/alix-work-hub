@@ -719,14 +719,41 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
       </div>
 
       <Tabs defaultValue="list" className="space-y-4 mt-4">
-        <TabsList className="bg-secondary">
-          <TabsTrigger value="list" className="gap-1.5">
-            <List className="w-3.5 h-3.5" /> Liste
-          </TabsTrigger>
-          <TabsTrigger value="calendar" className="gap-1.5">
-            <CalendarDays className="w-3.5 h-3.5" /> Kalender
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="list" className="space-y-4 mt-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <TabsList className="bg-secondary">
+            <TabsTrigger value="list" className="gap-1.5">
+              <List className="w-3.5 h-3.5" /> Liste
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-1.5">
+              <CalendarDays className="w-3.5 h-3.5" /> Kalender
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={deliveryView === 'all' ? 'default' : 'outline'}
+              onClick={() => setDeliveryView('all')}
+              className="gap-1.5"
+            >
+              <ClipboardList className="w-3.5 h-3.5" /> Alle
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDeliveryView('delivered')}
+              className={
+                deliveryView === 'delivered'
+                  ? 'gap-1.5 bg-destructive text-destructive-foreground border-destructive hover:bg-destructive/90'
+                  : 'gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10'
+              }
+            >
+              <Truck className="w-3.5 h-3.5" /> Geliefert
+            </Button>
+          </div>
+        </div>
+
 
         <TabsContent value="list" className="space-y-4">
           <div className="flex flex-col gap-3">
