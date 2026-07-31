@@ -160,6 +160,20 @@ export default function InboxPage() {
 
   const active = useMemo(() => convs.find((c) => c.id === activeId), [convs, activeId]);
 
+  useEffect(() => {
+    const cid = active?.contact_id;
+    if (!cid) { setContact(null); return; }
+    let cancelled = false;
+    supabase
+      .from("ac_contacts")
+      .select("id, full_name, email, phone, city, country")
+      .eq("id", cid)
+      .maybeSingle()
+      .then(({ data }) => { if (!cancelled) setContact((data as any) ?? null); });
+    return () => { cancelled = true; };
+  }, [active?.contact_id]);
+
+
   async function sendReply() {
     if (!reply.trim() || !activeId || !me) return;
     const text = reply.trim();
