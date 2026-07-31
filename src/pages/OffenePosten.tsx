@@ -821,6 +821,25 @@ export default function OffenePosten() {
             → {targetRegion === 'CH' ? 'Buchhaltung CH' : 'Buchhaltung DE'}
           </Button>
         )}
+        {isAdmin && selectedAccounts.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            disabled={moving}
+            onClick={() =>
+              moveRegion({
+                names: selectedAccounts.map((a) => a.name),
+                label: `${selectedAccounts.length} Kundenkonto/-konten`,
+              })
+            }
+            title={`Komplett markierte Kundenkonten nach ${regionLabel(targetRegion)} verschieben`}
+          >
+            {moving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Users className="w-3.5 h-3.5" />}
+            {selectedAccounts.length} Konten → {targetRegion === 'CH' ? 'CH' : 'DE'}
+          </Button>
+        )}
+
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
