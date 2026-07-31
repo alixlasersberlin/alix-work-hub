@@ -35,7 +35,8 @@ type ContactInfo = {
   full_name: string | null;
   email: string | null;
   phone: string | null;
-  company: string | null;
+  city: string | null;
+  country: string | null;
 };
 
 const CONV_SELECT =
@@ -100,7 +101,7 @@ export default function InboxPage() {
     (async () => {
       let q = supabase
         .from("ac_conversations")
-        .select("id, subject, channel_type, status, priority, last_message_at, last_message_preview, unread_count, assigned_to, customer_id, contact_id, ai_summary, ai_sentiment")
+        .select(CONV_SELECT)
         .order("last_message_at", { ascending: false })
         .limit(100);
       if (filter !== "all") q = q.eq("status", filter);
@@ -122,7 +123,7 @@ export default function InboxPage() {
         // refetch lightweight
         supabase
           .from("ac_conversations")
-          .select("id, subject, channel_type, status, priority, last_message_at, last_message_preview, unread_count, assigned_to, customer_id, contact_id, ai_summary, ai_sentiment")
+          .select(CONV_SELECT)
           .order("last_message_at", { ascending: false })
           .limit(100)
           .then(({ data }) => data && setConvs(data as any));
