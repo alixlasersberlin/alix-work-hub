@@ -604,7 +604,7 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
         it.sku?.toLowerCase().includes(m);
     });
     const notExcluded = !EXCLUDED_STATUSES.includes((o.order_status || '').toLowerCase());
-    const matchDelivered = deliveredOnly ? isDelivered(o) : !isDelivered(o);
+    const matchDelivered = deliveryView === 'delivered' ? isDelivered(o) : true;
     const isAt = o.source_system === 'zoho_eu_2';
     const matchRegion = regionFilter === 'all' || (regionFilter === 'at' ? isAt : !isAt);
     let matchDeposit = true;
