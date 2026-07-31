@@ -858,6 +858,7 @@ export default function OrderDetail() {
                 ['Anzahlung geleistet am', order.deposit_booking_date ? new Date(order.deposit_booking_date).toLocaleDateString('de-DE') : (order.deposit_ok && order.deposit_ok_at ? new Date(order.deposit_ok_at).toLocaleDateString('de-DE') : '—')],
                 ['Währung', order.currency],
                 ['Bestelldatum', order.order_date ? new Date(order.order_date).toLocaleDateString('de-DE') : '—'],
+                ['Verkäufer', order.salesperson_name || (order as any).raw_data?.salesperson_name || '—'],
                 ['Quelle', `${sourceFlag(order.source_system)} ${sourceLabel(order.source_system)}`.trim()],
                 ['Ext. Auftrags-ID', order.external_order_id],
                 ['Intern Nummer', order.internal_number],
