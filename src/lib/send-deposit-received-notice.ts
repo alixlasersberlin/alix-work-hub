@@ -4,11 +4,11 @@ function renderTemplate(tpl: string, vars: Record<string, string>): string {
   return tpl.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => vars[k] ?? '');
 }
 
-const DEPOSIT_BCC = ['k.trinh@alix-operation.de', 'natalia.p@alix-operation.de'];
+const DEPOSIT_BCC = ['k.trinh@alix-operation.de'];
 
 /**
  * Sendet eine Auftrags-bezogene Anzahlungs-Bestätigung an den Kunden.
- * BCC: k.trinh@alix-operation.de, natalia.p@alix-operation.de
+ * BCC: k.trinh@alix-operation.de
  * Wird automatisch aufgerufen, sobald eine Anzahlung gebucht/markiert wird.
  */
 export async function sendDepositReceivedNotice(

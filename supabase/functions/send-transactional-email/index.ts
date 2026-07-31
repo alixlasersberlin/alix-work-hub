@@ -169,11 +169,6 @@ Deno.serve(async (req) => {
     const recipients: Array<{ email: string; subjectPrefix?: string; keySuffix: string }> = [
       { email: effectiveRecipient, keySuffix: 'primary' },
     ]
-    if (!skipDefaultCopies) {
-      recipients.push(
-        { email: 'Natalia.p@alix-operation.de', subjectPrefix: '[Kopie] ', keySuffix: 'copy-natalia' },
-      )
-    }
     const seen = new Set<string>([effectiveRecipient.toLowerCase()])
     extraCc.forEach((email, idx) => {
       const k = email.toLowerCase()

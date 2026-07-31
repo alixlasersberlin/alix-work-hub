@@ -726,8 +726,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     };
 
     const BCC_EMAIL = 'rde@alix-lasers.com';
-    const CC_EMAIL = 'natalia.p@alix-operation.de';
-    const allRecipients = Array.from(new Set([...recipients, CC_EMAIL, BCC_EMAIL]));
+    const allRecipients = Array.from(new Set([...recipients, BCC_EMAIL]));
 
     const results = await Promise.allSettled(
       allRecipients.map(email =>

@@ -8,7 +8,7 @@ function renderTemplate(tpl: string, vars: Record<string, string>): string {
  * Sendet die Vorlage "Kunde – Produktion erfolgreich" (template_key:
  * 'production_successful') an den Kunden eines abgeschlossenen
  * Produktionsauftrags. Kopien gehen automatisch an
- * rde@alix-lasers.com und natalia.p@alix-operation.de (default copies
+ * rde@alix-lasers.com (default copies
  * der send-transactional-email Edge Function).
  */
 export async function sendProductionSuccessfulEmail(

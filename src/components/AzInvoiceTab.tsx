@@ -914,7 +914,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           templateName: 'customer-shipping-notice',
           recipientEmail: customer.email,
           idempotencyKey: `az-invoice-${order?.id || orderNo}-${invNo}-${Date.now()}`,
-          bcc: ['k.trinh@alix-operation.de', 'natalia.p@alix-operation.de'],
+          bcc: ['k.trinh@alix-operation.de'],
           templateData: {
             subject,
             body,
@@ -935,7 +935,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
           note_text: [
             `[Manuell versendet] Anzahlungsrechnung ${invNo}`,
             `An: ${customer.email}`,
-            `BCC: k.trinh@alix-operation.de, natalia.p@alix-operation.de`,
+            `BCC: k.trinh@alix-operation.de`,
             `Betreff: ${subject}`,
             '',
             body,
@@ -965,7 +965,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
         console.warn('[AzInvoice] Statusupdate Exception:', statusEx?.message);
       }
 
-      toast.success(`Anzahlungsrechnung an ${customer.email} versendet (BCC: k.trinh, natalia.p) – Status: versendet.`);
+      toast.success(`Anzahlungsrechnung an ${customer.email} versendet (BCC: k.trinh) – Status: versendet.`);
       if (!isResend) clearDraft();
       onReload?.();
       return true;
@@ -1162,7 +1162,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
             onClick={(e) => openConfirm('saveSend', e)}
             disabled={generating || booking || sending || postingToBuchhaltung}
             className="gold-gradient text-primary-foreground"
-            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Anzahlung festschreiben, in "Offene Anzahlungen" buchen und per E-Mail an Kunde (BCC k.trinh, natalia.p) senden'}
+            title={!customer?.email ? 'Kunde hat keine E-Mail-Adresse' : 'Anzahlung festschreiben, in "Offene Anzahlungen" buchen und per E-Mail an Kunde (BCC k.trinh) senden'}
             style={{ pointerEvents: 'auto' }}
           >
             {(booking || postingToBuchhaltung || sending)
@@ -1291,7 +1291,7 @@ export default function AzInvoiceTab({ order, customer, items, onReload }: Props
               <div><strong>Rechnungsnummer:</strong> {invoiceNumber}</div>
               <div><strong>Betrag (brutto):</strong> {fmtMoney(grossDeposit, currency)} (MwSt {taxPercentage}%)</div>
               <div><strong>Empfänger:</strong> {customer?.email || '—'}</div>
-              <div><strong>BCC:</strong> k.trinh@alix-operation.de, natalia.p@alix-operation.de</div>
+              <div><strong>BCC:</strong> k.trinh@alix-operation.de</div>
               {confirm === 'saveSend' && (
                 <div style={{ marginTop: 8 }}>
                   Die Rechnung wird festgeschrieben, in <em>Offene Anzahlungen</em> gebucht

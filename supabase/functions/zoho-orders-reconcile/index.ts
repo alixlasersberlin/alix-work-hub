@@ -357,8 +357,7 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             templateName: "orders-missing-alert",
-            recipientEmail: "natalia.p@alix-operation.de",
-            extraCc: ["k.trinh@alix-operation.de"],
+            recipientEmail: "k.trinh@alix-operation.de",
             skipDefaultCopies: true,
             idempotencyKey: `orders-missing-${new Date().toISOString().slice(0,16)}`,
             templateData: {

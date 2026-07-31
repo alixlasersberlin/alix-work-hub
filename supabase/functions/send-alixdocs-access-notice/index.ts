@@ -9,7 +9,6 @@ const SENDER_DOMAIN = 'notify.alixlasers.ai'
 const ARCHIVE_BCC = ['rde@alix-lasers.com']
 
 const RECIPIENTS = [
-  { email: 'Natalia.p@alix-operation.de', name: 'Natalia' },
   { email: 'jh@alix-operation.de', name: 'Justin' },
   { email: 's.galushchak@alix-operation.de', name: 'Sergji' },
   { email: 'l.scheidler@Alix-operation.de', name: 'Lars' },
