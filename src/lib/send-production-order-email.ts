@@ -1,7 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { generateProductionOrderPdf } from '@/lib/production-order-pdf';
 
-const CC_EMAIL = 'natalia.p@alix-operation.de';
 const TEN_YEARS_SECONDS = 60 * 60 * 24 * 365 * 10;
 
 export interface SendResult {
@@ -93,11 +92,11 @@ export async function sendProductionOrderEmail(poId: string): Promise<SendResult
   };
 
   // Ein einziger Invoke: primärer Empfänger = erster Zulieferer-Kontakt,
-  // zweite Adresse als extraCc. Natalia + RDE werden von der Edge Function
+  // zweite Adresse als extraCc. RDE wird von der Edge Function
   // automatisch als Default-Kopien hinzugefügt (mit Dedupe + Rate-Limit-Schutz).
   const [primary, ...rest] = recipients;
   const extraCc = rest;
-  const allRecipients = Array.from(new Set([primary, ...extraCc, CC_EMAIL]));
+  const allRecipients = Array.from(new Set([primary, ...extraCc]));
 
   const { data, error } = await supabase.functions.invoke('send-transactional-email', {
     body: {
