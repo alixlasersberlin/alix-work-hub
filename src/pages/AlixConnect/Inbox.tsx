@@ -245,11 +245,18 @@ export default function InboxPage() {
               >
                 <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium truncate flex-1">{c.subject || "(kein Betreff)"}</span>
+                  <span className="text-sm font-medium truncate flex-1">
+                    {c.visitor_meta?.name || c.visitor_meta?.email || c.subject || "(kein Betreff)"}
+                  </span>
                   {c.ai_sentiment === "negative" && <span title="Negative Stimmung" className="h-2 w-2 rounded-full bg-red-500" />}
                   {c.ai_sentiment === "positive" && <span title="Positive Stimmung" className="h-2 w-2 rounded-full bg-emerald-500" />}
                   {c.unread_count > 0 && <Badge className="h-4 px-1 text-[10px]">{c.unread_count}</Badge>}
                 </div>
+                {(c.visitor_meta?.email || c.visitor_meta?.phone) && (
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {[c.visitor_meta?.email, c.visitor_meta?.phone].filter(Boolean).join(" · ")}
+                  </p>
+                )}
                 <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{c.last_message_preview || "…"}</p>
                 <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
                   <Badge variant="outline" className="h-4 px-1">{c.status}</Badge>
