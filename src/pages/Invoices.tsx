@@ -198,9 +198,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_data';
     const [inv, rec] = await Promise.all([
       supabase.from('zoho_invoices').select(`${cols}, is_mietkauf`).eq('accounting_region', region).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
-      mietkaufOnly
-        ? Promise.resolve({ data: [], error: null } as any)
-        : supabase.from('zoho_recurring_invoices').select(cols).order('invoice_date', { ascending: false }).limit(10000),
+      supabase.from('zoho_recurring_invoices').select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
     ]);
     if (inv.error || rec.error) {
       setError(inv.error?.message || rec.error?.message || 'Fehler beim Laden');
@@ -220,15 +218,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const [mietkaufBusyId, setMietkaufBusyId] = useState<string | null>(null);
   const toggleMietkauf = async (r: Row) => {
-    if (r.source !== 'invoice') {
-      toast({ title: 'Nicht möglich', description: 'Periodische Rechnungen können nicht als Mietkauf gebucht werden.', variant: 'destructive' });
-      return;
-    }
+    const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
     const next = !r.is_mietkauf;
     setMietkaufBusyId(r.id);
     const { data: auth } = await supabase.auth.getUser();
     const { error } = await supabase
-      .from('zoho_invoices')
+      .from(table as any)
       .update({
         is_mietkauf: next,
         mietkauf_booked_at: next ? new Date().toISOString() : null,
@@ -240,7 +235,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
       return;
     }
-    setRows((prev) => prev.filter((x) => !(x.id === r.id && x.source === 'invoice')));
+    setRows((prev) => prev.filter((x) => !(x.id === r.id && x.source === r.source)));
     toast({
       title: next ? 'Nach „In Vermietung" verschoben' : 'Zurück zu Rechnungen',
       description: `Rechnung ${r.invoice_number ?? ''} wurde ${next ? 'als Mietkauf gebucht' : 'aus der Vermietung entfernt'}.`,
@@ -257,21 +252,25 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setBulkBusy(true);
     const next = !mietkaufOnly;
     const { data: auth } = await supabase.auth.getUser();
-    const { error } = await supabase
-      .from('zoho_invoices')
-      .update({
-        is_mietkauf: next,
-        mietkauf_booked_at: next ? new Date().toISOString() : null,
-        mietkauf_booked_by: next ? (auth?.user?.id ?? null) : null,
-      } as any)
-      .in('id', selectedIds);
+    const patch = {
+      is_mietkauf: next,
+      mietkauf_booked_at: next ? new Date().toISOString() : null,
+      mietkauf_booked_by: next ? (auth?.user?.id ?? null) : null,
+    } as any;
+    const invIds = rows.filter((x) => x.source === 'invoice' && selectedIds.includes(x.id)).map((x) => x.id);
+    const recIds = rows.filter((x) => x.source === 'recurring' && selectedIds.includes(x.id)).map((x) => x.id);
+    const results = await Promise.all([
+      invIds.length ? supabase.from('zoho_invoices').update(patch).in('id', invIds) : Promise.resolve({ error: null } as any),
+      recIds.length ? supabase.from('zoho_recurring_invoices' as any).update(patch).in('id', recIds) : Promise.resolve({ error: null } as any),
+    ]);
     setBulkBusy(false);
-    if (error) {
-      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    const err = results.find((x: any) => x.error)?.error;
+    if (err) {
+      toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
       return;
     }
     const count = selectedIds.length;
-    setRows((prev) => prev.filter((x) => !(x.source === 'invoice' && selectedIds.includes(x.id))));
+    setRows((prev) => prev.filter((x) => !selectedIds.includes(x.id)));
     setSelectedIds([]);
     toast({
       title: next ? 'Nach „In Vermietung" verschoben' : 'Zurück zu Rechnungen',
@@ -1219,11 +1218,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           className="accent-primary"
                           aria-label="Alle markieren"
                           checked={(() => {
-                            const ids = paginate(flatRows, pageSize).filter((x) => x.source === 'invoice').map((x) => x.id);
+                            const ids = paginate(flatRows, pageSize).map((x) => x.id);
                             return ids.length > 0 && ids.every((id) => selectedIds.includes(id));
                           })()}
                           onChange={(e) => {
-                            const ids = paginate(flatRows, pageSize).filter((x) => x.source === 'invoice').map((x) => x.id);
+                            const ids = paginate(flatRows, pageSize).map((x) => x.id);
                             setSelectedIds(e.target.checked ? Array.from(new Set([...selectedIds, ...ids])) : selectedIds.filter((id) => !ids.includes(id)));
                           }}
                         />
@@ -1246,15 +1245,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     <tr key={`${r.source}-${r.id}`} className="border-t border-border hover:bg-muted/10">
                       {isAdmin && (
                         <td className="px-3 py-2">
-                          {r.source === 'invoice' && (
-                            <input
-                              type="checkbox"
-                              className="accent-primary"
-                              aria-label={`Rechnung ${r.invoice_number ?? ''} markieren`}
-                              checked={selectedIds.includes(r.id)}
-                              onChange={() => toggleSelect(r.id)}
-                            />
-                          )}
+                          <input
+                            type="checkbox"
+                            className="accent-primary"
+                            aria-label={`Rechnung ${r.invoice_number ?? ''} markieren`}
+                            checked={selectedIds.includes(r.id)}
+                            onChange={() => toggleSelect(r.id)}
+                          />
                         </td>
                       )}
                       <td className="px-4 py-2">
@@ -1336,7 +1333,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           >
                             <Mail className="w-3.5 h-3.5" /> Rechnung/Email
                           </Button>
-                          {isAdmin && r.source === 'invoice' && (
+                          {isAdmin && (
                             <Button
                               size="sm"
                               variant="outline"
@@ -1515,7 +1512,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                                     <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> Ratenzahler
                                   </Button>
                                 )}
-                                {isAdmin && r.source === 'invoice' && (
+                                {isAdmin && (
                                   <Button
                                     size="sm"
                                     variant="outline"

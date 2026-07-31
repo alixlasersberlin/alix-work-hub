@@ -112,5 +112,5 @@ export async function sendProductionOrderEmail(poId: string): Promise<SendResult
     const msg = error?.message || (data as any)?.error || 'E-Mail-Versand fehlgeschlagen';
     return { ok: false, total: allRecipients.length, sent: 0, message: msg };
   }
-  return { ok: true, total: allRecipients.length, sent: allRecipients.length, message: `E-Mail an Zulieferer versendet (Kopie an ${CC_EMAIL})` };
+  return { ok: true, total: allRecipients.length, sent: allRecipients.length, message: 'E-Mail an Zulieferer versendet' };
 }
