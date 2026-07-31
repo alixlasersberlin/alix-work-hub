@@ -797,6 +797,25 @@ export default function OffenePosten() {
         {selectedCount > 0 && (
           <Badge variant="outline" className="text-xs">{selectedCount} markiert</Badge>
         )}
+        {isAdmin && selectedCount > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            disabled={moving}
+            onClick={() =>
+              moveRegion({
+                items: filtered.filter((i) => selected[keyOf(i)]),
+                label: `${selectedCount} markierte Rechnung(en)`,
+              })
+            }
+            title={`Markierte Posten nach ${regionLabel(targetRegion)} verschieben`}
+          >
+            {moving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowLeftRight className="w-3.5 h-3.5" />}
+            → {targetRegion === 'CH' ? 'Buchhaltung CH' : 'Buchhaltung DE'}
+          </Button>
+        )}
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm" className="gap-1.5">
