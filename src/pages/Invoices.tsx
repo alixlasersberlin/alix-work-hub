@@ -218,15 +218,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const [mietkaufBusyId, setMietkaufBusyId] = useState<string | null>(null);
   const toggleMietkauf = async (r: Row) => {
-    if (r.source !== 'invoice') {
-      toast({ title: 'Nicht möglich', description: 'Periodische Rechnungen können nicht als Mietkauf gebucht werden.', variant: 'destructive' });
-      return;
-    }
+    const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
     const next = !r.is_mietkauf;
     setMietkaufBusyId(r.id);
     const { data: auth } = await supabase.auth.getUser();
     const { error } = await supabase
-      .from('zoho_invoices')
+      .from(table as any)
       .update({
         is_mietkauf: next,
         mietkauf_booked_at: next ? new Date().toISOString() : null,
@@ -238,7 +235,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
       return;
     }
-    setRows((prev) => prev.filter((x) => !(x.id === r.id && x.source === 'invoice')));
+    setRows((prev) => prev.filter((x) => !(x.id === r.id && x.source === r.source)));
     toast({
       title: next ? 'Nach „In Vermietung" verschoben' : 'Zurück zu Rechnungen',
       description: `Rechnung ${r.invoice_number ?? ''} wurde ${next ? 'als Mietkauf gebucht' : 'aus der Vermietung entfernt'}.`,
@@ -255,21 +252,25 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setBulkBusy(true);
     const next = !mietkaufOnly;
     const { data: auth } = await supabase.auth.getUser();
-    const { error } = await supabase
-      .from('zoho_invoices')
-      .update({
-        is_mietkauf: next,
-        mietkauf_booked_at: next ? new Date().toISOString() : null,
-        mietkauf_booked_by: next ? (auth?.user?.id ?? null) : null,
-      } as any)
-      .in('id', selectedIds);
+    const patch = {
+      is_mietkauf: next,
+      mietkauf_booked_at: next ? new Date().toISOString() : null,
+      mietkauf_booked_by: next ? (auth?.user?.id ?? null) : null,
+    } as any;
+    const invIds = rows.filter((x) => x.source === 'invoice' && selectedIds.includes(x.id)).map((x) => x.id);
+    const recIds = rows.filter((x) => x.source === 'recurring' && selectedIds.includes(x.id)).map((x) => x.id);
+    const results = await Promise.all([
+      invIds.length ? supabase.from('zoho_invoices').update(patch).in('id', invIds) : Promise.resolve({ error: null } as any),
+      recIds.length ? supabase.from('zoho_recurring_invoices' as any).update(patch).in('id', recIds) : Promise.resolve({ error: null } as any),
+    ]);
     setBulkBusy(false);
-    if (error) {
-      toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    const err = results.find((x: any) => x.error)?.error;
+    if (err) {
+      toast({ title: 'Fehler', description: err.message, variant: 'destructive' });
       return;
     }
     const count = selectedIds.length;
-    setRows((prev) => prev.filter((x) => !(x.source === 'invoice' && selectedIds.includes(x.id))));
+    setRows((prev) => prev.filter((x) => !selectedIds.includes(x.id)));
     setSelectedIds([]);
     toast({
       title: next ? 'Nach „In Vermietung" verschoben' : 'Zurück zu Rechnungen',
