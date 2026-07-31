@@ -33,8 +33,7 @@ Deno.serve(async (req) => {
 
   const admin = createClient(url, service);
   // Role check: Admin or Super Admin
-  const { data: roles } = await admin.from('user_roles').select('role').eq('user_id', u.user.id);
-  const isAdmin = (roles ?? []).some((r: any) => r.role === 'Admin' || r.role === 'Super Admin');
+  const { data: isAdmin } = await userClient.rpc('is_admin');
   if (!isAdmin) return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403, headers: corsHeaders });
 
   const params = req.method === 'POST' ? await req.json().catch(() => ({})) : Object.fromEntries(new URL(req.url).searchParams);
