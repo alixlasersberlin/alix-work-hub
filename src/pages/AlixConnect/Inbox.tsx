@@ -72,6 +72,7 @@ export default function InboxPage() {
   const [drafting, setDrafting] = useState(false);
   const [filter, setFilter] = useState<"open" | "pending" | "resolved" | "all">("open");
   const [me, setMe] = useState<string | null>(null);
+  const [contact, setContact] = useState<ContactInfo | null>(null);
   const { items: outboxItems, online } = useAcOutbox();
 
   async function generateDraft() {
