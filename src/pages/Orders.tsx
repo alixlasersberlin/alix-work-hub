@@ -744,8 +744,8 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
               onClick={() => setDeliveryView('delivered')}
               className={
                 deliveryView === 'delivered'
-                  ? 'gap-1.5 bg-destructive text-destructive-foreground border-destructive hover:bg-destructive/90'
-                  : 'gap-1.5 border-destructive/50 text-destructive hover:bg-destructive/10'
+                  ? 'gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                  : 'gap-1.5 border-emerald-600/50 text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-400'
               }
             >
               <Truck className="w-3.5 h-3.5" /> Geliefert
