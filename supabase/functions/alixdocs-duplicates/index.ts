@@ -29,8 +29,7 @@ Deno.serve(async (req) => {
   if (!u?.user) return json(401, { error: 'unauthorized' });
 
   const admin = createClient(url, svc);
-  const { data: roles } = await admin.from('user_roles').select('role').eq('user_id', u.user.id);
-  const isAdmin = (roles ?? []).some((r: any) => r.role === 'Admin' || r.role === 'Super Admin');
+  const { data: isAdmin } = await user.rpc('is_admin');
   if (!isAdmin) return json(403, { error: 'forbidden' });
 
   const { data: docs, error } = await admin.from('alixdocs_documents')
