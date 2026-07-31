@@ -82,6 +82,7 @@ type Row = {
   payment_status: string | null;
   last_payment_date: string | null;
   raw_data?: any;
+  is_mietkauf?: boolean | null;
 };
 
 type Account = {
