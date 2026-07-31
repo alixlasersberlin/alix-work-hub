@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
+import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 
 type WorkflowStatus = 'offen' | 'rueckstellung' | 'in_klaerung' | 'anwalt' | 'inkasso' | 'erledigt';
 
