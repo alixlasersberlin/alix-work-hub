@@ -90,6 +90,7 @@ const isDelivered = (o: any): boolean => {
 
 export default function Orders({ deliveredOnly = false }: { deliveredOnly?: boolean } = {}) {
   const [orders, setOrders] = useState<any[]>([]);
+  const [deliveryView, setDeliveryView] = useState<'all' | 'delivered'>(deliveredOnly ? 'delivered' : 'all');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [modelFilter, setModelFilter] = useState('all');
