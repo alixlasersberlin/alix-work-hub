@@ -18,6 +18,30 @@ export default function FinanceVertraege() {
   const { canWrite } = useFinancePermissions();
   const [sigContract, setSigContract] = useState<any | null>(null);
   const [remindingId, setRemindingId] = useState<string | null>(null);
+  const [stopped, setStopped] = useState<any[]>([]);
+  const [resumeId, setResumeId] = useState<string | null>(null);
+
+  async function loadStopped() {
+    const { data } = await supabase
+      .from('zoho_recurring_profiles')
+      .select('*')
+      .eq('status', 'pruefung')
+      .order('created_at', { ascending: false });
+    setStopped((data as any[]) ?? []);
+  }
+
+  async function resumeProfile(p: any) {
+    setResumeId(p.id);
+    const { error } = await supabase
+      .from('zoho_recurring_profiles')
+      .update({ status: 'active' } as any)
+      .eq('id', p.id);
+    setResumeId(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Vertrag reaktiviert');
+    setStopped(prev => prev.filter(x => x.id !== p.id));
+  }
+
 
   async function sendReminder(r: any) {
     setRemindingId(r.id);
