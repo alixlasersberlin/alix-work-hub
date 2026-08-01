@@ -35,6 +35,7 @@ export default function FinanceRaten() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [dayTab, setDayTab] = useState<'all' | 1 | 15>('all');
 
   useEffect(() => {
     (async () => {
@@ -51,11 +52,29 @@ export default function FinanceRaten() {
     })();
   }, [region]);
 
+  const dayOf = (r: Row) => {
+    const d = r.next_invoice_date ?? r.start_date;
+    if (!d) return null;
+    const dt = new Date(d);
+    return isNaN(dt.getTime()) ? null : dt.getDate();
+  };
+
+  const byDay = useMemo(() => {
+    if (dayTab === 'all') return rows;
+    return rows.filter(r => dayOf(r) === dayTab);
+  }, [rows, dayTab]);
+
+  const counts = useMemo(() => ({
+    all: rows.length,
+    d1: rows.filter(r => dayOf(r) === 1).length,
+    d15: rows.filter(r => dayOf(r) === 15).length,
+  }), [rows]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(r => [r.customer_name, r.reference_number, r.recurring_invoice_id].some(v => (v ?? '').toLowerCase().includes(q)));
-  }, [rows, search]);
+    if (!q) return byDay;
+    return byDay.filter(r => [r.customer_name, r.reference_number, r.recurring_invoice_id].some(v => (v ?? '').toLowerCase().includes(q)));
+  }, [byDay, search]);
 
   const monthlyTotal = useMemo(() => filtered.reduce((s, r) => s + Number(r.amount ?? 0), 0), [filtered]);
 
@@ -68,6 +87,26 @@ export default function FinanceRaten() {
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
       />
+      <div className="flex flex-wrap gap-2 mb-4">
+        {([
+          { key: 'all' as const, label: 'Alle', count: counts.all },
+          { key: 1 as const, label: 'Buchung 1. im Monat', count: counts.d1 },
+          { key: 15 as const, label: 'Buchung 15. im Monat', count: counts.d15 },
+        ]).map(t => (
+          <button
+            key={String(t.key)}
+            type="button"
+            onClick={() => setDayTab(t.key)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+              dayTab === t.key
+                ? 'bg-primary/15 border-primary/40 text-primary'
+                : 'bg-card border-border text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t.label} <span className="opacity-70">({t.count})</span>
+          </button>
+        ))}
+      </div>
       <DataCard className="p-4 mb-4">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
           <div className="relative flex-1">
