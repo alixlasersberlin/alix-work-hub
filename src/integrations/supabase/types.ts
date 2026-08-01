@@ -12562,6 +12562,7 @@ export type Database = {
           currency: string | null
           customer_id: string | null
           customer_name: string | null
+          customer_number: string | null
           id: string
           import_id: string | null
           invoice_id: string | null
@@ -12584,6 +12585,7 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          customer_number?: string | null
           id?: string
           import_id?: string | null
           invoice_id?: string | null
@@ -12606,6 +12608,7 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          customer_number?: string | null
           id?: string
           import_id?: string | null
           invoice_id?: string | null
