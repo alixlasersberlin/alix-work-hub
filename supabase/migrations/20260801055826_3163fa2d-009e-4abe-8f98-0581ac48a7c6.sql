@@ -1,0 +1,1 @@
+ALTER TABLE public.device_locks ALTER COLUMN customer_id TYPE text USING customer_id::text;
