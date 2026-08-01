@@ -1620,15 +1620,20 @@ export default function AppLayout() {
             const isCollapsedView = collapsed && !mobileOpen;
 
             if (hasChildren) {
-              const isNavigableParent = item.path === '/lager' || item.path === '/verkauf/artikel-uebersicht' || item.path === '/verkauf';
+              const isNavigableParent = item.path === '/lager' || item.path === '/verkauf/artikel-uebersicht' || item.path === '/verkauf' || item.path === '/geraetesperren';
+              const isRedGroup = item.path === '/geraetesperren';
               const rowEl = (
                 <div
                   className={cn(
                     "w-full flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150",
                     isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
-                    childActive
-                      ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                      : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
+                    isRedGroup
+                      ? (childActive || active
+                          ? "font-bold bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
+                          : "font-bold text-red-500 hover:text-red-500 hover:bg-red-500/10")
+                      : childActive
+                        ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                        : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
                   )}
                 >
                   {isNavigableParent ? (
