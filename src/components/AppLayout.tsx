@@ -408,13 +408,8 @@ export const navItems: NavItem[] = [
     ],
   },
 
-  {
-    path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: null,
-    children: [
-      { path: '/geraetesperren', label: 'Übersicht', icon: Lock, roles: null },
-      { path: '/geraetesperren/bearbeitung', label: 'Bearbeitung', icon: Lock, roles: null },
-    ],
-  },
+  // GERÄTESPERREN wurde in die Kopfzeile verschoben (siehe GeraetesperrenMenu)
+
 
   {
     path: '/finance', label: 'BUCHHALTUNG', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
@@ -810,7 +805,7 @@ function filterKontaktByRoles(items: NavChild[] | undefined, roles: string[]): N
     .filter(it => !it.children || it.children.length > 0 || !!it.path);
 }
 
-function HeaderNavMenu({ roles, itemLabel, triggerLabel }: { roles: string[]; itemLabel: string; triggerLabel: string }) {
+function HeaderNavMenu({ roles, itemLabel, triggerLabel, triggerClassName, align = 'end' }: { roles: string[]; itemLabel: string; triggerLabel: string; triggerClassName?: string; align?: 'start' | 'end' }) {
   const item = navItems.find(i => i.label === itemLabel);
   if (!item) return null;
   if (item.roles && !item.roles.some(r => roles.includes(r))) return null;
@@ -851,7 +846,7 @@ function HeaderNavMenu({ roles, itemLabel, triggerLabel }: { roles: string[]; it
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          className={triggerClassName ?? "hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"}
           aria-label={`${triggerLabel}-Menü`}
         >
           <RootIcon className="w-4 h-4" />
@@ -859,7 +854,7 @@ function HeaderNavMenu({ roles, itemLabel, triggerLabel }: { roles: string[]; it
           <ChevronDown className="w-3.5 h-3.5 opacity-70" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64 max-h-[75vh] overflow-y-auto">
+      <DropdownMenuContent align={align} className="w-64 max-h-[75vh] overflow-y-auto">
         <DropdownMenuLabel>{triggerLabel}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {renderItems(children)}
@@ -874,6 +869,38 @@ function KontaktMenu({ roles }: { roles: string[] }) {
 
 function AiDiensteMenu({ roles }: { roles: string[] }) {
   return <HeaderNavMenu roles={roles} itemLabel="ALIX AI DIENSTE" triggerLabel="Alix AI" />;
+}
+
+function GeraetesperrenMenu(_props: { roles: string[] }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm font-bold text-destructive hover:bg-destructive/10 transition-colors"
+          aria-label="Gerätesperren-Menü"
+        >
+          <Lock className="w-4 h-4" />
+          <span>GERÄTESPERREN</span>
+          <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuLabel className="text-destructive font-bold">GERÄTESPERREN</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/geraetesperren" className="flex items-center gap-2 cursor-pointer">
+            <Lock className="w-4 h-4" /> <span>Übersicht</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/geraetesperren/bearbeitung" className="flex items-center gap-2 cursor-pointer">
+            <Lock className="w-4 h-4" /> <span>Bearbeitung</span>
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 
@@ -2054,6 +2081,7 @@ export default function AppLayout() {
             >
               {collapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </Button>
+            <GeraetesperrenMenu roles={roles} />
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
