@@ -87,6 +87,26 @@ export default function FinanceRaten() {
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
       />
+      <div className="flex flex-wrap gap-2 mb-4">
+        {([
+          { key: 'all' as const, label: 'Alle', count: counts.all },
+          { key: 1 as const, label: 'Buchung 1. im Monat', count: counts.d1 },
+          { key: 15 as const, label: 'Buchung 15. im Monat', count: counts.d15 },
+        ]).map(t => (
+          <button
+            key={String(t.key)}
+            type="button"
+            onClick={() => setDayTab(t.key)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+              dayTab === t.key
+                ? 'bg-primary/15 border-primary/40 text-primary'
+                : 'bg-card border-border text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t.label} <span className="opacity-70">({t.count})</span>
+          </button>
+        ))}
+      </div>
       <DataCard className="p-4 mb-4">
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
           <div className="relative flex-1">
