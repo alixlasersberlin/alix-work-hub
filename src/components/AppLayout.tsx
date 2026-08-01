@@ -877,16 +877,16 @@ function GeraetesperrenMenu(_props: { roles: string[] }) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm font-bold text-destructive hover:bg-destructive/10 transition-colors"
-          aria-label="Gerätesperren-Menü"
+          className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm font-bold bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors"
+          aria-label="Sperren-Menü"
         >
           <Lock className="w-4 h-4" />
-          <span>GERÄTESPERREN</span>
+          <span>Sperren</span>
           <ChevronDown className="w-3.5 h-3.5 opacity-70" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-56">
-        <DropdownMenuLabel className="text-destructive font-bold">GERÄTESPERREN</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-destructive font-bold">Sperren</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/geraetesperren" className="flex items-center gap-2 cursor-pointer">
