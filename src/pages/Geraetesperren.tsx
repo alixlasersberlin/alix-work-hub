@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { GeraetesperrenTabs } from './GeraetesperrenTabs';
 import { useAuth } from '@/hooks/useAuth';
 import { DeviceLockEditDialog, DeviceLockBookDialog, type DeviceLock } from '@/components/finance/DeviceLockDialogs';
+import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
 
 const fmt = (n: number | null | undefined) =>
   n == null ? '—' : new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
