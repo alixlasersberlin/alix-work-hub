@@ -77,18 +77,25 @@ export default function FinanceRaten() {
     return isNaN(dt.getTime()) ? null : dt.getDate();
   };
 
+  const isSepa = (r: Row) => r.source_system === 'sepa_import';
+
   // Alphabetisch sortiert – Nummerierung folgt dem Alphabet
   const sorted = useMemo(
     () => rows.slice().sort((a, b) => (a.customer_name ?? '').localeCompare(b.customer_name ?? '', 'de')),
     [rows],
   );
 
-  const byDay = useMemo(() => (dayTab === 'all' ? sorted : sorted.filter(r => dayOf(r) === dayTab)), [sorted, dayTab]);
+  const byDay = useMemo(() => {
+    if (dayTab === 'sepa') return sorted.filter(isSepa);
+    const base = sorted.filter(r => !isSepa(r));
+    return dayTab === 'all' ? base : base.filter(r => dayOf(r) === dayTab);
+  }, [sorted, dayTab]);
 
   const counts = useMemo(() => ({
-    all: rows.length,
-    d1: rows.filter(r => dayOf(r) === 1).length,
-    d15: rows.filter(r => dayOf(r) === 15).length,
+    all: rows.filter(r => !isSepa(r)).length,
+    d1: rows.filter(r => !isSepa(r) && dayOf(r) === 1).length,
+    d15: rows.filter(r => !isSepa(r) && dayOf(r) === 15).length,
+    sepa: rows.filter(isSepa).length,
   }), [rows]);
 
   const filtered = useMemo(() => byDay.filter(r => matchesQuery({
