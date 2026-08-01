@@ -51,7 +51,7 @@ export default function FinanceRaten() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(100);
-  const [dayTab, setDayTab] = useState<'all' | 1 | 15>('all');
+  const [dayTab, setDayTab] = useState<'all' | 1 | 15 | 'sepa'>('all');
 
   useEffect(() => {
     let cancelled = false;
