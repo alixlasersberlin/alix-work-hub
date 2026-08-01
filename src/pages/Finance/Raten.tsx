@@ -83,13 +83,23 @@ export default function FinanceRaten() {
     [rows],
   );
 
-  const byDay = useMemo(() => (dayTab === 'all' ? sorted : sorted.filter(r => dayOf(r) === dayTab)), [sorted, dayTab]);
+  const isArchived = (r: Row) => (r.status ?? '').toLowerCase() === 'archived';
 
-  const counts = useMemo(() => ({
-    all: rows.length,
-    d1: rows.filter(r => dayOf(r) === 1).length,
-    d15: rows.filter(r => dayOf(r) === 15).length,
-  }), [rows]);
+  const byDay = useMemo(() => {
+    if (dayTab === 'archive') return sorted.filter(isArchived);
+    const act = sorted.filter(r => !isArchived(r));
+    return dayTab === 'all' ? act : act.filter(r => dayOf(r) === dayTab);
+  }, [sorted, dayTab]);
+
+  const counts = useMemo(() => {
+    const act = rows.filter(r => !isArchived(r));
+    return {
+      all: act.length,
+      d1: act.filter(r => dayOf(r) === 1).length,
+      d15: act.filter(r => dayOf(r) === 15).length,
+      archive: rows.filter(isArchived).length,
+    };
+  }, [rows]);
 
   const filtered = useMemo(() => byDay.filter(r => matchesQuery({
     ...r,
