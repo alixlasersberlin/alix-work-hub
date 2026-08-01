@@ -51,7 +51,7 @@ export default function FinanceRaten() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(100);
-  const [dayTab, setDayTab] = useState<'all' | 1 | 15 | 'sepa'>('all');
+  const [dayTab, setDayTab] = useState<'all' | 1 | 15 | 'sepa' | 'sepa15'>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -133,6 +133,7 @@ export default function FinanceRaten() {
           { key: 1 as const, label: 'Buchung 1. im Monat', count: counts.d1 },
           { key: 15 as const, label: 'Buchung 15. im Monat', count: counts.d15 },
           { key: 'sepa' as const, label: 'REAL DATEV 1. des Monats', count: counts.sepa },
+          { key: 'sepa15' as const, label: 'REAL DATEV 15. des Monats', count: counts.sepa15 },
         ]).map(t => (
           <button
             key={String(t.key)}
