@@ -25,7 +25,13 @@ export type DeviceLock = {
   status: string | null;
 };
 
-const STATUS_OPTIONS = ['entwurf', 'vorgeschlagen', 'aktiv', 'fehler', 'aufgehoben'];
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'entwurf', label: 'Entwurf' },
+  { value: 'vorgeschlagen', label: 'Vorgeschlagen' },
+  { value: 'aktiv', label: 'Aktiv' },
+  { value: 'fehler', label: 'Fehler' },
+  { value: 'aufgehoben', label: 'Aufgehoben' },
+];
 
 export function DeviceLockEditDialog({
   lock, open, onOpenChange, onSaved,
