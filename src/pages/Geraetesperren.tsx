@@ -44,7 +44,7 @@ export default function Geraetesperren() {
 
   const filtered = q.trim()
     ? rows.filter((r) =>
-        `${r.invoice_number ?? ''} ${r.customer_name ?? ''} ${r.lock_note ?? ''}`.toLowerCase().includes(q.toLowerCase()),
+        `${r.invoice_number ?? ''} ${r.customer_number ?? ''} ${r.customer_name ?? ''} ${r.lock_note ?? ''}`.toLowerCase().includes(q.toLowerCase()),
       )
     : rows;
 
