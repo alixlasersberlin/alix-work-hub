@@ -257,6 +257,7 @@ const SurveyEditor = lazy(() => import("./pages/Feedback/SurveyEditor"));
 const FeedbackResponses = lazy(() => import("./pages/Feedback/Responses"));
 const FeedbackRewards = lazy(() => import("./pages/Feedback/Rewards"));
 const FeedbackEmailTemplates = lazy(() => import("./pages/Feedback/EmailTemplates"));
+const FeedbackRewardAssignments = lazy(() => import("./pages/Feedback/RewardAssignments"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const NewsAdmin = lazy(() => import("./pages/Operation/NewsAdmin"));
 const HealthCheck = lazy(() => import("./pages/HealthCheck"));
@@ -1134,7 +1135,9 @@ function AppRoutes() {
           <Route path="/umfragen" element={<ProtectedRoute><FeedbackSurveys /></ProtectedRoute>} />
           <Route path="/umfragen/antworten" element={<ProtectedRoute><FeedbackResponses /></ProtectedRoute>} />
           <Route path="/umfragen/geschenke" element={<ProtectedRoute><FeedbackRewards /></ProtectedRoute>} />
+          <Route path="/umfragen/belohnungen" element={<ProtectedRoute><FeedbackRewardAssignments /></ProtectedRoute>} />
           <Route path="/umfragen/vorlagen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Marketing']}><FeedbackEmailTemplates /></ProtectedRoute>} />
+
           <Route path="/umfragen/:id" element={<ProtectedRoute><SurveyEditor /></ProtectedRoute>} />
           <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
           <Route path="/kunden/doppelte" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DoppelteKunden /></ProtectedRoute>} />
