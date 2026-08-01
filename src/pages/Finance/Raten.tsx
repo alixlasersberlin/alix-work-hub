@@ -35,6 +35,7 @@ export default function FinanceRaten() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [dayTab, setDayTab] = useState<'all' | 1 | 15>('all');
 
   useEffect(() => {
     (async () => {
@@ -51,11 +52,29 @@ export default function FinanceRaten() {
     })();
   }, [region]);
 
+  const dayOf = (r: Row) => {
+    const d = r.next_invoice_date ?? r.start_date;
+    if (!d) return null;
+    const dt = new Date(d);
+    return isNaN(dt.getTime()) ? null : dt.getDate();
+  };
+
+  const byDay = useMemo(() => {
+    if (dayTab === 'all') return rows;
+    return rows.filter(r => dayOf(r) === dayTab);
+  }, [rows, dayTab]);
+
+  const counts = useMemo(() => ({
+    all: rows.length,
+    d1: rows.filter(r => dayOf(r) === 1).length,
+    d15: rows.filter(r => dayOf(r) === 15).length,
+  }), [rows]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(r => [r.customer_name, r.reference_number, r.recurring_invoice_id].some(v => (v ?? '').toLowerCase().includes(q)));
-  }, [rows, search]);
+    if (!q) return byDay;
+    return byDay.filter(r => [r.customer_name, r.reference_number, r.recurring_invoice_id].some(v => (v ?? '').toLowerCase().includes(q)));
+  }, [byDay, search]);
 
   const monthlyTotal = useMemo(() => filtered.reduce((s, r) => s + Number(r.amount ?? 0), 0), [filtered]);
 
