@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { GeraetesperrenTabs } from './GeraetesperrenTabs';
 import { useAuth } from '@/hooks/useAuth';
 import { DeviceLockEditDialog, DeviceLockBookDialog, type DeviceLock } from '@/components/finance/DeviceLockDialogs';
+import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
 
 const fmt = (n: number | null | undefined) =>
   n == null ? '—' : new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
@@ -51,6 +52,21 @@ export default function Geraetesperren() {
   const canManage = hasAnyRole(['Admin', 'Super Admin']);
   const [editLock, setEditLock] = useState<DeviceLock | null>(null);
   const [bookLock, setBookLock] = useState<DeviceLock | null>(null);
+  const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
+
+  async function openPdf(r: any) {
+    let q = supabase.from('zoho_invoices').select('zoho_invoice_id,invoice_number,source_system').limit(1);
+    q = r.invoice_id ? q.eq('id', r.invoice_id) : q.eq('invoice_number', r.invoice_number);
+    const { data } = await q;
+    const inv = (data as any[])?.[0];
+    if (!inv?.zoho_invoice_id) return toast.error('Keine Zoho-Rechnung gefunden');
+    setPdfInvoice({
+      zoho_invoice_id: inv.zoho_invoice_id,
+      invoice_number: inv.invoice_number,
+      source_system: inv.source_system,
+    });
+  }
+
 
   async function load() {
     setLoading(true);
@@ -146,7 +162,17 @@ export default function Geraetesperren() {
                 {filtered.map((r) => (
                   <tr key={r.id} className="border-t border-border hover:bg-red-500/5">
                     <td className="p-2 whitespace-nowrap"><StatusBadge status={r.status} /></td>
-                    <td className="p-2 font-medium text-red-500 whitespace-nowrap">{r.invoice_number ?? '—'}</td>
+                    <td className="p-2 font-medium whitespace-nowrap">
+                      {r.invoice_number ? (
+                        <button
+                          type="button"
+                          onClick={() => openPdf(r)}
+                          className="text-red-500 underline underline-offset-2 hover:text-red-400"
+                        >
+                          {r.invoice_number}
+                        </button>
+                      ) : '—'}
+                    </td>
                     <td className="p-2 font-mono text-xs whitespace-nowrap">{r.customer_number ?? r.customer_id ?? '—'}</td>
                     <td className="p-2">{r.customer_name ?? '—'}</td>
                     <td className="p-2 text-right whitespace-nowrap">{fmt(r.amount)}</td>
@@ -190,6 +216,11 @@ export default function Geraetesperren() {
         open={!!bookLock}
         onOpenChange={(v) => !v && setBookLock(null)}
         onBooked={load}
+      />
+      <InvoicePdfDialog
+        invoice={pdfInvoice}
+        open={!!pdfInvoice}
+        onOpenChange={(v) => !v && setPdfInvoice(null)}
       />
     </div>
   );
