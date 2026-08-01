@@ -18,6 +18,30 @@ export default function FinanceVertraege() {
   const { canWrite } = useFinancePermissions();
   const [sigContract, setSigContract] = useState<any | null>(null);
   const [remindingId, setRemindingId] = useState<string | null>(null);
+  const [stopped, setStopped] = useState<any[]>([]);
+  const [resumeId, setResumeId] = useState<string | null>(null);
+
+  async function loadStopped() {
+    const { data } = await supabase
+      .from('zoho_recurring_profiles')
+      .select('*')
+      .eq('status', 'pruefung')
+      .order('created_at', { ascending: false });
+    setStopped((data as any[]) ?? []);
+  }
+
+  async function resumeProfile(p: any) {
+    setResumeId(p.id);
+    const { error } = await supabase
+      .from('zoho_recurring_profiles')
+      .update({ status: 'active' } as any)
+      .eq('id', p.id);
+    setResumeId(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Vertrag reaktiviert');
+    setStopped(prev => prev.filter(x => x.id !== p.id));
+  }
+
 
   async function sendReminder(r: any) {
     setRemindingId(r.id);
@@ -40,6 +64,7 @@ export default function FinanceVertraege() {
 
   useEffect(() => {
     listContracts().then(r => { setRows(r); setLoading(false); }).catch(() => setLoading(false));
+    loadStopped();
   }, []);
   const fmt = (n: number | null | undefined) => n != null ? Number(n).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }) : '—';
 
@@ -59,13 +84,56 @@ export default function FinanceVertraege() {
     <div className="container mx-auto px-4 py-8">
       <PageHeader
         icon={FileText}
-        title="Verträge"
-        subtitle={`${rows.length} Verträge · ${rows.filter(r => r.signature_status === 'signed').length} signiert`}
+        title="PRÜFUNG"
+        subtitle={`${stopped.length} gestoppte Verträge zur Prüfung · ${rows.length} Verträge gesamt`}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length}`} pulse={!loading} />}
         actions={canWrite ? <Button disabled className="gold-gradient text-primary-foreground"><Plus className="w-4 h-4 mr-2" />Neuer Vertrag (folgt)</Button> : undefined}
       />
+
+      <div className="rounded-xl border border-border bg-card card-glow overflow-hidden mb-6">
+        <div className="px-4 py-3 border-b border-border text-sm font-semibold">
+          Gestoppte Wiederkehrende Zahler ({stopped.length})
+        </div>
+        {stopped.length === 0 ? (
+          <div className="p-6 text-sm text-muted-foreground">Keine Datensätze in Prüfung.</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/50 text-muted-foreground">
+              <tr>
+                <th className="text-left px-4 py-3">Name / Referenz</th>
+                <th className="text-left px-4 py-3">Kunde</th>
+                <th className="text-left px-4 py-3">Letzte</th>
+                <th className="text-left px-4 py-3">Nächste</th>
+                <th className="text-right px-4 py-3">Betrag</th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {stopped.map((p: any) => (
+                <tr key={p.id} className="hover:bg-secondary/30">
+                  <td className="px-4 py-2">
+                    <div className="font-medium">{p.recurrence_name || '—'}</div>
+                    {p.reference_number && <div className="text-xs text-muted-foreground font-mono">{p.reference_number}</div>}
+                  </td>
+                  <td className="px-4 py-2">{p.customer_name || p.company_name || '—'}</td>
+                  <td className="px-4 py-2">{p.last_sent_date ? new Date(p.last_sent_date).toLocaleDateString('de-DE') : '—'}</td>
+                  <td className="px-4 py-2">{p.next_invoice_date ? new Date(p.next_invoice_date).toLocaleDateString('de-DE') : '—'}</td>
+                  <td className="px-4 py-2 text-right tabular-nums">{fmt(p.total)}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Button size="sm" variant="outline" disabled={!canWrite || resumeId === p.id} onClick={() => resumeProfile(p)}>
+                      {resumeId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Reaktivieren'}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
       <div className="rounded-xl border border-border bg-card card-glow overflow-hidden">
+
         {loading ? (
           <div className="p-6"><SkeletonTable rows={8} cols={8} /></div>
         ) : rows.length === 0 ? (
