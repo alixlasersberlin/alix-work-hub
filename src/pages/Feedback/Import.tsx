@@ -83,7 +83,7 @@ export default function FeedbackImport() {
     try {
       const rows = await readFile(file);
       const payload = rows.map(r => ({
-        survey_id: surveyId,
+        survey_id: sid,
         customer_number: pick(r, ['kundennummer', 'kundennr', 'customernumber', 'customerno']) || null,
         company_name: pick(r, ['firma', 'firmenname', 'company', 'companyname', 'kunde']) || null,
         first_name: pick(r, ['vorname', 'firstname']) || null,
