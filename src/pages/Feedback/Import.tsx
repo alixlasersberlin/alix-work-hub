@@ -168,7 +168,6 @@ export default function FeedbackImport() {
   }
 
   async function analyzeDoc(file: File) {
-    if (!surveyId) { toast.error('Bitte zuerst eine Umfrage wählen'); return; }
     setBusy('d');
     setDocName(file.name);
     try {
@@ -188,7 +187,8 @@ export default function FeedbackImport() {
     if (!parsed?.length) return;
     setBusy('d');
     try {
-      const { created, opts } = await insertQuestions(parsed);
+      const sid = await ensureSurvey(docName);
+      const { created, opts } = await insertQuestions(parsed, sid);
       toast.success(`${created} Fragen (${opts} Optionen) importiert`);
       addLog(`${new Date().toLocaleTimeString('de-DE')} · ${created} Fragen aus ${docName} → ${selected?.name ?? ''}`);
       setParsed(null); setDocName('');
