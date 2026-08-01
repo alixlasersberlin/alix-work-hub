@@ -251,6 +251,55 @@ export default function FeedbackImport() {
       </div>
 
       <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />Fragenkatalog aus PDF oder Word</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            PDF (.pdf), Word (.docx) oder Text (.txt) hochladen — Fragen werden automatisch erkannt.
+            Fragezeilen enden mit „?" oder sind nummeriert („1. …"), Antwortoptionen stehen als Aufzählung darunter
+            („- Option"). Typ optional in Klammern, z. B. „(Sterne)", Pflichtfragen mit „*" am Ende.
+          </p>
+          <input ref={docRef} type="file" accept=".pdf,.docx,.txt" className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) analyzeDoc(f); }} />
+          <div className="flex flex-wrap gap-2">
+            <Button disabled={busy !== null || !surveyId} onClick={() => docRef.current?.click()}>
+              <Upload className="h-4 w-4 mr-2" />{busy === 'd' ? 'Verarbeite…' : 'PDF / Word wählen'}
+            </Button>
+            {parsed && parsed.length > 0 && (
+              <>
+                <Button variant="default" disabled={busy !== null} onClick={confirmParsed}>
+                  {parsed.length} Fragen übernehmen
+                </Button>
+                <Button variant="outline" disabled={busy !== null} onClick={() => { setParsed(null); setDocName(''); }}>
+                  Verwerfen
+                </Button>
+              </>
+            )}
+          </div>
+
+          {parsed && parsed.length > 0 && (
+            <div className="rounded-md border border-border divide-y divide-border max-h-96 overflow-auto">
+              <div className="px-3 py-2 text-xs text-muted-foreground">Vorschau · {docName}</div>
+              {parsed.map((q, i) => (
+                <div key={i} className="px-3 py-2 space-y-1">
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs text-muted-foreground w-6 shrink-0">{i + 1}.</span>
+                    <span className="text-sm flex-1">{q.label}</span>
+                    <Badge variant="outline" className="shrink-0">{q.qtype}</Badge>
+                    {q.required && <Badge variant="secondary" className="shrink-0">Pflicht</Badge>}
+                  </div>
+                  {q.options.length > 0 && (
+                    <p className="text-xs text-muted-foreground pl-8">{q.options.join(' · ')}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
+
+      <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileSpreadsheet className="h-4 w-4 text-primary" />Import-Protokoll</CardTitle></CardHeader>
         <CardContent>
           {log.length === 0
