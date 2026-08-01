@@ -810,7 +810,7 @@ function filterKontaktByRoles(items: NavChild[] | undefined, roles: string[]): N
     .filter(it => !it.children || it.children.length > 0 || !!it.path);
 }
 
-function HeaderNavMenu({ roles, itemLabel, triggerLabel }: { roles: string[]; itemLabel: string; triggerLabel: string }) {
+function HeaderNavMenu({ roles, itemLabel, triggerLabel, triggerClassName, align = 'end' }: { roles: string[]; itemLabel: string; triggerLabel: string; triggerClassName?: string; align?: 'start' | 'end' }) {
   const item = navItems.find(i => i.label === itemLabel);
   if (!item) return null;
   if (item.roles && !item.roles.some(r => roles.includes(r))) return null;
