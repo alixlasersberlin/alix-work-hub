@@ -51,7 +51,7 @@ export default function FinanceRaten() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(100);
-  const [dayTab, setDayTab] = useState<'all' | 1 | 15 | 'sepa'>('all');
+  const [dayTab, setDayTab] = useState<'all' | 1 | 15 | 'sepa' | 'sepa15'>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -86,7 +86,8 @@ export default function FinanceRaten() {
   );
 
   const byDay = useMemo(() => {
-    if (dayTab === 'sepa') return sorted.filter(isSepa);
+    if (dayTab === 'sepa') return sorted.filter(r => isSepa(r) && dayOf(r) !== 15);
+    if (dayTab === 'sepa15') return sorted.filter(r => isSepa(r) && dayOf(r) === 15);
     const base = sorted.filter(r => !isSepa(r));
     return dayTab === 'all' ? base : base.filter(r => dayOf(r) === dayTab);
   }, [sorted, dayTab]);
@@ -95,8 +96,10 @@ export default function FinanceRaten() {
     all: rows.filter(r => !isSepa(r)).length,
     d1: rows.filter(r => !isSepa(r) && dayOf(r) === 1).length,
     d15: rows.filter(r => !isSepa(r) && dayOf(r) === 15).length,
-    sepa: rows.filter(isSepa).length,
+    sepa: rows.filter(r => isSepa(r) && dayOf(r) !== 15).length,
+    sepa15: rows.filter(r => isSepa(r) && dayOf(r) === 15).length,
   }), [rows]);
+
 
   const filtered = useMemo(() => byDay.filter(r => matchesQuery({
     ...r,
@@ -130,6 +133,7 @@ export default function FinanceRaten() {
           { key: 1 as const, label: 'Buchung 1. im Monat', count: counts.d1 },
           { key: 15 as const, label: 'Buchung 15. im Monat', count: counts.d15 },
           { key: 'sepa' as const, label: 'REAL DATEV 1. des Monats', count: counts.sepa },
+          { key: 'sepa15' as const, label: 'REAL DATEV 15. des Monats', count: counts.sepa15 },
         ]).map(t => (
           <button
             key={String(t.key)}
