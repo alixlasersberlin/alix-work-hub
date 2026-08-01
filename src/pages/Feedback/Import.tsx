@@ -92,42 +92,51 @@ export default function FeedbackImport() {
     }
   }
 
+  async function insertQuestions(list: { label: string; qtype: string; required: boolean; options: string[]; help_text?: string | null }[]) {
+    const { data: existing } = await sb.from('survey_questions').select('id').eq('survey_id', surveyId);
+    let pos = (existing?.length ?? 0);
+    let created = 0, opts = 0;
+    for (const item of list) {
+      if (!item.label) continue;
+      pos += 1;
+      const { data: q, error } = await sb.from('survey_questions').insert({
+        survey_id: surveyId,
+        qtype: QTYPES.includes(item.qtype) ? item.qtype : 'text',
+        label: item.label, position: pos, required: item.required,
+        help_text: item.help_text ?? null,
+      }).select('id').single();
+      if (error) throw new Error(error.message);
+      created += 1;
+      if (item.options.length) {
+        const { error: oe } = await sb.from('survey_question_options').insert(
+          item.options.map((l, i) => ({ question_id: q.id, label: l, value: `opt${i + 1}`, position: i + 1 }))
+        );
+        if (oe) throw new Error(oe.message);
+        opts += item.options.length;
+      }
+    }
+    return { created, opts };
+  }
+
   async function importQuestions(file: File) {
     if (!surveyId) { toast.error('Bitte zuerst eine Umfrage wählen'); return; }
     setBusy('q');
     try {
       const rows = await readFile(file);
-      const { data: existing } = await sb.from('survey_questions').select('id').eq('survey_id', surveyId);
-      let pos = (existing?.length ?? 0);
-      let created = 0, opts = 0;
-
-      for (const r of rows) {
+      const list = rows.map(r => {
         const label = pick(r, ['frage', 'label', 'fragetext', 'question', 'text']);
-        if (!label) continue;
         const rawType = norm(pick(r, ['typ', 'fragetyp', 'type', 'qtype']) || 'text');
-        const qtype = QTYPES.includes(rawType) ? rawType : 'text';
         const requiredRaw = norm(pick(r, ['pflicht', 'pflichtfeld', 'required']) || '');
-        const required = ['ja', 'yes', 'true', '1', 'x'].includes(requiredRaw);
-        pos += 1;
-        const { data: q, error } = await sb.from('survey_questions').insert({
-          survey_id: surveyId, qtype, label, position: pos, required,
-          help_text: pick(r, ['hilfetext', 'beschreibung', 'helptext']) || null,
-        }).select('id').single();
-        if (error) throw new Error(error.message);
-        created += 1;
-
         const optRaw = pick(r, ['optionen', 'antworten', 'options', 'answers']);
-        if (optRaw) {
-          const list = optRaw.split(/[;|]/).map(s => s.trim()).filter(Boolean);
-          if (list.length) {
-            const { error: oe } = await sb.from('survey_question_options').insert(
-              list.map((l, i) => ({ question_id: q.id, label: l, value: `opt${i + 1}`, position: i + 1 }))
-            );
-            if (oe) throw new Error(oe.message);
-            opts += list.length;
-          }
-        }
-      }
+        return {
+          label,
+          qtype: QTYPES.includes(rawType) ? rawType : 'text',
+          required: ['ja', 'yes', 'true', '1', 'x'].includes(requiredRaw),
+          options: optRaw ? optRaw.split(/[;|]/).map(s => s.trim()).filter(Boolean) : [],
+          help_text: pick(r, ['hilfetext', 'beschreibung', 'helptext']) || null,
+        };
+      }).filter(r => r.label);
+      const { created, opts } = await insertQuestions(list);
       if (!created) { toast.error('Keine gültigen Fragen gefunden'); return; }
       toast.success(`${created} Fragen (${opts} Optionen) importiert`);
       addLog(`${new Date().toLocaleTimeString('de-DE')} · ${created} Fragen → ${selected?.name ?? ''}`);
@@ -138,6 +147,37 @@ export default function FeedbackImport() {
       if (qRef.current) qRef.current.value = '';
     }
   }
+
+  async function analyzeDoc(file: File) {
+    if (!surveyId) { toast.error('Bitte zuerst eine Umfrage wählen'); return; }
+    setBusy('d');
+    setDocName(file.name);
+    try {
+      const list = await parseQuestionsFromFile(file);
+      if (!list.length) { toast.error('Keine Fragen erkannt — Fragezeilen sollten mit „?" enden oder nummeriert sein.'); setParsed([]); return; }
+      setParsed(list);
+      toast.success(`${list.length} Fragen erkannt — bitte prüfen und übernehmen`);
+    } catch (e: any) {
+      toast.error(e.message ?? 'Datei konnte nicht gelesen werden');
+    } finally {
+      setBusy(null);
+      if (docRef.current) docRef.current.value = '';
+    }
+  }
+
+  async function confirmParsed() {
+    if (!parsed?.length) return;
+    setBusy('d');
+    try {
+      const { created, opts } = await insertQuestions(parsed);
+      toast.success(`${created} Fragen (${opts} Optionen) importiert`);
+      addLog(`${new Date().toLocaleTimeString('de-DE')} · ${created} Fragen aus ${docName} → ${selected?.name ?? ''}`);
+      setParsed(null); setDocName('');
+    } catch (e: any) {
+      toast.error(e.message ?? 'Import fehlgeschlagen');
+    } finally { setBusy(null); }
+  }
+
 
   return (
     <div className="space-y-5">
