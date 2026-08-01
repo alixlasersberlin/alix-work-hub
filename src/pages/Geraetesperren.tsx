@@ -185,47 +185,83 @@ export default function Geraetesperren() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r) => (
-                  <tr key={r.id} className="border-t border-border hover:bg-red-500/5">
-                    <td className="p-2 whitespace-nowrap"><StatusBadge status={r.status} /></td>
-                    <td className="p-2 font-medium whitespace-nowrap">
-                      {r.invoice_number ? (
-                        <button
-                          type="button"
-                          onClick={() => openPdf(r)}
-                          className="text-red-500 underline underline-offset-2 hover:text-red-400"
-                        >
-                          {r.invoice_number}
-                        </button>
-                      ) : '—'}
-                    </td>
-                    <td className="p-2 font-mono text-xs whitespace-nowrap">{r.customer_number ?? r.customer_id ?? '—'}</td>
-                    <td className="p-2">{r.customer_name ?? '—'}</td>
-                    <td className="p-2 text-right whitespace-nowrap">{fmt(r.amount)}</td>
-                    <td className="p-2 whitespace-nowrap">{r.return_date ?? '—'}</td>
-                    <td className="p-2 text-xs text-muted-foreground max-w-[420px]">{r.lock_note}</td>
-                    <td className="p-2 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {canManage && (
-                          <>
-                            <Button size="sm" variant="outline" onClick={() => setEditLock(r as DeviceLock)}>
-                              <Pencil className="w-3.5 h-3.5 mr-1" /> Bearbeiten
+                {groups.map((g) => {
+                  const multi = g.items.length > 1;
+                  const open = !!openGroups[g.key];
+                  const renderRow = (r: any, nested: boolean) => (
+                    <tr key={r.id} className={`border-t border-border hover:bg-red-500/5 ${nested ? 'bg-muted/20' : ''}`}>
+                      <td className={`p-2 whitespace-nowrap ${nested ? 'pl-8' : ''}`}><StatusBadge status={r.status} /></td>
+                      <td className="p-2 font-medium whitespace-nowrap">
+                        {r.invoice_number ? (
+                          <button
+                            type="button"
+                            onClick={() => openPdf(r)}
+                            className="text-red-500 underline underline-offset-2 hover:text-red-400"
+                          >
+                            {r.invoice_number}
+                          </button>
+                        ) : '—'}
+                      </td>
+                      <td className="p-2 font-mono text-xs whitespace-nowrap">{r.customer_number ?? r.customer_id ?? '—'}</td>
+                      <td className="p-2">{r.customer_name ?? '—'}</td>
+                      <td className="p-2 text-right whitespace-nowrap">{fmt(r.amount)}</td>
+                      <td className="p-2 whitespace-nowrap">{r.return_date ?? '—'}</td>
+                      <td className="p-2 text-xs text-muted-foreground max-w-[420px]">{r.lock_note}</td>
+                      <td className="p-2 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {canManage && (
+                            <>
+                              <Button size="sm" variant="outline" onClick={() => setEditLock(r as DeviceLock)}>
+                                <Pencil className="w-3.5 h-3.5 mr-1" /> Bearbeiten
+                              </Button>
+                              <Button size="sm" onClick={() => setBookLock(r as DeviceLock)}>
+                                <Wallet className="w-3.5 h-3.5 mr-1" /> Buchen
+                              </Button>
+                            </>
+                          )}
+                          {r.status === 'aktiv' && (
+                            <Button size="sm" variant="outline" onClick={() => release(r.id)}>
+                              <Unlock className="w-3.5 h-3.5 mr-1" /> Aufheben
                             </Button>
-                            <Button size="sm" onClick={() => setBookLock(r as DeviceLock)}>
-                              <Wallet className="w-3.5 h-3.5 mr-1" /> Buchen
-                            </Button>
-                          </>
-                        )}
-                        {r.status === 'aktiv' && (
-                          <Button size="sm" variant="outline" onClick={() => release(r.id)}>
-                            <Unlock className="w-3.5 h-3.5 mr-1" /> Aufheben
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+
+                  if (!multi) return renderRow(g.items[0], false);
+
+                  return (
+                    <>
+                      <tr
+                        key={g.key}
+                        className="border-t border-border bg-muted/40 hover:bg-red-500/5 cursor-pointer"
+                        onClick={() => toggleGroup(g.key)}
+                      >
+                        <td className="p-2 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                            Konto
+                          </span>
+                        </td>
+                        <td className="p-2">
+                          <Badge variant="destructive">{g.items.length} Rücklastschriften</Badge>
+                        </td>
+                        <td className="p-2 font-mono text-xs whitespace-nowrap">{g.number}</td>
+                        <td className="p-2 font-medium">{g.name}</td>
+                        <td className="p-2 text-right font-semibold whitespace-nowrap">{fmt(g.total)}</td>
+                        <td className="p-2 text-xs text-muted-foreground whitespace-nowrap">
+                          {g.items.map((i) => i.return_date).filter(Boolean).sort().slice(-1)[0] ?? '—'}
+                        </td>
+                        <td className="p-2 text-xs text-muted-foreground">Zum Aufklappen klicken</td>
+                        <td className="p-2" />
+                      </tr>
+                      {open && g.items.map((r) => renderRow(r, true))}
+                    </>
+                  );
+                })}
               </tbody>
+
             </table>
           )}
         </CardContent>
