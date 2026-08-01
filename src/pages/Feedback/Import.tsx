@@ -212,8 +212,16 @@ export default function FeedbackImport() {
             </SelectContent>
           </Select>
           {selected && <Badge variant="outline">{selected.status}</Badge>}
+          {!surveyId && (
+            <span className="text-xs text-muted-foreground">
+              {surveys.length === 0
+                ? 'Noch keine Umfrage vorhanden — beim Import wird automatisch eine neue Umfrage angelegt.'
+                : 'Ohne Auswahl wird beim Import automatisch eine neue Umfrage angelegt.'}
+            </span>
+          )}
         </CardContent>
       </Card>
+
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
