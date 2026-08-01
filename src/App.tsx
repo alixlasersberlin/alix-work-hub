@@ -250,6 +250,13 @@ const Detailsuche = lazy(() => import("./pages/Detailsuche"));
 const AuftragStatus = lazy(() => import("./pages/AuftragStatus"));
 const Geraetesperren = lazy(() => import("./pages/Geraetesperren"));
 const GeraetesperrenBearbeitung = lazy(() => import("./pages/GeraetesperrenBearbeitung"));
+const SurveyPublic = lazy(() => import("./pages/SurveyPublic"));
+const FeedbackDashboard = lazy(() => import("./pages/Feedback/Dashboard"));
+const FeedbackSurveys = lazy(() => import("./pages/Feedback/Surveys"));
+const SurveyEditor = lazy(() => import("./pages/Feedback/SurveyEditor"));
+const FeedbackResponses = lazy(() => import("./pages/Feedback/Responses"));
+const FeedbackRewards = lazy(() => import("./pages/Feedback/Rewards"));
+const FeedbackEmailTemplates = lazy(() => import("./pages/Feedback/EmailTemplates"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const NewsAdmin = lazy(() => import("./pages/Operation/NewsAdmin"));
 const HealthCheck = lazy(() => import("./pages/HealthCheck"));
@@ -1056,6 +1063,8 @@ function AppRoutes() {
         <Route path="/social-portal/:token" element={<SocialPortalView />} />
         <Route path="/social-onboarding/:token" element={<SocialOnboardingPortal />} />
         <Route path="/social/showcase/:token" element={<SocialShowcase />} />
+        <Route path="/umfrage/:token" element={<SurveyPublic />} />
+
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/start" element={<Startseite />} />
           <Route path="/dashboard" element={<HomeRoute />} />
@@ -1119,6 +1128,14 @@ function AppRoutes() {
           <Route path="/auftragsstatus" element={<ProtectedRoute><AuftragStatus /></ProtectedRoute>} />
           <Route path="/geraetesperren" element={<ProtectedRoute><Geraetesperren /></ProtectedRoute>} />
           <Route path="/geraetesperren/bearbeitung" element={<ProtectedRoute><GeraetesperrenBearbeitung /></ProtectedRoute>} />
+
+          {/* ALIX Feedback & Rewards */}
+          <Route path="/umfragen/dashboard" element={<ProtectedRoute><FeedbackDashboard /></ProtectedRoute>} />
+          <Route path="/umfragen" element={<ProtectedRoute><FeedbackSurveys /></ProtectedRoute>} />
+          <Route path="/umfragen/antworten" element={<ProtectedRoute><FeedbackResponses /></ProtectedRoute>} />
+          <Route path="/umfragen/geschenke" element={<ProtectedRoute><FeedbackRewards /></ProtectedRoute>} />
+          <Route path="/umfragen/vorlagen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Marketing']}><FeedbackEmailTemplates /></ProtectedRoute>} />
+          <Route path="/umfragen/:id" element={<ProtectedRoute><SurveyEditor /></ProtectedRoute>} />
           <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
           <Route path="/kunden/doppelte" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DoppelteKunden /></ProtectedRoute>} />
           <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />

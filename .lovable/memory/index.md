@@ -64,3 +64,4 @@
 - [Finance Phase 10 Lohn](mem://features/finance-phase10-lohn) — Lohnläufe, Lohnjournal, Lohnarten, SV-Sätze (CH AHV/ALV/BVG, EU RV/KV/PV/AV) unter /finance/lohnbuchhaltung
 - [Finance Periodenabschluss](mem://features/finance-perioden) — Monats-Periodensperre EU/CH (finance_periods + enforce_period_lock), /finance/perioden, Region-Helper src/lib/finance/region.ts, RegionChip global
 - [AZ-Rechnung Status nach Versand](mem://features/az-invoice-status) — Anzahlungsrechnungen wechseln nach E-Mail-Versand automatisch von Entwurf auf Versendet / Offen
+- [ALIX Feedback & Rewards](mem://features/alix-feedback-rewards) — Umfragemodul /umfragen (Dashboard, Editor, Antworten, Geschenke, Vorlagen), öffentliche Teilnahme /umfrage/:token, Edge Functions survey-public + survey-send-invites

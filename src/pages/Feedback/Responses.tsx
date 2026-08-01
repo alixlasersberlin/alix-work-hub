@@ -1,0 +1,135 @@
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FeedbackHeader } from './_shared';
+import { Download, Eye, AlertTriangle } from 'lucide-react';
+
+export default function FeedbackResponses() {
+  const sb = supabase as any;
+  const [surveys, setSurveys] = useState<any[]>([]);
+  const [surveyId, setSurveyId] = useState<string>('all');
+  const [rows, setRows] = useState<any[]>([]);
+  const [q, setQ] = useState('');
+  const [detail, setDetail] = useState<any | null>(null);
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { sb.from('surveys').select('id,name').is('deleted_at', null).order('name').then((r: any) => setSurveys(r.data ?? [])); /* eslint-disable-next-line */ }, []);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      let query = sb.from('survey_responses').select('*').order('completed_at', { ascending: false, nullsFirst: false }).limit(1000);
+      if (surveyId !== 'all') query = query.eq('survey_id', surveyId);
+      const { data } = await query;
+      const list = data ?? [];
+      const rids = list.map((r: any) => r.recipient_id).filter(Boolean);
+      let recMap: Record<string, any> = {};
+      if (rids.length) {
+        const { data: recs } = await sb.from('survey_recipients').select('id,company_name,first_name,last_name,email,customer_number').in('id', rids);
+        (recs ?? []).forEach((x: any) => { recMap[x.id] = x; });
+      }
+      setRows(list.map((r: any) => ({ ...r, recipient: recMap[r.recipient_id] })));
+      setLoading(false);
+    })();
+    /* eslint-disable-next-line */
+  }, [surveyId]);
+
+  async function open(r: any) {
+    setDetail(r);
+    const { data } = await sb.from('survey_response_items').select('*').eq('response_id', r.id).order('created_at');
+    setItems(data ?? []);
+  }
+
+  function exportCsv() {
+    const head = ['Datum', 'Kunde', 'E-Mail', 'Status', 'Score', 'NPS', 'Dauer (s)'];
+    const lines = filtered.map(r => [
+      r.completed_at ? new Date(r.completed_at).toLocaleString('de-DE') : '',
+      r.recipient?.company_name ?? `${r.recipient?.first_name ?? ''} ${r.recipient?.last_name ?? ''}`.trim(),
+      r.recipient?.email ?? '', r.status ?? '', r.score_total ?? '', r.nps_score ?? '', r.duration_seconds ?? '',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(';'));
+    const blob = new Blob(['\uFEFF' + [head.join(';'), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'umfrage-antworten.csv'; a.click();
+  }
+
+  const filtered = rows.filter(r => !q || JSON.stringify(r.recipient ?? {}).toLowerCase().includes(q.toLowerCase()));
+
+  function itemValue(i: any) {
+    if (i.value_text) return i.value_text;
+    if (i.value_number !== null && i.value_number !== undefined) return String(i.value_number);
+    if (i.value_bool !== null && i.value_bool !== undefined) return i.value_bool ? 'Ja' : 'Nein';
+    if (i.value_date) return new Date(i.value_date).toLocaleDateString('de-DE');
+    if (i.value_json) return Array.isArray(i.value_json) ? i.value_json.join(', ') : JSON.stringify(i.value_json);
+    return '–';
+  }
+
+  return (
+    <div className="space-y-5">
+      <FeedbackHeader title="Antworten" subtitle="Alle eingegangenen Rückmeldungen"
+        action={<Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-2" />CSV Export</Button>} />
+
+      <div className="flex flex-wrap gap-2">
+        <Select value={surveyId} onValueChange={setSurveyId}>
+          <SelectTrigger className="w-72"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Umfragen</SelectItem>
+            {surveys.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Input className="max-w-xs" placeholder="Kunde suchen …" value={q} onChange={e => setQ(e.target.value)} />
+      </div>
+
+      <Card>
+        <CardContent className="p-0 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/40 text-left"><tr>
+              <th className="p-3">Datum</th><th className="p-3">Kunde</th><th className="p-3">Status</th>
+              <th className="p-3">Score</th><th className="p-3">NPS</th><th className="p-3">Dauer</th><th className="p-3" />
+            </tr></thead>
+            <tbody>
+              {filtered.map(r => (
+                <tr key={r.id} className="border-t border-border hover:bg-muted/20">
+                  <td className="p-3 text-muted-foreground">{r.completed_at ? new Date(r.completed_at).toLocaleString('de-DE') : '–'}</td>
+                  <td className="p-3">
+                    {r.recipient?.company_name || `${r.recipient?.first_name ?? ''} ${r.recipient?.last_name ?? ''}`.trim() || 'Anonym'}
+                    <div className="text-xs text-muted-foreground">{r.recipient?.email}</div>
+                  </td>
+                  <td className="p-3">
+                    {r.is_critical && <Badge variant="outline" className="mr-1 border-destructive/40 text-destructive"><AlertTriangle className="h-3 w-3 mr-1" />Kritisch</Badge>}
+                    <Badge variant="outline">{r.status}</Badge>
+                  </td>
+                  <td className="p-3">{r.score_total ?? '–'}</td>
+                  <td className="p-3">{r.nps_score ?? '–'}</td>
+                  <td className="p-3">{r.duration_seconds ? `${Math.round(r.duration_seconds / 60)} min` : '–'}</td>
+                  <td className="p-3 text-right"><Button size="sm" variant="ghost" onClick={() => open(r)}><Eye className="h-4 w-4" /></Button></td>
+                </tr>
+              ))}
+              {filtered.length === 0 && <tr><td className="p-4 text-muted-foreground" colSpan={7}>{loading ? 'Lade …' : 'Keine Antworten vorhanden.'}</td></tr>}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!detail} onOpenChange={o => !o && setDetail(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+          <DialogHeader><DialogTitle>Antwortdetails</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            {items.map(i => (
+              <div key={i.id} className="rounded-md border border-border p-3">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">{i.question_label}</div>
+                <div className="text-sm mt-1">{itemValue(i)}</div>
+              </div>
+            ))}
+            {items.length === 0 && <p className="text-sm text-muted-foreground">Keine Einzelantworten gespeichert.</p>}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
