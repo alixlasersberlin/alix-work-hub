@@ -51,7 +51,7 @@ export default function FinanceRaten() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(100);
-  const [dayTab, setDayTab] = useState<'all' | 1 | 15>('all');
+  const [dayTab, setDayTab] = useState<'all' | 1 | 15 | 'sepa'>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -77,18 +77,25 @@ export default function FinanceRaten() {
     return isNaN(dt.getTime()) ? null : dt.getDate();
   };
 
+  const isSepa = (r: Row) => r.source_system === 'sepa_import';
+
   // Alphabetisch sortiert – Nummerierung folgt dem Alphabet
   const sorted = useMemo(
     () => rows.slice().sort((a, b) => (a.customer_name ?? '').localeCompare(b.customer_name ?? '', 'de')),
     [rows],
   );
 
-  const byDay = useMemo(() => (dayTab === 'all' ? sorted : sorted.filter(r => dayOf(r) === dayTab)), [sorted, dayTab]);
+  const byDay = useMemo(() => {
+    if (dayTab === 'sepa') return sorted.filter(isSepa);
+    const base = sorted.filter(r => !isSepa(r));
+    return dayTab === 'all' ? base : base.filter(r => dayOf(r) === dayTab);
+  }, [sorted, dayTab]);
 
   const counts = useMemo(() => ({
-    all: rows.length,
-    d1: rows.filter(r => dayOf(r) === 1).length,
-    d15: rows.filter(r => dayOf(r) === 15).length,
+    all: rows.filter(r => !isSepa(r)).length,
+    d1: rows.filter(r => !isSepa(r) && dayOf(r) === 1).length,
+    d15: rows.filter(r => !isSepa(r) && dayOf(r) === 15).length,
+    sepa: rows.filter(isSepa).length,
   }), [rows]);
 
   const filtered = useMemo(() => byDay.filter(r => matchesQuery({
@@ -122,6 +129,7 @@ export default function FinanceRaten() {
           { key: 'all' as const, label: 'Alle', count: counts.all },
           { key: 1 as const, label: 'Buchung 1. im Monat', count: counts.d1 },
           { key: 15 as const, label: 'Buchung 15. im Monat', count: counts.d15 },
+          { key: 'sepa' as const, label: 'REAL DATEV 1. des Monats', count: counts.sepa },
         ]).map(t => (
           <button
             key={String(t.key)}
