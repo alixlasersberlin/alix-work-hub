@@ -178,22 +178,64 @@ export default function GeraetesperrenBearbeitung() {
     loadPending();
   }
 
-  const filtered = useMemo(() => {
-    if (!q.trim()) return matches;
-    const s = q.toLowerCase();
-    return matches.filter(
-      (m) =>
-        (m.invoice?.invoice_number ?? m.row.invoice_number ?? '').toLowerCase().includes(s) ||
-        (m.invoice?.customer_name ?? m.row.customer_name ?? '').toLowerCase().includes(s),
-    );
-  }, [matches, q]);
+  const term = (q || '').trim().toLowerCase();
+  const hit = (...vals: any[]) =>
+    !term || vals.some((v) => (v == null ? '' : String(v)).toLowerCase().includes(term));
+
+  const filtered = useMemo(
+    () =>
+      matches.filter((m) =>
+        hit(
+          m.invoice?.invoice_number,
+          m.row.invoice_number,
+          m.invoice?.customer_name,
+          m.row.customer_name,
+          m.invoice?.customer_id,
+          (m.row as any).serial_number,
+          (m.row as any).city,
+          (m.row as any).company_name,
+          m.note,
+        ),
+      ),
+    [matches, term],
+  );
+
+  const filteredPending = useMemo(
+    () =>
+      pending.filter((p) =>
+        hit(p.invoice_number, p.customer_name, p.customer_number, p.customer_id, p.serial_number, p.city, p.lock_note),
+      ),
+    [pending, term],
+  );
 
   const selectedCount = matches.filter((m) => m.selected).length;
+
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <PageHeader icon={Lock} title="Gerätesperren · Bearbeitung" subtitle="Rücklastschriften importieren, Rechnungen zuordnen und Sperren aktivieren" noBreadcrumbs />
       <GeraetesperrenTabs />
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Suche: Rechnungsnummer, Firmenname, Name, Seriennummer, Ortschaft…"
+              className="pl-9"
+            />
+          </div>
+          {term && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {filtered.length} Sperrvorschläge · {filteredPending.length} offene Vorschläge gefunden
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+
 
       <Card className="border-red-500/30 bg-red-500/5">
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Upload className="w-4 h-4 text-red-500" /> Rücklastschrift importieren (PDF / CSV)</CardTitle></CardHeader>
@@ -211,12 +253,9 @@ export default function GeraetesperrenBearbeitung() {
       {matches.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
-            <CardTitle className="text-base">Sperrvorschläge ({matches.length}) · {selectedCount} ausgewählt</CardTitle>
+            <CardTitle className="text-base">Sperrvorschläge ({filtered.length}/{matches.length}) · {selectedCount} ausgewählt</CardTitle>
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Suchen…" className="pl-8 w-56" />
-              </div>
+
               <Button variant="outline" size="sm" onClick={() => setMatches((m) => m.map((x) => ({ ...x, selected: true })))}>Alle</Button>
               <Button variant="outline" size="sm" onClick={() => setMatches((m) => m.map((x) => ({ ...x, selected: false })))}>Keine</Button>
               <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" disabled={saving || !selectedCount} onClick={() => activate(true)}>
@@ -280,17 +319,17 @@ export default function GeraetesperrenBearbeitung() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Offene Sperrvorschläge ({pending.length})</CardTitle>
+          <CardTitle className="text-base">Offene Sperrvorschläge ({filteredPending.length}/{pending.length})</CardTitle>
           <Button variant="ghost" size="sm" onClick={loadPending}><RefreshCw className="w-4 h-4" /></Button>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
-          {pending.length === 0 ? (
+          {filteredPending.length === 0 ? (
             <p className="p-6 text-sm text-muted-foreground text-center">Keine offenen Vorschläge.</p>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-left"><tr><th className="p-2">Rechnung</th><th className="p-2">Kd.-Nr.</th><th className="p-2">Kunde</th><th className="p-2 text-right">Betrag</th><th className="p-2">Vermerk</th><th className="p-2"></th></tr></thead>
               <tbody>
-                {pending.map((p) => (
+                {filteredPending.map((p) => (
                   <tr key={p.id} className="border-t border-border">
                     <td className="p-2">{p.invoice_number ?? '—'}</td>
                     <td className="p-2 font-mono text-xs">{p.customer_number ?? p.customer_id ?? '—'}</td>
