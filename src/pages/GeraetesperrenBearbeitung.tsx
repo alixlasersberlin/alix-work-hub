@@ -216,6 +216,27 @@ export default function GeraetesperrenBearbeitung() {
       <PageHeader icon={Lock} title="Gerätesperren · Bearbeitung" subtitle="Rücklastschriften importieren, Rechnungen zuordnen und Sperren aktivieren" noBreadcrumbs />
       <GeraetesperrenTabs />
 
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Suche: Rechnungsnummer, Firmenname, Name, Seriennummer, Ortschaft…"
+              className="pl-9"
+            />
+          </div>
+          {term && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {filtered.length} Sperrvorschläge · {filteredPending.length} offene Vorschläge gefunden
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+
+
       <Card className="border-red-500/30 bg-red-500/5">
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><Upload className="w-4 h-4 text-red-500" /> Rücklastschrift importieren (PDF / CSV)</CardTitle></CardHeader>
         <CardContent className="space-y-3">
