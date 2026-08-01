@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, RefreshCw, Unlock } from 'lucide-react';
+import { Lock, RefreshCw, Unlock, Pencil, Wallet } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { GeraetesperrenTabs } from './GeraetesperrenTabs';
+import { useAuth } from '@/hooks/useAuth';
+import { DeviceLockEditDialog, DeviceLockBookDialog, type DeviceLock } from '@/components/finance/DeviceLockDialogs';
 
 const fmt = (n: number | null | undefined) =>
   n == null ? '—' : new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
@@ -45,6 +47,10 @@ export default function Geraetesperren() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [status, setStatus] = useState<'alle' | StatusKey>('aktiv');
+  const { hasAnyRole } = useAuth();
+  const canManage = hasAnyRole(['Admin', 'Super Admin']);
+  const [editLock, setEditLock] = useState<DeviceLock | null>(null);
+  const [bookLock, setBookLock] = useState<DeviceLock | null>(null);
 
   async function load() {
     setLoading(true);
@@ -147,11 +153,23 @@ export default function Geraetesperren() {
                     <td className="p-2 whitespace-nowrap">{r.return_date ?? '—'}</td>
                     <td className="p-2 text-xs text-muted-foreground max-w-[420px]">{r.lock_note}</td>
                     <td className="p-2 text-right">
-                      {r.status === 'aktiv' && (
-                        <Button size="sm" variant="outline" onClick={() => release(r.id)}>
-                          <Unlock className="w-3.5 h-3.5 mr-1" /> Aufheben
-                        </Button>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {canManage && (
+                          <>
+                            <Button size="sm" variant="outline" onClick={() => setEditLock(r as DeviceLock)}>
+                              <Pencil className="w-3.5 h-3.5 mr-1" /> Bearbeiten
+                            </Button>
+                            <Button size="sm" onClick={() => setBookLock(r as DeviceLock)}>
+                              <Wallet className="w-3.5 h-3.5 mr-1" /> Buchen
+                            </Button>
+                          </>
+                        )}
+                        {r.status === 'aktiv' && (
+                          <Button size="sm" variant="outline" onClick={() => release(r.id)}>
+                            <Unlock className="w-3.5 h-3.5 mr-1" /> Aufheben
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -160,6 +178,19 @@ export default function Geraetesperren() {
           )}
         </CardContent>
       </Card>
+
+      <DeviceLockEditDialog
+        lock={editLock}
+        open={!!editLock}
+        onOpenChange={(v) => !v && setEditLock(null)}
+        onSaved={load}
+      />
+      <DeviceLockBookDialog
+        lock={bookLock}
+        open={!!bookLock}
+        onOpenChange={(v) => !v && setBookLock(null)}
+        onBooked={load}
+      />
     </div>
   );
 }
