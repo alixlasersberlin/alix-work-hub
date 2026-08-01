@@ -45,7 +45,7 @@ type NavItem = NavChild & { children?: NavChild[] };
 
 export const navItems: NavItem[] = [
   {
-    path: '/geraetesperren', label: 'SPERREN', icon: Lock,
+    path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock,
     roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
     children: [
       { path: '/geraetesperren', label: 'Übersicht', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'] },
