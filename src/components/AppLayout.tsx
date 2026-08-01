@@ -408,6 +408,8 @@ export const navItems: NavItem[] = [
     ],
   },
 
+  { path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: null },
+
   {
     path: '/finance', label: 'BUCHHALTUNG', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
     children: [
