@@ -1277,7 +1277,7 @@ export default function AppLayout() {
       );
 
     }
-    
+    if (path === '/verkauf/angebote') return label;
     const key = path === '/production' && label === 'Liste' ? '__production_liste' : path;
     const c = lagerCounts[key];
     if (c === undefined) return label;
