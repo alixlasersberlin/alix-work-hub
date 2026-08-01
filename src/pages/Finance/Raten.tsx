@@ -86,7 +86,8 @@ export default function FinanceRaten() {
   );
 
   const byDay = useMemo(() => {
-    if (dayTab === 'sepa') return sorted.filter(isSepa);
+    if (dayTab === 'sepa') return sorted.filter(r => isSepa(r) && dayOf(r) !== 15);
+    if (dayTab === 'sepa15') return sorted.filter(r => isSepa(r) && dayOf(r) === 15);
     const base = sorted.filter(r => !isSepa(r));
     return dayTab === 'all' ? base : base.filter(r => dayOf(r) === dayTab);
   }, [sorted, dayTab]);
@@ -95,8 +96,10 @@ export default function FinanceRaten() {
     all: rows.filter(r => !isSepa(r)).length,
     d1: rows.filter(r => !isSepa(r) && dayOf(r) === 1).length,
     d15: rows.filter(r => !isSepa(r) && dayOf(r) === 15).length,
-    sepa: rows.filter(isSepa).length,
+    sepa: rows.filter(r => isSepa(r) && dayOf(r) !== 15).length,
+    sepa15: rows.filter(r => isSepa(r) && dayOf(r) === 15).length,
   }), [rows]);
+
 
   const filtered = useMemo(() => byDay.filter(r => matchesQuery({
     ...r,
