@@ -64,8 +64,21 @@ export default function FeedbackImport() {
   const selected = useMemo(() => surveys.find(s => s.id === surveyId), [surveys, surveyId]);
   const addLog = (l: string) => setLog(p => [l, ...p].slice(0, 30));
 
+  /** Gibt die Ziel-Umfrage zurück — legt automatisch eine neue an, wenn keine gewählt ist. */
+  async function ensureSurvey(labelHint?: string): Promise<string> {
+    if (surveyId) return surveyId;
+    const name = `Import ${labelHint ? `· ${labelHint} ` : ''}· ${new Date().toLocaleDateString('de-DE')}`;
+    const { data, error } = await sb.from('surveys').insert({ name, status: 'entwurf' }).select('id,name,status').single();
+    if (error) throw new Error(error.message);
+    setSurveys(p => [data, ...p]);
+    setSurveyId(data.id);
+    toast.info(`Neue Umfrage „${data.name}" angelegt`);
+    return data.id as string;
+  }
+
   async function importRecipients(file: File) {
-    if (!surveyId) { toast.error('Bitte zuerst eine Umfrage wählen'); return; }
+    const sid = await ensureSurvey(file.name);
+
     setBusy('r');
     try {
       const rows = await readFile(file);
