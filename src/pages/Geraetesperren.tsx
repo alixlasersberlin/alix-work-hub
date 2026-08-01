@@ -162,7 +162,17 @@ export default function Geraetesperren() {
                 {filtered.map((r) => (
                   <tr key={r.id} className="border-t border-border hover:bg-red-500/5">
                     <td className="p-2 whitespace-nowrap"><StatusBadge status={r.status} /></td>
-                    <td className="p-2 font-medium text-red-500 whitespace-nowrap">{r.invoice_number ?? '—'}</td>
+                    <td className="p-2 font-medium whitespace-nowrap">
+                      {r.invoice_number ? (
+                        <button
+                          type="button"
+                          onClick={() => openPdf(r)}
+                          className="text-red-500 underline underline-offset-2 hover:text-red-400"
+                        >
+                          {r.invoice_number}
+                        </button>
+                      ) : '—'}
+                    </td>
                     <td className="p-2 font-mono text-xs whitespace-nowrap">{r.customer_number ?? r.customer_id ?? '—'}</td>
                     <td className="p-2">{r.customer_name ?? '—'}</td>
                     <td className="p-2 text-right whitespace-nowrap">{fmt(r.amount)}</td>
