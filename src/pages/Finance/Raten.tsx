@@ -129,7 +129,7 @@ export default function FinanceRaten() {
           { key: 'all' as const, label: 'Alle', count: counts.all },
           { key: 1 as const, label: 'Buchung 1. im Monat', count: counts.d1 },
           { key: 15 as const, label: 'Buchung 15. im Monat', count: counts.d15 },
-        ]).map(t => (
+          { key: 'sepa' as const, label: 'REAL DATEV 1. des Monats', count: counts.sepa },
           <button
             key={String(t.key)}
             type="button"
