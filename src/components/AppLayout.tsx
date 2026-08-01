@@ -1278,6 +1278,17 @@ export default function AppLayout() {
 
     }
     if (path === '/verkauf/angebote') return label;
+    if (path === '/verkauf/anfragen') {
+      const c = lagerCounts['/verkauf/anfragen'] ?? 0;
+      return (
+        <>
+          {label}{' '}
+          <span className={c > 0 ? 'text-amber-500' : 'text-muted-foreground'} title="Offene Anfragen">
+            ({c})
+          </span>
+        </>
+      );
+    }
     const key = path === '/production' && label === 'Liste' ? '__production_liste' : path;
     const c = lagerCounts[key];
     if (c === undefined) return label;
