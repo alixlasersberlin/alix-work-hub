@@ -64,13 +64,26 @@ export default function FeedbackImport() {
   const selected = useMemo(() => surveys.find(s => s.id === surveyId), [surveys, surveyId]);
   const addLog = (l: string) => setLog(p => [l, ...p].slice(0, 30));
 
+  /** Gibt die Ziel-Umfrage zurück — legt automatisch eine neue an, wenn keine gewählt ist. */
+  async function ensureSurvey(labelHint?: string): Promise<string> {
+    if (surveyId) return surveyId;
+    const name = `Import ${labelHint ? `· ${labelHint} ` : ''}· ${new Date().toLocaleDateString('de-DE')}`;
+    const { data, error } = await sb.from('surveys').insert({ name, status: 'entwurf' }).select('id,name,status').single();
+    if (error) throw new Error(error.message);
+    setSurveys(p => [data, ...p]);
+    setSurveyId(data.id);
+    toast.info(`Neue Umfrage „${data.name}" angelegt`);
+    return data.id as string;
+  }
+
   async function importRecipients(file: File) {
-    if (!surveyId) { toast.error('Bitte zuerst eine Umfrage wählen'); return; }
+    const sid = await ensureSurvey(file.name);
+
     setBusy('r');
     try {
       const rows = await readFile(file);
       const payload = rows.map(r => ({
-        survey_id: surveyId,
+        survey_id: sid,
         customer_number: pick(r, ['kundennummer', 'kundennr', 'customernumber', 'customerno']) || null,
         company_name: pick(r, ['firma', 'firmenname', 'company', 'companyname', 'kunde']) || null,
         first_name: pick(r, ['vorname', 'firstname']) || null,
@@ -98,15 +111,15 @@ export default function FeedbackImport() {
     }
   }
 
-  async function insertQuestions(list: { label: string; qtype: string; required: boolean; options: string[]; help_text?: string | null }[]) {
-    const { data: existing } = await sb.from('survey_questions').select('id').eq('survey_id', surveyId);
+  async function insertQuestions(list: { label: string; qtype: string; required: boolean; options: string[]; help_text?: string | null }[], sid: string) {
+    const { data: existing } = await sb.from('survey_questions').select('id').eq('survey_id', sid);
     let pos = (existing?.length ?? 0);
     let created = 0, opts = 0;
     for (const item of list) {
       if (!item.label) continue;
       pos += 1;
       const { data: q, error } = await sb.from('survey_questions').insert({
-        survey_id: surveyId,
+        survey_id: sid,
         qtype: QTYPES.includes(item.qtype) ? item.qtype : 'text',
         label: item.label, position: pos, required: item.required,
         help_text: item.help_text ?? null,
@@ -125,7 +138,7 @@ export default function FeedbackImport() {
   }
 
   async function importQuestions(file: File) {
-    if (!surveyId) { toast.error('Bitte zuerst eine Umfrage wählen'); return; }
+    const sid = await ensureSurvey(file.name);
     setBusy('q');
     try {
       const rows = await readFile(file);
@@ -142,7 +155,7 @@ export default function FeedbackImport() {
           help_text: pick(r, ['hilfetext', 'beschreibung', 'helptext']) || null,
         };
       }).filter(r => r.label);
-      const { created, opts } = await insertQuestions(list);
+      const { created, opts } = await insertQuestions(list, sid);
       if (!created) { toast.error('Keine gültigen Fragen gefunden'); return; }
       toast.success(`${created} Fragen (${opts} Optionen) importiert`);
       addLog(`${new Date().toLocaleTimeString('de-DE')} · ${created} Fragen → ${selected?.name ?? ''}`);
@@ -155,7 +168,6 @@ export default function FeedbackImport() {
   }
 
   async function analyzeDoc(file: File) {
-    if (!surveyId) { toast.error('Bitte zuerst eine Umfrage wählen'); return; }
     setBusy('d');
     setDocName(file.name);
     try {
@@ -175,7 +187,8 @@ export default function FeedbackImport() {
     if (!parsed?.length) return;
     setBusy('d');
     try {
-      const { created, opts } = await insertQuestions(parsed);
+      const sid = await ensureSurvey(docName);
+      const { created, opts } = await insertQuestions(parsed, sid);
       toast.success(`${created} Fragen (${opts} Optionen) importiert`);
       addLog(`${new Date().toLocaleTimeString('de-DE')} · ${created} Fragen aus ${docName} → ${selected?.name ?? ''}`);
       setParsed(null); setDocName('');
@@ -199,8 +212,16 @@ export default function FeedbackImport() {
             </SelectContent>
           </Select>
           {selected && <Badge variant="outline">{selected.status}</Badge>}
+          {!surveyId && (
+            <span className="text-xs text-muted-foreground">
+              {surveys.length === 0
+                ? 'Noch keine Umfrage vorhanden — beim Import wird automatisch eine neue Umfrage angelegt.'
+                : 'Ohne Auswahl wird beim Import automatisch eine neue Umfrage angelegt.'}
+            </span>
+          )}
         </CardContent>
       </Card>
+
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
@@ -212,7 +233,7 @@ export default function FeedbackImport() {
             <input ref={recRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) importRecipients(f); }} />
             <div className="flex flex-wrap gap-2">
-              <Button disabled={busy !== null || !surveyId} onClick={() => recRef.current?.click()}>
+              <Button disabled={busy !== null} onClick={() => recRef.current?.click()}>
                 <Upload className="h-4 w-4 mr-2" />{busy === 'r' ? 'Importiere…' : 'Datei wählen'}
               </Button>
               <Button variant="outline" onClick={() => downloadTemplate('empfaenger-vorlage.xlsx',
@@ -233,7 +254,7 @@ export default function FeedbackImport() {
             <input ref={qRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) importQuestions(f); }} />
             <div className="flex flex-wrap gap-2">
-              <Button disabled={busy !== null || !surveyId} onClick={() => qRef.current?.click()}>
+              <Button disabled={busy !== null} onClick={() => qRef.current?.click()}>
                 <Upload className="h-4 w-4 mr-2" />{busy === 'q' ? 'Importiere…' : 'Datei wählen'}
               </Button>
               <Button variant="outline" onClick={() => downloadTemplate('fragen-vorlage.xlsx',
@@ -261,7 +282,7 @@ export default function FeedbackImport() {
           <input ref={docRef} type="file" accept=".pdf,.docx,.txt" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) analyzeDoc(f); }} />
           <div className="flex flex-wrap gap-2">
-            <Button disabled={busy !== null || !surveyId} onClick={() => docRef.current?.click()}>
+            <Button disabled={busy !== null} onClick={() => docRef.current?.click()}>
               <Upload className="h-4 w-4 mr-2" />{busy === 'd' ? 'Verarbeite…' : 'PDF / Word wählen'}
             </Button>
             {parsed && parsed.length > 0 && (
