@@ -1892,8 +1892,8 @@ export default function AppLayout() {
                     isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
                     isRed
                       ? (active
-                          ? "bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
-                          : "text-red-500 hover:text-red-500 hover:bg-red-500/10")
+                          ? "font-bold bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
+                          : "font-bold text-red-500 hover:text-red-500 hover:bg-red-500/10")
                       : (active
                           ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
                           : "text-sidebar-foreground hover:text-primary hover:bg-primary/15")
