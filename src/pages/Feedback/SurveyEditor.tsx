@@ -67,7 +67,12 @@ export default function SurveyEditor() {
       language: survey.language, est_minutes: survey.est_minutes ? Number(survey.est_minutes) : null,
       target_group: survey.target_group, device_model: survey.device_model, status: survey.status,
       reward_id: survey.reward_id || null, reminders_enabled: survey.reminders_enabled,
-      reminder_days: survey.reminder_days ? Number(survey.reminder_days) : null,
+      reminder_days: (() => {
+        const v = survey.reminder_days;
+        const arr = Array.isArray(v) ? v.map(Number) : String(v ?? '').split(',').map((s: string) => Number(s.trim()));
+        const clean = arr.filter((n: number) => Number.isFinite(n) && n > 0);
+        return clean.length ? clean : [7];
+      })(),
       starts_at: survey.starts_at || null, ends_at: survey.ends_at || null,
     };
     if (isNew) {
@@ -225,8 +230,8 @@ export default function SurveyEditor() {
             <div className="flex items-center gap-3 pt-6">
               <Switch checked={!!survey.reminders_enabled} onCheckedChange={v => setSurvey({ ...survey, reminders_enabled: v })} />
               <span className="text-sm">Erinnerungen aktiv</span>
-              <Input className="w-20" type="number" value={survey.reminder_days ?? 7} onChange={e => setSurvey({ ...survey, reminder_days: e.target.value })} />
-              <span className="text-sm text-muted-foreground">Tage</span>
+              <Input className="w-32" value={Array.isArray(survey.reminder_days) ? survey.reminder_days.join(', ') : (survey.reminder_days ?? 7)} onChange={e => setSurvey({ ...survey, reminder_days: e.target.value })} />
+              <span className="text-sm text-muted-foreground">Tage (z. B. 7, 14)</span>
             </div>
           </CardContent></Card>
         </TabsContent>
