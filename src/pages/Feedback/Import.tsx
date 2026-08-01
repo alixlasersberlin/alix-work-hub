@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FeedbackHeader } from './_shared';
-import { Upload, FileSpreadsheet, Users, ListChecks, Download } from 'lucide-react';
+import { Upload, FileSpreadsheet, Users, ListChecks, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { parseQuestionsFromFile, type ParsedQuestion } from '@/lib/feedback/parseDocQuestions';
+
 
 type Row = Record<string, any>;
 
