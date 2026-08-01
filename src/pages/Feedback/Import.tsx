@@ -225,7 +225,7 @@ export default function FeedbackImport() {
             <input ref={recRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) importRecipients(f); }} />
             <div className="flex flex-wrap gap-2">
-              <Button disabled={busy !== null || !surveyId} onClick={() => recRef.current?.click()}>
+              <Button disabled={busy !== null} onClick={() => recRef.current?.click()}>
                 <Upload className="h-4 w-4 mr-2" />{busy === 'r' ? 'Importiere…' : 'Datei wählen'}
               </Button>
               <Button variant="outline" onClick={() => downloadTemplate('empfaenger-vorlage.xlsx',
@@ -246,7 +246,7 @@ export default function FeedbackImport() {
             <input ref={qRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; if (f) importQuestions(f); }} />
             <div className="flex flex-wrap gap-2">
-              <Button disabled={busy !== null || !surveyId} onClick={() => qRef.current?.click()}>
+              <Button disabled={busy !== null} onClick={() => qRef.current?.click()}>
                 <Upload className="h-4 w-4 mr-2" />{busy === 'q' ? 'Importiere…' : 'Datei wählen'}
               </Button>
               <Button variant="outline" onClick={() => downloadTemplate('fragen-vorlage.xlsx',
@@ -274,7 +274,7 @@ export default function FeedbackImport() {
           <input ref={docRef} type="file" accept=".pdf,.docx,.txt" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) analyzeDoc(f); }} />
           <div className="flex flex-wrap gap-2">
-            <Button disabled={busy !== null || !surveyId} onClick={() => docRef.current?.click()}>
+            <Button disabled={busy !== null} onClick={() => docRef.current?.click()}>
               <Upload className="h-4 w-4 mr-2" />{busy === 'd' ? 'Verarbeite…' : 'PDF / Word wählen'}
             </Button>
             {parsed && parsed.length > 0 && (
