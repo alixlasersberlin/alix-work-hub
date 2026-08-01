@@ -253,12 +253,9 @@ export default function GeraetesperrenBearbeitung() {
       {matches.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
-            <CardTitle className="text-base">Sperrvorschläge ({matches.length}) · {selectedCount} ausgewählt</CardTitle>
+            <CardTitle className="text-base">Sperrvorschläge ({filtered.length}/{matches.length}) · {selectedCount} ausgewählt</CardTitle>
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Suchen…" className="pl-8 w-56" />
-              </div>
+
               <Button variant="outline" size="sm" onClick={() => setMatches((m) => m.map((x) => ({ ...x, selected: true })))}>Alle</Button>
               <Button variant="outline" size="sm" onClick={() => setMatches((m) => m.map((x) => ({ ...x, selected: false })))}>Keine</Button>
               <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" disabled={saving || !selectedCount} onClick={() => activate(true)}>
