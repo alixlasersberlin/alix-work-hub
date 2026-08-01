@@ -111,15 +111,15 @@ export default function FeedbackImport() {
     }
   }
 
-  async function insertQuestions(list: { label: string; qtype: string; required: boolean; options: string[]; help_text?: string | null }[]) {
-    const { data: existing } = await sb.from('survey_questions').select('id').eq('survey_id', surveyId);
+  async function insertQuestions(list: { label: string; qtype: string; required: boolean; options: string[]; help_text?: string | null }[], sid: string) {
+    const { data: existing } = await sb.from('survey_questions').select('id').eq('survey_id', sid);
     let pos = (existing?.length ?? 0);
     let created = 0, opts = 0;
     for (const item of list) {
       if (!item.label) continue;
       pos += 1;
       const { data: q, error } = await sb.from('survey_questions').insert({
-        survey_id: surveyId,
+        survey_id: sid,
         qtype: QTYPES.includes(item.qtype) ? item.qtype : 'text',
         label: item.label, position: pos, required: item.required,
         help_text: item.help_text ?? null,
