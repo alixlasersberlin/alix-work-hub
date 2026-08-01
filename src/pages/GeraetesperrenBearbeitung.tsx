@@ -319,17 +319,17 @@ export default function GeraetesperrenBearbeitung() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Offene Sperrvorschläge ({pending.length})</CardTitle>
+          <CardTitle className="text-base">Offene Sperrvorschläge ({filteredPending.length}/{pending.length})</CardTitle>
           <Button variant="ghost" size="sm" onClick={loadPending}><RefreshCw className="w-4 h-4" /></Button>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
-          {pending.length === 0 ? (
+          {filteredPending.length === 0 ? (
             <p className="p-6 text-sm text-muted-foreground text-center">Keine offenen Vorschläge.</p>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-left"><tr><th className="p-2">Rechnung</th><th className="p-2">Kd.-Nr.</th><th className="p-2">Kunde</th><th className="p-2 text-right">Betrag</th><th className="p-2">Vermerk</th><th className="p-2"></th></tr></thead>
               <tbody>
-                {pending.map((p) => (
+                {filteredPending.map((p) => (
                   <tr key={p.id} className="border-t border-border">
                     <td className="p-2">{p.invoice_number ?? '—'}</td>
                     <td className="p-2 font-mono text-xs">{p.customer_number ?? p.customer_id ?? '—'}</td>
