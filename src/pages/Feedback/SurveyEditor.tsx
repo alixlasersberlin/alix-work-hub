@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FeedbackHeader, LANGUAGES, QUESTION_TYPES, SURVEY_STATUS } from './_shared';
 import { Plus, Save, Trash2, ArrowUp, ArrowDown, Send, Search, Link2, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { publicUrl } from '@/lib/esc/public-url';
 
 const OPTION_TYPES = QUESTION_TYPES.filter(t => t.hasOptions).map(t => t.value);
 
@@ -169,7 +170,7 @@ export default function SurveyEditor() {
     load();
   }
 
-  const publicBase = useMemo(() => `${window.location.origin}/umfrage`, []);
+  const publicBase = useMemo(() => publicUrl('/umfrage'), []);
 
   return (
     <div className="space-y-5">

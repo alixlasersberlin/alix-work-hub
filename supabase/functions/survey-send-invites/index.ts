@@ -50,7 +50,8 @@ Deno.serve(async (req) => {
       .eq('kind', kind).or(`survey_id.eq.${survey_id},survey_id.is.null`)
       .order('survey_id', { ascending: false, nullsFirst: false }).limit(1).maybeSingle();
 
-    const origin = req.headers.get('origin') ?? 'https://app.alixwork.de';
+    // Öffentliche Links immer über die feste Produktions-Domain
+    const origin = 'https://alixwork.de';
     const now = new Date().toISOString();
     let sent = 0, skipped = 0;
 
