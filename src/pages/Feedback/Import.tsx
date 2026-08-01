@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FeedbackHeader } from './_shared';
-import { Upload, FileSpreadsheet, Users, ListChecks, Download } from 'lucide-react';
+import { Upload, FileSpreadsheet, Users, ListChecks, Download, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { parseQuestionsFromFile, type ParsedQuestion } from '@/lib/feedback/parseDocQuestions';
+
 
 type Row = Record<string, any>;
 
@@ -44,10 +46,14 @@ export default function FeedbackImport() {
   const sb = supabase as any;
   const [surveys, setSurveys] = useState<any[]>([]);
   const [surveyId, setSurveyId] = useState('');
-  const [busy, setBusy] = useState<'r' | 'q' | null>(null);
+  const [busy, setBusy] = useState<'r' | 'q' | 'd' | null>(null);
   const [log, setLog] = useState<string[]>([]);
+  const [parsed, setParsed] = useState<ParsedQuestion[] | null>(null);
+  const [docName, setDocName] = useState('');
   const recRef = useRef<HTMLInputElement>(null);
   const qRef = useRef<HTMLInputElement>(null);
+  const docRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     sb.from('surveys').select('id,name,status').is('deleted_at', null).order('created_at', { ascending: false })
@@ -92,42 +98,51 @@ export default function FeedbackImport() {
     }
   }
 
+  async function insertQuestions(list: { label: string; qtype: string; required: boolean; options: string[]; help_text?: string | null }[]) {
+    const { data: existing } = await sb.from('survey_questions').select('id').eq('survey_id', surveyId);
+    let pos = (existing?.length ?? 0);
+    let created = 0, opts = 0;
+    for (const item of list) {
+      if (!item.label) continue;
+      pos += 1;
+      const { data: q, error } = await sb.from('survey_questions').insert({
+        survey_id: surveyId,
+        qtype: QTYPES.includes(item.qtype) ? item.qtype : 'text',
+        label: item.label, position: pos, required: item.required,
+        help_text: item.help_text ?? null,
+      }).select('id').single();
+      if (error) throw new Error(error.message);
+      created += 1;
+      if (item.options.length) {
+        const { error: oe } = await sb.from('survey_question_options').insert(
+          item.options.map((l, i) => ({ question_id: q.id, label: l, value: `opt${i + 1}`, position: i + 1 }))
+        );
+        if (oe) throw new Error(oe.message);
+        opts += item.options.length;
+      }
+    }
+    return { created, opts };
+  }
+
   async function importQuestions(file: File) {
     if (!surveyId) { toast.error('Bitte zuerst eine Umfrage wählen'); return; }
     setBusy('q');
     try {
       const rows = await readFile(file);
-      const { data: existing } = await sb.from('survey_questions').select('id').eq('survey_id', surveyId);
-      let pos = (existing?.length ?? 0);
-      let created = 0, opts = 0;
-
-      for (const r of rows) {
+      const list = rows.map(r => {
         const label = pick(r, ['frage', 'label', 'fragetext', 'question', 'text']);
-        if (!label) continue;
         const rawType = norm(pick(r, ['typ', 'fragetyp', 'type', 'qtype']) || 'text');
-        const qtype = QTYPES.includes(rawType) ? rawType : 'text';
         const requiredRaw = norm(pick(r, ['pflicht', 'pflichtfeld', 'required']) || '');
-        const required = ['ja', 'yes', 'true', '1', 'x'].includes(requiredRaw);
-        pos += 1;
-        const { data: q, error } = await sb.from('survey_questions').insert({
-          survey_id: surveyId, qtype, label, position: pos, required,
-          help_text: pick(r, ['hilfetext', 'beschreibung', 'helptext']) || null,
-        }).select('id').single();
-        if (error) throw new Error(error.message);
-        created += 1;
-
         const optRaw = pick(r, ['optionen', 'antworten', 'options', 'answers']);
-        if (optRaw) {
-          const list = optRaw.split(/[;|]/).map(s => s.trim()).filter(Boolean);
-          if (list.length) {
-            const { error: oe } = await sb.from('survey_question_options').insert(
-              list.map((l, i) => ({ question_id: q.id, label: l, value: `opt${i + 1}`, position: i + 1 }))
-            );
-            if (oe) throw new Error(oe.message);
-            opts += list.length;
-          }
-        }
-      }
+        return {
+          label,
+          qtype: QTYPES.includes(rawType) ? rawType : 'text',
+          required: ['ja', 'yes', 'true', '1', 'x'].includes(requiredRaw),
+          options: optRaw ? optRaw.split(/[;|]/).map(s => s.trim()).filter(Boolean) : [],
+          help_text: pick(r, ['hilfetext', 'beschreibung', 'helptext']) || null,
+        };
+      }).filter(r => r.label);
+      const { created, opts } = await insertQuestions(list);
       if (!created) { toast.error('Keine gültigen Fragen gefunden'); return; }
       toast.success(`${created} Fragen (${opts} Optionen) importiert`);
       addLog(`${new Date().toLocaleTimeString('de-DE')} · ${created} Fragen → ${selected?.name ?? ''}`);
@@ -138,6 +153,37 @@ export default function FeedbackImport() {
       if (qRef.current) qRef.current.value = '';
     }
   }
+
+  async function analyzeDoc(file: File) {
+    if (!surveyId) { toast.error('Bitte zuerst eine Umfrage wählen'); return; }
+    setBusy('d');
+    setDocName(file.name);
+    try {
+      const list = await parseQuestionsFromFile(file);
+      if (!list.length) { toast.error('Keine Fragen erkannt — Fragezeilen sollten mit „?" enden oder nummeriert sein.'); setParsed([]); return; }
+      setParsed(list);
+      toast.success(`${list.length} Fragen erkannt — bitte prüfen und übernehmen`);
+    } catch (e: any) {
+      toast.error(e.message ?? 'Datei konnte nicht gelesen werden');
+    } finally {
+      setBusy(null);
+      if (docRef.current) docRef.current.value = '';
+    }
+  }
+
+  async function confirmParsed() {
+    if (!parsed?.length) return;
+    setBusy('d');
+    try {
+      const { created, opts } = await insertQuestions(parsed);
+      toast.success(`${created} Fragen (${opts} Optionen) importiert`);
+      addLog(`${new Date().toLocaleTimeString('de-DE')} · ${created} Fragen aus ${docName} → ${selected?.name ?? ''}`);
+      setParsed(null); setDocName('');
+    } catch (e: any) {
+      toast.error(e.message ?? 'Import fehlgeschlagen');
+    } finally { setBusy(null); }
+  }
+
 
   return (
     <div className="space-y-5">
@@ -203,6 +249,55 @@ export default function FeedbackImport() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4 text-primary" />Fragenkatalog aus PDF oder Word</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            PDF (.pdf), Word (.docx) oder Text (.txt) hochladen — Fragen werden automatisch erkannt.
+            Fragezeilen enden mit „?" oder sind nummeriert („1. …"), Antwortoptionen stehen als Aufzählung darunter
+            („- Option"). Typ optional in Klammern, z. B. „(Sterne)", Pflichtfragen mit „*" am Ende.
+          </p>
+          <input ref={docRef} type="file" accept=".pdf,.docx,.txt" className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) analyzeDoc(f); }} />
+          <div className="flex flex-wrap gap-2">
+            <Button disabled={busy !== null || !surveyId} onClick={() => docRef.current?.click()}>
+              <Upload className="h-4 w-4 mr-2" />{busy === 'd' ? 'Verarbeite…' : 'PDF / Word wählen'}
+            </Button>
+            {parsed && parsed.length > 0 && (
+              <>
+                <Button variant="default" disabled={busy !== null} onClick={confirmParsed}>
+                  {parsed.length} Fragen übernehmen
+                </Button>
+                <Button variant="outline" disabled={busy !== null} onClick={() => { setParsed(null); setDocName(''); }}>
+                  Verwerfen
+                </Button>
+              </>
+            )}
+          </div>
+
+          {parsed && parsed.length > 0 && (
+            <div className="rounded-md border border-border divide-y divide-border max-h-96 overflow-auto">
+              <div className="px-3 py-2 text-xs text-muted-foreground">Vorschau · {docName}</div>
+              {parsed.map((q, i) => (
+                <div key={i} className="px-3 py-2 space-y-1">
+                  <div className="flex items-start gap-2">
+                    <span className="text-xs text-muted-foreground w-6 shrink-0">{i + 1}.</span>
+                    <span className="text-sm flex-1">{q.label}</span>
+                    <Badge variant="outline" className="shrink-0">{q.qtype}</Badge>
+                    {q.required && <Badge variant="secondary" className="shrink-0">Pflicht</Badge>}
+                  </div>
+                  {q.options.length > 0 && (
+                    <p className="text-xs text-muted-foreground pl-8">{q.options.join(' · ')}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+
 
       <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><FileSpreadsheet className="h-4 w-4 text-primary" />Import-Protokoll</CardTitle></CardHeader>
