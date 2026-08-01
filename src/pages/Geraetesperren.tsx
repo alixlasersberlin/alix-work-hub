@@ -217,6 +217,11 @@ export default function Geraetesperren() {
         onOpenChange={(v) => !v && setBookLock(null)}
         onBooked={load}
       />
+      <InvoicePdfDialog
+        invoice={pdfInvoice}
+        open={!!pdfInvoice}
+        onOpenChange={(v) => !v && setPdfInvoice(null)}
+      />
     </div>
   );
 }
