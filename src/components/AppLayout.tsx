@@ -605,6 +605,7 @@ export const navItems: NavItem[] = [
       { path: '/umfragen', label: 'Umfragen', icon: ClipboardCheck, roles: null },
       { path: '/umfragen/antworten', label: 'Antworten', icon: MessageSquare, roles: null },
       { path: '/umfragen/geschenke', label: 'Geschenke', icon: Gift, roles: null },
+      { path: '/umfragen/belohnungen', label: 'Belohnungszusagen', icon: Gift, roles: null },
       { path: '/umfragen/vorlagen', label: 'E-Mail-Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Marketing'] },
     ],
   },
