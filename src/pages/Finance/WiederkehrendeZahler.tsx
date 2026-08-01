@@ -621,15 +621,27 @@ export default function WiederkehrendeZahler() {
                                     <Badge variant={(p.status ?? '').toLowerCase() === 'active' ? 'default' : 'secondary'} className="capitalize">{p.status ?? '—'}</Badge>
                                   </td>
                                   <td className="px-3 py-2 text-right">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      disabled={!canWrite}
-                                      onClick={() => setEditProfile(p as EditableProfile)}
-                                    >
-                                      Bearbeiten
-                                    </Button>
+                                    <div className="flex items-center gap-2 justify-end">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        disabled={!canWrite}
+                                        onClick={() => setEditProfile(p as EditableProfile)}
+                                      >
+                                        Bearbeiten
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        disabled={!canWrite || stoppingId === p.id || (p.status ?? '').toLowerCase() === 'pruefung'}
+                                        onClick={() => stopProfile(p)}
+                                        title="Vertrag stoppen und zur Prüfung verschieben"
+                                      >
+                                        {stoppingId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'STOP'}
+                                      </Button>
+                                    </div>
                                   </td>
+
                                 </tr>
                                 );
                               })}
