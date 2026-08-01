@@ -178,17 +178,38 @@ export default function GeraetesperrenBearbeitung() {
     loadPending();
   }
 
-  const filtered = useMemo(() => {
-    if (!q.trim()) return matches;
-    const s = q.toLowerCase();
-    return matches.filter(
-      (m) =>
-        (m.invoice?.invoice_number ?? m.row.invoice_number ?? '').toLowerCase().includes(s) ||
-        (m.invoice?.customer_name ?? m.row.customer_name ?? '').toLowerCase().includes(s),
-    );
-  }, [matches, q]);
+  const term = (q || '').trim().toLowerCase();
+  const hit = (...vals: any[]) =>
+    !term || vals.some((v) => (v == null ? '' : String(v)).toLowerCase().includes(term));
+
+  const filtered = useMemo(
+    () =>
+      matches.filter((m) =>
+        hit(
+          m.invoice?.invoice_number,
+          m.row.invoice_number,
+          m.invoice?.customer_name,
+          m.row.customer_name,
+          m.invoice?.customer_id,
+          (m.row as any).serial_number,
+          (m.row as any).city,
+          (m.row as any).company_name,
+          m.note,
+        ),
+      ),
+    [matches, term],
+  );
+
+  const filteredPending = useMemo(
+    () =>
+      pending.filter((p) =>
+        hit(p.invoice_number, p.customer_name, p.customer_number, p.customer_id, p.serial_number, p.city, p.lock_note),
+      ),
+    [pending, term],
+  );
 
   const selectedCount = matches.filter((m) => m.selected).length;
+
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
