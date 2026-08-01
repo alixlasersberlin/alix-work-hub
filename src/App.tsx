@@ -249,6 +249,7 @@ const AnfragenOffen = lazy(() => import("./pages/AnfragenOffen"));
 const Detailsuche = lazy(() => import("./pages/Detailsuche"));
 const AuftragStatus = lazy(() => import("./pages/AuftragStatus"));
 const Geraetesperren = lazy(() => import("./pages/Geraetesperren"));
+const GeraetesperrenBearbeitung = lazy(() => import("./pages/GeraetesperrenBearbeitung"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const NewsAdmin = lazy(() => import("./pages/Operation/NewsAdmin"));
 const HealthCheck = lazy(() => import("./pages/HealthCheck"));
@@ -1117,6 +1118,7 @@ function AppRoutes() {
 
           <Route path="/auftragsstatus" element={<ProtectedRoute><AuftragStatus /></ProtectedRoute>} />
           <Route path="/geraetesperren" element={<ProtectedRoute><Geraetesperren /></ProtectedRoute>} />
+          <Route path="/geraetesperren/bearbeitung" element={<ProtectedRoute><GeraetesperrenBearbeitung /></ProtectedRoute>} />
           <Route path="/kunden" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Customers /></ProtectedRoute>} />
           <Route path="/kunden/doppelte" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><DoppelteKunden /></ProtectedRoute>} />
           <Route path="/kunden/:id" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><CustomerDetail /></ProtectedRoute>} />

@@ -408,7 +408,13 @@ export const navItems: NavItem[] = [
     ],
   },
 
-  { path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: null },
+  {
+    path: '/geraetesperren', label: 'GERÄTESPERREN', icon: Lock, roles: null,
+    children: [
+      { path: '/geraetesperren', label: 'Übersicht', icon: Lock, roles: null },
+      { path: '/geraetesperren/bearbeitung', label: 'Bearbeitung', icon: Lock, roles: null },
+    ],
+  },
 
   {
     path: '/finance', label: 'BUCHHALTUNG', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
@@ -1620,15 +1626,20 @@ export default function AppLayout() {
             const isCollapsedView = collapsed && !mobileOpen;
 
             if (hasChildren) {
-              const isNavigableParent = item.path === '/lager' || item.path === '/verkauf/artikel-uebersicht' || item.path === '/verkauf';
+              const isNavigableParent = item.path === '/lager' || item.path === '/verkauf/artikel-uebersicht' || item.path === '/verkauf' || item.path === '/geraetesperren';
+              const isRedGroup = item.path === '/geraetesperren';
               const rowEl = (
                 <div
                   className={cn(
                     "w-full flex items-center gap-2.5 rounded-lg text-[14.5px] font-medium transition-all duration-150",
                     isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-3" : "px-3.5 py-3 md:py-2.5",
-                    childActive
-                      ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
-                      : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
+                    isRedGroup
+                      ? (childActive || active
+                          ? "font-bold bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]"
+                          : "font-bold text-red-500 hover:text-red-500 hover:bg-red-500/10")
+                      : childActive
+                        ? "bg-primary/10 text-primary shadow-[inset_0_0_0_1px_hsl(var(--primary)/0.15)]"
+                        : "text-sidebar-foreground hover:text-primary hover:bg-primary/15"
                   )}
                 >
                   {isNavigableParent ? (
@@ -1849,6 +1860,11 @@ export default function AppLayout() {
                             icon: 'text-blue-500',
                           },
                           '/geraetesperren': {
+                            active: 'bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]',
+                            inactive: 'text-red-500 hover:text-red-500 hover:bg-red-500/10',
+                            icon: 'text-red-500',
+                          },
+                          '/geraetesperren/bearbeitung': {
                             active: 'bg-red-500/15 text-red-500 shadow-[inset_0_0_0_1px_hsl(0_84%_60%/0.4)]',
                             inactive: 'text-red-500 hover:text-red-500 hover:bg-red-500/10',
                             icon: 'text-red-500',
