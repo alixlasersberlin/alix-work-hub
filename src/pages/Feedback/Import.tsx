@@ -138,7 +138,7 @@ export default function FeedbackImport() {
   }
 
   async function importQuestions(file: File) {
-    if (!surveyId) { toast.error('Bitte zuerst eine Umfrage wählen'); return; }
+    const sid = await ensureSurvey(file.name);
     setBusy('q');
     try {
       const rows = await readFile(file);
@@ -155,7 +155,7 @@ export default function FeedbackImport() {
           help_text: pick(r, ['hilfetext', 'beschreibung', 'helptext']) || null,
         };
       }).filter(r => r.label);
-      const { created, opts } = await insertQuestions(list);
+      const { created, opts } = await insertQuestions(list, sid);
       if (!created) { toast.error('Keine gültigen Fragen gefunden'); return; }
       toast.success(`${created} Fragen (${opts} Optionen) importiert`);
       addLog(`${new Date().toLocaleTimeString('de-DE')} · ${created} Fragen → ${selected?.name ?? ''}`);
