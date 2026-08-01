@@ -230,8 +230,8 @@ export default function SurveyEditor() {
             <div className="flex items-center gap-3 pt-6">
               <Switch checked={!!survey.reminders_enabled} onCheckedChange={v => setSurvey({ ...survey, reminders_enabled: v })} />
               <span className="text-sm">Erinnerungen aktiv</span>
-              <Input className="w-20" type="number" value={survey.reminder_days ?? 7} onChange={e => setSurvey({ ...survey, reminder_days: e.target.value })} />
-              <span className="text-sm text-muted-foreground">Tage</span>
+              <Input className="w-32" value={Array.isArray(survey.reminder_days) ? survey.reminder_days.join(', ') : (survey.reminder_days ?? 7)} onChange={e => setSurvey({ ...survey, reminder_days: e.target.value })} />
+              <span className="text-sm text-muted-foreground">Tage (z. B. 7, 14)</span>
             </div>
           </CardContent></Card>
         </TabsContent>
