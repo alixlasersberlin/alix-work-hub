@@ -132,6 +132,7 @@ export default function FinanceRaten() {
           { key: 'all' as const, label: 'Alle', count: counts.all },
           { key: 1 as const, label: 'Buchung 1. im Monat', count: counts.d1 },
           { key: 15 as const, label: 'Buchung 15. im Monat', count: counts.d15 },
+          { key: 'archive' as const, label: 'Archiv', count: counts.archive },
         ]).map(t => (
           <button
             key={String(t.key)}
