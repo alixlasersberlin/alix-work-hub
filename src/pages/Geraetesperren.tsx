@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Lock, RefreshCw, Unlock } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,19 +12,47 @@ import { GeraetesperrenTabs } from './GeraetesperrenTabs';
 const fmt = (n: number | null | undefined) =>
   n == null ? '—' : new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
 
+type StatusKey = 'entwurf' | 'vorgeschlagen' | 'aktiv' | 'fehler' | 'aufgehoben';
+
+const STATUS_META: Record<StatusKey, { label: string; className: string }> = {
+  entwurf: { label: 'Entwurf', className: 'bg-muted text-muted-foreground border-border' },
+  vorgeschlagen: { label: 'Vorgeschlagen', className: 'bg-amber-500/15 text-amber-500 border-amber-500/30' },
+  aktiv: { label: 'Aktiv', className: 'bg-red-500/15 text-red-500 border-red-500/30' },
+  fehler: { label: 'Fehler', className: 'bg-orange-600/15 text-orange-500 border-orange-600/30' },
+  aufgehoben: { label: 'Aufgehoben', className: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30' },
+};
+
+const FILTERS: { key: 'alle' | StatusKey; label: string }[] = [
+  { key: 'alle', label: 'Alle' },
+  { key: 'entwurf', label: 'Entwurf' },
+  { key: 'vorgeschlagen', label: 'Vorgeschlagen' },
+  { key: 'aktiv', label: 'Aktiv' },
+  { key: 'fehler', label: 'Fehler' },
+  { key: 'aufgehoben', label: 'Aufgehoben' },
+];
+
+function StatusBadge({ status }: { status: string | null }) {
+  const meta = STATUS_META[(status ?? '') as StatusKey];
+  return (
+    <Badge variant="outline" className={meta?.className ?? 'bg-muted text-muted-foreground border-border'}>
+      {meta?.label ?? (status ?? '—')}
+    </Badge>
+  );
+}
+
 export default function Geraetesperren() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
+  const [status, setStatus] = useState<'alle' | StatusKey>('aktiv');
 
   async function load() {
     setLoading(true);
     const { data, error } = await supabase
       .from('device_locks' as any)
       .select('*')
-      .eq('status', 'aktiv')
-      .order('activated_at', { ascending: false })
-      .limit(500);
+      .order('created_at', { ascending: false })
+      .limit(1000);
     if (error) toast.error(error.message);
     setRows((data as any[]) ?? []);
     setLoading(false);
@@ -42,11 +70,22 @@ export default function Geraetesperren() {
     load();
   }
 
-  const filtered = q.trim()
-    ? rows.filter((r) =>
-        `${r.invoice_number ?? ''} ${r.customer_number ?? ''} ${r.customer_name ?? ''} ${r.lock_note ?? ''}`.toLowerCase().includes(q.toLowerCase()),
-      )
-    : rows;
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { alle: rows.length };
+    for (const r of rows) c[r.status ?? '—'] = (c[r.status ?? '—'] ?? 0) + 1;
+    return c;
+  }, [rows]);
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (status !== 'alle' && (r.status ?? '') !== status) return false;
+      if (!term) return true;
+      return `${r.invoice_number ?? ''} ${r.customer_number ?? ''} ${r.customer_name ?? ''} ${r.lock_note ?? ''}`
+        .toLowerCase()
+        .includes(term);
+    });
+  }, [rows, q, status]);
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
@@ -54,24 +93,40 @@ export default function Geraetesperren() {
       <GeraetesperrenTabs />
 
       <Card className="border-red-500/30">
-        <CardHeader className="flex flex-row items-center justify-between gap-3 flex-wrap">
-          <CardTitle className="text-base flex items-center gap-2">
-            Aktive Sperren <Badge variant="destructive">{rows.length}</Badge>
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechnung / Kunde suchen…" className="w-64" />
-            <Button variant="ghost" size="sm" onClick={load}><RefreshCw className="w-4 h-4" /></Button>
+        <CardHeader className="space-y-3">
+          <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
+            <CardTitle className="text-base flex items-center gap-2">
+              Gerätesperren <Badge variant="destructive">{filtered.length}</Badge>
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechnung / Kd.-Nr. / Kunde suchen…" className="w-64" />
+              <Button variant="ghost" size="sm" onClick={load}><RefreshCw className="w-4 h-4" /></Button>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            {FILTERS.map((f) => (
+              <Button
+                key={f.key}
+                size="sm"
+                variant={status === f.key ? 'default' : 'outline'}
+                onClick={() => setStatus(f.key)}
+              >
+                {f.label}
+                <span className="ml-1.5 opacity-70">{counts[f.key] ?? 0}</span>
+              </Button>
+            ))}
           </div>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <p className="p-6 text-sm text-muted-foreground text-center">Lädt…</p>
           ) : filtered.length === 0 ? (
-            <p className="p-8 text-sm text-muted-foreground text-center">Keine aktiven Gerätesperren.</p>
+            <p className="p-8 text-sm text-muted-foreground text-center">Keine Gerätesperren in dieser Auswahl.</p>
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-left">
                 <tr>
+                  <th className="p-2">Status</th>
                   <th className="p-2">Rechnung</th>
                   <th className="p-2">Kd.-Nr.</th>
                   <th className="p-2">Kunde</th>
@@ -84,6 +139,7 @@ export default function Geraetesperren() {
               <tbody>
                 {filtered.map((r) => (
                   <tr key={r.id} className="border-t border-border hover:bg-red-500/5">
+                    <td className="p-2 whitespace-nowrap"><StatusBadge status={r.status} /></td>
                     <td className="p-2 font-medium text-red-500 whitespace-nowrap">{r.invoice_number ?? '—'}</td>
                     <td className="p-2 font-mono text-xs whitespace-nowrap">{r.customer_number ?? r.customer_id ?? '—'}</td>
                     <td className="p-2">{r.customer_name ?? '—'}</td>
@@ -91,9 +147,11 @@ export default function Geraetesperren() {
                     <td className="p-2 whitespace-nowrap">{r.return_date ?? '—'}</td>
                     <td className="p-2 text-xs text-muted-foreground max-w-[420px]">{r.lock_note}</td>
                     <td className="p-2 text-right">
-                      <Button size="sm" variant="outline" onClick={() => release(r.id)}>
-                        <Unlock className="w-3.5 h-3.5 mr-1" /> Aufheben
-                      </Button>
+                      {r.status === 'aktiv' && (
+                        <Button size="sm" variant="outline" onClick={() => release(r.id)}>
+                          <Unlock className="w-3.5 h-3.5 mr-1" /> Aufheben
+                        </Button>
+                      )}
                     </td>
                   </tr>
                 ))}
