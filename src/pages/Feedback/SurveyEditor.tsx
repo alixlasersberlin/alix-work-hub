@@ -67,7 +67,12 @@ export default function SurveyEditor() {
       language: survey.language, est_minutes: survey.est_minutes ? Number(survey.est_minutes) : null,
       target_group: survey.target_group, device_model: survey.device_model, status: survey.status,
       reward_id: survey.reward_id || null, reminders_enabled: survey.reminders_enabled,
-      reminder_days: survey.reminder_days ? Number(survey.reminder_days) : null,
+      reminder_days: (() => {
+        const v = survey.reminder_days;
+        const arr = Array.isArray(v) ? v.map(Number) : String(v ?? '').split(',').map((s: string) => Number(s.trim()));
+        const clean = arr.filter((n: number) => Number.isFinite(n) && n > 0);
+        return clean.length ? clean : [7];
+      })(),
       starts_at: survey.starts_at || null, ends_at: survey.ends_at || null,
     };
     if (isNew) {
