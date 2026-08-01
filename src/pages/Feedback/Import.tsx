@@ -46,10 +46,14 @@ export default function FeedbackImport() {
   const sb = supabase as any;
   const [surveys, setSurveys] = useState<any[]>([]);
   const [surveyId, setSurveyId] = useState('');
-  const [busy, setBusy] = useState<'r' | 'q' | null>(null);
+  const [busy, setBusy] = useState<'r' | 'q' | 'd' | null>(null);
   const [log, setLog] = useState<string[]>([]);
+  const [parsed, setParsed] = useState<ParsedQuestion[] | null>(null);
+  const [docName, setDocName] = useState('');
   const recRef = useRef<HTMLInputElement>(null);
   const qRef = useRef<HTMLInputElement>(null);
+  const docRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     sb.from('surveys').select('id,name,status').is('deleted_at', null).order('created_at', { ascending: false })
