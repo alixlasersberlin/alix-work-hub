@@ -52,6 +52,21 @@ export default function Geraetesperren() {
   const canManage = hasAnyRole(['Admin', 'Super Admin']);
   const [editLock, setEditLock] = useState<DeviceLock | null>(null);
   const [bookLock, setBookLock] = useState<DeviceLock | null>(null);
+  const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
+
+  async function openPdf(r: any) {
+    let q = supabase.from('zoho_invoices').select('zoho_invoice_id,invoice_number,source_system').limit(1);
+    q = r.invoice_id ? q.eq('id', r.invoice_id) : q.eq('invoice_number', r.invoice_number);
+    const { data } = await q;
+    const inv = (data as any[])?.[0];
+    if (!inv?.zoho_invoice_id) return toast.error('Keine Zoho-Rechnung gefunden');
+    setPdfInvoice({
+      zoho_invoice_id: inv.zoho_invoice_id,
+      invoice_number: inv.invoice_number,
+      source_system: inv.source_system,
+    });
+  }
+
 
   async function load() {
     setLoading(true);
