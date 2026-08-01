@@ -25,7 +25,13 @@ export type DeviceLock = {
   status: string | null;
 };
 
-const STATUS_OPTIONS = ['entwurf', 'vorgeschlagen', 'aktiv', 'fehler', 'aufgehoben'];
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'entwurf', label: 'Entwurf' },
+  { value: 'vorgeschlagen', label: 'Vorgeschlagen' },
+  { value: 'aktiv', label: 'Aktiv' },
+  { value: 'fehler', label: 'Fehler' },
+  { value: 'aufgehoben', label: 'Aufgehoben' },
+];
 
 export function DeviceLockEditDialog({
   lock, open, onOpenChange, onSaved,
@@ -95,7 +101,7 @@ export function DeviceLockEditDialog({
               <Select value={form.status ?? ''} onValueChange={(v) => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  {STATUS_OPTIONS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
