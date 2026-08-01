@@ -257,6 +257,7 @@ const SurveyEditor = lazy(() => import("./pages/Feedback/SurveyEditor"));
 const FeedbackResponses = lazy(() => import("./pages/Feedback/Responses"));
 const FeedbackRewards = lazy(() => import("./pages/Feedback/Rewards"));
 const FeedbackEmailTemplates = lazy(() => import("./pages/Feedback/EmailTemplates"));
+const FeedbackRewardAssignments = lazy(() => import("./pages/Feedback/RewardAssignments"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const NewsAdmin = lazy(() => import("./pages/Operation/NewsAdmin"));
 const HealthCheck = lazy(() => import("./pages/HealthCheck"));
