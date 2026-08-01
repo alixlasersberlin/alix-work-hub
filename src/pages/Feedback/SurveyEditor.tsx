@@ -169,7 +169,7 @@ export default function SurveyEditor() {
     load();
   }
 
-  const publicBase = useMemo(() => `${window.location.origin}/umfrage`, []);
+  const publicBase = useMemo(() => publicUrl('/umfrage'), []);
 
   return (
     <div className="space-y-5">
