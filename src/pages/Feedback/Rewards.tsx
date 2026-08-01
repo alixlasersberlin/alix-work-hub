@@ -105,25 +105,30 @@ export default function FeedbackRewards() {
             <div className="md:col-span-2"><Label>Beschreibung</Label><Textarea rows={2} value={form.description ?? ''} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
             <div>
               <Label>Art</Label>
-              <Select value={form.reward_type} onValueChange={v => setForm({ ...form, reward_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{REWARD_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-              </Select>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                value={form.reward_type}
+                onChange={e => setForm({ ...form, reward_type: e.target.value })}
+              >
+                {REWARD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
             </div>
             <div><Label>Wert</Label><Input type="number" value={form.value_amount} onChange={e => setForm({ ...form, value_amount: e.target.value })} /></div>
             <div><Label>Währung</Label><Input value={form.currency ?? 'EUR'} onChange={e => setForm({ ...form, currency: e.target.value })} /></div>
             <div><Label>Bestand (leer = unbegrenzt)</Label><Input type="number" value={form.stock_total} onChange={e => setForm({ ...form, stock_total: e.target.value })} /></div>
             <div>
               <Label>Code-Modus</Label>
-              <Select value={form.code_mode ?? 'einmalig'} onValueChange={v => setForm({ ...form, code_mode: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="einmalig">Einmalige Codes</SelectItem>
-                  <SelectItem value="generisch">Ein generischer Code</SelectItem>
-                  <SelectItem value="kein_code">Ohne Code</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                value={form.code_mode ?? 'einmalig'}
+                onChange={e => setForm({ ...form, code_mode: e.target.value })}
+              >
+                <option value="einmalig">Einmalige Codes</option>
+                <option value="generisch">Ein generischer Code</option>
+                <option value="kein_code">Ohne Code</option>
+              </select>
             </div>
+
             <div><Label>Generischer Code</Label><Input value={form.generic_code ?? ''} onChange={e => setForm({ ...form, generic_code: e.target.value })} /></div>
             <div><Label>Gültig ab</Label><Input type="date" value={form.valid_from ?? ''} onChange={e => setForm({ ...form, valid_from: e.target.value })} /></div>
             <div><Label>Gültig bis</Label><Input type="date" value={form.valid_to ?? ''} onChange={e => setForm({ ...form, valid_to: e.target.value })} /></div>
