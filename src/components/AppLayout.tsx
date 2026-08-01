@@ -45,6 +45,15 @@ type NavItem = NavChild & { children?: NavChild[] };
 
 export const navItems: NavItem[] = [
   {
+    path: '/geraetesperren', label: 'SPERREN', icon: Lock,
+    roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
+    children: [
+      { path: '/geraetesperren', label: 'Übersicht', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'] },
+      { path: '/geraetesperren/bearbeitung', label: 'Bearbeitung', icon: Lock, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'] },
+    ],
+  },
+
+  {
     path: '/', label: 'DASHBOARDS', icon: LayoutDashboard,
     roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Read Only Audit', 'Österreich'],
     children: [
@@ -2081,7 +2090,7 @@ export default function AppLayout() {
             >
               {collapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </Button>
-            <GeraetesperrenMenu roles={roles} />
+            
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
