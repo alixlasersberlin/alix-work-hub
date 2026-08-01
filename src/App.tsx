@@ -1056,6 +1056,8 @@ function AppRoutes() {
         <Route path="/social-portal/:token" element={<SocialPortalView />} />
         <Route path="/social-onboarding/:token" element={<SocialOnboardingPortal />} />
         <Route path="/social/showcase/:token" element={<SocialShowcase />} />
+        <Route path="/umfrage/:token" element={<SurveyPublic />} />
+
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/start" element={<Startseite />} />
           <Route path="/dashboard" element={<HomeRoute />} />
