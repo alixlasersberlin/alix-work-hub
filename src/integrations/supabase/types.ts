@@ -12519,6 +12519,123 @@ export type Database = {
         }
         Relationships: []
       }
+      device_lock_imports: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_type: string
+          filename: string
+          id: string
+          raw_rows: Json
+          row_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_type?: string
+          filename: string
+          id?: string
+          raw_rows?: Json
+          row_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_type?: string
+          filename?: string
+          id?: string
+          raw_rows?: Json
+          row_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      device_locks: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          amount: number | null
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          import_id: string | null
+          invoice_id: string | null
+          invoice_number: string | null
+          lock_note: string
+          released_at: string | null
+          released_by: string | null
+          return_date: string | null
+          return_reason: string | null
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          import_id?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          lock_note?: string
+          released_at?: string | null
+          released_by?: string | null
+          return_date?: string | null
+          return_reason?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          amount?: number | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          import_id?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          lock_note?: string
+          released_at?: string | null
+          released_by?: string | null
+          return_date?: string | null
+          return_reason?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_locks_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "device_lock_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_locks_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "zoho_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_maintenance: {
         Row: {
           assigned_technician: string | null
