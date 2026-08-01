@@ -876,6 +876,18 @@ function AiDiensteMenu({ roles }: { roles: string[] }) {
   return <HeaderNavMenu roles={roles} itemLabel="ALIX AI DIENSTE" triggerLabel="Alix AI" />;
 }
 
+function GeraetesperrenMenu({ roles }: { roles: string[] }) {
+  return (
+    <HeaderNavMenu
+      roles={roles}
+      itemLabel="GERÄTESPERREN"
+      triggerLabel="GERÄTESPERREN"
+      align="start"
+      triggerClassName="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm font-bold text-destructive hover:bg-destructive/10 transition-colors"
+    />
+  );
+}
+
 
 
 
