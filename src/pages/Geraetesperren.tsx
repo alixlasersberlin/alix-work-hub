@@ -109,6 +109,32 @@ export default function Geraetesperren() {
     });
   }, [rows, q, status]);
 
+  // Mehrere Rücklastschriften pro Kundenkonto zusammenfassen
+  const groups = useMemo(() => {
+    const map = new Map<string, { key: string; name: string; number: string; items: any[]; total: number }>();
+    for (const r of filtered) {
+      const key = String(r.customer_number ?? r.customer_id ?? r.customer_name ?? r.id);
+      let g = map.get(key);
+      if (!g) {
+        g = {
+          key,
+          name: r.customer_name ?? '—',
+          number: r.customer_number ?? r.customer_id ?? '—',
+          items: [],
+          total: 0,
+        };
+        map.set(key, g);
+      }
+      g.items.push(r);
+      g.total += Number(r.amount) || 0;
+    }
+    return Array.from(map.values());
+  }, [filtered]);
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const toggleGroup = (k: string) => setOpenGroups((s) => ({ ...s, [k]: !s[k] }));
+
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <PageHeader icon={Lock} title="Gerätesperren" subtitle="Übersicht und Verwaltung gesperrter Geräte" noBreadcrumbs />
