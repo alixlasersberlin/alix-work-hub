@@ -871,15 +871,35 @@ function AiDiensteMenu({ roles }: { roles: string[] }) {
   return <HeaderNavMenu roles={roles} itemLabel="ALIX AI DIENSTE" triggerLabel="Alix AI" />;
 }
 
-function GeraetesperrenMenu({ roles }: { roles: string[] }) {
+function GeraetesperrenMenu(_props: { roles: string[] }) {
   return (
-    <HeaderNavMenu
-      roles={roles}
-      itemLabel="GERÄTESPERREN"
-      triggerLabel="GERÄTESPERREN"
-      align="start"
-      triggerClassName="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm font-bold text-destructive hover:bg-destructive/10 transition-colors"
-    />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-md text-sm font-bold text-destructive hover:bg-destructive/10 transition-colors"
+          aria-label="Gerätesperren-Menü"
+        >
+          <Lock className="w-4 h-4" />
+          <span>GERÄTESPERREN</span>
+          <ChevronDown className="w-3.5 h-3.5 opacity-70" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        <DropdownMenuLabel className="text-destructive font-bold">GERÄTESPERREN</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to="/geraetesperren" className="flex items-center gap-2 cursor-pointer">
+            <Lock className="w-4 h-4" /> <span>Übersicht</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/geraetesperren/bearbeitung" className="flex items-center gap-2 cursor-pointer">
+            <Lock className="w-4 h-4" /> <span>Bearbeitung</span>
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
