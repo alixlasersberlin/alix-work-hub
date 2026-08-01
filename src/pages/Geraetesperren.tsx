@@ -73,6 +73,7 @@ export default function Geraetesperren() {
               <thead className="bg-muted/40 text-left">
                 <tr>
                   <th className="p-2">Rechnung</th>
+                  <th className="p-2">Kd.-Nr.</th>
                   <th className="p-2">Kunde</th>
                   <th className="p-2 text-right">Betrag</th>
                   <th className="p-2">Rückl.-Datum</th>
@@ -84,6 +85,7 @@ export default function Geraetesperren() {
                 {filtered.map((r) => (
                   <tr key={r.id} className="border-t border-border hover:bg-red-500/5">
                     <td className="p-2 font-medium text-red-500 whitespace-nowrap">{r.invoice_number ?? '—'}</td>
+                    <td className="p-2 font-mono text-xs whitespace-nowrap">{r.customer_number ?? r.customer_id ?? '—'}</td>
                     <td className="p-2">{r.customer_name ?? '—'}</td>
                     <td className="p-2 text-right whitespace-nowrap">{fmt(r.amount)}</td>
                     <td className="p-2 whitespace-nowrap">{r.return_date ?? '—'}</td>

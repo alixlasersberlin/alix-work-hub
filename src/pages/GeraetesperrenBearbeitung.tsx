@@ -140,6 +140,7 @@ export default function GeraetesperrenBearbeitung() {
         invoice_id: m.invoice?.id ?? null,
         invoice_number: m.invoice?.invoice_number ?? m.row.invoice_number,
         customer_id: m.invoice?.customer_id ?? null,
+        customer_number: m.invoice?.customer_id ?? null,
         customer_name: m.invoice?.customer_name ?? m.row.customer_name,
         amount: m.row.amount ?? m.invoice?.total ?? null,
         currency: m.invoice?.currency ?? 'EUR',
@@ -229,6 +230,7 @@ export default function GeraetesperrenBearbeitung() {
                 <tr>
                   <th className="p-2 w-10"></th>
                   <th className="p-2">Rechnung</th>
+                  <th className="p-2">Kd.-Nr.</th>
                   <th className="p-2">Kunde</th>
                   <th className="p-2 text-right">Betrag</th>
                   <th className="p-2">Rückl.-Datum</th>
@@ -255,6 +257,7 @@ export default function GeraetesperrenBearbeitung() {
                           <span className="text-amber-500">{m.row.invoice_number ?? 'nicht gefunden'}</span>
                         )}
                       </td>
+                      <td className="p-2 font-mono text-xs whitespace-nowrap">{m.invoice?.customer_id ?? '—'}</td>
                       <td className="p-2">{m.invoice?.customer_name ?? m.row.customer_name ?? '—'}</td>
                       <td className="p-2 text-right whitespace-nowrap">{fmt(m.row.amount ?? m.invoice?.total)}</td>
                       <td className="p-2 whitespace-nowrap">{m.row.return_date ?? '—'}</td>
@@ -285,11 +288,12 @@ export default function GeraetesperrenBearbeitung() {
             <p className="p-6 text-sm text-muted-foreground text-center">Keine offenen Vorschläge.</p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-left"><tr><th className="p-2">Rechnung</th><th className="p-2">Kunde</th><th className="p-2 text-right">Betrag</th><th className="p-2">Vermerk</th><th className="p-2"></th></tr></thead>
+              <thead className="bg-muted/40 text-left"><tr><th className="p-2">Rechnung</th><th className="p-2">Kd.-Nr.</th><th className="p-2">Kunde</th><th className="p-2 text-right">Betrag</th><th className="p-2">Vermerk</th><th className="p-2"></th></tr></thead>
               <tbody>
                 {pending.map((p) => (
                   <tr key={p.id} className="border-t border-border">
                     <td className="p-2">{p.invoice_number ?? '—'}</td>
+                    <td className="p-2 font-mono text-xs">{p.customer_number ?? p.customer_id ?? '—'}</td>
                     <td className="p-2">{p.customer_name ?? '—'}</td>
                     <td className="p-2 text-right">{fmt(p.amount)}</td>
                     <td className="p-2 text-xs text-muted-foreground">{p.lock_note}</td>
