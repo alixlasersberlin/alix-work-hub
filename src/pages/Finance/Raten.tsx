@@ -51,7 +51,7 @@ export default function FinanceRaten() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [pageSize, setPageSize] = useState<PageSize>(100);
-  const [dayTab, setDayTab] = useState<'all' | 1 | 15 | 'archive'>('all');
+  const [dayTab, setDayTab] = useState<'all' | 1 | 15>('all');
 
   useEffect(() => {
     let cancelled = false;
@@ -83,23 +83,13 @@ export default function FinanceRaten() {
     [rows],
   );
 
-  const isArchived = (r: Row) => (r.status ?? '').toLowerCase() === 'archived';
+  const byDay = useMemo(() => (dayTab === 'all' ? sorted : sorted.filter(r => dayOf(r) === dayTab)), [sorted, dayTab]);
 
-  const byDay = useMemo(() => {
-    if (dayTab === 'archive') return sorted.filter(isArchived);
-    const act = sorted.filter(r => !isArchived(r));
-    return dayTab === 'all' ? act : act.filter(r => dayOf(r) === dayTab);
-  }, [sorted, dayTab]);
-
-  const counts = useMemo(() => {
-    const act = rows.filter(r => !isArchived(r));
-    return {
-      all: act.length,
-      d1: act.filter(r => dayOf(r) === 1).length,
-      d15: act.filter(r => dayOf(r) === 15).length,
-      archive: rows.filter(isArchived).length,
-    };
-  }, [rows]);
+  const counts = useMemo(() => ({
+    all: rows.length,
+    d1: rows.filter(r => dayOf(r) === 1).length,
+    d15: rows.filter(r => dayOf(r) === 15).length,
+  }), [rows]);
 
   const filtered = useMemo(() => byDay.filter(r => matchesQuery({
     ...r,
@@ -132,7 +122,6 @@ export default function FinanceRaten() {
           { key: 'all' as const, label: 'Alle', count: counts.all },
           { key: 1 as const, label: 'Buchung 1. im Monat', count: counts.d1 },
           { key: 15 as const, label: 'Buchung 15. im Monat', count: counts.d15 },
-          { key: 'archive' as const, label: 'Archiv', count: counts.archive },
         ]).map(t => (
           <button
             key={String(t.key)}
