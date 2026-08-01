@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Lock, RefreshCw, Unlock, Pencil, Wallet } from 'lucide-react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Lock, RefreshCw, Unlock, Pencil, Wallet, ChevronDown, ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -232,9 +232,8 @@ export default function Geraetesperren() {
                   if (!multi) return renderRow(g.items[0], false);
 
                   return (
-                    <>
+                    <Fragment key={g.key}>
                       <tr
-                        key={g.key}
                         className="border-t border-border bg-muted/40 hover:bg-red-500/5 cursor-pointer"
                         onClick={() => toggleGroup(g.key)}
                       >
@@ -257,7 +256,7 @@ export default function Geraetesperren() {
                         <td className="p-2" />
                       </tr>
                       {open && g.items.map((r) => renderRow(r, true))}
-                    </>
+                    </Fragment>
                   );
                 })}
               </tbody>
