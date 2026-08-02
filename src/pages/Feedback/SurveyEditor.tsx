@@ -34,6 +34,10 @@ export default function SurveyEditor() {
   const [saving, setSaving] = useState(false);
   const [custQuery, setCustQuery] = useState('');
   const [custResults, setCustResults] = useState<any[]>([]);
+  const [groupQuery, setGroupQuery] = useState('');
+  const [groupResults, setGroupResults] = useState<any[]>([]);
+  const [addingGroup, setAddingGroup] = useState<string | null>(null);
+
 
   async function load() {
     if (isNew) return;
@@ -163,6 +167,45 @@ export default function SurveyEditor() {
     if (error) { toast.error(error.message); return; }
     setRecipients(r => [data, ...r]);
     toast.success('Empfänger hinzugefügt');
+  }
+
+  async function searchGroups() {
+    let q = sb.from('survey_recipient_groups').select('id,name,description,survey_recipient_group_members(count)').order('name');
+    if (groupQuery.trim()) q = q.ilike('name', `%${groupQuery.trim()}%`);
+    const { data, error } = await q.limit(50);
+    if (error) { toast.error(error.message); return; }
+    const rows = (data ?? []).map((g: any) => ({
+      id: g.id, name: g.name, description: g.description,
+      member_count: g.survey_recipient_group_members?.[0]?.count ?? 0,
+    }));
+    setGroupResults(rows);
+    if (!rows.length) toast.info('Keine Empfängerlisten gefunden');
+  }
+
+  async function addGroupRecipients(g: any) {
+    if (!id) return;
+    setAddingGroup(g.id);
+    try {
+      const { data: members, error } = await sb.from('survey_recipient_group_members')
+        .select('customer_id, customer_number, company_name, contact_name, email').eq('group_id', g.id);
+      if (error) { toast.error(error.message); return; }
+      const existing = new Set(recipients.map(r => (r.email ?? '').toLowerCase()));
+      const rows = (members ?? [])
+        .filter((m: any) => m.email && !existing.has(String(m.email).toLowerCase()))
+        .map((m: any) => ({
+          survey_id: id, customer_id: m.customer_id ?? null, customer_number: m.customer_number ?? null,
+          company_name: m.company_name ?? null, first_name: null, last_name: m.contact_name ?? null,
+          email: m.email, language: survey.language ?? 'de', consent_status: 'offen',
+        }));
+      const withoutMail = (members ?? []).length - (members ?? []).filter((m: any) => m.email).length;
+      if (!rows.length) { toast.info(`Keine neuen Empfänger aus „${g.name}" (${withoutMail} ohne E-Mail)`); return; }
+      const { data: inserted, error: insErr } = await sb.from('survey_recipients').insert(rows).select();
+      if (insErr) { toast.error(insErr.message); return; }
+      setRecipients(r => [...(inserted ?? []), ...r]);
+      toast.success(`${inserted?.length ?? 0} Empfänger aus „${g.name}" übernommen`);
+    } finally {
+      setAddingGroup(null);
+    }
   }
 
 
@@ -301,6 +344,33 @@ export default function SurveyEditor() {
         </TabsContent>
 
         <TabsContent value="empfaenger" className="mt-4 space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4" />Empfängerlisten suchen</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2 max-w-xl">
+                <Input placeholder="Name der Empfängerliste (leer = alle)" value={groupQuery}
+                  onChange={e => setGroupQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchGroups()} />
+                <Button variant="outline" onClick={searchGroups}>Suchen</Button>
+              </div>
+              {groupResults.length > 0 && (
+                <div className="rounded-md border border-border divide-y divide-border max-h-72 overflow-auto">
+                  {groupResults.map(g => (
+                    <div key={g.id} className="flex items-center justify-between p-2 text-sm">
+                      <div>
+                        <div className="font-medium">{g.name}</div>
+                        <div className="text-xs text-muted-foreground">{g.member_count} Mitglieder{g.description ? ` · ${g.description}` : ''}</div>
+                      </div>
+                      <Button size="sm" variant="outline" disabled={addingGroup === g.id} onClick={() => addGroupRecipients(g)}>
+                        <Plus className="h-3 w-3 mr-1" />{addingGroup === g.id ? 'Übernehme …' : 'Liste übernehmen'}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+
           <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><Search className="h-4 w-4" />Kunden suchen</CardTitle></CardHeader>
             <CardContent className="space-y-3">
