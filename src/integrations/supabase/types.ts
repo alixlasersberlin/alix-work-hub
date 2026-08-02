@@ -30727,6 +30727,109 @@ export type Database = {
         }
         Relationships: []
       }
+      survey_automation_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          delay_days: number
+          filters: Json
+          id: string
+          last_run_at: string | null
+          min_gap_days: number
+          name: string
+          survey_id: string | null
+          trigger_event: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          delay_days?: number
+          filters?: Json
+          id?: string
+          last_run_at?: string | null
+          min_gap_days?: number
+          name: string
+          survey_id?: string | null
+          trigger_event?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          delay_days?: number
+          filters?: Json
+          id?: string
+          last_run_at?: string | null
+          min_gap_days?: number
+          name?: string
+          survey_id?: string | null
+          trigger_event?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_automation_rules_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_automation_runs: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          email: string | null
+          error_text: string | null
+          id: string
+          rule_id: string | null
+          source_ref: string | null
+          status: string
+          survey_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          email?: string | null
+          error_text?: string | null
+          id?: string
+          rule_id?: string | null
+          source_ref?: string | null
+          status?: string
+          survey_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          email?: string | null
+          error_text?: string | null
+          id?: string
+          rule_id?: string | null
+          source_ref?: string | null
+          status?: string
+          survey_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_automation_runs_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "survey_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       survey_consents: {
         Row: {
           consent_type: string
