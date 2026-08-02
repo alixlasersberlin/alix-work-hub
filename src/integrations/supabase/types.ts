@@ -30800,6 +30800,57 @@ export type Database = {
           },
         ]
       }
+      survey_design_templates: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          design: Json
+          id: string
+          is_system: boolean
+          key: string | null
+          name: string
+          preview_image_url: string | null
+          tenant_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          design?: Json
+          id?: string
+          is_system?: boolean
+          key?: string | null
+          name: string
+          preview_image_url?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          design?: Json
+          id?: string
+          is_system?: boolean
+          key?: string | null
+          name?: string
+          preview_image_url?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       survey_email_logs: {
         Row: {
           attempt: number
@@ -32209,6 +32260,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           deleted_at: string | null
+          design: Json
           device_model: string | null
           ends_at: string | null
           est_minutes: number | null
@@ -32236,6 +32288,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          design?: Json
           device_model?: string | null
           ends_at?: string | null
           est_minutes?: number | null
@@ -32263,6 +32316,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
+          design?: Json
           device_model?: string | null
           ends_at?: string | null
           est_minutes?: number | null
