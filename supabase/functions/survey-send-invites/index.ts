@@ -100,13 +100,30 @@ Deno.serve(async (req) => {
         subject, status: 'queued', scheduled_at: now,
       }).select('id').single();
 
-      const { error: mailErr } = await admin.functions.invoke('send-mail', {
-        body: { to: r.email, subject, html },
-      });
+      let mailErr: { message: string } | null = null;
+      try {
+        const resendKey = Deno.env.get('RESEND_API_KEY');
+        if (!resendKey) throw new Error('RESEND_API_KEY fehlt');
+        const res = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'Alix Lasers | Feedback <news@alixwork.de>',
+            reply_to: tpl?.reply_to || 'support@alix-operation.de',
+            to: [r.email],
+            subject,
+            html,
+          }),
+        });
+        if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
+      } catch (e) {
+        mailErr = { message: (e as Error).message };
+      }
 
       if (mailErr) {
         await admin.from('survey_email_logs').update({ status: 'failed', error_text: mailErr.message }).eq('id', log?.id);
         skipped++;
+
         continue;
       }
 
