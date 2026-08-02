@@ -169,6 +169,45 @@ export default function SurveyEditor() {
     toast.success('Empfänger hinzugefügt');
   }
 
+  async function searchGroups() {
+    let q = sb.from('survey_recipient_groups').select('id,name,description,survey_recipient_group_members(count)').order('name');
+    if (groupQuery.trim()) q = q.ilike('name', `%${groupQuery.trim()}%`);
+    const { data, error } = await q.limit(50);
+    if (error) { toast.error(error.message); return; }
+    const rows = (data ?? []).map((g: any) => ({
+      id: g.id, name: g.name, description: g.description,
+      member_count: g.survey_recipient_group_members?.[0]?.count ?? 0,
+    }));
+    setGroupResults(rows);
+    if (!rows.length) toast.info('Keine Empfängerlisten gefunden');
+  }
+
+  async function addGroupRecipients(g: any) {
+    if (!id) return;
+    setAddingGroup(g.id);
+    try {
+      const { data: members, error } = await sb.from('survey_recipient_group_members')
+        .select('customer_id, customer_number, company_name, contact_name, email').eq('group_id', g.id);
+      if (error) { toast.error(error.message); return; }
+      const existing = new Set(recipients.map(r => (r.email ?? '').toLowerCase()));
+      const rows = (members ?? [])
+        .filter((m: any) => m.email && !existing.has(String(m.email).toLowerCase()))
+        .map((m: any) => ({
+          survey_id: id, customer_id: m.customer_id ?? null, customer_number: m.customer_number ?? null,
+          company_name: m.company_name ?? null, first_name: null, last_name: m.contact_name ?? null,
+          email: m.email, language: survey.language ?? 'de', consent_status: 'offen',
+        }));
+      const withoutMail = (members ?? []).length - (members ?? []).filter((m: any) => m.email).length;
+      if (!rows.length) { toast.info(`Keine neuen Empfänger aus „${g.name}" (${withoutMail} ohne E-Mail)`); return; }
+      const { data: inserted, error: insErr } = await sb.from('survey_recipients').insert(rows).select();
+      if (insErr) { toast.error(insErr.message); return; }
+      setRecipients(r => [...(inserted ?? []), ...r]);
+      toast.success(`${inserted?.length ?? 0} Empfänger aus „${g.name}" übernommen`);
+    } finally {
+      setAddingGroup(null);
+    }
+  }
+
 
   async function removeRecipient(rid: string) {
     await sb.from('survey_recipients').delete().eq('id', rid);
