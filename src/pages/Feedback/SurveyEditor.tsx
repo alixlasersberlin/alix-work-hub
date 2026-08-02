@@ -175,9 +175,12 @@ export default function SurveyEditor() {
     if (!id) return;
     const { data, error } = await sb.functions.invoke('survey-send-invites', { body: { survey_id: id, kind: 'einladung' } });
     if (error) { toast.error(error.message); return; }
-    toast.success(`${data?.sent ?? 0} Einladungen versendet`);
+    if (data?.error) { toast.error(String(data.error)); return; }
+    if (!data?.sent) toast.warning(`Keine Einladung versendet (${data?.skipped ?? 0} übersprungen)`);
+    else toast.success(`${data.sent} Einladungen versendet`);
     load();
   }
+
 
   async function sendReminders() {
     const { data, error } = await sb.functions.invoke('survey-send-invites', { body: { survey_id: id, kind: 'erinnerung' } });
