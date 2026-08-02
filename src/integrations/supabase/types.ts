@@ -32257,6 +32257,9 @@ export type Database = {
       }
       surveys: {
         Row: {
+          auto_reminder_days: number
+          auto_reminder_enabled: boolean
+          auto_reminder_max: number
           created_at: string
           created_by: string | null
           deleted_at: string | null
@@ -32287,6 +32290,9 @@ export type Database = {
           version: number
         }
         Insert: {
+          auto_reminder_days?: number
+          auto_reminder_enabled?: boolean
+          auto_reminder_max?: number
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
@@ -32317,6 +32323,9 @@ export type Database = {
           version?: number
         }
         Update: {
+          auto_reminder_days?: number
+          auto_reminder_enabled?: boolean
+          auto_reminder_max?: number
           created_at?: string
           created_by?: string | null
           deleted_at?: string | null
