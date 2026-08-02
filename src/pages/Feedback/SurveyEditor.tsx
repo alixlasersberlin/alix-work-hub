@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SurveyDesignTab from './SurveyDesignTab';
 import SurveyLogicTab from './SurveyLogicTab';
+import SurveyShareTab from './SurveyShareTab';
+
 import { mergeDesign } from '@/lib/feedback/design';
 import { FeedbackHeader, LANGUAGES, QUESTION_TYPES, SURVEY_STATUS } from './_shared';
 import { Plus, Save, Trash2, ArrowUp, ArrowDown, Send, Search, Link2, Users, GripVertical } from 'lucide-react';
