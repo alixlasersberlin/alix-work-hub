@@ -1139,7 +1139,9 @@ function AppRoutes() {
           <Route path="/umfragen" element={<ProtectedRoute><FeedbackSurveys /></ProtectedRoute>} />
           <Route path="/umfragen/antworten" element={<ProtectedRoute><FeedbackResponses /></ProtectedRoute>} />
           <Route path="/umfragen/geschenke" element={<ProtectedRoute><FeedbackRewards /></ProtectedRoute>} />
+          <Route path="/umfragen/auswertung" element={<ProtectedRoute><FeedbackInsights /></ProtectedRoute>} />
           <Route path="/umfragen/import" element={<ProtectedRoute><FeedbackImport /></ProtectedRoute>} />
+
           <Route path="/umfragen/belohnungen" element={<ProtectedRoute><FeedbackRewardAssignments /></ProtectedRoute>} />
           <Route path="/umfragen/empfaenger" element={<ProtectedRoute><FeedbackRecipientGroups /></ProtectedRoute>} />
           <Route path="/umfragen/vorlagen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Marketing']}><FeedbackEmailTemplates /></ProtectedRoute>} />
