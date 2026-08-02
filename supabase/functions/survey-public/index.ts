@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
     const { data: survey } = await admin
       .from('surveys')
-      .select('id, name, public_title, intro_text, outro_text, language, est_minutes, status, reward_id, ends_at')
+      .select('id, name, public_title, intro_text, outro_text, language, est_minutes, status, reward_id, ends_at, design')
       .eq('id', inv.survey_id).maybeSingle();
     if (!survey || survey.status === 'archiviert') return json({ error: 'not_available' }, 410);
 
@@ -73,8 +73,21 @@ Deno.serve(async (req) => {
         });
       }
 
+      let recipient: Record<string, unknown> | null = null;
+      if (inv.recipient_id) {
+        const { data: rec } = await admin
+          .from('survey_recipients').select('*').eq('id', inv.recipient_id).maybeSingle();
+        if (rec) {
+          recipient = {
+            name: (rec as any).name ?? (rec as any).contact_name ?? null,
+            firma: (rec as any).company ?? (rec as any).company_name ?? null,
+          };
+        }
+      }
+
       return json({
         survey,
+        recipient,
         questions: (questions ?? []).map((q) => ({ ...q, options: optsByQ[q.id] ?? [] })),
         draft_answers: session?.draft_answers ?? {},
       });

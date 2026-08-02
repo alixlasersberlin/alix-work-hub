@@ -9,6 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Star, Gift, CheckCircle2, Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  mergeDesign, ensureFontLoaded, designVars, tokenVars, backgroundStyle,
+  buttonCss, shadowCss, animClasses, personalize,
+} from '@/lib/feedback/design';
+import { resolveMediaUrl } from '@/lib/feedback/media';
 
 const STATIC_TYPES = ['heading', 'description', 'divider'];
 const AUTO_ADVANCE = ['yesno', 'stars', 'nps', 'scale10', 'single', 'dropdown'];
@@ -22,8 +27,14 @@ export default function SurveyPublic() {
   const [reward, setReward] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(0);
+  const [started, setStarted] = useState(false);
   const [anim, setAnim] = useState<'in-right' | 'in-left' | 'out-left' | 'out-right'>('in-right');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [heroUrl, setHeroUrl] = useState('');
+  const [bgUrl, setBgUrl] = useState('');
   const timer = useRef<any>(null);
+
+  const design = useMemo(() => mergeDesign(data?.survey?.design), [data]);
 
   useEffect(() => {
     (async () => {
@@ -34,6 +45,10 @@ export default function SurveyPublic() {
     })();
   }, [token]);
 
+  useEffect(() => { ensureFontLoaded(design.font); }, [design.font]);
+  useEffect(() => { resolveMediaUrl(design.media.logoUrl).then(setLogoUrl); }, [design.media.logoUrl]);
+  useEffect(() => { resolveMediaUrl(design.media.heroUrl).then(setHeroUrl); }, [design.media.heroUrl]);
+  useEffect(() => { resolveMediaUrl(design.background.imageUrl).then(setBgUrl); }, [design.background.imageUrl]);
   useEffect(() => () => clearTimeout(timer.current), []);
 
   // Gruppiert Überschriften/Beschreibungen mit der folgenden Frage zu einem Slide
@@ -64,6 +79,7 @@ export default function SurveyPublic() {
   function go(dir: 1 | -1) {
     const next = step + dir;
     if (next < 0 || next >= slides.length) return;
+    if (design.animation === 'none') { setStep(next); return; }
     setAnim(dir === 1 ? 'out-left' : 'out-right');
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
@@ -80,7 +96,7 @@ export default function SurveyPublic() {
 
   function handleAnswer(q: any, v: any) {
     setAnswer(q.id, v);
-    if (AUTO_ADVANCE.includes(q.qtype) && step < slides.length - 1) {
+    if (design.onePerPage && AUTO_ADVANCE.includes(q.qtype) && step < slides.length - 1) {
       clearTimeout(timer.current);
       timer.current = setTimeout(() => go(1), 260);
     }
@@ -97,84 +113,214 @@ export default function SurveyPublic() {
     setState('done');
   }
 
+  const shellStyle: any = {
+    ...tokenVars(design),
+    ...designVars(design),
+    ...backgroundStyle({ ...design, background: { ...design.background, imageUrl: bgUrl } }),
+  };
+
   if (state === 'loading') return <Centered><Loader2 className="h-6 w-6 animate-spin text-primary" /></Centered>;
   if (state === 'error') return <Centered><p className="text-sm text-muted-foreground">{error}</p></Centered>;
 
+  const vars = {
+    name: data?.recipient?.name ?? '',
+    firma: data?.recipient?.firma ?? '',
+    umfrage: data?.survey?.public_title ?? data?.survey?.name ?? '',
+  };
+
   if (state === 'done') return (
-    <Centered>
-      <Card className="max-w-lg w-full"><CardContent className="p-8 text-center space-y-4">
-        <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
-        <h1 className="text-xl font-semibold">Vielen Dank für Ihre Rückmeldung!</h1>
-        <p className="text-sm text-muted-foreground">{data?.survey?.outro_text ?? 'Ihre Antworten helfen uns, unsere Leistungen weiter zu verbessern.'}</p>
-        {reward && (
-          <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-left">
-            <div className="flex items-center gap-2 font-medium"><Gift className="h-4 w-4 text-primary" />{reward.name}</div>
-            {reward.description && <p className="text-sm text-muted-foreground mt-1">{reward.description}</p>}
-            {reward.code && <p className="mt-2 text-sm">Ihr Code: <code className="font-mono text-primary">{reward.code}</code></p>}
-          </div>
-        )}
-      </CardContent></Card>
-    </Centered>
+    <div style={shellStyle} className="min-h-screen flex items-center justify-center p-6">
+      <Card className="max-w-lg w-full" style={{ borderRadius: design.radius, boxShadow: shadowCss(design.shadow) }}>
+        <CardContent className="p-8 text-center space-y-4">
+          {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: design.media.logoHeight }} className="mx-auto object-contain" />}
+          <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
+          <h1 className="text-xl font-semibold">Vielen Dank für Ihre Rückmeldung!</h1>
+          <p className="text-sm text-muted-foreground">{data?.survey?.outro_text ?? 'Ihre Antworten helfen uns, unsere Leistungen weiter zu verbessern.'}</p>
+          {reward && (
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-left">
+              <div className="flex items-center gap-2 font-medium"><Gift className="h-4 w-4 text-primary" />{reward.name}</div>
+              {reward.description && <p className="text-sm text-muted-foreground mt-1">{reward.description}</p>}
+              {reward.code && <p className="mt-2 text-sm">Ihr Code: <code className="font-mono text-primary">{reward.code}</code></p>}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 
   const s = data.survey;
   const total = slides.length || 1;
   const current = slides[step];
   const isLast = step === slides.length - 1;
-  const animClass =
-    anim === 'out-left' ? 'opacity-0 -translate-x-16'
-    : anim === 'out-right' ? 'opacity-0 translate-x-16'
-    : anim === 'in-left' ? 'animate-in fade-in slide-in-from-left-16 duration-300'
-    : 'animate-in fade-in slide-in-from-right-16 duration-300';
+  const animClass = animClasses(design, anim);
+  const greeting = personalize(design.personalization.greeting, vars);
+  const split = design.layout === 'split' && !!heroUrl;
+  const flat = design.layout === 'minimal';
 
+  const header = (
+    <header className="space-y-3">
+      {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: design.media.logoHeight }} className="object-contain" />}
+      {!split && heroUrl && (
+        <img src={heroUrl} alt="" style={{ height: design.media.heroHeight, borderRadius: design.radius }} className="w-full object-cover" />
+      )}
+      {greeting && <p className="text-sm text-muted-foreground">{greeting}</p>}
+      <h1 className="text-2xl font-semibold tracking-tight">{s.public_title || s.name}</h1>
+      {step === 0 && s.intro_text && <p className="text-sm text-muted-foreground whitespace-pre-line">{s.intro_text}</p>}
+      {step === 0 && s.est_minutes && <p className="text-xs text-muted-foreground">Dauer: ca. {s.est_minutes} Minuten</p>}
+    </header>
+  );
+
+  const footer = (design.footer.text || design.footer.privacyUrl || design.footer.imprintUrl) ? (
+    <footer className="pb-10 pt-2 text-[11px] text-muted-foreground space-x-3">
+      {design.footer.text && <span>{design.footer.text}</span>}
+      {design.footer.privacyUrl && <a href={design.footer.privacyUrl} target="_blank" rel="noreferrer" className="underline">Datenschutz</a>}
+      {design.footer.imprintUrl && <a href={design.footer.imprintUrl} target="_blank" rel="noreferrer" className="underline">Impressum</a>}
+    </footer>
+  ) : null;
+
+  // ---- Startseite ----
+  if (design.startPage.enabled && !started) {
+    return (
+      <div style={shellStyle} className="min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-xl space-y-6 text-center">
+          {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: design.media.logoHeight }} className="mx-auto object-contain" />}
+          {heroUrl && <img src={heroUrl} alt="" style={{ height: design.media.heroHeight, borderRadius: design.radius }} className="w-full object-cover" />}
+          {greeting && <p className="text-sm text-muted-foreground">{greeting}</p>}
+          <h1 className="text-3xl font-semibold tracking-tight">{personalize(design.startPage.headline, vars) || s.public_title || s.name}</h1>
+          <p className="text-sm text-muted-foreground whitespace-pre-line">{personalize(design.startPage.text, vars) || s.intro_text}</p>
+          <button className="px-6 py-3 text-sm font-medium" style={buttonCss(design)} onClick={() => setStarted(true)}>
+            {design.startPage.button || 'Umfrage starten'}
+          </button>
+          {s.est_minutes && <p className="text-xs text-muted-foreground">Dauer: ca. {s.est_minutes} Minuten</p>}
+          {footer}
+        </div>
+      </div>
+    );
+  }
+
+  const progress = design.progress === 'none' ? null : (
+    <div className="space-y-2">
+      {design.progress === 'bar' && (
+        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${((step + 1) / total) * 100}%` }} />
+        </div>
+      )}
+      {design.progress === 'dots' && (
+        <div className="flex flex-wrap gap-1.5">
+          {slides.map((_, i) => <span key={i} className={`h-2 w-2 rounded-full ${i <= step ? 'bg-primary' : 'bg-muted'}`} />)}
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">Frage {step + 1} von {total}</p>
+    </div>
+  );
+
+  const cardStyle: any = {
+    borderRadius: design.radius,
+    boxShadow: flat ? 'none' : shadowCss(design.shadow),
+    background: flat ? 'transparent' : undefined,
+    border: flat ? 'none' : undefined,
+  };
+
+  // ---- Alle Fragen auf einer Seite ----
+  if (!design.onePerPage) {
+    return (
+      <div style={shellStyle} className="min-h-screen py-10 px-4">
+        <div className={`mx-auto space-y-6 ${design.layout === 'fullscreen' ? 'max-w-3xl' : 'max-w-2xl'}`}>
+          {header}
+          {slides.map(sl => (
+            <Card key={sl.q?.id ?? `intro-${sl.index}`} style={cardStyle}>
+              <CardContent className="p-6 space-y-4">
+                {sl.intro?.map((h: any) => (
+                  h.qtype === 'heading' ? <h2 key={h.id} className="text-lg font-semibold">{h.label}</h2>
+                  : h.qtype === 'divider' ? <hr key={h.id} className="border-border" />
+                  : <p key={h.id} className="text-sm text-muted-foreground whitespace-pre-line">{h.label}</p>
+                ))}
+                {sl.q && (
+                  <>
+                    <Label className="text-base">{sl.index}. {sl.q.label} {sl.q.required && <span className="text-destructive">*</span>}</Label>
+                    {sl.q.help_text && <p className="text-xs text-muted-foreground">{sl.q.help_text}</p>}
+                    <QuestionInput q={sl.q} value={answers[sl.q.id]} onChange={(v: any) => setAnswer(sl.q.id, v)} />
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+          <div className="flex justify-end pb-4">
+            <button className="px-6 py-3 text-sm font-medium" style={buttonCss(design)} onClick={submit} disabled={submitting}>
+              {submitting ? 'Wird gesendet …' : 'Antworten absenden'}
+            </button>
+          </div>
+          {footer}
+        </div>
+      </div>
+    );
+  }
+
+  const questionBlock = (
+    <div className="overflow-hidden">
+      <Card key={step} className={`transition-all duration-200 ease-out ${animClass} ${design.layout === 'chat' ? 'rounded-br-none' : ''}`} style={cardStyle}>
+        <CardContent className="p-6 space-y-4 min-h-[220px]">
+          {current?.intro?.map((h: any) => (
+            h.qtype === 'heading' ? <h2 key={h.id} className="text-lg font-semibold">{h.label}</h2>
+            : h.qtype === 'divider' ? <hr key={h.id} className="border-border" />
+            : <p key={h.id} className="text-sm text-muted-foreground whitespace-pre-line">{h.label}</p>
+          ))}
+          {current?.q && (
+            <>
+              <Label className="text-base">
+                {current.index}. {current.q.label} {current.q.required && <span className="text-destructive">*</span>}
+              </Label>
+              {current.q.help_text && <p className="text-xs text-muted-foreground">{current.q.help_text}</p>}
+              <QuestionInput q={current.q} value={answers[current.q.id]} onChange={(v: any) => handleAnswer(current.q, v)} />
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const navBlock = (
+    <div className="flex items-center justify-between pb-10">
+      <button className="px-4 py-2 text-sm disabled:opacity-40" style={buttonCss(design, 'ghost')} onClick={() => go(-1)} disabled={step === 0}>
+        <ArrowLeft className="h-4 w-4 mr-1 inline" /> Zurück
+      </button>
+      {isLast ? (
+        <button className="px-6 py-3 text-sm font-medium" style={buttonCss(design)} onClick={submit} disabled={submitting}>
+          {submitting ? 'Wird gesendet …' : 'Antworten absenden'}
+        </button>
+      ) : (
+        <button className="px-6 py-3 text-sm font-medium" style={buttonCss(design)} onClick={next}>
+          Weiter <ArrowRight className="h-4 w-4 ml-1 inline" />
+        </button>
+      )}
+    </div>
+  );
+
+  if (split) {
+    return (
+      <div style={shellStyle} className="min-h-screen grid md:grid-cols-2">
+        <div className="hidden md:block bg-cover bg-center" style={{ backgroundImage: `url(${heroUrl})` }} />
+        <div className="p-6 md:p-10 flex items-center">
+          <div className="w-full max-w-xl space-y-6">
+            {header}
+            {progress}
+            {questionBlock}
+            {navBlock}
+            {footer}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background py-10 px-4">
-      <div className="mx-auto max-w-2xl space-y-6">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">{s.public_title || s.name}</h1>
-          {step === 0 && s.intro_text && <p className="text-sm text-muted-foreground whitespace-pre-line">{s.intro_text}</p>}
-          {step === 0 && s.est_minutes && <p className="text-xs text-muted-foreground">Dauer: ca. {s.est_minutes} Minuten</p>}
-        </header>
-
-        <div className="space-y-2">
-          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-            <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${((step + 1) / total) * 100}%` }} />
-          </div>
-          <p className="text-xs text-muted-foreground">Frage {step + 1} von {total}</p>
-        </div>
-
-        <div className="overflow-hidden">
-          <Card key={step} className={`transition-all duration-200 ease-out ${animClass}`}>
-            <CardContent className="p-6 space-y-4 min-h-[220px]">
-              {current?.intro?.map((h: any) => (
-                h.qtype === 'heading' ? <h2 key={h.id} className="text-lg font-semibold">{h.label}</h2>
-                : h.qtype === 'divider' ? <hr key={h.id} className="border-border" />
-                : <p key={h.id} className="text-sm text-muted-foreground whitespace-pre-line">{h.label}</p>
-              ))}
-              {current?.q && (
-                <>
-                  <Label className="text-base">
-                    {current.index}. {current.q.label} {current.q.required && <span className="text-destructive">*</span>}
-                  </Label>
-                  {current.q.help_text && <p className="text-xs text-muted-foreground">{current.q.help_text}</p>}
-                  <QuestionInput q={current.q} value={answers[current.q.id]} onChange={(v: any) => handleAnswer(current.q, v)} />
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="flex items-center justify-between pb-10">
-          <Button variant="outline" onClick={() => go(-1)} disabled={step === 0}>
-            <ArrowLeft className="h-4 w-4 mr-1" /> Zurück
-          </Button>
-          {isLast ? (
-            <Button size="lg" onClick={submit} disabled={submitting}>{submitting ? 'Wird gesendet …' : 'Antworten absenden'}</Button>
-          ) : (
-            <Button size="lg" onClick={next}>Weiter <ArrowRight className="h-4 w-4 ml-1" /></Button>
-          )}
-        </div>
+    <div style={shellStyle} className={`min-h-screen px-4 ${design.layout === 'fullscreen' ? 'py-0 flex items-center' : 'py-10'}`}>
+      <div className={`mx-auto w-full space-y-6 ${design.layout === 'fullscreen' ? 'max-w-3xl py-10' : 'max-w-2xl'}`}>
+        {header}
+        {progress}
+        {questionBlock}
+        {navBlock}
+        {footer}
       </div>
     </div>
   );

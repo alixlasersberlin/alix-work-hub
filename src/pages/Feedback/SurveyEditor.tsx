@@ -10,6 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SurveyDesignTab from './SurveyDesignTab';
+import { mergeDesign } from '@/lib/feedback/design';
 import { FeedbackHeader, LANGUAGES, QUESTION_TYPES, SURVEY_STATUS } from './_shared';
 import { Plus, Save, Trash2, ArrowUp, ArrowDown, Send, Search, Link2, Users } from 'lucide-react';
 import { toast } from 'sonner';
@@ -78,6 +80,7 @@ export default function SurveyEditor() {
         return clean.length ? clean : [7];
       })(),
       starts_at: survey.starts_at || null, ends_at: survey.ends_at || null,
+      design: survey.design ?? {},
     };
     if (isNew) {
       const { data, error } = await sb.from('surveys').insert(payload).select().single();
@@ -245,10 +248,20 @@ export default function SurveyEditor() {
       <Tabs defaultValue="basis">
         <TabsList>
           <TabsTrigger value="basis">Grundlagen</TabsTrigger>
+          <TabsTrigger value="design" disabled={isNew}>Design</TabsTrigger>
           <TabsTrigger value="fragen" disabled={isNew}>Fragen</TabsTrigger>
           <TabsTrigger value="empfaenger" disabled={isNew}>Empfänger</TabsTrigger>
           <TabsTrigger value="versand" disabled={isNew}>Versand</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="design" className="mt-4">
+          <SurveyDesignTab
+            design={mergeDesign(survey.design)}
+            onChange={(d) => setSurvey({ ...survey, design: d })}
+            title={survey.public_title || survey.name}
+          />
+        </TabsContent>
+
 
         <TabsContent value="basis" className="mt-4">
           <Card><CardContent className="p-5 grid gap-4 md:grid-cols-2 max-w-4xl">
