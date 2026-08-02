@@ -113,15 +113,28 @@ export default function SurveyEditor() {
     setQuestions(qs => qs.filter(q => q.id !== qid));
   }
 
+  async function persistOrder(next: any[]) {
+    setQuestions(next);
+    await Promise.all(next.map((q, i) => sb.from('survey_questions').update({ position: i + 1 }).eq('id', q.id)));
+  }
+
   async function move(qid: string, dir: -1 | 1) {
     const idx = questions.findIndex(q => q.id === qid);
     const to = idx + dir;
     if (to < 0 || to >= questions.length) return;
     const next = [...questions];
     [next[idx], next[to]] = [next[to], next[idx]];
-    setQuestions(next);
-    await Promise.all(next.map((q, i) => sb.from('survey_questions').update({ position: i + 1 }).eq('id', q.id)));
+    await persistOrder(next);
   }
+
+  async function dropQuestion(from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= questions.length || to >= questions.length) return;
+    const next = [...questions];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    await persistOrder(next);
+  }
+
 
   async function addOption(qid: string) {
     const list = options[qid] ?? [];
