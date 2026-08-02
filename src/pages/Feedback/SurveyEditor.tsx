@@ -134,13 +134,23 @@ export default function SurveyEditor() {
   }
 
   async function searchCustomers() {
-    if (custQuery.trim().length < 2) return;
+    if (custQuery.trim().length < 2) { toast.error('Bitte mindestens 2 Zeichen eingeben'); return; }
     const term = `%${custQuery.trim()}%`;
-    const { data } = await sb.from('customers')
-      .select('id, customer_number, company_name, first_name, last_name, email')
-      .or(`company_name.ilike.${term},email.ilike.${term},customer_number.ilike.${term},last_name.ilike.${term}`)
+    const { data, error } = await sb.from('customers')
+      .select('id, external_customer_id, company_name, contact_name, email')
+      .or(`company_name.ilike.${term},email.ilike.${term},external_customer_id.ilike.${term},contact_name.ilike.${term}`)
       .limit(25);
-    setCustResults(data ?? []);
+    if (error) { toast.error(error.message); return; }
+    const rows = (data ?? []).map((c: any) => ({
+      id: c.id,
+      customer_number: c.external_customer_id,
+      company_name: c.company_name,
+      first_name: null,
+      last_name: c.contact_name,
+      email: c.email,
+    }));
+    setCustResults(rows);
+    if (!rows.length) toast.info('Keine Kunden gefunden');
   }
 
   async function addRecipient(c: any) {
@@ -154,6 +164,7 @@ export default function SurveyEditor() {
     setRecipients(r => [data, ...r]);
     toast.success('Empfänger hinzugefügt');
   }
+
 
   async function removeRecipient(rid: string) {
     await sb.from('survey_recipients').delete().eq('id', rid);
