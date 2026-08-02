@@ -321,14 +321,29 @@ export default function SurveyEditor() {
 
         <TabsContent value="fragen" className="mt-4 space-y-3">
           <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">{questions.length} Fragen</p>
+            <p className="text-sm text-muted-foreground">{questions.length} Fragen · zum Sortieren am Griff ziehen</p>
             <Button size="sm" onClick={addQuestion}><Plus className="h-4 w-4 mr-2" />Frage hinzufügen</Button>
           </div>
           {questions.map((q, i) => (
-            <Card key={q.id}>
+            <Card
+              key={q.id}
+              onDragOver={e => { if (dragIdx !== null) { e.preventDefault(); setOverIdx(i); } }}
+              onDrop={e => { e.preventDefault(); if (dragIdx !== null) dropQuestion(dragIdx, i); setDragIdx(null); setOverIdx(null); }}
+              className={overIdx === i && dragIdx !== null && dragIdx !== i ? 'ring-2 ring-primary' : dragIdx === i ? 'opacity-60' : ''}
+            >
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start gap-2">
-                  <Badge variant="outline" className="mt-2">{i + 1}</Badge>
+                  <div
+                    draggable
+                    onDragStart={() => setDragIdx(i)}
+                    onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+                    title="Zum Sortieren ziehen"
+                    className="mt-1 flex flex-col items-center gap-1 cursor-grab active:cursor-grabbing select-none"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <Badge variant="outline">{i + 1}</Badge>
+                  </div>
+
                   <div className="flex-1 grid gap-3 md:grid-cols-3">
                     <div className="md:col-span-2"><Label>Fragetext</Label><Input value={q.label ?? ''} onChange={e => patchQuestion(q.id, { label: e.target.value })} /></div>
                     <div>
