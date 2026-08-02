@@ -262,6 +262,7 @@ const FeedbackImport = lazy(() => import("./pages/Feedback/Import"));
 const FeedbackRecipientGroups = lazy(() => import("./pages/Feedback/RecipientGroups"));
 const FeedbackInsights = lazy(() => import("./pages/Feedback/Insights"));
 const FeedbackStatistics = lazy(() => import("./pages/Feedback/Statistics"));
+const FeedbackExports = lazy(() => import("./pages/Feedback/Exports"));
 const FeedbackLibrary = lazy(() => import("./pages/Feedback/Library"));
 
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
@@ -1143,6 +1144,7 @@ function AppRoutes() {
           <Route path="/umfragen/geschenke" element={<ProtectedRoute><FeedbackRewards /></ProtectedRoute>} />
           <Route path="/umfragen/auswertung" element={<ProtectedRoute><FeedbackInsights /></ProtectedRoute>} />
           <Route path="/umfragen/statistik" element={<ProtectedRoute><FeedbackStatistics /></ProtectedRoute>} />
+          <Route path="/umfragen/exporte" element={<ProtectedRoute><FeedbackExports /></ProtectedRoute>} />
 
           <Route path="/umfragen/bibliothek" element={<ProtectedRoute><FeedbackLibrary /></ProtectedRoute>} />
           <Route path="/umfragen/import" element={<ProtectedRoute><FeedbackImport /></ProtectedRoute>} />
