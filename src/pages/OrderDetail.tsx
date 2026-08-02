@@ -949,10 +949,10 @@ export default function OrderDetail() {
               <p className="text-muted-foreground text-sm">Keine Kundendaten verfügbar.</p>
             )}
           </div>
-        </div>
           <div className="lg:col-span-2">
             <CustomerFeedbackCard customerId={order?.customer_id ?? null} orderNumber={order?.order_number ?? null} />
           </div>
+        </div>
       )}
 
       {/* Items Tab */}
