@@ -88,7 +88,47 @@ Deno.serve(async (req) => {
             company_name: t.company_name, order_number: t.order_number,
           });
         }
+      } else if (rule.trigger_event === 'repair_done') {
+        const { data: reps } = await admin.from('repair_orders')
+          .select('id, customer_email, customer_name, customer_company, customer_id, order_number, repair_status, updated_at')
+          .in('repair_status', ['abgeschlossen', 'fertig', 'ausgeliefert', 'closed', 'completed'])
+          .lte('updated_at', cutoff).order('updated_at', { ascending: false }).limit(200);
+        for (const r of reps ?? []) {
+          if (!r.customer_email) continue;
+          candidates.push({
+            source_ref: `repair:${r.id}`, email: r.customer_email, first_name: r.customer_name,
+            company_name: r.customer_company, customer_id: r.customer_id, order_number: r.order_number,
+          });
+        }
+      } else if (rule.trigger_event === 'academy_done') {
+        const { data: bks } = await admin.from('academy_bookings')
+          .select('id, customer_email, customer_name, customer_id, booking_status, updated_at')
+          .in('booking_status', ['abgeschlossen', 'teilgenommen', 'bestaetigt', 'completed'])
+          .lte('updated_at', cutoff).order('updated_at', { ascending: false }).limit(200);
+        for (const b of bks ?? []) {
+          if (!b.customer_email) continue;
+          candidates.push({
+            source_ref: `academy:${b.id}`, email: b.customer_email, first_name: b.customer_name,
+            customer_id: b.customer_id,
+          });
+        }
+      } else if (rule.trigger_event === 'mediapaket_done') {
+        const { data: mps } = await admin.from('media_packages')
+          .select('id, customer_id, status, completed_at, updated_at')
+          .eq('status', 'completed').lte('updated_at', cutoff)
+          .order('updated_at', { ascending: false }).limit(200);
+        for (const m of mps ?? []) {
+          if (!m.customer_id) continue;
+          const { data: c } = await admin.from('customers')
+            .select('id, email, contact_name, company_name').eq('id', m.customer_id).maybeSingle();
+          if (!c?.email) continue;
+          candidates.push({
+            source_ref: `mediapaket:${m.id}`, email: c.email, first_name: c.contact_name,
+            company_name: c.company_name, customer_id: c.id,
+          });
+        }
       }
+
 
       let ruleCreated = 0;
       for (const cand of candidates) {
