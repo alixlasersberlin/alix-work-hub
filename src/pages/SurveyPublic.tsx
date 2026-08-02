@@ -26,6 +26,8 @@ export default function SurveyPublic() {
   const [state, setState] = useState<'loading' | 'ready' | 'done' | 'error'>('loading');
   const [error, setError] = useState('');
   const [reward, setReward] = useState<any>(null);
+  const [review, setReview] = useState<any>(null);
+
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(0);
   const [started, setStarted] = useState(false);
@@ -122,7 +124,9 @@ export default function SurveyPublic() {
     setSubmitting(false);
     if (err || res?.error) { toast.error(res?.error ?? 'Speichern fehlgeschlagen'); return; }
     setReward(res.reward ?? null);
+    setReview(res.review ?? null);
     setState('done');
+
   }
 
   const shellStyle: any = {
@@ -155,6 +159,16 @@ export default function SurveyPublic() {
               {reward.code && <p className="mt-2 text-sm">Ihr Code: <code className="font-mono text-primary">{reward.code}</code></p>}
             </div>
           )}
+          {review?.url && (
+            <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-3">
+              <p className="text-sm">{review.text}</p>
+              <a href={review.url} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+                Jetzt auf {review.provider} bewerten
+              </a>
+            </div>
+          )}
+
         </CardContent>
       </Card>
     </div>

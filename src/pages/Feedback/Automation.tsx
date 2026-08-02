@@ -16,7 +16,11 @@ const TRIGGERS = [
   { value: 'order_created', label: 'Auftrag erstellt' },
   { value: 'ticket_closed', label: 'Ticket geschlossen' },
   { value: 'service_done', label: 'Servicetermin erledigt' },
+  { value: 'repair_done', label: 'Reparatur abgeschlossen' },
+  { value: 'academy_done', label: 'Schulung / Academy besucht' },
+  { value: 'mediapaket_done', label: 'Mediapaket fertiggestellt' },
 ];
+
 
 export default function FeedbackAutomation() {
   const [rules, setRules] = useState<any[]>([]);

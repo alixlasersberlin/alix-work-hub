@@ -36,6 +36,9 @@ export default function FeedbackTestimonials() {
   );
 
   const embed = `<div id="alix-testimonials"></div>
+<script src="${FN_URL}?format=js&limit=6&accent=%23c9a227&interval=6000" async></script>`;
+
+  const embedJson = `<div id="alix-testimonials"></div>
 <script>
 fetch("${FN_URL}?limit=6").then(r=>r.json()).then(d=>{
   document.getElementById("alix-testimonials").innerHTML =
@@ -44,6 +47,7 @@ fetch("${FN_URL}?limit=6").then(r=>r.json()).then(d=>{
       + [t.author,t.company].filter(Boolean).join(', ') + '</footer></blockquote>').join("");
 });
 </script>`;
+
 
   return (
     <div className="space-y-5">
@@ -56,12 +60,21 @@ fetch("${FN_URL}?limit=6").then(r=>r.json()).then(d=>{
       </div>
 
       <Card><CardContent className="p-5 space-y-3">
-        <Label>Website-Einbettung (ALIX CONNECT / eigene Seite)</Label>
-        <Textarea readOnly rows={8} value={embed} className="font-mono text-xs" />
-        <Button variant="outline" onClick={() => { navigator.clipboard.writeText(embed); toast.success('Code kopiert'); }}>
-          <Copy className="h-4 w-4 mr-2" />Einbettungscode kopieren
+        <Label>Website-Einbettung – Carousel (empfohlen)</Label>
+        <p className="text-xs text-muted-foreground">Fertiges Slider-Design mit Autoplay, Punkten und Akzentfarbe – einfach einfügen.</p>
+        <Textarea readOnly rows={3} value={embed} className="font-mono text-xs" />
+        <Button variant="outline" onClick={() => { navigator.clipboard.writeText(embed); toast.success('Carousel-Code kopiert'); }}>
+          <Copy className="h-4 w-4 mr-2" />Carousel-Code kopieren
         </Button>
+        <div className="pt-3 border-t border-border space-y-3">
+          <Label>Alternative: eigene Gestaltung (JSON-Ausgabe)</Label>
+          <Textarea readOnly rows={8} value={embedJson} className="font-mono text-xs" />
+          <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard.writeText(embedJson); toast.success('Code kopiert'); }}>
+            <Copy className="h-4 w-4 mr-2" />JSON-Code kopieren
+          </Button>
+        </div>
       </CardContent></Card>
+
 
       <Input placeholder="Suche in Kundenstimmen …" value={q} onChange={e => setQ(e.target.value)} className="max-w-md" />
 

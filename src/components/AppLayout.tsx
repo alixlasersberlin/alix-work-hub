@@ -599,7 +599,7 @@ export const navItems: NavItem[] = [
 
   {
     path: '/umfragen/dashboard', label: 'FEEDBACK & REWARDS', icon: ClipboardCheck,
-    roles: ['Admin', 'Super Admin', 'Marketing', 'Geschäftsführung', 'Kundenservice', 'Service', 'Vertrieb', 'Vertriebsleitung', 'QM'],
+    roles: ['Admin', 'Super Admin', 'Marketing', 'Geschäftsführung', 'Kundenservice', 'Service', 'Vertrieb', 'Vertriebsleitung', 'QM', 'Feedback'],
     children: [
       { path: '/umfragen/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: null },
       { path: '/umfragen', label: 'Umfragen', icon: ClipboardCheck, roles: null },
@@ -608,7 +608,7 @@ export const navItems: NavItem[] = [
       { path: '/umfragen/auswertung', label: 'Auswertung', icon: Sparkles, roles: null },
       { path: '/umfragen/statistik', label: 'Statistik', icon: BarChart3, roles: null },
       { path: '/umfragen/benchmark', label: 'Benchmark & Trends', icon: BarChart3, roles: null },
-      { path: '/umfragen/automatisierung', label: 'Automatisierung', icon: Zap, roles: ['Admin', 'Super Admin', 'Marketing'] },
+      { path: '/umfragen/automatisierung', label: 'Automatisierung', icon: Zap, roles: ['Admin', 'Super Admin', 'Marketing', 'Feedback'] },
       { path: '/umfragen/testimonials', label: 'Testimonials', icon: Quote, roles: null },
       { path: '/umfragen/empfaenger', label: 'Empfängerliste', icon: Users, roles: null },
 
