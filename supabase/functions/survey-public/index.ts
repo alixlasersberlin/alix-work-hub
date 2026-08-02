@@ -291,7 +291,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      return json({ ok: true, reward: rewardOut });
+      return json({ ok: true, reward: rewardOut, review: reviewOut });
     }
 
     return json({ error: 'unknown_action' }, 400);
