@@ -75,6 +75,8 @@ export default function SurveyPublic() {
     return out;
   }, [data, answers]);
 
+  useEffect(() => { if (step > 0 && step >= slides.length) setStep(Math.max(0, slides.length - 1)); }, [slides.length, step]);
+
   function setAnswer(qid: string, v: any) { setAnswers(a => ({ ...a, [qid]: v })); }
 
   function isAnswered(q: any) {
