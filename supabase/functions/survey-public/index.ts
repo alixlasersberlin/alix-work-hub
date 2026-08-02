@@ -186,13 +186,82 @@ Deno.serve(async (req) => {
       await admin.from('survey_invitations').update({ completed_at: now, status: 'abgeschlossen' }).eq('id', inv.id);
       await admin.from('survey_sessions').update({ completed_at: now, duration_seconds: duration, status: 'abgeschlossen' }).eq('invitation_id', inv.id);
 
+      // Globale Feedback-Einstellungen laden (Ticket/CAPA-Rückkopplung, Review-Boost)
+      let cfg: Record<string, any> = {};
+      try {
+        const { data: setRow } = await admin.from('app_settings').select('value').eq('key', 'feedback.settings').maybeSingle();
+        const raw = (setRow as any)?.value;
+        cfg = typeof raw === 'string' ? JSON.parse(raw) : (raw ?? {});
+      } catch { cfg = {}; }
+
+      let recipient: Record<string, any> | null = null;
+      if (inv.recipient_id) {
+        const { data: r } = await admin.from('survey_recipients').select('*').eq('id', inv.recipient_id).maybeSingle();
+        recipient = r as any;
+      }
+
       if (critical) {
+        let ticketId: string | null = null;
+        let capaId: string | null = null;
+
+        const answerText = items
+          .map((i) => `${i.question_label}: ${i.value_text ?? i.value_number ?? (i.value_json ? JSON.stringify(i.value_json) : i.value_bool ?? '—')}`)
+          .join('\n');
+        const label = `Kritisches Feedback – ${survey.public_title ?? survey.name}`;
+
+        if (cfg.critical_create_ticket) {
+          const { data: t } = await admin.from('tickets').insert({
+            subject: label,
+            description: `Bewertung: NPS ${npsScore ?? '—'} / Score ${scoreTotal ?? '—'}\n\n${answerText}`,
+            customer_email: recipient?.email ?? null,
+            customer_name: recipient?.first_name ?? recipient?.name ?? null,
+            company_name: recipient?.company_name ?? null,
+            customer_id: recipient?.customer_id ?? null,
+            order_number: recipient?.order_number ?? null,
+            priority: 'hoch',
+            source: 'feedback',
+            source_system: 'alixwork',
+            department: String(cfg.critical_ticket_department ?? 'service'),
+          }).select('id').maybeSingle();
+          ticketId = (t as any)?.id ?? null;
+        }
+
+        if (cfg.critical_create_capa) {
+          const { data: c } = await admin.from('capas').insert({
+            title: label,
+            trigger_type: 'kundenfeedback',
+            status: 'offen',
+            immediate_action: null,
+            root_cause: null,
+            preventive_action: null,
+            corrective_action: null,
+            due_date: new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10),
+          }).select('id').maybeSingle();
+          capaId = (c as any)?.id ?? null;
+        }
+
         await admin.from('survey_alerts').insert({
           survey_id: survey.id, response_id: resp.id, recipient_id: inv.recipient_id,
           rule_name: 'negative_bewertung', severity: 'hoch',
           reason: 'Kritische Bewertung erkannt (Sterne ≤ 2, Skala ≤ 4 oder NPS ≤ 6)', status: 'offen',
+          ticket_id: ticketId, capa_id: capaId,
         });
       }
+
+      // Review-Boost: bei Top-Bewertung auf Google/Trustpilot weiterleiten
+      let reviewOut: Record<string, unknown> | null = null;
+      const reviewMin = Number(cfg.review_nps_min ?? 9);
+      const reviewUrl = String(cfg.review_url ?? '').trim();
+      const topRating = (typeof npsScore === 'number' && npsScore >= reviewMin)
+        || (npsScore === null && typeof scoreTotal === 'number' && scoreTotal >= 4.5);
+      if (cfg.review_enabled && reviewUrl && topRating) {
+        reviewOut = {
+          url: reviewUrl,
+          provider: cfg.review_provider ?? 'Google',
+          text: cfg.review_text ?? 'Ihre Bewertung hilft anderen bei der Entscheidung – vielen Dank!',
+        };
+      }
+
 
       // Belohnung zuweisen
       let rewardOut: Record<string, unknown> | null = null;
