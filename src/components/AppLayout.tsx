@@ -614,6 +614,7 @@ export const navItems: NavItem[] = [
       { path: '/umfragen/import', label: 'Upload & Import', icon: Upload, roles: null },
       { path: '/umfragen/vorlagen', label: 'E-Mail-Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Marketing'] },
       { path: '/umfragen/exporte', label: 'Exporte', icon: Download, roles: null },
+      { path: '/umfragen/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin'] },
 
     ],
   },

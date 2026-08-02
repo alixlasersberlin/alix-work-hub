@@ -264,6 +264,7 @@ const FeedbackInsights = lazy(() => import("./pages/Feedback/Insights"));
 const FeedbackStatistics = lazy(() => import("./pages/Feedback/Statistics"));
 const FeedbackExports = lazy(() => import("./pages/Feedback/Exports"));
 const FeedbackLibrary = lazy(() => import("./pages/Feedback/Library"));
+const FeedbackSettings = lazy(() => import("./pages/Feedback/Settings"));
 
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const NewsAdmin = lazy(() => import("./pages/Operation/NewsAdmin"));
@@ -1145,6 +1146,7 @@ function AppRoutes() {
           <Route path="/umfragen/auswertung" element={<ProtectedRoute><FeedbackInsights /></ProtectedRoute>} />
           <Route path="/umfragen/statistik" element={<ProtectedRoute><FeedbackStatistics /></ProtectedRoute>} />
           <Route path="/umfragen/exporte" element={<ProtectedRoute><FeedbackExports /></ProtectedRoute>} />
+          <Route path="/umfragen/einstellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><FeedbackSettings /></ProtectedRoute>} />
 
           <Route path="/umfragen/bibliothek" element={<ProtectedRoute><FeedbackLibrary /></ProtectedRoute>} />
           <Route path="/umfragen/import" element={<ProtectedRoute><FeedbackImport /></ProtectedRoute>} />
