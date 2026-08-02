@@ -1144,6 +1144,7 @@ function AppRoutes() {
           <Route path="/umfragen/auswertung" element={<ProtectedRoute><FeedbackInsights /></ProtectedRoute>} />
           <Route path="/umfragen/statistik" element={<ProtectedRoute><FeedbackStatistics /></ProtectedRoute>} />
 
+          <Route path="/umfragen/bibliothek" element={<ProtectedRoute><FeedbackLibrary /></ProtectedRoute>} />
           <Route path="/umfragen/import" element={<ProtectedRoute><FeedbackImport /></ProtectedRoute>} />
 
           <Route path="/umfragen/belohnungen" element={<ProtectedRoute><FeedbackRewardAssignments /></ProtectedRoute>} />
