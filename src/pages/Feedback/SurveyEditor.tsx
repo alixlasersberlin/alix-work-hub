@@ -86,7 +86,11 @@ export default function SurveyEditor() {
       })(),
       starts_at: survey.starts_at || null, ends_at: survey.ends_at || null,
       design: survey.design ?? {},
+      auto_reminder_enabled: Boolean((survey as any).auto_reminder_enabled),
+      auto_reminder_days: Math.max(1, Number((survey as any).auto_reminder_days) || 5),
+      auto_reminder_max: Math.max(1, Number((survey as any).auto_reminder_max) || 2),
     };
+
     if (isNew) {
       const { data, error } = await sb.from('surveys').insert(payload).select().single();
       setSaving(false);
