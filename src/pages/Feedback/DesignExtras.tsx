@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Save, Trash2, Loader2, Sparkles, Download } from 'lucide-react';
 import { toast } from 'sonner';
@@ -187,6 +186,3 @@ function contrast(a: string, b: string) {
   const l1 = lum(a), l2 = lum(b);
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
-
-/** Label-Export für externe Nutzung. */
-export const DESIGN_EXTRAS_LABEL = Label;
