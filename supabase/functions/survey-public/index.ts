@@ -73,8 +73,21 @@ Deno.serve(async (req) => {
         });
       }
 
+      let recipient: Record<string, unknown> | null = null;
+      if (inv.recipient_id) {
+        const { data: rec } = await admin
+          .from('survey_recipients').select('*').eq('id', inv.recipient_id).maybeSingle();
+        if (rec) {
+          recipient = {
+            name: (rec as any).name ?? (rec as any).contact_name ?? null,
+            firma: (rec as any).company ?? (rec as any).company_name ?? null,
+          };
+        }
+      }
+
       return json({
         survey,
+        recipient,
         questions: (questions ?? []).map((q) => ({ ...q, options: optsByQ[q.id] ?? [] })),
         draft_answers: session?.draft_answers ?? {},
       });
