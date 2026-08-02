@@ -14,6 +14,8 @@ import {
   applyTheme, mergeDesign, ensureFontLoaded, designVars, backgroundStyle, buttonCss,
 } from '@/lib/feedback/design';
 import { uploadSurveyMedia, listSurveyMedia, deleteSurveyMedia, resolveMediaUrl } from '@/lib/feedback/media';
+import { DesignTemplates, DesignAiAssistant, ContrastHint } from './DesignExtras';
+
 
 type Props = { design: SurveyDesign; onChange: (d: SurveyDesign) => void; title?: string };
 
@@ -56,6 +58,11 @@ export default function SurveyDesignTab({ design, onChange, title }: Props) {
             ))}
           </div>
         </CardContent></Card>
+
+        <DesignAiAssistant design={d} onApply={onChange} />
+        <DesignTemplates design={d} onApply={onChange} />
+        <ContrastHint design={d} />
+
 
         <Card><CardContent className="p-4 space-y-4">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Layout &amp; Typografie</h3>
