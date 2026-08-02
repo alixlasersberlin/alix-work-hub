@@ -57,6 +57,11 @@ Deno.serve(async (req) => {
         for (const o of opts ?? []) (optsByQ[o.question_id] ||= []).push(o);
       }
 
+      const { data: logic } = await admin
+        .from('survey_logic_rules')
+        .select('id, source_question_id, operator, compare_value, action, target_question_id, position, status')
+        .eq('survey_id', survey.id).eq('status', 'aktiv').order('position');
+
       const { data: session } = await admin
         .from('survey_sessions').select('id, draft_answers')
         .eq('invitation_id', inv.id).maybeSingle();
@@ -89,6 +94,7 @@ Deno.serve(async (req) => {
         survey,
         recipient,
         questions: (questions ?? []).map((q) => ({ ...q, options: optsByQ[q.id] ?? [] })),
+        logic: logic ?? [],
         draft_answers: session?.draft_answers ?? {},
       });
     }
