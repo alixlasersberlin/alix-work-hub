@@ -150,8 +150,59 @@ export default function FeedbackSettings() {
               <Input value={cfg.alert_recipients} onChange={e => set('alert_recipients', e.target.value)} placeholder="qm@alix-lasers.com, service@…" />
             </div>
           </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
+              <div>
+                <Label>Ticket erzeugen</Label>
+                <p className="text-xs text-muted-foreground mt-1">Legt bei kritischem Feedback automatisch ein Ticket an.</p>
+              </div>
+              <Switch checked={cfg.critical_create_ticket} onCheckedChange={v => set('critical_create_ticket', v)} />
+            </div>
+            <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
+              <div>
+                <Label>CAPA erzeugen</Label>
+                <p className="text-xs text-muted-foreground mt-1">Erstellt eine Qualitätsmaßnahme (Bug &amp; CAPA) mit 14 Tagen Frist.</p>
+              </div>
+              <Switch checked={cfg.critical_create_capa} onCheckedChange={v => set('critical_create_capa', v)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Abteilung für neue Tickets</Label>
+              <Input value={cfg.critical_ticket_department} onChange={e => set('critical_ticket_department', e.target.value)} placeholder="service" />
+            </div>
+          </div>
         </CardContent></Card>
       </Section>
+
+      <Section title="Bewertungs-Weiterleitung (Review-Boost)">
+        <Card><CardContent className="p-4 space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label>Weiterleitung aktiv</Label>
+              <p className="text-xs text-muted-foreground mt-1">Zufriedene Teilnehmer werden nach dem Absenden auf Google oder Trustpilot eingeladen.</p>
+            </div>
+            <Switch checked={cfg.review_enabled} onCheckedChange={v => set('review_enabled', v)} />
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <Label>Portal</Label>
+              <Input value={cfg.review_provider} onChange={e => set('review_provider', e.target.value)} placeholder="Google" />
+            </div>
+            <div className="space-y-2">
+              <Label>Bewertungslink</Label>
+              <Input value={cfg.review_url} onChange={e => set('review_url', e.target.value)} placeholder="https://g.page/r/…/review" />
+            </div>
+            <div className="space-y-2">
+              <Label>Ab NPS-Wert</Label>
+              <Input type="number" min={0} max={10} value={cfg.review_nps_min} onChange={e => set('review_nps_min', Number(e.target.value))} />
+            </div>
+            <div className="space-y-2 md:col-span-3">
+              <Label>Hinweistext</Label>
+              <Input value={cfg.review_text} onChange={e => set('review_text', e.target.value)} />
+            </div>
+          </div>
+        </CardContent></Card>
+      </Section>
+
 
       <Section title="Datenschutz & Aufbewahrung">
         <Card><CardContent className="p-4 space-y-4">
