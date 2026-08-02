@@ -368,3 +368,6 @@ verify_jwt = false
 
 [functions.survey-send-invites]
 verify_jwt = false
+
+[functions.survey-auto-reminders]
+verify_jwt = false
