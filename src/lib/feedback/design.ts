@@ -216,3 +216,48 @@ export function animClasses(d: SurveyDesign, phase: 'in-right' | 'in-left' | 'ou
 export function personalize(text: string, vars: Record<string, string | null | undefined>) {
   return String(text ?? '').replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, k) => String(vars[k] ?? '').trim());
 }
+
+/** #rrggbb → "H S% L%" (Format der shadcn-Design-Tokens). */
+export function hexToHslTriple(hex: string): string {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec((hex || '').trim());
+  if (!m) return '0 0% 50%';
+  const r = parseInt(m[1], 16) / 255, g = parseInt(m[2], 16) / 255, b = parseInt(m[3], 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (max !== min) {
+    const dd = max - min;
+    s = l > 0.5 ? dd / (2 - max - min) : dd / (max + min);
+    h = max === r ? (g - b) / dd + (g < b ? 6 : 0) : max === g ? (b - r) / dd + 2 : (r - g) / dd + 4;
+    h *= 60;
+  }
+  return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
+/**
+ * Überschreibt die shadcn-Tokens innerhalb des Umfrage-Containers,
+ * damit alle UI-Komponenten (Buttons, Inputs, Checkboxen) das Umfrage-Design übernehmen.
+ */
+export function tokenVars(d: SurveyDesign): CSSProperties {
+  const t = hexToHslTriple;
+  return {
+    ['--background' as any]: t(d.colors.bg),
+    ['--foreground' as any]: t(d.colors.text),
+    ['--card' as any]: t(d.colors.surface),
+    ['--card-foreground' as any]: t(d.colors.text),
+    ['--popover' as any]: t(d.colors.surface),
+    ['--popover-foreground' as any]: t(d.colors.text),
+    ['--primary' as any]: t(d.colors.primary),
+    ['--primary-foreground' as any]: t(d.colors.primaryText),
+    ['--secondary' as any]: t(d.colors.surface),
+    ['--secondary-foreground' as any]: t(d.colors.text),
+    ['--muted' as any]: t(d.colors.border),
+    ['--muted-foreground' as any]: t(d.colors.muted),
+    ['--accent' as any]: t(d.colors.border),
+    ['--accent-foreground' as any]: t(d.colors.text),
+    ['--border' as any]: t(d.colors.border),
+    ['--input' as any]: t(d.colors.border),
+    ['--ring' as any]: t(d.colors.primary),
+    ['--radius' as any]: `${d.radius}px`,
+  };
+}
