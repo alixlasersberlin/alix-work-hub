@@ -20,6 +20,14 @@ type FeedbackSettings = {
   alert_nps_max: number;
   alert_stars_max: number;
   alert_recipients: string;
+  critical_create_ticket: boolean;
+  critical_create_capa: boolean;
+  critical_ticket_department: string;
+  review_enabled: boolean;
+  review_provider: string;
+  review_url: string;
+  review_nps_min: number;
+  review_text: string;
   anonymize_enabled: boolean;
   anonymize_after_days: number;
   testimonial_auto_request: boolean;
@@ -36,6 +44,14 @@ const DEFAULTS: FeedbackSettings = {
   alert_nps_max: 6,
   alert_stars_max: 2,
   alert_recipients: '',
+  critical_create_ticket: false,
+  critical_create_capa: false,
+  critical_ticket_department: 'service',
+  review_enabled: false,
+  review_provider: 'Google',
+  review_url: '',
+  review_nps_min: 9,
+  review_text: 'Ihre Bewertung hilft anderen bei der Entscheidung – vielen Dank!',
   anonymize_enabled: false,
   anonymize_after_days: 365,
   testimonial_auto_request: false,
@@ -43,6 +59,7 @@ const DEFAULTS: FeedbackSettings = {
   privacy_url: '',
   imprint_url: '',
 };
+
 
 export default function FeedbackSettings() {
   const sb = supabase as any;
