@@ -263,6 +263,7 @@ const FeedbackRecipientGroups = lazy(() => import("./pages/Feedback/RecipientGro
 const FeedbackInsights = lazy(() => import("./pages/Feedback/Insights"));
 const FeedbackStatistics = lazy(() => import("./pages/Feedback/Statistics"));
 const FeedbackExports = lazy(() => import("./pages/Feedback/Exports"));
+const FeedbackMailLog = lazy(() => import("./pages/Feedback/MailLog"));
 const FeedbackLibrary = lazy(() => import("./pages/Feedback/Library"));
 const FeedbackSettings = lazy(() => import("./pages/Feedback/Settings"));
 
