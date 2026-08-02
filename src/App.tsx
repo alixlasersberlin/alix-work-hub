@@ -264,6 +264,9 @@ const FeedbackRecipientGroups = lazy(() => import("./pages/Feedback/RecipientGro
 const FeedbackInsights = lazy(() => import("./pages/Feedback/Insights"));
 const FeedbackStatistics = lazy(() => import("./pages/Feedback/Statistics"));
 const FeedbackExports = lazy(() => import("./pages/Feedback/Exports"));
+const FeedbackAutomation = lazy(() => import("./pages/Feedback/Automation"));
+const FeedbackTestimonials = lazy(() => import("./pages/Feedback/Testimonials"));
+const FeedbackBenchmark = lazy(() => import("./pages/Feedback/Benchmark"));
 const FeedbackMailLog = lazy(() => import("./pages/Feedback/MailLog"));
 const FeedbackLibrary = lazy(() => import("./pages/Feedback/Library"));
 const FeedbackSettings = lazy(() => import("./pages/Feedback/Settings"));
@@ -1155,6 +1158,9 @@ function AppRoutes() {
           <Route path="/umfragen/import" element={<ProtectedRoute><FeedbackImport /></ProtectedRoute>} />
 
           <Route path="/umfragen/belohnungen" element={<ProtectedRoute><FeedbackRewardAssignments /></ProtectedRoute>} />
+          <Route path="/umfragen/automatisierung" element={<ProtectedRoute><FeedbackAutomation /></ProtectedRoute>} />
+          <Route path="/umfragen/testimonials" element={<ProtectedRoute><FeedbackTestimonials /></ProtectedRoute>} />
+          <Route path="/umfragen/benchmark" element={<ProtectedRoute><FeedbackBenchmark /></ProtectedRoute>} />
           <Route path="/umfragen/gutscheincodes" element={<ProtectedRoute><FeedbackRewardCodes /></ProtectedRoute>} />
           <Route path="/umfragen/empfaenger" element={<ProtectedRoute><FeedbackRecipientGroups /></ProtectedRoute>} />
           <Route path="/umfragen/vorlagen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Marketing']}><FeedbackEmailTemplates /></ProtectedRoute>} />

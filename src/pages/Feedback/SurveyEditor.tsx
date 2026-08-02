@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SurveyDesignTab from './SurveyDesignTab';
 import SurveyLogicTab from './SurveyLogicTab';
 import SurveyShareTab from './SurveyShareTab';
+import SurveyTranslationsTab from './SurveyTranslationsTab';
 
 import { mergeDesign } from '@/lib/feedback/design';
 import { FeedbackHeader, LANGUAGES, QUESTION_TYPES, SURVEY_STATUS } from './_shared';
@@ -273,6 +274,7 @@ export default function SurveyEditor() {
           <TabsTrigger value="design" disabled={isNew}>Design</TabsTrigger>
           <TabsTrigger value="fragen" disabled={isNew}>Fragen</TabsTrigger>
           <TabsTrigger value="logik" disabled={isNew}>Logik</TabsTrigger>
+          <TabsTrigger value="sprachen" disabled={isNew}>Sprachen</TabsTrigger>
           <TabsTrigger value="empfaenger" disabled={isNew}>Empfänger</TabsTrigger>
           <TabsTrigger value="versand" disabled={isNew}>Versand</TabsTrigger>
           <TabsTrigger value="teilen" disabled={isNew}>Teilen</TabsTrigger>
@@ -299,6 +301,10 @@ export default function SurveyEditor() {
               questions={questions.map(q => ({ ...q, __options: options[q.id] ?? [] }))}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="sprachen" className="mt-4">
+          {!isNew && <SurveyTranslationsTab surveyId={id!} baseLanguage={survey.language} />}
         </TabsContent>
 
         <TabsContent value="basis" className="mt-4">

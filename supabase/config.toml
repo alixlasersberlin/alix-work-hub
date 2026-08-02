@@ -371,3 +371,9 @@ verify_jwt = false
 
 [functions.survey-auto-reminders]
 verify_jwt = false
+
+[functions.survey-automation]
+verify_jwt = false
+
+[functions.survey-testimonials-public]
+verify_jwt = false

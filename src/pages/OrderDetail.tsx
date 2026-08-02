@@ -58,6 +58,7 @@ import { sendCustomerShippingNotice } from '@/lib/send-customer-shipping-notice'
 import { sendReviewInvitation } from '@/lib/review-invitation';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
+import CustomerFeedbackCard from '@/components/feedback/CustomerFeedbackCard';
 import OrderVatPanel, { useOrderVatState } from '@/components/OrderVatPanel';
 import MediapaketOrderTab from '@/components/MediapaketOrderTab';
 import SocialOnboardingOrderTab from '@/components/SocialOnboardingOrderTab';
@@ -949,6 +950,9 @@ export default function OrderDetail() {
             )}
           </div>
         </div>
+          <div className="lg:col-span-2">
+            <CustomerFeedbackCard customerId={order?.customer_id ?? null} orderNumber={order?.order_number ?? null} />
+          </div>
       )}
 
       {/* Items Tab */}
