@@ -264,6 +264,7 @@ const FeedbackInsights = lazy(() => import("./pages/Feedback/Insights"));
 const FeedbackStatistics = lazy(() => import("./pages/Feedback/Statistics"));
 const FeedbackExports = lazy(() => import("./pages/Feedback/Exports"));
 const FeedbackLibrary = lazy(() => import("./pages/Feedback/Library"));
+const FeedbackSettings = lazy(() => import("./pages/Feedback/Settings"));
 
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const NewsAdmin = lazy(() => import("./pages/Operation/NewsAdmin"));
