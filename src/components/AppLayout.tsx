@@ -603,6 +603,7 @@ export const navItems: NavItem[] = [
     children: [
       { path: '/umfragen/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: null },
       { path: '/umfragen', label: 'Umfragen', icon: ClipboardCheck, roles: null },
+      { path: '/umfragen/bibliothek', label: 'Vorlagen-Bibliothek', icon: Sparkles, roles: null },
       { path: '/umfragen/antworten', label: 'Antworten', icon: MessageSquare, roles: null },
       { path: '/umfragen/auswertung', label: 'Auswertung', icon: Sparkles, roles: null },
       { path: '/umfragen/statistik', label: 'Statistik', icon: BarChart3, roles: null },
