@@ -122,10 +122,11 @@ export default function SurveyPublic() {
   const current = slides[step];
   const isLast = step === slides.length - 1;
   const animClass =
-    anim === 'out-left' ? 'opacity-0 -translate-x-12'
-    : anim === 'out-right' ? 'opacity-0 translate-x-12'
-    : anim === 'in-left' ? 'opacity-100 translate-x-0'
-    : 'opacity-100 translate-x-0';
+    anim === 'out-left' ? 'opacity-0 -translate-x-16'
+    : anim === 'out-right' ? 'opacity-0 translate-x-16'
+    : anim === 'in-left' ? 'animate-in fade-in slide-in-from-left-16 duration-300'
+    : 'animate-in fade-in slide-in-from-right-16 duration-300';
+
 
   return (
     <div className="min-h-screen bg-background py-10 px-4">
