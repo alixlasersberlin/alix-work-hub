@@ -14,6 +14,7 @@ import {
   buttonCss, shadowCss, animClasses, personalize,
 } from '@/lib/feedback/design';
 import { resolveMediaUrl } from '@/lib/feedback/media';
+import { applyLogic } from '@/lib/feedback/logic';
 
 const STATIC_TYPES = ['heading', 'description', 'divider'];
 const AUTO_ADVANCE = ['yesno', 'stars', 'nps', 'scale10', 'single', 'dropdown'];
@@ -53,7 +54,14 @@ export default function SurveyPublic() {
 
   // Gruppiert Überschriften/Beschreibungen mit der folgenden Frage zu einem Slide
   const slides = useMemo(() => {
-    const qs: any[] = data?.questions ?? [];
+    const all: any[] = data?.questions ?? [];
+    const rules = data?.logic ?? [];
+    const { visibleIds } = rules.length
+      ? applyLogic(all.filter(q => !STATIC_TYPES.includes(q.qtype)), rules, answers)
+      : { visibleIds: null as any };
+    const qs: any[] = visibleIds
+      ? all.filter(q => STATIC_TYPES.includes(q.qtype) || visibleIds.has(q.id))
+      : all;
     const out: { intro: any[]; q: any | null; index: number }[] = [];
     let intro: any[] = [];
     let n = 0;
@@ -65,7 +73,9 @@ export default function SurveyPublic() {
     }
     if (intro.length) out.push({ intro, q: null, index: n });
     return out;
-  }, [data]);
+  }, [data, answers]);
+
+  useEffect(() => { if (step > 0 && step >= slides.length) setStep(Math.max(0, slides.length - 1)); }, [slides.length, step]);
 
   function setAnswer(qid: string, v: any) { setAnswers(a => ({ ...a, [qid]: v })); }
 

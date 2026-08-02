@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SurveyDesignTab from './SurveyDesignTab';
+import SurveyLogicTab from './SurveyLogicTab';
 import { mergeDesign } from '@/lib/feedback/design';
 import { FeedbackHeader, LANGUAGES, QUESTION_TYPES, SURVEY_STATUS } from './_shared';
 import { Plus, Save, Trash2, ArrowUp, ArrowDown, Send, Search, Link2, Users, GripVertical } from 'lucide-react';
@@ -265,6 +266,7 @@ export default function SurveyEditor() {
           <TabsTrigger value="basis">Grundlagen</TabsTrigger>
           <TabsTrigger value="design" disabled={isNew}>Design</TabsTrigger>
           <TabsTrigger value="fragen" disabled={isNew}>Fragen</TabsTrigger>
+          <TabsTrigger value="logik" disabled={isNew}>Logik</TabsTrigger>
           <TabsTrigger value="empfaenger" disabled={isNew}>Empfänger</TabsTrigger>
           <TabsTrigger value="versand" disabled={isNew}>Versand</TabsTrigger>
         </TabsList>
@@ -277,6 +279,15 @@ export default function SurveyEditor() {
           />
         </TabsContent>
 
+
+        <TabsContent value="logik" className="mt-4">
+          {!isNew && (
+            <SurveyLogicTab
+              surveyId={id!}
+              questions={questions.map(q => ({ ...q, __options: options[q.id] ?? [] }))}
+            />
+          )}
+        </TabsContent>
 
         <TabsContent value="basis" className="mt-4">
           <Card><CardContent className="p-5 grid gap-4 md:grid-cols-2 max-w-4xl">
