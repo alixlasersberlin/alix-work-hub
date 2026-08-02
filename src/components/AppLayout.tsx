@@ -33,7 +33,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2 } from 'lucide-react';
+import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2, Zap, Quote } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
@@ -607,6 +607,9 @@ export const navItems: NavItem[] = [
       { path: '/umfragen/antworten', label: 'Antworten', icon: MessageSquare, roles: null },
       { path: '/umfragen/auswertung', label: 'Auswertung', icon: Sparkles, roles: null },
       { path: '/umfragen/statistik', label: 'Statistik', icon: BarChart3, roles: null },
+      { path: '/umfragen/benchmark', label: 'Benchmark & Trends', icon: BarChart3, roles: null },
+      { path: '/umfragen/automatisierung', label: 'Automatisierung', icon: Zap, roles: ['Admin', 'Super Admin', 'Marketing'] },
+      { path: '/umfragen/testimonials', label: 'Testimonials', icon: Quote, roles: null },
       { path: '/umfragen/empfaenger', label: 'Empfängerliste', icon: Users, roles: null },
 
       { path: '/umfragen/geschenke', label: 'Geschenke', icon: Gift, roles: null },

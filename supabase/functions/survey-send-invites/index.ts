@@ -24,10 +24,19 @@ Deno.serve(async (req) => {
     const auth = req.headers.get('Authorization');
     if (!auth?.startsWith('Bearer ')) return json({ error: 'unauthorized' }, 401);
 
-    const userClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
-      global: { headers: { Authorization: auth } },
-    });
-    const { data: userRes } = await userClient.auth.getUser();
+    const token = auth.slice(7);
+    const isSystem = token === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    let userRes: { user: { id: string; email?: string | null } | null } = { user: null };
+    if (isSystem) {
+      userRes = { user: { id: '00000000-0000-0000-0000-000000000000', email: 'system@alixwork.de' } };
+    } else {
+      const userClient = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: auth } },
+      });
+      const res = await userClient.auth.getUser();
+      userRes = { user: res.data?.user ?? null };
+    }
     if (!userRes?.user) return json({ error: 'unauthorized' }, 401);
 
     const { survey_id, kind = 'einladung' } = await req.json().catch(() => ({}));
@@ -144,7 +153,7 @@ Deno.serve(async (req) => {
 
     await admin.from('survey_audit_logs').insert({
       survey_id, entity_table: 'survey_invitations', action: kind === 'einladung' ? 'INVITES_SENT' : 'REMINDERS_SENT',
-      new_value: { sent, skipped }, actor_id: userRes.user.id, actor_email: userRes.user.email,
+      new_value: { sent, skipped }, actor_id: isSystem ? null : userRes.user.id, actor_email: userRes.user.email,
     });
 
     return json({ ok: true, sent, skipped });
