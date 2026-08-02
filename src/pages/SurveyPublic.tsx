@@ -122,7 +122,9 @@ export default function SurveyPublic() {
     setSubmitting(false);
     if (err || res?.error) { toast.error(res?.error ?? 'Speichern fehlgeschlagen'); return; }
     setReward(res.reward ?? null);
+    setReview(res.review ?? null);
     setState('done');
+
   }
 
   const shellStyle: any = {
