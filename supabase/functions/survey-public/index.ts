@@ -29,8 +29,35 @@ Deno.serve(async (req) => {
       .select('id, survey_id, recipient_id, expires_at, completed_at, started_at, status')
       .eq('token', token)
       .maybeSingle();
-    if (!inv) return json({ error: 'invalid_token' }, 404);
+
+    if (!inv) {
+      // Offener Link (QR): anonyme Teilnahme -> frische Einladung erzeugen
+      const { data: openSurvey } = await admin
+        .from('surveys').select('id, status, language, public_enabled')
+        .eq('public_token', token).maybeSingle();
+      if (openSurvey && openSurvey.public_enabled && openSurvey.status !== 'archiviert') {
+        const rnd = crypto.randomUUID().replace(/-/g, '');
+        const { data: rec, error: recErr } = await admin.from('survey_recipients').insert({
+          survey_id: openSurvey.id,
+          email: `anonym+${rnd}@umfrage.local`,
+          first_name: 'Anonym',
+          language: openSurvey.language ?? 'de',
+          consent_status: 'unbekannt',
+          status: 'eingeladen_offen',
+        }).select('id').single();
+        if (recErr) return json({ error: recErr.message }, 500);
+        const newToken = rnd + crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+        const { error: invErr } = await admin.from('survey_invitations').insert({
+          survey_id: openSurvey.id, recipient_id: rec.id, token: newToken,
+          multi_use: false, status: 'versendet', sent_at: new Date().toISOString(),
+        });
+        if (invErr) return json({ error: invErr.message }, 500);
+        return json({ redirect_token: newToken });
+      }
+      return json({ error: 'invalid_token' }, 404);
+    }
     if (inv.expires_at && new Date(inv.expires_at) < new Date()) return json({ error: 'expired' }, 410);
+
 
     const { data: survey } = await admin
       .from('surveys')

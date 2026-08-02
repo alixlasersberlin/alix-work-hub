@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SurveyDesignTab from './SurveyDesignTab';
 import SurveyLogicTab from './SurveyLogicTab';
+import SurveyShareTab from './SurveyShareTab';
+
 import { mergeDesign } from '@/lib/feedback/design';
 import { FeedbackHeader, LANGUAGES, QUESTION_TYPES, SURVEY_STATUS } from './_shared';
 import { Plus, Save, Trash2, ArrowUp, ArrowDown, Send, Search, Link2, Users, GripVertical } from 'lucide-react';
@@ -269,7 +271,13 @@ export default function SurveyEditor() {
           <TabsTrigger value="logik" disabled={isNew}>Logik</TabsTrigger>
           <TabsTrigger value="empfaenger" disabled={isNew}>Empfänger</TabsTrigger>
           <TabsTrigger value="versand" disabled={isNew}>Versand</TabsTrigger>
+          <TabsTrigger value="teilen" disabled={isNew}>Teilen</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="teilen" className="mt-4">
+          {!isNew && <SurveyShareTab surveyId={id!} />}
+        </TabsContent>
+
 
         <TabsContent value="design" className="mt-4">
           <SurveyDesignTab

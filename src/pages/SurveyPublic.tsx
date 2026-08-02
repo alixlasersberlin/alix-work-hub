@@ -40,7 +40,9 @@ export default function SurveyPublic() {
   useEffect(() => {
     (async () => {
       const { data: res, error: err } = await (supabase as any).functions.invoke('survey-public', { body: { action: 'load', token } });
+      if (res?.redirect_token) { window.location.replace(`/umfrage/${res.redirect_token}`); return; }
       if (err || res?.error) { setError(res?.error ?? 'Der Link ist ungültig oder abgelaufen.'); setState('error'); return; }
+
       if (res.already_completed) { setState('done'); setData(res); return; }
       setData(res); setAnswers(res.draft_answers ?? {}); setState('ready');
     })();

@@ -32272,7 +32272,9 @@ export type Database = {
           name: string
           outro_text: string | null
           owner_user_id: string | null
+          public_enabled: boolean
           public_title: string | null
+          public_token: string | null
           reminder_days: number[]
           reminders_enabled: boolean
           reward_id: string | null
@@ -32300,7 +32302,9 @@ export type Database = {
           name: string
           outro_text?: string | null
           owner_user_id?: string | null
+          public_enabled?: boolean
           public_title?: string | null
+          public_token?: string | null
           reminder_days?: number[]
           reminders_enabled?: boolean
           reward_id?: string | null
@@ -32328,7 +32332,9 @@ export type Database = {
           name?: string
           outro_text?: string | null
           owner_user_id?: string | null
+          public_enabled?: boolean
           public_title?: string | null
+          public_token?: string | null
           reminder_days?: number[]
           reminders_enabled?: boolean
           reward_id?: string | null
