@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,8 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Star, Gift, CheckCircle2, Loader2 } from 'lucide-react';
+import { Star, Gift, CheckCircle2, Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+
+const STATIC_TYPES = ['heading', 'description', 'divider'];
+const AUTO_ADVANCE = ['yesno', 'stars', 'nps', 'scale10', 'single', 'dropdown'];
 
 export default function SurveyPublic() {
   const { token } = useParams();
@@ -18,6 +21,9 @@ export default function SurveyPublic() {
   const [error, setError] = useState('');
   const [reward, setReward] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [step, setStep] = useState(0);
+  const [anim, setAnim] = useState<'in-right' | 'in-left' | 'out-left' | 'out-right'>('in-right');
+  const timer = useRef<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -28,7 +34,57 @@ export default function SurveyPublic() {
     })();
   }, [token]);
 
+  useEffect(() => () => clearTimeout(timer.current), []);
+
+  // Gruppiert Überschriften/Beschreibungen mit der folgenden Frage zu einem Slide
+  const slides = useMemo(() => {
+    const qs: any[] = data?.questions ?? [];
+    const out: { intro: any[]; q: any | null; index: number }[] = [];
+    let intro: any[] = [];
+    let n = 0;
+    for (const q of qs) {
+      if (STATIC_TYPES.includes(q.qtype)) { intro.push(q); continue; }
+      n += 1;
+      out.push({ intro, q, index: n });
+      intro = [];
+    }
+    if (intro.length) out.push({ intro, q: null, index: n });
+    return out;
+  }, [data]);
+
   function setAnswer(qid: string, v: any) { setAnswers(a => ({ ...a, [qid]: v })); }
+
+  function isAnswered(q: any) {
+    if (!q) return true;
+    const v = answers[q.id];
+    if (Array.isArray(v)) return v.length > 0;
+    return v !== undefined && v !== '' && v !== null;
+  }
+
+  function go(dir: 1 | -1) {
+    const next = step + dir;
+    if (next < 0 || next >= slides.length) return;
+    setAnim(dir === 1 ? 'out-left' : 'out-right');
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      setStep(next);
+      setAnim(dir === 1 ? 'in-right' : 'in-left');
+    }, 220);
+  }
+
+  function next() {
+    const cur = slides[step];
+    if (cur?.q?.required && !isAnswered(cur.q)) { toast.error('Bitte beantworten Sie diese Frage.'); return; }
+    go(1);
+  }
+
+  function handleAnswer(q: any, v: any) {
+    setAnswer(q.id, v);
+    if (AUTO_ADVANCE.includes(q.qtype) && step < slides.length - 1) {
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => go(1), 260);
+    }
+  }
 
   async function submit() {
     const missing = (data?.questions ?? []).filter((q: any) => q.required && (answers[q.id] === undefined || answers[q.id] === '' || answers[q.id] === null));
@@ -62,39 +118,67 @@ export default function SurveyPublic() {
   );
 
   const s = data.survey;
+  const total = slides.length || 1;
+  const current = slides[step];
+  const isLast = step === slides.length - 1;
+  const animClass =
+    anim === 'out-left' ? 'opacity-0 -translate-x-12'
+    : anim === 'out-right' ? 'opacity-0 translate-x-12'
+    : anim === 'in-left' ? 'opacity-100 translate-x-0'
+    : 'opacity-100 translate-x-0';
+
   return (
     <div className="min-h-screen bg-background py-10 px-4">
       <div className="mx-auto max-w-2xl space-y-6">
         <header className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight">{s.public_title || s.name}</h1>
-          {s.intro_text && <p className="text-sm text-muted-foreground whitespace-pre-line">{s.intro_text}</p>}
-          {s.est_minutes && <p className="text-xs text-muted-foreground">Dauer: ca. {s.est_minutes} Minuten</p>}
+          {step === 0 && s.intro_text && <p className="text-sm text-muted-foreground whitespace-pre-line">{s.intro_text}</p>}
+          {step === 0 && s.est_minutes && <p className="text-xs text-muted-foreground">Dauer: ca. {s.est_minutes} Minuten</p>}
         </header>
 
-        {data.questions.map((q: any, i: number) => (
-          <Card key={q.id}><CardContent className="p-5 space-y-3">
-            {q.qtype === 'heading' ? <h2 className="text-lg font-semibold">{q.label}</h2>
-              : q.qtype === 'description' ? <p className="text-sm text-muted-foreground">{q.label}</p>
-              : q.qtype === 'divider' ? <hr className="border-border" />
-              : (
+        <div className="space-y-2">
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${((step + 1) / total) * 100}%` }} />
+          </div>
+          <p className="text-xs text-muted-foreground">Frage {step + 1} von {total}</p>
+        </div>
+
+        <div className="overflow-hidden">
+          <Card key={step} className={`transition-all duration-200 ease-out ${animClass}`}>
+            <CardContent className="p-6 space-y-4 min-h-[220px]">
+              {current?.intro?.map((h: any) => (
+                h.qtype === 'heading' ? <h2 key={h.id} className="text-lg font-semibold">{h.label}</h2>
+                : h.qtype === 'divider' ? <hr key={h.id} className="border-border" />
+                : <p key={h.id} className="text-sm text-muted-foreground whitespace-pre-line">{h.label}</p>
+              ))}
+              {current?.q && (
                 <>
                   <Label className="text-base">
-                    {i + 1}. {q.label} {q.required && <span className="text-destructive">*</span>}
+                    {current.index}. {current.q.label} {current.q.required && <span className="text-destructive">*</span>}
                   </Label>
-                  {q.help_text && <p className="text-xs text-muted-foreground">{q.help_text}</p>}
-                  <QuestionInput q={q} value={answers[q.id]} onChange={(v: any) => setAnswer(q.id, v)} />
+                  {current.q.help_text && <p className="text-xs text-muted-foreground">{current.q.help_text}</p>}
+                  <QuestionInput q={current.q} value={answers[current.q.id]} onChange={(v: any) => handleAnswer(current.q, v)} />
                 </>
               )}
-          </CardContent></Card>
-        ))}
+            </CardContent>
+          </Card>
+        </div>
 
-        <div className="flex justify-end pb-10">
-          <Button size="lg" onClick={submit} disabled={submitting}>{submitting ? 'Wird gesendet …' : 'Antworten absenden'}</Button>
+        <div className="flex items-center justify-between pb-10">
+          <Button variant="outline" onClick={() => go(-1)} disabled={step === 0}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> Zurück
+          </Button>
+          {isLast ? (
+            <Button size="lg" onClick={submit} disabled={submitting}>{submitting ? 'Wird gesendet …' : 'Antworten absenden'}</Button>
+          ) : (
+            <Button size="lg" onClick={next}>Weiter <ArrowRight className="h-4 w-4 ml-1" /></Button>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
 
 function Centered({ children }: { children: any }) {
   return <div className="min-h-screen flex items-center justify-center bg-background p-6">{children}</div>;
