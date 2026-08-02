@@ -30609,6 +30609,7 @@ export type Database = {
       survey_alerts: {
         Row: {
           assigned_to: string | null
+          capa_id: string | null
           created_at: string
           created_by: string | null
           due_at: string | null
@@ -30627,6 +30628,7 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          capa_id?: string | null
           created_at?: string
           created_by?: string | null
           due_at?: string | null
@@ -30645,6 +30647,7 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          capa_id?: string | null
           created_at?: string
           created_by?: string | null
           due_at?: string | null
@@ -30662,6 +30665,20 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "survey_alerts_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capa_overdue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "survey_alerts_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "survey_alerts_recipient_id_fkey"
             columns: ["recipient_id"]
