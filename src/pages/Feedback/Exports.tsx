@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import AppLayout from '@/components/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,7 +12,7 @@ import { toast } from 'sonner';
 import { Download, FileJson, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { FeedbackHeader, Section } from './_shared';
 
-type SurveyRow = { id: string; title: string | null; status: string | null };
+type SurveyRow = { id: string; name: string | null; status: string | null };
 type ExportRow = {
   id: string; survey_id: string | null; format: string; anonymized: boolean;
   row_count: number | null; status: string; created_at: string; filters: any;
@@ -33,6 +32,7 @@ function download(filename: string, content: string, mime: string) {
 }
 
 export default function FeedbackExports() {
+  const sb = supabase as any;
   const [surveys, setSurveys] = useState<SurveyRow[]>([]);
   const [history, setHistory] = useState<ExportRow[]>([]);
   const [surveyId, setSurveyId] = useState<string>('all');
@@ -44,12 +44,12 @@ export default function FeedbackExports() {
   const [busy, setBusy] = useState(false);
 
   const surveyTitles = useMemo(
-    () => Object.fromEntries(surveys.map((s) => [s.id, s.title ?? 'Ohne Titel'])),
+    () => Object.fromEntries(surveys.map((s) => [s.id, s.name ?? 'Ohne Titel'])),
     [surveys],
   );
 
   async function loadHistory() {
-    const { data } = await supabase
+    const { data } = await sb
       .from('survey_exports')
       .select('id, survey_id, format, anonymized, row_count, status, created_at, filters')
       .order('created_at', { ascending: false })
@@ -59,9 +59,9 @@ export default function FeedbackExports() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
+      const { data } = await sb
         .from('surveys')
-        .select('id, title, status')
+        .select('id, name, status')
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
       setSurveys((data ?? []) as SurveyRow[]);
@@ -72,7 +72,7 @@ export default function FeedbackExports() {
   async function runExport() {
     setBusy(true);
     try {
-      let q = supabase
+      let q = sb
         .from('survey_responses')
         .select('id, survey_id, recipient_id, language, score_total, nps_score, is_critical, started_at, completed_at, duration_seconds, status, order_number, device_model, serial_number')
         .order('completed_at', { ascending: false, nullsFirst: false })
@@ -92,7 +92,7 @@ export default function FeedbackExports() {
       const ids = rows.map((r: any) => r.id);
       const items: any[] = [];
       for (let i = 0; i < ids.length; i += 200) {
-        const { data } = await supabase
+        const { data } = await sb
           .from('survey_response_items')
           .select('response_id, question_label, qtype, value_text, value_number, value_date, value_bool, value_json')
           .in('response_id', ids.slice(i, i + 200));
@@ -103,7 +103,7 @@ export default function FeedbackExports() {
       if (!anonymized) {
         const rIds = [...new Set(rows.map((r: any) => r.recipient_id).filter(Boolean))] as string[];
         for (let i = 0; i < rIds.length; i += 200) {
-          const { data } = await supabase
+          const { data } = await sb
             .from('survey_recipients')
             .select('id, email, company_name, first_name, last_name, customer_number, country')
             .in('id', rIds.slice(i, i + 200));
@@ -173,7 +173,7 @@ export default function FeedbackExports() {
         download(`umfrage-export-${name}-${stamp}.csv`, `\uFEFF${csv}`, 'text/csv;charset=utf-8');
       }
 
-      await supabase.from('survey_exports').insert({
+      await sb.from('survey_exports').insert({
         survey_id: surveyId === 'all' ? null : surveyId,
         format,
         anonymized,
@@ -191,7 +191,7 @@ export default function FeedbackExports() {
   }
 
   return (
-    <AppLayout>
+    <>
       <div className="space-y-6 p-4 md:p-6">
         <FeedbackHeader
           title="Exporte"
@@ -207,7 +207,7 @@ export default function FeedbackExports() {
                 <SelectContent>
                   <SelectItem value="all">Alle Umfragen</SelectItem>
                   {surveys.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.title ?? 'Ohne Titel'}</SelectItem>
+                    <SelectItem key={s.id} value={s.id}>{s.name ?? 'Ohne Titel'}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -302,6 +302,6 @@ export default function FeedbackExports() {
           </Card>
         </Section>
       </div>
-    </AppLayout>
+    </>
   );
 }
