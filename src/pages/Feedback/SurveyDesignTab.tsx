@@ -59,6 +59,11 @@ export default function SurveyDesignTab({ design, onChange, title }: Props) {
           </div>
         </CardContent></Card>
 
+        <DesignAiAssistant design={d} onApply={onChange} />
+        <DesignTemplates design={d} onApply={onChange} />
+        <ContrastHint design={d} />
+
+
         <Card><CardContent className="p-4 space-y-4">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Layout &amp; Typografie</h3>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
