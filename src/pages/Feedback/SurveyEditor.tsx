@@ -496,6 +496,36 @@ export default function SurveyEditor() {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-base">Automatische Erinnerungen</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between max-w-xl">
+                <div>
+                  <Label>Automatisch erinnern</Label>
+                  <p className="text-sm text-muted-foreground">Täglicher Lauf erinnert Empfänger ohne abgeschlossene Antwort.</p>
+                </div>
+                <Switch
+                  checked={Boolean((survey as any).auto_reminder_enabled)}
+                  onCheckedChange={(v) => setSurvey({ ...survey, auto_reminder_enabled: v })}
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 max-w-xl">
+                <div>
+                  <Label>Abstand (Tage)</Label>
+                  <Input type="number" min={1} value={(survey as any).auto_reminder_days ?? 5}
+                    onChange={(e) => setSurvey({ ...survey, auto_reminder_days: Math.max(1, Number(e.target.value) || 1) })} />
+                </div>
+                <div>
+                  <Label>Maximale Erinnerungen</Label>
+                  <Input type="number" min={1} value={(survey as any).auto_reminder_max ?? 2}
+                    onChange={(e) => setSurvey({ ...survey, auto_reminder_max: Math.max(1, Number(e.target.value) || 1) })} />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Änderungen mit „Speichern“ übernehmen.</p>
+            </CardContent>
+          </Card>
+
         </TabsContent>
       </Tabs>
     </div>
