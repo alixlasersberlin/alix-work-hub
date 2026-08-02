@@ -14,6 +14,8 @@ import {
   applyTheme, mergeDesign, ensureFontLoaded, designVars, backgroundStyle, buttonCss,
 } from '@/lib/feedback/design';
 import { uploadSurveyMedia, listSurveyMedia, deleteSurveyMedia, resolveMediaUrl } from '@/lib/feedback/media';
+import { DesignTemplates, DesignAiAssistant, ContrastHint } from './DesignExtras';
+
 
 type Props = { design: SurveyDesign; onChange: (d: SurveyDesign) => void; title?: string };
 
