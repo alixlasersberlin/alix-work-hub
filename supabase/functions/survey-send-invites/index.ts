@@ -103,10 +103,16 @@ Deno.serve(async (req) => {
       let mailErr: { message: string } | null = null;
       try {
         const resendKey = Deno.env.get('RESEND_API_KEY');
+        const lovableKey = Deno.env.get('LOVABLE_API_KEY');
         if (!resendKey) throw new Error('RESEND_API_KEY fehlt');
-        const res = await fetch('https://api.resend.com/emails', {
+        if (!lovableKey) throw new Error('LOVABLE_API_KEY fehlt');
+        const res = await fetch('https://connector-gateway.lovable.dev/resend/emails', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+          headers: {
+            Authorization: `Bearer ${lovableKey}`,
+            'X-Connection-Api-Key': resendKey,
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             from: 'Alix Lasers | Feedback <news@alixwork.de>',
             reply_to: tpl?.reply_to || 'support@alix-operation.de',
