@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SurveyDesignTab from './SurveyDesignTab';
 import { mergeDesign } from '@/lib/feedback/design';
 import { FeedbackHeader, LANGUAGES, QUESTION_TYPES, SURVEY_STATUS } from './_shared';
-import { Plus, Save, Trash2, ArrowUp, ArrowDown, Send, Search, Link2, Users } from 'lucide-react';
+import { Plus, Save, Trash2, ArrowUp, ArrowDown, Send, Search, Link2, Users, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { publicUrl } from '@/lib/esc/public-url';
 
@@ -30,6 +30,8 @@ export default function SurveyEditor() {
     est_minutes: 5, target_group: '', status: 'entwurf', reminders_enabled: true, reminder_days: 7,
   });
   const [questions, setQuestions] = useState<any[]>([]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
   const [options, setOptions] = useState<Record<string, any[]>>({});
   const [rewards, setRewards] = useState<any[]>([]);
   const [recipients, setRecipients] = useState<any[]>([]);
@@ -113,15 +115,28 @@ export default function SurveyEditor() {
     setQuestions(qs => qs.filter(q => q.id !== qid));
   }
 
+  async function persistOrder(next: any[]) {
+    setQuestions(next);
+    await Promise.all(next.map((q, i) => sb.from('survey_questions').update({ position: i + 1 }).eq('id', q.id)));
+  }
+
   async function move(qid: string, dir: -1 | 1) {
     const idx = questions.findIndex(q => q.id === qid);
     const to = idx + dir;
     if (to < 0 || to >= questions.length) return;
     const next = [...questions];
     [next[idx], next[to]] = [next[to], next[idx]];
-    setQuestions(next);
-    await Promise.all(next.map((q, i) => sb.from('survey_questions').update({ position: i + 1 }).eq('id', q.id)));
+    await persistOrder(next);
   }
+
+  async function dropQuestion(from: number, to: number) {
+    if (from === to || from < 0 || to < 0 || from >= questions.length || to >= questions.length) return;
+    const next = [...questions];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    await persistOrder(next);
+  }
+
 
   async function addOption(qid: string) {
     const list = options[qid] ?? [];
@@ -308,14 +323,29 @@ export default function SurveyEditor() {
 
         <TabsContent value="fragen" className="mt-4 space-y-3">
           <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">{questions.length} Fragen</p>
+            <p className="text-sm text-muted-foreground">{questions.length} Fragen · zum Sortieren am Griff ziehen</p>
             <Button size="sm" onClick={addQuestion}><Plus className="h-4 w-4 mr-2" />Frage hinzufügen</Button>
           </div>
           {questions.map((q, i) => (
-            <Card key={q.id}>
+            <Card
+              key={q.id}
+              onDragOver={e => { if (dragIdx !== null) { e.preventDefault(); setOverIdx(i); } }}
+              onDrop={e => { e.preventDefault(); if (dragIdx !== null) dropQuestion(dragIdx, i); setDragIdx(null); setOverIdx(null); }}
+              className={overIdx === i && dragIdx !== null && dragIdx !== i ? 'ring-2 ring-primary' : dragIdx === i ? 'opacity-60' : ''}
+            >
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start gap-2">
-                  <Badge variant="outline" className="mt-2">{i + 1}</Badge>
+                  <div
+                    draggable
+                    onDragStart={() => setDragIdx(i)}
+                    onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+                    title="Zum Sortieren ziehen"
+                    className="mt-1 flex flex-col items-center gap-1 cursor-grab active:cursor-grabbing select-none"
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <Badge variant="outline">{i + 1}</Badge>
+                  </div>
+
                   <div className="flex-1 grid gap-3 md:grid-cols-3">
                     <div className="md:col-span-2"><Label>Fragetext</Label><Input value={q.label ?? ''} onChange={e => patchQuestion(q.id, { label: e.target.value })} /></div>
                     <div>
