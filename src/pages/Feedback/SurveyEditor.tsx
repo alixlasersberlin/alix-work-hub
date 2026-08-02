@@ -245,10 +245,20 @@ export default function SurveyEditor() {
       <Tabs defaultValue="basis">
         <TabsList>
           <TabsTrigger value="basis">Grundlagen</TabsTrigger>
+          <TabsTrigger value="design" disabled={isNew}>Design</TabsTrigger>
           <TabsTrigger value="fragen" disabled={isNew}>Fragen</TabsTrigger>
           <TabsTrigger value="empfaenger" disabled={isNew}>Empfänger</TabsTrigger>
           <TabsTrigger value="versand" disabled={isNew}>Versand</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="design" className="mt-4">
+          <SurveyDesignTab
+            design={mergeDesign(survey.design)}
+            onChange={(d) => setSurvey({ ...survey, design: d })}
+            title={survey.public_title || survey.name}
+          />
+        </TabsContent>
+
 
         <TabsContent value="basis" className="mt-4">
           <Card><CardContent className="p-5 grid gap-4 md:grid-cols-2 max-w-4xl">
