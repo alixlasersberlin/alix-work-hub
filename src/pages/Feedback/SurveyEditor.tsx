@@ -302,6 +302,33 @@ export default function SurveyEditor() {
 
         <TabsContent value="empfaenger" className="mt-4 space-y-4">
           <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4" />Empfängerlisten suchen</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2 max-w-xl">
+                <Input placeholder="Name der Empfängerliste (leer = alle)" value={groupQuery}
+                  onChange={e => setGroupQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchGroups()} />
+                <Button variant="outline" onClick={searchGroups}>Suchen</Button>
+              </div>
+              {groupResults.length > 0 && (
+                <div className="rounded-md border border-border divide-y divide-border max-h-72 overflow-auto">
+                  {groupResults.map(g => (
+                    <div key={g.id} className="flex items-center justify-between p-2 text-sm">
+                      <div>
+                        <div className="font-medium">{g.name}</div>
+                        <div className="text-xs text-muted-foreground">{g.member_count} Mitglieder{g.description ? ` · ${g.description}` : ''}</div>
+                      </div>
+                      <Button size="sm" variant="outline" disabled={addingGroup === g.id} onClick={() => addGroupRecipients(g)}>
+                        <Plus className="h-3 w-3 mr-1" />{addingGroup === g.id ? 'Übernehme …' : 'Liste übernehmen'}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+
+          <Card>
             <CardHeader><CardTitle className="text-base flex items-center gap-2"><Search className="h-4 w-4" />Kunden suchen</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="flex gap-2 max-w-xl">
