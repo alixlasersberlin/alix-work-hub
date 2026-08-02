@@ -31376,6 +31376,83 @@ export type Database = {
           },
         ]
       }
+      survey_recipient_group_members: {
+        Row: {
+          company_name: string | null
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_number: string | null
+          email: string | null
+          group_id: string
+          id: string
+          source: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_number?: string | null
+          email?: string | null
+          group_id: string
+          id?: string
+          source?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_number?: string | null
+          email?: string | null
+          group_id?: string
+          id?: string
+          source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_recipient_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "survey_recipient_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      survey_recipient_groups: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       survey_recipients: {
         Row: {
           company_name: string | null

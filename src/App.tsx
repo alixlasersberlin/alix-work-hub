@@ -259,6 +259,7 @@ const FeedbackRewards = lazy(() => import("./pages/Feedback/Rewards"));
 const FeedbackEmailTemplates = lazy(() => import("./pages/Feedback/EmailTemplates"));
 const FeedbackRewardAssignments = lazy(() => import("./pages/Feedback/RewardAssignments"));
 const FeedbackImport = lazy(() => import("./pages/Feedback/Import"));
+const FeedbackRecipientGroups = lazy(() => import("./pages/Feedback/RecipientGroups"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const NewsAdmin = lazy(() => import("./pages/Operation/NewsAdmin"));
 const HealthCheck = lazy(() => import("./pages/HealthCheck"));
@@ -1138,6 +1139,7 @@ function AppRoutes() {
           <Route path="/umfragen/geschenke" element={<ProtectedRoute><FeedbackRewards /></ProtectedRoute>} />
           <Route path="/umfragen/import" element={<ProtectedRoute><FeedbackImport /></ProtectedRoute>} />
           <Route path="/umfragen/belohnungen" element={<ProtectedRoute><FeedbackRewardAssignments /></ProtectedRoute>} />
+          <Route path="/umfragen/empfaenger" element={<ProtectedRoute><FeedbackRecipientGroups /></ProtectedRoute>} />
           <Route path="/umfragen/vorlagen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Marketing']}><FeedbackEmailTemplates /></ProtectedRoute>} />
 
           <Route path="/umfragen/:id" element={<ProtectedRoute><SurveyEditor /></ProtectedRoute>} />
