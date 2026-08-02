@@ -599,7 +599,7 @@ export const navItems: NavItem[] = [
 
   {
     path: '/umfragen/dashboard', label: 'FEEDBACK & REWARDS', icon: ClipboardCheck,
-    roles: ['Admin', 'Super Admin', 'Marketing', 'Geschäftsführung', 'Kundenservice', 'Service', 'Vertrieb', 'Vertriebsleitung', 'QM'],
+    roles: ['Admin', 'Super Admin', 'Marketing', 'Geschäftsführung', 'Kundenservice', 'Service', 'Vertrieb', 'Vertriebsleitung', 'QM', 'Feedback'],
     children: [
       { path: '/umfragen/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: null },
       { path: '/umfragen', label: 'Umfragen', icon: ClipboardCheck, roles: null },
