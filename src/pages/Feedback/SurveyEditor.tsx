@@ -10,6 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import SurveyDesignTab from './SurveyDesignTab';
+import { mergeDesign } from '@/lib/feedback/design';
 import { FeedbackHeader, LANGUAGES, QUESTION_TYPES, SURVEY_STATUS } from './_shared';
 import { Plus, Save, Trash2, ArrowUp, ArrowDown, Send, Search, Link2, Users } from 'lucide-react';
 import { toast } from 'sonner';
@@ -78,6 +80,7 @@ export default function SurveyEditor() {
         return clean.length ? clean : [7];
       })(),
       starts_at: survey.starts_at || null, ends_at: survey.ends_at || null,
+      design: survey.design ?? {},
     };
     if (isNew) {
       const { data, error } = await sb.from('surveys').insert(payload).select().single();
