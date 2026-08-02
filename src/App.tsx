@@ -1146,6 +1146,7 @@ function AppRoutes() {
           <Route path="/umfragen/geschenke" element={<ProtectedRoute><FeedbackRewards /></ProtectedRoute>} />
           <Route path="/umfragen/auswertung" element={<ProtectedRoute><FeedbackInsights /></ProtectedRoute>} />
           <Route path="/umfragen/statistik" element={<ProtectedRoute><FeedbackStatistics /></ProtectedRoute>} />
+          <Route path="/umfragen/protokoll" element={<ProtectedRoute><FeedbackMailLog /></ProtectedRoute>} />
           <Route path="/umfragen/exporte" element={<ProtectedRoute><FeedbackExports /></ProtectedRoute>} />
           <Route path="/umfragen/einstellungen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin']}><FeedbackSettings /></ProtectedRoute>} />
 
