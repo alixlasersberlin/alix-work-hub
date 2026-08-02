@@ -269,7 +269,13 @@ export default function SurveyEditor() {
           <TabsTrigger value="logik" disabled={isNew}>Logik</TabsTrigger>
           <TabsTrigger value="empfaenger" disabled={isNew}>Empfänger</TabsTrigger>
           <TabsTrigger value="versand" disabled={isNew}>Versand</TabsTrigger>
+          <TabsTrigger value="teilen" disabled={isNew}>Teilen</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="teilen" className="mt-4">
+          {!isNew && <SurveyShareTab surveyId={id!} />}
+        </TabsContent>
+
 
         <TabsContent value="design" className="mt-4">
           <SurveyDesignTab
