@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
     const { data: survey } = await admin
       .from('surveys')
-      .select('id, name, public_title, intro_text, outro_text, language, est_minutes, status, reward_id, ends_at')
+      .select('id, name, public_title, intro_text, outro_text, language, est_minutes, status, reward_id, ends_at, design')
       .eq('id', inv.survey_id).maybeSingle();
     if (!survey || survey.status === 'archiviert') return json({ error: 'not_available' }, 410);
 
