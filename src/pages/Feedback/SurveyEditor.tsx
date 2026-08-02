@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SurveyDesignTab from './SurveyDesignTab';
 import { mergeDesign } from '@/lib/feedback/design';
 import { FeedbackHeader, LANGUAGES, QUESTION_TYPES, SURVEY_STATUS } from './_shared';
-import { Plus, Save, Trash2, ArrowUp, ArrowDown, Send, Search, Link2, Users } from 'lucide-react';
+import { Plus, Save, Trash2, ArrowUp, ArrowDown, Send, Search, Link2, Users, GripVertical } from 'lucide-react';
 import { toast } from 'sonner';
 import { publicUrl } from '@/lib/esc/public-url';
 
@@ -30,6 +30,8 @@ export default function SurveyEditor() {
     est_minutes: 5, target_group: '', status: 'entwurf', reminders_enabled: true, reminder_days: 7,
   });
   const [questions, setQuestions] = useState<any[]>([]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
   const [options, setOptions] = useState<Record<string, any[]>>({});
   const [rewards, setRewards] = useState<any[]>([]);
   const [recipients, setRecipients] = useState<any[]>([]);
