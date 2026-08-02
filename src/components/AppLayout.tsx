@@ -613,6 +613,7 @@ export const navItems: NavItem[] = [
       { path: '/umfragen/belohnungen', label: 'Belohnungszusagen', icon: Gift, roles: null },
       { path: '/umfragen/import', label: 'Upload & Import', icon: Upload, roles: null },
       { path: '/umfragen/vorlagen', label: 'E-Mail-Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Marketing'] },
+      { path: '/umfragen/protokoll', label: 'Versand-Protokoll', icon: MailCheck, roles: null },
       { path: '/umfragen/exporte', label: 'Exporte', icon: Download, roles: null },
       { path: '/umfragen/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin'] },
 
