@@ -33,7 +33,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2 } from 'lucide-react';
+import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2, Zap, Quote } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
