@@ -34,6 +34,10 @@ export default function SurveyEditor() {
   const [saving, setSaving] = useState(false);
   const [custQuery, setCustQuery] = useState('');
   const [custResults, setCustResults] = useState<any[]>([]);
+  const [groupQuery, setGroupQuery] = useState('');
+  const [groupResults, setGroupResults] = useState<any[]>([]);
+  const [addingGroup, setAddingGroup] = useState<string | null>(null);
+
 
   async function load() {
     if (isNew) return;
