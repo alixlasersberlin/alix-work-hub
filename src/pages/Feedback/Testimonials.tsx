@@ -36,6 +36,9 @@ export default function FeedbackTestimonials() {
   );
 
   const embed = `<div id="alix-testimonials"></div>
+<script src="${FN_URL}?format=js&limit=6&accent=%23c9a227&interval=6000" async></script>`;
+
+  const embedJson = `<div id="alix-testimonials"></div>
 <script>
 fetch("${FN_URL}?limit=6").then(r=>r.json()).then(d=>{
   document.getElementById("alix-testimonials").innerHTML =
@@ -44,6 +47,7 @@ fetch("${FN_URL}?limit=6").then(r=>r.json()).then(d=>{
       + [t.author,t.company].filter(Boolean).join(', ') + '</footer></blockquote>').join("");
 });
 </script>`;
+
 
   return (
     <div className="space-y-5">
