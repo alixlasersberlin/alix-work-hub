@@ -259,6 +259,7 @@ const FeedbackRewards = lazy(() => import("./pages/Feedback/Rewards"));
 const FeedbackEmailTemplates = lazy(() => import("./pages/Feedback/EmailTemplates"));
 const FeedbackRewardAssignments = lazy(() => import("./pages/Feedback/RewardAssignments"));
 const FeedbackImport = lazy(() => import("./pages/Feedback/Import"));
+const FeedbackRecipientGroups = lazy(() => import("./pages/Feedback/RecipientGroups"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const NewsAdmin = lazy(() => import("./pages/Operation/NewsAdmin"));
 const HealthCheck = lazy(() => import("./pages/HealthCheck"));
