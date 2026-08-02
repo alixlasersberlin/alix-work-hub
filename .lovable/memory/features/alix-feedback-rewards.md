@@ -15,3 +15,8 @@ type: feature
 - `surveys.design` (jsonb) speichert das komplette Erscheinungsbild; Vorlagen in `survey_design_templates`; Medien im privaten Bucket `survey-media` (anon lesbar via RLS, Zugriff über signierte URLs).
 - Code: `src/lib/feedback/design.ts` (Typen, 8 Themes, Layouts, Fonts, Token-Mapping), `src/lib/feedback/media.ts` (Upload/Mediathek), `src/pages/Feedback/SurveyDesignTab.tsx` (Designer + Live-Vorschau), Anwendung in `src/pages/SurveyPublic.tsx`.
 - Einstellbar: Theme, Layout (Karte/Vollbild/Split/Minimal/Chat), Farben, Schrift, Radius/Schatten, Hintergrund (Farbe/Verlauf/Bild), Logo/Titelbild, Fortschritt (Balken/Punkte/Schritte/aus), Animation, eine Frage pro Seite, Startseite, Personalisierung ({{name}}/{{firma}}/{{umfrage}}), Fußzeile/DSGVO-Links.
+
+## Fragen-Logik
+- Tab **Logik** im Umfrage-Editor (`src/pages/Feedback/SurveyLogicTab.tsx`) verwaltet `survey_logic_rules`.
+- Operatoren: eq, ne, gt, gte, lt, lte, contains, answered, not_answered. Aktionen: show, hide, jump (dazwischenliegende Fragen überspringen), end (vorzeitig beenden).
+- Auswertung in `src/lib/feedback/logic.ts` (`applyLogic`), live angewendet in `SurveyPublic.tsx`; `survey-public` liefert aktive Regeln im `load`-Payload mit.
