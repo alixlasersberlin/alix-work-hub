@@ -66,10 +66,13 @@ export default function FeedbackInsights() {
 
       const texts = (items ?? [])
         .map((i: any) => {
-          const v = i.value_text ?? (i.value_number ?? null) ?? (i.value_bool === null || i.value_bool === undefined ? null : (i.value_bool ? 'Ja' : 'Nein'))
-            ?? (i.value_json ? (Array.isArray(i.value_json) ? i.value_json.join(', ') : JSON.stringify(i.value_json)) : null);
-          return v === null || v === '' ? null : `${i.question_label}: ${v}`;
+          let v: any = i.value_text;
+          if (v === null || v === undefined || v === '') v = i.value_number ?? null;
+          if (v === null || v === undefined) v = (i.value_bool === null || i.value_bool === undefined) ? null : (i.value_bool ? 'Ja' : 'Nein');
+          if (v === null && i.value_json) v = Array.isArray(i.value_json) ? i.value_json.join(', ') : JSON.stringify(i.value_json);
+          return v === null || v === undefined || v === '' ? null : `${i.question_label}: ${v}`;
         })
+
         .filter(Boolean)
         .slice(0, 800)
         .join('\n');
