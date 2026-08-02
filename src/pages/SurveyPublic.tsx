@@ -26,6 +26,8 @@ export default function SurveyPublic() {
   const [state, setState] = useState<'loading' | 'ready' | 'done' | 'error'>('loading');
   const [error, setError] = useState('');
   const [reward, setReward] = useState<any>(null);
+  const [review, setReview] = useState<any>(null);
+
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(0);
   const [started, setStarted] = useState(false);
