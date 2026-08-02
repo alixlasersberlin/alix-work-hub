@@ -1155,6 +1155,7 @@ function AppRoutes() {
           <Route path="/umfragen/import" element={<ProtectedRoute><FeedbackImport /></ProtectedRoute>} />
 
           <Route path="/umfragen/belohnungen" element={<ProtectedRoute><FeedbackRewardAssignments /></ProtectedRoute>} />
+          <Route path="/umfragen/gutscheincodes" element={<ProtectedRoute><FeedbackRewardCodes /></ProtectedRoute>} />
           <Route path="/umfragen/empfaenger" element={<ProtectedRoute><FeedbackRecipientGroups /></ProtectedRoute>} />
           <Route path="/umfragen/vorlagen" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Marketing']}><FeedbackEmailTemplates /></ProtectedRoute>} />
 
