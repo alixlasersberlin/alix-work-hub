@@ -349,6 +349,65 @@ export default function Lagergeraete({
 
   const [sortField, setSortField] = useState<'serial_number' | 'model_name' | 'entry_date' | 'order_number' | 'status' | 'notes'>('serial_number');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  // ---- Verschiebbare Spalten (Drag & Drop, pro Ansicht gespeichert) ----
+  const COL_STORAGE_KEY = 'lagergeraete_col_order_v1';
+  const DEFAULT_COLS: Record<'standard' | 'leih', string[]> = {
+    standard: ['entry_date', 'serial_number', 'model_name', 'order', 'plz', 'status', 'notes'],
+    leih: ['entry_date', 'kunde', 'serial_number', 'model_name', 'plz', 'status', 'order', 'notes'],
+  };
+  const COL_LABELS: Record<string, string> = {
+    entry_date: 'Eingangsdatum',
+    serial_number: 'Seriennummer',
+    model_name: 'Modell',
+    order: 'Reservierter Auftrag',
+    plz: 'PLZ / Stadt',
+    status: 'Status',
+    notes: 'Notizen',
+    kunde: 'Kunde',
+  };
+  const COL_SORT: Record<string, 'serial_number' | 'model_name' | 'entry_date' | 'order_number' | 'status' | 'notes' | undefined> = {
+    entry_date: 'entry_date',
+    serial_number: 'serial_number',
+    model_name: 'model_name',
+    order: 'order_number',
+    status: 'status',
+    notes: 'notes',
+    plz: undefined,
+    kunde: undefined,
+  };
+  const [colOrders, setColOrders] = useState<Record<'standard' | 'leih', string[]>>(() => {
+    try {
+      const raw = localStorage.getItem(COL_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<Record<'standard' | 'leih', string[]>>;
+        const merge = (v: 'standard' | 'leih') => {
+          const saved = (parsed?.[v] ?? []).filter((k) => DEFAULT_COLS[v].includes(k));
+          const missing = DEFAULT_COLS[v].filter((k) => !saved.includes(k));
+          return saved.length ? [...saved, ...missing] : DEFAULT_COLS[v];
+        };
+        return { standard: merge('standard'), leih: merge('leih') };
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_COLS;
+  });
+  const [dragCol, setDragCol] = useState<string | null>(null);
+  const persistCols = (next: Record<'standard' | 'leih', string[]>) => {
+    setColOrders(next);
+    try { localStorage.setItem(COL_STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+  const moveColumn = (variant: 'standard' | 'leih', from: string, to: string) => {
+    if (from === to) return;
+    const cur = [...colOrders[variant]];
+    const fi = cur.indexOf(from);
+    const ti = cur.indexOf(to);
+    if (fi < 0 || ti < 0) return;
+    cur.splice(fi, 1);
+    cur.splice(ti, 0, from);
+    persistCols({ ...colOrders, [variant]: cur });
+  };
+  const resetColumns = (variant: 'standard' | 'leih') =>
+    persistCols({ ...colOrders, [variant]: DEFAULT_COLS[variant] });
   const [viewMode, setViewMode] = useViewMode();
   type FreeOrder = {
     id: string;
