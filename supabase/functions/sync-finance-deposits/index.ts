@@ -74,7 +74,25 @@ Deno.serve(async (req) => {
       : { data: [] as any[] };
     const cmap = new Map((custs ?? []).map((c: any) => [c.id, c]));
 
+    // Bereits manuell (AZ-Tab) angelegte Anzahlungen -> nicht nochmal als 'order:<id>' duplizieren
+    const orderIdsAll = orders.map((o: any) => o.id);
+    const manualOrderIds = new Set<string>();
+    for (let i = 0; i < orderIdsAll.length; i += 500) {
+      const chunk = orderIdsAll.slice(i, i + 500);
+      const { data: existing } = await supabase
+        .from('finance_deposits')
+        .select('order_id, source_ref')
+        .in('order_id', chunk);
+      for (const e of existing ?? []) {
+        const ref = String((e as any).source_ref ?? '');
+        if ((e as any).order_id && ref !== `order:${(e as any).order_id}`) {
+          manualOrderIds.add((e as any).order_id);
+        }
+      }
+    }
+
     for (const o of orders) {
+      if (manualOrderIds.has((o as any).id)) { skipped++; continue; }
       const c: any = cmap.get((o as any).customer_id) ?? {};
       const gross = Number((o as any).deposit_amount) || 0;
       const net = gross / 1.19;
