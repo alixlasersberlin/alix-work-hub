@@ -2346,145 +2346,91 @@ export default function Lagergeraete({
                       />
                     </TableCell>
                   )}
-                  {filterType === 'Leihgerät' ? (
-                    <>
-                      <TableCell>{format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
-                      <TableCell>
-                        {kunde.name ? (
-                          <div className="space-y-0.5">
-                            <div className="font-medium text-sm truncate max-w-[220px]">{kunde.name}</div>
-                            {leihStartVal && (
-                              <div className="text-xs text-muted-foreground">seit {format(new Date(leihStartVal), 'dd.MM.yyyy', { locale: de })}</div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-mono">{d.serial_number}</TableCell>
-                      <TableCell>{d.model_name}</TableCell>
-                      <TableCell className="whitespace-nowrap text-xs">
-                        {d.orders?.customer_zip || d.orders?.customer_city ? (
-                          <span className="inline-flex items-center gap-1 text-muted-foreground">
-                            <MapPin className="w-3 h-3" />{d.orders.customer_zip ?? ''} {d.orders.customer_city ?? ''}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {inRepair ? (
-                          <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 animate-pulse font-bold tracking-wide">
-                            <Wrench className="w-3 h-3 mr-1" /> IN REPARATUR
+                  {(() => {
+                    const variant = filterType === 'Leihgerät' ? 'leih' : 'standard';
+                    const isLeih = variant === 'leih';
+                    const orderCell = d.orders?.order_number ? (
+                      <div className="space-y-1">
+                        {isLawyer && (
+                          <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 font-bold tracking-wide">
+                            <Gavel className="w-3 h-3 mr-1" /> ANWALT
                           </Badge>
-                        ) : (() => {
-                          const s = getStatusFromNotes(d.notes);
-                          return <StatusBadge status={s} className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined} />;
-                        })()}
-                      </TableCell>
-                      <TableCell>
-                        {d.orders?.order_number ? (
-                          <div className="space-y-1">
-                            {isLawyer && (
-                              <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 font-bold tracking-wide">
-                                <Gavel className="w-3 h-3 mr-1" /> ANWALT
-                              </Badge>
-                            )}
-                            <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
-                              {d.orders.order_number}
-                            </Badge>
-                            {d.orders.customer_name && (
-                              <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
-                            )}
-                            <div className="flex flex-wrap items-center gap-2 text-xs">
-                              {d.orders.customer_zip && (
-                                <span className="inline-flex items-center gap-1 text-muted-foreground">
-                                  <MapPin className="w-3 h-3" />{d.orders.customer_zip} {d.orders.customer_city ?? ''}
-                                </span>
-                              )}
-                              <DrivingTimeCell
-                                value={drivingTimes[d.reserved_order_id!]}
-                                requested={requestedIds.has(d.reserved_order_id!)}
-                                loading={drivingLoading}
-                              />
-                            </div>
-                            {isLawyer && d.orders.lawyer_reason && (
-                              <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
                         )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground max-w-[260px]">
-                        <div className="space-y-0.5">
-                          {shots && <div className="text-xs"><span className="font-medium text-foreground">Schusszahl:</span> {shots}</div>}
-                          {cleanNotes && <div className="text-xs truncate">{cleanNotes}</div>}
-                          {!shots && !cleanNotes && <span>—</span>}
+                        <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
+                          {d.orders.order_number}
+                        </Badge>
+                        {d.orders.customer_name && (
+                          <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
+                        )}
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          {d.orders.customer_zip && (
+                            <span className="inline-flex items-center gap-1 text-muted-foreground">
+                              <MapPin className="w-3 h-3" />{d.orders.customer_zip} {d.orders.customer_city ?? ''}
+                            </span>
+                          )}
+                          <DrivingTimeCell
+                            value={drivingTimes[d.reserved_order_id!]}
+                            requested={requestedIds.has(d.reserved_order_id!)}
+                            loading={drivingLoading}
+                          />
                         </div>
-                      </TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell className="font-mono">{d.serial_number}</TableCell>
-                      <TableCell>{d.model_name}</TableCell>
-                      <TableCell>{format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
-                      <TableCell>
-                        {d.orders?.order_number ? (
-                          <div className="space-y-1">
-                            {isLawyer && (
-                              <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 font-bold tracking-wide">
-                                <Gavel className="w-3 h-3 mr-1" /> ANWALT
-                              </Badge>
-                            )}
-                            <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
-                              {d.orders.order_number}
-                            </Badge>
-                            {d.orders.customer_name && (
-                              <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
-                            )}
-                            <div className="flex flex-wrap items-center gap-2 text-xs">
-                              {d.orders.customer_zip && (
-                                <span className="inline-flex items-center gap-1 text-muted-foreground">
-                                  <MapPin className="w-3 h-3" />{d.orders.customer_zip} {d.orders.customer_city ?? ''}
-                                </span>
+                        {isLawyer && d.orders.lawyer_reason && (
+                          <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    );
+                    const statusCell = inRepair ? (
+                      <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 animate-pulse font-bold tracking-wide">
+                        <Wrench className="w-3 h-3 mr-1" /> IN REPARATUR
+                      </Badge>
+                    ) : (() => {
+                      const s = getStatusFromNotes(d.notes);
+                      return <StatusBadge status={s} className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined} />;
+                    })();
+                    const plzCell = d.orders?.customer_zip || d.orders?.customer_city ? (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <MapPin className="w-3 h-3" />{d.orders.customer_zip ?? ''} {d.orders.customer_city ?? ''}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    );
+                    const cells: Record<string, JSX.Element> = {
+                      entry_date: <TableCell key="entry_date" className="whitespace-nowrap">{format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>,
+                      serial_number: <TableCell key="serial_number" className="font-mono">{d.serial_number}</TableCell>,
+                      model_name: <TableCell key="model_name">{d.model_name}</TableCell>,
+                      order: <TableCell key="order">{orderCell}</TableCell>,
+                      plz: <TableCell key="plz" className="whitespace-nowrap text-xs">{plzCell}</TableCell>,
+                      status: <TableCell key="status">{statusCell}</TableCell>,
+                      kunde: (
+                        <TableCell key="kunde">
+                          {kunde.name ? (
+                            <div className="space-y-0.5">
+                              <div className="font-medium text-sm truncate max-w-[220px]">{kunde.name}</div>
+                              {leihStartVal && (
+                                <div className="text-xs text-muted-foreground">seit {format(new Date(leihStartVal), 'dd.MM.yyyy', { locale: de })}</div>
                               )}
-                              <DrivingTimeCell
-                                value={drivingTimes[d.reserved_order_id!]}
-                                requested={requestedIds.has(d.reserved_order_id!)}
-                                loading={drivingLoading}
-                              />
                             </div>
-                            {isLawyer && d.orders.lawyer_reason && (
-                              <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
-                            )}
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      ),
+                      notes: isLeih ? (
+                        <TableCell key="notes" className="text-muted-foreground max-w-[260px]">
+                          <div className="space-y-0.5">
+                            {shots && <div className="text-xs"><span className="font-medium text-foreground">Schusszahl:</span> {shots}</div>}
+                            {cleanNotes && <div className="text-xs truncate">{cleanNotes}</div>}
+                            {!shots && !cleanNotes && <span>—</span>}
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-xs">
-                        {d.orders?.customer_zip || d.orders?.customer_city ? (
-                          <span className="inline-flex items-center gap-1 text-muted-foreground">
-                            <MapPin className="w-3 h-3" />{d.orders.customer_zip ?? ''} {d.orders.customer_city ?? ''}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {inRepair ? (
-                          <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 animate-pulse font-bold tracking-wide">
-                            <Wrench className="w-3 h-3 mr-1" /> IN REPARATUR
-                          </Badge>
-                        ) : (() => {
-                          const s = getStatusFromNotes(d.notes);
-                          return <StatusBadge status={s} className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined} />;
-                        })()}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{d.notes ?? '—'}</TableCell>
-                    </>
-                  )}
+                        </TableCell>
+                      ) : (
+                        <TableCell key="notes" className="text-muted-foreground">{d.notes ?? '—'}</TableCell>
+                      ),
+                    };
+                    return colOrders[variant].map((k) => cells[k]).filter(Boolean);
+                  })()}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <Button
