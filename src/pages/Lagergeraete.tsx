@@ -2281,29 +2281,45 @@ export default function Lagergeraete({
                     />
                   </TableHead>
                 )}
-                {filterType === 'Leihgerät' ? (
-                  <>
-                    <TableHead onClick={() => toggleSort('entry_date')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Datum <SortIcon field="entry_date" /></span></TableHead>
-                    <TableHead>Kunde</TableHead>
-                    <TableHead onClick={() => toggleSort('serial_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Seriennummer <SortIcon field="serial_number" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('model_name')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Modell <SortIcon field="model_name" /></span></TableHead>
-                    <TableHead>PLZ / Stadt</TableHead>
-                    <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Status <SortIcon field="status" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('order_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Reservierter Auftrag <SortIcon field="order_number" /></span></TableHead>
-                    <TableHead>Notizen</TableHead>
-                  </>
-                ) : (
-                  <>
-                    <TableHead onClick={() => toggleSort('serial_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Seriennummer <SortIcon field="serial_number" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('model_name')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Modell <SortIcon field="model_name" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('entry_date')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Eingangsdatum <SortIcon field="entry_date" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('order_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Reservierter Auftrag <SortIcon field="order_number" /></span></TableHead>
-                    <TableHead>PLZ / Stadt</TableHead>
-                    <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Status <SortIcon field="status" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('notes')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Notizen (intern) <SortIcon field="notes" /></span></TableHead>
-                  </>
-                )}
-                <TableHead className="w-24 text-right">Aktionen</TableHead>
+                {(() => {
+                  const variant: 'standard' | 'leih' = filterType === 'Leihgerät' ? 'leih' : 'standard';
+                  return colOrders[variant].map((key) => {
+                    const sortKey = COL_SORT[key];
+                    const label = key === 'entry_date' && variant === 'leih' ? 'Eingangsdatum' : COL_LABELS[key];
+                    return (
+                      <TableHead
+                        key={key}
+                        draggable
+                        onDragStart={() => setDragCol(key)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={() => { if (dragCol) moveColumn(variant, dragCol, key); setDragCol(null); }}
+                        onDragEnd={() => setDragCol(null)}
+                        onClick={sortKey ? () => toggleSort(sortKey) : undefined}
+                        title="Spalte per Drag & Drop verschieben"
+                        className={`select-none group ${sortKey ? 'cursor-pointer hover:text-foreground' : 'cursor-grab'} ${dragCol === key ? 'opacity-50' : ''}`}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          <GripVertical className="w-3 h-3 opacity-0 group-hover:opacity-60 cursor-grab" />
+                          {label}
+                          {sortKey && <SortIcon field={sortKey} />}
+                        </span>
+                      </TableHead>
+                    );
+                  });
+                })()}
+                <TableHead className="w-24 text-right">
+                  <span className="inline-flex items-center gap-1">
+                    <button
+                      type="button"
+                      title="Spaltenreihenfolge zurücksetzen"
+                      onClick={() => resetColumns(filterType === 'Leihgerät' ? 'leih' : 'standard')}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                    Aktionen
+                  </span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
