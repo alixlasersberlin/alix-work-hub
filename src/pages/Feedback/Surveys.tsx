@@ -5,9 +5,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FeedbackHeader, StatusPill } from './_shared';
-import { Plus, Search, Copy, Trash2 } from 'lucide-react';
+import { Plus, Search, Copy, Trash2, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCanDelete } from '@/hooks/useCanDelete';
+import { downloadSurveyPdf } from '@/lib/feedback/surveyPdf';
+
 
 export default function FeedbackSurveys() {
   const [rows, setRows] = useState<any[]>([]);
@@ -51,6 +53,17 @@ export default function FeedbackSurveys() {
     if (error) toast.error(error.message); else { toast.success('Gelöscht'); load(); }
   }
 
+  async function exportPdf(id: string) {
+    try {
+      toast.info('PDF wird erzeugt …');
+      await downloadSurveyPdf(id);
+      toast.success('PDF heruntergeladen');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'PDF-Export fehlgeschlagen');
+    }
+  }
+
+
   const filtered = rows.filter(r => !q || `${r.name} ${r.public_title ?? ''} ${r.status}`.toLowerCase().includes(q.toLowerCase()));
 
   return (
@@ -88,7 +101,11 @@ export default function FeedbackSurveys() {
                   </td>
                   <td className="p-3">v{r.version}</td>
                   <td className="p-3 text-right whitespace-nowrap">
+                    <Button size="sm" variant="outline" className="mr-1" onClick={() => exportPdf(r.id)}>
+                      <FileDown className="h-4 w-4 mr-1" />PDF
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => duplicate(r.id)}><Copy className="h-4 w-4" /></Button>
+
                     {canDelete && <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
                   </td>
                 </tr>
