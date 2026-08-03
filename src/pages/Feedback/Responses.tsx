@@ -102,7 +102,16 @@ export default function FeedbackResponses() {
   return (
     <div className="space-y-5">
       <FeedbackHeader title="Antworten" subtitle="Alle eingegangenen Rückmeldungen"
-        action={<Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-2" />CSV Export</Button>} />
+        action={
+          <div className="flex gap-2">
+            {canDelete && (
+              <Button variant="outline" className="text-destructive border-destructive/40" onClick={deleteAllForSurvey}>
+                <Trash2 className="h-4 w-4 mr-2" />Alle Antworten löschen
+              </Button>
+            )}
+            <Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-2" />CSV Export</Button>
+          </div>
+        } />
 
       <div className="flex flex-wrap gap-2">
         <Select value={surveyId} onValueChange={setSurveyId}>
