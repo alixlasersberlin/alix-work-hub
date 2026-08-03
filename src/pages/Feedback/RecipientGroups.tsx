@@ -207,19 +207,32 @@ export default function RecipientGroups() {
   async function transferToSurvey() {
     if (!transferSurvey || !members.length) return;
     setTransferring(true);
-    const rows = members.map((m) => ({
-      survey_id: transferSurvey,
-      customer_id: m.customer_id,
-      customer_number: m.customer_number,
-      company_name: m.company_name,
-      last_name: m.contact_name,
-      email: m.email,
-      status: 'neu',
-    }));
-    const { error } = await (supabase as any).from('survey_recipients').insert(rows);
+    const seen = new Set<string>();
+    const rows = members
+      .filter((m) => {
+        const mail = String(m.email ?? '').trim().toLowerCase();
+        if (!mail || seen.has(mail)) return false;
+        seen.add(mail);
+        return true;
+      })
+      .map((m) => ({
+        survey_id: transferSurvey,
+        customer_id: m.customer_id,
+        customer_number: m.customer_number,
+        company_name: m.company_name,
+        last_name: m.contact_name,
+        email: String(m.email).trim(),
+        status: 'neu',
+      }));
+    if (!rows.length) { setTransferring(false); toast.info('Keine Empfänger mit E-Mail-Adresse vorhanden'); return; }
+    const { data: inserted, error } = await (supabase as any)
+      .from('survey_recipients')
+      .upsert(rows, { onConflict: 'survey_id,email', ignoreDuplicates: true })
+      .select('id');
     setTransferring(false);
     if (error) { toast.error(error.message); return; }
-    toast.success(`${rows.length} Empfänger übertragen`);
+    const added = inserted?.length ?? 0;
+    toast.success(`${added} Empfänger übertragen${rows.length - added > 0 ? `, ${rows.length - added} bereits vorhanden` : ''}`);
     setTransferOpen(false);
   }
 

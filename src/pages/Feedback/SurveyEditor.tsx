@@ -190,7 +190,7 @@ export default function SurveyEditor() {
       company_name: c.company_name ?? null, first_name: c.first_name ?? null, last_name: c.last_name ?? null,
       email: c.email, language: survey.language ?? 'de', consent_status: 'offen',
     }).select().single();
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(error.message.includes('duplicate key') ? 'Dieser Empfänger ist bereits in der Umfrage' : error.message); return; }
     setRecipients(r => [data, ...r]);
     toast.success('Empfänger hinzugefügt');
   }
@@ -215,9 +215,14 @@ export default function SurveyEditor() {
       const { data: members, error } = await sb.from('survey_recipient_group_members')
         .select('customer_id, customer_number, company_name, contact_name, email').eq('group_id', g.id);
       if (error) { toast.error(error.message); return; }
-      const existing = new Set(recipients.map(r => (r.email ?? '').toLowerCase()));
+      const existing = new Set(recipients.map(r => (r.email ?? '').trim().toLowerCase()));
       const rows = (members ?? [])
-        .filter((m: any) => m.email && !existing.has(String(m.email).toLowerCase()))
+        .filter((m: any) => {
+          const mail = String(m.email ?? '').trim().toLowerCase();
+          if (!mail || existing.has(mail)) return false;
+          existing.add(mail);
+          return true;
+        })
         .map((m: any) => ({
           survey_id: id, customer_id: m.customer_id ?? null, customer_number: m.customer_number ?? null,
           company_name: m.company_name ?? null, first_name: null, last_name: m.contact_name ?? null,
@@ -225,10 +230,12 @@ export default function SurveyEditor() {
         }));
       const withoutMail = (members ?? []).length - (members ?? []).filter((m: any) => m.email).length;
       if (!rows.length) { toast.info(`Keine neuen Empfänger aus „${g.name}" (${withoutMail} ohne E-Mail)`); return; }
-      const { data: inserted, error: insErr } = await sb.from('survey_recipients').insert(rows).select();
+      const { data: inserted, error: insErr } = await sb.from('survey_recipients')
+        .upsert(rows, { onConflict: 'survey_id,email', ignoreDuplicates: true }).select();
       if (insErr) { toast.error(insErr.message); return; }
       setRecipients(r => [...(inserted ?? []), ...r]);
-      toast.success(`${inserted?.length ?? 0} Empfänger aus „${g.name}" übernommen`);
+      const skipped = rows.length - (inserted?.length ?? 0);
+      toast.success(`${inserted?.length ?? 0} Empfänger aus „${g.name}" übernommen${skipped > 0 ? `, ${skipped} bereits vorhanden` : ''}`);
     } finally {
       setAddingGroup(null);
     }

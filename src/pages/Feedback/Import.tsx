@@ -99,10 +99,21 @@ export default function FeedbackImport() {
       })).filter(r => r.email || r.company_name || r.last_name);
 
       if (!payload.length) { toast.error('Keine gültigen Zeilen gefunden'); return; }
-      const { error } = await sb.from('survey_recipients').insert(payload);
+      const seen = new Set<string>();
+      const unique = payload.filter(r => {
+        const mail = String(r.email ?? '').trim().toLowerCase();
+        if (!mail) return true;
+        if (seen.has(mail)) return false;
+        seen.add(mail);
+        return true;
+      });
+      const { data: inserted, error } = await sb.from('survey_recipients')
+        .upsert(unique, { onConflict: 'survey_id,email', ignoreDuplicates: true }).select('id');
       if (error) throw new Error(error.message);
-      toast.success(`${payload.length} Empfänger importiert`);
-      addLog(`${new Date().toLocaleTimeString('de-DE')} · ${payload.length} Empfänger → ${selected?.name ?? ''}`);
+      const added = inserted?.length ?? 0;
+      const skipped = payload.length - added;
+      toast.success(`${added} Empfänger importiert${skipped > 0 ? `, ${skipped} Duplikate übersprungen` : ''}`);
+      addLog(`${new Date().toLocaleTimeString('de-DE')} · ${added} Empfänger → ${selected?.name ?? ''}`);
     } catch (e: any) {
       toast.error(e.message ?? 'Import fehlgeschlagen');
     } finally {
