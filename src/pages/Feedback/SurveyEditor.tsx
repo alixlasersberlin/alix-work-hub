@@ -215,9 +215,14 @@ export default function SurveyEditor() {
       const { data: members, error } = await sb.from('survey_recipient_group_members')
         .select('customer_id, customer_number, company_name, contact_name, email').eq('group_id', g.id);
       if (error) { toast.error(error.message); return; }
-      const existing = new Set(recipients.map(r => (r.email ?? '').toLowerCase()));
+      const existing = new Set(recipients.map(r => (r.email ?? '').trim().toLowerCase()));
       const rows = (members ?? [])
-        .filter((m: any) => m.email && !existing.has(String(m.email).toLowerCase()))
+        .filter((m: any) => {
+          const mail = String(m.email ?? '').trim().toLowerCase();
+          if (!mail || existing.has(mail)) return false;
+          existing.add(mail);
+          return true;
+        })
         .map((m: any) => ({
           survey_id: id, customer_id: m.customer_id ?? null, customer_number: m.customer_number ?? null,
           company_name: m.company_name ?? null, first_name: null, last_name: m.contact_name ?? null,
