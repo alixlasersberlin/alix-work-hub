@@ -121,7 +121,12 @@ export default function FeedbackSurveys() {
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => duplicate(r.id)}><Copy className="h-4 w-4" /></Button>
 
-                    {canDelete && <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                    {canDelete && (
+                      <Button size="sm" variant="ghost" title="Alle Antworten löschen" onClick={() => removeResponses(r.id, r.name)}>
+                        <Eraser className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                    {canDelete && <Button size="sm" variant="ghost" title="Umfrage löschen" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
                   </td>
                 </tr>
               ))}
