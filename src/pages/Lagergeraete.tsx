@@ -63,7 +63,7 @@ type LagerDevice = {
   created_at: string;
   reserved_order_id: string | null;
   reservation_week: string | null;
-  orders?: { id: string; order_number: string; customer_name?: string | null; order_status?: string | null; lawyer_reason?: string | null } | null;
+  orders?: { id: string; order_number: string; customer_name?: string | null; order_status?: string | null; lawyer_reason?: string | null; customer_zip?: string | null; customer_city?: string | null; customers?: any } | null;
 };
 
 function formatWeek(w: string | null | undefined): string {
