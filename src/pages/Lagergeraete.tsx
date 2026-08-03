@@ -2377,6 +2377,15 @@ export default function Lagergeraete({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
+                      <TableCell className="whitespace-nowrap text-xs">
+                        {d.orders?.customer_zip || d.orders?.customer_city ? (
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
+                            <MapPin className="w-3 h-3" />{d.orders.customer_zip ?? ''} {d.orders.customer_city ?? ''}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {inRepair ? (
                           <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 animate-pulse font-bold tracking-wide">
