@@ -52,6 +52,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useDrivingTimes } from '@/hooks/useDrivingTimes';
+import { DrivingTimeCell } from '@/components/DrivingTimeCell';
+import { MapPin } from 'lucide-react';
 
 type LagerDevice = {
   id: string;
