@@ -229,7 +229,7 @@ export default function TicketsList() {
     [filtered],
   );
 
-  type TabKey = 'open' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
+  type TabKey = 'all' | 'open' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
   const initialTab: TabKey = (() => {
     const s = searchParams.get('status');
     const d = searchParams.get('due');
