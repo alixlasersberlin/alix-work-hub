@@ -48,6 +48,7 @@ export default function RecipientGroups() {
   const [results, setResults] = useState<Customer[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [maxRows, setMaxRows] = useState(1000);
 
   // Transfer to survey
   const [surveys, setSurveys] = useState<{ id: string; name: string }[]>([]);
