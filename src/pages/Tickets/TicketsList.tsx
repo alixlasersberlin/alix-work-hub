@@ -133,7 +133,7 @@ export default function TicketsList() {
         .from('tickets')
         .select('id, external_ticket_id, case_number, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at')
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(2000);
       if (!cancelled) {
         if (error) console.error(error);
         setRows((data as TicketRow[]) || []);
