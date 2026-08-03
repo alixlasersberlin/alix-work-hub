@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FeedbackHeader, StatusPill } from './_shared';
-import { Plus, Search, Copy, Trash2, FileDown } from 'lucide-react';
+import { Plus, Search, Copy, Trash2, FileDown, Eraser } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCanDelete } from '@/hooks/useCanDelete';
 import { downloadSurveyPdf } from '@/lib/feedback/surveyPdf';
