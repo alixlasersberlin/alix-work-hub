@@ -637,16 +637,32 @@ export default function Lagergeraete({
         .select('id, order_number, order_status, lawyer_reason, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address)')
         .in('id', orderIds);
       (ords ?? []).forEach((o: any) => {
-        const addr =
-          o.customers?.shipping_address || o.customers?.billing_address || o.shipping_address || o.billing_address || null;
+        // Adressen können teilweise leer befüllt sein ({} oder alle Felder "") –
+        // deshalb über alle Quellen hinweg den ersten nicht-leeren Wert nehmen.
+        const sources = [
+          o.shipping_address,
+          o.customers?.shipping_address,
+          o.billing_address,
+          o.customers?.billing_address,
+        ].filter((a) => a && typeof a === 'object');
+        const pick = (keys: string[]) => {
+          for (const a of sources) {
+            for (const k of keys) {
+              const v = (a as any)[k];
+              if (typeof v === 'string' && v.trim()) return v.trim();
+              if (typeof v === 'number') return String(v);
+            }
+          }
+          return null;
+        };
         orderMap[o.id] = {
           id: o.id,
           order_number: o.order_number,
           customer_name: o.customers?.company_name || o.customers?.contact_name || null,
           order_status: o.order_status ?? null,
           lawyer_reason: o.lawyer_reason ?? null,
-          customer_zip: (typeof addr === 'object' && addr) ? (addr.zip || addr.postal_code || null) : null,
-          customer_city: (typeof addr === 'object' && addr) ? (addr.city || null) : null,
+          customer_zip: pick(['zip', 'postal_code', 'zipcode', 'zip_code', 'plz']),
+          customer_city: pick(['city', 'town', 'ort']),
           customers: o.customers ?? null,
         };
       });
