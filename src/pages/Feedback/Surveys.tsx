@@ -53,6 +53,17 @@ export default function FeedbackSurveys() {
     if (error) toast.error(error.message); else { toast.success('Gelöscht'); load(); }
   }
 
+  async function exportPdf(id: string) {
+    try {
+      toast.info('PDF wird erzeugt …');
+      await downloadSurveyPdf(id);
+      toast.success('PDF heruntergeladen');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'PDF-Export fehlgeschlagen');
+    }
+  }
+
+
   const filtered = rows.filter(r => !q || `${r.name} ${r.public_title ?? ''} ${r.status}`.toLowerCase().includes(q.toLowerCase()));
 
   return (
