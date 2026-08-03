@@ -136,25 +136,35 @@ export default function RecipientGroups() {
 
       if (limitIds && limitIds.length === 0) { setResults([]); return; }
 
-      let q = (supabase as any)
-        .from('customers')
-        .select('id,external_customer_id,company_name,contact_name,email,source_system,accounting_region,is_vip')
-        .order('company_name')
-        .limit(PAGE_SIZE);
-
-      if (limitIds) q = q.in('id', limitIds.slice(0, 1000));
-      if (fVip) q = q.eq('is_vip', true);
-      if (fEmail) q = q.not('email', 'is', null);
-      if (region !== 'alle') q = q.eq('accounting_region', region);
-      if (source !== 'alle') q = q.eq('source_system', source);
       const t = term.trim();
-      if (t.length >= 2) {
-        q = q.or(`company_name.ilike.%${t}%,contact_name.ilike.%${t}%,email.ilike.%${t}%,external_customer_id.ilike.%${t}%`);
-      }
+      const buildQuery = (from: number, to: number) => {
+        let q = (supabase as any)
+          .from('customers')
+          .select('id,external_customer_id,company_name,contact_name,email,source_system,accounting_region,is_vip')
+          .order('company_name')
+          .range(from, to);
+        if (limitIds) q = q.in('id', limitIds.slice(0, 1000));
+        if (fVip) q = q.eq('is_vip', true);
+        if (fEmail) q = q.not('email', 'is', null);
+        if (region !== 'alle') q = q.eq('accounting_region', region);
+        if (source !== 'alle') q = q.eq('source_system', source);
+        if (t.length >= 2) {
+          q = q.or(`company_name.ilike.%${t}%,contact_name.ilike.%${t}%,email.ilike.%${t}%,external_customer_id.ilike.%${t}%`);
+        }
+        return q;
+      };
 
-      const { data, error } = await q;
-      if (error) throw error;
-      setResults((data || []) as Customer[]);
+      const CHUNK = 1000;
+      const all: Customer[] = [];
+      for (let from = 0; from < maxRows; from += CHUNK) {
+        const to = Math.min(from + CHUNK, maxRows) - 1;
+        const { data, error } = await buildQuery(from, to);
+        if (error) throw error;
+        const batch = (data || []) as Customer[];
+        all.push(...batch);
+        if (batch.length < to - from + 1) break;
+      }
+      setResults(all);
       setSelected({});
     } catch (e: any) {
       toast.error(e?.message || 'Suche fehlgeschlagen');
