@@ -617,19 +617,24 @@ export default function Lagergeraete({
     }
     const rows = (data ?? []) as any[];
     const orderIds = Array.from(new Set(rows.map((r) => r.reserved_order_id).filter(Boolean)));
-    let orderMap: Record<string, { id: string; order_number: string; customer_name?: string | null; order_status?: string | null; lawyer_reason?: string | null }> = {};
+    let orderMap: Record<string, NonNullable<LagerDevice['orders']>> = {};
     if (orderIds.length > 0) {
       const { data: ords } = await supabase
         .from('orders')
-        .select('id, order_number, order_status, lawyer_reason, customers(company_name, contact_name)')
+        .select('id, order_number, order_status, lawyer_reason, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address)')
         .in('id', orderIds);
       (ords ?? []).forEach((o: any) => {
+        const addr =
+          o.customers?.shipping_address || o.customers?.billing_address || o.shipping_address || o.billing_address || null;
         orderMap[o.id] = {
           id: o.id,
           order_number: o.order_number,
           customer_name: o.customers?.company_name || o.customers?.contact_name || null,
           order_status: o.order_status ?? null,
           lawyer_reason: o.lawyer_reason ?? null,
+          customer_zip: (typeof addr === 'object' && addr) ? (addr.zip || addr.postal_code || null) : null,
+          customer_city: (typeof addr === 'object' && addr) ? (addr.city || null) : null,
+          customers: o.customers ?? null,
         };
       });
     }
