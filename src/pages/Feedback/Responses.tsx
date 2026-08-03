@@ -21,6 +21,8 @@ export default function FeedbackResponses() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const canDelete = useCanDelete();
+
   useEffect(() => { sb.from('surveys').select('id,name').is('deleted_at', null).order('name').then((r: any) => setSurveys(r.data ?? [])); /* eslint-disable-next-line */ }, []);
 
   useEffect(() => {
