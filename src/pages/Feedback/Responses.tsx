@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FeedbackHeader } from './_shared';
-import { Download, Eye, AlertTriangle } from 'lucide-react';
+import { Download, Eye, AlertTriangle, Trash2 } from 'lucide-react';
+import { useCanDelete } from '@/hooks/useCanDelete';
+import { toast } from 'sonner';
 
 export default function FeedbackResponses() {
   const sb = supabase as any;
@@ -18,6 +20,8 @@ export default function FeedbackResponses() {
   const [detail, setDetail] = useState<any | null>(null);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const canDelete = useCanDelete();
 
   useEffect(() => { sb.from('surveys').select('id,name').is('deleted_at', null).order('name').then((r: any) => setSurveys(r.data ?? [])); /* eslint-disable-next-line */ }, []);
 
@@ -46,6 +50,32 @@ export default function FeedbackResponses() {
     setItems(data ?? []);
   }
 
+  async function deleteResponse(r: any) {
+    if (!confirm('Diese Antwort endgültig löschen?')) return;
+    await sb.from('survey_response_items').delete().eq('response_id', r.id);
+    const { error } = await sb.from('survey_responses').delete().eq('id', r.id);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.filter(x => x.id !== r.id));
+    toast.success('Antwort gelöscht');
+  }
+
+  async function deleteAllForSurvey() {
+    if (surveyId === 'all') { toast.error('Bitte zuerst eine Umfrage auswählen'); return; }
+    const ids = rows.map(r => r.id);
+    if (!ids.length) { toast.error('Keine Antworten vorhanden'); return; }
+    if (!confirm(`Wirklich alle ${ids.length} Antworten dieser Umfrage löschen?`)) return;
+    for (let i = 0; i < ids.length; i += 200) {
+      const chunk = ids.slice(i, i + 200);
+      await sb.from('survey_response_items').delete().in('response_id', chunk);
+      const { error } = await sb.from('survey_responses').delete().in('id', chunk);
+      if (error) { toast.error(error.message); return; }
+    }
+    setRows([]);
+    toast.success('Alle Antworten gelöscht');
+  }
+
+
+
   function exportCsv() {
     const head = ['Datum', 'Kunde', 'E-Mail', 'Status', 'Score', 'NPS', 'Dauer (s)'];
     const lines = filtered.map(r => [
@@ -72,7 +102,16 @@ export default function FeedbackResponses() {
   return (
     <div className="space-y-5">
       <FeedbackHeader title="Antworten" subtitle="Alle eingegangenen Rückmeldungen"
-        action={<Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-2" />CSV Export</Button>} />
+        action={
+          <div className="flex gap-2">
+            {canDelete && (
+              <Button variant="outline" className="text-destructive border-destructive/40" onClick={deleteAllForSurvey}>
+                <Trash2 className="h-4 w-4 mr-2" />Alle Antworten löschen
+              </Button>
+            )}
+            <Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-2" />CSV Export</Button>
+          </div>
+        } />
 
       <div className="flex flex-wrap gap-2">
         <Select value={surveyId} onValueChange={setSurveyId}>
@@ -107,7 +146,10 @@ export default function FeedbackResponses() {
                   <td className="p-3">{r.score_total ?? '–'}</td>
                   <td className="p-3">{r.nps_score ?? '–'}</td>
                   <td className="p-3">{r.duration_seconds ? `${Math.round(r.duration_seconds / 60)} min` : '–'}</td>
-                  <td className="p-3 text-right"><Button size="sm" variant="ghost" onClick={() => open(r)}><Eye className="h-4 w-4" /></Button></td>
+                  <td className="p-3 text-right whitespace-nowrap">
+                    <Button size="sm" variant="ghost" onClick={() => open(r)}><Eye className="h-4 w-4" /></Button>
+                    {canDelete && <Button size="sm" variant="ghost" onClick={() => deleteResponse(r)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && <tr><td className="p-4 text-muted-foreground" colSpan={7}>{loading ? 'Lade …' : 'Keine Antworten vorhanden.'}</td></tr>}

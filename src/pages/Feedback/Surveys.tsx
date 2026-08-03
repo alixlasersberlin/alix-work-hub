@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FeedbackHeader, StatusPill } from './_shared';
-import { Plus, Search, Copy, Trash2, FileDown } from 'lucide-react';
+import { Plus, Search, Copy, Trash2, FileDown, Eraser } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCanDelete } from '@/hooks/useCanDelete';
 import { downloadSurveyPdf } from '@/lib/feedback/surveyPdf';
@@ -45,6 +45,21 @@ export default function FeedbackSurveys() {
     }
     toast.success('Umfrage dupliziert');
     load();
+  }
+
+  async function removeResponses(id: string, name: string) {
+    const sb = supabase as any;
+    const { data: rs } = await sb.from('survey_responses').select('id').eq('survey_id', id);
+    const ids = (rs ?? []).map((r: any) => r.id);
+    if (!ids.length) { toast.info('Keine Antworten vorhanden'); return; }
+    if (!confirm(`Wirklich alle ${ids.length} Antworten der Umfrage „${name}" löschen?`)) return;
+    for (let i = 0; i < ids.length; i += 200) {
+      const chunk = ids.slice(i, i + 200);
+      await sb.from('survey_response_items').delete().in('response_id', chunk);
+      const { error } = await sb.from('survey_responses').delete().in('id', chunk);
+      if (error) { toast.error(error.message); return; }
+    }
+    toast.success(`${ids.length} Antworten gelöscht`);
   }
 
   async function remove(id: string) {
@@ -106,7 +121,12 @@ export default function FeedbackSurveys() {
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => duplicate(r.id)}><Copy className="h-4 w-4" /></Button>
 
-                    {canDelete && <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                    {canDelete && (
+                      <Button size="sm" variant="ghost" title="Alle Antworten löschen" onClick={() => removeResponses(r.id, r.name)}>
+                        <Eraser className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
+                    {canDelete && <Button size="sm" variant="ghost" title="Umfrage löschen" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
                   </td>
                 </tr>
               ))}
