@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Pencil, Plus, Warehouse, Link2, Link2Off, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench, Inbox, Gavel } from 'lucide-react';
+import { Loader2, Pencil, Plus, Warehouse, Link2, Link2Off, X, Sparkles, Package, Search, ArrowUpDown, ArrowUp, ArrowDown, Mail, Send, PackageCheck, FileDown, FileText, Wrench, Inbox, Gavel, GripVertical, RotateCcw } from 'lucide-react';
 import WareneingangDialog, { type WareneingangDialogHandle } from '@/components/WareneingangDialog';
 import { useNavigate } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
@@ -349,6 +349,65 @@ export default function Lagergeraete({
 
   const [sortField, setSortField] = useState<'serial_number' | 'model_name' | 'entry_date' | 'order_number' | 'status' | 'notes'>('serial_number');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
+  // ---- Verschiebbare Spalten (Drag & Drop, pro Ansicht gespeichert) ----
+  const COL_STORAGE_KEY = 'lagergeraete_col_order_v1';
+  const DEFAULT_COLS: Record<'standard' | 'leih', string[]> = {
+    standard: ['entry_date', 'serial_number', 'model_name', 'order', 'plz', 'status', 'notes'],
+    leih: ['entry_date', 'kunde', 'serial_number', 'model_name', 'plz', 'status', 'order', 'notes'],
+  };
+  const COL_LABELS: Record<string, string> = {
+    entry_date: 'Eingangsdatum',
+    serial_number: 'Seriennummer',
+    model_name: 'Modell',
+    order: 'Reservierter Auftrag',
+    plz: 'PLZ / Stadt',
+    status: 'Status',
+    notes: 'Notizen',
+    kunde: 'Kunde',
+  };
+  const COL_SORT: Record<string, 'serial_number' | 'model_name' | 'entry_date' | 'order_number' | 'status' | 'notes' | undefined> = {
+    entry_date: 'entry_date',
+    serial_number: 'serial_number',
+    model_name: 'model_name',
+    order: 'order_number',
+    status: 'status',
+    notes: 'notes',
+    plz: undefined,
+    kunde: undefined,
+  };
+  const [colOrders, setColOrders] = useState<Record<'standard' | 'leih', string[]>>(() => {
+    try {
+      const raw = localStorage.getItem(COL_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<Record<'standard' | 'leih', string[]>>;
+        const merge = (v: 'standard' | 'leih') => {
+          const saved = (parsed?.[v] ?? []).filter((k) => DEFAULT_COLS[v].includes(k));
+          const missing = DEFAULT_COLS[v].filter((k) => !saved.includes(k));
+          return saved.length ? [...saved, ...missing] : DEFAULT_COLS[v];
+        };
+        return { standard: merge('standard'), leih: merge('leih') };
+      }
+    } catch { /* ignore */ }
+    return DEFAULT_COLS;
+  });
+  const [dragCol, setDragCol] = useState<string | null>(null);
+  const persistCols = (next: Record<'standard' | 'leih', string[]>) => {
+    setColOrders(next);
+    try { localStorage.setItem(COL_STORAGE_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+  };
+  const moveColumn = (variant: 'standard' | 'leih', from: string, to: string) => {
+    if (from === to) return;
+    const cur = [...colOrders[variant]];
+    const fi = cur.indexOf(from);
+    const ti = cur.indexOf(to);
+    if (fi < 0 || ti < 0) return;
+    cur.splice(fi, 1);
+    cur.splice(ti, 0, from);
+    persistCols({ ...colOrders, [variant]: cur });
+  };
+  const resetColumns = (variant: 'standard' | 'leih') =>
+    persistCols({ ...colOrders, [variant]: DEFAULT_COLS[variant] });
   const [viewMode, setViewMode] = useViewMode();
   type FreeOrder = {
     id: string;
@@ -2222,29 +2281,45 @@ export default function Lagergeraete({
                     />
                   </TableHead>
                 )}
-                {filterType === 'Leihgerät' ? (
-                  <>
-                    <TableHead onClick={() => toggleSort('entry_date')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Datum <SortIcon field="entry_date" /></span></TableHead>
-                    <TableHead>Kunde</TableHead>
-                    <TableHead onClick={() => toggleSort('serial_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Seriennummer <SortIcon field="serial_number" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('model_name')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Modell <SortIcon field="model_name" /></span></TableHead>
-                    <TableHead>PLZ / Stadt</TableHead>
-                    <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Status <SortIcon field="status" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('order_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Reservierter Auftrag <SortIcon field="order_number" /></span></TableHead>
-                    <TableHead>Notizen</TableHead>
-                  </>
-                ) : (
-                  <>
-                    <TableHead onClick={() => toggleSort('serial_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Seriennummer <SortIcon field="serial_number" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('model_name')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Modell <SortIcon field="model_name" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('entry_date')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Eingangsdatum <SortIcon field="entry_date" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('order_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Reservierter Auftrag <SortIcon field="order_number" /></span></TableHead>
-                    <TableHead>PLZ / Stadt</TableHead>
-                    <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Status <SortIcon field="status" /></span></TableHead>
-                    <TableHead onClick={() => toggleSort('notes')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Notizen (intern) <SortIcon field="notes" /></span></TableHead>
-                  </>
-                )}
-                <TableHead className="w-24 text-right">Aktionen</TableHead>
+                {(() => {
+                  const variant: 'standard' | 'leih' = filterType === 'Leihgerät' ? 'leih' : 'standard';
+                  return colOrders[variant].map((key) => {
+                    const sortKey = COL_SORT[key];
+                    const label = key === 'entry_date' && variant === 'leih' ? 'Eingangsdatum' : COL_LABELS[key];
+                    return (
+                      <TableHead
+                        key={key}
+                        draggable
+                        onDragStart={() => setDragCol(key)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={() => { if (dragCol) moveColumn(variant, dragCol, key); setDragCol(null); }}
+                        onDragEnd={() => setDragCol(null)}
+                        onClick={sortKey ? () => toggleSort(sortKey) : undefined}
+                        title="Spalte per Drag & Drop verschieben"
+                        className={`select-none group ${sortKey ? 'cursor-pointer hover:text-foreground' : 'cursor-grab'} ${dragCol === key ? 'opacity-50' : ''}`}
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          <GripVertical className="w-3 h-3 opacity-0 group-hover:opacity-60 cursor-grab" />
+                          {label}
+                          {sortKey && <SortIcon field={sortKey} />}
+                        </span>
+                      </TableHead>
+                    );
+                  });
+                })()}
+                <TableHead className="w-24 text-right">
+                  <span className="inline-flex items-center gap-1">
+                    <button
+                      type="button"
+                      title="Spaltenreihenfolge zurücksetzen"
+                      onClick={() => resetColumns(filterType === 'Leihgerät' ? 'leih' : 'standard')}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                    Aktionen
+                  </span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -2287,145 +2362,91 @@ export default function Lagergeraete({
                       />
                     </TableCell>
                   )}
-                  {filterType === 'Leihgerät' ? (
-                    <>
-                      <TableCell>{format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
-                      <TableCell>
-                        {kunde.name ? (
-                          <div className="space-y-0.5">
-                            <div className="font-medium text-sm truncate max-w-[220px]">{kunde.name}</div>
-                            {leihStartVal && (
-                              <div className="text-xs text-muted-foreground">seit {format(new Date(leihStartVal), 'dd.MM.yyyy', { locale: de })}</div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-mono">{d.serial_number}</TableCell>
-                      <TableCell>{d.model_name}</TableCell>
-                      <TableCell className="whitespace-nowrap text-xs">
-                        {d.orders?.customer_zip || d.orders?.customer_city ? (
-                          <span className="inline-flex items-center gap-1 text-muted-foreground">
-                            <MapPin className="w-3 h-3" />{d.orders.customer_zip ?? ''} {d.orders.customer_city ?? ''}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {inRepair ? (
-                          <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 animate-pulse font-bold tracking-wide">
-                            <Wrench className="w-3 h-3 mr-1" /> IN REPARATUR
+                  {(() => {
+                    const variant = filterType === 'Leihgerät' ? 'leih' : 'standard';
+                    const isLeih = variant === 'leih';
+                    const orderCell = d.orders?.order_number ? (
+                      <div className="space-y-1">
+                        {isLawyer && (
+                          <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 font-bold tracking-wide">
+                            <Gavel className="w-3 h-3 mr-1" /> ANWALT
                           </Badge>
-                        ) : (() => {
-                          const s = getStatusFromNotes(d.notes);
-                          return <StatusBadge status={s} className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined} />;
-                        })()}
-                      </TableCell>
-                      <TableCell>
-                        {d.orders?.order_number ? (
-                          <div className="space-y-1">
-                            {isLawyer && (
-                              <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 font-bold tracking-wide">
-                                <Gavel className="w-3 h-3 mr-1" /> ANWALT
-                              </Badge>
-                            )}
-                            <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
-                              {d.orders.order_number}
-                            </Badge>
-                            {d.orders.customer_name && (
-                              <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
-                            )}
-                            <div className="flex flex-wrap items-center gap-2 text-xs">
-                              {d.orders.customer_zip && (
-                                <span className="inline-flex items-center gap-1 text-muted-foreground">
-                                  <MapPin className="w-3 h-3" />{d.orders.customer_zip} {d.orders.customer_city ?? ''}
-                                </span>
-                              )}
-                              <DrivingTimeCell
-                                value={drivingTimes[d.reserved_order_id!]}
-                                requested={requestedIds.has(d.reserved_order_id!)}
-                                loading={drivingLoading}
-                              />
-                            </div>
-                            {isLawyer && d.orders.lawyer_reason && (
-                              <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
                         )}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground max-w-[260px]">
-                        <div className="space-y-0.5">
-                          {shots && <div className="text-xs"><span className="font-medium text-foreground">Schusszahl:</span> {shots}</div>}
-                          {cleanNotes && <div className="text-xs truncate">{cleanNotes}</div>}
-                          {!shots && !cleanNotes && <span>—</span>}
+                        <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
+                          {d.orders.order_number}
+                        </Badge>
+                        {d.orders.customer_name && (
+                          <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
+                        )}
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          {d.orders.customer_zip && (
+                            <span className="inline-flex items-center gap-1 text-muted-foreground">
+                              <MapPin className="w-3 h-3" />{d.orders.customer_zip} {d.orders.customer_city ?? ''}
+                            </span>
+                          )}
+                          <DrivingTimeCell
+                            value={drivingTimes[d.reserved_order_id!]}
+                            requested={requestedIds.has(d.reserved_order_id!)}
+                            loading={drivingLoading}
+                          />
                         </div>
-                      </TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell className="font-mono">{d.serial_number}</TableCell>
-                      <TableCell>{d.model_name}</TableCell>
-                      <TableCell>{format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>
-                      <TableCell>
-                        {d.orders?.order_number ? (
-                          <div className="space-y-1">
-                            {isLawyer && (
-                              <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 font-bold tracking-wide">
-                                <Gavel className="w-3 h-3 mr-1" /> ANWALT
-                              </Badge>
-                            )}
-                            <Badge className="font-mono bg-yellow-500/20 text-yellow-600 dark:text-yellow-300 border border-yellow-500/40 hover:bg-yellow-500/25">
-                              {d.orders.order_number}
-                            </Badge>
-                            {d.orders.customer_name && (
-                              <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
-                            )}
-                            <div className="flex flex-wrap items-center gap-2 text-xs">
-                              {d.orders.customer_zip && (
-                                <span className="inline-flex items-center gap-1 text-muted-foreground">
-                                  <MapPin className="w-3 h-3" />{d.orders.customer_zip} {d.orders.customer_city ?? ''}
-                                </span>
+                        {isLawyer && d.orders.lawyer_reason && (
+                          <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    );
+                    const statusCell = inRepair ? (
+                      <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 animate-pulse font-bold tracking-wide">
+                        <Wrench className="w-3 h-3 mr-1" /> IN REPARATUR
+                      </Badge>
+                    ) : (() => {
+                      const s = getStatusFromNotes(d.notes);
+                      return <StatusBadge status={s} className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined} />;
+                    })();
+                    const plzCell = d.orders?.customer_zip || d.orders?.customer_city ? (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <MapPin className="w-3 h-3" />{d.orders.customer_zip ?? ''} {d.orders.customer_city ?? ''}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    );
+                    const cells: Record<string, JSX.Element> = {
+                      entry_date: <TableCell key="entry_date" className="whitespace-nowrap">{format(new Date(d.entry_date), 'dd.MM.yyyy', { locale: de })}</TableCell>,
+                      serial_number: <TableCell key="serial_number" className="font-mono">{d.serial_number}</TableCell>,
+                      model_name: <TableCell key="model_name">{d.model_name}</TableCell>,
+                      order: <TableCell key="order">{orderCell}</TableCell>,
+                      plz: <TableCell key="plz" className="whitespace-nowrap text-xs">{plzCell}</TableCell>,
+                      status: <TableCell key="status">{statusCell}</TableCell>,
+                      kunde: (
+                        <TableCell key="kunde">
+                          {kunde.name ? (
+                            <div className="space-y-0.5">
+                              <div className="font-medium text-sm truncate max-w-[220px]">{kunde.name}</div>
+                              {leihStartVal && (
+                                <div className="text-xs text-muted-foreground">seit {format(new Date(leihStartVal), 'dd.MM.yyyy', { locale: de })}</div>
                               )}
-                              <DrivingTimeCell
-                                value={drivingTimes[d.reserved_order_id!]}
-                                requested={requestedIds.has(d.reserved_order_id!)}
-                                loading={drivingLoading}
-                              />
                             </div>
-                            {isLawyer && d.orders.lawyer_reason && (
-                              <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
-                            )}
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      ),
+                      notes: isLeih ? (
+                        <TableCell key="notes" className="text-muted-foreground max-w-[260px]">
+                          <div className="space-y-0.5">
+                            {shots && <div className="text-xs"><span className="font-medium text-foreground">Schusszahl:</span> {shots}</div>}
+                            {cleanNotes && <div className="text-xs truncate">{cleanNotes}</div>}
+                            {!shots && !cleanNotes && <span>—</span>}
                           </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-xs">
-                        {d.orders?.customer_zip || d.orders?.customer_city ? (
-                          <span className="inline-flex items-center gap-1 text-muted-foreground">
-                            <MapPin className="w-3 h-3" />{d.orders.customer_zip ?? ''} {d.orders.customer_city ?? ''}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {inRepair ? (
-                          <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 animate-pulse font-bold tracking-wide">
-                            <Wrench className="w-3 h-3 mr-1" /> IN REPARATUR
-                          </Badge>
-                        ) : (() => {
-                          const s = getStatusFromNotes(d.notes);
-                          return <StatusBadge status={s} className={s === 'Transfer' ? 'bg-red-500/15 text-red-500 border-red-500/40 animate-pulse' : undefined} />;
-                        })()}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{d.notes ?? '—'}</TableCell>
-                    </>
-                  )}
+                        </TableCell>
+                      ) : (
+                        <TableCell key="notes" className="text-muted-foreground">{d.notes ?? '—'}</TableCell>
+                      ),
+                    };
+                    return colOrders[variant].map((k) => cells[k]).filter(Boolean);
+                  })()}
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <Button
