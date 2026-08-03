@@ -23,7 +23,7 @@ type Customer = {
   accounting_region: string | null; is_vip: boolean | null;
 };
 
-const PAGE_SIZE = 100;
+const PAGE_SIZES = [100, 250, 500, 1000, 2500, 5000];
 
 export default function RecipientGroups() {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -48,6 +48,7 @@ export default function RecipientGroups() {
   const [results, setResults] = useState<Customer[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [maxRows, setMaxRows] = useState(1000);
 
   // Transfer to survey
   const [surveys, setSurveys] = useState<{ id: string; name: string }[]>([]);
@@ -135,25 +136,35 @@ export default function RecipientGroups() {
 
       if (limitIds && limitIds.length === 0) { setResults([]); return; }
 
-      let q = (supabase as any)
-        .from('customers')
-        .select('id,external_customer_id,company_name,contact_name,email,source_system,accounting_region,is_vip')
-        .order('company_name')
-        .limit(PAGE_SIZE);
-
-      if (limitIds) q = q.in('id', limitIds.slice(0, 1000));
-      if (fVip) q = q.eq('is_vip', true);
-      if (fEmail) q = q.not('email', 'is', null);
-      if (region !== 'alle') q = q.eq('accounting_region', region);
-      if (source !== 'alle') q = q.eq('source_system', source);
       const t = term.trim();
-      if (t.length >= 2) {
-        q = q.or(`company_name.ilike.%${t}%,contact_name.ilike.%${t}%,email.ilike.%${t}%,external_customer_id.ilike.%${t}%`);
-      }
+      const buildQuery = (from: number, to: number) => {
+        let q = (supabase as any)
+          .from('customers')
+          .select('id,external_customer_id,company_name,contact_name,email,source_system,accounting_region,is_vip')
+          .order('company_name')
+          .range(from, to);
+        if (limitIds) q = q.in('id', limitIds.slice(0, 1000));
+        if (fVip) q = q.eq('is_vip', true);
+        if (fEmail) q = q.not('email', 'is', null);
+        if (region !== 'alle') q = q.eq('accounting_region', region);
+        if (source !== 'alle') q = q.eq('source_system', source);
+        if (t.length >= 2) {
+          q = q.or(`company_name.ilike.%${t}%,contact_name.ilike.%${t}%,email.ilike.%${t}%,external_customer_id.ilike.%${t}%`);
+        }
+        return q;
+      };
 
-      const { data, error } = await q;
-      if (error) throw error;
-      setResults((data || []) as Customer[]);
+      const CHUNK = 1000;
+      const all: Customer[] = [];
+      for (let from = 0; from < maxRows; from += CHUNK) {
+        const to = Math.min(from + CHUNK, maxRows) - 1;
+        const { data, error } = await buildQuery(from, to);
+        if (error) throw error;
+        const batch = (data || []) as Customer[];
+        all.push(...batch);
+        if (batch.length < to - from + 1) break;
+      }
+      setResults(all);
       setSelected({});
     } catch (e: any) {
       toast.error(e?.message || 'Suche fehlgeschlagen');
@@ -283,6 +294,10 @@ export default function RecipientGroups() {
                   <option value="alle">Mandant: alle</option>
                   <option value="zoho_eu_1">Alix Deutschland</option>
                   <option value="zoho_eu_2">Alix Austria</option>
+                </select>
+                <select value={maxRows} onChange={(e) => setMaxRows(Number(e.target.value))}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                  {PAGE_SIZES.map((n) => <option key={n} value={n}>max. {n} Treffer</option>)}
                 </select>
                 <Button onClick={runSearch} disabled={searching}>
                   {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
