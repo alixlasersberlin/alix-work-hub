@@ -52,6 +52,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useDrivingTimes } from '@/hooks/useDrivingTimes';
+import { DrivingTimeCell } from '@/components/DrivingTimeCell';
+import { MapPin } from 'lucide-react';
 
 type LagerDevice = {
   id: string;
@@ -63,7 +66,7 @@ type LagerDevice = {
   created_at: string;
   reserved_order_id: string | null;
   reservation_week: string | null;
-  orders?: { id: string; order_number: string; customer_name?: string | null; order_status?: string | null; lawyer_reason?: string | null } | null;
+  orders?: { id: string; order_number: string; customer_name?: string | null; order_status?: string | null; lawyer_reason?: string | null; customer_zip?: string | null; customer_city?: string | null; customers?: any } | null;
 };
 
 function formatWeek(w: string | null | undefined): string {
@@ -243,6 +246,16 @@ export default function Lagergeraete({
   const canReserve = isAdmin || hasRole('Order');
   const canManage = isAdmin || hasRole('Order') || hasRole('Auftragsverwaltung') || hasRole('SACHBEARBEITUNG');
   const [devices, setDevices] = useState<LagerDevice[]>([]);
+  const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes } = useDrivingTimes();
+
+  // Fahrzeit/Anschrift für reservierte Aufträge berechnen
+  useEffect(() => {
+    const reserved = devices
+      .filter((d) => d.reserved_order_id && d.orders)
+      .map((d) => ({ id: d.reserved_order_id as string, customers: d.orders?.customers ?? null }));
+    const uniq = Array.from(new Map(reserved.map((o) => [o.id, o])).values());
+    if (uniq.length > 0) fetchDrivingTimes(uniq);
+  }, [devices, fetchDrivingTimes]);
   const [lastFailedByOrder, setLastFailedByOrder] = useState<Record<string, { id: string; template: string | null; recipient_email: string | null; created_at: string; metadata: any; status: string | null }>>({});
   const [resendingOrderId, setResendingOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -617,19 +630,24 @@ export default function Lagergeraete({
     }
     const rows = (data ?? []) as any[];
     const orderIds = Array.from(new Set(rows.map((r) => r.reserved_order_id).filter(Boolean)));
-    let orderMap: Record<string, { id: string; order_number: string; customer_name?: string | null; order_status?: string | null; lawyer_reason?: string | null }> = {};
+    let orderMap: Record<string, NonNullable<LagerDevice['orders']>> = {};
     if (orderIds.length > 0) {
       const { data: ords } = await supabase
         .from('orders')
-        .select('id, order_number, order_status, lawyer_reason, customers(company_name, contact_name)')
+        .select('id, order_number, order_status, lawyer_reason, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address)')
         .in('id', orderIds);
       (ords ?? []).forEach((o: any) => {
+        const addr =
+          o.customers?.shipping_address || o.customers?.billing_address || o.shipping_address || o.billing_address || null;
         orderMap[o.id] = {
           id: o.id,
           order_number: o.order_number,
           customer_name: o.customers?.company_name || o.customers?.contact_name || null,
           order_status: o.order_status ?? null,
           lawyer_reason: o.lawyer_reason ?? null,
+          customer_zip: (typeof addr === 'object' && addr) ? (addr.zip || addr.postal_code || null) : null,
+          customer_city: (typeof addr === 'object' && addr) ? (addr.city || null) : null,
+          customers: o.customers ?? null,
         };
       });
     }
@@ -2091,6 +2109,18 @@ export default function Lagergeraete({
                       {d.orders.customer_name && (
                         <div className="text-xs text-muted-foreground truncate">{d.orders.customer_name}</div>
                       )}
+                      <div className="flex flex-wrap items-center gap-2 text-xs">
+                        {d.orders.customer_zip && (
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
+                            <MapPin className="w-3 h-3" />{d.orders.customer_zip} {d.orders.customer_city ?? ''}
+                          </span>
+                        )}
+                        <DrivingTimeCell
+                          value={drivingTimes[d.reserved_order_id!]}
+                          requested={requestedIds.has(d.reserved_order_id!)}
+                          loading={drivingLoading}
+                        />
+                      </div>
                     </div>
                   )}
                   {d.notes && (
@@ -2280,6 +2310,18 @@ export default function Lagergeraete({
                             {d.orders.customer_name && (
                               <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
                             )}
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                              {d.orders.customer_zip && (
+                                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                                  <MapPin className="w-3 h-3" />{d.orders.customer_zip} {d.orders.customer_city ?? ''}
+                                </span>
+                              )}
+                              <DrivingTimeCell
+                                value={drivingTimes[d.reserved_order_id!]}
+                                requested={requestedIds.has(d.reserved_order_id!)}
+                                loading={drivingLoading}
+                              />
+                            </div>
                             {isLawyer && d.orders.lawyer_reason && (
                               <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
                             )}
@@ -2315,6 +2357,18 @@ export default function Lagergeraete({
                             {d.orders.customer_name && (
                               <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
                             )}
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                              {d.orders.customer_zip && (
+                                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                                  <MapPin className="w-3 h-3" />{d.orders.customer_zip} {d.orders.customer_city ?? ''}
+                                </span>
+                              )}
+                              <DrivingTimeCell
+                                value={drivingTimes[d.reserved_order_id!]}
+                                requested={requestedIds.has(d.reserved_order_id!)}
+                                loading={drivingLoading}
+                              />
+                            </div>
                             {isLawyer && d.orders.lawyer_reason && (
                               <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
                             )}
