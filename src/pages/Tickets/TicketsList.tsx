@@ -133,7 +133,7 @@ export default function TicketsList() {
         .from('tickets')
         .select('id, external_ticket_id, case_number, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at')
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(2000);
       if (!cancelled) {
         if (error) console.error(error);
         setRows((data as TicketRow[]) || []);
@@ -229,7 +229,7 @@ export default function TicketsList() {
     [filtered],
   );
 
-  type TabKey = 'open' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
+  type TabKey = 'all' | 'open' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
   const initialTab: TabKey = (() => {
     const s = searchParams.get('status');
     const d = searchParams.get('due');
@@ -417,6 +417,7 @@ export default function TicketsList() {
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
         <TabsList className="mb-3 flex-wrap h-auto">
+          <TabsTrigger value="all">Alle ({filtered.length})</TabsTrigger>
           <TabsTrigger value="open">Offene ({openRows.length})</TabsTrigger>
           <TabsTrigger value="neu"><Inbox className="w-3.5 h-3.5 mr-1" />Neue / Eingang ({neueRows.length})</TabsTrigger>
           <TabsTrigger value="overdue"><AlertTriangle className="w-3.5 h-3.5 mr-1 text-red-400" />Überfällig ({overdueRows.length})</TabsTrigger>
@@ -432,9 +433,10 @@ export default function TicketsList() {
           <EscBookings />
         </TabsContent>
 
-        {(['open', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
+        {(['all', 'open', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
           const list =
-            key === 'open' ? openRows
+            key === 'all' ? filtered
+              : key === 'open' ? openRows
               : key === 'closed' ? closedRows
               : key === 'wartung' ? wartungRows
               : key === 'reklamation' ? reklamationRows
@@ -443,7 +445,8 @@ export default function TicketsList() {
               : key === 'escalated' ? escalatedRows
               : wartetKundeRows;
           const emptyTitle =
-            key === 'open' ? 'Keine offenen Tickets'
+            key === 'all' ? 'Keine Tickets'
+              : key === 'open' ? 'Keine offenen Tickets'
               : key === 'closed' ? 'Keine geschlossenen Tickets'
               : key === 'wartung' ? 'Keine Wartungs-Tickets'
               : key === 'reklamation' ? 'Keine Reklamations-Tickets'
