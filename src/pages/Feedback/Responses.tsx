@@ -50,6 +50,32 @@ export default function FeedbackResponses() {
     setItems(data ?? []);
   }
 
+  async function deleteResponse(r: any) {
+    if (!confirm('Diese Antwort endgültig löschen?')) return;
+    await sb.from('survey_response_items').delete().eq('response_id', r.id);
+    const { error } = await sb.from('survey_responses').delete().eq('id', r.id);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.filter(x => x.id !== r.id));
+    toast.success('Antwort gelöscht');
+  }
+
+  async function deleteAllForSurvey() {
+    if (surveyId === 'all') { toast.error('Bitte zuerst eine Umfrage auswählen'); return; }
+    const ids = rows.map(r => r.id);
+    if (!ids.length) { toast.error('Keine Antworten vorhanden'); return; }
+    if (!confirm(`Wirklich alle ${ids.length} Antworten dieser Umfrage löschen?`)) return;
+    for (let i = 0; i < ids.length; i += 200) {
+      const chunk = ids.slice(i, i + 200);
+      await sb.from('survey_response_items').delete().in('response_id', chunk);
+      const { error } = await sb.from('survey_responses').delete().in('id', chunk);
+      if (error) { toast.error(error.message); return; }
+    }
+    setRows([]);
+    toast.success('Alle Antworten gelöscht');
+  }
+
+
+
   function exportCsv() {
     const head = ['Datum', 'Kunde', 'E-Mail', 'Status', 'Score', 'NPS', 'Dauer (s)'];
     const lines = filtered.map(r => [
