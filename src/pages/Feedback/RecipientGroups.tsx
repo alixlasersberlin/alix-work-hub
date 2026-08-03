@@ -295,6 +295,10 @@ export default function RecipientGroups() {
                   <option value="zoho_eu_1">Alix Deutschland</option>
                   <option value="zoho_eu_2">Alix Austria</option>
                 </select>
+                <select value={maxRows} onChange={(e) => setMaxRows(Number(e.target.value))}
+                  className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+                  {PAGE_SIZES.map((n) => <option key={n} value={n}>max. {n} Treffer</option>)}
+                </select>
                 <Button onClick={runSearch} disabled={searching}>
                   {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
                   Suchen
