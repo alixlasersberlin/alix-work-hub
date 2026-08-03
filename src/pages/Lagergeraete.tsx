@@ -2212,6 +2212,7 @@ export default function Lagergeraete({
                     <TableHead>Kunde</TableHead>
                     <TableHead onClick={() => toggleSort('serial_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Seriennummer <SortIcon field="serial_number" /></span></TableHead>
                     <TableHead onClick={() => toggleSort('model_name')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Modell <SortIcon field="model_name" /></span></TableHead>
+                    <TableHead>PLZ / Stadt</TableHead>
                     <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Status <SortIcon field="status" /></span></TableHead>
                     <TableHead onClick={() => toggleSort('order_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Reservierter Auftrag <SortIcon field="order_number" /></span></TableHead>
                     <TableHead>Notizen</TableHead>
@@ -2222,6 +2223,7 @@ export default function Lagergeraete({
                     <TableHead onClick={() => toggleSort('model_name')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Modell <SortIcon field="model_name" /></span></TableHead>
                     <TableHead onClick={() => toggleSort('entry_date')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Eingangsdatum <SortIcon field="entry_date" /></span></TableHead>
                     <TableHead onClick={() => toggleSort('order_number')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Reservierter Auftrag <SortIcon field="order_number" /></span></TableHead>
+                    <TableHead>PLZ / Stadt</TableHead>
                     <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Status <SortIcon field="status" /></span></TableHead>
                     <TableHead onClick={() => toggleSort('notes')} className="cursor-pointer select-none hover:text-foreground"><span className="inline-flex items-center gap-1">Notizen (intern) <SortIcon field="notes" /></span></TableHead>
                   </>
@@ -2286,6 +2288,15 @@ export default function Lagergeraete({
                       </TableCell>
                       <TableCell className="font-mono">{d.serial_number}</TableCell>
                       <TableCell>{d.model_name}</TableCell>
+                      <TableCell className="whitespace-nowrap text-xs">
+                        {d.orders?.customer_zip || d.orders?.customer_city ? (
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
+                            <MapPin className="w-3 h-3" />{d.orders.customer_zip ?? ''} {d.orders.customer_city ?? ''}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {inRepair ? (
                           <Badge className="bg-red-600 text-white border border-red-700 hover:bg-red-600 animate-pulse font-bold tracking-wide">
@@ -2373,6 +2384,15 @@ export default function Lagergeraete({
                               <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
                             )}
                           </div>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap text-xs">
+                        {d.orders?.customer_zip || d.orders?.customer_city ? (
+                          <span className="inline-flex items-center gap-1 text-muted-foreground">
+                            <MapPin className="w-3 h-3" />{d.orders.customer_zip ?? ''} {d.orders.customer_city ?? ''}
+                          </span>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
