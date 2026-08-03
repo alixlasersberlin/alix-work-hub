@@ -36243,6 +36243,10 @@ export type Database = {
         Args: { _item_id: string; _reviewer_id: string }
         Returns: Json
       }
+      device_lock_import_raw_rows: {
+        Args: { _import_id: string }
+        Returns: Json
+      }
       dl_upsert: {
         Args: {
           _customer_id: string
