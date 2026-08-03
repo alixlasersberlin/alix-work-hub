@@ -329,11 +329,21 @@ export default function TicketsList() {
           </>
         }
       />
-
-
-
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          onClick={openCreateDialog}
+          className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0"
+        >
+          <Plus className="w-4 h-4 mr-2" /> Neues Ticket erstellen
+        </Button>
+        <Button variant="outline" asChild>
+          <Link to="/tickets/sync"><RefreshCw className="w-4 h-4 mr-2" />Synchronisation</Link>
+        </Button>
+      </div>
 
       <div className="rounded-xl border border-border bg-card p-4 mb-4 grid gap-3 md:grid-cols-5">
+
         <div className="relative md:col-span-2">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Suche Kunde, Gerät, Seriennr., Auftragsnr., Titel..." className="pl-9" />
