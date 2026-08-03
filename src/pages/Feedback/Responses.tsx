@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FeedbackHeader } from './_shared';
-import { Download, Eye, AlertTriangle } from 'lucide-react';
+import { Download, Eye, AlertTriangle, Trash2 } from 'lucide-react';
+import { useCanDelete } from '@/hooks/useCanDelete';
+import { toast } from 'sonner';
 
 export default function FeedbackResponses() {
   const sb = supabase as any;
