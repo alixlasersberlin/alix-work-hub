@@ -13,6 +13,7 @@ Deno.serve(async (req) => {
     );
 
     let upserted = 0;
+    let skipped = 0;
     const errors: string[] = [];
 
     // ---- 1) Zoho invoices that look like deposit invoices (AZ-...) ----
