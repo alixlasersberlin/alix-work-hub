@@ -417,6 +417,7 @@ export default function TicketsList() {
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
         <TabsList className="mb-3 flex-wrap h-auto">
+          <TabsTrigger value="all">Alle ({filtered.length})</TabsTrigger>
           <TabsTrigger value="open">Offene ({openRows.length})</TabsTrigger>
           <TabsTrigger value="neu"><Inbox className="w-3.5 h-3.5 mr-1" />Neue / Eingang ({neueRows.length})</TabsTrigger>
           <TabsTrigger value="overdue"><AlertTriangle className="w-3.5 h-3.5 mr-1 text-red-400" />Überfällig ({overdueRows.length})</TabsTrigger>
