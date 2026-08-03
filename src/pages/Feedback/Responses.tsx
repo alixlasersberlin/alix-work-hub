@@ -146,7 +146,10 @@ export default function FeedbackResponses() {
                   <td className="p-3">{r.score_total ?? '–'}</td>
                   <td className="p-3">{r.nps_score ?? '–'}</td>
                   <td className="p-3">{r.duration_seconds ? `${Math.round(r.duration_seconds / 60)} min` : '–'}</td>
-                  <td className="p-3 text-right"><Button size="sm" variant="ghost" onClick={() => open(r)}><Eye className="h-4 w-4" /></Button></td>
+                  <td className="p-3 text-right whitespace-nowrap">
+                    <Button size="sm" variant="ghost" onClick={() => open(r)}><Eye className="h-4 w-4" /></Button>
+                    {canDelete && <Button size="sm" variant="ghost" onClick={() => deleteResponse(r)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && <tr><td className="p-4 text-muted-foreground" colSpan={7}>{loading ? 'Lade …' : 'Keine Antworten vorhanden.'}</td></tr>}
