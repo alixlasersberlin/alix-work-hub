@@ -243,6 +243,16 @@ export default function Lagergeraete({
   const canReserve = isAdmin || hasRole('Order');
   const canManage = isAdmin || hasRole('Order') || hasRole('Auftragsverwaltung') || hasRole('SACHBEARBEITUNG');
   const [devices, setDevices] = useState<LagerDevice[]>([]);
+  const { drivingTimes, loading: drivingLoading, requestedIds, fetchDrivingTimes } = useDrivingTimes();
+
+  // Fahrzeit/Anschrift für reservierte Aufträge berechnen
+  useEffect(() => {
+    const reserved = devices
+      .filter((d) => d.reserved_order_id && d.orders)
+      .map((d) => ({ id: d.reserved_order_id as string, customers: d.orders?.customers ?? null }));
+    const uniq = Array.from(new Map(reserved.map((o) => [o.id, o])).values());
+    if (uniq.length > 0) fetchDrivingTimes(uniq);
+  }, [devices, fetchDrivingTimes]);
   const [lastFailedByOrder, setLastFailedByOrder] = useState<Record<string, { id: string; template: string | null; recipient_email: string | null; created_at: string; metadata: any; status: string | null }>>({});
   const [resendingOrderId, setResendingOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
