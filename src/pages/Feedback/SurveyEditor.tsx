@@ -248,22 +248,34 @@ export default function SurveyEditor() {
   }
 
   async function sendInvites() {
-    if (!id) return;
-    const { data, error } = await sb.functions.invoke('survey-send-invites', { body: { survey_id: id, kind: 'einladung' } });
-    if (error) { toast.error(error.message); return; }
-    if (data?.error) { toast.error(String(data.error)); return; }
-    if (!data?.sent) toast.warning(`Keine Einladung versendet (${data?.skipped ?? 0} übersprungen)`);
-    else toast.success(`${data.sent} Einladungen versendet`);
-    load();
+    if (!id || sending) return;
+    setSending('einladung');
+    try {
+      const { data, error } = await sb.functions.invoke('survey-send-invites', { body: { survey_id: id, kind: 'einladung' } });
+      if (error) { toast.error(error.message); return; }
+      if (data?.error) { toast.error(String(data.error)); return; }
+      if (!data?.sent) toast.warning(`Keine Einladung versendet (${data?.skipped ?? 0} übersprungen)`);
+      else toast.success(`${data.sent} Einladungen versendet`);
+      load();
+    } finally {
+      setSending(null);
+    }
   }
 
 
   async function sendReminders() {
-    const { data, error } = await sb.functions.invoke('survey-send-invites', { body: { survey_id: id, kind: 'erinnerung' } });
-    if (error) { toast.error(error.message); return; }
-    toast.success(`${data?.sent ?? 0} Erinnerungen versendet`);
-    load();
+    if (!id || sending) return;
+    setSending('erinnerung');
+    try {
+      const { data, error } = await sb.functions.invoke('survey-send-invites', { body: { survey_id: id, kind: 'erinnerung' } });
+      if (error) { toast.error(error.message); return; }
+      toast.success(`${data?.sent ?? 0} Erinnerungen versendet`);
+      load();
+    } finally {
+      setSending(null);
+    }
   }
+
 
   const publicBase = useMemo(() => publicUrl('/umfrage'), []);
 
