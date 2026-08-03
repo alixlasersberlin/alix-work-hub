@@ -2298,6 +2298,18 @@ export default function Lagergeraete({
                             {d.orders.customer_name && (
                               <div className="text-xs text-muted-foreground truncate max-w-[220px]">{d.orders.customer_name}</div>
                             )}
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
+                              {d.orders.customer_zip && (
+                                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                                  <MapPin className="w-3 h-3" />{d.orders.customer_zip} {d.orders.customer_city ?? ''}
+                                </span>
+                              )}
+                              <DrivingTimeCell
+                                value={drivingTimes[d.reserved_order_id!]}
+                                requested={requestedIds.has(d.reserved_order_id!)}
+                                loading={drivingLoading}
+                              />
+                            </div>
                             {isLawyer && d.orders.lawyer_reason && (
                               <div className="text-[11px] text-red-500 truncate max-w-[220px]">{d.orders.lawyer_reason}</div>
                             )}
