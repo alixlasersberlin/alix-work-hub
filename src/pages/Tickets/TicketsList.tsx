@@ -432,9 +432,10 @@ export default function TicketsList() {
           <EscBookings />
         </TabsContent>
 
-        {(['open', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
+        {(['all', 'open', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
           const list =
-            key === 'open' ? openRows
+            key === 'all' ? filtered
+              : key === 'open' ? openRows
               : key === 'closed' ? closedRows
               : key === 'wartung' ? wartungRows
               : key === 'reklamation' ? reklamationRows
@@ -443,7 +444,8 @@ export default function TicketsList() {
               : key === 'escalated' ? escalatedRows
               : wartetKundeRows;
           const emptyTitle =
-            key === 'open' ? 'Keine offenen Tickets'
+            key === 'all' ? 'Keine Tickets'
+              : key === 'open' ? 'Keine offenen Tickets'
               : key === 'closed' ? 'Keine geschlossenen Tickets'
               : key === 'wartung' ? 'Keine Wartungs-Tickets'
               : key === 'reklamation' ? 'Keine Reklamations-Tickets'
