@@ -190,7 +190,7 @@ export default function SurveyEditor() {
       company_name: c.company_name ?? null, first_name: c.first_name ?? null, last_name: c.last_name ?? null,
       email: c.email, language: survey.language ?? 'de', consent_status: 'offen',
     }).select().single();
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(error.message.includes('duplicate key') ? 'Dieser Empfänger ist bereits in der Umfrage' : error.message); return; }
     setRecipients(r => [data, ...r]);
     toast.success('Empfänger hinzugefügt');
   }
