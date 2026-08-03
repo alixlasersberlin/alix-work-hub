@@ -40,6 +40,8 @@ export default function SurveyEditor() {
   const [rewards, setRewards] = useState<any[]>([]);
   const [recipients, setRecipients] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState<null | 'einladung' | 'erinnerung'>(null);
+
   const [custQuery, setCustQuery] = useState('');
   const [custResults, setCustResults] = useState<any[]>([]);
   const [groupQuery, setGroupQuery] = useState('');
@@ -248,22 +250,34 @@ export default function SurveyEditor() {
   }
 
   async function sendInvites() {
-    if (!id) return;
-    const { data, error } = await sb.functions.invoke('survey-send-invites', { body: { survey_id: id, kind: 'einladung' } });
-    if (error) { toast.error(error.message); return; }
-    if (data?.error) { toast.error(String(data.error)); return; }
-    if (!data?.sent) toast.warning(`Keine Einladung versendet (${data?.skipped ?? 0} übersprungen)`);
-    else toast.success(`${data.sent} Einladungen versendet`);
-    load();
+    if (!id || sending) return;
+    setSending('einladung');
+    try {
+      const { data, error } = await sb.functions.invoke('survey-send-invites', { body: { survey_id: id, kind: 'einladung' } });
+      if (error) { toast.error(error.message); return; }
+      if (data?.error) { toast.error(String(data.error)); return; }
+      if (!data?.sent) toast.warning(`Keine Einladung versendet (${data?.skipped ?? 0} übersprungen)`);
+      else toast.success(`${data.sent} Einladungen versendet`);
+      load();
+    } finally {
+      setSending(null);
+    }
   }
 
 
   async function sendReminders() {
-    const { data, error } = await sb.functions.invoke('survey-send-invites', { body: { survey_id: id, kind: 'erinnerung' } });
-    if (error) { toast.error(error.message); return; }
-    toast.success(`${data?.sent ?? 0} Erinnerungen versendet`);
-    load();
+    if (!id || sending) return;
+    setSending('erinnerung');
+    try {
+      const { data, error } = await sb.functions.invoke('survey-send-invites', { body: { survey_id: id, kind: 'erinnerung' } });
+      if (error) { toast.error(error.message); return; }
+      toast.success(`${data?.sent ?? 0} Erinnerungen versendet`);
+      load();
+    } finally {
+      setSending(null);
+    }
   }
+
 
   const publicBase = useMemo(() => publicUrl('/umfrage'), []);
 
@@ -504,8 +518,9 @@ export default function SurveyEditor() {
                 Jeder Empfänger erhält einen persönlichen, einmaligen Link. Abgemeldete Kunden werden automatisch übersprungen.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={sendInvites} disabled={survey.status !== 'aktiv'}><Send className="h-4 w-4 mr-2" />Einladungen versenden</Button>
-                <Button variant="outline" onClick={sendReminders} disabled={survey.status !== 'aktiv'}>Erinnerungen versenden</Button>
+                <Button onClick={sendInvites} disabled={survey.status !== 'aktiv' || !!sending}><Send className="h-4 w-4 mr-2" />{sending === 'einladung' ? 'Versende …' : 'Einladungen versenden'}</Button>
+                <Button variant="outline" onClick={sendReminders} disabled={survey.status !== 'aktiv' || !!sending}>{sending === 'erinnerung' ? 'Versende …' : 'Erinnerungen versenden'}</Button>
+
               </div>
               {survey.status !== 'aktiv' && <p className="text-xs text-amber-400">Setzen Sie die Umfrage auf „Aktiv“, um Einladungen zu versenden.</p>}
               <div className="pt-2 text-sm flex items-center gap-2 text-muted-foreground">
