@@ -40,6 +40,8 @@ export default function SurveyEditor() {
   const [rewards, setRewards] = useState<any[]>([]);
   const [recipients, setRecipients] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState<null | 'einladung' | 'erinnerung'>(null);
+
   const [custQuery, setCustQuery] = useState('');
   const [custResults, setCustResults] = useState<any[]>([]);
   const [groupQuery, setGroupQuery] = useState('');
