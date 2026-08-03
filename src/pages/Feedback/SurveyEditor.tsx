@@ -230,10 +230,12 @@ export default function SurveyEditor() {
         }));
       const withoutMail = (members ?? []).length - (members ?? []).filter((m: any) => m.email).length;
       if (!rows.length) { toast.info(`Keine neuen Empfänger aus „${g.name}" (${withoutMail} ohne E-Mail)`); return; }
-      const { data: inserted, error: insErr } = await sb.from('survey_recipients').insert(rows).select();
+      const { data: inserted, error: insErr } = await sb.from('survey_recipients')
+        .upsert(rows, { onConflict: 'survey_id,email', ignoreDuplicates: true }).select();
       if (insErr) { toast.error(insErr.message); return; }
       setRecipients(r => [...(inserted ?? []), ...r]);
-      toast.success(`${inserted?.length ?? 0} Empfänger aus „${g.name}" übernommen`);
+      const skipped = rows.length - (inserted?.length ?? 0);
+      toast.success(`${inserted?.length ?? 0} Empfänger aus „${g.name}" übernommen${skipped > 0 ? `, ${skipped} bereits vorhanden` : ''}`);
     } finally {
       setAddingGroup(null);
     }
