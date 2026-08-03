@@ -47,6 +47,21 @@ export default function FeedbackSurveys() {
     load();
   }
 
+  async function removeResponses(id: string, name: string) {
+    const sb = supabase as any;
+    const { data: rs } = await sb.from('survey_responses').select('id').eq('survey_id', id);
+    const ids = (rs ?? []).map((r: any) => r.id);
+    if (!ids.length) { toast.info('Keine Antworten vorhanden'); return; }
+    if (!confirm(`Wirklich alle ${ids.length} Antworten der Umfrage „${name}" löschen?`)) return;
+    for (let i = 0; i < ids.length; i += 200) {
+      const chunk = ids.slice(i, i + 200);
+      await sb.from('survey_response_items').delete().in('response_id', chunk);
+      const { error } = await sb.from('survey_responses').delete().in('id', chunk);
+      if (error) { toast.error(error.message); return; }
+    }
+    toast.success(`${ids.length} Antworten gelöscht`);
+  }
+
   async function remove(id: string) {
     if (!confirm('Umfrage wirklich löschen?')) return;
     const { error } = await (supabase as any).from('surveys').update({ deleted_at: new Date().toISOString(), status: 'archiviert' }).eq('id', id);
