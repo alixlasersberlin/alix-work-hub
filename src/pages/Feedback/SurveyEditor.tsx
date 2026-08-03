@@ -518,8 +518,9 @@ export default function SurveyEditor() {
                 Jeder Empfänger erhält einen persönlichen, einmaligen Link. Abgemeldete Kunden werden automatisch übersprungen.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={sendInvites} disabled={survey.status !== 'aktiv'}><Send className="h-4 w-4 mr-2" />Einladungen versenden</Button>
-                <Button variant="outline" onClick={sendReminders} disabled={survey.status !== 'aktiv'}>Erinnerungen versenden</Button>
+                <Button onClick={sendInvites} disabled={survey.status !== 'aktiv' || !!sending}><Send className="h-4 w-4 mr-2" />{sending === 'einladung' ? 'Versende …' : 'Einladungen versenden'}</Button>
+                <Button variant="outline" onClick={sendReminders} disabled={survey.status !== 'aktiv' || !!sending}>{sending === 'erinnerung' ? 'Versende …' : 'Erinnerungen versenden'}</Button>
+
               </div>
               {survey.status !== 'aktiv' && <p className="text-xs text-amber-400">Setzen Sie die Umfrage auf „Aktiv“, um Einladungen zu versenden.</p>}
               <div className="pt-2 text-sm flex items-center gap-2 text-muted-foreground">
