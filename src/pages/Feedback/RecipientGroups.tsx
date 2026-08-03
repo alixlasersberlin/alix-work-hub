@@ -23,7 +23,7 @@ type Customer = {
   accounting_region: string | null; is_vip: boolean | null;
 };
 
-const PAGE_SIZE = 100;
+const PAGE_SIZES = [100, 250, 500, 1000, 2500, 5000];
 
 export default function RecipientGroups() {
   const [groups, setGroups] = useState<Group[]>([]);
