@@ -101,7 +101,11 @@ export default function FeedbackSurveys() {
                   </td>
                   <td className="p-3">v{r.version}</td>
                   <td className="p-3 text-right whitespace-nowrap">
+                    <Button size="sm" variant="outline" className="mr-1" onClick={() => exportPdf(r.id)}>
+                      <FileDown className="h-4 w-4 mr-1" />PDF
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => duplicate(r.id)}><Copy className="h-4 w-4" /></Button>
+
                     {canDelete && <Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
                   </td>
                 </tr>
