@@ -29,8 +29,8 @@ export default function FeedbackSurveys() {
     const sb = supabase as any;
     const { data: src } = await sb.from('surveys').select('*').eq('id', id).single();
     if (!src) return;
-    const { id: _i, created_at, updated_at, created_by, updated_by, ...rest } = src;
-    const { data: copy, error } = await sb.from('surveys').insert({ ...rest, name: `${src.name} (Kopie)`, status: 'entwurf', version: 1 }).select().single();
+    const { id: _i, created_at, updated_at, created_by, updated_by, public_token, public_enabled, ...rest } = src;
+    const { data: copy, error } = await sb.from('surveys').insert({ ...rest, name: `${src.name} (Kopie)`, status: 'entwurf', version: 1, public_token: null, public_enabled: false }).select().single();
     if (error) { toast.error(error.message); return; }
     const { data: qs } = await sb.from('survey_questions').select('*').eq('survey_id', id).order('position');
     for (const qq of qs ?? []) {
