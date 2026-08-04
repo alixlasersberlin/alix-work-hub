@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw, Download, FileSpreadsheet, FileText, FileJson } from 'lucide-react';
+import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw, Download, FileSpreadsheet, FileText, FileJson, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -14,6 +14,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { toast } from '@/hooks/use-toast';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { RecurringProfileEditDialog, type EditableProfile } from '@/components/finance/RecurringProfileEditDialog';
+import { RecurringProfileCreateDialog } from '@/components/finance/RecurringProfileCreateDialog';
+
 import { RecurringInvoiceBookDialog, type BookableInvoice } from '@/components/finance/RecurringInvoiceBookDialog';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
@@ -140,6 +142,8 @@ export default function WiederkehrendeZahler() {
   const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
   const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
   const [stoppingId, setStoppingId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+
 
   async function stopProfile(p: Profile) {
     if (!confirm(`Vertrag "${p.recurrence_name || p.reference_number || ''}" stoppen und zur Prüfung verschieben?`)) return;
@@ -427,11 +431,20 @@ export default function WiederkehrendeZahler() {
         noBreadcrumbs
         meta={<InfinityStatusBadge kind="done" label={`${profiles.length}`} dotOnly />}
         actions={
-          <Button onClick={runSync} disabled={syncing} size="sm" variant="outline">
-            {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-            Jetzt synchronisieren
-          </Button>
+          <div className="flex items-center gap-2">
+            {canWrite && (
+              <Button onClick={() => setCreateOpen(true)} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Neuanlage
+              </Button>
+            )}
+            <Button onClick={runSync} disabled={syncing} size="sm" variant="outline">
+              {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              Jetzt synchronisieren
+            </Button>
+          </div>
         }
+
       />
 
       {error && <PageError message={error} onRetry={load} />}
@@ -763,6 +776,13 @@ export default function WiederkehrendeZahler() {
         onOpenChange={(v) => { if (!v) setBookInvoice(null); }}
         onBooked={load}
       />
+      <RecurringProfileCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        region={region === 'CH' ? 'CH' : 'EU'}
+        onCreated={load}
+      />
+
     </div>
   );
 }
