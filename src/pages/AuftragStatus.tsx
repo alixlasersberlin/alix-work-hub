@@ -134,10 +134,11 @@ export default function AuftragStatus() {
       deposit_amount: o.deposit_amount,
       salesperson_name: o.salesperson_name,
       customer_name: o.customers?.company_name || o.customers?.contact_name || '–',
-      production_orders: prodRes.count ?? 0,
-      reserviert: resRes.count ?? 0,
-      geliefert: delRes.count ?? 0,
-      route_plans: rpRes.count ?? 0,
+      production_orders: Number(counts.production_orders ?? 0),
+      reserviert: Number(counts.reserviert ?? 0),
+      geliefert: Number(counts.geliefert ?? 0),
+      route_plans: Number(counts.route_plans ?? 0),
+
     });
     await loadReservedDevices(o.id);
     setLoading(false);
