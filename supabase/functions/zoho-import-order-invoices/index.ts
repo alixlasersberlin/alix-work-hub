@@ -182,11 +182,15 @@ Deno.serve(async (req) => {
       else result.order_error = (rb as any)?.message || (rb as any)?.error || `HTTP ${r.status}`;
     }
 
-    // 4) Collect invoice ids: from salesorder detail + fallback via reference number / customer
+    // 4) Collect invoice ids: from salesorder detail + fallback via reference / salesorder_id / customer
     const invoiceIds = new Set<string>();
+    let matchMode: "salesorder_link" | "reference" | "customer_fallback" | "none" = "none";
     for (const inv of (Array.isArray(so.invoices) ? so.invoices : [])) {
       if (inv?.invoice_id) invoiceIds.add(String(inv.invoice_id));
     }
+    if (invoiceIds.size > 0) matchMode = "salesorder_link";
+
+    let customerInvoices: any[] = [];
     if (importInvoices && customerId) {
       const listRes = await fetch(
         `${cfg.booksApiBaseUrl}/invoices?organization_id=${cfg.organizationId}&customer_id=${customerId}&per_page=200&filter_by=Status.All`,
@@ -194,15 +198,35 @@ Deno.serve(async (req) => {
       );
       if (listRes.ok) {
         const lj = await listRes.json();
-        for (const inv of (Array.isArray(lj.invoices) ? lj.invoices : [])) {
-          const ref = String(inv.reference_number ?? "").toUpperCase();
-          if (ref && salesorderNumber && ref.includes(salesorderNumber.toUpperCase())) {
+        customerInvoices = Array.isArray(lj.invoices) ? lj.invoices : [];
+        const soNum = (salesorderNumber ?? "").toUpperCase();
+        for (const inv of customerInvoices) {
+          const hay = [
+            inv.reference_number,
+            inv.salesorder_number,
+            inv.subject,
+            inv.cf_auftragsnummer,
+          ].filter(Boolean).join(" ").toUpperCase();
+          const linkedById = String(inv.salesorder_id ?? "") === String(salesorderId) ||
+            (Array.isArray(inv.salesorder_ids) && inv.salesorder_ids.map(String).includes(String(salesorderId)));
+          if (linkedById || (soNum && hay.includes(soNum))) {
             invoiceIds.add(String(inv.invoice_id));
+            if (matchMode === "none") matchMode = "reference";
           }
+        }
+        // Fallback: Zoho verknüpft die Rechnungen nicht immer mit dem Auftrag
+        // (leere reference_number). Dann alle Rechnungen des Kunden importieren.
+        if (invoiceIds.size === 0 && customerInvoices.length > 0) {
+          for (const inv of customerInvoices) invoiceIds.add(String(inv.invoice_id));
+          matchMode = "customer_fallback";
         }
       }
     }
     result.invoices_found = invoiceIds.size;
+    result.match_mode = matchMode;
+    result.customer_invoice_count = customerInvoices.length;
+
+
 
     // 5) Import each invoice
     if (importInvoices) {
