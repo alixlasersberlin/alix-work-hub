@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Inbox, Search, Filter, UserCheck, Pencil, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Inbox, Search, Filter, UserCheck, Pencil, Trash2, CheckCircle2, AlertTriangle, Download } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 const STATUS_OPTIONS = [
@@ -64,9 +66,13 @@ export default function SalesLeadsList() {
   const [status, setStatus] = useState<string>('alle');
   const [source, setSource] = useState<string>('alle');
   const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
+  const [assignedFilter, setAssignedFilter] = useState<string>('alle');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [assigning, setAssigning] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [orderMatches, setOrderMatches] = useState<Set<string>>(new Set());
+
+
 
   async function handleDelete(lead: Lead) {
     const label = lead.lead_number || lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.id.slice(0, 8);
@@ -169,13 +175,63 @@ export default function SalesLeadsList() {
     return rows.filter((r) => {
       if (status !== 'alle' && r.lead_status !== status) return false;
       if (source !== 'alle' && r.source !== source) return false;
+      if (assignedFilter === '__none' && r.assigned_user) return false;
+      if (assignedFilter !== 'alle' && assignedFilter !== '__none' && r.assigned_user !== assignedFilter) return false;
       if (!q) return true;
       return [
         r.lead_number, r.company, r.first_name, r.last_name, r.email, r.phone,
         r.requested_products, r.form_name, r.device_category, r.customer_goal,
       ].some((v) => v?.toLowerCase().includes(q));
     });
-  }, [rows, search, status, source]);
+  }, [rows, search, status, source, assignedFilter]);
+
+  const allVisibleSelected = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+
+  function toggleRow(id: string) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  }
+
+  function toggleAllVisible() {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (allVisibleSelected) filtered.forEach((r) => n.delete(r.id));
+      else filtered.forEach((r) => n.add(r.id));
+      return n;
+    });
+  }
+
+  function downloadSelected() {
+    const list = filtered.filter((r) => selected.has(r.id));
+    if (!list.length) { toast.error('Keine Anfragen ausgewählt'); return; }
+    const headers = ['Datum','Lead-Nr.','Score','Kategorie','Firma','Vorname','Nachname','E-Mail','Telefon','Geräteklasse','Produkte','Zeitraum','Bewertung','Quelle','Status','Zugewiesen an'];
+    const esc = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [headers.join(';')];
+    for (const r of list) {
+      lines.push([
+        new Date(r.created_at).toLocaleString('de-DE'), r.lead_number, r.lead_score, r.score_category,
+        r.company, r.first_name, r.last_name, r.email, r.phone, r.device_category, r.requested_products,
+        r.implementation_period, r.service_rating, r.form_name || r.source, r.lead_status,
+        userLabel(r.assigned_user) || '',
+      ].map(esc).join(';'));
+    }
+    const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `verkaufsanfragen-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${list.length} Anfragen exportiert`);
+  }
+
+
 
   return (
     <div className="p-6 pb-32 space-y-6">
@@ -227,6 +283,25 @@ export default function SalesLeadsList() {
                 <SelectItem value="manual">Manuell</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={assignedFilter} onValueChange={setAssignedFilter}>
+              <SelectTrigger className="w-[220px]"><SelectValue placeholder="Mitarbeiter" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle Mitarbeiter</SelectItem>
+                <SelectItem value="__none">— Nicht zugewiesen —</SelectItem>
+                {users.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>{u.full_name || u.email || u.id.slice(0, 8)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-xs text-muted-foreground">{selected.size} ausgewählt</span>
+            {selected.size > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Auswahl aufheben</Button>
+            )}
+            <Button size="sm" onClick={downloadSelected} disabled={selected.size === 0}>
+              <Download className="h-4 w-4 mr-1.5" />Download (CSV)
+            </Button>
           </div>
         </div>
       </Card>
@@ -236,6 +311,9 @@ export default function SalesLeadsList() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-left">
               <tr>
+                <th className="p-3 w-8">
+                  <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAllVisible} aria-label="Alle auswählen" />
+                </th>
                 <th className="p-3 w-8" title="Auftrag vorhanden?"></th>
                 <th className="p-3">Datum</th>
                 <th className="p-3">Lead-Nr.</th>
@@ -253,12 +331,16 @@ export default function SalesLeadsList() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={13} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={13} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
-                <tr key={r.id} className="border-t hover:bg-muted/30">
+                <tr key={r.id} className={`border-t hover:bg-muted/30 ${selected.has(r.id) ? 'bg-primary/10' : ''}`}>
                   <td className="p-3 align-middle">
+                    <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleRow(r.id)} aria-label="Anfrage auswählen" />
+                  </td>
+                  <td className="p-3 align-middle">
+
                     {orderMatches.has(r.id) ? (
                       <CheckCircle2 className="h-5 w-5 text-green-500" aria-label="Auftrag vorhanden" />
                     ) : (
