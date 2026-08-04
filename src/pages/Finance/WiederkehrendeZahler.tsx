@@ -142,7 +142,33 @@ export default function WiederkehrendeZahler() {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const { canWrite, isAdmin } = useFinancePermissions();
   // Admin & Super Admin sehen standardmäßig ALLE Konten (inkl. gestoppt/SEPA) und alle Rechnungen (auch bezahlte)
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>(isAdmin ? 'all' : 'active');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa' | 'lawyer'>(isAdmin ? 'all' : 'active');
+  // Kunden/Auftragsnummern mit Auftragsstatus „Anwalt"
+  const [lawyerNames, setLawyerNames] = useState<Set<string>>(new Set());
+  const [lawyerRefs, setLawyerRefs] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('order_number, customers(company_name, contact_name)')
+        .ilike('order_status', 'anwalt')
+        .limit(2000);
+      if (cancelled || !data) return;
+      const names = new Set<string>();
+      const refs = new Set<string>();
+      for (const o of data as any[]) {
+        if (o.order_number) refs.add(String(o.order_number).toLowerCase());
+        const c = o.customers;
+        if (c?.company_name) names.add(String(c.company_name).trim().toLowerCase());
+        if (c?.contact_name) names.add(String(c.contact_name).trim().toLowerCase());
+      }
+      setLawyerNames(names);
+      setLawyerRefs(refs);
+    })();
+    return () => { cancelled = true; };
+  }, []);
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'all' | 'paid' | 'unpaid' | 'overdue' | 'draft'>('all');
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
