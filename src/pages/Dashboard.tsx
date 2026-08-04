@@ -190,36 +190,20 @@ export default function Dashboard() {
   const canSeeAudit = isAdmin || hasRole('Read Only Audit');
 
   async function loadDashboard() {
-    // Lager-Geräte für die KPI-Karten (Freie Pool-Geräte + Leihgeräte gesamt)
-    const lagerRes = isAdmin
-      ? await supabase.from('lager_devices').select('notes, reserved_order_id')
-      : { data: [] as { notes: string | null; reserved_order_id: string | null }[] };
+    // Alle KPI-Zähler kommen aus einer serverseitigen Abfrage,
+    // statt komplette Tabellen (z. B. lager_devices) in den Browser zu laden.
+    const kpiRes = await supabase.rpc('main_dashboard_kpis' as any, { p_at_only: atOnly });
+    const kpi = (kpiRes.data ?? {}) as Record<string, number>;
+    const num = (k: string) => Number(kpi?.[k] ?? 0);
+    const freePoolDevices = isAdmin ? num('freePoolDevices') : 0;
+    const leihgeraete = isAdmin ? num('leihgeraete') : 0;
 
-    const getStatus = (n: string | null | undefined) => {
-      const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
-      return (m?.[1] ?? '').trim();
-    };
-    const isLeih = (n: string | null | undefined) =>
-      (n ?? '').includes('[Typ: Leihgerät]') || (n ?? '').includes('[Leihgerät]');
+    const recentOrdersRes = canSeeOrders
+      ? await (atOnly
+          ? supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').eq('source_system', 'zoho_eu_2').order('created_at', { ascending: false }).limit(7)
+          : supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7))
+      : { data: [] };
 
-    let freePoolDevices = 0;
-    let leihgeraete = 0;
-    for (const d of (lagerRes.data ?? []) as { notes: string | null; reserved_order_id: string | null }[]) {
-      if (isLeih(d.notes)) { leihgeraete++; continue; }
-      const status = getStatus(d.notes);
-      if (d.reserved_order_id == null && status !== 'Hold') freePoolDevices++;
-    }
-
-    const [openOrdersRes, recentOrdersRes] = canSeeOrders
-      ? await Promise.all([
-          (atOnly
-            ? supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen').eq('source_system', 'zoho_eu_2')
-            : supabase.from('orders').select('id', { count: 'exact', head: true }).eq('order_status', 'offen')),
-          (atOnly
-            ? supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').eq('source_system', 'zoho_eu_2').order('created_at', { ascending: false }).limit(7)
-            : supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7)),
-        ])
-      : [{ count: 0 }, { data: [] }];
 
     const shipmentOrdersRes = canSeeOrders
       ? await (atOnly
