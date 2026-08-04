@@ -1734,6 +1734,8 @@ export default function ImportManagement() {
         {/* ============ INVOICE IMPORT TAB ============ */}
         {canWrite && (
           <TabsContent value="invoices" className="space-y-6">
+            <FullBackfillCard />
+
             <Card className="border-primary/30">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
