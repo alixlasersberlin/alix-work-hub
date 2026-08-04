@@ -182,16 +182,46 @@ export default function WiederkehrendeZahler() {
     load();
   }
 
-  async function deleteProfile(p: Profile) {
-    if (!confirm(`Buchung "${p.recurrence_name || p.reference_number || ''}" endgültig löschen?`)) return;
+  async function confirmDelete() {
+    const p = deleteTarget;
+    const reason = deleteReason.trim();
+    if (!p || reason.length < 5) return;
     setDeletingId(p.id);
+
+    const { data: auth } = await supabase.auth.getUser();
     const { error } = await supabase.from('zoho_recurring_profiles').delete().eq('id', p.id);
-    setDeletingId(null);
     if (error) {
+      setDeletingId(null);
       toast({ title: 'Löschen fehlgeschlagen', description: error.message, variant: 'destructive' });
       return;
     }
-    toast({ title: 'Buchung gelöscht' });
+
+    const { error: logError } = await supabase.from('audit_logs').insert({
+      user_id: auth?.user?.id ?? null,
+      action: 'delete',
+      module: 'finance_recurring_profiles',
+      record_id: p.id,
+      details: {
+        reason,
+        recurrence_name: p.recurrence_name,
+        reference_number: p.reference_number,
+        customer_name: p.customer_name,
+        customer_id: p.customer_id,
+        zoho_recurring_invoice_id: p.zoho_recurring_invoice_id,
+        status: p.status,
+        total: p.total,
+        currency: p.currency,
+      },
+    } as any);
+
+    setDeletingId(null);
+    setDeleteTarget(null);
+    setDeleteReason('');
+    if (logError) {
+      toast({ title: 'Buchung gelöscht — Protokoll fehlgeschlagen', description: logError.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Buchung gelöscht', description: 'Löschgrund wurde im Audit-Protokoll gespeichert.' });
+    }
     load();
   }
 
