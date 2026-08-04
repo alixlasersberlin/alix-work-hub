@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { signedThumbMap } from '@/lib/storage/thumb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -189,11 +190,11 @@ export default function KatalogArtikelDetail() {
   const [signed, setSigned] = useState<Record<string,string>>({});
   useEffect(() => {
     (async () => {
-      const out: Record<string,string> = {};
-      for (const img of images) {
-        const { data } = await supabase.storage.from('catalog-media').createSignedUrl(img.storage_path, 3600);
-        if (data?.signedUrl) out[img.id] = data.signedUrl;
-      }
+      const out = await signedThumbMap(
+        'catalog-media',
+        images.map((img: any) => ({ key: img.id, path: img.storage_path })),
+        { width: 640, quality: 70 },
+      );
       setSigned(out);
     })();
   }, [images]);

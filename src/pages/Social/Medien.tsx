@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { signedThumbMap } from '@/lib/storage/thumb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,11 +36,11 @@ export default function SocialMedien() {
       .select('*').eq('client_id', clientId).is('deleted_at', null).order('created_at', { ascending: false });
     const list = (data ?? []) as Asset[];
     setAssets(list);
-    const p: Record<string, string> = {};
-    await Promise.all(list.map(async a => {
-      const { data: sig } = await supabase.storage.from('social-media-library').createSignedUrl(a.storage_path, 3600);
-      if (sig?.signedUrl) p[a.id] = sig.signedUrl;
-    }));
+    const p = await signedThumbMap(
+      'social-media-library',
+      list.map(a => ({ key: a.id, path: a.storage_path })),
+      { width: 480, quality: 70 },
+    );
     setPreviews(p);
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [clientId]);

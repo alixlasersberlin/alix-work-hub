@@ -24572,6 +24572,54 @@ export type Database = {
         }
         Relationships: []
       }
+      perf_metric_snapshots: {
+        Row: {
+          avg_ms: number
+          calls: number
+          captured_at: string
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string | null
+          max_ms: number
+          p95_ms: number
+          route: string | null
+          scope: string
+          target: string | null
+          total_bytes: number
+        }
+        Insert: {
+          avg_ms?: number
+          calls?: number
+          captured_at?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string | null
+          max_ms?: number
+          p95_ms?: number
+          route?: string | null
+          scope?: string
+          target?: string | null
+          total_bytes?: number
+        }
+        Update: {
+          avg_ms?: number
+          calls?: number
+          captured_at?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string | null
+          max_ms?: number
+          p95_ms?: number
+          route?: string | null
+          scope?: string
+          target?: string | null
+          total_bytes?: number
+        }
+        Relationships: []
+      }
       portal_ticket_reads: {
         Row: {
           created_at: string

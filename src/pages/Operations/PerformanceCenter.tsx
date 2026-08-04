@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Gauge, Loader2, RefreshCw, Database, Zap, ListTree, Trash2, AlertTriangle } from 'lucide-react';
+import { Gauge, Loader2, RefreshCw, Database, Zap, ListTree, Trash2, AlertTriangle, Save, History } from 'lucide-react';
+import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { getPerfSamples, subscribePerfSamples, clearPerfSamples, type PerfSample } from '@/lib/perf/queryProbe';
 
@@ -35,6 +36,7 @@ function KpiCard({ label, value, hint, icon: Icon, accent }: { label: string; va
 
 function LiveTab() {
   const samples = useSyncExternalStore(subscribePerfSamples, getPerfSamples, getPerfSamples);
+  const [saving, setSaving] = useState(false);
 
   const stats = useMemo(() => {
     if (!samples.length) return null;
@@ -81,11 +83,50 @@ function LiveTab() {
         <KpiCard label="Übertragen" value={stats ? `${(stats.bytes / 1024 / 1024).toFixed(2)} MB` : '—'} icon={Database} hint={stats ? `${stats.slow} Abfragen > 1 s` : undefined} />
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!samples.length || saving}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              const { data: u } = await supabase.auth.getUser();
+              const uid = u?.user?.id;
+              if (!uid) throw new Error('Nicht angemeldet');
+              const rows = [
+                {
+                  created_by: uid, scope: 'session', route: null, kind: null, target: null,
+                  calls: samples.length, avg_ms: stats?.avg ?? 0, p95_ms: stats?.p95 ?? 0,
+                  max_ms: Math.max(...samples.map(s => s.ms)), total_bytes: stats?.bytes ?? 0,
+                },
+                ...byRoute.map(r => ({
+                  created_by: uid, scope: 'route', route: r.route, kind: null, target: null,
+                  calls: r.calls, avg_ms: Math.round(r.total / r.calls), p95_ms: 0, max_ms: 0, total_bytes: 0,
+                })),
+                ...byTarget.map(t => ({
+                  created_by: uid, scope: 'target', route: null, kind: t.kind, target: t.target,
+                  calls: t.calls, avg_ms: Math.round(t.total / t.calls), p95_ms: 0, max_ms: t.max, total_bytes: 0,
+                })),
+              ];
+              const { error } = await supabase.from('perf_metric_snapshots' as any).insert(rows as any);
+              if (error) throw error;
+              toast.success(`${rows.length} Messwerte in der Historie gespeichert`);
+            } catch (e: any) {
+              toast.error(e.message ?? 'Speichern fehlgeschlagen');
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          {saving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+          In Historie speichern
+        </Button>
         <Button variant="outline" size="sm" onClick={clearPerfSamples}>
           <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Messwerte zurücksetzen
         </Button>
       </div>
+
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-border bg-card overflow-hidden card-glow">
@@ -167,6 +208,122 @@ function LiveTab() {
   );
 }
 
+type Snapshot = {
+  id: string; captured_at: string; scope: string; route: string | null; kind: string | null;
+  target: string | null; calls: number; avg_ms: number; p95_ms: number; max_ms: number; total_bytes: number;
+};
+
+function HistoryTab() {
+  const [rows, setRows] = useState<Snapshot[]>([]);
+  const [busy, setBusy] = useState(true);
+
+  const load = async () => {
+    setBusy(true);
+    const { data } = await supabase
+      .from('perf_metric_snapshots' as any)
+      .select('*')
+      .order('captured_at', { ascending: false })
+      .limit(500);
+    setRows(((data ?? []) as any) as Snapshot[]);
+    setBusy(false);
+  };
+  useEffect(() => { load(); }, []);
+
+  const sessions = rows.filter(r => r.scope === 'session');
+  const routes = rows.filter(r => r.scope === 'route');
+
+  /** Trend je Tag über die gespeicherten Sitzungs-Messwerte. */
+  const trend = useMemo(() => {
+    const m = new Map<string, { day: string; calls: number; total: number; p95: number; n: number }>();
+    for (const s of sessions) {
+      const day = s.captured_at.slice(0, 10);
+      const e = m.get(day) ?? { day, calls: 0, total: 0, p95: 0, n: 0 };
+      e.calls += s.calls; e.total += Number(s.avg_ms); e.p95 = Math.max(e.p95, Number(s.p95_ms)); e.n++;
+      m.set(day, e);
+    }
+    return [...m.values()].sort((a, b) => (a.day < b.day ? 1 : -1)).slice(0, 30);
+  }, [rows]);
+
+  /** Module, die im Schnitt über der Zielvorgabe liegen – Alerting-Liste. */
+  const alerts = useMemo(() => {
+    const m = new Map<string, { route: string; total: number; n: number; last: string }>();
+    for (const r of routes) {
+      const key = r.route ?? '—';
+      const e = m.get(key) ?? { route: key, total: 0, n: 0, last: r.captured_at };
+      e.total += Number(r.avg_ms); e.n++;
+      if (r.captured_at > e.last) e.last = r.captured_at;
+      m.set(key, e);
+    }
+    return [...m.values()]
+      .map(e => ({ ...e, avg: e.total / e.n }))
+      .filter(e => e.avg >= 1000)
+      .sort((a, b) => b.avg - a.avg)
+      .slice(0, 15);
+  }, [rows]);
+
+  if (busy) return <div className="py-12 text-center"><Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" /></div>;
+  if (!rows.length) return <div className="py-12 text-center text-muted-foreground">Noch keine Historie — speichere Messwerte im Tab „Live-Messung".</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button variant="outline" size="sm" onClick={load}><RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Aktualisieren</Button>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card overflow-hidden card-glow">
+        <div className="px-4 py-3 border-b border-border bg-secondary/40 text-sm font-medium">Trend je Tag</div>
+        <table className="w-full text-sm">
+          <thead><tr className="text-muted-foreground text-xs">
+            <th className="text-left px-4 py-2 font-medium">Tag</th>
+            <th className="text-right px-4 py-2 font-medium">Snapshots</th>
+            <th className="text-right px-4 py-2 font-medium">Abfragen</th>
+            <th className="text-right px-4 py-2 font-medium">Ø</th>
+            <th className="text-right px-4 py-2 font-medium">p95 (max)</th>
+          </tr></thead>
+          <tbody className="divide-y divide-border">
+            {trend.map(t => (
+              <tr key={t.day}>
+                <td className="px-4 py-2 text-foreground">{new Date(t.day).toLocaleDateString('de-DE')}</td>
+                <td className="px-4 py-2 text-right text-muted-foreground">{fmtNum(t.n)}</td>
+                <td className="px-4 py-2 text-right text-muted-foreground">{fmtNum(t.calls)}</td>
+                <td className={`px-4 py-2 text-right font-medium ${tone(t.total / t.n)}`}>{fmtMs(t.total / t.n)}</td>
+                <td className={`px-4 py-2 text-right ${tone(t.p95)}`}>{fmtMs(t.p95)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card overflow-hidden card-glow">
+        <div className="px-4 py-3 border-b border-border bg-secondary/40 text-sm font-medium flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-400" /> Alerts: Module über 1 s im Schnitt
+        </div>
+        <table className="w-full text-sm">
+          <thead><tr className="text-muted-foreground text-xs">
+            <th className="text-left px-4 py-2 font-medium">Modul</th>
+            <th className="text-right px-4 py-2 font-medium">Messungen</th>
+            <th className="text-right px-4 py-2 font-medium">Ø</th>
+            <th className="text-right px-4 py-2 font-medium">Zuletzt</th>
+          </tr></thead>
+          <tbody className="divide-y divide-border">
+            {alerts.length === 0 ? (
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Keine Auffälligkeiten.</td></tr>
+            ) : alerts.map(a => (
+              <tr key={a.route}>
+                <td className="px-4 py-2 font-mono text-xs text-foreground">{a.route}</td>
+                <td className="px-4 py-2 text-right text-muted-foreground">{fmtNum(a.n)}</td>
+                <td className={`px-4 py-2 text-right font-medium ${tone(a.avg)}`}>{fmtMs(a.avg)}</td>
+                <td className="px-4 py-2 text-right text-xs text-muted-foreground">{new Date(a.last).toLocaleString('de-DE')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+
 export default function PerformanceCenter() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -220,9 +377,11 @@ export default function PerformanceCenter() {
           <TabsTrigger value="sql">Langsamste SQL-Abfragen</TabsTrigger>
           <TabsTrigger value="tables">Tabellen &amp; Scans</TabsTrigger>
           <TabsTrigger value="indexes">Ungenutzte Indizes</TabsTrigger>
+          <TabsTrigger value="history"><History className="w-3.5 h-3.5 mr-1.5" /> Historie &amp; Alerts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="live" className="mt-4"><LiveTab /></TabsContent>
+        <TabsContent value="history" className="mt-4"><HistoryTab /></TabsContent>
 
         <TabsContent value="sql" className="mt-4">
           <div className="rounded-xl border border-border bg-card overflow-hidden card-glow">

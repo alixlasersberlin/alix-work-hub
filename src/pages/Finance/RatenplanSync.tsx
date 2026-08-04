@@ -158,12 +158,18 @@ export default function RatenplanSync() {
     setSelected(new Set(rows.filter((r) => r.status === 'bereit').map((r) => r.id)));
   };
 
-  const runScan = async (opts?: { profile?: ProfileHit | null }) => {
+  const runScan = async (opts?: { profile?: ProfileHit | null; statusesOverride?: string[]; limitOverride?: number }) => {
     const profile = opts?.profile ?? target;
     setScanning(true); setProgress(8); setItems([]); setStats(null); setRunId(null); setBackupId(null);
     const tick = setInterval(() => setProgress((p) => Math.min(p + 3, 92)), 900);
     try {
-      const payload: Record<string, unknown> = { action: 'scan', region, statuses, limit, useAi };
+      const payload: Record<string, unknown> = {
+        action: 'scan',
+        region,
+        statuses: opts?.statusesOverride ?? statuses,
+        limit: opts?.limitOverride ?? limit,
+        useAi,
+      };
       if (profile) payload.profile_ids = [profile.id];
       const res = await call(payload);
       setRunId(res.run_id); setStats(res.stats);
@@ -356,6 +362,7 @@ export default function RatenplanSync() {
                 <option value="stopped">Nur gestoppt</option>
                 <option value="expired">Nur abgelaufen</option>
                 <option value="active">Aktiv</option>
+                <option value="active,stopped,expired,pruefung">Alle Verträge (Massenlauf)</option>
               </select>
             </div>
             <div>
@@ -376,6 +383,20 @@ export default function RatenplanSync() {
               {scanning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSearch className="w-4 h-4 mr-2" />}
               {target ? 'Dry Run (nur gewählter Kunde)' : 'Dokumente durchsuchen · OCR · Dry Run'}
             </Button>
+
+            <Button
+              variant="secondary"
+              disabled={scanning || !!target}
+              onClick={() => {
+                setStatuses(['active', 'stopped', 'expired', 'pruefung']);
+                setLimit(300);
+                runScan({ profile: null, statusesOverride: ['active', 'stopped', 'expired', 'pruefung'], limitOverride: 300 });
+              }}
+            >
+              {scanning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSearch className="w-4 h-4 mr-2" />}
+              Massenlauf: alle Verträge (300er-Batch)
+            </Button>
+
 
             <Button variant="default" onClick={runApply} disabled={!runId || applying || selected.size === 0}>
               {applying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
