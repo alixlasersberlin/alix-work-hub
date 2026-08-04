@@ -205,7 +205,7 @@ export default function CustomerDetail() {
             customerPhone={customer.phone}
             customerContactName={customer.contact_name}
             customerBillingAddress={customer.billing_address}
-            customerRawData={customer.raw_data}
+            customerRawData={rawData ?? {}}
           />
         </TabsContent>
 
@@ -214,7 +214,7 @@ export default function CustomerDetail() {
       {/* Dialogs */}
       {editOpen && customer && (
         <CustomerEditDialog
-          customer={customer}
+          customer={fullCustomer ?? customer}
           open={editOpen}
           onClose={() => setEditOpen(false)}
           onSaved={() => { setEditOpen(false); loadCustomer(); }}
