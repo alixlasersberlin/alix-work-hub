@@ -607,18 +607,13 @@ export default function WiederkehrendeZahler() {
                     )}
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 mt-0.5">
                       <span>{activeP} aktiv / {g.profiles.length} Verträge</span>
-                      <span>{g.invoices.length} Rechnungen</span>
                       {g.nextInvoiceDate && <span>nächste: {fmtDate(g.nextInvoiceDate)}</span>}
-                      {g.lastInvoiceDate && <span>letzte: {fmtDate(g.lastInvoiceDate)}</span>}
                     </div>
                   </div>
                   <div className="hidden md:flex flex-col items-end text-sm">
                     <span className="font-semibold tabular-nums">{fmt(g.monthly, g.currency)}<span className="text-xs text-muted-foreground"> /Mon.</span></span>
-                    <span className="text-xs text-muted-foreground tabular-nums">YTD {fmt(g.ytdBilled, g.currency)}</span>
                   </div>
-                  {g.openBalance > 0 && (
-                    <Badge variant="destructive" className="ml-2 tabular-nums">{fmt(g.openBalance, g.currency)}</Badge>
-                  )}
+
                 </button>
                 </div>
 
