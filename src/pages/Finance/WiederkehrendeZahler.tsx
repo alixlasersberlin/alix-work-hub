@@ -716,6 +716,20 @@ export default function WiederkehrendeZahler() {
                                       >
                                         {stoppingId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'STOP'}
                                       </Button>
+                                      {isAdmin && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="text-destructive hover:text-destructive"
+                                          disabled={deletingId === p.id}
+                                          onClick={() => deleteProfile(p)}
+                                          title="Buchung löschen"
+                                        >
+                                          {deletingId === p.id
+                                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            : <Trash2 className="w-3.5 h-3.5" />}
+                                        </Button>
+                                      )}
                                     </div>
                                   </td>
 
