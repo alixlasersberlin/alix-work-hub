@@ -292,6 +292,11 @@ export default function WiederkehrendeZahler() {
     );
   }, [groups, search]);
 
+  const visible = useMemo(
+    () => (pageSize === 'all' ? filtered : filtered.slice(0, pageSize)),
+    [filtered, pageSize]
+  );
+
   const totals = useMemo(() => {
     return {
       customers: filtered.length,
