@@ -1773,6 +1773,18 @@ export default function ImportManagement() {
                   </div>
                 </div>
 
+                {(singleOrderBusy || (singleOrderPct > 0 && singleOrderPct < 100)) && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{singleOrderStep}</span>
+                      <span>{singleOrderPct}%</span>
+                    </div>
+                    <Progress value={singleOrderPct} className="h-2" />
+                  </div>
+                )}
+
+
+
                 {singleOrderResult && (
                   <div className="rounded-lg border border-border p-4 space-y-3 text-sm">
                     {singleOrderResult.error ? (
