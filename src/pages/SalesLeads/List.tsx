@@ -231,6 +231,44 @@ export default function SalesLeadsList() {
     toast.success(`${list.length} Anfragen exportiert`);
   }
 
+  async function downloadSelectedPdf() {
+    const list = filtered.filter((r) => selected.has(r.id));
+    if (!list.length) { toast.error('Keine Anfragen ausgewählt'); return; }
+    const { createPDF } = await import('@/lib/pdf-utils');
+    const autoTable = (await import('jspdf-autotable')).default;
+    const doc = createPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    doc.setFont('Inter', 'bold');
+    doc.setFontSize(14);
+    doc.text('Verkaufsanfragen', 14, 16);
+    doc.setFont('Inter', 'normal');
+    doc.setFontSize(9);
+    doc.text(`${list.length} Anfragen · Stand ${new Date().toLocaleString('de-DE')}`, 14, 22);
+
+    autoTable(doc, {
+      startY: 27,
+      head: [['Datum', 'Lead-Nr.', 'Score', 'Firma', 'Name', 'E-Mail', 'Telefon', 'Produkte', 'Quelle', 'Status', 'Zugewiesen an']],
+      body: list.map((r) => [
+        new Date(r.created_at).toLocaleDateString('de-DE'),
+        r.lead_number ?? '',
+        r.lead_score ?? '',
+        r.company ?? '',
+        [r.first_name, r.last_name].filter(Boolean).join(' '),
+        r.email ?? '',
+        r.phone ?? '',
+        r.requested_products ?? '',
+        r.form_name || r.source || '',
+        r.lead_status ?? '',
+        userLabel(r.assigned_user) || '',
+      ]),
+      styles: { font: 'Inter', fontSize: 7, cellPadding: 1.5, overflow: 'linebreak' },
+      headStyles: { fillColor: [30, 30, 30], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      margin: { left: 10, right: 10 },
+    });
+    doc.save(`verkaufsanfragen-${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast.success(`${list.length} Anfragen als PDF exportiert`);
+  }
+
 
 
   return (
