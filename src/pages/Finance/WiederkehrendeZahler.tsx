@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw, Download, FileSpreadsheet, FileText, FileJson, Plus } from 'lucide-react';
+import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw, Download, FileSpreadsheet, FileText, FileJson, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -151,6 +151,7 @@ export default function WiederkehrendeZahler() {
   const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
   const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
   const [stoppingId, setStoppingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
   // Rollen laden asynchron: sobald Admin erkannt wird, alles anzeigen (solange der Filter nicht manuell geändert wurde)
@@ -180,6 +181,21 @@ export default function WiederkehrendeZahler() {
     toast({ title: 'Vertrag gestoppt', description: 'Der Datensatz liegt jetzt unter Prüfung.' });
     load();
   }
+
+  async function deleteProfile(p: Profile) {
+    if (!confirm(`Buchung "${p.recurrence_name || p.reference_number || ''}" endgültig löschen?`)) return;
+    setDeletingId(p.id);
+    const { error } = await supabase.from('zoho_recurring_profiles').delete().eq('id', p.id);
+    setDeletingId(null);
+    if (error) {
+      toast({ title: 'Löschen fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Buchung gelöscht' });
+    load();
+  }
+
+
 
 
   async function load() {
@@ -700,6 +716,20 @@ export default function WiederkehrendeZahler() {
                                       >
                                         {stoppingId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'STOP'}
                                       </Button>
+                                      {isAdmin && (
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          className="text-destructive hover:text-destructive"
+                                          disabled={deletingId === p.id}
+                                          onClick={() => deleteProfile(p)}
+                                          title="Buchung löschen"
+                                        >
+                                          {deletingId === p.id
+                                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            : <Trash2 className="w-3.5 h-3.5" />}
+                                        </Button>
+                                      )}
                                     </div>
                                   </td>
 
