@@ -120,10 +120,11 @@ function fmtDate(d: string | null) {
   try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }
 }
 
-function isDraftInvoice(r: Pick<Row, 'status' | 'payment_status' | 'raw_data'>) {
+function isDraftInvoice(r: Pick<Row, 'status' | 'payment_status' | 'raw_data' | 'raw_is_draft'>) {
   const status = String(r.status ?? '').toLowerCase();
   const paymentStatus = String(r.payment_status ?? '').toLowerCase();
-  return status === 'draft' || status === 'entwurf' || paymentStatus === 'entwurf' || r.raw_data?.is_draft === true;
+  const rawDraft = r.raw_is_draft === true || r.raw_data?.is_draft === true;
+  return status === 'draft' || status === 'entwurf' || paymentStatus === 'entwurf' || rawDraft;
 }
 
 function matchesDocStatus(r: Row, docStatus: string) {
