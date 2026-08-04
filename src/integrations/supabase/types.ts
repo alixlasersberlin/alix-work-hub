@@ -37091,6 +37091,7 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      sidebar_lager_counts: { Args: never; Returns: Json }
       sidebar_production_counts: {
         Args: { p_at_only?: boolean }
         Returns: Json
