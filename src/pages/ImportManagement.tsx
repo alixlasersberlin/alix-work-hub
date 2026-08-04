@@ -418,6 +418,8 @@ export default function ImportManagement() {
   const [singleOrderSource, setSingleOrderSource] = useState<'zoho_eu_1' | 'zoho_eu_2'>('zoho_eu_1');
   const [singleOrderBusy, setSingleOrderBusy] = useState(false);
   const [singleOrderResult, setSingleOrderResult] = useState<any | null>(null);
+  const [singleOrderPct, setSingleOrderPct] = useState(0);
+  const [singleOrderStep, setSingleOrderStep] = useState('');
 
   async function handleSingleOrderInvoiceImport() {
     const q = singleOrderNumber.trim();
