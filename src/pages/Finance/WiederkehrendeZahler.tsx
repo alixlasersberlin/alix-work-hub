@@ -346,15 +346,31 @@ export default function WiederkehrendeZahler() {
   );
 
   const totals = useMemo(() => {
+    const allProfiles = filtered.flatMap(g => g.profiles);
+    const isActive = (p: Profile) => (p.status ?? '').toLowerCase() === 'active';
     return {
       customers: filtered.length,
       monthly: filtered.reduce((s, g) => s + g.monthly, 0),
       remaining: filtered.reduce((s, g) => s + g.remaining, 0),
       ytd: filtered.reduce((s, g) => s + g.ytdBilled, 0),
       open: filtered.reduce((s, g) => s + g.openBalance, 0),
-      activeProfiles: filtered.reduce((s, g) => s + g.profiles.filter(p => (p.status ?? '').toLowerCase() === 'active').length, 0),
+      activeProfiles: allProfiles.filter(isActive).length,
+      sepaProfiles: allProfiles.filter(p => isSepaProfile(p)).length,
+      selfPayProfiles: allProfiles.filter(p => !isSepaProfile(p) && isActive(p)).length,
+      stoppedProfiles: allProfiles.filter(p => !isActive(p)).length,
+      allProfiles: allProfiles.length,
     };
   }, [filtered]);
+
+  const secondTile = useMemo(() => {
+    switch (statusFilter) {
+      case 'sepa': return { label: 'SEPA-Verträge', value: totals.sepaProfiles };
+      case 'stopped': return { label: 'Beendet', value: totals.stoppedProfiles };
+      case 'active': return { label: 'Selbstzahler', value: totals.selfPayProfiles };
+      default: return { label: 'Verträge gesamt', value: totals.allProfiles };
+    }
+  }, [statusFilter, totals]);
+
 
   // ---------- Auswahl & Export ----------
   const selectedGroups = useMemo(() => filtered.filter(g => selected[g.customer_id]), [filtered, selected]);
