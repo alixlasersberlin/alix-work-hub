@@ -35104,6 +35104,9 @@ export type Database = {
           currency: string | null
           customer_id: string | null
           customer_name: string | null
+          delivery_date: string | null
+          delivery_document_id: string | null
+          delivery_source: string | null
           device_name: string | null
           email: string | null
           end_date: string | null
@@ -35134,6 +35137,9 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          delivery_date?: string | null
+          delivery_document_id?: string | null
+          delivery_source?: string | null
           device_name?: string | null
           email?: string | null
           end_date?: string | null
@@ -35164,6 +35170,9 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          delivery_date?: string | null
+          delivery_document_id?: string | null
+          delivery_source?: string | null
           device_name?: string | null
           email?: string | null
           end_date?: string | null
