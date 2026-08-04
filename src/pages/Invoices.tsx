@@ -1038,13 +1038,17 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         vorgang: 'Zahlung',
         payment_method: bookMethod,
       });
-      if (!jr.ok) throw new Error(jr.error || 'Journal-Buchung fehlgeschlagen');
 
       setRows((prev) => prev.map((x) => (x.id === bookRow.id && x.source === bookRow.source
         ? { ...x, payment_status: patch.payment_status, balance: newBalance, last_payment_date: bookDate }
         : x)));
-      toast({ title: 'Gebucht', description: `Zahlung ${fmtMoney(gross, bookRow.currency)} für Rechnung ${bookRow.invoice_number ?? ''} verbucht.${fullyPaid ? '' : ` Restsaldo: ${fmtMoney(newBalance, bookRow.currency)}`}` });
+      if (!jr.ok) {
+        toast({ title: 'Rechnung gebucht – Journal fehlgeschlagen', description: jr.error || 'Journal-Buchung fehlgeschlagen', variant: 'destructive' });
+      } else {
+        toast({ title: 'Gebucht', description: `Zahlung ${fmtMoney(gross, bookRow.currency)} für Rechnung ${bookRow.invoice_number ?? ''} verbucht.${fullyPaid ? '' : ` Restsaldo: ${fmtMoney(newBalance, bookRow.currency)}`}` });
+      }
       setBookRow(null);
+
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message || String(e), variant: 'destructive' });
     } finally {
