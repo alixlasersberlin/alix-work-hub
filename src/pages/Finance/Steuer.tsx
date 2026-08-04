@@ -121,7 +121,7 @@ export default function FinanceSteuer() {
     const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `Steuer_${from}_${to}.csv`;
+    a.download = `Steuer_${region}_${from}_${to}.csv`;
     a.click();
     URL.revokeObjectURL(a.href);
   };

@@ -41,7 +41,7 @@ export default function Buchungsjournal() {
     const body = rows.map(r => cols.map(c => String(r[c] ?? '').replace(/[;\n\r"]/g, ' ')).join(';')).join('\n');
     const blob = new Blob([head + '\n' + body], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `journal_${from}_${to}.csv`; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = `journal_${region}_${from}_${to}.csv`; a.click();
     URL.revokeObjectURL(url);
   }
 
