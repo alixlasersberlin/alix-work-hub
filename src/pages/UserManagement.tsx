@@ -172,7 +172,7 @@ export default function UserManagement() {
     setSelectedUser(user);
     const [invRes, auditRes] = await Promise.all([
       supabase.from('user_invitations').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10),
-      supabase.from('audit_logs').select('*').eq('record_id', user.id).order('created_at', { ascending: false }).limit(20),
+      supabase.from('audit_logs').select('id,created_at,user_id,action,module,record_id,details').eq('record_id', user.id).order('created_at', { ascending: false }).limit(20),
     ]);
     setUserInvitations(invRes.data ?? []);
     setUserAuditLogs(auditRes.data ?? []);

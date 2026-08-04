@@ -156,7 +156,7 @@ export default function SystemMonitoring() {
   async function loadSecurity() {
     setSecurityLoading(true);
     const [auditRes, otpRes, sessionRes] = await Promise.all([
-      supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(50),
+      supabase.from('audit_logs').select('id,created_at,user_id,action,module,record_id,ip_address,details').order('created_at', { ascending: false }).limit(50),
       supabase.from('otp_challenges').select('*').in('challenge_status', ['blocked', 'expired', 'pending']).order('created_at', { ascending: false }).limit(50),
       supabase.from('login_sessions').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(50),
     ]);
