@@ -1128,23 +1128,34 @@ export default function AppLayout() {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const { count } = await supabase
-        .from('route_plans')
-        .select('*', { count: 'exact', head: true })
-        .eq('planning_status', 'offen');
-      if (cancelled) return;
-      setLagerCounts((prev) => ({ ...prev, '/tourenplanung': count ?? 0 }));
+      if (document.visibilityState !== 'visible') return;
+      const { data, error } = await (supabase as any).rpc('sidebar_sales_counts');
+      if (cancelled || error || !data) return;
+      const c = data as any;
+      setLagerCounts((prev) => ({
+        ...prev,
+        '/tourenplanung': Number(c.routes_open ?? 0),
+        '/verkauf/anfragen': Number(c.leads_open ?? 0),
+        '/verkauf/angebote': Number(c.offers_open ?? 0),
+      }));
     };
     const id = window.setTimeout(load, isOrdersRoute ? 5000 : 1500);
     const intervalId = window.setInterval(load, 15 * 60 * 1000);
     let debounceId: number | undefined;
+    let lastRun = 0;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
-      debounceId = window.setTimeout(load, 400);
+      debounceId = window.setTimeout(() => {
+        if (Date.now() - lastRun < 60 * 1000) return;
+        lastRun = Date.now();
+        void load();
+      }, 3000);
     };
     const channel = supabase
-      .channel('route_plans_counts')
+      .channel('sidebar_sales_counts')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'route_plans' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales_leads' }, scheduleReload)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, scheduleReload)
       .subscribe();
     const onCustomRefresh = () => scheduleReload();
     window.addEventListener('route-plans-refresh', onCustomRefresh);
@@ -1158,57 +1169,6 @@ export default function AppLayout() {
     };
   }, [isOrdersRoute]);
 
-  // Anzahl offener Vertriebsanfragen (sales_leads) und offener Angebote (offers) – Echtzeit
-  useEffect(() => {
-    let cancelled = false;
-    const loadLeads = async () => {
-      const { count } = await supabase
-        .from('sales_leads')
-        .select('*', { count: 'exact', head: true })
-        .or('assigned_user.is.null,lead_status.eq.Neu,lead_status.eq.Importiert - Angebot offen')
-        .not('lead_status', 'in', '("Gewonnen","Verloren","Archiviert")');
-      if (cancelled) return;
-      setLagerCounts((prev) => ({ ...prev, '/verkauf/anfragen': count ?? 0 }));
-    };
-    const loadOffers = async () => {
-      const { count } = await supabase
-        .from('offers')
-        .select('*', { count: 'exact', head: true })
-        .not('status', 'in', '("signed","order","unterschrieben","abgelehnt","storniert","expired","abgelaufen")');
-      if (cancelled) return;
-      setLagerCounts((prev) => ({ ...prev, '/verkauf/angebote': count ?? 0 }));
-    };
-    const loadAll = () => { void loadLeads(); void loadOffers(); };
-    const id = window.setTimeout(loadAll, isOrdersRoute ? 5000 : 1500);
-    const intervalId = window.setInterval(loadAll, 15 * 60 * 1000);
-    let debounceLeads: number | undefined;
-    let debounceOffers: number | undefined;
-    const scheduleLeads = () => {
-      if (debounceLeads) window.clearTimeout(debounceLeads);
-      debounceLeads = window.setTimeout(loadLeads, 400);
-    };
-    const scheduleOffers = () => {
-      if (debounceOffers) window.clearTimeout(debounceOffers);
-      debounceOffers = window.setTimeout(loadOffers, 400);
-    };
-    const chLeads = supabase
-      .channel('sales_leads_counts')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales_leads' }, scheduleLeads)
-      .subscribe();
-    const chOffers = supabase
-      .channel('offers_counts')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, scheduleOffers)
-      .subscribe();
-    return () => {
-      cancelled = true;
-      window.clearTimeout(id);
-      window.clearInterval(intervalId);
-      if (debounceLeads) window.clearTimeout(debounceLeads);
-      if (debounceOffers) window.clearTimeout(debounceOffers);
-      supabase.removeChannel(chLeads);
-      supabase.removeChannel(chOffers);
-    };
-  }, [isOrdersRoute]);
 
 
   // Anzahl der Bestellungen (production_orders + Bestellung möglich) – gedrosselt: 1 RPC statt 9 Queries
