@@ -117,12 +117,10 @@ export default function AuftragStatus() {
       return;
     }
 
-    const [prodRes, resRes, delRes, rpRes] = await Promise.all([
-      supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('order_id', o.id),
-      supabase.from('lager_devices').select('id', { count: 'exact', head: true }).eq('reserved_order_id', o.id),
-      supabase.from('lager_devices').select('id', { count: 'exact', head: true }).eq('delivered_order_id', o.id),
-      supabase.from('route_plans').select('id', { count: 'exact', head: true }).eq('order_id', o.id),
-    ]);
+    // 1 RPC statt 4 Einzel-Counts
+    const { data: countsData } = await (supabase as any).rpc('order_status_counts', { p_order_id: o.id });
+    const counts = (countsData ?? {}) as Record<string, number>;
+
 
     setResult({
       id: o.id,
@@ -136,10 +134,11 @@ export default function AuftragStatus() {
       deposit_amount: o.deposit_amount,
       salesperson_name: o.salesperson_name,
       customer_name: o.customers?.company_name || o.customers?.contact_name || '–',
-      production_orders: prodRes.count ?? 0,
-      reserviert: resRes.count ?? 0,
-      geliefert: delRes.count ?? 0,
-      route_plans: rpRes.count ?? 0,
+      production_orders: Number(counts.production_orders ?? 0),
+      reserviert: Number(counts.reserviert ?? 0),
+      geliefert: Number(counts.geliefert ?? 0),
+      route_plans: Number(counts.route_plans ?? 0),
+
     });
     await loadReservedDevices(o.id);
     setLoading(false);

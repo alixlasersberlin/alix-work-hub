@@ -37007,6 +37007,7 @@ export type Database = {
         Args: { _reason: string; _user_id: string }
         Returns: Json
       }
+      order_status_counts: { Args: { p_order_id: string }; Returns: Json }
       peek_document_number: { Args: { p_code: string }; Returns: string }
       perf_slow_queries: {
         Args: { _limit?: number }
