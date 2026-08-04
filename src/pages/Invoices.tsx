@@ -743,11 +743,20 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     openEdit(r);
   };
 
+  // Lädt raw_data erst bei Bedarf nach (nicht mehr in der Listenabfrage enthalten).
+  const loadRawData = async (r: Row): Promise<any> => {
+    if (r.raw_data && typeof r.raw_data === 'object' && !Array.isArray(r.raw_data)) return r.raw_data;
+    const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+    const { data } = await (supabase as any).from(table).select('raw_data').eq('id', r.id).maybeSingle();
+    const raw = data?.raw_data;
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  };
+
   const commitDraft = async (r: Row) => {
     if (!isDraftInvoice(r)) return;
     try {
       const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
-      const raw = r.raw_data && typeof r.raw_data === 'object' && !Array.isArray(r.raw_data) ? (r.raw_data as any) : {};
+      const raw = await loadRawData(r);
       const patch: any = {
         status: 'sent',
         raw_data: { ...raw, is_draft: false },
