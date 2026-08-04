@@ -147,8 +147,8 @@ export default function WiederkehrendeZahler() {
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [pageSize, setPageSize] = useState<20 | 50 | 100 | 'all'>(20);
-  type SortKey = 'date_new' | 'date_old' | 'amount_desc' | 'amount_asc' | 'name_asc' | 'name_desc';
-  const [sortBy, setSortBy] = useState<SortKey>('date_new');
+  type SortKey = 'recent_added' | 'date_new' | 'date_old' | 'amount_desc' | 'amount_asc' | 'name_asc' | 'name_desc';
+  const [sortBy, setSortBy] = useState<SortKey>('recent_added');
 
   const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
   const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
@@ -324,6 +324,12 @@ export default function WiederkehrendeZahler() {
   const sorted = useMemo(() => {
     const arr = [...filtered];
     switch (sortBy) {
+      case 'recent_added': return arr.sort((a, b) => {
+        const ac = a.newestCreatedAt || '';
+        const bc = b.newestCreatedAt || '';
+        if (ac !== bc) return bc.localeCompare(ac);
+        return a.customer_name.localeCompare(b.customer_name, 'de');
+      });
       case 'amount_desc': return arr.sort((a, b) => b.monthly - a.monthly);
       case 'amount_asc': return arr.sort((a, b) => a.monthly - b.monthly);
       case 'date_new': return arr.sort((a, b) => (b.newestCreatedAt || '').localeCompare(a.newestCreatedAt || ''));
@@ -534,6 +540,7 @@ export default function WiederkehrendeZahler() {
             onChange={(e) => setSortBy(e.target.value as SortKey)}
             className="h-9 rounded-md border border-border bg-background px-2 text-xs"
           >
+            <option value="recent_added">Zuletzt hinzugefügt</option>
             <option value="amount_desc">Betrag absteigend</option>
             <option value="amount_asc">Betrag aufsteigend</option>
             <option value="date_new">Datum neueste</option>
