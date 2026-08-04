@@ -22,6 +22,14 @@ function formatDate(date: string | null) {
   return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
+
+function addrZip(o: any): string {
+  return String(o?.customers?.billing_address?.zip ?? '');
+}
+function addrCity(o: any): string {
+  return String(o?.customers?.billing_address?.city ?? '');
+}
+
 const SOURCE_LABEL: Record<string, string> = {
   zoho_eu_1: 'Alix Deutschland 🇩🇪',
   zoho_eu_2: 'Alix Austria 🇦🇹',
@@ -54,7 +62,7 @@ export default function FinanceAnwaltsfaelle() {
       setError(null);
       let q = supabase
         .from('orders')
-        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, lawyer_reason, salesperson_name, internal_number, customers(company_name, contact_name, city, zip_code)')
+        .select('id, order_number, order_status, order_date, expected_shipment_date, total_amount, currency, source_system, lawyer_reason, salesperson_name, internal_number, customers(company_name, contact_name, billing_address)')
         .ilike('order_status', 'anwalt')
         .order(sortField, { ascending: sortDir === 'asc' })
         .limit(1000);
@@ -103,7 +111,7 @@ export default function FinanceAnwaltsfaelle() {
     if (!q) return true;
     const hay = [
       o.order_number, o.internal_number, o.lawyer_reason, o.salesperson_name,
-      o.customers?.company_name, o.customers?.contact_name, o.customers?.city, o.customers?.zip_code,
+      o.customers?.company_name, o.customers?.contact_name, addrCity(o), addrZip(o),
       o.total_amount != null ? String(o.total_amount) : '',
     ].filter(Boolean).join(' ').toLowerCase();
     return hay.includes(q);
@@ -136,7 +144,7 @@ export default function FinanceAnwaltsfaelle() {
       const cells = [
         o.order_number || '', o.lawyer_reason || '',
         o.customers?.company_name || '', o.customers?.contact_name || '',
-        o.customers?.zip_code || '', o.customers?.city || '',
+        addrZip(o), addrCity(o),
         o.salesperson_name || '',
         formatDate(o.order_date), formatDate(o.expected_shipment_date),
         o.total_amount != null ? Number(o.total_amount).toFixed(2).replace('.', ',') : '',
@@ -169,7 +177,7 @@ export default function FinanceAnwaltsfaelle() {
       body: filtered.map((o) => [
         o.order_number || '', o.lawyer_reason || '—',
         o.customers?.company_name || '—', o.customers?.contact_name || '—',
-        [o.customers?.zip_code, o.customers?.city].filter(Boolean).join(' ') || '—',
+        [addrZip(o), addrCity(o)].filter(Boolean).join(' ') || '—',
         o.salesperson_name || '—',
         formatDate(o.order_date),
         o.total_amount != null ? `${Number(o.total_amount).toLocaleString('de-DE', { minimumFractionDigits: 2 })} ${o.currency || '€'}` : '—',
@@ -317,7 +325,7 @@ export default function FinanceAnwaltsfaelle() {
                   <td className="px-4 py-3 text-muted-foreground">{o.lawyer_reason || '—'}</td>
                   <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || '—'}</td>
                   <td className="px-4 py-3 text-muted-foreground">{o.customers?.contact_name || '—'}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{[o.customers?.zip_code, o.customers?.city].filter(Boolean).join(' ') || '—'}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{[addrZip(o), addrCity(o)].filter(Boolean).join(' ') || '—'}</td>
                   <td className="px-4 py-3 text-muted-foreground">{o.salesperson_name || '—'}</td>
                   <td className="px-4 py-3 text-muted-foreground">{formatDate(o.order_date)}</td>
                   <td className="px-4 py-3 text-muted-foreground">{formatDate(o.expected_shipment_date)}</td>
