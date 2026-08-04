@@ -336,6 +336,8 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
 
     const expandOrders = (loaded: any[]) => loaded.map(o => ({
         ...o,
+        // Nur der tatsächlich benötigte raw_data-Teilpfad (statt des kompletten JSON-Blobs)
+        raw_data: { payment: { down: o.offer_down } },
         order_items: [],
         _seq: 1,
         _displayNumber: withAt(o.order_number, o.source_system),
