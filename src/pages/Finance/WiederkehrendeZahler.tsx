@@ -262,40 +262,8 @@ export default function WiederkehrendeZahler() {
       if (p.created_at && (!g.newestCreatedAt || p.created_at > g.newestCreatedAt)) g.newestCreatedAt = p.created_at;
     }
 
-    const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
-    const today = new Date().toISOString().slice(0, 10);
-    const invMatches = (inv: Invoice) => {
-      if (invoiceStatusFilter === 'all') return true;
-      const s = (inv.status ?? '').toLowerCase();
-      const bal = Number(inv.balance || 0);
-      if (invoiceStatusFilter === 'paid') return s === 'paid' || bal <= 0;
-      if (invoiceStatusFilter === 'unpaid') return bal > 0 && s !== 'draft';
-      if (invoiceStatusFilter === 'overdue') return bal > 0 && !!(inv as any).due_date && String((inv as any).due_date) < today;
-      if (invoiceStatusFilter === 'draft') return s === 'draft' || s === 'entwurf';
-      return true;
-    };
-    for (const inv of invoices.filter(invMatches)) {
-
-      const k = keyOf(inv.customer_id, inv.customer_name);
-      if (!map.has(k)) {
-        map.set(k, {
-          customer_id: inv.customer_id || k,
-          customer_name: inv.customer_name || 'Unbekannt',
-          profiles: [], invoices: [], monthly: 0, remaining: 0, ytdBilled: 0, openBalance: 0,
-          lastInvoiceDate: null, nextInvoiceDate: null, newestCreatedAt: null, currency: inv.currency || 'EUR',
-          hasSepa: false,
-        });
-      }
-      const g = map.get(k)!;
-      g.invoices.push(inv);
-      if (inv.invoice_date && inv.invoice_date >= yearStart) g.ytdBilled += Number(inv.total || 0);
-      if (inv.balance) g.openBalance += Number(inv.balance);
-      if (inv.invoice_date && (!g.lastInvoiceDate || inv.invoice_date > g.lastInvoiceDate)) g.lastInvoiceDate = inv.invoice_date;
-    }
-
     return Array.from(map.values())
       .filter(g => {
-        if (invoiceStatusFilter !== 'all' && g.invoices.length === 0) return false;
         if (statusFilter === 'sepa') return g.hasSepa;
         if (statusFilter === 'active') return !g.hasSepa && g.profiles.some(p => (p.status ?? '').toLowerCase() === 'active');
         if (statusFilter === 'stopped') return !g.hasSepa && g.profiles.length > 0 && g.profiles.every(p => (p.status ?? '').toLowerCase() !== 'active');
@@ -307,7 +275,8 @@ export default function WiederkehrendeZahler() {
         if (ac !== bc) return bc.localeCompare(ac);
         return b.monthly - a.monthly;
       });
-  }, [profiles, invoices, statusFilter, invoiceStatusFilter]);
+  }, [profiles, statusFilter]);
+
 
 
   const filtered = useMemo(() => {
