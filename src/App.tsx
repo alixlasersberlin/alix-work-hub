@@ -188,6 +188,7 @@ const Backups = lazy(() => import("./pages/Backups"));
 const Rollen = lazy(() => import("./pages/Rollen"));
 const SystemMonitoring = lazy(() => import("./pages/SystemMonitoring"));
 const LawyerList = lazy(() => import("./pages/LawyerList"));
+const FinanceAnwaltsfaelle = lazy(() => import("./pages/Finance/Anwaltsfaelle"));
 const DeliveredList = lazy(() => import("./pages/DeliveredList"));
 const PartialDeliveryList = lazy(() => import("./pages/PartialDeliveryList"));
 const DeviceStatistics = lazy(() => import("./pages/DeviceStatistics"));
@@ -1329,6 +1330,7 @@ function AppRoutes() {
           <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
           <Route path="/finance/cockpit/mandant/:code" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpitMandant /></ProtectedRoute>} />
           <Route path="/finance/wiederkehrende-zahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><WiederkehrendeZahler /></ProtectedRoute>} />
+          <Route path="/finance/anwaltsfaelle" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnwaltsfaelle /></ProtectedRoute>} />
           <Route path="/finance/bestandsuebersicht" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Bestandsuebersicht /></ProtectedRoute>} />
           <Route path="/finance/einstellungen/systemstatus" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSystemstatus /></ProtectedRoute>} />
           <Route path="/finance/raten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceRaten /></ProtectedRoute>} />
