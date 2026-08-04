@@ -552,7 +552,7 @@ export default function WiederkehrendeZahler() {
           {filtered.length === 0 && (
             <div className="px-5 py-12 text-center text-muted-foreground text-sm">Keine Treffer.</div>
           )}
-          {filtered.map(g => {
+          {visible.map(g => {
             const isOpen = !!open[g.customer_id];
             const activeP = g.profiles.filter(p => (p.status ?? '').toLowerCase() === 'active').length;
             return (
