@@ -774,6 +774,13 @@ export default function WiederkehrendeZahler() {
         onOpenChange={(v) => { if (!v) setBookInvoice(null); }}
         onBooked={load}
       />
+      <RecurringProfileCreateDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        region={region === 'CH' ? 'CH' : 'EU'}
+        onCreated={load}
+      />
+
     </div>
   );
 }
