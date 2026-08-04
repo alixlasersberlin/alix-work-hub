@@ -101,6 +101,7 @@ Deno.serve(async (req) => {
     const salesorderIdInput = body?.salesorder_id ? String(body.salesorder_id).trim() : "";
     const importOrder = body?.import_order !== false;
     const importInvoices = body?.import_invoices !== false;
+    const importRecurring = body?.import_recurring !== false;
 
     if (!query && !salesorderIdInput) {
       return json({ error: "order_number oder salesorder_id erforderlich" }, 400);
