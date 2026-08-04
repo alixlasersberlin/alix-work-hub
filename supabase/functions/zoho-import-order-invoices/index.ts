@@ -49,6 +49,11 @@ async function getAccessToken(cfg: ReturnType<typeof getZohoConfig>) {
 const CH_BRANCH_ID = "598077000000065075";
 const CH_MARKERS = ["alix lasers ® schweiz", "alix lasers (r) schweiz", "alix lasers schweiz"];
 
+function nullDate(v: unknown): string | null {
+  const s = typeof v === "string" ? v.trim() : "";
+  return s.length > 0 ? s : null;
+}
+
 function detectInvoiceRegion(inv: any): "EU" | "CH" {
   if (inv?.branch_id && String(inv.branch_id) === CH_BRANCH_ID) return "CH";
   if ((inv?.currency_code ?? "").toString().toUpperCase() === "CHF") return "CH";
@@ -249,14 +254,14 @@ Deno.serve(async (req) => {
             customer_id: inv.customer_id?.toString() ?? null,
             city: billing?.city ?? null,
             billing_address: billing,
-            invoice_date: inv.date ?? null,
-            due_date: inv.due_date ?? null,
+            invoice_date: nullDate(inv.date),
+            due_date: nullDate(inv.due_date),
             currency: inv.currency_code ?? null,
             total: Number(inv.total ?? 0),
             balance: Number(inv.balance ?? 0),
             status: inv.status ?? null,
             payment_status: payStatusFromInvoice(inv),
-            last_payment_date: inv.last_payment_date ?? null,
+            last_payment_date: nullDate(inv.last_payment_date),
             raw_data: inv,
             accounting_region: region,
             synced_at: new Date().toISOString(),

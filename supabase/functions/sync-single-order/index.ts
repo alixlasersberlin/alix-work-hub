@@ -238,15 +238,21 @@ Deno.serve(async (req: Request) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const token = authHeader.replace(/^Bearer\s+/i, "");
-    const { data: claims, error: userError } = await userClient.auth.getClaims(token);
-    const user = claims?.claims ? { id: claims.claims.sub as string } : null;
-    if (userError || !user) return jsonResponse({ error: "Unauthorized" }, 401);
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
-    const { data: callerRoles } = await adminClient.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
-    const roleNames = (callerRoles ?? []).map((r: any) => r.roles?.name).filter(Boolean);
-    if (!roleNames.includes("Admin") && !roleNames.includes("Super Admin")) {
-      return jsonResponse({ error: "Forbidden" }, 403);
+    // Internal service-to-service call (e.g. zoho-import-order-invoices)
+    const isServiceCall = token === serviceRoleKey;
+
+    if (!isServiceCall) {
+      const { data: claims, error: userError } = await userClient.auth.getClaims(token);
+      const user = claims?.claims ? { id: claims.claims.sub as string } : null;
+      if (userError || !user) return jsonResponse({ error: "Unauthorized" }, 401);
+
+      const { data: callerRoles } = await adminClient.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
+      const roleNames = (callerRoles ?? []).map((r: any) => r.roles?.name).filter(Boolean);
+      if (!roleNames.includes("Admin") && !roleNames.includes("Super Admin")) {
+        return jsonResponse({ error: "Forbidden" }, 403);
+      }
     }
 
     const body = await req.json();
