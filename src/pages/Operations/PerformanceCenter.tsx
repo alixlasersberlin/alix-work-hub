@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Gauge, Loader2, RefreshCw, Database, Zap, ListTree, Trash2, AlertTriangle } from 'lucide-react';
+import { Gauge, Loader2, RefreshCw, Database, Zap, ListTree, Trash2, AlertTriangle, Save, History } from 'lucide-react';
+import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { getPerfSamples, subscribePerfSamples, clearPerfSamples, type PerfSample } from '@/lib/perf/queryProbe';
 
