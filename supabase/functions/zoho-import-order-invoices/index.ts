@@ -49,6 +49,11 @@ async function getAccessToken(cfg: ReturnType<typeof getZohoConfig>) {
 const CH_BRANCH_ID = "598077000000065075";
 const CH_MARKERS = ["alix lasers ® schweiz", "alix lasers (r) schweiz", "alix lasers schweiz"];
 
+function nullDate(v: unknown): string | null {
+  const s = typeof v === "string" ? v.trim() : "";
+  return s.length > 0 ? s : null;
+}
+
 function detectInvoiceRegion(inv: any): "EU" | "CH" {
   if (inv?.branch_id && String(inv.branch_id) === CH_BRANCH_ID) return "CH";
   if ((inv?.currency_code ?? "").toString().toUpperCase() === "CHF") return "CH";
