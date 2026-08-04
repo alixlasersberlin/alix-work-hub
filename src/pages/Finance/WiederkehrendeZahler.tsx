@@ -444,7 +444,7 @@ export default function WiederkehrendeZahler() {
     <div className="space-y-6">
       <PageHeader
         title="Wiederkehrende Zahler"
-        subtitle="Periodische Rechnungen & aktive Verträge aus Zoho Deutschland — gruppiert nach Kundenkonto"
+        subtitle="Angelegte wiederkehrende Buchungen & Verträge aus Zoho Deutschland — gruppiert nach Kundenkonto"
         icon={Repeat}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind="done" label={`${profiles.length}`} dotOnly />}
@@ -477,7 +477,7 @@ export default function WiederkehrendeZahler() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[260px] max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Kunde, Vertragsnr. oder Rechnungsnr. suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Kunde oder Vertragsnr. suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <div className="flex gap-1 border border-border rounded-md p-1">
           {(['sepa', 'active', 'stopped', 'all'] as const).map(s => (
@@ -741,7 +741,7 @@ export default function WiederkehrendeZahler() {
       </DataCard>
 
       <p className="text-xs text-muted-foreground text-center">
-        Quelle: Zoho Deutschland (zoho_eu_1) · Tägliche Synchronisation 23:45 Uhr · {profiles.length} Profile · {invoices.length} Rechnungen geladen
+        Quelle: Zoho Deutschland (zoho_eu_1) · Tägliche Synchronisation 23:45 Uhr · {profiles.length} wiederkehrende Buchungen · Rechnungen siehe RECHNUNGEN → Rechnungen
       </p>
 
       <RecurringProfileEditDialog
