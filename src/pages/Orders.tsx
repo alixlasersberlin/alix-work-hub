@@ -55,7 +55,7 @@ const cur = (c?: string | null): string => {
   return /^[A-Za-z]{3}$/.test(v) ? v.toUpperCase() : 'EUR';
 };
 
-const ORDER_SELECT = `
+const ORDER_SELECT: string = `
     id, customer_id, external_order_id, order_number, source_system, order_status, invoiced_flag,
     currency, total_amount, order_date, expected_shipment_date, salesperson_name,
     internal_number, lawyer_reason, deposit_ok, deposit_ok_by, deposit_ok_at,
