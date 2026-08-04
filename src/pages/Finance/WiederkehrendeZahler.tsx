@@ -503,7 +503,7 @@ export default function WiederkehrendeZahler() {
           {(['sepa', 'active', 'stopped', 'all'] as const).map(s => (
             <button
               key={s}
-              onClick={() => setStatusFilter(s)}
+              onClick={() => { filterTouched.current = true; setStatusFilter(s); }}
               className={`px-3 py-1 text-xs rounded ${statusFilter === s ? (s === 'sepa' ? 'bg-emerald-600 text-white' : 'bg-primary text-primary-foreground') : 'text-muted-foreground hover:text-foreground'}`}
             >
               {s === 'sepa' ? 'SEPA' : s === 'active' ? 'Selbstzahler' : s === 'stopped' ? 'Beendet' : 'Alle'}
