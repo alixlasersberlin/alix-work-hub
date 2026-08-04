@@ -13,6 +13,17 @@ export const qk = {
       sortField: string;
       sortDir: 'asc' | 'desc';
     }) => ['customers', 'list', params] as const,
+    /** Serverseitige Seitenabfrage — jeder Filter/Seitenwechsel ist ein eigener Cache-Eintrag. */
+    page: (params: {
+      q: string;
+      source: string;
+      letter: string | null;
+      sortField: string;
+      sortDir: 'asc' | 'desc';
+      page: number;
+      pageSize: number;
+    }) => ['customers', 'page', params] as const,
+    letters: (source: string) => ['customers', 'letters', source] as const,
   },
   orders: {
     all: ['orders'] as const,

@@ -8,6 +8,11 @@ import { bootA11yPrefs } from "./hooks/useA11yPrefs";
 import { bootAIBackground } from "./hooks/useAIBackground";
 import { bootPageFade } from "./hooks/usePageFade";
 import { bootTheme } from "./hooks/useTheme";
+import { installQueryProbe } from "./lib/perf/queryProbe";
+
+// Performance-Messung so früh wie möglich aktivieren, damit auch die
+// ersten Abfragen beim App-Start im Performance Center auftauchen.
+installQueryProbe();
 
 bootTheme();
 bootUiTemplate();

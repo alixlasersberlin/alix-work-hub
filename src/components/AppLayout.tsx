@@ -708,6 +708,7 @@ export const navItems: NavItem[] = [
           { path: '/operation/datensicherung', label: 'Security Base', icon: ShieldCheck, roles: ['Super Admin'] },
           { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
           { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
+          { path: '/operation/performance', label: 'Performance Center', icon: Activity, roles: ['Super Admin'] },
           { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
           { path: '/mediapaket/admin', label: 'Mediapaket-Konfigurator', icon: PackageIcon, roles: ['Super Admin'] },
           { path: '/operation/security-center', label: 'Alix Security Center', icon: Shield, roles: ['Super Admin'] },

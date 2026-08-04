@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,6 @@ import CustomerEditDialog from '@/components/CustomerEditDialog';
 import CustomerDeleteDialog from '@/components/CustomerDeleteDialog';
 import CustomerImportDialog from '@/components/CustomerImportDialog';
 import { VipBadge } from '@/components/VipBadge';
-import { isCustomerVip, vipFirst } from '@/lib/vip';
 import { SourceBadge, sourceLabel, sourceFlag } from '@/lib/source-system';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -23,37 +22,52 @@ type SortField = 'company_name' | 'contact_name' | 'created_at';
 type SortDir = 'asc' | 'desc';
 
 const ALPHABET = '#ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const PAGE_SIZES = [20, 50, 100, 0] as const; // 0 = alle
+const PAGE_SIZES = [20, 50, 100, 250] as const;
 
-async function fetchAllCustomers(params: { atOnly: boolean; sortField: SortField; sortDir: SortDir }) {
-  const { atOnly, sortField, sortDir } = params;
-  const CHUNK = 1000;
-  let from = 0;
-  const all: any[] = [];
-  for (;;) {
-    let qb = supabase
-      .from('customers')
-      .select('*')
-      .order(sortField, { ascending: sortDir === 'asc' })
-      .range(from, from + CHUNK - 1);
-    if (atOnly) qb = qb.eq('source_system', 'zoho_eu_2');
-    const { data, error } = await qb;
-    if (error) throw error;
-    if (!data || data.length === 0) break;
-    all.push(...data);
-    if (data.length < CHUNK) break;
-    from += CHUNK;
-  }
-  return all;
+type CustomerRow = {
+  id: string;
+  company_name: string | null;
+  contact_name: string | null;
+  email: string | null;
+  phone: string | null;
+  source_system: string | null;
+  external_customer_id: string | null;
+  is_vip: boolean;
+  created_at: string;
+  total_count: number;
+};
+
+/**
+ * Serverseitige Seitenabfrage (Phase 3/4).
+ * Statt aller Kunden inkl. `raw_data` (~27 MB) kommen nur die sichtbaren
+ * Zeilen mit den benötigten Spalten und die Gesamtzahl in einem Rutsch zurück.
+ */
+async function fetchCustomerPage(params: {
+  q: string; source: string; letter: string | null;
+  sortField: SortField; sortDir: SortDir; limit: number; offset: number;
+}) {
+  const { data, error } = await supabase.rpc('customers_page' as any, {
+    _q: params.q || null,
+    _source: params.source === 'all' ? null : params.source,
+    _letter: params.letter,
+    _sort: params.sortField,
+    _dir: params.sortDir,
+    _limit: params.limit,
+    _offset: params.offset,
+  });
+  if (error) throw error;
+  const rows = (data ?? []) as CustomerRow[];
+  return { rows, total: rows.length ? Number(rows[0].total_count) : 0 };
 }
 
 export default function Customers() {
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [sortField, setSortField] = useState<SortField>('company_name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [letterFilter, setLetterFilter] = useState<string | null>(null);
-  const [pageSize, setPageSize] = useState<number>(20);
+  const [pageSize, setPageSize] = useState<number>(50);
   const [page, setPage] = useState(0);
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
@@ -62,67 +76,75 @@ export default function Customers() {
   const [editCustomer, setEditCustomer] = useState<any>(null);
   const [deleteCustomer, setDeleteCustomer] = useState<any>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [loadingRow, setLoadingRow] = useState<string | null>(null);
 
-  const { data: customers = [], isPending: loading, error: queryError, refetch } = useQuery({
-    queryKey: qk.customers.list({ atOnly, sortField, sortDir }),
-    queryFn: () => fetchAllCustomers({ atOnly, sortField, sortDir }),
-    staleTime: STALE.long, // Stammdaten — selten geändert
+  // Suche entprellen — sonst eine Serverabfrage pro Tastendruck.
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const effectiveSource = atOnly ? 'zoho_eu_2' : sourceFilter;
+
+  const { data, isPending: loading, error: queryError } = useQuery({
+    queryKey: qk.customers.page({
+      q: search, source: effectiveSource, letter: letterFilter,
+      sortField, sortDir, page, pageSize,
+    }),
+    queryFn: () => fetchCustomerPage({
+      q: search, source: effectiveSource, letter: letterFilter,
+      sortField, sortDir, limit: pageSize, offset: page * pageSize,
+    }),
+    staleTime: STALE.medium,
+    placeholderData: keepPreviousData,
   });
+
+  // Buchstabenleiste kommt aus einer aggregierten Serverabfrage (eine Zeile je Buchstabe).
+  const { data: letters } = useQuery({
+    queryKey: qk.customers.letters(effectiveSource),
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('customers_letters' as any, {
+        _source: effectiveSource === 'all' ? null : effectiveSource,
+      });
+      if (error) throw error;
+      return new Set(((data ?? []) as { letter: string }[]).map(r => r.letter));
+    },
+    staleTime: STALE.long,
+  });
+
+  const { data: sources = [] } = useQuery({
+    queryKey: ['customers', 'sources'],
+    queryFn: async () => {
+      const { data } = await supabase.from('customers').select('source_system').limit(5000);
+      return [...new Set((data ?? []).map(r => r.source_system).filter(Boolean))] as string[];
+    },
+    staleTime: STALE.long,
+    enabled: !atOnly,
+  });
+
   const error = queryError ? (queryError as Error).message : null;
   const invalidateCustomers = () => queryClient.invalidateQueries({ queryKey: qk.customers.all });
 
-
-  const sources = [...new Set(customers.map(c => c.source_system).filter(Boolean))];
-
-  const filtered = useMemo(() => {
-    return customers.filter(c => {
-      const q = search.toLowerCase();
-      const matchSearch = !search ||
-        c.company_name?.toLowerCase().includes(q) ||
-        c.contact_name?.toLowerCase().includes(q) ||
-        c.email?.toLowerCase().includes(q) ||
-        c.phone?.includes(q);
-      const matchSource = sourceFilter === 'all' || c.source_system === sourceFilter;
-
-      let matchLetter = true;
-      if (letterFilter) {
-        const name = (c.company_name || c.contact_name || '').trim();
-        if (letterFilter === '#') {
-          matchLetter = !name || !/^[a-zA-Z]/.test(name);
-        } else {
-          matchLetter = name.toUpperCase().startsWith(letterFilter);
-        }
-      }
-
-      return matchSearch && matchSource && matchLetter;
-    });
-  }, [customers, search, sourceFilter, letterFilter]);
-
-  // Available letters for highlighting
-  const availableLetters = useMemo(() => {
-    const set = new Set<string>();
-    customers.forEach(c => {
-      const name = (c.company_name || c.contact_name || '').trim();
-      if (!name || !/^[a-zA-Z]/.test(name)) {
-        set.add('#');
-      } else {
-        set.add(name[0].toUpperCase());
-      }
-    });
-    return set;
-  }, [customers]);
-
-  // Reset page when filters change
   useEffect(() => { setPage(0); }, [search, sourceFilter, letterFilter, pageSize]);
 
-  const totalFiltered = filtered.length;
-  const sortedFiltered = vipFirst(filtered, isCustomerVip);
-  const paginated = pageSize === 0 ? sortedFiltered : sortedFiltered.slice(page * pageSize, (page + 1) * pageSize);
-  const totalPages = pageSize === 0 ? 1 : Math.ceil(totalFiltered / pageSize);
+  const rows = data?.rows ?? [];
+  const totalFiltered = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+  const availableLetters = letters ?? new Set<string>();
+
+  /** Dialoge brauchen den vollständigen Datensatz — der wird erst bei Bedarf geladen. */
+  async function openFull(row: CustomerRow, mode: 'edit' | 'delete') {
+    setLoadingRow(row.id);
+    const { data } = await supabase.from('customers').select('*').eq('id', row.id).maybeSingle();
+    setLoadingRow(null);
+    const full = data ?? row;
+    if (mode === 'edit') setEditCustomer(full); else setDeleteCustomer(full);
+  }
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDir('asc'); }
+    setPage(0);
   };
 
   const SortHeader = ({ field, label }: { field: SortField; label: string }) => (
@@ -164,31 +186,33 @@ export default function Customers() {
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Suche nach Firma, Kontakt, E-Mail..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
+          <Input placeholder="Suche nach Firma, Kontakt, E-Mail, Nr..." value={searchInput} onChange={e => setSearchInput(e.target.value)} className="pl-10 bg-secondary border-border" />
         </div>
-        <Select value={sourceFilter} onValueChange={setSourceFilter}>
-          <SelectTrigger className="w-48 bg-secondary border-border">
-            <SelectValue placeholder="Quelle filtern" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Quellen</SelectItem>
-            {sources.map(s => (
-              <SelectItem key={s} value={s}>
-                <span className="inline-flex items-center gap-2">
-                  <span aria-hidden>{sourceFlag(s)}</span>
-                  {sourceLabel(s)}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {!atOnly && (
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className="w-48 bg-secondary border-border">
+              <SelectValue placeholder="Quelle filtern" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Quellen</SelectItem>
+              {sources.map(s => (
+                <SelectItem key={s} value={s}>
+                  <span className="inline-flex items-center gap-2">
+                    <span aria-hidden>{sourceFlag(s)}</span>
+                    {sourceLabel(s)}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={String(pageSize)} onValueChange={v => setPageSize(Number(v))}>
           <SelectTrigger className="w-36 bg-secondary border-border">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {PAGE_SIZES.map(s => (
-              <SelectItem key={s} value={String(s)}>{s === 0 ? 'Alle' : `${s} pro Seite`}</SelectItem>
+              <SelectItem key={s} value={String(s)}>{`${s} pro Seite`}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -248,21 +272,21 @@ export default function Customers() {
                 <tr><td colSpan={isAdmin ? 7 : 6} className="px-4 py-12 text-center">
                   <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
                 </td></tr>
-              ) : paginated.length === 0 ? (
+              ) : rows.length === 0 ? (
                 <tr><td colSpan={isAdmin ? 7 : 6} className="px-4 py-12 text-center">
                   <Inbox className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
                   <p className="text-muted-foreground">Keine Kunden gefunden.</p>
                 </td></tr>
               ) : (
-                paginated.map(c => (
+                rows.map(c => (
                   <tr
                     key={c.id}
-                    className={`hover:bg-secondary/30 transition-colors cursor-pointer ${isCustomerVip(c) ? 'bg-gradient-to-r from-amber-500/[0.08] to-transparent' : ''}`}
+                    className={`hover:bg-secondary/30 transition-colors cursor-pointer ${c.is_vip ? 'bg-gradient-to-r from-amber-500/[0.08] to-transparent' : ''}`}
                     onClick={() => navigate(`/kunden/${c.id}`)}
                   >
                     <td className="px-4 py-3 font-medium text-foreground">
                       <span className="inline-flex items-center gap-2">
-                        {isCustomerVip(c) && <VipBadge size="sm" iconOnly />}
+                        {c.is_vip && <VipBadge size="sm" iconOnly />}
                         {c.company_name || '—'}
                       </span>
                     </td>
@@ -277,16 +301,18 @@ export default function Customers() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            disabled={loadingRow === c.id}
                             className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-                            onClick={e => { e.stopPropagation(); setEditCustomer(c); }}
+                            onClick={e => { e.stopPropagation(); openFull(c, 'edit'); }}
                           >
                             <Pencil className="w-3 h-3 mr-1" /> Ändern
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
+                            disabled={loadingRow === c.id}
                             className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
-                            onClick={e => { e.stopPropagation(); setDeleteCustomer(c); }}
+                            onClick={e => { e.stopPropagation(); openFull(c, 'delete'); }}
                           >
                             <Trash2 className="w-3 h-3 mr-1" /> Löschen
                           </Button>
