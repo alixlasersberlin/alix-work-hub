@@ -24869,6 +24869,229 @@ export type Database = {
         }
         Relationships: []
       }
+      ratenplan_ai_corrections: {
+        Row: {
+          corrected_by: string | null
+          corrected_date: string
+          created_at: string
+          document_id: string | null
+          extracted_date: string | null
+          id: string
+          note: string | null
+          profile_id: string | null
+        }
+        Insert: {
+          corrected_by?: string | null
+          corrected_date: string
+          created_at?: string
+          document_id?: string | null
+          extracted_date?: string | null
+          id?: string
+          note?: string | null
+          profile_id?: string | null
+        }
+        Update: {
+          corrected_by?: string | null
+          corrected_date?: string
+          created_at?: string
+          document_id?: string | null
+          extracted_date?: string | null
+          id?: string
+          note?: string | null
+          profile_id?: string | null
+        }
+        Relationships: []
+      }
+      ratenplan_document_links: {
+        Row: {
+          confirmed_by: string | null
+          created_at: string
+          delivery_date: string | null
+          document_id: string
+          document_type: string | null
+          id: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed_by?: string | null
+          created_at?: string
+          delivery_date?: string | null
+          document_id: string
+          document_type?: string | null
+          id?: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed_by?: string | null
+          created_at?: string
+          delivery_date?: string | null
+          document_id?: string
+          document_type?: string | null
+          id?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ratenplan_sync_backups: {
+        Row: {
+          before_data: Json
+          created_at: string
+          id: string
+          record_id: string
+          run_id: string
+          table_name: string
+        }
+        Insert: {
+          before_data: Json
+          created_at?: string
+          id?: string
+          record_id: string
+          run_id: string
+          table_name: string
+        }
+        Update: {
+          before_data?: Json
+          created_at?: string
+          id?: string
+          record_id?: string
+          run_id?: string
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratenplan_sync_backups_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ratenplan_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ratenplan_sync_items: {
+        Row: {
+          candidates: Json
+          created_at: string
+          customer_name: string | null
+          delivery_date: string | null
+          delivery_source: string | null
+          document_id: string | null
+          document_title: string | null
+          document_type: string | null
+          estimated: boolean
+          first_rate_new: string | null
+          first_rate_old: string | null
+          id: string
+          needs_review: boolean
+          order_id: string | null
+          order_number: string | null
+          profile_id: string | null
+          reason: string | null
+          run_id: string
+          shifted_count: number
+          status: string
+        }
+        Insert: {
+          candidates?: Json
+          created_at?: string
+          customer_name?: string | null
+          delivery_date?: string | null
+          delivery_source?: string | null
+          document_id?: string | null
+          document_title?: string | null
+          document_type?: string | null
+          estimated?: boolean
+          first_rate_new?: string | null
+          first_rate_old?: string | null
+          id?: string
+          needs_review?: boolean
+          order_id?: string | null
+          order_number?: string | null
+          profile_id?: string | null
+          reason?: string | null
+          run_id: string
+          shifted_count?: number
+          status?: string
+        }
+        Update: {
+          candidates?: Json
+          created_at?: string
+          customer_name?: string | null
+          delivery_date?: string | null
+          delivery_source?: string | null
+          document_id?: string | null
+          document_title?: string | null
+          document_type?: string | null
+          estimated?: boolean
+          first_rate_new?: string | null
+          first_rate_old?: string | null
+          id?: string
+          needs_review?: boolean
+          order_id?: string | null
+          order_number?: string | null
+          profile_id?: string | null
+          reason?: string | null
+          run_id?: string
+          shifted_count?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratenplan_sync_items_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ratenplan_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ratenplan_sync_runs: {
+        Row: {
+          applied_run_id: string | null
+          created_at: string
+          created_by: string | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          mode: string
+          rolled_back_at: string | null
+          rolled_back_by: string | null
+          scope: Json
+          stats: Json
+          status: string
+        }
+        Insert: {
+          applied_run_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          mode?: string
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
+          scope?: Json
+          stats?: Json
+          status?: string
+        }
+        Update: {
+          applied_run_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          mode?: string
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
+          scope?: Json
+          stats?: Json
+          status?: string
+        }
+        Relationships: []
+      }
       repair_attachments: {
         Row: {
           category: string | null

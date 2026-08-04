@@ -136,6 +136,7 @@ const FinanceCockpit = lazy(() => import("./pages/Finance/Cockpit"));
 const FinanceCockpitMandant = lazy(() => import("./pages/Finance/MandantDrilldown"));
 const FinanceSystemstatus = lazy(() => import("./pages/Finance/Systemstatus"));
 const FinanceRaten = lazy(() => import("./pages/Finance/Raten"));
+const FinanceRatenplanSync = lazy(() => import("./pages/Finance/RatenplanSync"));
 const FinanceBelege = lazy(() => import("./pages/Finance/Belege"));
 const FinanceEingangsrechnungen = lazy(() => import("./pages/Finance/Eingangsrechnungen"));
 const FinanceAnlagen = lazy(() => import("./pages/Finance/Anlagen"));
@@ -1331,6 +1332,8 @@ function AppRoutes() {
           <Route path="/finance/bestandsuebersicht" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Bestandsuebersicht /></ProtectedRoute>} />
           <Route path="/finance/einstellungen/systemstatus" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSystemstatus /></ProtectedRoute>} />
           <Route path="/finance/raten" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceRaten /></ProtectedRoute>} />
+          <Route path="/finance/ratenplan-sync" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><FinanceRatenplanSync /></ProtectedRoute>} />
+
           <Route path="/finance/belege" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBelege /></ProtectedRoute>} />
           <Route path="/finance/eingangsrechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceEingangsrechnungen /></ProtectedRoute>} />
           <Route path="/finance/anlagen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnlagen /></ProtectedRoute>} />
