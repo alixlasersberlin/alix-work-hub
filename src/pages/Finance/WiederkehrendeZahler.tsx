@@ -140,6 +140,8 @@ export default function WiederkehrendeZahler() {
   const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
   const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
   const [stoppingId, setStoppingId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+
 
   async function stopProfile(p: Profile) {
     if (!confirm(`Vertrag "${p.recurrence_name || p.reference_number || ''}" stoppen und zur Prüfung verschieben?`)) return;
