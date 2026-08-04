@@ -51,7 +51,10 @@ export async function postPaymentToJournal(input: JournalPaymentInput): Promise<
       reference: input.reference ?? input.invoice_number ?? null,
       order_number: input.order_number ?? null,
       invoice_number: input.invoice_number ?? null,
-      customer_id: input.customer_id ?? null,
+      customer_id: (input.customer_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(input.customer_id)))
+        ? input.customer_id
+        : null,
+
       vorgang: input.vorgang ?? 'Zahlung',
       amount_gross: Number(input.amount_gross) || 0,
       amount_net: input.amount_net != null ? Number(input.amount_net) : null,
