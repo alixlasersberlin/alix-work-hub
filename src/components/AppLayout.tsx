@@ -458,6 +458,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/bestandsuebersicht', label: 'Bestandsübersicht', icon: Repeat, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/vertraege', label: 'PRÜFUNG', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/raten', label: 'Laufende Raten', icon: ScrollText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/ratenplan-sync', label: 'Ratenplan synchronisieren', icon: Repeat, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/alix-flex', label: 'SEPA MANDAT', icon: Banknote, roles: ['Admin', 'Super Admin'] },
           {
             path: '/finanzierungen', label: 'FREMD LEASING', icon: Landmark, roles: ['Admin', 'Super Admin'],
