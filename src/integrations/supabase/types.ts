@@ -36934,6 +36934,7 @@ export type Database = {
           warranty_active: number
         }[]
       }
+      housekeeping_purge_logs: { Args: never; Returns: Json }
       is_ac_meeting_member: {
         Args: { _meeting_id: string; _user: string }
         Returns: boolean
