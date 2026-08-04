@@ -1144,7 +1144,7 @@ export default function AppLayout() {
       setLagerCounts((prev) => ({ ...prev, '/tourenplanung': count ?? 0 }));
     };
     const id = window.setTimeout(load, isOrdersRoute ? 5000 : 0);
-    const intervalId = window.setInterval(load, 5 * 60 * 1000);
+    const intervalId = window.setInterval(load, 15 * 60 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
@@ -1188,7 +1188,7 @@ export default function AppLayout() {
     };
     const loadAll = () => { void loadLeads(); void loadOffers(); };
     const id = window.setTimeout(loadAll, isOrdersRoute ? 5000 : 0);
-    const intervalId = window.setInterval(loadAll, 5 * 60 * 1000);
+    const intervalId = window.setInterval(loadAll, 15 * 60 * 1000);
     let debounceLeads: number | undefined;
     let debounceOffers: number | undefined;
     const scheduleLeads = () => {
