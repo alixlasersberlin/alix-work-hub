@@ -5,7 +5,7 @@ import { notifyBus } from './useNotifications';
 import { useAuth } from './useAuth';
 
 const SEEN_KEY = 'alixwork.notifications.seen.v1';
-const POLL_MS = 60_000;
+const POLL_MS = 5 * 60_000;
 
 function loadSeen(): Set<string> {
   try {
@@ -33,6 +33,9 @@ export function useNotificationFeed() {
   const location = useLocation();
   const timer = useRef<number | null>(null);
   const seenRef = useRef<Set<string>>(loadSeen());
+  const pathRef = useRef(location.pathname);
+  pathRef.current = location.pathname;
+
 
   useEffect(() => {
     if (!user) return;
@@ -163,14 +166,22 @@ export function useNotificationFeed() {
       saveSeen(seen);
     };
 
-    // initial run + interval
-    const initialDelay = location.pathname.startsWith('/auftraege') ? 5000 : 0;
-    const initialTimer = window.setTimeout(tick, initialDelay);
-    timer.current = window.setInterval(tick, POLL_MS);
+    // initial run + interval (pausiert, wenn der Tab im Hintergrund liegt)
+    const guardedTick = () => {
+      if (document.visibilityState !== 'visible') return;
+      void tick();
+    };
+    const initialDelay = pathRef.current.startsWith('/auftraege') ? 5000 : 0;
+    const initialTimer = window.setTimeout(guardedTick, initialDelay);
+    timer.current = window.setInterval(guardedTick, POLL_MS);
     return () => {
       cancelled = true;
       window.clearTimeout(initialTimer);
       if (timer.current) window.clearInterval(timer.current);
     };
-  }, [user, roles, location.pathname]);
+    // Bewusst NICHT von location.pathname abhängig: sonst würde bei jedem
+    // Seitenwechsel ein kompletter Polling-Durchlauf ausgelöst.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, roles.join("|")]);
 }
+
