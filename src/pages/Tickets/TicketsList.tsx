@@ -127,18 +127,24 @@ export default function TicketsList() {
 
   useEffect(() => {
     let cancelled = false;
+    const TICKET_COLS = 'id, external_ticket_id, case_number, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at';
+    const fetchTickets = (limit: number) => supabase
+      .from('tickets')
+      .select(TICKET_COLS)
+      .order('created_at', { ascending: false })
+      .limit(limit);
     (async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('tickets')
-        .select('id, external_ticket_id, case_number, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at')
-        .order('created_at', { ascending: false })
-        .limit(2000);
-      if (!cancelled) {
-        if (error) console.error(error);
-        setRows((data as TicketRow[]) || []);
-        setLoading(false);
-      }
+      // Schnelle erste Anzeige, danach im Hintergrund vollständig nachladen
+      const { data, error } = await fetchTickets(200);
+      if (cancelled) return;
+      if (error) console.error(error);
+      setRows((data as TicketRow[]) || []);
+      setLoading(false);
+      if (error || (data?.length ?? 0) < 200) return;
+      const { data: full, error: fullErr } = await fetchTickets(2000);
+      if (cancelled || fullErr) return;
+      setRows((full as TicketRow[]) || []);
     })();
     return () => { cancelled = true; };
   }, []);

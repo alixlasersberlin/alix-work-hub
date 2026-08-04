@@ -55,14 +55,15 @@ const cur = (c?: string | null): string => {
   return /^[A-Za-z]{3}$/.test(v) ? v.toUpperCase() : 'EUR';
 };
 
-const ORDER_SELECT = `
+const ORDER_SELECT: string = `
     id, customer_id, external_order_id, order_number, source_system, order_status, invoiced_flag,
     currency, total_amount, order_date, expected_shipment_date, salesperson_name,
     internal_number, lawyer_reason, deposit_ok, deposit_ok_by, deposit_ok_at,
     deposit_amount, deposit_additional, deposit_booking_date, is_vip,
     finance_total_amount, finance_deposit_amount, finance_remaining_amount,
     finance_open_amount, finance_paid_amount, finance_overdue_amount,
-    finance_payment_status, case_number, billing_address, shipping_address, raw_data,
+    finance_payment_status, case_number, billing_address, shipping_address,
+    offer_down:raw_data->payment->down,
     imported_via_reconcile_at,
     customers(company_name, contact_name, shipping_address, billing_address, is_vip)
   `;
@@ -335,6 +336,8 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
 
     const expandOrders = (loaded: any[]) => loaded.map(o => ({
         ...o,
+        // Nur der tatsächlich benötigte raw_data-Teilpfad (statt des kompletten JSON-Blobs)
+        raw_data: { payment: { down: o.offer_down } },
         order_items: [],
         _seq: 1,
         _displayNumber: withAt(o.order_number, o.source_system),
@@ -538,6 +541,7 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
           .filter(o => !seen.has(o.id))
           .map(o => ({
             ...o,
+            raw_data: { payment: { down: (o as any).offer_down } },
             order_items: [],
             _seq: 1,
             _displayNumber: withAt(o.order_number, o.source_system),

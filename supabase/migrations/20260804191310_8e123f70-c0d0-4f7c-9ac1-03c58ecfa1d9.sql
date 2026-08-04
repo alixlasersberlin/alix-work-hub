@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_orders_ch_branch ON public.orders ((raw_data->>'branch_id')) WHERE source_system = 'zoho_eu_1';
