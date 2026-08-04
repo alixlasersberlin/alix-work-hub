@@ -846,7 +846,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
       // 3) Fallback: Email aus raw_data der Zoho-Rechnung
       if (!foundEmail) {
-        const rd: any = r.raw_data || {};
+        const rd: any = await loadRawData(r);
         const rawEmail =
           rd.email ||
           rd.customer_email ||
