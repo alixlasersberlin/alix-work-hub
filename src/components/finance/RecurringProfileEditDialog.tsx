@@ -82,14 +82,15 @@ export function RecurringProfileEditDialog({ profile, open, onOpenChange, onSave
             </div>
             <div className="grid gap-1.5">
               <Label>Status</Label>
-              <Select value={(form.status ?? 'active').toLowerCase()} onValueChange={(v) => set({ status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">active</SelectItem>
-                  <SelectItem value="stopped">stopped</SelectItem>
-                  <SelectItem value="expired">expired</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={(form.status ?? 'active').toLowerCase()}
+                onChange={(e) => set({ status: e.target.value })}
+              >
+                <option value="active">active</option>
+                <option value="stopped">stopped</option>
+                <option value="expired">expired</option>
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
