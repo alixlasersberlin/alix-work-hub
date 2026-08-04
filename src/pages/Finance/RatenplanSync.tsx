@@ -75,6 +75,12 @@ export default function RatenplanSync() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [progress, setProgress] = useState(0);
 
+  // Monatliche Rechnungserzeugung ab Lieferdatum
+  const [invBusy, setInvBusy] = useState<'preview' | 'generate' | null>(null);
+  const [invStats, setInvStats] = useState<any>(null);
+  const [invItems, setInvItems] = useState<any[]>([]);
+  const [horizon, setHorizon] = useState(0);
+
   const call = async (payload: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke('ratenplan-sync', { body: payload });
     if (error) {
@@ -84,6 +90,32 @@ export default function RatenplanSync() {
     if ((data as any)?.error) throw new Error((data as any).error);
     return data as any;
   };
+
+  const runInvoices = async (action: 'preview' | 'generate') => {
+    setInvBusy(action);
+    try {
+      const payload: Record<string, unknown> = { action, region, horizon_months: horizon };
+      if (target) payload.profile_ids = [target.id];
+      const { data, error } = await supabase.functions.invoke('ratenplan-invoices', { body: payload });
+      if (error) {
+        const details = (error as any)?.context ? await (error as any).context.text() : error.message;
+        throw new Error(details || error.message);
+      }
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setInvStats((data as any).stats);
+      setInvItems((data as any).items ?? []);
+      toast.success(
+        action === 'preview'
+          ? `Vorschau: ${(data as any).stats.planned} Raten offen, ${(data as any).stats.existing} bereits vorhanden`
+          : `${(data as any).stats.created} Ratenrechnungen erzeugt`,
+      );
+    } catch (e: any) {
+      toast.error(e.message ?? 'Fehler bei der Rechnungserzeugung');
+    } finally {
+      setInvBusy(null);
+    }
+  };
+
 
   const searchProfiles = async () => {
     const q = term.trim();
