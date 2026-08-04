@@ -282,15 +282,16 @@ export function RecurringProfileCreateDialog({ open, onOpenChange, region, onCre
             </div>
             <div className="grid gap-1.5">
               <Label>Frequenz</Label>
-              <Select value={form.recurrence_frequency} onValueChange={(v) => set({ recurrence_frequency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="days">days</SelectItem>
-                  <SelectItem value="weeks">weeks</SelectItem>
-                  <SelectItem value="months">months</SelectItem>
-                  <SelectItem value="years">years</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={form.recurrence_frequency}
+                onChange={(e) => set({ recurrence_frequency: e.target.value })}
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+              >
+                <option value="days">days</option>
+                <option value="weeks">weeks</option>
+                <option value="months">months</option>
+                <option value="years">years</option>
+              </select>
             </div>
           </div>
 
