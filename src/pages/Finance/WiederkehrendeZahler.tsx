@@ -136,6 +136,7 @@ export default function WiederkehrendeZahler() {
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'all' | 'paid' | 'unpaid' | 'overdue' | 'draft'>('all');
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [pageSize, setPageSize] = useState<20 | 50 | 100 | 'all'>(20);
 
   const { canWrite } = useFinancePermissions();
   const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
@@ -290,6 +291,11 @@ export default function WiederkehrendeZahler() {
       g.invoices.some(i => (i.invoice_number ?? '').toLowerCase().includes(s))
     );
   }, [groups, search]);
+
+  const visible = useMemo(
+    () => (pageSize === 'all' ? filtered : filtered.slice(0, pageSize)),
+    [filtered, pageSize]
+  );
 
   const totals = useMemo(() => {
     return {
@@ -484,6 +490,20 @@ export default function WiederkehrendeZahler() {
           ))}
         </div>
 
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Anzeige:</span>
+          <select
+            value={String(pageSize)}
+            onChange={(e) => setPageSize(e.target.value === 'all' ? 'all' : (Number(e.target.value) as 20 | 50 | 100))}
+            className="h-9 rounded-md border border-border bg-background px-2 text-xs"
+          >
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="all">Alle</option>
+          </select>
+        </div>
+
         <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none border border-border rounded-md px-3 py-2">
           <Checkbox checked={allSelected} onCheckedChange={(v) => toggleAll(!!v)} aria-label="Alle markieren" />
           {allSelected ? 'Auswahl aufheben' : 'Alle markieren'}
@@ -510,7 +530,7 @@ export default function WiederkehrendeZahler() {
 
 
       <DataCard
-        title={`Kundenkonten (${filtered.length})`}
+        title={`Kundenkonten (${visible.length} / ${filtered.length})`}
         actions={
           <div className="flex items-center gap-4 text-sm">
             <div className="text-muted-foreground">
@@ -532,7 +552,7 @@ export default function WiederkehrendeZahler() {
           {filtered.length === 0 && (
             <div className="px-5 py-12 text-center text-muted-foreground text-sm">Keine Treffer.</div>
           )}
-          {filtered.map(g => {
+          {visible.map(g => {
             const isOpen = !!open[g.customer_id];
             const activeP = g.profiles.filter(p => (p.status ?? '').toLowerCase() === 'active').length;
             return (
