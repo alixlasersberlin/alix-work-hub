@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -82,14 +82,15 @@ export function RecurringProfileEditDialog({ profile, open, onOpenChange, onSave
             </div>
             <div className="grid gap-1.5">
               <Label>Status</Label>
-              <Select value={(form.status ?? 'active').toLowerCase()} onValueChange={(v) => set({ status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">active</SelectItem>
-                  <SelectItem value="stopped">stopped</SelectItem>
-                  <SelectItem value="expired">expired</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={(form.status ?? 'active').toLowerCase()}
+                onChange={(e) => set({ status: e.target.value })}
+              >
+                <option value="active">active</option>
+                <option value="stopped">stopped</option>
+                <option value="expired">expired</option>
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -117,15 +118,16 @@ export function RecurringProfileEditDialog({ profile, open, onOpenChange, onSave
             </div>
             <div className="grid gap-1.5">
               <Label>Frequenz</Label>
-              <Select value={(form.recurrence_frequency ?? 'months').toLowerCase()} onValueChange={(v) => set({ recurrence_frequency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="days">days</SelectItem>
-                  <SelectItem value="weeks">weeks</SelectItem>
-                  <SelectItem value="months">months</SelectItem>
-                  <SelectItem value="years">years</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={(form.recurrence_frequency ?? 'months').toLowerCase()}
+                onChange={(e) => set({ recurrence_frequency: e.target.value })}
+              >
+                <option value="days">days</option>
+                <option value="weeks">weeks</option>
+                <option value="months">months</option>
+                <option value="years">years</option>
+              </select>
             </div>
           </div>
         </div>
