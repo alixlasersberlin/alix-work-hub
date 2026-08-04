@@ -118,15 +118,16 @@ export function RecurringProfileEditDialog({ profile, open, onOpenChange, onSave
             </div>
             <div className="grid gap-1.5">
               <Label>Frequenz</Label>
-              <Select value={(form.recurrence_frequency ?? 'months').toLowerCase()} onValueChange={(v) => set({ recurrence_frequency: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="days">days</SelectItem>
-                  <SelectItem value="weeks">weeks</SelectItem>
-                  <SelectItem value="months">months</SelectItem>
-                  <SelectItem value="years">years</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={(form.recurrence_frequency ?? 'months').toLowerCase()}
+                onChange={(e) => set({ recurrence_frequency: e.target.value })}
+              >
+                <option value="days">days</option>
+                <option value="weeks">weeks</option>
+                <option value="months">months</option>
+                <option value="years">years</option>
+              </select>
             </div>
           </div>
         </div>
