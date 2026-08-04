@@ -189,11 +189,11 @@ export default function KatalogArtikelDetail() {
   const [signed, setSigned] = useState<Record<string,string>>({});
   useEffect(() => {
     (async () => {
-      const out: Record<string,string> = {};
-      for (const img of images) {
-        const { data } = await supabase.storage.from('catalog-media').createSignedUrl(img.storage_path, 3600);
-        if (data?.signedUrl) out[img.id] = data.signedUrl;
-      }
+      const out = await signedThumbMap(
+        'catalog-media',
+        images.map((img: any) => ({ key: img.id, path: img.storage_path })),
+        { width: 640, quality: 70 },
+      );
       setSigned(out);
     })();
   }, [images]);
