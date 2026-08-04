@@ -82,6 +82,7 @@ type Row = {
   payment_status: string | null;
   last_payment_date: string | null;
   raw_data?: any;
+  raw_is_draft?: boolean | null;
   is_mietkauf?: boolean | null;
 };
 
@@ -119,10 +120,11 @@ function fmtDate(d: string | null) {
   try { return new Date(d).toLocaleDateString('de-DE'); } catch { return d; }
 }
 
-function isDraftInvoice(r: Pick<Row, 'status' | 'payment_status' | 'raw_data'>) {
+function isDraftInvoice(r: Pick<Row, 'status' | 'payment_status' | 'raw_data' | 'raw_is_draft'>) {
   const status = String(r.status ?? '').toLowerCase();
   const paymentStatus = String(r.payment_status ?? '').toLowerCase();
-  return status === 'draft' || status === 'entwurf' || paymentStatus === 'entwurf' || r.raw_data?.is_draft === true;
+  const rawDraft = r.raw_is_draft === true || r.raw_data?.is_draft === true;
+  return status === 'draft' || status === 'entwurf' || paymentStatus === 'entwurf' || rawDraft;
 }
 
 function matchesDocStatus(r: Row, docStatus: string) {
@@ -195,10 +197,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const fetchRows = async () => {
     setLoading(true);
     setError(null);
-    const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_data';
+    // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
+    const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
     const [inv, rec] = await Promise.all([
-      supabase.from('zoho_invoices').select(`${cols}, is_mietkauf`).eq('accounting_region', region).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
-      supabase.from('zoho_recurring_invoices').select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
+      (supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf`).eq('accounting_region', region).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
+      (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
     ]);
     if (inv.error || rec.error) {
       setError(inv.error?.message || rec.error?.message || 'Fehler beim Laden');
@@ -740,11 +743,20 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     openEdit(r);
   };
 
+  // Lädt raw_data erst bei Bedarf nach (nicht mehr in der Listenabfrage enthalten).
+  const loadRawData = async (r: Row): Promise<any> => {
+    if (r.raw_data && typeof r.raw_data === 'object' && !Array.isArray(r.raw_data)) return r.raw_data;
+    const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+    const { data } = await (supabase as any).from(table).select('raw_data').eq('id', r.id).maybeSingle();
+    const raw = data?.raw_data;
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  };
+
   const commitDraft = async (r: Row) => {
     if (!isDraftInvoice(r)) return;
     try {
       const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
-      const raw = r.raw_data && typeof r.raw_data === 'object' && !Array.isArray(r.raw_data) ? (r.raw_data as any) : {};
+      const raw = await loadRawData(r);
       const patch: any = {
         status: 'sent',
         raw_data: { ...raw, is_draft: false },
@@ -772,7 +784,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       };
       if (editForm.status) {
         patch.status = editForm.status;
-        const raw = editRow.raw_data && typeof editRow.raw_data === 'object' && !Array.isArray(editRow.raw_data) ? editRow.raw_data : {};
+        const raw = await loadRawData(editRow);
         patch.raw_data = { ...raw, is_draft: editForm.status === 'draft' };
       }
       if (isSuperAdmin) {
@@ -834,7 +846,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
       // 3) Fallback: Email aus raw_data der Zoho-Rechnung
       if (!foundEmail) {
-        const rd: any = r.raw_data || {};
+        const rd: any = await loadRawData(r);
         const rawEmail =
           rd.email ||
           rd.customer_email ||
