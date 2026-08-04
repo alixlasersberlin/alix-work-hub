@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+
 import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw, Download, FileSpreadsheet, FileText, FileJson, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
@@ -191,34 +193,26 @@ export default function WiederkehrendeZahler() {
         new Promise<T>((_, rej) => setTimeout(() => rej(new Error('Zeitüberschreitung beim Laden (Datenbank überlastet). Bitte erneut versuchen.')), ms)),
       ]);
     try {
-      const [p, i] = await Promise.all([
-        withTimeout(
-          supabase
-            .from('zoho_recurring_profiles')
-            .select('*')
-            .eq('accounting_region', reg)
-            .order('created_at', { ascending: false, nullsFirst: false })
-            .limit(5000)
-        ),
-        withTimeout(
-          supabase
-            .from('zoho_recurring_invoices')
-            .select('*')
-            .eq('accounting_region', reg)
-            .order('invoice_date', { ascending: false, nullsFirst: false })
-            .limit(5000)
-        ),
-      ]);
+      // Nur noch die angelegten wiederkehrenden Buchungen (Verträge/Profile) —
+      // Rechnungen werden ausschließlich unter RECHNUNGEN → Rechnungen geführt.
+      const p = await withTimeout(
+        supabase
+          .from('zoho_recurring_profiles')
+          .select('*')
+          .eq('accounting_region', reg)
+          .order('created_at', { ascending: false, nullsFirst: false })
+          .limit(5000)
+      );
       if (p.error) { setError(p.error.message); setLoading(false); return; }
-      if (i.error) { setError(i.error.message); setLoading(false); return; }
       setProfiles((p.data ?? []) as Profile[]);
-      setInvoices((i.data ?? []) as Invoice[]);
+      setInvoices([]);
     } catch (e: any) {
       setError(e?.message ?? 'Unbekannter Fehler beim Laden');
     } finally {
       setLoading(false);
     }
   }
+
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [region]);
 
@@ -268,40 +262,8 @@ export default function WiederkehrendeZahler() {
       if (p.created_at && (!g.newestCreatedAt || p.created_at > g.newestCreatedAt)) g.newestCreatedAt = p.created_at;
     }
 
-    const yearStart = new Date(new Date().getFullYear(), 0, 1).toISOString().slice(0, 10);
-    const today = new Date().toISOString().slice(0, 10);
-    const invMatches = (inv: Invoice) => {
-      if (invoiceStatusFilter === 'all') return true;
-      const s = (inv.status ?? '').toLowerCase();
-      const bal = Number(inv.balance || 0);
-      if (invoiceStatusFilter === 'paid') return s === 'paid' || bal <= 0;
-      if (invoiceStatusFilter === 'unpaid') return bal > 0 && s !== 'draft';
-      if (invoiceStatusFilter === 'overdue') return bal > 0 && !!(inv as any).due_date && String((inv as any).due_date) < today;
-      if (invoiceStatusFilter === 'draft') return s === 'draft' || s === 'entwurf';
-      return true;
-    };
-    for (const inv of invoices.filter(invMatches)) {
-
-      const k = keyOf(inv.customer_id, inv.customer_name);
-      if (!map.has(k)) {
-        map.set(k, {
-          customer_id: inv.customer_id || k,
-          customer_name: inv.customer_name || 'Unbekannt',
-          profiles: [], invoices: [], monthly: 0, remaining: 0, ytdBilled: 0, openBalance: 0,
-          lastInvoiceDate: null, nextInvoiceDate: null, newestCreatedAt: null, currency: inv.currency || 'EUR',
-          hasSepa: false,
-        });
-      }
-      const g = map.get(k)!;
-      g.invoices.push(inv);
-      if (inv.invoice_date && inv.invoice_date >= yearStart) g.ytdBilled += Number(inv.total || 0);
-      if (inv.balance) g.openBalance += Number(inv.balance);
-      if (inv.invoice_date && (!g.lastInvoiceDate || inv.invoice_date > g.lastInvoiceDate)) g.lastInvoiceDate = inv.invoice_date;
-    }
-
     return Array.from(map.values())
       .filter(g => {
-        if (invoiceStatusFilter !== 'all' && g.invoices.length === 0) return false;
         if (statusFilter === 'sepa') return g.hasSepa;
         if (statusFilter === 'active') return !g.hasSepa && g.profiles.some(p => (p.status ?? '').toLowerCase() === 'active');
         if (statusFilter === 'stopped') return !g.hasSepa && g.profiles.length > 0 && g.profiles.every(p => (p.status ?? '').toLowerCase() !== 'active');
@@ -313,7 +275,8 @@ export default function WiederkehrendeZahler() {
         if (ac !== bc) return bc.localeCompare(ac);
         return b.monthly - a.monthly;
       });
-  }, [profiles, invoices, statusFilter, invoiceStatusFilter]);
+  }, [profiles, statusFilter]);
+
 
 
   const filtered = useMemo(() => {
@@ -481,7 +444,7 @@ export default function WiederkehrendeZahler() {
     <div className="space-y-6">
       <PageHeader
         title="Wiederkehrende Zahler"
-        subtitle="Periodische Rechnungen & aktive Verträge aus Zoho Deutschland — gruppiert nach Kundenkonto"
+        subtitle="Angelegte wiederkehrende Buchungen & Verträge aus Zoho Deutschland — gruppiert nach Kundenkonto"
         icon={Repeat}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind="done" label={`${profiles.length}`} dotOnly />}
@@ -514,7 +477,7 @@ export default function WiederkehrendeZahler() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[260px] max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Kunde, Vertragsnr. oder Rechnungsnr. suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          <Input placeholder="Kunde oder Vertragsnr. suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <div className="flex gap-1 border border-border rounded-md p-1">
           {(['sepa', 'active', 'stopped', 'all'] as const).map(s => (
@@ -527,17 +490,10 @@ export default function WiederkehrendeZahler() {
             </button>
           ))}
         </div>
-        <div className="flex gap-1 border border-border rounded-md p-1">
-          {(['all', 'unpaid', 'overdue', 'paid', 'draft'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => { filterTouched.current = true; setInvoiceStatusFilter(s); }}
-              className={`px-3 py-1 text-xs rounded ${invoiceStatusFilter === s ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              {s === 'all' ? 'Status: Alle' : s === 'unpaid' ? 'Offen' : s === 'overdue' ? 'Überfällig' : s === 'paid' ? 'Bezahlt' : 'Entwurf'}
-            </button>
-          ))}
-        </div>
+        <Button asChild size="sm" variant="outline">
+          <Link to="/finance/rechnungen"><FileText className="w-4 h-4 mr-2" />Rechnungen öffnen</Link>
+        </Button>
+
 
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Sortierung:</span>
@@ -651,18 +607,13 @@ export default function WiederkehrendeZahler() {
                     )}
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 mt-0.5">
                       <span>{activeP} aktiv / {g.profiles.length} Verträge</span>
-                      <span>{g.invoices.length} Rechnungen</span>
                       {g.nextInvoiceDate && <span>nächste: {fmtDate(g.nextInvoiceDate)}</span>}
-                      {g.lastInvoiceDate && <span>letzte: {fmtDate(g.lastInvoiceDate)}</span>}
                     </div>
                   </div>
                   <div className="hidden md:flex flex-col items-end text-sm">
                     <span className="font-semibold tabular-nums">{fmt(g.monthly, g.currency)}<span className="text-xs text-muted-foreground"> /Mon.</span></span>
-                    <span className="text-xs text-muted-foreground tabular-nums">YTD {fmt(g.ytdBilled, g.currency)}</span>
                   </div>
-                  {g.openBalance > 0 && (
-                    <Badge variant="destructive" className="ml-2 tabular-nums">{fmt(g.openBalance, g.currency)}</Badge>
-                  )}
+
                 </button>
                 </div>
 
@@ -776,73 +727,11 @@ export default function WiederkehrendeZahler() {
                       </div>
                     )}
 
-                    {g.invoices.length > 0 && (
-                      <div>
-                        <h4 className="text-xs uppercase text-muted-foreground font-medium mb-2">Rechnungen ({g.invoices.length})</h4>
-                        <div className="rounded-lg border border-border overflow-hidden">
-                          <table className="w-full text-sm">
-                            <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
-                              <tr>
-                                <th className="text-left px-3 py-2">Rechnungsnr.</th>
-                                <th className="text-left px-3 py-2">Datum</th>
-                                <th className="text-left px-3 py-2">Fällig</th>
-                                <th className="text-right px-3 py-2">Betrag</th>
-                                <th className="text-right px-3 py-2">Offen</th>
-                                <th className="text-left px-3 py-2">Status</th>
-                                <th className="text-left px-3 py-2">Letzte Zahlung</th>
-                                <th className="text-right px-3 py-2">Aktion</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {g.invoices.slice(0, 50).map(inv => (
-                                <tr key={inv.id} className="border-t border-border">
-                                  <td className="px-3 py-2 font-mono">
-                                    {inv.zoho_invoice_id ? (
-                                      <button
-                                        type="button"
-                                        onClick={() => setPdfInvoice({
-                                          zoho_invoice_id: inv.zoho_invoice_id,
-                                          invoice_number: inv.invoice_number,
-                                          source_system: (inv as any).source_system ?? 'zoho_eu_1',
-                                          recurring: false,
-                                        })}
-                                        className="text-primary hover:underline"
-                                        title="Rechnung als PDF öffnen"
-                                      >
-                                        {inv.invoice_number || 'PDF'}
-                                      </button>
-                                    ) : (inv.invoice_number || '—')}
-                                  </td>
-                                  <td className="px-3 py-2">{fmtDate(inv.invoice_date)}</td>
-                                  <td className="px-3 py-2">{fmtDate(inv.due_date)}</td>
-                                  <td className="px-3 py-2 text-right tabular-nums">{fmt(Number(inv.total || 0), inv.currency || 'EUR')}</td>
-                                  <td className={`px-3 py-2 text-right tabular-nums ${Number(inv.balance) > 0 ? 'text-destructive font-medium' : ''}`}>
-                                    {fmt(Number(inv.balance || 0), inv.currency || 'EUR')}
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    <Badge variant={(inv.status ?? '').toLowerCase() === 'paid' ? 'default' : 'secondary'} className="capitalize">{inv.status ?? '—'}</Badge>
-                                  </td>
-                                  <td className="px-3 py-2">{fmtDate(inv.last_payment_date)}</td>
-                                  <td className="px-3 py-2 text-right">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      disabled={!canWrite}
-                                      onClick={() => setBookInvoice(inv as BookableInvoice)}
-                                    >
-                                      Buchen
-                                    </Button>
-                                  </td>
-                                </tr>
-                              ))}
-                              {g.invoices.length > 50 && (
-                                <tr><td colSpan={8} className="px-3 py-2 text-center text-xs text-muted-foreground">… {g.invoices.length - 50} weitere</td></tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
+                    <div className="text-xs text-muted-foreground">
+                      Rechnungen zu diesem Kunden findest du unter{' '}
+                      <Link to="/finance/rechnungen" className="text-primary hover:underline">Rechnungen</Link>.
+                    </div>
+
                   </div>
                 )}
               </div>
@@ -852,7 +741,7 @@ export default function WiederkehrendeZahler() {
       </DataCard>
 
       <p className="text-xs text-muted-foreground text-center">
-        Quelle: Zoho Deutschland (zoho_eu_1) · Tägliche Synchronisation 23:45 Uhr · {profiles.length} Profile · {invoices.length} Rechnungen geladen
+        Quelle: Zoho Deutschland (zoho_eu_1) · Tägliche Synchronisation 23:45 Uhr · {profiles.length} wiederkehrende Buchungen · Rechnungen siehe RECHNUNGEN → Rechnungen
       </p>
 
       <RecurringProfileEditDialog
