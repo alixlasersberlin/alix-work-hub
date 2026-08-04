@@ -834,7 +834,17 @@ export default function WiederkehrendeZahler() {
                                 <React.Fragment key={p.id}>
                                 <tr className="border-t border-border">
                                   <td className="px-3 py-2">
-                                    <div className="font-medium">{p.recurrence_name || '—'}</div>
+                                    <div className="font-medium flex items-center gap-2">
+                                      {isLawyerProfile(p) && (
+                                        <Badge className="bg-red-600 hover:bg-red-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">ANWALT</Badge>
+                                      )}
+                                      {isSepaProfile(p) ? (
+                                        <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">SEPA</Badge>
+                                      ) : (
+                                        <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">Zahler</Badge>
+                                      )}
+                                      <span>{p.recurrence_name || '—'}</span>
+                                    </div>
                                     {p.reference_number && <div className="text-xs text-muted-foreground font-mono">{p.reference_number}</div>}
                                   </td>
                                   <td className="px-3 py-2">{fmtDate(p.created_at)}</td>
