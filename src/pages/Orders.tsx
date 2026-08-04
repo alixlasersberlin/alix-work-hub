@@ -541,6 +541,7 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
           .filter(o => !seen.has(o.id))
           .map(o => ({
             ...o,
+            raw_data: { payment: { down: (o as any).offer_down } },
             order_items: [],
             _seq: 1,
             _displayNumber: withAt(o.order_number, o.source_system),
