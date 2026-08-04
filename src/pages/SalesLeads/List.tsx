@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Inbox, Search, Filter, UserCheck, Pencil, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Inbox, Search, Filter, UserCheck, Pencil, Trash2, CheckCircle2, AlertTriangle, Download } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 const STATUS_OPTIONS = [
