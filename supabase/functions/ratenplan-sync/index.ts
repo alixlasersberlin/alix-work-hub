@@ -239,6 +239,9 @@ Deno.serve(async (req) => {
         customer_name: p.company_name || p.customer_name,
         first_rate_old: p.start_date,
         status: 'pending',
+        estimated: false,
+        needs_review: false,
+        shifted_count: 0,
       };
 
       // 1) Bereits bestaetigte Dokumentzuordnung bevorzugen
