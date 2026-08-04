@@ -36957,6 +36957,10 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      sidebar_production_counts: {
+        Args: { p_at_only?: boolean }
+        Returns: Json
+      }
       sig_can_send: { Args: never; Returns: boolean }
       sig_is_admin: { Args: never; Returns: boolean }
       sod_conflict_report: {
