@@ -514,7 +514,7 @@ export default function WiederkehrendeZahler() {
           {(['all', 'unpaid', 'overdue', 'paid', 'draft'] as const).map(s => (
             <button
               key={s}
-              onClick={() => setInvoiceStatusFilter(s)}
+              onClick={() => { filterTouched.current = true; setInvoiceStatusFilter(s); }}
               className={`px-3 py-1 text-xs rounded ${invoiceStatusFilter === s ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
             >
               {s === 'all' ? 'Status: Alle' : s === 'unpaid' ? 'Offen' : s === 'overdue' ? 'Überfällig' : s === 'paid' ? 'Bezahlt' : 'Entwurf'}
