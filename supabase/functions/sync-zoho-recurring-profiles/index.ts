@@ -131,8 +131,9 @@ Deno.serve(async (req) => {
     while (hasMore && page <= startPage + maxPages - 1) {
       if (Date.now() - startedAt > SOFT_DEADLINE_MS) break;
 
+      // Status.All = auch beendete/gestoppte/abgelaufene Profile importieren
       const url = `${cfg.booksApiBaseUrl}/recurringinvoices?organization_id=${cfg.organizationId}` +
-        `&page=${page}&per_page=${perPage}`;
+        `&page=${page}&per_page=${perPage}&filter_by=Status.All`;
       const res = await fetch(url, { headers: authH });
       if (!res.ok) {
         const t = await res.text();

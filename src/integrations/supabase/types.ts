@@ -34847,6 +34847,66 @@ export type Database = {
         }
         Relationships: []
       }
+      zoho_credit_notes: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          balance: number | null
+          created_at: string
+          creditnote_date: string | null
+          creditnote_number: string | null
+          currency: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          raw_data: Json | null
+          reference_number: string | null
+          source_system: string
+          status: string | null
+          synced_at: string
+          total: number | null
+          updated_at: string
+          zoho_creditnote_id: string
+        }
+        Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          balance?: number | null
+          created_at?: string
+          creditnote_date?: string | null
+          creditnote_number?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          raw_data?: Json | null
+          reference_number?: string | null
+          source_system: string
+          status?: string | null
+          synced_at?: string
+          total?: number | null
+          updated_at?: string
+          zoho_creditnote_id: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          balance?: number | null
+          created_at?: string
+          creditnote_date?: string | null
+          creditnote_number?: string | null
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          raw_data?: Json | null
+          reference_number?: string | null
+          source_system?: string
+          status?: string | null
+          synced_at?: string
+          total?: number | null
+          updated_at?: string
+          zoho_creditnote_id?: string
+        }
+        Relationships: []
+      }
       zoho_estimate_import_logs: {
         Row: {
           created_at: string

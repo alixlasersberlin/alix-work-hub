@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import FullBackfillCard from '@/components/import/FullBackfillCard';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -1734,6 +1735,8 @@ export default function ImportManagement() {
         {/* ============ INVOICE IMPORT TAB ============ */}
         {canWrite && (
           <TabsContent value="invoices" className="space-y-6">
+            <FullBackfillCard />
+
             <Card className="border-primary/30">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
