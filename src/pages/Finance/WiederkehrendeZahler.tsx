@@ -427,11 +427,20 @@ export default function WiederkehrendeZahler() {
         noBreadcrumbs
         meta={<InfinityStatusBadge kind="done" label={`${profiles.length}`} dotOnly />}
         actions={
-          <Button onClick={runSync} disabled={syncing} size="sm" variant="outline">
-            {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-            Jetzt synchronisieren
-          </Button>
+          <div className="flex items-center gap-2">
+            {canWrite && (
+              <Button onClick={() => setCreateOpen(true)} size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Neuanlage
+              </Button>
+            )}
+            <Button onClick={runSync} disabled={syncing} size="sm" variant="outline">
+              {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              Jetzt synchronisieren
+            </Button>
+          </div>
         }
+
       />
 
       {error && <PageError message={error} onRetry={load} />}
