@@ -11,22 +11,16 @@ export default function AlixConnectDashboard() {
 
   useEffect(() => {
     (async () => {
-      const since = new Date(Date.now() - 7 * 864e5).toISOString();
-      const [msgs, convs, contacts, events, campaigns, openInbox] = await Promise.all([
-        supabase.from("ac_messages").select("id", { count: "exact", head: true }).gte("created_at", since),
-        supabase.from("ac_conversations").select("id", { count: "exact", head: true }).gte("created_at", since),
-        supabase.from("ac_contacts").select("id", { count: "exact", head: true }),
-        supabase.from("ac_analytics_events").select("id", { count: "exact", head: true }).gte("created_at", since),
-        supabase.from("ac_campaigns").select("id", { count: "exact", head: true }),
-        supabase.from("ac_conversations").select("id", { count: "exact", head: true }).in("status", ["open", "pending"]),
-      ]);
+      // Eine Server-Abfrage statt sechs parallelen Count-Queries.
+      const { data } = await supabase.rpc("ac_dashboard_kpis" as any);
+      const k = (data ?? {}) as Record<string, number>;
       setKpis([
-        { label: "Nachrichten (7T)", value: msgs.count ?? 0, icon: MessageSquare },
-        { label: "Neue Conversations (7T)", value: convs.count ?? 0, icon: InboxIcon },
-        { label: "Kontakte gesamt", value: contacts.count ?? 0, icon: Users },
-        { label: "Pageviews / Events (7T)", value: events.count ?? 0, icon: Eye, hint: "cookieless" },
-        { label: "Kampagnen", value: campaigns.count ?? 0, icon: Megaphone },
-        { label: "Offene im Inbox", value: openInbox.count ?? 0, icon: Send },
+        { label: "Nachrichten (7T)", value: Number(k.messages || 0), icon: MessageSquare },
+        { label: "Neue Conversations (7T)", value: Number(k.convs || 0), icon: InboxIcon },
+        { label: "Kontakte gesamt", value: Number(k.contacts || 0), icon: Users },
+        { label: "Pageviews / Events (7T)", value: Number(k.events || 0), icon: Eye, hint: "cookieless" },
+        { label: "Kampagnen", value: Number(k.campaigns || 0), icon: Megaphone },
+        { label: "Offene im Inbox", value: Number(k.openInbox || 0), icon: Send },
       ]);
       setLoading(false);
     })();

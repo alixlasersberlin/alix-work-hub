@@ -18,36 +18,19 @@ export default function MailCenterDashboard() {
   const [kpis, setKpis] = useState<Kpis | null>(null);
 
   const load = useCallback(async () => {
-    const start = new Date(); start.setHours(0, 0, 0, 0);
-    const iso = start.toISOString();
-
-    const countFor = async (column: string) => {
-      const { count } = await supabase.from('mail_messages')
-        .select('id', { count: 'exact', head: true }).gte(column, iso);
-      return count ?? 0;
-    };
-
-    const [sent, opened, clicked, bounced, complained, newMsgs, openReq, openRep, crit] = await Promise.all([
-      countFor('sent_at'),
-      countFor('opened_at'),
-      countFor('clicked_at'),
-      countFor('bounced_at'),
-      supabase.from('mail_messages').select('id', { count: 'exact', head: true })
-        .eq('status', 'complained').gte('updated_at', iso).then(r => r.count ?? 0),
-      supabase.from('mail_messages').select('id', { count: 'exact', head: true })
-        .eq('direction', 'inbound').eq('is_read', false).then(r => r.count ?? 0),
-      supabase.from('mail_messages').select('id', { count: 'exact', head: true })
-        .eq('direction', 'inbound').is('assigned_to', null).then(r => r.count ?? 0),
-      supabase.from('repair_orders').select('id', { count: 'exact', head: true })
-        .not('repair_status', 'ilike', '%abgeschlossen%').then(r => r.count ?? 0),
-      supabase.from('mail_messages').select('id', { count: 'exact', head: true })
-        .eq('priority', 'Kritisch').then(r => r.count ?? 0),
-    ]);
-
+    // Eine Server-Abfrage statt neun einzelner Count-Queries.
+    const { data } = await supabase.rpc('mailcenter_dashboard_kpis' as any);
+    const k = (data ?? {}) as Record<string, number>;
     setKpis({
-      sentToday: sent, openedToday: opened, clickedToday: clicked,
-      bouncedToday: bounced, complainedToday: complained,
-      newMessages: newMsgs, openRequests: openReq, openRepairs: openRep, critical: crit,
+      sentToday: Number(k.sentToday || 0),
+      openedToday: Number(k.openedToday || 0),
+      clickedToday: Number(k.clickedToday || 0),
+      bouncedToday: Number(k.bouncedToday || 0),
+      complainedToday: Number(k.complainedToday || 0),
+      newMessages: Number(k.newMessages || 0),
+      openRequests: Number(k.openRequests || 0),
+      openRepairs: Number(k.openRepairs || 0),
+      critical: Number(k.critical || 0),
     });
   }, []);
 

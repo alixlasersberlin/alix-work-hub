@@ -16,7 +16,7 @@ export function useRealtimeRefresh(
   onChange: () => void,
   options: { debounceMs?: number; enabled?: boolean } = {},
 ) {
-  const { debounceMs = 800, enabled = true } = options;
+  const { debounceMs = 4000, enabled = true } = options;
   // Stable ref to the latest callback, so re-subscribing isn't triggered
   // every render just because the function identity changed.
   const cbRef = useRef(onChange);
@@ -29,6 +29,9 @@ export function useRealtimeRefresh(
 
     let timer: ReturnType<typeof setTimeout> | null = null;
     const trigger = () => {
+      // Bei Hintergrund-Tabs gar nicht erst neu laden — das spart bei
+      // Massen-Syncs sehr viele überflüssige Abfragen.
+      if (typeof document !== 'undefined' && document.hidden) return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         try { cbRef.current(); } catch { /* ignore */ }
@@ -38,11 +41,15 @@ export function useRealtimeRefresh(
     const channelName = `rt-refresh:${tables.slice().sort().join(',')}:${Math.random().toString(36).slice(2, 8)}`;
     let channel = supabase.channel(channelName);
     for (const table of tables) {
-      channel = (channel as any).on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table },
-        trigger,
-      );
+      // Nur INSERT/UPDATE — DELETE-Events sind für Kennzahlen-Dashboards
+      // irrelevant und verdoppeln bei Sync-Läufen die Reload-Trigger.
+      for (const event of ['INSERT', 'UPDATE'] as const) {
+        channel = (channel as any).on(
+          'postgres_changes',
+          { event, schema: 'public', table },
+          trigger,
+        );
+      }
     }
     channel.subscribe();
 
