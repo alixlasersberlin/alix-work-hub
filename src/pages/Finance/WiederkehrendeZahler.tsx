@@ -834,6 +834,42 @@ export default function WiederkehrendeZahler() {
         onCreated={load}
       />
 
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => { if (!v && !deletingId) { setDeleteTarget(null); setDeleteReason(''); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Buchung löschen</DialogTitle>
+            <DialogDescription>
+              „{deleteTarget?.recurrence_name || deleteTarget?.reference_number || '—'}" wird endgültig gelöscht.
+              Bitte geben Sie einen Löschgrund an (Pflichtfeld, min. 5 Zeichen). Er wird im Audit-Protokoll gespeichert.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="delete-reason">Löschgrund *</Label>
+            <Textarea
+              id="delete-reason"
+              value={deleteReason}
+              maxLength={500}
+              rows={4}
+              placeholder="z. B. Doppelerfassung, Vertrag storniert …"
+              onChange={(e) => setDeleteReason(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">{deleteReason.trim().length}/500 Zeichen</p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" disabled={!!deletingId} onClick={() => { setDeleteTarget(null); setDeleteReason(''); }}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteReason.trim().length < 5 || !!deletingId}
+              onClick={confirmDelete}
+            >
+              {deletingId ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Endgültig löschen'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
