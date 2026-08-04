@@ -429,6 +429,17 @@ export default function ImportManagement() {
     }
     setSingleOrderBusy(true);
     setSingleOrderResult(null);
+    setSingleOrderPct(8);
+    setSingleOrderStep('Auftrag in Zoho suchen…');
+    const steps: Array<[number, number, string]> = [
+      [1200, 30, 'Auftrag importieren…'],
+      [3000, 55, 'Rechnungen laden…'],
+      [6000, 75, 'Rechnungen speichern…'],
+      [9000, 90, 'Periodische Rechnungs-Stammdaten…'],
+    ];
+    const timers = steps.map(([ms, pct, label]) =>
+      window.setTimeout(() => { setSingleOrderPct(pct); setSingleOrderStep(label); }, ms)
+    );
     try {
       const { data, error } = await supabase.functions.invoke('zoho-import-order-invoices', {
         body: { source_system: singleOrderSource, order_number: q },
@@ -447,6 +458,9 @@ export default function ImportManagement() {
     } catch (e: any) {
       toast({ title: 'Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
     } finally {
+      timers.forEach(clearTimeout);
+      setSingleOrderPct(100);
+      setSingleOrderStep('Fertig');
       setSingleOrderBusy(false);
     }
   }
