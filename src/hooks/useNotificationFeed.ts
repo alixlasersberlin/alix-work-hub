@@ -163,14 +163,21 @@ export function useNotificationFeed() {
       saveSeen(seen);
     };
 
-    // initial run + interval
-    const initialDelay = location.pathname.startsWith('/auftraege') ? 5000 : 0;
-    const initialTimer = window.setTimeout(tick, initialDelay);
-    timer.current = window.setInterval(tick, POLL_MS);
+    // initial run + interval (pausiert, wenn der Tab im Hintergrund liegt)
+    const guardedTick = () => {
+      if (document.visibilityState !== 'visible') return;
+      void tick();
+    };
+    const initialDelay = pathRef.current.startsWith('/auftraege') ? 5000 : 0;
+    const initialTimer = window.setTimeout(guardedTick, initialDelay);
+    timer.current = window.setInterval(guardedTick, POLL_MS);
     return () => {
       cancelled = true;
       window.clearTimeout(initialTimer);
       if (timer.current) window.clearInterval(timer.current);
     };
-  }, [user, roles, location.pathname]);
+    // Bewusst NICHT von location.pathname abhängig: sonst würde bei jedem
+    // Seitenwechsel ein kompletter Polling-Durchlauf ausgelöst.
+  }, [user, roles]);
 }
+
