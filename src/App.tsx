@@ -94,6 +94,7 @@ const TourenDashboard = lazy(() => import("./pages/Tourenplanung/Dashboard"));
 const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
 const WiederkehrendeZahler = lazy(() => import("./pages/Finance/WiederkehrendeZahler"));
+const Bestandsuebersicht = lazy(() => import("./pages/Finance/Bestandsuebersicht"));
 const AlixFlex = lazy(() => import("./pages/AlixFlex"));
 const Invoices = lazy(() => import("./pages/Invoices"));
 const OffenePosten = lazy(() => import("./pages/OffenePosten"));
