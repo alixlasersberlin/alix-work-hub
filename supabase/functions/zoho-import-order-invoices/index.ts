@@ -162,7 +162,14 @@ Deno.serve(async (req) => {
       invoices_updated: 0,
       invoices_failed: 0,
       invoices: [] as any[],
+      recurring_found: 0,
+      recurring_imported: 0,
+      recurring_updated: 0,
+      recurring_failed: 0,
+      recurring: [] as any[],
     };
+
+
 
     if (importOrder) {
       const r = await fetch(`${SUPABASE_URL}/functions/v1/sync-single-order`, {
