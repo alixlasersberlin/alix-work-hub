@@ -33,6 +33,9 @@ export function useNotificationFeed() {
   const location = useLocation();
   const timer = useRef<number | null>(null);
   const seenRef = useRef<Set<string>>(loadSeen());
+  const pathRef = useRef(location.pathname);
+  pathRef.current = location.pathname;
+
 
   useEffect(() => {
     if (!user) return;
