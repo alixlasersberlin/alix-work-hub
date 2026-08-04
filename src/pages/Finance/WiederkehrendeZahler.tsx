@@ -530,7 +530,7 @@ export default function WiederkehrendeZahler() {
 
 
       <DataCard
-        title={`Kundenkonten (${filtered.length})`}
+        title={`Kundenkonten (${visible.length} / ${filtered.length})`}
         actions={
           <div className="flex items-center gap-4 text-sm">
             <div className="text-muted-foreground">
