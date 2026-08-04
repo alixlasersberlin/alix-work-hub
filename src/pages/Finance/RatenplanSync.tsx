@@ -378,6 +378,20 @@ export default function RatenplanSync() {
               {target ? 'Dry Run (nur gewählter Kunde)' : 'Dokumente durchsuchen · OCR · Dry Run'}
             </Button>
 
+            <Button
+              variant="secondary"
+              disabled={scanning || !!target}
+              onClick={() => {
+                setStatuses(['active', 'stopped', 'expired', 'pruefung']);
+                setLimit(300);
+                runScan({ profile: null, statusesOverride: ['active', 'stopped', 'expired', 'pruefung'], limitOverride: 300 });
+              }}
+            >
+              {scanning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSearch className="w-4 h-4 mr-2" />}
+              Massenlauf: alle Verträge (300er-Batch)
+            </Button>
+
+
             <Button variant="default" onClick={runApply} disabled={!runId || applying || selected.size === 0}>
               {applying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
               Synchronisieren ({selected.size})
