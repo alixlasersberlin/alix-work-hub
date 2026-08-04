@@ -94,9 +94,6 @@ export default function HeadOfOperationDashboard() {
     async function load() {
       try {
         setError(null);
-        const today = new Date().toISOString().slice(0, 10);
-        const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-        const since24 = new Date(Date.now() - 86400000).toISOString();
 
         const [mandR, kpiR, recentAuditsR, activeSessionsR] = await Promise.all([
           (supabase as any).rpc('hoo_mandanten_stats'),
