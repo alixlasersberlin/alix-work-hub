@@ -158,7 +158,6 @@ const HEAVY_TABLES = new Set<string>([
 ]);
 // Extra-schwere Tabellen (sehr große jsonb-Payloads) bekommen die kleinste Seite.
 const XL_TABLES = new Set<string>([
-  "audit_logs",
   "mail_messages",
   "mail_attachments",
   "finance_documents",
@@ -169,14 +168,26 @@ const XL_TABLES = new Set<string>([
 const NANO_TABLES = new Set<string>([
   "alix_sign_signatures",
 ]);
-const HEAVY_PAGE_SIZE = 15;
-const XL_PAGE_SIZE = 4;
+// Tabellen mit vielen, aber moderat großen Zeilen (Logs): größere Seiten, sonst
+// erzeugt der Export Hunderttausende Einzelabfragen und blockiert die DB.
+const LOG_TABLES = new Set<string>([
+  "audit_logs",
+  "mail_audit_logs",
+  "mail_events",
+  "alix_sign_audit_log",
+  "alixdocs_audit_log",
+]);
+const HEAVY_PAGE_SIZE = 60;
+const XL_PAGE_SIZE = 8;
 const NANO_PAGE_SIZE = 2;
+const LOG_PAGE_SIZE = 250;
 const pageSizeFor = (table: string) =>
   NANO_TABLES.has(table) ? NANO_PAGE_SIZE
-    : XL_TABLES.has(table) ? XL_PAGE_SIZE
-    : HEAVY_TABLES.has(table) ? HEAVY_PAGE_SIZE
-    : DB_PAGE_SIZE;
+    : LOG_TABLES.has(table) ? LOG_PAGE_SIZE
+      : XL_TABLES.has(table) ? XL_PAGE_SIZE
+        : HEAVY_TABLES.has(table) ? HEAVY_PAGE_SIZE
+          : DB_PAGE_SIZE;
+
 
 // Konservativ pro Seite (Memory), aber viele Seiten pro Invocation (Speed).
 const BATCH_MAX_MS = 40_000;
