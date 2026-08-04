@@ -135,7 +135,9 @@ export default function WiederkehrendeZahler() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>('active');
+  const { canWrite, isAdmin } = useFinancePermissions();
+  // Admin & Super Admin sehen standardmäßig ALLE Konten (inkl. gestoppt/SEPA) und alle Rechnungen (auch bezahlte)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>(isAdmin ? 'all' : 'active');
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'all' | 'paid' | 'unpaid' | 'overdue' | 'draft'>('all');
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
@@ -143,7 +145,6 @@ export default function WiederkehrendeZahler() {
   type SortKey = 'date_new' | 'date_old' | 'amount_desc' | 'amount_asc' | 'name_asc' | 'name_desc';
   const [sortBy, setSortBy] = useState<SortKey>('date_new');
 
-  const { canWrite } = useFinancePermissions();
   const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
   const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
   const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
