@@ -645,7 +645,9 @@ export default function WiederkehrendeZahler() {
                                 <th className="text-left px-3 py-2">Name / Referenz</th>
                                 <th className="text-left px-3 py-2">Erfasst</th>
                                 <th className="text-left px-3 py-2">Frequenz</th>
+                                <th className="text-left px-3 py-2">Lieferung</th>
                                 <th className="text-left px-3 py-2">Start</th>
+
                                 <th className="text-left px-3 py-2">Ende</th>
                                 <th className="text-left px-3 py-2">Letzte</th>
                                 <th className="text-left px-3 py-2">Nächste</th>
