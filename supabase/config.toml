@@ -1,5 +1,10 @@
 project_id = "xmrmkgfgpoundfwhnxfs"
 
+[functions.ratenplan-invoices]
+verify_jwt = false
+
+
+
 [functions.social-portal]
 verify_jwt = false
 

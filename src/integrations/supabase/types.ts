@@ -24935,6 +24935,126 @@ export type Database = {
         }
         Relationships: []
       }
+      ratenplan_generated_invoices: {
+        Row: {
+          accounting_region: Database["public"]["Enums"]["accounting_region"]
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_name: string | null
+          delivery_date: string | null
+          due_date: string | null
+          id: string
+          installment_no: number
+          installment_total: number | null
+          invoice_date: string
+          notes: string | null
+          origin: string
+          profile_id: string
+          reference_number: string | null
+          run_id: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_name?: string | null
+          delivery_date?: string | null
+          due_date?: string | null
+          id?: string
+          installment_no: number
+          installment_total?: number | null
+          invoice_date: string
+          notes?: string | null
+          origin?: string
+          profile_id: string
+          reference_number?: string | null
+          run_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: Database["public"]["Enums"]["accounting_region"]
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_name?: string | null
+          delivery_date?: string | null
+          due_date?: string | null
+          id?: string
+          installment_no?: number
+          installment_total?: number | null
+          invoice_date?: string
+          notes?: string | null
+          origin?: string
+          profile_id?: string
+          reference_number?: string | null
+          run_id?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ratenplan_generated_invoices_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "zoho_recurring_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratenplan_generated_invoices_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ratenplan_invoice_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ratenplan_invoice_runs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          mode: string
+          scope: Json
+          stats: Json | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          mode?: string
+          scope?: Json
+          stats?: Json | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          mode?: string
+          scope?: Json
+          stats?: Json | null
+          status?: string
+        }
+        Relationships: []
+      }
       ratenplan_sync_backups: {
         Row: {
           before_data: Json

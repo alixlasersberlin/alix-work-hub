@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import {
-  CalendarSync, FileSearch, Play, Undo2, FileDown, Loader2, ScanText, Sparkles, AlertTriangle, Search, X,
+  CalendarSync, FileSearch, Play, Undo2, FileDown, Loader2, ScanText, Sparkles, AlertTriangle, Search, X, Receipt,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -75,6 +75,12 @@ export default function RatenplanSync() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [progress, setProgress] = useState(0);
 
+  // Monatliche Rechnungserzeugung ab Lieferdatum
+  const [invBusy, setInvBusy] = useState<'preview' | 'generate' | null>(null);
+  const [invStats, setInvStats] = useState<any>(null);
+  const [invItems, setInvItems] = useState<any[]>([]);
+  const [horizon, setHorizon] = useState(0);
+
   const call = async (payload: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke('ratenplan-sync', { body: payload });
     if (error) {
@@ -84,6 +90,32 @@ export default function RatenplanSync() {
     if ((data as any)?.error) throw new Error((data as any).error);
     return data as any;
   };
+
+  const runInvoices = async (action: 'preview' | 'generate') => {
+    setInvBusy(action);
+    try {
+      const payload: Record<string, unknown> = { action, region, horizon_months: horizon };
+      if (target) payload.profile_ids = [target.id];
+      const { data, error } = await supabase.functions.invoke('ratenplan-invoices', { body: payload });
+      if (error) {
+        const details = (error as any)?.context ? await (error as any).context.text() : error.message;
+        throw new Error(details || error.message);
+      }
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setInvStats((data as any).stats);
+      setInvItems((data as any).items ?? []);
+      toast.success(
+        action === 'preview'
+          ? `Vorschau: ${(data as any).stats.planned} Raten offen, ${(data as any).stats.existing} bereits vorhanden`
+          : `${(data as any).stats.created} Ratenrechnungen erzeugt`,
+      );
+    } catch (e: any) {
+      toast.error(e.message ?? 'Fehler bei der Rechnungserzeugung');
+    } finally {
+      setInvBusy(null);
+    }
+  };
+
 
   const searchProfiles = async () => {
     const q = term.trim();
@@ -451,6 +483,91 @@ export default function RatenplanSync() {
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2">
+          <Receipt className="w-4 h-4" /> Monatliche Rechnungen ab Lieferdatum
+        </CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Erzeugt für alle Verträge mit hinterlegtem Lieferdatum die Monatsraten – erste Rate = 1. des
+            Folgemonats nach Lieferung, rückwirkend bis heute. Bereits erzeugte Raten werden nie doppelt angelegt.
+            {target && <> Aktuell nur für <strong>{target.reference_number ?? target.recurrence_name}</strong>.</>}
+          </p>
+          <div className="flex flex-wrap items-end gap-4">
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Künftige Raten im Voraus</label>
+              <select className="h-9 rounded-md border bg-background px-2 text-sm"
+                value={horizon} onChange={(e) => setHorizon(Number(e.target.value))}>
+                {[0, 3, 6, 12, 24].map((n) => (
+                  <option key={n} value={n}>{n === 0 ? 'nur bis heute' : `+ ${n} Monate`}</option>
+                ))}
+              </select>
+            </div>
+            <Button variant="outline" onClick={() => runInvoices('preview')} disabled={!!invBusy}>
+              {invBusy === 'preview' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSearch className="w-4 h-4 mr-2" />}
+              Vorschau
+            </Button>
+            <Button onClick={() => runInvoices('generate')} disabled={!!invBusy}>
+              {invBusy === 'generate' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Receipt className="w-4 h-4 mr-2" />}
+              Rechnungen erzeugen
+            </Button>
+          </div>
+
+          {invStats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                ['Verträge', invStats.profiles],
+                ['Offene Raten', invStats.planned],
+                ['Bereits vorhanden', invStats.existing],
+                ['Neu erzeugt', invStats.created],
+              ].map(([l, v]) => (
+                <Card key={l as string}><CardContent className="p-4">
+                  <div className="text-xs text-muted-foreground">{l as string}</div>
+                  <div className="text-2xl font-display gold-text">{v as number}</div>
+                </CardContent></Card>
+              ))}
+            </div>
+          )}
+
+          {invItems.length > 0 && (
+            <div className="overflow-x-auto max-h-96">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Vertrag</TableHead>
+                    <TableHead>Kunde</TableHead>
+                    <TableHead>Rate</TableHead>
+                    <TableHead>Rechnungsdatum</TableHead>
+                    <TableHead>Lieferdatum</TableHead>
+                    <TableHead className="text-right">Betrag</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invItems.slice(0, 300).map((r, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-mono text-xs">{r.reference_number ?? '—'}</TableCell>
+                      <TableCell className="text-xs max-w-[200px] truncate">{r.customer_name ?? '—'}</TableCell>
+                      <TableCell className="text-xs">{r.installment_no}{r.installment_total ? ` / ${r.installment_total}` : ''}</TableCell>
+                      <TableCell className="text-xs">{de(r.invoice_date)}</TableCell>
+                      <TableCell className="text-xs">{de(r.delivery_date)}</TableCell>
+                      <TableCell className="text-xs text-right tabular-nums">
+                        {Number(r.amount ?? 0).toLocaleString('de-DE', { style: 'currency', currency: r.currency || 'EUR' })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground">
+            Zusätzlich läuft täglich um 04:00 Uhr ein automatischer Lauf, der für alle Verträge mit Lieferdatum
+            fehlende Monatsraten nacherzeugt.
+          </p>
+        </CardContent>
+      </Card>
     </div>
+
   );
 }
