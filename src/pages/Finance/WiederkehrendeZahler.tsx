@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw, Download, FileSpreadsheet, FileText, FileJson, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
@@ -135,7 +135,9 @@ export default function WiederkehrendeZahler() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>('active');
+  const { canWrite, isAdmin } = useFinancePermissions();
+  // Admin & Super Admin sehen standardmäßig ALLE Konten (inkl. gestoppt/SEPA) und alle Rechnungen (auch bezahlte)
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>(isAdmin ? 'all' : 'active');
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'all' | 'paid' | 'unpaid' | 'overdue' | 'draft'>('all');
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
@@ -143,12 +145,22 @@ export default function WiederkehrendeZahler() {
   type SortKey = 'date_new' | 'date_old' | 'amount_desc' | 'amount_asc' | 'name_asc' | 'name_desc';
   const [sortBy, setSortBy] = useState<SortKey>('date_new');
 
-  const { canWrite } = useFinancePermissions();
   const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
   const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
   const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
   const [stoppingId, setStoppingId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+
+  // Rollen laden asynchron: sobald Admin erkannt wird, alles anzeigen (solange der Filter nicht manuell geändert wurde)
+  const filterTouched = useRef(false);
+  useEffect(() => {
+    if (isAdmin && !filterTouched.current) {
+      setStatusFilter('all');
+      setInvoiceStatusFilter('all');
+    }
+  }, [isAdmin]);
+
+
 
 
   async function stopProfile(p: Profile) {
@@ -491,7 +503,7 @@ export default function WiederkehrendeZahler() {
           {(['sepa', 'active', 'stopped', 'all'] as const).map(s => (
             <button
               key={s}
-              onClick={() => setStatusFilter(s)}
+              onClick={() => { filterTouched.current = true; setStatusFilter(s); }}
               className={`px-3 py-1 text-xs rounded ${statusFilter === s ? (s === 'sepa' ? 'bg-emerald-600 text-white' : 'bg-primary text-primary-foreground') : 'text-muted-foreground hover:text-foreground'}`}
             >
               {s === 'sepa' ? 'SEPA' : s === 'active' ? 'Selbstzahler' : s === 'stopped' ? 'Beendet' : 'Alle'}
@@ -502,7 +514,7 @@ export default function WiederkehrendeZahler() {
           {(['all', 'unpaid', 'overdue', 'paid', 'draft'] as const).map(s => (
             <button
               key={s}
-              onClick={() => setInvoiceStatusFilter(s)}
+              onClick={() => { filterTouched.current = true; setInvoiceStatusFilter(s); }}
               className={`px-3 py-1 text-xs rounded ${invoiceStatusFilter === s ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
             >
               {s === 'all' ? 'Status: Alle' : s === 'unpaid' ? 'Offen' : s === 'overdue' ? 'Überfällig' : s === 'paid' ? 'Bezahlt' : 'Entwurf'}
