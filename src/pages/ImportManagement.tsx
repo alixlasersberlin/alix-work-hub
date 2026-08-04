@@ -1781,6 +1781,14 @@ export default function ImportManagement() {
                           {singleOrderResult.invoices_failed > 0 && (
                             <Badge variant="destructive">{singleOrderResult.invoices_failed} Fehler</Badge>
                           )}
+                          <Badge variant="secondary">
+                            {singleOrderResult.recurring_found ?? 0} periodische Profile
+                          </Badge>
+                          <Badge variant="secondary">{singleOrderResult.recurring_imported ?? 0} neu</Badge>
+                          <Badge variant="secondary">{singleOrderResult.recurring_updated ?? 0} aktualisiert</Badge>
+                          {(singleOrderResult.recurring_failed ?? 0) > 0 && (
+                            <Badge variant="destructive">{singleOrderResult.recurring_failed} Profil-Fehler</Badge>
+                          )}
                         </div>
                         {singleOrderResult.order_error && (
                           <div className="text-destructive text-xs">Auftrag: {singleOrderResult.order_error}</div>
