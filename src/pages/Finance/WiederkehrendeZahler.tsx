@@ -42,6 +42,9 @@ type Profile = {
   end_date: string | null;
   next_invoice_date: string | null;
   last_sent_date: string | null;
+  delivery_date?: string | null;
+  delivery_source?: string | null;
+
   total: number | null;
   currency: string | null;
   created_at: string | null;
