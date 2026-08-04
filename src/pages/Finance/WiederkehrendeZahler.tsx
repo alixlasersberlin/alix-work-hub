@@ -198,7 +198,8 @@ export default function WiederkehrendeZahler() {
       const p = await withTimeout(
         supabase
           .from('zoho_recurring_profiles')
-          .select('*')
+          // Nur benötigte Spalten — spart u. a. das große raw_data-JSON
+          .select('id, zoho_recurring_invoice_id, recurrence_name, reference_number, status, customer_id, customer_name, company_name, recurrence_frequency, repeat_every, start_date, end_date, next_invoice_date, last_sent_date, delivery_date, delivery_source, total, currency, created_at')
           .eq('accounting_region', reg)
           .order('created_at', { ascending: false, nullsFirst: false })
           .limit(5000)
