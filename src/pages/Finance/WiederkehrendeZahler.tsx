@@ -213,6 +213,100 @@ export default function WiederkehrendeZahler() {
     load();
   }
 
+  // ---------- OPS: Mehrfachauswahl je Vertrag ----------
+  const [opsBusy, setOpsBusy] = useState<string | null>(null);
+
+  const isLawyerProfile = (p: Profile) => {
+    const hay = `${p.reference_number ?? ''} ${p.recurrence_name ?? ''}`.toLowerCase();
+    return Array.from(lawyerRefs).some(r => r && hay.includes(r));
+  };
+
+  const orderNumberOf = (p: Profile) => {
+    const ref = (p.reference_number ?? '').trim();
+    if (ref) return ref;
+    const m = `${p.recurrence_name ?? ''}`.match(/\b(?:SO|AU)-\d+\b/i);
+    return m ? m[0] : '';
+  };
+
+  async function notifyAdmins(title: string, message: string, actionUrl = '/finance/wiederkehrende-zahler') {
+    try {
+      const { data: roleRows } = await supabase
+        .from('roles')
+        .select('id, name')
+        .in('name', ['Admin', 'Super Admin']);
+      const roleIds = (roleRows ?? []).map((r: any) => r.id);
+      if (roleIds.length === 0) return;
+      const { data: userRows } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role_id', roleIds);
+      const userIds = Array.from(new Set((userRows ?? []).map((u: any) => u.user_id).filter(Boolean)));
+      if (userIds.length === 0) return;
+      await supabase.from('app_notifications').insert(
+        userIds.map((uid) => ({
+          user_id: uid,
+          category: 'finance',
+          title,
+          message,
+          priority: 'high',
+          action_url: actionUrl,
+        })) as any,
+      );
+    } catch {
+      /* Best effort – Benachrichtigung darf die Aktion nicht blockieren */
+    }
+  }
+
+  async function opsMarkLawyer(p: Profile) {
+    const orderNo = orderNumberOf(p);
+    if (!orderNo) {
+      toast({ title: 'Keine Auftragsnummer', description: 'Für diesen Vertrag ist keine Referenz hinterlegt.', variant: 'destructive' });
+      return;
+    }
+    setOpsBusy(p.id);
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ order_status: 'Anwalt' } as any)
+      .eq('order_number', orderNo)
+      .select('id');
+    setOpsBusy(null);
+    if (error) {
+      toast({ title: 'Anwalt fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    if (!data || data.length === 0) {
+      toast({ title: 'Auftrag nicht gefunden', description: `Kein Auftrag mit Nummer ${orderNo}.`, variant: 'destructive' });
+      return;
+    }
+    setLawyerRefs(prev => new Set([...prev, orderNo.toLowerCase()]));
+    toast({ title: 'Als Anwaltsfall markiert', description: `${orderNo} erscheint jetzt unter BUCHHALTUNG → Anwaltsfälle.` });
+  }
+
+  async function opsSetPaymentMode(p: Profile, mode: 'sepa' | 'self') {
+    const base = (p.recurrence_name ?? '').replace(/\s*\bSEPA\b\s*[·|-]?\s*/gi, ' ').replace(/\s{2,}/g, ' ').trim();
+    const nextName = mode === 'sepa' ? `SEPA · ${base}`.trim() : base || (p.reference_number ?? '');
+    setOpsBusy(p.id);
+    const { error } = await supabase
+      .from('zoho_recurring_profiles')
+      .update({ recurrence_name: nextName } as any)
+      .eq('id', p.id);
+    setOpsBusy(null);
+    if (error) {
+      toast({ title: 'Umstellung fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    if (mode === 'sepa') {
+      await notifyAdmins(
+        'SEPA-Mandat ausstellen',
+        `Vertrag ${nextName} wurde auf SEPA umgestellt. Bitte SEPA-Mandat ausstellen und hinterlegen.`,
+      );
+      toast({ title: 'Auf SEPA umgestellt', description: 'Admins wurden an die Ausstellung des SEPA-Mandats erinnert.' });
+    } else {
+      toast({ title: 'Auf Selbstzahler umgestellt' });
+    }
+    load();
+  }
+
   async function confirmDelete() {
     const p = deleteTarget;
     const reason = deleteReason.trim();
