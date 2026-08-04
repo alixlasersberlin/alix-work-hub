@@ -440,7 +440,7 @@ export default function ImportManagement() {
       setSingleOrderResult(data);
       toast({
         title: 'Import abgeschlossen',
-        description: `${data?.salesorder_number ?? q}: Auftrag ${data?.order_imported ? 'importiert' : 'übersprungen'} • Rechnungen ${data?.invoices_imported ?? 0} neu / ${data?.invoices_updated ?? 0} aktualisiert`,
+        description: `${data?.salesorder_number ?? q}: Auftrag ${data?.order_imported ? 'importiert' : 'übersprungen'} • Rechnungen ${data?.invoices_imported ?? 0} neu / ${data?.invoices_updated ?? 0} aktualisiert • Periodische Profile ${data?.recurring_imported ?? 0} neu / ${data?.recurring_updated ?? 0} aktualisiert`,
       });
     } catch (e: any) {
       toast({ title: 'Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
@@ -1781,6 +1781,14 @@ export default function ImportManagement() {
                           {singleOrderResult.invoices_failed > 0 && (
                             <Badge variant="destructive">{singleOrderResult.invoices_failed} Fehler</Badge>
                           )}
+                          <Badge variant="secondary">
+                            {singleOrderResult.recurring_found ?? 0} periodische Profile
+                          </Badge>
+                          <Badge variant="secondary">{singleOrderResult.recurring_imported ?? 0} neu</Badge>
+                          <Badge variant="secondary">{singleOrderResult.recurring_updated ?? 0} aktualisiert</Badge>
+                          {(singleOrderResult.recurring_failed ?? 0) > 0 && (
+                            <Badge variant="destructive">{singleOrderResult.recurring_failed} Profil-Fehler</Badge>
+                          )}
                         </div>
                         {singleOrderResult.order_error && (
                           <div className="text-destructive text-xs">Auftrag: {singleOrderResult.order_error}</div>
@@ -1813,6 +1821,40 @@ export default function ImportManagement() {
                               ))}
                             </TableBody>
                           </Table>
+                        )}
+                        {Array.isArray(singleOrderResult.recurring) && singleOrderResult.recurring.length > 0 && (
+                          <div className="space-y-1">
+                            <div className="text-xs font-medium text-muted-foreground">Periodische Rechnungs-Stammdaten</div>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Profil</TableHead>
+                                  <TableHead>Referenz</TableHead>
+                                  <TableHead>Start</TableHead>
+                                  <TableHead>Nächste</TableHead>
+                                  <TableHead className="text-right">Betrag</TableHead>
+                                  <TableHead>Status</TableHead>
+                                  <TableHead>Ergebnis</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {singleOrderResult.recurring.map((p: any, i: number) => (
+                                  <TableRow key={i}>
+                                    <TableCell className="font-mono">{p.recurrence_name ?? p.recurring_invoice_id ?? '—'}</TableCell>
+                                    <TableCell>{p.reference_number ?? '—'}</TableCell>
+                                    <TableCell>{p.start_date ?? '—'}</TableCell>
+                                    <TableCell>{p.next_invoice_date ?? '—'}</TableCell>
+                                    <TableCell className="text-right tabular-nums">{p.total != null ? Number(p.total).toFixed(2) : '—'}</TableCell>
+                                    <TableCell>{p.status ?? '—'}</TableCell>
+                                    <TableCell>
+                                      <Badge variant={p.state === 'fehler' ? 'destructive' : 'secondary'}>{p.state}</Badge>
+                                      {p.message && <div className="text-xs text-destructive">{p.message}</div>}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
                         )}
                       </>
                     )}

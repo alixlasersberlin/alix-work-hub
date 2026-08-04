@@ -101,6 +101,7 @@ Deno.serve(async (req) => {
     const salesorderIdInput = body?.salesorder_id ? String(body.salesorder_id).trim() : "";
     const importOrder = body?.import_order !== false;
     const importInvoices = body?.import_invoices !== false;
+    const importRecurring = body?.import_recurring !== false;
 
     if (!query && !salesorderIdInput) {
       return json({ error: "order_number oder salesorder_id erforderlich" }, 400);
@@ -161,7 +162,14 @@ Deno.serve(async (req) => {
       invoices_updated: 0,
       invoices_failed: 0,
       invoices: [] as any[],
+      recurring_found: 0,
+      recurring_imported: 0,
+      recurring_updated: 0,
+      recurring_failed: 0,
+      recurring: [] as any[],
     };
+
+
 
     if (importOrder) {
       const r = await fetch(`${SUPABASE_URL}/functions/v1/sync-single-order`, {
@@ -252,6 +260,101 @@ Deno.serve(async (req) => {
           result.invoices.push({ invoice_id: invId, state: "fehler", message: (e as Error).message });
         }
         await new Promise((r) => setTimeout(r, 300));
+      }
+    }
+
+    // 6) Periodische Rechnungs-Stammdaten (Recurring Invoices) des Kunden
+    if (importRecurring && customerId) {
+      try {
+        const rr = await fetch(
+          `${cfg.booksApiBaseUrl}/recurringinvoices?organization_id=${cfg.organizationId}&customer_id=${customerId}&per_page=200`,
+          { headers: authH },
+        );
+        if (!rr.ok) throw new Error((await rr.text()).slice(0, 300));
+        const rj = await rr.json();
+        const profiles: any[] = Array.isArray(rj.recurring_invoices) ? rj.recurring_invoices : [];
+        result.recurring_found = profiles.length;
+
+        for (const p of profiles) {
+          const recurringId = String(p.recurring_invoice_id ?? "");
+          if (!recurringId) { result.recurring_failed++; continue; }
+          try {
+            // Vollständige Details laden (line_items etc.)
+            let full = p;
+            const dr = await fetch(
+              `${cfg.booksApiBaseUrl}/recurringinvoices/${recurringId}?organization_id=${cfg.organizationId}`,
+              { headers: authH },
+            );
+            if (dr.ok) full = (await dr.json()).recurring_invoice ?? p;
+
+            const region = detectInvoiceRegion(full);
+            const lineItems: any[] = full.line_items ?? [];
+            const deviceName = lineItems.length > 0
+              ? lineItems.map((li: any) => li.name ?? li.description).filter(Boolean).join(", ").substring(0, 500)
+              : (full.entity_name ?? null);
+
+            const payload = {
+              source_system: source,
+              zoho_recurring_invoice_id: recurringId,
+              recurrence_name: full.recurrence_name ?? null,
+              reference_number: full.reference_number ?? null,
+              status: full.status ?? null,
+              customer_id: full.customer_id ? String(full.customer_id) : customerId,
+              customer_name: full.customer_name ?? so.customer_name ?? null,
+              company_name: full.company_name ?? null,
+              email: full.email ?? null,
+              salesperson_name: full.salesperson_name ?? null,
+              recurrence_frequency: full.recurrence_frequency ?? null,
+              repeat_every: full.repeat_every ?? null,
+              start_date: full.start_date || null,
+              end_date: full.end_date || null,
+              next_invoice_date: full.next_invoice_date || null,
+              last_sent_date: full.last_sent_date || null,
+              total: full.total != null ? Number(full.total) : null,
+              sub_total: full.sub_total != null ? Number(full.sub_total) : null,
+              currency: full.currency_code ?? null,
+              device_name: deviceName,
+              line_items: lineItems,
+              raw_data: full,
+              accounting_region: region,
+              synced_at: new Date().toISOString(),
+            };
+
+            const { data: existing } = await admin
+              .from("zoho_recurring_profiles")
+              .select("id")
+              .eq("source_system", source)
+              .eq("zoho_recurring_invoice_id", recurringId)
+              .maybeSingle();
+
+            if (existing) {
+              const { error } = await admin.from("zoho_recurring_profiles").update(payload).eq("id", (existing as any).id);
+              if (error) throw error;
+              result.recurring_updated++;
+            } else {
+              const { error } = await admin.from("zoho_recurring_profiles").insert(payload);
+              if (error) throw error;
+              result.recurring_imported++;
+            }
+
+            result.recurring.push({
+              recurrence_name: payload.recurrence_name,
+              reference_number: payload.reference_number,
+              status: payload.status,
+              start_date: payload.start_date,
+              next_invoice_date: payload.next_invoice_date,
+              total: payload.total,
+              region,
+              state: existing ? "aktualisiert" : "neu",
+            });
+          } catch (e) {
+            result.recurring_failed++;
+            result.recurring.push({ recurring_invoice_id: recurringId, state: "fehler", message: (e as Error).message });
+          }
+          await new Promise((r) => setTimeout(r, 250));
+        }
+      } catch (e) {
+        result.recurring.push({ state: "fehler", message: (e as Error).message });
       }
     }
 
