@@ -67,6 +67,11 @@ export default function SalesLeadsList() {
   const [source, setSource] = useState<string>('alle');
   const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
   const [assignedFilter, setAssignedFilter] = useState<string>('alle');
+  const [datePreset, setDatePreset] = useState<string>('alle');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const [pageSize, setPageSize] = useState<string>('50');
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [assigning, setAssigning] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -170,6 +175,24 @@ export default function SalesLeadsList() {
     return u?.full_name || u?.email || id.slice(0, 8);
   };
 
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+    if (datePreset === 'custom') {
+      return {
+        from: dateFrom ? startOfDay(new Date(dateFrom)).getTime() : null,
+        to: dateTo ? new Date(new Date(dateTo).setHours(23, 59, 59, 999)).getTime() : null,
+      };
+    }
+    if (datePreset === 'alle') return { from: null, to: null };
+    const days: Record<string, number> = { heute: 0, '7': 7, '30': 30, '90': 90, '365': 365 };
+    if (datePreset === 'heute') return { from: startOfDay(now).getTime(), to: null };
+    const n = days[datePreset];
+    if (n == null) return { from: null, to: null };
+    const from = startOfDay(new Date(now.getTime() - n * 86400000)).getTime();
+    return { from, to: null };
+  }, [datePreset, dateFrom, dateTo]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter((r) => {
@@ -177,15 +200,29 @@ export default function SalesLeadsList() {
       if (source !== 'alle' && r.source !== source) return false;
       if (assignedFilter === '__none' && r.assigned_user) return false;
       if (assignedFilter !== 'alle' && assignedFilter !== '__none' && r.assigned_user !== assignedFilter) return false;
+      const t = new Date(r.created_at).getTime();
+      if (dateRange.from != null && t < dateRange.from) return false;
+      if (dateRange.to != null && t > dateRange.to) return false;
       if (!q) return true;
       return [
         r.lead_number, r.company, r.first_name, r.last_name, r.email, r.phone,
         r.requested_products, r.form_name, r.device_category, r.customer_goal,
       ].some((v) => v?.toLowerCase().includes(q));
     });
-  }, [rows, search, status, source, assignedFilter]);
+  }, [rows, search, status, source, assignedFilter, dateRange]);
+
+  useEffect(() => { setPage(1); }, [search, status, source, assignedFilter, datePreset, dateFrom, dateTo, pageSize]);
+
+  const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(filtered.length / Number(pageSize)));
+  const safePage = Math.min(page, totalPages);
+  const paged = useMemo(() => {
+    if (pageSize === 'all') return filtered;
+    const size = Number(pageSize);
+    return filtered.slice((safePage - 1) * size, safePage * size);
+  }, [filtered, pageSize, safePage]);
 
   const allVisibleSelected = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+
 
   function toggleRow(id: string) {
     setSelected((prev) => {
@@ -331,7 +368,36 @@ export default function SalesLeadsList() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={datePreset} onValueChange={setDatePreset}>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Zeitraum" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Gesamter Zeitraum</SelectItem>
+                <SelectItem value="heute">Heute</SelectItem>
+                <SelectItem value="7">Letzte 7 Tage</SelectItem>
+                <SelectItem value="30">Letzte 30 Tage</SelectItem>
+                <SelectItem value="90">Letzte 90 Tage</SelectItem>
+                <SelectItem value="365">Letzte 12 Monate</SelectItem>
+                <SelectItem value="custom">Benutzerdefiniert …</SelectItem>
+              </SelectContent>
+            </Select>
+            {datePreset === 'custom' && (
+              <>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-[150px]" aria-label="Datum von" />
+                <span className="text-xs text-muted-foreground">bis</span>
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-[150px]" aria-label="Datum bis" />
+              </>
+            )}
+            <Select value={pageSize} onValueChange={setPageSize}>
+              <SelectTrigger className="w-[130px]"><SelectValue placeholder="Anzahl" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="20">20 / Seite</SelectItem>
+                <SelectItem value="50">50 / Seite</SelectItem>
+                <SelectItem value="100">100 / Seite</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-xs text-muted-foreground">{selected.size} ausgewählt</span>
             {selected.size > 0 && (
@@ -375,7 +441,7 @@ export default function SalesLeadsList() {
                 <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
-              ) : filtered.map((r) => (
+              ) : paged.map((r) => (
                 <tr key={r.id} className={`border-t hover:bg-muted/30 ${selected.has(r.id) ? 'bg-primary/10' : ''}`}>
                   <td className="p-3 align-middle">
                     <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleRow(r.id)} aria-label="Anfrage auswählen" />
@@ -481,7 +547,20 @@ export default function SalesLeadsList() {
             </tbody>
           </table>
         </div>
+        <div className="flex items-center justify-between gap-3 flex-wrap p-3 border-t">
+          <p className="text-xs text-muted-foreground">
+            {filtered.length} Treffer · angezeigt: {paged.length}
+            {pageSize !== 'all' && totalPages > 1 ? ` · Seite ${safePage} von ${totalPages}` : ''}
+          </p>
+          {pageSize !== 'all' && totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Zurück</Button>
+              <Button size="sm" variant="outline" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Weiter</Button>
+            </div>
+          )}
+        </div>
       </Card>
+
     </div>
   );
 }
