@@ -1144,7 +1144,7 @@ export default function AppLayout() {
       setLagerCounts((prev) => ({ ...prev, '/tourenplanung': count ?? 0 }));
     };
     const id = window.setTimeout(load, isOrdersRoute ? 5000 : 0);
-    const intervalId = window.setInterval(load, 5 * 60 * 1000);
+    const intervalId = window.setInterval(load, 15 * 60 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
@@ -1188,7 +1188,7 @@ export default function AppLayout() {
     };
     const loadAll = () => { void loadLeads(); void loadOffers(); };
     const id = window.setTimeout(loadAll, isOrdersRoute ? 5000 : 0);
-    const intervalId = window.setInterval(loadAll, 5 * 60 * 1000);
+    const intervalId = window.setInterval(loadAll, 15 * 60 * 1000);
     let debounceLeads: number | undefined;
     let debounceOffers: number | undefined;
     const scheduleLeads = () => {
@@ -1219,54 +1219,22 @@ export default function AppLayout() {
   }, [isOrdersRoute]);
 
 
-  // Anzahl der Bestellungen (production_orders + Bestellung möglich) – Echtzeit
+  // Anzahl der Bestellungen (production_orders + Bestellung möglich) – gedrosselt: 1 RPC statt 9 Queries
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const baseProdSel = atOnly
-        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2')
-        : supabase.from('production_orders').select('id', { count: 'exact', head: true });
-      const reklaProd = atOnly
-        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', true)
-        : supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('is_reclamation', true);
-      const factoryProd = atOnly
-        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('is_reclamation', false)
-        : supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('is_reclamation', false);
-      const approvedProd = atOnly
-        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('approval_status', 'approved').neq('status', 'fertig')
-        : supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('approval_status', 'approved').neq('status', 'fertig');
-      const pendingProd = atOnly
-        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').or('approval_status.is.null,approval_status.eq.pending')
-        : supabase.from('production_orders').select('id', { count: 'exact', head: true }).or('approval_status.is.null,approval_status.eq.pending');
-      const fertigProd = atOnly
-        ? supabase.from('production_orders').select('id, orders!inner(source_system)', { count: 'exact', head: true }).eq('orders.source_system', 'zoho_eu_2').eq('status', 'fertig')
-        : supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('status', 'fertig');
-      const freiOrdersQ = atOnly
-        ? supabase.from('orders').select('id').eq('source_system', 'zoho_eu_2').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000)
-        : supabase.from('orders').select('id').eq('deposit_ok', true).not('deposit_ok_by', 'is', null).neq('deposit_ok_by', '').limit(2000);
-      const [allRes, reklaRes, factoryRes, freiOrdersRes, prodOrderIdsRes, reservedDevsRes, approvedRes, pendingRes, fertigRes] = await Promise.all([
-        baseProdSel,
-        reklaProd,
-        factoryProd,
-        freiOrdersQ,
-        supabase.from('production_orders').select('order_id').limit(2000),
-        supabase.from('lager_devices').select('reserved_order_id').not('reserved_order_id', 'is', null).limit(2000),
-        approvedProd,
-        pendingProd,
-        fertigProd,
-      ]);
-      if (cancelled) return;
-      const all = allRes.count ?? 0;
-      const rekla = reklaRes.count ?? 0;
-      const factory = factoryRes.count ?? 0;
-      const usedOrderIds = new Set<string>([
-        ...((prodOrderIdsRes.data ?? []).map((r: any) => r.order_id).filter(Boolean)),
-        ...((reservedDevsRes.data ?? []).map((r: any) => r.reserved_order_id).filter(Boolean)),
-      ]);
-      const frei = (freiOrdersRes.data ?? []).filter((o: any) => !usedOrderIds.has(o.id)).length;
-      const approved = approvedRes.count ?? 0;
-      const pending = pendingRes.count ?? 0;
-      const fertig = fertigRes.count ?? 0;
+      // Kein Polling, wenn der Tab im Hintergrund ist
+      if (document.visibilityState !== 'visible') return;
+      const { data, error } = await supabase.rpc('sidebar_production_counts', { p_at_only: atOnly });
+      if (cancelled || error || !data) return;
+      const c = data as any;
+      const all = Number(c.all ?? 0);
+      const rekla = Number(c.rekla ?? 0);
+      const factory = Number(c.factory ?? 0);
+      const frei = Number(c.frei ?? 0);
+      const approved = Number(c.approved ?? 0);
+      const pending = Number(c.pending ?? 0);
+      const fertig = Number(c.fertig ?? 0);
       setLagerCounts((prev) => ({
         ...prev,
         '/einkauf': frei,
@@ -1281,22 +1249,27 @@ export default function AppLayout() {
         '__production_liste': factory,
       }));
     };
-    // Initiales Laden verschieben (8 parallele Queries → nicht beim ersten Render der Auftragsliste).
+    // Initiales Laden verschieben (nicht beim ersten Render der Auftragsliste).
     const ric: any = (window as any).requestIdleCallback ?? ((cb: any) => window.setTimeout(cb, 300));
     const cic: any = (window as any).cancelIdleCallback ?? ((id: any) => window.clearTimeout(id));
     const initialId = isOrdersRoute
       ? window.setTimeout(() => { if (!cancelled) load(); }, 5000)
       : ric(() => { if (!cancelled) load(); });
-    const intervalId = window.setInterval(load, 5 * 60 * 1000);
+    const intervalId = window.setInterval(load, 15 * 60 * 1000);
     let debounceId: number | undefined;
+    let lastRun = 0;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
-      // Längeres Debounce (2s), damit Bursts (Import/Batch-Updates) nicht 8 parallele
-      // Count-Queries pro Zeile auslösen. Reicht für gefühlte "Echtzeit"-Aktualisierung.
-      debounceId = window.setTimeout(load, 2000);
+      // Debounce 5s + max. 1 Aktualisierung pro 60s (Bursts bei Import/Batch-Updates abfangen)
+      debounceId = window.setTimeout(() => {
+        if (Date.now() - lastRun < 60 * 1000) return;
+        lastRun = Date.now();
+        void load();
+      }, 5000);
     };
     const onRefresh = () => scheduleReload();
     window.addEventListener('einkauf-counts-refresh', onRefresh);
+
     // Realtime: Menü-Zähler live aktualisieren bei Änderungen an production_orders,
     // orders (source_system für AT-Filter) und lager_devices.
     const chProd = supabase
