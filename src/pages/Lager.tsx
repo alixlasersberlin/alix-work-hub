@@ -24,7 +24,6 @@ type SearchHit = {
 };
 
 
-interface Row { notes: string | null; reserved_order_id: string | null }
 
 function getStatus(n: string | null | undefined) {
   const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
