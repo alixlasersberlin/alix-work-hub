@@ -98,98 +98,54 @@ export default function HeadOfOperationDashboard() {
         const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
         const since24 = new Date(Date.now() - 86400000).toISOString();
 
-        const headOpts = { count: 'exact' as const, head: true };
-        const [
-          usersTotalR, usersActiveR, sessionsR,
-          customersR, customersDeR, customersAtR,
-          ordersR, ordersDeR, ordersAtR, ordersOpenR, ordersOverdueR,
-          revenueDeR, revenueAtR,
-          prodR, prodPendR, prodReclR,
-          financeOpenR, financeListR,
-          ticketsOpenR, repairsOpenR,
-          routesR, routesTodayR,
-          lagerR, itemsR, stockR,
-          bugsR, capasR, warrantyR,
-          audits24R, securityIncidentsR,
-          recentAuditsR, activeSessionsR,
-        ] = await Promise.all([
-          supabase.from('user_profiles').select('id', headOpts),
-          supabase.from('user_profiles').select('id', headOpts).eq('is_active', true),
-          supabase.from('login_sessions').select('id', headOpts).eq('is_active', true).gt('expires_at', new Date().toISOString()),
+        const [mandR, kpiR, recentAuditsR, activeSessionsR] = await Promise.all([
           (supabase as any).rpc('hoo_mandanten_stats'),
-          Promise.resolve({ data: null }),
-          Promise.resolve({ data: null }),
-          Promise.resolve({ data: null }),
-          Promise.resolve({ data: null }),
-          Promise.resolve({ data: null }),
-          supabase.from('orders').select('id', headOpts).in('order_status', ['offen', 'Offen', 'open', 'Open', 'approved', 'Approved', 'invoiced', 'Invoiced']),
-          supabase.from('orders').select('id', headOpts).not('expected_shipment_date', 'is', null).lt('expected_shipment_date', today).not('order_status', 'in', '("geliefert","storniert","cancelled")'),
-          Promise.resolve({ data: null }),
-          Promise.resolve({ data: null }),
-          supabase.from('production_orders').select('id', headOpts),
-          supabase.from('production_orders').select('id', headOpts).eq('approval_status', 'pending'),
-          supabase.from('production_orders').select('id', headOpts).eq('is_reclamation', true),
-          supabase.from('finance_records').select('id', headOpts).eq('payment_status', 'offen'),
-          supabase.from('finance_records').select('amount_due, amount_paid').or('payment_status.eq.offen,payment_status.eq.teilweise bezahlt,payment_status.eq.überfällig'),
-          supabase.from('tickets').select('id', headOpts).not('status', 'in', '("closed","geschlossen","erledigt")'),
-          supabase.from('repair_orders').select('id', headOpts).not('repair_status', 'in', '("Abgeschlossen","abgeschlossen","Ausgeliefert","ausgeliefert","Storniert","storniert")'),
-          supabase.from('route_plans').select('id', headOpts),
-          supabase.from('route_plans').select('id', headOpts).gte('planned_date', today).lt('planned_date', tomorrow),
-          supabase.from('lager_devices').select('id', headOpts),
-          supabase.from('zoho_items').select('id', headOpts),
-          supabase.from('zoho_items').select('stock_on_hand'),
-          supabase.from('bugs').select('id', headOpts).not('status', 'in', '("closed","geschlossen")'),
-          supabase.from('capas').select('id', headOpts).not('status', 'in', '("closed","geschlossen")'),
-          supabase.from('warranty_records').select('id', headOpts).eq('warranty_status', 'Aktiv'),
-          supabase.from('audit_logs').select('id', headOpts).gte('created_at', since24),
-          supabase.from('audit_logs').select('id', headOpts).gte('created_at', since24).or('action.ilike.%fail%,action.ilike.%denied%,action.ilike.%unauthorized%,action.ilike.%block%,action.ilike.%suspicious%'),
+          (supabase as any).rpc('hoo_ops_kpis'),
           supabase.from('audit_logs').select('id, created_at, action, module, user_profiles!audit_logs_user_id_fkey(full_name, email)').order('created_at', { ascending: false }).limit(10),
           supabase.from('login_sessions').select('id, user_id, created_at, ip_address, user_profiles!login_sessions_user_id_fkey(full_name, email)').eq('is_active', true).gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(8),
         ]);
-        const _mand = ((customersR as any)?.data?.[0]) || {};
 
         if (!alive) return;
 
-        const revenueDe = Number(_mand.revenue_de ?? 0);
-        const revenueAt = Number(_mand.revenue_at ?? 0);
-        const stockOnHand = (stockR.data ?? []).reduce((s: number, r: any) => s + Number(r.stock_on_hand ?? 0), 0);
-        const financeAmountOpen = (financeListR.data ?? []).reduce(
-          (s: number, r: any) => s + (Number(r.amount_due ?? 0) - Number(r.amount_paid ?? 0)), 0,
-        );
+        const _mand = ((mandR as any)?.data?.[0]) || {};
+        const k = ((kpiR as any)?.data?.[0]) || {};
+        const n = (v: any) => Number(v ?? 0);
 
         setC({
-          usersTotal: usersTotalR.count ?? 0,
-          usersActive: usersActiveR.count ?? 0,
-          sessionsActive: sessionsR.count ?? 0,
-          customersTotal: Number(_mand.customers_total ?? 0),
-          customersDe: Number(_mand.customers_de ?? 0),
-          customersAt: Number(_mand.customers_at ?? 0),
-          ordersTotal: Number(_mand.orders_total ?? 0),
-          ordersDe: Number(_mand.orders_de ?? 0),
-          ordersAt: Number(_mand.orders_at ?? 0),
-          ordersOpen: ordersOpenR.count ?? 0,
-          ordersOverdue: ordersOverdueR.count ?? 0,
-          revenueDe, revenueAt,
-          production: prodR.count ?? 0,
-          productionPending: prodPendR.count ?? 0,
-          productionReclamation: prodReclR.count ?? 0,
-          financeOpen: financeOpenR.count ?? 0,
-          financeAmountOpen,
-          ticketsOpen: ticketsOpenR.count ?? 0,
-          repairsOpen: repairsOpenR.count ?? 0,
-          routes: routesR.count ?? 0,
-          routesToday: routesTodayR.count ?? 0,
-          lagerDevices: lagerR.count ?? 0,
-          itemsTotal: itemsR.count ?? 0,
-          stockOnHand,
-          bugsOpen: bugsR.count ?? 0,
-          capasOpen: capasR.count ?? 0,
-          warrantyActive: warrantyR.count ?? 0,
-          audits24h: audits24R.count ?? 0,
-          securityIncidents24h: securityIncidentsR.count ?? 0,
+          usersTotal: n(k.users_total),
+          usersActive: n(k.users_active),
+          sessionsActive: n(k.sessions_active),
+          customersTotal: n(_mand.customers_total),
+          customersDe: n(_mand.customers_de),
+          customersAt: n(_mand.customers_at),
+          ordersTotal: n(_mand.orders_total),
+          ordersDe: n(_mand.orders_de),
+          ordersAt: n(_mand.orders_at),
+          ordersOpen: n(k.orders_open),
+          ordersOverdue: n(k.orders_overdue),
+          revenueDe: n(_mand.revenue_de),
+          revenueAt: n(_mand.revenue_at),
+          production: n(k.production),
+          productionPending: n(k.production_pending),
+          productionReclamation: n(k.production_reclamation),
+          financeOpen: n(k.finance_open),
+          financeAmountOpen: n(k.finance_amount_open),
+          ticketsOpen: n(k.tickets_open),
+          repairsOpen: n(k.repairs_open),
+          routes: n(k.routes),
+          routesToday: n(k.routes_today),
+          lagerDevices: n(k.lager_devices),
+          itemsTotal: n(k.items_total),
+          stockOnHand: n(k.stock_on_hand),
+          bugsOpen: n(k.bugs_open),
+          capasOpen: n(k.capas_open),
+          warrantyActive: n(k.warranty_active),
+          audits24h: n(k.audits_24h),
+          securityIncidents24h: n(k.security_incidents_24h),
         });
         setRecentAudits((recentAuditsR.data ?? []) as any);
         setSessions((activeSessionsR.data ?? []) as any);
+
       } catch (e: any) {
         if (alive) setError('Daten konnten nicht geladen werden.');
       } finally {
