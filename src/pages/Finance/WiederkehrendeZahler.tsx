@@ -14,6 +14,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { toast } from '@/hooks/use-toast';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { RecurringProfileEditDialog, type EditableProfile } from '@/components/finance/RecurringProfileEditDialog';
+import { RecurringProfileCreateDialog } from '@/components/finance/RecurringProfileCreateDialog';
+
 import { RecurringInvoiceBookDialog, type BookableInvoice } from '@/components/finance/RecurringInvoiceBookDialog';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
