@@ -340,6 +340,9 @@ export default function SalesLeadsList() {
             <Button size="sm" onClick={downloadSelected} disabled={selected.size === 0}>
               <Download className="h-4 w-4 mr-1.5" />Download (CSV)
             </Button>
+            <Button size="sm" variant="outline" onClick={downloadSelectedPdf} disabled={selected.size === 0}>
+              <Download className="h-4 w-4 mr-1.5" />PDF (A4 quer)
+            </Button>
           </div>
         </div>
       </Card>
