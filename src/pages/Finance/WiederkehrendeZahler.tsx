@@ -292,9 +292,22 @@ export default function WiederkehrendeZahler() {
     );
   }, [groups, search]);
 
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    switch (sortBy) {
+      case 'amount_desc': return arr.sort((a, b) => b.monthly - a.monthly);
+      case 'amount_asc': return arr.sort((a, b) => a.monthly - b.monthly);
+      case 'date_new': return arr.sort((a, b) => (b.newestCreatedAt || '').localeCompare(a.newestCreatedAt || ''));
+      case 'date_old': return arr.sort((a, b) => (a.newestCreatedAt || '').localeCompare(b.newestCreatedAt || ''));
+      case 'name_asc': return arr.sort((a, b) => a.customer_name.localeCompare(b.customer_name, 'de'));
+      case 'name_desc': return arr.sort((a, b) => b.customer_name.localeCompare(a.customer_name, 'de'));
+      default: return arr;
+    }
+  }, [filtered, sortBy]);
+
   const visible = useMemo(
-    () => (pageSize === 'all' ? filtered : filtered.slice(0, pageSize)),
-    [filtered, pageSize]
+    () => (pageSize === 'all' ? sorted : sorted.slice(0, pageSize)),
+    [sorted, pageSize]
   );
 
   const totals = useMemo(() => {
