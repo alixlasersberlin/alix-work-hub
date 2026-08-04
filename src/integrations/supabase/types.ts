@@ -36620,6 +36620,7 @@ export type Database = {
         Args: { _department_id: string; _user_id: string }
         Returns: boolean
       }
+      esc_is_staff: { Args: never; Returns: boolean }
       esc_public_appointment_kinds: {
         Args: never
         Returns: {
