@@ -1124,7 +1124,7 @@ export default function AppLayout() {
     return () => window.clearTimeout(id);
   }, [location.pathname]);
 
-  // Anzahl bevorstehender Touren (planned_date >= heute)
+  // Menü-Zähler Verkauf/Touren – 1 RPC statt 3 Einzelabfragen
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
