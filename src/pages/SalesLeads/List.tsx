@@ -175,13 +175,63 @@ export default function SalesLeadsList() {
     return rows.filter((r) => {
       if (status !== 'alle' && r.lead_status !== status) return false;
       if (source !== 'alle' && r.source !== source) return false;
+      if (assignedFilter === '__none' && r.assigned_user) return false;
+      if (assignedFilter !== 'alle' && assignedFilter !== '__none' && r.assigned_user !== assignedFilter) return false;
       if (!q) return true;
       return [
         r.lead_number, r.company, r.first_name, r.last_name, r.email, r.phone,
         r.requested_products, r.form_name, r.device_category, r.customer_goal,
       ].some((v) => v?.toLowerCase().includes(q));
     });
-  }, [rows, search, status, source]);
+  }, [rows, search, status, source, assignedFilter]);
+
+  const allVisibleSelected = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+
+  function toggleRow(id: string) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  }
+
+  function toggleAllVisible() {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (allVisibleSelected) filtered.forEach((r) => n.delete(r.id));
+      else filtered.forEach((r) => n.add(r.id));
+      return n;
+    });
+  }
+
+  function downloadSelected() {
+    const list = filtered.filter((r) => selected.has(r.id));
+    if (!list.length) { toast.error('Keine Anfragen ausgewählt'); return; }
+    const headers = ['Datum','Lead-Nr.','Score','Kategorie','Firma','Vorname','Nachname','E-Mail','Telefon','Geräteklasse','Produkte','Zeitraum','Bewertung','Quelle','Status','Zugewiesen an'];
+    const esc = (v: any) => {
+      const s = v == null ? '' : String(v);
+      return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [headers.join(';')];
+    for (const r of list) {
+      lines.push([
+        new Date(r.created_at).toLocaleString('de-DE'), r.lead_number, r.lead_score, r.score_category,
+        r.company, r.first_name, r.last_name, r.email, r.phone, r.device_category, r.requested_products,
+        r.implementation_period, r.service_rating, r.form_name || r.source, r.lead_status,
+        userLabel(r.assigned_user) || '',
+      ].map(esc).join(';'));
+    }
+    const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `verkaufsanfragen-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${list.length} Anfragen exportiert`);
+  }
+
+
 
   return (
     <div className="p-6 pb-32 space-y-6">
