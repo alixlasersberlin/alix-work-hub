@@ -5,7 +5,7 @@ import { notifyBus } from './useNotifications';
 import { useAuth } from './useAuth';
 
 const SEEN_KEY = 'alixwork.notifications.seen.v1';
-const POLL_MS = 60_000;
+const POLL_MS = 5 * 60_000;
 
 function loadSeen(): Set<string> {
   try {
