@@ -175,6 +175,24 @@ export default function SalesLeadsList() {
     return u?.full_name || u?.email || id.slice(0, 8);
   };
 
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+    if (datePreset === 'custom') {
+      return {
+        from: dateFrom ? startOfDay(new Date(dateFrom)).getTime() : null,
+        to: dateTo ? new Date(new Date(dateTo).setHours(23, 59, 59, 999)).getTime() : null,
+      };
+    }
+    if (datePreset === 'alle') return { from: null, to: null };
+    const days: Record<string, number> = { heute: 0, '7': 7, '30': 30, '90': 90, '365': 365 };
+    if (datePreset === 'heute') return { from: startOfDay(now).getTime(), to: null };
+    const n = days[datePreset];
+    if (n == null) return { from: null, to: null };
+    const from = startOfDay(new Date(now.getTime() - n * 86400000)).getTime();
+    return { from, to: null };
+  }, [datePreset, dateFrom, dateTo]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter((r) => {
@@ -182,15 +200,29 @@ export default function SalesLeadsList() {
       if (source !== 'alle' && r.source !== source) return false;
       if (assignedFilter === '__none' && r.assigned_user) return false;
       if (assignedFilter !== 'alle' && assignedFilter !== '__none' && r.assigned_user !== assignedFilter) return false;
+      const t = new Date(r.created_at).getTime();
+      if (dateRange.from != null && t < dateRange.from) return false;
+      if (dateRange.to != null && t > dateRange.to) return false;
       if (!q) return true;
       return [
         r.lead_number, r.company, r.first_name, r.last_name, r.email, r.phone,
         r.requested_products, r.form_name, r.device_category, r.customer_goal,
       ].some((v) => v?.toLowerCase().includes(q));
     });
-  }, [rows, search, status, source, assignedFilter]);
+  }, [rows, search, status, source, assignedFilter, dateRange]);
+
+  useEffect(() => { setPage(1); }, [search, status, source, assignedFilter, datePreset, dateFrom, dateTo, pageSize]);
+
+  const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(filtered.length / Number(pageSize)));
+  const safePage = Math.min(page, totalPages);
+  const paged = useMemo(() => {
+    if (pageSize === 'all') return filtered;
+    const size = Number(pageSize);
+    return filtered.slice((safePage - 1) * size, safePage * size);
+  }, [filtered, pageSize, safePage]);
 
   const allVisibleSelected = filtered.length > 0 && filtered.every((r) => selected.has(r.id));
+
 
   function toggleRow(id: string) {
     setSelected((prev) => {
