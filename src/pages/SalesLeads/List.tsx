@@ -67,6 +67,11 @@ export default function SalesLeadsList() {
   const [source, setSource] = useState<string>('alle');
   const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
   const [assignedFilter, setAssignedFilter] = useState<string>('alle');
+  const [datePreset, setDatePreset] = useState<string>('alle');
+  const [dateFrom, setDateFrom] = useState<string>('');
+  const [dateTo, setDateTo] = useState<string>('');
+  const [pageSize, setPageSize] = useState<string>('50');
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [assigning, setAssigning] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
