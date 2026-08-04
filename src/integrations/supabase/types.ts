@@ -36930,6 +36930,7 @@ export type Database = {
         Returns: string
       }
       mailcenter_dashboard_kpis: { Args: never; Returns: Json }
+      main_dashboard_kpis: { Args: { p_at_only?: boolean }; Returns: Json }
       merge_customers: {
         Args: { _duplicate_ids: string[]; _primary_id: string }
         Returns: Json
@@ -37090,6 +37091,7 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      sidebar_lager_counts: { Args: never; Returns: Json }
       sidebar_production_counts: {
         Args: { p_at_only?: boolean }
         Returns: Json

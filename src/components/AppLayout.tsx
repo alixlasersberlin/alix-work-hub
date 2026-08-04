@@ -1048,31 +1048,15 @@ export default function AppLayout() {
     const REFRESH_MS = 5 * 60 * 1000; // 5 Minuten
 
     const load = async () => {
-      const { data, error } = await supabase
-        .from('lager_devices')
-        .select('notes, reserved_order_id');
+      // Zähler werden serverseitig aggregiert (statt alle Geräte zu laden)
+      const { data, error } = await supabase.rpc('sidebar_lager_counts' as any);
       if (cancelled || error || !data) return;
       lastLoadedAt = Date.now();
-      const getStatus = (n: string | null | undefined) => {
-        const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
-        return (m?.[1] ?? '').trim();
-      };
-      const isLeih = (n: string | null | undefined) =>
-        (n ?? '').includes('[Typ: Leihgerät]') || (n ?? '').includes('[Leihgerät]');
-      let leih = 0, lager = 0, transfer = 0, produktion = 0, hold = 0, warehouse = 0, ausgeliefert = 0;
-      for (const d of data as { notes: string | null; reserved_order_id: string | null }[]) {
-        const s = getStatus(d.notes);
-        if (s === 'Transfer') { transfer++; continue; }
-        if (s === 'Produktion') { produktion++; continue; }
-        if (s === 'Hold') { hold++; continue; }
-        if (s === 'Shell Warehouse') {
-          // Reservierte Geräte werden im Warehouse nicht mehr gezählt
-          if (!d.reserved_order_id) warehouse++;
-          continue;
-        }
-        if (s === 'Ausgeliefert') { ausgeliefert++; continue; }
-        if (isLeih(d.notes)) leih++; else lager++;
-      }
+      const c = data as Record<string, number>;
+      const n = (k: string) => Number(c?.[k] ?? 0);
+      const leih = n('leih'), lager = n('lager'), transfer = n('transfer');
+      const produktion = n('produktion'), hold = n('hold');
+      const warehouse = n('warehouse'), ausgeliefert = n('ausgeliefert');
       setLagerCounts((prev) => ({
         ...prev,
         '/lager': leih + lager + transfer + produktion + hold + warehouse + ausgeliefert,
@@ -1086,6 +1070,7 @@ export default function AppLayout() {
         '/lager/equipment-area': lager + transfer + produktion + hold + warehouse + ausgeliefert,
       }));
     };
+
 
     // Initiales Laden verschieben, damit der erste Render der Auftragsliste nicht blockiert wird.
     const ric: any = (window as any).requestIdleCallback ?? ((cb: any) => window.setTimeout(cb, 200));
