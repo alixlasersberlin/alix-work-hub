@@ -544,6 +544,12 @@ export const navItems: NavItem[] = [
           { path: '/finance/einstellungen/systemstatus', label: 'Systemstatus', icon: FileText, roles: ['Admin', 'Super Admin'] },
         ],
       },
+      {
+        path: '/finance/anwaltsfaelle', label: 'ANWALTSFÄLLE', icon: Gavel, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
+        children: [
+          { path: '/finance/anwaltsfaelle', label: 'Anwaltsfälle', icon: Gavel, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'] },
+        ],
+      },
     ],
   },
 
