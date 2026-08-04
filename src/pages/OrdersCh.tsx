@@ -19,16 +19,16 @@ export default function OrdersCh() {
   async function load() {
     setLoading(true);
     setError(null);
-    // Fetch EU 1 orders, filter for CH branch in raw_data
+    // CH-Filter serverseitig über raw_data->>branch_id (kein Volllauf über alle EU-Aufträge)
     const { data, error: err } = await supabase
       .from('orders')
-      .select('*, customers(company_name, contact_name)')
+      .select('id, order_number, order_date, order_status, total_amount, currency, customers(company_name, contact_name)')
       .eq('source_system', 'zoho_eu_1')
+      .eq('raw_data->>branch_id', CH_BRANCH_ID)
       .order('order_date', { ascending: false, nullsFirst: false })
       .limit(2000);
     if (err) { setError(err.message); setLoading(false); return; }
-    const ch = (data ?? []).filter((o: any) => o?.raw_data?.branch_id === CH_BRANCH_ID);
-    setOrders(ch);
+    setOrders(data ?? []);
     setLoading(false);
   }
 
