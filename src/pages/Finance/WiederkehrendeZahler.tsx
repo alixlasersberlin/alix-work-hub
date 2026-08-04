@@ -490,17 +490,10 @@ export default function WiederkehrendeZahler() {
             </button>
           ))}
         </div>
-        <div className="flex gap-1 border border-border rounded-md p-1">
-          {(['all', 'unpaid', 'overdue', 'paid', 'draft'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => { filterTouched.current = true; setInvoiceStatusFilter(s); }}
-              className={`px-3 py-1 text-xs rounded ${invoiceStatusFilter === s ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              {s === 'all' ? 'Status: Alle' : s === 'unpaid' ? 'Offen' : s === 'overdue' ? 'Überfällig' : s === 'paid' ? 'Bezahlt' : 'Entwurf'}
-            </button>
-          ))}
-        </div>
+        <Button asChild size="sm" variant="outline">
+          <Link to="/finance/rechnungen"><FileText className="w-4 h-4 mr-2" />Rechnungen öffnen</Link>
+        </Button>
+
 
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Sortierung:</span>
