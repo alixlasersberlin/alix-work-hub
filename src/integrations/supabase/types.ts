@@ -36907,6 +36907,33 @@ export type Database = {
           revenue_de: number
         }[]
       }
+      hoo_ops_kpis: {
+        Args: never
+        Returns: {
+          audits_24h: number
+          bugs_open: number
+          capas_open: number
+          finance_amount_open: number
+          finance_open: number
+          items_total: number
+          lager_devices: number
+          orders_open: number
+          orders_overdue: number
+          production: number
+          production_pending: number
+          production_reclamation: number
+          repairs_open: number
+          routes: number
+          routes_today: number
+          security_incidents_24h: number
+          sessions_active: number
+          stock_on_hand: number
+          tickets_open: number
+          users_active: number
+          users_total: number
+          warranty_active: number
+        }[]
+      }
       is_ac_meeting_member: {
         Args: { _meeting_id: string; _user: string }
         Returns: boolean
