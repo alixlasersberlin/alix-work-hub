@@ -193,34 +193,26 @@ export default function WiederkehrendeZahler() {
         new Promise<T>((_, rej) => setTimeout(() => rej(new Error('Zeitüberschreitung beim Laden (Datenbank überlastet). Bitte erneut versuchen.')), ms)),
       ]);
     try {
-      const [p, i] = await Promise.all([
-        withTimeout(
-          supabase
-            .from('zoho_recurring_profiles')
-            .select('*')
-            .eq('accounting_region', reg)
-            .order('created_at', { ascending: false, nullsFirst: false })
-            .limit(5000)
-        ),
-        withTimeout(
-          supabase
-            .from('zoho_recurring_invoices')
-            .select('*')
-            .eq('accounting_region', reg)
-            .order('invoice_date', { ascending: false, nullsFirst: false })
-            .limit(5000)
-        ),
-      ]);
+      // Nur noch die angelegten wiederkehrenden Buchungen (Verträge/Profile) —
+      // Rechnungen werden ausschließlich unter RECHNUNGEN → Rechnungen geführt.
+      const p = await withTimeout(
+        supabase
+          .from('zoho_recurring_profiles')
+          .select('*')
+          .eq('accounting_region', reg)
+          .order('created_at', { ascending: false, nullsFirst: false })
+          .limit(5000)
+      );
       if (p.error) { setError(p.error.message); setLoading(false); return; }
-      if (i.error) { setError(i.error.message); setLoading(false); return; }
       setProfiles((p.data ?? []) as Profile[]);
-      setInvoices((i.data ?? []) as Invoice[]);
+      setInvoices([]);
     } catch (e: any) {
       setError(e?.message ?? 'Unbekannter Fehler beim Laden');
     } finally {
       setLoading(false);
     }
   }
+
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [region]);
 
