@@ -695,7 +695,7 @@ export default function WiederkehrendeZahler() {
                                 <th className="text-right px-3 py-2">Monatlich</th>
                                 <th className="text-right px-3 py-2">Restsumme</th>
                                 <th className="text-left px-3 py-2">Status</th>
-                                <th className="text-right px-3 py-2">Aktion</th>
+
                               </tr>
                             </thead>
                             <tbody>
