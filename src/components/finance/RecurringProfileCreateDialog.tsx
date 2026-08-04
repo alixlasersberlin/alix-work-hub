@@ -263,14 +263,15 @@ export function RecurringProfileCreateDialog({ open, onOpenChange, region, onCre
             </div>
             <div className="grid gap-1.5">
               <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => set({ status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">active</SelectItem>
-                  <SelectItem value="pruefung">Prüfung</SelectItem>
-                  <SelectItem value="stopped">stopped</SelectItem>
-                </SelectContent>
-              </Select>
+              <select
+                value={form.status}
+                onChange={(e) => set({ status: e.target.value })}
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+              >
+                <option value="active">active</option>
+                <option value="pruefung">Prüfung</option>
+                <option value="stopped">stopped</option>
+              </select>
             </div>
           </div>
 
