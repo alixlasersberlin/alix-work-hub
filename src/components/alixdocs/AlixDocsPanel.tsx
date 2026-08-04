@@ -89,7 +89,8 @@ export default function AlixDocsPanel({ orderId, customerId, orderNumber, scope 
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('alixdocs_documents').select('*');
+    const DOC_COLS = 'id,title,description,original_filename,mime_type,file_size,current_version,status,confidentiality_level,category_id,serial_number,document_date,created_at,updated_at,deleted_at,uploaded_by,ocr_status,ai_summary,ai_category_suggestion,ai_serial_numbers,ai_order_numbers,expiry_date,duplicate_of,tags,order_id,customer_id';
+    let q = supabase.from('alixdocs_documents').select(DOC_COLS as '*');
     if (effectiveScope === 'order' && orderId) q = q.eq('order_id', orderId);
     else if (effectiveScope === 'customer' && customerId) q = q.eq('customer_id', customerId);
     else { setDocs([]); setLoading(false); return; }
