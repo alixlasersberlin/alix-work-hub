@@ -155,6 +155,8 @@ export default function WiederkehrendeZahler() {
   const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
   const [stoppingId, setStoppingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
 
   // Rollen laden asynchron: sobald Admin erkannt wird, alles anzeigen (solange der Filter nicht manuell geändert wurde)
