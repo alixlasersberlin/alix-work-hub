@@ -180,6 +180,12 @@ Deno.serve(async (req) => {
     const region = body?.region ?? 'EU';
     const limit = Math.min(Number(body?.limit ?? 100), 300);
     const useAi = body?.useAi !== false && !!lovableKey;
+    // Einzelkunden-Modus: entweder konkrete Profil-IDs oder Freitextsuche
+    const profileIds: string[] = Array.isArray(body?.profile_ids)
+      ? body.profile_ids.filter((x: unknown) => typeof x === 'string').slice(0, 50)
+      : [];
+    const search = typeof body?.search === 'string' ? body.search.trim().slice(0, 120) : '';
+    const single = profileIds.length > 0 || search.length >= 2;
 
     const { data: run, error: runErr } = await svc
       .from('ratenplan_sync_runs')
@@ -187,21 +193,40 @@ Deno.serve(async (req) => {
         mode: 'dry_run',
         status: 'running',
         created_by: uid,
-        scope: { statuses: statusScope, region, limit, useAi },
+        scope: { statuses: statusScope, region, limit, useAi, profile_ids: profileIds, search: search || null },
       })
       .select('id')
       .single();
     if (runErr) throw runErr;
     const runId = run.id as string;
 
-    const { data: profiles, error: pErr } = await svc
+    let pq: any = svc
       .from('zoho_recurring_profiles')
-      .select('id, customer_id, customer_name, company_name, reference_number, recurrence_name, status, start_date, next_invoice_date, end_date, last_sent_date, total, currency, accounting_region')
-      .in('status', statusScope)
-      .eq('accounting_region', region)
+      .select('id, customer_id, customer_name, company_name, reference_number, recurrence_name, status, start_date, next_invoice_date, end_date, last_sent_date, total, currency, accounting_region');
+
+    if (profileIds.length) {
+      pq = pq.in('id', profileIds);
+    } else {
+      // Bei gezielter Suche werden Status/Region-Filter gelockert, damit der Kunde immer gefunden wird
+      if (!single) {
+        pq = pq.in('status', statusScope).eq('accounting_region', region);
+      }
+      if (search) {
+        const esc = search.replace(/[%,()]/g, ' ').trim();
+        pq = pq.or([
+          `reference_number.ilike.%${esc}%`,
+          `customer_name.ilike.%${esc}%`,
+          `company_name.ilike.%${esc}%`,
+          `recurrence_name.ilike.%${esc}%`,
+        ].join(','));
+      }
+    }
+
+    const { data: profiles, error: pErr } = await pq
       .order('start_date', { ascending: false })
-      .limit(limit);
+      .limit(single ? Math.min(limit, 50) : limit);
     if (pErr) throw pErr;
+
 
     const items: any[] = [];
     let found = 0, review = 0, ready = 0, skipped = 0;

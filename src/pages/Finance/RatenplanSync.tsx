@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import {
-  CalendarSync, FileSearch, Play, Undo2, FileDown, Loader2, ScanText, Sparkles, AlertTriangle,
+  CalendarSync, FileSearch, Play, Undo2, FileDown, Loader2, ScanText, Sparkles, AlertTriangle, Search, X,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -42,11 +43,28 @@ const STATUS_VARIANT: Record<string, 'default' | 'secondary' | 'outline' | 'dest
 
 const de = (d?: string | null) => (d ? new Date(d).toLocaleDateString('de-DE') : '—');
 
+type ProfileHit = {
+  id: string;
+  reference_number: string | null;
+  customer_name: string | null;
+  company_name: string | null;
+  recurrence_name: string | null;
+  status: string | null;
+  accounting_region: string | null;
+  start_date: string | null;
+};
+
 export default function RatenplanSync() {
   const [region, setRegion] = useState<'EU' | 'CH'>('EU');
   const [statuses, setStatuses] = useState<string[]>(['stopped', 'expired']);
   const [limit, setLimit] = useState(100);
   const [useAi, setUseAi] = useState(true);
+
+  // Einzelkunden-Modus
+  const [term, setTerm] = useState('');
+  const [hits, setHits] = useState<ProfileHit[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [target, setTarget] = useState<ProfileHit | null>(null);
 
   const [scanning, setScanning] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -67,6 +85,34 @@ export default function RatenplanSync() {
     return data as any;
   };
 
+  const searchProfiles = async () => {
+    const q = term.trim();
+    if (q.length < 2) { toast.error('Mindestens 2 Zeichen eingeben'); return; }
+    setSearching(true);
+    try {
+      const esc = q.replace(/[%,()]/g, ' ').trim();
+      const { data, error } = await supabase
+        .from('zoho_recurring_profiles')
+        .select('id, reference_number, customer_name, company_name, recurrence_name, status, accounting_region, start_date')
+        .or([
+          `reference_number.ilike.%${esc}%`,
+          `customer_name.ilike.%${esc}%`,
+          `company_name.ilike.%${esc}%`,
+          `recurrence_name.ilike.%${esc}%`,
+        ].join(','))
+        .order('start_date', { ascending: false })
+        .limit(25);
+      if (error) throw error;
+      const rows = (data as any as ProfileHit[]) ?? [];
+      setHits(rows);
+      if (!rows.length) toast.info('Kein Ratenplan gefunden');
+    } catch (e: any) {
+      toast.error(e.message ?? 'Suche fehlgeschlagen');
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const loadItems = async (id: string) => {
     const { data, error } = await supabase
       .from('ratenplan_sync_items')
@@ -80,21 +126,27 @@ export default function RatenplanSync() {
     setSelected(new Set(rows.filter((r) => r.status === 'bereit').map((r) => r.id)));
   };
 
-  const runScan = async () => {
+  const runScan = async (opts?: { profile?: ProfileHit | null }) => {
+    const profile = opts?.profile ?? target;
     setScanning(true); setProgress(8); setItems([]); setStats(null); setRunId(null); setBackupId(null);
     const tick = setInterval(() => setProgress((p) => Math.min(p + 3, 92)), 900);
     try {
-      const res = await call({ action: 'scan', region, statuses, limit, useAi });
+      const payload: Record<string, unknown> = { action: 'scan', region, statuses, limit, useAi };
+      if (profile) payload.profile_ids = [profile.id];
+      const res = await call(payload);
       setRunId(res.run_id); setStats(res.stats);
       await loadItems(res.run_id);
       setProgress(100);
-      toast.success(`Dry Run abgeschlossen: ${res.stats.ready} bereit, ${res.stats.needs_review} Nacharbeit`);
+      toast.success(
+        `${profile ? 'Einzelprüfung' : 'Dry Run'} abgeschlossen: ${res.stats.ready} bereit, ${res.stats.needs_review} Nacharbeit`,
+      );
     } catch (e: any) {
       toast.error(e.message ?? 'Scan fehlgeschlagen');
     } finally {
       clearInterval(tick); setScanning(false);
     }
   };
+
 
   const runApply = async () => {
     if (!runId || selected.size === 0) return;
@@ -188,12 +240,77 @@ export default function RatenplanSync() {
       </div>
 
       <Card>
+        <CardHeader><CardTitle className="text-base flex items-center gap-2">
+          <Search className="w-4 h-4" /> Einzelnen Kunden / Ratenplan suchen
+        </CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Input
+              className="max-w-md"
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') searchProfiles(); }}
+              placeholder="Kundenauftrag, Referenznummer, Kunde oder Ratenplanname…"
+            />
+            <Button variant="outline" onClick={searchProfiles} disabled={searching}>
+              {searching ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
+              Suchen
+            </Button>
+            {target && (
+              <Button variant="ghost" onClick={() => { setTarget(null); setHits([]); setTerm(''); }}>
+                <X className="w-4 h-4 mr-2" /> Einzelmodus beenden
+              </Button>
+            )}
+          </div>
+
+          {target ? (
+            <div className="rounded-md border border-primary/40 bg-primary/5 p-3 text-sm flex flex-wrap items-center gap-3">
+              <Badge variant="default">Einzelmodus</Badge>
+              <span className="font-mono text-xs">{target.reference_number ?? '—'}</span>
+              <span className="font-medium">{target.company_name || target.customer_name}</span>
+              <span className="text-xs text-muted-foreground">
+                {target.recurrence_name ?? ''} · {target.status} · {target.accounting_region} · Start {de(target.start_date)}
+              </span>
+              <Button size="sm" onClick={() => runScan({ profile: target })} disabled={scanning}>
+                {scanning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSearch className="w-4 h-4 mr-2" />}
+                Nur diesen Kunden prüfen
+              </Button>
+            </div>
+          ) : hits.length > 0 && (
+            <div className="max-h-64 overflow-auto rounded-md border divide-y">
+              {hits.map((h) => (
+                <button
+                  key={h.id}
+                  type="button"
+                  className="w-full text-left px-3 py-2 hover:bg-accent text-sm"
+                  onClick={() => { setTarget(h); setHits([]); }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs w-32 shrink-0">{h.reference_number ?? '—'}</span>
+                    <span className="flex-1 truncate font-medium">{h.company_name || h.customer_name}</span>
+                    <Badge variant="outline">{h.status}</Badge>
+                    <Badge variant="secondary">{h.accounting_region}</Badge>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground truncate">
+                    {h.recurrence_name ?? ''} · Start {de(h.start_date)}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Im Einzelmodus laufen alle Schritte (Dry Run, Synchronisieren, Rollback, Datumskorrektur) ausschließlich für den gewählten Ratenplan.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="text-base">Auswahl & Aktionen</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end gap-4">
             <div>
               <label className="text-xs text-muted-foreground block mb-1">Region</label>
-              <select className="h-9 rounded-md border bg-background px-2 text-sm"
+              <select className="h-9 rounded-md border bg-background px-2 text-sm" disabled={!!target}
                 value={region} onChange={(e) => setRegion(e.target.value as 'EU' | 'CH')}>
                 <option value="EU">Buchhaltung EU</option>
                 <option value="CH">Buchhaltung CH</option>
@@ -201,7 +318,7 @@ export default function RatenplanSync() {
             </div>
             <div>
               <label className="text-xs text-muted-foreground block mb-1">Status</label>
-              <select className="h-9 rounded-md border bg-background px-2 text-sm"
+              <select className="h-9 rounded-md border bg-background px-2 text-sm" disabled={!!target}
                 value={statuses.join(',')} onChange={(e) => setStatuses(e.target.value.split(','))}>
                 <option value="stopped,expired">Beendet (gestoppt + abgelaufen)</option>
                 <option value="stopped">Nur gestoppt</option>
@@ -211,7 +328,7 @@ export default function RatenplanSync() {
             </div>
             <div>
               <label className="text-xs text-muted-foreground block mb-1">Batchgröße</label>
-              <select className="h-9 rounded-md border bg-background px-2 text-sm"
+              <select className="h-9 rounded-md border bg-background px-2 text-sm" disabled={!!target}
                 value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
                 {[20, 50, 100, 200, 300].map((n) => <option key={n} value={n}>{n}</option>)}
               </select>
@@ -223,10 +340,11 @@ export default function RatenplanSync() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button onClick={runScan} disabled={scanning}>
+            <Button onClick={() => runScan()} disabled={scanning}>
               {scanning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSearch className="w-4 h-4 mr-2" />}
-              Dokumente durchsuchen · OCR · Dry Run
+              {target ? 'Dry Run (nur gewählter Kunde)' : 'Dokumente durchsuchen · OCR · Dry Run'}
             </Button>
+
             <Button variant="default" onClick={runApply} disabled={!runId || applying || selected.size === 0}>
               {applying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
               Synchronisieren ({selected.size})
