@@ -95,26 +95,59 @@ Deno.serve(async (req: Request) => {
     const isNumericId = /^\d+$/.test(rawInput);
 
     if (!isNumericId) {
-      // Lookup by contact_number (customer number like CUS-25967)
-      const lookupUrl = `${zohoConfig.booksApiBaseUrl}/contacts?organization_id=${zohoConfig.organizationId}&contact_number=${encodeURIComponent(rawInput)}`;
-      const lookupRes = await fetch(lookupUrl, {
-        headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
-      });
-      if (!lookupRes.ok) {
-        const text = await lookupRes.text();
-        return jsonResponse({ error: "Zoho lookup failed", message: text }, 502);
+      const authHeaders = { Authorization: `Zoho-oauthtoken ${accessToken}` };
+      const base = `${zohoConfig.booksApiBaseUrl}`;
+      const org = zohoConfig.organizationId;
+
+      // 1) Lookup by contact_number (customer number like CUS-25967)
+      let found: string | null = null;
+      const lookupRes = await fetch(
+        `${base}/contacts?organization_id=${org}&contact_number=${encodeURIComponent(rawInput)}`,
+        { headers: authHeaders }
+      );
+      if (lookupRes.ok) {
+        const lookupJson = await lookupRes.json();
+        const matches = Array.isArray(lookupJson.contacts) ? lookupJson.contacts : [];
+        if (matches.length > 0) found = String(matches[0].contact_id);
       }
-      const lookupJson = await lookupRes.json();
-      const matches = Array.isArray(lookupJson.contacts) ? lookupJson.contacts : [];
-      if (matches.length === 0) {
+
+      // 2) Fallback: input may be a sales order number (e.g. SO-3590) -> resolve its customer
+      if (!found) {
+        const soRes = await fetch(
+          `${base}/salesorders?organization_id=${org}&salesorder_number=${encodeURIComponent(rawInput)}`,
+          { headers: authHeaders }
+        );
+        if (soRes.ok) {
+          const soJson = await soRes.json();
+          const sos = Array.isArray(soJson.salesorders) ? soJson.salesorders : [];
+          if (sos.length > 0 && sos[0].customer_id) found = String(sos[0].customer_id);
+        }
+      }
+
+      // 3) Fallback: input may be an invoice number
+      if (!found) {
+        const invRes = await fetch(
+          `${base}/invoices?organization_id=${org}&invoice_number=${encodeURIComponent(rawInput)}`,
+          { headers: authHeaders }
+        );
+        if (invRes.ok) {
+          const invJson = await invRes.json();
+          const invs = Array.isArray(invJson.invoices) ? invJson.invoices : [];
+          if (invs.length > 0 && invs[0].customer_id) found = String(invs[0].customer_id);
+        }
+      }
+
+      if (!found) {
         return jsonResponse({
           error: "Customer not found in Zoho",
-          message: `No contact with customer number "${rawInput}" found in ${source_system}.`,
+          message: `Kein Kontakt für "${rawInput}" in ${source_system} gefunden (weder als Kundennummer, Auftrags- noch Rechnungsnummer).`,
         }, 404);
       }
-      resolvedContactId = String(matches[0].contact_id);
+
+      resolvedContactId = found;
       console.log(`[sync-single-customer] Resolved ${rawInput} -> contact_id ${resolvedContactId}`);
     }
+
 
     const contactRes = await fetch(
       `${zohoConfig.booksApiBaseUrl}/contacts/${resolvedContactId}?organization_id=${zohoConfig.organizationId}`,
