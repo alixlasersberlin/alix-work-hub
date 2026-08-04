@@ -81,11 +81,50 @@ function LiveTab() {
         <KpiCard label="Übertragen" value={stats ? `${(stats.bytes / 1024 / 1024).toFixed(2)} MB` : '—'} icon={Database} hint={stats ? `${stats.slow} Abfragen > 1 s` : undefined} />
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={!samples.length || saving}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              const { data: u } = await supabase.auth.getUser();
+              const uid = u?.user?.id;
+              if (!uid) throw new Error('Nicht angemeldet');
+              const rows = [
+                {
+                  created_by: uid, scope: 'session', route: null, kind: null, target: null,
+                  calls: samples.length, avg_ms: stats?.avg ?? 0, p95_ms: stats?.p95 ?? 0,
+                  max_ms: Math.max(...samples.map(s => s.ms)), total_bytes: stats?.bytes ?? 0,
+                },
+                ...byRoute.map(r => ({
+                  created_by: uid, scope: 'route', route: r.route, kind: null, target: null,
+                  calls: r.calls, avg_ms: Math.round(r.total / r.calls), p95_ms: 0, max_ms: 0, total_bytes: 0,
+                })),
+                ...byTarget.map(t => ({
+                  created_by: uid, scope: 'target', route: null, kind: t.kind, target: t.target,
+                  calls: t.calls, avg_ms: Math.round(t.total / t.calls), p95_ms: 0, max_ms: t.max, total_bytes: 0,
+                })),
+              ];
+              const { error } = await supabase.from('perf_metric_snapshots' as any).insert(rows as any);
+              if (error) throw error;
+              toast.success(`${rows.length} Messwerte in der Historie gespeichert`);
+            } catch (e: any) {
+              toast.error(e.message ?? 'Speichern fehlgeschlagen');
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          {saving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+          In Historie speichern
+        </Button>
         <Button variant="outline" size="sm" onClick={clearPerfSamples}>
           <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Messwerte zurücksetzen
         </Button>
       </div>
+
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-border bg-card overflow-hidden card-glow">
