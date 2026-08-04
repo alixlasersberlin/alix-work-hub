@@ -523,7 +523,7 @@ export default function WiederkehrendeZahler() {
 
       <div className="grid md:grid-cols-4 gap-4">
         <KpiTile label="Kunden" value={totals.customers} icon={Repeat} accent="sky" />
-        <KpiTile label="Selbstzahler" value={totals.activeProfiles} icon={Repeat} accent="violet" />
+        <KpiTile label={secondTile.label} value={secondTile.value} icon={Repeat} accent="violet" />
         <KpiTile label="Volumen / Monat" value={fmt(totals.monthly)} icon={Repeat} accent="gold" />
         <KpiTile label="Restsumme offen" value={fmt(totals.remaining)} icon={Repeat} accent="emerald" />
       </div>
