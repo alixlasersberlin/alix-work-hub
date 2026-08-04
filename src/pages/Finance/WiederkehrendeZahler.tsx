@@ -136,6 +136,7 @@ export default function WiederkehrendeZahler() {
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'all' | 'paid' | 'unpaid' | 'overdue' | 'draft'>('all');
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [pageSize, setPageSize] = useState<20 | 50 | 100 | 'all'>(20);
 
   const { canWrite } = useFinancePermissions();
   const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
