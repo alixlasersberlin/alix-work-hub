@@ -669,7 +669,16 @@ export default function WiederkehrendeZahler() {
                                   </td>
                                   <td className="px-3 py-2">{fmtDate(p.created_at)}</td>
                                   <td className="px-3 py-2">{p.repeat_every ?? 1}× {p.recurrence_frequency ?? '—'}</td>
+                                  <td className="px-3 py-2">
+                                    {p.delivery_date ? (
+                                      <>
+                                        {fmtDate(p.delivery_date)}
+                                        {p.delivery_source && <div className="text-[10px] text-muted-foreground">{p.delivery_source}</div>}
+                                      </>
+                                    ) : '—'}
+                                  </td>
                                   <td className="px-3 py-2">{fmtDate(p.start_date)}</td>
+
                                   <td className="px-3 py-2">{fmtDate(p.end_date)}</td>
                                   <td className="px-3 py-2">{fmtDate(p.last_sent_date)}</td>
                                   <td className="px-3 py-2">{fmtDate(p.next_invoice_date)}</td>
