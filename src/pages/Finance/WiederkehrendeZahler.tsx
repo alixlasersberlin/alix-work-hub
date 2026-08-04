@@ -137,6 +137,8 @@ export default function WiederkehrendeZahler() {
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [pageSize, setPageSize] = useState<20 | 50 | 100 | 'all'>(20);
+  type SortKey = 'date_new' | 'date_old' | 'amount_desc' | 'amount_asc' | 'name_asc' | 'name_desc';
+  const [sortBy, setSortBy] = useState<SortKey>('date_new');
 
   const { canWrite } = useFinancePermissions();
   const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
@@ -292,9 +294,22 @@ export default function WiederkehrendeZahler() {
     );
   }, [groups, search]);
 
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    switch (sortBy) {
+      case 'amount_desc': return arr.sort((a, b) => b.monthly - a.monthly);
+      case 'amount_asc': return arr.sort((a, b) => a.monthly - b.monthly);
+      case 'date_new': return arr.sort((a, b) => (b.newestCreatedAt || '').localeCompare(a.newestCreatedAt || ''));
+      case 'date_old': return arr.sort((a, b) => (a.newestCreatedAt || '').localeCompare(b.newestCreatedAt || ''));
+      case 'name_asc': return arr.sort((a, b) => a.customer_name.localeCompare(b.customer_name, 'de'));
+      case 'name_desc': return arr.sort((a, b) => b.customer_name.localeCompare(a.customer_name, 'de'));
+      default: return arr;
+    }
+  }, [filtered, sortBy]);
+
   const visible = useMemo(
-    () => (pageSize === 'all' ? filtered : filtered.slice(0, pageSize)),
-    [filtered, pageSize]
+    () => (pageSize === 'all' ? sorted : sorted.slice(0, pageSize)),
+    [sorted, pageSize]
   );
 
   const totals = useMemo(() => {
@@ -488,6 +503,22 @@ export default function WiederkehrendeZahler() {
               {s === 'all' ? 'Status: Alle' : s === 'unpaid' ? 'Offen' : s === 'overdue' ? 'Überfällig' : s === 'paid' ? 'Bezahlt' : 'Entwurf'}
             </button>
           ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Sortierung:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+            className="h-9 rounded-md border border-border bg-background px-2 text-xs"
+          >
+            <option value="amount_desc">Betrag absteigend</option>
+            <option value="amount_asc">Betrag aufsteigend</option>
+            <option value="date_new">Datum neueste</option>
+            <option value="date_old">Datum älteste</option>
+            <option value="name_asc">Alphabetisch A–Z</option>
+            <option value="name_desc">Alphabetisch Z–A</option>
+          </select>
         </div>
 
         <div className="flex items-center gap-2">
