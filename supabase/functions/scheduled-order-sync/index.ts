@@ -177,24 +177,36 @@ Deno.serve(async (req: Request) => {
 
     const accessToken = await getAccessToken(zohoConfig);
 
-    const daysBack = Math.max(1, Math.min(365, Number(body.days_back ?? 1) || 1));
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - daysBack);
-    cutoff.setHours(0, 0, 0, 0);
-    // Zoho Books requires ISO8601 datetime, e.g. 2026-05-13T00:00:00+0000
-    const lastModifiedAfter = cutoff.toISOString().replace(/\.\d{3}Z$/, "+0000");
+    // "since" (YYYY-MM-DD oder ISO) erlaubt einen Voll-Backfill seit Zoho-Beginn
+    const sinceRaw = (body.since as string | undefined) ?? null;
+    let lastModifiedAfter: string;
+    if (sinceRaw) {
+      const d = new Date(sinceRaw.length === 10 ? `${sinceRaw}T00:00:00Z` : sinceRaw);
+      lastModifiedAfter = d.toISOString().replace(/\.\d{3}Z$/, "+0000");
+    } else {
+      const daysBack = Math.max(1, Math.min(365, Number(body.days_back ?? 1) || 1));
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - daysBack);
+      cutoff.setHours(0, 0, 0, 0);
+      // Zoho Books requires ISO8601 datetime, e.g. 2026-05-13T00:00:00+0000
+      lastModifiedAfter = cutoff.toISOString().replace(/\.\d{3}Z$/, "+0000");
+    }
 
     console.log(`[scheduled-order-sync] Start ${sourceSystem}, modified since ${lastModifiedAfter}`);
 
-    let page = 1;
+    const startPage = Math.max(1, Number(body.page ?? 1) || 1);
+    let page = startPage;
     let totalImported = 0;
     let totalUpdated = 0;
     let totalSkipped = 0;
     let totalFailed = 0;
     let totalFetched = 0;
     let autoSyncedCustomers = 0;
+    let zohoHasMore = false;
     const errors: { id: string; message: string }[] = [];
-    const MAX_PAGES = 50;
+    const MAX_PAGES = Math.min(50, Math.max(1, Number(body.max_pages ?? 50) || 50));
+    const lastPageAllowed = startPage + MAX_PAGES - 1;
+    const SOFT_DEADLINE_MS = Number(body.soft_deadline_ms ?? 120_000);
     const maxOrders = body.max_orders != null ? Math.max(1, Number(body.max_orders)) : null;
     const autoSyncCustomers = body.auto_sync_customers !== false;
 
