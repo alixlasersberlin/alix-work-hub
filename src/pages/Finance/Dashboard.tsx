@@ -17,26 +17,16 @@ export default function FinanceDashboard() {
 
   const load = useCallback(async () => {
     const fmt = (n: number) => n.toLocaleString('de-DE', { style: 'currency', currency: region === 'CH' ? 'CHF' : 'EUR' });
-    const [accountsRes, contractsRes, txRes] = await Promise.all([
-      supabase.from('finance_accounts' as any).select('current_balance, overdue_balance').eq('accounting_region', region),
-      supabase.from('finance_contracts' as any).select('id, status, monthly_rate, remaining_amount').eq('status', 'aktiv').eq('accounting_region', region),
-      supabase.from('finance_transactions' as any).select('amount, transaction_type').eq('accounting_region', region),
-    ]);
-    const accounts = (accountsRes.data ?? []) as any[];
-    const contracts = (contractsRes.data ?? []) as any[];
-    const tx = (txRes.data ?? []) as any[];
-    const open = accounts.reduce((s, a) => s + Number(a.current_balance || 0), 0);
-    const overdue = accounts.reduce((s, a) => s + Number(a.overdue_balance || 0), 0);
-    const deposits = tx.filter(t => t.transaction_type === 'Anzahlung').reduce((s, t) => s + Number(t.amount || 0), 0);
-    const payments = tx.filter(t => t.transaction_type === 'Zahlung').reduce((s, t) => s + Number(t.amount || 0), 0);
-    const monthlyRates = contracts.reduce((s, c) => s + Number(c.monthly_rate || 0), 0);
+    // Eine einzige Server-Abfrage statt drei Tabellen-Scans im Client.
+    const { data } = await supabase.rpc('finance_dashboard_kpis' as any, { _region: region });
+    const k = (data ?? {}) as Record<string, number>;
     setKpis([
-      { label: 'Offene Forderungen', value: fmt(open), icon: Banknote, accent: 'gold' },
-      { label: 'Überfällige Forderungen', value: fmt(overdue), icon: AlertTriangle, accent: 'rose' },
-      { label: 'Offene Anzahlungen', value: fmt(deposits), icon: Wallet, accent: 'sky' },
-      { label: 'Aktive Verträge', value: String(contracts.length), icon: FileText, accent: 'violet' },
-      { label: 'Offene Raten (monatlich)', value: fmt(monthlyRates), icon: ScrollText, accent: 'gold' },
-      { label: 'Zahlungseingänge', value: fmt(payments), icon: ArrowDownToLine, accent: 'emerald' },
+      { label: 'Offene Forderungen', value: fmt(Number(k.open || 0)), icon: Banknote, accent: 'gold' },
+      { label: 'Überfällige Forderungen', value: fmt(Number(k.overdue || 0)), icon: AlertTriangle, accent: 'rose' },
+      { label: 'Offene Anzahlungen', value: fmt(Number(k.deposits || 0)), icon: Wallet, accent: 'sky' },
+      { label: 'Aktive Verträge', value: String(Number(k.contracts || 0)), icon: FileText, accent: 'violet' },
+      { label: 'Offene Raten (monatlich)', value: fmt(Number(k.monthlyRates || 0)), icon: ScrollText, accent: 'gold' },
+      { label: 'Zahlungseingänge', value: fmt(Number(k.payments || 0)), icon: ArrowDownToLine, accent: 'emerald' },
     ]);
     setLoading(false);
   }, [region]);
