@@ -21,6 +21,9 @@ import { RecurringProfileCreateDialog } from '@/components/finance/RecurringProf
 import { RecurringInvoiceBookDialog, type BookableInvoice } from '@/components/finance/RecurringInvoiceBookDialog';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 
 // Beträge auf dieser Seite werden bewusst NICHT durch die Revenue-Mask (Super Admin)
@@ -152,6 +155,8 @@ export default function WiederkehrendeZahler() {
   const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
   const [stoppingId, setStoppingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
 
   // Rollen laden asynchron: sobald Admin erkannt wird, alles anzeigen (solange der Filter nicht manuell geändert wurde)
@@ -182,16 +187,26 @@ export default function WiederkehrendeZahler() {
     load();
   }
 
-  async function deleteProfile(p: Profile) {
-    if (!confirm(`Buchung "${p.recurrence_name || p.reference_number || ''}" endgültig löschen?`)) return;
+  async function confirmDelete() {
+    const p = deleteTarget;
+    const reason = deleteReason.trim();
+    if (!p || reason.length < 5) return;
     setDeletingId(p.id);
-    const { error } = await supabase.from('zoho_recurring_profiles').delete().eq('id', p.id);
+
+    const { error } = await supabase.rpc('delete_recurring_profile_with_reason' as any, {
+      p_id: p.id,
+      p_reason: reason,
+    });
+
     setDeletingId(null);
     if (error) {
       toast({ title: 'Löschen fehlgeschlagen', description: error.message, variant: 'destructive' });
       return;
     }
-    toast({ title: 'Buchung gelöscht' });
+
+    setDeleteTarget(null);
+    setDeleteReason('');
+    toast({ title: 'Buchung gelöscht', description: 'Löschgrund wurde im Audit-Protokoll gespeichert.' });
     load();
   }
 
@@ -722,7 +737,7 @@ export default function WiederkehrendeZahler() {
                                           variant="ghost"
                                           className="text-destructive hover:text-destructive"
                                           disabled={deletingId === p.id}
-                                          onClick={() => deleteProfile(p)}
+                                          onClick={() => { setDeleteTarget(p); setDeleteReason(''); }}
                                           title="Buchung löschen"
                                         >
                                           {deletingId === p.id
@@ -798,6 +813,42 @@ export default function WiederkehrendeZahler() {
         region={region === 'CH' ? 'CH' : 'EU'}
         onCreated={load}
       />
+
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => { if (!v && !deletingId) { setDeleteTarget(null); setDeleteReason(''); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Buchung löschen</DialogTitle>
+            <DialogDescription>
+              „{deleteTarget?.recurrence_name || deleteTarget?.reference_number || '—'}" wird endgültig gelöscht.
+              Bitte geben Sie einen Löschgrund an (Pflichtfeld, min. 5 Zeichen). Er wird im Audit-Protokoll gespeichert.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="delete-reason">Löschgrund *</Label>
+            <Textarea
+              id="delete-reason"
+              value={deleteReason}
+              maxLength={500}
+              rows={4}
+              placeholder="z. B. Doppelerfassung, Vertrag storniert …"
+              onChange={(e) => setDeleteReason(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">{deleteReason.trim().length}/500 Zeichen</p>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" disabled={!!deletingId} onClick={() => { setDeleteTarget(null); setDeleteReason(''); }}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteReason.trim().length < 5 || !!deletingId}
+              onClick={confirmDelete}
+            >
+              {deletingId ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Endgültig löschen'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
