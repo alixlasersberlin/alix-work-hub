@@ -664,7 +664,7 @@ async function processBackupStep(params: {
 
       while (state.tableIndex < BACKUP_TABLES.length) {
         const table = BACKUP_TABLES[state.tableIndex];
-        if (pagesProcessed === 0 || pagesProcessed % 5 === 0) {
+        if (pagesProcessed === 0 || pagesProcessed % 25 === 0) {
           await updateBackupMessage(
             adminClient,
             backupId,
