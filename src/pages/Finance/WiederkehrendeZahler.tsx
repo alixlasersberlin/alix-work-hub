@@ -757,7 +757,7 @@ export default function WiederkehrendeZahler() {
                                           variant="ghost"
                                           className="text-destructive hover:text-destructive"
                                           disabled={deletingId === p.id}
-                                          onClick={() => deleteProfile(p)}
+                                          onClick={() => { setDeleteTarget(p); setDeleteReason(''); }}
                                           title="Buchung löschen"
                                         >
                                           {deletingId === p.id
