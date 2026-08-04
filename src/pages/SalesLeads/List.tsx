@@ -368,7 +368,36 @@ export default function SalesLeadsList() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={datePreset} onValueChange={setDatePreset}>
+              <SelectTrigger className="w-[180px]"><SelectValue placeholder="Zeitraum" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Gesamter Zeitraum</SelectItem>
+                <SelectItem value="heute">Heute</SelectItem>
+                <SelectItem value="7">Letzte 7 Tage</SelectItem>
+                <SelectItem value="30">Letzte 30 Tage</SelectItem>
+                <SelectItem value="90">Letzte 90 Tage</SelectItem>
+                <SelectItem value="365">Letzte 12 Monate</SelectItem>
+                <SelectItem value="custom">Benutzerdefiniert …</SelectItem>
+              </SelectContent>
+            </Select>
+            {datePreset === 'custom' && (
+              <>
+                <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-[150px]" aria-label="Datum von" />
+                <span className="text-xs text-muted-foreground">bis</span>
+                <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-[150px]" aria-label="Datum bis" />
+              </>
+            )}
+            <Select value={pageSize} onValueChange={setPageSize}>
+              <SelectTrigger className="w-[130px]"><SelectValue placeholder="Anzahl" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="20">20 / Seite</SelectItem>
+                <SelectItem value="50">50 / Seite</SelectItem>
+                <SelectItem value="100">100 / Seite</SelectItem>
+                <SelectItem value="all">Alle</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
           <div className="flex items-center gap-2 ml-auto">
             <span className="text-xs text-muted-foreground">{selected.size} ausgewählt</span>
             {selected.size > 0 && (
