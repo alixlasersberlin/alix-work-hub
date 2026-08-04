@@ -702,7 +702,8 @@ export default function WiederkehrendeZahler() {
                               {g.profiles.map(p => {
                                 const monthly = Number(p.total || 0) * monthsFactor(p.recurrence_frequency, p.repeat_every);
                                 return (
-                                <tr key={p.id} className="border-t border-border">
+                                <React.Fragment key={p.id}>
+                                <tr className="border-t border-border">
                                   <td className="px-3 py-2">
                                     <div className="font-medium">{p.recurrence_name || '—'}</div>
                                     {p.reference_number && <div className="text-xs text-muted-foreground font-mono">{p.reference_number}</div>}
@@ -735,8 +736,10 @@ export default function WiederkehrendeZahler() {
                                   <td className="px-3 py-2">
                                     <Badge variant={(p.status ?? '').toLowerCase() === 'active' ? 'default' : 'secondary'} className="capitalize">{p.status ?? '—'}</Badge>
                                   </td>
-                                  <td className="px-3 py-2 text-right">
-                                    <div className="flex items-center gap-2 justify-end">
+                                </tr>
+                                <tr className="bg-muted/20">
+                                  <td className="px-3 pb-3 pt-0" colSpan={12}>
+                                    <div className="flex items-center gap-2">
                                       <Button
                                         size="sm"
                                         variant="outline"
@@ -770,9 +773,10 @@ export default function WiederkehrendeZahler() {
                                       )}
                                     </div>
                                   </td>
-
                                 </tr>
+                                </React.Fragment>
                                 );
+
                               })}
                             </tbody>
                             <tfoot>
