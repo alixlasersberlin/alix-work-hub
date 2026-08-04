@@ -1128,7 +1128,7 @@ export default function AppLayout() {
     const id = window.setTimeout(() => {
       window.dispatchEvent(new Event('lager-data-refresh'));
       window.dispatchEvent(new Event('route-plans-refresh'));
-    }, isOrdersRoute ? 5000 : 0);
+    }, isOrdersRoute ? 5000 : 1500);
     return () => window.clearTimeout(id);
   }, [location.pathname]);
 
@@ -1143,7 +1143,7 @@ export default function AppLayout() {
       if (cancelled) return;
       setLagerCounts((prev) => ({ ...prev, '/tourenplanung': count ?? 0 }));
     };
-    const id = window.setTimeout(load, isOrdersRoute ? 5000 : 0);
+    const id = window.setTimeout(load, isOrdersRoute ? 5000 : 1500);
     const intervalId = window.setInterval(load, 15 * 60 * 1000);
     let debounceId: number | undefined;
     const scheduleReload = () => {
@@ -1187,7 +1187,7 @@ export default function AppLayout() {
       setLagerCounts((prev) => ({ ...prev, '/verkauf/angebote': count ?? 0 }));
     };
     const loadAll = () => { void loadLeads(); void loadOffers(); };
-    const id = window.setTimeout(loadAll, isOrdersRoute ? 5000 : 0);
+    const id = window.setTimeout(loadAll, isOrdersRoute ? 5000 : 1500);
     const intervalId = window.setInterval(loadAll, 15 * 60 * 1000);
     let debounceLeads: number | undefined;
     let debounceOffers: number | undefined;
@@ -1299,7 +1299,7 @@ export default function AppLayout() {
   }, [atOnly, isOrdersRoute]);
 
   useEffect(() => {
-    const id = window.setTimeout(() => window.dispatchEvent(new Event('einkauf-counts-refresh')), isOrdersRoute ? 5000 : 0);
+    const id = window.setTimeout(() => window.dispatchEvent(new Event('einkauf-counts-refresh')), isOrdersRoute ? 5000 : 1500);
     return () => window.clearTimeout(id);
   }, [location.pathname, isOrdersRoute]);
 
