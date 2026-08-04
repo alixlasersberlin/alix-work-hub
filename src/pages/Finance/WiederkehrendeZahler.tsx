@@ -776,73 +776,11 @@ export default function WiederkehrendeZahler() {
                       </div>
                     )}
 
-                    {g.invoices.length > 0 && (
-                      <div>
-                        <h4 className="text-xs uppercase text-muted-foreground font-medium mb-2">Rechnungen ({g.invoices.length})</h4>
-                        <div className="rounded-lg border border-border overflow-hidden">
-                          <table className="w-full text-sm">
-                            <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
-                              <tr>
-                                <th className="text-left px-3 py-2">Rechnungsnr.</th>
-                                <th className="text-left px-3 py-2">Datum</th>
-                                <th className="text-left px-3 py-2">Fällig</th>
-                                <th className="text-right px-3 py-2">Betrag</th>
-                                <th className="text-right px-3 py-2">Offen</th>
-                                <th className="text-left px-3 py-2">Status</th>
-                                <th className="text-left px-3 py-2">Letzte Zahlung</th>
-                                <th className="text-right px-3 py-2">Aktion</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {g.invoices.slice(0, 50).map(inv => (
-                                <tr key={inv.id} className="border-t border-border">
-                                  <td className="px-3 py-2 font-mono">
-                                    {inv.zoho_invoice_id ? (
-                                      <button
-                                        type="button"
-                                        onClick={() => setPdfInvoice({
-                                          zoho_invoice_id: inv.zoho_invoice_id,
-                                          invoice_number: inv.invoice_number,
-                                          source_system: (inv as any).source_system ?? 'zoho_eu_1',
-                                          recurring: false,
-                                        })}
-                                        className="text-primary hover:underline"
-                                        title="Rechnung als PDF öffnen"
-                                      >
-                                        {inv.invoice_number || 'PDF'}
-                                      </button>
-                                    ) : (inv.invoice_number || '—')}
-                                  </td>
-                                  <td className="px-3 py-2">{fmtDate(inv.invoice_date)}</td>
-                                  <td className="px-3 py-2">{fmtDate(inv.due_date)}</td>
-                                  <td className="px-3 py-2 text-right tabular-nums">{fmt(Number(inv.total || 0), inv.currency || 'EUR')}</td>
-                                  <td className={`px-3 py-2 text-right tabular-nums ${Number(inv.balance) > 0 ? 'text-destructive font-medium' : ''}`}>
-                                    {fmt(Number(inv.balance || 0), inv.currency || 'EUR')}
-                                  </td>
-                                  <td className="px-3 py-2">
-                                    <Badge variant={(inv.status ?? '').toLowerCase() === 'paid' ? 'default' : 'secondary'} className="capitalize">{inv.status ?? '—'}</Badge>
-                                  </td>
-                                  <td className="px-3 py-2">{fmtDate(inv.last_payment_date)}</td>
-                                  <td className="px-3 py-2 text-right">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      disabled={!canWrite}
-                                      onClick={() => setBookInvoice(inv as BookableInvoice)}
-                                    >
-                                      Buchen
-                                    </Button>
-                                  </td>
-                                </tr>
-                              ))}
-                              {g.invoices.length > 50 && (
-                                <tr><td colSpan={8} className="px-3 py-2 text-center text-xs text-muted-foreground">… {g.invoices.length - 50} weitere</td></tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
+                    <div className="text-xs text-muted-foreground">
+                      Rechnungen zu diesem Kunden findest du unter{' '}
+                      <Link to="/finance/rechnungen" className="text-primary hover:underline">Rechnungen</Link>.
+                    </div>
+
                   </div>
                 )}
               </div>
