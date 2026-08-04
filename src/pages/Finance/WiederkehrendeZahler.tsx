@@ -506,6 +506,22 @@ export default function WiederkehrendeZahler() {
         </div>
 
         <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Sortierung:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortKey)}
+            className="h-9 rounded-md border border-border bg-background px-2 text-xs"
+          >
+            <option value="amount_desc">Betrag absteigend</option>
+            <option value="amount_asc">Betrag aufsteigend</option>
+            <option value="date_new">Datum neueste</option>
+            <option value="date_old">Datum älteste</option>
+            <option value="name_asc">Alphabetisch A–Z</option>
+            <option value="name_desc">Alphabetisch Z–A</option>
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Anzeige:</span>
           <select
             value={String(pageSize)}
