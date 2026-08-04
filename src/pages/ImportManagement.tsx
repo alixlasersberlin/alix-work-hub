@@ -413,7 +413,44 @@ export default function ImportManagement() {
     }
   }
 
+  // ---- Einzelner Auftrag + zugehörige Rechnungen ----
+  const [singleOrderNumber, setSingleOrderNumber] = useState('');
+  const [singleOrderSource, setSingleOrderSource] = useState<'zoho_eu_1' | 'zoho_eu_2'>('zoho_eu_1');
+  const [singleOrderBusy, setSingleOrderBusy] = useState(false);
+  const [singleOrderResult, setSingleOrderResult] = useState<any | null>(null);
+
+  async function handleSingleOrderInvoiceImport() {
+    const q = singleOrderNumber.trim();
+    if (!q) {
+      toast({ title: 'Auftragsnummer fehlt', description: 'Bitte z. B. SO-3590 eingeben.', variant: 'destructive' });
+      return;
+    }
+    setSingleOrderBusy(true);
+    setSingleOrderResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('zoho-import-order-invoices', {
+        body: { source_system: singleOrderSource, order_number: q },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        setSingleOrderResult(data);
+        toast({ title: data.error, description: data.message ?? '', variant: 'destructive' });
+        return;
+      }
+      setSingleOrderResult(data);
+      toast({
+        title: 'Import abgeschlossen',
+        description: `${data?.salesorder_number ?? q}: Auftrag ${data?.order_imported ? 'importiert' : 'übersprungen'} • Rechnungen ${data?.invoices_imported ?? 0} neu / ${data?.invoices_updated ?? 0} aktualisiert`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setSingleOrderBusy(false);
+    }
+  }
+
   async function handleInvoiceImport() {
+
     setInvoiceImporting(true);
     setInvoiceProgress(null);
     setInvoiceImportError(null);
