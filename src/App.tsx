@@ -136,6 +136,7 @@ const FinanceCockpit = lazy(() => import("./pages/Finance/Cockpit"));
 const FinanceCockpitMandant = lazy(() => import("./pages/Finance/MandantDrilldown"));
 const FinanceSystemstatus = lazy(() => import("./pages/Finance/Systemstatus"));
 const FinanceRaten = lazy(() => import("./pages/Finance/Raten"));
+const FinanceRatenplanSync = lazy(() => import("./pages/Finance/RatenplanSync"));
 const FinanceBelege = lazy(() => import("./pages/Finance/Belege"));
 const FinanceEingangsrechnungen = lazy(() => import("./pages/Finance/Eingangsrechnungen"));
 const FinanceAnlagen = lazy(() => import("./pages/Finance/Anlagen"));
