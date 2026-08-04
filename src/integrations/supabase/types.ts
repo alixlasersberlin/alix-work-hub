@@ -36595,6 +36595,10 @@ export type Database = {
         Args: { _item_id: string; _reviewer_id: string }
         Returns: Json
       }
+      delete_recurring_profile_with_reason: {
+        Args: { p_id: string; p_reason: string }
+        Returns: undefined
+      }
       device_lock_import_raw_rows: {
         Args: { _import_id: string }
         Returns: Json
