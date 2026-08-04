@@ -468,9 +468,13 @@ Deno.serve(async (req) => {
       const patch: Record<string, unknown> = {
         start_date: it.first_rate_new,
         next_invoice_date: nextNew,
+        delivery_date: it.delivery_date ?? null,
+        delivery_source: it.delivery_source ?? null,
+        delivery_document_id: it.document_id ?? null,
         updated_at: new Date().toISOString(),
       };
       if (endNew) patch.end_date = endNew;
+
 
       const { error: uErr } = await svc.from('zoho_recurring_profiles').update(patch).eq('id', p.id);
       if (uErr) { failed++; errors.push(`${it.order_number}: ${uErr.message}`); continue; }
