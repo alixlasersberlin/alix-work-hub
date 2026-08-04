@@ -158,12 +158,18 @@ export default function RatenplanSync() {
     setSelected(new Set(rows.filter((r) => r.status === 'bereit').map((r) => r.id)));
   };
 
-  const runScan = async (opts?: { profile?: ProfileHit | null }) => {
+  const runScan = async (opts?: { profile?: ProfileHit | null; statusesOverride?: string[]; limitOverride?: number }) => {
     const profile = opts?.profile ?? target;
     setScanning(true); setProgress(8); setItems([]); setStats(null); setRunId(null); setBackupId(null);
     const tick = setInterval(() => setProgress((p) => Math.min(p + 3, 92)), 900);
     try {
-      const payload: Record<string, unknown> = { action: 'scan', region, statuses, limit, useAi };
+      const payload: Record<string, unknown> = {
+        action: 'scan',
+        region,
+        statuses: opts?.statusesOverride ?? statuses,
+        limit: opts?.limitOverride ?? limit,
+        useAi,
+      };
       if (profile) payload.profile_ids = [profile.id];
       const res = await call(payload);
       setRunId(res.run_id); setStats(res.stats);
