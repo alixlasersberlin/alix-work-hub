@@ -887,15 +887,36 @@ export default function WiederkehrendeZahler() {
                                       >
                                         Bearbeiten
                                       </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        disabled={!canWrite || stoppingId === p.id || (p.status ?? '').toLowerCase() === 'pruefung'}
-                                        onClick={() => stopProfile(p)}
-                                        title="Vertrag stoppen und zur Prüfung verschieben"
-                                      >
-                                        {stoppingId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'STOP'}
-                                      </Button>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button size="sm" variant="secondary" disabled={!canWrite || opsBusy === p.id || stoppingId === p.id}>
+                                            {opsBusy === p.id || stoppingId === p.id
+                                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                              : <>OPS <ChevronDown className="w-3.5 h-3.5 ml-1" /></>}
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start" className="w-56">
+                                          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Vertragsaktionen</DropdownMenuLabel>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem className="text-red-500 focus:text-red-500" onClick={() => opsMarkLawyer(p)}>
+                                            Anwalt – in Anwaltsfälle kopieren
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem className="text-emerald-500 focus:text-emerald-500" onClick={() => opsSetPaymentMode(p, 'sepa')}>
+                                            SEPA – Zahlart umstellen
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem className="text-blue-500 focus:text-blue-500" onClick={() => opsSetPaymentMode(p, 'self')}>
+                                            Selbstzahler – Zahlart umstellen
+                                          </DropdownMenuItem>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                            className="text-destructive focus:text-destructive"
+                                            disabled={(p.status ?? '').toLowerCase() === 'pruefung'}
+                                            onClick={() => stopProfile(p)}
+                                          >
+                                            STOP – keine weiteren Rechnungen
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
                                       {isAdmin && (
                                         <Button
                                           size="sm"
