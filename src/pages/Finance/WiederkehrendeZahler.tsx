@@ -322,6 +322,14 @@ export default function WiederkehrendeZahler() {
 
     return Array.from(map.values())
       .filter(g => {
+        if (statusFilter === 'lawyer') {
+          const n = (g.customer_name || '').trim().toLowerCase();
+          if (n && lawyerNames.has(n)) return true;
+          return g.profiles.some(p => {
+            const hay = `${p.reference_number ?? ''} ${p.recurrence_name ?? ''}`.toLowerCase();
+            return Array.from(lawyerRefs).some(r => r && hay.includes(r));
+          });
+        }
         if (statusFilter === 'sepa') return g.hasSepa;
         if (statusFilter === 'active') return !g.hasSepa && g.profiles.some(p => (p.status ?? '').toLowerCase() === 'active');
         if (statusFilter === 'stopped') return !g.hasSepa && g.profiles.length > 0 && g.profiles.every(p => (p.status ?? '').toLowerCase() !== 'active');
