@@ -15,6 +15,11 @@ import AlixDocsPanel from '@/components/alixdocs/AlixDocsPanel';
 import CustomerSocialMediaTab from '@/components/customer/CustomerSocialMediaTab';
 import { withAt } from '@/lib/atSuffix';
 
+/** Nur die in der Übersicht angezeigten Spalten — `raw_data` (im Schnitt 3 KB pro Kunde) bleibt draußen. */
+const CUSTOMER_COLS =
+  'id, company_name, contact_name, email, phone, source_system, external_customer_id, billing_address, shipping_address, created_at, is_vip';
+const ORDER_COLS = 'id, order_number, order_date, order_status, total_amount, currency, source_system';
+
 export default function CustomerDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -24,6 +29,9 @@ export default function CustomerDetail() {
   const { isAdmin } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [tab, setTab] = useState('overview');
+  const [rawData, setRawData] = useState<any>(null);
+  const [fullCustomer, setFullCustomer] = useState<any>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -32,15 +40,33 @@ export default function CustomerDetail() {
 
   async function loadCustomer() {
     setLoading(true);
+    setRawData(null);
+    setFullCustomer(null);
     const [cRes, oRes, bRes] = await Promise.all([
-      supabase.from('customers').select('*').eq('id', id!).maybeSingle(),
-      supabase.from('orders').select('*').eq('customer_id', id!).order('created_at', { ascending: false }),
+      supabase.from('customers').select(CUSTOMER_COLS).eq('id', id!).maybeSingle(),
+      supabase.from('orders').select(ORDER_COLS).eq('customer_id', id!).order('order_date', { ascending: false }).limit(200),
       // Bankdaten sind Finance-only; für andere Rollen liefert RLS ein leeres Ergebnis.
       supabase.from('customer_bank_details').select('iban, bic, bank_name').eq('customer_id', id!).maybeSingle(),
     ]);
     setCustomer(cRes.data ? { ...cRes.data, ...(bRes.data ?? { iban: null, bic: null, bank_name: null }) } : null);
     setOrders(oRes.data ?? []);
     setLoading(false);
+  }
+
+  /** Rohdaten und Volldatensatz erst laden, wenn sie wirklich gebraucht werden. */
+  async function ensureRawData() {
+    if (rawData !== null || !id) return;
+    const { data } = await supabase.from('customers').select('raw_data').eq('id', id).maybeSingle();
+    setRawData(data?.raw_data ?? {});
+  }
+
+  async function openEdit() {
+    if (!id) return;
+    if (!fullCustomer) {
+      const { data } = await supabase.from('customers').select('*').eq('id', id).maybeSingle();
+      setFullCustomer(data ? { ...data, iban: customer?.iban, bic: customer?.bic, bank_name: customer?.bank_name } : customer);
+    }
+    setEditOpen(true);
   }
 
 
@@ -69,7 +95,7 @@ export default function CustomerDetail() {
         <h1 className="text-2xl font-display font-bold text-foreground">{customer?.company_name || customer?.contact_name || 'Kunde'}</h1>
         {isAdmin && customer && (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Button variant="outline" size="sm" onClick={openEdit}>
               <Pencil className="w-3.5 h-3.5 mr-1.5" /> Ändern
             </Button>
             <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
@@ -79,7 +105,7 @@ export default function CustomerDetail() {
         )}
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={tab} onValueChange={(v) => { setTab(v); if (v === 'social') ensureRawData(); }} className="w-full">
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
@@ -179,7 +205,7 @@ export default function CustomerDetail() {
             customerPhone={customer.phone}
             customerContactName={customer.contact_name}
             customerBillingAddress={customer.billing_address}
-            customerRawData={customer.raw_data}
+            customerRawData={rawData ?? {}}
           />
         </TabsContent>
 
@@ -188,7 +214,7 @@ export default function CustomerDetail() {
       {/* Dialogs */}
       {editOpen && customer && (
         <CustomerEditDialog
-          customer={customer}
+          customer={fullCustomer ?? customer}
           open={editOpen}
           onClose={() => setEditOpen(false)}
           onSaved={() => { setEditOpen(false); loadCustomer(); }}

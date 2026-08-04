@@ -36648,6 +36648,36 @@ export type Database = {
       current_alix_identity_id: { Args: never; Returns: string }
       current_portal_customer_id: { Args: never; Returns: string }
       current_supplier_id: { Args: never; Returns: string }
+      customers_letters: {
+        Args: { _source?: string }
+        Returns: {
+          letter: string
+          n: number
+        }[]
+      }
+      customers_page: {
+        Args: {
+          _dir?: string
+          _letter?: string
+          _limit?: number
+          _offset?: number
+          _q?: string
+          _sort?: string
+          _source?: string
+        }
+        Returns: {
+          company_name: string
+          contact_name: string
+          created_at: string
+          email: string
+          external_customer_id: string
+          id: string
+          is_vip: boolean
+          phone: string
+          source_system: string
+          total_count: number
+        }[]
+      }
       decide_recert_item: {
         Args: { _decision: string; _item_id: string; _note: string }
         Returns: Json
@@ -36949,6 +36979,38 @@ export type Database = {
         Returns: Json
       }
       peek_document_number: { Args: { p_code: string }; Returns: string }
+      perf_slow_queries: {
+        Args: { _limit?: number }
+        Returns: {
+          calls: number
+          max_ms: number
+          mean_ms: number
+          query: string
+          rows_avg: number
+          total_ms: number
+        }[]
+      }
+      perf_table_stats: {
+        Args: { _limit?: number }
+        Returns: {
+          idx_scans: number
+          live_rows: number
+          seq_ratio: number
+          seq_scans: number
+          table_name: string
+          total_bytes: number
+          total_pretty: string
+        }[]
+      }
+      perf_unused_indexes: {
+        Args: { _limit?: number }
+        Returns: {
+          index_name: string
+          index_pretty: string
+          index_scans: number
+          table_name: string
+        }[]
+      }
       process_scheduled_grants: { Args: never; Returns: Json }
       qr_reference_check_digit: { Args: { _body: string }; Returns: string }
       recompute_device_health: { Args: { _serial: string }; Returns: undefined }

@@ -493,6 +493,7 @@ const BugCapaBerichte = lazy(() => import("./pages/BugCapa/Berichte"));
 const BugCapaAnalytics = lazy(() => import("./pages/BugCapa/Analytics"));
 const BugCapaIsoReport = lazy(() => import("./pages/BugCapa/IsoReport"));
 
+const PerformanceCenter = lazy(() => import("./pages/Operations/PerformanceCenter"));
 const AuditCenterLayout = lazy(() => import("./pages/AuditCenter/Layout"));
 const AuditOverview = lazy(() => import("./pages/AuditCenter/Overview"));
 const AuditTimeline = lazy(() => import("./pages/AuditCenter/Timeline"));
@@ -1216,6 +1217,7 @@ function AppRoutes() {
           <Route path="/operation/logfiles" element={<ProtectedRoute requiredRoles={SYSTEM_ROLES}><Logfiles /></ProtectedRoute>} />
           <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
           <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
+          <Route path="/operation/performance" element={<ProtectedRoute requiredRoles={['Super Admin']}><PerformanceCenter /></ProtectedRoute>} />
           <Route path="/operation/news" element={<ProtectedRoute requiredRoles={['Super Admin']}><NewsAdmin /></ProtectedRoute>} />
           <Route path="/operation/health-check" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><HealthCheck /></ProtectedRoute>} />
           <Route path="/operation/nummernkreise" element={<ProtectedRoute requiredRoles={['Super Admin']}><Nummernkreise /></ProtectedRoute>} />
