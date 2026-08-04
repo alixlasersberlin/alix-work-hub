@@ -181,6 +181,21 @@ export default function WiederkehrendeZahler() {
     load();
   }
 
+  async function deleteProfile(p: Profile) {
+    if (!confirm(`Buchung "${p.recurrence_name || p.reference_number || ''}" endgültig löschen?`)) return;
+    setDeletingId(p.id);
+    const { error } = await supabase.from('zoho_recurring_profiles').delete().eq('id', p.id);
+    setDeletingId(null);
+    if (error) {
+      toast({ title: 'Löschen fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Buchung gelöscht' });
+    load();
+  }
+
+
+
 
   async function load() {
     setLoading(true);
