@@ -547,7 +547,20 @@ export default function SalesLeadsList() {
             </tbody>
           </table>
         </div>
+        <div className="flex items-center justify-between gap-3 flex-wrap p-3 border-t">
+          <p className="text-xs text-muted-foreground">
+            {filtered.length} Treffer · angezeigt: {paged.length}
+            {pageSize !== 'all' && totalPages > 1 ? ` · Seite ${safePage} von ${totalPages}` : ''}
+          </p>
+          {pageSize !== 'all' && totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)}>Zurück</Button>
+              <Button size="sm" variant="outline" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)}>Weiter</Button>
+            </div>
+          )}
+        </div>
       </Card>
+
     </div>
   );
 }
