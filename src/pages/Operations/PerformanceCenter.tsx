@@ -36,6 +36,7 @@ function KpiCard({ label, value, hint, icon: Icon, accent }: { label: string; va
 
 function LiveTab() {
   const samples = useSyncExternalStore(subscribePerfSamples, getPerfSamples, getPerfSamples);
+  const [saving, setSaving] = useState(false);
 
   const stats = useMemo(() => {
     if (!samples.length) return null;
