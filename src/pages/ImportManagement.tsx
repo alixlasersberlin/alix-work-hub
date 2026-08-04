@@ -1717,6 +1717,111 @@ export default function ImportManagement() {
         {/* ============ INVOICE IMPORT TAB ============ */}
         {canWrite && (
           <TabsContent value="invoices" className="space-y-6">
+            <Card className="border-primary/30">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Search className="w-5 h-5 text-primary" />
+                  Auftrag + zugehörige Rechnungen importieren
+                </CardTitle>
+                <CardDescription>
+                  Auftragsnummer aus Zoho eingeben (z. B. SO-3590). Der Auftrag und alle damit verknüpften Rechnungen werden importiert bzw. aktualisiert.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2 md:col-span-1">
+                    <Label>Mandant</Label>
+                    <Select value={singleOrderSource} onValueChange={(v) => setSingleOrderSource(v as 'zoho_eu_1' | 'zoho_eu_2')}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="zoho_eu_1">🇩🇪 Alix Deutschland</SelectItem>
+                        <SelectItem value="zoho_eu_2">🇦🇹 Alix Austria</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2 md:col-span-1">
+                    <Label>Auftragsnummer</Label>
+                    <Input
+                      value={singleOrderNumber}
+                      onChange={(e) => setSingleOrderNumber(e.target.value)}
+                      placeholder="SO-3590"
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !singleOrderBusy) handleSingleOrderInvoiceImport(); }}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-1 flex items-end">
+                    <Button className="w-full" disabled={singleOrderBusy} onClick={handleSingleOrderInvoiceImport}>
+                      {singleOrderBusy
+                        ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Importiere…</>
+                        : <><Play className="w-4 h-4 mr-2" /> Auftrag + Rechnungen importieren</>}
+                    </Button>
+                  </div>
+                </div>
+
+                {singleOrderResult && (
+                  <div className="rounded-lg border border-border p-4 space-y-3 text-sm">
+                    {singleOrderResult.error ? (
+                      <div className="flex items-start gap-2 text-destructive">
+                        <XCircle className="w-4 h-4 mt-0.5" />
+                        <div>
+                          <div className="font-medium">{singleOrderResult.error}</div>
+                          {singleOrderResult.message && <div className="text-muted-foreground">{singleOrderResult.message}</div>}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge variant="outline" className="font-mono">{singleOrderResult.salesorder_number}</Badge>
+                          {singleOrderResult.customer_name && <span className="text-muted-foreground">{singleOrderResult.customer_name}</span>}
+                          <Badge variant={singleOrderResult.order_imported ? 'default' : 'secondary'}>
+                            Auftrag {singleOrderResult.order_imported ? 'importiert' : 'nicht importiert'}
+                          </Badge>
+                          <Badge variant="secondary">{singleOrderResult.invoices_found} Rechnungen gefunden</Badge>
+                          <Badge variant="secondary">{singleOrderResult.invoices_imported} neu</Badge>
+                          <Badge variant="secondary">{singleOrderResult.invoices_updated} aktualisiert</Badge>
+                          {singleOrderResult.invoices_failed > 0 && (
+                            <Badge variant="destructive">{singleOrderResult.invoices_failed} Fehler</Badge>
+                          )}
+                        </div>
+                        {singleOrderResult.order_error && (
+                          <div className="text-destructive text-xs">Auftrag: {singleOrderResult.order_error}</div>
+                        )}
+                        {Array.isArray(singleOrderResult.invoices) && singleOrderResult.invoices.length > 0 && (
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Rechnung</TableHead>
+                                <TableHead>Datum</TableHead>
+                                <TableHead className="text-right">Betrag</TableHead>
+                                <TableHead className="text-right">Offen</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Ergebnis</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {singleOrderResult.invoices.map((inv: any, i: number) => (
+                                <TableRow key={i}>
+                                  <TableCell className="font-mono">{inv.invoice_number ?? inv.invoice_id ?? '—'}</TableCell>
+                                  <TableCell>{inv.date ?? '—'}</TableCell>
+                                  <TableCell className="text-right tabular-nums">{inv.total != null ? Number(inv.total).toFixed(2) : '—'}</TableCell>
+                                  <TableCell className="text-right tabular-nums">{inv.balance != null ? Number(inv.balance).toFixed(2) : '—'}</TableCell>
+                                  <TableCell>{inv.status ?? '—'}</TableCell>
+                                  <TableCell>
+                                    <Badge variant={inv.state === 'fehler' ? 'destructive' : 'secondary'}>{inv.state}</Badge>
+                                    {inv.message && <div className="text-xs text-destructive">{inv.message}</div>}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+
             <Card className="border-border">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
