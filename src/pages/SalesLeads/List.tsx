@@ -66,9 +66,13 @@ export default function SalesLeadsList() {
   const [status, setStatus] = useState<string>('alle');
   const [source, setSource] = useState<string>('alle');
   const [users, setUsers] = useState<{ id: string; full_name: string | null; email: string | null }[]>([]);
+  const [assignedFilter, setAssignedFilter] = useState<string>('alle');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [assigning, setAssigning] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [orderMatches, setOrderMatches] = useState<Set<string>>(new Set());
+
+
 
   async function handleDelete(lead: Lead) {
     const label = lead.lead_number || lead.company || [lead.first_name, lead.last_name].filter(Boolean).join(' ') || lead.id.slice(0, 8);
