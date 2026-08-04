@@ -117,12 +117,10 @@ export default function AuftragStatus() {
       return;
     }
 
-    const [prodRes, resRes, delRes, rpRes] = await Promise.all([
-      supabase.from('production_orders').select('id', { count: 'exact', head: true }).eq('order_id', o.id),
-      supabase.from('lager_devices').select('id', { count: 'exact', head: true }).eq('reserved_order_id', o.id),
-      supabase.from('lager_devices').select('id', { count: 'exact', head: true }).eq('delivered_order_id', o.id),
-      supabase.from('route_plans').select('id', { count: 'exact', head: true }).eq('order_id', o.id),
-    ]);
+    // 1 RPC statt 4 Einzel-Counts
+    const { data: countsData } = await (supabase as any).rpc('order_status_counts', { p_order_id: o.id });
+    const counts = (countsData ?? {}) as Record<string, number>;
+
 
     setResult({
       id: o.id,
