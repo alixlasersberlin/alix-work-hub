@@ -441,7 +441,7 @@ export default function SalesLeadsList() {
                 <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
                 <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
-              ) : filtered.map((r) => (
+              ) : paged.map((r) => (
                 <tr key={r.id} className={`border-t hover:bg-muted/30 ${selected.has(r.id) ? 'bg-primary/10' : ''}`}>
                   <td className="p-3 align-middle">
                     <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleRow(r.id)} aria-label="Anfrage auswählen" />
