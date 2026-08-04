@@ -455,6 +455,7 @@ export const navItems: NavItem[] = [
         path: '/finance/raten', label: 'RATENZAHLER', icon: ScrollText, roles: ['Admin', 'Super Admin'],
         children: [
           { path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/bestandsuebersicht', label: 'Bestandsübersicht', icon: Repeat, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/vertraege', label: 'PRÜFUNG', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/raten', label: 'Laufende Raten', icon: ScrollText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/alix-flex', label: 'SEPA MANDAT', icon: Banknote, roles: ['Admin', 'Super Admin'] },
