@@ -37124,6 +37124,7 @@ export type Database = {
         Args: { p_at_only?: boolean }
         Returns: Json
       }
+      sidebar_sales_counts: { Args: never; Returns: Json }
       sig_can_send: { Args: never; Returns: boolean }
       sig_is_admin: { Args: never; Returns: boolean }
       sod_conflict_report: {
