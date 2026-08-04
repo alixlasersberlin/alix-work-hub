@@ -362,7 +362,9 @@ export default function WiederkehrendeZahler() {
           Status: p.status ?? '',
           Frequenz: `${p.repeat_every ?? 1}x ${p.recurrence_frequency ?? ''}`.trim(),
           Erfasst: fmtDate(p.created_at),
+          Lieferung: fmtDate(p.delivery_date),
           Start: fmtDate(p.start_date),
+
           Ende: fmtDate(p.end_date),
           'Letzte Rechnung': fmtDate(p.last_sent_date),
           'Nächste Rechnung': fmtDate(p.next_invoice_date),
