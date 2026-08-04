@@ -142,7 +142,33 @@ export default function WiederkehrendeZahler() {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const { canWrite, isAdmin } = useFinancePermissions();
   // Admin & Super Admin sehen standardmäßig ALLE Konten (inkl. gestoppt/SEPA) und alle Rechnungen (auch bezahlte)
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa'>(isAdmin ? 'all' : 'active');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa' | 'lawyer'>(isAdmin ? 'all' : 'active');
+  // Kunden/Auftragsnummern mit Auftragsstatus „Anwalt"
+  const [lawyerNames, setLawyerNames] = useState<Set<string>>(new Set());
+  const [lawyerRefs, setLawyerRefs] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('order_number, customers(company_name, contact_name)')
+        .ilike('order_status', 'anwalt')
+        .limit(2000);
+      if (cancelled || !data) return;
+      const names = new Set<string>();
+      const refs = new Set<string>();
+      for (const o of data as any[]) {
+        if (o.order_number) refs.add(String(o.order_number).toLowerCase());
+        const c = o.customers;
+        if (c?.company_name) names.add(String(c.company_name).trim().toLowerCase());
+        if (c?.contact_name) names.add(String(c.contact_name).trim().toLowerCase());
+      }
+      setLawyerNames(names);
+      setLawyerRefs(refs);
+    })();
+    return () => { cancelled = true; };
+  }, []);
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<'all' | 'paid' | 'unpaid' | 'overdue' | 'draft'>('all');
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
@@ -296,6 +322,14 @@ export default function WiederkehrendeZahler() {
 
     return Array.from(map.values())
       .filter(g => {
+        if (statusFilter === 'lawyer') {
+          const n = (g.customer_name || '').trim().toLowerCase();
+          if (n && lawyerNames.has(n)) return true;
+          return g.profiles.some(p => {
+            const hay = `${p.reference_number ?? ''} ${p.recurrence_name ?? ''}`.toLowerCase();
+            return Array.from(lawyerRefs).some(r => r && hay.includes(r));
+          });
+        }
         if (statusFilter === 'sepa') return g.hasSepa;
         if (statusFilter === 'active') return !g.hasSepa && g.profiles.some(p => (p.status ?? '').toLowerCase() === 'active');
         if (statusFilter === 'stopped') return !g.hasSepa && g.profiles.length > 0 && g.profiles.every(p => (p.status ?? '').toLowerCase() !== 'active');
@@ -307,7 +341,7 @@ export default function WiederkehrendeZahler() {
         if (ac !== bc) return bc.localeCompare(ac);
         return b.monthly - a.monthly;
       });
-  }, [profiles, statusFilter]);
+  }, [profiles, statusFilter, lawyerNames, lawyerRefs]);
 
 
 
@@ -364,6 +398,7 @@ export default function WiederkehrendeZahler() {
 
   const secondTile = useMemo(() => {
     switch (statusFilter) {
+      case 'lawyer': return { label: 'Anwaltsfälle', value: totals.allProfiles };
       case 'sepa': return { label: 'SEPA-Verträge', value: totals.sepaProfiles };
       case 'stopped': return { label: 'Beendet', value: totals.stoppedProfiles };
       case 'active': return { label: 'Selbstzahler', value: totals.selfPayProfiles };
@@ -534,13 +569,13 @@ export default function WiederkehrendeZahler() {
           <Input placeholder="Kunde oder Vertragsnr. suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <div className="flex gap-1 border border-border rounded-md p-1">
-          {(['sepa', 'active', 'stopped', 'all'] as const).map(s => (
+          {(['sepa', 'active', 'stopped', 'lawyer', 'all'] as const).map(s => (
             <button
               key={s}
               onClick={() => { filterTouched.current = true; setStatusFilter(s); }}
-              className={`px-3 py-1 text-xs rounded ${statusFilter === s ? (s === 'sepa' ? 'bg-emerald-600 text-white' : 'bg-primary text-primary-foreground') : 'text-muted-foreground hover:text-foreground'}`}
+              className={`px-3 py-1 text-xs rounded ${statusFilter === s ? (s === 'sepa' ? 'bg-emerald-600 text-white' : s === 'lawyer' ? 'bg-red-600 text-white' : 'bg-primary text-primary-foreground') : 'text-muted-foreground hover:text-foreground'}`}
             >
-              {s === 'sepa' ? 'SEPA' : s === 'active' ? 'Selbstzahler' : s === 'stopped' ? 'Beendet' : 'Alle'}
+              {s === 'sepa' ? 'SEPA' : s === 'active' ? 'Selbstzahler' : s === 'stopped' ? 'Beendet' : s === 'lawyer' ? 'Anwaltsfälle' : 'Alle'}
             </button>
           ))}
         </div>
