@@ -243,8 +243,10 @@ Deno.serve(async (req: Request) => {
       } catch { return null; }
     }
 
-    while (page <= MAX_PAGES) {
-      const apiUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}&page=${page}&per_page=200&last_modified_time=${encodeURIComponent(lastModifiedAfter)}`;
+    while (page <= lastPageAllowed) {
+      if (Date.now() - startTime > SOFT_DEADLINE_MS) { zohoHasMore = true; break; }
+      // filter_by=Status.All: auch geschlossene/stornierte Aufträge und alle Versandstatus
+      const apiUrl = `${zohoConfig.booksApiBaseUrl}/salesorders?organization_id=${zohoConfig.organizationId}&page=${page}&per_page=200&filter_by=Status.All&last_modified_time=${encodeURIComponent(lastModifiedAfter)}`;
       const res = await fetch(apiUrl, { headers: { Authorization: `Zoho-oauthtoken ${accessToken}` } });
       if (!res.ok) {
         const text = await res.text();
@@ -254,8 +256,10 @@ Deno.serve(async (req: Request) => {
       const json = await res.json();
       const salesorders = json.salesorders ?? [];
       const hasMore = json.page_context?.has_more_page === true;
+      zohoHasMore = hasMore;
       console.log(`[scheduled-order-sync] Page ${page}: ${salesorders.length} orders, hasMore=${hasMore}`);
       if (salesorders.length === 0) break;
+      totalFetched += salesorders.length;
       totalFetched += salesorders.length;
 
       for (const so of salesorders) {
