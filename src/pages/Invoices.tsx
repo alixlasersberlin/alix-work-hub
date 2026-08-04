@@ -784,7 +784,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       };
       if (editForm.status) {
         patch.status = editForm.status;
-        const raw = editRow.raw_data && typeof editRow.raw_data === 'object' && !Array.isArray(editRow.raw_data) ? editRow.raw_data : {};
+        const raw = await loadRawData(editRow);
         patch.raw_data = { ...raw, is_draft: editForm.status === 'draft' };
       }
       if (isSuperAdmin) {
