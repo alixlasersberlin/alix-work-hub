@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import {
-  CalendarSync, FileSearch, Play, Undo2, FileDown, Loader2, ScanText, Sparkles, AlertTriangle, Search, X,
+  CalendarSync, FileSearch, Play, Undo2, FileDown, Loader2, ScanText, Sparkles, AlertTriangle, Search, X, Receipt,
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
