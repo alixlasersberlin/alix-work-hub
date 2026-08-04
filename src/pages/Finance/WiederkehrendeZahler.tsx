@@ -151,6 +151,17 @@ export default function WiederkehrendeZahler() {
   const [stoppingId, setStoppingId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
+  // Rollen laden asynchron: sobald Admin erkannt wird, alles anzeigen (solange der Filter nicht manuell geändert wurde)
+  const filterTouched = useRef(false);
+  useEffect(() => {
+    if (isAdmin && !filterTouched.current) {
+      setStatusFilter('all');
+      setInvoiceStatusFilter('all');
+    }
+  }, [isAdmin]);
+
+
+
 
   async function stopProfile(p: Profile) {
     if (!confirm(`Vertrag "${p.recurrence_name || p.reference_number || ''}" stoppen und zur Prüfung verschieben?`)) return;
