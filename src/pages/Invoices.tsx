@@ -1014,8 +1014,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         balance: newBalance,
         last_payment_date: bookDate,
       };
-      const { error } = await (supabase as any).from(table).update(patch).eq('id', bookRow.id);
+      const { data: updated, error } = await (supabase as any).from(table).update(patch).eq('id', bookRow.id).select('id');
       if (error) throw error;
+      if (!updated || updated.length === 0) {
+        throw new Error('Buchung nicht gespeichert – keine Berechtigung zum Ändern dieser Rechnung (nur Admin/Super Admin).');
+      }
+
 
       const gross = +pay.toFixed(2);
       const net = +(gross / 1.19).toFixed(2);
