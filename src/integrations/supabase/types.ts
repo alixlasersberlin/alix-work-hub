@@ -36182,6 +36182,7 @@ export type Database = {
       }
     }
     Functions: {
+      ac_dashboard_kpis: { Args: never; Returns: Json }
       ac_is_channel_member: {
         Args: { _channel: string; _user: string }
         Returns: boolean
@@ -36729,6 +36730,10 @@ export type Database = {
           variable_cost: number
         }[]
       }
+      finance_dashboard_kpis: {
+        Args: { _region: Database["public"]["Enums"]["accounting_region"] }
+        Returns: Json
+      }
       finance_db_summary: {
         Args: {
           p_from: string
@@ -36894,6 +36899,7 @@ export type Database = {
         }
         Returns: string
       }
+      mailcenter_dashboard_kpis: { Args: never; Returns: Json }
       merge_customers: {
         Args: { _duplicate_ids: string[]; _primary_id: string }
         Returns: Json
