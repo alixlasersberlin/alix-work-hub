@@ -181,6 +181,7 @@ export function useNotificationFeed() {
     };
     // Bewusst NICHT von location.pathname abhängig: sonst würde bei jedem
     // Seitenwechsel ein kompletter Polling-Durchlauf ausgelöst.
-  }, [user, roles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, roles.join("|")]);
 }
 
