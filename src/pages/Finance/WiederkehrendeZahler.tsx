@@ -451,7 +451,7 @@ export default function WiederkehrendeZahler() {
 
       <div className="grid md:grid-cols-4 gap-4">
         <KpiTile label="Kunden" value={totals.customers} icon={Repeat} accent="sky" />
-        <KpiTile label="Aktive Verträge" value={totals.activeProfiles} icon={Repeat} accent="violet" />
+        <KpiTile label="Selbstzahler" value={totals.activeProfiles} icon={Repeat} accent="violet" />
         <KpiTile label="Volumen / Monat" value={fmt(totals.monthly)} icon={Repeat} accent="gold" />
         <KpiTile label="Restsumme offen" value={fmt(totals.remaining)} icon={Repeat} accent="emerald" />
       </div>
@@ -468,7 +468,7 @@ export default function WiederkehrendeZahler() {
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-1 text-xs rounded ${statusFilter === s ? (s === 'sepa' ? 'bg-emerald-600 text-white' : 'bg-primary text-primary-foreground') : 'text-muted-foreground hover:text-foreground'}`}
             >
-              {s === 'sepa' ? 'SEPA' : s === 'active' ? 'Aktiv' : s === 'stopped' ? 'Beendet' : 'Alle'}
+              {s === 'sepa' ? 'SEPA' : s === 'active' ? 'Selbstzahler' : s === 'stopped' ? 'Beendet' : 'Alle'}
             </button>
           ))}
         </div>
