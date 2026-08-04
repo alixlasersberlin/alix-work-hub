@@ -42,6 +42,9 @@ type Profile = {
   end_date: string | null;
   next_invoice_date: string | null;
   last_sent_date: string | null;
+  delivery_date?: string | null;
+  delivery_source?: string | null;
+
   total: number | null;
   currency: string | null;
   created_at: string | null;
@@ -359,7 +362,9 @@ export default function WiederkehrendeZahler() {
           Status: p.status ?? '',
           Frequenz: `${p.repeat_every ?? 1}x ${p.recurrence_frequency ?? ''}`.trim(),
           Erfasst: fmtDate(p.created_at),
+          Lieferung: fmtDate(p.delivery_date),
           Start: fmtDate(p.start_date),
+
           Ende: fmtDate(p.end_date),
           'Letzte Rechnung': fmtDate(p.last_sent_date),
           'Nächste Rechnung': fmtDate(p.next_invoice_date),
@@ -645,7 +650,9 @@ export default function WiederkehrendeZahler() {
                                 <th className="text-left px-3 py-2">Name / Referenz</th>
                                 <th className="text-left px-3 py-2">Erfasst</th>
                                 <th className="text-left px-3 py-2">Frequenz</th>
+                                <th className="text-left px-3 py-2">Lieferung</th>
                                 <th className="text-left px-3 py-2">Start</th>
+
                                 <th className="text-left px-3 py-2">Ende</th>
                                 <th className="text-left px-3 py-2">Letzte</th>
                                 <th className="text-left px-3 py-2">Nächste</th>
@@ -667,7 +674,16 @@ export default function WiederkehrendeZahler() {
                                   </td>
                                   <td className="px-3 py-2">{fmtDate(p.created_at)}</td>
                                   <td className="px-3 py-2">{p.repeat_every ?? 1}× {p.recurrence_frequency ?? '—'}</td>
+                                  <td className="px-3 py-2">
+                                    {p.delivery_date ? (
+                                      <>
+                                        {fmtDate(p.delivery_date)}
+                                        {p.delivery_source && <div className="text-[10px] text-muted-foreground">{p.delivery_source}</div>}
+                                      </>
+                                    ) : '—'}
+                                  </td>
                                   <td className="px-3 py-2">{fmtDate(p.start_date)}</td>
+
                                   <td className="px-3 py-2">{fmtDate(p.end_date)}</td>
                                   <td className="px-3 py-2">{fmtDate(p.last_sent_date)}</td>
                                   <td className="px-3 py-2">{fmtDate(p.next_invoice_date)}</td>
