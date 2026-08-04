@@ -440,7 +440,7 @@ export default function ImportManagement() {
       setSingleOrderResult(data);
       toast({
         title: 'Import abgeschlossen',
-        description: `${data?.salesorder_number ?? q}: Auftrag ${data?.order_imported ? 'importiert' : 'übersprungen'} • Rechnungen ${data?.invoices_imported ?? 0} neu / ${data?.invoices_updated ?? 0} aktualisiert`,
+        description: `${data?.salesorder_number ?? q}: Auftrag ${data?.order_imported ? 'importiert' : 'übersprungen'} • Rechnungen ${data?.invoices_imported ?? 0} neu / ${data?.invoices_updated ?? 0} aktualisiert • Periodische Profile ${data?.recurring_imported ?? 0} neu / ${data?.recurring_updated ?? 0} aktualisiert`,
       });
     } catch (e: any) {
       toast({ title: 'Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
