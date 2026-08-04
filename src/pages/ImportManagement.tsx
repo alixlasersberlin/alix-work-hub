@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -418,6 +419,8 @@ export default function ImportManagement() {
   const [singleOrderSource, setSingleOrderSource] = useState<'zoho_eu_1' | 'zoho_eu_2'>('zoho_eu_1');
   const [singleOrderBusy, setSingleOrderBusy] = useState(false);
   const [singleOrderResult, setSingleOrderResult] = useState<any | null>(null);
+  const [singleOrderPct, setSingleOrderPct] = useState(0);
+  const [singleOrderStep, setSingleOrderStep] = useState('');
 
   async function handleSingleOrderInvoiceImport() {
     const q = singleOrderNumber.trim();
@@ -427,6 +430,17 @@ export default function ImportManagement() {
     }
     setSingleOrderBusy(true);
     setSingleOrderResult(null);
+    setSingleOrderPct(8);
+    setSingleOrderStep('Auftrag in Zoho suchen…');
+    const steps: Array<[number, number, string]> = [
+      [1200, 30, 'Auftrag importieren…'],
+      [3000, 55, 'Rechnungen laden…'],
+      [6000, 75, 'Rechnungen speichern…'],
+      [9000, 90, 'Periodische Rechnungs-Stammdaten…'],
+    ];
+    const timers = steps.map(([ms, pct, label]) =>
+      window.setTimeout(() => { setSingleOrderPct(pct); setSingleOrderStep(label); }, ms)
+    );
     try {
       const { data, error } = await supabase.functions.invoke('zoho-import-order-invoices', {
         body: { source_system: singleOrderSource, order_number: q },
@@ -445,6 +459,9 @@ export default function ImportManagement() {
     } catch (e: any) {
       toast({ title: 'Import fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
     } finally {
+      timers.forEach(clearTimeout);
+      setSingleOrderPct(100);
+      setSingleOrderStep('Fertig');
       setSingleOrderBusy(false);
     }
   }
@@ -1756,6 +1773,18 @@ export default function ImportManagement() {
                     </Button>
                   </div>
                 </div>
+
+                {(singleOrderBusy || (singleOrderPct > 0 && singleOrderPct < 100)) && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{singleOrderStep}</span>
+                      <span>{singleOrderPct}%</span>
+                    </div>
+                    <Progress value={singleOrderPct} className="h-2" />
+                  </div>
+                )}
+
+
 
                 {singleOrderResult && (
                   <div className="rounded-lg border border-border p-4 space-y-3 text-sm">
