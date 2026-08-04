@@ -503,6 +503,7 @@ Deno.serve(async (req) => {
     let restored = 0;
     for (const b of backups) {
       const before = b.before_data as Record<string, unknown>;
+      const region = (before.accounting_region as string) ?? 'EU';
       const { error: uErr } = await svc
         .from(b.table_name)
         .update({
@@ -517,6 +518,7 @@ Deno.serve(async (req) => {
         await svc.from('finance_audit_trail').insert({
           module: 'ratenplan_sync', entity_table: b.table_name, entity_id: b.record_id,
           action: 'rollback', new_data: before, user_id: uid, ip_address: ip, user_agent: ua,
+          accounting_region: region,
         });
       }
     }
