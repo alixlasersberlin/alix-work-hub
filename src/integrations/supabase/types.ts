@@ -36918,6 +36918,7 @@ export type Database = {
         | { Args: never; Returns: boolean }
         | { Args: { _customer_id: string }; Returns: boolean }
       is_supplier: { Args: never; Returns: boolean }
+      lager_overview_counts: { Args: never; Returns: Json }
       log_audit_event: {
         Args: {
           _action: string

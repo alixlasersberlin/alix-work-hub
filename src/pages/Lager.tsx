@@ -24,7 +24,6 @@ type SearchHit = {
 };
 
 
-interface Row { notes: string | null; reserved_order_id: string | null }
 
 function getStatus(n: string | null | undefined) {
   const m = /\[Status:\s*([^\]]+)\]/.exec(n ?? '');
@@ -41,10 +40,22 @@ const COLORS = {
   Produktion: 'hsl(38 92% 50%)',
 } as const;
 
-async function fetchLagerOverview(): Promise<Row[]> {
-  const { data, error } = await supabase.from('lager_devices').select('notes, reserved_order_id');
+type Counts = { leih: number; lager: number; transfer: number; produktion: number };
+
+/**
+ * Performance: Zählung serverseitig per RPC statt Volltabellen-Fetch
+ * (vorher wurden alle lager_devices-Zeilen in den Browser geladen).
+ */
+async function fetchLagerCounts(): Promise<Counts> {
+  const { data, error } = await (supabase as any).rpc('lager_overview_counts');
   if (error) throw error;
-  return (data as Row[]) ?? [];
+  const d = (data ?? {}) as Partial<Counts>;
+  return {
+    leih: Number(d.leih ?? 0),
+    lager: Number(d.lager ?? 0),
+    transfer: Number(d.transfer ?? 0),
+    produktion: Number(d.produktion ?? 0),
+  };
 }
 
 export default function Lager() {
@@ -53,25 +64,16 @@ export default function Lager() {
   const [searching, setSearching] = useState(false);
   const atOnly = useAtOnly();
 
-  const { data: rows = [], isPending: loading } = useQuery({
+  const { data: rawCounts, isPending: loading } = useQuery({
     queryKey: qk.lager.overview,
-    queryFn: fetchLagerOverview,
+    queryFn: fetchLagerCounts,
     staleTime: STALE.medium,
   });
 
-
   const counts = useMemo(() => {
-    let leih = 0, lager = 0, transfer = 0, produktion = 0;
-    for (const r of rows) {
-      // Reservierte Geräte zählen nicht mehr als verfügbarer Lagerbestand
-      if (r.reserved_order_id) continue;
-      const s = getStatus(r.notes);
-      if (s === 'Transfer') { transfer++; continue; }
-      if (s === 'Produktion') { produktion++; continue; }
-      if (isLeih(r.notes)) leih++; else lager++;
-    }
-    return { leih, lager, transfer, produktion, total: leih + lager + transfer + produktion };
-  }, [rows]);
+    const c = rawCounts ?? { leih: 0, lager: 0, transfer: 0, produktion: 0 };
+    return { ...c, total: c.leih + c.lager + c.transfer + c.produktion };
+  }, [rawCounts]);
 
   function areaFor(notes: string | null, leih: boolean): { label: string; path: string; color: string } {
     const s = getStatus(notes);
