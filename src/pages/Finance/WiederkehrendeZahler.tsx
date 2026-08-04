@@ -213,6 +213,100 @@ export default function WiederkehrendeZahler() {
     load();
   }
 
+  // ---------- OPS: Mehrfachauswahl je Vertrag ----------
+  const [opsBusy, setOpsBusy] = useState<string | null>(null);
+
+  const isLawyerProfile = (p: Profile) => {
+    const hay = `${p.reference_number ?? ''} ${p.recurrence_name ?? ''}`.toLowerCase();
+    return Array.from(lawyerRefs).some(r => r && hay.includes(r));
+  };
+
+  const orderNumberOf = (p: Profile) => {
+    const ref = (p.reference_number ?? '').trim();
+    if (ref) return ref;
+    const m = `${p.recurrence_name ?? ''}`.match(/\b(?:SO|AU)-\d+\b/i);
+    return m ? m[0] : '';
+  };
+
+  async function notifyAdmins(title: string, message: string, actionUrl = '/finance/wiederkehrende-zahler') {
+    try {
+      const { data: roleRows } = await supabase
+        .from('roles')
+        .select('id, name')
+        .in('name', ['Admin', 'Super Admin']);
+      const roleIds = (roleRows ?? []).map((r: any) => r.id);
+      if (roleIds.length === 0) return;
+      const { data: userRows } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role_id', roleIds);
+      const userIds = Array.from(new Set((userRows ?? []).map((u: any) => u.user_id).filter(Boolean)));
+      if (userIds.length === 0) return;
+      await supabase.from('app_notifications').insert(
+        userIds.map((uid) => ({
+          user_id: uid,
+          category: 'finance',
+          title,
+          message,
+          priority: 'high',
+          action_url: actionUrl,
+        })) as any,
+      );
+    } catch {
+      /* Best effort – Benachrichtigung darf die Aktion nicht blockieren */
+    }
+  }
+
+  async function opsMarkLawyer(p: Profile) {
+    const orderNo = orderNumberOf(p);
+    if (!orderNo) {
+      toast({ title: 'Keine Auftragsnummer', description: 'Für diesen Vertrag ist keine Referenz hinterlegt.', variant: 'destructive' });
+      return;
+    }
+    setOpsBusy(p.id);
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ order_status: 'Anwalt' } as any)
+      .eq('order_number', orderNo)
+      .select('id');
+    setOpsBusy(null);
+    if (error) {
+      toast({ title: 'Anwalt fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    if (!data || data.length === 0) {
+      toast({ title: 'Auftrag nicht gefunden', description: `Kein Auftrag mit Nummer ${orderNo}.`, variant: 'destructive' });
+      return;
+    }
+    setLawyerRefs(prev => new Set([...prev, orderNo.toLowerCase()]));
+    toast({ title: 'Als Anwaltsfall markiert', description: `${orderNo} erscheint jetzt unter BUCHHALTUNG → Anwaltsfälle.` });
+  }
+
+  async function opsSetPaymentMode(p: Profile, mode: 'sepa' | 'self') {
+    const base = (p.recurrence_name ?? '').replace(/\s*\bSEPA\b\s*[·|-]?\s*/gi, ' ').replace(/\s{2,}/g, ' ').trim();
+    const nextName = mode === 'sepa' ? `SEPA · ${base}`.trim() : base || (p.reference_number ?? '');
+    setOpsBusy(p.id);
+    const { error } = await supabase
+      .from('zoho_recurring_profiles')
+      .update({ recurrence_name: nextName } as any)
+      .eq('id', p.id);
+    setOpsBusy(null);
+    if (error) {
+      toast({ title: 'Umstellung fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    if (mode === 'sepa') {
+      await notifyAdmins(
+        'SEPA-Mandat ausstellen',
+        `Vertrag ${nextName} wurde auf SEPA umgestellt. Bitte SEPA-Mandat ausstellen und hinterlegen.`,
+      );
+      toast({ title: 'Auf SEPA umgestellt', description: 'Admins wurden an die Ausstellung des SEPA-Mandats erinnert.' });
+    } else {
+      toast({ title: 'Auf Selbstzahler umgestellt' });
+    }
+    load();
+  }
+
   async function confirmDelete() {
     const p = deleteTarget;
     const reason = deleteReason.trim();
@@ -740,7 +834,17 @@ export default function WiederkehrendeZahler() {
                                 <React.Fragment key={p.id}>
                                 <tr className="border-t border-border">
                                   <td className="px-3 py-2">
-                                    <div className="font-medium">{p.recurrence_name || '—'}</div>
+                                    <div className="font-medium flex items-center gap-2">
+                                      {isLawyerProfile(p) && (
+                                        <Badge className="bg-red-600 hover:bg-red-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">ANWALT</Badge>
+                                      )}
+                                      {isSepaProfile(p) ? (
+                                        <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">SEPA</Badge>
+                                      ) : (
+                                        <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">Zahler</Badge>
+                                      )}
+                                      <span>{p.recurrence_name || '—'}</span>
+                                    </div>
                                     {p.reference_number && <div className="text-xs text-muted-foreground font-mono">{p.reference_number}</div>}
                                   </td>
                                   <td className="px-3 py-2">{fmtDate(p.created_at)}</td>
@@ -783,15 +887,36 @@ export default function WiederkehrendeZahler() {
                                       >
                                         Bearbeiten
                                       </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        disabled={!canWrite || stoppingId === p.id || (p.status ?? '').toLowerCase() === 'pruefung'}
-                                        onClick={() => stopProfile(p)}
-                                        title="Vertrag stoppen und zur Prüfung verschieben"
-                                      >
-                                        {stoppingId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'STOP'}
-                                      </Button>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button size="sm" variant="secondary" disabled={!canWrite || opsBusy === p.id || stoppingId === p.id}>
+                                            {opsBusy === p.id || stoppingId === p.id
+                                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                              : <>OPS <ChevronDown className="w-3.5 h-3.5 ml-1" /></>}
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start" className="w-56">
+                                          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Vertragsaktionen</DropdownMenuLabel>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem className="text-red-500 focus:text-red-500" onClick={() => opsMarkLawyer(p)}>
+                                            Anwalt – in Anwaltsfälle kopieren
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem className="text-emerald-500 focus:text-emerald-500" onClick={() => opsSetPaymentMode(p, 'sepa')}>
+                                            SEPA – Zahlart umstellen
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem className="text-blue-500 focus:text-blue-500" onClick={() => opsSetPaymentMode(p, 'self')}>
+                                            Selbstzahler – Zahlart umstellen
+                                          </DropdownMenuItem>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                            className="text-destructive focus:text-destructive"
+                                            disabled={(p.status ?? '').toLowerCase() === 'pruefung'}
+                                            onClick={() => stopProfile(p)}
+                                          >
+                                            STOP – keine weiteren Rechnungen
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
                                       {isAdmin && (
                                         <Button
                                           size="sm"
