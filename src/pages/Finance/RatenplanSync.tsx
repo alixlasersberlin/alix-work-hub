@@ -356,6 +356,7 @@ export default function RatenplanSync() {
                 <option value="stopped">Nur gestoppt</option>
                 <option value="expired">Nur abgelaufen</option>
                 <option value="active">Aktiv</option>
+                <option value="active,stopped,expired,pruefung">Alle Verträge (Massenlauf)</option>
               </select>
             </div>
             <div>
