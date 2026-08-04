@@ -283,6 +283,25 @@ export default function SalesLeadsList() {
                 <SelectItem value="manual">Manuell</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={assignedFilter} onValueChange={setAssignedFilter}>
+              <SelectTrigger className="w-[220px]"><SelectValue placeholder="Mitarbeiter" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="alle">Alle Mitarbeiter</SelectItem>
+                <SelectItem value="__none">— Nicht zugewiesen —</SelectItem>
+                {users.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>{u.full_name || u.email || u.id.slice(0, 8)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-xs text-muted-foreground">{selected.size} ausgewählt</span>
+            {selected.size > 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Auswahl aufheben</Button>
+            )}
+            <Button size="sm" onClick={downloadSelected} disabled={selected.size === 0}>
+              <Download className="h-4 w-4 mr-1.5" />Download (CSV)
+            </Button>
           </div>
         </div>
       </Card>
@@ -292,6 +311,9 @@ export default function SalesLeadsList() {
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-left">
               <tr>
+                <th className="p-3 w-8">
+                  <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAllVisible} aria-label="Alle auswählen" />
+                </th>
                 <th className="p-3 w-8" title="Auftrag vorhanden?"></th>
                 <th className="p-3">Datum</th>
                 <th className="p-3">Lead-Nr.</th>
@@ -309,12 +331,16 @@ export default function SalesLeadsList() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={13} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
+                <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Lade …</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={13} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
+                <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Keine Anfragen gefunden.</td></tr>
               ) : filtered.map((r) => (
-                <tr key={r.id} className="border-t hover:bg-muted/30">
+                <tr key={r.id} className={`border-t hover:bg-muted/30 ${selected.has(r.id) ? 'bg-primary/10' : ''}`}>
                   <td className="p-3 align-middle">
+                    <Checkbox checked={selected.has(r.id)} onCheckedChange={() => toggleRow(r.id)} aria-label="Anfrage auswählen" />
+                  </td>
+                  <td className="p-3 align-middle">
+
                     {orderMatches.has(r.id) ? (
                       <CheckCircle2 className="h-5 w-5 text-green-500" aria-label="Auftrag vorhanden" />
                     ) : (
