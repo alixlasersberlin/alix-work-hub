@@ -1798,6 +1798,13 @@ export default function ImportManagement() {
                       </div>
                     ) : (
                       <>
+                        {singleOrderResult.match_mode === 'customer_fallback' && (
+                          <div className="text-xs text-muted-foreground">
+                            Hinweis: In Zoho ist keine Rechnung direkt mit diesem Auftrag verknüpft (leere Referenznummer).
+                            Es wurden daher alle {singleOrderResult.customer_invoice_count ?? 0} Rechnungen des Kunden importiert.
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge variant="outline" className="font-mono">{singleOrderResult.salesorder_number}</Badge>
                           {singleOrderResult.customer_name && <span className="text-muted-foreground">{singleOrderResult.customer_name}</span>}
