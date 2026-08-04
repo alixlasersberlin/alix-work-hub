@@ -151,6 +151,7 @@ export default function WiederkehrendeZahler() {
   const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
   const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
   const [stoppingId, setStoppingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
   // Rollen laden asynchron: sobald Admin erkannt wird, alles anzeigen (solange der Filter nicht manuell geändert wurde)
