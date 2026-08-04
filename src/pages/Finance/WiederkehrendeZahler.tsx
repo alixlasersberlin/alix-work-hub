@@ -268,8 +268,8 @@ export default function WiederkehrendeZahler() {
       .filter(g => {
         if (invoiceStatusFilter !== 'all' && g.invoices.length === 0) return false;
         if (statusFilter === 'sepa') return g.hasSepa;
-        if (statusFilter === 'active') return g.profiles.some(p => (p.status ?? '').toLowerCase() === 'active');
-        if (statusFilter === 'stopped') return g.profiles.length > 0 && g.profiles.every(p => (p.status ?? '').toLowerCase() !== 'active');
+        if (statusFilter === 'active') return !g.hasSepa && g.profiles.some(p => (p.status ?? '').toLowerCase() === 'active');
+        if (statusFilter === 'stopped') return !g.hasSepa && g.profiles.length > 0 && g.profiles.every(p => (p.status ?? '').toLowerCase() !== 'active');
         return true;
       })
       .sort((a, b) => {
