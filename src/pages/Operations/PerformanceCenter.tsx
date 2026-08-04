@@ -377,9 +377,11 @@ export default function PerformanceCenter() {
           <TabsTrigger value="sql">Langsamste SQL-Abfragen</TabsTrigger>
           <TabsTrigger value="tables">Tabellen &amp; Scans</TabsTrigger>
           <TabsTrigger value="indexes">Ungenutzte Indizes</TabsTrigger>
+          <TabsTrigger value="history"><History className="w-3.5 h-3.5 mr-1.5" /> Historie &amp; Alerts</TabsTrigger>
         </TabsList>
 
         <TabsContent value="live" className="mt-4"><LiveTab /></TabsContent>
+        <TabsContent value="history" className="mt-4"><HistoryTab /></TabsContent>
 
         <TabsContent value="sql" className="mt-4">
           <div className="rounded-xl border border-border bg-card overflow-hidden card-glow">
