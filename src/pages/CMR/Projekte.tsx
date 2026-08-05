@@ -149,8 +149,15 @@ export default function CmrProjekte() {
               </div>
             </button>
             <Badge variant="outline" className="capitalize">{p.status}</Badge>
-            <div className="text-sm font-semibold whitespace-nowrap">{cmrMoney(p.budget, p.currency || cur)}</div>
+            <div className="text-right whitespace-nowrap">
+              <div className="text-sm font-semibold">{cmrMoney(revenue[p.id] || 0, p.currency || cur)}</div>
+              <div className="text-[11px] text-muted-foreground">
+                Budget {cmrMoney(p.budget, p.currency || cur)}
+                {Number(p.budget) > 0 ? ` · ${Math.round(((revenue[p.id] || 0) / Number(p.budget)) * 100)}%` : ''}
+              </div>
+            </div>
             <Button size="icon" variant="ghost" onClick={() => remove(p)}><Trash2 className="w-4 h-4" /></Button>
+
           </div>
         ))}
       </Card>
