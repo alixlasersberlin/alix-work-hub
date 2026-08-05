@@ -3,9 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Search, Users } from 'lucide-react';
-import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import { Loader2, Search, Users, Download } from 'lucide-react';
+import { useCmrTenant, cmrMoney, CMR_DOC_TYPES } from '@/hooks/useCmrTenant';
+
 
 type Row = {
   key: string;
