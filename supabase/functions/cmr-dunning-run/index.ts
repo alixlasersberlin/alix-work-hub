@@ -111,22 +111,29 @@ Deno.serve(async (req) => {
         paid_total: 0,
         reference: d.doc_number,
         parent_document_id: d.id,
-        notes: `${cfg.label} zur Rechnung ${d.doc_number ?? ""} · offen seit ${overdue} Tagen.`,
+        notes: `${cfg.label} zur Rechnung ${d.doc_number ?? ""} · offen seit ${overdue} Tagen.`
+          + (fee ? ` · Mahngebühr ${fee.toFixed(2)}` : "")
+          + (interest ? ` · Verzugszinsen ${interest.toFixed(2)}` : ""),
       }).select("id").single();
       if (docErr) { results.push({ invoice: d.id, error: docErr.message }); continue; }
 
-      const { error: liErr } = await sb.from("cmr_document_items").insert({
+      const posRows: Record<string, unknown>[] = [{
         document_id: doc.id,
         position: 1,
         name: `Offener Betrag Rechnung ${d.doc_number ?? ""}`,
         quantity: 1,
         unit: "Pauschal",
-        unit_price: open,
+        unit_price: openBase,
         discount_pct: 0,
         tax_rate: 0,
-        line_total: open,
-      });
+        line_total: openBase,
+      }];
+      if (fee) posRows.push({ document_id: doc.id, position: 2, name: "Mahngebühr", quantity: 1, unit: "Pauschal", unit_price: fee, discount_pct: 0, tax_rate: 0, line_total: fee });
+      if (interest) posRows.push({ document_id: doc.id, position: posRows.length + 1, name: `Verzugszinsen (${tCfg.dunning_interest_pct}% p.a.)`, quantity: 1, unit: "Pauschal", unit_price: interest, discount_pct: 0, tax_rate: 0, line_total: interest });
+
+      const { error: liErr } = await sb.from("cmr_document_items").insert(posRows);
       if (liErr) { results.push({ invoice: d.id, error: liErr.message }); continue; }
+
 
       await sb.from("cmr_documents").update({
         reminder_level: nextLevel,
