@@ -131,6 +131,132 @@ export async function updateReturnDebit(id: string, patch: Record<string, any>) 
   if (error) throw error;
 }
 
+/* ------------------------------------------- Manuelle Erfassung */
+
+export interface ManualReturnDebitInput {
+  area: 'EU' | 'CH';
+  bankAccountId?: string | null;
+  bookingDate: string;
+  valueDate?: string | null;
+  amount: number;
+  currency: string;
+  returnCode?: string | null;
+  returnReason?: string | null;
+  bankFee?: number;
+  customerFee?: number;
+  chargeCustomer?: boolean;
+  customerId?: string | null;
+  customerName?: string | null;
+  invoiceId?: string | null;
+  invoiceNumber?: string | null;
+  orderId?: string | null;
+  iban?: string | null;
+  mandateReference?: string | null;
+  purpose?: string | null;
+  note?: string | null;
+}
+
+/**
+ * Erfasst eine Rücklastschrift manuell (ohne Bankimport).
+ * Dazu wird eine synthetische Bankbuchung angelegt, damit alle
+ * Folgeprozesse (Zuordnung, Bestätigung, Mahnung, Sperre) greifen.
+ */
+export async function createManualReturnDebit(input: ManualReturnDebitInput) {
+  const { data: u } = await supabase.auth.getUser();
+  const amount = Math.abs(Number(input.amount || 0));
+  if (!amount) throw new Error('Bitte einen Betrag > 0 erfassen.');
+  if (!input.bookingDate) throw new Error('Bitte ein Buchungsdatum erfassen.');
+
+  const purpose = input.purpose
+    ?? `Rücklastschrift${input.invoiceNumber ? ` Rechnung ${input.invoiceNumber}` : ''}${input.returnCode ? ` (${input.returnCode})` : ''}`;
+
+  const { data: tx, error: txErr } = await T('bank_transactions').insert({
+    accounting_area: input.area,
+    bank_account_id: input.bankAccountId ?? null,
+    booking_date: input.bookingDate,
+    value_date: input.valueDate ?? input.bookingDate,
+    amount: -amount,
+    currency: input.currency || (input.area === 'CH' ? 'CHF' : 'EUR'),
+    transaction_type: 'ausgang',
+    sender_receiver_name: input.customerName ?? null,
+    sender_receiver_iban: input.iban ?? null,
+    booking_text: 'Rücklastschrift (manuell erfasst)',
+    purpose,
+    mandate_reference: input.mandateReference ?? null,
+    invoice_number_hint: input.invoiceNumber ?? null,
+    matched_customer_id: input.customerId ?? null,
+    matched_invoice_id: input.invoiceId ?? null,
+    status: 'offen',
+    is_return_debit: true,
+    note: input.note ?? null,
+    raw_data: { source: 'manual_return_debit' } as any,
+  } as any).select().single();
+  if (txErr) throw txErr;
+
+  const { data: rd, error } = await T('bank_return_debits').insert({
+    accounting_area: input.area,
+    bank_account_id: input.bankAccountId ?? null,
+    bank_transaction_id: (tx as any).id,
+    customer_id: input.customerId ?? null,
+    invoice_id: input.invoiceId ?? null,
+    invoice_number: input.invoiceNumber ?? null,
+    order_id: input.orderId ?? null,
+    return_debit_amount: amount,
+    currency: input.currency || (input.area === 'CH' ? 'CHF' : 'EUR'),
+    bank_fee: Number(input.bankFee ?? 0),
+    customer_fee: Number(input.customerFee ?? 0),
+    charge_customer: input.chargeCustomer ?? true,
+    return_code: input.returnCode ?? null,
+    return_reason: input.returnReason ?? (input.returnCode ? RETURN_CODES[input.returnCode] ?? null : null),
+    booking_date: input.bookingDate,
+    value_date: input.valueDate ?? input.bookingDate,
+    status: 'pruefung',
+    note: input.note ?? null,
+    created_by: u?.user?.id ?? null,
+  } as any).select().single();
+  if (error) throw error;
+
+  await logBank({
+    action: 'ruecklastschrift_manuell_erfasst',
+    bank_transaction_id: (tx as any).id,
+    new_value: { amount, invoice_number: input.invoiceNumber, customer_id: input.customerId, code: input.returnCode },
+  });
+
+  return { rd: rd as any, tx: tx as any };
+}
+
+/* ------------------------------------------- Suche für manuelle Erfassung */
+
+export async function searchInvoicesForReturn(area: 'EU' | 'CH', term: string) {
+  const s = term.trim().replace(/[%,]/g, ' ');
+  const cols = 'id,invoice_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status,reference_number';
+  const build = (table: 'zoho_invoices' | 'zoho_recurring_invoices') => {
+    let q = supabase.from(table).select(cols)
+      .eq('accounting_region', area as any)
+      .order('invoice_date', { ascending: false }).limit(25);
+    if (s) q = q.or(`invoice_number.ilike.%${s}%,customer_name.ilike.%${s}%,reference_number.ilike.%${s}%`);
+    else q = q.gt('balance', 0);
+    return q;
+  };
+  const [std, rec] = await Promise.all([build('zoho_invoices'), build('zoho_recurring_invoices')]);
+  return [
+    ...(((std.data ?? []) as any[]).map(i => ({ ...i, __src: 'zoho' as const }))),
+    ...(((rec.data ?? []) as any[]).map(i => ({ ...i, __src: 'recurring' as const }))),
+  ];
+}
+
+export async function searchCustomersForReturn(term: string) {
+  const s = term.trim().replace(/[%,]/g, ' ');
+  let q = supabase.from('customers')
+    .select('id,company_name,contact_name,email,external_customer_id,city,zip_code')
+    .order('company_name', { ascending: true }).limit(25);
+  if (s) q = q.or(`company_name.ilike.%${s}%,contact_name.ilike.%${s}%,email.ilike.%${s}%,external_customer_id.ilike.%${s}%`);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as any[];
+}
+
+
 /* ------------------------------------------- Suche der ursprünglichen Zahlung */
 
 const norm = (s?: string | null) => (s ?? '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]/g, '');
