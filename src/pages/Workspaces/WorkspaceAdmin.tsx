@@ -324,11 +324,18 @@ export default function WorkspaceAdmin() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4 pt-4">
-          <Input placeholder="Benutzer suchen…" value={userFilter} onChange={e => setUserFilter(e.target.value)} className="max-w-sm" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Input placeholder="Benutzer suchen…" value={userFilter} onChange={e => setUserFilter(e.target.value)} className="max-w-sm" />
+            <Button size="sm" variant="outline" className="ml-auto" disabled={saving} onClick={applyDefaults}>
+              {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+              Standardzuweisung nach Rolle
+            </Button>
+          </div>
           <p className="text-xs text-muted-foreground">
             Ohne Zuordnung sieht ein Benutzer alle Workspaces. Sobald mindestens ein Workspace gesetzt ist, wird die Auswahl eingeschränkt.
             Admins und Super Admins sehen immer alle.
           </p>
+
           <Card>
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-sm">
