@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Trash2, Settings2, Brain } from 'lucide-react';
+import { Trash2, Settings2, Brain, RefreshCw } from 'lucide-react';
 import { listMatchRules, deleteMatchRule, setRuleAutoBook, type BankMatchRule } from '@/lib/bank/rules';
 import { supabase } from '@/integrations/supabase/client';
 import { listBankAccounts, type BankAccount } from '@/lib/bank/api';
@@ -69,9 +69,48 @@ export default function Importregeln() {
       </CardContent>
     </Card>
     <LearnedRules region={region} />
+    <AutoReconcileCard region={region} />
     </div>
   );
 }
+
+function AutoReconcileCard({ region }: { region: 'EU' | 'CH' }) {
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+
+  const run = async () => {
+    setBusy(true); setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('bank-auto-reconcile', { body: { area: region } });
+      if (error) throw error;
+      const s = (data as any)?.summary?.[0];
+      setResult(s ? `${s.geprueft} Buchungen geprüft · ${s.vorschlaege} Vorschläge · ${s.verbucht} automatisch verbucht` : 'Abgleich abgeschlossen');
+      toast.success('Abgleich abgeschlossen');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Abgleich fehlgeschlagen');
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2"><RefreshCw className="w-4 h-4" />Automatischer Tagesabgleich</CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          Läuft täglich um 05:10 Uhr für EU und CH: offene Bankbuchungen werden gegen offene Rechnungen bewertet und als Vorschlag hinterlegt.
+          Automatisch verbucht wird nur bei exaktem Betrag und einem Score oberhalb der Schwelle des Bankkontos bzw. einer gelernten Auto-Regel.
+        </p>
+      </CardHeader>
+      <CardContent className="flex items-center gap-3">
+        <Button size="sm" onClick={run} disabled={busy}>
+          <RefreshCw className={`w-3.5 h-3.5 mr-2 ${busy ? 'animate-spin' : ''}`} />
+          Jetzt für {region} abgleichen
+        </Button>
+        {result && <span className="text-xs text-muted-foreground">{result}</span>}
+      </CardContent>
+    </Card>
+  );
+}
+
 
 function LearnedRules({ region }: { region: 'EU' | 'CH' }) {
   const [rules, setRules] = useState<BankMatchRule[]>([]);
