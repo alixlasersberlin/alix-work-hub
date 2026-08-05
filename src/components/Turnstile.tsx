@@ -32,10 +32,12 @@ function loadScript(): Promise<void> {
 interface Props {
   onToken: (token: string) => void;
   onExpire?: () => void;
+  /** Wird aufgerufen, wenn das Captcha nicht geladen/gelöst werden kann. */
+  onUnavailable?: () => void;
   theme?: 'light' | 'dark' | 'auto';
 }
 
-export default function Turnstile({ onToken, onExpire, theme = 'dark' }: Props) {
+export default function Turnstile({ onToken, onExpire, onUnavailable, theme = 'dark' }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -43,6 +45,14 @@ export default function Turnstile({ onToken, onExpire, theme = 'dark' }: Props) 
   useEffect(() => {
     let cancelled = false;
     let waitInterval: number | null = null;
+    let solved = false;
+    // Fail-open: Wenn Cloudflare das Widget nicht laden/lösen kann
+    // (Netzwerk blockiert, Domain nicht freigegeben, Fehler 300030),
+    // darf der Login nicht dauerhaft blockiert bleiben.
+    const failTimer = window.setTimeout(() => {
+      if (!cancelled && !solved) onUnavailable?.();
+    }, 8000);
+
     loadScript().then(() => {
       if (cancelled) return;
       waitInterval = window.setInterval(() => {
@@ -52,19 +62,25 @@ export default function Turnstile({ onToken, onExpire, theme = 'dark' }: Props) 
         }
         if (window.turnstile && ref.current && !widgetId.current) {
           if (waitInterval !== null) { clearInterval(waitInterval); waitInterval = null; }
-          widgetId.current = window.turnstile.render(ref.current, {
-            sitekey: SITE_KEY,
-            theme,
-            callback: (token: string) => onToken(token),
-            'expired-callback': () => { onExpire?.(); },
-            'error-callback': () => { onExpire?.(); },
-          });
+          try {
+            widgetId.current = window.turnstile.render(ref.current, {
+              sitekey: SITE_KEY,
+              theme,
+              callback: (token: string) => { solved = true; onToken(token); },
+              'expired-callback': () => { solved = false; onExpire?.(); },
+              'error-callback': () => { solved = false; onExpire?.(); onUnavailable?.(); },
+            });
+          } catch {
+            onUnavailable?.();
+          }
           setReady(true);
         }
       }, 100);
-    });
+    }).catch(() => onUnavailable?.());
+
     return () => {
       cancelled = true;
+      clearTimeout(failTimer);
       if (waitInterval !== null) { clearInterval(waitInterval); waitInterval = null; }
       if (widgetId.current && window.turnstile) {
         try { window.turnstile.remove(widgetId.current); } catch { /* ignore */ }
