@@ -69,3 +69,4 @@
 - [CMR Mandant](mem://features/cmr-mandant) — Eigener Mandant /cmr: Belege, Projekte, Abos, Mahnwesen, PDF-/Mail-Vorlagen, Buchhaltung + USt-Export, Cron cmr-recurring-daily
 - [Bank & Kontoauszüge](mem://features/bank-kontoauszuege) — Import/Prüfung/Verbuchung von Kontoauszügen unter /finance/kontoauszuege, Tabellen bank_*, Bucket bank-statements, Matching-Score EU/CH
 - [System Health Center](mem://features/system-health-center) — Täglicher Health-/Security-/Performance-Scan /operation/system-health, Tabellen sys_health_*, Edge Function system-health-scan (Cron 03:00), nur risikoarme Auto-Wartung, Strukturänderungen nur nach Super-Admin-Freigabe
+- [Workspaces](mem://features/workspaces) — Workspace-System (Verkauf/Buchhaltung/Lager/Fertigung/Operation), Workspace-Bar, /w/:code Dashboards, Mandant Alix Medical

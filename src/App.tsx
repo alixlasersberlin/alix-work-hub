@@ -10,6 +10,8 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useSyncRevenueMaskGlobal } from "@/lib/revenue-mask";
 import { useRadixBodyPointerEventsFix } from "@/hooks/useRadixBodyPointerEventsFix";
 import { TenantProvider } from "@/contexts/TenantContext";
+import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import WorkspaceDashboard from "@/pages/Workspaces/WorkspaceDashboard";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
 import { ExperienceModeProvider } from "@/hooks/useExperienceMode";
@@ -1114,6 +1116,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/start" element={<Startseite />} />
           <Route path="/dashboard" element={<HomeRoute />} />
+          <Route path="/w/:code" element={<WorkspaceDashboard />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
           <Route path="/einstellungen/personalisierung" element={<Personalisierung />} />
           <Route path="/sicherheit" element={<Sicherheit />} />
@@ -2176,6 +2179,7 @@ const App = () => (
             <BrowserRouter>
               <AuthProvider>
                 <TenantProvider>
+                  <WorkspaceProvider>
                   <AccountingRegionProvider>
                   <MaintenanceGate>
                     <AIBackground />
@@ -2191,6 +2195,7 @@ const App = () => (
                     {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                   </MaintenanceGate>
                   </AccountingRegionProvider>
+                  </WorkspaceProvider>
                 </TenantProvider>
               </AuthProvider>
             </BrowserRouter>

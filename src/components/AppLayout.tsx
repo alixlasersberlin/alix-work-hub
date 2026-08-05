@@ -20,6 +20,9 @@ import NewsAnnouncementDialog from '@/components/NewsAnnouncementDialog';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
+import WorkspaceBar from '@/components/workspace/WorkspaceBar';
+import WorkspaceNav from '@/components/workspace/WorkspaceNav';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
 import { RegionChip } from '@/components/finance/RegionChip';
 
@@ -1377,6 +1380,8 @@ export default function AppLayout() {
     return menuGrants.has(item.path);
   };
 
+  const { workspaceMode: wsMode } = useWorkspace();
+
   const visibleItems = navItems
     .filter(i => i.label !== 'KONTAKT' && i.label !== 'ALIX AI DIENSTE')
     .filter(filterByRoles)
@@ -1523,6 +1528,8 @@ export default function AppLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto scroll-touch">
+          {wsMode && <WorkspaceNav collapsed={collapsed && !mobileOpen} />}
+          <div className={cn("space-y-0.5", wsMode && "hidden")}>
           {/* ALIX Copilot – öffnet das Copilot-Panel */}
           {(() => {
             const isCollapsedView = collapsed && !mobileOpen;
@@ -1962,6 +1969,7 @@ export default function AppLayout() {
               </div>
             );
           })}
+          </div>
         </nav>
 
         {/* User Section */}
@@ -2142,6 +2150,7 @@ export default function AppLayout() {
           </div>
 
         </header>
+        <WorkspaceBar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-touch pb-safe">
           <Outlet key={refreshKey} />
         </main>
