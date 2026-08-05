@@ -213,6 +213,57 @@ export default function CmrBuchhaltung() {
   /** Bankdatei importieren (CSV, CAMT.053 XML oder MT940) und Zahlungen automatisch zuordnen. */
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
+  const [importFileName, setImportFileName] = useState<string>('');
+  const [importFormat, setImportFormat] = useState<string>('');
+  const [bankLines, setBankLines] = useState<any[]>([]);
+  const [autoMatching, setAutoMatching] = useState(false);
+
+  /** Offene (noch nicht zugeordnete) Bankbuchungen laden. */
+  const loadBankLines = async () => {
+    if (!tenantId) return;
+    const { data } = await supabase.from('cmr_bank_lines' as any)
+      .select('*').eq('tenant_id', tenantId).eq('status', 'offen')
+      .order('booking_date', { ascending: false }).limit(300);
+    setBankLines(((data as any) || []) as any[]);
+  };
+
+  /** Automatischen Bankabgleich serverseitig anstoßen. */
+  const runAutoMatch = async () => {
+    if (!tenantId) return;
+    setAutoMatching(true);
+    const { data, error } = await supabase.functions.invoke('cmr-bank-automatch', { body: { tenantId } });
+    setAutoMatching(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Bankabgleich: ${(data as any)?.matched ?? 0} Position(en) zugeordnet`);
+    loadBankLines();
+    load();
+  };
+
+  /** Offene Bankposition manuell einer Rechnung zuordnen und buchen. */
+  const assignBankLine = async (line: any, documentId: string) => {
+    if (!tenantId || !documentId) return;
+    const doc = invoices.find((d) => d.id === documentId);
+    const { data: pay, error } = await supabase.from('cmr_payments' as any).insert({
+      tenant_id: tenantId, document_id: documentId, customer_id: doc?.customer_id ?? null,
+      paid_on: line.booking_date ?? new Date().toISOString().slice(0, 10),
+      amount: Number(line.amount) || 0, currency: line.currency || cur,
+      method: 'Bankabgleich', reference: (line.purpose ?? '').slice(0, 200) || null,
+    }).select('id').single();
+    if (error) { toast.error(error.message); return; }
+    await supabase.from('cmr_bank_lines' as any).update({
+      status: 'gebucht', matched_document_id: documentId,
+      payment_id: (pay as any)?.id ?? null, match_score: 1, matched_at: new Date().toISOString(),
+    }).eq('id', line.id);
+    toast.success('Zahlung gebucht');
+    loadBankLines();
+    load();
+  };
+
+  /** Bankposition als ignoriert markieren (z. B. Fremdzahlung). */
+  const ignoreBankLine = async (id: string) => {
+    await supabase.from('cmr_bank_lines' as any).update({ status: 'ignoriert' }).eq('id', id);
+    loadBankLines();
+  };
 
   const matchDoc = (ref: string) =>
     invoices.find((d) => d.doc_number && ref.toUpperCase().includes(String(d.doc_number).toUpperCase()));
@@ -269,6 +320,11 @@ export default function CmrBuchhaltung() {
   const parseBankCsv = async (file: File) => {
     const text = await file.text();
     const name = file.name.toLowerCase();
+    setImportFileName(file.name);
+    setImportFormat(
+      name.endsWith('.xml') || text.trimStart().startsWith('<?xml') ? 'CAMT.053'
+        : text.includes(':61:') ? 'MT940' : 'CSV',
+    );
 
     if (name.endsWith('.xml') || text.trimStart().startsWith('<?xml')) {
       const rows = parseCamt(text);
