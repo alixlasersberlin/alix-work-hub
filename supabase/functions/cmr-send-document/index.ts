@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
     if (!u?.user) return Response.json({ error: "Not authenticated" }, { status: 401, headers: corsHeaders });
 
     const roleChecks = await Promise.all(
-      ["Super Admin", "Admin", "Geschäftsführung"].map((r) => userSb.rpc("has_role", { check_role: r })),
+      ["Super Admin", "Admin", "Geschäftsführung", "CMR"].map((r) => userSb.rpc("has_role", { check_role: r })),
     );
     if (!roleChecks.some((r) => !!r.data)) {
       return Response.json({ error: "Forbidden" }, { status: 403, headers: corsHeaders });
