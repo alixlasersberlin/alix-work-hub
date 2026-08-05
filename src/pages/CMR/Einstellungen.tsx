@@ -46,6 +46,7 @@ const FIELDS: { key: string; label: string; type?: string }[][] = [
     { key: 'email_from_name', label: 'Absendername' },
     { key: 'email_from_address', label: 'Absenderadresse' },
     { key: 'email_reply_to', label: 'Antwort an' },
+    { key: 'portal_payment_url', label: 'Zahlungslink Kundenportal' },
     { key: 'smtp_host', label: 'SMTP Host' },
     { key: 'smtp_port', label: 'SMTP Port', type: 'number' },
     { key: 'smtp_user', label: 'SMTP Benutzer' },

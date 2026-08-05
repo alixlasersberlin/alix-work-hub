@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, FileText, AlertCircle } from 'lucide-react';
+import { Loader2, FileText, AlertCircle, CreditCard } from 'lucide-react';
 
 const money = (n: number, c: string) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: c || 'AED' }).format(Number(n || 0));
@@ -92,6 +92,23 @@ export default function CmrPortal() {
             );
           })}
         </Card>
+
+        {data.payment_url && data.summary.open_amount > 0 && (
+          <Card className="p-4 flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-0 text-sm">
+              <div className="font-semibold">Offenen Betrag bezahlen</div>
+              <div className="text-muted-foreground">{money(data.summary.open_amount, cur)} offen</div>
+            </div>
+            <a
+              href={data.payment_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              <CreditCard className="w-4 h-4" /> Jetzt bezahlen
+            </a>
+          </Card>
+        )}
 
         {data.payments.length > 0 && (
           <Card className="divide-y">

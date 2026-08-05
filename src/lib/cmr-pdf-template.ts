@@ -10,6 +10,7 @@ export async function loadCmrPdfOptions(
   tenantId: string | null,
   docType: string,
   qrPayload?: string | null,
+  language?: string | null,
 ): Promise<CmrPdfOptions> {
   if (!tenantId) return {};
 
@@ -19,10 +20,13 @@ export async function loadCmrPdfOptions(
     .eq('tenant_id', tenantId)
     .eq('doc_type', docType)
     .order('is_default', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(20);
 
-  const tpl = ((data as any) ?? null) as CmrPdfTemplate | null;
+  const all = ((data as any) || []) as (CmrPdfTemplate & { language?: string | null })[];
+  // Sprachvorlage bevorzugen, sonst Standardvorlage
+  const tpl = (language ? all.find((t) => (t.language ?? 'de') === language) : null)
+    ?? all[0]
+    ?? null;
   if (!tpl) return {};
 
   const [logoDataUrl, watermarkDataUrl] = await Promise.all([

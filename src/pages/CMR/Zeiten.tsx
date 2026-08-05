@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Clock, Loader2, Plus, Receipt, Trash2, Play, Square, AlertTriangle } from 'lucide-react';
+import { Clock, Loader2, Plus, Receipt, Trash2, Play, Square, AlertTriangle, Check, Undo2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
@@ -24,13 +24,18 @@ type Entry = {
   description: string | null;
   billable: boolean;
   billed_document_id: string | null;
+  worked_by?: string | null;
+  approved?: boolean | null;
+  approved_at?: string | null;
 };
+
+type TeamMember = { user_id: string; full_name: string | null; email: string | null };
 
 type Project = { id: string; name: string; code: string | null; customer_id: string | null; customer_name: string | null; budget: number | null };
 
 const EMPTY = {
   project_id: '', work_date: new Date().toISOString().slice(0, 10),
-  hours: 1, hourly_rate: 0, description: '', billable: true,
+  hours: 1, hourly_rate: 0, description: '', billable: true, worked_by: '',
 };
 
 /**
@@ -41,6 +46,7 @@ export default function CmrZeiten() {
   const { tenantId, settings, loading, canWrite } = useCmrTenant();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [team, setTeam] = useState<TeamMember[]>([]);
   const [busy, setBusy] = useState(true);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(EMPTY);
@@ -56,14 +62,17 @@ export default function CmrZeiten() {
   const load = async () => {
     if (!tenantId) return;
     setBusy(true);
-    const [{ data: e }, { data: p }] = await Promise.all([
+    const [{ data: e }, { data: p }, { data: t }] = await Promise.all([
       supabase.from('cmr_time_entries' as any).select('*').eq('tenant_id', tenantId)
         .order('work_date', { ascending: false }).limit(1000),
       supabase.from('cmr_projects' as any).select('id,name,code,customer_id,customer_name,budget')
         .eq('tenant_id', tenantId).order('name').limit(500),
+      supabase.from('user_profiles').select('user_id,full_name,email')
+        .eq('is_active', true).order('full_name').limit(500),
     ]);
     setEntries(((e as any) || []) as Entry[]);
     setProjects(((p as any) || []) as Project[]);
+    setTeam(((t as any) || []) as TeamMember[]);
     setSelected(new Set());
     setBusy(false);
   };
@@ -159,6 +168,7 @@ export default function CmrZeiten() {
       hourly_rate: Number(form.hourly_rate) || 0,
       description: form.description || null,
       billable: !!form.billable,
+      worked_by: form.worked_by || auth?.user?.id || null,
       created_by: auth?.user?.id ?? null,
     });
     setSaving(false);
@@ -167,6 +177,24 @@ export default function CmrZeiten() {
     setOpen(false);
     setForm(EMPTY);
     load();
+  };
+
+  /** Fremderfasste bzw. offene Zeiten freigeben oder Freigabe zurücknehmen. */
+  const setApproved = async (e: Entry, approved: boolean) => {
+    const { data: auth } = await supabase.auth.getUser();
+    const { error } = await supabase.from('cmr_time_entries' as any).update({
+      approved,
+      approved_by: approved ? auth?.user?.id ?? null : null,
+      approved_at: approved ? new Date().toISOString() : null,
+    }).eq('id', e.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(approved ? 'Zeit freigegeben' : 'Freigabe zurückgenommen');
+    load();
+  };
+
+  const memberName = (id?: string | null) => {
+    const m = team.find((x) => x.user_id === id);
+    return m?.full_name || m?.email || null;
   };
 
   const remove = async (id: string) => {
@@ -367,7 +395,7 @@ export default function CmrZeiten() {
                 type="checkbox"
                 className="h-4 w-4"
                 aria-label="Zeit auswählen"
-                disabled={!!e.billed_document_id || !e.billable || !canWrite}
+                disabled={!!e.billed_document_id || !e.billable || !canWrite || !e.approved}
                 checked={selected.has(e.id)}
                 onChange={() => toggle(e.id)}
               />
@@ -378,6 +406,7 @@ export default function CmrZeiten() {
                 </div>
                 <div className="text-xs text-muted-foreground truncate">
                   {new Date(e.work_date).toLocaleDateString('de-DE')} · {Number(e.hours).toFixed(2)} h
+                  {memberName(e.worked_by) ? ` · ${memberName(e.worked_by)}` : ''}
                   {e.description ? ` · ${e.description}` : ''}
                 </div>
               </div>
@@ -386,7 +415,16 @@ export default function CmrZeiten() {
                 : e.billable
                   ? <Badge variant="outline" className="border-amber-500/40 text-amber-500">offen</Badge>
                   : <Badge variant="outline">nicht abrechenbar</Badge>}
+              <Badge variant="outline" className={e.approved ? 'border-emerald-500/40 text-emerald-500' : 'border-muted-foreground/30'}>
+                {e.approved ? 'freigegeben' : 'zu prüfen'}
+              </Badge>
               <div className="w-28 text-right text-sm font-semibold tabular-nums">{cmrMoney(value, cur)}</div>
+              <Button
+                size="sm" variant="ghost" title={e.approved ? 'Freigabe zurücknehmen' : 'Freigeben'}
+                disabled={!canWrite || !!e.billed_document_id} onClick={() => setApproved(e, !e.approved)}
+              >
+                {e.approved ? <Undo2 className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+              </Button>
               <Button size="sm" variant="ghost" disabled={!canWrite || !!e.billed_document_id} onClick={() => remove(e.id)}>
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -410,6 +448,19 @@ export default function CmrZeiten() {
                 <option value="">Ohne Projekt</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>{p.code ? `${p.code} · ` : ''}{p.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label>Mitarbeiter</Label>
+              <select
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={form.worked_by}
+                onChange={(e) => setForm({ ...form, worked_by: e.target.value })}
+              >
+                <option value="">Ich selbst</option>
+                {team.map((m) => (
+                  <option key={m.user_id} value={m.user_id}>{m.full_name || m.email || m.user_id}</option>
                 ))}
               </select>
             </div>
