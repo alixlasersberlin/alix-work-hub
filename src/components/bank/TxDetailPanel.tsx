@@ -73,7 +73,10 @@ export function TxDetailPanel({
                   {matches.map(m => (
                     <div key={m.id} className="rounded-md border border-border p-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{m.invoice_number ?? '–'}</span>
+                        <span className="font-medium">
+                          {m.invoice_number ?? '–'}
+                          {m.order_id && !m.invoice_id && <Badge variant="outline" className="ml-1 text-[9px]">Auftrag</Badge>}
+                        </span>
                         <Badge variant="outline">{m.matching_score} % Übereinstimmung</Badge>
                       </div>
                       <ul className="mt-1 list-disc pl-4 text-xs text-muted-foreground">
@@ -82,11 +85,14 @@ export function TxDetailPanel({
                       {tx.status !== 'verbucht' && (
                         <Button size="sm" className="mt-2" variant="outline"
                           onClick={() => act(() => bookTransaction(tx, [{
-                            invoice_id: m.invoice_id, invoice_number: m.invoice_number,
-                            customer_id: m.customer_id, allocation_type: 'rechnung',
+                            invoice_id: m.invoice_id ?? null, order_id: m.order_id ?? null,
+                            invoice_number: m.invoice_number,
+                            customer_id: m.customer_id,
+                            allocation_type: (!m.invoice_id && m.order_id) ? 'anzahlung' : 'rechnung',
                             allocated_amount: Math.abs(Number(tx.amount)),
                           }]), 'Zahlung verbucht')}>
-                          <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Diese Rechnung verbuchen
+                          <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                          {(!m.invoice_id && m.order_id) ? 'Auf diesen Auftrag verbuchen' : 'Diese Rechnung verbuchen'}
                         </Button>
                       )}
                     </div>
