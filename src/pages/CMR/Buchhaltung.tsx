@@ -396,6 +396,7 @@ export default function CmrBuchhaltung() {
               type="file"
               accept=".csv,text/csv,.xml,text/xml,.sta,.mt940,.940"
               className="hidden"
+              disabled={!canWrite}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) parseBankCsv(f); e.currentTarget.value = ''; }}
             />
             <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input px-3 text-sm hover:bg-muted">
@@ -467,7 +468,7 @@ export default function CmrBuchhaltung() {
                 <div className="text-sm font-semibold">{cmrMoney(d.gross_total, d.currency || cur)}</div>
                 <div className="text-xs text-muted-foreground">offen {cmrMoney(Number(d.gross_total) - Number(d.paid_total), cur)}</div>
               </div>
-              <Button size="sm" variant="outline" onClick={() => startPayment(d)}>
+              <Button size="sm" variant="outline" onClick={() => startPayment(d)} disabled={!canWrite}>
                 <Plus className="w-3.5 h-3.5 mr-1" /> Zahlung
               </Button>
             </div>
