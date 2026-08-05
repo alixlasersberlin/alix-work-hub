@@ -116,7 +116,9 @@ export default function ReturnDebitDialog({
   }
 
   const splitSum = useMemo(() => splits.reduce((s, r) => s + Number(r.allocated_amount || 0), 0), [splits]);
-  const splitOk = Math.abs(splitSum - amount) < 0.01 && splits.length > 0;
+  const splitTol = amountTolerance(amount);
+  const splitOk = Math.abs(splitSum - amount) <= splitTol && splits.length > 0;
+  const splitExact = Math.abs(splitSum - amount) < 0.01;
   const customerId = picked?.allocations.find(a => a.customer_id)?.customer_id ?? picked?.tx?.matched_customer_id ?? rd?.customer_id ?? null;
   const confidence = picked?.score ?? 0;
   const readOnly = rd && ['bestaetigt', 'storniert', 'erledigt'].includes(rd.status);
