@@ -62,6 +62,9 @@ export default function CmrDokumente() {
   const [payForm, setPayForm] = useState<any>(null);
   const [paying, setPaying] = useState(false);
 
+  const [logDoc, setLogDoc] = useState<Doc | null>(null);
+  const [logRows, setLogRows] = useState<any[] | null>(null);
+
   const cur = settings?.default_currency || 'AED';
   const defTax = Number(settings?.tax_rate ?? 5);
 
