@@ -133,6 +133,7 @@ export default function CmrEinstellungen() {
       <Card className="p-4 space-y-3">
 
         <div className="text-sm font-semibold">Texte</div>
+
         <div><Label>Steuerhinweis</Label><Textarea rows={2} value={form.tax_note ?? ''} onChange={(e) => setForm({ ...form, tax_note: e.target.value })} /></div>
         <div><Label>Zahlungsbedingungen</Label><Textarea rows={2} value={form.payment_terms ?? ''} onChange={(e) => setForm({ ...form, payment_terms: e.target.value })} /></div>
         <div><Label>E-Mail-Signatur</Label><Textarea rows={3} value={form.email_signature ?? ''} onChange={(e) => setForm({ ...form, email_signature: e.target.value })} /></div>
