@@ -891,6 +891,7 @@ export async function createDeviceLockFromReturnDebit(
   invoiceInfos: { invoice_id?: string | null; invoice_number?: string | null }[] = [],
   amount?: number,
   fee?: number,
+  tx?: any,
 ) {
   const marker = `[RD:${rd.id}]`;
 
@@ -906,6 +907,17 @@ export async function createDeviceLockFromReturnDebit(
     customerName = (c as any)?.company_name || (c as any)?.contact_name || null;
     customerNumber = (c as any)?.external_customer_id ?? null;
   }
+  // Fallback: Auftraggeber/Empfänger aus der Banktransaktion
+  if (!customerName) {
+    let name = tx?.sender_receiver_name ?? null;
+    if (!name && rd.bank_transaction_id) {
+      const { data: t } = await supabase.from('bank_transactions' as any)
+        .select('sender_receiver_name').eq('id', rd.bank_transaction_id).maybeSingle();
+      name = (t as any)?.sender_receiver_name ?? null;
+    }
+    customerName = name;
+  }
+
 
   const invNumbers = invoiceInfos.map(i => i.invoice_number).filter(Boolean) as string[];
   const invoiceNumber = rd.invoice_number ?? invNumbers[0] ?? null;
