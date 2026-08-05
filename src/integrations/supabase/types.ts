@@ -8350,6 +8350,105 @@ export type Database = {
           },
         ]
       }
+      bank_accounts: {
+        Row: {
+          account_name: string
+          accounting_area: string
+          active: boolean
+          auto_book_threshold: number
+          automatic_booking_enabled: boolean
+          bank_name: string
+          bic: string | null
+          company_id: string | null
+          country: string | null
+          created_at: string
+          currency: string
+          iban: string | null
+          id: string
+          notes: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          accounting_area?: string
+          active?: boolean
+          auto_book_threshold?: number
+          automatic_booking_enabled?: boolean
+          bank_name: string
+          bic?: string | null
+          company_id?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string
+          iban?: string | null
+          id?: string
+          notes?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          accounting_area?: string
+          active?: boolean
+          auto_book_threshold?: number
+          automatic_booking_enabled?: boolean
+          bank_name?: string
+          bic?: string | null
+          company_id?: string | null
+          country?: string | null
+          created_at?: string
+          currency?: string
+          iban?: string | null
+          id?: string
+          notes?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bank_audit_log: {
+        Row: {
+          action: string
+          bank_import_id: string | null
+          bank_transaction_id: string | null
+          company_id: string | null
+          created_at: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          tenant_id: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          bank_import_id?: string | null
+          bank_transaction_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          tenant_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          bank_import_id?: string | null
+          bank_transaction_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          tenant_id?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       bank_financing_requests: {
         Row: {
           created_at: string
@@ -8426,6 +8525,383 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: true
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_import_templates: {
+        Row: {
+          bank_account_id: string | null
+          column_mapping: Json
+          created_at: string
+          created_by: string | null
+          file_format: string
+          id: string
+          parsing_rules: Json
+          template_name: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_account_id?: string | null
+          column_mapping?: Json
+          created_at?: string
+          created_by?: string | null
+          file_format: string
+          id?: string
+          parsing_rules?: Json
+          template_name: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_account_id?: string | null
+          column_mapping?: Json
+          created_at?: string
+          created_by?: string | null
+          file_format?: string
+          id?: string
+          parsing_rules?: Json
+          template_name?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_import_templates_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_imports: {
+        Row: {
+          accounting_area: string
+          auto_matched_count: number
+          bank_account_id: string | null
+          company_id: string | null
+          created_at: string
+          duplicates_count: number
+          error_log: Json | null
+          file_format: string
+          file_hash: string | null
+          file_name: string
+          file_path: string | null
+          id: string
+          import_number: string | null
+          imported_at: string
+          imported_by: string | null
+          manual_matched_count: number
+          period_from: string | null
+          period_to: string | null
+          status: string
+          tenant_id: string | null
+          total_expenses: number
+          total_income: number
+          total_transactions: number
+          unmatched_count: number
+          updated_at: string
+        }
+        Insert: {
+          accounting_area?: string
+          auto_matched_count?: number
+          bank_account_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          duplicates_count?: number
+          error_log?: Json | null
+          file_format: string
+          file_hash?: string | null
+          file_name: string
+          file_path?: string | null
+          id?: string
+          import_number?: string | null
+          imported_at?: string
+          imported_by?: string | null
+          manual_matched_count?: number
+          period_from?: string | null
+          period_to?: string | null
+          status?: string
+          tenant_id?: string | null
+          total_expenses?: number
+          total_income?: number
+          total_transactions?: number
+          unmatched_count?: number
+          updated_at?: string
+        }
+        Update: {
+          accounting_area?: string
+          auto_matched_count?: number
+          bank_account_id?: string | null
+          company_id?: string | null
+          created_at?: string
+          duplicates_count?: number
+          error_log?: Json | null
+          file_format?: string
+          file_hash?: string | null
+          file_name?: string
+          file_path?: string | null
+          id?: string
+          import_number?: string | null
+          imported_at?: string
+          imported_by?: string | null
+          manual_matched_count?: number
+          period_from?: string | null
+          period_to?: string | null
+          status?: string
+          tenant_id?: string | null
+          total_expenses?: number
+          total_income?: number
+          total_transactions?: number
+          unmatched_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_imports_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_transaction_allocations: {
+        Row: {
+          allocated_amount: number
+          allocation_type: string
+          bank_transaction_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          id: string
+          invoice_id: string | null
+          invoice_number: string | null
+          note: string | null
+          order_id: string | null
+          reversal_of: string | null
+          supplier_id: string | null
+        }
+        Insert: {
+          allocated_amount: number
+          allocation_type?: string
+          bank_transaction_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          note?: string | null
+          order_id?: string | null
+          reversal_of?: string | null
+          supplier_id?: string | null
+        }
+        Update: {
+          allocated_amount?: number
+          allocation_type?: string
+          bank_transaction_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          note?: string | null
+          order_id?: string | null
+          reversal_of?: string | null
+          supplier_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transaction_allocations_bank_transaction_id_fkey"
+            columns: ["bank_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_transaction_matches: {
+        Row: {
+          bank_transaction_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          invoice_id: string | null
+          invoice_number: string | null
+          matching_reasons: Json | null
+          matching_score: number
+          order_id: string | null
+          status: string
+          suggested_amount: number | null
+        }
+        Insert: {
+          bank_transaction_id: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          matching_reasons?: Json | null
+          matching_score?: number
+          order_id?: string | null
+          status?: string
+          suggested_amount?: number | null
+        }
+        Update: {
+          bank_transaction_id?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          matching_reasons?: Json | null
+          matching_score?: number
+          order_id?: string | null
+          status?: string
+          suggested_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transaction_matches_bank_transaction_id_fkey"
+            columns: ["bank_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_transactions: {
+        Row: {
+          accounting_area: string
+          amount: number
+          bank_account_id: string | null
+          bank_import_id: string | null
+          bank_reference: string | null
+          bic: string | null
+          booking_date: string | null
+          booking_text: string | null
+          company_id: string | null
+          created_at: string
+          currency: string
+          customer_reference: string | null
+          duplicate_hash: string | null
+          duplicate_of: string | null
+          end_to_end_reference: string | null
+          id: string
+          invoice_number_hint: string | null
+          is_duplicate: boolean
+          is_return_debit: boolean
+          mandate_reference: string | null
+          matched_customer_id: string | null
+          matched_invoice_id: string | null
+          matching_score: number
+          note: string | null
+          purpose: string | null
+          raw_data: Json | null
+          sender_receiver_iban: string | null
+          sender_receiver_name: string | null
+          status: string
+          tenant_id: string | null
+          transaction_type: string
+          updated_at: string
+          value_date: string | null
+        }
+        Insert: {
+          accounting_area?: string
+          amount?: number
+          bank_account_id?: string | null
+          bank_import_id?: string | null
+          bank_reference?: string | null
+          bic?: string | null
+          booking_date?: string | null
+          booking_text?: string | null
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_reference?: string | null
+          duplicate_hash?: string | null
+          duplicate_of?: string | null
+          end_to_end_reference?: string | null
+          id?: string
+          invoice_number_hint?: string | null
+          is_duplicate?: boolean
+          is_return_debit?: boolean
+          mandate_reference?: string | null
+          matched_customer_id?: string | null
+          matched_invoice_id?: string | null
+          matching_score?: number
+          note?: string | null
+          purpose?: string | null
+          raw_data?: Json | null
+          sender_receiver_iban?: string | null
+          sender_receiver_name?: string | null
+          status?: string
+          tenant_id?: string | null
+          transaction_type?: string
+          updated_at?: string
+          value_date?: string | null
+        }
+        Update: {
+          accounting_area?: string
+          amount?: number
+          bank_account_id?: string | null
+          bank_import_id?: string | null
+          bank_reference?: string | null
+          bic?: string | null
+          booking_date?: string | null
+          booking_text?: string | null
+          company_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_reference?: string | null
+          duplicate_hash?: string | null
+          duplicate_of?: string | null
+          end_to_end_reference?: string | null
+          id?: string
+          invoice_number_hint?: string | null
+          is_duplicate?: boolean
+          is_return_debit?: boolean
+          mandate_reference?: string | null
+          matched_customer_id?: string | null
+          matched_invoice_id?: string | null
+          matching_score?: number
+          note?: string | null
+          purpose?: string | null
+          raw_data?: Json | null
+          sender_receiver_iban?: string | null
+          sender_receiver_name?: string | null
+          status?: string
+          tenant_id?: string | null
+          transaction_type?: string
+          updated_at?: string
+          value_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_bank_import_id_fkey"
+            columns: ["bank_import_id"]
+            isOneToOne: false
+            referencedRelation: "bank_imports"
             referencedColumns: ["id"]
           },
         ]
