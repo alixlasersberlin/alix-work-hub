@@ -319,7 +319,14 @@ export default function OrderDetail() {
           source_id: id!,
           vorgang: 'Anzahlung',
         });
+        const settle = await settleDepositInvoices(id!, parsedAmount);
+        if (settle.ok && settle.settled.length) {
+          toast.success(`Anzahlungsrechnung(en) als bezahlt verbucht: ${settle.settled.join(', ')}`);
+        } else if (!settle.ok) {
+          toast.error('AZ-Rechnung nicht verbucht: ' + (settle.error ?? ''));
+        }
       }
+
     }
     loadAll();
   }
