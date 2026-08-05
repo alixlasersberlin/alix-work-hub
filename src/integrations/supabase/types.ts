@@ -10591,6 +10591,53 @@ export type Database = {
           },
         ]
       }
+      cmr_email_log: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          error: string | null
+          id: string
+          provider: string | null
+          recipients: string
+          sent_by: string | null
+          status: string
+          subject: string | null
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          error?: string | null
+          id?: string
+          provider?: string | null
+          recipients: string
+          sent_by?: string | null
+          status?: string
+          subject?: string | null
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          error?: string | null
+          id?: string
+          provider?: string | null
+          recipients?: string
+          sent_by?: string | null
+          status?: string
+          subject?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_email_log_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cmr_email_templates: {
         Row: {
           body_html: string
@@ -11067,6 +11114,14 @@ export type Database = {
           country: string | null
           created_at: string
           default_currency: string
+          dunning_days_1: number
+          dunning_days_2: number
+          dunning_days_3: number
+          dunning_fee_1: number
+          dunning_fee_2: number
+          dunning_fee_3: number
+          dunning_gap_days: number
+          dunning_interest_pct: number
           email: string | null
           email_from_address: string | null
           email_from_name: string | null
@@ -11106,6 +11161,14 @@ export type Database = {
           country?: string | null
           created_at?: string
           default_currency?: string
+          dunning_days_1?: number
+          dunning_days_2?: number
+          dunning_days_3?: number
+          dunning_fee_1?: number
+          dunning_fee_2?: number
+          dunning_fee_3?: number
+          dunning_gap_days?: number
+          dunning_interest_pct?: number
           email?: string | null
           email_from_address?: string | null
           email_from_name?: string | null
@@ -11145,6 +11208,14 @@ export type Database = {
           country?: string | null
           created_at?: string
           default_currency?: string
+          dunning_days_1?: number
+          dunning_days_2?: number
+          dunning_days_3?: number
+          dunning_fee_1?: number
+          dunning_fee_2?: number
+          dunning_fee_3?: number
+          dunning_gap_days?: number
+          dunning_interest_pct?: number
           email?: string | null
           email_from_address?: string | null
           email_from_name?: string | null
