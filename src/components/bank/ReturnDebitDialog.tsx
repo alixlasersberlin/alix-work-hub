@@ -54,6 +54,7 @@ export default function ReturnDebitDialog({
   const [suggIdx, setSuggIdx] = useState<number | null>(null);
   const [suggTerm, setSuggTerm] = useState('');
   const [sugg, setSugg] = useState<any[]>([]);
+  const [feeStatus, setFeeStatus] = useState<string | null>(null);
 
 
 
@@ -68,6 +69,19 @@ export default function ReturnDebitDialog({
   const [blockMandate, setBlockMandate] = useState(true);
   const [startReminder, setStartReminder] = useState(true);
   const [createTask, setCreateTask] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!rd?.fee_invoice_id) { setFeeStatus(null); return; }
+      const { data } = await supabase.from('zoho_invoices')
+        .select('payment_status, status, balance').eq('id', rd.fee_invoice_id).maybeSingle();
+      if (cancelled || !data) return;
+      const d = data as any;
+      setFeeStatus(Number(d.balance) === 0 ? 'bezahlt' : (d.payment_status ?? d.status ?? 'offen'));
+    })();
+    return () => { cancelled = true; };
+  }, [rd?.fee_invoice_id]);
 
   const amount = Math.abs(Number(rd?.return_debit_amount ?? tx?.amount ?? 0));
   const currency = rd?.currency ?? tx?.currency ?? 'EUR';
