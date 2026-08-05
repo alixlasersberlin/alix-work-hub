@@ -190,6 +190,22 @@ export default function CmrBuchhaltung() {
           ))}
         </Card>
       ) : tab !== 'zahlungen' ? (
+        <>
+        {tab === 'offen' && (
+          <Card className="p-4">
+            <div className="text-sm font-medium mb-3">Fälligkeitsstruktur</div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {aging.map((b) => (
+                <div key={b.label} className="rounded-md border border-border/60 p-3">
+                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{b.label}</div>
+                  <div className="mt-1 font-semibold tabular-nums">{cmrMoney(b.amount, cur)}</div>
+                  <div className="text-[11px] text-muted-foreground">{b.count} Beleg(e)</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         <Card className="divide-y">
           {list.length === 0 && (
             <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
