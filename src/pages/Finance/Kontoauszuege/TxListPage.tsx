@@ -10,6 +10,8 @@ import { useCanDelete } from '@/hooks/useCanDelete';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import BankStatusBadge from '@/components/bank/BankStatusBadge';
 import TxDetailPanel from '@/components/bank/TxDetailPanel';
+import BankLoadErrorPanel from '@/components/bank/BankLoadErrorPanel';
+import { describeBankLoadError, type BankLoadError } from '@/lib/bank/loadError';
 
 const fmt = (n: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
 
