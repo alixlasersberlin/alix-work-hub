@@ -1048,7 +1048,7 @@ export default function AppLayout() {
     return v >= SIDEBAR_MIN && v <= SIDEBAR_MAX ? v : 240;
   });
   const [resizing, setResizing] = useState(false);
-  const { scale: menuScale } = useMenuScale();
+  
 
   // Per-User Menü-Freigaben (überschreibt Rollenlogik, wenn gesetzt)
   const [menuGrants, setMenuGrants] = useState<Set<string> | null>(null);
