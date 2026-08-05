@@ -10,6 +10,8 @@ import { downloadReturnDunningPdf } from '@/lib/bank/returnDunningLetter';
 import { supabase } from '@/integrations/supabase/client';
 import ReturnDebitDialog from '@/components/bank/ReturnDebitDialog';
 import ManualReturnDebitDialog from '@/components/bank/ManualReturnDebitDialog';
+import BankLoadErrorPanel from '@/components/bank/BankLoadErrorPanel';
+import { describeBankLoadError, type BankLoadError } from '@/lib/bank/loadError';
 
 const fmt = (n: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
 
@@ -42,16 +44,22 @@ export default function Ruecklastschriften() {
   const [tx, setTx] = useState<any | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
 
+  const [loadError, setLoadError] = useState<BankLoadError | null>(null);
+
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
+    let endpoint = 'GET /rest/v1/bank_return_debits';
     try {
       const list = await listReturnDebits(region, status || undefined);
       // Aktuellen Status der verknüpften Gebührenrechnungen nachladen
       const ids = list.map((r: any) => r.fee_invoice_id).filter(Boolean);
       if (ids.length) {
-        const { data: invs } = await supabase.from('zoho_invoices')
+        endpoint = 'GET /rest/v1/zoho_invoices';
+        const { data: invs, error } = await supabase.from('zoho_invoices')
           .select('id, invoice_number, payment_status, status, balance')
           .in('id', ids as string[]);
+        if (error) throw error;
         const map = new Map((invs ?? []).map((i: any) => [i.id, i]));
         for (const r of list as any[]) {
           const i = r.fee_invoice_id ? map.get(r.fee_invoice_id) : null;
@@ -63,7 +71,11 @@ export default function Ruecklastschriften() {
       }
       setRows(list);
     }
-    catch (e: any) { toast.error(e.message); }
+    catch (e: any) {
+      const err = describeBankLoadError(e, endpoint);
+      setLoadError(err);
+      toast.error(`${err.message} (${err.correlationId})`);
+    }
     finally { setLoading(false); }
   };
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [region, status]);
@@ -77,6 +89,7 @@ export default function Ruecklastschriften() {
 
   return (
     <div className="space-y-4">
+      {loadError && <BankLoadErrorPanel error={loadError} onRetry={load} />}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
