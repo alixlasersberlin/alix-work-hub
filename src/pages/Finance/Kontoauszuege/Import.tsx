@@ -13,6 +13,7 @@ import { parseBankFile, applyMapping, guessMapping, duplicateHash, isReturnDebit
 import type { ColumnMapping, ParsedTx, ParseResult } from '@/lib/bank/types';
 import { listBankAccounts, logBank, type BankAccount } from '@/lib/bank/api';
 import { loadOpenInvoices, scoreInvoices, scoreColor } from '@/lib/bank/matching';
+import { loadMatchRules, payerKey } from '@/lib/bank/rules';
 import ColumnMapper from '@/components/bank/ColumnMapper';
 
 const fmt = (n: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
