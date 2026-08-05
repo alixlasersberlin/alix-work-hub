@@ -1022,6 +1022,32 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
                     Verschieben ({selectedIds.size})
                   </Button>
                 )}
+                {selectionMode && canExportSelection && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 gap-1.5"
+                      disabled={selectedIds.size === 0 || exportingSelection}
+                      onClick={handleExportSelectionPdf}
+                      title="Markierte Aufträge inkl. Anzahlungen und Offener Posten als PDF"
+                    >
+                      {exportingSelection ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                      PDF ({selectedIds.size})
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 gap-1.5"
+                      disabled={selectedIds.size === 0 || exportingSelection}
+                      onClick={handleExportSelectionCsv}
+                      title="Markierte Aufträge inkl. Anzahlungen und Offener Posten als CSV"
+                    >
+                      {exportingSelection ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
+                      CSV ({selectedIds.size})
+                    </Button>
+                  </>
+                )}
                 {selectionMode && hasRole('Super Admin') && (
                   <Button
                     size="sm"
