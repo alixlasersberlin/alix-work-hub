@@ -718,6 +718,7 @@ export const navItems: NavItem[] = [
           { path: '/admin/rollen-freigaben', label: 'Rollen & Freigaben', icon: ShieldCheck, roles: ['Super Admin'] },
           { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
           { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
+          { path: '/workspaces-admin', label: 'Workspaces', icon: LayoutGrid, roles: ['Admin', 'Super Admin'] },
           { path: '/security-center', label: 'Security Center', icon: Shield, roles: ['Super Admin'] },
 
         ],
