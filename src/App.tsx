@@ -1242,14 +1242,14 @@ function AppRoutes() {
           <Route path="/operation/auftrags-import" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AuftragsImport /></ProtectedRoute>} />
           <Route path="/operation/auftrags-abgleich" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AuftragsAbgleich /></ProtectedRoute>} />
           <Route path="/mandanten" element={<ProtectedRoute requiredRoles={['Super Admin']}><Mandanten /></ProtectedRoute>} />
-          <Route path="/cmr" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrDashboard /></ProtectedRoute>} />
-          <Route path="/cmr/artikel" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrArtikel /></ProtectedRoute>} />
-          <Route path="/cmr/dokumente" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrDokumente /></ProtectedRoute>} />
-          <Route path="/cmr/buchhaltung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrBuchhaltung /></ProtectedRoute>} />
-          <Route path="/cmr/kunden" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrKunden /></ProtectedRoute>} />
-          <Route path="/cmr/projekte" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrProjekte /></ProtectedRoute>} />
-          <Route path="/cmr/abos" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrAbos /></ProtectedRoute>} />
-          <Route path="/cmr/mahnwesen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrMahnwesen /></ProtectedRoute>} />
+          <Route path="/cmr" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR']}><CmrDashboard /></ProtectedRoute>} />
+          <Route path="/cmr/artikel" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR']}><CmrArtikel /></ProtectedRoute>} />
+          <Route path="/cmr/dokumente" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR']}><CmrDokumente /></ProtectedRoute>} />
+          <Route path="/cmr/buchhaltung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR']}><CmrBuchhaltung /></ProtectedRoute>} />
+          <Route path="/cmr/kunden" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR']}><CmrKunden /></ProtectedRoute>} />
+          <Route path="/cmr/projekte" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR']}><CmrProjekte /></ProtectedRoute>} />
+          <Route path="/cmr/abos" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR']}><CmrAbos /></ProtectedRoute>} />
+          <Route path="/cmr/mahnwesen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR']}><CmrMahnwesen /></ProtectedRoute>} />
           <Route path="/cmr/einstellungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><CmrEinstellungen /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><AdminAuditLog /></ProtectedRoute>} />
           <Route path="/admin/geraete" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><GeraeteVerwaltung /></ProtectedRoute>} />
