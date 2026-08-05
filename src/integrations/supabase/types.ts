@@ -8798,6 +8798,11 @@ export type Database = {
           dunning_level: number
           dunning_paused: boolean
           fee_handling: string
+          fee_invoice_id: string | null
+          fee_invoice_number: string | null
+          fee_invoice_sent_at: string | null
+          fee_invoice_status: string | null
+          fee_invoice_total: number | null
           id: string
           installment_id: string | null
           invoice_id: string | null
@@ -8840,6 +8845,11 @@ export type Database = {
           dunning_level?: number
           dunning_paused?: boolean
           fee_handling?: string
+          fee_invoice_id?: string | null
+          fee_invoice_number?: string | null
+          fee_invoice_sent_at?: string | null
+          fee_invoice_status?: string | null
+          fee_invoice_total?: number | null
           id?: string
           installment_id?: string | null
           invoice_id?: string | null
@@ -8882,6 +8892,11 @@ export type Database = {
           dunning_level?: number
           dunning_paused?: boolean
           fee_handling?: string
+          fee_invoice_id?: string | null
+          fee_invoice_number?: string | null
+          fee_invoice_sent_at?: string | null
+          fee_invoice_status?: string | null
+          fee_invoice_total?: number | null
           id?: string
           installment_id?: string | null
           invoice_id?: string | null
