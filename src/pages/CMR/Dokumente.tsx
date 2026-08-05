@@ -221,18 +221,22 @@ export default function CmrDokumente() {
           </div>
         )}
         {filtered.map((d) => (
-          <button key={d.id} className="w-full text-left p-3 hover:bg-muted/50 flex items-center gap-3" onClick={() => startEdit(d)}>
-            <div className="min-w-0 flex-1">
+          <div key={d.id} className="w-full p-3 hover:bg-muted/50 flex items-center gap-3">
+            <button className="min-w-0 flex-1 text-left" onClick={() => startEdit(d)}>
               <div className="font-medium truncate">
                 {d.doc_number ?? '—'} · {CMR_DOC_TYPES.find((t) => t.value === d.doc_type)?.label ?? d.doc_type}
               </div>
               <div className="text-xs text-muted-foreground truncate">
                 {d.customer_name ?? 'Ohne Kunde'} · {new Date(d.doc_date).toLocaleDateString('de-DE')}
               </div>
-            </div>
+            </button>
             <Badge variant="outline" className="capitalize">{d.status}</Badge>
             <div className="text-sm font-semibold whitespace-nowrap">{cmrMoney(d.gross_total, d.currency || cur)}</div>
-          </button>
+            <Button size="icon" variant="ghost" title="PDF herunterladen" onClick={() => downloadPdf(d)}>
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
+
         ))}
       </Card>
 
