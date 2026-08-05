@@ -208,15 +208,21 @@ export default function BankImport() {
         if (!best) { unmatched++; continue; }
         await supabase.from('bank_transaction_matches' as any).insert(
           cands.slice(0, 5).map(c => ({
-            bank_transaction_id: row.id, invoice_id: c.invoice.id, invoice_number: c.invoice.invoice_number,
-            customer_id: null, suggested_amount: Math.abs(Number(row.amount)),
+            bank_transaction_id: row.id,
+            invoice_id: c.invoice.source === 'order' ? null : c.invoice.id,
+            order_id: c.invoice.source === 'order' ? c.invoice.id : null,
+            invoice_number: c.invoice.invoice_number,
+            customer_id: c.invoice.source === 'order' ? (c.invoice.customer_id ?? null) : null,
+            suggested_amount: Math.abs(Number(row.amount)),
             matching_score: c.score, matching_reasons: c.reasons as any, status: 'vorschlag',
           }))
         );
         const color = scoreColor(best.score);
         const status = color === 'gruen' ? 'sicher' : color === 'gelb' ? 'vorschlag' : 'offen';
         await supabase.from('bank_transactions' as any).update({
-          matching_score: best.score, status, matched_invoice_id: best.invoice.id,
+          matching_score: best.score, status,
+          matched_invoice_id: best.invoice.source === 'order' ? null : best.invoice.id,
+          matched_customer_id: best.invoice.source === 'order' ? (best.invoice.customer_id ?? null) : null,
         }).eq('id', row.id);
         if (color === 'rot') unmatched++; else auto++;
       }
