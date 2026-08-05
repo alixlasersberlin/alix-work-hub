@@ -300,7 +300,9 @@ export async function findOriginalPayments(
   if (filter.dateTo) q = q.lte('booking_date', filter.dateTo);
   if (tx.booking_date && !filter.dateTo) q = q.lte('booking_date', tx.booking_date);
   if (amount > 0 && !filter.invoiceNumber && !filter.customerName) {
-    q = q.gte('amount', amount - 0.02).lte('amount', amount + 0.02);
+    // Toleranz für Bankgebühren: Rücklastschriftbetrag ≠ Zahlbetrag
+    const tol = amountTolerance(amount);
+    q = q.gte('amount', amount - tol).lte('amount', amount + tol);
   }
   const { data, error } = await q;
   if (error) throw error;
