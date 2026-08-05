@@ -157,7 +157,7 @@ export default function CmrMahnwesen() {
         title="CMR Mahnwesen"
         subtitle="Überfällige Rechnungen des Mandanten CMR – Zahlungserinnerung und Mahnstufen."
         actions={
-          <Button variant="outline" onClick={runDunning} disabled={runBusy}>
+          <Button variant="outline" onClick={runDunning} disabled={runBusy || !canWrite}>
             {runBusy ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1.5" />}
             Mahnlauf jetzt
           </Button>
