@@ -242,8 +242,12 @@ export default function CmrDokumente() {
     return generateCmrDocumentPdf(d as any, ((data as any) || []) as any, settings, opts);
   };
 
-  /** Folgebeleg erzeugen (Angebot -> Auftragsbestätigung -> Rechnung usw.). */
-  const convertDoc = async (d: Doc, targetType: string) => {
+  /**
+   * Folgebeleg erzeugen (Angebot -> Auftragsbestätigung -> Rechnung usw.).
+   * Bei Gutschrift/Storno werden alle Beträge negiert (Storno-Assistent).
+   * mode = 'duplicate' erzeugt eine Kopie derselben Belegart.
+   */
+  const convertDoc = async (d: Doc, targetType: string, mode: 'convert' | 'duplicate' | 'storno' = 'convert') => {
     if (!tenantId) return;
     try {
       const { data: nr, error: nrErr } = await supabase.rpc('cmr_next_document_number' as any, {
@@ -254,6 +258,7 @@ export default function CmrDokumente() {
       const { data: src } = await supabase.from('cmr_documents' as any).select('*').eq('id', d.id).maybeSingle();
       const { data: srcLines } = await supabase.from('cmr_document_items' as any).select('*').eq('document_id', d.id).order('position');
 
+      const negate = mode === 'storno';
       const payload: any = { ...(src as any) };
       delete payload.id; delete payload.created_at; delete payload.updated_at; delete payload.sent_at;
       payload.doc_type = targetType;
@@ -262,8 +267,15 @@ export default function CmrDokumente() {
       payload.paid_total = 0;
       payload.reminder_level = 0;
       payload.last_reminded_at = null;
-      payload.parent_document_id = d.id;
+      payload.parent_document_id = mode === 'duplicate' ? null : d.id;
       payload.doc_date = new Date().toISOString().slice(0, 10);
+      if (negate) {
+        payload.net_total = -Math.abs(Number(payload.net_total || 0));
+        payload.tax_total = -Math.abs(Number(payload.tax_total || 0));
+        payload.gross_total = -Math.abs(Number(payload.gross_total || 0));
+        payload.notes = `Storno/Gutschrift zur Rechnung ${d.doc_number ?? ''}`;
+        payload.reference = d.doc_number ?? payload.reference ?? null;
+      }
 
       const { data: created, error } = await supabase.from('cmr_documents' as any).insert(payload).select('id').single();
       if (error) throw error;
@@ -272,14 +284,22 @@ export default function CmrDokumente() {
         const c: any = { ...l };
         delete c.id; delete c.created_at; delete c.updated_at;
         c.document_id = (created as any).id;
+        if (negate) {
+          c.quantity = -Math.abs(Number(c.quantity || 0));
+          c.line_total = -Math.abs(Number(c.line_total || 0));
+        }
         return c;
       });
       if (rows.length) await supabase.from('cmr_document_items' as any).insert(rows);
 
-      toast.success(`Folgebeleg ${nr} erstellt`);
+      toast.success(
+        mode === 'duplicate' ? `Kopie ${nr} erstellt`
+          : mode === 'storno' ? `Storno-Gutschrift ${nr} erstellt`
+            : `Folgebeleg ${nr} erstellt`,
+      );
       load();
     } catch (e: any) {
-      toast.error(e.message ?? 'Folgebeleg konnte nicht erstellt werden');
+      toast.error(e.message ?? 'Beleg konnte nicht erstellt werden');
     }
   };
 
@@ -292,6 +312,20 @@ export default function CmrDokumente() {
     if (t === 'zahlungserinnerung') return ['mahnung'];
     return [];
   };
+
+  /** E-Mail-Versandprotokoll eines Belegs laden. */
+  const openLog = async (d: Doc) => {
+    setLogDoc(d);
+    setLogRows(null);
+    const { data } = await supabase
+      .from('cmr_email_log' as any)
+      .select('*')
+      .eq('document_id', d.id)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    setLogRows(((data as any) || []) as any[]);
+  };
+
 
   const downloadPdf = async (d: Doc) => {
     try {
