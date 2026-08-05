@@ -30,6 +30,7 @@ import { template as ticketCsat } from './ticket-csat.tsx'
 import { template as ordersMissingAlert } from './orders-missing-alert.tsx'
 import { template as alixdocsAccessGranted } from './alixdocs-access-granted.tsx'
 import { template as ruecklastschriftMahnung } from './ruecklastschrift-mahnung.tsx'
+import { template as ruecklastschriftGebuehrenrechnung } from './ruecklastschrift-gebuehrenrechnung.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -53,4 +54,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'orders-missing-alert': ordersMissingAlert,
   'alixdocs-access-granted': alixdocsAccessGranted,
   'ruecklastschrift-mahnung': ruecklastschriftMahnung,
+  'ruecklastschrift-gebuehrenrechnung': ruecklastschriftGebuehrenrechnung,
 }

@@ -229,7 +229,15 @@ export default function ReturnDebitDialog({
       toast.success(res.fullyReturned
         ? 'Rücklastschrift bestätigt – Rechnung wieder geöffnet'
         : 'Rücklastschrift bestätigt – Rechnung ist wieder teilbezahlt');
+      if (res.feeInvoice) {
+        toast.success(
+          `Gebührenrechnung ${res.feeInvoice.invoiceNumber} (45,00 €) erstellt` +
+          (res.feeInvoice.emailSentTo ? ` und an ${res.feeInvoice.emailSentTo} versendet` : ''),
+          { duration: 8000 },
+        );
+      }
       res.warnings?.forEach(w => toast.warning(w, { duration: 10000 }));
+
       onChanged(); onOpenChange(false);
 
     } catch (e: any) { toast.error(e.message); }
