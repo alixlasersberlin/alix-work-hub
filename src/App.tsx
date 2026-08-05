@@ -1851,6 +1851,8 @@ function AppRoutes() {
         <Route path="/csat/:token" element={<TicketCsat />} />
         <Route path="/help" element={<SelfServicePortal />} />
         <Route path="/portal" element={<PortalLookup />} />
+        <Route path="/cmr-portal" element={<CmrPortal />} />
+        <Route path="/cmr-portal/:token" element={<CmrPortal />} />
         <Route path="/portal/status" element={<PortalStatus />} />
         <Route path="/sign/:token" element={<AlixSignPublic />} />
         <Route path="/dokumente/share/:token" element={<AlixDocsSharePublic />} />
