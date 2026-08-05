@@ -351,7 +351,8 @@ export default function ReturnDebitDialog({
                     </Button>
                     <span className={splitOk ? 'text-emerald-500 text-xs' : 'text-amber-500 text-xs'}>
                       Aufteilung {fmt(splitSum, currency)} von {fmt(amount, currency)}
-                      {!splitOk && ' – Summe muss exakt übereinstimmen'}
+                      {splitOk && !splitExact && ` – Differenz ${fmt(Math.abs(amount - splitSum), currency)} (Bankgebühren) akzeptiert`}
+                      {!splitOk && ` – Abweichung bis ${fmt(splitTol, currency)} (Bankgebühren) zulässig`}
                     </span>
                   </div>
                 </div>
