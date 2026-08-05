@@ -161,6 +161,59 @@ export default function WorkspaceAdmin() {
     });
   };
 
+  // Standardzuweisung: Workspaces anhand der Rollen der Benutzer vorbelegen
+  const ROLE_WS: Record<string, string[]> = {
+    'Order': ['verkauf', 'lager', 'fertigung'],
+    'Auftragsverwaltung': ['verkauf', 'lager'],
+    'SACHBEARBEITUNG': ['verkauf'],
+    'Vertrieb': ['verkauf'],
+    'Österreich': ['verkauf'],
+    'After Sales': ['verkauf', 'operation'],
+    'Finance': ['buchhaltung'],
+    'Buchhaltung EU': ['buchhaltung'],
+    'Finanzierungen': ['buchhaltung'],
+    'FACTORY INVOICE': ['buchhaltung', 'fertigung'],
+    'Tourenplanung': ['lager', 'operation'],
+    'Reparaturannahme': ['operation', 'lager'],
+    'QM': ['operation'],
+  };
+
+  const applyDefaults = async () => {
+    if (!confirm('Fehlende Workspace-Zuordnungen anhand der Rollen ergänzen? Bestehende Zuordnungen bleiben erhalten.')) return;
+    setSaving(true);
+    try {
+      const { data: ur, error } = await supabase
+        .from('user_roles').select('user_id, roles!inner(name)').limit(5000);
+      if (error) throw error;
+      const byCode: Record<string, string> = {};
+      ws.forEach(w => { byCode[w.code] = w.id; });
+      const rows: { user_id: string; workspace_id: string }[] = [];
+      const seen = new Set<string>();
+      ((ur as any[]) || []).forEach((r: any) => {
+        const roleName = r.roles?.name as string | undefined;
+        if (!roleName) return;
+        (ROLE_WS[roleName] || []).forEach(code => {
+          const wsId = byCode[code];
+          if (!wsId) return;
+          const key = `${r.user_id}|${wsId}`;
+          if (seen.has(key)) return;
+          if ((access[r.user_id] || []).includes(wsId)) return;
+          seen.add(key);
+          rows.push({ user_id: r.user_id, workspace_id: wsId });
+        });
+      });
+      if (rows.length === 0) { toast.info('Keine neuen Zuordnungen nötig'); return; }
+      const { error: insErr } = await supabase.from('user_workspace_access' as any).insert(rows);
+      if (insErr) throw insErr;
+      toast.success(`${rows.length} Zuordnungen ergänzt`);
+      await load();
+      reload();
+    } catch (e: any) {
+      toast.error('Standardzuweisung fehlgeschlagen: ' + (e?.message || 'Unbekannter Fehler'));
+    } finally {
+      setSaving(false);
+    }
+  };
 
 
   const filteredUsers = useMemo(() => {
