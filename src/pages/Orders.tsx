@@ -320,6 +320,131 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
     toast.success(`${rows.length} Aufträge als PDF exportiert`);
   }
 
+  // ---- Export markierter Aufträge inkl. Anzahlungen & Offener Posten ----
+  const canExportSelection = hasRole('Super Admin') || hasRole('Admin');
+  const [exportingSelection, setExportingSelection] = useState(false);
+
+  async function buildSelectionExport() {
+    const sel = orders.filter((o: any) => selectedIds.has(o.id));
+    const numbers = sel.map((o: any) => o.order_number).filter(Boolean);
+    let openItems: any[] = [];
+    if (numbers.length > 0) {
+      const { data } = await supabase
+        .from('zoho_invoices')
+        .select('invoice_number, reference_number, total, balance, due_date, status, currency_code')
+        .in('reference_number', numbers);
+      openItems = (data || []).filter((i: any) => Number(i.balance) > 0.005);
+    }
+    const openByOrder: Record<string, any[]> = {};
+    openItems.forEach((i: any) => { (openByOrder[i.reference_number] ||= []).push(i); });
+
+    const rows = sel.map((o: any) => {
+      const rates = (o._azRates || []) as any[];
+      const opens = openByOrder[o.order_number] || [];
+      const depPaid = rates.reduce((s, r) => s + (Number(r.paid_amount) || 0), 0);
+      const depGross = rates.reduce((s, r) => s + (Number(r.gross_amount) || 0), 0);
+      const openSum = opens.reduce((s, i) => s + (Number(i.balance) || 0), 0);
+      return {
+        number: o._displayNumber ?? o.order_number ?? '',
+        date: o.order_date ?? '',
+        status: o.order_status ?? '',
+        customer: o.customers?.company_name || o.customers?.contact_name || '',
+        city: resolveCity(o),
+        total: Number(o.total_amount) || 0,
+        currency: o.currency ?? '',
+        rates,
+        opens,
+        depGross,
+        depPaid,
+        openSum,
+      };
+    });
+    return rows;
+  }
+
+  const fmtMoney = (n: number) => (Number(n) || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  async function handleExportSelectionCsv() {
+    if (selectedIds.size === 0) return;
+    setExportingSelection(true);
+    try {
+      const rows = await buildSelectionExport();
+      const lines: string[] = [];
+      lines.push(['Typ', 'Auftragsnr', 'Datum', 'Status', 'Kunde', 'Ort', 'Beleg', 'Fällig', 'Betrag', 'Bezahlt', 'Offen', 'Währung'].join(';'));
+      rows.forEach(r => {
+        lines.push(['Auftrag', r.number, r.date, r.status, r.customer, r.city, '', '', r.total, r.depPaid, r.openSum, r.currency].map(escCsv).join(';'));
+        r.rates.forEach((a: any) => {
+          lines.push(['Anzahlung', r.number, a.issue_date ?? '', a.status ?? (a.isPaid ? 'bezahlt' : 'offen'), r.customer, '', a.invoice_number, a.due_date ?? '', a.gross_amount, a.paid_amount, Math.max((Number(a.gross_amount) || 0) - (Number(a.paid_amount) || 0), 0), r.currency].map(escCsv).join(';'));
+        });
+        r.opens.forEach((i: any) => {
+          lines.push(['Offener Posten', r.number, '', i.status ?? '', r.customer, '', i.invoice_number, i.due_date ?? '', i.total, (Number(i.total) || 0) - (Number(i.balance) || 0), i.balance, i.currency_code ?? r.currency].map(escCsv).join(';'));
+        });
+      });
+      const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Auftraege_Auswahl_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${rows.length} markierte Aufträge als CSV exportiert`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Export fehlgeschlagen');
+    } finally {
+      setExportingSelection(false);
+    }
+  }
+
+  async function handleExportSelectionPdf() {
+    if (selectedIds.size === 0) return;
+    setExportingSelection(true);
+    try {
+      const rows = await buildSelectionExport();
+      const doc = createPDF({ orientation: 'landscape' });
+      doc.setFont('Inter', 'bold');
+      doc.setFontSize(14);
+      doc.text(`Aufträge – Auswahl (${rows.length})`, 14, 14);
+      doc.setFont('Inter', 'normal');
+      doc.setFontSize(9);
+      doc.text(format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de }), 14, 20);
+
+      autoTable(doc, {
+        startY: 26,
+        head: [['Auftragsnr', 'Datum', 'Status', 'Kunde', 'Ort', 'Betrag', 'Anzahlungen bez.', 'Offene Posten', 'Währ.']],
+        body: rows.map(r => [r.number, r.date, r.status, r.customer, r.city, fmtMoney(r.total), fmtMoney(r.depPaid), fmtMoney(r.openSum), r.currency]),
+        styles: { font: 'Inter', fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [30, 30, 30] },
+      });
+
+      rows.forEach(r => {
+        if (r.rates.length === 0 && r.opens.length === 0) return;
+        const y = ((doc as any).lastAutoTable?.finalY ?? 26) + 8;
+        doc.setFont('Inter', 'bold');
+        doc.setFontSize(10);
+        doc.text(`${r.number} – ${r.customer}`, 14, y);
+        doc.setFont('Inter', 'normal');
+        const body = [
+          ...r.rates.map((a: any) => ['Anzahlung', a.invoice_number, a.issue_date ?? '', a.due_date ?? '', fmtMoney(a.gross_amount), fmtMoney(a.paid_amount), a.isPaid ? 'bezahlt' : (a.status ?? 'offen')]),
+          ...r.opens.map((i: any) => ['Offener Posten', i.invoice_number, '', i.due_date ?? '', fmtMoney(i.total), fmtMoney(i.balance), i.status ?? '']),
+        ];
+        autoTable(doc, {
+          startY: y + 3,
+          head: [['Art', 'Beleg', 'Datum', 'Fällig', 'Betrag', 'Bezahlt / Offen', 'Status']],
+          body,
+          styles: { font: 'Inter', fontSize: 8, cellPadding: 2 },
+          headStyles: { fillColor: [70, 70, 70] },
+        });
+      });
+
+      doc.save(`Auftraege_Auswahl_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+      toast.success(`${rows.length} markierte Aufträge als PDF exportiert`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Export fehlgeschlagen');
+    } finally {
+      setExportingSelection(false);
+    }
+  }
+
   async function load() {
     const requestId = ++loadRequestRef.current;
     setLoading(true);
@@ -896,6 +1021,32 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
                     <MoveRight className="w-3.5 h-3.5" />
                     Verschieben ({selectedIds.size})
                   </Button>
+                )}
+                {selectionMode && canExportSelection && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 gap-1.5"
+                      disabled={selectedIds.size === 0 || exportingSelection}
+                      onClick={handleExportSelectionPdf}
+                      title="Markierte Aufträge inkl. Anzahlungen und Offener Posten als PDF"
+                    >
+                      {exportingSelection ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                      PDF ({selectedIds.size})
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-9 gap-1.5"
+                      disabled={selectedIds.size === 0 || exportingSelection}
+                      onClick={handleExportSelectionCsv}
+                      title="Markierte Aufträge inkl. Anzahlungen und Offener Posten als CSV"
+                    >
+                      {exportingSelection ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileDown className="w-3.5 h-3.5" />}
+                      CSV ({selectedIds.size})
+                    </Button>
+                  </>
                 )}
                 {selectionMode && hasRole('Super Admin') && (
                   <Button
