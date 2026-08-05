@@ -121,6 +121,9 @@ Deno.serve(async (req) => {
             ? [{ filename, encoding: "base64", content: pdfBase64, contentType: "application/pdf" }]
             : undefined,
         });
+      } catch (e) {
+        await logSend("failed", "smtp", subject, String((e as Error)?.message || e));
+        throw e;
       } finally {
         await client.close().catch(() => {});
       }
@@ -129,6 +132,7 @@ Deno.serve(async (req) => {
         sent_at: new Date().toISOString(),
         status: doc.status === "entwurf" ? "versendet" : doc.status,
       }).eq("id", documentId);
+      await logSend("sent", "smtp", subject);
 
       return Response.json({ ok: true, to, subject, transport: "smtp" }, { headers: corsHeaders });
     }
@@ -141,14 +145,19 @@ Deno.serve(async (req) => {
       body: JSON.stringify(payload),
     });
     const resText = await r.text();
-    if (!r.ok) return Response.json({ error: `Versand fehlgeschlagen: ${resText}` }, { status: 502, headers: corsHeaders });
+    if (!r.ok) {
+      await logSend("failed", "resend", subject, resText);
+      return Response.json({ error: `Versand fehlgeschlagen: ${resText}` }, { status: 502, headers: corsHeaders });
+    }
 
     await sb.from("cmr_documents").update({
       sent_at: new Date().toISOString(),
       status: doc.status === "entwurf" ? "versendet" : doc.status,
     }).eq("id", documentId);
+    await logSend("sent", "resend", subject);
 
     return Response.json({ ok: true, to, subject }, { headers: corsHeaders });
+
   } catch (e: any) {
     return Response.json({ error: String(e?.message || e) }, { status: 500, headers: corsHeaders });
   }
