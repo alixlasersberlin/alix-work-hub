@@ -35335,42 +35335,87 @@ export type Database = {
       }
       tenants: {
         Row: {
+          accent_color: string | null
+          address_line1: string | null
+          address_line2: string | null
+          bank_details: string | null
+          city: string | null
           code: string
           country: string | null
+          country_name: string | null
           created_at: string
           currency: string | null
+          email: string | null
           flag_emoji: string | null
           id: string
           is_active: boolean
+          legal_name: string | null
+          logo_url: string | null
           name: string
+          phone: string | null
+          postal_code: string | null
           sort_order: number
+          tax_number: string | null
           updated_at: string
+          vat_id: string | null
+          website: string | null
+          whatsapp: string | null
           zoho_source_system: string | null
         }
         Insert: {
+          accent_color?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
+          bank_details?: string | null
+          city?: string | null
           code: string
           country?: string | null
+          country_name?: string | null
           created_at?: string
           currency?: string | null
+          email?: string | null
           flag_emoji?: string | null
           id?: string
           is_active?: boolean
+          legal_name?: string | null
+          logo_url?: string | null
           name: string
+          phone?: string | null
+          postal_code?: string | null
           sort_order?: number
+          tax_number?: string | null
           updated_at?: string
+          vat_id?: string | null
+          website?: string | null
+          whatsapp?: string | null
           zoho_source_system?: string | null
         }
         Update: {
+          accent_color?: string | null
+          address_line1?: string | null
+          address_line2?: string | null
+          bank_details?: string | null
+          city?: string | null
           code?: string
           country?: string | null
+          country_name?: string | null
           created_at?: string
           currency?: string | null
+          email?: string | null
           flag_emoji?: string | null
           id?: string
           is_active?: boolean
+          legal_name?: string | null
+          logo_url?: string | null
           name?: string
+          phone?: string | null
+          postal_code?: string | null
           sort_order?: number
+          tax_number?: string | null
           updated_at?: string
+          vat_id?: string | null
+          website?: string | null
+          whatsapp?: string | null
           zoho_source_system?: string | null
         }
         Relationships: []
@@ -36484,6 +36529,35 @@ export type Database = {
           },
         ]
       }
+      user_workspace_access: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_workspace_access_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warranty_claims: {
         Row: {
           approval_status: string
@@ -37187,6 +37261,98 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           variables?: Json
+        }
+        Relationships: []
+      }
+      workspace_nav_items: {
+        Row: {
+          created_at: string
+          icon: string
+          id: string
+          is_active: boolean
+          label: string
+          path: string
+          roles: string[] | null
+          section: string | null
+          sort_order: number
+          tenant_codes: string[] | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          path: string
+          roles?: string[] | null
+          section?: string | null
+          sort_order?: number
+          tenant_codes?: string[] | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          path?: string
+          roles?: string[] | null
+          section?: string | null
+          sort_order?: number
+          tenant_codes?: string[] | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_nav_items_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspaces: {
+        Row: {
+          code: string
+          created_at: string
+          dashboard_path: string | null
+          emoji: string | null
+          icon: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          dashboard_path?: string | null
+          emoji?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          dashboard_path?: string | null
+          emoji?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }
