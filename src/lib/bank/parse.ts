@@ -434,12 +434,12 @@ export function parsePdfText(text: string, currency = 'EUR'): { transactions: Pa
   if (cur) txs.push(cur);
   for (const t of txs) {
     if (!t.sender_receiver_name && t.purpose) {
-      const nm = t.purpose.split(/\s{2,}|,/)[0];
-      if (nm && nm.length > 3 && nm.length < 60) t.sender_receiver_name = nm.trim();
+      t.sender_receiver_name = extractCustomerName(t.purpose);
     }
     const inv = (t.purpose || '').match(/\b(RG|RE|INV|AZ)?[-\s]?(\d{4}[-/]\d{3,6}|\d{5,10})\b/i);
     if (inv) t.raw_data.invoice_hint = inv[0];
   }
+
   if (!txs.length) warnings.push('Im PDF konnten keine Buchungszeilen eindeutig erkannt werden.');
   return { transactions: txs, warnings };
 }
