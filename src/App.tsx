@@ -1063,6 +1063,24 @@ function MfaGate({ children, expect }: { children: React.ReactNode; expect: 'not
   return <>{children}</>;
 }
 
+/**
+ * Erzwingt nach jedem Login genau einmal die Willkommens-Seite.
+ * Greift unabhängig davon, über welchen Login-Alias oder MFA-Schritt
+ * der Nutzer hereinkommt oder welche Deep-Link-URL gerufen wurde.
+ */
+function ForceWelcomeGate({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const pending = hasPendingWelcome();
+
+  if (pending && location.pathname !== '/willkommen') {
+    return <Navigate to="/willkommen" replace />;
+  }
+  if (pending && location.pathname === '/willkommen') {
+    clearPendingWelcome();
+  }
+  return <>{children}</>;
+}
+
 function HomeRoute() {
   const { roles } = useAuth();
   if (isSupplierOnly(roles)) return <Navigate to="/production" replace />;
