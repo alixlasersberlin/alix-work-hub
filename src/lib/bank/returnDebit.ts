@@ -262,6 +262,15 @@ export async function searchCustomersForReturn(term: string) {
 
 const norm = (s?: string | null) => (s ?? '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]/g, '');
 
+/**
+ * Toleranz für Betragsvergleiche bei Rücklastschriften.
+ * In den Beträgen sind häufig Bankgebühren enthalten, daher darf der
+ * Rücklastschriftbetrag vom Rechnungs-/Zahlbetrag abweichen.
+ */
+export function amountTolerance(amount: number): number {
+  return Math.max(25, Math.abs(amount) * 0.1);
+}
+
 export interface PaymentCandidate {
   tx: any;
   allocations: any[];
