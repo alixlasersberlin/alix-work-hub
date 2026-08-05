@@ -308,13 +308,22 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
 
 
-  // Realtime: aktualisiere Offene Beträge live, sobald sich Rechnungen ändern
+  // Realtime: aktualisiert Offene Beträge live – stark entzerrt, damit
+  // Massen-Updates (z. B. Zoho-Sync) keine Refetch-Lawine auslösen.
   useEffect(() => {
     let debounce: ReturnType<typeof setTimeout> | null = null;
+    let pending = false;
+    const run = () => {
+      pending = false;
+      if (document.hidden) { pending = true; return; }
+      fetchRows({ silent: true });
+    };
     const trigger = () => {
       if (debounce) clearTimeout(debounce);
-      debounce = setTimeout(() => { fetchRows({ silent: true }); }, 2000);
+      debounce = setTimeout(run, 20000);
     };
+    const onVisible = () => { if (!document.hidden && pending) run(); };
+    document.addEventListener('visibilitychange', onVisible);
     const channel = supabase
       .channel('invoices-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'zoho_invoices' }, trigger)
@@ -322,9 +331,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       .subscribe();
     return () => {
       if (debounce) clearTimeout(debounce);
+      document.removeEventListener('visibilitychange', onVisible);
       supabase.removeChannel(channel);
     };
   }, []);
+
 
   const accounts = useMemo<Account[]>(() => {
     let res = rows;
