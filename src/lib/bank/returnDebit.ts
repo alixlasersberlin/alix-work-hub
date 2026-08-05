@@ -554,6 +554,22 @@ export async function confirmReturnDebit(input: ConfirmInput) {
     warnings.push(`Gerätesperre konnte nicht angelegt werden: ${e?.message ?? e}`);
   }
 
+  // Automatische Gebührenrechnung (15 € Bank + 30 € Bearbeitung) + Versand an den Kunden
+  let feeInvoice: { invoiceNumber: string; emailSentTo?: string | null } | null = null;
+  try {
+    const { createReturnDebitFeeInvoice } = await import('./feeInvoice');
+    const res = await createReturnDebitFeeInvoice(
+      { ...rd, customer_id: input.customerId ?? rd.customer_id, bank_transaction_id: tx.id, invoice_number: input.allocations[0]?.invoice_number ?? rd.invoice_number },
+      input.customerId ?? rd.customer_id ?? null,
+      tx,
+    );
+    feeInvoice = { invoiceNumber: res.invoiceNumber, emailSentTo: res.emailSentTo };
+    if (!res.emailSentTo) warnings.push(`Gebührenrechnung ${res.invoiceNumber} erstellt, aber keine E-Mail-Adresse des Kunden hinterlegt.`);
+  } catch (e: any) {
+    console.error('Gebührenrechnung konnte nicht erstellt werden', e);
+    warnings.push(`Gebührenrechnung konnte nicht erstellt/versendet werden: ${e?.message ?? e}`);
+  }
+
   // Mahnung mit Sperrankündigung automatisch an den Kunden senden (CC Buchhaltung)
   if (input.startReminder) {
     try {
@@ -564,6 +580,7 @@ export async function confirmReturnDebit(input: ConfirmInput) {
       warnings.push(`Mahnung konnte nicht versendet werden: ${e?.message ?? e}`);
     }
   }
+
 
   if (input.createTask) await notifyAccounting(rd, invoiceInfos, input.customerId);
 
