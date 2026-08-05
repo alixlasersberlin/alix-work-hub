@@ -2192,6 +2192,7 @@ const App = () => (
                     {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                   </MaintenanceGate>
                   </AccountingRegionProvider>
+                  </WorkspaceProvider>
                 </TenantProvider>
               </AuthProvider>
             </BrowserRouter>
