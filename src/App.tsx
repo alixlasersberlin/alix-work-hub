@@ -960,6 +960,7 @@ const CmrZeiten = lazy(() => import("./pages/CMR/Zeiten"));
 const CmrSammelrechnungen = lazy(() => import("./pages/CMR/Sammelrechnungen"));
 const CmrPortal = lazy(() => import("./pages/CMR/Portal"));
 const LicenseDashboard = lazy(() => import("./pages/License/Dashboard"));
+const LicenseCockpit = lazy(() => import("./pages/License/Cockpit"));
 const LicenseMarken = lazy(() => import("./pages/License/Marken"));
 const LicenseLizenznehmer = lazy(() => import("./pages/License/Lizenznehmer"));
 const LicenseVertraege = lazy(() => import("./pages/License/Vertraege"));
