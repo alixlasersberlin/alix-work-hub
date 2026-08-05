@@ -1054,10 +1054,7 @@ function MfaGate({ children, expect }: { children: React.ReactNode; expect: 'not
   if (!user) return <Navigate to="/alix-control" replace />;
   if (blockReason) return <AccountBlocked />;
   if (mfaState === 'verified') {
-    const postMfaTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
-      ? '/esc/kalender'
-      : '/dashboard';
-    return <Navigate to={postMfaTarget} replace />;
+    return <Navigate to={postLoginTarget()} replace />;
   }
   if (expect !== 'any' && mfaState !== expect && mfaState !== 'unknown') {
     if (mfaState === 'not_enrolled') return <Navigate to="/mfa-setup" replace />;
