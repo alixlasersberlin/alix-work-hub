@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
             currency: tx.currency,
             note: "Automatischer Tagesabgleich",
           } as any);
-          await sb.from("zoho_invoices").update({
+          await sb.from((best.invoice as any).__table ?? "zoho_invoices").update({
             balance: 0,
             payment_status: "paid",
             status: "paid",
