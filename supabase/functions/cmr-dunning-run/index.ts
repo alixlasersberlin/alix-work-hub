@@ -12,12 +12,19 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Stufe -> Belegart, Mindest-Verzugstage und Mindestabstand zur letzten Mahnung
-const LEVELS = [
-  { level: 1, type: "zahlungserinnerung", label: "Zahlungserinnerung", minOverdue: 3, minGapDays: 0 },
-  { level: 2, type: "mahnung", label: "1. Mahnung", minOverdue: 10, minGapDays: 7 },
-  { level: 3, type: "mahnung", label: "2. Mahnung", minOverdue: 20, minGapDays: 7 },
-];
+// Stufe -> Belegart; Fristen, Gebühren und Zinsen kommen aus cmr_settings (Fallbacks unten)
+const DEFAULTS = {
+  dunning_days_1: 3, dunning_days_2: 10, dunning_days_3: 20, dunning_gap_days: 7,
+  dunning_fee_1: 0, dunning_fee_2: 0, dunning_fee_3: 0, dunning_interest_pct: 0,
+};
+
+type Cfg = typeof DEFAULTS;
+
+function levelConfig(cfg: Cfg, level: number) {
+  if (level === 1) return { type: "zahlungserinnerung", label: "Zahlungserinnerung", minOverdue: cfg.dunning_days_1, minGapDays: 0, fee: cfg.dunning_fee_1 };
+  if (level === 2) return { type: "mahnung", label: "1. Mahnung", minOverdue: cfg.dunning_days_2, minGapDays: cfg.dunning_gap_days, fee: cfg.dunning_fee_2 };
+  return { type: "mahnung", label: "2. Mahnung", minOverdue: cfg.dunning_days_3, minGapDays: cfg.dunning_gap_days, fee: cfg.dunning_fee_3 };
+}
 
 const days = (ms: number) => Math.floor(ms / 86400000);
 
@@ -30,6 +37,17 @@ Deno.serve(async (req) => {
 
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
     const today = new Date().toISOString().slice(0, 10);
+
+    // Mahnstufen-Konfiguration je Mandant laden
+    const { data: settingsRows } = await sb.from("cmr_settings").select("*");
+    const cfgByTenant = new Map<string, Cfg>();
+    for (const s of settingsRows ?? []) {
+      const c: Cfg = { ...DEFAULTS };
+      for (const k of Object.keys(DEFAULTS) as (keyof Cfg)[]) {
+        if (s[k] !== null && s[k] !== undefined) c[k] = Number(s[k]);
+      }
+      cfgByTenant.set(s.tenant_id, c);
+    }
 
     let q = sb.from("cmr_documents").select("*")
       .eq("doc_type", "rechnung")
@@ -45,20 +63,28 @@ Deno.serve(async (req) => {
     const results: unknown[] = [];
 
     for (const d of invoices ?? []) {
-      const open = Number(d.gross_total || 0) - Number(d.paid_total || 0);
-      if (open <= 0.01) continue;
+      const openBase = Number(d.gross_total || 0) - Number(d.paid_total || 0);
+      if (openBase <= 0.01) continue;
 
       const overdue = d.due_date ? days(Date.now() - new Date(d.due_date).getTime()) : 0;
       const nextLevel = Math.min(3, Number(d.reminder_level || 0) + 1);
       if (Number(d.reminder_level || 0) >= 3) continue;
 
-      const cfg = LEVELS.find((l) => l.level === nextLevel)!;
+      const tCfg = cfgByTenant.get(d.tenant_id) ?? DEFAULTS;
+      const cfg = levelConfig(tCfg, nextLevel);
       if (overdue < cfg.minOverdue) continue;
 
       if (d.last_reminded_at) {
         const gap = days(Date.now() - new Date(d.last_reminded_at).getTime());
         if (gap < cfg.minGapDays) continue;
       }
+
+      const interest = tCfg.dunning_interest_pct > 0
+        ? Math.round(openBase * (tCfg.dunning_interest_pct / 100) * (overdue / 365) * 100) / 100
+        : 0;
+      const fee = Number(cfg.fee || 0);
+      const open = Math.round((openBase + fee + interest) * 100) / 100;
+
 
       const { data: nr, error: nrErr } = await sb.rpc("cmr_next_document_number", {
         _tenant_id: d.tenant_id,
@@ -85,22 +111,29 @@ Deno.serve(async (req) => {
         paid_total: 0,
         reference: d.doc_number,
         parent_document_id: d.id,
-        notes: `${cfg.label} zur Rechnung ${d.doc_number ?? ""} · offen seit ${overdue} Tagen.`,
+        notes: `${cfg.label} zur Rechnung ${d.doc_number ?? ""} · offen seit ${overdue} Tagen.`
+          + (fee ? ` · Mahngebühr ${fee.toFixed(2)}` : "")
+          + (interest ? ` · Verzugszinsen ${interest.toFixed(2)}` : ""),
       }).select("id").single();
       if (docErr) { results.push({ invoice: d.id, error: docErr.message }); continue; }
 
-      const { error: liErr } = await sb.from("cmr_document_items").insert({
+      const posRows: Record<string, unknown>[] = [{
         document_id: doc.id,
         position: 1,
         name: `Offener Betrag Rechnung ${d.doc_number ?? ""}`,
         quantity: 1,
         unit: "Pauschal",
-        unit_price: open,
+        unit_price: openBase,
         discount_pct: 0,
         tax_rate: 0,
-        line_total: open,
-      });
+        line_total: openBase,
+      }];
+      if (fee) posRows.push({ document_id: doc.id, position: 2, name: "Mahngebühr", quantity: 1, unit: "Pauschal", unit_price: fee, discount_pct: 0, tax_rate: 0, line_total: fee });
+      if (interest) posRows.push({ document_id: doc.id, position: posRows.length + 1, name: `Verzugszinsen (${tCfg.dunning_interest_pct}% p.a.)`, quantity: 1, unit: "Pauschal", unit_price: interest, discount_pct: 0, tax_rate: 0, line_total: interest });
+
+      const { error: liErr } = await sb.from("cmr_document_items").insert(posRows);
       if (liErr) { results.push({ invoice: d.id, error: liErr.message }); continue; }
+
 
       await sb.from("cmr_documents").update({
         reminder_level: nextLevel,

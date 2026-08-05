@@ -68,6 +68,12 @@ export default function CmrEinstellungen() {
     payload.tenant_id = tenantId;
     payload.tax_rate = Number(payload.tax_rate) || 0;
     payload.smtp_port = payload.smtp_port ? Number(payload.smtp_port) : null;
+    ['dunning_days_1', 'dunning_days_2', 'dunning_days_3', 'dunning_gap_days'].forEach((k) => {
+      payload[k] = Number(payload[k]) || 0;
+    });
+    ['dunning_fee_1', 'dunning_fee_2', 'dunning_fee_3', 'dunning_interest_pct'].forEach((k) => {
+      payload[k] = Number(payload[k]) || 0;
+    });
 
     const { error } = settings?.id
       ? await supabase.from('cmr_settings' as any).update(payload).eq('id', settings.id)
@@ -125,8 +131,39 @@ export default function CmrEinstellungen() {
       </Card>
 
       <Card className="p-4 space-y-3">
+        <div className="text-sm font-semibold">Mahnwesen</div>
+        <p className="text-xs text-muted-foreground">
+          Fristen ab Fälligkeit, ab denen der Mahnlauf die jeweilige Stufe als Entwurf erzeugt. Gebühren und Verzugszinsen werden dem offenen Betrag hinzugerechnet.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { key: 'dunning_days_1', label: 'Zahlungserinnerung ab (Tage)' },
+            { key: 'dunning_days_2', label: '1. Mahnung ab (Tage)' },
+            { key: 'dunning_days_3', label: '2. Mahnung ab (Tage)' },
+            { key: 'dunning_gap_days', label: 'Mindestabstand (Tage)' },
+            { key: 'dunning_fee_1', label: 'Gebühr Erinnerung' },
+            { key: 'dunning_fee_2', label: 'Gebühr 1. Mahnung' },
+            { key: 'dunning_fee_3', label: 'Gebühr 2. Mahnung' },
+            { key: 'dunning_interest_pct', label: 'Verzugszinsen p.a. (%)' },
+          ].map((f) => (
+            <div key={f.key}>
+              <Label>{f.label}</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form[f.key] ?? ''}
+                onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+              />
+            </div>
+          ))}
+        </div>
+      </Card>
+
+
+      <Card className="p-4 space-y-3">
 
         <div className="text-sm font-semibold">Texte</div>
+
         <div><Label>Steuerhinweis</Label><Textarea rows={2} value={form.tax_note ?? ''} onChange={(e) => setForm({ ...form, tax_note: e.target.value })} /></div>
         <div><Label>Zahlungsbedingungen</Label><Textarea rows={2} value={form.payment_terms ?? ''} onChange={(e) => setForm({ ...form, payment_terms: e.target.value })} /></div>
         <div><Label>E-Mail-Signatur</Label><Textarea rows={3} value={form.email_signature ?? ''} onChange={(e) => setForm({ ...form, email_signature: e.target.value })} /></div>

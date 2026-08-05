@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Banknote, Plus, Download } from 'lucide-react';
+import { Loader2, Banknote, Plus, Download, Upload, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 
@@ -118,6 +118,163 @@ export default function CmrBuchhaltung() {
     URL.revokeObjectURL(url);
   };
 
+  /** DATEV-ähnlicher Buchungsstapel-Export (CSV, semikolongetrennt). */
+  const exportDatev = () => {
+    const sep = ';';
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const head = ['Umsatz (ohne Soll/Haben-Kz)', 'Soll/Haben-Kennzeichen', 'WKZ Umsatz', 'Konto', 'Gegenkonto (ohne BU-Schlüssel)', 'Belegdatum', 'Belegfeld 1', 'Buchungstext'];
+    const rows = invoices.map((d) => {
+      const isCredit = (d as any).doc_type === 'gutschrift';
+      const amount = Math.abs(Number(d.gross_total || 0));
+      return [
+        amount.toFixed(2).replace('.', ','),
+        isCredit ? 'H' : 'S',
+        d.currency || cur,
+        '1400',
+        '8400',
+        String(d.doc_date).slice(8, 10) + String(d.doc_date).slice(5, 7),
+        d.doc_number ?? '',
+        `${isCredit ? 'Gutschrift' : 'Rechnung'} ${d.customer_name ?? ''}`.trim(),
+      ];
+    });
+    const csv = [head, ...rows].map((r) => r.map(esc).join(sep)).join('\r\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `CMR_DATEV_Buchungsstapel_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  /** Jahresabschluss-Paket als PDF (Umsätze, Steuern, offene Posten). */
+  const exportYearPdf = async () => {
+    const { default: jsPDF } = await import('jspdf');
+    const year = new Date().getFullYear();
+    const inYear = invoices.filter((d) => String(d.doc_date).startsWith(String(year)));
+    const sign = (d: any) => (d.doc_type === 'gutschrift' ? -1 : 1);
+    const net = inYear.reduce((s, d: any) => s + sign(d) * Number(d.net_total || 0), 0);
+    const tax = inYear.reduce((s, d: any) => s + sign(d) * Number(d.tax_total || 0), 0);
+    const gross = inYear.reduce((s, d: any) => s + sign(d) * Number(d.gross_total || 0), 0);
+    const paid = inYear.reduce((s, d) => s + Number(d.paid_total || 0), 0);
+
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    let y = 56;
+    doc.setFontSize(16);
+    doc.text(`${settings?.company_name ?? 'CMR'} – Jahresabschluss ${year}`, 40, y);
+    y += 24;
+    doc.setFontSize(10);
+    doc.text(`Erstellt am ${new Date().toLocaleDateString('de-DE')}`, 40, y);
+    y += 28;
+
+    doc.setFontSize(12);
+    doc.text('Übersicht', 40, y); y += 18;
+    doc.setFontSize(10);
+    const rows: [string, string][] = [
+      ['Anzahl Belege', String(inYear.length)],
+      ['Netto-Umsatz', cmrMoney(net, cur)],
+      ['Umsatzsteuer', cmrMoney(tax, cur)],
+      ['Brutto-Umsatz', cmrMoney(gross, cur)],
+      ['Zahlungseingänge', cmrMoney(paid, cur)],
+      ['Offene Posten', cmrMoney(sums.open, cur)],
+    ];
+    rows.forEach(([k, v]) => { doc.text(k, 40, y); doc.text(v, 400, y, { align: 'right' }); y += 16; });
+
+    y += 18;
+    doc.setFontSize(12); doc.text('Monatsauswertung', 40, y); y += 18;
+    doc.setFontSize(9);
+    doc.text('Monat', 40, y); doc.text('Netto', 250, y, { align: 'right' });
+    doc.text('MwSt.', 330, y, { align: 'right' }); doc.text('Brutto', 420, y, { align: 'right' });
+    y += 14;
+    ustRows.filter((r) => r.month.startsWith(String(year))).forEach((r) => {
+      if (y > 780) { doc.addPage(); y = 56; }
+      doc.text(r.month, 40, y);
+      doc.text(cmrMoney(r.net, cur), 250, y, { align: 'right' });
+      doc.text(cmrMoney(r.tax, cur), 330, y, { align: 'right' });
+      doc.text(cmrMoney(r.gross, cur), 420, y, { align: 'right' });
+      y += 14;
+    });
+
+    y += 18;
+    if (y > 720) { doc.addPage(); y = 56; }
+    doc.setFontSize(12); doc.text('Offene Posten', 40, y); y += 18;
+    doc.setFontSize(9);
+    open_.forEach((d) => {
+      if (y > 780) { doc.addPage(); y = 56; }
+      doc.text(`${d.doc_number ?? '—'} · ${(d.customer_name ?? '').slice(0, 40)}`, 40, y);
+      doc.text(cmrMoney(Number(d.gross_total) - Number(d.paid_total), cur), 420, y, { align: 'right' });
+      y += 13;
+    });
+
+    doc.save(`CMR_Jahresabschluss_${year}.pdf`);
+  };
+
+  /** Bank-CSV importieren und Zahlungen automatisch den Belegen zuordnen. */
+  const [importRows, setImportRows] = useState<any[] | null>(null);
+  const [importing, setImporting] = useState(false);
+
+  const parseBankCsv = async (file: File) => {
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (!lines.length) { toast.error('Datei ist leer.'); return; }
+    const sep = (lines[0].match(/;/g)?.length ?? 0) >= (lines[0].match(/,/g)?.length ?? 0) ? ';' : ',';
+    const split = (l: string) => l.split(sep).map((c) => c.replace(/^"|"$/g, '').trim());
+    const header = split(lines[0]).map((h) => h.toLowerCase());
+    const idx = (...names: string[]) => header.findIndex((h) => names.some((n) => h.includes(n)));
+    const iDate = idx('datum', 'date', 'buchung');
+    const iAmount = idx('betrag', 'amount', 'umsatz');
+    const iText = idx('verwendung', 'zweck', 'referenz', 'reference', 'text');
+
+    const toNumber = (s: string) => Number(String(s).replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '')) || 0;
+    const toDate = (s: string) => {
+      const t = String(s).trim();
+      const de = t.match(/^(\d{2})[.\/](\d{2})[.\/](\d{2,4})$/);
+      if (de) return `${de[3].length === 2 ? '20' + de[3] : de[3]}-${de[2]}-${de[1]}`;
+      return t.slice(0, 10);
+    };
+
+    const parsed = lines.slice(1).map((l) => {
+      const c = split(l);
+      const amount = iAmount >= 0 ? toNumber(c[iAmount]) : 0;
+      const ref = iText >= 0 ? c[iText] ?? '' : c.join(' ');
+      const match = invoices.find((d) => d.doc_number && ref.toUpperCase().includes(String(d.doc_number).toUpperCase()));
+      return {
+        paid_on: iDate >= 0 ? toDate(c[iDate]) : new Date().toISOString().slice(0, 10),
+        amount,
+        reference: ref,
+        document_id: match?.id ?? null,
+        doc_number: match?.doc_number ?? null,
+        customer_id: match?.customer_id ?? null,
+      };
+    }).filter((r) => r.amount > 0);
+
+    if (!parsed.length) { toast.error('Keine Zahlungseingänge erkannt.'); return; }
+    setImportRows(parsed);
+  };
+
+  const commitImport = async () => {
+    if (!tenantId || !importRows) return;
+    const rows = importRows.filter((r) => r.document_id);
+    if (!rows.length) { toast.error('Keine zugeordneten Zahlungen zum Buchen.'); return; }
+    setImporting(true);
+    const { error } = await supabase.from('cmr_payments' as any).insert(
+      rows.map((r) => ({
+        tenant_id: tenantId,
+        document_id: r.document_id,
+        customer_id: r.customer_id,
+        paid_on: r.paid_on,
+        amount: Number(r.amount) || 0,
+        currency: cur,
+        method: 'Bankimport',
+        reference: r.reference?.slice(0, 200) ?? null,
+      })),
+    );
+    setImporting(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${rows.length} Zahlung(en) gebucht`);
+    setImportRows(null);
+    load();
+  };
+
+
   const startPayment = (d: Doc) => {
     setForm({
       document_id: d.id, customer_id: d.customer_id, label: `${d.doc_number} · ${d.customer_name ?? ''}`,
@@ -169,10 +326,30 @@ export default function CmrBuchhaltung() {
             {t === 'offen' ? 'Offene Posten' : t === 'alle' ? 'Alle Rechnungen' : t === 'zahlungen' ? 'Zahlungseingänge' : 'Umsatzsteuer'}
           </Button>
         ))}
-        <Button size="sm" variant="outline" className="ml-auto" onClick={exportCsv}>
-          <Download className="w-3.5 h-3.5 mr-1" /> CSV Export
-        </Button>
+        <div className="ml-auto flex flex-wrap gap-2">
+          <label className="inline-flex">
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) parseBankCsv(f); e.currentTarget.value = ''; }}
+            />
+            <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input px-3 text-sm hover:bg-muted">
+              <Upload className="w-3.5 h-3.5 mr-1" /> Bank-CSV
+            </span>
+          </label>
+          <Button size="sm" variant="outline" onClick={exportCsv}>
+            <Download className="w-3.5 h-3.5 mr-1" /> CSV Export
+          </Button>
+          <Button size="sm" variant="outline" onClick={exportDatev}>
+            <Download className="w-3.5 h-3.5 mr-1" /> DATEV
+          </Button>
+          <Button size="sm" variant="outline" onClick={exportYearPdf}>
+            <FileDown className="w-3.5 h-3.5 mr-1" /> Jahresabschluss
+          </Button>
+        </div>
       </div>
+
 
       {tab === 'ust' ? (
         <Card className="divide-y">
@@ -270,6 +447,34 @@ export default function CmrBuchhaltung() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!importRows} onOpenChange={(o) => !o && setImportRows(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Bankimport – Vorschau</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {importRows?.filter((r) => r.document_id).length ?? 0} von {importRows?.length ?? 0} Buchungen wurden anhand der Belegnummer im Verwendungszweck zugeordnet. Nur zugeordnete Zeilen werden gebucht.
+          </p>
+          <div className="max-h-80 overflow-y-auto divide-y">
+            {(importRows ?? []).map((r, i) => (
+              <div key={i} className="py-2 text-sm flex items-center gap-3">
+                <span className="w-24 text-xs text-muted-foreground">{r.paid_on}</span>
+                <span className="flex-1 truncate">{r.reference}</span>
+                <span className="w-28 text-right tabular-nums">{cmrMoney(r.amount, cur)}</span>
+                <span className={`w-32 text-right text-xs ${r.doc_number ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                  {r.doc_number ?? 'ohne Zuordnung'}
+                </span>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportRows(null)}>Abbrechen</Button>
+            <Button onClick={commitImport} disabled={importing}>
+              {importing && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />} Zahlungen buchen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
