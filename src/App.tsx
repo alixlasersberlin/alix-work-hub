@@ -133,6 +133,7 @@ const KontoauszuegeOffen = lazy(() => import("./pages/Finance/Kontoauszuege/Offe
 const KontoauszuegeVerbucht = lazy(() => import("./pages/Finance/Kontoauszuege/Verbucht"));
 const KontoauszuegeHistorie = lazy(() => import("./pages/Finance/Kontoauszuege/Historie"));
 const KontoauszuegeRuecklastschriften = lazy(() => import("./pages/Finance/Kontoauszuege/Ruecklastschriften"));
+const KontoauszuegeQuote = lazy(() => import("./pages/Finance/Kontoauszuege/Quote"));
 const KontoauszuegeKonten = lazy(() => import("./pages/Finance/Kontoauszuege/Konten"));
 const KontoauszuegeRegeln = lazy(() => import("./pages/Finance/Kontoauszuege/Regeln"));
 const FinanceSepa = lazy(() => import("./pages/Finance/Sepa"));
@@ -1359,6 +1360,7 @@ function AppRoutes() {
             <Route path="verbucht" element={<KontoauszuegeVerbucht />} />
             <Route path="historie" element={<KontoauszuegeHistorie />} />
             <Route path="ruecklastschriften" element={<KontoauszuegeRuecklastschriften />} />
+            <Route path="quote" element={<KontoauszuegeQuote />} />
             <Route path="konten" element={<KontoauszuegeKonten />} />
             <Route path="regeln" element={<KontoauszuegeRegeln />} />
           </Route>
