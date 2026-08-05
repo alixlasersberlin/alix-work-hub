@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Plus, Repeat, Trash2, Play } from 'lucide-react';
+import { Loader2, Plus, Repeat, Trash2, Play, Pause } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 
@@ -162,6 +162,13 @@ export default function CmrAbos() {
         }
       />
 
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="p-4"><div className="text-[11px] uppercase text-muted-foreground">Abos gesamt</div><div className="text-xl font-semibold mt-1">{rows.length}</div></Card>
+        <Card className="p-4"><div className="text-[11px] uppercase text-muted-foreground">Aktiv</div><div className="text-xl font-semibold mt-1">{rows.filter((p) => p.is_active).length}</div></Card>
+        <Card className="p-4"><div className="text-[11px] uppercase text-muted-foreground">MRR (aktiv)</div><div className="text-xl font-semibold mt-1">{cmrMoney(mrr, cur)}</div></Card>
+        <Card className="p-4"><div className="text-[11px] uppercase text-muted-foreground">Jahresumsatz (hochgerechnet)</div><div className="text-xl font-semibold mt-1">{cmrMoney(mrr * 12, cur)}</div></Card>
+      </div>
+
       <Card className="divide-y">
         {rows.length === 0 && (
           <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
@@ -178,6 +185,9 @@ export default function CmrAbos() {
                 {p.last_run_at ? ` · zuletzt ${new Date(p.last_run_at).toLocaleDateString('de-DE')}` : ''}
               </div>
             </button>
+            <Button size="sm" variant="ghost" onClick={() => toggleActive(p)}>
+              {p.is_active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </Button>
             <Badge variant={p.is_active ? 'default' : 'outline'}>{p.is_active ? 'aktiv' : 'pausiert'}</Badge>
             <div className="text-sm font-semibold whitespace-nowrap">{cmrMoney(planTotal(p), p.currency || cur)}</div>
             <Button size="icon" variant="ghost" title="Nur dieses Abo abrechnen" onClick={() => runNow(p.id)} disabled={running}>
