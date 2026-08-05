@@ -188,7 +188,7 @@ export default function TxListPage({
                       onChange={e => setChecked(e.target.checked ? rows.map(r => r.id) : [])} />
                   </th>
                 )}
-                <th className="p-2">Datum</th><th className="p-2">Bankkonto</th><th className="p-2">Name</th>
+                <th className="p-2">Datum</th><th className="p-2">Bankkonto</th><th className="p-2">Kundenname</th>
                 <th className="p-2">Verwendungszweck</th><th className="p-2 text-right">Betrag</th>
                 <th className="p-2">Status</th><th className="p-2">Hinweis</th>
               </tr></thead>
