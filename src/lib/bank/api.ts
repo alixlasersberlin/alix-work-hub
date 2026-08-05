@@ -46,7 +46,23 @@ export async function listBankAccounts(area?: AccountingArea) {
   return (data ?? []) as unknown as BankAccount[];
 }
 
+const normIban = (v?: string | null) => (v ?? '').replace(/\s+/g, '').toUpperCase();
+
+/** Prüft, ob die IBAN im gleichen Buchhaltungsbereich bereits existiert. */
+async function ibanExists(iban: string, area: string, excludeId?: string) {
+  const { data, error } = await T('bank_accounts').select('id, iban, accounting_area');
+  if (error) throw error;
+  return ((data ?? []) as any[]).some(r =>
+    r.id !== excludeId && r.accounting_area === area && normIban(r.iban) === iban,
+  );
+}
+
 export async function saveBankAccount(payload: Partial<BankAccount> & { id?: string }) {
+  const iban = normIban(payload.iban);
+  const area = payload.accounting_area ?? 'EU';
+  if (iban && await ibanExists(iban, area, payload.id)) {
+    throw new Error(`Ein Bankkonto mit dieser IBAN existiert bereits in der Buchhaltung ${area}.`);
+  }
   if (payload.id) {
     const { error } = await T('bank_accounts').update(payload as any).eq('id', payload.id);
     if (error) throw error;
