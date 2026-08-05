@@ -50,6 +50,26 @@ export default function CmrBuchhaltung() {
     open: open_.reduce((s, i) => s + (Number(i.gross_total) - Number(i.paid_total)), 0),
   }), [invoices, open_]);
 
+  /** Fälligkeitsstruktur (Aging) der offenen Posten. */
+  const aging = useMemo(() => {
+    const buckets = [
+      { label: 'Nicht fällig', min: -Infinity, max: 0 },
+      { label: '1–30 Tage', min: 1, max: 30 },
+      { label: '31–60 Tage', min: 31, max: 60 },
+      { label: '61–90 Tage', min: 61, max: 90 },
+      { label: '> 90 Tage', min: 91, max: Infinity },
+    ].map((b) => ({ ...b, amount: 0, count: 0 }));
+    open_.forEach((i) => {
+      const openAmt = Number(i.gross_total) - Number(i.paid_total);
+      const days = i.due_date ? Math.floor((Date.now() - new Date(i.due_date).getTime()) / 86400000) : 0;
+      const b = buckets.find((x) => days >= x.min && days <= x.max) ?? buckets[0];
+      b.amount += openAmt;
+      b.count += 1;
+    });
+    return buckets;
+  }, [open_]);
+
+
   /** Umsatzsteuer-Auswertung je Monat (nur CMR-Belege). */
   const ustRows = useMemo(() => {
     const map = new Map<string, { net: number; tax: number; gross: number }>();
@@ -170,6 +190,22 @@ export default function CmrBuchhaltung() {
           ))}
         </Card>
       ) : tab !== 'zahlungen' ? (
+        <>
+        {tab === 'offen' && (
+          <Card className="p-4">
+            <div className="text-sm font-medium mb-3">Fälligkeitsstruktur</div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              {aging.map((b) => (
+                <div key={b.label} className="rounded-md border border-border/60 p-3">
+                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{b.label}</div>
+                  <div className="mt-1 font-semibold tabular-nums">{cmrMoney(b.amount, cur)}</div>
+                  <div className="text-[11px] text-muted-foreground">{b.count} Beleg(e)</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         <Card className="divide-y">
           {list.length === 0 && (
             <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
@@ -195,7 +231,9 @@ export default function CmrBuchhaltung() {
             </div>
           ))}
         </Card>
+        </>
       ) : (
+
         <Card className="divide-y">
           {payments.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">Keine Zahlungseingänge erfasst.</div>}
           {payments.map((p) => (
