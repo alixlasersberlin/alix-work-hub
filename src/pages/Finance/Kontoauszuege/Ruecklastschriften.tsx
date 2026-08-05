@@ -19,6 +19,21 @@ const statusColor = (s: string) =>
       : s === 'ungeklaert' || s === 'doppelt' ? 'bg-red-500/15 text-red-500 border-red-500/30'
         : 'bg-amber-500/15 text-amber-500 border-amber-500/30';
 
+const feeStatusLabel = (s?: string | null) => {
+  const v = (s ?? 'offen').toLowerCase();
+  if (v === 'paid' || v === 'bezahlt') return 'bezahlt';
+  if (v === 'storniert' || v === 'void') return 'storniert';
+  if (v === 'teilweise' || v === 'partially_paid') return 'teilweise';
+  return 'offen';
+};
+
+const feeStatusColor = (s?: string | null) => {
+  const v = feeStatusLabel(s);
+  return v === 'bezahlt' ? 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
+    : v === 'storniert' ? 'bg-muted text-muted-foreground'
+      : 'bg-amber-500/15 text-amber-500 border-amber-500/30';
+};
+
 export default function Ruecklastschriften() {
   const { region } = useAccountingRegion();
   const [rows, setRows] = useState<any[]>([]);
