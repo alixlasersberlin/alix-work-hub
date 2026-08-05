@@ -547,10 +547,26 @@ export async function confirmReturnDebit(input: ConfirmInput) {
   }
 
   // Gerätesperre aus der Rückbuchung erzeugen (Übersicht "Gerätesperren")
-  try { await createDeviceLockFromReturnDebit(rd, input.customerId ?? null, invoiceInfos, total, fee); }
-  catch (e) { console.error('Gerätesperre konnte nicht angelegt werden', e); }
+  const warnings: string[] = [];
+  try { await createDeviceLockFromReturnDebit(rd, input.customerId ?? null, invoiceInfos, total, fee, tx); }
+  catch (e: any) {
+    console.error('Gerätesperre konnte nicht angelegt werden', e);
+    warnings.push(`Gerätesperre konnte nicht angelegt werden: ${e?.message ?? e}`);
+  }
+
+  // Mahnung mit Sperrankündigung automatisch an den Kunden senden (CC Buchhaltung)
+  if (input.startReminder) {
+    try {
+      const fresh = { ...rd, customer_id: input.customerId ?? rd.customer_id, bank_transaction_id: tx.id, invoice_number: input.allocations[0]?.invoice_number ?? rd.invoice_number, customer_fee: input.chargeCustomer ? input.customerFee : 0 };
+      await sendReturnDebitDunning(fresh);
+    } catch (e: any) {
+      console.error('Mahnung konnte nicht versendet werden', e);
+      warnings.push(`Mahnung konnte nicht versendet werden: ${e?.message ?? e}`);
+    }
+  }
 
   if (input.createTask) await notifyAccounting(rd, invoiceInfos, input.customerId);
+
 
   await logBank({
     action: 'ruecklastschrift_bestaetigt',
