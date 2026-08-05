@@ -170,7 +170,7 @@ export default function CmrArtikel() {
             />
           </label>
         </Button>
-        <Button onClick={() => { setEditId(null); setForm(EMPTY); setOpen(true); }}>
+        <Button onClick={() => { setEditId(null); setForm(EMPTY); setOpen(true); }} disabled={!canWrite}>
           <Plus className="w-4 h-4 mr-1.5" /> Neuer Artikel
         </Button>
       </div>
