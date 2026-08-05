@@ -76,7 +76,21 @@ export default function Ruecklastschriften() {
                       <td className="p-2 text-right">{fmt(Number(r.bank_fee) + Number(r.additional_costs), r.currency)}</td>
                       <td className="p-2"><Badge className={statusColor(r.status)}>{RD_STATUS[r.status] ?? r.status}</Badge></td>
                       <td className="p-2">{r.sepa_mandate_blocked ? 'Lastschrift gesperrt' : '–'}</td>
-                      <td className="p-2 text-right"><Button size="sm" variant="outline" onClick={() => openRow(r)}>Öffnen</Button></td>
+                      <td className="p-2 text-right whitespace-nowrap space-x-1">
+                        <Button size="sm" variant="ghost" title="Mahnung mit Sperrankündigung senden"
+                          onClick={async () => {
+                            const days = Number(window.prompt('Zahlungsfrist in Tagen (danach Sperre der Leistungen)', '7') ?? '');
+                            if (!days || days < 1) return;
+                            try {
+                              const info = await sendReturnDebitDunning(r, days);
+                              toast.success(`Mahnung an ${info.recipient} versendet (zahlbar bis ${info.payUntil})`);
+                              load();
+                            } catch (e: any) { toast.error(e.message); }
+                          }}>
+                          <Mail className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => openRow(r)}>Öffnen</Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
