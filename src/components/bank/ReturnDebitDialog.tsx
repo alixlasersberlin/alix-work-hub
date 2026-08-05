@@ -131,6 +131,55 @@ export default function ReturnDebitDialog({
   const confidence = picked?.score ?? 0;
   const readOnly = rd && ['bestaetigt', 'storniert', 'erledigt'].includes(rd.status);
 
+  // Live-Vorschläge zu Rechnungen/Ratenzahlern im Suchbereich
+  const invTerm = (filter.invoiceNumber || filter.customerName || filter.orderNumber || '').trim();
+  useEffect(() => {
+    if (!open || readOnly) return;
+    if (invTerm.length < 2) { setInvHits([]); return; }
+    let alive = true;
+    setInvBusy(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await searchInvoicesForReturn(region, invTerm);
+        if (alive) setInvHits(res.slice(0, 20));
+      } catch { /* ignore */ }
+      finally { if (alive) setInvBusy(false); }
+    }, 300);
+    return () => { alive = false; clearTimeout(t); };
+  }, [invTerm, open, region, readOnly]);
+
+  // Live-Vorschläge direkt im Aufteilungsfeld
+  useEffect(() => {
+    if (suggIdx === null || suggTerm.trim().length < 2) { setSugg([]); return; }
+    let alive = true;
+    const t = setTimeout(async () => {
+      try {
+        const res = await searchInvoicesForReturn(region, suggTerm.trim());
+        if (alive) setSugg(res.slice(0, 10));
+      } catch { /* ignore */ }
+    }, 300);
+    return () => { alive = false; clearTimeout(t); };
+  }, [suggTerm, suggIdx, region]);
+
+  function applyInvoice(inv: any, index?: number) {
+    const row: SplitRow = {
+      invoice_id: inv.id ?? null,
+      invoice_number: inv.invoice_number ?? null,
+      order_id: null, installment_id: null, original_payment_allocation_id: null,
+      allocated_amount: Number(amount.toFixed(2)),
+    };
+    if (index === undefined) {
+      setSplits([row]);
+      setShowSearch(false);
+    } else {
+      setSplits(splits.map((x, j) => j === index
+        ? { ...x, invoice_id: inv.id ?? null, invoice_number: inv.invoice_number ?? null }
+        : x));
+    }
+    setSuggIdx(null); setSugg([]); setSuggTerm('');
+    toast.success(`Rechnung ${inv.invoice_number ?? ''} zugeordnet`);
+  }
+
   const runSearch = async () => {
     setBusy(true);
     try {
@@ -147,9 +196,17 @@ export default function ReturnDebitDialog({
         dateTo: filter.dateTo || undefined,
       });
       setCands(list);
-      if (!list.length) toast.warning('Keine passende Zahlung gefunden.');
+      if (!list.length && invTerm) {
+        const res = await searchInvoicesForReturn(region, invTerm);
+        setInvHits(res.slice(0, 20));
+        if (!res.length) toast.warning('Keine passende Zahlung oder Rechnung gefunden.');
+        else toast.info('Keine Zahlung gefunden – Rechnungen als Vorschlag geladen.');
+      } else if (!list.length) {
+        toast.warning('Keine passende Zahlung gefunden.');
+      }
     } catch (e: any) { toast.error(e.message); }
     finally { setBusy(false); }
+
   };
 
   const doConfirm = async () => {
