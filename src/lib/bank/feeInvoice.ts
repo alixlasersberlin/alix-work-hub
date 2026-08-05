@@ -167,8 +167,7 @@ export async function createReturnDebitFeeInvoice(
       body: {
         templateName: 'ruecklastschrift-gebuehrenrechnung',
         recipientEmail: cust.email,
-        extraBcc: RETURN_DUNNING_CC,
-        extraCc: [],
+        bcc: RETURN_DUNNING_CC,
         idempotencyKey: `rd-fee-invoice-${rd.id}-${Date.now()}`,
         templateData: {
           customerName: cust.name ?? '',
