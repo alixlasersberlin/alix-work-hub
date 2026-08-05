@@ -10,6 +10,8 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useSyncRevenueMaskGlobal } from "@/lib/revenue-mask";
 import { useRadixBodyPointerEventsFix } from "@/hooks/useRadixBodyPointerEventsFix";
 import { TenantProvider } from "@/contexts/TenantContext";
+import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import WorkspaceDashboard from "@/pages/Workspaces/WorkspaceDashboard";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
 import { ExperienceModeProvider } from "@/hooks/useExperienceMode";
