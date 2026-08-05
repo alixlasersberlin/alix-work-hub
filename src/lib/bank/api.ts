@@ -198,12 +198,18 @@ export async function bookTransaction(tx: any, allocations: AllocationInput[]) {
     if (error) throw error;
 
     if (a.invoice_id && a.allocation_type === 'rechnung') {
-      const { data: inv } = await supabase.from('zoho_invoices')
+      let table: 'zoho_invoices' | 'zoho_recurring_invoices' = 'zoho_invoices';
+      let { data: inv } = await supabase.from('zoho_invoices')
         .select('id,balance,total,status,payment_status').eq('id', a.invoice_id).maybeSingle();
+      if (!inv) {
+        const r = await supabase.from('zoho_recurring_invoices')
+          .select('id,balance,total,status,payment_status').eq('id', a.invoice_id).maybeSingle();
+        if (r.data) { inv = r.data as any; table = 'zoho_recurring_invoices'; }
+      }
       if (inv) {
         const newBalance = Math.max(0, Number(inv.balance ?? 0) - Number(a.allocated_amount));
         const paid = newBalance <= 0.009;
-        const { error: uErr } = await supabase.from('zoho_invoices').update({
+        const { error: uErr } = await supabase.from(table).update({
           balance: newBalance,
           payment_status: paid ? 'paid' : 'partially_paid',
           status: paid ? 'paid' : (inv.status ?? 'open'),
@@ -212,11 +218,12 @@ export async function bookTransaction(tx: any, allocations: AllocationInput[]) {
         if (uErr) throw uErr;
         await logBank({
           action: 'zahlung_verbucht', bank_transaction_id: tx.id,
-          old_value: { invoice_id: inv.id, balance: inv.balance, status: inv.status },
-          new_value: { invoice_id: inv.id, balance: newBalance, status: paid ? 'paid' : 'partially_paid', amount: a.allocated_amount },
+          old_value: { invoice_id: inv.id, balance: inv.balance, status: inv.status, table },
+          new_value: { invoice_id: inv.id, balance: newBalance, status: paid ? 'paid' : 'partially_paid', amount: a.allocated_amount, table },
         });
       }
     }
+
   }
 
   const primary = allocations.find(a => a.invoice_id) ?? allocations[0];
