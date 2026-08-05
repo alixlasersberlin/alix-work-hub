@@ -68,6 +68,12 @@ export default function CmrEinstellungen() {
     payload.tenant_id = tenantId;
     payload.tax_rate = Number(payload.tax_rate) || 0;
     payload.smtp_port = payload.smtp_port ? Number(payload.smtp_port) : null;
+    ['dunning_days_1', 'dunning_days_2', 'dunning_days_3', 'dunning_gap_days'].forEach((k) => {
+      payload[k] = Number(payload[k]) || 0;
+    });
+    ['dunning_fee_1', 'dunning_fee_2', 'dunning_fee_3', 'dunning_interest_pct'].forEach((k) => {
+      payload[k] = Number(payload[k]) || 0;
+    });
 
     const { error } = settings?.id
       ? await supabase.from('cmr_settings' as any).update(payload).eq('id', settings.id)
