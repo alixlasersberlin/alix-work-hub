@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { FileDown, Loader2, Search, RefreshCw } from 'lucide-react';
-import { listBankAccounts, listTransactions, type BankAccount } from '@/lib/bank/api';
+import { FileDown, Loader2, Search, RefreshCw, Trash2 } from 'lucide-react';
+import { listBankAccounts, listTransactions, deleteTransactions, type BankAccount } from '@/lib/bank/api';
+import { useCanDelete } from '@/hooks/useCanDelete';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import BankStatusBadge from '@/components/bank/BankStatusBadge';
 import TxDetailPanel from '@/components/bank/TxDetailPanel';
@@ -30,6 +31,9 @@ export default function TxListPage({
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<any | null>(null);
+  const [checked, setChecked] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState(false);
+  const canDelete = useCanDelete();
   const pageSize = 50;
 
   useEffect(() => { listBankAccounts(region).then(setAccounts).catch(() => {}); }, [region]);
@@ -49,7 +53,7 @@ export default function TxListPage({
         amountMax: amountMax ? Number(amountMax) : undefined,
         page, pageSize,
       });
-      setRows(res.rows); setCount(res.count);
+      setRows(res.rows); setCount(res.count); setChecked([]);
     } catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   };
@@ -104,6 +108,22 @@ export default function TxListPage({
     doc.save(`bankbuchungen_${region}.pdf`);
   };
 
+  const toggle = (id: string) =>
+    setChecked(c => c.includes(id) ? c.filter(x => x !== id) : [...c, id]);
+
+  const removeSelected = async () => {
+    if (!checked.length) return;
+    if (!window.confirm(`${checked.length} Buchung(en) endgültig löschen? Zugehörige Zuordnungen und Rücklastschriften werden ebenfalls entfernt.`)) return;
+    setDeleting(true);
+    try {
+      await deleteTransactions(checked);
+      toast.success(`${checked.length} Buchung(en) gelöscht`);
+      if (selected && checked.includes(selected.id)) setSelected(null);
+      await load();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setDeleting(false); }
+  };
+
   return (
     <div className="space-y-4">
       <Card>
@@ -117,6 +137,12 @@ export default function TxListPage({
             <Button size="sm" variant="outline" onClick={exportCsv}><FileDown className="w-3.5 h-3.5 mr-1" />CSV</Button>
             <Button size="sm" variant="outline" onClick={exportXlsx}><FileDown className="w-3.5 h-3.5 mr-1" />Excel</Button>
             <Button size="sm" variant="outline" onClick={exportPdf}><FileDown className="w-3.5 h-3.5 mr-1" />PDF</Button>
+            {canDelete && (
+              <Button size="sm" variant="destructive" disabled={!checked.length || deleting} onClick={removeSelected}>
+                {deleting ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Trash2 className="w-3.5 h-3.5 mr-1" />}
+                Löschen{checked.length ? ` (${checked.length})` : ''}
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -155,15 +181,28 @@ export default function TxListPage({
           <div className="overflow-x-auto rounded-md border border-border">
             <table className="w-full text-xs">
               <thead className="bg-muted/40"><tr className="text-left">
+                {canDelete && (
+                  <th className="p-2 w-8">
+                    <input type="checkbox" aria-label="Alle auswählen"
+                      checked={!!rows.length && checked.length === rows.length}
+                      onChange={e => setChecked(e.target.checked ? rows.map(r => r.id) : [])} />
+                  </th>
+                )}
                 <th className="p-2">Datum</th><th className="p-2">Bankkonto</th><th className="p-2">Name</th>
                 <th className="p-2">Verwendungszweck</th><th className="p-2 text-right">Betrag</th>
                 <th className="p-2">Status</th><th className="p-2">Hinweis</th>
               </tr></thead>
               <tbody>
-                {loading && <tr><td colSpan={7} className="p-6 text-center"><Loader2 className="w-4 h-4 animate-spin inline" /></td></tr>}
-                {!loading && !rows.length && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Keine Buchungen gefunden.</td></tr>}
+                {loading && <tr><td colSpan={canDelete ? 8 : 7} className="p-6 text-center"><Loader2 className="w-4 h-4 animate-spin inline" /></td></tr>}
+                {!loading && !rows.length && <tr><td colSpan={canDelete ? 8 : 7} className="p-6 text-center text-muted-foreground">Keine Buchungen gefunden.</td></tr>}
                 {!loading && rows.map(r => (
                   <tr key={r.id} className="border-t border-border hover:bg-muted/30 cursor-pointer" onClick={() => setSelected(r)}>
+                    {canDelete && (
+                      <td className="p-2" onClick={e => e.stopPropagation()}>
+                        <input type="checkbox" aria-label="Buchung auswählen"
+                          checked={checked.includes(r.id)} onChange={() => toggle(r.id)} />
+                      </td>
+                    )}
                     <td className="p-2 whitespace-nowrap">{r.booking_date}</td>
                     <td className="p-2 whitespace-nowrap">{r.bank_accounts?.bank_name ?? '–'}</td>
                     <td className="p-2">{r.sender_receiver_name ?? '–'}</td>

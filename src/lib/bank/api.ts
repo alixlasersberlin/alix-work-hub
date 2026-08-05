@@ -158,6 +158,17 @@ export async function setTxStatus(txId: string, status: string, note?: string) {
   });
 }
 
+/** Löscht Bankbuchungen inkl. Zuordnungen, Treffer und Rücklastschriften (nur Super Admin, RLS-geschützt). */
+export async function deleteTransactions(ids: string[]) {
+  if (!ids.length) return 0;
+  for (const id of ids) {
+    await logBank({ action: 'buchung_geloescht', bank_transaction_id: id });
+  }
+  const { error } = await T('bank_transactions').delete().in('id', ids);
+  if (error) throw error;
+  return ids.length;
+}
+
 /* ------------------------------------------------------------- Verbuchung */
 
 export interface AllocationInput {
