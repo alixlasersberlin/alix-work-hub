@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
+import { markPostLogin, postLoginTarget } from '@/lib/postLogin';
 
 export default function Login() {
   const navigate = useNavigate();
