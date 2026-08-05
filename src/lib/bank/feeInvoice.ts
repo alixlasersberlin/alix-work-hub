@@ -24,78 +24,107 @@ async function nextFeeInvoiceNumber(): Promise<string> {
   return `${prefix}${String(n + 1).padStart(4, '0')}`;
 }
 
+const pickEmail = (raw: any): string | null => {
+  if (!raw) return null;
+  const cand = [raw.email, raw.customer_email, raw.contact_email, raw.billing_address?.email];
+  for (const c of cand) if (typeof c === 'string' && c.includes('@')) return c.trim();
+  const cp = raw.contact_persons_details ?? raw.contact_persons;
+  if (Array.isArray(cp)) {
+    const hit = cp.find((p: any) => typeof p?.email === 'string' && p.email.includes('@'));
+    if (hit) return String(hit.email).trim();
+  }
+  if (typeof raw.email_id === 'string' && raw.email_id.includes('@')) return raw.email_id.trim();
+  return null;
+};
+
+/**
+ * Ermittelt Name + E-Mail des Kunden für eine Rücklastschrift.
+ * Sucht der Reihe nach: Kundendatensatz -> Ursprungsrechnung (normal + wiederkehrend)
+ * -> Auftrag -> Kunde über Zoho-ID -> Kunde über Namen.
+ */
 async function resolveCustomer(rd: any, customerId: string | null, tx?: any) {
   let name: string | null = null;
   let email: string | null = null;
   let externalId: string | null = null;
-  if (customerId) {
-    const { data: c } = await supabase
-      .from('customers')
-      .select('company_name, contact_name, email, external_customer_id, city')
-      .eq('id', customerId)
-      .maybeSingle();
-    name = (c as any)?.company_name || (c as any)?.contact_name || null;
-    email = (c as any)?.email ?? null;
-    externalId = (c as any)?.external_customer_id ?? null;
-  }
-  const pickEmail = (raw: any): string | null => {
-    if (!raw) return null;
-    if (typeof raw.email === 'string' && raw.email.includes('@')) return raw.email;
-    const cp = raw.contact_persons_details ?? raw.contact_persons;
-    if (Array.isArray(cp)) {
-      const hit = cp.find((p: any) => typeof p?.email === 'string' && p.email.includes('@'));
-      if (hit) return hit.email as string;
-    }
-    if (typeof raw.customer_email === 'string' && raw.customer_email.includes('@')) return raw.customer_email;
-    return null;
+
+  const fromCustomerRow = (c: any) => {
+    if (!c) return;
+    name = name || c.company_name || c.contact_name || null;
+    email = email || (typeof c.email === 'string' && c.email.includes('@') ? c.email.trim() : null);
+    externalId = externalId || c.external_customer_id || null;
   };
 
-  if (!email && rd.invoice_id) {
-    // 1) normale Rechnung
-    const { data: inv } = await supabase
-      .from('zoho_invoices')
-      .select('customer_id, customer_name, raw_data')
-      .eq('id', rd.invoice_id)
+  const byInternalId = customerId ?? rd.customer_id ?? null;
+  if (byInternalId) {
+    const { data: c } = await supabase
+      .from('customers')
+      .select('company_name, contact_name, email, external_customer_id')
+      .eq('id', byInternalId)
       .maybeSingle();
-    // 2) Fallback: wiederkehrende Rechnung (Ratenzahler)
-    const { data: rec } = inv
-      ? { data: null as any }
-      : await supabase
-          .from('zoho_recurring_invoices')
-          .select('customer_id, customer_name, raw_data')
-          .eq('id', rd.invoice_id)
-          .maybeSingle();
-    const src: any = inv ?? rec;
-    if (src) {
-      name = name || (src.customer_name ?? null);
-      email = email || pickEmail(src.raw_data);
-      if (!email && src.customer_id) {
-        const { data: c2 } = await supabase
+    fromCustomerRow(c);
+  }
+
+  // Ursprungsrechnung (normal oder wiederkehrend) – auch über Rechnungsnummer
+  const sources: any[] = [];
+  if (rd.invoice_id) {
+    const [{ data: inv }, { data: rec }] = await Promise.all([
+      supabase.from('zoho_invoices').select('customer_id, customer_name, raw_data').eq('id', rd.invoice_id).maybeSingle(),
+      supabase.from('zoho_recurring_invoices').select('customer_id, customer_name, raw_data').eq('id', rd.invoice_id).maybeSingle(),
+    ]);
+    if (inv) sources.push(inv);
+    if (rec) sources.push(rec);
+  }
+  if (rd.invoice_number) {
+    const [{ data: inv2 }, { data: rec2 }] = await Promise.all([
+      supabase.from('zoho_invoices').select('customer_id, customer_name, raw_data').eq('invoice_number', rd.invoice_number).limit(1),
+      supabase.from('zoho_recurring_invoices').select('customer_id, customer_name, raw_data').eq('invoice_number', rd.invoice_number).limit(1),
+    ]);
+    if (inv2?.[0]) sources.push(inv2[0]);
+    if (rec2?.[0]) sources.push(rec2[0]);
+  }
+  for (const src of sources) {
+    name = name || (src.customer_name ?? null);
+    email = email || pickEmail(src.raw_data);
+    if (!email && src.customer_id) {
+      const { data: c2 } = await supabase
+        .from('customers')
+        .select('company_name, contact_name, email, external_customer_id')
+        .eq('external_customer_id', String(src.customer_id))
+        .maybeSingle();
+      fromCustomerRow(c2);
+    }
+    if (email) break;
+  }
+
+  // Auftrag als weitere Quelle
+  if (!email && (rd.order_id || rd.order_number)) {
+    const q = supabase.from('orders').select('customer_id').limit(1);
+    const { data: ord } = rd.order_id ? await q.eq('id', rd.order_id) : await q.eq('order_number', rd.order_number);
+    const o: any = ord?.[0];
+    if (o) {
+      if (!email && o.customer_id) {
+        const { data: c4 } = await supabase
           .from('customers')
           .select('company_name, contact_name, email, external_customer_id')
-          .eq('external_customer_id', String(src.customer_id))
+          .eq('id', o.customer_id)
           .maybeSingle();
-        name = name || (c2 as any)?.company_name || (c2 as any)?.contact_name || null;
-        email = (c2 as any)?.email ?? null;
-        externalId = externalId || ((c2 as any)?.external_customer_id ?? null);
+        fromCustomerRow(c4);
       }
     }
   }
-  // 3) Letzter Fallback: Kunde über Namen suchen
-  if (!email && name) {
+
+  // Letzter Fallback: Kunde über Namen (Rechnungsname oder Kontoinhaber)
+  for (const candidate of [name, tx?.sender_receiver_name, rd.customer_name].filter(Boolean) as string[]) {
+    if (email) break;
     const { data: c3 } = await supabase
       .from('customers')
-      .select('email, external_customer_id')
-      .ilike('company_name', name)
+      .select('company_name, contact_name, email, external_customer_id')
+      .ilike('company_name', candidate)
       .not('email', 'is', null)
       .limit(1);
-    if (c3?.[0]) {
-      email = (c3[0] as any).email ?? null;
-      externalId = externalId || ((c3[0] as any).external_customer_id ?? null);
-    }
+    fromCustomerRow(c3?.[0]);
   }
-  if (!name) name = tx?.sender_receiver_name ?? null;
-  return { name, email, externalId };
+
   if (!name) name = tx?.sender_receiver_name ?? null;
   return { name, email, externalId };
 }
@@ -138,10 +167,20 @@ export async function createReturnDebitFeeInvoice(
         fee_invoice_total: Number((existing as any).total ?? RD_FEE_TOTAL),
       })
       .eq('id', rd.id);
+    // Falls noch nie versendet: E-Mail automatisch nachholen
+    let emailSentTo: string | null = null;
+    if (!rd.fee_invoice_sent_at) {
+      try {
+        emailSentTo = await resendReturnDebitFeeInvoice({ ...rd, customer_id: rd.customer_id ?? customerId }, undefined, tx);
+      } catch (e) {
+        console.warn('Gebührenrechnung konnte nicht automatisch versendet werden:', e);
+      }
+    }
     return {
       invoiceId: (existing as any).id,
       invoiceNumber: (existing as any).invoice_number,
       total: Number((existing as any).total ?? RD_FEE_TOTAL),
+      emailSentTo,
       created: false,
     };
   }
@@ -264,7 +303,7 @@ export async function createReturnDebitFeeInvoice(
  * Versendet eine bereits erzeugte Gebührenrechnung (erneut) per E-Mail.
  * Ermittelt den Empfänger notfalls über Kunde/Rechnung und speichert ihn nach.
  */
-export async function resendReturnDebitFeeInvoice(rd: any, overrideEmail?: string): Promise<string> {
+export async function resendReturnDebitFeeInvoice(rd: any, overrideEmail?: string, tx?: any): Promise<string> {
   const { data: inv } = await supabase
     .from('zoho_invoices')
     .select('id, invoice_number, invoice_date, due_date, currency, total, customer_name, raw_data')
@@ -274,10 +313,10 @@ export async function resendReturnDebitFeeInvoice(rd: any, overrideEmail?: strin
   if (!inv) throw new Error('Keine Gebührenrechnung zu dieser Rücklastschrift gefunden');
 
   const raw: any = (inv as any).raw_data ?? {};
-  let email: string | null = overrideEmail?.trim() || (typeof raw.email === 'string' ? raw.email : null);
+  let email: string | null = overrideEmail?.trim() || pickEmail(raw);
   let name: string | null = (inv as any).customer_name ?? null;
   if (!email) {
-    const c = await resolveCustomer(rd, rd.customer_id ?? null);
+    const c = await resolveCustomer(rd, rd.customer_id ?? null, tx);
     email = c.email;
     name = name || c.name;
   }
