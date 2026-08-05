@@ -959,6 +959,18 @@ const CmrMahnwesen = lazy(() => import("./pages/CMR/Mahnwesen"));
 const CmrZeiten = lazy(() => import("./pages/CMR/Zeiten"));
 const CmrSammelrechnungen = lazy(() => import("./pages/CMR/Sammelrechnungen"));
 const CmrPortal = lazy(() => import("./pages/CMR/Portal"));
+const LicenseDashboard = lazy(() => import("./pages/License/Dashboard"));
+const LicenseMarken = lazy(() => import("./pages/License/Marken"));
+const LicenseLizenznehmer = lazy(() => import("./pages/License/Lizenznehmer"));
+const LicenseVertraege = lazy(() => import("./pages/License/Vertraege"));
+const LicenseSaetze = lazy(() => import("./pages/License/Saetze"));
+const LicenseProdukte = lazy(() => import("./pages/License/Produkte"));
+const LicenseRoyalties = lazy(() => import("./pages/License/Royalties"));
+const LicenseRechnungen = lazy(() => import("./pages/License/Rechnungen"));
+const LicenseIntercompany = lazy(() => import("./pages/License/Intercompany"));
+const LicenseAuswertungen = lazy(() => import("./pages/License/Auswertungen"));
+const LicenseLaufzeiten = lazy(() => import("./pages/License/Laufzeiten"));
+const LicenseEinstellungen = lazy(() => import("./pages/License/Einstellungen"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -1287,6 +1299,18 @@ function AppRoutes() {
           <Route path="/cmr/sammelrechnungen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR','CMR Viewer']}><CmrSammelrechnungen /></ProtectedRoute>} />
           <Route path="/cmr/betrieb" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR','CMR Viewer']}><CmrBetrieb /></ProtectedRoute>} />
           <Route path="/cmr/einstellungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><CmrEinstellungen /></ProtectedRoute>} />
+          <Route path="/license" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseDashboard /></ProtectedRoute>} />
+          <Route path="/license/marken" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseMarken /></ProtectedRoute>} />
+          <Route path="/license/lizenznehmer" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseLizenznehmer /></ProtectedRoute>} />
+          <Route path="/license/vertraege" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseVertraege /></ProtectedRoute>} />
+          <Route path="/license/saetze" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseSaetze /></ProtectedRoute>} />
+          <Route path="/license/produkte" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseProdukte /></ProtectedRoute>} />
+          <Route path="/license/royalties" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseRoyalties /></ProtectedRoute>} />
+          <Route path="/license/rechnungen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseRechnungen /></ProtectedRoute>} />
+          <Route path="/license/intercompany" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseIntercompany /></ProtectedRoute>} />
+          <Route path="/license/auswertungen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseAuswertungen /></ProtectedRoute>} />
+          <Route path="/license/laufzeiten" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseLaufzeiten /></ProtectedRoute>} />
+          <Route path="/license/einstellungen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','License Manager']}><LicenseEinstellungen /></ProtectedRoute>} />
           <Route path="/med" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Medical']}><MedDashboard /></ProtectedRoute>} />
           <Route path="/med/artikel" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Medical']}><MedArtikel /></ProtectedRoute>} />
           <Route path="/med/belege" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Medical']}><MedBelege /></ProtectedRoute>} />

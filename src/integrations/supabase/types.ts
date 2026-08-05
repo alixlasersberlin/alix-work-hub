@@ -9187,6 +9187,72 @@ export type Database = {
           },
         ]
       }
+      brand_registry: {
+        Row: {
+          code: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          jurisdiction: string | null
+          name: string
+          notes: string | null
+          owner_tenant_id: string | null
+          registration_number: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jurisdiction?: string | null
+          name: string
+          notes?: string | null
+          owner_tenant_id?: string | null
+          registration_number?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          jurisdiction?: string | null
+          name?: string
+          notes?: string | null
+          owner_tenant_id?: string | null
+          registration_number?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_registry_owner_tenant_id_fkey"
+            columns: ["owner_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_registry_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bugs: {
         Row: {
           assignee_id: string | null
@@ -21886,6 +21952,88 @@ export type Database = {
         }
         Relationships: []
       }
+      intercompany_invoices: {
+        Row: {
+          amount_net: number
+          category: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          due_date: string | null
+          from_tenant_id: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string | null
+          license_invoice_id: string | null
+          notes: string | null
+          paid_at: string | null
+          reference: string | null
+          status: string
+          to_tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_net?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          from_tenant_id?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string | null
+          license_invoice_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          reference?: string | null
+          status?: string
+          to_tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_net?: number
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          from_tenant_id?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string | null
+          license_invoice_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          reference?: string | null
+          status?: string
+          to_tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intercompany_invoices_from_tenant_id_fkey"
+            columns: ["from_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intercompany_invoices_license_invoice_id_fkey"
+            columns: ["license_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "license_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intercompany_invoices_to_tenant_id_fkey"
+            columns: ["to_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_workflow_states: {
         Row: {
           created_at: string
@@ -22361,6 +22509,492 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      license_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          payload: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          payload?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          payload?: Json | null
+        }
+        Relationships: []
+      }
+      license_contracts: {
+        Row: {
+          auto_renew: boolean
+          billing_mode: string
+          brand_id: string | null
+          contract_number: string | null
+          created_at: string
+          created_by: string | null
+          document_url: string | null
+          end_date: string | null
+          id: string
+          license_model: string
+          licensee_tenant_id: string | null
+          licensor_tenant_id: string | null
+          minimum_royalty: number | null
+          notes: string | null
+          payment_terms_days: number | null
+          rate_per_unit: number | null
+          royalty_percent: number | null
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auto_renew?: boolean
+          billing_mode?: string
+          brand_id?: string | null
+          contract_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_url?: string | null
+          end_date?: string | null
+          id?: string
+          license_model?: string
+          licensee_tenant_id?: string | null
+          licensor_tenant_id?: string | null
+          minimum_royalty?: number | null
+          notes?: string | null
+          payment_terms_days?: number | null
+          rate_per_unit?: number | null
+          royalty_percent?: number | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_renew?: boolean
+          billing_mode?: string
+          brand_id?: string | null
+          contract_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_url?: string | null
+          end_date?: string | null
+          id?: string
+          license_model?: string
+          licensee_tenant_id?: string | null
+          licensor_tenant_id?: string | null
+          minimum_royalty?: number | null
+          notes?: string | null
+          payment_terms_days?: number | null
+          rate_per_unit?: number | null
+          royalty_percent?: number | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_contracts_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brand_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "license_contracts_licensee_tenant_id_fkey"
+            columns: ["licensee_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "license_contracts_licensor_tenant_id_fkey"
+            columns: ["licensor_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      license_invoice_items: {
+        Row: {
+          amount: number
+          base_amount: number | null
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          product_name: string | null
+          rate_percent: number | null
+          royalty_transaction_id: string | null
+          serial_number: string | null
+          source_invoice_number: string | null
+        }
+        Insert: {
+          amount?: number
+          base_amount?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          product_name?: string | null
+          rate_percent?: number | null
+          royalty_transaction_id?: string | null
+          serial_number?: string | null
+          source_invoice_number?: string | null
+        }
+        Update: {
+          amount?: number
+          base_amount?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          product_name?: string | null
+          rate_percent?: number | null
+          royalty_transaction_id?: string | null
+          serial_number?: string | null
+          source_invoice_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "license_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "license_invoice_items_royalty_transaction_id_fkey"
+            columns: ["royalty_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "royalty_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      license_invoices: {
+        Row: {
+          amount_net: number
+          contract_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          due_date: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string | null
+          licensee_tenant_id: string | null
+          licensor_tenant_id: string | null
+          notes: string | null
+          paid_at: string | null
+          pdf_path: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_net?: number
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string | null
+          licensee_tenant_id?: string | null
+          licensor_tenant_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          pdf_path?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_net?: number
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string | null
+          licensee_tenant_id?: string | null
+          licensor_tenant_id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          pdf_path?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "license_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "license_invoices_licensee_tenant_id_fkey"
+            columns: ["licensee_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "license_invoices_licensor_tenant_id_fkey"
+            columns: ["licensor_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      license_number_ranges: {
+        Row: {
+          last_no: number
+          prefix: string
+          year: number
+        }
+        Insert: {
+          last_no?: number
+          prefix: string
+          year: number
+        }
+        Update: {
+          last_no?: number
+          prefix?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      license_products: {
+        Row: {
+          brand_id: string | null
+          catalog_item_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_licensable: boolean
+          item_name: string
+          license_model: string
+          licensor_tenant_id: string | null
+          min_amount: number | null
+          notes: string | null
+          per_device: boolean
+          rate_per_unit: number | null
+          rate_percent: number | null
+          sku: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          brand_id?: string | null
+          catalog_item_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_licensable?: boolean
+          item_name: string
+          license_model?: string
+          licensor_tenant_id?: string | null
+          min_amount?: number | null
+          notes?: string | null
+          per_device?: boolean
+          rate_per_unit?: number | null
+          rate_percent?: number | null
+          sku?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          brand_id?: string | null
+          catalog_item_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_licensable?: boolean
+          item_name?: string
+          license_model?: string
+          licensor_tenant_id?: string | null
+          min_amount?: number | null
+          notes?: string | null
+          per_device?: boolean
+          rate_per_unit?: number | null
+          rate_percent?: number | null
+          sku?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_products_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brand_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "license_products_catalog_item_id_fkey"
+            columns: ["catalog_item_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "license_products_licensor_tenant_id_fkey"
+            columns: ["licensor_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      license_rates: {
+        Row: {
+          brand_id: string | null
+          contract_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          license_model: string
+          min_amount: number | null
+          product_name: string | null
+          rate_per_unit: number | null
+          rate_percent: number | null
+          sku: string | null
+          tenant_id: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          brand_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          license_model?: string
+          min_amount?: number | null
+          product_name?: string | null
+          rate_per_unit?: number | null
+          rate_percent?: number | null
+          sku?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          brand_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          license_model?: string
+          min_amount?: number | null
+          product_name?: string | null
+          rate_per_unit?: number | null
+          rate_percent?: number | null
+          sku?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_rates_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brand_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "license_rates_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "license_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "license_rates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      license_settings: {
+        Row: {
+          auto_generate: boolean
+          billing_mode: string
+          created_at: string
+          currency: string
+          default_rate_percent: number
+          id: string
+          payment_terms_days: number
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_generate?: boolean
+          billing_mode?: string
+          created_at?: string
+          currency?: string
+          default_rate_percent?: number
+          id?: string
+          payment_terms_days?: number
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_generate?: boolean
+          billing_mode?: string
+          created_at?: string
+          currency?: string
+          default_rate_percent?: number
+          id?: string
+          payment_terms_days?: number
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "license_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       loaner_device_assignments: {
         Row: {
@@ -29803,6 +30437,136 @@ export type Database = {
           },
         ]
       }
+      royalty_transactions: {
+        Row: {
+          brand_id: string | null
+          contract_id: string | null
+          created_at: string
+          currency: string
+          id: string
+          license_invoice_id: string | null
+          license_model: string
+          license_product_id: string | null
+          licensee_tenant_id: string | null
+          licensor_tenant_id: string | null
+          net_amount: number
+          order_number: string | null
+          product_name: string | null
+          product_sku: string | null
+          quantity: number
+          rate_per_unit: number | null
+          rate_percent: number | null
+          royalty_amount: number
+          royalty_number: string | null
+          serial_number: string | null
+          source_invoice_date: string | null
+          source_invoice_id: string | null
+          source_invoice_number: string | null
+          source_system: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          brand_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          license_invoice_id?: string | null
+          license_model?: string
+          license_product_id?: string | null
+          licensee_tenant_id?: string | null
+          licensor_tenant_id?: string | null
+          net_amount?: number
+          order_number?: string | null
+          product_name?: string | null
+          product_sku?: string | null
+          quantity?: number
+          rate_per_unit?: number | null
+          rate_percent?: number | null
+          royalty_amount?: number
+          royalty_number?: string | null
+          serial_number?: string | null
+          source_invoice_date?: string | null
+          source_invoice_id?: string | null
+          source_invoice_number?: string | null
+          source_system?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: string | null
+          contract_id?: string | null
+          created_at?: string
+          currency?: string
+          id?: string
+          license_invoice_id?: string | null
+          license_model?: string
+          license_product_id?: string | null
+          licensee_tenant_id?: string | null
+          licensor_tenant_id?: string | null
+          net_amount?: number
+          order_number?: string | null
+          product_name?: string | null
+          product_sku?: string | null
+          quantity?: number
+          rate_per_unit?: number | null
+          rate_percent?: number | null
+          royalty_amount?: number
+          royalty_number?: string | null
+          serial_number?: string | null
+          source_invoice_date?: string | null
+          source_invoice_id?: string | null
+          source_invoice_number?: string | null
+          source_system?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "royalty_transactions_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brand_registry"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "royalty_transactions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "license_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "royalty_transactions_license_invoice_id_fkey"
+            columns: ["license_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "license_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "royalty_transactions_license_product_id_fkey"
+            columns: ["license_product_id"]
+            isOneToOne: false
+            referencedRelation: "license_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "royalty_transactions_licensee_tenant_id_fkey"
+            columns: ["licensee_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "royalty_transactions_licensor_tenant_id_fkey"
+            columns: ["licensor_tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_followups: {
         Row: {
           assigned_user: string | null
@@ -35762,6 +36526,7 @@ export type Database = {
           flag_emoji: string | null
           id: string
           is_active: boolean
+          is_system_tenant: boolean
           legal_name: string | null
           logo_url: string | null
           name: string
@@ -35790,6 +36555,7 @@ export type Database = {
           flag_emoji?: string | null
           id?: string
           is_active?: boolean
+          is_system_tenant?: boolean
           legal_name?: string | null
           logo_url?: string | null
           name: string
@@ -35818,6 +36584,7 @@ export type Database = {
           flag_emoji?: string | null
           id?: string
           is_active?: boolean
+          is_system_tenant?: boolean
           legal_name?: string | null
           logo_url?: string | null
           name?: string
@@ -39528,6 +40295,7 @@ export type Database = {
       can_manage_backups: { Args: never; Returns: boolean }
       can_manage_copilot_config: { Args: never; Returns: boolean }
       can_manage_esc_master: { Args: never; Returns: boolean }
+      can_manage_license: { Args: never; Returns: boolean }
       can_manage_mail_campaigns: { Args: never; Returns: boolean }
       can_manage_mail_domains: { Args: never; Returns: boolean }
       can_manage_mail_templates: { Args: never; Returns: boolean }
@@ -39903,6 +40671,7 @@ export type Database = {
         | { Args: { _customer_id: string }; Returns: boolean }
       is_supplier: { Args: never; Returns: boolean }
       lager_overview_counts: { Args: never; Returns: Json }
+      license_next_number: { Args: { p_prefix: string }; Returns: string }
       log_audit_event: {
         Args: {
           _action: string
