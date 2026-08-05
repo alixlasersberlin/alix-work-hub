@@ -15,6 +15,19 @@ export default function LicenseEinstellungen() {
   const [form, setForm] = useState<any>(null);
   const [log, setLog] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [running, setRunning] = useState(false);
+
+  const runNow = async () => {
+    setRunning(true);
+    const { data, error } = await supabase.functions.invoke('license-royalty-run', { body: { force: true } });
+    setRunning(false);
+    if (error) { toast.error(error.message); return; }
+    if ((data as any)?.error) { toast.error((data as any).error); return; }
+    const d: any = data || {};
+    toast.success(`Lauf beendet: ${d.created ?? 0} Royalty-Buchungen, ${d.invoices ?? 0} Lizenzrechnungen.`);
+    const { data: l } = await supabase.from('license_audit_log' as any).select('*').order('created_at', { ascending: false }).limit(50);
+    setLog(((l as any[]) || []));
+  };
 
   useEffect(() => { if (settings) setForm({ ...settings }); }, [settings]);
   useEffect(() => {
