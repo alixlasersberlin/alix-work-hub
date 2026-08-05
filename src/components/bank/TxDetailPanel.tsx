@@ -7,6 +7,7 @@ import { CheckCircle2, Undo2, PauseCircle, XCircle, Pencil } from 'lucide-react'
 import { getAllocations, getMatches, getTxAudit, setTxStatus, bookTransaction, reverseTransaction } from '@/lib/bank/api';
 import BankStatusBadge from './BankStatusBadge';
 import ManualMatchDialog from './ManualMatchDialog';
+import ReturnDebitDialog from './ReturnDebitDialog';
 import { useAuth } from '@/hooks/useAuth';
 
 const fmt = (n: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
@@ -20,6 +21,7 @@ export function TxDetailPanel({
   const [allocs, setAllocs] = useState<any[]>([]);
   const [audit, setAudit] = useState<any[]>([]);
   const [manual, setManual] = useState(false);
+  const [returnOpen, setReturnOpen] = useState(false);
 
   useEffect(() => {
     if (!tx) return;
@@ -112,6 +114,10 @@ export function TxDetailPanel({
                 )}
 
                 <section className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" className="border-red-500/40 text-red-500 hover:text-red-500"
+                    onClick={() => setReturnOpen(true)}>
+                    <Undo2 className="w-3.5 h-3.5 mr-1" />Als Rücklastschrift bearbeiten
+                  </Button>
                   {tx.status !== 'verbucht' && (
                     <>
                       <Button size="sm" onClick={() => setManual(true)}><Pencil className="w-3.5 h-3.5 mr-1" />Manuell zuordnen</Button>
@@ -146,6 +152,10 @@ export function TxDetailPanel({
         </SheetContent>
       </Sheet>
       {tx && <ManualMatchDialog tx={tx} region={region} open={manual} onOpenChange={setManual} onBooked={() => { onChanged(); onClose(); }} />}
+      {tx && returnOpen && (
+        <ReturnDebitDialog tx={tx} region={region} open={returnOpen} onOpenChange={setReturnOpen}
+          onChanged={() => { onChanged(); onClose(); }} />
+      )}
     </>
   );
 }

@@ -79,12 +79,22 @@ export async function duplicateHash(tx: ParsedTx, accountId: string): Promise<st
 
 export const RETURN_DEBIT_WORDS = [
   'rücklastschrift', 'ruecklastschrift', 'lastschrift zurück', 'lastschrift zurueck',
+  'lastschrift nicht eingelöst', 'lastschrift nicht eingeloest', 'nicht eingelöst', 'nicht eingeloest',
+  'rückgabe lastschrift', 'rueckgabe lastschrift', 'sepa-rückgabe', 'sepa-rueckgabe',
+  'sepa rückgabe', 'sepa rueckgabe', 'retoure lastschrift',
   'chargeback', 'storno', 'rückbuchung', 'rueckbuchung', 'rückgabe', 'ruecklauf', 'widerspruch',
+  'kontodeckung nicht ausreichend', 'keine kontodeckung', 'konto erloschen', 'konto gesperrt',
 ];
 
+/** SEPA-Rückgabecodes, die eine Rücklastschrift kennzeichnen */
+export const RETURN_DEBIT_CODES = ['AC01', 'AC04', 'AC06', 'AM04', 'MD01', 'MD06', 'MS02', 'SL01'];
+
 export function isReturnDebit(tx: ParsedTx): boolean {
-  const hay = `${tx.booking_text ?? ''} ${tx.purpose ?? ''}`.toLowerCase();
-  return RETURN_DEBIT_WORDS.some(w => hay.includes(w));
+  const raw = `${tx.booking_text ?? ''} ${tx.purpose ?? ''} ${JSON.stringify(tx.raw_data ?? {})}`;
+  const hay = raw.toLowerCase();
+  if (RETURN_DEBIT_WORDS.some(w => hay.includes(w))) return true;
+  const up = raw.toUpperCase();
+  return RETURN_DEBIT_CODES.some(c => new RegExp(`(^|[^A-Z0-9])${c}([^A-Z0-9]|$)`).test(up));
 }
 
 /* ------------------------------------------------------- format detection */

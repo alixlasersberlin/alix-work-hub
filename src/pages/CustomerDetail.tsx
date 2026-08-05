@@ -13,6 +13,7 @@ import FinanceAccountTab from '@/components/finance/FinanceAccountTab';
 import PortalAccessTab from '@/components/customer/PortalAccessTab';
 import AlixDocsPanel from '@/components/alixdocs/AlixDocsPanel';
 import CustomerSocialMediaTab from '@/components/customer/CustomerSocialMediaTab';
+import CustomerReturnDebits, { PaymentRiskWarning } from '@/components/finance/CustomerReturnDebits';
 import { withAt } from '@/lib/atSuffix';
 
 /** Nur die in der Übersicht angezeigten Spalten — `raw_data` (im Schnitt 3 KB pro Kunde) bleibt draußen. */
@@ -105,6 +106,8 @@ export default function CustomerDetail() {
         )}
       </div>
 
+      <PaymentRiskWarning customerId={customer.id} className="mb-4" />
+
       <Tabs value={tab} onValueChange={(v) => { setTab(v); if (v === 'social') ensureRawData(); }} className="w-full">
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
@@ -185,8 +188,9 @@ export default function CustomerDetail() {
           <CustomerCommunication customer={customer} />
         </TabsContent>
 
-        <TabsContent value="finance" className="mt-4">
+        <TabsContent value="finance" className="mt-4 space-y-4">
           <FinanceAccountTab customerId={customer.id} />
+          <CustomerReturnDebits customerId={customer.id} />
         </TabsContent>
 
         <TabsContent value="portal" className="mt-4">

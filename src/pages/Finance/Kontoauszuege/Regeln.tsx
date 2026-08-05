@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Trash2, Settings2, Brain, RefreshCw } from 'lucide-react';
+import { Trash2, Settings2, Brain, RefreshCw, Undo2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { loadReturnRules, saveReturnRules, type ReturnRules } from '@/lib/bank/returnDebit';
 import { listMatchRules, deleteMatchRule, setRuleAutoBook, type BankMatchRule } from '@/lib/bank/rules';
 import { supabase } from '@/integrations/supabase/client';
 import { listBankAccounts, type BankAccount } from '@/lib/bank/api';
@@ -70,7 +72,80 @@ export default function Importregeln() {
     </Card>
     <LearnedRules region={region} />
     <AutoReconcileCard region={region} />
+    <ReturnDebitRulesCard />
     </div>
+  );
+}
+
+function ReturnDebitRulesCard() {
+  const { hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
+  const [rules, setRules] = useState<ReturnRules | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => { loadReturnRules().then(setRules).catch(() => {}); }, []);
+  if (!rules) return null;
+
+  const set = (patch: Partial<ReturnRules>) => setRules({ ...rules, ...patch });
+  const save = async () => {
+    setBusy(true);
+    try { await saveReturnRules(rules); toast.success('Rücklastschriftregeln gespeichert'); }
+    catch (e: any) { toast.error(e.message); }
+    finally { setBusy(false); }
+  };
+
+  const Check = ({ k, l }: { k: keyof ReturnRules; l: string }) => (
+    <label className="flex items-center gap-2 text-sm">
+      <input type="checkbox" disabled={!isSuperAdmin} checked={!!rules[k]} onChange={e => set({ [k]: e.target.checked } as any)} />{l}
+    </label>
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2"><Undo2 className="w-4 h-4 text-red-500" />Regeln für Rücklastschriften</CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          Steuert Warnungen, Lastschriftsperren und Standardgebühren bei wiederholten Zahlungsstörungen. Änderungen sind nur für Super Admins möglich.
+        </p>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase text-muted-foreground">Erste Rücklastschrift</div>
+            <Check k="firstWarn" l="Warnhinweis anzeigen, Forderung wieder öffnen, Buchhaltungsaufgabe erstellen" />
+          </div>
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase text-muted-foreground">Zweite Rücklastschrift</div>
+            <Check k="secondBlock" l="Lastschrift automatisch sperren" />
+            <Check k="secondNotifyAdmin" l="Admin informieren" />
+            <Check k="secondBlockDelivery" l="Lieferung / weitere Leistung sperren" />
+          </div>
+          <div className="space-y-2">
+            <div className="text-xs font-semibold uppercase text-muted-foreground">Dritte Rücklastschrift</div>
+            <Check k="thirdRisk" l="Kunde als erhöhtes Zahlungsrisiko markieren" />
+            <Check k="thirdNotifySuperadmin" l="Superadmin informieren" />
+            <Check k="thirdNoAutoDebit" l="Keine weitere automatische Lastschrift" />
+            <Check k="thirdApprovalRequired" l="Neue Aufträge nur nach Freigabe (Vorkasse empfohlen)" />
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3 max-w-2xl">
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Standard-Bankgebühr</label>
+            <input type="number" step="0.01" disabled={!isSuperAdmin} value={rules.defaultBankFee}
+              className="w-full h-9 rounded-md border border-border bg-background px-2 text-sm"
+              onChange={e => set({ defaultBankFee: Number(e.target.value) })} />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-muted-foreground">Standard-Gebühr für Kunden</label>
+            <input type="number" step="0.01" disabled={!isSuperAdmin} value={rules.defaultCustomerFee}
+              className="w-full h-9 rounded-md border border-border bg-background px-2 text-sm"
+              onChange={e => set({ defaultCustomerFee: Number(e.target.value) })} />
+          </div>
+          <div className="flex items-end"><Check k="chargeCustomerByDefault" l="Gebühr standardmäßig weiterberechnen" /></div>
+        </div>
+        {isSuperAdmin && <Button size="sm" onClick={save} disabled={busy}>Regeln speichern</Button>}
+      </CardContent>
+    </Card>
   );
 }
 

@@ -9,6 +9,7 @@ const tabs = [
   { to: '/finance/kontoauszuege/buchungen', label: 'Importierte Buchungen' },
   { to: '/finance/kontoauszuege/offen', label: 'Offene Zuordnungen' },
   { to: '/finance/kontoauszuege/verbucht', label: 'Bereits verbuchte Zahlungen' },
+  { to: '/finance/kontoauszuege/ruecklastschriften', label: 'Rücklastschriften' },
   { to: '/finance/kontoauszuege/historie', label: 'Importhistorie' },
   { to: '/finance/kontoauszuege/konten', label: 'Bankkonten' },
   { to: '/finance/kontoauszuege/regeln', label: 'Importregeln' },
