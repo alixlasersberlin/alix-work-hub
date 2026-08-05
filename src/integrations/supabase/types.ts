@@ -10393,6 +10393,63 @@ export type Database = {
           },
         ]
       }
+      cmr_customer_dunning: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          days_1: number
+          days_2: number
+          days_3: number
+          fee_1: number
+          fee_2: number
+          fee_3: number
+          gap_days: number
+          id: string
+          interest_pct: number
+          is_active: boolean
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          days_1?: number
+          days_2?: number
+          days_3?: number
+          fee_1?: number
+          fee_2?: number
+          fee_3?: number
+          gap_days?: number
+          id?: string
+          interest_pct?: number
+          is_active?: boolean
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          days_1?: number
+          days_2?: number
+          days_3?: number
+          fee_1?: number
+          fee_2?: number
+          fee_3?: number
+          gap_days?: number
+          id?: string
+          interest_pct?: number
+          is_active?: boolean
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cmr_document_items: {
         Row: {
           created_at: string
@@ -10844,6 +10901,7 @@ export type Database = {
           amount: number
           created_at: string
           created_by: string | null
+          credit_document_id: string | null
           currency: string
           customer_id: string | null
           discount_amount: number
@@ -10860,6 +10918,7 @@ export type Database = {
           amount?: number
           created_at?: string
           created_by?: string | null
+          credit_document_id?: string | null
           currency?: string
           customer_id?: string | null
           discount_amount?: number
@@ -10876,6 +10935,7 @@ export type Database = {
           amount?: number
           created_at?: string
           created_by?: string | null
+          credit_document_id?: string | null
           currency?: string
           customer_id?: string | null
           discount_amount?: number
@@ -10889,6 +10949,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "cmr_payments_credit_document_id_fkey"
+            columns: ["credit_document_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "cmr_payments_customer_id_fkey"
             columns: ["customer_id"]
@@ -11050,6 +11117,7 @@ export type Database = {
           id: string
           interval_unit: string
           is_active: boolean
+          last_notice_at: string | null
           last_run_at: string | null
           lines: Json
           name: string
@@ -11070,6 +11138,7 @@ export type Database = {
           id?: string
           interval_unit?: string
           is_active?: boolean
+          last_notice_at?: string | null
           last_run_at?: string | null
           lines?: Json
           name: string
@@ -11090,6 +11159,7 @@ export type Database = {
           id?: string
           interval_unit?: string
           is_active?: boolean
+          last_notice_at?: string | null
           last_run_at?: string | null
           lines?: Json
           name?: string
@@ -11106,6 +11176,8 @@ export type Database = {
           address_line1: string | null
           address_line2: string | null
           address_line3: string | null
+          advance_notice_active: boolean
+          advance_notice_days: number
           bank_account: string | null
           bank_bic: string | null
           bank_iban: string | null
@@ -11154,6 +11226,8 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           address_line3?: string | null
+          advance_notice_active?: boolean
+          advance_notice_days?: number
           bank_account?: string | null
           bank_bic?: string | null
           bank_iban?: string | null
@@ -11202,6 +11276,8 @@ export type Database = {
           address_line1?: string | null
           address_line2?: string | null
           address_line3?: string | null
+          advance_notice_active?: boolean
+          advance_notice_days?: number
           bank_account?: string | null
           bank_bic?: string | null
           bank_iban?: string | null
@@ -11252,6 +11328,75 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: true
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cmr_time_entries: {
+        Row: {
+          billable: boolean
+          billed_at: string | null
+          billed_document_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          description: string | null
+          hourly_rate: number
+          hours: number
+          id: string
+          project_id: string | null
+          tenant_id: string
+          updated_at: string
+          work_date: string
+        }
+        Insert: {
+          billable?: boolean
+          billed_at?: string | null
+          billed_document_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string | null
+          hourly_rate?: number
+          hours?: number
+          id?: string
+          project_id?: string | null
+          tenant_id: string
+          updated_at?: string
+          work_date?: string
+        }
+        Update: {
+          billable?: boolean
+          billed_at?: string | null
+          billed_document_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string | null
+          hourly_rate?: number
+          hours?: number
+          id?: string
+          project_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_time_entries_billed_document_id_fkey"
+            columns: ["billed_document_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cmr_time_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_projects"
             referencedColumns: ["id"]
           },
         ]
