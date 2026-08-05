@@ -126,6 +126,14 @@ const FinanceMahnwesenDetail = lazy(() => import("./pages/Finance/MahnwesenDetai
 const FinanceMahnwesenSettings = lazy(() => import("./pages/Finance/MahnwesenSettings"));
 const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
 const FinanceBank = lazy(() => import("./pages/Finance/Bank"));
+const KontoauszuegeLayout = lazy(() => import("./pages/Finance/Kontoauszuege/Layout"));
+const KontoauszuegeImport = lazy(() => import("./pages/Finance/Kontoauszuege/Import"));
+const KontoauszuegeBuchungen = lazy(() => import("./pages/Finance/Kontoauszuege/Buchungen"));
+const KontoauszuegeOffen = lazy(() => import("./pages/Finance/Kontoauszuege/Offen"));
+const KontoauszuegeVerbucht = lazy(() => import("./pages/Finance/Kontoauszuege/Verbucht"));
+const KontoauszuegeHistorie = lazy(() => import("./pages/Finance/Kontoauszuege/Historie"));
+const KontoauszuegeKonten = lazy(() => import("./pages/Finance/Kontoauszuege/Konten"));
+const KontoauszuegeRegeln = lazy(() => import("./pages/Finance/Kontoauszuege/Regeln"));
 const FinanceSepa = lazy(() => import("./pages/Finance/Sepa"));
 const FinanceQrRechnung = lazy(() => import("./pages/Finance/QrRechnung"));
 const FinanceChLastschriften = lazy(() => import("./pages/Finance/ChLastschriften"));
