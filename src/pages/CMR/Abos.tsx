@@ -108,7 +108,16 @@ export default function CmrAbos() {
     setOpen(false); load();
   };
 
+  const toggleActive = async (p: Plan) => {
+    const { error } = await supabase.from('cmr_recurring_plans' as any)
+      .update({ is_active: !p.is_active }).eq('id', p.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success(p.is_active ? 'Abo pausiert' : 'Abo aktiviert');
+    load();
+  };
+
   const remove = async (p: Plan) => {
+    if (!window.confirm(`Abo „${p.name}" wirklich löschen?`)) return;
     const { error } = await supabase.from('cmr_recurring_plans' as any).delete().eq('id', p.id);
     if (error) { toast.error(error.message); return; }
     load();
