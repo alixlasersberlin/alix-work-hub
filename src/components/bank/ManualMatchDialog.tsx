@@ -52,20 +52,28 @@ export function ManualMatchDialog({
     if (!open) return;
     const t = setTimeout(async () => {
       setSearching(true);
-      let q = supabase.from('zoho_invoices')
-        .select('id,invoice_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status,reference_number')
-        .eq('accounting_region', region as any)
-        .order('invoice_date', { ascending: false })
-        .limit(30);
+      const cols = 'id,invoice_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status,reference_number';
       const s = term.trim().replace(/[%,]/g, ' ');
-      if (s) q = q.or(`invoice_number.ilike.%${s}%,customer_name.ilike.%${s}%,reference_number.ilike.%${s}%,customer_id.ilike.%${s}%`);
-      else q = q.gt('balance', 0);
-      const { data } = await q;
-      setResults(data ?? []);
+      const build = (table: 'zoho_invoices' | 'zoho_recurring_invoices') => {
+        let q = supabase.from(table)
+          .select(cols)
+          .eq('accounting_region', region as any)
+          .order('invoice_date', { ascending: false })
+          .limit(30);
+        if (s) q = q.or(`invoice_number.ilike.%${s}%,customer_name.ilike.%${s}%,reference_number.ilike.%${s}%,customer_id.ilike.%${s}%`);
+        else q = q.gt('balance', 0);
+        return q;
+      };
+      const [std, rec] = await Promise.all([build('zoho_invoices'), build('zoho_recurring_invoices')]);
+      setResults([
+        ...((std.data ?? []) as any[]).map(i => ({ ...i, __src: 'zoho' })),
+        ...((rec.data ?? []) as any[]).map(i => ({ ...i, __src: 'recurring' })),
+      ]);
       setSearching(false);
     }, 300);
     return () => clearTimeout(t);
   }, [term, open, region]);
+
 
   const sum = useMemo(() => rows.reduce((s, r) => s + Number(r.allocated_amount || 0), 0), [rows]);
   const diff = abs - sum;
@@ -132,8 +140,12 @@ export function ManualMatchDialog({
                 {!searching && !results.length && <tr><td colSpan={8} className="p-3 text-muted-foreground">Keine Treffer</td></tr>}
                 {results.map(inv => (
                   <tr key={inv.id} className="border-t border-border hover:bg-muted/30">
-                    <td className="p-2 font-medium">{inv.invoice_number}</td>
+                    <td className="p-2 font-medium">
+                      {inv.invoice_number}
+                      {inv.__src === 'recurring' && <Badge variant="secondary" className="ml-1 text-[9px]">Rate</Badge>}
+                    </td>
                     <td className="p-2">{inv.customer_name}</td>
+
                     <td className="p-2">{inv.invoice_date}</td>
                     <td className="p-2">{inv.due_date}</td>
                     <td className="p-2 text-right">{fmt(Number(inv.total), inv.currency || 'EUR')}</td>
