@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import { RouteErrorBoundary, RouteFallback } from "@/components/RouteBoundary";
 import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
+import { postLoginTarget, hasPendingWelcome, clearPendingWelcome } from "@/lib/postLogin";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -1053,14 +1054,29 @@ function MfaGate({ children, expect }: { children: React.ReactNode; expect: 'not
   if (!user) return <Navigate to="/alix-control" replace />;
   if (blockReason) return <AccountBlocked />;
   if (mfaState === 'verified') {
-    const postMfaTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
-      ? '/esc/kalender'
-      : '/dashboard';
-    return <Navigate to={postMfaTarget} replace />;
+    return <Navigate to={postLoginTarget()} replace />;
   }
   if (expect !== 'any' && mfaState !== expect && mfaState !== 'unknown') {
     if (mfaState === 'not_enrolled') return <Navigate to="/mfa-setup" replace />;
     if (mfaState === 'challenge_required') return <Navigate to="/mfa-challenge" replace />;
+  }
+  return <>{children}</>;
+}
+
+/**
+ * Erzwingt nach jedem Login genau einmal die Willkommens-Seite.
+ * Greift unabhängig davon, über welchen Login-Alias oder MFA-Schritt
+ * der Nutzer hereinkommt oder welche Deep-Link-URL gerufen wurde.
+ */
+function ForceWelcomeGate({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const pending = hasPendingWelcome();
+
+  if (pending && location.pathname !== '/willkommen') {
+    return <Navigate to="/willkommen" replace />;
+  }
+  if (pending && location.pathname === '/willkommen') {
+    clearPendingWelcome();
   }
   return <>{children}</>;
 }
@@ -1095,9 +1111,9 @@ function AppRoutes() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Landing />} />
         {/* Verdeckte Login-Aliasse (nicht im Menü, nicht in Sitemap, noindex) */}
-        <Route path="/alix-control" element={user ? <Navigate to={typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de' ? '/esc/kalender' : '/dashboard'} replace /> : <CovertLogin />} />
-        <Route path="/alix-secure" element={user ? <Navigate to={typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de' ? '/esc/kalender' : '/dashboard'} replace /> : <CovertLogin />} />
-        <Route path="/alix-enterprise" element={user ? <Navigate to={typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de' ? '/esc/kalender' : '/dashboard'} replace /> : <CovertLogin />} />
+        <Route path="/alix-control" element={user ? <Navigate to={postLoginTarget()} replace /> : <CovertLogin />} />
+        <Route path="/alix-secure" element={user ? <Navigate to={postLoginTarget()} replace /> : <CovertLogin />} />
+        <Route path="/alix-enterprise" element={user ? <Navigate to={postLoginTarget()} replace /> : <CovertLogin />} />
 
         <Route path="/passwort-setzen" element={<SetPassword />} />
         <Route path="/stakeholder/:token" element={<StakeholderPortal />} />
@@ -1134,7 +1150,7 @@ function AppRoutes() {
         <Route path="/social/showcase/:token" element={<SocialShowcase />} />
         <Route path="/umfrage/:token" element={<SurveyPublic />} />
 
-        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+        <Route element={<ProtectedRoute><ForceWelcomeGate><AppLayout /></ForceWelcomeGate></ProtectedRoute>}>
           <Route path="/start" element={<Startseite />} />
           <Route path="/willkommen" element={<Willkommen />} />
 

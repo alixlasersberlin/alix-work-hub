@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
+import { markPostLogin, postLoginTarget } from '@/lib/postLogin';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ export default function Login() {
       }
     }
 
+    markPostLogin();
     const { error } = await signIn(email, password);
     if (error) {
       setError('Ungültige Anmeldedaten. Bitte versuchen Sie es erneut.');
@@ -73,13 +75,10 @@ export default function Login() {
     // Sicherheitsnetz: pointer-events auf <body> zurücksetzen, falls Radix-Overlays
     // (Turnstile / Dialog) es beim Unmount hängen ließen.
     try { document.body.style.removeProperty('pointer-events'); } catch { /* ignore */ }
-    const postLoginTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
-      ? '/esc/kalender'
-      : '/willkommen';
     // Weiche Navigation via React Router — kein voller Reload, damit das
     // Design nicht während des Neuparsens „einfriert".
     setLoading(false);
-    navigate(postLoginTarget, { replace: true });
+    navigate(postLoginTarget(), { replace: true });
   };
 
   return (
