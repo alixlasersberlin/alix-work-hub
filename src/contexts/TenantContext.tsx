@@ -45,7 +45,7 @@ const Ctx = createContext<TenantContextType>({
 });
 
 export function TenantProvider({ children }: { children: ReactNode }) {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, roles } = useAuth() as any;
   const atOnly = useAtOnly();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [accessIds, setAccessIds] = useState<string[] | null>(null);
