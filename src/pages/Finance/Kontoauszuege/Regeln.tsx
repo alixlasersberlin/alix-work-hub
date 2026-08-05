@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { listBankAccounts, type BankAccount } from '@/lib/bank/api';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import ReturnDunningTemplateCard from '@/components/bank/ReturnDunningTemplateCard';
+import ReturnDunningEmailCard from '@/components/bank/ReturnDunningEmailCard';
 import ReturnDunningEscalationCard from '@/components/bank/ReturnDunningEscalationCard';
 
 export default function Importregeln() {
@@ -78,6 +79,7 @@ export default function Importregeln() {
     <ReturnDunningEscalationCard />
 
     <ReturnDunningTemplateCard />
+    <ReturnDunningEmailCard />
     </div>
   );
 }

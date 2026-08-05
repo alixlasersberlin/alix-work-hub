@@ -25,6 +25,14 @@ interface Props {
   bankName?: string
   reference?: string
   senderName?: string
+  /* Editierbare Texte (app_settings: bank_return_dunning_email) */
+  subjectOverride?: string
+  headline?: string
+  intro?: string
+  warnTitle?: string
+  warnBody?: string
+  warnBody2?: string
+  closing?: string
 }
 
 const fmt = (n?: number, cur = 'EUR') =>
@@ -36,22 +44,27 @@ const Email = ({
   customerName, returnDate, returnReason, returnCode, amount, fee, total,
   currency = 'EUR', payUntil, blockDate, mandateBlocked, items = [],
   iban, bic, bankName, reference, senderName,
+  subjectOverride, headline, intro, warnTitle: warnTitleTxt, warnBody, warnBody2, closing,
 }: Props) => (
   <Html lang="de" dir="ltr">
     <Head />
     <Preview>Rücklastschrift – offene Forderung {fmt(total, currency)}, bitte bis {payUntil ?? 'zum genannten Termin'} ausgleichen</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Zahlungsaufforderung nach Rücklastschrift</Heading>
+        <Heading style={h1}>{headline || 'Zahlungsaufforderung nach Rücklastschrift'}</Heading>
 
         <Text style={p}>Sehr geehrte Damen und Herren{customerName ? `, ${customerName}` : ''},</Text>
 
-        <Text style={p}>
-          die von uns eingezogene Lastschrift wurde{returnDate ? ` am ${returnDate}` : ''} von Ihrem
-          Kreditinstitut zurückgegeben{returnReason ? ` – Grund: ${returnReason}` : ''}
-          {returnCode ? ` (Rückgabecode ${returnCode})` : ''}. Die betroffene Forderung ist damit
-          wieder offen; die zugehörige Rechnung wurde in unserem System erneut geöffnet.
-        </Text>
+        {intro ? (
+          <Text style={p}>{intro}</Text>
+        ) : (
+          <Text style={p}>
+            die von uns eingezogene Lastschrift wurde{returnDate ? ` am ${returnDate}` : ''} von Ihrem
+            Kreditinstitut zurückgegeben{returnReason ? ` – Grund: ${returnReason}` : ''}
+            {returnCode ? ` (Rückgabecode ${returnCode})` : ''}. Die betroffene Forderung ist damit
+            wieder offen; die zugehörige Rechnung wurde in unserem System erneut geöffnet.
+          </Text>
+        )}
 
         <Section style={box}>
           <Text style={boxTitle}>Offene Forderung</Text>
@@ -70,17 +83,25 @@ const Email = ({
         </Section>
 
         <Section style={warnBox}>
-          <Text style={warnTitle}>Wichtiger Hinweis: bevorstehende Sperre der Leistungen</Text>
-          <Text style={warnText}>
-            Sollte der Gesamtbetrag nicht bis zum {payUntil ?? 'genannten Termin'} vollständig auf
-            unserem Konto eingegangen sein, sind wir gezwungen, sämtliche Leistungen von
-            Alix Lasers{blockDate ? ` mit Wirkung zum ${blockDate}` : ''} vorübergehend zu sperren.
-          </Text>
-          <Text style={warnText}>
-            Dies betrifft insbesondere die Freischaltung und den Betrieb Ihres Gerätes, Service- und
-            Wartungsleistungen, Support, Schulungen sowie ausstehende Lieferungen. Die Sperre wird
-            unmittelbar nach vollständigem Zahlungseingang wieder aufgehoben.
-          </Text>
+          <Text style={warnTitle}>{warnTitleTxt || 'Wichtiger Hinweis: bevorstehende Sperre der Leistungen'}</Text>
+          {warnBody ? (
+            <Text style={warnText}>{warnBody}</Text>
+          ) : (
+            <Text style={warnText}>
+              Sollte der Gesamtbetrag nicht bis zum {payUntil ?? 'genannten Termin'} vollständig auf
+              unserem Konto eingegangen sein, sind wir gezwungen, sämtliche Leistungen von
+              Alix Lasers{blockDate ? ` mit Wirkung zum ${blockDate}` : ''} vorübergehend zu sperren.
+            </Text>
+          )}
+          {warnBody2 ? (
+            <Text style={warnText}>{warnBody2}</Text>
+          ) : (
+            <Text style={warnText}>
+              Dies betrifft insbesondere die Freischaltung und den Betrieb Ihres Gerätes, Service- und
+              Wartungsleistungen, Support, Schulungen sowie ausstehende Lieferungen. Die Sperre wird
+              unmittelbar nach vollständigem Zahlungseingang wieder aufgehoben.
+            </Text>
+          )}
           {mandateBlocked && (
             <Text style={warnText}>
               Ihr SEPA-Lastschriftmandat haben wir vorsorglich gesperrt. Bitte überweisen Sie den
@@ -100,8 +121,8 @@ const Email = ({
         )}
 
         <Text style={p}>
-          Sollte die Rücklastschrift auf einem Irrtum Ihres Kreditinstituts beruhen oder haben Sie
-          den Betrag bereits ausgeglichen, setzen Sie sich bitte kurzfristig mit uns in Verbindung.
+          {closing ||
+            'Sollte die Rücklastschrift auf einem Irrtum Ihres Kreditinstituts beruhen oder haben Sie den Betrag bereits ausgeglichen, setzen Sie sich bitte kurzfristig mit uns in Verbindung.'}
         </Text>
 
         <Hr style={hr} />
@@ -117,6 +138,7 @@ const Email = ({
 export const template = {
   component: Email,
   subject: (d: Record<string, any>) =>
+    d.subjectOverride ||
     `Rücklastschrift – offene Forderung${d.items?.[0]?.invoice_number ? ` zu Rechnung ${d.items[0].invoice_number}` : ''} und angekündigte Leistungssperre`,
   displayName: 'Rücklastschrift – Mahnung & Sperrankündigung',
   previewData: {
