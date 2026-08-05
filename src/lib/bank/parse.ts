@@ -190,7 +190,10 @@ const GUESS: Record<string, RegExp> = {
   mandate_reference: /(mandat)/i,
   customer_reference: /(kundenreferenz|customer)/i,
   debit_credit: /(soll.?haben|s\/h|cdtdbt|debit)/i,
+  // Rechnungs-/Auftragsnummer wird an den Verwendungszweck angehängt (Suche & Matching)
+  invoice_number: /(rechnungsnummer|rechnungs.?nr|invoice|auftragsnummer|auftrags.?nr|belegnummer|beleg.?nr)/i,
 };
+
 
 export function guessMapping(headers: string[]): ColumnMapping {
   const m: ColumnMapping = {};
