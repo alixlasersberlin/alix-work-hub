@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Plus, Package } from 'lucide-react';
+import { Loader2, Plus, Package, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 import CmrCategories from './Categories';
@@ -85,6 +85,56 @@ export default function CmrArtikel() {
     (!catFilter || i.category_id === catFilter) &&
     (!search || `${i.name} ${i.sku ?? ''}`.toLowerCase().includes(search.toLowerCase())));
 
+  const exportCsv = () => {
+    const head = ['sku', 'name', 'kategorie', 'beschreibung', 'einheit', 'preis', 'waehrung', 'mwst', 'wiederkehrend', 'intervall', 'aktiv'];
+    const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const rows = filtered.map((i) => [
+      i.sku ?? '', i.name, cats.find((c) => c.id === i.category_id)?.name ?? '', i.description ?? '',
+      i.unit, i.price, i.currency || cur, i.tax_rate, i.is_recurring ? 'ja' : 'nein',
+      i.billing_interval ?? '', i.is_active ? 'ja' : 'nein',
+    ].map(esc).join(';'));
+    const blob = new Blob(['\uFEFF' + [head.join(';'), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `cmr-artikel-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const importCsv = async (file: File) => {
+    if (!tenantId) return;
+    const text = await file.text();
+    const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) { toast.error('CSV enthält keine Datenzeilen.'); return; }
+    const delim = lines[0].includes(';') ? ';' : ',';
+    const split = (l: string) => l.split(delim).map((c) => c.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
+    const head = split(lines[0]).map((h) => h.toLowerCase());
+    const idx = (n: string) => head.indexOf(n);
+    if (idx('name') === -1) { toast.error('Spalte "name" fehlt in der CSV.'); return; }
+    const rows = lines.slice(1).map(split).filter((r) => r[idx('name')]);
+    const payload = rows.map((r) => {
+      const catName = idx('kategorie') > -1 ? r[idx('kategorie')] : '';
+      return {
+        tenant_id: tenantId,
+        sku: idx('sku') > -1 ? r[idx('sku')] || null : null,
+        name: r[idx('name')],
+        category_id: cats.find((c) => c.name.toLowerCase() === (catName || '').toLowerCase())?.id ?? null,
+        description: idx('beschreibung') > -1 ? r[idx('beschreibung')] || null : null,
+        unit: (idx('einheit') > -1 && r[idx('einheit')]) || 'Stück',
+        price: Number(String(idx('preis') > -1 ? r[idx('preis')] : '0').replace(',', '.')) || 0,
+        currency: cur,
+        tax_rate: Number(String(idx('mwst') > -1 ? r[idx('mwst')] : '0').replace(',', '.')) || 0,
+        is_recurring: idx('wiederkehrend') > -1 ? /ja|true|1/i.test(r[idx('wiederkehrend')] || '') : false,
+        billing_interval: idx('intervall') > -1 ? r[idx('intervall')] || null : null,
+        is_active: idx('aktiv') > -1 ? !/nein|false|0/i.test(r[idx('aktiv')] || 'ja') : true,
+      };
+    });
+    const { error } = await supabase.from('cmr_items' as any).insert(payload);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${payload.length} Artikel importiert`);
+    load();
+  };
+
   if (loading || busy) {
     return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
   }
@@ -104,7 +154,21 @@ export default function CmrArtikel() {
           <option value="">Alle Kategorien</option>
           {cats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        <Button className="ml-auto" onClick={() => { setEditId(null); setForm(EMPTY); setOpen(true); }}>
+        <Button variant="outline" className="ml-auto" onClick={exportCsv}>
+          <Download className="w-4 h-4 mr-1.5" /> CSV Export
+        </Button>
+        <Button variant="outline" asChild>
+          <label className="cursor-pointer">
+            <Upload className="w-4 h-4 mr-1.5" /> CSV Import
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) importCsv(f); e.currentTarget.value = ''; }}
+            />
+          </label>
+        </Button>
+        <Button onClick={() => { setEditId(null); setForm(EMPTY); setOpen(true); }}>
           <Plus className="w-4 h-4 mr-1.5" /> Neuer Artikel
         </Button>
       </div>
