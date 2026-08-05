@@ -97,6 +97,7 @@ interface SecurityIncident {
 import { StatusBadge } from '@/components/StatusBadge';
 import { ActivityHeatmap } from '@/components/aurora/ActivityHeatmap';
 import { ToursHeatmap } from '@/components/aurora/ToursHeatmap';
+import { BankKpiCard } from '@/components/bank/BankKpiCard';
 
 function formatCurrency(amount: number | null, currency: string | null) {
   if (amount == null) return '—';
@@ -733,6 +734,9 @@ export default function Dashboard() {
             ))}
           </div>
         )}
+
+        {/* Bank & Kontoauszüge KPIs */}
+        {isAdmin && <BankKpiCard />}
 
         {/* Finance Overview */}
         {canSeeFinance && !isAdmin && (

@@ -561,6 +561,8 @@ export const navItems: NavItem[] = [
           { path: '/finance/kontoauszuege/quote', label: 'Rücklastschriftquote', icon: Landmark, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/kontoauszuege/konten', label: 'Bankkonten', icon: Landmark, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/kontoauszuege/regeln', label: 'Importregeln', icon: Landmark, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/kontoauszuege/datev', label: 'DATEV-Export', icon: Landmark, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/kontoauszuege/bank-api', label: 'Bank-API / EBICS', icon: Landmark, roles: ['Admin', 'Super Admin'] },
         ],
       },
     ],

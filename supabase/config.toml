@@ -388,3 +388,9 @@ verify_jwt = false
 
 [functions.bank-auto-reconcile]
 verify_jwt = false
+
+[functions.bank-return-dunning-escalate]
+verify_jwt = false
+
+[functions.bank-api-fetch]
+verify_jwt = false
