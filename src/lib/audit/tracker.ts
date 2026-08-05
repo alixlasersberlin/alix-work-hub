@@ -79,6 +79,8 @@ class AuditTracker {
 
   private async sendHeartbeat() {
     if (!this.sessionId || !this.started) return;
+    if (Date.now() < this.pauseUntil) return;
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { await this.stop(); return; }
     const now = Date.now();
