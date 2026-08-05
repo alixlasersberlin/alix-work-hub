@@ -497,6 +497,14 @@ export default function CmrBuchhaltung() {
             <div className="space-y-3">
               <div className="text-sm text-muted-foreground">{form.label}</div>
               <div><Label>Betrag ({cur})</Label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+              <div>
+                <Label>Skonto ({cur})</Label>
+                <Input type="number" step="0.01" value={form.discount_amount ?? 0} onChange={(e) => setForm({ ...form, discount_amount: e.target.value })} />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Restforderung nach Buchung: {cmrMoney(Math.max(0, Number(form.openAmount || 0) - (Number(form.amount) || 0) - (Number(form.discount_amount) || 0)), cur)}
+                </p>
+              </div>
+
               <div><Label>Datum</Label><Input type="date" value={form.paid_on} onChange={(e) => setForm({ ...form, paid_on: e.target.value })} /></div>
               <div><Label>Zahlungsart</Label><Input value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value })} /></div>
               <div><Label>Referenz</Label><Input value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} /></div>
