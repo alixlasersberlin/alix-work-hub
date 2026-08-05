@@ -30,29 +30,40 @@ export default function WorkspaceAdmin() {
   const [nav, setNav] = useState<NavItem[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
   const [access, setAccess] = useState<Record<string, string[]>>({}); // userId -> workspaceIds
+  const [tenants, setTenants] = useState<{ id: string; code: string; name: string; flag_emoji: string | null }[]>([]);
+  const [tenantAccess, setTenantAccess] = useState<Record<string, string[]>>({}); // userId -> tenantIds
   const [activeWs, setActiveWs] = useState<string | null>(null);
   const [userFilter, setUserFilter] = useState('');
 
   const load = async () => {
     setLoading(true);
-    const [{ data: w }, { data: n }, { data: p }, { data: a }] = await Promise.all([
+    const [{ data: w }, { data: n }, { data: p }, { data: a }, { data: t }, { data: ta }] = await Promise.all([
       supabase.from('workspaces' as any).select('*').order('sort_order'),
       supabase.from('workspace_nav_items' as any).select('*').order('sort_order'),
       supabase.from('user_profiles').select('id, full_name, email, is_active').order('full_name').limit(1000),
       supabase.from('user_workspace_access' as any).select('user_id, workspace_id').limit(5000),
+      supabase.from('tenants' as any).select('id, code, name, flag_emoji').order('code'),
+      supabase.from('user_tenant_access' as any).select('user_id, tenant_id').limit(5000),
     ]);
     const wsList = ((w as any) || []) as Ws[];
     setWs(wsList);
     setNav(((n as any) || []) as NavItem[]);
     setUsers(((p as any) || []) as Profile[]);
+    setTenants(((t as any) || []) as any);
     const map: Record<string, string[]> = {};
     ((a as any[]) || []).forEach(r => {
       map[r.user_id] = [...(map[r.user_id] || []), r.workspace_id];
     });
     setAccess(map);
+    const tmap: Record<string, string[]> = {};
+    ((ta as any[]) || []).forEach(r => {
+      tmap[r.user_id] = [...(tmap[r.user_id] || []), r.tenant_id];
+    });
+    setTenantAccess(tmap);
     setActiveWs(prev => prev || wsList[0]?.id || null);
     setLoading(false);
   };
+
 
   useEffect(() => { load(); }, []);
 
@@ -135,6 +146,23 @@ export default function WorkspaceAdmin() {
     reload();
   };
 
+  const toggleTenantAccess = async (userId: string, tenantId: string, on: boolean) => {
+    if (on) {
+      const { error } = await supabase.from('user_tenant_access' as any).insert({ user_id: userId, tenant_id: tenantId });
+      if (error) return toast.error(error.message);
+    } else {
+      const { error } = await supabase.from('user_tenant_access' as any).delete()
+        .eq('user_id', userId).eq('tenant_id', tenantId);
+      if (error) return toast.error(error.message);
+    }
+    setTenantAccess(m => {
+      const cur = m[userId] || [];
+      return { ...m, [userId]: on ? [...cur, tenantId] : cur.filter(x => x !== tenantId) };
+    });
+  };
+
+
+
   const filteredUsers = useMemo(() => {
     const t = userFilter.trim().toLowerCase();
     if (!t) return users;
@@ -161,7 +189,8 @@ export default function WorkspaceAdmin() {
         <TabsList>
           <TabsTrigger value="ws">Workspaces</TabsTrigger>
           <TabsTrigger value="nav">Navigation</TabsTrigger>
-          <TabsTrigger value="users">Zugriffe</TabsTrigger>
+          <TabsTrigger value="users">Workspace-Zugriffe</TabsTrigger>
+          <TabsTrigger value="tenants">Mandanten-Zugriffe</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ws" className="space-y-4 pt-4">
@@ -278,7 +307,48 @@ export default function WorkspaceAdmin() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="tenants" className="space-y-4 pt-4">
+          <Input placeholder="Benutzer suchen…" value={userFilter} onChange={e => setUserFilter(e.target.value)} className="max-w-sm" />
+          <p className="text-xs text-muted-foreground">
+            Steuert, welche Mandanten (Alix Lasers, Alix Austria, Alix Medical, CMR) ein Benutzer im Umschalter sieht.
+            Ohne Zuordnung gelten die bisherigen Rollenregeln. Nur Super Admin darf ändern.
+          </p>
+          <Card>
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-left p-3">Benutzer</th>
+                    {tenants.map(t => (
+                      <th key={t.id} className="p-3 text-center whitespace-nowrap">{t.flag_emoji || ''} {t.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map(u => (
+                    <tr key={u.id} className="border-t border-border">
+                      <td className="p-3">
+                        <div className="font-medium">{u.full_name || '—'}</div>
+                        <div className="text-xs text-muted-foreground">{u.email}</div>
+                      </td>
+                      {tenants.map(t => (
+                        <td key={t.id} className="p-3 text-center">
+                          <Checkbox
+                            checked={(tenantAccess[u.id] || []).includes(t.id)}
+                            onCheckedChange={v => toggleTenantAccess(u.id, t.id, Boolean(v))}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
     </div>
   );
 }
