@@ -149,6 +149,11 @@ function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docSt
 
 type InvoicesProps = { mietkaufOnly?: boolean };
 
+// Modul-Cache: Rechnungsliste bleibt beim Zurücknavigieren sofort sichtbar
+const ROWS_CACHE = new Map<string, { ts: number; rows: Row[] }>();
+const ROWS_CACHE_TTL = 60_000;
+
+
 export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const { roles } = useAuth();
   const { region } = useAccountingRegion();
