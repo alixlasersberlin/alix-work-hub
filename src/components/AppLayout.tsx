@@ -20,6 +20,7 @@ import NewsAnnouncementDialog from '@/components/NewsAnnouncementDialog';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
+import GlobalSearch from '@/components/GlobalSearch';
 import WorkspaceBar from '@/components/workspace/WorkspaceBar';
 import WorkspaceNav from '@/components/workspace/WorkspaceNav';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
@@ -2153,7 +2154,10 @@ export default function AppLayout() {
             </Link>
             <TicketNotificationBell />
 
+            <GlobalSearch />
+
             <TenantSwitcher />
+
 
             <KontaktMenu roles={roles} />
             <AiDiensteMenu roles={roles} />
