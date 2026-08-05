@@ -155,6 +155,10 @@ export function scoreInvoices(
       if (isFinite(d) && Math.abs(Date.now() - d) < 1000 * 60 * 60 * 24 * 60) { score += 2; reasons.push('Fälligkeit im Zeitfenster'); }
     }
 
+    if (inv.source === 'order') {
+      score = Math.max(0, score - 5);
+      if (score > 0) reasons.push('Auftrag ohne Rechnung');
+    }
     if (score > 0) results.push({ invoice: inv, score: Math.min(100, score), reasons });
   }
 
