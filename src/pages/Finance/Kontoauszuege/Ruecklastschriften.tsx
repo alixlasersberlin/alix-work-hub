@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Undo2, Mail } from 'lucide-react';
+import { Loader2, RefreshCw, Undo2, Mail, FileText } from 'lucide-react';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { listReturnDebits, sendReturnDebitDunning, RD_STATUS } from '@/lib/bank/returnDebit';
+import { downloadReturnDunningPdf } from '@/lib/bank/returnDunningLetter';
 import { supabase } from '@/integrations/supabase/client';
 import ReturnDebitDialog from '@/components/bank/ReturnDebitDialog';
 
@@ -88,6 +89,17 @@ export default function Ruecklastschriften() {
                             } catch (e: any) { toast.error(e.message); }
                           }}>
                           <Mail className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="ghost" title="Mahnschreiben als PDF herunterladen"
+                          onClick={async () => {
+                            const days = Number(window.prompt('Zahlungsfrist in Tagen für das Mahnschreiben', '7') ?? '');
+                            if (!days || days < 1) return;
+                            try {
+                              const vars = await downloadReturnDunningPdf(r, days);
+                              toast.success(`Mahnschreiben erstellt (zahlbar bis ${vars.zahlbar_bis})`);
+                            } catch (e: any) { toast.error(e.message); }
+                          }}>
+                          <FileText className="w-4 h-4" />
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => openRow(r)}>Öffnen</Button>
                       </td>

@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, CheckCircle2, Search, Loader2, Undo2, Split, PauseCircle, Copy, Banknote, Mail,
+  AlertTriangle, CheckCircle2, Search, Loader2, Undo2, Split, PauseCircle, Copy, Banknote, Mail, FileText,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -17,6 +17,7 @@ import {
   RD_STATUS, RETURN_CODES,
   type PaymentCandidate, type ReturnRules,
 } from '@/lib/bank/returnDebit';
+import { downloadReturnDunningPdf } from '@/lib/bank/returnDunningLetter';
 
 const fmt = (n: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
 
@@ -195,6 +196,19 @@ export default function ReturnDebitDialog({
     } catch (e: any) { toast.error(e.message); }
     finally { setBusy(false); }
   };
+
+  const doDunningPdf = async () => {
+    if (!rd) return;
+    const days = Number(window.prompt('Zahlungsfrist in Tagen für das Mahnschreiben', '7') ?? '');
+    if (!days || days < 1) return;
+    setBusy(true);
+    try {
+      const vars = await downloadReturnDunningPdf(rd, days);
+      toast.success(`Mahnschreiben erstellt (zahlbar bis ${vars.zahlbar_bis})`);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setBusy(false); }
+  };
+
 
 
   return (
@@ -421,6 +435,11 @@ export default function ReturnDebitDialog({
           {rd && (
             <Button size="sm" variant="outline" onClick={doDunning} disabled={busy}>
               <Mail className="w-3.5 h-3.5 mr-1" />Mahnung mit Sperrankündigung senden
+            </Button>
+          )}
+          {rd && (
+            <Button size="sm" variant="outline" onClick={doDunningPdf} disabled={busy}>
+              <FileText className="w-3.5 h-3.5 mr-1" />Mahnschreiben als PDF
             </Button>
           )}
           <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}>Bearbeitung abbrechen</Button>
