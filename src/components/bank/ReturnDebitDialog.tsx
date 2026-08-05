@@ -20,6 +20,7 @@ import {
   type PaymentCandidate, type ReturnRules,
 } from '@/lib/bank/returnDebit';
 import { downloadReturnDunningPdf } from '@/lib/bank/returnDunningLetter';
+import { resendReturnDebitFeeInvoice } from '@/lib/bank/feeInvoice';
 
 const fmt = (n: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
 
@@ -56,6 +57,8 @@ export default function ReturnDebitDialog({
   const [suggTerm, setSuggTerm] = useState('');
   const [sugg, setSugg] = useState<any[]>([]);
   const [feeStatus, setFeeStatus] = useState<string | null>(null);
+  const [feeEmail, setFeeEmail] = useState('');
+  const [feeSending, setFeeSending] = useState(false);
 
 
 
@@ -342,6 +345,34 @@ export default function ReturnDebitDialog({
                     <Row l="Status" v={feeStatus ?? rd.fee_invoice_status ?? 'offen'} />
                     <Row l="Betrag" v={fmt(Number(rd.fee_invoice_total ?? 45), currency)} />
                     <Row l="Versendet am" v={rd.fee_invoice_sent_at ? new Date(rd.fee_invoice_sent_at).toLocaleString('de-DE') : 'nicht versendet'} />
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Input
+                      className="h-8 w-64"
+                      placeholder="E-Mail-Empfänger (optional)"
+                      value={feeEmail}
+                      onChange={(e) => setFeeEmail(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={feeSending}
+                      onClick={async () => {
+                        setFeeSending(true);
+                        try {
+                          const to = await resendReturnDebitFeeInvoice(rd, feeEmail || undefined);
+                          toast.success(`Gebührenrechnung an ${to} versendet`);
+                          onChanged();
+                        } catch (e: any) {
+                          toast.error(e?.message ?? 'Versand fehlgeschlagen');
+                        } finally {
+                          setFeeSending(false);
+                        }
+                      }}
+                    >
+                      {feeSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                      {rd.fee_invoice_sent_at ? 'Erneut senden' : 'Jetzt senden'}
+                    </Button>
                   </div>
                 </section>
               </>
