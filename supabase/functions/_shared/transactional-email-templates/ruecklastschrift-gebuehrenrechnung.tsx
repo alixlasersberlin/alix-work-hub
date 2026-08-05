@@ -1,7 +1,7 @@
 /// <reference types="npm:@types/react@18.3.1" />
 import * as React from 'npm:react@18.3.1'
 import {
-  Body, Container, Head, Heading, Hr, Html, Preview, Section, Text,
+  Body, Button, Container, Head, Heading, Hr, Html, Link, Preview, Section, Text,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
 
@@ -18,6 +18,7 @@ interface Props {
   returnReason?: string
   originalInvoice?: string
   senderName?: string
+  pdfUrl?: string
 }
 
 const fmt = (n?: number, cur = 'EUR') =>
@@ -27,7 +28,7 @@ const fmt = (n?: number, cur = 'EUR') =>
 
 const Email = ({
   customerName, invoiceNumber, invoiceDate, dueDate, currency = 'EUR',
-  bankFee, handlingFee, total, returnDate, returnReason, originalInvoice, senderName,
+  bankFee, handlingFee, total, returnDate, returnReason, originalInvoice, senderName, pdfUrl,
 }: Props) => (
   <Html lang="de" dir="ltr">
     <Head />
@@ -56,6 +57,15 @@ const Email = ({
           <Text style={row}><strong>Zahlbar bis:</strong> {dueDate ?? '–'}</Text>
         </Section>
 
+        {pdfUrl ? (
+          <Section style={{ margin: '20px 0' }}>
+            <Button href={pdfUrl} style={btn}>Rechnung als PDF öffnen</Button>
+            <Text style={{ ...row, marginTop: '10px' }}>
+              Falls der Button nicht funktioniert: <Link href={pdfUrl} style={link}>{pdfUrl}</Link>
+            </Text>
+          </Section>
+        ) : null}
+
         <Text style={p}>
           Bitte überweisen Sie den Betrag bis zum genannten Termin unter Angabe der
           Rechnungsnummer {invoiceNumber ?? ''}. Die Gebühren werden als Verzugsschaden
@@ -78,6 +88,8 @@ const p = { fontSize: '14px', lineHeight: '22px', color: '#374151' }
 const box = { backgroundColor: '#f9fafb', padding: '16px', borderRadius: '6px', margin: '16px 0' }
 const row = { fontSize: '14px', color: '#374151', margin: '4px 0' }
 const totalRow = { fontSize: '16px', color: '#111827', margin: '8px 0' }
+const btn = { backgroundColor: '#b7941f', color: '#ffffff', fontSize: '14px', fontWeight: 'bold', padding: '12px 20px', borderRadius: '6px', textDecoration: 'none', display: 'inline-block' }
+const link = { color: '#b7941f', fontSize: '12px', wordBreak: 'break-all' as const }
 const hr = { borderColor: '#e5e7eb', margin: '12px 0' }
 
 export const template: TemplateEntry = {
@@ -98,5 +110,6 @@ export const template: TemplateEntry = {
     returnReason: 'Konto nicht gedeckt',
     originalInvoice: 'INV-11132',
     senderName: 'Alix Lasers – Buchhaltung',
+    pdfUrl: 'https://example.com/gebuehrenrechnung.pdf',
   },
 }

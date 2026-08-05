@@ -52,6 +52,17 @@ Deno.serve(async (req) => {
     }
     if (!recipient) throw new Error('Kein E-Mail-Empfänger ermittelbar')
 
+    // PDF-Token sicherstellen (ältere Gebührenrechnungen haben noch keinen)
+    const raw = ((inv as any).raw_data ?? {}) as Record<string, unknown>
+    let pdfToken = typeof raw.pdf_token === 'string' ? raw.pdf_token : ''
+    if (!pdfToken) {
+      pdfToken = crypto.randomUUID().replace(/-/g, '')
+      await supabase.from('zoho_invoices')
+        .update({ raw_data: { ...raw, pdf_token: pdfToken } })
+        .eq('id', (inv as any).id)
+    }
+    const pdfUrl = `${url}/functions/v1/return-debit-fee-invoice-pdf?id=${id}&token=${pdfToken}`
+
     const res = await fetch(`${url}/functions/v1/send-transactional-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
@@ -72,6 +83,7 @@ Deno.serve(async (req) => {
           returnDate: rd.booking_date ? de(new Date(rd.booking_date)) : null,
           returnReason: rd.return_reason ?? null,
           originalInvoice: rd.invoice_number ?? null,
+          pdfUrl,
         },
       }),
     })

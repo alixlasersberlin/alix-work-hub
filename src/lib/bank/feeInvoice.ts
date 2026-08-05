@@ -110,6 +110,8 @@ export async function createReturnDebitFeeInvoice(
   due.setDate(due.getDate() + 7);
   const iso = (d: Date) => d.toISOString().slice(0, 10);
 
+  const pdfToken = crypto.randomUUID().replace(/-/g, '');
+
   const lineItems = [
     { name: 'Bankgebühren Rücklastschrift', quantity: 1, rate: RD_FEE_BANK, amount: RD_FEE_BANK },
     { name: 'Bearbeitungsgebühr Rücklastschrift', quantity: 1, rate: RD_FEE_HANDLING, amount: RD_FEE_HANDLING },
@@ -136,6 +138,7 @@ export async function createReturnDebitFeeInvoice(
         source: 'ruecklastschrift_gebuehrenrechnung',
         return_debit_id: rd.id,
         email: cust.email,
+        pdf_token: pdfToken,
         line_items: lineItems,
         bank_fee: RD_FEE_BANK,
         handling_fee: RD_FEE_HANDLING,
@@ -161,6 +164,8 @@ export async function createReturnDebitFeeInvoice(
     },
   });
 
+  const pdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/return-debit-fee-invoice-pdf?id=${rd.id}&token=${pdfToken}`;
+
   let emailSentTo: string | null = null;
   if (cust.email) {
     const { data, error: mailErr } = await supabase.functions.invoke('send-transactional-email', {
@@ -182,6 +187,7 @@ export async function createReturnDebitFeeInvoice(
           returnReason: rd.return_reason ?? null,
           originalInvoice: rd.invoice_number ?? null,
           amountText: money(RD_FEE_TOTAL, currency),
+          pdfUrl,
         },
       },
     });

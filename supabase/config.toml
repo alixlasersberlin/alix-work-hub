@@ -394,3 +394,6 @@ verify_jwt = false
 
 [functions.bank-api-fetch]
 verify_jwt = false
+
+[functions.return-debit-fee-invoice-pdf]
+verify_jwt = false
