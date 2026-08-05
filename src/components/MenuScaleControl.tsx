@@ -1,6 +1,6 @@
 import { Minus, Plus, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useMenuScale, MENU_SCALE_STEP, MENU_SCALE_MIN, MENU_SCALE_MAX } from '@/hooks/useMenuScale';
+import { useMenuScale, MENU_SCALE_STEP, MENU_SCALE_MIN, MENU_SCALE_MAX } from '@/hooks/useUiPrefs';
 
 /** Kleine Steuerung zum Ändern der Menü-/Schriftgröße in der Sidebar. */
 export default function MenuScaleControl({ compact }: { compact?: boolean }) {
