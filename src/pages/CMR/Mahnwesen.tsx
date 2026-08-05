@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, BellRing, FileWarning } from 'lucide-react';
+import { Loader2, BellRing, FileWarning, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 
