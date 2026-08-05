@@ -401,7 +401,32 @@ export async function pdfToText(file: File): Promise<string> {
 const DATE_RE = /(\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}|\d{4}-\d{2}-\d{2})/;
 const AMT_RE = /(-?\(?\d{1,3}(?:[.'\s]\d{3})*,\d{2}\)?-?|-?\d+\.\d{2}-?)/g;
 
+/** Typische Buchungstext-Begriffe – dürfen NIE als Kundenname gelten */
+const BOOKING_TEXT_RE = /^(sepa|dauerauftrag|lastschrift|ruecklastschrift|rücklastschrift|retoure|ueberweisung|überweisung|gutschrift|belastung|kartenzahlung|entgelt|gebuehr|gebühr|zinsen|abschluss|basislastschrift|folgelastschrift|einzugsermaechtigung|onlinebanking|dauerauftragsgutschr|kartentransaktion|storno|umbuchung|bargeldauszahlung|echtzeit)/i;
+
+/**
+ * Versucht, aus dem Verwendungszweck den Kundennamen zu ziehen –
+ * Buchungstext-Fragmente (z. B. „RUECKLASTSCHRIFT Sonstige Gruende“) werden verworfen.
+ */
+export function extractCustomerName(purpose: string): string | null {
+  const marked = purpose.match(/(?:auftraggeber|zahlungspflichtiger|kontoinhaber|beguenstigter|begünstigter|empf(?:ä|ae)nger|name)\s*[:.]?\s*([A-Za-zÄÖÜäöüß][^\n]{2,60})/i);
+  const candidates = [
+    marked?.[1],
+    ...purpose.split(/\s{2,}|,|\||\/{2,}/),
+  ];
+  for (const raw of candidates) {
+    const nm = (raw || '').trim().replace(/\s+/g, ' ');
+    if (nm.length < 4 || nm.length > 60) continue;
+    if (BOOKING_TEXT_RE.test(nm)) continue;
+    if (/^[\d\s.,:+-]+$/.test(nm)) continue;
+    if (!/[A-Za-zÄÖÜäöüß]{3}/.test(nm)) continue;
+    return nm;
+  }
+  return null;
+}
+
 export function parsePdfText(text: string, currency = 'EUR'): { transactions: ParsedTx[]; warnings: string[] } {
+
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const txs: ParsedTx[] = [];
   const warnings: string[] = [];
