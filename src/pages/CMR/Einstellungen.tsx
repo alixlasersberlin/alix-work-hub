@@ -96,7 +96,7 @@ export default function CmrEinstellungen() {
       <PageHeader
         title="CMR Einstellungen"
         subtitle="Branding, Bankdaten, Steuer und E-Mail-Versand – gelten ausschließlich für den Mandanten CMR."
-        actions={<Button onClick={save} disabled={saving}>{saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />} Speichern</Button>}
+        actions={<Button onClick={save} disabled={saving || !canWrite}>{saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />} Speichern</Button>}
       />
 
       {FIELDS.map((group, gi) => (
