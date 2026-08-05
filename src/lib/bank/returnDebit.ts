@@ -866,7 +866,9 @@ export async function sendReturnDebitDunning(rd: any, payDays = 7) {
     body: {
       templateName: 'ruecklastschrift-mahnung',
       recipientEmail: info.recipient,
+      extraCc: RETURN_DUNNING_CC,
       idempotencyKey: `ruecklastschrift-mahnung-${rd.id}-${new Date().toISOString().slice(0, 10)}`,
+
       templateData: {
         customerName: info.customerName,
         returnDate: rd.booking_date ? new Date(rd.booking_date).toLocaleDateString('de-DE') : null,
