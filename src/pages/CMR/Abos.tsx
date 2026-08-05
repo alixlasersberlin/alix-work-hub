@@ -145,6 +145,9 @@ export default function CmrAbos() {
   const planTotal = (p: Plan) =>
     p.lines.reduce((s, l) => s + Number(l.quantity || 0) * Number(l.unit_price || 0) * (1 + Number(l.tax_rate || 0) / 100), 0);
 
+  const mrr = rows.filter((p) => p.is_active)
+    .reduce((s, p) => s + planTotal(p) * monthlyFactor(p.interval_unit), 0);
+
   if (loading || busy) {
     return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
   }
