@@ -316,10 +316,37 @@ export default function CmrDokumente() {
             <Button size="icon" variant="ghost" title="PDF herunterladen" onClick={() => downloadPdf(d)}>
               <Download className="w-4 h-4" />
             </Button>
+            <Button size="icon" variant="ghost" title="Per E-Mail senden" onClick={() => startSend(d)}>
+              <Mail className="w-4 h-4" />
+            </Button>
           </div>
 
         ))}
       </Card>
+
+      <Dialog open={!!sendDoc} onOpenChange={(o) => !o && setSendDoc(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Beleg {sendDoc?.doc_number ?? ''} senden</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Empfänger (Komma-getrennt)</Label>
+              <Input value={sendTo} onChange={(e) => setSendTo(e.target.value)} placeholder="kunde@example.com" />
+            </div>
+            <div><Label>Betreff</Label><Input value={sendSubject} onChange={(e) => setSendSubject(e.target.value)} /></div>
+            <div><Label>Nachricht</Label><Textarea rows={8} value={sendMessage} onChange={(e) => setSendMessage(e.target.value)} /></div>
+            <p className="text-xs text-muted-foreground">Das PDF im CMR-Branding wird automatisch angehängt.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendDoc(null)}>Abbrechen</Button>
+            <Button onClick={doSend} disabled={sending}>
+              {sending ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Mail className="w-4 h-4 mr-1.5" />} Senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
