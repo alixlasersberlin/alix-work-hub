@@ -4,7 +4,7 @@ import {
   AlertTriangle, BellRing, Undo2, FileDown, Landmark, Database, CreditCard, Repeat,
   Warehouse, Hash, PackageCheck, Truck, ListChecks, Building2, ShoppingCart, Factory,
   Inbox, CheckCircle2, ClipboardCheck, BadgeCheck, Activity, ShieldCheck, Briefcase,
-  Wrench, CheckSquare, MapPin, Sparkles, Cog, Settings, TrendingUp, Circle,
+  Wrench, CheckSquare, MapPin, Sparkles, Cog, Settings, TrendingUp, Plus, Globe, Circle,
 } from 'lucide-react';
 
 export const WORKSPACE_ICONS: Record<string, typeof Circle> = {
@@ -13,7 +13,7 @@ export const WORKSPACE_ICONS: Record<string, typeof Circle> = {
   AlertTriangle, BellRing, Undo2, FileDown, Landmark, Database, CreditCard, Repeat,
   Warehouse, Hash, PackageCheck, Truck, ListChecks, Building2, ShoppingCart, Factory,
   Inbox, CheckCircle2, ClipboardCheck, BadgeCheck, Activity, ShieldCheck, Briefcase,
-  Wrench, CheckSquare, MapPin, Sparkles, Cog, Settings, TrendingUp, Circle,
+  Wrench, CheckSquare, MapPin, Sparkles, Cog, Settings, TrendingUp, Plus, Globe, Circle,
 };
 
 export function iconFor(name?: string | null) {
