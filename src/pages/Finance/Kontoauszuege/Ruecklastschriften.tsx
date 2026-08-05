@@ -90,6 +90,17 @@ export default function Ruecklastschriften() {
                           }}>
                           <Mail className="w-4 h-4" />
                         </Button>
+                        <Button size="sm" variant="ghost" title="Mahnschreiben als PDF herunterladen"
+                          onClick={async () => {
+                            const days = Number(window.prompt('Zahlungsfrist in Tagen für das Mahnschreiben', '7') ?? '');
+                            if (!days || days < 1) return;
+                            try {
+                              const vars = await downloadReturnDunningPdf(r, days);
+                              toast.success(`Mahnschreiben erstellt (zahlbar bis ${vars.zahlbar_bis})`);
+                            } catch (e: any) { toast.error(e.message); }
+                          }}>
+                          <FileText className="w-4 h-4" />
+                        </Button>
                         <Button size="sm" variant="outline" onClick={() => openRow(r)}>Öffnen</Button>
                       </td>
                     </tr>
