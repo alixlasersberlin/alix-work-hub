@@ -407,6 +407,10 @@ export async function confirmReturnDebit(input: ConfirmInput) {
     }
   }
 
+  // Gerätesperre aus der Rückbuchung erzeugen (Übersicht "Gerätesperren")
+  try { await createDeviceLockFromReturnDebit(rd, input.customerId ?? null, invoiceInfos, total, fee); }
+  catch (e) { console.error('Gerätesperre konnte nicht angelegt werden', e); }
+
   if (input.createTask) await notifyAccounting(rd, invoiceInfos, input.customerId);
 
   await logBank({
