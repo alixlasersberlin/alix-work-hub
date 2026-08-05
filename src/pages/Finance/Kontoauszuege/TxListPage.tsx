@@ -74,7 +74,12 @@ export default function TxListPage({
     if (!data.length) return toast.error('Keine Daten zum Export');
     const head = Object.keys(data[0]);
     const csv = [head.join(';'), ...data.map(r => head.map(h => `"${String((r as any)[h] ?? '').replace(/"/g, '""')}"`).join(';'))].join('\n');
-    downloadBlob(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }), `bankbuchungen_${region}.csv`);
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `bankbuchungen_${region}.csv`; a.click();
+    URL.revokeObjectURL(url);
+
   };
 
   const exportXlsx = async () => {
