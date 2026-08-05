@@ -551,7 +551,39 @@ export default function CmrDokumente() {
         </DialogContent>
       </Dialog>
 
-
+      <Dialog open={!!logDoc} onOpenChange={(o) => !o && setLogDoc(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>E-Mail-Protokoll · {logDoc?.doc_number ?? ''}</DialogTitle>
+          </DialogHeader>
+          {logRows === null ? (
+            <div className="p-6 flex justify-center"><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /></div>
+          ) : logRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4">Für diesen Beleg wurde noch keine E-Mail versendet.</p>
+          ) : (
+            <div className="divide-y max-h-80 overflow-y-auto">
+              {logRows.map((l) => (
+                <div key={l.id} className="py-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={l.status === 'sent' ? 'outline' : 'destructive'}>
+                      {l.status === 'sent' ? 'gesendet' : 'fehlgeschlagen'}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(l.created_at).toLocaleString('de-DE')} · {l.provider ?? ''}
+                    </span>
+                  </div>
+                  <div className="mt-1 truncate">{l.subject ?? ''}</div>
+                  <div className="text-xs text-muted-foreground truncate">{l.recipients}</div>
+                  {l.error && <div className="text-xs text-destructive mt-1">{l.error}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLogDoc(null)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
 
       <Dialog open={open} onOpenChange={setOpen}>
