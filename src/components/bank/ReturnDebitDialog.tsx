@@ -49,6 +49,13 @@ export default function ReturnDebitDialog({
   const [confirmedAllocs, setConfirmedAllocs] = useState<any[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [filter, setFilter] = useState({ customerName: '', invoiceNumber: '', orderNumber: '', iban: '', amount: '', bankReference: '', endToEnd: '', mandate: '', dateFrom: '', dateTo: '' });
+  const [invHits, setInvHits] = useState<any[]>([]);
+  const [invBusy, setInvBusy] = useState(false);
+  const [suggIdx, setSuggIdx] = useState<number | null>(null);
+  const [suggTerm, setSuggTerm] = useState('');
+  const [sugg, setSugg] = useState<any[]>([]);
+
+
 
   const [bankFee, setBankFee] = useState(0);
   const [additionalCosts, setAdditionalCosts] = useState(0);
