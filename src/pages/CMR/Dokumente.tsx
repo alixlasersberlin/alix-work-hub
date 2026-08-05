@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Plus, Trash2, FileText, Search, Download, Mail, GitBranch } from 'lucide-react';
+import { Loader2, Plus, Trash2, FileText, Search, Download, Mail, GitBranch, Euro } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { generateCmrDocumentPdf, cmrPdfFilename } from '@/lib/cmr-document-pdf';
 import { loadCmrPdfOptions } from '@/lib/cmr-pdf-template';
@@ -58,8 +58,43 @@ export default function CmrDokumente() {
   const [sendMessage, setSendMessage] = useState('');
   const [sending, setSending] = useState(false);
 
+  const [payDoc, setPayDoc] = useState<Doc | null>(null);
+  const [payForm, setPayForm] = useState<any>(null);
+  const [paying, setPaying] = useState(false);
+
   const cur = settings?.default_currency || 'AED';
   const defTax = Number(settings?.tax_rate ?? 5);
+
+  const startPayment = (d: Doc) => {
+    setPayForm({
+      amount: Math.max(0, Number(d.gross_total || 0) - Number(d.paid_total || 0)),
+      paid_on: new Date().toISOString().slice(0, 10),
+      method: 'Überweisung',
+      reference: d.doc_number ?? '',
+    });
+    setPayDoc(d);
+  };
+
+  const savePayment = async () => {
+    if (!tenantId || !payDoc || !payForm) return;
+    setPaying(true);
+    const { error } = await supabase.from('cmr_payments' as any).insert({
+      tenant_id: tenantId,
+      document_id: payDoc.id,
+      customer_id: payDoc.customer_id,
+      paid_on: payForm.paid_on,
+      amount: Number(payForm.amount) || 0,
+      currency: payDoc.currency || cur,
+      method: payForm.method || null,
+      reference: payForm.reference || null,
+    });
+    setPaying(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Zahlungseingang erfasst');
+    setPayDoc(null);
+    load();
+  };
+
 
   const load = async () => {
     if (!tenantId) return;
@@ -375,6 +410,12 @@ export default function CmrDokumente() {
             <Button size="icon" variant="ghost" title="Per E-Mail senden" onClick={() => startSend(d)}>
               <Mail className="w-4 h-4" />
             </Button>
+            {['rechnung', 'proforma', 'zahlungserinnerung', 'mahnung'].includes(d.doc_type) && (
+              <Button size="icon" variant="ghost" title="Zahlung erfassen" onClick={() => startPayment(d)}>
+                <Euro className="w-4 h-4" />
+              </Button>
+            )}
+
             {followUps(d.doc_type).length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -416,6 +457,33 @@ export default function CmrDokumente() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!payDoc} onOpenChange={(o) => !o && setPayDoc(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Zahlung erfassen · {payDoc?.doc_number ?? ''}</DialogTitle>
+          </DialogHeader>
+          {payForm && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Offen: {cmrMoney(Number(payDoc?.gross_total || 0) - Number(payDoc?.paid_total || 0), payDoc?.currency || cur)}
+              </p>
+              <div><Label>Betrag</Label><Input type="number" step="0.01" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} /></div>
+              <div><Label>Zahlungsdatum</Label><Input type="date" value={payForm.paid_on} onChange={(e) => setPayForm({ ...payForm, paid_on: e.target.value })} /></div>
+              <div><Label>Zahlungsart</Label><Input value={payForm.method} onChange={(e) => setPayForm({ ...payForm, method: e.target.value })} /></div>
+              <div><Label>Referenz</Label><Input value={payForm.reference} onChange={(e) => setPayForm({ ...payForm, reference: e.target.value })} /></div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayDoc(null)}>Abbrechen</Button>
+            <Button onClick={savePayment} disabled={paying}>
+              {paying ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Euro className="w-4 h-4 mr-1.5" />} Buchen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
 
 
       <Dialog open={open} onOpenChange={setOpen}>
