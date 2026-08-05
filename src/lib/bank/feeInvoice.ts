@@ -167,10 +167,20 @@ export async function createReturnDebitFeeInvoice(
         fee_invoice_total: Number((existing as any).total ?? RD_FEE_TOTAL),
       })
       .eq('id', rd.id);
+    // Falls noch nie versendet: E-Mail automatisch nachholen
+    let emailSentTo: string | null = null;
+    if (!rd.fee_invoice_sent_at) {
+      try {
+        emailSentTo = await resendReturnDebitFeeInvoice({ ...rd, customer_id: rd.customer_id ?? customerId }, undefined, tx);
+      } catch (e) {
+        console.warn('Gebührenrechnung konnte nicht automatisch versendet werden:', e);
+      }
+    }
     return {
       invoiceId: (existing as any).id,
       invoiceNumber: (existing as any).invoice_number,
       total: Number((existing as any).total ?? RD_FEE_TOTAL),
+      emailSentTo,
       created: false,
     };
   }
