@@ -20,6 +20,9 @@ import NewsAnnouncementDialog from '@/components/NewsAnnouncementDialog';
 import SalesLeadAssignmentOverlay from '@/components/SalesLeadAssignmentOverlay';
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
+import WorkspaceBar from '@/components/workspace/WorkspaceBar';
+import WorkspaceNav from '@/components/workspace/WorkspaceNav';
+import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
 import { RegionChip } from '@/components/finance/RegionChip';
 
