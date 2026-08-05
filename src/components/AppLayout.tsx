@@ -690,6 +690,19 @@ export const navItems: NavItem[] = [
         ],
       },
 
+      // Alix Medical – eigener Mandant (MDR / CE / ISO 13485)
+      {
+        path: '#med', label: 'Alix Medical', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'],
+        children: [
+          { path: '/med', label: 'Medical Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
+          { path: '/med/belege', label: 'Belege', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
+          { path: '/med/artikel', label: 'Artikelstamm', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
+          { path: '/med/buchhaltung', label: 'Buchhaltung Medical', icon: Wallet, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
+          { path: '/med/compliance', label: 'MDR / CE / ISO', icon: Activity, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
+          { path: '/med/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin'] },
+        ],
+      },
+
 
 
       // Stammdaten & Import
