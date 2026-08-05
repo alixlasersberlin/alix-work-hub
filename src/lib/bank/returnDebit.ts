@@ -742,9 +742,9 @@ export async function createDeviceLockFromReturnDebit(
   let customerNumber: string | null = null;
   if (customerId) {
     const { data: c } = await supabase.from('customers')
-      .select('company_name, contact_name, customer_number').eq('id', customerId).maybeSingle();
+      .select('company_name, contact_name, zoho_customer_id').eq('id', customerId).maybeSingle();
     customerName = (c as any)?.company_name || (c as any)?.contact_name || null;
-    customerNumber = (c as any)?.customer_number ?? null;
+    customerNumber = (c as any)?.zoho_customer_id ?? null;
   }
 
   const invNumbers = invoiceInfos.map(i => i.invoice_number).filter(Boolean) as string[];
