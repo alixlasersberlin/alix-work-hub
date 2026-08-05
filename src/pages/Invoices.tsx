@@ -315,7 +315,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     let debounce: ReturnType<typeof setTimeout> | null = null;
     const trigger = () => {
       if (debounce) clearTimeout(debounce);
-      debounce = setTimeout(() => { fetchRows(); }, 400);
+      debounce = setTimeout(() => { fetchRows({ silent: true }); }, 2000);
     };
     const channel = supabase
       .channel('invoices-live')
