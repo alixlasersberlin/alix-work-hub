@@ -231,11 +231,12 @@ export async function searchInvoicesForReturn(area: 'EU' | 'CH', term: string) {
   const s = term.trim().replace(/[%,]/g, ' ');
   const cols = 'id,invoice_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status,reference_number';
   const build = (table: 'zoho_invoices' | 'zoho_recurring_invoices') => {
+    // Bewusst KEINE Betrags-/Saldo-Einschränkung: Rücklastschriftbeträge enthalten
+    // häufig Bankgebühren und weichen daher von der Rechnungssumme ab.
     let q = supabase.from(table).select(cols)
       .eq('accounting_region', area as any)
-      .order('invoice_date', { ascending: false }).limit(25);
+      .order('invoice_date', { ascending: false }).limit(50);
     if (s) q = q.or(`invoice_number.ilike.%${s}%,customer_name.ilike.%${s}%,reference_number.ilike.%${s}%`);
-    else q = q.gt('balance', 0);
     return q;
   };
   const [std, rec] = await Promise.all([build('zoho_invoices'), build('zoho_recurring_invoices')]);
@@ -260,6 +261,15 @@ export async function searchCustomersForReturn(term: string) {
 /* ------------------------------------------- Suche der ursprünglichen Zahlung */
 
 const norm = (s?: string | null) => (s ?? '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]/g, '');
+
+/**
+ * Toleranz für Betragsvergleiche bei Rücklastschriften.
+ * In den Beträgen sind häufig Bankgebühren enthalten, daher darf der
+ * Rücklastschriftbetrag vom Rechnungs-/Zahlbetrag abweichen.
+ */
+export function amountTolerance(amount: number): number {
+  return Math.max(25, Math.abs(amount) * 0.1);
+}
 
 export interface PaymentCandidate {
   tx: any;
@@ -299,7 +309,9 @@ export async function findOriginalPayments(
   if (filter.dateTo) q = q.lte('booking_date', filter.dateTo);
   if (tx.booking_date && !filter.dateTo) q = q.lte('booking_date', tx.booking_date);
   if (amount > 0 && !filter.invoiceNumber && !filter.customerName) {
-    q = q.gte('amount', amount - 0.02).lte('amount', amount + 0.02);
+    // Toleranz für Bankgebühren: Rücklastschriftbetrag ≠ Zahlbetrag
+    const tol = amountTolerance(amount);
+    q = q.gte('amount', amount - tol).lte('amount', amount + tol);
   }
   const { data, error } = await q;
   if (error) throw error;
@@ -338,6 +350,7 @@ export async function findOriginalPayments(
     let score = 0;
     const rAmount = Math.abs(Number(r.amount ?? 0));
     if (Math.abs(rAmount - amount) < 0.01) { score += 35; reasons.push('Betrag identisch'); }
+    else if (amount > 0 && Math.abs(rAmount - amount) <= amountTolerance(amount)) { score += 25; reasons.push('Betrag ähnlich (Abweichung durch Bankgebühren)'); }
     else if (amount > 0 && rAmount > amount && rAmount - amount < amount) { score += 12; reasons.push('Sammelzahlung mit höherem Betrag'); }
     if (tx.sender_receiver_iban && norm(r.sender_receiver_iban) === norm(tx.sender_receiver_iban)) { score += 20; reasons.push('IBAN identisch'); }
     if (tx.sender_receiver_name && norm(r.sender_receiver_name) && norm(r.sender_receiver_name) === norm(tx.sender_receiver_name)) { score += 15; reasons.push('Kundenname identisch'); }
@@ -421,8 +434,8 @@ export async function confirmReturnDebit(input: ConfirmInput) {
   const sum = input.allocations.reduce((s, a) => s + Number(a.allocated_amount || 0), 0);
   const total = Math.abs(Number(rd.return_debit_amount ?? tx.amount ?? 0));
   if (!input.allocations.length) throw new Error('Bitte mindestens eine Rechnung oder Rate zuordnen.');
-  if (Math.abs(sum - total) > 0.01) {
-    throw new Error(`Die Aufteilung (${sum.toFixed(2)}) muss exakt dem Rücklastschriftbetrag (${total.toFixed(2)}) entsprechen.`);
+  if (Math.abs(sum - total) > amountTolerance(total)) {
+    throw new Error(`Die Aufteilung (${sum.toFixed(2)}) weicht zu stark vom Rücklastschriftbetrag (${total.toFixed(2)}) ab. Abweichungen durch Bankgebühren sind bis ${amountTolerance(total).toFixed(2)} zulässig.`);
   }
 
   const { data: u } = await supabase.auth.getUser();
