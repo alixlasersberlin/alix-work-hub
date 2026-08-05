@@ -75,6 +75,8 @@ export default function CmrEinstellungen() {
     ['dunning_fee_1', 'dunning_fee_2', 'dunning_fee_3', 'dunning_interest_pct'].forEach((k) => {
       payload[k] = Number(payload[k]) || 0;
     });
+    payload.advance_notice_days = Number(payload.advance_notice_days) || 0;
+    payload.advance_notice_active = !!payload.advance_notice_active;
 
     const { error } = settings?.id
       ? await supabase.from('cmr_settings' as any).update(payload).eq('id', settings.id)

@@ -35,6 +35,8 @@ export type CmrSettings = {
   smtp_secure: boolean | null;
   footer_html: string | null;
   dunning_auto_send?: boolean | null;
+  advance_notice_active?: boolean | null;
+  advance_notice_days?: number | null;
 };
 
 /**
