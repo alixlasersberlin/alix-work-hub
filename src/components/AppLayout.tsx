@@ -24,7 +24,8 @@ import GlobalSearch from '@/components/GlobalSearch';
 import WorkspaceBar from '@/components/workspace/WorkspaceBar';
 import WorkspaceNav from '@/components/workspace/WorkspaceNav';
 import MenuScaleControl from '@/components/MenuScaleControl';
-import { useMenuScale } from '@/hooks/useMenuScale';
+import { useUiPrefs } from '@/hooks/useUiPrefs';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
 import { RegionChip } from '@/components/finance/RegionChip';
@@ -1017,8 +1018,20 @@ export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const isOrdersRoute = location.pathname.startsWith('/auftraege');
-  // Desktop: eingeklappt? (schmale Icon-Leiste)
-  const [collapsed, setCollapsed] = useState(false);
+  // Desktop: eingeklappt? (schmale Icon-Leiste) – pro Benutzer gespeichert
+  const {
+    menuScale,
+    sidebarCollapsed,
+    sidebarAutoCollapse,
+    setSidebarCollapsed,
+    setSidebarAutoCollapse,
+  } = useUiPrefs();
+  const [hoverExpand, setHoverExpand] = useState(false);
+  const collapsed = sidebarAutoCollapse ? !hoverExpand : sidebarCollapsed;
+  const setCollapsed = (v: boolean) => {
+    if (sidebarAutoCollapse) setSidebarAutoCollapse(false);
+    setSidebarCollapsed(v);
+  };
   // Mobile: Drawer offen?
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ '__favorites': true });
@@ -1035,7 +1048,7 @@ export default function AppLayout() {
     return v >= SIDEBAR_MIN && v <= SIDEBAR_MAX ? v : 240;
   });
   const [resizing, setResizing] = useState(false);
-  const { scale: menuScale } = useMenuScale();
+  
 
   // Per-User Menü-Freigaben (überschreibt Rollenlogik, wenn gesetzt)
   const [menuGrants, setMenuGrants] = useState<Set<string> | null>(null);
@@ -1498,6 +1511,8 @@ export default function AppLayout() {
 
       {/* Sidebar */}
       <aside
+        onMouseEnter={sidebarAutoCollapse ? () => setHoverExpand(true) : undefined}
+        onMouseLeave={sidebarAutoCollapse ? () => setHoverExpand(false) : undefined}
         style={!collapsed ? { ['--sb-w' as any]: `${sidebarWidth}px` } : undefined}
         className={cn(
           "relative flex flex-col border-r border-border bg-sidebar transition-transform duration-200 flex-shrink-0",
@@ -2012,6 +2027,27 @@ export default function AppLayout() {
               title={collapsed ? "Menü erweitern" : "Menü einklappen"}
             >
               {collapsed ? <Menu className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "h-8 w-8 hidden md:inline-flex flex-shrink-0",
+                sidebarAutoCollapse ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => {
+                const next = !sidebarAutoCollapse;
+                setSidebarAutoCollapse(next);
+                setHoverExpand(false);
+                if (!next) setSidebarCollapsed(false);
+              }}
+              title={sidebarAutoCollapse
+                ? "Auto-Einklappen aus (Menü bleibt offen)"
+                : "Auto-Einklappen an (öffnet bei Mauskontakt)"}
+              aria-label="Automatisches Ein- und Ausklappen umschalten"
+              aria-pressed={sidebarAutoCollapse}
+            >
+              {sidebarAutoCollapse ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
             </Button>
             <Button
               variant="ghost"
