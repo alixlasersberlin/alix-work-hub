@@ -24,7 +24,8 @@ import GlobalSearch from '@/components/GlobalSearch';
 import WorkspaceBar from '@/components/workspace/WorkspaceBar';
 import WorkspaceNav from '@/components/workspace/WorkspaceNav';
 import MenuScaleControl from '@/components/MenuScaleControl';
-import { useMenuScale } from '@/hooks/useMenuScale';
+import { useUiPrefs } from '@/hooks/useUiPrefs';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
 import { RegionChip } from '@/components/finance/RegionChip';
@@ -1017,8 +1018,20 @@ export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const isOrdersRoute = location.pathname.startsWith('/auftraege');
-  // Desktop: eingeklappt? (schmale Icon-Leiste)
-  const [collapsed, setCollapsed] = useState(false);
+  // Desktop: eingeklappt? (schmale Icon-Leiste) – pro Benutzer gespeichert
+  const {
+    menuScale,
+    sidebarCollapsed,
+    sidebarAutoCollapse,
+    setSidebarCollapsed,
+    setSidebarAutoCollapse,
+  } = useUiPrefs();
+  const [hoverExpand, setHoverExpand] = useState(false);
+  const collapsed = sidebarAutoCollapse ? !hoverExpand : sidebarCollapsed;
+  const setCollapsed = (v: boolean) => {
+    if (sidebarAutoCollapse) setSidebarAutoCollapse(false);
+    setSidebarCollapsed(v);
+  };
   // Mobile: Drawer offen?
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ '__favorites': true });
