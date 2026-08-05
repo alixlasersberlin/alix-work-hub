@@ -79,9 +79,41 @@ export default function Willkommen() {
 
   const loading = tLoading || wLoading;
 
+  const isSuper = Array.isArray(roles) && roles.includes('Super Admin');
+
+  // Schnellzugriff: 20 meistgenutzte Menüpunkte über ALLE Workspaces,
+  // gefiltert auf erlaubte Workspaces und Rollen.
+  const quickAccess = useMemo(() => {
+    const wsById = new Map(allWorkspaces.map((w) => [w.id, w]));
+    const navByPath = new Map<string, WorkspaceNavEntry>();
+    for (const n of allNav) if (!navByPath.has(n.path)) navByPath.set(n.path, n);
+
+    return topPages
+      .map((p) => {
+        const nav = navByPath.get(p.path);
+        const ws = nav ? wsById.get(nav.workspace_id) : undefined;
+        return { ...p, nav, ws };
+      })
+      .filter(({ nav, ws }) => {
+        if (!nav || !ws) return false;                       // nur echte Menüpunkte
+        if (!allowedWsIds.has(ws.id)) return false;          // Workspace freigegeben?
+        if (!nav.roles || nav.roles.length === 0) return true;
+        if (isSuper) return true;
+        return (roles || []).some((r: string) => nav.roles!.includes(r));
+      })
+      .slice(0, 20);
+  }, [topPages, allNav, allWorkspaces, allowedWsIds, roles, isSuper]);
+
+  const openQuick = (path: string, wsId: string) => {
+    const ws = allWorkspaces.find((w) => w.id === wsId);
+    if (ws) { setWorkspace(ws); setWorkspaceMode(true); }
+    navigate(path);
+  };
+
   return (
-    <main className="min-h-[70vh] flex items-center justify-center px-4 py-10">
+    <main className="min-h-[70vh] flex flex-col items-center justify-center gap-6 px-4 py-10">
       <Card className="w-full max-w-2xl card-glow animate-fade-in">
+
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-light tracking-wide">
             Willkommen{profile?.full_name ? `, ${profile.full_name}` : ''}
