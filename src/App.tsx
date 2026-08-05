@@ -1243,6 +1243,7 @@ function AppRoutes() {
           <Route path="/cmr/artikel" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrArtikel /></ProtectedRoute>} />
           <Route path="/cmr/dokumente" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrDokumente /></ProtectedRoute>} />
           <Route path="/cmr/buchhaltung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrBuchhaltung /></ProtectedRoute>} />
+          <Route path="/cmr/kunden" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrKunden /></ProtectedRoute>} />
           <Route path="/cmr/einstellungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><CmrEinstellungen /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><AdminAuditLog /></ProtectedRoute>} />
           <Route path="/admin/geraete" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><GeraeteVerwaltung /></ProtectedRoute>} />
