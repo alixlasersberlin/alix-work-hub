@@ -140,7 +140,7 @@ export default function BankImport() {
       setProgress(10);
 
       // 2. Import-Datensatz
-      const { data: imp, error: impErr } = await supabase.from('bank_imports' as any).insert({
+      const { data: impData, error: impErr } = await supabase.from('bank_imports' as any).insert({
         bank_account_id: accountId,
         accounting_area: region,
         company_id: account.company_id ?? null,
@@ -152,6 +152,8 @@ export default function BankImport() {
         imported_by: u?.user?.id ?? null,
       }).select().single();
       if (impErr) throw impErr;
+      const imp = impData as any;
+
       await logBank({ action: 'datei_hochgeladen', bank_import_id: imp.id, new_value: { file: file.name, format: result.format } });
       if (result.needsMapping) await logBank({ action: 'spaltenzuordnung_gewaehlt', bank_import_id: imp.id, new_value: mapping });
       setProgress(20);
