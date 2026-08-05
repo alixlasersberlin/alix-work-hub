@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Plus, Trash2, FileText, Search } from 'lucide-react';
+import { Loader2, Plus, Trash2, FileText, Search, Download } from 'lucide-react';
+import { generateCmrDocumentPdf, cmrPdfFilename } from '@/lib/cmr-document-pdf';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney, CMR_DOC_TYPES, CMR_DOC_STATUS } from '@/hooks/useCmrTenant';
 
@@ -190,7 +191,18 @@ export default function CmrDokumente() {
     }
   };
 
+  const downloadPdf = async (d: Doc) => {
+    try {
+      const { data } = await supabase.from('cmr_document_items' as any).select('*').eq('document_id', d.id).order('position');
+      const pdf = generateCmrDocumentPdf(d as any, ((data as any) || []) as any, settings);
+      pdf.save(cmrPdfFilename(d as any));
+    } catch (e: any) {
+      toast.error(e.message ?? 'PDF konnte nicht erstellt werden');
+    }
+  };
+
   const filtered = docs.filter((d) =>
+
     (!typeFilter || d.doc_type === typeFilter) &&
     (!search || `${d.doc_number ?? ''} ${d.customer_name ?? ''} ${d.reference ?? ''}`.toLowerCase().includes(search.toLowerCase())));
 
@@ -221,18 +233,22 @@ export default function CmrDokumente() {
           </div>
         )}
         {filtered.map((d) => (
-          <button key={d.id} className="w-full text-left p-3 hover:bg-muted/50 flex items-center gap-3" onClick={() => startEdit(d)}>
-            <div className="min-w-0 flex-1">
+          <div key={d.id} className="w-full p-3 hover:bg-muted/50 flex items-center gap-3">
+            <button className="min-w-0 flex-1 text-left" onClick={() => startEdit(d)}>
               <div className="font-medium truncate">
                 {d.doc_number ?? '—'} · {CMR_DOC_TYPES.find((t) => t.value === d.doc_type)?.label ?? d.doc_type}
               </div>
               <div className="text-xs text-muted-foreground truncate">
                 {d.customer_name ?? 'Ohne Kunde'} · {new Date(d.doc_date).toLocaleDateString('de-DE')}
               </div>
-            </div>
+            </button>
             <Badge variant="outline" className="capitalize">{d.status}</Badge>
             <div className="text-sm font-semibold whitespace-nowrap">{cmrMoney(d.gross_total, d.currency || cur)}</div>
-          </button>
+            <Button size="icon" variant="ghost" title="PDF herunterladen" onClick={() => downloadPdf(d)}>
+              <Download className="w-4 h-4" />
+            </Button>
+          </div>
+
         ))}
       </Card>
 
