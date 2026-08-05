@@ -74,6 +74,19 @@ export default function LicenseEinstellungen() {
         {canWrite && <Button onClick={save} disabled={saving}>{saving ? 'Speichern…' : 'Speichern'}</Button>}
       </Card>
 
+      <Card className="space-y-3 p-4">
+        <div className="font-medium">Automatischer Lizenzlauf</div>
+        <div className="text-sm text-muted-foreground">
+          Läuft monatlich am 3. um 04:20 UTC und rechnet den Vormonat ab (Royalty-Buchungen + Lizenzrechnungen + Intercompany-Belege).
+          Der Lauf beachtet den Schalter „Lizenzabrechnung automatisch erzeugen“.
+        </div>
+        {canWrite && (
+          <Button variant="outline" disabled={running} onClick={runNow}>
+            {running ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Lauf läuft…</> : 'Lauf jetzt manuell starten (Vormonat)'}
+          </Button>
+        )}
+      </Card>
+
       <Card className="p-4">
         <div className="mb-3 font-medium">Revisionssicheres Protokoll</div>
         <div className="space-y-1 text-xs">
