@@ -418,6 +418,11 @@ export default function ReturnDebitDialog({
               <Undo2 className="w-3.5 h-3.5 mr-1" />Rücklastschrift-Zuordnung stornieren
             </Button>
           )}
+          {rd && (
+            <Button size="sm" variant="outline" onClick={doDunning} disabled={busy}>
+              <Mail className="w-3.5 h-3.5 mr-1" />Mahnung mit Sperrankündigung senden
+            </Button>
+          )}
           <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}>Bearbeitung abbrechen</Button>
         </DialogFooter>
       </DialogContent>
