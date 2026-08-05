@@ -2140,7 +2140,7 @@ export default function AppLayout() {
             </Link>
             <TicketNotificationBell />
 
-            <div className="hidden md:block"><TenantSwitcher /></div>
+            <TenantSwitcher />
 
             <KontaktMenu roles={roles} />
             <AiDiensteMenu roles={roles} />
