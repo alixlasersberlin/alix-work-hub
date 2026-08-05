@@ -303,7 +303,7 @@ export async function createReturnDebitFeeInvoice(
  * Versendet eine bereits erzeugte Gebührenrechnung (erneut) per E-Mail.
  * Ermittelt den Empfänger notfalls über Kunde/Rechnung und speichert ihn nach.
  */
-export async function resendReturnDebitFeeInvoice(rd: any, overrideEmail?: string): Promise<string> {
+export async function resendReturnDebitFeeInvoice(rd: any, overrideEmail?: string, tx?: any): Promise<string> {
   const { data: inv } = await supabase
     .from('zoho_invoices')
     .select('id, invoice_number, invoice_date, due_date, currency, total, customer_name, raw_data')
@@ -313,10 +313,10 @@ export async function resendReturnDebitFeeInvoice(rd: any, overrideEmail?: strin
   if (!inv) throw new Error('Keine Gebührenrechnung zu dieser Rücklastschrift gefunden');
 
   const raw: any = (inv as any).raw_data ?? {};
-  let email: string | null = overrideEmail?.trim() || (typeof raw.email === 'string' ? raw.email : null);
+  let email: string | null = overrideEmail?.trim() || pickEmail(raw);
   let name: string | null = (inv as any).customer_name ?? null;
   if (!email) {
-    const c = await resolveCustomer(rd, rd.customer_id ?? null);
+    const c = await resolveCustomer(rd, rd.customer_id ?? null, tx);
     email = c.email;
     name = name || c.name;
   }
