@@ -473,22 +473,32 @@ export default function CmrDokumente() {
                 <Euro className="w-4 h-4" />
               </Button>
             )}
+            <Button size="icon" variant="ghost" title="E-Mail-Versandprotokoll" onClick={() => openLog(d)}>
+              <History className="w-4 h-4" />
+            </Button>
 
-            {followUps(d.doc_type).length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="icon" variant="ghost" title="Folgebeleg erstellen"><GitBranch className="w-4 h-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {followUps(d.doc_type).map((t) => (
-                    <DropdownMenuItem key={t} onClick={() => convertDoc(d, t)}>
-                      {CMR_DOC_TYPES.find((x) => x.value === t)?.label ?? t} erstellen
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost" title="Folgebeleg / Kopie"><GitBranch className="w-4 h-4" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {followUps(d.doc_type).map((t) => (
+                  <DropdownMenuItem key={t} onClick={() => convertDoc(d, t)}>
+                    {CMR_DOC_TYPES.find((x) => x.value === t)?.label ?? t} erstellen
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuItem onClick={() => convertDoc(d, d.doc_type, 'duplicate')}>
+                  Beleg duplizieren
+                </DropdownMenuItem>
+                {['rechnung', 'proforma'].includes(d.doc_type) && (
+                  <DropdownMenuItem onClick={() => convertDoc(d, 'gutschrift', 'storno')}>
+                    Storno-Gutschrift (Beträge negativ)
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
+
 
         ))}
       </Card>
