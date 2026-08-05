@@ -196,10 +196,13 @@ export default function BankImport() {
       // 4. Automatischer Abgleich gegen offene Rechnungen
       setProgress(70);
       const invoices = await loadOpenInvoices(region);
+      const rules = await loadMatchRules(region);
       let auto = 0, unmatched = 0, autoBooked = 0;
       for (const row of insertedRows) {
         if (row.is_duplicate || row.is_return_debit) { unmatched++; continue; }
-        const cands = scoreInvoices(row, invoices);
+        const key = payerKey(row);
+        const rule = key ? rules.get(key) : undefined;
+        const cands = scoreInvoices(row, invoices, new Set(), rule?.customer_id ?? null);
         const best = cands[0];
         if (!best) { unmatched++; continue; }
         await supabase.from('bank_transaction_matches' as any).insert(
