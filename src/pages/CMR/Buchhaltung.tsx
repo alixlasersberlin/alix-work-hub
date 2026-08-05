@@ -613,9 +613,13 @@ export default function CmrBuchhaltung() {
       </div>
 
       <div className="flex gap-2">
-        {(['offen', 'alle', 'zahlungen', 'ust'] as const).map((t) => (
-          <Button key={t} size="sm" variant={tab === t ? 'default' : 'outline'} onClick={() => setTab(t)}>
-            {t === 'offen' ? 'Offene Posten' : t === 'alle' ? 'Alle Rechnungen' : t === 'zahlungen' ? 'Zahlungseingänge' : 'Umsatzsteuer'}
+        {(['offen', 'alle', 'zahlungen', 'ust', 'bank'] as const).map((t) => (
+          <Button key={t} size="sm" variant={tab === t ? 'default' : 'outline'} onClick={() => setTab(t as any)}>
+            {t === 'offen' ? 'Offene Posten'
+              : t === 'alle' ? 'Alle Rechnungen'
+              : t === 'zahlungen' ? 'Zahlungseingänge'
+              : t === 'ust' ? 'Umsatzsteuer'
+              : `Bankabgleich${bankLines.length ? ` (${bankLines.length})` : ''}`}
           </Button>
         ))}
         <div className="ml-auto flex flex-wrap gap-2">
@@ -649,7 +653,52 @@ export default function CmrBuchhaltung() {
       </div>
 
 
-      {tab === 'ust' ? (
+      {tab === 'bank' ? (
+        <Card className="divide-y">
+          <div className="p-3 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold">Offene Bankpositionen</div>
+              <div className="text-xs text-muted-foreground">
+                Nicht automatisch zugeordnete Zahlungseingänge aus importierten Auszügen.
+              </div>
+            </div>
+            <Button size="sm" variant="outline" onClick={runAutoMatch} disabled={!canWrite || autoMatching}>
+              {autoMatching ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <SearchCheck className="w-3.5 h-3.5 mr-1" />}
+              Auto-Abgleich starten
+            </Button>
+          </div>
+          {bankLines.length === 0 && (
+            <div className="p-8 text-center text-sm text-muted-foreground">Keine offenen Bankpositionen.</div>
+          )}
+          {bankLines.map((l) => (
+            <div key={l.id} className="p-3 flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="font-medium truncate">{l.purpose || 'Ohne Verwendungszweck'}</div>
+                <div className="text-xs text-muted-foreground">
+                  {l.booking_date ? new Date(l.booking_date).toLocaleDateString('de-DE') : '—'}
+                  {l.counterparty ? ` · ${l.counterparty}` : ''}
+                </div>
+              </div>
+              <div className="text-sm font-semibold tabular-nums">{cmrMoney(l.amount, l.currency || cur)}</div>
+              <select
+                className="h-9 rounded-md border border-input bg-background px-2 text-sm max-w-[280px]"
+                aria-label="Rechnung zuordnen"
+                disabled={!canWrite}
+                defaultValue=""
+                onChange={(e) => { if (e.target.value) assignBankLine(l, e.target.value); }}
+              >
+                <option value="">Rechnung zuordnen …</option>
+                {open_.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.doc_number ?? '—'} · {(d.customer_name ?? '').slice(0, 24)} · {cmrMoney(Number(d.gross_total) - Number(d.paid_total), cur)}
+                  </option>
+                ))}
+              </select>
+              <Button size="sm" variant="ghost" disabled={!canWrite} onClick={() => ignoreBankLine(l.id)}>Ignorieren</Button>
+            </div>
+          ))}
+        </Card>
+      ) : tab === 'ust' ? (
         <Card className="divide-y">
           <div className="p-3 grid grid-cols-4 text-[11px] uppercase tracking-wide text-muted-foreground">
             <div>Monat</div><div className="text-right">Netto</div><div className="text-right">MwSt.</div><div className="text-right">Brutto</div>
