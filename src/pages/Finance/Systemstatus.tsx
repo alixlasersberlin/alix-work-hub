@@ -79,7 +79,7 @@ export default function FinanceSystemstatus() {
       )}
 
       <p className="mt-6 text-xs text-muted-foreground">
-        Cron-Job: Tägliche Synchronisation um 02:30 Uhr UTC. Manuell nur durch Super Admin auslösbar.
+        Automatischer Zoho-Abgleich ist deaktiviert. Alle Abrufe erfolgen ausschließlich manuell (Super Admin).
       </p>
     </div>
   );
