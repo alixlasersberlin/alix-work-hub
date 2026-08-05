@@ -700,6 +700,7 @@ export const navItems: NavItem[] = [
         path: '#license', label: 'Lizenzmanagement', icon: BadgeCheck, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'],
         children: [
           { path: '/license', label: 'Alix License Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/cockpit', label: 'Lizenz-Cockpit', icon: LineChart, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
           { path: '/license/marken', label: 'Marken', icon: Star, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
           { path: '/license/lizenznehmer', label: 'Lizenznehmer', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
           { path: '/license/vertraege', label: 'Lizenzverträge', icon: FileSignature, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
