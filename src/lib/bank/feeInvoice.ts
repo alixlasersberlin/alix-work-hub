@@ -259,3 +259,71 @@ export async function createReturnDebitFeeInvoice(
 
   return { invoiceId, invoiceNumber, total: RD_FEE_TOTAL, emailSentTo, created: true };
 }
+
+/**
+ * Versendet eine bereits erzeugte Gebührenrechnung (erneut) per E-Mail.
+ * Ermittelt den Empfänger notfalls über Kunde/Rechnung und speichert ihn nach.
+ */
+export async function resendReturnDebitFeeInvoice(rd: any, overrideEmail?: string): Promise<string> {
+  const { data: inv } = await supabase
+    .from('zoho_invoices')
+    .select('id, invoice_number, invoice_date, due_date, currency, total, customer_name, raw_data')
+    .eq('source_system', 'internal')
+    .eq('zoho_invoice_id', `rd-fee-${rd.id}`)
+    .maybeSingle();
+  if (!inv) throw new Error('Keine Gebührenrechnung zu dieser Rücklastschrift gefunden');
+
+  const raw: any = (inv as any).raw_data ?? {};
+  let email: string | null = overrideEmail?.trim() || (typeof raw.email === 'string' ? raw.email : null);
+  let name: string | null = (inv as any).customer_name ?? null;
+  if (!email) {
+    const c = await resolveCustomer(rd, rd.customer_id ?? null);
+    email = c.email;
+    name = name || c.name;
+  }
+  if (!email) throw new Error('Kein E-Mail-Empfänger ermittelbar – bitte Adresse manuell eingeben');
+
+  let pdfToken: string = typeof raw.pdf_token === 'string' && raw.pdf_token ? raw.pdf_token : crypto.randomUUID().replace(/-/g, '');
+  await (supabase.from('zoho_invoices') as any)
+    .update({ raw_data: { ...raw, email, pdf_token: pdfToken } })
+    .eq('id', (inv as any).id);
+
+  const currency = (inv as any).currency || 'EUR';
+  const pdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/return-debit-fee-invoice-pdf?id=${rd.id}&token=${pdfToken}`;
+
+  const { data, error } = await supabase.functions.invoke('send-transactional-email', {
+    body: {
+      templateName: 'ruecklastschrift-gebuehrenrechnung',
+      recipientEmail: email,
+      bcc: RETURN_DUNNING_CC,
+      idempotencyKey: `rd-fee-invoice-${rd.id}-${Date.now()}`,
+      templateData: {
+        customerName: name ?? '',
+        invoiceNumber: (inv as any).invoice_number,
+        invoiceDate: new Date((inv as any).invoice_date).toLocaleDateString('de-DE'),
+        dueDate: new Date((inv as any).due_date).toLocaleDateString('de-DE'),
+        currency,
+        bankFee: Number(raw.bank_fee ?? RD_FEE_BANK),
+        handlingFee: Number(raw.handling_fee ?? RD_FEE_HANDLING),
+        total: Number((inv as any).total ?? RD_FEE_TOTAL),
+        returnDate: rd.booking_date ? new Date(rd.booking_date).toLocaleDateString('de-DE') : null,
+        returnReason: rd.return_reason ?? null,
+        originalInvoice: rd.invoice_number ?? null,
+        amountText: money(Number((inv as any).total ?? RD_FEE_TOTAL), currency),
+        pdfUrl,
+      },
+    },
+  });
+  if (error) throw new Error(error.message);
+  if (!data?.success) throw new Error(data?.error || 'E-Mail-Dienst hat den Versand nicht bestätigt');
+
+  await (supabase.from('bank_return_debits') as any)
+    .update({ fee_invoice_sent_at: new Date().toISOString() })
+    .eq('id', rd.id);
+  await logBank({
+    action: 'ruecklastschrift_gebuehrenrechnung_versendet',
+    bank_transaction_id: rd.bank_transaction_id ?? null,
+    new_value: { return_debit_id: rd.id, invoice_number: (inv as any).invoice_number, recipient: email, bcc: RETURN_DUNNING_CC },
+  });
+  return email;
+}
