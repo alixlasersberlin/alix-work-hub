@@ -149,6 +149,11 @@ function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docSt
 
 type InvoicesProps = { mietkaufOnly?: boolean };
 
+// Modul-Cache: Rechnungsliste bleibt beim Zurücknavigieren sofort sichtbar
+const ROWS_CACHE = new Map<string, { ts: number; rows: Row[] }>();
+const ROWS_CACHE_TTL = 60_000;
+
+
 export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const { roles } = useAuth();
   const { region } = useAccountingRegion();
@@ -194,9 +199,23 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
 
-  const fetchRows = async () => {
-    setLoading(true);
+  const fetchRows = async (opts?: { silent?: boolean }) => {
+    const cacheKey = `${region}|${mietkaufOnly}`;
+    const cached = ROWS_CACHE.get(cacheKey);
+    if (!opts?.silent && cached && Date.now() - cached.ts < ROWS_CACHE_TTL) {
+      // Sofort aus dem Cache anzeigen und im Hintergrund aktualisieren
+      setRows(cached.rows);
+      setLoading(false);
+      void refetchRows(cacheKey, false);
+      return;
+    }
+    if (!opts?.silent) setLoading(true);
     setError(null);
+    await refetchRows(cacheKey, !opts?.silent);
+  };
+
+
+  const refetchRows = async (cacheKey: string, showError: boolean) => {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
     const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
     const [inv, rec] = await Promise.all([
@@ -204,8 +223,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
     ]);
     if (inv.error || rec.error) {
-      setError(inv.error?.message || rec.error?.message || 'Fehler beim Laden');
-      setRows([]);
+      if (showError) {
+        setError(inv.error?.message || rec.error?.message || 'Fehler beim Laden');
+        setRows([]);
+      }
     } else {
       const isChCurrency = (c?: string | null) => (c ?? '').toUpperCase() === 'CHF';
       const merged: Row[] = [
@@ -214,10 +235,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           .filter((r: any) => (region === 'CH' ? isChCurrency(r.currency) : !isChCurrency(r.currency)))
           .map((r: any) => ({ ...r, source: 'recurring' as const })),
       ];
+      ROWS_CACHE.set(cacheKey, { ts: Date.now(), rows: merged });
       setRows(merged);
     }
     setLoading(false);
   };
+
 
   const [mietkaufBusyId, setMietkaufBusyId] = useState<string | null>(null);
   const toggleMietkauf = async (r: Row) => {
@@ -290,7 +313,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     let debounce: ReturnType<typeof setTimeout> | null = null;
     const trigger = () => {
       if (debounce) clearTimeout(debounce);
-      debounce = setTimeout(() => { fetchRows(); }, 400);
+      debounce = setTimeout(() => { fetchRows({ silent: true }); }, 2000);
     };
     const channel = supabase
       .channel('invoices-live')
