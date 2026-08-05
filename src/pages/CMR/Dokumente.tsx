@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Plus, Trash2, FileText, Search, Download } from 'lucide-react';
+import { Loader2, Plus, Trash2, FileText, Search, Download, Mail } from 'lucide-react';
 import { generateCmrDocumentPdf, cmrPdfFilename } from '@/lib/cmr-document-pdf';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney, CMR_DOC_TYPES, CMR_DOC_STATUS } from '@/hooks/useCmrTenant';
@@ -49,6 +49,12 @@ export default function CmrDokumente() {
   const [items, setItems] = useState<any[]>([]);
   const [custQuery, setCustQuery] = useState('');
   const [custResults, setCustResults] = useState<any[]>([]);
+
+  const [sendDoc, setSendDoc] = useState<Doc | null>(null);
+  const [sendTo, setSendTo] = useState('');
+  const [sendSubject, setSendSubject] = useState('');
+  const [sendMessage, setSendMessage] = useState('');
+  const [sending, setSending] = useState(false);
 
   const cur = settings?.default_currency || 'AED';
   const defTax = Number(settings?.tax_rate ?? 5);
@@ -191,15 +197,78 @@ export default function CmrDokumente() {
     }
   };
 
+  const buildPdf = async (d: Doc) => {
+    const { data } = await supabase.from('cmr_document_items' as any).select('*').eq('document_id', d.id).order('position');
+    return generateCmrDocumentPdf(d as any, ((data as any) || []) as any, settings);
+  };
+
   const downloadPdf = async (d: Doc) => {
     try {
-      const { data } = await supabase.from('cmr_document_items' as any).select('*').eq('document_id', d.id).order('position');
-      const pdf = generateCmrDocumentPdf(d as any, ((data as any) || []) as any, settings);
+      const pdf = await buildPdf(d);
       pdf.save(cmrPdfFilename(d as any));
     } catch (e: any) {
       toast.error(e.message ?? 'PDF konnte nicht erstellt werden');
     }
   };
+
+  const startSend = async (d: Doc) => {
+    const label = CMR_DOC_TYPES.find((t) => t.value === d.doc_type)?.label ?? d.doc_type;
+    let subject = `${label} ${d.doc_number ?? ''} – ${settings?.company_name ?? 'CMR'}`.trim();
+    let message = `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie ${label} ${d.doc_number ?? ''}.\n\nMit freundlichen Grüßen`;
+    if (tenantId) {
+      const { data: tpl } = await supabase
+        .from('cmr_email_templates' as any)
+        .select('subject, body_html')
+        .eq('tenant_id', tenantId).eq('key', d.doc_type).eq('is_active', true).maybeSingle();
+      if (tpl) {
+        const vars: Record<string, string> = {
+          '{{doc_number}}': d.doc_number ?? '',
+          '{{doc_type}}': label,
+          '{{customer_name}}': d.customer_name ?? '',
+          '{{total}}': cmrMoney(d.gross_total, d.currency || cur),
+          '{{company}}': settings?.company_name ?? 'CMR',
+        };
+        const fill = (s: string) => Object.entries(vars).reduce((acc, [k, v]) => acc.split(k).join(v), s || '');
+        subject = fill((tpl as any).subject) || subject;
+        message = fill((tpl as any).body_html) || message;
+      }
+    }
+    setSendDoc(d);
+    setSendTo(d.customer_email ?? '');
+    setSendSubject(subject);
+    setSendMessage(message);
+  };
+
+  const doSend = async () => {
+    if (!sendDoc) return;
+    if (!sendTo.includes('@')) { toast.error('Bitte eine gültige E-Mail-Adresse angeben.'); return; }
+    setSending(true);
+    try {
+      const pdf = await buildPdf(sendDoc);
+      const dataUri: string = pdf.output('datauristring');
+      const pdfBase64 = dataUri.split(',')[1];
+      const { data, error } = await supabase.functions.invoke('cmr-send-document', {
+        body: {
+          documentId: sendDoc.id,
+          to: sendTo.split(',').map((s) => s.trim()).filter(Boolean),
+          subject: sendSubject,
+          message: sendMessage,
+          pdfBase64,
+          filename: cmrPdfFilename(sendDoc as any),
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success('Beleg versendet');
+      setSendDoc(null);
+      load();
+    } catch (e: any) {
+      toast.error(e.message ?? 'Versand fehlgeschlagen');
+    } finally {
+      setSending(false);
+    }
+  };
+
 
   const filtered = docs.filter((d) =>
 
@@ -247,10 +316,37 @@ export default function CmrDokumente() {
             <Button size="icon" variant="ghost" title="PDF herunterladen" onClick={() => downloadPdf(d)}>
               <Download className="w-4 h-4" />
             </Button>
+            <Button size="icon" variant="ghost" title="Per E-Mail senden" onClick={() => startSend(d)}>
+              <Mail className="w-4 h-4" />
+            </Button>
           </div>
 
         ))}
       </Card>
+
+      <Dialog open={!!sendDoc} onOpenChange={(o) => !o && setSendDoc(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Beleg {sendDoc?.doc_number ?? ''} senden</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Empfänger (Komma-getrennt)</Label>
+              <Input value={sendTo} onChange={(e) => setSendTo(e.target.value)} placeholder="kunde@example.com" />
+            </div>
+            <div><Label>Betreff</Label><Input value={sendSubject} onChange={(e) => setSendSubject(e.target.value)} /></div>
+            <div><Label>Nachricht</Label><Textarea rows={8} value={sendMessage} onChange={(e) => setSendMessage(e.target.value)} /></div>
+            <p className="text-xs text-muted-foreground">Das PDF im CMR-Branding wird automatisch angehängt.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendDoc(null)}>Abbrechen</Button>
+            <Button onClick={doSend} disabled={sending}>
+              {sending ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Mail className="w-4 h-4 mr-1.5" />} Senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">

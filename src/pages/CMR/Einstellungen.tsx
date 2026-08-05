@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant } from '@/hooks/useCmrTenant';
+import CmrEmailTemplates from './EmailTemplates';
 
 const FIELDS: { key: string; label: string; type?: string }[][] = [
   [
@@ -113,6 +114,8 @@ export default function CmrEinstellungen() {
         <div><Label>E-Mail-Signatur</Label><Textarea rows={3} value={form.email_signature ?? ''} onChange={(e) => setForm({ ...form, email_signature: e.target.value })} /></div>
         <div><Label>Beleg-Fußzeile (HTML)</Label><Textarea rows={3} value={form.footer_html ?? ''} onChange={(e) => setForm({ ...form, footer_html: e.target.value })} /></div>
       </Card>
+
+      <CmrEmailTemplates tenantId={tenantId} />
     </div>
   );
 }
