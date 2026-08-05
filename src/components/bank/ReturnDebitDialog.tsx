@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   ensureReturnDebit, findOriginalPayments, confirmReturnDebit, cancelReturnDebit,
   updateReturnDebit, loadReturnRules, getAllocationsOfReturnDebit, sendReturnDebitDunning,
+  searchInvoicesForReturn,
   RD_STATUS, RETURN_CODES, amountTolerance,
   type PaymentCandidate, type ReturnRules,
 } from '@/lib/bank/returnDebit';
