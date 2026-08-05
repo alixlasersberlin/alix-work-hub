@@ -191,7 +191,18 @@ export default function CmrDokumente() {
     }
   };
 
+  const downloadPdf = async (d: Doc) => {
+    try {
+      const { data } = await supabase.from('cmr_document_items' as any).select('*').eq('document_id', d.id).order('position');
+      const pdf = generateCmrDocumentPdf(d as any, ((data as any) || []) as any, settings);
+      pdf.save(cmrPdfFilename(d as any));
+    } catch (e: any) {
+      toast.error(e.message ?? 'PDF konnte nicht erstellt werden');
+    }
+  };
+
   const filtered = docs.filter((d) =>
+
     (!typeFilter || d.doc_type === typeFilter) &&
     (!search || `${d.doc_number ?? ''} ${d.customer_name ?? ''} ${d.reference ?? ''}`.toLowerCase().includes(search.toLowerCase())));
 
