@@ -44,8 +44,12 @@ export default function Ruecklastschriften() {
   const [tx, setTx] = useState<any | null>(null);
   const [manualOpen, setManualOpen] = useState(false);
 
+  const [loadError, setLoadError] = useState<BankLoadError | null>(null);
+
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
+    let endpoint = 'GET /rest/v1/bank_return_debits';
     try {
       const list = await listReturnDebits(region, status || undefined);
       // Aktuellen Status der verknüpften Gebührenrechnungen nachladen
