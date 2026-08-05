@@ -180,7 +180,9 @@ const GUESS: Record<string, RegExp> = {
   currency: /(währung|waehrung|currency|ccy)/i,
   purpose: /(verwendungszweck|zweck|reference text|remittance|description)/i,
   booking_text: /(buchungstext|umsatzart|text|typ)/i,
-  sender_receiver_name: /(auftraggeber|empfänger|empfaenger|beguenstigter|begünstigter|name|zahlungspflichtiger|payer|payee)/i,
+  // "Auftraggeber / Empfänger" ist der Kundenname
+  sender_receiver_name: /(kundenname|\bkunde\b|auftraggeber|empfänger|empfaenger|beguenstigter|begünstigter|beguenstigte|kontoinhaber|absender|zahler|zahlungspflichtiger|payer|payee|name)/i,
+
   sender_receiver_iban: /(iban|kontonummer)/i,
   bic: /(bic|swift)/i,
   bank_reference: /(bankreferenz|referenz|reference)/i,
