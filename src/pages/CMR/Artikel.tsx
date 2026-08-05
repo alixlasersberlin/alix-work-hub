@@ -90,7 +90,7 @@ export default function CmrArtikel() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="CMR Artikelstamm" description="Eigener Artikelstamm der Cloud Marketing Research – getrennt von Alix Lasers." />
+      <PageHeader title="CMR Artikelstamm" subtitle="Eigener Artikelstamm der Cloud Marketing Research – getrennt von Alix Lasers." />
 
       <div className="flex flex-wrap gap-2 items-center">
         <Input placeholder="Suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />

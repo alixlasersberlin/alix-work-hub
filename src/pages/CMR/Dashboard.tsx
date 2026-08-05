@@ -44,7 +44,7 @@ export default function CmrDashboard() {
     <div className="space-y-6">
       <PageHeader
         title="CMR Dashboard"
-        description={`${settings?.company_name ?? 'Cloud Marketing Research'} · ${settings?.city ?? 'Dubai'}`}
+        subtitle={`${settings?.company_name ?? 'Cloud Marketing Research'} · ${settings?.city ?? 'Dubai'}`}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
