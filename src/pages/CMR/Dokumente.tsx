@@ -474,7 +474,7 @@ export default function CmrDokumente() {
               </Button>
             )}
             <Button size="icon" variant="ghost" title="E-Mail-Versandprotokoll" onClick={() => openLog(d)}>
-              <History className="w-4 h-4" />
+              <HistoryIcon className="w-4 h-4" />
             </Button>
 
             <DropdownMenu>
