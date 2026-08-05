@@ -1246,6 +1246,8 @@ function AppRoutes() {
           <Route path="/operation/email-vorlagen" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><EmailTemplates /></ProtectedRoute>} />
           <Route path="/operation/systemwartung" element={<ProtectedRoute requiredRoles={['Super Admin']}><Systemwartung /></ProtectedRoute>} />
           <Route path="/operation/performance" element={<ProtectedRoute requiredRoles={['Super Admin']}><PerformanceCenter /></ProtectedRoute>} />
+          <Route path="/operation/system-health" element={<ProtectedRoute requiredRoles={['Super Admin']}><SystemHealthCenter /></ProtectedRoute>} />
+
           <Route path="/operation/news" element={<ProtectedRoute requiredRoles={['Super Admin']}><NewsAdmin /></ProtectedRoute>} />
           <Route path="/operation/health-check" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><HealthCheck /></ProtectedRoute>} />
           <Route path="/operation/nummernkreise" element={<ProtectedRoute requiredRoles={['Super Admin']}><Nummernkreise /></ProtectedRoute>} />
