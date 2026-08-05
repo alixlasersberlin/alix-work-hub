@@ -12,7 +12,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders })
 
   const secret = req.headers.get('x-cron-secret') ?? ''
-  if (!secret || secret !== Deno.env.get('CRON_SECRET')) {
+  const allowed = [Deno.env.get('CRON_SECRET'), Deno.env.get('RETURN_DUNNING_RESEND_KEY')].filter(Boolean)
+  if (!secret || !allowed.includes(secret)) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
