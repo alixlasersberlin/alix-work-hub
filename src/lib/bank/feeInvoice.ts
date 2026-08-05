@@ -98,12 +98,10 @@ async function resolveCustomer(rd: any, customerId: string | null, tx?: any) {
 
   // Auftrag als weitere Quelle
   if (!email && (rd.order_id || rd.order_number)) {
-    const q = supabase.from('orders').select('customer_id, customer_name, customer_email').limit(1);
+    const q = supabase.from('orders').select('customer_id').limit(1);
     const { data: ord } = rd.order_id ? await q.eq('id', rd.order_id) : await q.eq('order_number', rd.order_number);
     const o: any = ord?.[0];
     if (o) {
-      name = name || o.customer_name || null;
-      if (typeof o.customer_email === 'string' && o.customer_email.includes('@')) email = o.customer_email.trim();
       if (!email && o.customer_id) {
         const { data: c4 } = await supabase
           .from('customers')
