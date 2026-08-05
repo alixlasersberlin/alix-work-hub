@@ -66,5 +66,66 @@ export default function Importregeln() {
         </table>
       </CardContent>
     </Card>
+    <LearnedRules region={region} />
+    </div>
+  );
+}
+
+function LearnedRules({ region }: { region: 'EU' | 'CH' }) {
+  const [rules, setRules] = useState<BankMatchRule[]>([]);
+
+  const load = async () => {
+    try { setRules(await listMatchRules(region)); } catch (e: any) { toast.error(e.message); }
+  };
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [region]);
+
+  const remove = async (id: string) => {
+    if (!window.confirm('Gelernte Regel wirklich löschen?')) return;
+    try { await deleteMatchRule(id); toast.success('Regel gelöscht'); load(); }
+    catch (e: any) { toast.error(e.message); }
+  };
+
+  const toggle = async (r: BankMatchRule) => {
+    try { await setRuleAutoBook(r.id, !r.auto_book); load(); }
+    catch (e: any) { toast.error(e.message); }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2"><Brain className="w-4 h-4" />Gelernte Zuordnungen</CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          Bei jeder Verbuchung merkt sich das System, welchem Kunden ein Zahler (IBAN bzw. Name) zugeordnet wurde. Beim nächsten Import erhöht das die Trefferquote automatisch.
+        </p>
+      </CardHeader>
+      <CardContent className="p-0 overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="bg-muted/40"><tr className="text-left">
+            <th className="p-2">Zahler</th><th className="p-2">IBAN</th><th className="p-2">Kunde</th>
+            <th className="p-2">Art</th><th className="p-2">Treffer</th><th className="p-2">Zuletzt</th>
+            <th className="p-2">Auto-Verbuchen</th><th className="p-2"></th>
+          </tr></thead>
+          <tbody>
+            {!rules.length && <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Noch keine gelernten Zuordnungen.</td></tr>}
+            {rules.map(r => (
+              <tr key={r.id} className="border-t border-border">
+                <td className="p-2 font-medium">{r.payer_name || '–'}</td>
+                <td className="p-2 font-mono">{r.payer_iban || '–'}</td>
+                <td className="p-2">{r.customer_name || r.customer_id || '–'}</td>
+                <td className="p-2"><Badge variant="outline">{r.allocation_type}</Badge></td>
+                <td className="p-2">{r.hit_count}</td>
+                <td className="p-2">{r.last_used_at ? new Date(r.last_used_at).toLocaleDateString('de-DE') : '–'}</td>
+                <td className="p-2">
+                  <Button size="sm" variant={r.auto_book ? 'default' : 'outline'} onClick={() => toggle(r)}>
+                    {r.auto_book ? 'aktiv' : 'aus'}
+                  </Button>
+                </td>
+                <td className="p-2 text-right"><Button size="sm" variant="ghost" onClick={() => remove(r.id)}><Trash2 className="w-3.5 h-3.5 text-red-500" /></Button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
   );
 }
