@@ -140,6 +140,8 @@ export default function CmrAbos() {
     }
   };
 
+  const monthlyFactor = (unit: string) => (unit === 'yearly' ? 1 / 12 : unit === 'quarterly' ? 1 / 3 : 1);
+
   const planTotal = (p: Plan) =>
     p.lines.reduce((s, l) => s + Number(l.quantity || 0) * Number(l.unit_price || 0) * (1 + Number(l.tax_rate || 0) / 100), 0);
 
