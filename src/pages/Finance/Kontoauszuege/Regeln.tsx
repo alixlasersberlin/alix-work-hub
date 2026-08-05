@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Trash2, Settings2, Brain } from 'lucide-react';
+import { Trash2, Settings2, Brain, RefreshCw } from 'lucide-react';
 import { listMatchRules, deleteMatchRule, setRuleAutoBook, type BankMatchRule } from '@/lib/bank/rules';
 import { supabase } from '@/integrations/supabase/client';
 import { listBankAccounts, type BankAccount } from '@/lib/bank/api';
