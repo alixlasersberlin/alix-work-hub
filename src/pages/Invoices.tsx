@@ -202,20 +202,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const fetchRows = async (opts?: { silent?: boolean }) => {
     const cacheKey = `${region}|${mietkaufOnly}`;
     const cached = ROWS_CACHE.get(cacheKey);
-    if (cached && Date.now() - cached.ts < ROWS_CACHE_TTL) {
+    if (!opts?.silent && cached && Date.now() - cached.ts < ROWS_CACHE_TTL) {
+      // Sofort aus dem Cache anzeigen und im Hintergrund aktualisieren
       setRows(cached.rows);
       setLoading(false);
-      if (!opts?.silent) {
-        // im Hintergrund aktualisieren
-        void refetchRows(cacheKey, false);
-        return;
-      }
+      void refetchRows(cacheKey, false);
       return;
     }
     if (!opts?.silent) setLoading(true);
     setError(null);
-    await refetchRows(cacheKey, true);
+    await refetchRows(cacheKey, !opts?.silent);
   };
+
 
   const refetchRows = async (cacheKey: string, showError: boolean) => {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
