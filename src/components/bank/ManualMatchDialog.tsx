@@ -55,13 +55,14 @@ export function ManualMatchDialog({
       const cols = 'id,invoice_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status,reference_number';
       const s = term.trim().replace(/[%,]/g, ' ');
       const build = (table: 'zoho_invoices' | 'zoho_recurring_invoices') => {
+        // Alle Rechnungen inkl. Ratenzahler – auch wenn Beträge abweichen
+        // (Rücklastschrift-/Zahlbeträge enthalten häufig Bankgebühren).
         let q = supabase.from(table)
           .select(cols)
           .eq('accounting_region', region as any)
           .order('invoice_date', { ascending: false })
-          .limit(30);
+          .limit(50);
         if (s) q = q.or(`invoice_number.ilike.%${s}%,customer_name.ilike.%${s}%,reference_number.ilike.%${s}%,customer_id.ilike.%${s}%`);
-        else q = q.gt('balance', 0);
         return q;
       };
       const [std, rec, ord] = await Promise.all([
