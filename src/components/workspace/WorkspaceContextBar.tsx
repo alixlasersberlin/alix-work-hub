@@ -4,6 +4,7 @@ import { ChevronRight, Clock, Home, Star } from 'lucide-react';
 import { useTenant } from '@/contexts/TenantContext';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useRecentPages } from '@/hooks/useRecentPages';
+import { usePageUsageTracker } from '@/hooks/usePageUsage';
 import { useFavorites } from '@/hooks/useFavorites';
 import { cn } from '@/lib/utils';
 
