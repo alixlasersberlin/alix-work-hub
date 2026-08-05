@@ -21,6 +21,9 @@ class AuditTracker {
   private lastActivity = Date.now();
   private lastHeartbeat = Date.now();
   private started = false;
+  private failureCount = 0;
+  private pauseUntil = 0;
+
 
   async start() {
     if (this.started) return;
@@ -76,6 +79,8 @@ class AuditTracker {
 
   private async sendHeartbeat() {
     if (!this.sessionId || !this.started) return;
+    if (Date.now() < this.pauseUntil) return;
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { await this.stop(); return; }
     const now = Date.now();
@@ -100,10 +105,26 @@ class AuditTracker {
         const msg = String((error as any)?.message ?? "");
         if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
           await this.stop();
+          return;
         }
+        // Transient backend issues (503 / service degraded): back off instead of hammering
+        this.failureCount++;
+        if (this.failureCount >= 3) {
+          this.pauseUntil = Date.now() + 5 * 60_000;
+          this.failureCount = 0;
+        }
+        return;
       }
-    } catch {}
+      this.failureCount = 0;
+    } catch {
+      this.failureCount++;
+      if (this.failureCount >= 3) {
+        this.pauseUntil = Date.now() + 5 * 60_000;
+        this.failureCount = 0;
+      }
+    }
   }
+
 
   private async flush() {
     if (!this.sessionId || this.queue.length === 0) return;
