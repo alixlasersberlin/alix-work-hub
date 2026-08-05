@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS uq_bank_accounts_iban_area ON public.bank_accounts (replace(upper(iban), ' ', ''), accounting_area) WHERE iban IS NOT NULL AND iban <> '';
