@@ -1123,6 +1123,8 @@ function AppRoutes() {
           <Route path="/start" element={<Startseite />} />
           <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/w/:code" element={<WorkspaceDashboard />} />
+          <Route path="/workspaces-admin" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><WorkspaceAdmin /></ProtectedRoute>} />
+
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
           <Route path="/einstellungen/personalisierung" element={<Personalisierung />} />
           <Route path="/sicherheit" element={<Sicherheit />} />
