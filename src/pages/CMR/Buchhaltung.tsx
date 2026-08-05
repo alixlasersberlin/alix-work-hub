@@ -326,10 +326,30 @@ export default function CmrBuchhaltung() {
             {t === 'offen' ? 'Offene Posten' : t === 'alle' ? 'Alle Rechnungen' : t === 'zahlungen' ? 'Zahlungseingänge' : 'Umsatzsteuer'}
           </Button>
         ))}
-        <Button size="sm" variant="outline" className="ml-auto" onClick={exportCsv}>
-          <Download className="w-3.5 h-3.5 mr-1" /> CSV Export
-        </Button>
+        <div className="ml-auto flex flex-wrap gap-2">
+          <label className="inline-flex">
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) parseBankCsv(f); e.currentTarget.value = ''; }}
+            />
+            <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input px-3 text-sm hover:bg-muted">
+              <Upload className="w-3.5 h-3.5 mr-1" /> Bank-CSV
+            </span>
+          </label>
+          <Button size="sm" variant="outline" onClick={exportCsv}>
+            <Download className="w-3.5 h-3.5 mr-1" /> CSV Export
+          </Button>
+          <Button size="sm" variant="outline" onClick={exportDatev}>
+            <Download className="w-3.5 h-3.5 mr-1" /> DATEV
+          </Button>
+          <Button size="sm" variant="outline" onClick={exportYearPdf}>
+            <FileDown className="w-3.5 h-3.5 mr-1" /> Jahresabschluss
+          </Button>
+        </div>
       </div>
+
 
       {tab === 'ust' ? (
         <Card className="divide-y">
