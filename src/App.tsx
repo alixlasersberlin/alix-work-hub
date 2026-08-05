@@ -1063,7 +1063,8 @@ function AppRoutes() {
   if (loading) return <FullscreenLoader />;
 
   return (
-    <Suspense fallback={null}>
+    <RouteErrorBoundary>
+    <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Öffentliche Landing-Page: / und /login zeigen IMMER nur Landing, niemals Redirect */}
         <Route path="/" element={<Landing />} />
