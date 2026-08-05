@@ -303,7 +303,7 @@ export default function Dashboard() {
   }
 
   const dashboardQuery = useQuery({
-    queryKey: qk.dashboard.main({ canSeeOrders, canSeeRoutes, canSeeFinance, canSeeCustomers, canSeeAudit, isAdmin, tenant: tenant?.code ?? 'ALL' }),
+    queryKey: [...qk.dashboard.main({ canSeeOrders, canSeeRoutes, canSeeFinance, canSeeCustomers, canSeeAudit, isAdmin, atOnly }), tenant?.code ?? 'ALL'],
     queryFn: loadDashboard,
     staleTime: STALE.short,
     refetchInterval: 60 * 1000, // Fallback: 1 min Polling, falls Realtime ausfällt
