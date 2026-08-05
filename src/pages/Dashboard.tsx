@@ -21,6 +21,7 @@ import { isOrderVip, vipFirst } from '@/lib/vip';
 
 import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import { useAtOnly } from '@/hooks/useAtOnly';
+import { useTenant } from '@/contexts/TenantContext';
 import HeadOfOperationDashboard from './HeadOfOperationDashboard';
 import RevenueByCountryCard from '@/components/RevenueByCountryCard';
 import { OpenDepositsOverview } from '@/components/dashboard/OpenDepositsOverview';
@@ -151,6 +152,9 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { profile, roles, hasRole, hasAnyRole, isAdmin } = useAuth();
   const atOnly = useAtOnly();
+  const { current: tenant } = useTenant();
+  const selectedSource = tenant?.zoho_source_system ?? null;
+  const tenantSelected = Boolean(tenant);
   const [stats, setStats] = useState<Stats>({ freePoolDevices: 0, leihgeraete: 0, openOrders: 0, routes: 0, openFinance: 0, vipCustomers: 0, vipOrders: 0 });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [shipmentOrders, setShipmentOrders] = useState<ShipmentOrder[]>([]);
@@ -193,28 +197,32 @@ export default function Dashboard() {
   async function loadDashboard() {
     // Alle KPI-Zähler kommen aus einer serverseitigen Abfrage,
     // statt komplette Tabellen (z. B. lager_devices) in den Browser zu laden.
-    const kpiRes = await supabase.rpc('main_dashboard_kpis' as any, { p_at_only: atOnly });
+    const kpiRes = await supabase.rpc('main_dashboard_tenant_kpis' as any, {
+      p_source_system: selectedSource,
+      p_tenant_id: tenant?.id ?? null,
+      p_tenant_selected: tenantSelected,
+    });
     const kpi = (kpiRes.data ?? {}) as Record<string, number>;
     const num = (k: string) => Number(kpi?.[k] ?? 0);
     const freePoolDevices = isAdmin ? num('freePoolDevices') : 0;
     const leihgeraete = isAdmin ? num('leihgeraete') : 0;
 
-    const recentOrdersRes = canSeeOrders
-      ? await (atOnly
-          ? supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').eq('source_system', 'zoho_eu_2').order('created_at', { ascending: false }).limit(7)
+    const recentOrdersRes = canSeeOrders && (!tenantSelected || selectedSource)
+      ? await (selectedSource
+          ? supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').eq('source_system', selectedSource).order('created_at', { ascending: false }).limit(7)
           : supabase.from('orders').select('id, order_number, order_status, total_amount, currency, order_date, expected_shipment_date').order('created_at', { ascending: false }).limit(7))
       : { data: [] };
 
 
     const [shipmentOrdersRes, routePlansRes, financeRes, sessionsRes, incidentsRes] = await Promise.all([
-      canSeeOrders
-        ? (atOnly
-            ? supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').eq('source_system', 'zoho_eu_2').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500)
+      canSeeOrders && (!tenantSelected || selectedSource)
+        ? (selectedSource
+            ? supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').eq('source_system', selectedSource).not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500)
             : supabase.from('orders').select('id, order_number, expected_shipment_date, order_status, shipping_address, billing_address, customers(company_name, contact_name, shipping_address, billing_address), order_items(item_name, sku, description)').not('expected_shipment_date', 'is', null).order('expected_shipment_date', { ascending: true }).limit(500))
         : Promise.resolve({ data: [] as any[] }),
-      canSeeRoutes
-        ? (atOnly
-            ? supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority, orders!inner(source_system)').eq('orders.source_system', 'zoho_eu_2').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7)
+      canSeeRoutes && (!tenantSelected || selectedSource)
+        ? (selectedSource
+            ? supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority, orders!inner(source_system)').eq('orders.source_system', selectedSource).or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7)
             : supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7))
         : Promise.resolve({ data: [] as any[] }),
       canSeeFinance
@@ -240,9 +248,9 @@ export default function Dashboard() {
     ]);
 
 
-    const prioRes = canSeeOrders
-      ? await (atOnly
-          ? supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).eq('source_system', 'zoho_eu_2').order('expected_shipment_date', { ascending: true }).limit(5)
+    const prioRes = canSeeOrders && (!tenantSelected || selectedSource)
+      ? await (selectedSource
+          ? supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).eq('source_system', selectedSource).order('expected_shipment_date', { ascending: true }).limit(5)
           : supabase.from('orders').select('id, order_number, order_status, expected_shipment_date, is_vip, source_system, customers(company_name, contact_name, is_vip)').not('expected_shipment_date', 'is', null).in('order_status', ['overdue','Overdue','invoiced','Invoiced','open','Open','offen','Offen','approved','Approved']).order('expected_shipment_date', { ascending: true }).limit(5))
       : { data: [] };
 
@@ -260,9 +268,9 @@ export default function Dashboard() {
       return arr;
     };
     const [ordersTrend, financeTrend] = await Promise.all([
-      canSeeOrders
-        ? (atOnly
-            ? supabase.from('orders').select('created_at').eq('source_system', 'zoho_eu_2').gte('created_at', since).limit(1000)
+      canSeeOrders && (!tenantSelected || selectedSource)
+        ? (selectedSource
+            ? supabase.from('orders').select('created_at').eq('source_system', selectedSource).gte('created_at', since).limit(1000)
             : supabase.from('orders').select('created_at').gte('created_at', since).limit(1000))
         : Promise.resolve({ data: [] as any[] }),
       canSeeFinance
@@ -295,7 +303,7 @@ export default function Dashboard() {
   }
 
   const dashboardQuery = useQuery({
-    queryKey: qk.dashboard.main({ canSeeOrders, canSeeRoutes, canSeeFinance, canSeeCustomers, canSeeAudit, isAdmin, atOnly }),
+    queryKey: [...qk.dashboard.main({ canSeeOrders, canSeeRoutes, canSeeFinance, canSeeCustomers, canSeeAudit, isAdmin, atOnly }), tenant?.code ?? 'ALL'],
     queryFn: loadDashboard,
     staleTime: STALE.short,
     refetchInterval: 60 * 1000, // Fallback: 1 min Polling, falls Realtime ausfällt

@@ -39916,6 +39916,14 @@ export type Database = {
       }
       mailcenter_dashboard_kpis: { Args: never; Returns: Json }
       main_dashboard_kpis: { Args: { p_at_only?: boolean }; Returns: Json }
+      main_dashboard_tenant_kpis: {
+        Args: {
+          p_source_system?: string
+          p_tenant_id?: string
+          p_tenant_selected?: boolean
+        }
+        Returns: Json
+      }
       med_can_write: { Args: never; Returns: boolean }
       merge_customers: {
         Args: { _duplicate_ids: string[]; _primary_id: string }

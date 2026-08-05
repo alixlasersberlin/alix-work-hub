@@ -7,83 +7,82 @@ import { Card } from '@/components/ui/card';
 import { iconFor } from '@/lib/workspace/icons';
 import { Loader2 } from 'lucide-react';
 
-type Kpi = { key: string; label: string; table: string; hint?: string; to?: string };
+type KpiScope = 'source' | 'customer' | 'order' | 'tenant' | 'lead-country' | 'unscoped';
+type Kpi = { key: string; label: string; table: string; scope: KpiScope; hint?: string; to?: string };
 
 const KPIS: Record<string, Kpi[]> = {
   verkauf: [
-    { key: 'leads', label: 'Leads', table: 'sales_leads', to: '/verkauf/anfragen' },
-    { key: 'offers', label: 'Angebote', table: 'offers', to: '/verkauf/angebote' },
-    { key: 'orders', label: 'Aufträge', table: 'orders', to: '/auftraege' },
-    { key: 'customers', label: 'Kunden', table: 'customers', to: '/kunden' },
+    { key: 'leads', label: 'Leads', table: 'sales_leads', scope: 'lead-country', to: '/verkauf/anfragen' },
+    { key: 'offers', label: 'Angebote', table: 'offers', scope: 'customer', to: '/verkauf/angebote' },
+    { key: 'orders', label: 'Aufträge', table: 'orders', scope: 'source', to: '/auftraege' },
+    { key: 'customers', label: 'Kunden', table: 'customers', scope: 'source', to: '/kunden' },
   ],
   buchhaltung: [
-    { key: 'tx', label: 'Buchungen', table: 'finance_transactions', to: '/finance/rechnungen' },
-    { key: 'orders', label: 'Aufträge', table: 'orders', to: '/auftraege' },
-    { key: 'customers', label: 'Kunden', table: 'customers', to: '/kunden' },
+    { key: 'tx', label: 'Buchungen', table: 'finance_transactions', scope: 'customer', to: '/finance/rechnungen' },
+    { key: 'orders', label: 'Aufträge', table: 'orders', scope: 'source', to: '/auftraege' },
+    { key: 'customers', label: 'Kunden', table: 'customers', scope: 'source', to: '/kunden' },
   ],
   lager: [
-    { key: 'devices', label: 'Geräte im Bestand', table: 'lager_devices', to: '/lager' },
-    { key: 'orders', label: 'Aufträge', table: 'orders', to: '/auftraege' },
+    { key: 'devices', label: 'Geräte im Bestand', table: 'lager_devices', scope: 'source', to: '/lager' },
+    { key: 'orders', label: 'Aufträge', table: 'orders', scope: 'source', to: '/auftraege' },
   ],
   fertigung: [
-    { key: 'prod', label: 'Produktionsaufträge', table: 'production_orders', to: '/production' },
-    { key: 'bugs', label: 'Qualitätsmeldungen', table: 'bugs', to: '/bug-capa' },
+    { key: 'prod', label: 'Produktionsaufträge', table: 'production_orders', scope: 'order', to: '/production' },
+    { key: 'bugs', label: 'Qualitätsmeldungen', table: 'bugs', scope: 'unscoped', to: '/bug-capa' },
   ],
   operation: [
-    { key: 'tickets', label: 'Tickets', table: 'tickets', to: '/tickets/dashboard' },
-    { key: 'customers', label: 'Kunden', table: 'customers', to: '/kunden' },
-    { key: 'orders', label: 'Aufträge', table: 'orders', to: '/auftraege' },
+    { key: 'tickets', label: 'Tickets', table: 'tickets', scope: 'source', to: '/tickets/dashboard' },
+    { key: 'customers', label: 'Kunden', table: 'customers', scope: 'source', to: '/kunden' },
+    { key: 'orders', label: 'Aufträge', table: 'orders', scope: 'source', to: '/auftraege' },
   ],
 };
 
 // Tabellen, die per Zoho-Quellsystem einem Mandanten zugeordnet sind
-const TENANT_SCOPED = ['orders', 'customers'];
-
 // Eigene Belegkreise: Mandanten ohne Zoho-Quellsystem haben eigene Tabellen
 const TENANT_KPIS: Record<string, Record<string, Kpi[]>> = {
   CMR: {
     verkauf: [
-      { key: 'cmr_docs', label: 'Belege', table: 'cmr_documents', to: '/cmr/dokumente' },
-      { key: 'cmr_projects', label: 'Projekte', table: 'cmr_projects', to: '/cmr/projekte' },
-      { key: 'cmr_items', label: 'Artikel', table: 'cmr_items', to: '/cmr/artikel' },
-      { key: 'customers', label: 'Kunden', table: 'customers', to: '/cmr/kunden' },
+      { key: 'cmr_docs', label: 'Belege', table: 'cmr_documents', scope: 'tenant', to: '/cmr/dokumente' },
+      { key: 'cmr_projects', label: 'Projekte', table: 'cmr_projects', scope: 'tenant', to: '/cmr/projekte' },
+      { key: 'cmr_items', label: 'Artikel', table: 'cmr_items', scope: 'tenant', to: '/cmr/artikel' },
+      { key: 'customers', label: 'Kunden', table: 'customers', scope: 'source', to: '/cmr/kunden' },
     ],
     buchhaltung: [
-      { key: 'cmr_docs', label: 'Belege', table: 'cmr_documents', to: '/cmr/buchhaltung' },
-      { key: 'cmr_pay', label: 'Zahlungen', table: 'cmr_payments', to: '/cmr/buchhaltung' },
-      { key: 'cmr_rec', label: 'Abos', table: 'cmr_recurring_plans', to: '/cmr/abos' },
+      { key: 'cmr_docs', label: 'Belege', table: 'cmr_documents', scope: 'tenant', to: '/cmr/buchhaltung' },
+      { key: 'cmr_pay', label: 'Zahlungen', table: 'cmr_payments', scope: 'tenant', to: '/cmr/buchhaltung' },
+      { key: 'cmr_rec', label: 'Abos', table: 'cmr_recurring_plans', scope: 'tenant', to: '/cmr/abos' },
     ],
     lager: [
-      { key: 'cmr_items', label: 'Artikel', table: 'cmr_items', to: '/cmr/artikel' },
+      { key: 'cmr_items', label: 'Artikel', table: 'cmr_items', scope: 'tenant', to: '/cmr/artikel' },
     ],
     fertigung: [
-      { key: 'cmr_projects', label: 'Projekte', table: 'cmr_projects', to: '/cmr/projekte' },
+      { key: 'cmr_projects', label: 'Projekte', table: 'cmr_projects', scope: 'tenant', to: '/cmr/projekte' },
     ],
     operation: [
-      { key: 'cmr_projects', label: 'Projekte', table: 'cmr_projects', to: '/cmr/projekte' },
-      { key: 'cmr_docs', label: 'Belege', table: 'cmr_documents', to: '/cmr/dokumente' },
+      { key: 'cmr_projects', label: 'Projekte', table: 'cmr_projects', scope: 'tenant', to: '/cmr/projekte' },
+      { key: 'cmr_docs', label: 'Belege', table: 'cmr_documents', scope: 'tenant', to: '/cmr/dokumente' },
     ],
   },
   MED: {
     verkauf: [
-      { key: 'med_docs', label: 'Belege', table: 'med_documents', to: '/med/belege' },
-      { key: 'med_items', label: 'Artikel', table: 'med_items', to: '/med/artikel' },
-      { key: 'customers', label: 'Kunden', table: 'customers', to: '/kunden' },
+      { key: 'med_docs', label: 'Belege', table: 'med_documents', scope: 'tenant', to: '/med/belege' },
+      { key: 'med_items', label: 'Artikel', table: 'med_items', scope: 'tenant', to: '/med/artikel' },
+      { key: 'customers', label: 'Kunden', table: 'customers', scope: 'source', to: '/kunden' },
     ],
     buchhaltung: [
-      { key: 'med_docs', label: 'Belege', table: 'med_documents', to: '/med/buchhaltung' },
-      { key: 'med_pay', label: 'Zahlungen', table: 'med_payments', to: '/med/buchhaltung' },
+      { key: 'med_docs', label: 'Belege', table: 'med_documents', scope: 'tenant', to: '/med/buchhaltung' },
+      { key: 'med_pay', label: 'Zahlungen', table: 'med_payments', scope: 'tenant', to: '/med/buchhaltung' },
     ],
     lager: [
-      { key: 'med_items', label: 'Artikel', table: 'med_items', to: '/med/artikel' },
+      { key: 'med_items', label: 'Artikel', table: 'med_items', scope: 'tenant', to: '/med/artikel' },
     ],
     fertigung: [
-      { key: 'med_items', label: 'Artikel', table: 'med_items', to: '/med/artikel' },
-      { key: 'med_compliance', label: 'Compliance-Dokumente', table: 'med_compliance_docs', to: '/med/compliance' },
+      { key: 'med_items', label: 'Artikel', table: 'med_items', scope: 'tenant', to: '/med/artikel' },
+      { key: 'med_compliance', label: 'Compliance-Dokumente', table: 'med_compliance_docs', scope: 'tenant', to: '/med/compliance' },
     ],
     operation: [
-      { key: 'med_docs', label: 'Belege', table: 'med_documents', to: '/med/belege' },
-      { key: 'med_compliance', label: 'Compliance-Dokumente', table: 'med_compliance_docs', to: '/med/compliance' },
+      { key: 'med_docs', label: 'Belege', table: 'med_documents', scope: 'tenant', to: '/med/belege' },
+      { key: 'med_compliance', label: 'Compliance-Dokumente', table: 'med_compliance_docs', scope: 'tenant', to: '/med/compliance' },
     ],
   },
 };
@@ -113,13 +112,32 @@ export default function WorkspaceDashboard() {
       const res: Record<string, number | null> = {};
       await Promise.all(kpis.map(async (k) => {
         try {
-          const scoped = TENANT_SCOPED.includes(k.table);
-          // Mandant ohne Zoho-Quellsystem: Zoho-Tabellen enthalten keine Daten dieses Mandanten
-          if (scoped && sourceFilter && sourceFilter.length === 0) { res[k.key] = 0; return; }
-          let q: any = supabase.from(k.table as any).select('id', { count: 'exact', head: true });
-          if (scoped && sourceFilter && sourceFilter.length > 0) {
-            q = q.in('source_system', sourceFilter);
+          const hasSelectedTenant = Boolean(tenant);
+          const hasSources = Boolean(sourceFilter && sourceFilter.length > 0);
+
+          // Legacy-Tabellen ohne belastbare Mandantenzuordnung gehören nur zur DE-Ansicht.
+          if (k.scope === 'unscoped' && hasSelectedTenant && tenantCode !== 'DE') {
+            res[k.key] = 0;
+            return;
           }
+          // Mandanten ohne Zoho-Zuordnung dürfen niemals fremde operative Daten sehen.
+          if (['source', 'customer', 'order', 'lead-country'].includes(k.scope) && hasSelectedTenant && !hasSources) {
+            res[k.key] = 0;
+            return;
+          }
+
+          let select = 'id';
+          if (k.scope === 'customer') select = 'id, customers!inner(source_system)';
+          if (k.scope === 'order') select = 'id, orders!inner(source_system)';
+          let q: any = supabase.from(k.table as any).select(select, { count: 'exact', head: true });
+
+          if (k.scope === 'source' && hasSources) q = q.in('source_system', sourceFilter);
+          if (k.scope === 'customer' && hasSources) q = q.in('customers.source_system', sourceFilter);
+          if (k.scope === 'order' && hasSources) q = q.in('orders.source_system', sourceFilter);
+          if (k.scope === 'tenant' && tenant?.id) q = q.eq('tenant_id', tenant.id);
+          if (k.scope === 'lead-country' && tenantCode === 'DE') q = q.eq('country_code', '+49');
+          if (k.scope === 'lead-country' && tenantCode === 'AT') q = q.eq('country_code', '+43');
+
           const { count, error } = await q;
           res[k.key] = error ? null : (count ?? 0);
         } catch {
