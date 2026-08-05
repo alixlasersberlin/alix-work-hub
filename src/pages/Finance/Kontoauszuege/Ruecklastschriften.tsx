@@ -66,10 +66,11 @@ export default function Ruecklastschriften() {
                 <thead className="bg-muted/40"><tr className="text-left">
                   <th className="p-2">Datum</th><th className="p-2">Rechnung</th><th className="p-2">Grund</th>
                   <th className="p-2">Code</th><th className="p-2 text-right">Betrag</th><th className="p-2 text-right">Gebühr</th>
+                  <th className="p-2">Gebührenrechnung</th>
                   <th className="p-2">Status</th><th className="p-2">Sperre</th><th className="p-2"></th>
                 </tr></thead>
                 <tbody>
-                  {!rows.length && <tr><td colSpan={9} className="p-6 text-center text-muted-foreground">Keine Rücklastschriften vorhanden.</td></tr>}
+                  {!rows.length && <tr><td colSpan={10} className="p-6 text-center text-muted-foreground">Keine Rücklastschriften vorhanden.</td></tr>}
                   {rows.map(r => (
                     <tr key={r.id} className="border-t border-border hover:bg-muted/30">
                       <td className="p-2">{r.booking_date ?? '–'}</td>
@@ -78,8 +79,17 @@ export default function Ruecklastschriften() {
                       <td className="p-2">{r.return_code ?? '–'}</td>
                       <td className="p-2 text-right font-medium text-red-500">{fmt(Number(r.return_debit_amount), r.currency)}</td>
                       <td className="p-2 text-right">{fmt(Number(r.bank_fee) + Number(r.additional_costs), r.currency)}</td>
+                      <td className="p-2 whitespace-nowrap">
+                        {r.fee_invoice_number ? (
+                          <span className="flex items-center gap-1">
+                            <span className="font-medium">{r.fee_invoice_number}</span>
+                            <Badge className={feeStatusColor(r.fee_invoice_status)}>{feeStatusLabel(r.fee_invoice_status)}</Badge>
+                          </span>
+                        ) : <span className="text-muted-foreground">–</span>}
+                      </td>
                       <td className="p-2"><Badge className={statusColor(r.status)}>{RD_STATUS[r.status] ?? r.status}</Badge></td>
                       <td className="p-2">{r.sepa_mandate_blocked ? 'Lastschrift gesperrt' : '–'}</td>
+
                       <td className="p-2 text-right whitespace-nowrap space-x-1">
                         <Button size="sm" variant="ghost" title="Mahnung mit Sperrankündigung senden"
                           onClick={async () => {
