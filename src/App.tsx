@@ -507,6 +507,7 @@ const BugCapaAnalytics = lazy(() => import("./pages/BugCapa/Analytics"));
 const BugCapaIsoReport = lazy(() => import("./pages/BugCapa/IsoReport"));
 
 const PerformanceCenter = lazy(() => import("./pages/Operations/PerformanceCenter"));
+const SystemHealthCenter = lazy(() => import("./pages/Operations/SystemHealthCenter"));
 const AuditCenterLayout = lazy(() => import("./pages/AuditCenter/Layout"));
 const AuditOverview = lazy(() => import("./pages/AuditCenter/Overview"));
 const AuditTimeline = lazy(() => import("./pages/AuditCenter/Timeline"));
