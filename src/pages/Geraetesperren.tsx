@@ -109,20 +109,14 @@ export default function Geraetesperren() {
     });
   }, [rows, q, status]);
 
-  // Mehrere Rücklastschriften pro Kundenkonto zusammenfassen
+  // Eine Zeile je Rechnung – weitere Sperren derselben Rechnung zum Aufklappen
   const groups = useMemo(() => {
-    const map = new Map<string, { key: string; name: string; number: string; items: any[]; total: number }>();
+    const map = new Map<string, { key: string; items: any[]; total: number }>();
     for (const r of filtered) {
-      const key = String(r.customer_number ?? r.customer_id ?? r.customer_name ?? r.id);
+      const key = String(r.invoice_number ?? r.invoice_id ?? r.id);
       let g = map.get(key);
       if (!g) {
-        g = {
-          key,
-          name: r.customer_name ?? '—',
-          number: r.customer_number ?? r.customer_id ?? '—',
-          items: [],
-          total: 0,
-        };
+        g = { key, items: [], total: 0 };
         map.set(key, g);
       }
       g.items.push(r);
