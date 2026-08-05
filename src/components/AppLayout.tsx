@@ -653,6 +653,20 @@ export const navItems: NavItem[] = [
         ],
       },
 
+      // CMR – Cloud Marketing Research (eigener Mandant)
+      {
+        path: '#cmr', label: 'CMR', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung'],
+        children: [
+          { path: '/cmr', label: 'CMR Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
+          { path: '/cmr/dokumente', label: 'Belege & Vorgänge', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
+          { path: '/cmr/artikel', label: 'Artikelstamm', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
+          { path: '/cmr/buchhaltung', label: 'Buchhaltung CMR', icon: Wallet, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
+          { path: '/cmr/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin'] },
+        ],
+      },
+
+
+
       // Stammdaten & Import
 
       // Benutzer & Rechte
