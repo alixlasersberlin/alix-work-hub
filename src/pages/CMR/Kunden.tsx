@@ -153,7 +153,8 @@ export default function CmrKunden() {
             </thead>
             <tbody>
               {filtered.map((r) => (
-                <tr key={r.key} className="border-b border-border/50 hover:bg-muted/40">
+                <tr key={r.key} className="border-b border-border/50 hover:bg-muted/40 cursor-pointer" onClick={() => openDetail(r)}>
+
                   <td className="py-2 px-2 font-medium">
                     <span className="inline-flex items-center gap-2"><Users className="w-3.5 h-3.5 text-muted-foreground" />{r.name}</span>
                   </td>
