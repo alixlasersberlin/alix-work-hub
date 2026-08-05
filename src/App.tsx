@@ -923,6 +923,11 @@ const EcpSupplier = lazy(() => import("./pages/ECP/Supplier"));
 const EcpSearch = lazy(() => import("./pages/ECP/Search"));
 const EcpNotifications = lazy(() => import("./pages/ECP/Notifications"));
 const EcpAdmin = lazy(() => import("./pages/ECP/Admin"));
+const CmrDashboard = lazy(() => import("./pages/CMR/Dashboard"));
+const CmrArtikel = lazy(() => import("./pages/CMR/Artikel"));
+const CmrDokumente = lazy(() => import("./pages/CMR/Dokumente"));
+const CmrBuchhaltung = lazy(() => import("./pages/CMR/Buchhaltung"));
+const CmrEinstellungen = lazy(() => import("./pages/CMR/Einstellungen"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -1233,6 +1238,11 @@ function AppRoutes() {
           <Route path="/operation/auftrags-import" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AuftragsImport /></ProtectedRoute>} />
           <Route path="/operation/auftrags-abgleich" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><AuftragsAbgleich /></ProtectedRoute>} />
           <Route path="/mandanten" element={<ProtectedRoute requiredRoles={['Super Admin']}><Mandanten /></ProtectedRoute>} />
+          <Route path="/cmr" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrDashboard /></ProtectedRoute>} />
+          <Route path="/cmr/artikel" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrArtikel /></ProtectedRoute>} />
+          <Route path="/cmr/dokumente" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrDokumente /></ProtectedRoute>} />
+          <Route path="/cmr/buchhaltung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrBuchhaltung /></ProtectedRoute>} />
+          <Route path="/cmr/einstellungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><CmrEinstellungen /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><AdminAuditLog /></ProtectedRoute>} />
           <Route path="/admin/geraete" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><GeraeteVerwaltung /></ProtectedRoute>} />
           <Route path="/konzern/dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><KonzernDashboard /></ProtectedRoute>} />
