@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Banknote, Plus, Download, Upload, FileDown } from 'lucide-react';
+import { Loader2, Banknote, Plus, Download, Upload, FileDown, SearchCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
@@ -22,7 +22,7 @@ export default function CmrBuchhaltung() {
   const [invoices, setInvoices] = useState<Doc[]>([]);
   const [payments, setPayments] = useState<Pay[]>([]);
   const [busy, setBusy] = useState(true);
-  const [tab, setTab] = useState<'offen' | 'alle' | 'zahlungen' | 'ust'>('offen');
+  const [tab, setTab] = useState<'offen' | 'alle' | 'zahlungen' | 'ust' | 'bank'>('offen');
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(null);
   const [saving, setSaving] = useState(false);
