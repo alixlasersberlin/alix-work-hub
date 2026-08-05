@@ -33,6 +33,24 @@ export default function CmrMahnwesen() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [busy, setBusy] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
+  const [runBusy, setRunBusy] = useState(false);
+
+  /** Startet den automatischen Mahnlauf – erzeugt ausschließlich Entwürfe. */
+  const runDunning = async () => {
+    if (!tenantId) return;
+    setRunBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('cmr-dunning-run', { body: { tenantId } });
+      if (error) throw error;
+      const created = Number((data as any)?.created ?? 0);
+      toast.success(created ? `${created} Mahnbeleg(e) als Entwurf erstellt.` : 'Keine neuen Mahnungen fällig.');
+      load();
+    } catch (e: any) {
+      toast.error(e.message ?? 'Mahnlauf fehlgeschlagen');
+    } finally {
+      setRunBusy(false);
+    }
+  };
 
   const cur = settings?.default_currency || 'AED';
 
