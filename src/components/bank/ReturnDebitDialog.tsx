@@ -196,6 +196,19 @@ export default function ReturnDebitDialog({
     finally { setBusy(false); }
   };
 
+  const doDunningPdf = async () => {
+    if (!rd) return;
+    const days = Number(window.prompt('Zahlungsfrist in Tagen für das Mahnschreiben', '7') ?? '');
+    if (!days || days < 1) return;
+    setBusy(true);
+    try {
+      const vars = await downloadReturnDunningPdf(rd, days);
+      toast.success(`Mahnschreiben erstellt (zahlbar bis ${vars.zahlbar_bis})`);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setBusy(false); }
+  };
+
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -421,6 +434,11 @@ export default function ReturnDebitDialog({
           {rd && (
             <Button size="sm" variant="outline" onClick={doDunning} disabled={busy}>
               <Mail className="w-3.5 h-3.5 mr-1" />Mahnung mit Sperrankündigung senden
+            </Button>
+          )}
+          {rd && (
+            <Button size="sm" variant="outline" onClick={doDunningPdf} disabled={busy}>
+              <FileText className="w-3.5 h-3.5 mr-1" />Mahnschreiben als PDF
             </Button>
           )}
           <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}>Bearbeitung abbrechen</Button>
