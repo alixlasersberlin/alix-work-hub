@@ -366,9 +366,29 @@ export default function CmrDokumente() {
     (!typeFilter || d.doc_type === typeFilter) &&
     (!search || `${d.doc_number ?? ''} ${d.customer_name ?? ''} ${d.reference ?? ''}`.toLowerCase().includes(search.toLowerCase())));
 
+  const exportCsv = () => {
+    const head = ['Belegart', 'Nummer', 'Datum', 'Fällig', 'Kunde', 'Status', 'Netto', 'MwSt.', 'Brutto', 'Bezahlt', 'Offen', 'Währung', 'Referenz'];
+    const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const rows = filtered.map((d) => [
+      CMR_DOC_TYPES.find((t) => t.value === d.doc_type)?.label ?? d.doc_type,
+      d.doc_number ?? '', d.doc_date ?? '', d.due_date ?? '', d.customer_name ?? '', d.status,
+      Number(d.net_total || 0).toFixed(2), Number(d.tax_total || 0).toFixed(2), Number(d.gross_total || 0).toFixed(2),
+      Number(d.paid_total || 0).toFixed(2), (Number(d.gross_total || 0) - Number(d.paid_total || 0)).toFixed(2),
+      d.currency || cur, d.reference ?? '',
+    ]);
+    const csv = [head, ...rows].map((r) => r.map(esc).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CMR_Belege_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading || busy) {
     return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
   }
+
 
   return (
     <div className="space-y-4">
