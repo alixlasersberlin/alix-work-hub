@@ -39,6 +39,55 @@ const KPIS: Record<string, Kpi[]> = {
 // Tabellen, die per Zoho-Quellsystem einem Mandanten zugeordnet sind
 const TENANT_SCOPED = ['orders', 'customers'];
 
+// Eigene Belegkreise: Mandanten ohne Zoho-Quellsystem haben eigene Tabellen
+const TENANT_KPIS: Record<string, Record<string, Kpi[]>> = {
+  CMR: {
+    verkauf: [
+      { key: 'cmr_docs', label: 'Belege', table: 'cmr_documents', to: '/cmr/dokumente' },
+      { key: 'cmr_projects', label: 'Projekte', table: 'cmr_projects', to: '/cmr/projekte' },
+      { key: 'cmr_items', label: 'Artikel', table: 'cmr_items', to: '/cmr/artikel' },
+      { key: 'customers', label: 'Kunden', table: 'customers', to: '/cmr/kunden' },
+    ],
+    buchhaltung: [
+      { key: 'cmr_docs', label: 'Belege', table: 'cmr_documents', to: '/cmr/buchhaltung' },
+      { key: 'cmr_pay', label: 'Zahlungen', table: 'cmr_payments', to: '/cmr/buchhaltung' },
+      { key: 'cmr_rec', label: 'Abos', table: 'cmr_recurring_plans', to: '/cmr/abos' },
+    ],
+    lager: [
+      { key: 'cmr_items', label: 'Artikel', table: 'cmr_items', to: '/cmr/artikel' },
+    ],
+    fertigung: [
+      { key: 'cmr_projects', label: 'Projekte', table: 'cmr_projects', to: '/cmr/projekte' },
+    ],
+    operation: [
+      { key: 'cmr_projects', label: 'Projekte', table: 'cmr_projects', to: '/cmr/projekte' },
+      { key: 'cmr_docs', label: 'Belege', table: 'cmr_documents', to: '/cmr/dokumente' },
+    ],
+  },
+  MED: {
+    verkauf: [
+      { key: 'med_docs', label: 'Belege', table: 'med_documents', to: '/med/belege' },
+      { key: 'med_items', label: 'Artikel', table: 'med_items', to: '/med/artikel' },
+      { key: 'customers', label: 'Kunden', table: 'customers', to: '/kunden' },
+    ],
+    buchhaltung: [
+      { key: 'med_docs', label: 'Belege', table: 'med_documents', to: '/med/buchhaltung' },
+      { key: 'med_pay', label: 'Zahlungen', table: 'med_payments', to: '/med/buchhaltung' },
+    ],
+    lager: [
+      { key: 'med_items', label: 'Artikel', table: 'med_items', to: '/med/artikel' },
+    ],
+    fertigung: [
+      { key: 'med_items', label: 'Artikel', table: 'med_items', to: '/med/artikel' },
+      { key: 'med_compliance', label: 'Compliance-Dokumente', table: 'med_compliance_docs', to: '/med/compliance' },
+    ],
+    operation: [
+      { key: 'med_docs', label: 'Belege', table: 'med_documents', to: '/med/belege' },
+      { key: 'med_compliance', label: 'Compliance-Dokumente', table: 'med_compliance_docs', to: '/med/compliance' },
+    ],
+  },
+};
+
 export default function WorkspaceDashboard() {
   const { code } = useParams<{ code: string }>();
   const { workspaces, navItems, current, setCurrent } = useWorkspace();
@@ -47,6 +96,10 @@ export default function WorkspaceDashboard() {
   const [loading, setLoading] = useState(true);
 
   const ws = workspaces.find(w => w.code === code) || current;
+  const tenantCode = tenant?.code ?? null;
+  const kpis = (tenantCode && TENANT_KPIS[tenantCode]?.[ws?.code ?? ''])
+    || KPIS[ws?.code ?? '']
+    || [];
 
   useEffect(() => {
     if (code && ws && ws.code !== current?.code) setCurrent(ws);
@@ -54,16 +107,17 @@ export default function WorkspaceDashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    const kpis = KPIS[ws?.code ?? ''] || [];
     if (kpis.length === 0) { setCounts({}); setLoading(false); return; }
     setLoading(true);
     (async () => {
       const res: Record<string, number | null> = {};
       await Promise.all(kpis.map(async (k) => {
         try {
+          const scoped = TENANT_SCOPED.includes(k.table);
+          // Mandant ohne Zoho-Quellsystem: Zoho-Tabellen enthalten keine Daten dieses Mandanten
+          if (scoped && sourceFilter && sourceFilter.length === 0) { res[k.key] = 0; return; }
           let q: any = supabase.from(k.table as any).select('id', { count: 'exact', head: true });
-          // Mandantenfilter: Tabellen mit source_system nach aktivem Mandanten einschränken
-          if (sourceFilter && sourceFilter.length > 0 && TENANT_SCOPED.includes(k.table)) {
+          if (scoped && sourceFilter && sourceFilter.length > 0) {
             q = q.in('source_system', sourceFilter);
           }
           const { count, error } = await q;
@@ -75,7 +129,9 @@ export default function WorkspaceDashboard() {
       if (!cancelled) { setCounts(res); setLoading(false); }
     })();
     return () => { cancelled = true; };
-  }, [ws?.code, sourceFilter?.join(',')]);
+  }, [ws?.code, tenantCode, sourceFilter?.join(',')]); // eslint-disable-line react-hooks/exhaustive-deps
+
+
 
 
   if (!ws) {
