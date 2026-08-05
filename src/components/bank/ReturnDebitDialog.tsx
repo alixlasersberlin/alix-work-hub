@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, CheckCircle2, Search, Loader2, Undo2, Split, PauseCircle, Copy, Banknote, Mail,
+  AlertTriangle, CheckCircle2, Search, Loader2, Undo2, Split, PauseCircle, Copy, Banknote, Mail, FileText,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -17,6 +17,7 @@ import {
   RD_STATUS, RETURN_CODES,
   type PaymentCandidate, type ReturnRules,
 } from '@/lib/bank/returnDebit';
+import { downloadReturnDunningPdf } from '@/lib/bank/returnDunningLetter';
 
 const fmt = (n: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
 
