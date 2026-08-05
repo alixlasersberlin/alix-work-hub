@@ -157,7 +157,17 @@ export default function CmrEinstellungen() {
             </div>
           ))}
         </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4"
+            checked={!!form.dunning_auto_send}
+            onChange={(e) => setForm({ ...form, dunning_auto_send: e.target.checked })}
+          />
+          Mahnungen automatisch versenden (sonst nur Entwürfe erzeugen)
+        </label>
       </Card>
+
 
 
       <Card className="p-4 space-y-3">
