@@ -558,6 +558,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/kontoauszuege/offen', label: 'Offene Zuordnungen', icon: Landmark, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/kontoauszuege/verbucht', label: 'Bereits verbuchte Zahlungen', icon: Landmark, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/kontoauszuege/historie', label: 'Importhistorie', icon: Landmark, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/kontoauszuege/quote', label: 'Rücklastschriftquote', icon: Landmark, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/kontoauszuege/konten', label: 'Bankkonten', icon: Landmark, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/kontoauszuege/regeln', label: 'Importregeln', icon: Landmark, roles: ['Admin', 'Super Admin'] },
         ],
