@@ -8,9 +8,10 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import {
   Gauge, Loader2, Star, FileSignature, Hash, Package, Building2,
-  TrendingUp, AlertTriangle, Receipt,
+  TrendingUp, AlertTriangle, Receipt, Download,
 } from 'lucide-react';
 import { useLicense, licMoney } from '@/hooks/useLicense';
+import { downloadCsv, downloadPdf } from '@/lib/license/export';
 
 const monthKey = (d: Date) => d.toISOString().slice(0, 7);
 const monthLabel = (k: string) =>
