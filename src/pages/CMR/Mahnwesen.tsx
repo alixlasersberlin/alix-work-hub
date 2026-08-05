@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, BellRing, FileWarning, PlayCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 
 type Doc = {
   id: string; doc_type: string; doc_number: string | null; status: string; tenant_id: string;
@@ -151,6 +152,7 @@ export default function CmrMahnwesen() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader
         title="CMR Mahnwesen"
         subtitle="Überfällige Rechnungen des Mandanten CMR – Zahlungserinnerung und Mahnstufen."

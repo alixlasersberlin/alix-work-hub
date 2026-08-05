@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Plus, Package, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 import CmrCategories from './Categories';
 
 type Cat = { id: string; name: string };
@@ -141,6 +142,7 @@ export default function CmrArtikel() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader title="CMR Artikelstamm" subtitle="Eigener Artikelstamm der Cloud Marketing Research – getrennt von Alix Lasers." />
       <CmrCategories tenantId={tenantId} onChanged={load} />
 

@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Plus, Briefcase, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 
 type Project = {
   id: string; code: string | null; name: string; customer_id: string | null; customer_name: string | null;
@@ -122,6 +123,7 @@ export default function CmrProjekte() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader title="CMR Projekte" subtitle="Projekte der Cloud Marketing Research – Budget, Laufzeit und Status." />
 
       <div className="flex flex-wrap gap-2 items-center">

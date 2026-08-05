@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Banknote, Plus, Download, Upload, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 
 type Doc = {
   id: string; doc_number: string | null; customer_id: string | null; customer_name: string | null;
@@ -374,6 +375,7 @@ export default function CmrBuchhaltung() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader title="CMR Buchhaltung" subtitle="Getrennte Buchhaltung der Cloud Marketing Research – ohne Vermischung mit Alix Lasers." />
 
       <div className="grid grid-cols-3 gap-3">

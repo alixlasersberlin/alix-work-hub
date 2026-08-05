@@ -14,6 +14,7 @@ import { generateCmrDocumentPdf, cmrPdfFilename } from '@/lib/cmr-document-pdf';
 import { loadCmrPdfOptions } from '@/lib/cmr-pdf-template';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney, CMR_DOC_TYPES, CMR_DOC_STATUS } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 
 type Doc = {
   id: string; doc_type: string; doc_number: string | null; status: string;
@@ -429,6 +430,7 @@ export default function CmrDokumente() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader title="CMR Geschäftsvorgänge" subtitle="Angebote, Aufträge, Rechnungen und mehr – ausschließlich im Mandanten CMR sichtbar." />
 
       <div className="flex flex-wrap gap-2 items-center">

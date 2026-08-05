@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Plus, Repeat, Trash2, Play, Pause } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 
 type PlanLine = { name: string; quantity: number; unit: string; unit_price: number; tax_rate: number };
 type Plan = {
@@ -154,6 +155,7 @@ export default function CmrAbos() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader
         title="CMR Abrechnungen"
         subtitle="Wiederkehrende Abrechnung – erzeugt automatisch Rechnungen im Mandanten CMR."

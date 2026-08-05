@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 import CmrEmailTemplates from './EmailTemplates';
 import CmrNumberRanges from './NumberRanges';
 import CmrPdfTemplates from './PdfTemplates';
@@ -91,6 +92,7 @@ export default function CmrEinstellungen() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader
         title="CMR Einstellungen"
         subtitle="Branding, Bankdaten, Steuer und E-Mail-Versand – gelten ausschließlich für den Mandanten CMR."
