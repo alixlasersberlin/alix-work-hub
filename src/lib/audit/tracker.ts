@@ -21,6 +21,9 @@ class AuditTracker {
   private lastActivity = Date.now();
   private lastHeartbeat = Date.now();
   private started = false;
+  private failureCount = 0;
+  private pauseUntil = 0;
+
 
   async start() {
     if (this.started) return;
