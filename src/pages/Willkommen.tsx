@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
-import { useWorkspace, type Workspace } from '@/contexts/WorkspaceContext';
+import { useWorkspace, type Workspace, type WorkspaceNavEntry } from '@/contexts/WorkspaceContext';
+import { useTopPages } from '@/hooks/usePageUsage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lock, ArrowRight, Building2, LayoutGrid } from 'lucide-react';
+import { Lock, ArrowRight, Building2, LayoutGrid, Zap } from 'lucide-react';
 
 /**
  * Startseite nach dem Login:
@@ -16,7 +17,7 @@ import { Lock, ArrowRight, Building2, LayoutGrid } from 'lucide-react';
  */
 export default function Willkommen() {
   const navigate = useNavigate();
-  const { profile } = useAuth() as any;
+  const { profile, roles } = useAuth() as any;
   const { tenants, allowedTenants, setCurrent: setTenant, loading: tLoading } = useTenant();
   const {
     workspaces: allowedWorkspaces,
@@ -24,22 +25,25 @@ export default function Willkommen() {
     setWorkspaceMode,
     loading: wLoading,
   } = useWorkspace();
+  const { pages: topPages, loading: topLoading } = useTopPages(20);
 
   const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
+  const [allNav, setAllNav] = useState<WorkspaceNavEntry[]>([]);
   const [tenantCode, setTenantCode] = useState<string>('');
   const [wsCode, setWsCode] = useState<string>('');
 
   useEffect(() => {
     document.title = 'Startseite — Alix Work';
     (async () => {
-      const { data } = await supabase
-        .from('workspaces' as any)
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
-      setAllWorkspaces(((data as any) || []) as Workspace[]);
+      const [{ data: ws }, { data: nav }] = await Promise.all([
+        supabase.from('workspaces' as any).select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('workspace_nav_items' as any).select('*').eq('is_active', true),
+      ]);
+      setAllWorkspaces(((ws as any) || []) as Workspace[]);
+      setAllNav(((nav as any) || []) as WorkspaceNavEntry[]);
     })();
   }, []);
+
 
   const allowedTenantCodes = useMemo(
     () => new Set(allowedTenants.map((t) => t.code)),
@@ -75,9 +79,41 @@ export default function Willkommen() {
 
   const loading = tLoading || wLoading;
 
+  const isSuper = Array.isArray(roles) && roles.includes('Super Admin');
+
+  // Schnellzugriff: 20 meistgenutzte Menüpunkte über ALLE Workspaces,
+  // gefiltert auf erlaubte Workspaces und Rollen.
+  const quickAccess = useMemo(() => {
+    const wsById = new Map(allWorkspaces.map((w) => [w.id, w]));
+    const navByPath = new Map<string, WorkspaceNavEntry>();
+    for (const n of allNav) if (!navByPath.has(n.path)) navByPath.set(n.path, n);
+
+    return topPages
+      .map((p) => {
+        const nav = navByPath.get(p.path);
+        const ws = nav ? wsById.get(nav.workspace_id) : undefined;
+        return { ...p, nav, ws };
+      })
+      .filter(({ nav, ws }) => {
+        if (!nav || !ws) return false;                       // nur echte Menüpunkte
+        if (!allowedWsIds.has(ws.id)) return false;          // Workspace freigegeben?
+        if (!nav.roles || nav.roles.length === 0) return true;
+        if (isSuper) return true;
+        return (roles || []).some((r: string) => nav.roles!.includes(r));
+      })
+      .slice(0, 20);
+  }, [topPages, allNav, allWorkspaces, allowedWsIds, roles, isSuper]);
+
+  const openQuick = (path: string, wsId: string) => {
+    const ws = allWorkspaces.find((w) => w.id === wsId);
+    if (ws) { setWorkspace(ws); setWorkspaceMode(true); }
+    navigate(path);
+  };
+
   return (
-    <main className="min-h-[70vh] flex items-center justify-center px-4 py-10">
+    <main className="min-h-[70vh] flex flex-col items-center justify-center gap-6 px-4 py-10">
       <Card className="w-full max-w-2xl card-glow animate-fade-in">
+
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-light tracking-wide">
             Willkommen{profile?.full_name ? `, ${profile.full_name}` : ''}
@@ -162,6 +198,46 @@ export default function Willkommen() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="w-full max-w-2xl animate-fade-in">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Zap className="h-4 w-4 text-primary" /> Schnellzugriff
+            <span className="text-xs font-normal text-muted-foreground">
+              Ihre 20 meistgenutzten Menüpunkte (alle Abteilungen)
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {topLoading ? (
+            <p className="text-xs text-muted-foreground">Wird berechnet …</p>
+          ) : quickAccess.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Noch keine Nutzungsdaten – der Schnellzugriff füllt sich automatisch, sobald Sie
+              Menüpunkte öffnen.
+            </p>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {quickAccess.map((q) => (
+                <button
+                  key={q.path}
+                  onClick={() => openQuick(q.path, q.ws!.id)}
+                  className="flex items-center justify-between gap-2 rounded-md border border-border bg-background/50 px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
+                >
+                  <span className="truncate">
+                    {q.nav!.label}
+                    <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {q.ws!.name}
+                    </span>
+                  </span>
+                  <Badge variant="secondary" className="shrink-0">{q.hits}×</Badge>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </main>
+
   );
 }
