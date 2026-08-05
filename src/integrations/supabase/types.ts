@@ -10846,6 +10846,7 @@ export type Database = {
           created_by: string | null
           currency: string
           customer_id: string | null
+          discount_amount: number
           document_id: string | null
           id: string
           method: string | null
@@ -10861,6 +10862,7 @@ export type Database = {
           created_by?: string | null
           currency?: string
           customer_id?: string | null
+          discount_amount?: number
           document_id?: string | null
           id?: string
           method?: string | null
@@ -10876,6 +10878,7 @@ export type Database = {
           created_by?: string | null
           currency?: string
           customer_id?: string | null
+          discount_amount?: number
           document_id?: string | null
           id?: string
           method?: string | null
@@ -11114,6 +11117,7 @@ export type Database = {
           country: string | null
           created_at: string
           default_currency: string
+          dunning_auto_send: boolean
           dunning_days_1: number
           dunning_days_2: number
           dunning_days_3: number
@@ -11161,6 +11165,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           default_currency?: string
+          dunning_auto_send?: boolean
           dunning_days_1?: number
           dunning_days_2?: number
           dunning_days_3?: number
@@ -11208,6 +11213,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           default_currency?: string
+          dunning_auto_send?: boolean
           dunning_days_1?: number
           dunning_days_2?: number
           dunning_days_3?: number
