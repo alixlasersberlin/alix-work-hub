@@ -1350,6 +1350,16 @@ function AppRoutes() {
           <Route path="/operation/anzahlung-mahnung-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin']}><OperationMahnungKonfiguration /></ProtectedRoute>} />
           <Route path="/finance/datev" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatev /></ProtectedRoute>} />
           <Route path="/finance/bank" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceBank /></ProtectedRoute>} />
+          <Route path="/finance/kontoauszuege" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><KontoauszuegeLayout /></ProtectedRoute>}>
+            <Route index element={<KontoauszuegeImport />} />
+            <Route path="import" element={<KontoauszuegeImport />} />
+            <Route path="buchungen" element={<KontoauszuegeBuchungen />} />
+            <Route path="offen" element={<KontoauszuegeOffen />} />
+            <Route path="verbucht" element={<KontoauszuegeVerbucht />} />
+            <Route path="historie" element={<KontoauszuegeHistorie />} />
+            <Route path="konten" element={<KontoauszuegeKonten />} />
+            <Route path="regeln" element={<KontoauszuegeRegeln />} />
+          </Route>
           <Route path="/finance/sepa" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSepa /></ProtectedRoute>} />
           <Route path="/finance/qr-rechnung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceQrRechnung /></ProtectedRoute>} />
           <Route path="/finance/ch-lastschriften" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceChLastschriften /></ProtectedRoute>} />
