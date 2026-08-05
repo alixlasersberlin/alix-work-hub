@@ -27,8 +27,38 @@ export default function CmrKunden() {
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(true);
   const [q, setQ] = useState('');
+  const [detail, setDetail] = useState<Row | null>(null);
+  const [detailDocs, setDetailDocs] = useState<any[] | null>(null);
 
   const cur = settings?.default_currency || 'AED';
+
+  const openDetail = async (r: Row) => {
+    setDetail(r);
+    setDetailDocs(null);
+    let query = supabase
+      .from('cmr_documents' as any)
+      .select('id,doc_number,doc_type,doc_date,due_date,status,gross_total,paid_total,currency')
+      .eq('tenant_id', tenantId)
+      .order('doc_date', { ascending: false })
+      .limit(200);
+    query = r.customer_id ? query.eq('customer_id', r.customer_id) : query.eq('customer_name', r.name);
+    const { data } = await query;
+    setDetailDocs(((data as any) || []) as any[]);
+  };
+
+  const exportCsv = () => {
+    const sep = ';';
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    let csv = ['Kunde', 'E-Mail', 'Belege', 'Umsatz', 'Bezahlt', 'Offen', 'Letzter Beleg'].join(sep) + '\n';
+    csv += filtered.map((r) => [
+      r.name, r.email ?? '', r.docs, r.gross.toFixed(2), r.paid.toFixed(2), r.open.toFixed(2), r.last ?? '',
+    ].map(esc).join(sep)).join('\n');
+    const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'CMR_Kunden.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
 
   useEffect(() => {
     if (!tenantId) return;
