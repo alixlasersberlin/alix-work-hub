@@ -89,6 +89,7 @@ export default function Ruecklastschriften() {
 
   return (
     <div className="space-y-4">
+      {loadError && <BankLoadErrorPanel error={loadError} onRetry={load} />}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
