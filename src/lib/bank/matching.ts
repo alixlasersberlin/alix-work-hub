@@ -95,6 +95,9 @@ export function scoreInvoices(
     if (cname && cname.length > 4 && hay.includes(cname)) { score += 8; reasons.push('Kundenname im Buchungstext'); }
     if (inv.customer_id && ibanCustomerIds.has(inv.customer_id)) { score += 15; reasons.push('IBAN ist dem Kunden zugeordnet'); }
     if (inv.customer_id && hayRaw.includes(String(inv.customer_id).toLowerCase())) { score += 10; reasons.push('Kundennummer erkannt'); }
+    if (learnedCustomerId && inv.customer_id && inv.customer_id === learnedCustomerId) {
+      score += 18; reasons.push('Gelernte Regel: Zahler war bereits diesem Kunden zugeordnet');
+    }
     if (inv.due_date) {
       const d = new Date(inv.due_date).getTime();
       if (isFinite(d) && Math.abs(Date.now() - d) < 1000 * 60 * 60 * 24 * 60) { score += 2; reasons.push('Fälligkeit im Zeitfenster'); }
