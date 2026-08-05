@@ -10,6 +10,8 @@ import { downloadReturnDunningPdf } from '@/lib/bank/returnDunningLetter';
 import { supabase } from '@/integrations/supabase/client';
 import ReturnDebitDialog from '@/components/bank/ReturnDebitDialog';
 import ManualReturnDebitDialog from '@/components/bank/ManualReturnDebitDialog';
+import BankLoadErrorPanel from '@/components/bank/BankLoadErrorPanel';
+import { describeBankLoadError, type BankLoadError } from '@/lib/bank/loadError';
 
 const fmt = (n: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
 
