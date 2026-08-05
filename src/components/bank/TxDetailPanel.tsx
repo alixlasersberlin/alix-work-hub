@@ -57,7 +57,7 @@ export function TxDetailPanel({
                   <Row l="Buchungsdatum" v={tx.booking_date} />
                   <Row l="Wertstellung" v={tx.value_date} />
                   <Row l="Richtung" v={tx.transaction_type === 'eingang' ? 'Zahlungseingang' : 'Zahlungsausgang'} />
-                  <Row l="Auftraggeber / Empfänger" v={tx.sender_receiver_name} />
+                  <Row l="Kundenname (Auftraggeber / Empfänger)" v={tx.sender_receiver_name} />
                   <Row l="IBAN" v={tx.sender_receiver_iban} />
                   <Row l="BIC" v={tx.bic} />
                   <Row l="Buchungstext" v={tx.booking_text} />
