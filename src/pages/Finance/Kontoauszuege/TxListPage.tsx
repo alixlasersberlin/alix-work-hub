@@ -149,7 +149,7 @@ export default function TxListPage({
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-2 top-3 text-muted-foreground" />
-              <Input className="pl-8" placeholder="Suche: Name, IBAN, Verwendungszweck, Referenz" value={search} onChange={e => setSearch(e.target.value)} />
+              <Input className="pl-8" placeholder="Suche: Auftragsnr., Rechnungsnr., Kundenname, IBAN, Verwendungszweck" value={search} onChange={e => setSearch(e.target.value)} />
             </div>
             <select className="h-10 rounded-md border border-border bg-background px-2 text-sm" value={accountId} onChange={e => setAccountId(e.target.value)}>
               <option value="">Alle Bankkonten</option>
