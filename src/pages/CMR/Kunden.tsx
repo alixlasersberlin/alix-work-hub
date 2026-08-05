@@ -6,7 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Search, Users, Download } from 'lucide-react';
+import { Input as TextInput } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { DialogFooter } from '@/components/ui/dialog';
+import { Loader2, Search, Users, Download, BellRing } from 'lucide-react';
+import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney, CMR_DOC_TYPES } from '@/hooks/useCmrTenant';
 
 
@@ -23,12 +27,14 @@ type Row = {
 };
 
 export default function CmrKunden() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite } = useCmrTenant();
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(true);
   const [q, setQ] = useState('');
   const [detail, setDetail] = useState<Row | null>(null);
   const [detailDocs, setDetailDocs] = useState<any[] | null>(null);
+  const [dunning, setDunning] = useState<any>(null);
+  const [dunningSaving, setDunningSaving] = useState(false);
 
   const cur = settings?.default_currency || 'AED';
 
@@ -44,6 +50,61 @@ export default function CmrKunden() {
     query = r.customer_id ? query.eq('customer_id', r.customer_id) : query.eq('customer_name', r.name);
     const { data } = await query;
     setDetailDocs(((data as any) || []) as any[]);
+  };
+
+  /** Individuelle Mahnstufen je Kunde (überschreiben die Mandanten-Einstellung). */
+  const openDunning = async (r: Row) => {
+    if (!tenantId) return;
+    const { data } = await supabase
+      .from('cmr_customer_dunning' as any)
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('customer_id', r.customer_id)
+      .maybeSingle();
+    setDunning({
+      row: r,
+      id: (data as any)?.id ?? null,
+      days_1: (data as any)?.days_1 ?? (settings as any)?.dunning_days_1 ?? 7,
+      days_2: (data as any)?.days_2 ?? (settings as any)?.dunning_days_2 ?? 14,
+      days_3: (data as any)?.days_3 ?? (settings as any)?.dunning_days_3 ?? 30,
+      gap_days: (data as any)?.gap_days ?? (settings as any)?.dunning_gap_days ?? 7,
+      fee_1: (data as any)?.fee_1 ?? 0,
+      fee_2: (data as any)?.fee_2 ?? 0,
+      fee_3: (data as any)?.fee_3 ?? 0,
+      interest_pct: (data as any)?.interest_pct ?? 0,
+      is_active: (data as any)?.is_active ?? true,
+      exists: !!(data as any)?.id,
+    });
+  };
+
+  const saveDunning = async () => {
+    if (!tenantId || !dunning) return;
+    if (!dunning.row.customer_id) { toast.error('Kunde ohne Kundennummer – keine eigene Mahnstufe möglich'); return; }
+    setDunningSaving(true);
+    const payload: any = {
+      tenant_id: tenantId,
+      customer_id: dunning.row.customer_id,
+      customer_name: dunning.row.name,
+      is_active: !!dunning.is_active,
+    };
+    ['days_1', 'days_2', 'days_3', 'gap_days', 'fee_1', 'fee_2', 'fee_3', 'interest_pct'].forEach((k) => {
+      payload[k] = Number(dunning[k]) || 0;
+    });
+    const { error } = dunning.id
+      ? await supabase.from('cmr_customer_dunning' as any).update(payload).eq('id', dunning.id)
+      : await supabase.from('cmr_customer_dunning' as any).insert(payload);
+    setDunningSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Mahnstufen gespeichert');
+    setDunning(null);
+  };
+
+  const resetDunning = async () => {
+    if (!dunning?.id) { setDunning(null); return; }
+    const { error } = await supabase.from('cmr_customer_dunning' as any).delete().eq('id', dunning.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Kundenregel entfernt – es gilt wieder die Standardeinstellung');
+    setDunning(null);
   };
 
   const exportCsv = () => {
@@ -149,6 +210,7 @@ export default function CmrKunden() {
                 <th className="text-right py-2 px-2">Bezahlt</th>
                 <th className="text-right py-2 px-2">Offen</th>
                 <th className="text-left py-2 px-2">Letzter Beleg</th>
+                <th className="text-right py-2 px-2">Mahnstufen</th>
               </tr>
             </thead>
             <tbody>
@@ -168,15 +230,70 @@ export default function CmrKunden() {
                       : <span className="text-muted-foreground">—</span>}
                   </td>
                   <td className="py-2 px-2 text-muted-foreground">{r.last ? new Date(r.last).toLocaleDateString('de-DE') : '—'}</td>
+                  <td className="py-2 px-2 text-right">
+                    <Button
+                      size="sm" variant="ghost" disabled={!canWrite || !r.customer_id}
+                      onClick={(e) => { e.stopPropagation(); openDunning(r); }}
+                    >
+                      <BellRing className="w-3.5 h-3.5" />
+                    </Button>
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="py-8 text-center text-muted-foreground">Keine Kunden gefunden.</td></tr>
+                <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Keine Kunden gefunden.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       </Card>
+
+      <Dialog open={!!dunning} onOpenChange={(o) => !o && setDunning(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Mahnstufen · {dunning?.row?.name}</DialogTitle></DialogHeader>
+          {dunning && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Diese Werte überschreiben für diesen Kunden die allgemeinen CMR-Mahneinstellungen.
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { key: 'days_1', label: 'Erinnerung ab (Tage)' },
+                  { key: 'days_2', label: '1. Mahnung ab (Tage)' },
+                  { key: 'days_3', label: '2. Mahnung ab (Tage)' },
+                  { key: 'gap_days', label: 'Mindestabstand (Tage)' },
+                  { key: 'fee_1', label: 'Gebühr Erinnerung' },
+                  { key: 'fee_2', label: 'Gebühr 1. Mahnung' },
+                  { key: 'fee_3', label: 'Gebühr 2. Mahnung' },
+                  { key: 'interest_pct', label: 'Verzugszinsen p.a. (%)' },
+                ].map((f) => (
+                  <div key={f.key}>
+                    <Label>{f.label}</Label>
+                    <TextInput
+                      type="number" step="0.01" value={dunning[f.key] ?? 0}
+                      onChange={(e) => setDunning({ ...dunning, [f.key]: e.target.value })}
+                    />
+                  </div>
+                ))}
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox" className="h-4 w-4" checked={!!dunning.is_active}
+                  onChange={(e) => setDunning({ ...dunning, is_active: e.target.checked })}
+                />
+                Kunde am Mahnlauf teilnehmen lassen
+              </label>
+            </div>
+          )}
+          <DialogFooter>
+            {dunning?.id && <Button variant="ghost" onClick={resetDunning}>Regel entfernen</Button>}
+            <Button variant="outline" onClick={() => setDunning(null)}>Abbrechen</Button>
+            <Button onClick={saveDunning} disabled={dunningSaving}>
+              {dunningSaving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />} Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!detail} onOpenChange={(o) => { if (!o) { setDetail(null); setDetailDocs(null); } }}>
         <DialogContent className="max-w-3xl">
