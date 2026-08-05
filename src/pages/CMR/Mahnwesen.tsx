@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, BellRing, FileWarning } from 'lucide-react';
+import { Loader2, BellRing, FileWarning, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 
@@ -33,6 +33,24 @@ export default function CmrMahnwesen() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [busy, setBusy] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
+  const [runBusy, setRunBusy] = useState(false);
+
+  /** Startet den automatischen Mahnlauf – erzeugt ausschließlich Entwürfe. */
+  const runDunning = async () => {
+    if (!tenantId) return;
+    setRunBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('cmr-dunning-run', { body: { tenantId } });
+      if (error) throw error;
+      const created = Number((data as any)?.created ?? 0);
+      toast.success(created ? `${created} Mahnbeleg(e) als Entwurf erstellt.` : 'Keine neuen Mahnungen fällig.');
+      load();
+    } catch (e: any) {
+      toast.error(e.message ?? 'Mahnlauf fehlgeschlagen');
+    } finally {
+      setRunBusy(false);
+    }
+  };
 
   const cur = settings?.default_currency || 'AED';
 
@@ -108,7 +126,16 @@ export default function CmrMahnwesen() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="CMR Mahnwesen" subtitle="Überfällige Rechnungen des Mandanten CMR – Zahlungserinnerung und Mahnstufen." />
+      <PageHeader
+        title="CMR Mahnwesen"
+        subtitle="Überfällige Rechnungen des Mandanten CMR – Zahlungserinnerung und Mahnstufen."
+        actions={
+          <Button variant="outline" onClick={runDunning} disabled={runBusy}>
+            {runBusy ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1.5" />}
+            Mahnlauf jetzt
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-2 gap-3">
         <Card className="p-4"><div className="text-[11px] uppercase text-muted-foreground">Überfällige Rechnungen</div><div className="text-xl font-semibold mt-1">{sums.count}</div></Card>
