@@ -58,8 +58,43 @@ export default function CmrDokumente() {
   const [sendMessage, setSendMessage] = useState('');
   const [sending, setSending] = useState(false);
 
+  const [payDoc, setPayDoc] = useState<Doc | null>(null);
+  const [payForm, setPayForm] = useState<any>(null);
+  const [paying, setPaying] = useState(false);
+
   const cur = settings?.default_currency || 'AED';
   const defTax = Number(settings?.tax_rate ?? 5);
+
+  const startPayment = (d: Doc) => {
+    setPayForm({
+      amount: Math.max(0, Number(d.gross_total || 0) - Number(d.paid_total || 0)),
+      paid_on: new Date().toISOString().slice(0, 10),
+      method: 'Überweisung',
+      reference: d.doc_number ?? '',
+    });
+    setPayDoc(d);
+  };
+
+  const savePayment = async () => {
+    if (!tenantId || !payDoc || !payForm) return;
+    setPaying(true);
+    const { error } = await supabase.from('cmr_payments' as any).insert({
+      tenant_id: tenantId,
+      document_id: payDoc.id,
+      customer_id: payDoc.customer_id,
+      paid_on: payForm.paid_on,
+      amount: Number(payForm.amount) || 0,
+      currency: payDoc.currency || cur,
+      method: payForm.method || null,
+      reference: payForm.reference || null,
+    });
+    setPaying(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Zahlungseingang erfasst');
+    setPayDoc(null);
+    load();
+  };
+
 
   const load = async () => {
     if (!tenantId) return;
