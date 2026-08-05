@@ -37531,6 +37531,7 @@ export type Database = {
         Args: { _production_order_id: string }
         Returns: undefined
       }
+      cmr_can_write: { Args: never; Returns: boolean }
       cmr_dashboard_kpis: { Args: { _tenant_id: string }; Returns: Json }
       cmr_next_document_number: {
         Args: { _doc_type: string; _tenant_id: string }
