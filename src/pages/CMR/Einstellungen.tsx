@@ -110,6 +110,22 @@ export default function CmrEinstellungen() {
       ))}
 
       <Card className="p-4 space-y-3">
+        <div className="text-sm font-semibold">SMTP-Verschlüsselung</div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.smtp_secure !== false}
+            onChange={(e) => setForm({ ...form, smtp_secure: e.target.checked })}
+          />
+          TLS/SSL verwenden (empfohlen, Port 465/587)
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Sobald ein SMTP-Host hinterlegt ist, läuft der Versand über deinen Mailserver (Passwort liegt im Secret CMR_SMTP_PASSWORD), sonst über Resend.
+        </p>
+      </Card>
+
+      <Card className="p-4 space-y-3">
+
         <div className="text-sm font-semibold">Texte</div>
         <div><Label>Steuerhinweis</Label><Textarea rows={2} value={form.tax_note ?? ''} onChange={(e) => setForm({ ...form, tax_note: e.target.value })} /></div>
         <div><Label>Zahlungsbedingungen</Label><Textarea rows={2} value={form.payment_terms ?? ''} onChange={(e) => setForm({ ...form, payment_terms: e.target.value })} /></div>
