@@ -8,9 +8,10 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import {
   Gauge, Loader2, Star, FileSignature, Hash, Package, Building2,
-  TrendingUp, AlertTriangle, Receipt,
+  TrendingUp, AlertTriangle, Receipt, Download,
 } from 'lucide-react';
 import { useLicense, licMoney } from '@/hooks/useLicense';
+import { downloadCsv, downloadPdf } from '@/lib/license/export';
 
 const monthKey = (d: Date) => d.toISOString().slice(0, 7);
 const monthLabel = (k: string) =>
@@ -136,6 +137,24 @@ export default function LicenseCockpit() {
   const maxTrend = Math.max(...trend.map((t) => t.amount), 1);
   const maxBrand = Math.max(...byBrand.map(([, v]) => v), 1);
 
+  const matrixHeaders = ['Mandant', 'Code', 'Vertrag', 'Satz', 'Buchungen', 'Basis netto', 'Royalty', 'Offen'];
+  const matrixRows = () =>
+    byTenant.map((t) => [
+      t.name,
+      t.code,
+      t.contract?.contract_number || (t.contract ? 'aktiv' : 'kein Vertrag'),
+      t.contract?.royalty_percent
+        ? `${Number(t.contract.royalty_percent)} %`
+        : t.contract?.rate_per_unit
+          ? `${Number(t.contract.rate_per_unit)} / Stk`
+          : '-',
+      t.bookings,
+      t.base.toFixed(2),
+      t.royalty.toFixed(2),
+      t.open.toFixed(2),
+    ]);
+
+
   if (loading || busy) {
     return <div className="flex items-center justify-center p-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
@@ -148,6 +167,10 @@ export default function LicenseCockpit() {
         icon={Gauge}
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => downloadPdf('lizenz_cockpit', `Lizenz-Cockpit ${year}`, matrixHeaders, matrixRows(), `Stand ${today}`)}>
+              <Download className="mr-2 h-4 w-4" /> PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => downloadCsv('lizenz_cockpit', matrixHeaders, matrixRows())}>CSV</Button>
             <Button asChild variant="outline" size="sm"><Link to="/license/royalties">Lizenzabrechnung</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to="/license/auswertungen">Auswertungen</Link></Button>
           </div>
