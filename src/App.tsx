@@ -960,6 +960,7 @@ const CmrZeiten = lazy(() => import("./pages/CMR/Zeiten"));
 const CmrSammelrechnungen = lazy(() => import("./pages/CMR/Sammelrechnungen"));
 const CmrPortal = lazy(() => import("./pages/CMR/Portal"));
 const LicenseDashboard = lazy(() => import("./pages/License/Dashboard"));
+const LicenseCockpit = lazy(() => import("./pages/License/Cockpit"));
 const LicenseMarken = lazy(() => import("./pages/License/Marken"));
 const LicenseLizenznehmer = lazy(() => import("./pages/License/Lizenznehmer"));
 const LicenseVertraege = lazy(() => import("./pages/License/Vertraege"));
@@ -1300,6 +1301,7 @@ function AppRoutes() {
           <Route path="/cmr/betrieb" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR','CMR Viewer']}><CmrBetrieb /></ProtectedRoute>} />
           <Route path="/cmr/einstellungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><CmrEinstellungen /></ProtectedRoute>} />
           <Route path="/license" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseDashboard /></ProtectedRoute>} />
+          <Route path="/license/cockpit" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseCockpit /></ProtectedRoute>} />
           <Route path="/license/marken" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseMarken /></ProtectedRoute>} />
           <Route path="/license/lizenznehmer" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseLizenznehmer /></ProtectedRoute>} />
           <Route path="/license/vertraege" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','License Manager']}><LicenseVertraege /></ProtectedRoute>} />
