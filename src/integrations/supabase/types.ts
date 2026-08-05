@@ -8719,6 +8719,209 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_return_debit_allocations: {
+        Row: {
+          allocated_amount: number
+          created_at: string
+          created_by: string | null
+          id: string
+          installment_id: string | null
+          invoice_id: string | null
+          invoice_number: string | null
+          invoice_source: string
+          order_id: string | null
+          original_payment_allocation_id: string | null
+          return_debit_id: string
+        }
+        Insert: {
+          allocated_amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installment_id?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          invoice_source?: string
+          order_id?: string | null
+          original_payment_allocation_id?: string | null
+          return_debit_id: string
+        }
+        Update: {
+          allocated_amount?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installment_id?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          invoice_source?: string
+          order_id?: string | null
+          original_payment_allocation_id?: string | null
+          return_debit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_return_debit_allocations_original_payment_allocation__fkey"
+            columns: ["original_payment_allocation_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transaction_allocations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_return_debit_allocations_return_debit_id_fkey"
+            columns: ["return_debit_id"]
+            isOneToOne: false
+            referencedRelation: "bank_return_debits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_return_debits: {
+        Row: {
+          accounting_area: string
+          additional_costs: number
+          bank_account_id: string | null
+          bank_fee: number
+          bank_transaction_id: string
+          booking_account: string | null
+          booking_date: string | null
+          charge_customer: boolean
+          company_id: string | null
+          confirmed_at: string | null
+          confirmed_by: string | null
+          cost_center: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_fee: number
+          customer_id: string | null
+          fee_handling: string
+          id: string
+          installment_id: string | null
+          invoice_id: string | null
+          invoice_number: string | null
+          matching_score: number
+          note: string | null
+          order_id: string | null
+          original_payment_transaction_id: string | null
+          reminder_process_started: boolean
+          return_code: string | null
+          return_debit_amount: number
+          return_reason: string | null
+          reversal_of: string | null
+          sepa_mandate_blocked: boolean
+          status: string
+          tenant_id: string | null
+          updated_at: string
+          value_date: string | null
+        }
+        Insert: {
+          accounting_area?: string
+          additional_costs?: number
+          bank_account_id?: string | null
+          bank_fee?: number
+          bank_transaction_id: string
+          booking_account?: string | null
+          booking_date?: string | null
+          charge_customer?: boolean
+          company_id?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_fee?: number
+          customer_id?: string | null
+          fee_handling?: string
+          id?: string
+          installment_id?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          matching_score?: number
+          note?: string | null
+          order_id?: string | null
+          original_payment_transaction_id?: string | null
+          reminder_process_started?: boolean
+          return_code?: string | null
+          return_debit_amount?: number
+          return_reason?: string | null
+          reversal_of?: string | null
+          sepa_mandate_blocked?: boolean
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          value_date?: string | null
+        }
+        Update: {
+          accounting_area?: string
+          additional_costs?: number
+          bank_account_id?: string | null
+          bank_fee?: number
+          bank_transaction_id?: string
+          booking_account?: string | null
+          booking_date?: string | null
+          charge_customer?: boolean
+          company_id?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_fee?: number
+          customer_id?: string | null
+          fee_handling?: string
+          id?: string
+          installment_id?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          matching_score?: number
+          note?: string | null
+          order_id?: string | null
+          original_payment_transaction_id?: string | null
+          reminder_process_started?: boolean
+          return_code?: string | null
+          return_debit_amount?: number
+          return_reason?: string | null
+          reversal_of?: string | null
+          sepa_mandate_blocked?: boolean
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+          value_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_return_debits_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_return_debits_bank_transaction_id_fkey"
+            columns: ["bank_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_return_debits_original_payment_transaction_id_fkey"
+            columns: ["original_payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_return_debits_reversal_of_fkey"
+            columns: ["reversal_of"]
+            isOneToOne: false
+            referencedRelation: "bank_return_debits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bank_transaction_allocations: {
         Row: {
           allocated_amount: number
@@ -26132,6 +26335,62 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_risk_flags: {
+        Row: {
+          active: boolean
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          id: string
+          reason: string | null
+          related_return_debit_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          risk_level: string
+          risk_type: string
+          tenant_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          id?: string
+          reason?: string | null
+          related_return_debit_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          risk_level?: string
+          risk_type?: string
+          tenant_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          id?: string
+          reason?: string | null
+          related_return_debit_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          risk_level?: string
+          risk_type?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_risk_flags_related_return_debit_id_fkey"
+            columns: ["related_return_debit_id"]
+            isOneToOne: false
+            referencedRelation: "bank_return_debits"
             referencedColumns: ["id"]
           },
         ]
