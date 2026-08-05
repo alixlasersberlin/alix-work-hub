@@ -540,6 +540,10 @@ export default function CmrBuchhaltung() {
           <Button size="sm" variant="outline" onClick={exportYearPdf}>
             <FileDown className="w-3.5 h-3.5 mr-1" /> Jahresabschluss
           </Button>
+          <Button size="sm" variant="outline" onClick={exportYearZip}>
+            <FileDown className="w-3.5 h-3.5 mr-1" /> Jahrespaket (ZIP)
+          </Button>
+
         </div>
       </div>
 
