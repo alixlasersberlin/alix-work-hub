@@ -177,6 +177,54 @@ export default function CmrKunden() {
           </table>
         </div>
       </Card>
+
+      <Dialog open={!!detail} onOpenChange={(o) => { if (!o) { setDetail(null); setDetailDocs(null); } }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{detail?.name} · Beleghistorie</DialogTitle>
+          </DialogHeader>
+          {detail && (
+            <div className="grid grid-cols-3 gap-3 mb-2">
+              <Card className="p-3"><div className="text-[11px] text-muted-foreground">Umsatz</div><div className="font-semibold">{cmrMoney(detail.gross, cur)}</div></Card>
+              <Card className="p-3"><div className="text-[11px] text-muted-foreground">Bezahlt</div><div className="font-semibold text-emerald-500">{cmrMoney(detail.paid, cur)}</div></Card>
+              <Card className="p-3"><div className="text-[11px] text-muted-foreground">Offen</div><div className="font-semibold text-amber-500">{cmrMoney(detail.open, cur)}</div></Card>
+            </div>
+          )}
+          <div className="max-h-[55vh] overflow-y-auto">
+            {detailDocs === null ? (
+              <div className="p-6 flex justify-center"><Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /></div>
+            ) : detailDocs.length === 0 ? (
+              <div className="p-6 text-center text-sm text-muted-foreground">Keine Belege vorhanden.</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-muted-foreground border-b">
+                    <th className="text-left py-2 px-2">Beleg</th>
+                    <th className="text-left py-2 px-2">Typ</th>
+                    <th className="text-left py-2 px-2">Datum</th>
+                    <th className="text-left py-2 px-2">Status</th>
+                    <th className="text-right py-2 px-2">Brutto</th>
+                    <th className="text-right py-2 px-2">Offen</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detailDocs.map((d) => (
+                    <tr key={d.id} className="border-b border-border/50">
+                      <td className="py-2 px-2 font-medium">{d.doc_number ?? '—'}</td>
+                      <td className="py-2 px-2 text-muted-foreground">{CMR_DOC_TYPES.find((t) => t.value === d.doc_type)?.label ?? d.doc_type}</td>
+                      <td className="py-2 px-2 text-muted-foreground">{d.doc_date ? new Date(d.doc_date).toLocaleDateString('de-DE') : '—'}</td>
+                      <td className="py-2 px-2"><Badge variant="outline" className="text-[10px]">{d.status}</Badge></td>
+                      <td className="py-2 px-2 text-right tabular-nums">{cmrMoney(d.gross_total, d.currency || cur)}</td>
+                      <td className="py-2 px-2 text-right tabular-nums">{cmrMoney(Number(d.gross_total || 0) - Number(d.paid_total || 0), d.currency || cur)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
