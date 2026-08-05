@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, BellRing, FileWarning, PlayCircle } from 'lucide-react';
+import { Loader2, BellRing, FileWarning, PlayCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 
@@ -167,13 +167,42 @@ export default function CmrMahnwesen() {
         <Card className="p-4"><div className="text-[11px] uppercase text-muted-foreground">Offener Betrag</div><div className="text-xl font-semibold mt-1">{cmrMoney(sums.amount, cur)}</div></Card>
       </div>
 
+      <div className="flex flex-wrap gap-2 items-center">
+        <select
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          value={levelFilter}
+          onChange={(e) => setLevelFilter(e.target.value)}
+        >
+          <option value="">Alle Mahnstufen</option>
+          <option value="0">Stufe 0 – noch nicht gemahnt</option>
+          <option value="1">Stufe 1</option>
+          <option value="2">Stufe 2</option>
+          <option value="3">Stufe 3</option>
+        </select>
+        <select
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          value={minDays}
+          onChange={(e) => setMinDays(e.target.value)}
+        >
+          <option value="0">ab 1 Tag überfällig</option>
+          <option value="10">ab 10 Tagen</option>
+          <option value="30">ab 30 Tagen</option>
+          <option value="60">ab 60 Tagen</option>
+          <option value="90">ab 90 Tagen</option>
+        </select>
+        <span className="text-xs text-muted-foreground">{visible.length} Treffer</span>
+        <Button variant="outline" className="ml-auto" onClick={exportCsv} disabled={visible.length === 0}>
+          <Download className="w-4 h-4 mr-1.5" /> CSV Export
+        </Button>
+      </div>
+
       <Card className="divide-y">
-        {overdue.length === 0 && (
+        {visible.length === 0 && (
           <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
-            <FileWarning className="w-5 h-5" /> Keine überfälligen Rechnungen.
+            <FileWarning className="w-5 h-5" /> Keine überfälligen Rechnungen für diese Auswahl.
           </div>
         )}
-        {overdue.map((d) => {
+        {visible.map((d) => {
           const nextLevel = Math.min(3, Number(d.reminder_level || 0) + 1);
           const cfg = LEVELS.find((l) => l.level === nextLevel)!;
           return (
