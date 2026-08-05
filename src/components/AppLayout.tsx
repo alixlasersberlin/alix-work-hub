@@ -655,16 +655,16 @@ export const navItems: NavItem[] = [
 
       // CMR – Cloud Marketing Research (eigener Mandant)
       {
-        path: '#cmr', label: 'CMR', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung'],
+        path: '#cmr', label: 'CMR', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR'],
         children: [
-          { path: '/cmr', label: 'CMR Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
-          { path: '/cmr/dokumente', label: 'Belege & Vorgänge', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
-          { path: '/cmr/kunden', label: 'Kunden CMR', icon: Users, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
-          { path: '/cmr/artikel', label: 'Artikelstamm', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
-          { path: '/cmr/projekte', label: 'Projekte CMR', icon: Briefcase, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
-          { path: '/cmr/abos', label: 'Abrechnungen', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
-          { path: '/cmr/buchhaltung', label: 'Buchhaltung CMR', icon: Wallet, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
-          { path: '/cmr/mahnwesen', label: 'Mahnwesen CMR', icon: BellRing, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
+          { path: '/cmr', label: 'CMR Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR'] },
+          { path: '/cmr/dokumente', label: 'Belege & Vorgänge', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR'] },
+          { path: '/cmr/kunden', label: 'Kunden CMR', icon: Users, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR'] },
+          { path: '/cmr/artikel', label: 'Artikelstamm', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR'] },
+          { path: '/cmr/projekte', label: 'Projekte CMR', icon: Briefcase, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR'] },
+          { path: '/cmr/abos', label: 'Abrechnungen', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR'] },
+          { path: '/cmr/buchhaltung', label: 'Buchhaltung CMR', icon: Wallet, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR'] },
+          { path: '/cmr/mahnwesen', label: 'Mahnwesen CMR', icon: BellRing, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR'] },
           { path: '/cmr/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin'] },
         ],
       },
