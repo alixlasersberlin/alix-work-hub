@@ -45,6 +45,7 @@ const SetPassword = lazy(() => import("./pages/SetPassword"));
 const AlixSmartRegister = lazy(() => import("./pages/AlixSmartRegister"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Startseite = lazy(() => import("./pages/Startseite"));
+const Willkommen = lazy(() => import("./pages/Willkommen"));
 const VerkaufDashboard = lazy(() => import("./pages/VerkaufDashboard"));
 const BestellungenDashboard = lazy(() => import("./pages/BestellungenDashboard"));
 const AtDashboard = lazy(() => import("./pages/AtDashboard"));
