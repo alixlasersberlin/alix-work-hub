@@ -126,7 +126,16 @@ export default function CmrMahnwesen() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="CMR Mahnwesen" subtitle="Überfällige Rechnungen des Mandanten CMR – Zahlungserinnerung und Mahnstufen." />
+      <PageHeader
+        title="CMR Mahnwesen"
+        subtitle="Überfällige Rechnungen des Mandanten CMR – Zahlungserinnerung und Mahnstufen."
+        actions={
+          <Button variant="outline" onClick={runDunning} disabled={runBusy}>
+            {runBusy ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1.5" />}
+            Mahnlauf jetzt
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-2 gap-3">
         <Card className="p-4"><div className="text-[11px] uppercase text-muted-foreground">Überfällige Rechnungen</div><div className="text-xl font-semibold mt-1">{sums.count}</div></Card>
