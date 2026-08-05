@@ -311,28 +311,72 @@ export default function CmrBuchhaltung() {
   };
 
 
+  /**
+   * Bucht die zugeordneten Zahlungen und archiviert den kompletten Auszug
+   * (inkl. offener, nicht zuordenbarer Positionen) für den späteren Bankabgleich.
+   */
   const commitImport = async () => {
     if (!tenantId || !importRows) return;
     const rows = importRows.filter((r) => r.document_id);
-    if (!rows.length) { toast.error('Keine zugeordneten Zahlungen zum Buchen.'); return; }
     setImporting(true);
-    const { error } = await supabase.from('cmr_payments' as any).insert(
-      rows.map((r) => ({
-        tenant_id: tenantId,
-        document_id: r.document_id,
-        customer_id: r.customer_id,
-        paid_on: r.paid_on,
-        amount: Number(r.amount) || 0,
-        currency: cur,
-        method: 'Bankimport',
-        reference: r.reference?.slice(0, 200) ?? null,
-      })),
+
+    const { data: stmt, error: sErr } = await supabase.from('cmr_bank_statements' as any).insert({
+      tenant_id: tenantId,
+      file_name: importFileName || null,
+      format: importFormat || null,
+      statement_date: new Date().toISOString().slice(0, 10),
+      line_count: importRows.length,
+      matched_count: rows.length,
+      total_amount: importRows.reduce((s, r) => s + (Number(r.amount) || 0), 0),
+      currency: cur,
+    }).select('id').single();
+    if (sErr) { setImporting(false); toast.error(sErr.message); return; }
+    const statementId = (stmt as any).id as string;
+
+    let paymentIds: (string | null)[] = [];
+    if (rows.length) {
+      const { data: pays, error } = await supabase.from('cmr_payments' as any).insert(
+        rows.map((r) => ({
+          tenant_id: tenantId,
+          document_id: r.document_id,
+          customer_id: r.customer_id,
+          paid_on: r.paid_on,
+          amount: Number(r.amount) || 0,
+          currency: cur,
+          method: 'Bankimport',
+          reference: r.reference?.slice(0, 200) ?? null,
+        })),
+      ).select('id');
+      if (error) { setImporting(false); toast.error(error.message); return; }
+      paymentIds = ((pays as any) || []).map((p: any) => p.id);
+    }
+
+    let paidIdx = 0;
+    const { error: lErr } = await supabase.from('cmr_bank_lines' as any).insert(
+      importRows.map((r) => {
+        const matched = !!r.document_id;
+        return {
+          tenant_id: tenantId,
+          statement_id: statementId,
+          booking_date: r.paid_on,
+          amount: Number(r.amount) || 0,
+          currency: cur,
+          purpose: r.reference?.slice(0, 500) ?? null,
+          reference: r.doc_number ?? null,
+          status: matched ? 'gebucht' : 'offen',
+          matched_document_id: r.document_id ?? null,
+          payment_id: matched ? (paymentIds[paidIdx++] ?? null) : null,
+          match_score: matched ? 1 : null,
+          matched_at: matched ? new Date().toISOString() : null,
+        };
+      }),
     );
     setImporting(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success(`${rows.length} Zahlung(en) gebucht`);
+    if (lErr) { toast.error(lErr.message); return; }
+    toast.success(`${rows.length} Zahlung(en) gebucht · ${importRows.length - rows.length} offen im Bankabgleich`);
     setImportRows(null);
     load();
+    loadBankLines();
   };
 
 
