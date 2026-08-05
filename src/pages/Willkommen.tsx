@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
-import { useWorkspace, type Workspace } from '@/contexts/WorkspaceContext';
+import { useWorkspace, type Workspace, type WorkspaceNavEntry } from '@/contexts/WorkspaceContext';
+import { useTopPages } from '@/hooks/usePageUsage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Lock, ArrowRight, Building2, LayoutGrid } from 'lucide-react';
+import { Lock, ArrowRight, Building2, LayoutGrid, Zap } from 'lucide-react';
 
 /**
  * Startseite nach dem Login:
@@ -16,7 +17,7 @@ import { Lock, ArrowRight, Building2, LayoutGrid } from 'lucide-react';
  */
 export default function Willkommen() {
   const navigate = useNavigate();
-  const { profile } = useAuth() as any;
+  const { profile, roles } = useAuth() as any;
   const { tenants, allowedTenants, setCurrent: setTenant, loading: tLoading } = useTenant();
   const {
     workspaces: allowedWorkspaces,
@@ -24,22 +25,25 @@ export default function Willkommen() {
     setWorkspaceMode,
     loading: wLoading,
   } = useWorkspace();
+  const { pages: topPages, loading: topLoading } = useTopPages(20);
 
   const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
+  const [allNav, setAllNav] = useState<WorkspaceNavEntry[]>([]);
   const [tenantCode, setTenantCode] = useState<string>('');
   const [wsCode, setWsCode] = useState<string>('');
 
   useEffect(() => {
     document.title = 'Startseite — Alix Work';
     (async () => {
-      const { data } = await supabase
-        .from('workspaces' as any)
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
-      setAllWorkspaces(((data as any) || []) as Workspace[]);
+      const [{ data: ws }, { data: nav }] = await Promise.all([
+        supabase.from('workspaces' as any).select('*').eq('is_active', true).order('sort_order'),
+        supabase.from('workspace_nav_items' as any).select('*').eq('is_active', true),
+      ]);
+      setAllWorkspaces(((ws as any) || []) as Workspace[]);
+      setAllNav(((nav as any) || []) as WorkspaceNavEntry[]);
     })();
   }, []);
+
 
   const allowedTenantCodes = useMemo(
     () => new Set(allowedTenants.map((t) => t.code)),
