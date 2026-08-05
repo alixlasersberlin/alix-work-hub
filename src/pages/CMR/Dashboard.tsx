@@ -26,7 +26,7 @@ export default function CmrDashboard() {
         .from('cmr_documents' as any)
         .select('id,doc_number,customer_name,due_date,gross_total,paid_total,currency')
         .eq('tenant_id', tenantId)
-        .eq('doc_type', 'invoice')
+        .eq('doc_type', 'rechnung')
         .lt('due_date', today)
         .order('due_date', { ascending: true })
         .limit(50);
@@ -37,12 +37,12 @@ export default function CmrDashboard() {
         .from('cmr_documents' as any)
         .select('customer_name,gross_total,doc_type,doc_date')
         .eq('tenant_id', tenantId)
-        .in('doc_type', ['invoice', 'credit_note'])
+        .in('doc_type', ['rechnung', 'gutschrift'])
         .gte('doc_date', yearStart)
         .limit(2000);
       const map = new Map<string, number>();
       ((docs as any[]) ?? []).forEach((d) => {
-        const sign = d.doc_type === 'credit_note' ? -1 : 1;
+        const sign = d.doc_type === 'gutschrift' ? -1 : 1;
         const key = d.customer_name || '–';
         map.set(key, (map.get(key) ?? 0) + sign * Number(d.gross_total || 0));
       });
