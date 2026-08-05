@@ -22,6 +22,7 @@ import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 import TenantSwitcher from '@/components/TenantSwitcher';
 import GlobalSearch from '@/components/GlobalSearch';
 import WorkspaceBar from '@/components/workspace/WorkspaceBar';
+import WorkspaceContextBar from '@/components/workspace/WorkspaceContextBar';
 import WorkspaceNav from '@/components/workspace/WorkspaceNav';
 import MenuScaleControl from '@/components/MenuScaleControl';
 import { useUiPrefs } from '@/hooks/useUiPrefs';
@@ -2212,6 +2213,7 @@ export default function AppLayout() {
 
         </header>
         <WorkspaceBar />
+        <WorkspaceContextBar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden scroll-touch pb-safe">
           <Outlet key={refreshKey} />
         </main>
