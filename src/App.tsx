@@ -2176,6 +2176,7 @@ const App = () => (
             <BrowserRouter>
               <AuthProvider>
                 <TenantProvider>
+                  <WorkspaceProvider>
                   <AccountingRegionProvider>
                   <MaintenanceGate>
                     <AIBackground />
