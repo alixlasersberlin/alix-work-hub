@@ -26,6 +26,8 @@ export default function CmrBuchhaltung() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(null);
   const [saving, setSaving] = useState(false);
+  const [credit, setCredit] = useState<any>(null);
+
 
   const cur = settings?.default_currency || 'AED';
 
