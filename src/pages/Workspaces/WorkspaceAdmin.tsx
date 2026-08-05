@@ -146,6 +146,23 @@ export default function WorkspaceAdmin() {
     reload();
   };
 
+  const toggleTenantAccess = async (userId: string, tenantId: string, on: boolean) => {
+    if (on) {
+      const { error } = await supabase.from('user_tenant_access' as any).insert({ user_id: userId, tenant_id: tenantId });
+      if (error) return toast.error(error.message);
+    } else {
+      const { error } = await supabase.from('user_tenant_access' as any).delete()
+        .eq('user_id', userId).eq('tenant_id', tenantId);
+      if (error) return toast.error(error.message);
+    }
+    setTenantAccess(m => {
+      const cur = m[userId] || [];
+      return { ...m, [userId]: on ? [...cur, tenantId] : cur.filter(x => x !== tenantId) };
+    });
+  };
+
+
+
   const filteredUsers = useMemo(() => {
     const t = userFilter.trim().toLowerCase();
     if (!t) return users;
