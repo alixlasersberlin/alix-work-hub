@@ -372,6 +372,33 @@ export default function ReturnDebitDialog({
                       <div className="space-y-1"><Label className="text-xs">bis</Label>
                         <Input type="date" value={filter.dateTo} onChange={e => setFilter({ ...filter, dateTo: e.target.value })} /></div>
                       <div className="flex items-end"><Button size="sm" onClick={runSearch} disabled={busy}>Suchen</Button></div>
+
+                      <div className="sm:col-span-3 space-y-1">
+                        <Label className="text-xs">
+                          Vorschläge Rechnungen / Ratenzahler {invBusy && <Loader2 className="inline w-3 h-3 animate-spin ml-1" />}
+                        </Label>
+                        {invTerm.length < 2 ? (
+                          <p className="text-xs text-muted-foreground">Mindestens 2 Zeichen in Kundenname, Rechnungs- oder Auftragsnummer eingeben.</p>
+                        ) : invHits.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">Keine Rechnung gefunden.</p>
+                        ) : (
+                          <div className="max-h-52 overflow-y-auto rounded-md border border-border divide-y divide-border">
+                            {invHits.map(inv => (
+                              <button key={`${inv.__src}-${inv.id}`} type="button" onClick={() => applyInvoice(inv)}
+                                className="w-full text-left p-2 hover:bg-muted/40">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-medium">{inv.invoice_number ?? '–'} · {inv.customer_name ?? '–'}</span>
+                                  <Badge variant="outline">{inv.__src === 'recurring' ? 'Ratenzahler' : 'Rechnung'}</Badge>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {inv.invoice_date ?? '–'} · {fmt(Number(inv.total ?? 0), inv.currency ?? currency)}
+                                  {inv.balance != null && ` · offen ${fmt(Number(inv.balance), inv.currency ?? currency)}`}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
