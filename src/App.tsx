@@ -1284,6 +1284,12 @@ function AppRoutes() {
           <Route path="/cmr/sammelrechnungen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR','CMR Viewer']}><CmrSammelrechnungen /></ProtectedRoute>} />
           <Route path="/cmr/betrieb" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR','CMR Viewer']}><CmrBetrieb /></ProtectedRoute>} />
           <Route path="/cmr/einstellungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><CmrEinstellungen /></ProtectedRoute>} />
+          <Route path="/med" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Medical']}><MedDashboard /></ProtectedRoute>} />
+          <Route path="/med/artikel" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Medical']}><MedArtikel /></ProtectedRoute>} />
+          <Route path="/med/belege" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Medical']}><MedBelege /></ProtectedRoute>} />
+          <Route path="/med/buchhaltung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Medical']}><MedBuchhaltung /></ProtectedRoute>} />
+          <Route path="/med/compliance" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','Medical']}><MedCompliance /></ProtectedRoute>} />
+          <Route path="/med/einstellungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><MedEinstellungen /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><AdminAuditLog /></ProtectedRoute>} />
           <Route path="/admin/geraete" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><GeraeteVerwaltung /></ProtectedRoute>} />
           <Route path="/konzern/dashboard" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><KonzernDashboard /></ProtectedRoute>} />
