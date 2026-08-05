@@ -148,6 +148,10 @@ export default function LicenseCockpit() {
         icon={Gauge}
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => downloadPdf('lizenz_cockpit', `Lizenz-Cockpit ${year}`, matrixHeaders, matrixRows(), `Stand ${today}`)}>
+              <Download className="mr-2 h-4 w-4" /> PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => downloadCsv('lizenz_cockpit', matrixHeaders, matrixRows())}>CSV</Button>
             <Button asChild variant="outline" size="sm"><Link to="/license/royalties">Lizenzabrechnung</Link></Button>
             <Button asChild variant="outline" size="sm"><Link to="/license/auswertungen">Auswertungen</Link></Button>
           </div>
