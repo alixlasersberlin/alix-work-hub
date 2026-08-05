@@ -13,8 +13,8 @@ export interface OpenInvoice {
   balance: number | null;
   status: string | null;
   payment_status: string | null;
-  /** Quelle: normale Zoho-Rechnung oder Ratenrechnung (wiederkehrend) */
-  source?: 'zoho' | 'recurring';
+  /** Quelle: normale Zoho-Rechnung, Ratenrechnung (wiederkehrend) oder nicht fakturierter Auftrag */
+  source?: 'zoho' | 'recurring' | 'order';
 }
 
 export interface MatchCandidate {
