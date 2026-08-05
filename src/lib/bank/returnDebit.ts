@@ -700,7 +700,7 @@ export async function sendReturnDebitDunning(rd: any, payDays = 7) {
 
   await updateReturnDebit(rd.id, {
     status: 'mahnprozess',
-    dunning_sent_at: new Date().toISOString(),
+    reminder_process_started: true,
     note: [rd.note, `Mahnung mit Sperrankündigung an ${info.recipient} versendet (zahlbar bis ${info.payUntil}, Sperre ab ${info.blockDate}).`]
       .filter(Boolean).join('\n'),
   });
