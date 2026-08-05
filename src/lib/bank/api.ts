@@ -262,16 +262,22 @@ export async function reverseTransaction(tx: any, reason: string) {
       created_by: u?.user?.id ?? null,
     } as any);
     if (a.invoice_id && a.allocation_type === 'rechnung') {
-      const { data: inv } = await supabase.from('zoho_invoices').select('id,balance,total').eq('id', a.invoice_id).maybeSingle();
+      let table: 'zoho_invoices' | 'zoho_recurring_invoices' = 'zoho_invoices';
+      let { data: inv } = await supabase.from('zoho_invoices').select('id,balance,total').eq('id', a.invoice_id).maybeSingle();
+      if (!inv) {
+        const r = await supabase.from('zoho_recurring_invoices').select('id,balance,total').eq('id', a.invoice_id).maybeSingle();
+        if (r.data) { inv = r.data as any; table = 'zoho_recurring_invoices'; }
+      }
       if (inv) {
         const newBalance = Number(inv.balance ?? 0) + Number(a.allocated_amount);
-        await supabase.from('zoho_invoices').update({
+        await supabase.from(table).update({
           balance: newBalance,
           payment_status: newBalance >= Number(inv.total ?? 0) - 0.009 ? 'unpaid' : 'partially_paid',
           status: 'open',
         } as any).eq('id', a.invoice_id);
       }
     }
+
   }
   await T('bank_transactions').update({ status: 'offen', note: reason } as any).eq('id', tx.id);
   await logBank({ action: 'zahlung_storniert', bank_transaction_id: tx.id, old_value: { status: 'verbucht' }, new_value: { status: 'offen', reason } });
