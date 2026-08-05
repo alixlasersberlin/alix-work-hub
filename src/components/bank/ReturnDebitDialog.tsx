@@ -14,7 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   ensureReturnDebit, findOriginalPayments, confirmReturnDebit, cancelReturnDebit,
   updateReturnDebit, loadReturnRules, getAllocationsOfReturnDebit, sendReturnDebitDunning,
-  RD_STATUS, RETURN_CODES,
+  RD_STATUS, RETURN_CODES, amountTolerance,
   type PaymentCandidate, type ReturnRules,
 } from '@/lib/bank/returnDebit';
 import { downloadReturnDunningPdf } from '@/lib/bank/returnDunningLetter';
