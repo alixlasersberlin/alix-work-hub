@@ -189,7 +189,8 @@ export default function WorkspaceAdmin() {
         <TabsList>
           <TabsTrigger value="ws">Workspaces</TabsTrigger>
           <TabsTrigger value="nav">Navigation</TabsTrigger>
-          <TabsTrigger value="users">Zugriffe</TabsTrigger>
+          <TabsTrigger value="users">Workspace-Zugriffe</TabsTrigger>
+          <TabsTrigger value="tenants">Mandanten-Zugriffe</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ws" className="space-y-4 pt-4">
