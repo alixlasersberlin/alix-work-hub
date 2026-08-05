@@ -30,29 +30,40 @@ export default function WorkspaceAdmin() {
   const [nav, setNav] = useState<NavItem[]>([]);
   const [users, setUsers] = useState<Profile[]>([]);
   const [access, setAccess] = useState<Record<string, string[]>>({}); // userId -> workspaceIds
+  const [tenants, setTenants] = useState<{ id: string; code: string; name: string; flag_emoji: string | null }[]>([]);
+  const [tenantAccess, setTenantAccess] = useState<Record<string, string[]>>({}); // userId -> tenantIds
   const [activeWs, setActiveWs] = useState<string | null>(null);
   const [userFilter, setUserFilter] = useState('');
 
   const load = async () => {
     setLoading(true);
-    const [{ data: w }, { data: n }, { data: p }, { data: a }] = await Promise.all([
+    const [{ data: w }, { data: n }, { data: p }, { data: a }, { data: t }, { data: ta }] = await Promise.all([
       supabase.from('workspaces' as any).select('*').order('sort_order'),
       supabase.from('workspace_nav_items' as any).select('*').order('sort_order'),
       supabase.from('user_profiles').select('id, full_name, email, is_active').order('full_name').limit(1000),
       supabase.from('user_workspace_access' as any).select('user_id, workspace_id').limit(5000),
+      supabase.from('tenants' as any).select('id, code, name, flag_emoji').order('code'),
+      supabase.from('user_tenant_access' as any).select('user_id, tenant_id').limit(5000),
     ]);
     const wsList = ((w as any) || []) as Ws[];
     setWs(wsList);
     setNav(((n as any) || []) as NavItem[]);
     setUsers(((p as any) || []) as Profile[]);
+    setTenants(((t as any) || []) as any);
     const map: Record<string, string[]> = {};
     ((a as any[]) || []).forEach(r => {
       map[r.user_id] = [...(map[r.user_id] || []), r.workspace_id];
     });
     setAccess(map);
+    const tmap: Record<string, string[]> = {};
+    ((ta as any[]) || []).forEach(r => {
+      tmap[r.user_id] = [...(tmap[r.user_id] || []), r.tenant_id];
+    });
+    setTenantAccess(tmap);
     setActiveWs(prev => prev || wsList[0]?.id || null);
     setLoading(false);
   };
+
 
   useEffect(() => { load(); }, []);
 
