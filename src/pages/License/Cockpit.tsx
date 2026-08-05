@@ -137,6 +137,24 @@ export default function LicenseCockpit() {
   const maxTrend = Math.max(...trend.map((t) => t.amount), 1);
   const maxBrand = Math.max(...byBrand.map(([, v]) => v), 1);
 
+  const matrixHeaders = ['Mandant', 'Code', 'Vertrag', 'Satz', 'Buchungen', 'Basis netto', 'Royalty', 'Offen'];
+  const matrixRows = () =>
+    byTenant.map((t) => [
+      t.name,
+      t.code,
+      t.contract?.contract_number || (t.contract ? 'aktiv' : 'kein Vertrag'),
+      t.contract?.royalty_percent
+        ? `${Number(t.contract.royalty_percent)} %`
+        : t.contract?.rate_per_unit
+          ? `${Number(t.contract.rate_per_unit)} / Stk`
+          : '-',
+      t.bookings,
+      t.base.toFixed(2),
+      t.royalty.toFixed(2),
+      t.open.toFixed(2),
+    ]);
+
+
   if (loading || busy) {
     return <div className="flex items-center justify-center p-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
