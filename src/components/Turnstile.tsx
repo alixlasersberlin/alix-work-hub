@@ -32,10 +32,12 @@ function loadScript(): Promise<void> {
 interface Props {
   onToken: (token: string) => void;
   onExpire?: () => void;
+  /** Wird aufgerufen, wenn das Captcha nicht geladen/gelöst werden kann. */
+  onUnavailable?: () => void;
   theme?: 'light' | 'dark' | 'auto';
 }
 
-export default function Turnstile({ onToken, onExpire, theme = 'dark' }: Props) {
+export default function Turnstile({ onToken, onExpire, onUnavailable, theme = 'dark' }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
