@@ -52,4 +52,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'ticket-csat': ticketCsat,
   'orders-missing-alert': ordersMissingAlert,
   'alixdocs-access-granted': alixdocsAccessGranted,
+  'ruecklastschrift-mahnung': ruecklastschriftMahnung,
 }
