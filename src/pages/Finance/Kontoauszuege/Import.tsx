@@ -235,6 +235,7 @@ export default function BankImport() {
         for (const g of (greens ?? []) as any[]) {
           try {
             const { bookTransaction } = await import('@/lib/bank/api');
+            if (!g.matched_invoice_id) continue; // Auftrags-Treffer nur manuell verbuchen
             await bookTransaction(g, [{
               invoice_id: g.matched_invoice_id, allocation_type: 'rechnung',
               allocated_amount: Math.abs(Number(g.amount)),
