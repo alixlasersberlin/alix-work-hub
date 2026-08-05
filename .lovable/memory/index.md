@@ -67,3 +67,4 @@
 - [AZ-Rechnung Status nach Versand](mem://features/az-invoice-status) — Anzahlungsrechnungen wechseln nach E-Mail-Versand automatisch von Entwurf auf Versendet / Offen
 - [ALIX Feedback & Rewards](mem://features/alix-feedback-rewards) — Umfragemodul /umfragen (Dashboard, Editor, Antworten, Geschenke, Vorlagen), öffentliche Teilnahme /umfrage/:token, Edge Functions survey-public + survey-send-invites
 - [CMR Mandant](mem://features/cmr-mandant) — Eigener Mandant /cmr: Belege, Projekte, Abos, Mahnwesen, PDF-/Mail-Vorlagen, Buchhaltung + USt-Export, Cron cmr-recurring-daily
+- [Bank & Kontoauszüge](mem://features/bank-kontoauszuege) — Import/Prüfung/Verbuchung von Kontoauszügen unter /finance/kontoauszuege, Tabellen bank_*, Bucket bank-statements, Matching-Score EU/CH
