@@ -151,7 +151,7 @@ export function ManualMatchDialog({
         </DialogHeader>
 
         <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm space-y-1">
-          <div><span className="text-muted-foreground">Auftraggeber / Empfänger:</span> {tx.sender_receiver_name || '–'}</div>
+          <div><span className="text-muted-foreground">Kundenname (Auftraggeber / Empfänger):</span> {tx.sender_receiver_name || '–'}</div>
           <div><span className="text-muted-foreground">Verwendungszweck:</span> {tx.purpose || '–'}</div>
           <div><span className="text-muted-foreground">Buchungsdatum:</span> {tx.booking_date || '–'} · IBAN: {tx.sender_receiver_iban || '–'}</div>
         </div>

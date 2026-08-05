@@ -42,7 +42,7 @@ export const MAPPING_FIELDS = [
   { key: 'currency', label: 'Währung' },
   { key: 'purpose', label: 'Verwendungszweck' },
   { key: 'booking_text', label: 'Buchungstext' },
-  { key: 'sender_receiver_name', label: 'Auftraggeber / Empfänger' },
+  { key: 'sender_receiver_name', label: 'Kundenname (Auftraggeber / Empfänger)' },
   { key: 'sender_receiver_iban', label: 'IBAN' },
   { key: 'bic', label: 'BIC' },
   { key: 'bank_reference', label: 'Bankreferenz' },
