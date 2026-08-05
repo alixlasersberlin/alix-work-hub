@@ -4,6 +4,17 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+const DEFAULT_EMAIL: Record<string, string> = {
+  subject: 'Rücklastschrift – offene Forderung zu Rechnung {{rechnung}} und angekündigte Leistungssperre',
+  headline: 'Zahlungsaufforderung nach Rücklastschrift',
+  intro: 'die von uns eingezogene Lastschrift wurde am {{datum}} von Ihrem Kreditinstitut zurückgegeben – Grund: {{grund}} ({{code}}). Die betroffene Forderung ist damit wieder offen.',
+  warnTitle: 'Wichtiger Hinweis: bevorstehende Sperre der Leistungen',
+  warnBody: 'Sollte der Gesamtbetrag von {{gesamt}} nicht bis zum {{zahlbar_bis}} vollständig auf unserem Konto eingegangen sein, sind wir gezwungen, sämtliche Leistungen von Alix Lasers mit Wirkung zum {{sperrdatum}} vorübergehend zu sperren.',
+  warnBody2: 'Dies betrifft insbesondere die Freischaltung und den Betrieb Ihres Gerätes, Service- und Wartungsleistungen, Support, Schulungen sowie ausstehende Lieferungen.',
+  closing: 'Sollte die Rücklastschrift auf einem Irrtum Ihres Kreditinstituts beruhen oder haben Sie den Betrag bereits ausgeglichen, setzen Sie sich bitte kurzfristig mit uns in Verbindung.',
+  senderName: 'Alix Lasers – Buchhaltung',
+};
+
 const SETTINGS_KEY = 'bank_return_dunning_escalation';
 
 interface EscalationConfig {
@@ -114,6 +125,42 @@ Deno.serve(async (req) => {
 
       if (dryRun) { result.sent++; continue; }
 
+      const { data: emailRow } = await supabase.from('app_settings')
+        .select('value').eq('key', 'bank_return_dunning_email').maybeSingle();
+      const emailCfg: Record<string, string> = { ...DEFAULT_EMAIL, ...((emailRow?.value as any) ?? {}) };
+      const money = (n: number) =>
+        Number(n || 0).toLocaleString('de-DE', { style: 'currency', currency: rd.currency || 'EUR' });
+      const vars: Record<string, string> = {
+        kunde: customerName || '',
+        rechnung: (allocs ?? []).map((a: any) => a.invoice_number).filter(Boolean).join(', ') || rd.invoice_number || '–',
+        betrag: money(amount),
+        gebuehr: money(fee),
+        gesamt: money(amount + fee),
+        datum: rd.booking_date ? new Date(rd.booking_date).toLocaleDateString('de-DE') : '–',
+        grund: rd.return_reason || '–',
+        code: rd.return_code || '–',
+        zahlbar_bis: deDate(due),
+        sperrdatum: deDate(block),
+        iban: bank?.iban || '–',
+        bic: bank?.bic || '–',
+        bank: bank?.bank_name || '–',
+        absender: emailCfg.senderName,
+        heute: new Date().toLocaleDateString('de-DE'),
+        stufe: String(nextLevel),
+      };
+      const fill = (t: string) =>
+        (t ?? '').replace(/\{\{\s*([a-z_]+)\s*\}\}/gi, (_m: string, k: string) => vars[String(k).toLowerCase()] ?? '');
+      const texts = {
+        subjectOverride: fill(emailCfg.subject),
+        headline: fill(emailCfg.headline),
+        intro: fill(emailCfg.intro),
+        warnTitle: fill(emailCfg.warnTitle),
+        warnBody: fill(emailCfg.warnBody),
+        warnBody2: fill(emailCfg.warnBody2),
+        closing: fill(emailCfg.closing),
+        senderName: fill(emailCfg.senderName),
+      };
+
       const { error: mailErr } = await supabase.functions.invoke('send-transactional-email', {
         body: {
           templateName: 'ruecklastschrift-mahnung',
@@ -140,7 +187,7 @@ Deno.serve(async (req) => {
             iban: bank?.iban ?? null,
             bic: bank?.bic ?? null,
             bankName: bank?.bank_name ?? null,
-            senderName: 'Alix Lasers – Buchhaltung',
+            ...texts,
           },
         },
       });

@@ -674,6 +674,11 @@ export async function sendReturnDebitDunning(rd: any, payDays = 7) {
     bank = data;
   }
 
+  const { buildReturnDunningVars } = await import('./returnDunningLetter');
+  const { loadReturnDunningEmail, fillReturnDunningEmail } = await import('./returnDunningEmail');
+  const emailCfg = await loadReturnDunningEmail();
+  const texts = fillReturnDunningEmail(emailCfg, await buildReturnDunningVars(rd, payDays));
+
   const { error } = await supabase.functions.invoke('send-transactional-email', {
     body: {
       templateName: 'ruecklastschrift-mahnung',
@@ -696,7 +701,7 @@ export async function sendReturnDebitDunning(rd: any, payDays = 7) {
         bic: bank?.bic ?? null,
         bankName: bank?.bank_name ?? null,
         reference: info.items[0]?.invoice_number ?? null,
-        senderName: 'Alix Lasers – Buchhaltung',
+        ...texts,
       },
     },
   });
