@@ -1115,6 +1115,7 @@ function AppRoutes() {
 
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/start" element={<Startseite />} />
+          <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/w/:code" element={<WorkspaceDashboard />} />
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
           <Route path="/einstellungen/personalisierung" element={<Personalisierung />} />
