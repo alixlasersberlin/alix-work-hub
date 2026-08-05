@@ -1511,6 +1511,8 @@ export default function AppLayout() {
 
       {/* Sidebar */}
       <aside
+        onMouseEnter={sidebarAutoCollapse ? () => setHoverExpand(true) : undefined}
+        onMouseLeave={sidebarAutoCollapse ? () => setHoverExpand(false) : undefined}
         style={!collapsed ? { ['--sb-w' as any]: `${sidebarWidth}px` } : undefined}
         className={cn(
           "relative flex flex-col border-r border-border bg-sidebar transition-transform duration-200 flex-shrink-0",
