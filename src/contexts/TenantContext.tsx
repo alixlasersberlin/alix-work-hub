@@ -12,6 +12,21 @@ export interface Tenant {
   flag_emoji: string | null;
   zoho_source_system: string | null;
   is_active: boolean;
+  legal_name?: string | null;
+  address_line1?: string | null;
+  address_line2?: string | null;
+  postal_code?: string | null;
+  city?: string | null;
+  country_name?: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  website?: string | null;
+  email?: string | null;
+  logo_url?: string | null;
+  vat_id?: string | null;
+  tax_number?: string | null;
+  bank_details?: any;
+  accent_color?: string | null;
 }
 
 interface TenantContextType {
