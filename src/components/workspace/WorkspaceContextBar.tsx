@@ -19,6 +19,7 @@ export default function WorkspaceContextBar() {
   const { current: tenant } = useTenant();
   const { current: workspace, navItems } = useWorkspace();
   const { recents, track } = useRecentPages();
+  const trackUsage = usePageUsageTracker();
   const { favorites } = useFavorites();
 
   const segments = useMemo(() => pathname.split('/').filter(Boolean), [pathname]);
@@ -31,8 +32,10 @@ export default function WorkspaceContextBar() {
 
   useEffect(() => {
     track(pathname, label);
+    trackUsage(pathname, label, workspace?.code ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, label]);
+
 
   if (segments.length === 0) return null;
 
