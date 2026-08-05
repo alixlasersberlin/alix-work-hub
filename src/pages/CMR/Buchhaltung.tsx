@@ -599,9 +599,16 @@ export default function CmrBuchhaltung() {
                 <div className="text-sm font-semibold">{cmrMoney(d.gross_total, d.currency || cur)}</div>
                 <div className="text-xs text-muted-foreground">offen {cmrMoney(Number(d.gross_total) - Number(d.paid_total), cur)}</div>
               </div>
-              <Button size="sm" variant="outline" onClick={() => startPayment(d)} disabled={!canWrite}>
-                <Plus className="w-3.5 h-3.5 mr-1" /> Zahlung
-              </Button>
+              {(d as any).doc_type === 'gutschrift' ? (
+                <Button size="sm" variant="outline" onClick={() => startCredit(d)} disabled={!canWrite || creditOpen(d) <= 0.01}>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Verrechnen
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => startPayment(d)} disabled={!canWrite}>
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Zahlung
+                </Button>
+              )}
+
             </div>
           ))}
         </Card>
