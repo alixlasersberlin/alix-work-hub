@@ -34,6 +34,8 @@ export default function CmrMahnwesen() {
   const [busy, setBusy] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
   const [runBusy, setRunBusy] = useState(false);
+  const [levelFilter, setLevelFilter] = useState('');
+  const [minDays, setMinDays] = useState('0');
 
   /** Startet den automatischen Mahnlauf – erzeugt ausschließlich Entwürfe. */
   const runDunning = async () => {
@@ -119,6 +121,29 @@ export default function CmrMahnwesen() {
       setWorking(null);
     }
   };
+
+  const visible = useMemo(
+    () => overdue.filter((d) =>
+      (levelFilter === '' || Number(d.reminder_level || 0) === Number(levelFilter)) &&
+      daysOverdue(d) >= Number(minDays || 0)),
+    [overdue, levelFilter, minDays],
+  );
+
+  const exportCsv = () => {
+    const head = ['belegnummer', 'kunde', 'faellig_am', 'tage_ueberfaellig', 'mahnstufe', 'offen', 'waehrung'];
+    const esc = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const rows = visible.map((d) => [
+      d.doc_number ?? '', d.customer_name ?? '', d.due_date ?? '', daysOverdue(d),
+      d.reminder_level ?? 0, (Number(d.gross_total) - Number(d.paid_total)).toFixed(2), d.currency || cur,
+    ].map(esc).join(';'));
+    const blob = new Blob(['\uFEFF' + [head.join(';'), ...rows].join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `cmr-mahnwesen-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
 
   if (loading || busy) {
     return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
