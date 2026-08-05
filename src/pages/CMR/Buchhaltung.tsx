@@ -447,6 +447,34 @@ export default function CmrBuchhaltung() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!importRows} onOpenChange={(o) => !o && setImportRows(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Bankimport – Vorschau</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {importRows?.filter((r) => r.document_id).length ?? 0} von {importRows?.length ?? 0} Buchungen wurden anhand der Belegnummer im Verwendungszweck zugeordnet. Nur zugeordnete Zeilen werden gebucht.
+          </p>
+          <div className="max-h-80 overflow-y-auto divide-y">
+            {(importRows ?? []).map((r, i) => (
+              <div key={i} className="py-2 text-sm flex items-center gap-3">
+                <span className="w-24 text-xs text-muted-foreground">{r.paid_on}</span>
+                <span className="flex-1 truncate">{r.reference}</span>
+                <span className="w-28 text-right tabular-nums">{cmrMoney(r.amount, cur)}</span>
+                <span className={`w-32 text-right text-xs ${r.doc_number ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                  {r.doc_number ?? 'ohne Zuordnung'}
+                </span>
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportRows(null)}>Abbrechen</Button>
+            <Button onClick={commitImport} disabled={importing}>
+              {importing && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />} Zahlungen buchen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
