@@ -1380,7 +1380,7 @@ export default function AppLayout() {
     return menuGrants.has(item.path);
   };
 
-  const { workspaceMode: wsMode, current: wsCurrent } = useWorkspace();
+  const { workspaceMode: wsMode } = useWorkspace();
 
   const visibleItems = navItems
     .filter(i => i.label !== 'KONTAKT' && i.label !== 'ALIX AI DIENSTE')
