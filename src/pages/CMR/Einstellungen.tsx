@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant } from '@/hooks/useCmrTenant';
+import CmrEmailTemplates from './EmailTemplates';
 
 const FIELDS: { key: string; label: string; type?: string }[][] = [
   [
