@@ -17,6 +17,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string>('');
+  const [captchaUnavailable, setCaptchaUnavailable] = useState(false);
 
   // Accounts, die Cloudflare Turnstile nicht zuverlässig laden können
   // (z. B. eingeschränkter Netzwerkzugriff). Müssen auch serverseitig in
@@ -25,35 +26,38 @@ export default function Login() {
     '2556690413@qq.com',
   ]);
   const isBypass = CAPTCHA_BYPASS_EMAILS.has(email.trim().toLowerCase());
+  const skipCaptcha = isBypass || captchaUnavailable;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!isBypass && !captchaToken) {
+    if (!skipCaptcha && !captchaToken) {
       setError('Bitte bestätigen Sie das Sicherheits-Captcha.');
       return;
     }
 
     setLoading(true);
 
-    try {
-      const { data, error: verifyError } = await supabase.functions.invoke('verify-turnstile', {
-        body: { token: captchaToken, email },
-      });
-      if (verifyError || !data?.success) {
-        setError('Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.');
-        setCaptchaToken('');
-        if (window.turnstile) {
-          try { window.turnstile.reset(); } catch { /* ignore */ }
+    if (captchaToken) {
+      try {
+        const { data, error: verifyError } = await supabase.functions.invoke('verify-turnstile', {
+          body: { token: captchaToken, email },
+        });
+        if (verifyError || !data?.success) {
+          setError('Sicherheitsprüfung fehlgeschlagen. Bitte erneut versuchen.');
+          setCaptchaToken('');
+          if (window.turnstile) {
+            try { window.turnstile.reset(); } catch { /* ignore */ }
+          }
+          setLoading(false);
+          return;
         }
+      } catch {
+        setError('Sicherheitsprüfung nicht erreichbar. Bitte erneut versuchen.');
         setLoading(false);
         return;
       }
-    } catch {
-      setError('Sicherheitsprüfung nicht erreichbar. Bitte erneut versuchen.');
-      setLoading(false);
-      return;
     }
 
     const { error } = await signIn(email, password);
