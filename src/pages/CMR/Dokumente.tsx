@@ -50,6 +50,12 @@ export default function CmrDokumente() {
   const [custQuery, setCustQuery] = useState('');
   const [custResults, setCustResults] = useState<any[]>([]);
 
+  const [sendDoc, setSendDoc] = useState<Doc | null>(null);
+  const [sendTo, setSendTo] = useState('');
+  const [sendSubject, setSendSubject] = useState('');
+  const [sendMessage, setSendMessage] = useState('');
+  const [sending, setSending] = useState(false);
+
   const cur = settings?.default_currency || 'AED';
   const defTax = Number(settings?.tax_rate ?? 5);
 
