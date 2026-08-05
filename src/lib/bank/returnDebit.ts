@@ -407,6 +407,10 @@ export async function confirmReturnDebit(input: ConfirmInput) {
     }
   }
 
+  // Gerätesperre aus der Rückbuchung erzeugen (Übersicht "Gerätesperren")
+  try { await createDeviceLockFromReturnDebit(rd, input.customerId ?? null, invoiceInfos, total, fee); }
+  catch (e) { console.error('Gerätesperre konnte nicht angelegt werden', e); }
+
   if (input.createTask) await notifyAccounting(rd, invoiceInfos, input.customerId);
 
   await logBank({
@@ -712,4 +716,81 @@ export async function sendReturnDebitDunning(rd: any, payDays = 7) {
   });
 
   return info;
+}
+
+/* ------------------------------------------- Gerätesperren-Kopplung */
+
+/**
+ * Kopiert eine gebuchte Rücklastschrift als Datensatz in die Übersicht
+ * "Gerätesperren" (Tabelle device_locks, Quelle "ruecklastschrift").
+ * Idempotent: pro Rücklastschrift wird höchstens ein Eintrag angelegt.
+ */
+export async function createDeviceLockFromReturnDebit(
+  rd: any,
+  customerId: string | null,
+  invoiceInfos: { invoice_id?: string | null; invoice_number?: string | null }[] = [],
+  amount?: number,
+  fee?: number,
+) {
+  const marker = `[RD:${rd.id}]`;
+
+  const { data: existing } = await supabase.from('device_locks' as any)
+    .select('id').ilike('lock_note', `%${marker}%`).limit(1);
+  if (existing?.length) return (existing[0] as any).id as string;
+
+  let customerName: string | null = null;
+  let customerNumber: string | null = null;
+  if (customerId) {
+    const { data: c } = await supabase.from('customers')
+      .select('company_name, contact_name, external_customer_id').eq('id', customerId).maybeSingle();
+    customerName = (c as any)?.company_name || (c as any)?.contact_name || null;
+    customerNumber = (c as any)?.external_customer_id ?? null;
+  }
+
+  const invNumbers = invoiceInfos.map(i => i.invoice_number).filter(Boolean) as string[];
+  const invoiceNumber = rd.invoice_number ?? invNumbers[0] ?? null;
+  const total = Number(amount ?? rd.return_debit_amount ?? 0);
+  const feeVal = Number(fee ?? ((rd.bank_fee ?? 0) + (rd.additional_costs ?? 0)));
+  const returnDate = rd.booking_date ?? rd.value_date ?? new Date().toISOString().slice(0, 10);
+
+  const { data: u } = await supabase.auth.getUser();
+  const uid = u?.user?.id ?? null;
+
+  const note = [
+    `Rücklastschrift vom ${new Date(returnDate).toLocaleDateString('de-DE')}`,
+    invNumbers.length ? `Rechnung(en) ${invNumbers.join(', ')}` : (invoiceNumber ? `Rechnung ${invoiceNumber}` : null),
+    `Betrag ${new Intl.NumberFormat('de-DE', { style: 'currency', currency: rd.currency || 'EUR' }).format(total)}`,
+    feeVal > 0 ? `Gebühren ${new Intl.NumberFormat('de-DE', { style: 'currency', currency: rd.currency || 'EUR' }).format(feeVal)}` : null,
+    rd.return_code ? `Code ${rd.return_code}` : null,
+    rd.return_reason ?? null,
+    rd.sepa_mandate_blocked ? 'SEPA-Mandat gesperrt' : null,
+    marker,
+  ].filter(Boolean).join(' | ');
+
+  const { data: ins, error } = await supabase.from('device_locks' as any).insert({
+    invoice_id: rd.invoice_id ?? invoiceInfos[0]?.invoice_id ?? null,
+    invoice_number: invoiceNumber,
+    customer_id: customerId,
+    customer_number: customerNumber,
+    customer_name: customerName,
+    amount: total,
+    currency: rd.currency || 'EUR',
+    return_date: returnDate,
+    return_reason: rd.return_reason ?? rd.return_code ?? 'Rücklastschrift',
+    lock_note: note,
+    status: 'aktiv',
+    source: 'ruecklastschrift',
+    activated_at: new Date().toISOString(),
+    activated_by: uid,
+    created_by: uid,
+  } as any).select('id').maybeSingle();
+  if (error) throw error;
+
+  await logBank({
+    action: 'geraetesperre_aus_ruecklastschrift',
+    bank_transaction_id: rd.bank_transaction_id ?? null,
+    new_value: { return_debit_id: rd.id, device_lock_id: (ins as any)?.id ?? null, invoice_number: invoiceNumber, amount: total },
+  });
+
+  return (ins as any)?.id as string | undefined;
 }
