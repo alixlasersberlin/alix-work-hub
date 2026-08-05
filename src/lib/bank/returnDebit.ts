@@ -547,10 +547,26 @@ export async function confirmReturnDebit(input: ConfirmInput) {
   }
 
   // Gerätesperre aus der Rückbuchung erzeugen (Übersicht "Gerätesperren")
-  try { await createDeviceLockFromReturnDebit(rd, input.customerId ?? null, invoiceInfos, total, fee); }
-  catch (e) { console.error('Gerätesperre konnte nicht angelegt werden', e); }
+  const warnings: string[] = [];
+  try { await createDeviceLockFromReturnDebit(rd, input.customerId ?? null, invoiceInfos, total, fee, tx); }
+  catch (e: any) {
+    console.error('Gerätesperre konnte nicht angelegt werden', e);
+    warnings.push(`Gerätesperre konnte nicht angelegt werden: ${e?.message ?? e}`);
+  }
+
+  // Mahnung mit Sperrankündigung automatisch an den Kunden senden (CC Buchhaltung)
+  if (input.startReminder) {
+    try {
+      const fresh = { ...rd, customer_id: input.customerId ?? rd.customer_id, bank_transaction_id: tx.id, invoice_number: input.allocations[0]?.invoice_number ?? rd.invoice_number, customer_fee: input.chargeCustomer ? input.customerFee : 0 };
+      await sendReturnDebitDunning(fresh);
+    } catch (e: any) {
+      console.error('Mahnung konnte nicht versendet werden', e);
+      warnings.push(`Mahnung konnte nicht versendet werden: ${e?.message ?? e}`);
+    }
+  }
 
   if (input.createTask) await notifyAccounting(rd, invoiceInfos, input.customerId);
+
 
   await logBank({
     action: 'ruecklastschrift_bestaetigt',
@@ -563,7 +579,7 @@ export async function confirmReturnDebit(input: ConfirmInput) {
     },
   });
 
-  return { invoiceInfos, fullyReturned };
+  return { invoiceInfos, fullyReturned, warnings };
 }
 
 /** Storniert eine bestätigte Rücklastschrift-Zuordnung (nur Super Admin). */
@@ -774,6 +790,9 @@ export interface ReturnDunningPreview {
 
 const deDate = (d: Date) => d.toLocaleDateString('de-DE');
 
+/** Fester CC-Empfänger der Buchhaltung für Rücklastschrift-Mahnungen. */
+export const RETURN_DUNNING_CC = ['k.trinh@alix-lasers.com'];
+
 /** Sammelt alle Daten für die Rücklastschrift-Mahnung (Vorschau + Versand). */
 export async function buildReturnDunning(rd: any, payDays = 7): Promise<ReturnDunningPreview> {
   const allocs = await getAllocationsOfReturnDebit(rd.id);
@@ -785,6 +804,31 @@ export async function buildReturnDunning(rd: any, payDays = 7): Promise<ReturnDu
     customerName = (c as any)?.company_name || (c as any)?.contact_name || '';
     recipient = (c as any)?.email ?? null;
   }
+  // Fallback: Kundendaten über die zugeordnete Rechnung ermitteln
+  if (!recipient) {
+    for (const a of allocs) {
+      if (!a.invoice_id) continue;
+      let inv: any = null;
+      const r1 = await supabase.from('zoho_invoices').select('customer_id, customer_name, email').eq('id', a.invoice_id).maybeSingle();
+      inv = r1.data;
+      if (!inv) {
+        const r2 = await supabase.from('zoho_recurring_invoices').select('customer_id, customer_name, email').eq('id', a.invoice_id).maybeSingle();
+        inv = r2.data;
+      }
+      if (inv) {
+        customerName = customerName || (inv.customer_name ?? '');
+        recipient = inv.email ?? null;
+        if (!recipient && inv.customer_id) {
+          const { data: c2 } = await supabase.from('customers')
+            .select('company_name, contact_name, email').eq('id', inv.customer_id).maybeSingle();
+          customerName = customerName || (c2 as any)?.company_name || (c2 as any)?.contact_name || '';
+          recipient = (c2 as any)?.email ?? null;
+        }
+      }
+      if (recipient) break;
+    }
+  }
+
   const amount = Number(rd.return_debit_amount || 0);
   const fee = Number(rd.customer_fee || 0);
   const due = new Date(); due.setDate(due.getDate() + payDays);
@@ -822,7 +866,9 @@ export async function sendReturnDebitDunning(rd: any, payDays = 7) {
     body: {
       templateName: 'ruecklastschrift-mahnung',
       recipientEmail: info.recipient,
+      extraCc: RETURN_DUNNING_CC,
       idempotencyKey: `ruecklastschrift-mahnung-${rd.id}-${new Date().toISOString().slice(0, 10)}`,
+
       templateData: {
         customerName: info.customerName,
         returnDate: rd.booking_date ? new Date(rd.booking_date).toLocaleDateString('de-DE') : null,
@@ -875,6 +921,7 @@ export async function createDeviceLockFromReturnDebit(
   invoiceInfos: { invoice_id?: string | null; invoice_number?: string | null }[] = [],
   amount?: number,
   fee?: number,
+  tx?: any,
 ) {
   const marker = `[RD:${rd.id}]`;
 
@@ -890,6 +937,17 @@ export async function createDeviceLockFromReturnDebit(
     customerName = (c as any)?.company_name || (c as any)?.contact_name || null;
     customerNumber = (c as any)?.external_customer_id ?? null;
   }
+  // Fallback: Auftraggeber/Empfänger aus der Banktransaktion
+  if (!customerName) {
+    let name = tx?.sender_receiver_name ?? null;
+    if (!name && rd.bank_transaction_id) {
+      const { data: t } = await supabase.from('bank_transactions' as any)
+        .select('sender_receiver_name').eq('id', rd.bank_transaction_id).maybeSingle();
+      name = (t as any)?.sender_receiver_name ?? null;
+    }
+    customerName = name;
+  }
+
 
   const invNumbers = invoiceInfos.map(i => i.invoice_number).filter(Boolean) as string[];
   const invoiceNumber = rd.invoice_number ?? invNumbers[0] ?? null;
@@ -911,8 +969,17 @@ export async function createDeviceLockFromReturnDebit(
     marker,
   ].filter(Boolean).join(' | ');
 
+  // invoice_id ist per FK auf zoho_invoices beschränkt – Ratenzahler-IDs würden den Insert sprengen
+  const candidateInvoiceId = rd.invoice_id ?? invoiceInfos[0]?.invoice_id ?? null;
+  let safeInvoiceId: string | null = null;
+  if (candidateInvoiceId) {
+    const { data: zi } = await supabase.from('zoho_invoices').select('id').eq('id', candidateInvoiceId).maybeSingle();
+    safeInvoiceId = zi ? candidateInvoiceId : null;
+  }
+
   const { data: ins, error } = await supabase.from('device_locks' as any).insert({
-    invoice_id: rd.invoice_id ?? invoiceInfos[0]?.invoice_id ?? null,
+    invoice_id: safeInvoiceId,
+
     invoice_number: invoiceNumber,
     customer_id: customerId,
     customer_number: customerNumber,
