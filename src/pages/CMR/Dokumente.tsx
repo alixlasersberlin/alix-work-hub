@@ -403,7 +403,8 @@ export default function CmrDokumente() {
           <option value="">Alle Belegarten</option>
           {CMR_DOC_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
-        <Button className="ml-auto" onClick={startNew}><Plus className="w-4 h-4 mr-1.5" /> Neuer Beleg</Button>
+        <Button variant="outline" className="ml-auto" onClick={exportCsv}><Download className="w-4 h-4 mr-1.5" /> CSV-Export</Button>
+        <Button onClick={startNew}><Plus className="w-4 h-4 mr-1.5" /> Neuer Beleg</Button>
       </div>
 
       <Card className="divide-y">
