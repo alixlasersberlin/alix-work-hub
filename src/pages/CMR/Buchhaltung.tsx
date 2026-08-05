@@ -231,7 +231,9 @@ export default function CmrBuchhaltung() {
             </div>
           ))}
         </Card>
+        </>
       ) : (
+
         <Card className="divide-y">
           {payments.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">Keine Zahlungseingänge erfasst.</div>}
           {payments.map((p) => (
