@@ -39,15 +39,28 @@ export default function CmrProjekte() {
 
   const cur = settings?.default_currency || 'AED';
 
+  const [revenue, setRevenue] = useState<Record<string, number>>({});
+
   const load = async () => {
     if (!tenantId) return;
     setBusy(true);
-    const { data } = await supabase
-      .from('cmr_projects' as any).select('*').eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false }).limit(500);
+    const [{ data }, { data: docs }] = await Promise.all([
+      supabase.from('cmr_projects' as any).select('*').eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false }).limit(500),
+      supabase.from('cmr_documents' as any).select('project_id, doc_type, gross_total')
+        .eq('tenant_id', tenantId).not('project_id', 'is', null).limit(2000),
+    ]);
+    const rev: Record<string, number> = {};
+    (((docs as any) || []) as any[]).forEach((d) => {
+      if (d.doc_type !== 'rechnung' && d.doc_type !== 'gutschrift') return;
+      const sign = d.doc_type === 'gutschrift' ? -1 : 1;
+      rev[d.project_id] = (rev[d.project_id] || 0) + sign * Number(d.gross_total || 0);
+    });
+    setRevenue(rev);
     setRows(((data as any) || []) as Project[]);
     setBusy(false);
   };
+
 
   useEffect(() => { load(); }, [tenantId]);
 
@@ -136,8 +149,15 @@ export default function CmrProjekte() {
               </div>
             </button>
             <Badge variant="outline" className="capitalize">{p.status}</Badge>
-            <div className="text-sm font-semibold whitespace-nowrap">{cmrMoney(p.budget, p.currency || cur)}</div>
+            <div className="text-right whitespace-nowrap">
+              <div className="text-sm font-semibold">{cmrMoney(revenue[p.id] || 0, p.currency || cur)}</div>
+              <div className="text-[11px] text-muted-foreground">
+                Budget {cmrMoney(p.budget, p.currency || cur)}
+                {Number(p.budget) > 0 ? ` · ${Math.round(((revenue[p.id] || 0) / Number(p.budget)) * 100)}%` : ''}
+              </div>
+            </div>
             <Button size="icon" variant="ghost" onClick={() => remove(p)}><Trash2 className="w-4 h-4" /></Button>
+
           </div>
         ))}
       </Card>
