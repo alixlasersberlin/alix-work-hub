@@ -515,7 +515,7 @@ export default function ReturnDebitDialog({
                 <section className="space-y-2">
                   <H>Folgeaktionen</H>
                   <label className="flex items-center gap-2"><input type="checkbox" checked={blockMandate} onChange={e => setBlockMandate(e.target.checked)} />SEPA-Lastschrift für diesen Kunden sperren</label>
-                  <label className="flex items-center gap-2"><input type="checkbox" checked={startReminder} onChange={e => setStartReminder(e.target.checked)} />Forderung in den Mahnprozess aufnehmen</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={startReminder} onChange={e => setStartReminder(e.target.checked)} />Mahnprozess starten und E-Mail sofort senden</label>
                   <label className="flex items-center gap-2"><input type="checkbox" checked={createTask} onChange={e => setCreateTask(e.target.checked)} />Aufgabe für die Buchhaltung erstellen</label>
                   {rules && confidence < 70 && (
                     <p className="text-xs text-amber-500">Zuordnung unsicher – bitte die ursprüngliche Zahlung prüfen, bevor bestätigt wird.</p>
