@@ -100,10 +100,26 @@ class AuditTracker {
         const msg = String((error as any)?.message ?? "");
         if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
           await this.stop();
+          return;
         }
+        // Transient backend issues (503 / service degraded): back off instead of hammering
+        this.failureCount++;
+        if (this.failureCount >= 3) {
+          this.pauseUntil = Date.now() + 5 * 60_000;
+          this.failureCount = 0;
+        }
+        return;
       }
-    } catch {}
+      this.failureCount = 0;
+    } catch {
+      this.failureCount++;
+      if (this.failureCount >= 3) {
+        this.pauseUntil = Date.now() + 5 * 60_000;
+        this.failureCount = 0;
+      }
+    }
   }
+
 
   private async flush() {
     if (!this.sessionId || this.queue.length === 0) return;
