@@ -8668,6 +8668,57 @@ export type Database = {
           },
         ]
       }
+      bank_match_rules: {
+        Row: {
+          accounting_area: string
+          allocation_type: string
+          auto_book: boolean
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          hit_count: number
+          id: string
+          last_used_at: string
+          payer_iban: string | null
+          payer_key: string
+          payer_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          accounting_area?: string
+          allocation_type?: string
+          auto_book?: boolean
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          hit_count?: number
+          id?: string
+          last_used_at?: string
+          payer_iban?: string | null
+          payer_key: string
+          payer_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accounting_area?: string
+          allocation_type?: string
+          auto_book?: boolean
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          hit_count?: number
+          id?: string
+          last_used_at?: string
+          payer_iban?: string | null
+          payer_key?: string
+          payer_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bank_transaction_allocations: {
         Row: {
           allocated_amount: number
