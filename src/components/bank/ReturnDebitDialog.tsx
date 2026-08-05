@@ -183,6 +183,19 @@ export default function ReturnDebitDialog({
     catch (e: any) { toast.error(e.message); }
     finally { setBusy(false); }
   };
+  const doDunning = async () => {
+    if (!rd) return;
+    const days = Number(window.prompt('Zahlungsfrist in Tagen (danach Sperre der Leistungen)', '7') ?? '');
+    if (!days || days < 1) return;
+    setBusy(true);
+    try {
+      const info = await sendReturnDebitDunning(rd, days);
+      toast.success(`Mahnung mit Sperrankündigung an ${info.recipient} versendet (zahlbar bis ${info.payUntil})`);
+      onChanged();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setBusy(false); }
+  };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
