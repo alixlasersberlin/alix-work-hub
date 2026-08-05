@@ -219,14 +219,22 @@ export function applyMapping(rows: Record<string, any>[], mapping: ColumnMapping
       if (/^(H|C|CRDT|HABEN|CREDIT|\+)/.test(dc)) amount = Math.abs(amount);
     }
     const invoiceHint = g(r, 'invoice_number');
+    const bookingText = g(r, 'booking_text');
+    const purposeVal = [g(r, 'purpose'), invoiceHint].filter(Boolean).join(' ') || null;
+    let name = g(r, 'sender_receiver_name');
+    // Kein Buchungstext als Kundenname übernehmen
+    if (!name || name === bookingText || BOOKING_TEXT_RE.test(name)) {
+      name = (purposeVal ? extractCustomerName(purposeVal) : null) ?? (name && !BOOKING_TEXT_RE.test(name) ? name : null);
+    }
     return mk({
       amount,
       booking_date: parseDate(g(r, 'booking_date')),
       value_date: parseDate(g(r, 'value_date')) ?? parseDate(g(r, 'booking_date')),
       currency: (g(r, 'currency') || defaultCurrency).toUpperCase().slice(0, 3),
-      purpose: [g(r, 'purpose'), invoiceHint].filter(Boolean).join(' ') || null,
-      booking_text: g(r, 'booking_text'),
-      sender_receiver_name: g(r, 'sender_receiver_name'),
+      purpose: purposeVal,
+      booking_text: bookingText,
+      sender_receiver_name: name,
+
       sender_receiver_iban: g(r, 'sender_receiver_iban')?.replace(/\s+/g, '') ?? null,
       bic: g(r, 'bic'),
       bank_reference: g(r, 'bank_reference'),
@@ -401,7 +409,32 @@ export async function pdfToText(file: File): Promise<string> {
 const DATE_RE = /(\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}|\d{4}-\d{2}-\d{2})/;
 const AMT_RE = /(-?\(?\d{1,3}(?:[.'\s]\d{3})*,\d{2}\)?-?|-?\d+\.\d{2}-?)/g;
 
+/** Typische Buchungstext-Begriffe – dürfen NIE als Kundenname gelten */
+const BOOKING_TEXT_RE = /^(sepa|dauerauftrag|lastschrift|ruecklastschrift|rücklastschrift|retoure|ueberweisung|überweisung|gutschrift|belastung|kartenzahlung|entgelt|gebuehr|gebühr|zinsen|abschluss|basislastschrift|folgelastschrift|einzugsermaechtigung|onlinebanking|dauerauftragsgutschr|kartentransaktion|storno|umbuchung|bargeldauszahlung|echtzeit)/i;
+
+/**
+ * Versucht, aus dem Verwendungszweck den Kundennamen zu ziehen –
+ * Buchungstext-Fragmente (z. B. „RUECKLASTSCHRIFT Sonstige Gruende“) werden verworfen.
+ */
+export function extractCustomerName(purpose: string): string | null {
+  const marked = purpose.match(/(?:auftraggeber|zahlungspflichtiger|kontoinhaber|beguenstigter|begünstigter|empf(?:ä|ae)nger|name)\s*[:.]?\s*([A-Za-zÄÖÜäöüß][^\n]{2,60})/i);
+  const candidates = [
+    marked?.[1],
+    ...purpose.split(/\s{2,}|,|\||\/{2,}/),
+  ];
+  for (const raw of candidates) {
+    const nm = (raw || '').trim().replace(/\s+/g, ' ');
+    if (nm.length < 4 || nm.length > 60) continue;
+    if (BOOKING_TEXT_RE.test(nm)) continue;
+    if (/^[\d\s.,:+-]+$/.test(nm)) continue;
+    if (!/[A-Za-zÄÖÜäöüß]{3}/.test(nm)) continue;
+    return nm;
+  }
+  return null;
+}
+
 export function parsePdfText(text: string, currency = 'EUR'): { transactions: ParsedTx[]; warnings: string[] } {
+
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const txs: ParsedTx[] = [];
   const warnings: string[] = [];
@@ -434,12 +467,12 @@ export function parsePdfText(text: string, currency = 'EUR'): { transactions: Pa
   if (cur) txs.push(cur);
   for (const t of txs) {
     if (!t.sender_receiver_name && t.purpose) {
-      const nm = t.purpose.split(/\s{2,}|,/)[0];
-      if (nm && nm.length > 3 && nm.length < 60) t.sender_receiver_name = nm.trim();
+      t.sender_receiver_name = extractCustomerName(t.purpose);
     }
     const inv = (t.purpose || '').match(/\b(RG|RE|INV|AZ)?[-\s]?(\d{4}[-/]\d{3,6}|\d{5,10})\b/i);
     if (inv) t.raw_data.invoice_hint = inv[0];
   }
+
   if (!txs.length) warnings.push('Im PDF konnten keine Buchungszeilen eindeutig erkannt werden.');
   return { transactions: txs, warnings };
 }
