@@ -54,6 +54,10 @@ export default function Personalisierung() {
           <A11yPrefsPanel />
         </div>
 
+        {/* Menü & Sidebar */}
+        <UiPrefsPanel />
+
+
         {/* AI Background */}
         <AIBackgroundPanel />
 
