@@ -939,8 +939,17 @@ export async function createDeviceLockFromReturnDebit(
     marker,
   ].filter(Boolean).join(' | ');
 
+  // invoice_id ist per FK auf zoho_invoices beschränkt – Ratenzahler-IDs würden den Insert sprengen
+  const candidateInvoiceId = rd.invoice_id ?? invoiceInfos[0]?.invoice_id ?? null;
+  let safeInvoiceId: string | null = null;
+  if (candidateInvoiceId) {
+    const { data: zi } = await supabase.from('zoho_invoices').select('id').eq('id', candidateInvoiceId).maybeSingle();
+    safeInvoiceId = zi ? candidateInvoiceId : null;
+  }
+
   const { data: ins, error } = await supabase.from('device_locks' as any).insert({
-    invoice_id: rd.invoice_id ?? invoiceInfos[0]?.invoice_id ?? null,
+    invoice_id: safeInvoiceId,
+
     invoice_number: invoiceNumber,
     customer_id: customerId,
     customer_number: customerNumber,
