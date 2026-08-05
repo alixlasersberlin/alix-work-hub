@@ -350,6 +350,7 @@ export async function findOriginalPayments(
     let score = 0;
     const rAmount = Math.abs(Number(r.amount ?? 0));
     if (Math.abs(rAmount - amount) < 0.01) { score += 35; reasons.push('Betrag identisch'); }
+    else if (amount > 0 && Math.abs(rAmount - amount) <= amountTolerance(amount)) { score += 25; reasons.push('Betrag ähnlich (Abweichung durch Bankgebühren)'); }
     else if (amount > 0 && rAmount > amount && rAmount - amount < amount) { score += 12; reasons.push('Sammelzahlung mit höherem Betrag'); }
     if (tx.sender_receiver_iban && norm(r.sender_receiver_iban) === norm(tx.sender_receiver_iban)) { score += 20; reasons.push('IBAN identisch'); }
     if (tx.sender_receiver_name && norm(r.sender_receiver_name) && norm(r.sender_receiver_name) === norm(tx.sender_receiver_name)) { score += 15; reasons.push('Kundenname identisch'); }
