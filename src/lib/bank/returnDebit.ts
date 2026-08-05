@@ -614,3 +614,102 @@ export async function saveReturnRules(rules: ReturnRules) {
   );
   if (error) throw error;
 }
+
+/* ------------------------------------------- Mahnung / Sperrankündigung */
+
+export interface ReturnDunningPreview {
+  recipient: string | null;
+  customerName: string;
+  amount: number;
+  fee: number;
+  total: number;
+  currency: string;
+  payUntil: string;
+  blockDate: string;
+  items: { invoice_number: string | null; amount: number; due_date: string | null }[];
+}
+
+const deDate = (d: Date) => d.toLocaleDateString('de-DE');
+
+/** Sammelt alle Daten für die Rücklastschrift-Mahnung (Vorschau + Versand). */
+export async function buildReturnDunning(rd: any, payDays = 7): Promise<ReturnDunningPreview> {
+  const allocs = await getAllocationsOfReturnDebit(rd.id);
+  let customerName = '';
+  let recipient: string | null = null;
+  if (rd.customer_id) {
+    const { data: c } = await supabase.from('customers')
+      .select('company_name, contact_name, email').eq('id', rd.customer_id).maybeSingle();
+    customerName = (c as any)?.company_name || (c as any)?.contact_name || '';
+    recipient = (c as any)?.email ?? null;
+  }
+  const amount = Number(rd.return_debit_amount || 0);
+  const fee = Number(rd.customer_fee || 0);
+  const due = new Date(); due.setDate(due.getDate() + payDays);
+  const block = new Date(due); block.setDate(block.getDate() + 1);
+  return {
+    recipient, customerName, amount, fee, total: amount + fee,
+    currency: rd.currency || 'EUR',
+    payUntil: deDate(due), blockDate: deDate(block),
+    items: allocs.map(a => ({
+      invoice_number: a.invoice_number ?? null,
+      amount: Number(a.allocated_amount || 0),
+      due_date: null,
+    })),
+  };
+}
+
+/** Versendet die Mahnung inkl. Ankündigung der Leistungssperre an den Kunden. */
+export async function sendReturnDebitDunning(rd: any, payDays = 7) {
+  const info = await buildReturnDunning(rd, payDays);
+  if (!info.recipient) throw new Error('Kunde hat keine E-Mail-Adresse hinterlegt');
+
+  let bank: any = null;
+  if (rd.bank_account_id) {
+    const { data } = await supabase.from('bank_accounts' as any)
+      .select('iban, bic, bank_name').eq('id', rd.bank_account_id).maybeSingle();
+    bank = data;
+  }
+
+  const { error } = await supabase.functions.invoke('send-transactional-email', {
+    body: {
+      templateName: 'ruecklastschrift-mahnung',
+      recipientEmail: info.recipient,
+      idempotencyKey: `ruecklastschrift-mahnung-${rd.id}-${new Date().toISOString().slice(0, 10)}`,
+      templateData: {
+        customerName: info.customerName,
+        returnDate: rd.booking_date ? new Date(rd.booking_date).toLocaleDateString('de-DE') : null,
+        returnReason: rd.return_reason ?? null,
+        returnCode: rd.return_code ?? null,
+        amount: info.amount,
+        fee: info.fee,
+        total: info.total,
+        currency: info.currency,
+        payUntil: info.payUntil,
+        blockDate: info.blockDate,
+        mandateBlocked: !!rd.sepa_mandate_blocked,
+        items: info.items,
+        iban: bank?.iban ?? null,
+        bic: bank?.bic ?? null,
+        bankName: bank?.bank_name ?? null,
+        reference: info.items[0]?.invoice_number ?? null,
+        senderName: 'Alix Lasers – Buchhaltung',
+      },
+    },
+  });
+  if (error) throw new Error(error.message);
+
+  await updateReturnDebit(rd.id, {
+    status: 'mahnprozess',
+    dunning_sent_at: new Date().toISOString(),
+    note: [rd.note, `Mahnung mit Sperrankündigung an ${info.recipient} versendet (zahlbar bis ${info.payUntil}, Sperre ab ${info.blockDate}).`]
+      .filter(Boolean).join('\n'),
+  });
+
+  await logBank({
+    action: 'ruecklastschrift_mahnung_versendet',
+    bank_transaction_id: rd.bank_transaction_id ?? null,
+    new_value: { recipient: info.recipient, total: info.total, payUntil: info.payUntil, blockDate: info.blockDate },
+  });
+
+  return info;
+}
