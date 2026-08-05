@@ -1523,6 +1523,8 @@ export default function AppLayout() {
 
         {/* Navigation */}
         <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto scroll-touch">
+          {wsMode && <WorkspaceNav collapsed={collapsed && !mobileOpen} />}
+          <div className={cn("space-y-0.5", wsMode && "hidden")}>
           {/* ALIX Copilot – öffnet das Copilot-Panel */}
           {(() => {
             const isCollapsedView = collapsed && !mobileOpen;
