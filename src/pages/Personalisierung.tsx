@@ -1,6 +1,7 @@
 import { Palette, Eye, Sparkles, Keyboard } from "lucide-react";
 import { PageHeader } from "@/components/infinity/PageHeader";
 import { A11yPrefsPanel } from "@/components/infinity/A11yPrefsPanel";
+import UiPrefsPanel from "@/components/UiPrefsPanel";
 import { AIBackgroundPanel } from "@/components/infinity/AIBackgroundPanel";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -52,6 +53,10 @@ export default function Personalisierung() {
         <div className="md:col-span-2">
           <A11yPrefsPanel />
         </div>
+
+        {/* Menü & Sidebar */}
+        <UiPrefsPanel />
+
 
         {/* AI Background */}
         <AIBackgroundPanel />
