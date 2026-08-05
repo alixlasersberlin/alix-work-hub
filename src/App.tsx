@@ -932,6 +932,7 @@ const CmrEinstellungen = lazy(() => import("./pages/CMR/Einstellungen"));
 const CmrProjekte = lazy(() => import("./pages/CMR/Projekte"));
 const CmrAbos = lazy(() => import("./pages/CMR/Abos"));
 const CmrMahnwesen = lazy(() => import("./pages/CMR/Mahnwesen"));
+const CmrZeiten = lazy(() => import("./pages/CMR/Zeiten"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -1250,6 +1251,7 @@ function AppRoutes() {
           <Route path="/cmr/projekte" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR','CMR Viewer']}><CmrProjekte /></ProtectedRoute>} />
           <Route path="/cmr/abos" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR','CMR Viewer']}><CmrAbos /></ProtectedRoute>} />
           <Route path="/cmr/mahnwesen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR','CMR Viewer']}><CmrMahnwesen /></ProtectedRoute>} />
+          <Route path="/cmr/zeiten" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung','CMR','CMR Viewer']}><CmrZeiten /></ProtectedRoute>} />
           <Route path="/cmr/einstellungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><CmrEinstellungen /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><AdminAuditLog /></ProtectedRoute>} />
           <Route path="/admin/geraete" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><GeraeteVerwaltung /></ProtectedRoute>} />

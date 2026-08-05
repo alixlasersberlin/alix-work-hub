@@ -75,6 +75,8 @@ export default function CmrEinstellungen() {
     ['dunning_fee_1', 'dunning_fee_2', 'dunning_fee_3', 'dunning_interest_pct'].forEach((k) => {
       payload[k] = Number(payload[k]) || 0;
     });
+    payload.advance_notice_days = Number(payload.advance_notice_days) || 0;
+    payload.advance_notice_active = !!payload.advance_notice_active;
 
     const { error } = settings?.id
       ? await supabase.from('cmr_settings' as any).update(payload).eq('id', settings.id)
@@ -169,6 +171,34 @@ export default function CmrEinstellungen() {
           Mahnungen automatisch versenden (sonst nur Entwürfe erzeugen)
         </label>
       </Card>
+
+      <Card className="p-4 space-y-3">
+        <div className="text-sm font-semibold">Zahlungsavis (Vorankündigung)</div>
+        <p className="text-xs text-muted-foreground">
+          Informiert Abo-Kunden vor der nächsten Abrechnung per E-Mail („Ihre Rechnung kommt in X Tagen").
+        </p>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4"
+            checked={!!form.advance_notice_active}
+            onChange={(e) => setForm({ ...form, advance_notice_active: e.target.checked })}
+          />
+          Zahlungsavis aktiv
+        </label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <Label>Vorlauf (Tage)</Label>
+            <Input
+              type="number"
+              value={form.advance_notice_days ?? 5}
+              onChange={(e) => setForm({ ...form, advance_notice_days: e.target.value })}
+            />
+          </div>
+        </div>
+      </Card>
+
+
 
 
 

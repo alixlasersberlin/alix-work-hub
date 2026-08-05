@@ -11,6 +11,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 
 function advance(dateStr: string, unit: string): string {
   const d = new Date(dateStr + "T00:00:00Z");
@@ -38,6 +39,64 @@ Deno.serve(async (req) => {
 
     const { data: plans, error } = await q;
     if (error) throw error;
+
+    // --- Zahlungsavis: Kunden vor der nächsten Abrechnung vorab informieren ---
+    const { data: settingsRows } = await sb.from("cmr_settings").select("*");
+    const settingsByTenant = new Map<string, any>();
+    for (const st of settingsRows ?? []) settingsByTenant.set(st.tenant_id, st);
+
+    let notices = 0;
+    if (!planId && RESEND_API_KEY) {
+      let nq = sb.from("cmr_recurring_plans").select("*").eq("is_active", true).gt("next_run_date", today);
+      if (tenantId) nq = nq.eq("tenant_id", tenantId);
+      const { data: upcoming } = await nq;
+      for (const p of upcoming ?? []) {
+        const st = settingsByTenant.get(p.tenant_id);
+        if (!st?.advance_notice_active || !p.customer_email) continue;
+        const lead = Number(st.advance_notice_days ?? 5);
+        const daysLeft = Math.ceil(
+          (new Date(p.next_run_date + "T00:00:00Z").getTime() - new Date(today + "T00:00:00Z").getTime()) / 86400000,
+        );
+        if (daysLeft > lead) continue;
+        // pro Abrechnungszyklus nur einmal avisieren
+        if (p.last_notice_at && new Date(p.last_notice_at).getTime() > Date.now() - (daysLeft + lead) * 86400000) continue;
+
+        const lines = Array.isArray(p.lines) ? p.lines : [];
+        const gross = lines.reduce((s: number, l: any) => {
+          const t = Number(l.quantity || 0) * Number(l.unit_price || 0);
+          return s + t + t * (Number(l.tax_rate || 0) / 100);
+        }, 0);
+        const subject = `Zahlungsavis: Ihre Rechnung vom ${new Date(p.next_run_date).toLocaleDateString("de-DE")}`;
+        const text = `Sehr geehrte Damen und Herren,\n\nwir informieren Sie vorab: am ${new Date(p.next_run_date).toLocaleDateString("de-DE")} stellen wir Ihnen `
+          + `${gross.toFixed(2)} ${p.currency ?? ""} für "${p.name}" in Rechnung.\n\nMit freundlichen Grüßen\n${st.company_name ?? "CMR"}`;
+        let status = "gesendet";
+        let errText: string | null = null;
+        try {
+          const res = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: st.email ? `${st.company_name ?? "CMR"} <${st.email}>` : "CMR <onboarding@resend.dev>",
+              to: [p.customer_email],
+              subject,
+              text,
+            }),
+          });
+          if (!res.ok) { status = "fehler"; errText = await res.text(); }
+        } catch (e) {
+          status = "fehler";
+          errText = String((e as Error)?.message || e);
+        }
+        await sb.from("cmr_email_log").insert({
+          tenant_id: p.tenant_id, document_id: null, recipients: p.customer_email,
+          subject, provider: "resend", status, error: errText,
+        });
+        if (status === "gesendet") {
+          await sb.from("cmr_recurring_plans").update({ last_notice_at: new Date().toISOString() }).eq("id", p.id);
+          notices++;
+        }
+      }
+    }
 
     let created = 0;
     const results: unknown[] = [];
@@ -108,7 +167,7 @@ Deno.serve(async (req) => {
       results.push({ plan: p.id, document: doc.id, number: nr });
     }
 
-    return Response.json({ ok: true, created, results }, { headers: corsHeaders });
+    return Response.json({ ok: true, created, notices, results }, { headers: corsHeaders });
   } catch (e) {
     return Response.json({ error: String((e as Error)?.message || e) }, { status: 500, headers: corsHeaders });
   }
