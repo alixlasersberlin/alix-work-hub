@@ -50,6 +50,26 @@ export default function CmrBuchhaltung() {
     open: open_.reduce((s, i) => s + (Number(i.gross_total) - Number(i.paid_total)), 0),
   }), [invoices, open_]);
 
+  /** Fälligkeitsstruktur (Aging) der offenen Posten. */
+  const aging = useMemo(() => {
+    const buckets = [
+      { label: 'Nicht fällig', min: -Infinity, max: 0 },
+      { label: '1–30 Tage', min: 1, max: 30 },
+      { label: '31–60 Tage', min: 31, max: 60 },
+      { label: '61–90 Tage', min: 61, max: 90 },
+      { label: '> 90 Tage', min: 91, max: Infinity },
+    ].map((b) => ({ ...b, amount: 0, count: 0 }));
+    open_.forEach((i) => {
+      const openAmt = Number(i.gross_total) - Number(i.paid_total);
+      const days = i.due_date ? Math.floor((Date.now() - new Date(i.due_date).getTime()) / 86400000) : 0;
+      const b = buckets.find((x) => days >= x.min && days <= x.max) ?? buckets[0];
+      b.amount += openAmt;
+      b.count += 1;
+    });
+    return buckets;
+  }, [open_]);
+
+
   /** Umsatzsteuer-Auswertung je Monat (nur CMR-Belege). */
   const ustRows = useMemo(() => {
     const map = new Map<string, { net: number; tax: number; gross: number }>();
