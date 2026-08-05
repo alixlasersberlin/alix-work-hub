@@ -109,7 +109,7 @@ export default function GlobalSearch() {
           id: `dev-${d.id}`, group: 'Geräte', icon: Cpu,
           title: d.serial_number || d.model_name || 'Gerät',
           subtitle: d.model_name || d.device_status || undefined,
-          to: '/lagergeraete',
+          to: `/lager/lagergeraete?q=${encodeURIComponent(d.serial_number || d.model_name || '')}`,
         }));
       })());
 
@@ -122,9 +122,22 @@ export default function GlobalSearch() {
           id: `doc-${d.id}`, group: 'Dokumente', icon: FileText,
           title: d.title || d.original_filename || 'Dokument',
           subtitle: d.serial_number || undefined,
-          to: '/alixdocs',
+          to: `/alixdocs?doc=${d.id}`,
         }));
       })());
+
+      tasks.push((async () => {
+        const { data } = await supabase.from('alixdocs2_documents' as any)
+          .select('id, title, file_name')
+          .or(`title.ilike.${like},file_name.ilike.${like}`).limit(6);
+        ((data as any[]) || []).forEach((d: any) => out.push({
+          id: `doc2-${d.id}`, group: 'Dokumente', icon: FileText,
+          title: d.title || d.file_name || 'Dokument',
+          subtitle: 'AlixDocs',
+          to: `/alixdocs2/dokument/${d.id}`,
+        }));
+      })());
+
     }
 
     if (showCmr) {
