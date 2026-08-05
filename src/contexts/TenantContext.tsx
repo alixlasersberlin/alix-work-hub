@@ -90,6 +90,33 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     else localStorage.removeItem(STORAGE_KEY);
   };
 
+  // Mandanten-Konfiguration (Akzentfarbe, Kennzeichnung) live anwenden — ohne Seitenreload
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute('data-tenant', current?.code ?? 'ALL');
+    const hex = (current?.accent_color || '').trim();
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+    if (!m) { root.style.removeProperty('--primary'); root.style.removeProperty('--ring'); return; }
+    const int = parseInt(m[1], 16);
+    const r = ((int >> 16) & 255) / 255, g = ((int >> 8) & 255) / 255, b = (int & 255) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    const d = max - min;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    let h = 0;
+    if (d !== 0) {
+      if (max === r) h = 60 * (((g - b) / d) % 6);
+      else if (max === g) h = 60 * ((b - r) / d + 2);
+      else h = 60 * ((r - g) / d + 4);
+    }
+    if (h < 0) h += 360;
+    const hsl = `${h.toFixed(1)} ${(s * 100).toFixed(1)}% ${(l * 100).toFixed(1)}%`;
+    root.style.setProperty('--primary', hsl);
+    root.style.setProperty('--ring', hsl);
+  }, [current?.code, current?.accent_color]);
+
+
+
   const sourceFilter = useMemo(() => {
     if (current) return current.zoho_source_system ? [current.zoho_source_system] : [];
     // Konzernsicht: nur erlaubte Mandanten
