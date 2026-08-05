@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useCmrTenant } from '@/hooks/useCmrTenant';
 import CmrEmailTemplates from './EmailTemplates';
 import CmrNumberRanges from './NumberRanges';
+import CmrPdfTemplates from './PdfTemplates';
 
 const FIELDS: { key: string; label: string; type?: string }[][] = [
   [
@@ -117,6 +118,7 @@ export default function CmrEinstellungen() {
       </Card>
 
       <CmrNumberRanges tenantId={tenantId} />
+      <CmrPdfTemplates tenantId={tenantId} />
       <CmrEmailTemplates tenantId={tenantId} />
     </div>
   );
