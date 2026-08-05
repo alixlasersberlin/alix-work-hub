@@ -32,6 +32,7 @@ export default function Importregeln() {
   };
 
   return (
+    <div className="space-y-4">
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2"><Settings2 className="w-4 h-4" />Importregeln &amp; Spaltenvorlagen</CardTitle>
