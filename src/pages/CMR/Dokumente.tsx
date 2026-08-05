@@ -458,6 +458,33 @@ export default function CmrDokumente() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!payDoc} onOpenChange={(o) => !o && setPayDoc(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Zahlung erfassen · {payDoc?.doc_number ?? ''}</DialogTitle>
+          </DialogHeader>
+          {payForm && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Offen: {cmrMoney(Number(payDoc?.gross_total || 0) - Number(payDoc?.paid_total || 0), payDoc?.currency || cur)}
+              </p>
+              <div><Label>Betrag</Label><Input type="number" step="0.01" value={payForm.amount} onChange={(e) => setPayForm({ ...payForm, amount: e.target.value })} /></div>
+              <div><Label>Zahlungsdatum</Label><Input type="date" value={payForm.paid_on} onChange={(e) => setPayForm({ ...payForm, paid_on: e.target.value })} /></div>
+              <div><Label>Zahlungsart</Label><Input value={payForm.method} onChange={(e) => setPayForm({ ...payForm, method: e.target.value })} /></div>
+              <div><Label>Referenz</Label><Input value={payForm.reference} onChange={(e) => setPayForm({ ...payForm, reference: e.target.value })} /></div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPayDoc(null)}>Abbrechen</Button>
+            <Button onClick={savePayment} disabled={paying}>
+              {paying ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Euro className="w-4 h-4 mr-1.5" />} Buchen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
