@@ -10,6 +10,7 @@ import { listMatchRules, deleteMatchRule, setRuleAutoBook, type BankMatchRule } 
 import { supabase } from '@/integrations/supabase/client';
 import { listBankAccounts, type BankAccount } from '@/lib/bank/api';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import ReturnDunningTemplateCard from '@/components/bank/ReturnDunningTemplateCard';
 
 export default function Importregeln() {
   const { region } = useAccountingRegion();
@@ -73,6 +74,7 @@ export default function Importregeln() {
     <LearnedRules region={region} />
     <AutoReconcileCard region={region} />
     <ReturnDebitRulesCard />
+    <ReturnDunningTemplateCard />
     </div>
   );
 }
