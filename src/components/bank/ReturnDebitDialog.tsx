@@ -343,6 +343,34 @@ export default function ReturnDebitDialog({
                     <Row l="Betrag" v={fmt(Number(rd.fee_invoice_total ?? 45), currency)} />
                     <Row l="Versendet am" v={rd.fee_invoice_sent_at ? new Date(rd.fee_invoice_sent_at).toLocaleString('de-DE') : 'nicht versendet'} />
                   </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Input
+                      className="h-8 w-64"
+                      placeholder="E-Mail-Empfänger (optional)"
+                      value={feeEmail}
+                      onChange={(e) => setFeeEmail(e.target.value)}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={feeSending}
+                      onClick={async () => {
+                        setFeeSending(true);
+                        try {
+                          const to = await resendReturnDebitFeeInvoice(rd, feeEmail || undefined);
+                          toast.success(`Gebührenrechnung an ${to} versendet`);
+                          onChanged();
+                        } catch (e: any) {
+                          toast.error(e?.message ?? 'Versand fehlgeschlagen');
+                        } finally {
+                          setFeeSending(false);
+                        }
+                      }}
+                    >
+                      {feeSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+                      {rd.fee_invoice_sent_at ? 'Erneut senden' : 'Jetzt senden'}
+                    </Button>
+                  </div>
                 </section>
               </>
             )}
