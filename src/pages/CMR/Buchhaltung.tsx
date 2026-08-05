@@ -686,7 +686,53 @@ export default function CmrBuchhaltung() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!credit} onOpenChange={(o) => !o && setCredit(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Gutschrift verrechnen</DialogTitle></DialogHeader>
+          {credit && (
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                {credit.doc.doc_number} · {credit.doc.customer_name ?? 'Ohne Kunde'} · offen {cmrMoney(creditOpen(credit.doc), cur)}
+              </div>
+              <div>
+                <Label>Offene Rechnung</Label>
+                <select
+                  className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  value={credit.target_id}
+                  onChange={(e) => {
+                    const t = credit.targets.find((x: Doc) => x.id === e.target.value);
+                    setCredit({
+                      ...credit, target_id: e.target.value,
+                      amount: t ? Math.min(creditOpen(credit.doc), Number(t.gross_total) - Number(t.paid_total)) : credit.amount,
+                    });
+                  }}
+                >
+                  {credit.targets.length === 0 && <option value="">Keine offene Rechnung vorhanden</option>}
+                  {credit.targets.map((t: Doc) => (
+                    <option key={t.id} value={t.id}>
+                      {t.doc_number} · {t.customer_name ?? ''} · offen {(Number(t.gross_total) - Number(t.paid_total)).toFixed(2)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label>Betrag ({cur})</Label>
+                <Input type="number" step="0.01" value={credit.amount}
+                  onChange={(e) => setCredit({ ...credit, amount: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCredit(null)}>Abbrechen</Button>
+            <Button onClick={saveCredit} disabled={saving || !credit?.target_id}>
+              {saving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />} Verrechnen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
 
   );
 }
