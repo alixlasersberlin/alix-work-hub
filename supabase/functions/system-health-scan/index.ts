@@ -223,8 +223,9 @@ Deno.serve(async (req) => {
     // ---------- 7) Risikoarme Wartung ----------
     if (autoFixEnabled) {
       try {
-        const { data: fixed } = await admin.rpc('sys_health_autofix' as any);
-        autoActions = Array.isArray(fixed) ? fixed : [];
+        const { data: fixed, error: fixErr } = await admin.rpc('sys_health_autofix' as any);
+        if (fixErr) autoActions = [{ action: 'autofix', ok: false, error: fixErr.message }];
+        else autoActions = Array.isArray(fixed) ? fixed : [{ action: 'autofix', ok: true, result: fixed }];
       } catch (e) {
         autoActions = [{ action: 'autofix', ok: false, error: String(e) }];
       }

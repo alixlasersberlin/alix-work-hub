@@ -1,0 +1,48 @@
+name: AlixWork Daily Quality Scan
+
+on:
+  schedule:
+    # täglich 02:30 UTC – vor dem Supabase Health Scan um 03:00 UTC
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Abhängigkeiten installieren
+        run: bun install --frozen-lockfile
+
+      - name: TypeScript-Prüfung
+        run: bunx tsc --noEmit
+
+      - name: Tests
+        run: bunx vitest run --passWithNoTests
+
+      - name: Build-Test
+        run: bun run build
+
+      - name: Sicherheitsprüfung der Pakete
+        continue-on-error: true
+        run: bunx --bun npm audit --audit-level=high
+
+      - name: Veraltete Abhängigkeiten
+        continue-on-error: true
+        run: bunx --bun npm outdated || true
+
+      - name: Sehr große Dateien / Komponenten
+        continue-on-error: true
+        run: |
+          echo "### Dateien über 1000 Zeilen"
+          find src -name '*.tsx' -o -name '*.ts' | xargs wc -l 2>/dev/null \
+            | sort -rn | awk '$1 > 1000 && $2 != "total" { print $1" "$2 }' | head -40
+
+      - name: Bundle-Größe
+        continue-on-error: true
+        run: du -sh dist 2>/dev/null || true
