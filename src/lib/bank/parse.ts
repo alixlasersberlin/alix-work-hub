@@ -219,14 +219,22 @@ export function applyMapping(rows: Record<string, any>[], mapping: ColumnMapping
       if (/^(H|C|CRDT|HABEN|CREDIT|\+)/.test(dc)) amount = Math.abs(amount);
     }
     const invoiceHint = g(r, 'invoice_number');
+    const bookingText = g(r, 'booking_text');
+    const purposeVal = [g(r, 'purpose'), invoiceHint].filter(Boolean).join(' ') || null;
+    let name = g(r, 'sender_receiver_name');
+    // Kein Buchungstext als Kundenname übernehmen
+    if (!name || name === bookingText || BOOKING_TEXT_RE.test(name)) {
+      name = (purposeVal ? extractCustomerName(purposeVal) : null) ?? (name && !BOOKING_TEXT_RE.test(name) ? name : null);
+    }
     return mk({
       amount,
       booking_date: parseDate(g(r, 'booking_date')),
       value_date: parseDate(g(r, 'value_date')) ?? parseDate(g(r, 'booking_date')),
       currency: (g(r, 'currency') || defaultCurrency).toUpperCase().slice(0, 3),
-      purpose: [g(r, 'purpose'), invoiceHint].filter(Boolean).join(' ') || null,
-      booking_text: g(r, 'booking_text'),
-      sender_receiver_name: g(r, 'sender_receiver_name'),
+      purpose: purposeVal,
+      booking_text: bookingText,
+      sender_receiver_name: name,
+
       sender_receiver_iban: g(r, 'sender_receiver_iban')?.replace(/\s+/g, '') ?? null,
       bic: g(r, 'bic'),
       bank_reference: g(r, 'bank_reference'),
