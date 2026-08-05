@@ -138,7 +138,7 @@ export default function WorkspaceDashboard() {
     return <div className="p-6 text-muted-foreground">Kein Workspace verfügbar.</div>;
   }
 
-  const kpis = KPIS[ws.code] || [];
+  
 
   return (
     <div className="p-4 lg:p-6 space-y-6 animate-fade-in">
