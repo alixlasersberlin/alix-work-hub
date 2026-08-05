@@ -959,6 +959,18 @@ const CmrMahnwesen = lazy(() => import("./pages/CMR/Mahnwesen"));
 const CmrZeiten = lazy(() => import("./pages/CMR/Zeiten"));
 const CmrSammelrechnungen = lazy(() => import("./pages/CMR/Sammelrechnungen"));
 const CmrPortal = lazy(() => import("./pages/CMR/Portal"));
+const LicenseDashboard = lazy(() => import("./pages/License/Dashboard"));
+const LicenseMarken = lazy(() => import("./pages/License/Marken"));
+const LicenseLizenznehmer = lazy(() => import("./pages/License/Lizenznehmer"));
+const LicenseVertraege = lazy(() => import("./pages/License/Vertraege"));
+const LicenseSaetze = lazy(() => import("./pages/License/Saetze"));
+const LicenseProdukte = lazy(() => import("./pages/License/Produkte"));
+const LicenseRoyalties = lazy(() => import("./pages/License/Royalties"));
+const LicenseRechnungen = lazy(() => import("./pages/License/Rechnungen"));
+const LicenseIntercompany = lazy(() => import("./pages/License/Intercompany"));
+const LicenseAuswertungen = lazy(() => import("./pages/License/Auswertungen"));
+const LicenseLaufzeiten = lazy(() => import("./pages/License/Laufzeiten"));
+const LicenseEinstellungen = lazy(() => import("./pages/License/Einstellungen"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
