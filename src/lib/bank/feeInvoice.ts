@@ -95,6 +95,13 @@ export async function createReturnDebitFeeInvoice(
     .maybeSingle();
 
   if (existing) {
+    await (supabase.from('bank_return_debits') as any)
+      .update({
+        fee_invoice_id: (existing as any).id,
+        fee_invoice_number: (existing as any).invoice_number,
+        fee_invoice_total: Number((existing as any).total ?? RD_FEE_TOTAL),
+      })
+      .eq('id', rd.id);
     return {
       invoiceId: (existing as any).id,
       invoiceNumber: (existing as any).invoice_number,
@@ -151,6 +158,16 @@ export async function createReturnDebitFeeInvoice(
 
   const invoiceId = (ins as any).id as string;
 
+  // Rücklastschrift fest mit der Gebührenrechnung verknüpfen
+  await (supabase.from('bank_return_debits') as any)
+    .update({
+      fee_invoice_id: invoiceId,
+      fee_invoice_number: invoiceNumber,
+      fee_invoice_status: 'offen',
+      fee_invoice_total: RD_FEE_TOTAL,
+    })
+    .eq('id', rd.id);
+
   await logBank({
     action: 'ruecklastschrift_gebuehrenrechnung_erstellt',
     bank_transaction_id: rd.bank_transaction_id ?? tx?.id ?? null,
@@ -194,6 +211,9 @@ export async function createReturnDebitFeeInvoice(
     if (mailErr) throw new Error(mailErr.message);
     if (!data?.success) throw new Error(data?.error || 'E-Mail-Dienst hat den Versand nicht bestätigt');
     emailSentTo = cust.email;
+    await (supabase.from('bank_return_debits') as any)
+      .update({ fee_invoice_sent_at: new Date().toISOString() })
+      .eq('id', rd.id);
     await logBank({
       action: 'ruecklastschrift_gebuehrenrechnung_versendet',
       bank_transaction_id: rd.bank_transaction_id ?? tx?.id ?? null,

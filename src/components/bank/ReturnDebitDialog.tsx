@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,6 +55,7 @@ export default function ReturnDebitDialog({
   const [suggIdx, setSuggIdx] = useState<number | null>(null);
   const [suggTerm, setSuggTerm] = useState('');
   const [sugg, setSugg] = useState<any[]>([]);
+  const [feeStatus, setFeeStatus] = useState<string | null>(null);
 
 
 
@@ -68,6 +70,19 @@ export default function ReturnDebitDialog({
   const [blockMandate, setBlockMandate] = useState(true);
   const [startReminder, setStartReminder] = useState(true);
   const [createTask, setCreateTask] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!rd?.fee_invoice_id) { setFeeStatus(null); return; }
+      const { data } = await supabase.from('zoho_invoices')
+        .select('payment_status, status, balance').eq('id', rd.fee_invoice_id).maybeSingle();
+      if (cancelled || !data) return;
+      const d = data as any;
+      setFeeStatus(Number(d.balance) === 0 ? 'bezahlt' : (d.payment_status ?? d.status ?? 'offen'));
+    })();
+    return () => { cancelled = true; };
+  }, [rd?.fee_invoice_id]);
 
   const amount = Math.abs(Number(rd?.return_debit_amount ?? tx?.amount ?? 0));
   const currency = rd?.currency ?? tx?.currency ?? 'EUR';
@@ -316,6 +331,21 @@ export default function ReturnDebitDialog({
                 <Row l="Rückgabegrund" v={rd?.return_reason} />
               </div>
             </section>
+
+            {rd?.fee_invoice_number && (
+              <>
+                <Separator />
+                <section>
+                  <H>Gebührenrechnung</H>
+                  <div className="grid sm:grid-cols-2 gap-x-6">
+                    <Row l="Rechnungsnummer" v={rd.fee_invoice_number} />
+                    <Row l="Status" v={feeStatus ?? rd.fee_invoice_status ?? 'offen'} />
+                    <Row l="Betrag" v={fmt(Number(rd.fee_invoice_total ?? 45), currency)} />
+                    <Row l="Versendet am" v={rd.fee_invoice_sent_at ? new Date(rd.fee_invoice_sent_at).toLocaleString('de-DE') : 'nicht versendet'} />
+                  </div>
+                </section>
+              </>
+            )}
 
             <Separator />
 
