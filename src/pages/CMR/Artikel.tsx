@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Plus, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import CmrCategories from './Categories';
 
 type Cat = { id: string; name: string };
 type Item = {
@@ -91,6 +92,7 @@ export default function CmrArtikel() {
   return (
     <div className="space-y-4">
       <PageHeader title="CMR Artikelstamm" subtitle="Eigener Artikelstamm der Cloud Marketing Research – getrennt von Alix Lasers." />
+      <CmrCategories tenantId={tenantId} onChanged={load} />
 
       <div className="flex flex-wrap gap-2 items-center">
         <Input placeholder="Suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
