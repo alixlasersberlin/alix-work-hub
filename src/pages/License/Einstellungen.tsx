@@ -15,6 +15,19 @@ export default function LicenseEinstellungen() {
   const [form, setForm] = useState<any>(null);
   const [log, setLog] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
+  const [running, setRunning] = useState(false);
+
+  const runNow = async () => {
+    setRunning(true);
+    const { data, error } = await supabase.functions.invoke('license-royalty-run', { body: { force: true } });
+    setRunning(false);
+    if (error) { toast.error(error.message); return; }
+    if ((data as any)?.error) { toast.error((data as any).error); return; }
+    const d: any = data || {};
+    toast.success(`Lauf beendet: ${d.created ?? 0} Royalty-Buchungen, ${d.invoices ?? 0} Lizenzrechnungen.`);
+    const { data: l } = await supabase.from('license_audit_log' as any).select('*').order('created_at', { ascending: false }).limit(50);
+    setLog(((l as any[]) || []));
+  };
 
   useEffect(() => { if (settings) setForm({ ...settings }); }, [settings]);
   useEffect(() => {
@@ -72,6 +85,19 @@ export default function LicenseEinstellungen() {
           Nummernkreise: LIC-RG-JJJJ-000000 (Rechnung) · LIC-ROY-JJJJ-000000 (Royalty) · LIC-CON-JJJJ-000000 (Vertrag)
         </div>
         {canWrite && <Button onClick={save} disabled={saving}>{saving ? 'Speichern…' : 'Speichern'}</Button>}
+      </Card>
+
+      <Card className="space-y-3 p-4">
+        <div className="font-medium">Automatischer Lizenzlauf</div>
+        <div className="text-sm text-muted-foreground">
+          Läuft monatlich am 3. um 04:20 UTC und rechnet den Vormonat ab (Royalty-Buchungen + Lizenzrechnungen + Intercompany-Belege).
+          Der Lauf beachtet den Schalter „Lizenzabrechnung automatisch erzeugen“.
+        </div>
+        {canWrite && (
+          <Button variant="outline" disabled={running} onClick={runNow}>
+            {running ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Lauf läuft…</> : 'Lauf jetzt manuell starten (Vormonat)'}
+          </Button>
+        )}
       </Card>
 
       <Card className="p-4">
