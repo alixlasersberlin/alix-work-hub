@@ -10393,6 +10393,656 @@ export type Database = {
           },
         ]
       }
+      cmr_document_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_pct: number
+          document_id: string
+          id: string
+          item_id: string | null
+          line_total: number
+          name: string
+          position: number
+          quantity: number
+          tax_rate: number
+          unit: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_pct?: number
+          document_id: string
+          id?: string
+          item_id?: string | null
+          line_total?: number
+          name: string
+          position?: number
+          quantity?: number
+          tax_rate?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_pct?: number
+          document_id?: string
+          id?: string
+          item_id?: string | null
+          line_total?: number
+          name?: string
+          position?: number
+          quantity?: number
+          tax_rate?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_document_items_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cmr_document_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cmr_documents: {
+        Row: {
+          billing_address: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          doc_date: string
+          doc_number: string | null
+          doc_type: string
+          due_date: string | null
+          gross_total: number
+          id: string
+          internal_notes: string | null
+          net_total: number
+          notes: string | null
+          paid_total: number
+          parent_document_id: string | null
+          reference: string | null
+          sent_at: string | null
+          shipping_address: string | null
+          status: string
+          tax_rate: number
+          tax_total: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_address?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          doc_date?: string
+          doc_number?: string | null
+          doc_type: string
+          due_date?: string | null
+          gross_total?: number
+          id?: string
+          internal_notes?: string | null
+          net_total?: number
+          notes?: string | null
+          paid_total?: number
+          parent_document_id?: string | null
+          reference?: string | null
+          sent_at?: string | null
+          shipping_address?: string | null
+          status?: string
+          tax_rate?: number
+          tax_total?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_address?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          doc_date?: string
+          doc_number?: string | null
+          doc_type?: string
+          due_date?: string | null
+          gross_total?: number
+          id?: string
+          internal_notes?: string | null
+          net_total?: number
+          notes?: string | null
+          paid_total?: number
+          parent_document_id?: string | null
+          reference?: string | null
+          sent_at?: string | null
+          shipping_address?: string | null
+          status?: string
+          tax_rate?: number
+          tax_total?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cmr_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "cmr_documents_parent_document_id_fkey"
+            columns: ["parent_document_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cmr_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cmr_email_templates: {
+        Row: {
+          body_html: string
+          created_at: string
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          subject: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          body_html?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key: string
+          name: string
+          subject: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          subject?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_email_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cmr_item_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_item_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cmr_items: {
+        Row: {
+          billing_interval: string | null
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          is_recurring: boolean
+          name: string
+          price: number
+          sku: string | null
+          tax_rate: number
+          tenant_id: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          billing_interval?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_recurring?: boolean
+          name: string
+          price?: number
+          sku?: string | null
+          tax_rate?: number
+          tenant_id: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          billing_interval?: string | null
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          is_recurring?: boolean
+          name?: string
+          price?: number
+          sku?: string | null
+          tax_rate?: number
+          tenant_id?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_item_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cmr_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cmr_number_ranges: {
+        Row: {
+          created_at: string
+          doc_type: string
+          id: string
+          next_number: number
+          padding: number
+          prefix: string
+          tenant_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          doc_type: string
+          id?: string
+          next_number?: number
+          padding?: number
+          prefix: string
+          tenant_id: string
+          updated_at?: string
+          year?: number
+        }
+        Update: {
+          created_at?: string
+          doc_type?: string
+          id?: string
+          next_number?: number
+          padding?: number
+          prefix?: string
+          tenant_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_number_ranges_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cmr_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          document_id: string | null
+          id: string
+          method: string | null
+          notes: string | null
+          paid_on: string
+          reference: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          document_id?: string | null
+          id?: string
+          method?: string | null
+          notes?: string | null
+          paid_on?: string
+          reference?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          document_id?: string | null
+          id?: string
+          method?: string | null
+          notes?: string | null
+          paid_on?: string
+          reference?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cmr_payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "cmr_payments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cmr_payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cmr_pdf_templates: {
+        Row: {
+          accent_color: string | null
+          body_html: string | null
+          created_at: string
+          doc_type: string
+          font_family: string | null
+          footer_html: string | null
+          header_html: string | null
+          id: string
+          is_default: boolean
+          logo_url: string | null
+          name: string
+          show_qr: boolean
+          tenant_id: string
+          updated_at: string
+          watermark_url: string | null
+        }
+        Insert: {
+          accent_color?: string | null
+          body_html?: string | null
+          created_at?: string
+          doc_type: string
+          font_family?: string | null
+          footer_html?: string | null
+          header_html?: string | null
+          id?: string
+          is_default?: boolean
+          logo_url?: string | null
+          name: string
+          show_qr?: boolean
+          tenant_id: string
+          updated_at?: string
+          watermark_url?: string | null
+        }
+        Update: {
+          accent_color?: string | null
+          body_html?: string | null
+          created_at?: string
+          doc_type?: string
+          font_family?: string | null
+          footer_html?: string | null
+          header_html?: string | null
+          id?: string
+          is_default?: boolean
+          logo_url?: string | null
+          name?: string
+          show_qr?: boolean
+          tenant_id?: string
+          updated_at?: string
+          watermark_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_pdf_templates_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cmr_settings: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          address_line3: string | null
+          bank_account: string | null
+          bank_bic: string | null
+          bank_iban: string | null
+          bank_name: string | null
+          city: string | null
+          color_primary: string | null
+          color_secondary: string | null
+          company_name: string
+          country: string | null
+          created_at: string
+          default_currency: string
+          email: string | null
+          email_from_address: string | null
+          email_from_name: string | null
+          email_reply_to: string | null
+          email_signature: string | null
+          font_family: string | null
+          footer_html: string | null
+          header_html: string | null
+          id: string
+          logo_url: string | null
+          payment_terms: string | null
+          phone: string | null
+          smtp_host: string | null
+          smtp_port: number | null
+          smtp_secure: boolean | null
+          smtp_user: string | null
+          tax_note: string | null
+          tax_rate: number
+          tenant_id: string
+          updated_at: string
+          watermark_url: string | null
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          address_line3?: string | null
+          bank_account?: string | null
+          bank_bic?: string | null
+          bank_iban?: string | null
+          bank_name?: string | null
+          city?: string | null
+          color_primary?: string | null
+          color_secondary?: string | null
+          company_name?: string
+          country?: string | null
+          created_at?: string
+          default_currency?: string
+          email?: string | null
+          email_from_address?: string | null
+          email_from_name?: string | null
+          email_reply_to?: string | null
+          email_signature?: string | null
+          font_family?: string | null
+          footer_html?: string | null
+          header_html?: string | null
+          id?: string
+          logo_url?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          smtp_host?: string | null
+          smtp_port?: number | null
+          smtp_secure?: boolean | null
+          smtp_user?: string | null
+          tax_note?: string | null
+          tax_rate?: number
+          tenant_id: string
+          updated_at?: string
+          watermark_url?: string | null
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          address_line3?: string | null
+          bank_account?: string | null
+          bank_bic?: string | null
+          bank_iban?: string | null
+          bank_name?: string | null
+          city?: string | null
+          color_primary?: string | null
+          color_secondary?: string | null
+          company_name?: string
+          country?: string | null
+          created_at?: string
+          default_currency?: string
+          email?: string | null
+          email_from_address?: string | null
+          email_from_name?: string | null
+          email_reply_to?: string | null
+          email_signature?: string | null
+          font_family?: string | null
+          footer_html?: string | null
+          header_html?: string | null
+          id?: string
+          logo_url?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          smtp_host?: string | null
+          smtp_port?: number | null
+          smtp_secure?: boolean | null
+          smtp_user?: string | null
+          tax_note?: string | null
+          tax_rate?: number
+          tenant_id?: string
+          updated_at?: string
+          watermark_url?: string | null
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       copilot_audit_log: {
         Row: {
           action: string
@@ -36668,6 +37318,12 @@ export type Database = {
         Args: { _production_order_id: string }
         Returns: undefined
       }
+      cmr_dashboard_kpis: { Args: { _tenant_id: string }; Returns: Json }
+      cmr_next_document_number: {
+        Args: { _doc_type: string; _tenant_id: string }
+        Returns: string
+      }
+      cmr_tenant_id: { Args: never; Returns: string }
       complete_password_setup: { Args: never; Returns: undefined }
       create_finance_stakeholder: {
         Args: {
