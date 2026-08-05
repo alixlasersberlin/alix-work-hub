@@ -366,6 +366,131 @@ export default function CmrBuchhaltung() {
     load();
   };
 
+  /** Offener (noch nicht verrechneter) Betrag einer Gutschrift. */
+  const creditOpen = (d: Doc) => Math.max(0, Number(d.gross_total || 0) - Number(d.paid_total || 0));
+
+  const startCredit = (d: Doc) => {
+    const targets = invoices.filter(
+      (i) => (i as any).doc_type !== 'gutschrift'
+        && Number(i.gross_total) - Number(i.paid_total) > 0.01
+        && (!d.customer_id || !i.customer_id || i.customer_id === d.customer_id),
+    );
+    setCredit({
+      doc: d,
+      targets,
+      target_id: targets[0]?.id ?? '',
+      amount: Math.min(creditOpen(d), targets[0] ? Number(targets[0].gross_total) - Number(targets[0].paid_total) : creditOpen(d)),
+    });
+  };
+
+  /** Verrechnet eine Gutschrift gegen eine offene Rechnung (beidseitige Buchung). */
+  const saveCredit = async () => {
+    if (!tenantId || !credit) return;
+    const target = credit.targets.find((t: Doc) => t.id === credit.target_id);
+    if (!target) { toast.error('Bitte eine offene Rechnung wählen'); return; }
+    const amount = Math.round((Number(credit.amount) || 0) * 100) / 100;
+    if (amount <= 0) { toast.error('Betrag muss größer als 0 sein'); return; }
+    if (amount > creditOpen(credit.doc) + 0.01) { toast.error('Betrag übersteigt die Gutschrift'); return; }
+    setSaving(true);
+    const today = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from('cmr_payments' as any).insert([
+      {
+        tenant_id: tenantId, document_id: target.id, customer_id: target.customer_id,
+        paid_on: today, amount, currency: cur, method: 'Gutschrift',
+        reference: `Gutschrift ${credit.doc.doc_number ?? ''}`.trim(),
+        credit_document_id: credit.doc.id,
+      },
+      {
+        tenant_id: tenantId, document_id: credit.doc.id, customer_id: credit.doc.customer_id,
+        paid_on: today, amount, currency: cur, method: 'Verrechnung',
+        reference: `Verrechnet mit ${target.doc_number ?? ''}`.trim(),
+        credit_document_id: credit.doc.id,
+      },
+    ]);
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success('Gutschrift verrechnet');
+    setCredit(null);
+    load();
+  };
+
+  /** Jahresabschluss-Paket als ZIP: Belege, Zahlungen, USt-Auswertung, Summen-/Saldenliste und DATEV-Stapel. */
+  const exportYearZip = async () => {
+    const { default: JSZip } = await import('jszip');
+    const year = new Date().getFullYear();
+    const sep = ';';
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const toCsv = (head: string[], rows: unknown[][]) =>
+      '\ufeff' + [head, ...rows].map((r) => r.map(esc).join(sep)).join('\r\n');
+
+    const inYear = invoices.filter((d) => String(d.doc_date).startsWith(String(year)));
+    const paysYear = payments.filter((p) => String(p.paid_on).startsWith(String(year)));
+
+    const belege = toCsv(
+      ['Nummer', 'Belegart', 'Kunde', 'Datum', 'Faellig', 'Status', 'Netto', 'MwSt', 'Brutto', 'Bezahlt', 'Offen', 'Waehrung'],
+      inYear.map((d: any) => [
+        d.doc_number ?? '', d.doc_type, d.customer_name ?? '', d.doc_date, d.due_date ?? '', d.status,
+        Number(d.net_total || 0).toFixed(2), Number(d.tax_total || 0).toFixed(2),
+        Number(d.gross_total || 0).toFixed(2), Number(d.paid_total || 0).toFixed(2),
+        (Number(d.gross_total || 0) - Number(d.paid_total || 0)).toFixed(2), d.currency || cur,
+      ]),
+    );
+    const zahlungen = toCsv(
+      ['Datum', 'Beleg', 'Betrag', 'Zahlungsart', 'Referenz'],
+      paysYear.map((p) => [
+        p.paid_on, invoices.find((i) => i.id === p.document_id)?.doc_number ?? '',
+        Number(p.amount).toFixed(2), p.method ?? '', p.reference ?? '',
+      ]),
+    );
+    const ust = toCsv(
+      ['Monat', 'Netto', 'MwSt', 'Brutto'],
+      ustRows.filter((r) => r.month.startsWith(String(year))).map((r) => [r.month, r.net.toFixed(2), r.tax.toFixed(2), r.gross.toFixed(2)]),
+    );
+    const sign = (d: any) => (d.doc_type === 'gutschrift' ? -1 : 1);
+    const netSum = inYear.reduce((s, d: any) => s + sign(d) * Number(d.net_total || 0), 0);
+    const taxSum = inYear.reduce((s, d: any) => s + sign(d) * Number(d.tax_total || 0), 0);
+    const grossSum = inYear.reduce((s, d: any) => s + sign(d) * Number(d.gross_total || 0), 0);
+    const paidSum = paysYear.reduce((s, p) => s + Number(p.amount || 0), 0);
+    const susa = toCsv(
+      ['Konto', 'Bezeichnung', 'Soll', 'Haben', 'Saldo'],
+      [
+        ['8400', 'Umsatzerlöse', '0.00', netSum.toFixed(2), (-netSum).toFixed(2)],
+        ['1776', 'Umsatzsteuer', '0.00', taxSum.toFixed(2), (-taxSum).toFixed(2)],
+        ['1400', 'Forderungen a. L. u. L.', grossSum.toFixed(2), paidSum.toFixed(2), (grossSum - paidSum).toFixed(2)],
+        ['1200', 'Bank', paidSum.toFixed(2), '0.00', paidSum.toFixed(2)],
+      ],
+    );
+    const datev = toCsv(
+      ['Umsatz (ohne Soll/Haben-Kz)', 'Soll/Haben-Kennzeichen', 'WKZ Umsatz', 'Konto', 'Gegenkonto (ohne BU-Schlüssel)', 'Belegdatum', 'Belegfeld 1', 'Buchungstext'],
+      inYear.map((d: any) => [
+        Math.abs(Number(d.gross_total || 0)).toFixed(2).replace('.', ','),
+        d.doc_type === 'gutschrift' ? 'H' : 'S', d.currency || cur, '1400', '8400',
+        String(d.doc_date).slice(8, 10) + String(d.doc_date).slice(5, 7),
+        d.doc_number ?? '', `${d.doc_type === 'gutschrift' ? 'Gutschrift' : 'Rechnung'} ${d.customer_name ?? ''}`.trim(),
+      ]),
+    );
+
+    const zip = new JSZip();
+    const folder = zip.folder(`Jahresabschluss_${year}`)!;
+    folder.file('01_Belege.csv', belege);
+    folder.file('02_Zahlungen.csv', zahlungen);
+    folder.file('03_Umsatzsteuer.csv', ust);
+    folder.file('04_Summen_und_Salden.csv', susa);
+    folder.file('05_DATEV_Buchungsstapel.csv', datev);
+    folder.file('00_Info.txt',
+      `${settings?.company_name ?? 'CMR'} – Jahresabschluss ${year}\n`
+      + `Erstellt am ${new Date().toLocaleString('de-DE')}\n\n`
+      + `Belege: ${inYear.length}\nNetto: ${netSum.toFixed(2)} ${cur}\nUmsatzsteuer: ${taxSum.toFixed(2)} ${cur}\n`
+      + `Brutto: ${grossSum.toFixed(2)} ${cur}\nZahlungseingänge: ${paidSum.toFixed(2)} ${cur}\n`);
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `CMR_Jahresabschluss_${year}.zip`; a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Jahrespaket ${year} erstellt`);
+  };
+
 
   if (loading || busy) {
     return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
