@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     }
 
     const { data: settings } = await sb
-      .from("cmr_settings").select("company_name,logo_url,email,phone,website,default_currency")
+      .from("cmr_settings").select("company_name,logo_url,email,phone,website,default_currency,portal_payment_url")
       .eq("tenant_id", access.tenant_id).maybeSingle();
 
     let dq = sb.from("cmr_documents")
@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
       customer: { name: access.customer_name, email: access.customer_email },
       company: settings ?? null,
       currency: settings?.default_currency ?? "AED",
+      payment_url: settings?.portal_payment_url ?? null,
       documents: documents ?? [],
       payments: payments ?? [],
       summary: {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Plus, Save, Trash2, FileText } from 'lucide-react';
+import { Loader2, Plus, Save, Trash2, FileText, Upload, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { generateCmrDocumentPdf, cmrFetchImage } from '@/lib/cmr-document-pdf';
 import { toast } from 'sonner';
 import { CMR_DOC_TYPES } from '@/hooks/useCmrTenant';
 
@@ -15,13 +17,25 @@ type Tpl = {
   header_html: string | null; body_html: string | null; footer_html: string | null;
   accent_color: string | null; font_family: string | null;
   logo_url: string | null; watermark_url: string | null;
-  show_qr: boolean; is_default: boolean;
+  show_qr: boolean; is_default: boolean; language?: string | null;
 };
+
+const LANGS = [
+  { value: 'de', label: 'Deutsch' },
+  { value: 'en', label: 'English' },
+  { value: 'ar', label: 'العربية' },
+  { value: 'fr', label: 'Français' },
+];
 
 export default function CmrPdfTemplates({ tenantId }: { tenantId: string | null }) {
   const [rows, setRows] = useState<Tpl[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [settings, setSettings] = useState<any>(null);
+  const fileRef = useRef<{ idx: number; field: 'logo_url' | 'watermark_url' } | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const load = async () => {
     if (!tenantId) return;
@@ -30,6 +44,8 @@ export default function CmrPdfTemplates({ tenantId }: { tenantId: string | null 
       .from('cmr_pdf_templates' as any)
       .select('*').eq('tenant_id', tenantId).order('doc_type');
     setRows(((data as any) || []) as Tpl[]);
+    const { data: st } = await supabase.from('cmr_settings' as any).select('*').eq('tenant_id', tenantId).maybeSingle();
+    setSettings(st ?? null);
     setLoading(false);
   };
 
@@ -43,7 +59,7 @@ export default function CmrPdfTemplates({ tenantId }: { tenantId: string | null 
       tenant_id: tenantId, doc_type: next.value, name: `Vorlage ${next.label}`,
       header_html: '', body_html: '', footer_html: '',
       accent_color: '#C9A227', font_family: 'helvetica',
-      logo_url: '', watermark_url: '', show_qr: false, is_default: true,
+      logo_url: '', watermark_url: '', show_qr: false, is_default: true, language: 'de',
     }]);
   };
 
@@ -60,6 +76,7 @@ export default function CmrPdfTemplates({ tenantId }: { tenantId: string | null 
       accent_color: r.accent_color || null, font_family: r.font_family || null,
       logo_url: r.logo_url || null, watermark_url: r.watermark_url || null,
       show_qr: !!r.show_qr, is_default: !!r.is_default,
+      language: r.language || 'de',
     };
     const { error } = r.id
       ? await supabase.from('cmr_pdf_templates' as any).update(payload).eq('id', r.id)
@@ -79,8 +96,57 @@ export default function CmrPdfTemplates({ tenantId }: { tenantId: string | null 
     setRows(rows.filter((_, i) => i !== idx));
   };
 
+  /** Lädt Logo/Wasserzeichen in den privaten Branding-Bucket und hinterlegt eine signierte URL. */
+  const onPickFile = async (file: File) => {
+    const target = fileRef.current;
+    if (!file || !target || !tenantId) return;
+    setUploading(`${target.idx}-${target.field}`);
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+    const path = `${tenantId}/${target.field}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from('cmr-branding').upload(path, file, { upsert: true });
+    if (error) { setUploading(null); toast.error(error.message); return; }
+    const { data: signed } = await supabase.storage.from('cmr-branding')
+      .createSignedUrl(path, 60 * 60 * 24 * 365 * 5);
+    setUploading(null);
+    if (!signed?.signedUrl) { toast.error('Signierte URL konnte nicht erstellt werden'); return; }
+    patch(target.idx, { [target.field]: signed.signedUrl } as Partial<Tpl>);
+    toast.success('Bild hochgeladen – bitte Vorlage speichern');
+  };
+
+  /** Erzeugt ein Muster-PDF mit den aktuellen (auch ungespeicherten) Vorlagenwerten. */
+  const preview = async (idx: number) => {
+    const r = rows[idx];
+    setSavingKey(`preview-${idx}`);
+    const [logoDataUrl, watermarkDataUrl] = await Promise.all([
+      cmrFetchImage(r.logo_url), cmrFetchImage(r.watermark_url),
+    ]);
+    const today = new Date().toISOString().slice(0, 10);
+    const pdf = generateCmrDocumentPdf(
+      {
+        doc_type: r.doc_type, doc_number: 'MUSTER-0001', doc_date: today, due_date: today,
+        customer_name: 'Musterkunde LLC', customer_email: 'kunde@example.com',
+        billing_address: 'Musterstraße 1\n12345 Musterstadt',
+        reference: 'Vorschau', notes: 'Dies ist eine Layout-Vorschau.',
+        currency: settings?.default_currency || 'AED',
+        net_total: 1000, tax_total: 50, gross_total: 1050,
+      },
+      [
+        { position: 1, name: 'Beratungsleistung', description: 'Beispielposition', quantity: 4, unit: 'Std.', unit_price: 150, discount_pct: 0, tax_rate: 5, line_total: 600 },
+        { position: 2, name: 'Kampagnen-Setup', description: null, quantity: 1, unit: 'Pauschal', unit_price: 400, discount_pct: 0, tax_rate: 5, line_total: 400 },
+      ],
+      settings,
+      { tpl: r as any, logoDataUrl, watermarkDataUrl, qrDataUrl: null },
+    );
+    setSavingKey(null);
+    setPreviewUrl(URL.createObjectURL(pdf.output('blob')));
+  };
+
   return (
     <Card className="p-4 space-y-4">
+      <input
+        ref={inputRef} type="file" accept="image/*" className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) onPickFile(f); e.target.value = ''; }}
+      />
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm font-semibold">PDF-Vorlagen</div>
@@ -137,8 +203,37 @@ export default function CmrPdfTemplates({ tenantId }: { tenantId: string | null 
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div><Label>Logo-URL</Label><Input value={r.logo_url ?? ''} onChange={(e) => patch(idx, { logo_url: e.target.value })} /></div>
-            <div><Label>Wasserzeichen-URL</Label><Input value={r.watermark_url ?? ''} onChange={(e) => patch(idx, { watermark_url: e.target.value })} /></div>
+            {(['logo_url', 'watermark_url'] as const).map((field) => (
+              <div key={field}>
+                <Label>{field === 'logo_url' ? 'Logo' : 'Wasserzeichen'}</Label>
+                <div className="flex gap-2">
+                  <Input value={r[field] ?? ''} onChange={(e) => patch(idx, { [field]: e.target.value } as Partial<Tpl>)} />
+                  <Button
+                    size="sm" variant="outline" className="h-10 shrink-0"
+                    disabled={uploading === `${idx}-${field}`}
+                    onClick={() => { fileRef.current = { idx, field }; inputRef.current?.click(); }}
+                  >
+                    {uploading === `${idx}-${field}`
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Upload className="w-4 h-4" />}
+                  </Button>
+                </div>
+                {r[field] && (
+                  <img src={r[field] as string} alt={field === 'logo_url' ? 'Logo-Vorschau' : 'Wasserzeichen-Vorschau'}
+                    className="mt-2 h-10 object-contain" />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="md:w-56">
+            <Label>Sprache</Label>
+            <select
+              className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+              value={r.language ?? 'de'} onChange={(e) => patch(idx, { language: e.target.value })}
+            >
+              {LANGS.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
+            </select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -159,6 +254,9 @@ export default function CmrPdfTemplates({ tenantId }: { tenantId: string | null 
               </label>
             </div>
             <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => preview(idx)} disabled={savingKey === `preview-${idx}`}>
+                {savingKey === `preview-${idx}` ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Eye className="w-4 h-4 mr-1.5" />} Vorschau
+              </Button>
               <Button size="sm" variant="ghost" onClick={() => removeRow(idx)}><Trash2 className="w-4 h-4" /></Button>
               <Button size="sm" onClick={() => saveRow(idx)} disabled={savingKey === (r.id ?? `new-${idx}`)}>
                 {savingKey === (r.id ?? `new-${idx}`) ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />} Speichern
@@ -167,6 +265,16 @@ export default function CmrPdfTemplates({ tenantId }: { tenantId: string | null 
           </div>
         </div>
       ))}
+
+      <Dialog
+        open={!!previewUrl}
+        onOpenChange={(o) => { if (!o && previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null); } }}
+      >
+        <DialogContent className="max-w-4xl">
+          <DialogHeader><DialogTitle>Layout-Vorschau</DialogTitle></DialogHeader>
+          {previewUrl && <iframe title="PDF-Vorschau" src={previewUrl} className="w-full h-[70vh] rounded-md border" />}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

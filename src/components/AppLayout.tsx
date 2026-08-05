@@ -664,6 +664,7 @@ export const navItems: NavItem[] = [
           { path: '/cmr/projekte', label: 'Projekte CMR', icon: Briefcase, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
           { path: '/cmr/abos', label: 'Abrechnungen', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
           { path: '/cmr/sammelrechnungen', label: 'Sammelabrechnung', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/betrieb', label: 'Betrieb & Portale', icon: Activity, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
           { path: '/cmr/zeiten', label: 'Zeiterfassung', icon: Clock, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
           { path: '/cmr/buchhaltung', label: 'Buchhaltung CMR', icon: Wallet, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
           { path: '/cmr/mahnwesen', label: 'Mahnwesen CMR', icon: BellRing, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
