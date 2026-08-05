@@ -226,6 +226,27 @@ export function generateCmrDocumentPdf(
   y += 2;
   row('Gesamtbetrag', money(doc_.gross_total, cur), true);
 
+  // Mahntext-Block (nur Zahlungserinnerung / Mahnung)
+  const isDunning = doc_.doc_type === 'zahlungserinnerung' || doc_.doc_type === 'mahnung';
+  if (isDunning) {
+    const isReminder = doc_.doc_type === 'zahlungserinnerung';
+    const dunningText = isReminder
+      ? `Sicher ist Ihnen entgangen, dass die unten aufgeführte Forderung noch offen ist. Bitte gleichen Sie den Betrag von ${money(doc_.gross_total, cur)} bis zum ${dt(doc_.due_date)} aus. Sollte sich Ihre Zahlung mit diesem Schreiben überschnitten haben, betrachten Sie es bitte als gegenstandslos.`
+      : `Trotz unserer Zahlungserinnerung konnten wir bisher keinen Zahlungseingang feststellen. Wir fordern Sie hiermit auf, den offenen Betrag von ${money(doc_.gross_total, cur)} bis spätestens ${dt(doc_.due_date)} zu begleichen. Mahngebühren und Verzugszinsen sind – sofern angefallen – in der Aufstellung enthalten.`;
+    y += 6;
+    pdf.setFont('Inter', 'bold');
+    pdf.setFontSize(10);
+    pdf.setTextColor(...(isReminder ? ([120, 90, 20] as [number, number, number]) : ([160, 40, 40] as [number, number, number])));
+    pdf.text(isReminder ? 'Zahlungserinnerung' : 'Zahlungsaufforderung', mX, y);
+    y += 5;
+    pdf.setFont('Inter', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(60);
+    const wrappedD = pdf.splitTextToSize(dunningText, pageW - 2 * mX);
+    pdf.text(wrappedD, mX, y);
+    y += wrappedD.length * 4.5 + 2;
+  }
+
   // Hinweise
   y += 4;
   pdf.setFont('Inter', 'normal');
@@ -237,6 +258,7 @@ export function generateCmrDocumentPdf(
     pdf.text(wrapped, mX, y);
     y += wrapped.length * 4.5 + 2;
   });
+
 
   // Fußzeile
   // QR-Code aus PDF-Vorlage
