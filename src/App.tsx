@@ -1136,6 +1136,8 @@ function AppRoutes() {
 
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/start" element={<Startseite />} />
+          <Route path="/willkommen" element={<Willkommen />} />
+
           <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/w/:code" element={<WorkspaceDashboard />} />
           <Route path="/workspaces-admin" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><WorkspaceAdmin /></ProtectedRoute>} />
