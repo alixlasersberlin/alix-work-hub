@@ -118,6 +118,7 @@ export default function CmrEinstellungen() {
       </Card>
 
       <CmrNumberRanges tenantId={tenantId} />
+      <CmrPdfTemplates tenantId={tenantId} />
       <CmrEmailTemplates tenantId={tenantId} />
     </div>
   );
