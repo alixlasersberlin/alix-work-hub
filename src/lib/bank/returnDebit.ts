@@ -579,7 +579,7 @@ export async function confirmReturnDebit(input: ConfirmInput) {
     },
   });
 
-  return { invoiceInfos, fullyReturned };
+  return { invoiceInfos, fullyReturned, warnings };
 }
 
 /** Storniert eine bestätigte Rücklastschrift-Zuordnung (nur Super Admin). */
