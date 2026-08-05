@@ -10587,6 +10587,7 @@ export type Database = {
           id: string
           interest_pct: number
           is_active: boolean
+          language: string | null
           tenant_id: string
           updated_at: string
         }
@@ -10607,6 +10608,7 @@ export type Database = {
           id?: string
           interest_pct?: number
           is_active?: boolean
+          language?: string | null
           tenant_id: string
           updated_at?: string
         }
@@ -10627,6 +10629,7 @@ export type Database = {
           id?: string
           interest_pct?: number
           is_active?: boolean
+          language?: string | null
           tenant_id?: string
           updated_at?: string
         }
@@ -10714,11 +10717,13 @@ export type Database = {
           gross_total: number
           id: string
           internal_notes: string | null
+          language: string
           last_reminded_at: string | null
           net_total: number
           notes: string | null
           paid_total: number
           parent_document_id: string | null
+          payment_link_url: string | null
           project_id: string | null
           reference: string | null
           reminder_level: number
@@ -10745,11 +10750,13 @@ export type Database = {
           gross_total?: number
           id?: string
           internal_notes?: string | null
+          language?: string
           last_reminded_at?: string | null
           net_total?: number
           notes?: string | null
           paid_total?: number
           parent_document_id?: string | null
+          payment_link_url?: string | null
           project_id?: string | null
           reference?: string | null
           reminder_level?: number
@@ -10776,11 +10783,13 @@ export type Database = {
           gross_total?: number
           id?: string
           internal_notes?: string | null
+          language?: string
           last_reminded_at?: string | null
           net_total?: number
           notes?: string | null
           paid_total?: number
           parent_document_id?: string | null
+          payment_link_url?: string | null
           project_id?: string | null
           reference?: string | null
           reminder_level?: number
@@ -11034,6 +11043,54 @@ export type Database = {
           },
         ]
       }
+      cmr_job_runs: {
+        Row: {
+          created_at: string
+          details: Json
+          failed: number
+          finished_at: string | null
+          id: string
+          job: string
+          message: string | null
+          processed: number
+          skipped: number
+          started_at: string
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          job: string
+          message?: string | null
+          processed?: number
+          skipped?: number
+          started_at?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          failed?: number
+          finished_at?: string | null
+          id?: string
+          job?: string
+          message?: string | null
+          processed?: number
+          skipped?: number
+          started_at?: string
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cmr_number_ranges: {
         Row: {
           created_at: string
@@ -11179,6 +11236,7 @@ export type Database = {
           header_html: string | null
           id: string
           is_default: boolean
+          language: string
           logo_url: string | null
           name: string
           show_qr: boolean
@@ -11196,6 +11254,7 @@ export type Database = {
           header_html?: string | null
           id?: string
           is_default?: boolean
+          language?: string
           logo_url?: string | null
           name: string
           show_qr?: boolean
@@ -11213,6 +11272,7 @@ export type Database = {
           header_html?: string | null
           id?: string
           is_default?: boolean
+          language?: string
           logo_url?: string | null
           name?: string
           show_qr?: boolean
@@ -11446,6 +11506,7 @@ export type Database = {
           logo_url: string | null
           payment_terms: string | null
           phone: string | null
+          portal_payment_url: string | null
           smtp_host: string | null
           smtp_port: number | null
           smtp_secure: boolean | null
@@ -11496,6 +11557,7 @@ export type Database = {
           logo_url?: string | null
           payment_terms?: string | null
           phone?: string | null
+          portal_payment_url?: string | null
           smtp_host?: string | null
           smtp_port?: number | null
           smtp_secure?: boolean | null
@@ -11546,6 +11608,7 @@ export type Database = {
           logo_url?: string | null
           payment_terms?: string | null
           phone?: string | null
+          portal_payment_url?: string | null
           smtp_host?: string | null
           smtp_port?: number | null
           smtp_secure?: boolean | null
@@ -11570,6 +11633,9 @@ export type Database = {
       }
       cmr_time_entries: {
         Row: {
+          approved: boolean
+          approved_at: string | null
+          approved_by: string | null
           billable: boolean
           billed_at: string | null
           billed_document_id: string | null
@@ -11585,8 +11651,13 @@ export type Database = {
           tenant_id: string
           updated_at: string
           work_date: string
+          worked_by: string | null
+          worked_by_name: string | null
         }
         Insert: {
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
           billable?: boolean
           billed_at?: string | null
           billed_document_id?: string | null
@@ -11602,8 +11673,13 @@ export type Database = {
           tenant_id: string
           updated_at?: string
           work_date?: string
+          worked_by?: string | null
+          worked_by_name?: string | null
         }
         Update: {
+          approved?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
           billable?: boolean
           billed_at?: string | null
           billed_document_id?: string | null
@@ -11619,6 +11695,8 @@ export type Database = {
           tenant_id?: string
           updated_at?: string
           work_date?: string
+          worked_by?: string | null
+          worked_by_name?: string | null
         }
         Relationships: [
           {
