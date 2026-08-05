@@ -207,12 +207,77 @@ export default function CmrBuchhaltung() {
     doc.save(`CMR_Jahresabschluss_${year}.pdf`);
   };
 
-  /** Bank-CSV importieren und Zahlungen automatisch den Belegen zuordnen. */
+  /** Bankdatei importieren (CSV, CAMT.053 XML oder MT940) und Zahlungen automatisch zuordnen. */
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
 
+  const matchDoc = (ref: string) =>
+    invoices.find((d) => d.doc_number && ref.toUpperCase().includes(String(d.doc_number).toUpperCase()));
+
+  const buildRow = (paid_on: string, amount: number, reference: string) => {
+    const match = matchDoc(reference);
+    return {
+      paid_on, amount, reference,
+      document_id: match?.id ?? null,
+      doc_number: match?.doc_number ?? null,
+      customer_id: match?.customer_id ?? null,
+    };
+  };
+
+  /** CAMT.053 (ISO 20022 XML) parsen – nur Gutschriften (CRDT). */
+  const parseCamt = (text: string) => {
+    const xml = new DOMParser().parseFromString(text, 'application/xml');
+    const entries = Array.from(xml.getElementsByTagName('*')).filter((n) => n.localName === 'Ntry');
+    const rows: any[] = [];
+    entries.forEach((e) => {
+      const get = (name: string, root: Element = e) =>
+        Array.from(root.getElementsByTagName('*')).find((n) => n.localName === name)?.textContent?.trim() ?? '';
+      if (get('CdtDbtInd') !== 'CRDT') return;
+      const amount = Number(get('Amt')) || 0;
+      const date = get('BookgDt') ? get('Dt') : '';
+      const ref = [get('Ustrd'), get('AddtlNtryInf'), get('Nm')].filter(Boolean).join(' ');
+      if (amount > 0) rows.push(buildRow((date || new Date().toISOString()).slice(0, 10), amount, ref));
+    });
+    return rows;
+  };
+
+  /** MT940 (SWIFT) parsen – nur Habenbuchungen (:61: … C …). */
+  const parseMt940 = (text: string) => {
+    const rows: any[] = [];
+    const lines = text.split(/\r?\n/);
+    let cur_: any = null;
+    lines.forEach((l) => {
+      if (l.startsWith(':61:')) {
+        if (cur_) rows.push(buildRow(cur_.date, cur_.amount, cur_.ref.trim()));
+        const m = l.slice(4).match(/^(\d{6})(\d{4})?(C|D)([A-Z]?)([\d,.]+)/);
+        cur_ = null;
+        if (m && m[3] === 'C') {
+          const yy = m[1].slice(0, 2), mm = m[1].slice(2, 4), dd = m[1].slice(4, 6);
+          cur_ = { date: `20${yy}-${mm}-${dd}`, amount: Number(m[5].replace(',', '.')) || 0, ref: '' };
+        }
+      } else if (cur_ && (l.startsWith(':86:') || (!l.startsWith(':') && l.trim()))) {
+        cur_.ref += ' ' + l.replace(/^:86:/, '');
+      }
+    });
+    if (cur_) rows.push(buildRow(cur_.date, cur_.amount, cur_.ref.trim()));
+    return rows.filter((r) => r.amount > 0);
+  };
+
   const parseBankCsv = async (file: File) => {
     const text = await file.text();
+    const name = file.name.toLowerCase();
+
+    if (name.endsWith('.xml') || text.trimStart().startsWith('<?xml')) {
+      const rows = parseCamt(text);
+      if (!rows.length) { toast.error('Keine Gutschriften in der CAMT-Datei gefunden.'); return; }
+      setImportRows(rows); return;
+    }
+    if (name.endsWith('.sta') || name.endsWith('.mt940') || name.endsWith('.940') || text.includes(':61:')) {
+      const rows = parseMt940(text);
+      if (!rows.length) { toast.error('Keine Habenbuchungen in der MT940-Datei gefunden.'); return; }
+      setImportRows(rows); return;
+    }
+
     const lines = text.split(/\r?\n/).filter((l) => l.trim());
     if (!lines.length) { toast.error('Datei ist leer.'); return; }
     const sep = (lines[0].match(/;/g)?.length ?? 0) >= (lines[0].match(/,/g)?.length ?? 0) ? ';' : ',';
@@ -235,20 +300,13 @@ export default function CmrBuchhaltung() {
       const c = split(l);
       const amount = iAmount >= 0 ? toNumber(c[iAmount]) : 0;
       const ref = iText >= 0 ? c[iText] ?? '' : c.join(' ');
-      const match = invoices.find((d) => d.doc_number && ref.toUpperCase().includes(String(d.doc_number).toUpperCase()));
-      return {
-        paid_on: iDate >= 0 ? toDate(c[iDate]) : new Date().toISOString().slice(0, 10),
-        amount,
-        reference: ref,
-        document_id: match?.id ?? null,
-        doc_number: match?.doc_number ?? null,
-        customer_id: match?.customer_id ?? null,
-      };
+      return buildRow(iDate >= 0 ? toDate(c[iDate]) : new Date().toISOString().slice(0, 10), amount, ref);
     }).filter((r) => r.amount > 0);
 
     if (!parsed.length) { toast.error('Keine Zahlungseingänge erkannt.'); return; }
     setImportRows(parsed);
   };
+
 
   const commitImport = async () => {
     if (!tenantId || !importRows) return;
