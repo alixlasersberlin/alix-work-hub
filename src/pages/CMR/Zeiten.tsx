@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Clock, Loader2, Plus, Receipt, Trash2 } from 'lucide-react';
+import { Clock, Loader2, Plus, Receipt, Trash2, Play, Square, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
@@ -26,7 +26,7 @@ type Entry = {
   billed_document_id: string | null;
 };
 
-type Project = { id: string; name: string; code: string | null; customer_id: string | null; customer_name: string | null };
+type Project = { id: string; name: string; code: string | null; customer_id: string | null; customer_name: string | null; budget: number | null };
 
 const EMPTY = {
   project_id: '', work_date: new Date().toISOString().slice(0, 10),
@@ -47,7 +47,9 @@ export default function CmrZeiten() {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [billing, setBilling] = useState(false);
-  const [tab, setTab] = useState<'offen' | 'alle'>('offen');
+  const [tab, setTab] = useState<'offen' | 'alle' | 'woche' | 'budget'>('offen');
+  const [timer, setTimer] = useState<{ projectId: string; startedAt: number } | null>(null);
+  const [tick, setTick] = useState(0);
 
   const cur = settings?.default_currency || 'AED';
 
@@ -57,7 +59,7 @@ export default function CmrZeiten() {
     const [{ data: e }, { data: p }] = await Promise.all([
       supabase.from('cmr_time_entries' as any).select('*').eq('tenant_id', tenantId)
         .order('work_date', { ascending: false }).limit(1000),
-      supabase.from('cmr_projects' as any).select('id,name,code,customer_id,customer_name')
+      supabase.from('cmr_projects' as any).select('id,name,code,customer_id,customer_name,budget')
         .eq('tenant_id', tenantId).order('name').limit(500),
     ]);
     setEntries(((e as any) || []) as Entry[]);
@@ -67,6 +69,68 @@ export default function CmrZeiten() {
   };
 
   useEffect(() => { load(); }, [tenantId]);
+
+  // Laufenden Timer überdauert einen Reload der Seite
+  useEffect(() => {
+    const raw = localStorage.getItem('cmr_timer');
+    if (raw) { try { setTimer(JSON.parse(raw)); } catch { /* ignorieren */ } }
+  }, []);
+  useEffect(() => {
+    if (!timer) return;
+    const i = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(i);
+  }, [timer]);
+
+  const elapsedHours = timer ? (Date.now() - timer.startedAt) / 3600000 : 0;
+  const elapsedLabel = (() => {
+    const total = Math.floor((timer ? Date.now() - timer.startedAt : 0) / 1000);
+    const h = String(Math.floor(total / 3600)).padStart(2, '0');
+    const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+    const sec = String(total % 60).padStart(2, '0');
+    return `${h}:${m}:${sec}`;
+  })();
+
+  const startTimer = (projectId: string) => {
+    const t = { projectId, startedAt: Date.now() };
+    localStorage.setItem('cmr_timer', JSON.stringify(t));
+    setTimer(t);
+  };
+
+  /** Stoppt den Timer und öffnet die Erfassungsmaske mit den gelaufenen Stunden. */
+  const stopTimer = () => {
+    if (!timer) return;
+    const hours = Math.max(0.25, Math.round(elapsedHours * 4) / 4);
+    localStorage.removeItem('cmr_timer');
+    setTimer(null);
+    setForm({ ...EMPTY, project_id: timer.projectId, hours });
+    setOpen(true);
+  };
+
+  /** Wochenübersicht: Stunden je Kalenderwoche und Projekt. */
+  const weeks = useMemo(() => {
+    const map = new Map<string, { hours: number; value: number; entries: number }>();
+    entries.forEach((e) => {
+      const d = new Date(e.work_date);
+      const day = (d.getDay() + 6) % 7;
+      const monday = new Date(d); monday.setDate(d.getDate() - day);
+      const key = monday.toISOString().slice(0, 10);
+      const cur_ = map.get(key) ?? { hours: 0, value: 0, entries: 0 };
+      cur_.hours += Number(e.hours || 0);
+      cur_.value += Number(e.hours || 0) * Number(e.hourly_rate || 0);
+      cur_.entries += 1;
+      map.set(key, cur_);
+    });
+    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [entries]);
+
+  /** Budgetauslastung je Projekt inkl. Warnschwellen. */
+  const budgets = useMemo(() => projects.map((p) => {
+    const used = entries.filter((e) => e.project_id === p.id)
+      .reduce((s, e) => s + Number(e.hours || 0) * Number(e.hourly_rate || 0), 0);
+    const budget = Number(p.budget || 0);
+    return { project: p, used, budget, pct: budget > 0 ? (used / budget) * 100 : null };
+  }).filter((b) => b.used > 0 || b.budget > 0)
+    .sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1)), [projects, entries]);
 
   const list = useMemo(
     () => (tab === 'offen' ? entries.filter((x) => x.billable && !x.billed_document_id) : entries),
@@ -193,6 +257,21 @@ export default function CmrZeiten() {
         subtitle="Stunden auf Projekte buchen und offene Leistungen als Sammelrechnung abrechnen."
         actions={
           <div className="flex gap-2">
+            {timer
+              ? (
+                <Button variant="outline" onClick={stopTimer} className="text-amber-500 border-amber-500/40">
+                  <Square className="w-4 h-4 mr-1.5" /> {elapsedLabel} stoppen
+                </Button>
+              )
+              : (
+                <Button
+                  variant="outline"
+                  disabled={!canWrite || projects.length === 0}
+                  onClick={() => startTimer(form.project_id || projects[0]?.id || '')}
+                >
+                  <Play className="w-4 h-4 mr-1.5" /> Timer starten
+                </Button>
+              )}
             <Button variant="outline" onClick={createCollectiveInvoice} disabled={!canWrite || billing || selected.size === 0}>
               {billing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Receipt className="w-4 h-4 mr-1.5" />}
               Sammelrechnung ({selected.size})
@@ -211,13 +290,68 @@ export default function CmrZeiten() {
       </div>
 
       <div className="flex gap-2">
-        {(['offen', 'alle'] as const).map((t) => (
+        {(['offen', 'alle', 'woche', 'budget'] as const).map((t) => (
           <Button key={t} size="sm" variant={tab === t ? 'default' : 'outline'} onClick={() => { setTab(t); setSelected(new Set()); }}>
-            {t === 'offen' ? 'Offene Zeiten' : 'Alle Zeiten'}
+            {t === 'offen' ? 'Offene Zeiten' : t === 'alle' ? 'Alle Zeiten' : t === 'woche' ? 'Wochenübersicht' : 'Budgets'}
           </Button>
         ))}
       </div>
 
+      {tab === 'woche' && (
+        <Card className="divide-y">
+          {weeks.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">Keine Zeiten erfasst.</div>}
+          {weeks.map(([monday, w]) => {
+            const end = new Date(monday); end.setDate(end.getDate() + 6);
+            return (
+              <div key={monday} className="p-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium">
+                    KW {new Date(monday).toLocaleDateString('de-DE')} – {end.toLocaleDateString('de-DE')}
+                  </div>
+                  <div className="text-xs text-muted-foreground">{w.entries} Buchung(en)</div>
+                </div>
+                <div className="text-sm tabular-nums w-24 text-right">{w.hours.toFixed(2)} h</div>
+                <div className="text-sm font-semibold tabular-nums w-32 text-right">{cmrMoney(w.value, cur)}</div>
+              </div>
+            );
+          })}
+        </Card>
+      )}
+
+      {tab === 'budget' && (
+        <Card className="divide-y">
+          {budgets.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">Keine Projekte mit Budget oder Zeiten.</div>}
+          {budgets.map((b) => (
+            <div key={b.project.id} className="p-3 space-y-1.5">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0 font-medium truncate">
+                  {b.project.code ? `${b.project.code} · ` : ''}{b.project.name}
+                  <span className="text-muted-foreground font-normal"> · {b.project.customer_name ?? 'Ohne Kunde'}</span>
+                </div>
+                {b.pct !== null && b.pct >= 80 && (
+                  <Badge variant="outline" className={b.pct >= 100 ? 'border-red-500/40 text-red-500' : 'border-amber-500/40 text-amber-500'}>
+                    <AlertTriangle className="w-3 h-3 mr-1" />
+                    {b.pct >= 100 ? 'Budget überschritten' : 'Budget fast erreicht'}
+                  </Badge>
+                )}
+                <div className="text-sm tabular-nums">
+                  {cmrMoney(b.used, cur)}{b.budget > 0 ? ` / ${cmrMoney(b.budget, cur)}` : ' · kein Budget'}
+                </div>
+              </div>
+              {b.pct !== null && (
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full ${b.pct >= 100 ? 'bg-red-500' : b.pct >= 80 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                    style={{ width: `${Math.min(100, b.pct)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </Card>
+      )}
+
+      {(tab === 'offen' || tab === 'alle') && (
       <Card className="divide-y">
         {list.length === 0 && (
           <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
@@ -260,6 +394,7 @@ export default function CmrZeiten() {
           );
         })}
       </Card>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">

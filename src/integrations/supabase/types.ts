@@ -10393,8 +10393,186 @@ export type Database = {
           },
         ]
       }
+      cmr_bank_lines: {
+        Row: {
+          amount: number
+          booking_date: string | null
+          counterparty: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          match_score: number | null
+          matched_at: string | null
+          matched_document_id: string | null
+          payment_id: string | null
+          purpose: string | null
+          reference: string | null
+          statement_id: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          booking_date?: string | null
+          counterparty?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          match_score?: number | null
+          matched_at?: string | null
+          matched_document_id?: string | null
+          payment_id?: string | null
+          purpose?: string | null
+          reference?: string | null
+          statement_id?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          booking_date?: string | null
+          counterparty?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          match_score?: number | null
+          matched_at?: string | null
+          matched_document_id?: string | null
+          payment_id?: string | null
+          purpose?: string | null
+          reference?: string | null
+          statement_id?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cmr_bank_lines_statement_id_fkey"
+            columns: ["statement_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_bank_statements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cmr_bank_statements: {
+        Row: {
+          created_at: string
+          currency: string | null
+          file_name: string | null
+          format: string | null
+          id: string
+          imported_by: string | null
+          line_count: number
+          matched_count: number
+          statement_date: string | null
+          tenant_id: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          file_name?: string | null
+          format?: string | null
+          id?: string
+          imported_by?: string | null
+          line_count?: number
+          matched_count?: number
+          statement_date?: string | null
+          tenant_id: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          file_name?: string | null
+          format?: string | null
+          id?: string
+          imported_by?: string | null
+          line_count?: number
+          matched_count?: number
+          statement_date?: string | null
+          tenant_id?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cmr_collective_plans: {
+        Row: {
+          auto_send: boolean
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          interval_unit: string
+          is_active: boolean
+          last_run_at: string | null
+          min_amount: number
+          name: string
+          next_run_date: string
+          notes: string | null
+          project_ids: string[]
+          tax_rate: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          auto_send?: boolean
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          interval_unit?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          min_amount?: number
+          name: string
+          next_run_date?: string
+          notes?: string | null
+          project_ids?: string[]
+          tax_rate?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          auto_send?: boolean
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          interval_unit?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          min_amount?: number
+          name?: string
+          next_run_date?: string
+          notes?: string | null
+          project_ids?: string[]
+          tax_rate?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cmr_customer_dunning: {
         Row: {
+          advance_notice_active: boolean | null
+          advance_notice_days: number | null
           created_at: string
           created_by: string | null
           customer_id: string | null
@@ -10413,6 +10591,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          advance_notice_active?: boolean | null
+          advance_notice_days?: number | null
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
@@ -10431,6 +10611,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          advance_notice_active?: boolean | null
+          advance_notice_days?: number | null
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
@@ -11048,6 +11230,54 @@ export type Database = {
           },
         ]
       }
+      cmr_portal_tokens: {
+        Row: {
+          access_count: number
+          created_at: string
+          created_by: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          last_access_at: string | null
+          tenant_id: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          access_count?: number
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_access_at?: string | null
+          tenant_id: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          access_count?: number
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_access_at?: string | null
+          tenant_id?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cmr_projects: {
         Row: {
           budget: number
@@ -11107,6 +11337,8 @@ export type Database = {
       }
       cmr_recurring_plans: {
         Row: {
+          advance_notice_active: boolean | null
+          advance_notice_days: number | null
           billing_address: string | null
           created_at: string
           created_by: string | null
@@ -11128,6 +11360,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          advance_notice_active?: boolean | null
+          advance_notice_days?: number | null
           billing_address?: string | null
           created_at?: string
           created_by?: string | null
@@ -11149,6 +11383,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          advance_notice_active?: boolean | null
+          advance_notice_days?: number | null
           billing_address?: string | null
           created_at?: string
           created_by?: string | null

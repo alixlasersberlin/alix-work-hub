@@ -45,6 +45,12 @@ Deno.serve(async (req) => {
     const settingsByTenant = new Map<string, any>();
     for (const st of settingsRows ?? []) settingsByTenant.set(st.tenant_id, st);
 
+    const { data: noticeRows } = await sb
+      .from("cmr_customer_dunning")
+      .select("tenant_id,customer_id,advance_notice_active,advance_notice_days");
+    const noticeOverrides = new Map<string, any>();
+    for (const n of noticeRows ?? []) noticeOverrides.set(`${n.tenant_id}:${n.customer_id}`, n);
+
     let notices = 0;
     if (!planId && RESEND_API_KEY) {
       let nq = sb.from("cmr_recurring_plans").select("*").eq("is_active", true).gt("next_run_date", today);
@@ -52,8 +58,13 @@ Deno.serve(async (req) => {
       const { data: upcoming } = await nq;
       for (const p of upcoming ?? []) {
         const st = settingsByTenant.get(p.tenant_id);
-        if (!st?.advance_notice_active || !p.customer_email) continue;
-        const lead = Number(st.advance_notice_days ?? 5);
+        if (!p.customer_email) continue;
+
+        // Reihenfolge: Abo-Einstellung > Kundeneinstellung > Mandanteneinstellung
+        const ovr = p.customer_id ? noticeOverrides.get(`${p.tenant_id}:${p.customer_id}`) : null;
+        const active = p.advance_notice_active ?? ovr?.advance_notice_active ?? st?.advance_notice_active;
+        if (!active) continue;
+        const lead = Number(p.advance_notice_days ?? ovr?.advance_notice_days ?? st?.advance_notice_days ?? 5);
         const daysLeft = Math.ceil(
           (new Date(p.next_run_date + "T00:00:00Z").getTime() - new Date(today + "T00:00:00Z").getTime()) / 86400000,
         );

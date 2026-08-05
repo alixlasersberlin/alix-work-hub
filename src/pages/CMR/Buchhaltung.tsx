@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Banknote, Plus, Download, Upload, FileDown } from 'lucide-react';
+import { Loader2, Banknote, Plus, Download, Upload, FileDown, SearchCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
@@ -22,7 +22,7 @@ export default function CmrBuchhaltung() {
   const [invoices, setInvoices] = useState<Doc[]>([]);
   const [payments, setPayments] = useState<Pay[]>([]);
   const [busy, setBusy] = useState(true);
-  const [tab, setTab] = useState<'offen' | 'alle' | 'zahlungen' | 'ust'>('offen');
+  const [tab, setTab] = useState<'offen' | 'alle' | 'zahlungen' | 'ust' | 'bank'>('offen');
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(null);
   const [saving, setSaving] = useState(false);
@@ -45,6 +45,7 @@ export default function CmrBuchhaltung() {
   };
 
   useEffect(() => { load(); }, [tenantId]);
+  useEffect(() => { loadBankLines(); }, [tenantId]);
 
   const open_ = useMemo(() => invoices.filter((i) => Number(i.gross_total) - Number(i.paid_total) > 0.01), [invoices]);
   const sums = useMemo(() => ({
@@ -213,6 +214,57 @@ export default function CmrBuchhaltung() {
   /** Bankdatei importieren (CSV, CAMT.053 XML oder MT940) und Zahlungen automatisch zuordnen. */
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
+  const [importFileName, setImportFileName] = useState<string>('');
+  const [importFormat, setImportFormat] = useState<string>('');
+  const [bankLines, setBankLines] = useState<any[]>([]);
+  const [autoMatching, setAutoMatching] = useState(false);
+
+  /** Offene (noch nicht zugeordnete) Bankbuchungen laden. */
+  const loadBankLines = async () => {
+    if (!tenantId) return;
+    const { data } = await supabase.from('cmr_bank_lines' as any)
+      .select('*').eq('tenant_id', tenantId).eq('status', 'offen')
+      .order('booking_date', { ascending: false }).limit(300);
+    setBankLines(((data as any) || []) as any[]);
+  };
+
+  /** Automatischen Bankabgleich serverseitig anstoßen. */
+  const runAutoMatch = async () => {
+    if (!tenantId) return;
+    setAutoMatching(true);
+    const { data, error } = await supabase.functions.invoke('cmr-bank-automatch', { body: { tenantId } });
+    setAutoMatching(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Bankabgleich: ${(data as any)?.matched ?? 0} Position(en) zugeordnet`);
+    loadBankLines();
+    load();
+  };
+
+  /** Offene Bankposition manuell einer Rechnung zuordnen und buchen. */
+  const assignBankLine = async (line: any, documentId: string) => {
+    if (!tenantId || !documentId) return;
+    const doc = invoices.find((d) => d.id === documentId);
+    const { data: pay, error } = await supabase.from('cmr_payments' as any).insert({
+      tenant_id: tenantId, document_id: documentId, customer_id: doc?.customer_id ?? null,
+      paid_on: line.booking_date ?? new Date().toISOString().slice(0, 10),
+      amount: Number(line.amount) || 0, currency: line.currency || cur,
+      method: 'Bankabgleich', reference: (line.purpose ?? '').slice(0, 200) || null,
+    }).select('id').single();
+    if (error) { toast.error(error.message); return; }
+    await supabase.from('cmr_bank_lines' as any).update({
+      status: 'gebucht', matched_document_id: documentId,
+      payment_id: (pay as any)?.id ?? null, match_score: 1, matched_at: new Date().toISOString(),
+    }).eq('id', line.id);
+    toast.success('Zahlung gebucht');
+    loadBankLines();
+    load();
+  };
+
+  /** Bankposition als ignoriert markieren (z. B. Fremdzahlung). */
+  const ignoreBankLine = async (id: string) => {
+    await supabase.from('cmr_bank_lines' as any).update({ status: 'ignoriert' }).eq('id', id);
+    loadBankLines();
+  };
 
   const matchDoc = (ref: string) =>
     invoices.find((d) => d.doc_number && ref.toUpperCase().includes(String(d.doc_number).toUpperCase()));
@@ -269,6 +321,11 @@ export default function CmrBuchhaltung() {
   const parseBankCsv = async (file: File) => {
     const text = await file.text();
     const name = file.name.toLowerCase();
+    setImportFileName(file.name);
+    setImportFormat(
+      name.endsWith('.xml') || text.trimStart().startsWith('<?xml') ? 'CAMT.053'
+        : text.includes(':61:') ? 'MT940' : 'CSV',
+    );
 
     if (name.endsWith('.xml') || text.trimStart().startsWith('<?xml')) {
       const rows = parseCamt(text);
@@ -311,28 +368,72 @@ export default function CmrBuchhaltung() {
   };
 
 
+  /**
+   * Bucht die zugeordneten Zahlungen und archiviert den kompletten Auszug
+   * (inkl. offener, nicht zuordenbarer Positionen) für den späteren Bankabgleich.
+   */
   const commitImport = async () => {
     if (!tenantId || !importRows) return;
     const rows = importRows.filter((r) => r.document_id);
-    if (!rows.length) { toast.error('Keine zugeordneten Zahlungen zum Buchen.'); return; }
     setImporting(true);
-    const { error } = await supabase.from('cmr_payments' as any).insert(
-      rows.map((r) => ({
-        tenant_id: tenantId,
-        document_id: r.document_id,
-        customer_id: r.customer_id,
-        paid_on: r.paid_on,
-        amount: Number(r.amount) || 0,
-        currency: cur,
-        method: 'Bankimport',
-        reference: r.reference?.slice(0, 200) ?? null,
-      })),
+
+    const { data: stmt, error: sErr } = await supabase.from('cmr_bank_statements' as any).insert({
+      tenant_id: tenantId,
+      file_name: importFileName || null,
+      format: importFormat || null,
+      statement_date: new Date().toISOString().slice(0, 10),
+      line_count: importRows.length,
+      matched_count: rows.length,
+      total_amount: importRows.reduce((s, r) => s + (Number(r.amount) || 0), 0),
+      currency: cur,
+    }).select('id').single();
+    if (sErr) { setImporting(false); toast.error(sErr.message); return; }
+    const statementId = (stmt as any).id as string;
+
+    let paymentIds: (string | null)[] = [];
+    if (rows.length) {
+      const { data: pays, error } = await supabase.from('cmr_payments' as any).insert(
+        rows.map((r) => ({
+          tenant_id: tenantId,
+          document_id: r.document_id,
+          customer_id: r.customer_id,
+          paid_on: r.paid_on,
+          amount: Number(r.amount) || 0,
+          currency: cur,
+          method: 'Bankimport',
+          reference: r.reference?.slice(0, 200) ?? null,
+        })),
+      ).select('id');
+      if (error) { setImporting(false); toast.error(error.message); return; }
+      paymentIds = ((pays as any) || []).map((p: any) => p.id);
+    }
+
+    let paidIdx = 0;
+    const { error: lErr } = await supabase.from('cmr_bank_lines' as any).insert(
+      importRows.map((r) => {
+        const matched = !!r.document_id;
+        return {
+          tenant_id: tenantId,
+          statement_id: statementId,
+          booking_date: r.paid_on,
+          amount: Number(r.amount) || 0,
+          currency: cur,
+          purpose: r.reference?.slice(0, 500) ?? null,
+          reference: r.doc_number ?? null,
+          status: matched ? 'gebucht' : 'offen',
+          matched_document_id: r.document_id ?? null,
+          payment_id: matched ? (paymentIds[paidIdx++] ?? null) : null,
+          match_score: matched ? 1 : null,
+          matched_at: matched ? new Date().toISOString() : null,
+        };
+      }),
     );
     setImporting(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success(`${rows.length} Zahlung(en) gebucht`);
+    if (lErr) { toast.error(lErr.message); return; }
+    toast.success(`${rows.length} Zahlung(en) gebucht · ${importRows.length - rows.length} offen im Bankabgleich`);
     setImportRows(null);
     load();
+    loadBankLines();
   };
 
 
@@ -512,9 +613,13 @@ export default function CmrBuchhaltung() {
       </div>
 
       <div className="flex gap-2">
-        {(['offen', 'alle', 'zahlungen', 'ust'] as const).map((t) => (
-          <Button key={t} size="sm" variant={tab === t ? 'default' : 'outline'} onClick={() => setTab(t)}>
-            {t === 'offen' ? 'Offene Posten' : t === 'alle' ? 'Alle Rechnungen' : t === 'zahlungen' ? 'Zahlungseingänge' : 'Umsatzsteuer'}
+        {(['offen', 'alle', 'zahlungen', 'ust', 'bank'] as const).map((t) => (
+          <Button key={t} size="sm" variant={tab === t ? 'default' : 'outline'} onClick={() => setTab(t as any)}>
+            {t === 'offen' ? 'Offene Posten'
+              : t === 'alle' ? 'Alle Rechnungen'
+              : t === 'zahlungen' ? 'Zahlungseingänge'
+              : t === 'ust' ? 'Umsatzsteuer'
+              : `Bankabgleich${bankLines.length ? ` (${bankLines.length})` : ''}`}
           </Button>
         ))}
         <div className="ml-auto flex flex-wrap gap-2">
@@ -548,7 +653,52 @@ export default function CmrBuchhaltung() {
       </div>
 
 
-      {tab === 'ust' ? (
+      {tab === 'bank' ? (
+        <Card className="divide-y">
+          <div className="p-3 flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold">Offene Bankpositionen</div>
+              <div className="text-xs text-muted-foreground">
+                Nicht automatisch zugeordnete Zahlungseingänge aus importierten Auszügen.
+              </div>
+            </div>
+            <Button size="sm" variant="outline" onClick={runAutoMatch} disabled={!canWrite || autoMatching}>
+              {autoMatching ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <SearchCheck className="w-3.5 h-3.5 mr-1" />}
+              Auto-Abgleich starten
+            </Button>
+          </div>
+          {bankLines.length === 0 && (
+            <div className="p-8 text-center text-sm text-muted-foreground">Keine offenen Bankpositionen.</div>
+          )}
+          {bankLines.map((l) => (
+            <div key={l.id} className="p-3 flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="font-medium truncate">{l.purpose || 'Ohne Verwendungszweck'}</div>
+                <div className="text-xs text-muted-foreground">
+                  {l.booking_date ? new Date(l.booking_date).toLocaleDateString('de-DE') : '—'}
+                  {l.counterparty ? ` · ${l.counterparty}` : ''}
+                </div>
+              </div>
+              <div className="text-sm font-semibold tabular-nums">{cmrMoney(l.amount, l.currency || cur)}</div>
+              <select
+                className="h-9 rounded-md border border-input bg-background px-2 text-sm max-w-[280px]"
+                aria-label="Rechnung zuordnen"
+                disabled={!canWrite}
+                defaultValue=""
+                onChange={(e) => { if (e.target.value) assignBankLine(l, e.target.value); }}
+              >
+                <option value="">Rechnung zuordnen …</option>
+                {open_.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.doc_number ?? '—'} · {(d.customer_name ?? '').slice(0, 24)} · {cmrMoney(Number(d.gross_total) - Number(d.paid_total), cur)}
+                  </option>
+                ))}
+              </select>
+              <Button size="sm" variant="ghost" disabled={!canWrite} onClick={() => ignoreBankLine(l.id)}>Ignorieren</Button>
+            </div>
+          ))}
+        </Card>
+      ) : tab === 'ust' ? (
         <Card className="divide-y">
           <div className="p-3 grid grid-cols-4 text-[11px] uppercase tracking-wide text-muted-foreground">
             <div>Monat</div><div className="text-right">Netto</div><div className="text-right">MwSt.</div><div className="text-right">Brutto</div>

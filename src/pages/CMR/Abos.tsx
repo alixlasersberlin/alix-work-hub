@@ -68,7 +68,7 @@ export default function CmrAbos() {
   const emptyForm = () => ({
     name: '', customer_id: '', customer_name: '', customer_email: '', billing_address: '',
     interval_unit: 'monthly', next_run_date: new Date().toISOString().slice(0, 10),
-    tax_rate: defTax, notes: '', is_active: true,
+    tax_rate: defTax, notes: '', is_active: true, advance_notice_active: null, advance_notice_days: '',
     lines: [{ name: '', quantity: 1, unit: 'Monat', unit_price: 0, tax_rate: defTax }] as PlanLine[],
   });
 
@@ -79,6 +79,8 @@ export default function CmrAbos() {
       name: p.name, customer_id: p.customer_id ?? '', customer_name: p.customer_name ?? '',
       customer_email: p.customer_email ?? '', interval_unit: p.interval_unit, next_run_date: p.next_run_date,
       tax_rate: p.tax_rate, notes: p.notes ?? '', is_active: p.is_active,
+      advance_notice_active: (p as any).advance_notice_active ?? null,
+      advance_notice_days: (p as any).advance_notice_days ?? '',
       lines: p.lines.length ? p.lines : [{ name: '', quantity: 1, unit: 'Monat', unit_price: 0, tax_rate: defTax }],
     });
     setOpen(true);
@@ -99,6 +101,10 @@ export default function CmrAbos() {
         unit_price: Number(l.unit_price) || 0, tax_rate: Number(l.tax_rate) || 0,
       })),
       notes: form.notes || null, is_active: !!form.is_active,
+      advance_notice_active: form.advance_notice_active === null || form.advance_notice_active === undefined
+        ? null : !!form.advance_notice_active,
+      advance_notice_days: form.advance_notice_days === '' || form.advance_notice_days === null
+        ? null : Number(form.advance_notice_days),
     };
     const { error } = editId
       ? await supabase.from('cmr_recurring_plans' as any).update(payload).eq('id', editId)
@@ -229,6 +235,22 @@ export default function CmrAbos() {
                   </select>
                 </div>
                 <div><Label>Nächster Lauf</Label><Input type="date" value={form.next_run_date} onChange={(e) => setForm({ ...form, next_run_date: e.target.value })} /></div>
+                <div>
+                  <Label>Zahlungsavis</Label>
+                  <select
+                    className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    value={form.advance_notice_active === null || form.advance_notice_active === undefined ? '' : String(form.advance_notice_active)}
+                    onChange={(e) => setForm({ ...form, advance_notice_active: e.target.value === '' ? null : e.target.value === 'true' })}
+                  >
+                    <option value="">Standard (Kunde/Mandant)</option>
+                    <option value="true">immer senden</option>
+                    <option value="false">nie senden</option>
+                  </select>
+                </div>
+                <div>
+                  <Label>Avis-Vorlauf (Tage)</Label>
+                  <Input type="number" placeholder="Standard" value={form.advance_notice_days ?? ''} onChange={(e) => setForm({ ...form, advance_notice_days: e.target.value })} />
+                </div>
               </div>
 
               <div className="space-y-2">
