@@ -809,18 +809,18 @@ export async function buildReturnDunning(rd: any, payDays = 7): Promise<ReturnDu
     for (const a of allocs) {
       if (!a.invoice_id) continue;
       let inv: any = null;
-      const r1 = await supabase.from('zoho_invoices').select('customer_id, customer_name, email').eq('id', a.invoice_id).maybeSingle();
+      const r1 = await supabase.from('zoho_invoices').select('customer_id, customer_name, raw_data').eq('id', a.invoice_id).maybeSingle();
       inv = r1.data;
       if (!inv) {
-        const r2 = await supabase.from('zoho_recurring_invoices').select('customer_id, customer_name, email').eq('id', a.invoice_id).maybeSingle();
+        const r2 = await supabase.from('zoho_recurring_invoices').select('customer_id, customer_name, raw_data').eq('id', a.invoice_id).maybeSingle();
         inv = r2.data;
       }
       if (inv) {
         customerName = customerName || (inv.customer_name ?? '');
-        recipient = inv.email ?? null;
+        recipient = typeof inv.raw_data?.email === 'string' ? inv.raw_data.email : null;
         if (!recipient && inv.customer_id) {
           const { data: c2 } = await supabase.from('customers')
-            .select('company_name, contact_name, email').eq('id', inv.customer_id).maybeSingle();
+            .select('company_name, contact_name, email').eq('external_customer_id', String(inv.customer_id)).maybeSingle();
           customerName = customerName || (c2 as any)?.company_name || (c2 as any)?.contact_name || '';
           recipient = (c2 as any)?.email ?? null;
         }
@@ -862,7 +862,7 @@ export async function sendReturnDebitDunning(rd: any, payDays = 7) {
   const emailCfg = await loadReturnDunningEmail();
   const texts = fillReturnDunningEmail(emailCfg, await buildReturnDunningVars(rd, payDays));
 
-  const { error } = await supabase.functions.invoke('send-transactional-email', {
+  const { data, error } = await supabase.functions.invoke('send-transactional-email', {
     body: {
       templateName: 'ruecklastschrift-mahnung',
       recipientEmail: info.recipient,
@@ -891,6 +891,7 @@ export async function sendReturnDebitDunning(rd: any, payDays = 7) {
     },
   });
   if (error) throw new Error(error.message);
+  if (!data?.success) throw new Error(data?.error || 'E-Mail-Dienst hat den Versand nicht bestätigt');
 
   await updateReturnDebit(rd.id, {
     status: 'mahnprozess',
