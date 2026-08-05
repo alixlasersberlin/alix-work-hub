@@ -392,13 +392,14 @@ export default function CmrBuchhaltung() {
           <label className="inline-flex">
             <input
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,text/csv,.xml,text/xml,.sta,.mt940,.940"
               className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) parseBankCsv(f); e.currentTarget.value = ''; }}
             />
             <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input px-3 text-sm hover:bg-muted">
-              <Upload className="w-3.5 h-3.5 mr-1" /> Bank-CSV
+              <Upload className="w-3.5 h-3.5 mr-1" /> Bankimport (CSV/CAMT/MT940)
             </span>
+
           </label>
           <Button size="sm" variant="outline" onClick={exportCsv}>
             <Download className="w-3.5 h-3.5 mr-1" /> CSV Export
