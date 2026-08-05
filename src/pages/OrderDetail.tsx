@@ -31,6 +31,7 @@ import {
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
 import { postPaymentToJournal } from '@/lib/finance/journal';
+import { settleDepositInvoices } from '@/lib/finance/deposit-settle';
 import { computeDepositStatus } from '@/lib/deposit-status';
 import BankFinancingTab from '@/components/BankFinancingTab';
 import AtPurchaseTab from '@/components/AtPurchaseTab';
@@ -319,7 +320,14 @@ export default function OrderDetail() {
           source_id: id!,
           vorgang: 'Anzahlung',
         });
+        const settle = await settleDepositInvoices(id!, parsedAmount);
+        if (settle.ok && settle.settled.length) {
+          toast.success(`Anzahlungsrechnung(en) als bezahlt verbucht: ${settle.settled.join(', ')}`);
+        } else if (!settle.ok) {
+          toast.error('AZ-Rechnung nicht verbucht: ' + (settle.error ?? ''));
+        }
       }
+
     }
     loadAll();
   }
