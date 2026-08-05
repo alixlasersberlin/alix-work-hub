@@ -14,6 +14,7 @@ import { generateCmrDocumentPdf, cmrPdfFilename } from '@/lib/cmr-document-pdf';
 import { loadCmrPdfOptions } from '@/lib/cmr-pdf-template';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney, CMR_DOC_TYPES, CMR_DOC_STATUS } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 
 type Doc = {
   id: string; doc_type: string; doc_number: string | null; status: string;
@@ -37,7 +38,7 @@ function lineTotal(l: Line) {
 }
 
 export default function CmrDokumente() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [busy, setBusy] = useState(true);
   const [typeFilter, setTypeFilter] = useState('');
@@ -429,6 +430,7 @@ export default function CmrDokumente() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader title="CMR Geschäftsvorgänge" subtitle="Angebote, Aufträge, Rechnungen und mehr – ausschließlich im Mandanten CMR sichtbar." />
 
       <div className="flex flex-wrap gap-2 items-center">
@@ -441,7 +443,7 @@ export default function CmrDokumente() {
           {CMR_DOC_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
         <Button variant="outline" className="ml-auto" onClick={exportCsv}><Download className="w-4 h-4 mr-1.5" /> CSV-Export</Button>
-        <Button onClick={startNew}><Plus className="w-4 h-4 mr-1.5" /> Neuer Beleg</Button>
+        <Button onClick={startNew} disabled={!canWrite}><Plus className="w-4 h-4 mr-1.5" /> Neuer Beleg</Button>
       </div>
 
       <Card className="divide-y">

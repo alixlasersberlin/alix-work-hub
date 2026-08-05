@@ -12,6 +12,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Plus, Repeat, Trash2, Play, Pause } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 
 type PlanLine = { name: string; quantity: number; unit: string; unit_price: number; tax_rate: number };
 type Plan = {
@@ -27,7 +28,7 @@ const INTERVALS = [
 ];
 
 export default function CmrAbos() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [rows, setRows] = useState<Plan[]>([]);
   const [busy, setBusy] = useState(true);
   const [open, setOpen] = useState(false);
@@ -140,6 +141,12 @@ export default function CmrAbos() {
     }
   };
 
+  const [preview, setPreview] = useState<Plan[] | null>(null);
+  const duePlans = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    return rows.filter((p) => p.is_active && p.next_run_date <= today);
+  };
+
   const monthlyFactor = (unit: string) => (unit === 'yearly' ? 1 / 12 : unit === 'quarterly' ? 1 / 3 : 1);
 
   const planTotal = (p: Plan) =>
@@ -154,15 +161,19 @@ export default function CmrAbos() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader
         title="CMR Abrechnungen"
         subtitle="Wiederkehrende Abrechnung – erzeugt automatisch Rechnungen im Mandanten CMR."
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => runNow()} disabled={running}>
+            <Button variant="outline" onClick={() => setPreview(duePlans())} disabled={!canWrite}>
+              <Repeat className="w-4 h-4 mr-1.5" /> Vorschau
+            </Button>
+            <Button variant="outline" onClick={() => runNow()} disabled={running || !canWrite}>
               {running ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Play className="w-4 h-4 mr-1.5" />} Lauf starten
             </Button>
-            <Button onClick={startNew}><Plus className="w-4 h-4 mr-1.5" /> Neues Abo</Button>
+            <Button onClick={startNew} disabled={!canWrite}><Plus className="w-4 h-4 mr-1.5" /> Neues Abo</Button>
           </div>
         }
       />
@@ -283,6 +294,44 @@ export default function CmrAbos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    
+      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Abrechnungslauf – Vorschau</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {(preview?.length ?? 0) === 0
+              ? 'Aktuell ist kein Abo fällig – der Lauf würde keine Rechnung erzeugen.'
+              : `${preview?.length} Abo(s) sind fällig und würden abgerechnet werden.`}
+          </p>
+          <div className="max-h-72 overflow-y-auto divide-y">
+            {(preview ?? []).map((p) => (
+              <div key={p.id} className="py-2 flex items-center gap-3 text-sm">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate">{p.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {p.customer_name ?? 'Ohne Kunde'} · fällig {new Date(p.next_run_date).toLocaleDateString('de-DE')}
+                  </div>
+                </div>
+                <div className="font-semibold whitespace-nowrap">{cmrMoney(planTotal(p), p.currency || cur)}</div>
+              </div>
+            ))}
+          </div>
+          {(preview?.length ?? 0) > 0 && (
+            <div className="text-sm font-semibold text-right">
+              Summe: {cmrMoney((preview ?? []).reduce((s2, p) => s2 + planTotal(p), 0), cur)}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreview(null)}>Schließen</Button>
+            <Button
+              disabled={running || (preview?.length ?? 0) === 0 || !canWrite}
+              onClick={async () => { setPreview(null); await runNow(); }}
+            >
+              {running && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />} Lauf jetzt starten
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+</div>
   );
 }

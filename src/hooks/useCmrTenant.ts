@@ -34,15 +34,19 @@ export type CmrSettings = {
   smtp_user: string | null;
   smtp_secure: boolean | null;
   footer_html: string | null;
+  dunning_auto_send?: boolean | null;
 };
 
 /**
  * Lädt den Mandanten „CMR" (Cloud Marketing Research) samt Einstellungen.
+ * `canWrite` zeigt, ob der angemeldete Nutzer in CMR buchen/ändern darf
+ * (Rolle „CMR Viewer" darf ausschließlich lesen).
  * Rein additiv: bestehende Mandanten/Prozesse bleiben unberührt.
  */
 export function useCmrTenant() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [settings, setSettings] = useState<CmrSettings | null>(null);
+  const [canWrite, setCanWrite] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const reload = async () => {
@@ -61,13 +65,16 @@ export function useCmrTenant() {
         .maybeSingle();
       setSettings((data as any) ?? null);
     }
+    const { data: w } = await supabase.rpc('cmr_can_write' as any);
+    setCanWrite(!!w);
     setLoading(false);
   };
 
   useEffect(() => { reload(); }, []);
 
-  return { tenantId, settings, loading, reload };
+  return { tenantId, settings, loading, reload, canWrite };
 }
+
 
 export const CMR_DOC_TYPES: { value: string; label: string }[] = [
   { value: 'angebot', label: 'Angebot' },

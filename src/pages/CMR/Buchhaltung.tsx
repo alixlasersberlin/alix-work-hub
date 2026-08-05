@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Banknote, Plus, Download, Upload, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 
 type Doc = {
   id: string; doc_number: string | null; customer_id: string | null; customer_name: string | null;
@@ -17,7 +18,7 @@ type Doc = {
 type Pay = { id: string; document_id: string | null; paid_on: string; amount: number; method: string | null; reference: string | null };
 
 export default function CmrBuchhaltung() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [invoices, setInvoices] = useState<Doc[]>([]);
   const [payments, setPayments] = useState<Pay[]>([]);
   const [busy, setBusy] = useState(true);
@@ -207,12 +208,77 @@ export default function CmrBuchhaltung() {
     doc.save(`CMR_Jahresabschluss_${year}.pdf`);
   };
 
-  /** Bank-CSV importieren und Zahlungen automatisch den Belegen zuordnen. */
+  /** Bankdatei importieren (CSV, CAMT.053 XML oder MT940) und Zahlungen automatisch zuordnen. */
   const [importRows, setImportRows] = useState<any[] | null>(null);
   const [importing, setImporting] = useState(false);
 
+  const matchDoc = (ref: string) =>
+    invoices.find((d) => d.doc_number && ref.toUpperCase().includes(String(d.doc_number).toUpperCase()));
+
+  const buildRow = (paid_on: string, amount: number, reference: string) => {
+    const match = matchDoc(reference);
+    return {
+      paid_on, amount, reference,
+      document_id: match?.id ?? null,
+      doc_number: match?.doc_number ?? null,
+      customer_id: match?.customer_id ?? null,
+    };
+  };
+
+  /** CAMT.053 (ISO 20022 XML) parsen – nur Gutschriften (CRDT). */
+  const parseCamt = (text: string) => {
+    const xml = new DOMParser().parseFromString(text, 'application/xml');
+    const entries = Array.from(xml.getElementsByTagName('*')).filter((n) => n.localName === 'Ntry');
+    const rows: any[] = [];
+    entries.forEach((e) => {
+      const get = (name: string, root: Element = e) =>
+        Array.from(root.getElementsByTagName('*')).find((n) => n.localName === name)?.textContent?.trim() ?? '';
+      if (get('CdtDbtInd') !== 'CRDT') return;
+      const amount = Number(get('Amt')) || 0;
+      const date = get('BookgDt') ? get('Dt') : '';
+      const ref = [get('Ustrd'), get('AddtlNtryInf'), get('Nm')].filter(Boolean).join(' ');
+      if (amount > 0) rows.push(buildRow((date || new Date().toISOString()).slice(0, 10), amount, ref));
+    });
+    return rows;
+  };
+
+  /** MT940 (SWIFT) parsen – nur Habenbuchungen (:61: … C …). */
+  const parseMt940 = (text: string) => {
+    const rows: any[] = [];
+    const lines = text.split(/\r?\n/);
+    let cur_: any = null;
+    lines.forEach((l) => {
+      if (l.startsWith(':61:')) {
+        if (cur_) rows.push(buildRow(cur_.date, cur_.amount, cur_.ref.trim()));
+        const m = l.slice(4).match(/^(\d{6})(\d{4})?(C|D)([A-Z]?)([\d,.]+)/);
+        cur_ = null;
+        if (m && m[3] === 'C') {
+          const yy = m[1].slice(0, 2), mm = m[1].slice(2, 4), dd = m[1].slice(4, 6);
+          cur_ = { date: `20${yy}-${mm}-${dd}`, amount: Number(m[5].replace(',', '.')) || 0, ref: '' };
+        }
+      } else if (cur_ && (l.startsWith(':86:') || (!l.startsWith(':') && l.trim()))) {
+        cur_.ref += ' ' + l.replace(/^:86:/, '');
+      }
+    });
+    if (cur_) rows.push(buildRow(cur_.date, cur_.amount, cur_.ref.trim()));
+    return rows.filter((r) => r.amount > 0);
+  };
+
   const parseBankCsv = async (file: File) => {
     const text = await file.text();
+    const name = file.name.toLowerCase();
+
+    if (name.endsWith('.xml') || text.trimStart().startsWith('<?xml')) {
+      const rows = parseCamt(text);
+      if (!rows.length) { toast.error('Keine Gutschriften in der CAMT-Datei gefunden.'); return; }
+      setImportRows(rows); return;
+    }
+    if (name.endsWith('.sta') || name.endsWith('.mt940') || name.endsWith('.940') || text.includes(':61:')) {
+      const rows = parseMt940(text);
+      if (!rows.length) { toast.error('Keine Habenbuchungen in der MT940-Datei gefunden.'); return; }
+      setImportRows(rows); return;
+    }
+
     const lines = text.split(/\r?\n/).filter((l) => l.trim());
     if (!lines.length) { toast.error('Datei ist leer.'); return; }
     const sep = (lines[0].match(/;/g)?.length ?? 0) >= (lines[0].match(/,/g)?.length ?? 0) ? ';' : ',';
@@ -235,20 +301,13 @@ export default function CmrBuchhaltung() {
       const c = split(l);
       const amount = iAmount >= 0 ? toNumber(c[iAmount]) : 0;
       const ref = iText >= 0 ? c[iText] ?? '' : c.join(' ');
-      const match = invoices.find((d) => d.doc_number && ref.toUpperCase().includes(String(d.doc_number).toUpperCase()));
-      return {
-        paid_on: iDate >= 0 ? toDate(c[iDate]) : new Date().toISOString().slice(0, 10),
-        amount,
-        reference: ref,
-        document_id: match?.id ?? null,
-        doc_number: match?.doc_number ?? null,
-        customer_id: match?.customer_id ?? null,
-      };
+      return buildRow(iDate >= 0 ? toDate(c[iDate]) : new Date().toISOString().slice(0, 10), amount, ref);
     }).filter((r) => r.amount > 0);
 
     if (!parsed.length) { toast.error('Keine Zahlungseingänge erkannt.'); return; }
     setImportRows(parsed);
   };
+
 
   const commitImport = async () => {
     if (!tenantId || !importRows) return;
@@ -279,6 +338,8 @@ export default function CmrBuchhaltung() {
     setForm({
       document_id: d.id, customer_id: d.customer_id, label: `${d.doc_number} · ${d.customer_name ?? ''}`,
       amount: Math.max(0, Number(d.gross_total) - Number(d.paid_total)),
+      discount_amount: 0,
+      openAmount: Math.max(0, Number(d.gross_total) - Number(d.paid_total)),
       paid_on: new Date().toISOString().slice(0, 10), method: 'Überweisung', reference: '',
     });
     setOpen(true);
@@ -293,6 +354,7 @@ export default function CmrBuchhaltung() {
       customer_id: form.customer_id,
       paid_on: form.paid_on,
       amount: Number(form.amount) || 0,
+      discount_amount: Number(form.discount_amount) || 0,
       currency: cur,
       method: form.method || null,
       reference: form.reference || null,
@@ -304,6 +366,7 @@ export default function CmrBuchhaltung() {
     load();
   };
 
+
   if (loading || busy) {
     return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
   }
@@ -312,6 +375,7 @@ export default function CmrBuchhaltung() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader title="CMR Buchhaltung" subtitle="Getrennte Buchhaltung der Cloud Marketing Research – ohne Vermischung mit Alix Lasers." />
 
       <div className="grid grid-cols-3 gap-3">
@@ -330,13 +394,15 @@ export default function CmrBuchhaltung() {
           <label className="inline-flex">
             <input
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv,text/csv,.xml,text/xml,.sta,.mt940,.940"
               className="hidden"
+              disabled={!canWrite}
               onChange={(e) => { const f = e.target.files?.[0]; if (f) parseBankCsv(f); e.currentTarget.value = ''; }}
             />
             <span className="inline-flex h-9 cursor-pointer items-center rounded-md border border-input px-3 text-sm hover:bg-muted">
-              <Upload className="w-3.5 h-3.5 mr-1" /> Bank-CSV
+              <Upload className="w-3.5 h-3.5 mr-1" /> Bankimport (CSV/CAMT/MT940)
             </span>
+
           </label>
           <Button size="sm" variant="outline" onClick={exportCsv}>
             <Download className="w-3.5 h-3.5 mr-1" /> CSV Export
@@ -402,7 +468,7 @@ export default function CmrBuchhaltung() {
                 <div className="text-sm font-semibold">{cmrMoney(d.gross_total, d.currency || cur)}</div>
                 <div className="text-xs text-muted-foreground">offen {cmrMoney(Number(d.gross_total) - Number(d.paid_total), cur)}</div>
               </div>
-              <Button size="sm" variant="outline" onClick={() => startPayment(d)}>
+              <Button size="sm" variant="outline" onClick={() => startPayment(d)} disabled={!canWrite}>
                 <Plus className="w-3.5 h-3.5 mr-1" /> Zahlung
               </Button>
             </div>
@@ -434,6 +500,14 @@ export default function CmrBuchhaltung() {
             <div className="space-y-3">
               <div className="text-sm text-muted-foreground">{form.label}</div>
               <div><Label>Betrag ({cur})</Label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
+              <div>
+                <Label>Skonto ({cur})</Label>
+                <Input type="number" step="0.01" value={form.discount_amount ?? 0} onChange={(e) => setForm({ ...form, discount_amount: e.target.value })} />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Restforderung nach Buchung: {cmrMoney(Math.max(0, Number(form.openAmount || 0) - (Number(form.amount) || 0) - (Number(form.discount_amount) || 0)), cur)}
+                </p>
+              </div>
+
               <div><Label>Datum</Label><Input type="date" value={form.paid_on} onChange={(e) => setForm({ ...form, paid_on: e.target.value })} /></div>
               <div><Label>Zahlungsart</Label><Input value={form.method} onChange={(e) => setForm({ ...form, method: e.target.value })} /></div>
               <div><Label>Referenz</Label><Input value={form.reference} onChange={(e) => setForm({ ...form, reference: e.target.value })} /></div>

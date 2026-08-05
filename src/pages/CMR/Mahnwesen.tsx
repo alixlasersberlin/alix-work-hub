@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, BellRing, FileWarning, PlayCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 
 type Doc = {
   id: string; doc_type: string; doc_number: string | null; status: string; tenant_id: string;
@@ -29,7 +30,7 @@ const daysOverdue = (d: Doc) => {
 };
 
 export default function CmrMahnwesen() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [busy, setBusy] = useState(true);
   const [working, setWorking] = useState<string | null>(null);
@@ -151,11 +152,12 @@ export default function CmrMahnwesen() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader
         title="CMR Mahnwesen"
         subtitle="Überfällige Rechnungen des Mandanten CMR – Zahlungserinnerung und Mahnstufen."
         actions={
-          <Button variant="outline" onClick={runDunning} disabled={runBusy}>
+          <Button variant="outline" onClick={runDunning} disabled={runBusy || !canWrite}>
             {runBusy ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-1.5" />}
             Mahnlauf jetzt
           </Button>

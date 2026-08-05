@@ -1,5 +1,6 @@
-// CMR – Mahnlauf: erzeugt Zahlungserinnerungen / Mahnungen als ENTWÜRFE.
-// Rein additiv: betrifft ausschließlich den Mandanten CMR. Kein automatischer Versand.
+// CMR – Mahnlauf: erzeugt Zahlungserinnerungen / Mahnungen als Entwürfe.
+// Ist in den CMR-Einstellungen "dunning_auto_send" aktiv, werden sie zusätzlich per E-Mail versendet.
+// Rein additiv: betrifft ausschließlich den Mandanten CMR.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -11,6 +12,7 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 
 // Stufe -> Belegart; Fristen, Gebühren und Zinsen kommen aus cmr_settings (Fallbacks unten)
 const DEFAULTS = {
@@ -41,12 +43,14 @@ Deno.serve(async (req) => {
     // Mahnstufen-Konfiguration je Mandant laden
     const { data: settingsRows } = await sb.from("cmr_settings").select("*");
     const cfgByTenant = new Map<string, Cfg>();
+    const settingsByTenant = new Map<string, any>();
     for (const s of settingsRows ?? []) {
       const c: Cfg = { ...DEFAULTS };
       for (const k of Object.keys(DEFAULTS) as (keyof Cfg)[]) {
         if (s[k] !== null && s[k] !== undefined) c[k] = Number(s[k]);
       }
       cfgByTenant.set(s.tenant_id, c);
+      settingsByTenant.set(s.tenant_id, s);
     }
 
     let q = sb.from("cmr_documents").select("*")
@@ -134,6 +138,38 @@ Deno.serve(async (req) => {
       const { error: liErr } = await sb.from("cmr_document_items").insert(posRows);
       if (liErr) { results.push({ invoice: d.id, error: liErr.message }); continue; }
 
+
+      // Optionaler automatischer Versand
+      const tSettings = settingsByTenant.get(d.tenant_id);
+      if (tSettings?.dunning_auto_send && d.customer_email && RESEND_API_KEY) {
+        const subject = `${cfg.label} ${nr} – ${tSettings.company_name ?? "CMR"}`;
+        const text = `Sehr geehrte Damen und Herren,\n\nzur Rechnung ${d.doc_number ?? ""} ist ein Betrag von ${open.toFixed(2)} ${d.currency ?? ""} seit ${overdue} Tagen offen.\nBitte begleichen Sie den Betrag kurzfristig.\n\nMit freundlichen Grüßen\n${tSettings.company_name ?? "CMR"}`;
+        let status = "gesendet";
+        let errText: string | null = null;
+        try {
+          const res = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: tSettings.email ? `${tSettings.company_name ?? "CMR"} <${tSettings.email}>` : "CMR <onboarding@resend.dev>",
+              to: [d.customer_email],
+              subject,
+              text,
+            }),
+          });
+          if (!res.ok) { status = "fehler"; errText = await res.text(); }
+        } catch (e) {
+          status = "fehler";
+          errText = String((e as Error)?.message || e);
+        }
+        await sb.from("cmr_email_log").insert({
+          tenant_id: d.tenant_id, document_id: doc.id, recipients: d.customer_email,
+          subject, provider: "resend", status, error: errText,
+        });
+        if (status === "gesendet") {
+          await sb.from("cmr_documents").update({ status: "versendet", sent_at: new Date().toISOString() }).eq("id", doc.id);
+        }
+      }
 
       await sb.from("cmr_documents").update({
         reminder_level: nextLevel,

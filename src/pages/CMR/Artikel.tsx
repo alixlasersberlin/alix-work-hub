@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Plus, Package, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 import CmrCategories from './Categories';
 
 type Cat = { id: string; name: string };
@@ -26,7 +27,7 @@ const EMPTY = {
 };
 
 export default function CmrArtikel() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(true);
@@ -141,6 +142,7 @@ export default function CmrArtikel() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader title="CMR Artikelstamm" subtitle="Eigener Artikelstamm der Cloud Marketing Research – getrennt von Alix Lasers." />
       <CmrCategories tenantId={tenantId} onChanged={load} />
 
@@ -168,7 +170,7 @@ export default function CmrArtikel() {
             />
           </label>
         </Button>
-        <Button onClick={() => { setEditId(null); setForm(EMPTY); setOpen(true); }}>
+        <Button onClick={() => { setEditId(null); setForm(EMPTY); setOpen(true); }} disabled={!canWrite}>
           <Plus className="w-4 h-4 mr-1.5" /> Neuer Artikel
         </Button>
       </div>

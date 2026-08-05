@@ -13,6 +13,7 @@ export default function CmrDashboard() {
   const [busy, setBusy] = useState(true);
   const [overdue, setOverdue] = useState<any[]>([]);
   const [topCustomers, setTopCustomers] = useState<{ name: string; amount: number }[]>([]);
+  const [trend, setTrend] = useState<{ ytd: number; prevYtd: number; prevFull: number; forecast: number } | null>(null);
 
   useEffect(() => {
     if (!tenantId) return;
@@ -47,6 +48,32 @@ export default function CmrDashboard() {
         map.set(key, (map.get(key) ?? 0) + sign * Number(d.gross_total || 0));
       });
       setTopCustomers([...map.entries()].map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount).slice(0, 8));
+
+      // Vorjahresvergleich & Forecast
+      const now = new Date();
+      const y = now.getFullYear();
+      const { data: trendDocs } = await supabase
+        .from('cmr_documents' as any)
+        .select('doc_date,doc_type,gross_total')
+        .eq('tenant_id', tenantId)
+        .in('doc_type', ['rechnung', 'gutschrift'])
+        .gte('doc_date', `${y - 1}-01-01`)
+        .limit(5000);
+      let ytd = 0, prevYtd = 0, prevFull = 0;
+      const monthNow = now.getMonth() + 1;
+      ((trendDocs as any[]) ?? []).forEach((d) => {
+        const sign = d.doc_type === 'gutschrift' ? -1 : 1;
+        const amt = sign * Number(d.gross_total || 0);
+        const dy = Number(String(d.doc_date).slice(0, 4));
+        const dm = Number(String(d.doc_date).slice(5, 7));
+        if (dy === y) ytd += amt;
+        else if (dy === y - 1) {
+          prevFull += amt;
+          if (dm <= monthNow) prevYtd += amt;
+        }
+      });
+      const elapsed = monthNow - 1 + now.getDate() / 30;
+      setTrend({ ytd, prevYtd, prevFull, forecast: elapsed > 0 ? (ytd / elapsed) * 12 : ytd });
 
       setBusy(false);
     })();
@@ -111,6 +138,30 @@ export default function CmrDashboard() {
           </div>
         )}
       </Card>
+
+      {trend && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="p-4">
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Umsatz YTD</div>
+            <div className="mt-2 text-xl font-semibold">{cmrMoney(trend.ytd, cur)}</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Vorjahr (gleicher Zeitraum)</div>
+            <div className="mt-2 text-xl font-semibold">{cmrMoney(trend.prevYtd, cur)}</div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Veränderung</div>
+            <div className={`mt-2 text-xl font-semibold ${trend.ytd >= trend.prevYtd ? 'text-emerald-500' : 'text-destructive'}`}>
+              {trend.prevYtd > 0 ? `${(((trend.ytd - trend.prevYtd) / trend.prevYtd) * 100).toFixed(1)} %` : '—'}
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Forecast Jahresende</div>
+            <div className="mt-2 text-xl font-semibold">{cmrMoney(trend.forecast, cur)}</div>
+            <div className="text-[11px] text-muted-foreground mt-1">Vorjahr gesamt: {cmrMoney(trend.prevFull, cur)}</div>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-4">

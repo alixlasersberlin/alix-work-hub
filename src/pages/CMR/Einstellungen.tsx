@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant } from '@/hooks/useCmrTenant';
+import CmrReadOnlyBanner from '@/components/cmr/CmrReadOnlyBanner';
 import CmrEmailTemplates from './EmailTemplates';
 import CmrNumberRanges from './NumberRanges';
 import CmrPdfTemplates from './PdfTemplates';
@@ -54,7 +55,7 @@ const FIELDS: { key: string; label: string; type?: string }[][] = [
 const SECTION_TITLES = ['Unternehmen', 'Anschrift', 'Bankverbindung', 'Belege & Steuer', 'E-Mail-Versand'];
 
 export default function CmrEinstellungen() {
-  const { tenantId, settings, loading, reload } = useCmrTenant();
+  const { tenantId, settings, loading, reload, canWrite} = useCmrTenant();
   const [form, setForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
 
@@ -91,10 +92,11 @@ export default function CmrEinstellungen() {
 
   return (
     <div className="space-y-4">
+      {!canWrite && <CmrReadOnlyBanner />}
       <PageHeader
         title="CMR Einstellungen"
         subtitle="Branding, Bankdaten, Steuer und E-Mail-Versand – gelten ausschließlich für den Mandanten CMR."
-        actions={<Button onClick={save} disabled={saving}>{saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />} Speichern</Button>}
+        actions={<Button onClick={save} disabled={saving || !canWrite}>{saving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Save className="w-4 h-4 mr-1.5" />} Speichern</Button>}
       />
 
       {FIELDS.map((group, gi) => (
@@ -157,7 +159,17 @@ export default function CmrEinstellungen() {
             </div>
           ))}
         </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4"
+            checked={!!form.dunning_auto_send}
+            onChange={(e) => setForm({ ...form, dunning_auto_send: e.target.checked })}
+          />
+          Mahnungen automatisch versenden (sonst nur Entwürfe erzeugen)
+        </label>
       </Card>
+
 
 
       <Card className="p-4 space-y-3">
