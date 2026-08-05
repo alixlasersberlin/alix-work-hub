@@ -36,10 +36,13 @@ const KPIS: Record<string, Kpi[]> = {
   ],
 };
 
+// Tabellen, die per Zoho-Quellsystem einem Mandanten zugeordnet sind
+const TENANT_SCOPED = ['orders', 'customers'];
+
 export default function WorkspaceDashboard() {
   const { code } = useParams<{ code: string }>();
   const { workspaces, navItems, current, setCurrent } = useWorkspace();
-  const { current: tenant } = useTenant();
+  const { current: tenant, sourceFilter } = useTenant();
   const [counts, setCounts] = useState<Record<string, number | null>>({});
   const [loading, setLoading] = useState(true);
 
