@@ -64,10 +64,37 @@ export function ManualMatchDialog({
         else q = q.gt('balance', 0);
         return q;
       };
-      const [std, rec] = await Promise.all([build('zoho_invoices'), build('zoho_recurring_invoices')]);
+      const [std, rec, ord] = await Promise.all([
+        build('zoho_invoices'),
+        build('zoho_recurring_invoices'),
+        (async () => {
+          let oq = supabase.from('orders')
+            .select('id,order_number,customer_id,currency,total_amount,finance_open_amount,finance_remaining_amount,order_date,order_status,customers:customer_id(company_name,contact_name)')
+            .eq('accounting_region', region as any)
+            .order('order_date', { ascending: false })
+            .limit(20);
+          if (s) oq = oq.or(`order_number.ilike.%${s}%,internal_number.ilike.%${s}%,case_number.ilike.%${s}%`);
+          const { data } = await oq;
+          return (data ?? []) as any[];
+        })(),
+      ]);
       setResults([
         ...((std.data ?? []) as any[]).map(i => ({ ...i, __src: 'zoho' })),
         ...((rec.data ?? []) as any[]).map(i => ({ ...i, __src: 'recurring' })),
+        ...ord.map((o: any) => ({
+          id: o.id,
+          invoice_number: o.order_number,
+          customer_id: o.customer_id,
+          customer_name: o.customers?.company_name || o.customers?.contact_name || null,
+          invoice_date: o.order_date ? String(o.order_date).slice(0, 10) : null,
+          due_date: null,
+          currency: o.currency || (region === 'CH' ? 'CHF' : 'EUR'),
+          total: Number(o.total_amount ?? 0),
+          balance: Number(o.finance_open_amount ?? o.finance_remaining_amount ?? o.total_amount ?? 0),
+          status: o.order_status,
+          payment_status: 'Auftrag',
+          __src: 'order',
+        })),
       ]);
       setSearching(false);
     }, 300);
@@ -79,12 +106,21 @@ export function ManualMatchDialog({
   const diff = abs - sum;
 
   const addInvoice = (inv: any) => {
-    if (rows.some(r => r.invoice_id === inv.id)) return;
+    if (rows.some(r => (r.invoice_id ?? r.order_id) === inv.id)) return;
     const rest = Math.max(0, diff);
+    const amount = Number(Math.min(rest || abs, Number(inv.balance ?? abs) || abs).toFixed(2));
+    if (inv.__src === 'order') {
+      setRows(r => [...r, {
+        key: crypto.randomUUID(), order_id: inv.id, invoice_number: inv.invoice_number,
+        customer_id: inv.customer_id ?? null, allocation_type: 'anzahlung',
+        allocated_amount: amount,
+      }]);
+      return;
+    }
     setRows(r => [...r, {
       key: crypto.randomUUID(), invoice_id: inv.id, invoice_number: inv.invoice_number,
       customer_id: null, allocation_type: 'rechnung',
-      allocated_amount: Number(Math.min(rest || abs, Number(inv.balance ?? abs)).toFixed(2)),
+      allocated_amount: amount,
     }]);
   };
 
