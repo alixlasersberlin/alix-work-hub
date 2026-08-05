@@ -37,12 +37,19 @@ export default function TxListPage({
   const [deleting, setDeleting] = useState(false);
   const canDelete = useCanDelete();
   const pageSize = 50;
+  const [loadError, setLoadError] = useState<BankLoadError | null>(null);
+  const [accountsError, setAccountsError] = useState<BankLoadError | null>(null);
 
-  useEffect(() => { listBankAccounts(region).then(setAccounts).catch(() => {}); }, [region]);
+  useEffect(() => {
+    listBankAccounts(region)
+      .then(a => { setAccounts(a); setAccountsError(null); })
+      .catch(e => setAccountsError(describeBankLoadError(e, 'GET /rest/v1/bank_accounts')));
+  }, [region]);
   useEffect(() => { setPage(0); }, [region, accountId, search, direction, status, from, to, amountMin, amountMax]);
 
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await listTransactions({
         area: region,
@@ -56,7 +63,11 @@ export default function TxListPage({
         page, pageSize,
       });
       setRows(res.rows); setCount(res.count); setChecked([]);
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) {
+      const err = describeBankLoadError(e, 'GET /rest/v1/bank_transactions');
+      setLoadError(err);
+      toast.error(`${err.message} (${err.correlationId})`);
+    }
     finally { setLoading(false); }
   };
 
