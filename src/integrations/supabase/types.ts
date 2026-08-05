@@ -27413,6 +27413,39 @@ export type Database = {
           },
         ]
       }
+      page_usage_stats: {
+        Row: {
+          created_at: string
+          hits: number
+          id: string
+          label: string | null
+          last_at: string
+          path: string
+          user_id: string
+          workspace_code: string | null
+        }
+        Insert: {
+          created_at?: string
+          hits?: number
+          id?: string
+          label?: string | null
+          last_at?: string
+          path: string
+          user_id: string
+          workspace_code?: string | null
+        }
+        Update: {
+          created_at?: string
+          hits?: number
+          id?: string
+          label?: string | null
+          last_at?: string
+          path?: string
+          user_id?: string
+          workspace_code?: string | null
+        }
+        Relationships: []
+      }
       payment_risk_flags: {
         Row: {
           active: boolean
@@ -40743,6 +40776,20 @@ export type Database = {
         Returns: Json
       }
       order_status_counts: { Args: { p_order_id: string }; Returns: Json }
+      page_usage_top: {
+        Args: { _limit?: number }
+        Returns: {
+          hits: number
+          label: string
+          last_at: string
+          path: string
+          workspace_code: string
+        }[]
+      }
+      page_usage_track: {
+        Args: { _label?: string; _path: string; _workspace_code?: string }
+        Returns: undefined
+      }
       peek_document_number: { Args: { p_code: string }; Returns: string }
       perf_slow_queries: {
         Args: { _limit?: number }
