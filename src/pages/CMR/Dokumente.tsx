@@ -410,6 +410,12 @@ export default function CmrDokumente() {
             <Button size="icon" variant="ghost" title="Per E-Mail senden" onClick={() => startSend(d)}>
               <Mail className="w-4 h-4" />
             </Button>
+            {['rechnung', 'proforma', 'zahlungserinnerung', 'mahnung'].includes(d.doc_type) && (
+              <Button size="icon" variant="ghost" title="Zahlung erfassen" onClick={() => startPayment(d)}>
+                <Euro className="w-4 h-4" />
+              </Button>
+            )}
+
             {followUps(d.doc_type).length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
