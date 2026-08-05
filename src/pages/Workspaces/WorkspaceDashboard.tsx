@@ -112,13 +112,32 @@ export default function WorkspaceDashboard() {
       const res: Record<string, number | null> = {};
       await Promise.all(kpis.map(async (k) => {
         try {
-          const scoped = TENANT_SCOPED.includes(k.table);
-          // Mandant ohne Zoho-Quellsystem: Zoho-Tabellen enthalten keine Daten dieses Mandanten
-          if (scoped && sourceFilter && sourceFilter.length === 0) { res[k.key] = 0; return; }
-          let q: any = supabase.from(k.table as any).select('id', { count: 'exact', head: true });
-          if (scoped && sourceFilter && sourceFilter.length > 0) {
-            q = q.in('source_system', sourceFilter);
+          const hasSelectedTenant = Boolean(tenant);
+          const hasSources = Boolean(sourceFilter && sourceFilter.length > 0);
+
+          // Legacy-Tabellen ohne belastbare Mandantenzuordnung gehören nur zur DE-Ansicht.
+          if (k.scope === 'unscoped' && hasSelectedTenant && tenantCode !== 'DE') {
+            res[k.key] = 0;
+            return;
           }
+          // Mandanten ohne Zoho-Zuordnung dürfen niemals fremde operative Daten sehen.
+          if (['source', 'customer', 'order', 'lead-country'].includes(k.scope) && hasSelectedTenant && !hasSources) {
+            res[k.key] = 0;
+            return;
+          }
+
+          let select = 'id';
+          if (k.scope === 'customer') select = 'id, customers!inner(source_system)';
+          if (k.scope === 'order') select = 'id, orders!inner(source_system)';
+          let q: any = supabase.from(k.table as any).select(select, { count: 'exact', head: true });
+
+          if (k.scope === 'source' && hasSources) q = q.in('source_system', sourceFilter);
+          if (k.scope === 'customer' && hasSources) q = q.in('customers.source_system', sourceFilter);
+          if (k.scope === 'order' && hasSources) q = q.in('orders.source_system', sourceFilter);
+          if (k.scope === 'tenant' && tenant?.id) q = q.eq('tenant_id', tenant.id);
+          if (k.scope === 'lead-country' && tenantCode === 'DE') q = q.eq('country_code', '+49');
+          if (k.scope === 'lead-country' && tenantCode === 'AT') q = q.eq('country_code', '+43');
+
           const { count, error } = await q;
           res[k.key] = error ? null : (count ?? 0);
         } catch {
