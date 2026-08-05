@@ -53,6 +53,11 @@ Deno.serve(async (req) => {
       settingsByTenant.set(s.tenant_id, s);
     }
 
+    // Individuelle Mahnstufen je Kunde (überschreiben die Mandanteneinstellung)
+    const { data: overrideRows } = await sb.from("cmr_customer_dunning").select("*");
+    const overrides = new Map<string, any>();
+    for (const o of overrideRows ?? []) overrides.set(`${o.tenant_id}:${o.customer_id}`, o);
+
     let q = sb.from("cmr_documents").select("*")
       .eq("doc_type", "rechnung")
       .lt("due_date", today)
@@ -74,7 +79,22 @@ Deno.serve(async (req) => {
       const nextLevel = Math.min(3, Number(d.reminder_level || 0) + 1);
       if (Number(d.reminder_level || 0) >= 3) continue;
 
-      const tCfg = cfgByTenant.get(d.tenant_id) ?? DEFAULTS;
+      const ovr = d.customer_id ? overrides.get(`${d.tenant_id}:${d.customer_id}`) : null;
+      if (ovr && ovr.is_active === false) continue; // Kunde vom Mahnlauf ausgenommen
+
+      const baseCfg = cfgByTenant.get(d.tenant_id) ?? DEFAULTS;
+      const tCfg: Cfg = ovr
+        ? {
+          dunning_days_1: Number(ovr.days_1 ?? baseCfg.dunning_days_1),
+          dunning_days_2: Number(ovr.days_2 ?? baseCfg.dunning_days_2),
+          dunning_days_3: Number(ovr.days_3 ?? baseCfg.dunning_days_3),
+          dunning_gap_days: Number(ovr.gap_days ?? baseCfg.dunning_gap_days),
+          dunning_fee_1: Number(ovr.fee_1 ?? baseCfg.dunning_fee_1),
+          dunning_fee_2: Number(ovr.fee_2 ?? baseCfg.dunning_fee_2),
+          dunning_fee_3: Number(ovr.fee_3 ?? baseCfg.dunning_fee_3),
+          dunning_interest_pct: Number(ovr.interest_pct ?? baseCfg.dunning_interest_pct),
+        }
+        : baseCfg;
       const cfg = levelConfig(tCfg, nextLevel);
       if (overdue < cfg.minOverdue) continue;
 
