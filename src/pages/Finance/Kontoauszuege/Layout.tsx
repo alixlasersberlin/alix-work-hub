@@ -14,6 +14,8 @@ const tabs = [
   { to: '/finance/kontoauszuege/historie', label: 'Importhistorie' },
   { to: '/finance/kontoauszuege/konten', label: 'Bankkonten' },
   { to: '/finance/kontoauszuege/regeln', label: 'Importregeln' },
+  { to: '/finance/kontoauszuege/datev', label: 'DATEV-Export' },
+  { to: '/finance/kontoauszuege/bank-api', label: 'Bank-API / EBICS' },
 ];
 
 export default function KontoauszuegeLayout() {

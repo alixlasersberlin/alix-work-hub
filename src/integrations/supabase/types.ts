@@ -8795,12 +8795,16 @@ export type Database = {
           currency: string
           customer_fee: number
           customer_id: string | null
+          dunning_level: number
+          dunning_paused: boolean
           fee_handling: string
           id: string
           installment_id: string | null
           invoice_id: string | null
           invoice_number: string | null
+          last_dunning_at: string | null
           matching_score: number
+          next_dunning_due: string | null
           note: string | null
           order_id: string | null
           original_payment_transaction_id: string | null
@@ -8833,12 +8837,16 @@ export type Database = {
           currency?: string
           customer_fee?: number
           customer_id?: string | null
+          dunning_level?: number
+          dunning_paused?: boolean
           fee_handling?: string
           id?: string
           installment_id?: string | null
           invoice_id?: string | null
           invoice_number?: string | null
+          last_dunning_at?: string | null
           matching_score?: number
+          next_dunning_due?: string | null
           note?: string | null
           order_id?: string | null
           original_payment_transaction_id?: string | null
@@ -8871,12 +8879,16 @@ export type Database = {
           currency?: string
           customer_fee?: number
           customer_id?: string | null
+          dunning_level?: number
+          dunning_paused?: boolean
           fee_handling?: string
           id?: string
           installment_id?: string | null
           invoice_id?: string | null
           invoice_number?: string | null
+          last_dunning_at?: string | null
           matching_score?: number
+          next_dunning_due?: string | null
           note?: string | null
           order_id?: string | null
           original_payment_transaction_id?: string | null

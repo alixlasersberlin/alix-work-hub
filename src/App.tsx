@@ -136,6 +136,8 @@ const KontoauszuegeRuecklastschriften = lazy(() => import("./pages/Finance/Konto
 const KontoauszuegeQuote = lazy(() => import("./pages/Finance/Kontoauszuege/Quote"));
 const KontoauszuegeKonten = lazy(() => import("./pages/Finance/Kontoauszuege/Konten"));
 const KontoauszuegeRegeln = lazy(() => import("./pages/Finance/Kontoauszuege/Regeln"));
+const KontoauszuegeDatev = lazy(() => import("./pages/Finance/Kontoauszuege/Datev"));
+const KontoauszuegeBankApi = lazy(() => import("./pages/Finance/Kontoauszuege/BankApi"));
 const FinanceSepa = lazy(() => import("./pages/Finance/Sepa"));
 const FinanceQrRechnung = lazy(() => import("./pages/Finance/QrRechnung"));
 const FinanceChLastschriften = lazy(() => import("./pages/Finance/ChLastschriften"));
@@ -1363,6 +1365,8 @@ function AppRoutes() {
             <Route path="quote" element={<KontoauszuegeQuote />} />
             <Route path="konten" element={<KontoauszuegeKonten />} />
             <Route path="regeln" element={<KontoauszuegeRegeln />} />
+            <Route path="datev" element={<KontoauszuegeDatev />} />
+            <Route path="bank-api" element={<KontoauszuegeBankApi />} />
           </Route>
           <Route path="/finance/sepa" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSepa /></ProtectedRoute>} />
           <Route path="/finance/qr-rechnung" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceQrRechnung /></ProtectedRoute>} />
