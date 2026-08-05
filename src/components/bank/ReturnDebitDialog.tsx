@@ -229,7 +229,9 @@ export default function ReturnDebitDialog({
       toast.success(res.fullyReturned
         ? 'Rücklastschrift bestätigt – Rechnung wieder geöffnet'
         : 'Rücklastschrift bestätigt – Rechnung ist wieder teilbezahlt');
+      res.warnings?.forEach(w => toast.warning(w, { duration: 10000 }));
       onChanged(); onOpenChange(false);
+
     } catch (e: any) { toast.error(e.message); }
     finally { setBusy(false); }
   };
