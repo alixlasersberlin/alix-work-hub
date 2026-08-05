@@ -45,6 +45,7 @@ export default function CmrBuchhaltung() {
   };
 
   useEffect(() => { load(); }, [tenantId]);
+  useEffect(() => { loadBankLines(); }, [tenantId]);
 
   const open_ = useMemo(() => invoices.filter((i) => Number(i.gross_total) - Number(i.paid_total) > 0.01), [invoices]);
   const sums = useMemo(() => ({
