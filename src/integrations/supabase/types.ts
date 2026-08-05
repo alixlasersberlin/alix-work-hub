@@ -39496,6 +39496,15 @@ export type Database = {
       }
       sv_can_read: { Args: never; Returns: boolean }
       sv_can_write: { Args: never; Returns: boolean }
+      sys_cron_recent_failures: {
+        Args: never
+        Returns: {
+          end_time: string
+          jobname: string
+          return_message: string
+          status: string
+        }[]
+      }
       sys_health_autofix: { Args: never; Returns: Json }
       sys_health_metrics: { Args: never; Returns: Json }
       tenant_id_for_source: { Args: { _source: string }; Returns: string }
