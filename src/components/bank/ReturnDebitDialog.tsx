@@ -56,6 +56,8 @@ export default function ReturnDebitDialog({
   const [suggTerm, setSuggTerm] = useState('');
   const [sugg, setSugg] = useState<any[]>([]);
   const [feeStatus, setFeeStatus] = useState<string | null>(null);
+  const [feeEmail, setFeeEmail] = useState('');
+  const [feeSending, setFeeSending] = useState(false);
 
 
 
