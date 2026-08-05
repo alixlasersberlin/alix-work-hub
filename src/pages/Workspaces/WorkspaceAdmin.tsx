@@ -307,7 +307,48 @@ export default function WorkspaceAdmin() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="tenants" className="space-y-4 pt-4">
+          <Input placeholder="Benutzer suchen…" value={userFilter} onChange={e => setUserFilter(e.target.value)} className="max-w-sm" />
+          <p className="text-xs text-muted-foreground">
+            Steuert, welche Mandanten (Alix Lasers, Alix Austria, Alix Medical, CMR) ein Benutzer im Umschalter sieht.
+            Ohne Zuordnung gelten die bisherigen Rollenregeln. Nur Super Admin darf ändern.
+          </p>
+          <Card>
+            <CardContent className="p-0 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50">
+                  <tr>
+                    <th className="text-left p-3">Benutzer</th>
+                    {tenants.map(t => (
+                      <th key={t.id} className="p-3 text-center whitespace-nowrap">{t.flag_emoji || ''} {t.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map(u => (
+                    <tr key={u.id} className="border-t border-border">
+                      <td className="p-3">
+                        <div className="font-medium">{u.full_name || '—'}</div>
+                        <div className="text-xs text-muted-foreground">{u.email}</div>
+                      </td>
+                      {tenants.map(t => (
+                        <td key={t.id} className="p-3 text-center">
+                          <Checkbox
+                            checked={(tenantAccess[u.id] || []).includes(t.id)}
+                            onCheckedChange={v => toggleTenantAccess(u.id, t.id, Boolean(v))}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
     </div>
   );
 }
