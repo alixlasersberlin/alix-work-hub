@@ -15,3 +15,8 @@ Frontend:
 - `src/pages/Workspaces/WorkspaceDashboard.tsx` — Route `/w/:code`, KPI-Kacheln + Schnellzugriff.
 
 Regeln: Bestehende Routen/Funktionen bleiben unverändert; klassische Navigation bleibt Default.
+
+## Phase 4-7 (Erweiterung)
+- `src/components/GlobalSearch.tsx` — mandantenabhängige globale Suche im Header (⌘K/Strg+K) über Kunden, Aufträge, Tickets, Seriennummern (lager_devices), AlixDocs, CMR-/MED-Belege und MED-Artikel.
+- `src/pages/Workspaces/WorkspaceAdmin.tsx` — Route `/workspaces-admin` (Admin/Super Admin, Menü Operations → Workspaces): Workspaces CRUD, Navigationseinträge inkl. Rollen-/Mandanten-Filter, Workspace-Zugriffsmatrix (user_workspace_access) und Mandanten-Zugriffsmatrix (user_tenant_access, nur Super Admin schreibend).
+- `WorkspaceDashboard` KPIs sind mandantengefiltert (source_system über TenantContext.sourceFilter für orders/customers).
