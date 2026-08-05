@@ -115,11 +115,24 @@ export async function listTransactions(q: TxQuery) {
   if (typeof q.amountMin === 'number') sel = sel.gte('amount', q.amountMin);
   if (typeof q.amountMax === 'number') sel = sel.lte('amount', q.amountMax);
   if (q.search?.trim()) {
-    const s = q.search.trim().replace(/[%,]/g, ' ');
-    sel = sel.or(
-      `purpose.ilike.%${s}%,booking_text.ilike.%${s}%,sender_receiver_name.ilike.%${s}%,sender_receiver_iban.ilike.%${s}%,bank_reference.ilike.%${s}%,end_to_end_reference.ilike.%${s}%`
-    );
+    const base = q.search.trim().replace(/[%,]/g, ' ').trim();
+    // Suchvarianten: Original, ohne Trennzeichen, nur Ziffern (Auftrags-/Rechnungsnummern
+    // stehen im Verwendungszweck oft als "SO 4161", "SO-4161", "INV10960", "2026-04226")
+    const variants = new Set<string>([base]);
+    const compact = base.replace(/[\s._/-]/g, '');
+    if (compact.length >= 2) variants.add(compact);
+    const digits = base.replace(/\D/g, '');
+    if (digits.length >= 3) variants.add(digits);
+
+    const purposeCols = ['purpose', 'booking_text', 'bank_reference', 'end_to_end_reference', 'customer_reference', 'mandate_reference'];
+    const nameCols = ['sender_receiver_name', 'sender_receiver_iban'];
+    const parts: string[] = [];
+    for (const v of variants) {
+      for (const c of [...purposeCols, ...nameCols]) parts.push(`${c}.ilike.%${v}%`);
+    }
+    sel = sel.or(parts.join(','));
   }
+
   const { data, error, count } = await sel
     .order('booking_date', { ascending: false })
     .range(page * size, page * size + size - 1);
