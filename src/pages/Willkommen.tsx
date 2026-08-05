@@ -198,6 +198,46 @@ export default function Willkommen() {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="w-full max-w-2xl animate-fade-in">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Zap className="h-4 w-4 text-primary" /> Schnellzugriff
+            <span className="text-xs font-normal text-muted-foreground">
+              Ihre 20 meistgenutzten Menüpunkte (alle Abteilungen)
+            </span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {topLoading ? (
+            <p className="text-xs text-muted-foreground">Wird berechnet …</p>
+          ) : quickAccess.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Noch keine Nutzungsdaten – der Schnellzugriff füllt sich automatisch, sobald Sie
+              Menüpunkte öffnen.
+            </p>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {quickAccess.map((q) => (
+                <button
+                  key={q.path}
+                  onClick={() => openQuick(q.path, q.ws!.id)}
+                  className="flex items-center justify-between gap-2 rounded-md border border-border bg-background/50 px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
+                >
+                  <span className="truncate">
+                    {q.nav!.label}
+                    <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {q.ws!.name}
+                    </span>
+                  </span>
+                  <Badge variant="secondary" className="shrink-0">{q.hits}×</Badge>
+                </button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </main>
+
   );
 }
