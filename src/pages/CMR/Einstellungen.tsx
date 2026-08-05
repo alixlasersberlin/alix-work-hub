@@ -131,6 +131,36 @@ export default function CmrEinstellungen() {
       </Card>
 
       <Card className="p-4 space-y-3">
+        <div className="text-sm font-semibold">Mahnwesen</div>
+        <p className="text-xs text-muted-foreground">
+          Fristen ab Fälligkeit, ab denen der Mahnlauf die jeweilige Stufe als Entwurf erzeugt. Gebühren und Verzugszinsen werden dem offenen Betrag hinzugerechnet.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { key: 'dunning_days_1', label: 'Zahlungserinnerung ab (Tage)' },
+            { key: 'dunning_days_2', label: '1. Mahnung ab (Tage)' },
+            { key: 'dunning_days_3', label: '2. Mahnung ab (Tage)' },
+            { key: 'dunning_gap_days', label: 'Mindestabstand (Tage)' },
+            { key: 'dunning_fee_1', label: 'Gebühr Erinnerung' },
+            { key: 'dunning_fee_2', label: 'Gebühr 1. Mahnung' },
+            { key: 'dunning_fee_3', label: 'Gebühr 2. Mahnung' },
+            { key: 'dunning_interest_pct', label: 'Verzugszinsen p.a. (%)' },
+          ].map((f) => (
+            <div key={f.key}>
+              <Label>{f.label}</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form[f.key] ?? ''}
+                onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
+              />
+            </div>
+          ))}
+        </div>
+      </Card>
+
+
+      <Card className="p-4 space-y-3">
 
         <div className="text-sm font-semibold">Texte</div>
 
