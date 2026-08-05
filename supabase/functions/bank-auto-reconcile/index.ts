@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
         .eq("accounting_area", area)
         .eq("status", "offen")
         .eq("is_duplicate", false)
+        .eq("is_return_debit", false)
         .order("booking_date", { ascending: false })
         .limit(500);
 
