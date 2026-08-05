@@ -23,6 +23,8 @@ import TenantSwitcher from '@/components/TenantSwitcher';
 import GlobalSearch from '@/components/GlobalSearch';
 import WorkspaceBar from '@/components/workspace/WorkspaceBar';
 import WorkspaceNav from '@/components/workspace/WorkspaceNav';
+import MenuScaleControl from '@/components/MenuScaleControl';
+import { useMenuScale } from '@/hooks/useMenuScale';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
 import { RegionChip } from '@/components/finance/RegionChip';
@@ -1542,7 +1544,10 @@ export default function AppLayout() {
 
 
         {/* Navigation */}
-        <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto scroll-touch">
+        <nav
+          style={menuScale !== 1 ? ({ zoom: menuScale } as any) : undefined}
+          className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto scroll-touch"
+        >
           {wsMode && <WorkspaceNav collapsed={collapsed && !mobileOpen} />}
           <div className={cn("space-y-0.5", wsMode && "hidden")}>
           {/* ALIX Copilot – öffnet das Copilot-Panel */}
@@ -2037,6 +2042,7 @@ export default function AppLayout() {
             >
               <HelpCircle className="w-4 h-4" />
             </Button>
+            <MenuScaleControl compact={collapsed} />
             {!collapsed && (
               <div className="hidden md:flex items-center gap-1 text-[11px] flex-shrink-0 px-1">
                 <span className="font-display font-bold gold-text">AlixWork</span>
