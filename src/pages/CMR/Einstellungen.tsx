@@ -10,6 +10,7 @@ import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant } from '@/hooks/useCmrTenant';
 import CmrEmailTemplates from './EmailTemplates';
+import CmrNumberRanges from './NumberRanges';
 
 const FIELDS: { key: string; label: string; type?: string }[][] = [
   [
@@ -115,6 +116,7 @@ export default function CmrEinstellungen() {
         <div><Label>Beleg-Fußzeile (HTML)</Label><Textarea rows={3} value={form.footer_html ?? ''} onChange={(e) => setForm({ ...form, footer_html: e.target.value })} /></div>
       </Card>
 
+      <CmrNumberRanges tenantId={tenantId} />
       <CmrEmailTemplates tenantId={tenantId} />
     </div>
   );

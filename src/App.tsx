@@ -927,6 +927,7 @@ const CmrDashboard = lazy(() => import("./pages/CMR/Dashboard"));
 const CmrArtikel = lazy(() => import("./pages/CMR/Artikel"));
 const CmrDokumente = lazy(() => import("./pages/CMR/Dokumente"));
 const CmrBuchhaltung = lazy(() => import("./pages/CMR/Buchhaltung"));
+const CmrKunden = lazy(() => import("./pages/CMR/Kunden"));
 const CmrEinstellungen = lazy(() => import("./pages/CMR/Einstellungen"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
