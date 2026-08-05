@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { RouteErrorBoundary, RouteFallback } from "@/components/RouteBoundary";
 import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
@@ -1063,7 +1064,8 @@ function AppRoutes() {
   if (loading) return <FullscreenLoader />;
 
   return (
-    <Suspense fallback={null}>
+    <RouteErrorBoundary>
+    <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Öffentliche Landing-Page: / und /login zeigen IMMER nur Landing, niemals Redirect */}
         <Route path="/" element={<Landing />} />
@@ -2156,6 +2158,7 @@ function AppRoutes() {
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
+    </RouteErrorBoundary>
   );
 }
 
