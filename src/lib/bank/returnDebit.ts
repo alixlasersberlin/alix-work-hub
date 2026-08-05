@@ -790,6 +790,9 @@ export interface ReturnDunningPreview {
 
 const deDate = (d: Date) => d.toLocaleDateString('de-DE');
 
+/** Fester CC-Empfänger der Buchhaltung für Rücklastschrift-Mahnungen. */
+export const RETURN_DUNNING_CC = ['k.trinh@alix-lasers.com'];
+
 /** Sammelt alle Daten für die Rücklastschrift-Mahnung (Vorschau + Versand). */
 export async function buildReturnDunning(rd: any, payDays = 7): Promise<ReturnDunningPreview> {
   const allocs = await getAllocationsOfReturnDebit(rd.id);
@@ -801,6 +804,31 @@ export async function buildReturnDunning(rd: any, payDays = 7): Promise<ReturnDu
     customerName = (c as any)?.company_name || (c as any)?.contact_name || '';
     recipient = (c as any)?.email ?? null;
   }
+  // Fallback: Kundendaten über die zugeordnete Rechnung ermitteln
+  if (!recipient) {
+    for (const a of allocs) {
+      if (!a.invoice_id) continue;
+      let inv: any = null;
+      const r1 = await supabase.from('zoho_invoices').select('customer_id, customer_name, email').eq('id', a.invoice_id).maybeSingle();
+      inv = r1.data;
+      if (!inv) {
+        const r2 = await supabase.from('zoho_recurring_invoices').select('customer_id, customer_name, email').eq('id', a.invoice_id).maybeSingle();
+        inv = r2.data;
+      }
+      if (inv) {
+        customerName = customerName || (inv.customer_name ?? '');
+        recipient = inv.email ?? null;
+        if (!recipient && inv.customer_id) {
+          const { data: c2 } = await supabase.from('customers')
+            .select('company_name, contact_name, email').eq('id', inv.customer_id).maybeSingle();
+          customerName = customerName || (c2 as any)?.company_name || (c2 as any)?.contact_name || '';
+          recipient = (c2 as any)?.email ?? null;
+        }
+      }
+      if (recipient) break;
+    }
+  }
+
   const amount = Number(rd.return_debit_amount || 0);
   const fee = Number(rd.customer_fee || 0);
   const due = new Date(); due.setDate(due.getDate() + payDays);
