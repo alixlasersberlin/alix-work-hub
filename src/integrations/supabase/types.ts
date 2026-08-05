@@ -23803,6 +23803,419 @@ export type Database = {
           },
         ]
       }
+      med_compliance_docs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          doc_kind: string
+          file_url: string | null
+          id: string
+          item_id: string | null
+          notes: string | null
+          reference: string | null
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          doc_kind: string
+          file_url?: string | null
+          id?: string
+          item_id?: string | null
+          notes?: string | null
+          reference?: string | null
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          doc_kind?: string
+          file_url?: string | null
+          id?: string
+          item_id?: string | null
+          notes?: string | null
+          reference?: string | null
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "med_compliance_docs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "med_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      med_document_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          discount_pct: number
+          document_id: string
+          id: string
+          item_id: string | null
+          line_total: number
+          name: string
+          position: number
+          quantity: number
+          tax_rate: number
+          unit: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          discount_pct?: number
+          document_id: string
+          id?: string
+          item_id?: string | null
+          line_total?: number
+          name: string
+          position?: number
+          quantity?: number
+          tax_rate?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          discount_pct?: number
+          document_id?: string
+          id?: string
+          item_id?: string | null
+          line_total?: number
+          name?: string
+          position?: number
+          quantity?: number
+          tax_rate?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "med_document_items_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "med_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "med_document_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "med_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      med_documents: {
+        Row: {
+          billing_address: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          doc_date: string
+          doc_number: string | null
+          doc_type: string
+          due_date: string | null
+          gross_total: number
+          id: string
+          internal_notes: string | null
+          net_total: number
+          notes: string | null
+          paid_total: number
+          parent_document_id: string | null
+          reference: string | null
+          sent_at: string | null
+          shipping_address: string | null
+          status: string
+          tax_rate: number
+          tax_total: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_address?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          doc_date?: string
+          doc_number?: string | null
+          doc_type: string
+          due_date?: string | null
+          gross_total?: number
+          id?: string
+          internal_notes?: string | null
+          net_total?: number
+          notes?: string | null
+          paid_total?: number
+          parent_document_id?: string | null
+          reference?: string | null
+          sent_at?: string | null
+          shipping_address?: string | null
+          status?: string
+          tax_rate?: number
+          tax_total?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_address?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          doc_date?: string
+          doc_number?: string | null
+          doc_type?: string
+          due_date?: string | null
+          gross_total?: number
+          id?: string
+          internal_notes?: string | null
+          net_total?: number
+          notes?: string | null
+          paid_total?: number
+          parent_document_id?: string | null
+          reference?: string | null
+          sent_at?: string | null
+          shipping_address?: string | null
+          status?: string
+          tax_rate?: number
+          tax_total?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "med_documents_parent_document_id_fkey"
+            columns: ["parent_document_id"]
+            isOneToOne: false
+            referencedRelation: "med_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      med_item_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      med_items: {
+        Row: {
+          category_id: string | null
+          ce_number: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          mdr_class: string | null
+          name: string
+          price: number
+          sku: string | null
+          tax_rate: number
+          tenant_id: string
+          udi_di: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          ce_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          mdr_class?: string | null
+          name: string
+          price?: number
+          sku?: string | null
+          tax_rate?: number
+          tenant_id: string
+          udi_di?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          ce_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          mdr_class?: string | null
+          name?: string
+          price?: number
+          sku?: string | null
+          tax_rate?: number
+          tenant_id?: string
+          udi_di?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "med_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "med_item_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      med_number_ranges: {
+        Row: {
+          created_at: string
+          doc_type: string
+          id: string
+          next_number: number
+          padding: number
+          prefix: string
+          tenant_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          doc_type: string
+          id?: string
+          next_number?: number
+          padding?: number
+          prefix?: string
+          tenant_id: string
+          updated_at?: string
+          year?: number
+        }
+        Update: {
+          created_at?: string
+          doc_type?: string
+          id?: string
+          next_number?: number
+          padding?: number
+          prefix?: string
+          tenant_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      med_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          document_id: string | null
+          id: string
+          method: string | null
+          notes: string | null
+          paid_on: string
+          reference: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          document_id?: string | null
+          id?: string
+          method?: string | null
+          notes?: string | null
+          paid_on?: string
+          reference?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          document_id?: string | null
+          id?: string
+          method?: string | null
+          notes?: string | null
+          paid_on?: string
+          reference?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "med_payments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "med_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_package_branding: {
         Row: {
           about_me: string | null
@@ -39476,6 +39889,7 @@ export type Database = {
       }
       mailcenter_dashboard_kpis: { Args: never; Returns: Json }
       main_dashboard_kpis: { Args: { p_at_only?: boolean }; Returns: Json }
+      med_can_write: { Args: never; Returns: boolean }
       merge_customers: {
         Args: { _duplicate_ids: string[]; _primary_id: string }
         Returns: Json
