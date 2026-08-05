@@ -1,0 +1,2 @@
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.bank_accounts, public.bank_imports, public.bank_transactions, public.bank_transaction_matches, public.bank_transaction_allocations, public.bank_match_rules, public.bank_import_templates, public.bank_audit_log TO authenticated;
+GRANT ALL ON public.bank_accounts, public.bank_imports, public.bank_transactions, public.bank_transaction_matches, public.bank_transaction_allocations, public.bank_match_rules, public.bank_import_templates, public.bank_audit_log TO service_role;
