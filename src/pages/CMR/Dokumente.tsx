@@ -8,8 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Plus, Trash2, FileText, Search, Download, Mail } from 'lucide-react';
+import { Loader2, Plus, Trash2, FileText, Search, Download, Mail, GitBranch } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { generateCmrDocumentPdf, cmrPdfFilename } from '@/lib/cmr-document-pdf';
+import { loadCmrPdfOptions } from '@/lib/cmr-pdf-template';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney, CMR_DOC_TYPES, CMR_DOC_STATUS } from '@/hooks/useCmrTenant';
 
@@ -198,8 +200,62 @@ export default function CmrDokumente() {
   };
 
   const buildPdf = async (d: Doc) => {
-    const { data } = await supabase.from('cmr_document_items' as any).select('*').eq('document_id', d.id).order('position');
-    return generateCmrDocumentPdf(d as any, ((data as any) || []) as any, settings);
+    const [{ data }, opts] = await Promise.all([
+      supabase.from('cmr_document_items' as any).select('*').eq('document_id', d.id).order('position'),
+      loadCmrPdfOptions(tenantId, d.doc_type, `${d.doc_number ?? ''} | ${cmrMoney(d.gross_total, d.currency || cur)}`),
+    ]);
+    return generateCmrDocumentPdf(d as any, ((data as any) || []) as any, settings, opts);
+  };
+
+  /** Folgebeleg erzeugen (Angebot -> Auftragsbestätigung -> Rechnung usw.). */
+  const convertDoc = async (d: Doc, targetType: string) => {
+    if (!tenantId) return;
+    try {
+      const { data: nr, error: nrErr } = await supabase.rpc('cmr_next_document_number' as any, {
+        _tenant_id: tenantId, _doc_type: targetType,
+      } as any);
+      if (nrErr) throw nrErr;
+
+      const { data: src } = await supabase.from('cmr_documents' as any).select('*').eq('id', d.id).maybeSingle();
+      const { data: srcLines } = await supabase.from('cmr_document_items' as any).select('*').eq('document_id', d.id).order('position');
+
+      const payload: any = { ...(src as any) };
+      delete payload.id; delete payload.created_at; delete payload.updated_at; delete payload.sent_at;
+      payload.doc_type = targetType;
+      payload.doc_number = nr;
+      payload.status = 'entwurf';
+      payload.paid_total = 0;
+      payload.reminder_level = 0;
+      payload.last_reminded_at = null;
+      payload.parent_document_id = d.id;
+      payload.doc_date = new Date().toISOString().slice(0, 10);
+
+      const { data: created, error } = await supabase.from('cmr_documents' as any).insert(payload).select('id').single();
+      if (error) throw error;
+
+      const rows = (((srcLines as any) || []) as any[]).map((l) => {
+        const c: any = { ...l };
+        delete c.id; delete c.created_at; delete c.updated_at;
+        c.document_id = (created as any).id;
+        return c;
+      });
+      if (rows.length) await supabase.from('cmr_document_items' as any).insert(rows);
+
+      toast.success(`Folgebeleg ${nr} erstellt`);
+      load();
+    } catch (e: any) {
+      toast.error(e.message ?? 'Folgebeleg konnte nicht erstellt werden');
+    }
+  };
+
+  const followUps = (t: string): string[] => {
+    if (t === 'angebot') return ['auftragsbestaetigung', 'rechnung', 'proforma'];
+    if (t === 'auftragsbestaetigung') return ['lieferschein', 'rechnung', 'proforma'];
+    if (t === 'proforma') return ['rechnung'];
+    if (t === 'lieferschein') return ['rechnung'];
+    if (t === 'rechnung') return ['gutschrift', 'zahlungserinnerung', 'mahnung'];
+    if (t === 'zahlungserinnerung') return ['mahnung'];
+    return [];
   };
 
   const downloadPdf = async (d: Doc) => {
@@ -319,6 +375,20 @@ export default function CmrDokumente() {
             <Button size="icon" variant="ghost" title="Per E-Mail senden" onClick={() => startSend(d)}>
               <Mail className="w-4 h-4" />
             </Button>
+            {followUps(d.doc_type).length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="icon" variant="ghost" title="Folgebeleg erstellen"><GitBranch className="w-4 h-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {followUps(d.doc_type).map((t) => (
+                    <DropdownMenuItem key={t} onClick={() => convertDoc(d, t)}>
+                      {CMR_DOC_TYPES.find((x) => x.value === t)?.label ?? t} erstellen
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
         ))}

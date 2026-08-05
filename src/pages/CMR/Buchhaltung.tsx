@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Banknote, Plus } from 'lucide-react';
+import { Loader2, Banknote, Plus, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney } from '@/hooks/useCmrTenant';
 
@@ -21,7 +21,7 @@ export default function CmrBuchhaltung() {
   const [invoices, setInvoices] = useState<Doc[]>([]);
   const [payments, setPayments] = useState<Pay[]>([]);
   const [busy, setBusy] = useState(true);
-  const [tab, setTab] = useState<'offen' | 'alle' | 'zahlungen'>('offen');
+  const [tab, setTab] = useState<'offen' | 'alle' | 'zahlungen' | 'ust'>('offen');
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<any>(null);
   const [saving, setSaving] = useState(false);
@@ -49,6 +49,54 @@ export default function CmrBuchhaltung() {
     paid: invoices.reduce((s, i) => s + Number(i.paid_total || 0), 0),
     open: open_.reduce((s, i) => s + (Number(i.gross_total) - Number(i.paid_total)), 0),
   }), [invoices, open_]);
+
+  /** Umsatzsteuer-Auswertung je Monat (nur CMR-Belege). */
+  const ustRows = useMemo(() => {
+    const map = new Map<string, { net: number; tax: number; gross: number }>();
+    invoices.forEach((i) => {
+      const key = String(i.doc_date).slice(0, 7);
+      const sign = (i as any).doc_type === 'gutschrift' ? -1 : 1;
+      const e = map.get(key) ?? { net: 0, tax: 0, gross: 0 };
+      const gross = Number(i.gross_total || 0);
+      const net = Number((i as any).net_total ?? 0);
+      e.gross += sign * gross;
+      e.net += sign * net;
+      e.tax += sign * Number((i as any).tax_total ?? gross - net);
+      map.set(key, e);
+    });
+    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([month, v]) => ({ month, ...v }));
+  }, [invoices]);
+
+  const exportCsv = () => {
+    const sep = ';';
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    let name = 'CMR_Export.csv';
+    let csv = '';
+    if (tab === 'zahlungen') {
+      name = 'CMR_Zahlungen.csv';
+      csv = ['Datum', 'Beleg', 'Betrag', 'Zahlungsart', 'Referenz'].join(sep) + '\n';
+      csv += payments.map((p) => [
+        p.paid_on, invoices.find((i) => i.id === p.document_id)?.doc_number ?? '', Number(p.amount).toFixed(2), p.method ?? '', p.reference ?? '',
+      ].map(esc).join(sep)).join('\n');
+    } else if (tab === 'ust') {
+      name = 'CMR_Umsatzsteuer.csv';
+      csv = ['Monat', 'Netto', 'MwSt.', 'Brutto'].join(sep) + '\n';
+      csv += ustRows.map((r) => [r.month, r.net.toFixed(2), r.tax.toFixed(2), r.gross.toFixed(2)].map(esc).join(sep)).join('\n');
+    } else {
+      name = tab === 'offen' ? 'CMR_Offene_Posten.csv' : 'CMR_Rechnungen.csv';
+      csv = ['Nummer', 'Kunde', 'Datum', 'Faellig', 'Status', 'Brutto', 'Bezahlt', 'Offen', 'Waehrung'].join(sep) + '\n';
+      csv += (tab === 'offen' ? open_ : invoices).map((d) => [
+        d.doc_number ?? '', d.customer_name ?? '', d.doc_date, d.due_date ?? '', d.status,
+        Number(d.gross_total).toFixed(2), Number(d.paid_total).toFixed(2),
+        (Number(d.gross_total) - Number(d.paid_total)).toFixed(2), d.currency || cur,
+      ].map(esc).join(sep)).join('\n');
+    }
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const startPayment = (d: Doc) => {
     setForm({
@@ -96,14 +144,32 @@ export default function CmrBuchhaltung() {
       </div>
 
       <div className="flex gap-2">
-        {(['offen', 'alle', 'zahlungen'] as const).map((t) => (
+        {(['offen', 'alle', 'zahlungen', 'ust'] as const).map((t) => (
           <Button key={t} size="sm" variant={tab === t ? 'default' : 'outline'} onClick={() => setTab(t)}>
-            {t === 'offen' ? 'Offene Posten' : t === 'alle' ? 'Alle Rechnungen' : 'Zahlungseingänge'}
+            {t === 'offen' ? 'Offene Posten' : t === 'alle' ? 'Alle Rechnungen' : t === 'zahlungen' ? 'Zahlungseingänge' : 'Umsatzsteuer'}
           </Button>
         ))}
+        <Button size="sm" variant="outline" className="ml-auto" onClick={exportCsv}>
+          <Download className="w-3.5 h-3.5 mr-1" /> CSV Export
+        </Button>
       </div>
 
-      {tab !== 'zahlungen' ? (
+      {tab === 'ust' ? (
+        <Card className="divide-y">
+          <div className="p-3 grid grid-cols-4 text-[11px] uppercase tracking-wide text-muted-foreground">
+            <div>Monat</div><div className="text-right">Netto</div><div className="text-right">MwSt.</div><div className="text-right">Brutto</div>
+          </div>
+          {ustRows.length === 0 && <div className="p-8 text-center text-sm text-muted-foreground">Keine Belege im Zeitraum.</div>}
+          {ustRows.map((r) => (
+            <div key={r.month} className="p-3 grid grid-cols-4 text-sm">
+              <div>{r.month}</div>
+              <div className="text-right">{cmrMoney(r.net, cur)}</div>
+              <div className="text-right">{cmrMoney(r.tax, cur)}</div>
+              <div className="text-right font-semibold">{cmrMoney(r.gross, cur)}</div>
+            </div>
+          ))}
+        </Card>
+      ) : tab !== 'zahlungen' ? (
         <Card className="divide-y">
           {list.length === 0 && (
             <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">

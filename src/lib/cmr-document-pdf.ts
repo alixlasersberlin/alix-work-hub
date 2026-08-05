@@ -41,8 +41,61 @@ const money = (v: number | null | undefined, c = 'AED') => {
 
 const dt = (v?: string | null) => (v ? new Date(v).toLocaleDateString('de-DE') : '—');
 
+export interface CmrPdfTemplate {
+  accent_color?: string | null;
+  font_family?: string | null;
+  header_html?: string | null;
+  body_html?: string | null;
+  footer_html?: string | null;
+  logo_url?: string | null;
+  watermark_url?: string | null;
+  show_qr?: boolean | null;
+}
+
+export interface CmrPdfOptions {
+  tpl?: CmrPdfTemplate | null;
+  logoDataUrl?: string | null;
+  watermarkDataUrl?: string | null;
+  qrDataUrl?: string | null;
+}
+
+const stripHtml = (v?: string | null) =>
+  String(v ?? '').replace(/<br\s*\/?>(\s*)/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+
+const hexToRgb = (hex?: string | null): [number, number, number] => {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex ?? ''));
+  if (!m) return [24, 24, 27];
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+
+/** Lädt ein Bild als DataURL (für Logo/Wasserzeichen aus den PDF-Vorlagen). */
+export async function cmrFetchImage(url?: string | null): Promise<string | null> {
+  if (!url) return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string | null>((resolve) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result));
+      fr.onerror = () => resolve(null);
+      fr.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 /** Erzeugt das PDF eines CMR-Belegs. Nur für den Mandanten CMR – kein Einfluss auf Alix-Lasers-Belege. */
-export function generateCmrDocumentPdf(doc_: CmrPdfDoc, lines: CmrPdfLine[], s: CmrSettings | null) {
+export function generateCmrDocumentPdf(
+  doc_: CmrPdfDoc,
+  lines: CmrPdfLine[],
+  s: CmrSettings | null,
+  opts: CmrPdfOptions = {},
+) {
+  const tpl = opts.tpl ?? null;
+  const accent = hexToRgb(tpl?.accent_color || (s as any)?.color_primary);
   const pdf = createPDF({ unit: 'mm', format: 'a4' });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
@@ -51,10 +104,28 @@ export function generateCmrDocumentPdf(doc_: CmrPdfDoc, lines: CmrPdfLine[], s: 
   const label = CMR_DOC_TYPES.find((t) => t.value === doc_.doc_type)?.label ?? doc_.doc_type;
   let y = 20;
 
+  // Wasserzeichen (aus PDF-Vorlage)
+  if (opts.watermarkDataUrl) {
+    try {
+      const gs = (pdf as any).GState ? (pdf as any).GState({ opacity: 0.08 }) : null;
+      if (gs) (pdf as any).setGState(gs);
+      pdf.addImage(opts.watermarkDataUrl, 'PNG', pageW / 2 - 50, pageH / 2 - 50, 100, 100);
+      if (gs) (pdf as any).setGState((pdf as any).GState({ opacity: 1 }));
+    } catch { /* Wasserzeichen optional */ }
+  }
+
+  // Logo (aus PDF-Vorlage)
+  if (opts.logoDataUrl) {
+    try {
+      pdf.addImage(opts.logoDataUrl, 'PNG', mX, y - 8, 34, 14, undefined, 'FAST');
+      y += 12;
+    } catch { /* Logo optional */ }
+  }
+
   // Kopf
   pdf.setFont('Inter', 'bold');
   pdf.setFontSize(16);
-  pdf.setTextColor(15);
+  pdf.setTextColor(accent[0], accent[1], accent[2]);
   pdf.text(s?.company_name || 'Cloud Marketing Research', mX, y);
 
   pdf.setFont('Inter', 'normal');
@@ -69,6 +140,17 @@ export function generateCmrDocumentPdf(doc_: CmrPdfDoc, lines: CmrPdfLine[], s: 
   pdf.setDrawColor(220);
   pdf.line(mX, y, pageW - mX, y);
   y += 10;
+
+  // Kopftext aus PDF-Vorlage
+  const headerText = stripHtml(tpl?.header_html);
+  if (headerText) {
+    pdf.setFont('Inter', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(110);
+    const wrapped = pdf.splitTextToSize(headerText, pageW - 2 * mX);
+    pdf.text(wrapped, mX, y);
+    y += wrapped.length * 4.2 + 4;
+  }
 
   // Empfänger
   pdf.setFont('Inter', 'bold');
@@ -85,7 +167,9 @@ export function generateCmrDocumentPdf(doc_: CmrPdfDoc, lines: CmrPdfLine[], s: 
   pdf.setFont('Inter', 'bold');
   pdf.setFontSize(15);
   pdf.setTextColor(15);
+  pdf.setTextColor(accent[0], accent[1], accent[2]);
   pdf.text(label, pageW - mX, hy, { align: 'right' });
+  pdf.setTextColor(15);
   pdf.setFont('Inter', 'normal');
   pdf.setFontSize(9);
   pdf.setTextColor(90);
@@ -111,7 +195,7 @@ export function generateCmrDocumentPdf(doc_: CmrPdfDoc, lines: CmrPdfLine[], s: 
       money(l.line_total, cur),
     ]),
     styles: { font: 'Inter', fontSize: 9, cellPadding: 2, textColor: 40 },
-    headStyles: { font: 'Inter', fontStyle: 'bold', fillColor: [24, 24, 27], textColor: 255 },
+    headStyles: { font: 'Inter', fontStyle: 'bold', fillColor: accent, textColor: 255 },
     columnStyles: {
       0: { cellWidth: 10 },
       2: { halign: 'right', cellWidth: 16 },
@@ -147,7 +231,7 @@ export function generateCmrDocumentPdf(doc_: CmrPdfDoc, lines: CmrPdfLine[], s: 
   pdf.setFont('Inter', 'normal');
   pdf.setFontSize(9);
   pdf.setTextColor(90);
-  const notes = [doc_.notes, s?.payment_terms, s?.tax_note].filter(Boolean) as string[];
+  const notes = [doc_.notes, stripHtml(tpl?.body_html) || null, s?.payment_terms, s?.tax_note].filter(Boolean) as string[];
   notes.forEach((n) => {
     const wrapped = pdf.splitTextToSize(String(n), pageW - 2 * mX);
     pdf.text(wrapped, mX, y);
@@ -155,6 +239,20 @@ export function generateCmrDocumentPdf(doc_: CmrPdfDoc, lines: CmrPdfLine[], s: 
   });
 
   // Fußzeile
+  // QR-Code aus PDF-Vorlage
+  if (opts.qrDataUrl) {
+    try { pdf.addImage(opts.qrDataUrl, 'PNG', pageW - mX - 24, pageH - 44, 24, 24); } catch { /* optional */ }
+  }
+
+  const tplFooter = stripHtml(tpl?.footer_html);
+  if (tplFooter) {
+    pdf.setFont('Inter', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor(120);
+    const wrapped = pdf.splitTextToSize(tplFooter, pageW - 2 * mX);
+    pdf.text(wrapped, pageW / 2, pageH - 18 - wrapped.length * 3.5, { align: 'center' });
+  }
+
   const footer = [
     s?.bank_name ? `Bank: ${s.bank_name}` : null,
     s?.bank_iban ? `IBAN: ${s.bank_iban}` : null,

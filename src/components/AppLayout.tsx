@@ -33,7 +33,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useFavorites, type FavoriteEntry } from '@/hooks/useFavorites';
 import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
-import { Briefcase, Bell, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2, Zap, Quote } from 'lucide-react';
+import { Briefcase, Bell, BellRing, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2, Zap, Quote } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 
@@ -661,7 +661,10 @@ export const navItems: NavItem[] = [
           { path: '/cmr/dokumente', label: 'Belege & Vorgänge', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
           { path: '/cmr/kunden', label: 'Kunden CMR', icon: Users, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
           { path: '/cmr/artikel', label: 'Artikelstamm', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
+          { path: '/cmr/projekte', label: 'Projekte CMR', icon: Briefcase, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
+          { path: '/cmr/abos', label: 'Abrechnungen', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
           { path: '/cmr/buchhaltung', label: 'Buchhaltung CMR', icon: Wallet, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
+          { path: '/cmr/mahnwesen', label: 'Mahnwesen CMR', icon: BellRing, roles: ['Super Admin', 'Admin', 'Geschäftsführung'] },
           { path: '/cmr/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin'] },
         ],
       },
