@@ -128,15 +128,16 @@ export default function GlobalSearch() {
 
       tasks.push((async () => {
         const { data } = await supabase.from('alixdocs2_documents' as any)
-          .select('id, title, file_name')
-          .or(`title.ilike.${like},file_name.ilike.${like}`).limit(6);
+          .select('id, title')
+          .ilike('title', like).is('deleted_at', null).limit(6);
         ((data as any[]) || []).forEach((d: any) => out.push({
           id: `doc2-${d.id}`, group: 'Dokumente', icon: FileText,
-          title: d.title || d.file_name || 'Dokument',
+          title: d.title || 'Dokument',
           subtitle: 'AlixDocs',
           to: `/alixdocs2/dokument/${d.id}`,
         }));
       })());
+
 
     }
 
