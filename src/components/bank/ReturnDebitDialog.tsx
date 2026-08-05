@@ -8,12 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, CheckCircle2, Search, Loader2, Undo2, Split, PauseCircle, Copy, Banknote,
+  AlertTriangle, CheckCircle2, Search, Loader2, Undo2, Split, PauseCircle, Copy, Banknote, Mail,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ensureReturnDebit, findOriginalPayments, confirmReturnDebit, cancelReturnDebit,
-  updateReturnDebit, loadReturnRules, getAllocationsOfReturnDebit, RD_STATUS, RETURN_CODES,
+  updateReturnDebit, loadReturnRules, getAllocationsOfReturnDebit, sendReturnDebitDunning,
+  RD_STATUS, RETURN_CODES,
   type PaymentCandidate, type ReturnRules,
 } from '@/lib/bank/returnDebit';
 
