@@ -38,21 +38,42 @@ async function resolveCustomer(rd: any, customerId: string | null, tx?: any) {
     email = (c as any)?.email ?? null;
     externalId = (c as any)?.external_customer_id ?? null;
   }
+  const pickEmail = (raw: any): string | null => {
+    if (!raw) return null;
+    if (typeof raw.email === 'string' && raw.email.includes('@')) return raw.email;
+    const cp = raw.contact_persons_details ?? raw.contact_persons;
+    if (Array.isArray(cp)) {
+      const hit = cp.find((p: any) => typeof p?.email === 'string' && p.email.includes('@'));
+      if (hit) return hit.email as string;
+    }
+    if (typeof raw.customer_email === 'string' && raw.customer_email.includes('@')) return raw.customer_email;
+    return null;
+  };
+
   if (!email && rd.invoice_id) {
+    // 1) normale Rechnung
     const { data: inv } = await supabase
       .from('zoho_invoices')
       .select('customer_id, customer_name, raw_data')
       .eq('id', rd.invoice_id)
       .maybeSingle();
-    if (inv) {
-      name = name || ((inv as any).customer_name ?? null);
-      const raw = (inv as any).raw_data;
-      if (typeof raw?.email === 'string') email = raw.email;
-      if (!email && (inv as any).customer_id) {
+    // 2) Fallback: wiederkehrende Rechnung (Ratenzahler)
+    const { data: rec } = inv
+      ? { data: null as any }
+      : await supabase
+          .from('zoho_recurring_invoices')
+          .select('customer_id, customer_name, raw_data')
+          .eq('id', rd.invoice_id)
+          .maybeSingle();
+    const src: any = inv ?? rec;
+    if (src) {
+      name = name || (src.customer_name ?? null);
+      email = email || pickEmail(src.raw_data);
+      if (!email && src.customer_id) {
         const { data: c2 } = await supabase
           .from('customers')
           .select('company_name, contact_name, email, external_customer_id')
-          .eq('external_customer_id', String((inv as any).customer_id))
+          .eq('external_customer_id', String(src.customer_id))
           .maybeSingle();
         name = name || (c2 as any)?.company_name || (c2 as any)?.contact_name || null;
         email = (c2 as any)?.email ?? null;
@@ -60,6 +81,21 @@ async function resolveCustomer(rd: any, customerId: string | null, tx?: any) {
       }
     }
   }
+  // 3) Letzter Fallback: Kunde über Namen suchen
+  if (!email && name) {
+    const { data: c3 } = await supabase
+      .from('customers')
+      .select('email, external_customer_id')
+      .ilike('company_name', name)
+      .not('email', 'is', null)
+      .limit(1);
+    if (c3?.[0]) {
+      email = (c3[0] as any).email ?? null;
+      externalId = externalId || ((c3[0] as any).external_customer_id ?? null);
+    }
+  }
+  if (!name) name = tx?.sender_receiver_name ?? null;
+  return { name, email, externalId };
   if (!name) name = tx?.sender_receiver_name ?? null;
   return { name, email, externalId };
 }
