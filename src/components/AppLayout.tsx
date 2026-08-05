@@ -2153,7 +2153,10 @@ export default function AppLayout() {
             </Link>
             <TicketNotificationBell />
 
+            <GlobalSearch />
+
             <TenantSwitcher />
+
 
             <KontaktMenu roles={roles} />
             <AiDiensteMenu roles={roles} />
