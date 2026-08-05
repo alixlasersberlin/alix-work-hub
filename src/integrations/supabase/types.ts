@@ -10475,11 +10475,14 @@ export type Database = {
           gross_total: number
           id: string
           internal_notes: string | null
+          last_reminded_at: string | null
           net_total: number
           notes: string | null
           paid_total: number
           parent_document_id: string | null
+          project_id: string | null
           reference: string | null
+          reminder_level: number
           sent_at: string | null
           shipping_address: string | null
           status: string
@@ -10503,11 +10506,14 @@ export type Database = {
           gross_total?: number
           id?: string
           internal_notes?: string | null
+          last_reminded_at?: string | null
           net_total?: number
           notes?: string | null
           paid_total?: number
           parent_document_id?: string | null
+          project_id?: string | null
           reference?: string | null
+          reminder_level?: number
           sent_at?: string | null
           shipping_address?: string | null
           status?: string
@@ -10531,11 +10537,14 @@ export type Database = {
           gross_total?: number
           id?: string
           internal_notes?: string | null
+          last_reminded_at?: string | null
           net_total?: number
           notes?: string | null
           paid_total?: number
           parent_document_id?: string | null
+          project_id?: string | null
           reference?: string | null
+          reminder_level?: number
           sent_at?: string | null
           shipping_address?: string | null
           status?: string
@@ -10564,6 +10573,13 @@ export type Database = {
             columns: ["parent_document_id"]
             isOneToOne: false
             referencedRelation: "cmr_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cmr_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "cmr_projects"
             referencedColumns: ["id"]
           },
           {
@@ -10914,6 +10930,126 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cmr_projects: {
+        Row: {
+          budget: number
+          code: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          customer_name: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          start_date: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: number
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: number
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          start_date?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cmr_recurring_plans: {
+        Row: {
+          billing_address: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          interval_unit: string
+          is_active: boolean
+          last_run_at: string | null
+          lines: Json
+          name: string
+          next_run_date: string
+          notes: string | null
+          tax_rate: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          billing_address?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          interval_unit?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          lines?: Json
+          name: string
+          next_run_date?: string
+          notes?: string | null
+          tax_rate?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          billing_address?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          interval_unit?: string
+          is_active?: boolean
+          last_run_at?: string | null
+          lines?: Json
+          name?: string
+          next_run_date?: string
+          notes?: string | null
+          tax_rate?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       cmr_settings: {
         Row: {
