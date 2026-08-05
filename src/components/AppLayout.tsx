@@ -2031,6 +2031,27 @@ export default function AppLayout() {
             <Button
               variant="ghost"
               size="icon"
+              className={cn(
+                "h-8 w-8 hidden md:inline-flex flex-shrink-0",
+                sidebarAutoCollapse ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => {
+                const next = !sidebarAutoCollapse;
+                setSidebarAutoCollapse(next);
+                setHoverExpand(false);
+                if (!next) setSidebarCollapsed(false);
+              }}
+              title={sidebarAutoCollapse
+                ? "Auto-Einklappen aus (Menü bleibt offen)"
+                : "Auto-Einklappen an (öffnet bei Mauskontakt)"}
+              aria-label="Automatisches Ein- und Ausklappen umschalten"
+              aria-pressed={sidebarAutoCollapse}
+            >
+              {sidebarAutoCollapse ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-foreground flex-shrink-0"
               onClick={() => navigate('/bug-capa')}
               title="Bugs"
