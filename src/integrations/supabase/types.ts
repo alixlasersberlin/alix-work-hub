@@ -35011,6 +35011,166 @@ export type Database = {
           },
         ]
       }
+      sys_health_approvals: {
+        Row: {
+          action_type: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          description: string | null
+          finding_id: string | null
+          id: string
+          note: string | null
+          risk: string
+          sql_preview: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          description?: string | null
+          finding_id?: string | null
+          id?: string
+          note?: string | null
+          risk?: string
+          sql_preview?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          description?: string | null
+          finding_id?: string | null
+          id?: string
+          note?: string | null
+          risk?: string
+          sql_preview?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sys_health_approvals_finding_id_fkey"
+            columns: ["finding_id"]
+            isOneToOne: false
+            referencedRelation: "sys_health_findings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sys_health_findings: {
+        Row: {
+          auto_fixed: boolean
+          category: string
+          created_at: string
+          detail: string | null
+          id: string
+          metric: number | null
+          needs_approval: boolean
+          recommendation: string | null
+          run_id: string
+          severity: string
+          status: string
+          target: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          auto_fixed?: boolean
+          category: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          metric?: number | null
+          needs_approval?: boolean
+          recommendation?: string | null
+          run_id: string
+          severity?: string
+          status?: string
+          target?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          auto_fixed?: boolean
+          category?: string
+          created_at?: string
+          detail?: string | null
+          id?: string
+          metric?: number | null
+          needs_approval?: boolean
+          recommendation?: string | null
+          run_id?: string
+          severity?: string
+          status?: string
+          target?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sys_health_findings_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "sys_health_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sys_health_runs: {
+        Row: {
+          auto_actions: Json
+          breakdown: Json
+          created_at: string
+          finished_at: string | null
+          id: string
+          metrics: Json
+          score: number
+          started_at: string
+          status: string
+          summary: string | null
+          trigger: string
+          updated_at: string
+        }
+        Insert: {
+          auto_actions?: Json
+          breakdown?: Json
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          metrics?: Json
+          score?: number
+          started_at?: string
+          status?: string
+          summary?: string | null
+          trigger?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_actions?: Json
+          breakdown?: Json
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          metrics?: Json
+          score?: number
+          started_at?: string
+          status?: string
+          summary?: string | null
+          trigger?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_maintenance: {
         Row: {
           enabled: boolean
@@ -39336,6 +39496,17 @@ export type Database = {
       }
       sv_can_read: { Args: never; Returns: boolean }
       sv_can_write: { Args: never; Returns: boolean }
+      sys_cron_recent_failures: {
+        Args: never
+        Returns: {
+          end_time: string
+          jobname: string
+          return_message: string
+          status: string
+        }[]
+      }
+      sys_health_autofix: { Args: never; Returns: Json }
+      sys_health_metrics: { Args: never; Returns: Json }
       tenant_id_for_source: { Args: { _source: string }; Returns: string }
       ticket_auto_close_stale: { Args: never; Returns: Json }
       ticket_merge: {
