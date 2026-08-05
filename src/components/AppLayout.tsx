@@ -695,6 +695,27 @@ export const navItems: NavItem[] = [
         ],
       },
 
+      // Alix License – Lizenzgesellschaft (Systemmandant)
+      {
+        path: '#license', label: 'Lizenzmanagement', icon: BadgeCheck, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'],
+        children: [
+          { path: '/license', label: 'Alix License Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/marken', label: 'Marken', icon: Star, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/lizenznehmer', label: 'Lizenznehmer', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/vertraege', label: 'Lizenzverträge', icon: FileSignature, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/saetze', label: 'Royalty-Sätze', icon: Hash, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/produkte', label: 'Produktlizenzen', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/royalties', label: 'Lizenzabrechnung', icon: Receipt, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/rechnungen', label: 'Lizenzrechnungen', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/intercompany', label: 'Intercompany-Rechnungen', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/auswertungen', label: 'Auswertungen', icon: LineChart, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/laufzeiten', label: 'Vertragslaufzeiten', icon: CalendarClock, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin', 'Admin', 'License Manager'] },
+        ],
+      },
+
+
+
       // Alix Medical – eigener Mandant (MDR / CE / ISO 13485)
       {
         path: '#med', label: 'Alix Medical', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'],
