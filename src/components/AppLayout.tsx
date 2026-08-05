@@ -485,18 +485,6 @@ export const navItems: NavItem[] = [
           { path: '/finance/belege', label: 'Belegarchiv', icon: Files, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/p2p', label: 'Procure-to-Pay', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/bank', label: 'Bankimport', icon: Banknote, roles: ['Admin', 'Super Admin'] },
-          {
-            path: '/finance/kontoauszuege', label: 'Bank & Kontoauszüge', icon: Landmark, roles: ['Admin', 'Super Admin'],
-            children: [
-              { path: '/finance/kontoauszuege/import', label: 'Kontoauszüge importieren', icon: Landmark, roles: ['Admin', 'Super Admin'] },
-              { path: '/finance/kontoauszuege/buchungen', label: 'Importierte Buchungen', icon: Landmark, roles: ['Admin', 'Super Admin'] },
-              { path: '/finance/kontoauszuege/offen', label: 'Offene Zuordnungen', icon: Landmark, roles: ['Admin', 'Super Admin'] },
-              { path: '/finance/kontoauszuege/verbucht', label: 'Bereits verbuchte Zahlungen', icon: Landmark, roles: ['Admin', 'Super Admin'] },
-              { path: '/finance/kontoauszuege/historie', label: 'Importhistorie', icon: Landmark, roles: ['Admin', 'Super Admin'] },
-              { path: '/finance/kontoauszuege/konten', label: 'Bankkonten', icon: Landmark, roles: ['Admin', 'Super Admin'] },
-              { path: '/finance/kontoauszuege/regeln', label: 'Importregeln', icon: Landmark, roles: ['Admin', 'Super Admin'] },
-            ],
-          },
           { path: '/finance/sepa', label: 'SEPA Lastschriften', icon: Banknote, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/qr-rechnung', label: 'QR-Rechnung 🇨🇭', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung CH'] },
           { path: '/finance/ch-lastschriften', label: 'CH Lastschriften (LSV+/BDD) 🇨🇭', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung CH'] },
