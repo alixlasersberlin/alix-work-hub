@@ -279,6 +279,8 @@ export default function CmrBuchhaltung() {
     setForm({
       document_id: d.id, customer_id: d.customer_id, label: `${d.doc_number} · ${d.customer_name ?? ''}`,
       amount: Math.max(0, Number(d.gross_total) - Number(d.paid_total)),
+      discount_amount: 0,
+      openAmount: Math.max(0, Number(d.gross_total) - Number(d.paid_total)),
       paid_on: new Date().toISOString().slice(0, 10), method: 'Überweisung', reference: '',
     });
     setOpen(true);
@@ -293,6 +295,7 @@ export default function CmrBuchhaltung() {
       customer_id: form.customer_id,
       paid_on: form.paid_on,
       amount: Number(form.amount) || 0,
+      discount_amount: Number(form.discount_amount) || 0,
       currency: cur,
       method: form.method || null,
       reference: form.reference || null,
@@ -303,6 +306,7 @@ export default function CmrBuchhaltung() {
     setOpen(false);
     load();
   };
+
 
   if (loading || busy) {
     return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
