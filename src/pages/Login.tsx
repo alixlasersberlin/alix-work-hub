@@ -75,7 +75,7 @@ export default function Login() {
     try { document.body.style.removeProperty('pointer-events'); } catch { /* ignore */ }
     const postLoginTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
       ? '/esc/kalender'
-      : '/dashboard';
+      : '/willkommen';
     // Weiche Navigation via React Router — kein voller Reload, damit das
     // Design nicht während des Neuparsens „einfriert".
     setLoading(false);
