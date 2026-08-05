@@ -53,6 +53,19 @@ Deno.serve(async (req) => {
 
     const { data: settings } = await sb.from("cmr_settings").select("*").eq("tenant_id", doc.tenant_id).maybeSingle();
 
+    // Versandprotokoll je Beleg
+    const logSend = async (status: string, provider: string, subj: string, err?: string) => {
+      await sb.from("cmr_email_log").insert({
+        tenant_id: doc.tenant_id,
+        document_id: doc.id,
+        recipients: to.join(", "),
+        subject: subj,
+        provider,
+        status,
+        error: err ?? null,
+      });
+    };
+
     const subject = subjectIn?.trim() || `${doc.doc_type} ${doc.doc_number ?? ""} – ${settings?.company_name ?? "CMR"}`.trim();
     const messageText = messageIn?.trim() || `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie unser Dokument ${doc.doc_number ?? ""}.\n\nMit freundlichen Grüßen`;
 
