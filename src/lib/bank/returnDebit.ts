@@ -433,8 +433,8 @@ export async function confirmReturnDebit(input: ConfirmInput) {
   const sum = input.allocations.reduce((s, a) => s + Number(a.allocated_amount || 0), 0);
   const total = Math.abs(Number(rd.return_debit_amount ?? tx.amount ?? 0));
   if (!input.allocations.length) throw new Error('Bitte mindestens eine Rechnung oder Rate zuordnen.');
-  if (Math.abs(sum - total) > 0.01) {
-    throw new Error(`Die Aufteilung (${sum.toFixed(2)}) muss exakt dem Rücklastschriftbetrag (${total.toFixed(2)}) entsprechen.`);
+  if (Math.abs(sum - total) > amountTolerance(total)) {
+    throw new Error(`Die Aufteilung (${sum.toFixed(2)}) weicht zu stark vom Rücklastschriftbetrag (${total.toFixed(2)}) ab. Abweichungen durch Bankgebühren sind bis ${amountTolerance(total).toFixed(2)} zulässig.`);
   }
 
   const { data: u } = await supabase.auth.getUser();
