@@ -37,7 +37,7 @@ function lineTotal(l: Line) {
 }
 
 export default function CmrDokumente() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [busy, setBusy] = useState(true);
   const [typeFilter, setTypeFilter] = useState('');

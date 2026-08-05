@@ -27,7 +27,7 @@ const INTERVALS = [
 ];
 
 export default function CmrAbos() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [rows, setRows] = useState<Plan[]>([]);
   const [busy, setBusy] = useState(true);
   const [open, setOpen] = useState(false);

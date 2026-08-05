@@ -26,7 +26,7 @@ const EMPTY = {
 };
 
 export default function CmrArtikel() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [cats, setCats] = useState<Cat[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(true);

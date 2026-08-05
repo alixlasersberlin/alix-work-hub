@@ -26,7 +26,7 @@ const EMPTY = {
 };
 
 export default function CmrProjekte() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [rows, setRows] = useState<Project[]>([]);
   const [busy, setBusy] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');

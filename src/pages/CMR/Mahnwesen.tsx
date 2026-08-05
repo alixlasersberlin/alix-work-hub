@@ -29,7 +29,7 @@ const daysOverdue = (d: Doc) => {
 };
 
 export default function CmrMahnwesen() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [docs, setDocs] = useState<Doc[]>([]);
   const [busy, setBusy] = useState(true);
   const [working, setWorking] = useState<string | null>(null);

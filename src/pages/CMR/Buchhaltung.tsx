@@ -17,7 +17,7 @@ type Doc = {
 type Pay = { id: string; document_id: string | null; paid_on: string; amount: number; method: string | null; reference: string | null };
 
 export default function CmrBuchhaltung() {
-  const { tenantId, settings, loading } = useCmrTenant();
+  const { tenantId, settings, loading, canWrite} = useCmrTenant();
   const [invoices, setInvoices] = useState<Doc[]>([]);
   const [payments, setPayments] = useState<Pay[]>([]);
   const [busy, setBusy] = useState(true);

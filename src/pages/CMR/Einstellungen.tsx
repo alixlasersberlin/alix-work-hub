@@ -54,7 +54,7 @@ const FIELDS: { key: string; label: string; type?: string }[][] = [
 const SECTION_TITLES = ['Unternehmen', 'Anschrift', 'Bankverbindung', 'Belege & Steuer', 'E-Mail-Versand'];
 
 export default function CmrEinstellungen() {
-  const { tenantId, settings, loading, reload } = useCmrTenant();
+  const { tenantId, settings, loading, reload, canWrite} = useCmrTenant();
   const [form, setForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
 
