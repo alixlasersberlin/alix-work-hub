@@ -179,6 +179,7 @@ export function ManualMatchDialog({
                     <td className="p-2 font-medium">
                       {inv.invoice_number}
                       {inv.__src === 'recurring' && <Badge variant="secondary" className="ml-1 text-[9px]">Rate</Badge>}
+                      {inv.__src === 'order' && <Badge variant="outline" className="ml-1 text-[9px]">Auftrag</Badge>}
                     </td>
                     <td className="p-2">{inv.customer_name}</td>
 
