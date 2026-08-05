@@ -94,17 +94,24 @@ Deno.serve(async (req) => {
       const list = txs ?? [];
       if (!list.length) { summary.push({ area, geprueft: 0, vorschlaege: 0, verbucht: 0 }); continue; }
 
-      const { data: invoices } = await sb
-        .from("zoho_invoices")
-        .select("id,invoice_number,reference_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status")
-        .eq("accounting_region", area)
-        .gt("balance", 0)
-        .order("invoice_date", { ascending: false })
-        .limit(3000);
+      const invCols =
+        "id,invoice_number,reference_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status";
+      const [stdRes, recRes] = await Promise.all([
+        sb.from("zoho_invoices").select(invCols).eq("accounting_region", area).gt("balance", 0)
+          .order("invoice_date", { ascending: false }).limit(3000),
+        sb.from("zoho_recurring_invoices").select(invCols).eq("accounting_region", area).gt("balance", 0)
+          .order("invoice_date", { ascending: false }).limit(3000),
+      ]);
 
-      const open = (invoices ?? []).filter(
+      const invoices = [
+        ...((stdRes.data ?? []) as any[]).map((i) => ({ ...i, __table: "zoho_invoices" })),
+        ...((recRes.data ?? []) as any[]).map((i) => ({ ...i, __table: "zoho_recurring_invoices" })),
+      ];
+
+      const open = invoices.filter(
         (i: any) => !["void", "cancelled", "storniert"].includes(String(i.status ?? "").toLowerCase()),
       );
+
 
       const { data: rulesRows } = await sb.from("bank_match_rules").select("*").eq("accounting_area", area).limit(2000);
       const rules = new Map<string, any>();
