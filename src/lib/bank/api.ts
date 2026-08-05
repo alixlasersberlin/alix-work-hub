@@ -211,6 +211,12 @@ export async function bookTransaction(tx: any, allocations: AllocationInput[]) {
   } as any).eq('id', tx.id);
   if (tErr) throw tErr;
 
+  const learnAlloc = allocations.find(a => a.customer_id) ?? null;
+  if (learnAlloc) {
+    const { learnFromBooking } = await import('./rules');
+    await learnFromBooking(tx, learnAlloc);
+  }
+
   await logBank({
     action: 'buchung_verbucht', bank_transaction_id: tx.id,
     old_value: { status: tx.status }, new_value: { status: 'verbucht', allocations },

@@ -13,6 +13,7 @@ import { parseBankFile, applyMapping, guessMapping, duplicateHash, isReturnDebit
 import type { ColumnMapping, ParsedTx, ParseResult } from '@/lib/bank/types';
 import { listBankAccounts, logBank, type BankAccount } from '@/lib/bank/api';
 import { loadOpenInvoices, scoreInvoices, scoreColor } from '@/lib/bank/matching';
+import { loadMatchRules, payerKey } from '@/lib/bank/rules';
 import ColumnMapper from '@/components/bank/ColumnMapper';
 
 const fmt = (n: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
@@ -196,10 +197,13 @@ export default function BankImport() {
       // 4. Automatischer Abgleich gegen offene Rechnungen
       setProgress(70);
       const invoices = await loadOpenInvoices(region);
+      const rules = await loadMatchRules(region);
       let auto = 0, unmatched = 0, autoBooked = 0;
       for (const row of insertedRows) {
         if (row.is_duplicate || row.is_return_debit) { unmatched++; continue; }
-        const cands = scoreInvoices(row, invoices);
+        const key = payerKey(row);
+        const rule = key ? rules.get(key) : undefined;
+        const cands = scoreInvoices(row, invoices, new Set(), rule?.customer_id ?? null);
         const best = cands[0];
         if (!best) { unmatched++; continue; }
         await supabase.from('bank_transaction_matches' as any).insert(
