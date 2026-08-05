@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
     const { data: inv } = await supabase
       .from('zoho_invoices')
-      .select('id, invoice_number, invoice_date, due_date, currency, total, customer_name, raw_data')
+      .select('id, invoice_number, invoice_date, due_date, currency, total, customer_name, payment_status, raw_data')
       .eq('zoho_invoice_id', `rd-fee-${id}`)
       .maybeSingle()
     if (!inv) throw new Error('Gebührenrechnung nicht gefunden')
@@ -93,6 +93,14 @@ Deno.serve(async (req) => {
         status: res.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    await supabase.from('bank_return_debits').update({
+      fee_invoice_id: (inv as any).id,
+      fee_invoice_number: (inv as any).invoice_number,
+      fee_invoice_status: (inv as any).payment_status ?? 'offen',
+      fee_invoice_total: Number((inv as any).total ?? 45),
+      fee_invoice_sent_at: new Date().toISOString(),
+    }).eq('id', id)
 
     return new Response(JSON.stringify({ success: true, recipient, bcc: BCC, invoice: (inv as any).invoice_number }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
