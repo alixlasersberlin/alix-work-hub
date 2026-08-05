@@ -344,7 +344,10 @@ export default function Lagergeraete({
   };
 
   // Global search across devices and available (unreserved) open orders
-  const [searchQuery, setSearchQuery] = useState('');
+  // Vorbelegung über ?q= (z. B. Deep-Link aus der globalen Suche)
+  const [searchQuery, setSearchQuery] = useState(() => {
+    try { return new URLSearchParams(window.location.search).get('q') || ''; } catch { return ''; }
+  });
   const [datePeriod, setDatePeriod] = useState<'this_month' | 'last_month' | 'this_year' | 'all'>('all');
 
   const [sortField, setSortField] = useState<'serial_number' | 'model_name' | 'entry_date' | 'order_number' | 'status' | 'notes'>('serial_number');
