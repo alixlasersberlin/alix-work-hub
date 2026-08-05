@@ -114,6 +114,8 @@ export default function CmrEinstellungen() {
         <div><Label>E-Mail-Signatur</Label><Textarea rows={3} value={form.email_signature ?? ''} onChange={(e) => setForm({ ...form, email_signature: e.target.value })} /></div>
         <div><Label>Beleg-Fußzeile (HTML)</Label><Textarea rows={3} value={form.footer_html ?? ''} onChange={(e) => setForm({ ...form, footer_html: e.target.value })} /></div>
       </Card>
+
+      <CmrEmailTemplates tenantId={tenantId} />
     </div>
   );
 }
