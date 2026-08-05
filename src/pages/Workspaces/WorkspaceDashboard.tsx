@@ -58,9 +58,12 @@ export default function WorkspaceDashboard() {
       const res: Record<string, number | null> = {};
       await Promise.all(kpis.map(async (k) => {
         try {
-          const { count, error } = await supabase
-            .from(k.table as any)
-            .select('id', { count: 'exact', head: true });
+          let q: any = supabase.from(k.table as any).select('id', { count: 'exact', head: true });
+          // Mandantenfilter: Tabellen mit source_system nach aktivem Mandanten einschränken
+          if (sourceFilter && sourceFilter.length > 0 && TENANT_SCOPED.includes(k.table)) {
+            q = q.in('source_system', sourceFilter);
+          }
+          const { count, error } = await q;
           res[k.key] = error ? null : (count ?? 0);
         } catch {
           res[k.key] = null;
@@ -69,7 +72,8 @@ export default function WorkspaceDashboard() {
       if (!cancelled) { setCounts(res); setLoading(false); }
     })();
     return () => { cancelled = true; };
-  }, [ws?.code]);
+  }, [ws?.code, sourceFilter?.join(',')]);
+
 
   if (!ws) {
     return <div className="p-6 text-muted-foreground">Kein Workspace verfügbar.</div>;
