@@ -929,6 +929,9 @@ const CmrDokumente = lazy(() => import("./pages/CMR/Dokumente"));
 const CmrBuchhaltung = lazy(() => import("./pages/CMR/Buchhaltung"));
 const CmrKunden = lazy(() => import("./pages/CMR/Kunden"));
 const CmrEinstellungen = lazy(() => import("./pages/CMR/Einstellungen"));
+const CmrProjekte = lazy(() => import("./pages/CMR/Projekte"));
+const CmrAbos = lazy(() => import("./pages/CMR/Abos"));
+const CmrMahnwesen = lazy(() => import("./pages/CMR/Mahnwesen"));
 import MaintenanceGate from "./components/MaintenanceGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
@@ -1244,6 +1247,9 @@ function AppRoutes() {
           <Route path="/cmr/dokumente" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrDokumente /></ProtectedRoute>} />
           <Route path="/cmr/buchhaltung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrBuchhaltung /></ProtectedRoute>} />
           <Route path="/cmr/kunden" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrKunden /></ProtectedRoute>} />
+          <Route path="/cmr/projekte" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrProjekte /></ProtectedRoute>} />
+          <Route path="/cmr/abos" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrAbos /></ProtectedRoute>} />
+          <Route path="/cmr/mahnwesen" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><CmrMahnwesen /></ProtectedRoute>} />
           <Route path="/cmr/einstellungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><CmrEinstellungen /></ProtectedRoute>} />
           <Route path="/admin/audit" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Geschäftsführung']}><AdminAuditLog /></ProtectedRoute>} />
           <Route path="/admin/geraete" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><GeraeteVerwaltung /></ProtectedRoute>} />

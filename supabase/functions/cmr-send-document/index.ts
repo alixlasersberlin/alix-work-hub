@@ -44,7 +44,6 @@ Deno.serve(async (req) => {
 
     if (!documentId) return Response.json({ error: "documentId fehlt" }, { status: 400, headers: corsHeaders });
     if (!to.length) return Response.json({ error: "Keine gültige Empfängeradresse" }, { status: 400, headers: corsHeaders });
-    if (!RESEND_API_KEY) return Response.json({ error: "RESEND_API_KEY fehlt" }, { status: 500, headers: corsHeaders });
 
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
 
@@ -81,6 +80,47 @@ Deno.serve(async (req) => {
     };
     if (settings?.email_reply_to) payload.reply_to = settings.email_reply_to;
     if (pdfBase64) payload.attachments = [{ filename, content: pdfBase64 }];
+
+    // Eigener SMTP-Server des Mandanten (falls in den CMR-Einstellungen hinterlegt), sonst Resend.
+    if (settings?.smtp_host) {
+      const smtpPass = Deno.env.get("CMR_SMTP_PASSWORD") || "";
+      if (!smtpPass) {
+        return Response.json({ error: "SMTP ist konfiguriert, aber das Secret CMR_SMTP_PASSWORD fehlt." }, { status: 500, headers: corsHeaders });
+      }
+      const { SMTPClient } = await import("https://deno.land/x/denomailer@1.6.0/mod.ts");
+      const client = new SMTPClient({
+        connection: {
+          hostname: settings.smtp_host,
+          port: Number(settings.smtp_port || 587),
+          tls: settings.smtp_secure !== false,
+          auth: { username: settings.smtp_user || fromAddress, password: smtpPass },
+        },
+      });
+      try {
+        await client.send({
+          from: `${fromName} <${fromAddress}>`,
+          to,
+          bcc: ["rde@alix-lasers.com"],
+          replyTo: settings.email_reply_to || undefined,
+          subject,
+          html,
+          attachments: pdfBase64
+            ? [{ filename, encoding: "base64", content: pdfBase64, contentType: "application/pdf" }]
+            : undefined,
+        });
+      } finally {
+        await client.close().catch(() => {});
+      }
+
+      await sb.from("cmr_documents").update({
+        sent_at: new Date().toISOString(),
+        status: doc.status === "entwurf" ? "versendet" : doc.status,
+      }).eq("id", documentId);
+
+      return Response.json({ ok: true, to, subject, transport: "smtp" }, { headers: corsHeaders });
+    }
+
+    if (!RESEND_API_KEY) return Response.json({ error: "RESEND_API_KEY fehlt" }, { status: 500, headers: corsHeaders });
 
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
