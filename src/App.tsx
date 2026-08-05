@@ -1150,7 +1150,7 @@ function AppRoutes() {
         <Route path="/social/showcase/:token" element={<SocialShowcase />} />
         <Route path="/umfrage/:token" element={<SurveyPublic />} />
 
-        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+        <Route element={<ProtectedRoute><ForceWelcomeGate><AppLayout /></ForceWelcomeGate></ProtectedRoute>}>
           <Route path="/start" element={<Startseite />} />
           <Route path="/willkommen" element={<Willkommen />} />
 
