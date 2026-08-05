@@ -421,11 +421,32 @@ export default function ReturnDebitDialog({
                 <div className="space-y-2">
                   {splits.map((s, i) => (
                     <div key={i} className="flex flex-wrap items-end gap-2">
-                      <div className="space-y-1 flex-1 min-w-40">
+                      <div className="space-y-1 flex-1 min-w-40 relative">
                         <Label className="text-xs">Rechnung / Rate</Label>
-                        <Input value={s.invoice_number ?? ''} placeholder="Rechnungsnummer"
-                          onChange={e => setSplits(splits.map((x, j) => j === i ? { ...x, invoice_number: e.target.value } : x))} />
+                        <Input value={s.invoice_number ?? ''} placeholder="Rechnungsnummer oder Kundenname"
+                          onFocus={() => { setSuggIdx(i); setSuggTerm(s.invoice_number ?? ''); }}
+                          onChange={e => {
+                            setSuggIdx(i); setSuggTerm(e.target.value);
+                            setSplits(splits.map((x, j) => j === i ? { ...x, invoice_number: e.target.value, invoice_id: null } : x));
+                          }} />
+                        {suggIdx === i && sugg.length > 0 && (
+                          <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-56 overflow-y-auto rounded-md border border-border bg-popover shadow-lg divide-y divide-border">
+                            {sugg.map(inv => (
+                              <button key={`${inv.__src}-${inv.id}`} type="button" onClick={() => applyInvoice(inv, i)}
+                                className="w-full text-left p-2 hover:bg-muted/40">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-medium text-xs">{inv.invoice_number ?? '–'} · {inv.customer_name ?? '–'}</span>
+                                  <Badge variant="outline">{inv.__src === 'recurring' ? 'Rate' : 'RE'}</Badge>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  {inv.invoice_date ?? '–'} · {fmt(Number(inv.total ?? 0), inv.currency ?? currency)}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
+
                       <div className="space-y-1 w-40">
                         <Label className="text-xs">Betrag</Label>
                         <Input type="number" step="0.01" value={s.allocated_amount}
