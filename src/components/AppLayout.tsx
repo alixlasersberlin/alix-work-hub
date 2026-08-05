@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAtOnly } from '@/hooks/useAtOnly';
 import { supabase } from '@/integrations/supabase/client';
 import {
-  LayoutDashboard, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, ShieldCheck, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, CalendarDays, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star, Lock, Globe, Wrench, Ticket, User, Flame,
+  LayoutDashboard, LayoutGrid, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, ShieldCheck, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, CalendarDays, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star, Lock, Globe, Wrench, Ticket, User, Flame,
   PenSquare, Send, FileEdit, MessageSquare, MessageCircle, Sparkles, FileCheck2, Files, Phone, PhoneCall, CheckSquare, CalendarClock, Megaphone, Activity, MailX, MailCheck, HeartPulse, TestTube2, Rocket, Database, Upload, FileUp, FileDown, BadgeCheck, GraduationCap, Brain, AlertOctagon, LineChart, ListChecks, Cog, Boxes, Repeat, Wallet, Hash, ClipboardCheck, Gift, Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -718,6 +718,7 @@ export const navItems: NavItem[] = [
           { path: '/admin/rollen-freigaben', label: 'Rollen & Freigaben', icon: ShieldCheck, roles: ['Super Admin'] },
           { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
           { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
+          { path: '/workspaces-admin', label: 'Workspaces', icon: LayoutGrid, roles: ['Admin', 'Super Admin'] },
           { path: '/security-center', label: 'Security Center', icon: Shield, roles: ['Super Admin'] },
 
         ],

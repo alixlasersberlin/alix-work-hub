@@ -12,6 +12,7 @@ import { useRadixBodyPointerEventsFix } from "@/hooks/useRadixBodyPointerEventsF
 import { TenantProvider } from "@/contexts/TenantContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspaceDashboard from "@/pages/Workspaces/WorkspaceDashboard";
+import WorkspaceAdmin from "@/pages/Workspaces/WorkspaceAdmin";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
 import { ExperienceModeProvider } from "@/hooks/useExperienceMode";
@@ -1123,6 +1124,8 @@ function AppRoutes() {
           <Route path="/start" element={<Startseite />} />
           <Route path="/dashboard" element={<HomeRoute />} />
           <Route path="/w/:code" element={<WorkspaceDashboard />} />
+          <Route path="/workspaces-admin" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><WorkspaceAdmin /></ProtectedRoute>} />
+
           <Route path="/infinity-showcase" element={<InfinityShowcase />} />
           <Route path="/einstellungen/personalisierung" element={<Personalisierung />} />
           <Route path="/sicherheit" element={<Sicherheit />} />
