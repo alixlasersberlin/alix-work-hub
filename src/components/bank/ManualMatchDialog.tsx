@@ -140,8 +140,12 @@ export function ManualMatchDialog({
                 {!searching && !results.length && <tr><td colSpan={8} className="p-3 text-muted-foreground">Keine Treffer</td></tr>}
                 {results.map(inv => (
                   <tr key={inv.id} className="border-t border-border hover:bg-muted/30">
-                    <td className="p-2 font-medium">{inv.invoice_number}</td>
+                    <td className="p-2 font-medium">
+                      {inv.invoice_number}
+                      {inv.__src === 'recurring' && <Badge variant="secondary" className="ml-1 text-[9px]">Rate</Badge>}
+                    </td>
                     <td className="p-2">{inv.customer_name}</td>
+
                     <td className="p-2">{inv.invoice_date}</td>
                     <td className="p-2">{inv.due_date}</td>
                     <td className="p-2 text-right">{fmt(Number(inv.total), inv.currency || 'EUR')}</td>
