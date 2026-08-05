@@ -228,7 +228,7 @@ export async function createManualReturnDebit(input: ManualReturnDebitInput) {
 /* ------------------------------------------- Suche für manuelle Erfassung */
 
 export async function searchInvoicesForReturn(area: 'EU' | 'CH', term: string) {
-  const s = term.trim().replace(/[%,]/g, ' ');
+  const s = term.trim().replace(/[%,()]/g, " ").trim();
   const cols = 'id,invoice_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status,reference_number';
   const build = (table: 'zoho_invoices' | 'zoho_recurring_invoices') => {
     // Bewusst KEINE Betrags-/Saldo-Einschränkung: Rücklastschriftbeträge enthalten
@@ -247,7 +247,7 @@ export async function searchInvoicesForReturn(area: 'EU' | 'CH', term: string) {
 }
 
 export async function searchCustomersForReturn(term: string) {
-  const s = term.trim().replace(/[%,]/g, ' ');
+  const s = term.trim().replace(/[%,()]/g, " ").trim();
   let q = supabase.from('customers')
     .select('id,company_name,contact_name,email,external_customer_id,city,zip_code')
     .order('company_name', { ascending: true }).limit(25);

@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   ensureReturnDebit, findOriginalPayments, confirmReturnDebit, cancelReturnDebit,
   updateReturnDebit, loadReturnRules, getAllocationsOfReturnDebit, sendReturnDebitDunning,
+  searchInvoicesForReturn,
   RD_STATUS, RETURN_CODES, amountTolerance,
   type PaymentCandidate, type ReturnRules,
 } from '@/lib/bank/returnDebit';
@@ -48,6 +49,13 @@ export default function ReturnDebitDialog({
   const [confirmedAllocs, setConfirmedAllocs] = useState<any[]>([]);
   const [showSearch, setShowSearch] = useState(false);
   const [filter, setFilter] = useState({ customerName: '', invoiceNumber: '', orderNumber: '', iban: '', amount: '', bankReference: '', endToEnd: '', mandate: '', dateFrom: '', dateTo: '' });
+  const [invHits, setInvHits] = useState<any[]>([]);
+  const [invBusy, setInvBusy] = useState(false);
+  const [suggIdx, setSuggIdx] = useState<number | null>(null);
+  const [suggTerm, setSuggTerm] = useState('');
+  const [sugg, setSugg] = useState<any[]>([]);
+
+
 
   const [bankFee, setBankFee] = useState(0);
   const [additionalCosts, setAdditionalCosts] = useState(0);
@@ -123,6 +131,55 @@ export default function ReturnDebitDialog({
   const confidence = picked?.score ?? 0;
   const readOnly = rd && ['bestaetigt', 'storniert', 'erledigt'].includes(rd.status);
 
+  // Live-Vorschläge zu Rechnungen/Ratenzahlern im Suchbereich
+  const invTerm = (filter.invoiceNumber || filter.customerName || filter.orderNumber || '').trim();
+  useEffect(() => {
+    if (!open || readOnly) return;
+    if (invTerm.length < 2) { setInvHits([]); return; }
+    let alive = true;
+    setInvBusy(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await searchInvoicesForReturn(region, invTerm);
+        if (alive) setInvHits(res.slice(0, 20));
+      } catch { /* ignore */ }
+      finally { if (alive) setInvBusy(false); }
+    }, 300);
+    return () => { alive = false; clearTimeout(t); };
+  }, [invTerm, open, region, readOnly]);
+
+  // Live-Vorschläge direkt im Aufteilungsfeld
+  useEffect(() => {
+    if (suggIdx === null || suggTerm.trim().length < 2) { setSugg([]); return; }
+    let alive = true;
+    const t = setTimeout(async () => {
+      try {
+        const res = await searchInvoicesForReturn(region, suggTerm.trim());
+        if (alive) setSugg(res.slice(0, 10));
+      } catch { /* ignore */ }
+    }, 300);
+    return () => { alive = false; clearTimeout(t); };
+  }, [suggTerm, suggIdx, region]);
+
+  function applyInvoice(inv: any, index?: number) {
+    const row: SplitRow = {
+      invoice_id: inv.id ?? null,
+      invoice_number: inv.invoice_number ?? null,
+      order_id: null, installment_id: null, original_payment_allocation_id: null,
+      allocated_amount: Number(amount.toFixed(2)),
+    };
+    if (index === undefined) {
+      setSplits([row]);
+      setShowSearch(false);
+    } else {
+      setSplits(splits.map((x, j) => j === index
+        ? { ...x, invoice_id: inv.id ?? null, invoice_number: inv.invoice_number ?? null }
+        : x));
+    }
+    setSuggIdx(null); setSugg([]); setSuggTerm('');
+    toast.success(`Rechnung ${inv.invoice_number ?? ''} zugeordnet`);
+  }
+
   const runSearch = async () => {
     setBusy(true);
     try {
@@ -139,9 +196,17 @@ export default function ReturnDebitDialog({
         dateTo: filter.dateTo || undefined,
       });
       setCands(list);
-      if (!list.length) toast.warning('Keine passende Zahlung gefunden.');
+      if (!list.length && invTerm) {
+        const res = await searchInvoicesForReturn(region, invTerm);
+        setInvHits(res.slice(0, 20));
+        if (!res.length) toast.warning('Keine passende Zahlung oder Rechnung gefunden.');
+        else toast.info('Keine Zahlung gefunden – Rechnungen als Vorschlag geladen.');
+      } else if (!list.length) {
+        toast.warning('Keine passende Zahlung gefunden.');
+      }
     } catch (e: any) { toast.error(e.message); }
     finally { setBusy(false); }
+
   };
 
   const doConfirm = async () => {
@@ -307,6 +372,33 @@ export default function ReturnDebitDialog({
                       <div className="space-y-1"><Label className="text-xs">bis</Label>
                         <Input type="date" value={filter.dateTo} onChange={e => setFilter({ ...filter, dateTo: e.target.value })} /></div>
                       <div className="flex items-end"><Button size="sm" onClick={runSearch} disabled={busy}>Suchen</Button></div>
+
+                      <div className="sm:col-span-3 space-y-1">
+                        <Label className="text-xs">
+                          Vorschläge Rechnungen / Ratenzahler {invBusy && <Loader2 className="inline w-3 h-3 animate-spin ml-1" />}
+                        </Label>
+                        {invTerm.length < 2 ? (
+                          <p className="text-xs text-muted-foreground">Mindestens 2 Zeichen in Kundenname, Rechnungs- oder Auftragsnummer eingeben.</p>
+                        ) : invHits.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">Keine Rechnung gefunden.</p>
+                        ) : (
+                          <div className="max-h-52 overflow-y-auto rounded-md border border-border divide-y divide-border">
+                            {invHits.map(inv => (
+                              <button key={`${inv.__src}-${inv.id}`} type="button" onClick={() => applyInvoice(inv)}
+                                className="w-full text-left p-2 hover:bg-muted/40">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-medium">{inv.invoice_number ?? '–'} · {inv.customer_name ?? '–'}</span>
+                                  <Badge variant="outline">{inv.__src === 'recurring' ? 'Ratenzahler' : 'Rechnung'}</Badge>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {inv.invoice_date ?? '–'} · {fmt(Number(inv.total ?? 0), inv.currency ?? currency)}
+                                  {inv.balance != null && ` · offen ${fmt(Number(inv.balance), inv.currency ?? currency)}`}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -329,11 +421,32 @@ export default function ReturnDebitDialog({
                 <div className="space-y-2">
                   {splits.map((s, i) => (
                     <div key={i} className="flex flex-wrap items-end gap-2">
-                      <div className="space-y-1 flex-1 min-w-40">
+                      <div className="space-y-1 flex-1 min-w-40 relative">
                         <Label className="text-xs">Rechnung / Rate</Label>
-                        <Input value={s.invoice_number ?? ''} placeholder="Rechnungsnummer"
-                          onChange={e => setSplits(splits.map((x, j) => j === i ? { ...x, invoice_number: e.target.value } : x))} />
+                        <Input value={s.invoice_number ?? ''} placeholder="Rechnungsnummer oder Kundenname"
+                          onFocus={() => { setSuggIdx(i); setSuggTerm(s.invoice_number ?? ''); }}
+                          onChange={e => {
+                            setSuggIdx(i); setSuggTerm(e.target.value);
+                            setSplits(splits.map((x, j) => j === i ? { ...x, invoice_number: e.target.value, invoice_id: null } : x));
+                          }} />
+                        {suggIdx === i && sugg.length > 0 && (
+                          <div className="absolute z-50 top-full left-0 right-0 mt-1 max-h-56 overflow-y-auto rounded-md border border-border bg-popover shadow-lg divide-y divide-border">
+                            {sugg.map(inv => (
+                              <button key={`${inv.__src}-${inv.id}`} type="button" onClick={() => applyInvoice(inv, i)}
+                                className="w-full text-left p-2 hover:bg-muted/40">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-medium text-xs">{inv.invoice_number ?? '–'} · {inv.customer_name ?? '–'}</span>
+                                  <Badge variant="outline">{inv.__src === 'recurring' ? 'Rate' : 'RE'}</Badge>
+                                </div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  {inv.invoice_date ?? '–'} · {fmt(Number(inv.total ?? 0), inv.currency ?? currency)}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
+
                       <div className="space-y-1 w-40">
                         <Label className="text-xs">Betrag</Label>
                         <Input type="number" step="0.01" value={s.allocated_amount}
