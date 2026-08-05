@@ -125,8 +125,9 @@ export default function Login() {
             {!isBypass && (
               <Turnstile
                 theme="dark"
-                onToken={setCaptchaToken}
+                onToken={(t) => { setCaptchaToken(t); setCaptchaUnavailable(false); }}
                 onExpire={() => setCaptchaToken('')}
+                onUnavailable={() => setCaptchaUnavailable(true)}
               />
             )}
 
@@ -134,7 +135,8 @@ export default function Login() {
               <p className="text-sm font-medium text-white bg-destructive rounded-lg p-3">{error}</p>
             )}
 
-            <Button type="submit" disabled={loading || (!isBypass && !captchaToken)} className="w-full gold-gradient font-semibold">
+            <Button type="submit" disabled={loading || (!skipCaptcha && !captchaToken)} className="w-full gold-gradient font-semibold">
+
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Anmelden
             </Button>
