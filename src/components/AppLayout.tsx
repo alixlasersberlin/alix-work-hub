@@ -1964,6 +1964,7 @@ export default function AppLayout() {
               </div>
             );
           })}
+          </div>
         </nav>
 
         {/* User Section */}
