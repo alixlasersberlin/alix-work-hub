@@ -36946,18 +36946,24 @@ export type Database = {
         Row: {
           created_at: string
           menu_scale: number
+          sidebar_auto_collapse: boolean
+          sidebar_collapsed: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           menu_scale?: number
+          sidebar_auto_collapse?: boolean
+          sidebar_collapsed?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           menu_scale?: number
+          sidebar_auto_collapse?: boolean
+          sidebar_collapsed?: boolean
           updated_at?: string
           user_id?: string
         }
