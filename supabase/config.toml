@@ -382,3 +382,6 @@ verify_jwt = false
 
 [functions.survey-testimonials-public]
 verify_jwt = false
+
+[functions.cmr-dunning-run]
+verify_jwt = false
