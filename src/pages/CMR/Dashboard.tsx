@@ -111,6 +111,54 @@ export default function CmrDashboard() {
           </div>
         )}
       </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm font-medium">Überfällige Rechnungen</div>
+            <Link to="/cmr/mahnwesen" className="text-xs text-primary hover:underline">Mahnwesen</Link>
+          </div>
+          {overdue.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Keine überfälligen Rechnungen.</div>
+          ) : (
+            <div className="space-y-2">
+              {overdue.map((d) => {
+                const open = Number(d.gross_total || 0) - Number(d.paid_total || 0);
+                const days = Math.floor((Date.now() - new Date(d.due_date).getTime()) / 86400000);
+                return (
+                  <div key={d.id} className="flex items-center justify-between gap-3 text-sm border-b border-border/50 pb-2 last:border-0">
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">{d.doc_number} · {d.customer_name || '–'}</div>
+                      <div className="text-[11px] text-muted-foreground">fällig {d.due_date}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Badge variant="destructive" className="text-[10px]">{days} T</Badge>
+                      <span className="tabular-nums">{cmrMoney(open, d.currency || cur)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-4">
+          <div className="text-sm font-medium mb-3">Top-Kunden (laufendes Jahr)</div>
+          {topCustomers.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Noch keine Umsätze erfasst.</div>
+          ) : (
+            <div className="space-y-2">
+              {topCustomers.map((c) => (
+                <div key={c.name} className="flex items-center justify-between gap-3 text-sm border-b border-border/50 pb-2 last:border-0">
+                  <span className="truncate">{c.name}</span>
+                  <span className="tabular-nums font-medium">{cmrMoney(c.amount, cur)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
     </div>
   );
 }
