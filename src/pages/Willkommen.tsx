@@ -1,0 +1,167 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useTenant } from '@/contexts/TenantContext';
+import { useWorkspace, type Workspace } from '@/contexts/WorkspaceContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Lock, ArrowRight, Building2, LayoutGrid } from 'lucide-react';
+
+/**
+ * Startseite nach dem Login:
+ * Mandant + Abteilung (Workspace) per Dropdown wählen.
+ * Es werden ALLE Einträge angezeigt – nicht freigegebene sind gesperrt.
+ */
+export default function Willkommen() {
+  const navigate = useNavigate();
+  const { profile } = useAuth() as any;
+  const { tenants, allowedTenants, setCurrent: setTenant, loading: tLoading } = useTenant();
+  const {
+    workspaces: allowedWorkspaces,
+    setCurrent: setWorkspace,
+    setWorkspaceMode,
+    loading: wLoading,
+  } = useWorkspace();
+
+  const [allWorkspaces, setAllWorkspaces] = useState<Workspace[]>([]);
+  const [tenantCode, setTenantCode] = useState<string>('');
+  const [wsCode, setWsCode] = useState<string>('');
+
+  useEffect(() => {
+    document.title = 'Startseite — Alix Work';
+    (async () => {
+      const { data } = await supabase
+        .from('workspaces' as any)
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
+      setAllWorkspaces(((data as any) || []) as Workspace[]);
+    })();
+  }, []);
+
+  const allowedTenantCodes = useMemo(
+    () => new Set(allowedTenants.map((t) => t.code)),
+    [allowedTenants],
+  );
+  const allowedWsIds = useMemo(
+    () => new Set(allowedWorkspaces.map((w) => w.id)),
+    [allowedWorkspaces],
+  );
+
+  useEffect(() => {
+    if (!tenantCode && allowedTenants.length) setTenantCode(allowedTenants[0].code);
+  }, [allowedTenants, tenantCode]);
+
+  useEffect(() => {
+    if (!wsCode && allowedWorkspaces.length) setWsCode(allowedWorkspaces[0].code);
+  }, [allowedWorkspaces, wsCode]);
+
+  const selectedTenant = tenants.find((t) => t.code === tenantCode) || null;
+  const selectedWs = allWorkspaces.find((w) => w.code === wsCode) || null;
+
+  const tenantOk = !!selectedTenant && allowedTenantCodes.has(selectedTenant.code);
+  const wsOk = !!selectedWs && allowedWsIds.has(selectedWs.id);
+  const canEnter = tenantOk && wsOk;
+
+  const enter = () => {
+    if (!canEnter || !selectedTenant || !selectedWs) return;
+    setTenant(selectedTenant);
+    setWorkspace(selectedWs);
+    setWorkspaceMode(true);
+    navigate(selectedWs.dashboard_path || `/w/${selectedWs.code}`, { replace: true });
+  };
+
+  const loading = tLoading || wLoading;
+
+  return (
+    <main className="min-h-[70vh] flex items-center justify-center px-4 py-10">
+      <Card className="w-full max-w-2xl card-glow animate-fade-in">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-2xl font-light tracking-wide">
+            Willkommen{profile?.full_name ? `, ${profile.full_name}` : ''}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Mandant und Abteilung wählen, um in den Arbeitsbereich zu wechseln.
+          </p>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Building2 className="h-3.5 w-3.5" /> Mandant
+            </label>
+            <select
+              value={tenantCode}
+              onChange={(e) => setTenantCode(e.target.value)}
+              disabled={loading}
+              className="w-full h-11 rounded-md border border-border bg-background px-3 text-sm"
+            >
+              {tenants.map((t) => {
+                const ok = allowedTenantCodes.has(t.code);
+                return (
+                  <option key={t.id} value={t.code}>
+                    {t.flag_emoji ? `${t.flag_emoji} ` : ''}
+                    {t.name}
+                    {ok ? '' : '  (kein Zugriff)'}
+                  </option>
+                );
+              })}
+            </select>
+            {!tenantOk && selectedTenant && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <Lock className="h-3 w-3" /> Für diesen Mandanten fehlt Ihnen die Berechtigung.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <LayoutGrid className="h-3.5 w-3.5" /> Abteilung
+            </label>
+            <select
+              value={wsCode}
+              onChange={(e) => setWsCode(e.target.value)}
+              disabled={loading}
+              className="w-full h-11 rounded-md border border-border bg-background px-3 text-sm"
+            >
+              {allWorkspaces.map((w) => {
+                const ok = allowedWsIds.has(w.id);
+                return (
+                  <option key={w.id} value={w.code}>
+                    {w.emoji ? `${w.emoji} ` : ''}
+                    {w.name}
+                    {ok ? '' : '  (kein Zugriff)'}
+                  </option>
+                );
+              })}
+            </select>
+            {!wsOk && selectedWs && (
+              <p className="text-xs text-destructive flex items-center gap-1">
+                <Lock className="h-3 w-3" /> Für diese Abteilung fehlt Ihnen die Berechtigung.
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">{allowedTenants.length} / {tenants.length} Mandanten</Badge>
+              <Badge variant="outline">
+                {allowedWorkspaces.length} / {allWorkspaces.length} Abteilungen
+              </Badge>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+                Klassische Ansicht
+              </Button>
+              <Button onClick={enter} disabled={!canEnter}>
+                Weiter <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </main>
+  );
+}
