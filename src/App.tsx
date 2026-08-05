@@ -12,6 +12,7 @@ import { useRadixBodyPointerEventsFix } from "@/hooks/useRadixBodyPointerEventsF
 import { TenantProvider } from "@/contexts/TenantContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import WorkspaceDashboard from "@/pages/Workspaces/WorkspaceDashboard";
+import WorkspaceAdmin from "@/pages/Workspaces/WorkspaceAdmin";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { DesignVariantProvider } from "@/hooks/useDesignVariant";
 import { ExperienceModeProvider } from "@/hooks/useExperienceMode";
