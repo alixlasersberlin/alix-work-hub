@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/infinity/PageHeader';
-import { Loader2, Plus, Trash2, FileText, Search, Download } from 'lucide-react';
+import { Loader2, Plus, Trash2, FileText, Search, Download, Mail } from 'lucide-react';
 import { generateCmrDocumentPdf, cmrPdfFilename } from '@/lib/cmr-document-pdf';
 import { toast } from 'sonner';
 import { useCmrTenant, cmrMoney, CMR_DOC_TYPES, CMR_DOC_STATUS } from '@/hooks/useCmrTenant';
