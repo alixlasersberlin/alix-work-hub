@@ -3,12 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Undo2, Mail, FileText } from 'lucide-react';
+import { Loader2, RefreshCw, Undo2, Mail, FileText, Plus } from 'lucide-react';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 import { listReturnDebits, sendReturnDebitDunning, RD_STATUS } from '@/lib/bank/returnDebit';
 import { downloadReturnDunningPdf } from '@/lib/bank/returnDunningLetter';
 import { supabase } from '@/integrations/supabase/client';
 import ReturnDebitDialog from '@/components/bank/ReturnDebitDialog';
+import ManualReturnDebitDialog from '@/components/bank/ManualReturnDebitDialog';
 
 const fmt = (n: number, cur = 'EUR') => new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n || 0);
 
@@ -24,6 +25,7 @@ export default function Ruecklastschriften() {
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
   const [tx, setTx] = useState<any | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -53,6 +55,7 @@ export default function Ruecklastschriften() {
               <option value="">Alle Status</option>
               {Object.entries(RD_STATUS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
+            <Button size="sm" onClick={() => setManualOpen(true)}><Plus className="w-4 h-4 mr-1" />Manuell erfassen</Button>
             <Button size="sm" variant="outline" onClick={load}><RefreshCw className="w-4 h-4" /></Button>
           </div>
         </CardHeader>
@@ -111,6 +114,9 @@ export default function Ruecklastschriften() {
           )}
         </CardContent>
       </Card>
+
+      <ManualReturnDebitDialog region={region} open={manualOpen}
+        onOpenChange={setManualOpen} onCreated={load} />
 
       {tx && (
         <ReturnDebitDialog tx={tx} region={region} open={!!tx}
