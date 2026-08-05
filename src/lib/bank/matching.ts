@@ -51,7 +51,12 @@ interface TxLike {
 }
 
 /** Bewertet eine Bankbuchung gegen offene Rechnungen. */
-export function scoreInvoices(tx: TxLike, invoices: OpenInvoice[], ibanCustomerIds: Set<string> = new Set()): MatchCandidate[] {
+export function scoreInvoices(
+  tx: TxLike,
+  invoices: OpenInvoice[],
+  ibanCustomerIds: Set<string> = new Set(),
+  learnedCustomerId?: string | null,
+): MatchCandidate[] {
   const hay = norm(`${tx.purpose ?? ''} ${tx.booking_text ?? ''} ${tx.end_to_end_reference ?? ''} ${tx.customer_reference ?? ''} ${tx.bank_reference ?? ''}`);
   const hayRaw = `${tx.purpose ?? ''} ${tx.booking_text ?? ''} ${tx.end_to_end_reference ?? ''}`.toLowerCase();
   const payer = norm(tx.sender_receiver_name);
