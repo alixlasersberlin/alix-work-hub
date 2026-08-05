@@ -317,6 +317,21 @@ export default function ReturnDebitDialog({
               </div>
             </section>
 
+            {rd?.fee_invoice_number && (
+              <>
+                <Separator />
+                <section>
+                  <H>Gebührenrechnung</H>
+                  <div className="grid sm:grid-cols-2 gap-x-6">
+                    <Row l="Rechnungsnummer" v={rd.fee_invoice_number} />
+                    <Row l="Status" v={feeStatus ?? rd.fee_invoice_status ?? 'offen'} />
+                    <Row l="Betrag" v={fmt(Number(rd.fee_invoice_total ?? 45), currency)} />
+                    <Row l="Versendet am" v={rd.fee_invoice_sent_at ? new Date(rd.fee_invoice_sent_at).toLocaleString('de-DE') : 'nicht versendet'} />
+                  </div>
+                </section>
+              </>
+            )}
+
             <Separator />
 
             {/* Ursprüngliche Zahlung */}

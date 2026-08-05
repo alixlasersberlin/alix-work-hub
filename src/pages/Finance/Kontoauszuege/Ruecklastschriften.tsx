@@ -44,7 +44,25 @@ export default function Ruecklastschriften() {
 
   const load = async () => {
     setLoading(true);
-    try { setRows(await listReturnDebits(region, status || undefined)); }
+    try {
+      const list = await listReturnDebits(region, status || undefined);
+      // Aktuellen Status der verknüpften Gebührenrechnungen nachladen
+      const ids = list.map((r: any) => r.fee_invoice_id).filter(Boolean);
+      if (ids.length) {
+        const { data: invs } = await supabase.from('zoho_invoices')
+          .select('id, invoice_number, payment_status, status, balance')
+          .in('id', ids as string[]);
+        const map = new Map((invs ?? []).map((i: any) => [i.id, i]));
+        for (const r of list as any[]) {
+          const i = r.fee_invoice_id ? map.get(r.fee_invoice_id) : null;
+          if (i) {
+            r.fee_invoice_number = i.invoice_number ?? r.fee_invoice_number;
+            r.fee_invoice_status = Number(i.balance) === 0 ? 'bezahlt' : (i.payment_status ?? i.status ?? 'offen');
+          }
+        }
+      }
+      setRows(list);
+    }
     catch (e: any) { toast.error(e.message); }
     finally { setLoading(false); }
   };
