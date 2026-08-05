@@ -8,12 +8,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, CheckCircle2, Search, Loader2, Undo2, Split, PauseCircle, Copy, Banknote,
+  AlertTriangle, CheckCircle2, Search, Loader2, Undo2, Split, PauseCircle, Copy, Banknote, Mail,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ensureReturnDebit, findOriginalPayments, confirmReturnDebit, cancelReturnDebit,
-  updateReturnDebit, loadReturnRules, getAllocationsOfReturnDebit, RD_STATUS, RETURN_CODES,
+  updateReturnDebit, loadReturnRules, getAllocationsOfReturnDebit, sendReturnDebitDunning,
+  RD_STATUS, RETURN_CODES,
   type PaymentCandidate, type ReturnRules,
 } from '@/lib/bank/returnDebit';
 
@@ -182,6 +183,19 @@ export default function ReturnDebitDialog({
     catch (e: any) { toast.error(e.message); }
     finally { setBusy(false); }
   };
+  const doDunning = async () => {
+    if (!rd) return;
+    const days = Number(window.prompt('Zahlungsfrist in Tagen (danach Sperre der Leistungen)', '7') ?? '');
+    if (!days || days < 1) return;
+    setBusy(true);
+    try {
+      const info = await sendReturnDebitDunning(rd, days);
+      toast.success(`Mahnung mit Sperrankündigung an ${info.recipient} versendet (zahlbar bis ${info.payUntil})`);
+      onChanged();
+    } catch (e: any) { toast.error(e.message); }
+    finally { setBusy(false); }
+  };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -402,6 +416,11 @@ export default function ReturnDebitDialog({
           {readOnly && rd?.status === 'bestaetigt' && isSuperAdmin && (
             <Button size="sm" variant="destructive" onClick={doCancel} disabled={busy}>
               <Undo2 className="w-3.5 h-3.5 mr-1" />Rücklastschrift-Zuordnung stornieren
+            </Button>
+          )}
+          {rd && (
+            <Button size="sm" variant="outline" onClick={doDunning} disabled={busy}>
+              <Mail className="w-3.5 h-3.5 mr-1" />Mahnung mit Sperrankündigung senden
             </Button>
           )}
           <Button size="sm" variant="ghost" onClick={() => onOpenChange(false)}>Bearbeitung abbrechen</Button>
