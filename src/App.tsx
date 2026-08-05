@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { RouteErrorBoundary, RouteFallback } from "@/components/RouteBoundary";
 import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
