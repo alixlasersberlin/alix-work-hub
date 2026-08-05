@@ -69,9 +69,19 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   const allowedTenants = useMemo(() => {
     if (atOnly) return tenants.filter(t => t.code === 'AT');
     if (isAdmin) return tenants;
+    // Mandanten-Rollen ("Mandant DE", "Mandant AT", ...) gewähren Zugriff
+    const roleCodes = (roles || [])
+      .filter((r: string) => r.startsWith('Mandant '))
+      .map((r: string) => r.replace('Mandant ', '').trim());
+    if (roleCodes.length > 0) {
+      const byRole = tenants.filter(t => roleCodes.includes(t.code));
+      const byAccess = accessIds ? tenants.filter(t => accessIds.includes(t.id)) : [];
+      const merged = [...byRole, ...byAccess.filter(t => !byRole.some(b => b.id === t.id))];
+      if (merged.length > 0) return merged;
+    }
     if (!accessIds || accessIds.length === 0) return tenants; // fallback: keine Beschränkung
     return tenants.filter(t => accessIds.includes(t.id));
-  }, [tenants, accessIds, isAdmin, atOnly]);
+  }, [tenants, accessIds, isAdmin, atOnly, roles]);
 
   useEffect(() => {
     if (loading) return;
