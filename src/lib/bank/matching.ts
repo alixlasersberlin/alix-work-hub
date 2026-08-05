@@ -13,6 +13,8 @@ export interface OpenInvoice {
   balance: number | null;
   status: string | null;
   payment_status: string | null;
+  /** Quelle: normale Zoho-Rechnung oder Ratenrechnung (wiederkehrend) */
+  source?: 'zoho' | 'recurring';
 }
 
 export interface MatchCandidate {
@@ -24,19 +26,36 @@ export interface MatchCandidate {
 const norm = (s: string | null | undefined) =>
   (s ?? '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]/g, '');
 
-/** Lädt offene Rechnungen einer Buchhaltungsregion (Saldo > 0). */
+const INV_COLS =
+  'id,invoice_number,reference_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status';
+
+/** Lädt offene Rechnungen einer Buchhaltungsregion (Saldo > 0) inkl. Ratenrechnungen. */
 export async function loadOpenInvoices(region: 'EU' | 'CH', limit = 2000): Promise<OpenInvoice[]> {
-  const { data, error } = await supabase
-    .from('zoho_invoices')
-    .select('id,invoice_number,reference_number,customer_id,customer_name,invoice_date,due_date,currency,total,balance,status,payment_status')
-    .eq('accounting_region', region as any)
-    .gt('balance', 0)
-    .not('status', 'in', '("void","cancelled","storniert")')
-    .order('invoice_date', { ascending: false })
-    .limit(limit);
-  if (error) throw error;
-  return (data ?? []) as OpenInvoice[];
+  const [std, rec] = await Promise.all([
+    supabase
+      .from('zoho_invoices')
+      .select(INV_COLS)
+      .eq('accounting_region', region as any)
+      .gt('balance', 0)
+      .not('status', 'in', '("void","cancelled","storniert")')
+      .order('invoice_date', { ascending: false })
+      .limit(limit),
+    supabase
+      .from('zoho_recurring_invoices')
+      .select(INV_COLS)
+      .eq('accounting_region', region as any)
+      .gt('balance', 0)
+      .not('status', 'in', '("void","cancelled","storniert")')
+      .order('invoice_date', { ascending: false })
+      .limit(limit),
+  ]);
+  if (std.error) throw std.error;
+  return [
+    ...((std.data ?? []) as any[]).map(i => ({ ...i, source: 'zoho' as const })),
+    ...((rec.data ?? []) as any[]).map(i => ({ ...i, source: 'recurring' as const })),
+  ] as OpenInvoice[];
 }
+
 
 interface TxLike {
   amount: number;
