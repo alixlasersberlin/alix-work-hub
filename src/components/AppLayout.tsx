@@ -369,6 +369,7 @@ export const navItems: NavItem[] = [
               { path: '/dispatch/touren', label: 'Touren', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
               { path: '/dispatch/fahrzeuge', label: 'Fahrzeuge', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
               { path: '/dispatch/fahrer', label: 'Fahrer', icon: Users, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
+              { path: '/dispatch/performance', label: 'Performance & CO₂', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
               { path: '/dispatch/einstellungen', label: 'Dispatch-Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
             ],
           },
