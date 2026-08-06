@@ -184,6 +184,29 @@ export default function TicketsList() {
     return () => { cancelled = true; };
   }, []);
 
+  // Angebote je Vorgangsnummer laden (neuestes Angebot pro Vorgang)
+  useEffect(() => {
+    const caseNumbers = Array.from(new Set(rows.map(r => (r as any).case_number).filter(Boolean))) as string[];
+    if (!caseNumbers.length) { setOffersByCase({}); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('offers')
+        .select('offer_number, status, case_number, created_at')
+        .in('case_number', caseNumbers)
+        .order('created_at', { ascending: false });
+      if (cancelled || error || !data) return;
+      const map: Record<string, OfferInfo> = {};
+      for (const o of data as any[]) {
+        if (o.case_number && !map[o.case_number]) {
+          map[o.case_number] = { offer_number: o.offer_number, status: o.status };
+        }
+      }
+      setOffersByCase(map);
+    })();
+    return () => { cancelled = true; };
+  }, [rows]);
+
   useEffect(() => {
     if (searchParams.get('new') === '1') {
       setCreateOpen(true);
