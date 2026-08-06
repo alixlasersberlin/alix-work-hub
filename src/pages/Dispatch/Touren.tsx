@@ -4,6 +4,7 @@ import { Truck } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TOUR_STATUS_LABELS, statusClass } from './constants';
 
