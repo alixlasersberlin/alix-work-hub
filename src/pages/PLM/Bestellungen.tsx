@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { ShoppingCart, Plus, Search, Loader2, Trash2, Send, PackageCheck } from 'lucide-react';
+import { ShoppingCart, Plus, Search, Loader2, Trash2, Send, PackageCheck, FileDown, Mail } from 'lucide-react';
+import { buildPurchaseOrderPdf, purchaseOrderFileName } from '@/lib/plm/purchase-order-pdf';
 import { useAuth } from '@/hooks/useAuth';
 
 const WRITE_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'];
@@ -36,6 +37,7 @@ export default function PlmBestellungen() {
   const [form, setForm] = useState<any>({});
   const [itemForm, setItemForm] = useState<any>({ quantity: 1, unit: 'Stk', price: 0 });
   const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -120,6 +122,51 @@ export default function PlmBestellungen() {
     if (error) { toast.error(error.message); return; }
     toast.success(`Status: ${status}`);
     load();
+  }
+
+  function pdfDataFor(po: any) {
+    const sup = suppliers.find(s => s.id === po.supplier_id) || {};
+    return {
+      po_number: po.po_number,
+      order_date: po.order_date,
+      expected_date: po.expected_date,
+      currency: po.currency || 'EUR',
+      notes: po.notes,
+      supplier: sup as any,
+      items: (itemsByPo[po.id] || []).map((it: any, i: number) => ({
+        position_no: it.position_no ?? i + 1,
+        part_number: partMap[it.part_id]?.part_number ?? null,
+        description: it.description || partMap[it.part_id]?.name || null,
+        quantity: num(it.quantity),
+        unit: it.unit,
+        price: num(it.price),
+      })),
+    };
+  }
+
+  function downloadPdf(po: any) {
+    const data = pdfDataFor(po);
+    buildPurchaseOrderPdf(data).save(purchaseOrderFileName(data));
+  }
+
+  async function sendPo(po: any) {
+    if (!(itemsByPo[po.id] || []).length) { toast.error('Bestellung hat keine Positionen.'); return; }
+    setSending(po.id);
+    try {
+      const data = pdfDataFor(po);
+      const base64 = buildPurchaseOrderPdf(data).output('datauristring').split(',')[1];
+      const { data: res, error } = await supabase.functions.invoke('plm-purchase-order-send', {
+        body: { po_id: po.id, pdf_base64: base64 },
+      });
+      if (error) throw error;
+      if ((res as any)?.error) throw new Error((res as any).error);
+      toast.success(`Bestellung an ${(res as any)?.recipient} gesendet`);
+      load();
+    } catch (e: any) {
+      toast.error(e.message || 'Versand fehlgeschlagen');
+    } finally {
+      setSending(null);
+    }
   }
 
   async function addItem() {
@@ -238,6 +285,12 @@ export default function PlmBestellungen() {
                       <TableCell>{statusBadge(p.status)}</TableCell>
                       <TableCell className="space-x-1 text-right" onClick={e => e.stopPropagation()}>
                         {canWrite && <Button size="sm" variant="outline" onClick={() => openPo(p)}>Bearbeiten</Button>}
+                        <Button size="sm" variant="outline" onClick={() => downloadPdf(p)}><FileDown className="mr-1 h-3 w-3" />PDF</Button>
+                        {canWrite && p.status !== 'entwurf' && p.status !== 'storniert' && (
+                          <Button size="sm" variant="outline" disabled={sending === p.id} onClick={() => sendPo(p)}>
+                            {sending === p.id ? <Loader2 className="mr-1 h-3 w-3 animate-spin" /> : <Mail className="mr-1 h-3 w-3" />}E-Mail
+                          </Button>
+                        )}
                         {canWrite && p.status === 'freigegeben' && (
                           <Button size="sm" onClick={() => setStatus(p, 'bestellt')}><Send className="mr-1 h-3 w-3" />Bestellen</Button>
                         )}
