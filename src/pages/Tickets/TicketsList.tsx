@@ -584,6 +584,7 @@ export default function TicketsList() {
                         <TableHead>Kategorie</TableHead>
                         <TableHead>Ticket</TableHead>
                         <TableHead>Kunde</TableHead>
+                        <TableHead>Angebot</TableHead>
                         <TableHead>Gerät</TableHead>
                         <TableHead>Seriennr.</TableHead>
                         <TableHead>Abteilung</TableHead>
