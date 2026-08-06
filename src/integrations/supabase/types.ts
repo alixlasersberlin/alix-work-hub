@@ -31080,6 +31080,1306 @@ export type Database = {
         }
         Relationships: []
       }
+      plm_assemblies: {
+        Row: {
+          code: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          device_id: string | null
+          id: string
+          image_url: string | null
+          name: string
+          parent_id: string | null
+          release_status: string
+          responsible_user_id: string | null
+          revision: string
+          sort_order: number
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          parent_id?: string | null
+          release_status?: string
+          responsible_user_id?: string | null
+          revision?: string
+          sort_order?: number
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          parent_id?: string | null
+          release_status?: string
+          responsible_user_id?: string | null
+          revision?: string
+          sort_order?: number
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_assemblies_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_assemblies_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "plm_assemblies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_audit_log: {
+        Row: {
+          action: string
+          changes: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          changes?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          changes?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      plm_bom_items: {
+        Row: {
+          assembly_id: string | null
+          child_assembly_id: string | null
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          id: string
+          install_position: string | null
+          notes: string | null
+          part_id: string | null
+          position_no: number | null
+          quantity: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          assembly_id?: string | null
+          child_assembly_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          id?: string
+          install_position?: string | null
+          notes?: string | null
+          part_id?: string | null
+          position_no?: number | null
+          quantity?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          assembly_id?: string | null
+          child_assembly_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          id?: string
+          install_position?: string | null
+          notes?: string | null
+          part_id?: string | null
+          position_no?: number | null
+          quantity?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_bom_items_assembly_id_fkey"
+            columns: ["assembly_id"]
+            isOneToOne: false
+            referencedRelation: "plm_assemblies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_bom_items_child_assembly_id_fkey"
+            columns: ["child_assembly_id"]
+            isOneToOne: false
+            referencedRelation: "plm_assemblies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_bom_items_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_bom_items_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_changes: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          assembly_id: string | null
+          change_kind: string
+          change_number: string | null
+          created_at: string
+          description: string | null
+          device_id: string | null
+          effective_date: string | null
+          id: string
+          new_revision: string | null
+          old_revision: string | null
+          part_id: string | null
+          qm_approved_at: string | null
+          qm_approved_by: string | null
+          reason: string | null
+          requested_by: string | null
+          risk_assessment: string | null
+          risk_level: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          assembly_id?: string | null
+          change_kind?: string
+          change_number?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          effective_date?: string | null
+          id?: string
+          new_revision?: string | null
+          old_revision?: string | null
+          part_id?: string | null
+          qm_approved_at?: string | null
+          qm_approved_by?: string | null
+          reason?: string | null
+          requested_by?: string | null
+          risk_assessment?: string | null
+          risk_level?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          assembly_id?: string | null
+          change_kind?: string
+          change_number?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          effective_date?: string | null
+          id?: string
+          new_revision?: string | null
+          old_revision?: string | null
+          part_id?: string | null
+          qm_approved_at?: string | null
+          qm_approved_by?: string | null
+          reason?: string | null
+          requested_by?: string | null
+          risk_assessment?: string | null
+          risk_level?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_changes_assembly_id_fkey"
+            columns: ["assembly_id"]
+            isOneToOne: false
+            referencedRelation: "plm_assemblies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_changes_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_changes_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_devices: {
+        Row: {
+          article_number: string
+          ce_status: string
+          created_at: string
+          created_by: string | null
+          firmware_version: string | null
+          hardware_version: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          mdr_class: string | null
+          mdr_status: string
+          name: string
+          notes: string | null
+          product_family: string | null
+          production_end: string | null
+          production_start: string | null
+          release_status: string
+          responsible_user_id: string | null
+          revision: string
+          serial_range_from: string | null
+          serial_range_to: string | null
+          software_version: string | null
+          udi_di: string | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          article_number: string
+          ce_status?: string
+          created_at?: string
+          created_by?: string | null
+          firmware_version?: string | null
+          hardware_version?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          mdr_class?: string | null
+          mdr_status?: string
+          name: string
+          notes?: string | null
+          product_family?: string | null
+          production_end?: string | null
+          production_start?: string | null
+          release_status?: string
+          responsible_user_id?: string | null
+          revision?: string
+          serial_range_from?: string | null
+          serial_range_to?: string | null
+          software_version?: string | null
+          udi_di?: string | null
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          article_number?: string
+          ce_status?: string
+          created_at?: string
+          created_by?: string | null
+          firmware_version?: string | null
+          hardware_version?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          mdr_class?: string | null
+          mdr_status?: string
+          name?: string
+          notes?: string | null
+          product_family?: string | null
+          production_end?: string | null
+          production_start?: string | null
+          release_status?: string
+          responsible_user_id?: string | null
+          revision?: string
+          serial_range_from?: string | null
+          serial_range_to?: string | null
+          software_version?: string | null
+          udi_di?: string | null
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      plm_documents: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          doc_type: string
+          document_number: string | null
+          entity_id: string
+          entity_type: string
+          file_path: string | null
+          file_size: number | null
+          file_url: string | null
+          id: string
+          mime_type: string | null
+          notes: string | null
+          release_status: string
+          revision: string
+          title: string
+          updated_at: string
+          valid_until: string | null
+          version: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          doc_type: string
+          document_number?: string | null
+          entity_id: string
+          entity_type: string
+          file_path?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          release_status?: string
+          revision?: string
+          title: string
+          updated_at?: string
+          valid_until?: string | null
+          version?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          doc_type?: string
+          document_number?: string | null
+          entity_id?: string
+          entity_type?: string
+          file_path?: string | null
+          file_size?: number | null
+          file_url?: string | null
+          id?: string
+          mime_type?: string | null
+          notes?: string | null
+          release_status?: string
+          revision?: string
+          title?: string
+          updated_at?: string
+          valid_until?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
+      plm_drawing_positions: {
+        Row: {
+          assembly_id: string | null
+          created_at: string
+          drawing_id: string
+          id: string
+          label: string | null
+          notes: string | null
+          part_id: string | null
+          position_no: number
+          quantity: number
+          updated_at: string
+          x: number
+          y: number
+        }
+        Insert: {
+          assembly_id?: string | null
+          created_at?: string
+          drawing_id: string
+          id?: string
+          label?: string | null
+          notes?: string | null
+          part_id?: string | null
+          position_no: number
+          quantity?: number
+          updated_at?: string
+          x?: number
+          y?: number
+        }
+        Update: {
+          assembly_id?: string | null
+          created_at?: string
+          drawing_id?: string
+          id?: string
+          label?: string | null
+          notes?: string | null
+          part_id?: string | null
+          position_no?: number
+          quantity?: number
+          updated_at?: string
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_drawing_positions_assembly_id_fkey"
+            columns: ["assembly_id"]
+            isOneToOne: false
+            referencedRelation: "plm_assemblies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_drawing_positions_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "plm_drawings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_drawing_positions_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_drawings: {
+        Row: {
+          approved_at: string | null
+          approved_by_name: string | null
+          assembly_id: string | null
+          checked_by_name: string | null
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          device_id: string | null
+          document_number: string | null
+          drawing_type: string
+          id: string
+          image_url: string | null
+          notes: string | null
+          released_at: string | null
+          revision: string
+          status: string
+          title: string
+          updated_at: string
+          version: string
+          view_type: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by_name?: string | null
+          assembly_id?: string | null
+          checked_by_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          device_id?: string | null
+          document_number?: string | null
+          drawing_type?: string
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          released_at?: string | null
+          revision?: string
+          status?: string
+          title: string
+          updated_at?: string
+          version?: string
+          view_type?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by_name?: string | null
+          assembly_id?: string | null
+          checked_by_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          device_id?: string | null
+          document_number?: string | null
+          drawing_type?: string
+          id?: string
+          image_url?: string | null
+          notes?: string | null
+          released_at?: string | null
+          revision?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          version?: string
+          view_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_drawings_assembly_id_fkey"
+            columns: ["assembly_id"]
+            isOneToOne: false
+            referencedRelation: "plm_assemblies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_drawings_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_goods_receipts: {
+        Row: {
+          batch_number: string | null
+          blocked: boolean
+          created_at: string
+          created_by: string | null
+          deviation: string | null
+          id: string
+          inspected_at: string | null
+          inspected_by: string | null
+          inspection_plan_id: string | null
+          inspection_result: string
+          lot_number: string | null
+          notes: string | null
+          part_id: string | null
+          quantity: number
+          receipt_number: string | null
+          received_at: string
+          serial_numbers: string[] | null
+          supplier_id: string | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          batch_number?: string | null
+          blocked?: boolean
+          created_at?: string
+          created_by?: string | null
+          deviation?: string | null
+          id?: string
+          inspected_at?: string | null
+          inspected_by?: string | null
+          inspection_plan_id?: string | null
+          inspection_result?: string
+          lot_number?: string | null
+          notes?: string | null
+          part_id?: string | null
+          quantity?: number
+          receipt_number?: string | null
+          received_at?: string
+          serial_numbers?: string[] | null
+          supplier_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string | null
+          blocked?: boolean
+          created_at?: string
+          created_by?: string | null
+          deviation?: string | null
+          id?: string
+          inspected_at?: string | null
+          inspected_by?: string | null
+          inspection_plan_id?: string | null
+          inspection_result?: string
+          lot_number?: string | null
+          notes?: string | null
+          part_id?: string | null
+          quantity?: number
+          receipt_number?: string | null
+          received_at?: string
+          serial_numbers?: string[] | null
+          supplier_id?: string | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_goods_receipts_inspection_plan_id_fkey"
+            columns: ["inspection_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plm_inspection_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_goods_receipts_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_goods_receipts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "plm_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_inspection_items: {
+        Row: {
+          characteristic: string
+          created_at: string
+          gauge: string | null
+          id: string
+          is_critical: boolean
+          method: string | null
+          nominal: string | null
+          plan_id: string
+          position_no: number | null
+          tolerance_max: number | null
+          tolerance_min: number | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          characteristic: string
+          created_at?: string
+          gauge?: string | null
+          id?: string
+          is_critical?: boolean
+          method?: string | null
+          nominal?: string | null
+          plan_id: string
+          position_no?: number | null
+          tolerance_max?: number | null
+          tolerance_min?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          characteristic?: string
+          created_at?: string
+          gauge?: string | null
+          id?: string
+          is_critical?: boolean
+          method?: string | null
+          nominal?: string | null
+          plan_id?: string
+          position_no?: number | null
+          tolerance_max?: number | null
+          tolerance_min?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_inspection_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plm_inspection_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_inspection_plans: {
+        Row: {
+          assembly_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          device_id: string | null
+          id: string
+          name: string
+          part_id: string | null
+          plan_number: string | null
+          plan_type: string
+          qs_responsible: string | null
+          status: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          assembly_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          name: string
+          part_id?: string | null
+          plan_number?: string | null
+          plan_type?: string
+          qs_responsible?: string | null
+          status?: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          assembly_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          name?: string
+          part_id?: string | null
+          plan_number?: string | null
+          plan_type?: string
+          qs_responsible?: string | null
+          status?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_inspection_plans_assembly_id_fkey"
+            columns: ["assembly_id"]
+            isOneToOne: false
+            referencedRelation: "plm_assemblies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_inspection_plans_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_inspection_plans_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_part_suppliers: {
+        Row: {
+          approved: boolean
+          created_at: string
+          currency: string
+          id: string
+          is_preferred: boolean
+          lead_time_days: number | null
+          moq: number | null
+          notes: string | null
+          part_id: string
+          price: number | null
+          supplier_id: string
+          supplier_part_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          is_preferred?: boolean
+          lead_time_days?: number | null
+          moq?: number | null
+          notes?: string | null
+          part_id: string
+          price?: number | null
+          supplier_id: string
+          supplier_part_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          is_preferred?: boolean
+          lead_time_days?: number | null
+          moq?: number | null
+          notes?: string | null
+          part_id?: string
+          price?: number | null
+          supplier_id?: string
+          supplier_part_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_part_suppliers_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_part_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "plm_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_parts: {
+        Row: {
+          assembly_id: string | null
+          block_reason: string | null
+          blocked: boolean
+          cad_url: string | null
+          category: string | null
+          color: string | null
+          country_of_origin: string | null
+          created_at: string
+          created_by: string | null
+          criticality: string | null
+          currency: string
+          current_a: number | null
+          customs_code: string | null
+          cutout_image_url: string | null
+          datasheet_url: string | null
+          description: string | null
+          device_id: string | null
+          dimensions: string | null
+          drawing_pdf_url: string | null
+          gspr_reference: string | null
+          id: string
+          ip_rating: string | null
+          is_spare_part: boolean
+          lead_time_days: number | null
+          manufacturer: string | null
+          manufacturer_part_number: string | null
+          material: string | null
+          moq: number | null
+          name: string
+          notes: string | null
+          optical_power: string | null
+          part_number: string
+          photo_url: string | null
+          power_w: number | null
+          predecessor_id: string | null
+          price: number | null
+          primary_supplier_id: string | null
+          protection_class: string | null
+          qs_responsible: string | null
+          reach: boolean
+          release_status: string
+          revision: string
+          risk_reference: string | null
+          rohs: boolean
+          service_notes: string | null
+          step_url: string | null
+          stock_min: number | null
+          stock_reorder: number | null
+          stock_target: number | null
+          successor_id: string | null
+          supplier_part_number: string | null
+          surface: string | null
+          temperature_range: string | null
+          tolerances: string | null
+          udi_reference: string | null
+          updated_at: string
+          version: string
+          voltage: string | null
+          wavelength_nm: string | null
+          weight_g: number | null
+        }
+        Insert: {
+          assembly_id?: string | null
+          block_reason?: string | null
+          blocked?: boolean
+          cad_url?: string | null
+          category?: string | null
+          color?: string | null
+          country_of_origin?: string | null
+          created_at?: string
+          created_by?: string | null
+          criticality?: string | null
+          currency?: string
+          current_a?: number | null
+          customs_code?: string | null
+          cutout_image_url?: string | null
+          datasheet_url?: string | null
+          description?: string | null
+          device_id?: string | null
+          dimensions?: string | null
+          drawing_pdf_url?: string | null
+          gspr_reference?: string | null
+          id?: string
+          ip_rating?: string | null
+          is_spare_part?: boolean
+          lead_time_days?: number | null
+          manufacturer?: string | null
+          manufacturer_part_number?: string | null
+          material?: string | null
+          moq?: number | null
+          name: string
+          notes?: string | null
+          optical_power?: string | null
+          part_number: string
+          photo_url?: string | null
+          power_w?: number | null
+          predecessor_id?: string | null
+          price?: number | null
+          primary_supplier_id?: string | null
+          protection_class?: string | null
+          qs_responsible?: string | null
+          reach?: boolean
+          release_status?: string
+          revision?: string
+          risk_reference?: string | null
+          rohs?: boolean
+          service_notes?: string | null
+          step_url?: string | null
+          stock_min?: number | null
+          stock_reorder?: number | null
+          stock_target?: number | null
+          successor_id?: string | null
+          supplier_part_number?: string | null
+          surface?: string | null
+          temperature_range?: string | null
+          tolerances?: string | null
+          udi_reference?: string | null
+          updated_at?: string
+          version?: string
+          voltage?: string | null
+          wavelength_nm?: string | null
+          weight_g?: number | null
+        }
+        Update: {
+          assembly_id?: string | null
+          block_reason?: string | null
+          blocked?: boolean
+          cad_url?: string | null
+          category?: string | null
+          color?: string | null
+          country_of_origin?: string | null
+          created_at?: string
+          created_by?: string | null
+          criticality?: string | null
+          currency?: string
+          current_a?: number | null
+          customs_code?: string | null
+          cutout_image_url?: string | null
+          datasheet_url?: string | null
+          description?: string | null
+          device_id?: string | null
+          dimensions?: string | null
+          drawing_pdf_url?: string | null
+          gspr_reference?: string | null
+          id?: string
+          ip_rating?: string | null
+          is_spare_part?: boolean
+          lead_time_days?: number | null
+          manufacturer?: string | null
+          manufacturer_part_number?: string | null
+          material?: string | null
+          moq?: number | null
+          name?: string
+          notes?: string | null
+          optical_power?: string | null
+          part_number?: string
+          photo_url?: string | null
+          power_w?: number | null
+          predecessor_id?: string | null
+          price?: number | null
+          primary_supplier_id?: string | null
+          protection_class?: string | null
+          qs_responsible?: string | null
+          reach?: boolean
+          release_status?: string
+          revision?: string
+          risk_reference?: string | null
+          rohs?: boolean
+          service_notes?: string | null
+          step_url?: string | null
+          stock_min?: number | null
+          stock_reorder?: number | null
+          stock_target?: number | null
+          successor_id?: string | null
+          supplier_part_number?: string | null
+          surface?: string | null
+          temperature_range?: string | null
+          tolerances?: string | null
+          udi_reference?: string | null
+          updated_at?: string
+          version?: string
+          voltage?: string | null
+          wavelength_nm?: string | null
+          weight_g?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_parts_assembly_id_fkey"
+            columns: ["assembly_id"]
+            isOneToOne: false
+            referencedRelation: "plm_assemblies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_parts_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_parts_predecessor_id_fkey"
+            columns: ["predecessor_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_parts_primary_supplier_id_fkey"
+            columns: ["primary_supplier_id"]
+            isOneToOne: false
+            referencedRelation: "plm_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_parts_successor_id_fkey"
+            columns: ["successor_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_production_orders: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          batch_number: string | null
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          id: string
+          notes: string | null
+          order_number: string | null
+          planned_end: string | null
+          planned_start: string | null
+          quantity: number
+          responsible_user_id: string | null
+          serial_numbers: string[] | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string | null
+          planned_end?: string | null
+          planned_start?: string | null
+          quantity?: number
+          responsible_user_id?: string | null
+          serial_numbers?: string[] | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string | null
+          planned_end?: string | null
+          planned_start?: string | null
+          quantity?: number
+          responsible_user_id?: string | null
+          serial_numbers?: string[] | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_production_orders_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_suppliers: {
+        Row: {
+          audit_report_url: string | null
+          cert_valid_until: string | null
+          city: string | null
+          contact_name: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          is_manufacturer: boolean
+          iso_certificates: string[] | null
+          name: string
+          nda_signed: boolean
+          notes: string | null
+          phone: string | null
+          quality_agreement: boolean
+          rating: number | null
+          release_status: string
+          street: string | null
+          supplier_number: string | null
+          updated_at: string
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          audit_report_url?: string | null
+          cert_valid_until?: string | null
+          city?: string | null
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          is_manufacturer?: boolean
+          iso_certificates?: string[] | null
+          name: string
+          nda_signed?: boolean
+          notes?: string | null
+          phone?: string | null
+          quality_agreement?: boolean
+          rating?: number | null
+          release_status?: string
+          street?: string | null
+          supplier_number?: string | null
+          updated_at?: string
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          audit_report_url?: string | null
+          cert_valid_until?: string | null
+          city?: string | null
+          contact_name?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          is_manufacturer?: boolean
+          iso_certificates?: string[] | null
+          name?: string
+          nda_signed?: boolean
+          notes?: string | null
+          phone?: string | null
+          quality_agreement?: boolean
+          rating?: number | null
+          release_status?: string
+          street?: string | null
+          supplier_number?: string | null
+          updated_at?: string
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      plm_work_instructions: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          assembly_id: string | null
+          content: string | null
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          file_url: string | null
+          id: string
+          instruction_number: string | null
+          revision: string
+          status: string
+          title: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          assembly_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          file_url?: string | null
+          id?: string
+          instruction_number?: string | null
+          revision?: string
+          status?: string
+          title: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          assembly_id?: string | null
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          file_url?: string | null
+          id?: string
+          instruction_number?: string | null
+          revision?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_work_instructions_assembly_id_fkey"
+            columns: ["assembly_id"]
+            isOneToOne: false
+            referencedRelation: "plm_assemblies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_work_instructions_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_ticket_reads: {
         Row: {
           created_at: string
@@ -44355,6 +45655,7 @@ export type Database = {
           table_name: string
         }[]
       }
+      plm_can_write: { Args: never; Returns: boolean }
       process_scheduled_grants: { Args: never; Returns: Json }
       qr_reference_check_digit: { Args: { _body: string }; Returns: string }
       recompute_device_health: { Args: { _serial: string }; Returns: undefined }

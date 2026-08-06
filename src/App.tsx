@@ -608,6 +608,20 @@ const AicForecasts = lazy(() => import("./pages/AIC/Forecasts"));
 const AicTasks = lazy(() => import("./pages/AIC/Tasks"));
 const AicBerichte = lazy(() => import("./pages/AIC/Berichte"));
 const MdrCe = lazy(() => import("./pages/MdrCe"));
+const PlmDashboard = lazy(() => import("./pages/PLM/Dashboard"));
+const PlmGeraete = lazy(() => import("./pages/PLM/Geraete"));
+const PlmBaugruppen = lazy(() => import("./pages/PLM/Baugruppen"));
+const PlmEinzelteile = lazy(() => import("./pages/PLM/Einzelteile"));
+const PlmStueckliste = lazy(() => import("./pages/PLM/Stueckliste"));
+const PlmExplosionszeichnungen = lazy(() => import("./pages/PLM/Explosionszeichnungen"));
+const PlmLieferanten = lazy(() => import("./pages/PLM/Lieferanten"));
+const PlmWareneingang = lazy(() => import("./pages/PLM/Wareneingang"));
+const PlmPruefplaene = lazy(() => import("./pages/PLM/Pruefplaene"));
+const PlmPruefmerkmale = lazy(() => import("./pages/PLM/Pruefmerkmale"));
+const PlmProduktionsauftraege = lazy(() => import("./pages/PLM/Produktionsauftraege"));
+const PlmArbeitsanweisungen = lazy(() => import("./pages/PLM/Arbeitsanweisungen"));
+const PlmAenderungen = lazy(() => import("./pages/PLM/Aenderungen"));
+const PlmDokumente = lazy(() => import("./pages/PLM/Dokumente"));
 const Iso13485 = lazy(() => import("./pages/Iso13485"));
 const ReviewsLayout = lazy(() => import("./pages/Reviews/_layout"));
 const ReviewsOverview = lazy(() => import("./pages/Reviews/Overview"));
@@ -1995,6 +2009,24 @@ function AppRoutes() {
           </Route>
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
+
+          {/* ALIXWORK Produktion & Beschaffung (PLM / MDR / ISO 13485) */}
+          <Route path="/produktion" element={<ProtectedRoute><PlmDashboard /></ProtectedRoute>} />
+          <Route path="/produktion/geraete" element={<ProtectedRoute><PlmGeraete /></ProtectedRoute>} />
+          <Route path="/produktion/baugruppen" element={<ProtectedRoute><PlmBaugruppen /></ProtectedRoute>} />
+          <Route path="/produktion/einzelteile" element={<ProtectedRoute><PlmEinzelteile /></ProtectedRoute>} />
+          <Route path="/produktion/stueckliste" element={<ProtectedRoute><PlmStueckliste /></ProtectedRoute>} />
+          <Route path="/produktion/explosionszeichnungen" element={<ProtectedRoute><PlmExplosionszeichnungen /></ProtectedRoute>} />
+          <Route path="/produktion/lieferanten" element={<ProtectedRoute><PlmLieferanten /></ProtectedRoute>} />
+          <Route path="/produktion/wareneingang" element={<ProtectedRoute><PlmWareneingang /></ProtectedRoute>} />
+          <Route path="/produktion/pruefplaene" element={<ProtectedRoute><PlmPruefplaene /></ProtectedRoute>} />
+          <Route path="/produktion/pruefmerkmale" element={<ProtectedRoute><PlmPruefmerkmale /></ProtectedRoute>} />
+          <Route path="/produktion/auftraege" element={<ProtectedRoute><PlmProduktionsauftraege /></ProtectedRoute>} />
+          <Route path="/produktion/arbeitsanweisungen" element={<ProtectedRoute><PlmArbeitsanweisungen /></ProtectedRoute>} />
+          <Route path="/produktion/aenderungen" element={<ProtectedRoute><PlmAenderungen /></ProtectedRoute>} />
+          <Route path="/produktion/dokumente" element={<ProtectedRoute><PlmDokumente /></ProtectedRoute>} />
+
+
           
 
           <Route path="/bewertungen" element={<ProtectedRoute><ReviewsLayout /></ProtectedRoute>}>
