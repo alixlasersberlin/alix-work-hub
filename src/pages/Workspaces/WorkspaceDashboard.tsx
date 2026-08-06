@@ -4,8 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { Card } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
 import { iconFor } from '@/lib/workspace/icons';
 import { Loader2 } from 'lucide-react';
+
+const QA_SIZE_KEY = 'alix.quickaccess.size';
 
 type KpiScope = 'source' | 'customer' | 'order' | 'tenant' | 'lead-country' | 'unscoped';
 type Kpi = { key: string; label: string; table: string; scope: KpiScope; hint?: string; to?: string };
@@ -93,6 +96,14 @@ export default function WorkspaceDashboard() {
   const { current: tenant, sourceFilter } = useTenant();
   const [counts, setCounts] = useState<Record<string, number | null>>({});
   const [loading, setLoading] = useState(true);
+  const [qaSize, setQaSize] = useState<number>(() => {
+    try { return Number(localStorage.getItem(QA_SIZE_KEY)) || 100; } catch { return 100; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(QA_SIZE_KEY, String(qaSize)); } catch { /* ignore */ }
+  }, [qaSize]);
+
 
   const ws = workspaces.find(w => w.code === code) || current;
   const tenantCode = tenant?.code ?? null;
@@ -187,20 +198,43 @@ export default function WorkspaceDashboard() {
       </div>
 
       <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wider">
-          Schnellzugriff
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex items-center justify-between gap-4 mb-3 flex-wrap">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Schnellzugriff
+          </h2>
+          <div className="flex items-center gap-3 min-w-[200px]">
+            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Größe</span>
+            <Slider
+              value={[qaSize]}
+              onValueChange={(v) => setQaSize(v[0])}
+              min={70}
+              max={140}
+              step={5}
+              className="w-36"
+              aria-label="Größe der Schnellzugriff-Buttons"
+            />
+            <span className="text-[11px] tabular-nums text-muted-foreground w-10 text-right">{qaSize}%</span>
+          </div>
+        </div>
+        <div
+          className="grid gap-3"
+          style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${Math.round(220 * qaSize / 100)}px, 1fr))` }}
+        >
           {navItems.filter(n => n.path !== `/w/${ws.code}`).map((n) => {
             const Icon = iconFor(n.icon);
             return (
               <Link
                 key={n.id}
                 to={n.path}
-                className="flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                className="flex items-center gap-3 rounded-lg border border-border bg-card hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                style={{
+                  paddingInline: `${Math.round(16 * qaSize / 100)}px`,
+                  paddingBlock: `${Math.round(12 * qaSize / 100)}px`,
+                  fontSize: `${Math.round(14 * qaSize / 100)}px`,
+                }}
               >
-                <Icon className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-sm truncate">{n.label}</span>
+                <Icon className="text-primary flex-shrink-0" style={{ width: `${Math.round(16 * qaSize / 100)}px`, height: `${Math.round(16 * qaSize / 100)}px` }} />
+                <span className="truncate">{n.label}</span>
               </Link>
             );
           })}
