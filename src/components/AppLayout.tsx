@@ -419,6 +419,7 @@ export const navItems: NavItem[] = [
       { path: '/produktion/ersatzteilkatalog', label: 'Ersatzteilkatalog', icon: Package, roles: null },
       { path: '/produktion/pruefprotokolle', label: 'Prüfprotokolle', icon: ClipboardCheck, roles: null },
       { path: '/produktion/aenderungsfreigabe', label: 'Änderungsfreigabe', icon: GitBranch, roles: null },
+      { path: '/produktion/konformitaet', label: 'Konformität (CE/MDR)', icon: ShieldCheck, roles: null },
 
       { path: '/produktion/aenderungen', label: 'Änderungen (ECR/ECO)', icon: GitBranch, roles: null },
       { path: '/produktion/dokumente', label: 'Technische Dokumentation', icon: FileCheck2, roles: null },
