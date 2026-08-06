@@ -2171,6 +2171,40 @@ export default function ImportManagement() {
                   </span>
                 </div>
 
+                {/* Einzelimport nach Name oder Auftragsnummer */}
+                <div className="rounded-lg border border-border bg-secondary/30 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Search className="w-4 h-4 text-primary" />
+                    Einzelnen Vorgang importieren (Name oder Auftragsnummer)
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Input
+                      value={flexSearch}
+                      onChange={(e) => setFlexSearch(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleFlexSingleImport(); }}
+                      placeholder="z.B. Müller GmbH oder 2026-04226"
+                      className="bg-secondary border-border"
+                    />
+                    <Button onClick={handleFlexSingleImport} disabled={flexSingleBusy || flexImporting} variant="outline" className="whitespace-nowrap">
+                      {flexSingleBusy ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Suche & Import…</>
+                      ) : (
+                        <><Search className="w-4 h-4 mr-2" /> Vorgang importieren</>
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Durchsucht DE + AT nach Kundenname, Firma, Profilname, Referenz-/Auftragsnummer oder E-Mail und importiert nur die Treffer.
+                  </p>
+                  {flexSingleResult && (
+                    <div className="text-sm">
+                      Treffer: <strong>{flexSingleResult.matched}</strong> • neu: <strong className="text-[hsl(var(--success))]">{flexSingleResult.imported}</strong> • aktualisiert: <strong>{flexSingleResult.updated}</strong> • Fehler: <strong className="text-destructive">{flexSingleResult.failed}</strong>
+                    </div>
+                  )}
+                </div>
+
+
+
 
                 {flexResult && (
                   <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-2 text-sm">
