@@ -29,7 +29,7 @@ const ASSIGN_STATUS: Record<string, string> = {
 
 const EMPTY_CARRIER = {
   name: '', contact_name: '', email: '', phone: '', street: '', zip: '', city: '', country: 'DE',
-  vat_id: '', base_price: '', price_per_km: '', notes: '', is_active: true,
+  vat_id: '', base_fee: '', price_per_km: '', notes: '', is_active: true,
 };
 
 export default function DispatchSpediteure() {
@@ -72,7 +72,7 @@ export default function DispatchSpediteure() {
       const { data: u } = await supabase.auth.getUser();
       const payload: any = {
         ...form,
-        base_price: form.base_price ? Number(form.base_price) : null,
+        base_fee: form.base_fee ? Number(form.base_fee) : null,
         price_per_km: form.price_per_km ? Number(form.price_per_km) : null,
         created_by: u.user?.id ?? null,
       };
@@ -132,7 +132,7 @@ export default function DispatchSpediteure() {
                 <div><Label>PLZ</Label><Input {...f('zip')} /></div>
                 <div><Label>Ort</Label><Input {...f('city')} /></div>
                 <div><Label>Land</Label><Input {...f('country')} /></div>
-                <div><Label>Grundpreis (€)</Label><Input type="number" step="0.01" {...f('base_price')} /></div>
+                <div><Label>Grundpreis (€)</Label><Input type="number" step="0.01" {...f('base_fee')} /></div>
                 <div><Label>Preis je km (€)</Label><Input type="number" step="0.01" {...f('price_per_km')} /></div>
                 <div className="col-span-2"><Label>Notiz</Label><Textarea rows={2} {...f('notes')} /></div>
               </div>
@@ -180,7 +180,7 @@ export default function DispatchSpediteure() {
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{c.contact_name || '—'}<div className="text-xs text-muted-foreground">{c.email || c.phone}</div></TableCell>
                     <TableCell>{[c.zip, c.city].filter(Boolean).join(' ') || '—'}</TableCell>
-                    <TableCell>{c.base_price != null ? `${Number(c.base_price).toFixed(2)} €` : '—'}</TableCell>
+                    <TableCell>{c.base_fee != null ? `${Number(c.base_fee).toFixed(2)} €` : '—'}</TableCell>
                     <TableCell>{c.price_per_km != null ? `${Number(c.price_per_km).toFixed(2)} €` : '—'}</TableCell>
                     <TableCell><Switch checked={!!c.is_active} onCheckedChange={v => toggleActive.mutate({ id: c.id, active: v })} /></TableCell>
                   </TableRow>
