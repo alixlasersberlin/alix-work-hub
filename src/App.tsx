@@ -622,6 +622,8 @@ const PlmProduktionsauftraege = lazy(() => import("./pages/PLM/Produktionsauftra
 const PlmArbeitsanweisungen = lazy(() => import("./pages/PLM/Arbeitsanweisungen"));
 const PlmAenderungen = lazy(() => import("./pages/PLM/Aenderungen"));
 const PlmDokumente = lazy(() => import("./pages/PLM/Dokumente"));
+const PlmBeschaffung = lazy(() => import("./pages/PLM/Beschaffung"));
+const PlmStuecklistenbaum = lazy(() => import("./pages/PLM/Stuecklistenbaum"));
 const Iso13485 = lazy(() => import("./pages/Iso13485"));
 const ReviewsLayout = lazy(() => import("./pages/Reviews/_layout"));
 const ReviewsOverview = lazy(() => import("./pages/Reviews/Overview"));
