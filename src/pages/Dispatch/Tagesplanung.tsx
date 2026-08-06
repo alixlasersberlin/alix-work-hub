@@ -76,7 +76,8 @@ export default function DispatchTagesplanung() {
   const { data: drivers = [] } = useQuery({
     queryKey: ['dispatch', 'drivers-active'],
     queryFn: async () => {
-      const { data } = await supabase.from('drivers').select('id, full_name').eq('active', true).order('full_name');
+      const { data, error } = await supabase.from('drivers').select('id, full_name').eq('active', true).order('full_name');
+      if (error) { toast.error(`Fahrer konnten nicht geladen werden: ${error.message}`); return []; }
       return data ?? [];
     },
     staleTime: 300_000,
@@ -85,11 +86,13 @@ export default function DispatchTagesplanung() {
   const { data: vehicles = [] } = useQuery({
     queryKey: ['dispatch', 'vehicles-active'],
     queryFn: async () => {
-      const { data } = await supabase.from('vehicles').select('id, license_plate, name, status').eq('active', true).order('license_plate');
+      const { data, error } = await supabase.from('vehicles').select('id, license_plate, name, status').eq('active', true).order('license_plate');
+      if (error) { toast.error(`Fahrzeuge konnten nicht geladen werden: ${error.message}`); return []; }
       return data ?? [];
     },
     staleTime: 300_000,
   });
+
 
   const assignedIds = useMemo(() => new Set((stops as any[]).map((s) => s.appointment_id)), [stops]);
   const openAppointments = useMemo(
