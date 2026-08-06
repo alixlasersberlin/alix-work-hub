@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Wrench, Plus, AlertTriangle } from 'lucide-react';
+import { Wrench, Plus, AlertTriangle, Mail } from 'lucide-react';
 import { differenceInDays, addMonths, format, parseISO } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card } from '@/components/ui/card';
