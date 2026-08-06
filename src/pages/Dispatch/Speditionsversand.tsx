@@ -340,7 +340,7 @@ export default function DispatchSpeditionsversand() {
                   <select
                     className={`rounded-full border px-2 py-1 text-xs bg-transparent ${statusClass(r.status)}`}
                     value={r.status ?? 'angefragt'}
-                    onChange={e => update.mutate({ id: r.id, patch: { status: e.target.value } })}
+                    onChange={e => changeStatus(r, e.target.value)}
                   >
                     {Object.entries(STATUSES).map(([k, v]) => <option key={k} value={k} className="bg-background text-foreground">{v}</option>)}
                   </select>
