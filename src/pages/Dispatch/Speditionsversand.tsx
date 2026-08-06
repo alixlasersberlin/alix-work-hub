@@ -34,6 +34,7 @@ function statusClass(s?: string | null) {
 const EMPTY = {
   carrier_id: '',
   appointment_id: '',
+  route_plan_id: '',
   status: 'angefragt',
   assigned_date: '',
   agreed_price: '',
@@ -41,6 +42,18 @@ const EMPTY = {
   tracking_number: '',
   notes: '',
 };
+
+function addrOf(a: any): string {
+  if (!a) return '';
+  if (typeof a === 'string') return a;
+  return [a.street || a.strasse, [a.zip || a.plz, a.city || a.ort].filter(Boolean).join(' '), a.country || a.land]
+    .filter(Boolean).join(', ');
+}
+
+function planLabel(p: any): string {
+  return [p.order_id ? `Auftrag ${String(p.order_id).slice(0, 8)}` : null, p.contact_name, p.device_model, p.device_serial_number, addrOf(p.location_address), p.planned_date ? format(new Date(p.planned_date), 'dd.MM.yyyy') : null]
+    .filter(Boolean).join(' · ');
+}
 
 export default function DispatchSpeditionsversand() {
   const qc = useQueryClient();
