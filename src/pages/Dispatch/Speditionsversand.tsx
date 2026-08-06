@@ -67,7 +67,7 @@ export default function DispatchSpeditionsversand() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('delivery_carrier_assignments')
-        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country)')
+        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country), route_plan:route_plan_id(id, order_id, planned_date, planning_status, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, tour_type)')
         .order('created_at', { ascending: false })
         .limit(300);
       if (error) throw error;
