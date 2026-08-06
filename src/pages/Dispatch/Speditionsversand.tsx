@@ -50,8 +50,21 @@ function addrOf(a: any): string {
     .filter(Boolean).join(', ');
 }
 
+function planOrderNo(p: any): string | null {
+  return p?.order?.order_number ?? (p?.order_id ? `Auftrag ${String(p.order_id).slice(0, 8)}` : null);
+}
+
+function planCustomer(p: any): string | null {
+  return p?.order?.customer?.company_name || p?.order?.customer?.contact_name || p?.contact_name || null;
+}
+
+function planContact(p: any): string | null {
+  const c = p?.order?.customer;
+  return [p?.contact_name || c?.contact_name, p?.contact_email || c?.email, p?.contact_phone || c?.phone].filter(Boolean).join(' · ') || null;
+}
+
 function planLabel(p: any): string {
-  return [p.order_id ? `Auftrag ${String(p.order_id).slice(0, 8)}` : null, p.contact_name, p.device_model, p.device_serial_number, addrOf(p.location_address), p.planned_date ? format(new Date(p.planned_date), 'dd.MM.yyyy') : null]
+  return [planOrderNo(p), planCustomer(p), p.device_model, p.device_serial_number, addrOf(p.location_address), p.planned_date ? format(new Date(p.planned_date), 'dd.MM.yyyy') : null]
     .filter(Boolean).join(' · ');
 }
 
@@ -69,7 +82,7 @@ export default function DispatchSpeditionsversand() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('delivery_carrier_assignments')
-        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country), route_plan:route_plan_id(id, order_id, planned_date, planning_status, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, tour_type)')
+        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country), route_plan:route_plan_id(id, order_id, planned_date, planning_status, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, tour_type, order:order_id(order_number, customer:customer_id(company_name, contact_name, email, phone)))')
         .order('created_at', { ascending: false })
         .limit(300);
       if (error) throw error;
@@ -111,7 +124,7 @@ export default function DispatchSpeditionsversand() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('route_plans')
-        .select('id, order_id, planned_date, requested_date, planning_status, tour_type, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, planning_note')
+        .select('id, order_id, planned_date, requested_date, planning_status, tour_type, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, planning_note, order:order_id(order_number, customer:customer_id(company_name, contact_name, email, phone))')
         .order('planned_date', { ascending: false, nullsFirst: false })
         .limit(300);
       if (error) throw error;
