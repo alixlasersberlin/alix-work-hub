@@ -1995,6 +1995,24 @@ function AppRoutes() {
           </Route>
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
+
+          {/* ALIXWORK Produktion & Beschaffung (PLM / MDR / ISO 13485) */}
+          <Route path="/produktion" element={<ProtectedRoute><PlmDashboard /></ProtectedRoute>} />
+          <Route path="/produktion/geraete" element={<ProtectedRoute><PlmGeraete /></ProtectedRoute>} />
+          <Route path="/produktion/baugruppen" element={<ProtectedRoute><PlmBaugruppen /></ProtectedRoute>} />
+          <Route path="/produktion/einzelteile" element={<ProtectedRoute><PlmEinzelteile /></ProtectedRoute>} />
+          <Route path="/produktion/stueckliste" element={<ProtectedRoute><PlmStueckliste /></ProtectedRoute>} />
+          <Route path="/produktion/explosionszeichnungen" element={<ProtectedRoute><PlmExplosionszeichnungen /></ProtectedRoute>} />
+          <Route path="/produktion/lieferanten" element={<ProtectedRoute><PlmLieferanten /></ProtectedRoute>} />
+          <Route path="/produktion/wareneingang" element={<ProtectedRoute><PlmWareneingang /></ProtectedRoute>} />
+          <Route path="/produktion/pruefplaene" element={<ProtectedRoute><PlmPruefplaene /></ProtectedRoute>} />
+          <Route path="/produktion/pruefmerkmale" element={<ProtectedRoute><PlmPruefmerkmale /></ProtectedRoute>} />
+          <Route path="/produktion/auftraege" element={<ProtectedRoute><PlmProduktionsauftraege /></ProtectedRoute>} />
+          <Route path="/produktion/arbeitsanweisungen" element={<ProtectedRoute><PlmArbeitsanweisungen /></ProtectedRoute>} />
+          <Route path="/produktion/aenderungen" element={<ProtectedRoute><PlmAenderungen /></ProtectedRoute>} />
+          <Route path="/produktion/dokumente" element={<ProtectedRoute><PlmDokumente /></ProtectedRoute>} />
+
+
           
 
           <Route path="/bewertungen" element={<ProtectedRoute><ReviewsLayout /></ProtectedRoute>}>
