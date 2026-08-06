@@ -58,11 +58,13 @@ export default function DispatchRetouren() {
   const [form, setForm] = useState({ ...EMPTY });
 
   const { data: rows, isPending } = useQuery({
-    queryKey: ['dispatch', 'returns', statusFilter],
+    queryKey: ['dispatch', 'returns'],
     queryFn: async () => {
-      let q = supabase.from('delivery_returns').select('*').order('created_at', { ascending: false }).limit(300);
-      if (statusFilter !== 'alle') q = q.eq('status', statusFilter);
-      const { data, error } = await q;
+      const { data, error } = await supabase
+        .from('delivery_returns')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500);
       if (error) throw error;
       return data ?? [];
     },
@@ -70,11 +72,14 @@ export default function DispatchRetouren() {
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    if (!s) return rows ?? [];
-    return (rows ?? []).filter((r: any) =>
+    let list = rows ?? [];
+    if (statusFilter !== 'alle') list = list.filter((r: any) => r.status === statusFilter);
+    if (!s) return list;
+    return list.filter((r: any) =>
       [r.return_number, r.order_number, r.customer_name, r.company_name, r.device_name, r.serial_number]
         .some(v => String(v ?? '').toLowerCase().includes(s)));
-  }, [rows, search]);
+  }, [rows, search, statusFilter]);
+
 
   const create = useMutation({
     mutationFn: async () => {
