@@ -43,10 +43,15 @@ import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
 import { Briefcase, Bell, BellRing, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2, Zap, Quote } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
+import appVersion from '@/version.json';
 
 
 
-const APP_VERSION = '6.01';
+// Wird bei jedem Production-Build (Publish) automatisch um 0.01 erhöht
+// (siehe vite.config.ts -> autoBumpVersion Plugin).
+declare const __APP_VERSION__: string;
+const APP_VERSION =
+  typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : appVersion.version;
 
 type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 type NavItem = NavChild & { children?: NavChild[] };

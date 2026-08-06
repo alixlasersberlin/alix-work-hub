@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "allowJs": true,
+    "resolveJsonModule": true,
     "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
