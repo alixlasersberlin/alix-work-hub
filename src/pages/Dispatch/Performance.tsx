@@ -154,7 +154,7 @@ export default function DispatchPerformance() {
     <div className="space-y-6">
       <PageHeader
         title="Performance & Nachhaltigkeit"
-        description="Phase 8 – Fahrer- und Fahrzeug-Scorecards, Pünktlichkeit, Kosten je Stopp und CO₂-Bilanz"
+        subtitle="Phase 8 – Fahrer- und Fahrzeug-Scorecards, Pünktlichkeit, Kosten je Stopp und CO₂-Bilanz"
         icon={Gauge}
       />
 
