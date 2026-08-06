@@ -262,6 +262,7 @@ export default function DispatchPerformance() {
                         <TableHead className="text-right">km/Stopp</TableHead>
                         <TableHead className="text-right">Kosten/Stopp</TableHead>
                         <TableHead className="text-right">CO₂</TableHead>
+                        <TableHead className="text-right">Bewertung</TableHead>
                         <TableHead className="text-right">Vorfälle</TableHead>
                       </TableRow>
                     </TableHeader>
