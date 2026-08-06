@@ -104,15 +104,41 @@ export default function DispatchSpeditionsversand() {
     staleTime: 60_000,
   });
 
+  const { data: routePlans } = useQuery({
+    queryKey: ['dispatch', 'route-plans', 'for-carrier'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('route_plans')
+        .select('id, order_id, planned_date, requested_date, planning_status, tour_type, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, planning_note')
+        .order('planned_date', { ascending: false, nullsFirst: false })
+        .limit(300);
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  const assignedPlanIds = useMemo(
+    () => new Set((rows ?? []).map((r: any) => r.route_plan_id).filter(Boolean)),
+    [rows],
+  );
+
+  const openPlans = useMemo(
+    () => (routePlans ?? []).filter((p: any) => !assignedPlanIds.has(p.id) && p.planning_status !== 'abgeschlossen' && p.planning_status !== 'storniert'),
+    [routePlans, assignedPlanIds],
+  );
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     return (rows ?? []).filter((r: any) => {
       if (statusFilter !== 'alle' && r.status !== statusFilter) return false;
       if (!s) return true;
-      return [r.tracking_number, r.carrier?.name, r.appointment?.order_number, r.appointment?.customer_name, r.appointment?.company_name, r.appointment?.serial_number]
+      return [r.tracking_number, r.carrier?.name, r.appointment?.order_number, r.appointment?.customer_name, r.appointment?.company_name, r.appointment?.serial_number,
+        r.route_plan?.contact_name, r.route_plan?.device_serial_number, r.route_plan?.device_model]
         .some(v => String(v ?? '').toLowerCase().includes(s));
     });
   }, [rows, search, statusFilter]);
+
 
   const create = useMutation({
     mutationFn: async () => {
