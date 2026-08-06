@@ -2090,6 +2090,40 @@ export default function ImportManagement() {
                   </span>
                 </div>
 
+                {/* Einzelimport nach Name oder Auftragsnummer */}
+                <div className="rounded-lg border border-border bg-secondary/30 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Search className="w-4 h-4 text-primary" />
+                    Einzelnen Vorgang importieren (Name oder Auftragsnummer)
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Input
+                      value={invoiceSearch}
+                      onChange={(e) => setInvoiceSearch(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleInvoiceSingleImport(); }}
+                      placeholder="z.B. Müller GmbH oder 2026-04226"
+                      className="bg-secondary border-border"
+                    />
+                    <Button onClick={handleInvoiceSingleImport} disabled={invoiceSingleBusy || invoiceImporting} variant="outline" className="whitespace-nowrap">
+                      {invoiceSingleBusy ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Suche & Import…</>
+                      ) : (
+                        <><Search className="w-4 h-4 mr-2" /> Vorgang importieren</>
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Importiert nur die Rechnungen der Ratenzahler-Profile, die zu Name, Firma, Referenz-/Auftragsnummer oder E-Mail passen (Quelle & Zeitraum wie oben gewählt).
+                  </p>
+                  {invoiceSingleResult && (
+                    <div className="text-sm">
+                      neu: <strong className="text-[hsl(var(--success))]">{invoiceSingleResult.imported}</strong> • aktualisiert: <strong>{invoiceSingleResult.updated}</strong> • Fehler: <strong className="text-destructive">{invoiceSingleResult.failed}</strong> • geprüfte Profile: <strong>{invoiceSingleResult.profiles}</strong>
+                    </div>
+                  )}
+                </div>
+
+
+
                 {packagesResult && (
                   <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-1 text-sm">
                     <div>Pakete aus Zoho: <strong>{packagesResult.packages_fetched}</strong></div>
