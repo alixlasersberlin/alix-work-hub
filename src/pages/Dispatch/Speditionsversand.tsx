@@ -277,7 +277,14 @@ export default function DispatchSpeditionsversand() {
             {openPlans.slice(0, 50).map((p: any) => (
               <div key={p.id} className="flex items-center justify-between gap-3 py-2">
                 <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{p.contact_name || 'Ohne Kontakt'} {p.device_model ? `· ${p.device_model}` : ''}</div>
+                  <div className="text-sm font-medium truncate">
+                    <span className="font-mono text-primary">{planOrderNo(p) ?? 'Ohne Auftrag'}</span>
+                    {' · '}{planCustomer(p) || 'Ohne Kunde'}
+                    {p.device_model ? ` · ${p.device_model}` : ''}
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {planContact(p) || 'Kein Kontakt hinterlegt'}
+                  </div>
                   <div className="text-xs text-muted-foreground truncate">
                     {[addrOf(p.location_address), p.device_serial_number, p.planning_status, p.planned_date ? format(new Date(p.planned_date), 'dd.MM.yyyy') : null].filter(Boolean).join(' · ')}
                   </div>
