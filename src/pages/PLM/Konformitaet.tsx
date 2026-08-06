@@ -98,7 +98,7 @@ export default function PlmKonformitaet() {
     <div className="space-y-6">
       <PageHeader
         title="Konformität (CE / MDR)"
-        description="Regulatorischer Status je Gerät inkl. Pflichtdokumenten, Ablaufdaten und UDI."
+        subtitle="Regulatorischer Status je Gerät inkl. Pflichtdokumenten, Ablaufdaten und UDI."
         icon={ShieldCheck}
       />
 
