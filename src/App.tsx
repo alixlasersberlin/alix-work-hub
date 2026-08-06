@@ -113,6 +113,7 @@ const DispatchArchiv = lazy(() => import("./pages/Dispatch/Archiv"));
 const DispatchSpediteure = lazy(() => import("./pages/Dispatch/Spediteure"));
 const DispatchRetouren = lazy(() => import("./pages/Dispatch/Retouren"));
 const DispatchAiAssistant = lazy(() => import("./pages/Dispatch/AiAssistant"));
+const DispatchWartung = lazy(() => import("./pages/Dispatch/Wartung"));
 const DispatchPerformance = lazy(() => import("./pages/Dispatch/Performance"));
 const LieferterminBestaetigung = lazy(() => import("./pages/Dispatch/public/Liefertermin"));
 const Lieferstatus = lazy(() => import("./pages/Dispatch/public/Lieferstatus"));
