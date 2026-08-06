@@ -137,7 +137,7 @@ export default function DispatchFahrzeuge() {
             : type.includes('7') ? VEHICLE_PRESETS.lkw75
             : type.includes('pkw') ? VEHICLE_PRESETS.pkw
             : VEHICLE_PRESETS.transporter;
-        const patch: Record<string, unknown> = {};
+        const patch: any = {};
         if (v.fuel_type == null) patch.fuel_type = preset.fuel_type;
         if (v.consumption_per_100km == null) patch.consumption_per_100km = preset.consumption_per_100km;
         if (v.co2_g_per_km == null) patch.co2_g_per_km = preset.co2_g_per_km;
