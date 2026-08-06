@@ -649,6 +649,21 @@ export default function TicketsList() {
                             <div className="text-sm">{r.customer_name || '—'}</div>
                             <div className="text-xs text-muted-foreground">{r.company_name || ''}</div>
                           </TableCell>
+                          <TableCell className="text-sm whitespace-nowrap">
+                            {(() => {
+                              const cn = (r as any).case_number as string | null;
+                              const off = cn ? offersByCase[cn] : undefined;
+                              if (!off) return <span className="text-muted-foreground text-xs">Kein Angebot</span>;
+                              return (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="font-mono text-xs text-primary">{off.offer_number}</span>
+                                  <Badge variant="outline" className={offerStatusColor(off.status)}>
+                                    {off.status || 'offen'}
+                                  </Badge>
+                                </div>
+                              );
+                            })()}
+                          </TableCell>
                           <TableCell className="text-sm">{r.device_name || '—'}</TableCell>
                           <TableCell className="text-sm font-mono">{r.serial_number || '—'}</TableCell>
                           <TableCell><Badge variant="outline">{r.department}</Badge></TableCell>
