@@ -22,6 +22,16 @@ import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 
 interface OfferInfo { offer_number: string; status: string | null }
 
+function offerStatusColor(s: string | null) {
+  const v = (s || '').toLowerCase();
+  if (v.includes('angenommen') || v.includes('accepted')) return 'border-emerald-500/40 text-emerald-400';
+  if (v.includes('abgelehnt') || v.includes('declined')) return 'border-red-500/40 text-red-400';
+  if (v.includes('versendet') || v.includes('sent')) return 'border-blue-500/40 text-blue-400';
+  if (v.includes('entwurf') || v.includes('draft')) return 'border-muted-foreground/40 text-muted-foreground';
+  return 'border-amber-500/40 text-amber-400';
+}
+
+
 interface TicketRow {
   id: string;
   external_ticket_id: string | null;
