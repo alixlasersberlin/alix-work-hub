@@ -128,7 +128,18 @@ export default function DispatchSpeditionsversand() {
     [routePlans, assignedPlanIds],
   );
 
+  const filteredAppointments = useMemo(() => {
+    const s = apptSearch.trim().toLowerCase();
+    const list = appointments ?? [];
+    if (!s) return list;
+    return list.filter((a: any) =>
+      [a.order_number, a.customer_name, a.company_name, a.device_name, a.delivery_city, a.delivery_zip]
+        .some(v => String(v ?? '').toLowerCase().includes(s)),
+    );
+  }, [appointments, apptSearch]);
+
   const filtered = useMemo(() => {
+
     const s = search.trim().toLowerCase();
     return (rows ?? []).filter((r: any) => {
       if (statusFilter !== 'alle' && r.status !== statusFilter) return false;
