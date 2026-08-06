@@ -694,7 +694,7 @@ export const navItems: NavItem[] = [
   },
 
   {
-    path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin'],
+    path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin', 'Admin'],
     children: [
       {
         path: '#mdr-ce', label: 'MDR CE & ISO 13485', icon: ShieldCheck, roles: ['Super Admin'],
@@ -945,14 +945,14 @@ export const navItems: NavItem[] = [
 
 
       {
-        path: '#system', label: 'SYSTEM', icon: Cog, roles: ['Super Admin'],
+        path: '#system', label: 'SYSTEM', icon: Cog, roles: ['Super Admin', 'Admin'],
         children: [
-          { path: '/import', label: 'Import', icon: Cloud, roles: ['Super Admin'] },
+          { path: '/import', label: 'Import', icon: Cloud, roles: ['Super Admin', 'Admin'] },
           { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
           { path: '/verkauf/anfragen/import', label: 'Anfragen Import', icon: Upload, roles: ['Super Admin'] },
           { path: '/verkauf/angebot/import', label: 'Angebote Data Import', icon: Upload, roles: ['Super Admin'] },
-          { path: '/operation/auftrags-import', label: 'Auftragsabgleich – Import', icon: Upload, roles: ['Super Admin'] },
-          { path: '/operation/auftrags-abgleich', label: 'Auftragsabgleich', icon: ListChecks, roles: ['Super Admin'] },
+          { path: '/operation/auftrags-import', label: 'Auftragsabgleich – Import', icon: Upload, roles: ['Super Admin', 'Admin'] },
+          { path: '/operation/auftrags-abgleich', label: 'Auftragsabgleich', icon: ListChecks, roles: ['Super Admin', 'Admin'] },
           { path: '/operation/angebotskalender-config', label: 'Angebotskalender Konfiguration', icon: Calendar, roles: ['Super Admin'] },
           { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
           { path: '/operation/news', label: 'News & Begrüßung', icon: Megaphone, roles: ['Super Admin'] },
