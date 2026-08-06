@@ -360,8 +360,8 @@ export default function DispatchSpeditionsversand() {
                     </Button>
                     <Button
                       size="sm" variant="outline" className="h-8 gap-1"
-                      title={r.appointment?.contact_email ? `Versandavis an ${r.appointment.contact_email}` : 'Keine Kunden-E-Mail hinterlegt'}
-                      disabled={!r.appointment?.contact_email || sending === `${r.id}:customer`}
+                      title={customerEmailOf(r) ? `Versandavis an ${customerEmailOf(r)} (CC K.trinh@alix-operation.de)` : 'Keine Kunden-E-Mail hinterlegt'}
+                      disabled={!customerEmailOf(r) || sending === `${r.id}:customer`}
                       onClick={() => sendMail(r, 'customer')}
                     >
                       {sending === `${r.id}:customer` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} Kunde
