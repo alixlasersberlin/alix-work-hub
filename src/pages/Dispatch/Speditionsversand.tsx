@@ -147,6 +147,7 @@ export default function DispatchSpeditionsversand() {
       const { error } = await supabase.from('delivery_carrier_assignments').insert({
         carrier_id: form.carrier_id,
         appointment_id: form.appointment_id || null,
+        route_plan_id: form.route_plan_id || null,
         status: form.status,
         assigned_date: form.assigned_date || null,
         agreed_price: form.agreed_price ? Number(form.agreed_price) : null,
