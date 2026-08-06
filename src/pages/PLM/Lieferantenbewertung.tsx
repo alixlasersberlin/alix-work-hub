@@ -32,7 +32,7 @@ export default function PlmLieferantenbewertung() {
   }, []);
 
   const rows = useMemo(() => {
-    return suppliers.map(s => {
+    return suppliers.map((s): Row => {
       const rs = receipts.filter(r => r.supplier_id === s.id);
       const total = rs.length;
       const bad = rs.filter(r => r.blocked || ['abweichung', 'gesperrt', 'rueckgesendet'].includes(r.inspection_result)).length;
