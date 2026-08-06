@@ -11,6 +11,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") || "";
 const BCC = "rde@alix-lasers.com";
 const CUSTOMER_CC = "K.trinh@alix-operation.de";
 
@@ -46,6 +47,7 @@ Deno.serve(async (req) => {
     if (!assignmentId) return json({ error: "assignment_id fehlt" }, 400);
     if (!["carrier", "customer"].includes(mode)) return json({ error: "mode ungültig" }, 400);
     if (!RESEND_API_KEY) return json({ error: "RESEND_API_KEY nicht konfiguriert" }, 500);
+    if (!LOVABLE_API_KEY) return json({ error: "LOVABLE_API_KEY nicht konfiguriert" }, 500);
 
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: row, error } = await sb
@@ -125,9 +127,13 @@ Deno.serve(async (req) => {
     let status = "sent";
     let providerId: string | null = null;
     let errText: string | null = null;
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
       method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": RESEND_API_KEY,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         from: "Alix Auslieferung <no-reply@alixwork.de>",
         to: [to],
