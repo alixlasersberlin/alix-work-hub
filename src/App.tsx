@@ -113,6 +113,7 @@ const DispatchArchiv = lazy(() => import("./pages/Dispatch/Archiv"));
 const DispatchSpediteure = lazy(() => import("./pages/Dispatch/Spediteure"));
 const DispatchRetouren = lazy(() => import("./pages/Dispatch/Retouren"));
 const DispatchAiAssistant = lazy(() => import("./pages/Dispatch/AiAssistant"));
+const DispatchPerformance = lazy(() => import("./pages/Dispatch/Performance"));
 const LieferterminBestaetigung = lazy(() => import("./pages/Dispatch/public/Liefertermin"));
 const Lieferstatus = lazy(() => import("./pages/Dispatch/public/Lieferstatus"));
 const Finance = lazy(() => import("./pages/Finance"));
@@ -1434,6 +1435,7 @@ function AppRoutes() {
           <Route path="/dispatch/spediteure" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchSpediteure /></ProtectedRoute>} />
           <Route path="/dispatch/retouren" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchRetouren /></ProtectedRoute>} />
           <Route path="/dispatch/ki" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchAiAssistant /></ProtectedRoute>} />
+          <Route path="/dispatch/performance" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchPerformance /></ProtectedRoute>} />
           <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
           <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
           <Route path="/finance/alix-flex" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixFlex /></ProtectedRoute>} />
