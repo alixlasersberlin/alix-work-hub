@@ -206,6 +206,21 @@ export default function DispatchSpeditionsversand() {
     }
   }
 
+  const customerEmailOf = (r: any) => r.appointment?.contact_email || r.route_plan?.contact_email || null;
+
+  // Statuswechsel: sobald "abgeholt" gesetzt wird, automatisch Versandavis an den Kunden (CC K.trinh).
+  async function changeStatus(row: any, next: string) {
+    const prev = row.status ?? 'angefragt';
+    await update.mutateAsync({ id: row.id, patch: { status: next } });
+    if (next === 'abgeholt' && prev !== 'abgeholt') {
+      if (!customerEmailOf(row)) {
+        toast.warning('Als abgeholt markiert – keine Kunden-E-Mail hinterlegt, kein Versandavis gesendet.');
+        return;
+      }
+      await sendMail(row, 'customer');
+    }
+  }
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       <PageHeader
