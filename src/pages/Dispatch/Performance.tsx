@@ -33,8 +33,8 @@ export default function DispatchPerformance() {
         supabase.from('delivery_tours')
           .select('id, tour_number, tour_date, status, driver_id, vehicle_id, planned_distance_km, actual_distance_km, planned_drive_minutes, planned_work_minutes, utilization_pct, actual_start_at, actual_end_at')
           .gte('tour_date', from).lte('tour_date', to).limit(2000),
-        supabase.from('drivers').select('id, full_name, active').limit(500),
-        supabase.from('vehicles').select('id, name, license_plate, is_electric, vehicle_type, active').limit(500),
+        supabase.from('drivers').select('id, full_name, active, cost_per_hour, cost_per_km').limit(500),
+        supabase.from('vehicles').select('id, name, license_plate, is_electric, fuel_type, co2_g_per_km, cost_per_km, fixed_cost_per_day, vehicle_type, active').limit(500),
       ]);
       if (toursRes.error) throw toursRes.error;
       const tours = toursRes.data ?? [];
@@ -43,18 +43,21 @@ export default function DispatchPerformance() {
       let stops: any[] = [];
       let costs: any[] = [];
       let incidents: any[] = [];
+      let ratings: any[] = [];
       if (tourIds.length) {
         const chunk = tourIds.slice(0, 1000);
-        const [s, c, i] = await Promise.all([
+        const [s, c, i, r] = await Promise.all([
           supabase.from('delivery_tour_stops').select('tour_id, stop_status, delay_minutes, distance_from_prev_km').in('tour_id', chunk).limit(5000),
           supabase.from('delivery_costs').select('tour_id, amount').in('tour_id', chunk).limit(5000),
           supabase.from('delivery_incidents').select('tour_id, incident_type').in('tour_id', chunk).limit(5000),
+          supabase.from('delivery_ratings').select('tour_id, driver_id, rating, punctuality, friendliness, instruction_quality, comment, created_at').in('tour_id', chunk).limit(5000),
         ]);
         stops = s.data ?? [];
         costs = c.data ?? [];
         incidents = i.data ?? [];
+        ratings = r.data ?? [];
       }
-      return { tours, stops, costs, incidents, drivers: driversRes.data ?? [], vehicles: vehiclesRes.data ?? [] };
+      return { tours, stops, costs, incidents, ratings, drivers: driversRes.data ?? [], vehicles: vehiclesRes.data ?? [] };
     },
   });
 
