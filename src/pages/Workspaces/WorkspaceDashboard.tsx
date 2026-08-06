@@ -4,8 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { Card } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
 import { iconFor } from '@/lib/workspace/icons';
 import { Loader2 } from 'lucide-react';
+
+const QA_SIZE_KEY = 'alix.quickaccess.size';
 
 type KpiScope = 'source' | 'customer' | 'order' | 'tenant' | 'lead-country' | 'unscoped';
 type Kpi = { key: string; label: string; table: string; scope: KpiScope; hint?: string; to?: string };
