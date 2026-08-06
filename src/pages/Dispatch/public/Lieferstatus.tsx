@@ -3,7 +3,9 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, MapPin, Package, Truck, CheckCircle2, Clock } from 'lucide-react';
+import { Loader2, MapPin, Package, Truck, CheckCircle2, Clock, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { DELIVERY_STATUS_LABELS } from '@/pages/Dispatch/constants';
 
 type Tracking = {
@@ -151,8 +153,68 @@ export default function Lieferstatus() {
           </CardContent>
         </Card>
 
+        {delivered && <RatingCard token={token!} appointmentId={a.id} tourId={data.stop?.tour_id ?? null} />}
+
         <p className="text-center text-xs text-muted-foreground">Diese Seite aktualisiert sich automatisch.</p>
       </div>
     </div>
   );
 }
+
+function RatingCard({ token, appointmentId, tourId }: { token: string; appointmentId?: string | null; tourId?: string | null }) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [sent, setSent] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  async function submit() {
+    if (!rating) return;
+    setSaving(true);
+    const { error } = await supabase.from('delivery_ratings').insert({
+      token,
+      appointment_id: appointmentId ?? null,
+      tour_id: tourId ?? null,
+      rating,
+      comment: comment.trim() || null,
+    });
+    setSaving(false);
+    if (!error) setSent(true);
+  }
+
+  if (sent) {
+    return (
+      <Card>
+        <CardContent className="pt-6 text-center text-sm text-muted-foreground">
+          Vielen Dank für Ihre Bewertung!
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Wie zufrieden waren Sie mit der Lieferung?</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map(n => (
+            <button key={n} type="button" onClick={() => setRating(n)} aria-label={`${n} Sterne`}>
+              <Star className={`h-7 w-7 ${n <= rating ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
+            </button>
+          ))}
+        </div>
+        <Textarea
+          placeholder="Ihr Kommentar (optional)"
+          value={comment}
+          onChange={e => setComment(e.target.value)}
+          rows={3}
+        />
+        <Button className="w-full" disabled={!rating || saving} onClick={submit}>
+          Bewertung absenden
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
