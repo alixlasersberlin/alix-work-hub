@@ -135,7 +135,7 @@ export default function TicketsList() {
     setBulkBusy(true);
     const { error } = await supabase
       .from('tickets')
-      .update({ status: 'geschlossen', closed_at: new Date().toISOString() })
+      .update({ status: 'geschlossen' })
       .in('id', selected);
     setBulkBusy(false);
     if (error) { toast.error(error.message); return; }
