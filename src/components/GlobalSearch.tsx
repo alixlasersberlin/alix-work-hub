@@ -17,7 +17,7 @@ type Hit = {
   to: string;
 };
 
-const GROUPS = ['Kunden', 'Aufträge', 'Tickets', 'Geräte', 'Dokumente', 'Belege', 'Artikel'];
+const GROUPS = ['Kunden', 'Aufträge', 'Tickets', 'Geräte', 'Dokumente', 'Belege', 'Artikel', 'Touren', 'Liefertermine'];
 
 /**
  * Mandantenabhängige globale Suche (Phase 4).
