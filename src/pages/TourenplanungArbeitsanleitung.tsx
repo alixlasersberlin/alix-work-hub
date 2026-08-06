@@ -204,7 +204,52 @@ const sections: Section[] = [
       },
     ],
   },
+  {
+    id: 'speditionsversand',
+    title: 'E · Speditionsversand',
+    icon: Truck,
+    intro: 'Wenn das Gerät nicht mit eigener Tour, sondern über eine Spedition zum Kunden geht.',
+    steps: [
+      {
+        title: '1. Spedition zuordnen',
+        who: 'Tourenplanung',
+        where: 'Dispatch → Speditionsversand',
+        path: '/dispatch/speditionsversand',
+        actions: [
+          '„Neuer Speditionsversand" öffnen und Auftrag bzw. Liefertermin auswählen.',
+          'Spedition wählen, Abholdatum und vereinbarten Preis eintragen.',
+          'Hinweise zur Sendung erfassen (z. B. Hebebühne, Avisierung).',
+        ],
+        result: 'Sendung ist angelegt, Status „Angefragt".',
+      },
+      {
+        title: '2. Frachtauftrag an die Spedition senden',
+        who: 'Tourenplanung',
+        where: 'Dispatch → Speditionsversand',
+        path: '/dispatch/speditionsversand',
+        actions: [
+          'Frachtauftrag als PDF prüfen (Abhol-/Lieferadresse, Gerät, Seriennummer, Preis).',
+          'PDF per E-Mail an die Spedition senden – der Versand wird protokolliert.',
+          'Nach der Abholung Status auf „Abgeholt" setzen.',
+        ],
+        result: 'Spedition hat den Frachtauftrag, Abholung ist dokumentiert.',
+      },
+      {
+        title: '3. Kunde informieren und Zustellung nachhalten',
+        who: 'Tourenplanung',
+        where: 'Dispatch → Speditionsversand',
+        path: '/dispatch/speditionsversand',
+        actions: [
+          'Sendungsnummer der Spedition eintragen.',
+          'Versandavis mit Sendungsnummer an den Kunden senden.',
+          'Status auf „Unterwegs" und nach Zustellung auf „Zugestellt" setzen.',
+        ],
+        result: 'Kunde ist informiert, Sendung ist lückenlos dokumentiert.',
+      },
+    ],
+  },
 ];
+
 
 const rules = [
   'Kein Einsatz ohne vollständige Adresse, PLZ und Telefonnummer.',
