@@ -96,6 +96,14 @@ export default function WorkspaceDashboard() {
   const { current: tenant, sourceFilter } = useTenant();
   const [counts, setCounts] = useState<Record<string, number | null>>({});
   const [loading, setLoading] = useState(true);
+  const [qaSize, setQaSize] = useState<number>(() => {
+    try { return Number(localStorage.getItem(QA_SIZE_KEY)) || 100; } catch { return 100; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem(QA_SIZE_KEY, String(qaSize)); } catch { /* ignore */ }
+  }, [qaSize]);
+
 
   const ws = workspaces.find(w => w.code === code) || current;
   const tenantCode = tenant?.code ?? null;
