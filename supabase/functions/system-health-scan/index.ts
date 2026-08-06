@@ -267,10 +267,16 @@ Deno.serve(async (req) => {
     }
 
     // Freigabe-Anfragen für strukturelle Vorschläge (ohne Duplikate)
+    // Wichtig: auch bereits bearbeitete (approved/rejected/applied) Titel werden
+    // 90 Tage lang nicht erneut vorgeschlagen – sonst kommen die gleichen
+    // Anzeigen nach jedem Scan wieder.
     const approvalCandidates = findings.filter((f) => f.needs_approval);
     if (approvalCandidates.length) {
+      const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
       const { data: pending } = await admin
-        .from('sys_health_approvals').select('title').eq('status', 'pending');
+        .from('sys_health_approvals')
+        .select('title, status, created_at')
+        .or(`status.eq.pending,created_at.gte.${since}`);
       const known = new Set((pending ?? []).map((p: any) => p.title));
       const rows = approvalCandidates
         .filter((f) => !known.has(f.title))
