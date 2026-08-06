@@ -221,6 +221,8 @@ Deno.serve(async (req) => {
     const profilesPage = body.page ?? 1;
     const maxProfilePages = Math.min(Math.max(body.max_pages ?? 1, 1), 5);
     const regionFilter = body.region_filter ?? "all";
+    const search = (body.search ?? "").toString().trim();
+
 
 
     const cfg = getZohoConfig(sourceSystem);
