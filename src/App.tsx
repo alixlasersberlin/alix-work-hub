@@ -293,6 +293,8 @@ const EmailTemplates = lazy(() => import("./pages/EmailTemplates"));
 const Hilfe = lazy(() => import("./pages/Hilfe"));
 const Dokumentation = lazy(() => import("./pages/Dokumentation"));
 const Arbeitsanleitung = lazy(() => import("./pages/Arbeitsanleitung"));
+const TourenplanungDokumentation = lazy(() => import("./pages/TourenplanungDokumentation"));
+const TourenplanungArbeitsanleitung = lazy(() => import("./pages/TourenplanungArbeitsanleitung"));
 const Papiere = lazy(() => import("./pages/Papiere"));
 const VersandPlaceholder = lazy(() => import("./pages/VersandPlaceholder"));
 const LeasingBank = lazy(() => import("./pages/LeasingBank"));
