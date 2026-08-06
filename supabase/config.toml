@@ -397,3 +397,9 @@ verify_jwt = false
 
 [functions.return-debit-fee-invoice-pdf]
 verify_jwt = false
+
+[functions.delivery-confirmation-submit]
+verify_jwt = false
+
+[functions.delivery-reminder-engine]
+verify_jwt = false

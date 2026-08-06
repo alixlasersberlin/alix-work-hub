@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { CalendarClock, Search, PackageSearch, History } from 'lucide-react';
+import { CalendarClock, Search, PackageSearch, History, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -22,13 +22,14 @@ export default function DispatchTermine() {
   const [status, setStatus] = useState('alle');
   const [readiness, setReadiness] = useState('alle');
   const [historyFor, setHistoryFor] = useState<{ id: string; label: string } | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const { data, isPending } = useQuery({
     queryKey: ['dispatch', 'appointments', status, readiness],
     queryFn: async () => {
       let q = supabase
         .from('delivery_appointments')
-        .select('id, order_number, customer_name, company_name, delivery_zip, delivery_city, appointment_type, status, readiness, planned_date, time_window_start, time_window_end, device_name, is_vip')
+        .select('id, order_number, customer_name, company_name, contact_email, delivery_zip, delivery_city, appointment_type, status, readiness, planned_date, time_window_start, time_window_end, device_name, is_vip')
         .order('planned_date', { ascending: true, nullsFirst: false })
         .limit(300);
       if (status !== 'alle') q = q.eq('status', status as never);
@@ -69,6 +70,19 @@ export default function DispatchTermine() {
       source: 'dispatch_ui',
     });
     toast.success(`Status: ${DELIVERY_STATUS_LABELS[next] ?? next}`);
+    qc.invalidateQueries({ queryKey: ['dispatch'] });
+  }
+
+  async function sendConfirmation(row: any) {
+    if (!row.contact_email) { toast.error('Keine Kunden-E-Mail im Termin hinterlegt'); return; }
+    if (!row.planned_date) { toast.error('Bitte zuerst ein Lieferdatum setzen'); return; }
+    setSendingId(row.id);
+    const { data, error } = await supabase.functions.invoke('delivery-appointment-send', {
+      body: { appointmentId: row.id, baseUrl: window.location.origin },
+    });
+    setSendingId(null);
+    if (error || (data as any)?.error) { toast.error((data as any)?.error ?? error?.message ?? 'Versand fehlgeschlagen'); return; }
+    toast.success(`Bestätigungslink an ${row.contact_email} versendet`);
     qc.invalidateQueries({ queryKey: ['dispatch'] });
   }
 
@@ -124,7 +138,7 @@ export default function DispatchTermine() {
               <TableHead>Art</TableHead>
               <TableHead>Ampel</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Verlauf</TableHead>
+              <TableHead className="text-right">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -162,7 +176,17 @@ export default function DispatchTermine() {
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right whitespace-nowrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mr-1"
+                    disabled={sendingId === r.id}
+                    onClick={() => sendConfirmation(r)}
+                    title="Terminbestätigung an Kunden senden"
+                  >
+                    <Send className="h-3.5 w-3.5 mr-1" /> Bestätigung
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={() => setHistoryFor({ id: r.id, label: r.order_number ?? '' })}>
                     <History className="h-4 w-4" />
                   </Button>

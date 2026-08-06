@@ -105,6 +105,7 @@ const DispatchTouren = lazy(() => import("./pages/Dispatch/Touren"));
 const DispatchFahrzeuge = lazy(() => import("./pages/Dispatch/Fahrzeuge"));
 const DispatchFahrer = lazy(() => import("./pages/Dispatch/Fahrer"));
 const DispatchEinstellungen = lazy(() => import("./pages/Dispatch/Einstellungen"));
+const LieferterminBestaetigung = lazy(() => import("./pages/Dispatch/public/Liefertermin"));
 const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
 const WiederkehrendeZahler = lazy(() => import("./pages/Finance/WiederkehrendeZahler"));
@@ -1153,6 +1154,7 @@ function AppRoutes() {
         <Route path="/termin/ablehnen/:token" element={<AppointmentAction action="cancel" />} />
         <Route path="/simulate/:userId" element={<ProtectedRoute requiredRoles={['Super Admin']}><SimulateEntry /></ProtectedRoute>} />
         {/* Öffentliche Kundenportale – KEIN Login, KEIN AppLayout */}
+        <Route path="/liefertermin/:token" element={<LieferterminBestaetigung />} />
         <Route path="/social-portal/:token" element={<SocialPortalView />} />
         <Route path="/social-onboarding/:token" element={<SocialOnboardingPortal />} />
         <Route path="/social/showcase/:token" element={<SocialShowcase />} />

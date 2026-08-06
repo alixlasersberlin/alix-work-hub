@@ -1,0 +1,111 @@
+// Phase 3 – Erinnerungs-Engine: 24h / 48h / 72h Eskalation für unbeantwortete Terminanfragen.
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
+const BCC = "rde@alix-lasers.com";
+
+function esc(s: unknown) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
+  const result = { checked: 0, reminders: 0, escalations: 0 };
+
+  try {
+    const { data: settingsRows } = await sb.from("delivery_settings").select("setting_key, setting_value");
+    const settings = Object.fromEntries((settingsRows ?? []).map((r: any) => [r.setting_key, r.setting_value]));
+    const stages: number[] = settings?.reminder_hours?.stages ?? [24, 48, 72];
+    const escalateTo: string = settings?.reminder_escalation_email?.value ?? "tour@alix-lasers.com";
+
+    const { data: appts } = await sb
+      .from("delivery_appointments")
+      .select("id, order_number, customer_name, contact_email, contact_name, planned_date, time_window_start, time_window_end, status, updated_at")
+      .in("status", ["bestaetigung_versendet", "kunde_geoeffnet"])
+      .limit(500);
+
+    for (const appt of appts ?? []) {
+      result.checked++;
+      const { data: tok } = await sb
+        .from("delivery_confirmation_tokens")
+        .select("id, created_at, expires_at, revoked, used_at")
+        .eq("appointment_id", appt.id)
+        .is("used_at", null)
+        .eq("revoked", false)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!tok) continue;
+      if (tok.expires_at && new Date(tok.expires_at) < new Date()) continue;
+
+      const hoursSince = (Date.now() - new Date(tok.created_at).getTime()) / 3_600_000;
+      const dueStage = [...stages].sort((a, b) => b - a).find((h) => hoursSince >= h);
+      if (dueStage == null) continue;
+
+      const { count } = await sb
+        .from("delivery_email_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("appointment_id", appt.id)
+        .eq("kind", `reminder_${dueStage}h`);
+      if ((count ?? 0) > 0) continue;
+
+      const isEscalation = dueStage === Math.max(...stages);
+      const to = isEscalation ? escalateTo : (appt.contact_email || "");
+      if (!to.includes("@")) continue;
+
+      const subject = isEscalation
+        ? `Eskalation: Keine Terminrückmeldung – ${appt.customer_name ?? ""} (${appt.order_number ?? "-"})`
+        : `Erinnerung: Bitte bestätigen Sie Ihren Liefertermin${appt.order_number ? ` (${appt.order_number})` : ""}`;
+
+      const html = isEscalation
+        ? `<div style="font-family:Arial;font-size:14px">Der Kunde <b>${esc(appt.customer_name)}</b> (Auftrag ${esc(appt.order_number)}) hat seit ${Math.round(hoursSince)} Stunden nicht auf die Terminanfrage reagiert. Bitte telefonisch nachfassen.</div>`
+        : `<div style="font-family:Arial;font-size:14px"><p>Guten Tag ${esc(appt.contact_name || appt.customer_name || "")},</p><p>wir haben Ihnen einen Liefertermin vorgeschlagen und bisher keine Rückmeldung erhalten. Bitte bestätigen Sie den Termin über den Link aus unserer letzten E-Mail.</p><p>Freundliche Grüße<br/>Ihr Alix Auslieferungsteam</p></div>`;
+
+      if (RESEND_API_KEY) {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ from: "Alix Auslieferung <no-reply@alixwork.de>", to: [to], bcc: [BCC], subject, html }),
+        }).catch(() => {});
+      }
+
+      await sb.from("delivery_email_logs").insert({
+        appointment_id: appt.id,
+        kind: `reminder_${dueStage}h`,
+        recipient: to,
+        bcc: BCC,
+        subject,
+        status: RESEND_API_KEY ? "sent" : "skipped",
+        sent_at: new Date().toISOString(),
+      }).then(() => {}, () => {});
+
+      if (isEscalation) {
+        result.escalations++;
+        await sb.from("delivery_notifications").insert({
+          appointment_id: appt.id,
+          event_type: "confirmation_escalation",
+          title: `Keine Terminrückmeldung – ${appt.customer_name ?? ""}`,
+          body: `Seit ${Math.round(hoursSince)} h keine Antwort auf die Terminanfrage.`,
+          target_role: "Tourenplanung",
+          channel: "app",
+        }).then(() => {}, () => {});
+      } else {
+        result.reminders++;
+      }
+    }
+
+    return Response.json({ ok: true, ...result }, { headers: corsHeaders });
+  } catch (e) {
+    return Response.json({ error: String((e as Error).message ?? e), ...result }, { status: 500, headers: corsHeaders });
+  }
+});
