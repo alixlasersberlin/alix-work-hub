@@ -91,7 +91,12 @@ const glossar = [
   ['Zeitfenster', 'Dem Kunden zugesagter Zeitraum, in dem der Techniker eintrifft.'],
   ['ETA', 'Voraussichtliche Ankunftszeit, berechnet aus Distanz und Durchschnittsgeschwindigkeit.'],
   ['Einsatzprotokoll', 'Ergebnis des Einsatzes inkl. Unterschrift, Fotos und Arbeitszeiten.'],
+  ['Einsatzprotokoll', 'Ergebnis des Einsatzes inkl. Unterschrift, Fotos und Arbeitszeiten.'],
+  ['Speditionsversand', 'Versand über einen externen Frachtführer statt eigener Tour – Abholung im Lager, Zustellung beim Kunden.'],
+  ['Frachtauftrag', 'PDF für die Spedition mit Abhol-/Lieferadresse, Gerät, Seriennummer, Preis und Unterschriftsfeld.'],
+  ['Sendungsnummer', 'Tracking-Nummer der Spedition; wird dem Kunden im Versandavis mitgeteilt.'],
 ];
+
 
 export default function TourenplanungDokumentation() {
   return (
