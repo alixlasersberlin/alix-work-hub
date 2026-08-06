@@ -128,6 +128,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: "Alix Auslieferung <no-reply@alixwork.de>",
         to: [to],
+        ...(mode === "customer" ? { cc: [CUSTOMER_CC] } : {}),
         bcc: [BCC],
         subject,
         html,
