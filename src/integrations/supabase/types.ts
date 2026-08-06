@@ -15576,6 +15576,76 @@ export type Database = {
           },
         ]
       }
+      delivery_ratings: {
+        Row: {
+          appointment_id: string | null
+          comment: string | null
+          created_at: string
+          customer_name: string | null
+          driver_id: string | null
+          friendliness: number | null
+          id: string
+          instruction_quality: number | null
+          punctuality: number | null
+          rating: number
+          token: string | null
+          tour_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_name?: string | null
+          driver_id?: string | null
+          friendliness?: number | null
+          id?: string
+          instruction_quality?: number | null
+          punctuality?: number | null
+          rating: number
+          token?: string | null
+          tour_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_name?: string | null
+          driver_id?: string | null
+          friendliness?: number | null
+          id?: string
+          instruction_quality?: number | null
+          punctuality?: number | null
+          rating?: number
+          token?: string | null
+          tour_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_ratings_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_ratings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_ratings_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_readiness_overrides: {
         Row: {
           appointment_id: string | null
@@ -16838,6 +16908,8 @@ export type Database = {
         Row: {
           active: boolean
           can_train: boolean
+          cost_per_hour: number | null
+          cost_per_km: number | null
           country_clearances: string[] | null
           created_at: string
           department: string | null
@@ -16861,6 +16933,8 @@ export type Database = {
         Insert: {
           active?: boolean
           can_train?: boolean
+          cost_per_hour?: number | null
+          cost_per_km?: number | null
           country_clearances?: string[] | null
           created_at?: string
           department?: string | null
@@ -16884,6 +16958,8 @@ export type Database = {
         Update: {
           active?: boolean
           can_train?: boolean
+          cost_per_hour?: number | null
+          cost_per_km?: number | null
           country_clearances?: string[] | null
           created_at?: string
           department?: string | null
@@ -39814,13 +39890,20 @@ export type Database = {
       vehicles: {
         Row: {
           active: boolean
+          co2_g_per_km: number | null
+          consumption_per_100km: number | null
+          cost_per_km: number | null
           created_at: string
+          fixed_cost_per_day: number | null
           fuel_level_pct: number | null
+          fuel_type: string
           has_trailer_hitch: boolean
           hu_due_date: string | null
           id: string
           insurance_until: string | null
           is_electric: boolean
+          last_service_date: string | null
+          last_service_km: number | null
           license_plate: string
           load_volume_m3: number | null
           location_id: string | null
@@ -39832,21 +39915,32 @@ export type Database = {
           notes: string | null
           odometer_km: number | null
           range_km: number | null
+          service_interval_km: number | null
+          service_interval_months: number | null
           special_equipment: string | null
           status: Database["public"]["Enums"]["delivery_vehicle_status"]
+          telematics_device_id: string | null
+          telematics_provider: string | null
           tire_status: string | null
           updated_at: string
           vehicle_type: string | null
         }
         Insert: {
           active?: boolean
+          co2_g_per_km?: number | null
+          consumption_per_100km?: number | null
+          cost_per_km?: number | null
           created_at?: string
+          fixed_cost_per_day?: number | null
           fuel_level_pct?: number | null
+          fuel_type?: string
           has_trailer_hitch?: boolean
           hu_due_date?: string | null
           id?: string
           insurance_until?: string | null
           is_electric?: boolean
+          last_service_date?: string | null
+          last_service_km?: number | null
           license_plate: string
           load_volume_m3?: number | null
           location_id?: string | null
@@ -39858,21 +39952,32 @@ export type Database = {
           notes?: string | null
           odometer_km?: number | null
           range_km?: number | null
+          service_interval_km?: number | null
+          service_interval_months?: number | null
           special_equipment?: string | null
           status?: Database["public"]["Enums"]["delivery_vehicle_status"]
+          telematics_device_id?: string | null
+          telematics_provider?: string | null
           tire_status?: string | null
           updated_at?: string
           vehicle_type?: string | null
         }
         Update: {
           active?: boolean
+          co2_g_per_km?: number | null
+          consumption_per_100km?: number | null
+          cost_per_km?: number | null
           created_at?: string
+          fixed_cost_per_day?: number | null
           fuel_level_pct?: number | null
+          fuel_type?: string
           has_trailer_hitch?: boolean
           hu_due_date?: string | null
           id?: string
           insurance_until?: string | null
           is_electric?: boolean
+          last_service_date?: string | null
+          last_service_km?: number | null
           license_plate?: string
           load_volume_m3?: number | null
           location_id?: string | null
@@ -39884,8 +39989,12 @@ export type Database = {
           notes?: string | null
           odometer_km?: number | null
           range_km?: number | null
+          service_interval_km?: number | null
+          service_interval_months?: number | null
           special_equipment?: string | null
           status?: Database["public"]["Enums"]["delivery_vehicle_status"]
+          telematics_device_id?: string | null
+          telematics_provider?: string | null
           tire_status?: string | null
           updated_at?: string
           vehicle_type?: string | null
