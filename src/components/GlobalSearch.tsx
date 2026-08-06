@@ -5,7 +5,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  Search, Users, ShoppingCart, LifeBuoy, Cpu, FileText, Package, Loader2,
+  Search, Users, ShoppingCart, LifeBuoy, Cpu, FileText, Package, Loader2, Truck, CalendarCheck,
 } from 'lucide-react';
 
 type Hit = {
@@ -17,7 +17,7 @@ type Hit = {
   to: string;
 };
 
-const GROUPS = ['Kunden', 'Aufträge', 'Tickets', 'Geräte', 'Dokumente', 'Belege', 'Artikel'];
+const GROUPS = ['Kunden', 'Aufträge', 'Tickets', 'Geräte', 'Dokumente', 'Belege', 'Artikel', 'Touren', 'Liefertermine'];
 
 /**
  * Mandantenabhängige globale Suche (Phase 4).
@@ -138,8 +138,28 @@ export default function GlobalSearch() {
         }));
       })());
 
-
+      tasks.push((async () => {
+        const [{ data: tours }, { data: apps }] = await Promise.all([
+          supabase.from('delivery_tours').select('id, tour_number, title, tour_date, status')
+            .or(`tour_number.ilike.${like},title.ilike.${like}`).limit(5),
+          supabase.from('delivery_appointments').select('id, order_number, customer_name, company_name, planned_date, delivery_city')
+            .or(`order_number.ilike.${like},customer_name.ilike.${like},company_name.ilike.${like},serial_number.ilike.${like}`).limit(5),
+        ]);
+        (tours || []).forEach((t2: any) => out.push({
+          id: `tour-${t2.id}`, group: 'Touren', icon: Truck,
+          title: `Tour ${t2.tour_number || t2.title || ''}`,
+          subtitle: [t2.tour_date, t2.status].filter(Boolean).join(' · '),
+          to: `/dispatch/touren/${t2.id}`,
+        }));
+        (apps || []).forEach((a: any) => out.push({
+          id: `appt-${a.id}`, group: 'Liefertermine', icon: CalendarCheck,
+          title: a.company_name || a.customer_name || a.order_number || 'Liefertermin',
+          subtitle: [a.planned_date || 'ohne Termin', a.delivery_city, a.order_number].filter(Boolean).join(' · '),
+          to: a.planned_date ? '/dispatch/termine' : '/dispatch/ungeplant',
+        }));
+      })());
     }
+
 
     if (showCmr) {
       tasks.push((async () => {

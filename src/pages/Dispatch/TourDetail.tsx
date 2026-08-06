@@ -9,10 +9,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Truck, ArrowLeft, PackageCheck, ClipboardCheck, ShieldCheck, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { Truck, ArrowLeft, PackageCheck, ClipboardCheck, ShieldCheck, AlertTriangle, RefreshCw, Loader2, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { TOUR_STATUS_LABELS, DELIVERY_STATUS_LABELS, statusClass } from './constants';
+import { tourPaperworkPdf, loadingListPdf } from '@/lib/dispatch/exports';
 
 const LOADING_STATUS_LABELS: Record<string, string> = {
   nicht_vorbereitet: 'Nicht vorbereitet',
@@ -177,13 +178,21 @@ export default function DispatchTourDetail() {
         subtitle={`${tour?.tour_date ? format(new Date(tour.tour_date), 'dd.MM.yyyy') : ''} · ${tour?.drivers?.full_name ?? 'kein Fahrer'} · ${tour?.vehicles?.license_plate ?? 'kein Fahrzeug'}`}
         icon={Truck}
         actions={
-          <Button
-            onClick={() => release.mutate()}
-            disabled={release.isPending || openBlocking > 0 || tour?.status === 'freigegeben'}
-          >
-            {release.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
-            {tour?.status === 'freigegeben' ? 'Freigegeben' : 'Tour freigeben'}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => tourPaperworkPdf(tour, (stops ?? []) as any[])}>
+              <FileDown className="h-4 w-4 mr-1" /> Fahrerunterlagen
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => loadingListPdf(tour, (loading?.items ?? []) as any[])}>
+              <FileDown className="h-4 w-4 mr-1" /> Beladungsliste
+            </Button>
+            <Button
+              onClick={() => release.mutate()}
+              disabled={release.isPending || openBlocking > 0 || tour?.status === 'freigegeben'}
+            >
+              {release.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+              {tour?.status === 'freigegeben' ? 'Freigegeben' : 'Tour freigeben'}
+            </Button>
+          </div>
         }
       />
 
