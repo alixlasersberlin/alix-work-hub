@@ -177,13 +177,21 @@ export default function DispatchTourDetail() {
         subtitle={`${tour?.tour_date ? format(new Date(tour.tour_date), 'dd.MM.yyyy') : ''} · ${tour?.drivers?.full_name ?? 'kein Fahrer'} · ${tour?.vehicles?.license_plate ?? 'kein Fahrzeug'}`}
         icon={Truck}
         actions={
-          <Button
-            onClick={() => release.mutate()}
-            disabled={release.isPending || openBlocking > 0 || tour?.status === 'freigegeben'}
-          >
-            {release.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
-            {tour?.status === 'freigegeben' ? 'Freigegeben' : 'Tour freigeben'}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => tourPaperworkPdf(tour, (stops ?? []) as any[])}>
+              <FileDown className="h-4 w-4 mr-1" /> Fahrerunterlagen
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => loadingListPdf(tour, (loading?.items ?? []) as any[])}>
+              <FileDown className="h-4 w-4 mr-1" /> Beladungsliste
+            </Button>
+            <Button
+              onClick={() => release.mutate()}
+              disabled={release.isPending || openBlocking > 0 || tour?.status === 'freigegeben'}
+            >
+              {release.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+              {tour?.status === 'freigegeben' ? 'Freigegeben' : 'Tour freigeben'}
+            </Button>
+          </div>
         }
       />
 
