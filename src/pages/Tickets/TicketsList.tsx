@@ -104,6 +104,7 @@ export default function TicketsList() {
   });
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [offersByCase, setOffersByCase] = useState<Record<string, OfferInfo>>({});
   const { isSuperAdmin } = useFinancePermissions();
 
   async function updateCategory(id: string, category: string | null) {
