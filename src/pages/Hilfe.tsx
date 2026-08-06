@@ -72,7 +72,7 @@ export default function Hilfe() {
         <Link to="/hilfe/tourenplanung/dokumentation" className="block">
           <Card className="hover:border-primary/60 transition-colors h-full">
             <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-              <Map className="h-6 w-6 text-primary" />
+              <MapPinned className="h-6 w-6 text-primary" />
               <CardTitle className="text-lg">Tourenplanung · Dokumentation</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
@@ -84,7 +84,7 @@ export default function Hilfe() {
         <Link to="/hilfe/tourenplanung/arbeitsanleitung" className="block">
           <Card className="hover:border-primary/60 transition-colors h-full">
             <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-              <Route className="h-6 w-6 text-primary" />
+              <RouteIcon className="h-6 w-6 text-primary" />
               <CardTitle className="text-lg">Tourenplanung · Arbeitsanleitung</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground">
