@@ -1453,6 +1453,18 @@ function AppRoutes() {
           <Route path="/dispatch/wartung" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchWartung /></ProtectedRoute>} />
           <Route path="/dispatch/telematik" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><DispatchTelematik /></ProtectedRoute>} />
           <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
+          <Route path="/finance/provision" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ProvisionUebersicht /></ProtectedRoute>} />
+          <Route path="/finance/provision/offene" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ProvisionOffene /></ProtectedRoute>} />
+          <Route path="/finance/provision/freizugeben" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><ProvisionFreizugeben /></ProtectedRoute>} />
+          <Route path="/finance/provision/freigegeben" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ProvisionFreigegeben /></ProtectedRoute>} />
+          <Route path="/finance/provision/stornierte" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ProvisionStornierte /></ProtectedRoute>} />
+          <Route path="/finance/provision/auszahlungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ProvisionAuszahlungen /></ProtectedRoute>} />
+          <Route path="/finance/provision/abrechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ProvisionAbrechnungen /></ProtectedRoute>} />
+          <Route path="/finance/provision/zuordnung" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><ProvisionZuordnung /></ProtectedRoute>} />
+          <Route path="/finance/provision/regeln" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><ProvisionRegeln /></ProtectedRoute>} />
+          <Route path="/finance/provision/auswertungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><ProvisionAuswertungen /></ProtectedRoute>} />
+          <Route path="/finance/provision/audit" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><ProvisionAudit /></ProtectedRoute>} />
+          <Route path="/finance/provision/einstellungen" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><ProvisionEinstellungen /></ProtectedRoute>} />
           <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
           <Route path="/finance/alix-flex" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixFlex /></ProtectedRoute>} />
           <Route path="/finance/rechnungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Invoices /></ProtectedRoute>} />
