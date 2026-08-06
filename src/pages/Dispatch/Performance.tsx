@@ -295,6 +295,29 @@ export default function DispatchPerformance() {
           );
         })}
       </Tabs>
+
+      <Card className="p-4">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Star className="h-4 w-4 text-amber-400" /> Neueste Kundenbewertungen
+          {agg?.totals.ratingCount ? <span className="text-xs text-muted-foreground">({nf(agg.totals.ratingCount)} im Zeitraum)</span> : null}
+        </div>
+        {!agg?.latestRatings?.length ? (
+          <p className="mt-2 text-sm text-muted-foreground">Noch keine Bewertungen im gewählten Zeitraum.</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {agg.latestRatings.map((r: any, i: number) => (
+              <li key={i} className="rounded-md border border-border p-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-amber-400">{'★'.repeat(Number(r.rating))}<span className="text-muted-foreground">{'★'.repeat(5 - Number(r.rating))}</span></span>
+                  <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString('de-DE')}</span>
+                </div>
+                {r.comment && <p className="mt-1 text-muted-foreground">{r.comment}</p>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </div>
   );
+
 }
