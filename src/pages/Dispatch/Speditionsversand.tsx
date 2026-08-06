@@ -366,6 +366,27 @@ export default function DispatchSpeditionsversand() {
               </select>
             </div>
             <div className="sm:col-span-2">
+              <Label>Tourenplanung (route_plans)</Label>
+              <select
+                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={form.route_plan_id}
+                onChange={e => {
+                  const id = e.target.value;
+                  const p = (routePlans ?? []).find((x: any) => x.id === id);
+                  setForm(f => ({
+                    ...f,
+                    route_plan_id: id,
+                    assigned_date: f.assigned_date || (p?.planned_date ? String(p.planned_date).slice(0, 10) : ''),
+                  }));
+                }}
+              >
+                <option value="">— ohne Tourenbezug —</option>
+                {(routePlans ?? []).map((p: any) => (
+                  <option key={p.id} value={p.id}>{planLabel(p)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="sm:col-span-2">
               <Label>Spedition *</Label>
               <select
                 className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
