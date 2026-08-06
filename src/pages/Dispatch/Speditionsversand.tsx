@@ -127,7 +127,7 @@ export default function DispatchSpeditionsversand() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, any> }) => {
+    mutationFn: async ({ id, patch }: { id: string; patch: { status?: string; tracking_number?: string | null } }) => {
       const { error } = await supabase.from('delivery_carrier_assignments').update(patch).eq('id', id);
       if (error) throw error;
     },
