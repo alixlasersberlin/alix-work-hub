@@ -631,6 +631,7 @@ const PlmQualitaetskennzahlen = lazy(() => import("./pages/PLM/Qualitaetskennzah
 const PlmErsatzteilkatalog = lazy(() => import("./pages/PLM/Ersatzteilkatalog"));
 const PlmPruefprotokolle = lazy(() => import("./pages/PLM/Pruefprotokolle"));
 const PlmAenderungsfreigabe = lazy(() => import("./pages/PLM/Aenderungsfreigabe"));
+const PlmKonformitaet = lazy(() => import("./pages/PLM/Konformitaet"));
 
 const PlmStuecklistenbaum = lazy(() => import("./pages/PLM/Stuecklistenbaum"));
 const Iso13485 = lazy(() => import("./pages/Iso13485"));
