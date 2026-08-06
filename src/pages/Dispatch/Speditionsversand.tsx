@@ -221,6 +221,46 @@ export default function DispatchSpeditionsversand() {
         </select>
       </Card>
 
+      <Card className="p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="font-semibold">Offene Termine aus der Tourenplanung</h2>
+            <p className="text-sm text-muted-foreground">Einträge aus <span className="font-mono">route_plans</span>, für die noch keine Spedition beauftragt wurde.</p>
+          </div>
+          <span className="text-sm text-muted-foreground">{openPlans.length} offen</span>
+        </div>
+        {openPlans.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Keine offenen Tourenplan-Einträge.</p>
+        ) : (
+          <div className="max-h-72 overflow-y-auto divide-y divide-border">
+            {openPlans.slice(0, 50).map((p: any) => (
+              <div key={p.id} className="flex items-center justify-between gap-3 py-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium truncate">{p.contact_name || 'Ohne Kontakt'} {p.device_model ? `· ${p.device_model}` : ''}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {[addrOf(p.location_address), p.device_serial_number, p.planning_status, p.planned_date ? format(new Date(p.planned_date), 'dd.MM.yyyy') : null].filter(Boolean).join(' · ')}
+                  </div>
+                </div>
+                <Button
+                  size="sm" variant="outline" className="h-8 gap-1 shrink-0"
+                  onClick={() => {
+                    setForm({
+                      ...EMPTY,
+                      route_plan_id: p.id,
+                      assigned_date: p.planned_date ? String(p.planned_date).slice(0, 10) : '',
+                      notes: [p.planning_note, addrOf(p.location_address)].filter(Boolean).join('\n'),
+                    });
+                    setOpen(true);
+                  }}
+                >
+                  <Ship className="w-3.5 h-3.5" /> Spedition beauftragen
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>
