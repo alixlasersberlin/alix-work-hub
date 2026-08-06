@@ -14733,6 +14733,151 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_carrier_assignments: {
+        Row: {
+          agreed_price: number | null
+          appointment_id: string | null
+          assigned_date: string | null
+          carrier_id: string
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          id: string
+          notes: string | null
+          pod_document_id: string | null
+          pod_received_at: string | null
+          status: string
+          tour_id: string | null
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          agreed_price?: number | null
+          appointment_id?: string | null
+          assigned_date?: string | null
+          carrier_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          id?: string
+          notes?: string | null
+          pod_document_id?: string | null
+          pod_received_at?: string | null
+          status?: string
+          tour_id?: string | null
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agreed_price?: number | null
+          appointment_id?: string | null
+          assigned_date?: string | null
+          carrier_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          id?: string
+          notes?: string | null
+          pod_document_id?: string | null
+          pod_received_at?: string | null
+          status?: string
+          tour_id?: string | null
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_carrier_assignments_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_carrier_assignments_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_carrier_assignments_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_carriers: {
+        Row: {
+          base_fee: number | null
+          city: string | null
+          contact_name: string | null
+          countries: string[] | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          price_per_km: number | null
+          price_per_stop: number | null
+          rating: number | null
+          street: string | null
+          updated_at: string
+          vat_id: string | null
+          zip: string | null
+        }
+        Insert: {
+          base_fee?: number | null
+          city?: string | null
+          contact_name?: string | null
+          countries?: string[] | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          price_per_km?: number | null
+          price_per_stop?: number | null
+          rating?: number | null
+          street?: string | null
+          updated_at?: string
+          vat_id?: string | null
+          zip?: string | null
+        }
+        Update: {
+          base_fee?: number | null
+          city?: string | null
+          contact_name?: string | null
+          countries?: string[] | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          price_per_km?: number | null
+          price_per_stop?: number | null
+          rating?: number | null
+          street?: string | null
+          updated_at?: string
+          vat_id?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       delivery_checklists: {
         Row: {
           checked_at: string | null
@@ -15475,6 +15620,108 @@ export type Database = {
           },
         ]
       }
+      delivery_returns: {
+        Row: {
+          accessories: string | null
+          appointment_id: string | null
+          company_name: string | null
+          condition: string | null
+          created_at: string
+          created_by: string | null
+          customer_name: string | null
+          device_name: string | null
+          id: string
+          incident_id: string | null
+          notes: string | null
+          order_id: string | null
+          order_number: string | null
+          pickup_date: string | null
+          reason: string | null
+          received_at: string | null
+          replacement_device: string | null
+          replacement_serial: string | null
+          return_number: string | null
+          return_type: string
+          serial_number: string | null
+          status: string
+          stock_booked: boolean
+          target_location: string | null
+          updated_at: string
+          workshop_ticket_id: string | null
+        }
+        Insert: {
+          accessories?: string | null
+          appointment_id?: string | null
+          company_name?: string | null
+          condition?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          device_name?: string | null
+          id?: string
+          incident_id?: string | null
+          notes?: string | null
+          order_id?: string | null
+          order_number?: string | null
+          pickup_date?: string | null
+          reason?: string | null
+          received_at?: string | null
+          replacement_device?: string | null
+          replacement_serial?: string | null
+          return_number?: string | null
+          return_type?: string
+          serial_number?: string | null
+          status?: string
+          stock_booked?: boolean
+          target_location?: string | null
+          updated_at?: string
+          workshop_ticket_id?: string | null
+        }
+        Update: {
+          accessories?: string | null
+          appointment_id?: string | null
+          company_name?: string | null
+          condition?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          device_name?: string | null
+          id?: string
+          incident_id?: string | null
+          notes?: string | null
+          order_id?: string | null
+          order_number?: string | null
+          pickup_date?: string | null
+          reason?: string | null
+          received_at?: string | null
+          replacement_device?: string | null
+          replacement_serial?: string | null
+          return_number?: string | null
+          return_type?: string
+          serial_number?: string | null
+          status?: string
+          stock_booked?: boolean
+          target_location?: string | null
+          updated_at?: string
+          workshop_ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_returns_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_returns_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_settings: {
         Row: {
           created_at: string
@@ -15822,6 +16069,66 @@ export type Database = {
           },
         ]
       }
+      delivery_tracking_events: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          created_by: string | null
+          eta: string | null
+          event_type: string
+          id: string
+          lat: number | null
+          lng: number | null
+          message: string | null
+          tour_id: string | null
+          updated_at: string
+          visible_to_customer: boolean
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          created_by?: string | null
+          eta?: string | null
+          event_type: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          message?: string | null
+          tour_id?: string | null
+          updated_at?: string
+          visible_to_customer?: boolean
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          created_by?: string | null
+          eta?: string | null
+          event_type?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          message?: string | null
+          tour_id?: string | null
+          updated_at?: string
+          visible_to_customer?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_tracking_events_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_tracking_events_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           created_at: string
@@ -16153,6 +16460,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dispatch_ai_suggestions: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          detail: string | null
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          impact: string | null
+          payload: Json
+          rationale: string | null
+          scope_date: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          detail?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          impact?: string | null
+          payload?: Json
+          rationale?: string | null
+          scope_date?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          detail?: string | null
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          impact?: string | null
+          payload?: Json
+          rationale?: string | null
+          scope_date?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       dispatch_attachments: {
         Row: {

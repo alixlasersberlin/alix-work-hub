@@ -110,7 +110,11 @@ const DispatchFahrer = lazy(() => import("./pages/Dispatch/Fahrer"));
 const DispatchEinstellungen = lazy(() => import("./pages/Dispatch/Einstellungen"));
 const DispatchKosten = lazy(() => import("./pages/Dispatch/Kosten"));
 const DispatchArchiv = lazy(() => import("./pages/Dispatch/Archiv"));
+const DispatchSpediteure = lazy(() => import("./pages/Dispatch/Spediteure"));
+const DispatchRetouren = lazy(() => import("./pages/Dispatch/Retouren"));
+const DispatchAiAssistant = lazy(() => import("./pages/Dispatch/AiAssistant"));
 const LieferterminBestaetigung = lazy(() => import("./pages/Dispatch/public/Liefertermin"));
+const Lieferstatus = lazy(() => import("./pages/Dispatch/public/Lieferstatus"));
 const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
 const WiederkehrendeZahler = lazy(() => import("./pages/Finance/WiederkehrendeZahler"));
@@ -1163,6 +1167,7 @@ function AppRoutes() {
         <Route path="/simulate/:userId" element={<ProtectedRoute requiredRoles={['Super Admin']}><SimulateEntry /></ProtectedRoute>} />
         {/* Öffentliche Kundenportale – KEIN Login, KEIN AppLayout */}
         <Route path="/liefertermin/:token" element={<LieferterminBestaetigung />} />
+        <Route path="/lieferstatus/:token" element={<Lieferstatus />} />
         <Route path="/social-portal/:token" element={<SocialPortalView />} />
         <Route path="/social-onboarding/:token" element={<SocialOnboardingPortal />} />
         <Route path="/social/showcase/:token" element={<SocialShowcase />} />
@@ -1426,6 +1431,9 @@ function AppRoutes() {
           <Route path="/dispatch/einstellungen" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><DispatchEinstellungen /></ProtectedRoute>} />
           <Route path="/dispatch/kosten" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchKosten /></ProtectedRoute>} />
           <Route path="/dispatch/archiv" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchArchiv /></ProtectedRoute>} />
+          <Route path="/dispatch/spediteure" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchSpediteure /></ProtectedRoute>} />
+          <Route path="/dispatch/retouren" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchRetouren /></ProtectedRoute>} />
+          <Route path="/dispatch/ki" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchAiAssistant /></ProtectedRoute>} />
           <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
           <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
           <Route path="/finance/alix-flex" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixFlex /></ProtectedRoute>} />
