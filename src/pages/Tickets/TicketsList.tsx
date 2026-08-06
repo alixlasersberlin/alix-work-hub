@@ -652,6 +652,8 @@ export default function TicketsList() {
                       ))}
                     </TableBody>
                   </Table>
+                  </>
+
                 )}
               </div>
             </TabsContent>
