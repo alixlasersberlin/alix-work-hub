@@ -173,15 +173,21 @@ Deno.serve(async (req) => {
     let backupOk = true;
     try {
       const { data: bk } = await admin
-        .from('backups_metadata').select('status, created_at')
+        .from('backups_metadata').select('backup_status, created_at, completed_at')
         .order('created_at', { ascending: false }).limit(1);
       const last = (bk ?? [])[0] as any;
-      const stale = !last || new Date(last.created_at).getTime() < Date.now() - 48 * 3600_000;
-      backupOk = !!last && last.status === 'completed' && !stale;
+      const ts = last ? new Date(last.completed_at ?? last.created_at).getTime() : 0;
+      const stale = !last || ts < Date.now() - 48 * 3600_000;
+      const ok = ['success', 'completed', 'erfolgreich'].includes(String(last?.backup_status ?? '').toLowerCase());
+      backupOk = !!last && ok && !stale;
       if (!backupOk) {
         findings.push({
           category: 'backup', severity: 'critical',
-          title: last ? `Letzte Sicherung: ${last.status}` : 'Keine Sicherung gefunden',
+          title: !last
+            ? 'Keine Sicherung gefunden'
+            : stale
+              ? `Letzte Sicherung älter als 48 Stunden (${new Date(ts).toLocaleString('de-DE')})`
+              : `Letzte Sicherung: ${last.backup_status}`,
           recommendation: 'Datensicherung sofort prüfen.',
         });
       }
