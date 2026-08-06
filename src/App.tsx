@@ -1424,6 +1424,8 @@ function AppRoutes() {
           <Route path="/dispatch/fahrzeuge" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchFahrzeuge /></ProtectedRoute>} />
           <Route path="/dispatch/fahrer" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchFahrer /></ProtectedRoute>} />
           <Route path="/dispatch/einstellungen" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><DispatchEinstellungen /></ProtectedRoute>} />
+          <Route path="/dispatch/kosten" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchKosten /></ProtectedRoute>} />
+          <Route path="/dispatch/archiv" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchArchiv /></ProtectedRoute>} />
           <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
           <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
           <Route path="/finance/alix-flex" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixFlex /></ProtectedRoute>} />
