@@ -136,6 +136,23 @@ export default function DispatchSpeditionsversand() {
     onError: (e: any) => toast.error(e.message ?? 'Aktualisierung fehlgeschlagen'),
   });
 
+  const [sending, setSending] = useState<string | null>(null);
+  async function sendMail(row: any, mode: 'carrier' | 'customer') {
+    setSending(`${row.id}:${mode}`);
+    try {
+      const { data, error } = await supabase.functions.invoke('carrier-shipment-send', {
+        body: { assignment_id: row.id, mode },
+      });
+      if (error) throw new Error((data as any)?.error ?? error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(mode === 'carrier' ? `Frachtauftrag an ${(data as any)?.recipient} gesendet` : `Versandavis an ${(data as any)?.recipient} gesendet`);
+    } catch (e: any) {
+      toast.error(e.message ?? 'Versand fehlgeschlagen');
+    } finally {
+      setSending(null);
+    }
+  }
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       <PageHeader
