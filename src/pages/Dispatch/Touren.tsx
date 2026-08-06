@@ -46,7 +46,9 @@ export default function DispatchTouren() {
             )}
             {(data ?? []).map((t: any) => (
               <TableRow key={t.id}>
-                <TableCell className="font-medium">{t.tour_number}</TableCell>
+                <TableCell className="font-medium">
+                  <Link to={`/dispatch/touren/${t.id}`} className="text-primary hover:underline">{t.tour_number}</Link>
+                </TableCell>
                 <TableCell>{t.tour_date ? format(new Date(t.tour_date), 'dd.MM.yyyy') : '—'}</TableCell>
                 <TableCell>{t.title ?? '—'}</TableCell>
                 <TableCell>{t.drivers?.full_name ?? '—'}</TableCell>
