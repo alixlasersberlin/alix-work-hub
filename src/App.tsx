@@ -632,6 +632,7 @@ const PlmErsatzteilkatalog = lazy(() => import("./pages/PLM/Ersatzteilkatalog"))
 const PlmPruefprotokolle = lazy(() => import("./pages/PLM/Pruefprotokolle"));
 const PlmAenderungsfreigabe = lazy(() => import("./pages/PLM/Aenderungsfreigabe"));
 const PlmKonformitaet = lazy(() => import("./pages/PLM/Konformitaet"));
+const PlmFertigungssteuerung = lazy(() => import("./pages/PLM/Fertigungssteuerung"));
 
 const PlmStuecklistenbaum = lazy(() => import("./pages/PLM/Stuecklistenbaum"));
 const Iso13485 = lazy(() => import("./pages/Iso13485"));
@@ -2038,6 +2039,8 @@ function AppRoutes() {
           <Route path="/produktion/pruefprotokolle" element={<ProtectedRoute><PlmPruefprotokolle /></ProtectedRoute>} />
           <Route path="/produktion/aenderungsfreigabe" element={<ProtectedRoute><PlmAenderungsfreigabe /></ProtectedRoute>} />
           <Route path="/produktion/konformitaet" element={<ProtectedRoute><PlmKonformitaet /></ProtectedRoute>} />
+          <Route path="/produktion/fertigungssteuerung" element={<ProtectedRoute><PlmFertigungssteuerung /></ProtectedRoute>} />
+
 
           <Route path="/produktion/beschaffung" element={<ProtectedRoute><PlmBeschaffung /></ProtectedRoute>} />
           <Route path="/produktion/explosionszeichnungen" element={<ProtectedRoute><PlmExplosionszeichnungen /></ProtectedRoute>} />
