@@ -70,12 +70,13 @@ export default function DispatchSpediteure() {
     mutationFn: async () => {
       if (!form.name.trim()) throw new Error('Name ist erforderlich');
       const { data: u } = await supabase.auth.getUser();
-      const { error } = await supabase.from('delivery_carriers').insert({
+      const payload: any = {
         ...form,
         base_price: form.base_price ? Number(form.base_price) : null,
         price_per_km: form.price_per_km ? Number(form.price_per_km) : null,
         created_by: u.user?.id ?? null,
-      });
+      };
+      const { error } = await supabase.from('delivery_carriers').insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
