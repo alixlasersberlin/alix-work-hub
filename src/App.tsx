@@ -1167,6 +1167,7 @@ function AppRoutes() {
         <Route path="/simulate/:userId" element={<ProtectedRoute requiredRoles={['Super Admin']}><SimulateEntry /></ProtectedRoute>} />
         {/* Öffentliche Kundenportale – KEIN Login, KEIN AppLayout */}
         <Route path="/liefertermin/:token" element={<LieferterminBestaetigung />} />
+        <Route path="/lieferstatus/:token" element={<Lieferstatus />} />
         <Route path="/social-portal/:token" element={<SocialPortalView />} />
         <Route path="/social-onboarding/:token" element={<SocialOnboardingPortal />} />
         <Route path="/social/showcase/:token" element={<SocialShowcase />} />
