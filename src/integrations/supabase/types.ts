@@ -42205,6 +42205,20 @@ export type Database = {
         Args: { _import_id: string }
         Returns: Json
       }
+      dispatch_dashboard_kpis: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      dispatch_smart_hints: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          detail: string
+          kind: string
+          link: string
+          severity: string
+          title: string
+        }[]
+      }
       dl_upsert: {
         Args: {
           _customer_id: string
