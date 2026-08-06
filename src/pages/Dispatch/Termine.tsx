@@ -28,7 +28,7 @@ export default function DispatchTermine() {
     queryFn: async () => {
       let q = supabase
         .from('delivery_appointments')
-        .select('id, order_number, customer_name, company_name, delivery_zip, delivery_city, appointment_type, status, readiness, planned_date, time_window_start, time_window_end, device_name, is_vip')
+        .select('id, order_number, customer_name, company_name, contact_email, delivery_zip, delivery_city, appointment_type, status, readiness, planned_date, time_window_start, time_window_end, device_name, is_vip')
         .order('planned_date', { ascending: true, nullsFirst: false })
         .limit(300);
       if (status !== 'alle') q = q.eq('status', status as never);
@@ -69,6 +69,19 @@ export default function DispatchTermine() {
       source: 'dispatch_ui',
     });
     toast.success(`Status: ${DELIVERY_STATUS_LABELS[next] ?? next}`);
+    qc.invalidateQueries({ queryKey: ['dispatch'] });
+  }
+
+  async function sendConfirmation(row: any) {
+    if (!row.contact_email) { toast.error('Keine Kunden-E-Mail im Termin hinterlegt'); return; }
+    if (!row.planned_date) { toast.error('Bitte zuerst ein Lieferdatum setzen'); return; }
+    setSendingId(row.id);
+    const { data, error } = await supabase.functions.invoke('delivery-appointment-send', {
+      body: { appointmentId: row.id, baseUrl: window.location.origin },
+    });
+    setSendingId(null);
+    if (error || (data as any)?.error) { toast.error((data as any)?.error ?? error?.message ?? 'Versand fehlgeschlagen'); return; }
+    toast.success(`Bestätigungslink an ${row.contact_email} versendet`);
     qc.invalidateQueries({ queryKey: ['dispatch'] });
   }
 
