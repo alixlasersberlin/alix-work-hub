@@ -20,6 +20,8 @@ import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/Status
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 
 
+interface OfferInfo { offer_number: string; status: string | null }
+
 interface TicketRow {
   id: string;
   external_ticket_id: string | null;
