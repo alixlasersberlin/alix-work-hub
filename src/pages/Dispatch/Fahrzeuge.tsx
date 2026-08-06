@@ -124,6 +124,58 @@ export default function DispatchFahrzeuge() {
     onError: (e: any) => toast.error(e.message ?? 'Fehler beim Speichern'),
   });
 
+  // Ergänzt fehlende Verbrauchs-, Kosten- und Wartungswerte anhand der Typ-Vorlagen
+  const fillDefaults = useMutation({
+    mutationFn: async () => {
+      const list = (data ?? []) as any[];
+      let touched = 0;
+      for (const v of list) {
+        const type = (v.vehicle_type ?? '').toLowerCase();
+        const preset =
+          v.fuel_type === 'electric' || v.is_electric ? VEHICLE_PRESETS.transporter_e
+            : type.includes('12') ? VEHICLE_PRESETS.lkw12
+            : type.includes('7') ? VEHICLE_PRESETS.lkw75
+            : type.includes('pkw') ? VEHICLE_PRESETS.pkw
+            : VEHICLE_PRESETS.transporter;
+        const patch: Record<string, unknown> = {};
+        if (v.fuel_type == null) patch.fuel_type = preset.fuel_type;
+        if (v.consumption_per_100km == null) patch.consumption_per_100km = preset.consumption_per_100km;
+        if (v.co2_g_per_km == null) patch.co2_g_per_km = preset.co2_g_per_km;
+        if (v.cost_per_km == null) patch.cost_per_km = preset.cost_per_km;
+        if (v.fixed_cost_per_day == null) patch.fixed_cost_per_day = preset.fixed_cost_per_day;
+        if (v.service_interval_km == null) patch.service_interval_km = preset.service_interval_km;
+        if (v.service_interval_months == null) patch.service_interval_months = preset.service_interval_months;
+        if (Object.keys(patch).length === 0) continue;
+        const { error } = await supabase.from('vehicles').update(patch).eq('id', v.id);
+        if (error) throw error;
+        touched++;
+      }
+      return touched;
+    },
+    onSuccess: (n) => {
+      toast.success(n ? `${n} Fahrzeug(e) mit Richtwerten ergänzt` : 'Alle Fahrzeuge sind bereits vollständig gepflegt');
+      qc.invalidateQueries({ queryKey: ['dispatch', 'vehicles'] });
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Fehler beim Ergänzen'),
+  });
+
+  const applyPreset = (key: string) => {
+    const p = VEHICLE_PRESETS[key];
+    if (!p) return;
+    setForm(f => ({
+      ...f,
+      vehicle_type: f.vehicle_type || p.vehicle_type,
+      fuel_type: p.fuel_type,
+      consumption_per_100km: String(p.consumption_per_100km),
+      co2_g_per_km: String(p.co2_g_per_km),
+      cost_per_km: String(p.cost_per_km),
+      fixed_cost_per_day: String(p.fixed_cost_per_day),
+      service_interval_km: String(p.service_interval_km),
+      service_interval_months: String(p.service_interval_months),
+    }));
+    toast.success(`Vorlage „${p.label}“ übernommen`);
+  };
+
   const fuelMeta = FUEL_TYPES.find(f => f.value === form.fuel_type);
 
   return (
@@ -132,8 +184,16 @@ export default function DispatchFahrzeuge() {
         title="Fahrzeuge"
         subtitle="Fuhrpark, Kapazitäten, Verbrauch, Kostensätze und Telematik"
         icon={Truck}
-        actions={<Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Fahrzeug</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={fillDefaults.isPending || (data ?? []).length === 0} onClick={() => fillDefaults.mutate()}>
+              <Leaf className="h-4 w-4 mr-2" />{fillDefaults.isPending ? 'Ergänze…' : 'Richtwerte ergänzen'}
+            </Button>
+            <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Fahrzeug</Button>
+          </div>
+        }
       />
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
