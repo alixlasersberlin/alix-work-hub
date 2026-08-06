@@ -2037,6 +2037,7 @@ function AppRoutes() {
           <Route path="/produktion/ersatzteilkatalog" element={<ProtectedRoute><PlmErsatzteilkatalog /></ProtectedRoute>} />
           <Route path="/produktion/pruefprotokolle" element={<ProtectedRoute><PlmPruefprotokolle /></ProtectedRoute>} />
           <Route path="/produktion/aenderungsfreigabe" element={<ProtectedRoute><PlmAenderungsfreigabe /></ProtectedRoute>} />
+          <Route path="/produktion/konformitaet" element={<ProtectedRoute><PlmKonformitaet /></ProtectedRoute>} />
 
           <Route path="/produktion/beschaffung" element={<ProtectedRoute><PlmBeschaffung /></ProtectedRoute>} />
           <Route path="/produktion/explosionszeichnungen" element={<ProtectedRoute><PlmExplosionszeichnungen /></ProtectedRoute>} />
