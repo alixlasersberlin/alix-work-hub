@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import EscBookings from '@/pages/ESC/Bookings';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -119,6 +120,40 @@ export default function TicketsList() {
     if (error) { toast.error(error.message); return; }
     setRows(prev => prev.filter(r => r.id !== id));
     toast.success('Ticket gelöscht');
+  }
+
+  // ---- Mehrfachauswahl (nur Super Admin) ----
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const toggleOne = (id: string) =>
+    setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = (ids: string[], checked: boolean) =>
+    setSelected(prev => checked ? Array.from(new Set([...prev, ...ids])) : prev.filter(x => !ids.includes(x)));
+
+  async function bulkClose() {
+    if (!isSuperAdmin || selected.length === 0) return;
+    setBulkBusy(true);
+    const { error } = await supabase
+      .from('tickets')
+      .update({ status: 'geschlossen' })
+      .in('id', selected);
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.map(r => selected.includes(r.id) ? { ...r, status: 'geschlossen' } : r));
+    toast.success(`${selected.length} Ticket(s) geschlossen`);
+    setSelected([]);
+  }
+
+  async function bulkDelete() {
+    if (!isSuperAdmin || selected.length === 0) return;
+    if (!window.confirm(`${selected.length} Ticket(s) wirklich unwiderruflich löschen?`)) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from('tickets').delete().in('id', selected);
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.filter(r => !selected.includes(r.id)));
+    toast.success(`${selected.length} Ticket(s) gelöscht`);
+    setSelected([]);
   }
 
   useEffect(() => {
@@ -487,9 +522,38 @@ export default function TicketsList() {
                   </div>
 
                 ) : (
+                  <>
+                  {isSuperAdmin && selected.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/40 px-4 py-2">
+                      <span className="text-sm text-muted-foreground">{selected.length} ausgewählt</span>
+                      <Button size="sm" variant="outline" disabled={bulkBusy} onClick={bulkClose}>
+                        {bulkBusy ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
+                        Schließen
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={bulkBusy}
+                        className="text-red-400 border-red-500/40 hover:bg-red-500/10"
+                        onClick={bulkDelete}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Löschen
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setSelected([])}>Auswahl aufheben</Button>
+                    </div>
+                  )}
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        {isSuperAdmin && (
+                          <TableHead className="w-10">
+                            <Checkbox
+                              checked={list.length > 0 && list.every(r => selected.includes(r.id))}
+                              onCheckedChange={(v) => toggleAll(list.map(r => r.id), !!v)}
+                              aria-label="Alle auswählen"
+                            />
+                          </TableHead>
+                        )}
                         <TableHead>Vorgang</TableHead>
                         <TableHead>Kategorie</TableHead>
                         <TableHead>Ticket</TableHead>
@@ -511,6 +575,15 @@ export default function TicketsList() {
                           onClick={() => navigate(`/tickets/${r.id}`)}
                           className="cursor-pointer hover:bg-muted/40"
                         >
+                          {isSuperAdmin && (
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                checked={selected.includes(r.id)}
+                                onCheckedChange={() => toggleOne(r.id)}
+                                aria-label="Ticket auswählen"
+                              />
+                            </TableCell>
+                          )}
                           <TableCell className="text-xs font-mono whitespace-nowrap">
                             {(r as any).case_number
                               ? <Badge variant="outline" className="border-primary/40 text-primary">{(r as any).case_number}</Badge>
@@ -579,6 +652,8 @@ export default function TicketsList() {
                       ))}
                     </TableBody>
                   </Table>
+                  </>
+
                 )}
               </div>
             </TabsContent>
