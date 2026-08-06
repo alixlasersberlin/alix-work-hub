@@ -279,7 +279,10 @@ Deno.serve(async (req) => {
       for (const profile of profiles) {
         if (Date.now() - startedAt > SOFT_DEADLINE_MS) { profilesHaveMore = true; break; }
         profilesProcessed++;
+        if (search && !profileMatchesSearch(profile, search)) continue;
         const recurringId = String(profile.recurring_invoice_id);
+
+
 
         // Derive device_name from profile (single source of truth, no per-invoice detail call)
         const profLineItems: any[] = profile.line_items ?? [];
