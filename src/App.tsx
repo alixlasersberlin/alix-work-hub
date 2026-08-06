@@ -123,6 +123,18 @@ const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
 const WiederkehrendeZahler = lazy(() => import("./pages/Finance/WiederkehrendeZahler"));
 const Bestandsuebersicht = lazy(() => import("./pages/Finance/Bestandsuebersicht"));
 const AlixFlex = lazy(() => import("./pages/AlixFlex"));
+const ProvisionUebersicht = lazy(() => import("./pages/Finance/Provision/Uebersicht"));
+const ProvisionOffene = lazy(() => import("./pages/Finance/Provision/Offene"));
+const ProvisionFreizugeben = lazy(() => import("./pages/Finance/Provision/Freizugeben"));
+const ProvisionFreigegeben = lazy(() => import("./pages/Finance/Provision/Freigegeben"));
+const ProvisionStornierte = lazy(() => import("./pages/Finance/Provision/Stornierte"));
+const ProvisionAuszahlungen = lazy(() => import("./pages/Finance/Provision/Auszahlungen"));
+const ProvisionAbrechnungen = lazy(() => import("./pages/Finance/Provision/Abrechnungen"));
+const ProvisionZuordnung = lazy(() => import("./pages/Finance/Provision/Zuordnung"));
+const ProvisionRegeln = lazy(() => import("./pages/Finance/Provision/Regeln"));
+const ProvisionAuswertungen = lazy(() => import("./pages/Finance/Provision/Auswertungen"));
+const ProvisionAudit = lazy(() => import("./pages/Finance/Provision/Audit"));
+const ProvisionEinstellungen = lazy(() => import("./pages/Finance/Provision/Einstellungen"));
 const Invoices = lazy(() => import("./pages/Invoices"));
 const OffenePosten = lazy(() => import("./pages/OffenePosten"));
 // const ZohoUnpaidInvoices = lazy(() => import("./pages/ZohoUnpaidInvoices")); // deaktiviert
