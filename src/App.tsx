@@ -97,6 +97,12 @@ const SmsTemplateSettings = lazy(() => import("./pages/Mobile/SmsTemplateSetting
 const TourenKalender = lazy(() => import("./pages/Tourenplanung/Kalender"));
 const TourenKarte = lazy(() => import("./pages/Tourenplanung/Karte"));
 const TourenDashboard = lazy(() => import("./pages/Tourenplanung/Dashboard"));
+const DispatchDashboard = lazy(() => import("./pages/Dispatch/Dashboard"));
+const DispatchTermine = lazy(() => import("./pages/Dispatch/Termine"));
+const DispatchTouren = lazy(() => import("./pages/Dispatch/Touren"));
+const DispatchFahrzeuge = lazy(() => import("./pages/Dispatch/Fahrzeuge"));
+const DispatchFahrer = lazy(() => import("./pages/Dispatch/Fahrer"));
+const DispatchEinstellungen = lazy(() => import("./pages/Dispatch/Einstellungen"));
 const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
 const WiederkehrendeZahler = lazy(() => import("./pages/Finance/WiederkehrendeZahler"));
@@ -1395,6 +1401,12 @@ function AppRoutes() {
           <Route path="/tourenplanung/neu" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
           <Route path="/tourenplanung/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><RoutePlanDetail /></ProtectedRoute>} />
           <Route path="/tourenplanung/:id/bearbeiten" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><RoutePlanForm /></ProtectedRoute>} />
+          <Route path="/dispatch" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchDashboard /></ProtectedRoute>} />
+          <Route path="/dispatch/termine" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTermine /></ProtectedRoute>} />
+          <Route path="/dispatch/touren" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTouren /></ProtectedRoute>} />
+          <Route path="/dispatch/fahrzeuge" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchFahrzeuge /></ProtectedRoute>} />
+          <Route path="/dispatch/fahrer" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchFahrer /></ProtectedRoute>} />
+          <Route path="/dispatch/einstellungen" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin', 'Tourenplanung']}><DispatchEinstellungen /></ProtectedRoute>} />
           <Route path="/finance" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Finance /></ProtectedRoute>} />
           <Route path="/finance/ratenzahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Ratenzahler /></ProtectedRoute>} />
           <Route path="/finance/alix-flex" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixFlex /></ProtectedRoute>} />
