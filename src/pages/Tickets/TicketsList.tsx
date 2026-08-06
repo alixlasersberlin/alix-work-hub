@@ -20,6 +20,18 @@ import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/Status
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 
 
+interface OfferInfo { offer_number: string; status: string | null }
+
+function offerStatusColor(s: string | null) {
+  const v = (s || '').toLowerCase();
+  if (v.includes('angenommen') || v.includes('accepted')) return 'border-emerald-500/40 text-emerald-400';
+  if (v.includes('abgelehnt') || v.includes('declined')) return 'border-red-500/40 text-red-400';
+  if (v.includes('versendet') || v.includes('sent')) return 'border-blue-500/40 text-blue-400';
+  if (v.includes('entwurf') || v.includes('draft')) return 'border-muted-foreground/40 text-muted-foreground';
+  return 'border-amber-500/40 text-amber-400';
+}
+
+
 interface TicketRow {
   id: string;
   external_ticket_id: string | null;
@@ -104,6 +116,7 @@ export default function TicketsList() {
   });
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [offersByCase, setOffersByCase] = useState<Record<string, OfferInfo>>({});
   const { isSuperAdmin } = useFinancePermissions();
 
   async function updateCategory(id: string, category: string | null) {
@@ -183,6 +196,29 @@ export default function TicketsList() {
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Angebote je Vorgangsnummer laden (neuestes Angebot pro Vorgang)
+  useEffect(() => {
+    const caseNumbers = Array.from(new Set(rows.map(r => (r as any).case_number).filter(Boolean))) as string[];
+    if (!caseNumbers.length) { setOffersByCase({}); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('offers')
+        .select('offer_number, status, case_number, created_at')
+        .in('case_number', caseNumbers)
+        .order('created_at', { ascending: false });
+      if (cancelled || error || !data) return;
+      const map: Record<string, OfferInfo> = {};
+      for (const o of data as any[]) {
+        if (o.case_number && !map[o.case_number]) {
+          map[o.case_number] = { offer_number: o.offer_number, status: o.status };
+        }
+      }
+      setOffersByCase(map);
+    })();
+    return () => { cancelled = true; };
+  }, [rows]);
 
   useEffect(() => {
     if (searchParams.get('new') === '1') {
@@ -558,6 +594,7 @@ export default function TicketsList() {
                         <TableHead>Kategorie</TableHead>
                         <TableHead>Ticket</TableHead>
                         <TableHead>Kunde</TableHead>
+                        <TableHead>Angebot</TableHead>
                         <TableHead>Gerät</TableHead>
                         <TableHead>Seriennr.</TableHead>
                         <TableHead>Abteilung</TableHead>
@@ -621,6 +658,21 @@ export default function TicketsList() {
                           <TableCell>
                             <div className="text-sm">{r.customer_name || '—'}</div>
                             <div className="text-xs text-muted-foreground">{r.company_name || ''}</div>
+                          </TableCell>
+                          <TableCell className="text-sm whitespace-nowrap">
+                            {(() => {
+                              const cn = (r as any).case_number as string | null;
+                              const off = cn ? offersByCase[cn] : undefined;
+                              if (!off) return <span className="text-muted-foreground text-xs">Kein Angebot</span>;
+                              return (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="font-mono text-xs text-primary">{off.offer_number}</span>
+                                  <Badge variant="outline" className={offerStatusColor(off.status)}>
+                                    {off.status || 'offen'}
+                                  </Badge>
+                                </div>
+                              );
+                            })()}
                           </TableCell>
                           <TableCell className="text-sm">{r.device_name || '—'}</TableCell>
                           <TableCell className="text-sm font-mono">{r.serial_number || '—'}</TableCell>
