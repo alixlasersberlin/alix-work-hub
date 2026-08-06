@@ -100,17 +100,18 @@ Deno.serve(async (req) => {
           <p>Freundliche Grüße<br>Alix Auslieferung</p>
         </div>`;
     } else {
-      subject = `Ihre Lieferung ist unterwegs – Auftrag ${a.order_number ?? ""}`.trim();
+      subject = `Ihre Sendung wurde abgeholt – Auftrag ${a.order_number ?? ""}`.trim();
       html = `
         <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111">
-          <h2>Ihre Lieferung ist unterwegs</h2>
+          <h2>Ihre Sendung ist unterwegs</h2>
           <p>Guten Tag${a.contact_name ? " " + esc(a.contact_name) : ""},</p>
-          <p>Ihr Gerät wurde an unsere Spedition übergeben.</p>
+          <p>Ihr Gerät wurde von unserer Spedition abgeholt und ist jetzt zu Ihnen unterwegs.</p>
           <table cellpadding="6" style="border-collapse:collapse">
             <tr><td><b>Auftrag</b></td><td>${esc(a.order_number ?? "—")}</td></tr>
-            <tr><td><b>Gerät</b></td><td>${esc(a.device_name ?? "—")}</td></tr>
+            <tr><td><b>Gerät</b></td><td>${esc(a.device_name ?? "—")}${a.serial_number ? " · SN " + esc(a.serial_number) : ""}</td></tr>
             <tr><td><b>Spedition</b></td><td>${esc(c.name ?? "—")}</td></tr>
-            ${row.tracking_number ? `<tr><td><b>Sendungsnummer</b></td><td>${esc(row.tracking_number)}</td></tr>` : ""}
+            <tr><td><b>Sendungsnummer</b></td><td>${esc(row.tracking_number ?? "wird nachgereicht")}</td></tr>
+            <tr><td><b>Abholdatum</b></td><td>${esc(fmtDate(row.assigned_date))}</td></tr>
             <tr><td><b>Lieferadresse</b></td><td>${esc(addr || "—")}</td></tr>
           </table>
           <p>Die Spedition meldet sich zur Terminabstimmung bei Ihnen.</p>
