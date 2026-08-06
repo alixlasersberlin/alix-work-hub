@@ -64,14 +64,45 @@ export default function DispatchFahrer() {
     onError: (e: any) => toast.error(e.message ?? 'Fehler beim Speichern'),
   });
 
+  // Richtwerte für Fahrerkosten (Vollkosten inkl. Lohnnebenkosten)
+  const fillDefaults = useMutation({
+    mutationFn: async () => {
+      const list = (data ?? []) as any[];
+      let touched = 0;
+      for (const d of list) {
+        const patch: any = {};
+        if (d.cost_per_hour == null) patch.cost_per_hour = 42;
+        if (d.cost_per_km == null) patch.cost_per_km = 0.3;
+        if (Object.keys(patch).length === 0) continue;
+        const { error } = await supabase.from('drivers').update(patch).eq('id', d.id);
+        if (error) throw error;
+        touched++;
+      }
+      return touched;
+    },
+    onSuccess: (n) => {
+      toast.success(n ? `${n} Fahrer mit Standardsätzen ergänzt` : 'Alle Fahrer haben bereits Kostensätze');
+      qc.invalidateQueries({ queryKey: ['dispatch', 'drivers'] });
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Fehler beim Ergänzen'),
+  });
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in space-y-4">
       <PageHeader
         title="Fahrer"
         subtitle="Fahrerstammdaten, Führerscheinklassen, Qualifikationen und Kostensätze"
         icon={Users}
-        actions={<Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Fahrer</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={fillDefaults.isPending || (data ?? []).length === 0} onClick={() => fillDefaults.mutate()}>
+              {fillDefaults.isPending ? 'Ergänze…' : 'Standardsätze ergänzen'}
+            </Button>
+            <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Fahrer</Button>
+          </div>
+        }
       />
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

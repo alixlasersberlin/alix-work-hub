@@ -25,6 +25,21 @@ export const FUEL_TYPES: { value: string; label: string; co2: number; unit: stri
 export const DEFAULT_CO2 = (fuel?: string | null) =>
   FUEL_TYPES.find(f => f.value === (fuel ?? 'diesel'))?.co2 ?? 250;
 
+// Branchenübliche Richtwerte je Fahrzeugklasse – dienen als Startwerte,
+// solange keine eigenen Verbrauchs- und Kostendaten gepflegt sind.
+export const VEHICLE_PRESETS: Record<string, {
+  label: string; vehicle_type: string; fuel_type: string;
+  consumption_per_100km: number; co2_g_per_km: number;
+  cost_per_km: number; fixed_cost_per_day: number;
+  service_interval_km: number; service_interval_months: number;
+}> = {
+  pkw: { label: 'PKW (Kombi)', vehicle_type: 'PKW', fuel_type: 'diesel', consumption_per_100km: 6.5, co2_g_per_km: 171, cost_per_km: 0.38, fixed_cost_per_day: 22, service_interval_km: 30000, service_interval_months: 12 },
+  transporter: { label: 'Transporter (3,5 t)', vehicle_type: 'Transporter', fuel_type: 'diesel', consumption_per_100km: 9.5, co2_g_per_km: 250, cost_per_km: 0.55, fixed_cost_per_day: 35, service_interval_km: 40000, service_interval_months: 12 },
+  transporter_e: { label: 'E-Transporter', vehicle_type: 'Transporter', fuel_type: 'electric', consumption_per_100km: 25, co2_g_per_km: 60, cost_per_km: 0.42, fixed_cost_per_day: 38, service_interval_km: 40000, service_interval_months: 24 },
+  lkw75: { label: 'LKW 7,5 t', vehicle_type: 'LKW 7,5t', fuel_type: 'diesel', consumption_per_100km: 18, co2_g_per_km: 474, cost_per_km: 0.85, fixed_cost_per_day: 70, service_interval_km: 50000, service_interval_months: 12 },
+  lkw12: { label: 'LKW 12 t', vehicle_type: 'LKW 12t', fuel_type: 'diesel', consumption_per_100km: 24, co2_g_per_km: 632, cost_per_km: 1.05, fixed_cost_per_day: 95, service_interval_km: 60000, service_interval_months: 12 },
+};
+
 const emptyForm = {
   license_plate: '', name: '', vehicle_type: '',
   load_volume_m3: '', max_payload_kg: '',
@@ -109,6 +124,58 @@ export default function DispatchFahrzeuge() {
     onError: (e: any) => toast.error(e.message ?? 'Fehler beim Speichern'),
   });
 
+  // Ergänzt fehlende Verbrauchs-, Kosten- und Wartungswerte anhand der Typ-Vorlagen
+  const fillDefaults = useMutation({
+    mutationFn: async () => {
+      const list = (data ?? []) as any[];
+      let touched = 0;
+      for (const v of list) {
+        const type = (v.vehicle_type ?? '').toLowerCase();
+        const preset =
+          v.fuel_type === 'electric' || v.is_electric ? VEHICLE_PRESETS.transporter_e
+            : type.includes('12') ? VEHICLE_PRESETS.lkw12
+            : type.includes('7') ? VEHICLE_PRESETS.lkw75
+            : type.includes('pkw') ? VEHICLE_PRESETS.pkw
+            : VEHICLE_PRESETS.transporter;
+        const patch: any = {};
+        if (v.fuel_type == null) patch.fuel_type = preset.fuel_type;
+        if (v.consumption_per_100km == null) patch.consumption_per_100km = preset.consumption_per_100km;
+        if (v.co2_g_per_km == null) patch.co2_g_per_km = preset.co2_g_per_km;
+        if (v.cost_per_km == null) patch.cost_per_km = preset.cost_per_km;
+        if (v.fixed_cost_per_day == null) patch.fixed_cost_per_day = preset.fixed_cost_per_day;
+        if (v.service_interval_km == null) patch.service_interval_km = preset.service_interval_km;
+        if (v.service_interval_months == null) patch.service_interval_months = preset.service_interval_months;
+        if (Object.keys(patch).length === 0) continue;
+        const { error } = await supabase.from('vehicles').update(patch).eq('id', v.id);
+        if (error) throw error;
+        touched++;
+      }
+      return touched;
+    },
+    onSuccess: (n) => {
+      toast.success(n ? `${n} Fahrzeug(e) mit Richtwerten ergänzt` : 'Alle Fahrzeuge sind bereits vollständig gepflegt');
+      qc.invalidateQueries({ queryKey: ['dispatch', 'vehicles'] });
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Fehler beim Ergänzen'),
+  });
+
+  const applyPreset = (key: string) => {
+    const p = VEHICLE_PRESETS[key];
+    if (!p) return;
+    setForm(f => ({
+      ...f,
+      vehicle_type: f.vehicle_type || p.vehicle_type,
+      fuel_type: p.fuel_type,
+      consumption_per_100km: String(p.consumption_per_100km),
+      co2_g_per_km: String(p.co2_g_per_km),
+      cost_per_km: String(p.cost_per_km),
+      fixed_cost_per_day: String(p.fixed_cost_per_day),
+      service_interval_km: String(p.service_interval_km),
+      service_interval_months: String(p.service_interval_months),
+    }));
+    toast.success(`Vorlage „${p.label}“ übernommen`);
+  };
+
   const fuelMeta = FUEL_TYPES.find(f => f.value === form.fuel_type);
 
   return (
@@ -117,8 +184,16 @@ export default function DispatchFahrzeuge() {
         title="Fahrzeuge"
         subtitle="Fuhrpark, Kapazitäten, Verbrauch, Kostensätze und Telematik"
         icon={Truck}
-        actions={<Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Fahrzeug</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" disabled={fillDefaults.isPending || (data ?? []).length === 0} onClick={() => fillDefaults.mutate()}>
+              <Leaf className="h-4 w-4 mr-2" />{fillDefaults.isPending ? 'Ergänze…' : 'Richtwerte ergänzen'}
+            </Button>
+            <Button onClick={openNew}><Plus className="h-4 w-4 mr-2" />Fahrzeug</Button>
+          </div>
+        }
       />
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
