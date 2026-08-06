@@ -412,6 +412,8 @@ export const navItems: NavItem[] = [
       { path: '/produktion/pruefmerkmale', label: 'Prüfmerkmale', icon: ClipboardList, roles: null },
       { path: '/produktion/auftraege', label: 'Produktionsaufträge', icon: Factory, roles: null },
       { path: '/produktion/arbeitsanweisungen', label: 'Arbeitsanweisungen', icon: FileText, roles: null },
+      { path: '/produktion/rueckverfolgbarkeit', label: 'Rückverfolgbarkeit', icon: ClipboardCheck, roles: null },
+
       { path: '/produktion/aenderungen', label: 'Änderungen (ECR/ECO)', icon: GitBranch, roles: null },
       { path: '/produktion/dokumente', label: 'Technische Dokumentation', icon: FileCheck2, roles: null },
     ],
