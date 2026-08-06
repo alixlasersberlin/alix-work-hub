@@ -14,7 +14,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 
-// CO₂-Faktoren (g/km) – Durchschnittswerte Transporter
+import { DEFAULT_CO2 } from './Fahrzeuge';
+
+// Fallback-CO₂-Faktoren (g/km), sofern am Fahrzeug nichts hinterlegt ist
 const CO2_DIESEL_G_PER_KM = 250;
 const CO2_ELECTRIC_G_PER_KM = 60; // Strommix DE/AT
 
