@@ -46,6 +46,7 @@ const sections: Section[] = [
       { path: '/dispatch/touren', label: 'Touren', desc: 'Übersicht aller Touren mit Tour-Nr., Datum, Fahrer, Fahrzeug, km und Fahrzeit.', roles: PLAN_RO },
       { path: '/dispatch/retouren', label: 'Retouren', desc: 'Rückholungen und Geräterücknahmen als eigener Einsatztyp.', roles: PLAN },
       { path: '/dispatch/spediteure', label: 'Spediteure', desc: 'Externe Transportdienstleister und deren Aufträge.', roles: PLAN },
+      { path: '/dispatch/speditionsversand', label: 'Speditionsversand', desc: 'Gerät wird per Spedition abgeholt und zum Kunden versendet: Zuordnung von Spedition zu Auftrag/Liefertermin, Abholdatum, Preis, Sendungsnummer und Status (Angefragt → Abgeholt → Unterwegs → Zugestellt). Frachtauftrag als PDF, E-Mail an Spedition und Versandavis an den Kunden.', roles: PLAN },
       { path: '/dispatch/archiv', label: 'Archiv', desc: 'Abgeschlossene Touren inkl. Protokollen, Unterschriften und Fotos.', roles: PLAN_RO },
     ],
   },
