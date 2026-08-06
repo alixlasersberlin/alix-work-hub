@@ -56,6 +56,9 @@ export default function DispatchRetouren() {
   const [statusFilter, setStatusFilter] = useState('alle');
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ ...EMPTY });
+  const [mailRow, setMailRow] = useState<any>(null);
+  const [mailTo, setMailTo] = useState('');
+
 
   const { data: rows, isPending } = useQuery({
     queryKey: ['dispatch', 'returns'],
