@@ -425,6 +425,7 @@ export const navItems: NavItem[] = [
       { path: '/produktion/risikomanagement', label: 'Risikomanagement (ISO 14971)', icon: ShieldCheck, roles: null },
       { path: '/produktion/pruefmittel', label: 'Prüfmittel & Kalibrierung', icon: ClipboardCheck, roles: null },
       { path: '/produktion/seriennummern', label: 'Serien- & Chargenvergabe', icon: Package, roles: null },
+      { path: '/produktion/stammdatenimport', label: 'Stammdaten-Import', icon: Upload, roles: null },
 
       { path: '/produktion/aenderungen', label: 'Änderungen (ECR/ECO)', icon: GitBranch, roles: null },
       { path: '/produktion/dokumente', label: 'Technische Dokumentation', icon: FileCheck2, roles: null },
