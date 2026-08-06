@@ -170,6 +170,21 @@ Deno.serve(async (req) => {
       const byName = new Map<string, string>();
       (profiles ?? []).forEach((p) => { if (p.full_name) byName.set(p.full_name.trim().toLowerCase(), p.id); });
 
+      // Verkäufer-Aliase (Zoho-Schreibweisen) aus den App-Einstellungen
+      const { data: aliasSetting } = await supabase
+        .from('app_settings').select('value').eq('key', 'commission_salesperson_aliases').maybeSingle();
+      try {
+        const aliasMap = JSON.parse(aliasSetting?.value ?? '{}') as Record<string, string>;
+        Object.entries(aliasMap).forEach(([alias, empId]) => {
+          if (alias && empId) byName.set(alias.trim().toLowerCase(), empId);
+        });
+      } catch { /* ungültige Alias-Konfiguration ignorieren */ }
+
+      // Mitarbeiter-Stammdaten (Standardregel, Provisionsberechtigung)
+      const { data: empRows } = await supabase.from('commission_employees').select('employee_id, commission_active, default_rule_id');
+      const empByUser = new Map((empRows ?? []).map((e: any) => [e.employee_id, e]));
+
+
       const limit = Number(body.limit ?? 300);
       const { data: orders } = await supabase
         .from('orders')
