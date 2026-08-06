@@ -4,6 +4,7 @@ import { Truck } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TOUR_STATUS_LABELS, statusClass } from './constants';
 
@@ -46,7 +47,9 @@ export default function DispatchTouren() {
             )}
             {(data ?? []).map((t: any) => (
               <TableRow key={t.id}>
-                <TableCell className="font-medium">{t.tour_number}</TableCell>
+                <TableCell className="font-medium">
+                  <Link to={`/dispatch/touren/${t.id}`} className="text-primary hover:underline">{t.tour_number}</Link>
+                </TableCell>
                 <TableCell>{t.tour_date ? format(new Date(t.tour_date), 'dd.MM.yyyy') : '—'}</TableCell>
                 <TableCell>{t.title ?? '—'}</TableCell>
                 <TableCell>{t.drivers?.full_name ?? '—'}</TableCell>

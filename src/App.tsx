@@ -102,6 +102,7 @@ const DispatchTermine = lazy(() => import("./pages/Dispatch/Termine"));
 const DispatchUngeplant = lazy(() => import("./pages/Dispatch/Ungeplant"));
 
 const DispatchTouren = lazy(() => import("./pages/Dispatch/Touren"));
+const DispatchTourDetail = lazy(() => import("./pages/Dispatch/TourDetail"));
 const DispatchTagesplanung = lazy(() => import("./pages/Dispatch/Tagesplanung"));
 
 const DispatchFahrzeuge = lazy(() => import("./pages/Dispatch/Fahrzeuge"));
@@ -329,6 +330,9 @@ const MobileChecklist = lazy(() => import("./pages/Mobile/Checkliste"));
 const MobileSync = lazy(() => import("./pages/Mobile/Sync"));
 const MobileProfil = lazy(() => import("./pages/Mobile/Profil"));
 const MobileSprachnotiz = lazy(() => import("./pages/Mobile/Sprachnotiz"));
+const MobileTouren = lazy(() => import("./pages/Mobile/Touren"));
+const MobileTourDetail = lazy(() => import("./pages/Mobile/TourDetail"));
+const MobileTourStopp = lazy(() => import("./pages/Mobile/TourStopp"));
 const KalenderLayout = lazy(() => import("./components/kalender/KalenderLayout"));
 const KalenderHeute = lazy(() => import("./pages/MobileKalender/Heute"));
 const KalenderAgenda = lazy(() => import("./pages/MobileKalender/Agenda"));
@@ -1412,6 +1416,7 @@ function AppRoutes() {
           <Route path="/dispatch/ungeplant" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchUngeplant /></ProtectedRoute>} />
 
           <Route path="/dispatch/touren" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTouren /></ProtectedRoute>} />
+          <Route path="/dispatch/touren/:id" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTourDetail /></ProtectedRoute>} />
           <Route path="/dispatch/tagesplanung" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchTagesplanung /></ProtectedRoute>} />
 
           <Route path="/dispatch/fahrzeuge" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchFahrzeuge /></ProtectedRoute>} />
@@ -2056,6 +2061,9 @@ function AppRoutes() {
         <Route path="/m" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Technik','Tourenplanung','Service','Reparaturannahme']}><MobileLayout /></ProtectedRoute>}>
           <Route index element={<MobileHome />} />
           <Route path="heute" element={<MobileHome />} />
+          <Route path="tour" element={<MobileTouren />} />
+          <Route path="tour/:tourId" element={<MobileTourDetail />} />
+          <Route path="tour/:tourId/stopp/:stopId" element={<MobileTourStopp />} />
           <Route path="sync" element={<MobileSync />} />
           <Route path="profil" element={<MobileProfil />} />
           <Route path="einsatz/:id" element={<MobileEinsatz />} />

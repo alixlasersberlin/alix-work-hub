@@ -42192,6 +42192,15 @@ export type Database = {
         Args: { p_id: string; p_reason: string }
         Returns: undefined
       }
+      delivery_generate_loading_list: {
+        Args: { p_tour_id: string }
+        Returns: string
+      }
+      delivery_release_tour: { Args: { p_tour_id: string }; Returns: Json }
+      delivery_seed_release_checklist: {
+        Args: { p_tour_id: string }
+        Returns: number
+      }
       device_lock_import_raw_rows: {
         Args: { _import_id: string }
         Returns: Json
