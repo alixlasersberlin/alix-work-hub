@@ -50,20 +50,31 @@ Deno.serve(async (req) => {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: row, error } = await sb
       .from("delivery_carrier_assignments")
-      .select("*, carrier:carrier_id(name, contact_name, email, phone), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_email, delivery_street, delivery_zip, delivery_city, delivery_country, planned_date)")
+      .select("*, carrier:carrier_id(name, contact_name, email, phone), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_email, delivery_street, delivery_zip, delivery_city, delivery_country, planned_date), route_plan:route_plan_id(order_id, planned_date, contact_name, contact_email, device_model, device_serial_number, location_address)")
       .eq("id", assignmentId)
       .maybeSingle();
     if (error) return json({ error: error.message }, 500);
     if (!row) return json({ error: "Speditionsversand nicht gefunden" }, 404);
 
-    const a: any = row.appointment ?? {};
+    const rp: any = (row as any).route_plan ?? {};
+    const a: any = {
+      ...(row.appointment ?? {}),
+    };
+    a.contact_name = a.contact_name || rp.contact_name || null;
+    a.contact_email = a.contact_email || rp.contact_email || null;
+    a.device_name = a.device_name || rp.device_model || null;
+    a.serial_number = a.serial_number || rp.device_serial_number || null;
+    a.planned_date = a.planned_date || rp.planned_date || null;
     const c: any = row.carrier ?? {};
     const to = mode === "carrier" ? c.email : a.contact_email;
     if (!to) {
       return json({ error: mode === "carrier" ? "Für diese Spedition ist keine E-Mail hinterlegt." : "Für diesen Auftrag ist keine Kunden-E-Mail hinterlegt." }, 400);
     }
 
-    const addr = [a.delivery_street, [a.delivery_zip, a.delivery_city].filter(Boolean).join(" "), a.delivery_country].filter(Boolean).join(", ");
+    const rpAddr = typeof rp.location_address === "string"
+      ? rp.location_address
+      : [rp.location_address?.street, [rp.location_address?.zip, rp.location_address?.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    const addr = [a.delivery_street, [a.delivery_zip, a.delivery_city].filter(Boolean).join(" "), a.delivery_country].filter(Boolean).join(", ") || rpAddr;
     let subject: string;
     let html: string;
 
