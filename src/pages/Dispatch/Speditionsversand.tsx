@@ -58,6 +58,8 @@ function planLabel(p: any): string {
 export default function DispatchSpeditionsversand() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
+  const [apptSearch, setApptSearch] = useState('');
+
   const [statusFilter, setStatusFilter] = useState('alle');
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ ...EMPTY });
@@ -128,7 +130,18 @@ export default function DispatchSpeditionsversand() {
     [routePlans, assignedPlanIds],
   );
 
+  const filteredAppointments = useMemo(() => {
+    const s = apptSearch.trim().toLowerCase();
+    const list = appointments ?? [];
+    if (!s) return list;
+    return list.filter((a: any) =>
+      [a.order_number, a.customer_name, a.company_name, a.device_name, a.delivery_city, a.delivery_zip]
+        .some(v => String(v ?? '').toLowerCase().includes(s)),
+    );
+  }, [appointments, apptSearch]);
+
   const filtered = useMemo(() => {
+
     const s = search.trim().toLowerCase();
     return (rows ?? []).filter((r: any) => {
       if (statusFilter !== 'alle' && r.status !== statusFilter) return false;
@@ -352,19 +365,32 @@ export default function DispatchSpeditionsversand() {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <Label>Auftrag / Liefertermin</Label>
+              <div className="relative mt-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  className="pl-9"
+                  placeholder="Suche nach Auftragsnummer oder Name…"
+                  value={apptSearch}
+                  onChange={e => setApptSearch(e.target.value)}
+                />
+              </div>
               <select
-                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="mt-2 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={form.appointment_id}
                 onChange={e => setForm(f => ({ ...f, appointment_id: e.target.value }))}
               >
                 <option value="">— ohne Auftragsbezug —</option>
-                {(appointments ?? []).map((a: any) => (
+                {filteredAppointments.map((a: any) => (
                   <option key={a.id} value={a.id}>
                     {[a.order_number, a.company_name || a.customer_name, a.device_name, [a.delivery_zip, a.delivery_city].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
                   </option>
                 ))}
               </select>
+              {apptSearch.trim() && (
+                <p className="mt-1 text-xs text-muted-foreground">{filteredAppointments.length} Treffer</p>
+              )}
             </div>
+
             <div className="sm:col-span-2">
               <Label>Tourenplanung (route_plans)</Label>
               <select
