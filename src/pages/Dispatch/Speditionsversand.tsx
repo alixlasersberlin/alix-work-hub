@@ -194,12 +194,13 @@ export default function DispatchSpeditionsversand() {
               <TableHead>Sendungsnr.</TableHead>
               <TableHead>Preis</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isPending && <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Lädt…</TableCell></TableRow>}
+            {isPending && <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Lädt…</TableCell></TableRow>}
             {!isPending && filtered.length === 0 && (
-              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Noch kein Speditionsversand erfasst.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Noch kein Speditionsversand erfasst.</TableCell></TableRow>
             )}
             {filtered.map((r: any) => (
               <TableRow key={r.id}>
