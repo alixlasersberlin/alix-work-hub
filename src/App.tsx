@@ -108,6 +108,8 @@ const DispatchTagesplanung = lazy(() => import("./pages/Dispatch/Tagesplanung"))
 const DispatchFahrzeuge = lazy(() => import("./pages/Dispatch/Fahrzeuge"));
 const DispatchFahrer = lazy(() => import("./pages/Dispatch/Fahrer"));
 const DispatchEinstellungen = lazy(() => import("./pages/Dispatch/Einstellungen"));
+const DispatchKosten = lazy(() => import("./pages/Dispatch/Kosten"));
+const DispatchArchiv = lazy(() => import("./pages/Dispatch/Archiv"));
 const LieferterminBestaetigung = lazy(() => import("./pages/Dispatch/public/Liefertermin"));
 const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
