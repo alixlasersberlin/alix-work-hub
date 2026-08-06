@@ -9,7 +9,7 @@ function getISOWeek(d: Date) {
   return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
-export function SidebarInfoBar() {
+export function SidebarInfoBar({ inline = false }: { inline?: boolean }) {
   const [now, setNow] = useState(new Date());
   const [temp, setTemp] = useState<number | null>(null);
 
@@ -46,8 +46,12 @@ export function SidebarInfoBar() {
   const time = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="px-3 py-2 border-b border-border bg-sidebar-accent/30 text-[11px] text-muted-foreground">
-      <div className="flex items-center justify-between gap-2 flex-wrap tabular-nums">
+    <div className={inline
+      ? "text-[11px] text-muted-foreground"
+      : "px-3 py-2 border-b border-border bg-sidebar-accent/30 text-[11px] text-muted-foreground"}>
+      <div className={inline
+        ? "flex items-center gap-3 whitespace-nowrap tabular-nums"
+        : "flex items-center justify-between gap-2 flex-wrap tabular-nums"}>
         <span className="inline-flex items-center gap-1">
           <Hash className="w-3 h-3 text-primary/80" /> KW {kw}
         </span>

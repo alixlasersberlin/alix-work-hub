@@ -2177,9 +2177,6 @@ export default function AppLayout() {
 
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <AuroraPrioTicker />
-            <div className="hidden md:block min-w-0 flex-1">
-              <SidebarInfoBar />
-            </div>
             {location.pathname.startsWith('/finance') && <RegionChip className="hidden lg:inline-flex" />}
             <AccountingRegionSwitcher className="hidden md:flex" />
 
