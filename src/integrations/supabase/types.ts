@@ -15431,6 +15431,50 @@ export type Database = {
           },
         ]
       }
+      delivery_readiness_overrides: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          id: string
+          order_id: string | null
+          overridden_by: string | null
+          overridden_by_name: string | null
+          previous_readiness: string | null
+          reason: string
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          overridden_by?: string | null
+          overridden_by_name?: string | null
+          previous_readiness?: string | null
+          reason: string
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          overridden_by?: string | null
+          overridden_by_name?: string | null
+          previous_readiness?: string | null
+          reason?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_readiness_overrides_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       delivery_settings: {
         Row: {
           created_at: string
@@ -42062,6 +42106,7 @@ export type Database = {
       catalog_can_edit: { Args: never; Returns: boolean }
       catalog_can_manage_prices: { Args: never; Returns: boolean }
       catalog_can_read: { Args: never; Returns: boolean }
+      check_delivery_readiness: { Args: { _order_id: string }; Returns: Json }
       check_rate_limit: {
         Args: { _bucket: string; _max: number; _window_seconds: number }
         Returns: boolean
