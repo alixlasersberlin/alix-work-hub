@@ -218,11 +218,18 @@ export default function DispatchRetouren() {
                 <TableCell>{r.pickup_date ? format(new Date(r.pickup_date), 'dd.MM.yyyy') : '—'}</TableCell>
                 <TableCell><Badge variant={statusVariant(r.status) as any}>{STATUSES[r.status] ?? r.status}</Badge></TableCell>
                 <TableCell>
-                  <Select value={r.status} onValueChange={v => setStatus.mutate({ id: r.id, status: v })}>
-                    <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                    <SelectContent>{Object.entries(STATUSES).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-1">
+                    <Select value={r.status} onValueChange={v => setStatus.mutate({ id: r.id, status: v })}>
+                      <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                      <SelectContent>{Object.entries(STATUSES).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Button size="icon" variant="outline" className="h-8 w-8 shrink-0" title="Retourenschein (PDF)"
+                      onClick={() => { downloadReturnNotePdf(r); toast.success('Retourenschein erstellt'); }}>
+                      <FileDown className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
+
               </TableRow>
             ))}
           </TableBody>
