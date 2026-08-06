@@ -406,6 +406,7 @@ export const navItems: NavItem[] = [
       { path: '/produktion/explosionszeichnungen', label: 'Explosionszeichnungen', icon: Layers, roles: null },
       { path: '/produktion/lieferanten', label: 'Lieferanten', icon: Factory, roles: null },
       { path: '/produktion/beschaffung', label: 'Beschaffung (Bezugsquellen)', icon: PackageCheck, roles: null },
+      { path: '/produktion/materialbedarf', label: 'Materialbedarf (MRP)', icon: ClipboardList, roles: null },
       { path: '/produktion/wareneingang', label: 'Wareneingang & Prüfung', icon: PackageCheck, roles: null },
       { path: '/produktion/pruefplaene', label: 'Prüfpläne', icon: ClipboardCheck, roles: null },
       { path: '/produktion/pruefmerkmale', label: 'Prüfmerkmale', icon: ClipboardList, roles: null },
