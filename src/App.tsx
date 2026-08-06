@@ -97,6 +97,12 @@ const SmsTemplateSettings = lazy(() => import("./pages/Mobile/SmsTemplateSetting
 const TourenKalender = lazy(() => import("./pages/Tourenplanung/Kalender"));
 const TourenKarte = lazy(() => import("./pages/Tourenplanung/Karte"));
 const TourenDashboard = lazy(() => import("./pages/Tourenplanung/Dashboard"));
+const DispatchDashboard = lazy(() => import("./pages/Dispatch/Dashboard"));
+const DispatchTermine = lazy(() => import("./pages/Dispatch/Termine"));
+const DispatchTouren = lazy(() => import("./pages/Dispatch/Touren"));
+const DispatchFahrzeuge = lazy(() => import("./pages/Dispatch/Fahrzeuge"));
+const DispatchFahrer = lazy(() => import("./pages/Dispatch/Fahrer"));
+const DispatchEinstellungen = lazy(() => import("./pages/Dispatch/Einstellungen"));
 const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
 const WiederkehrendeZahler = lazy(() => import("./pages/Finance/WiederkehrendeZahler"));
