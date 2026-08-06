@@ -481,6 +481,23 @@ export const navItems: NavItem[] = [
         ],
       },
       {
+        path: '/finance/provision', label: 'PROVISION MITARBEITER', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'],
+        children: [
+          { path: '/finance/provision', label: 'Übersicht', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/provision/offene', label: 'Offene Provisionen', icon: Clock, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/provision/freizugeben', label: 'Freizugebende Provisionen', icon: Lock, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/provision/freigegeben', label: 'Freigegebene Provisionen', icon: CheckCircle2, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/provision/auszahlungen', label: 'Auszahlungsübersicht', icon: Banknote, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/provision/stornierte', label: 'Stornierte Provisionen', icon: X, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/provision/abrechnungen', label: 'Provisionsabrechnungen', icon: FileText, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/provision/zuordnung', label: 'Mitarbeiter-Zuordnung', icon: Users, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/provision/regeln', label: 'Provisionsregeln', icon: Database, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/provision/auswertungen', label: 'Auswertungen', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
+          { path: '/finance/provision/audit', label: 'Provisions-Audit', icon: FileText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/provision/einstellungen', label: 'Einstellungen', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+        ],
+      },
+      {
         path: '/finance/raten', label: 'RATENZAHLER', icon: ScrollText, roles: ['Admin', 'Super Admin'],
         children: [
           { path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin'] },
