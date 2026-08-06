@@ -247,7 +247,12 @@ export default function DispatchRetouren() {
                       onClick={() => { downloadReturnNotePdf(r); toast.success('Retourenschein erstellt'); }}>
                       <FileDown className="h-4 w-4" />
                     </Button>
+                    <Button size="icon" variant="outline" className="h-8 w-8 shrink-0" title="Abholavis per E-Mail"
+                      onClick={() => { setMailRow(r); setMailTo(''); }}>
+                      <Mail className="h-4 w-4" />
+                    </Button>
                   </div>
+
                 </TableCell>
 
               </TableRow>
