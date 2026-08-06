@@ -26,7 +26,7 @@ import WorkspaceContextBar from '@/components/workspace/WorkspaceContextBar';
 import WorkspaceNav from '@/components/workspace/WorkspaceNav';
 import MenuScaleControl from '@/components/MenuScaleControl';
 import { useUiPrefs } from '@/hooks/useUiPrefs';
-import { PanelLeftClose, PanelLeftOpen, PackageSearch } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, PackageSearch, Cpu, Boxes, ListTree, Layers, GitBranch } from 'lucide-react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher';
 import { RegionChip } from '@/components/finance/RegionChip';
