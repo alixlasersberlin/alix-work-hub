@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Ship, Plus, Loader2, Search, FileDown, Mail, Send } from 'lucide-react';
+import { Ship, Plus, Loader2, Search, FileDown, Mail, Send, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { downloadCarrierOrderPdf } from '@/lib/dispatch/carrier-order-pdf';
@@ -75,6 +75,7 @@ export default function DispatchSpeditionsversand() {
 
   const [statusFilter, setStatusFilter] = useState('alle');
   const [open, setOpen] = useState(false);
+  const [plansOpen, setPlansOpen] = useState(false);
   const [form, setForm] = useState({ ...EMPTY });
 
   const { data: rows, isPending } = useQuery({
@@ -264,17 +265,25 @@ export default function DispatchSpeditionsversand() {
       </Card>
 
       <Card className="p-4 mb-4">
-        <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          className="w-full flex items-center justify-between gap-3 mb-3 text-left"
+          onClick={() => setPlansOpen(o => !o)}
+        >
           <div>
             <h2 className="font-semibold">Offene Termine aus der Tourenplanung</h2>
             <p className="text-sm text-muted-foreground">Einträge aus <span className="font-mono">route_plans</span>, für die noch keine Spedition beauftragt wurde.</p>
           </div>
-          <span className="text-sm text-muted-foreground">{openPlans.length} offen</span>
-        </div>
-        {openPlans.length === 0 ? (
+          <span className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
+            {openPlans.length} offen
+            <ChevronDown className={`w-4 h-4 transition-transform ${plansOpen ? 'rotate-180' : ''}`} />
+          </span>
+        </button>
+        {!plansOpen ? null : openPlans.length === 0 ? (
           <p className="text-sm text-muted-foreground">Keine offenen Tourenplan-Einträge.</p>
         ) : (
           <div className="max-h-72 overflow-y-auto divide-y divide-border">
+
             {openPlans.slice(0, 50).map((p: any) => (
               <div key={p.id} className="flex items-center justify-between gap-3 py-2">
                 <div className="min-w-0">
