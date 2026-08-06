@@ -99,6 +99,8 @@ const TourenKarte = lazy(() => import("./pages/Tourenplanung/Karte"));
 const TourenDashboard = lazy(() => import("./pages/Tourenplanung/Dashboard"));
 const DispatchDashboard = lazy(() => import("./pages/Dispatch/Dashboard"));
 const DispatchTermine = lazy(() => import("./pages/Dispatch/Termine"));
+const DispatchUngeplant = lazy(() => import("./pages/Dispatch/Ungeplant"));
+
 const DispatchTouren = lazy(() => import("./pages/Dispatch/Touren"));
 const DispatchFahrzeuge = lazy(() => import("./pages/Dispatch/Fahrzeuge"));
 const DispatchFahrer = lazy(() => import("./pages/Dispatch/Fahrer"));
