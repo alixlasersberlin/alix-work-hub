@@ -12538,6 +12538,1288 @@ export type Database = {
           },
         ]
       }
+      commission_adjustments: {
+        Row: {
+          adjustment_type: string
+          amount: number
+          created_at: string
+          created_by: string | null
+          entry_id: string
+          id: string
+          reason: string
+          reference: string | null
+        }
+        Insert: {
+          adjustment_type?: string
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          entry_id: string
+          id?: string
+          reason: string
+          reference?: string | null
+        }
+        Update: {
+          adjustment_type?: string
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          entry_id?: string
+          id?: string
+          reason?: string
+          reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_adjustments_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "commission_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_approvals: {
+        Row: {
+          decided_at: string
+          decided_by: string
+          decided_by_name: string | null
+          decision: string
+          entry_id: string
+          id: string
+          reason: string | null
+          step: string
+        }
+        Insert: {
+          decided_at?: string
+          decided_by: string
+          decided_by_name?: string | null
+          decision: string
+          entry_id: string
+          id?: string
+          reason?: string | null
+          step?: string
+        }
+        Update: {
+          decided_at?: string
+          decided_by?: string
+          decided_by_name?: string | null
+          decision?: string
+          entry_id?: string
+          id?: string
+          reason?: string | null
+          step?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_approvals_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "commission_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_assignments: {
+        Row: {
+          assigned_by: string | null
+          created_at: string
+          employee_id: string
+          employee_role: Database["public"]["Enums"]["commission_employee_role"]
+          fixed_share: number | null
+          id: string
+          note: string | null
+          order_id: string
+          priority: number
+          rule_id: string | null
+          share_percent: number
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          created_at?: string
+          employee_id: string
+          employee_role?: Database["public"]["Enums"]["commission_employee_role"]
+          fixed_share?: number | null
+          id?: string
+          note?: string | null
+          order_id: string
+          priority?: number
+          rule_id?: string | null
+          share_percent?: number
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string | null
+          created_at?: string
+          employee_id?: string
+          employee_role?: Database["public"]["Enums"]["commission_employee_role"]
+          fixed_share?: number | null
+          id?: string
+          note?: string | null
+          order_id?: string
+          priority?: number
+          rule_id?: string | null
+          share_percent?: number
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_assignments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_assignments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_assignments_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "commission_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          employee_id: string | null
+          entry_id: string | null
+          id: string
+          ip_address: string | null
+          new_value: Json | null
+          object_id: string | null
+          object_type: string
+          old_value: Json | null
+          order_id: string | null
+          reason: string | null
+          user_id: string | null
+          user_name: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          employee_id?: string | null
+          entry_id?: string | null
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          object_id?: string | null
+          object_type: string
+          old_value?: Json | null
+          order_id?: string | null
+          reason?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          employee_id?: string | null
+          entry_id?: string | null
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          object_id?: string | null
+          object_type?: string
+          old_value?: Json | null
+          order_id?: string | null
+          reason?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
+      commission_conditions: {
+        Row: {
+          checked_at: string
+          condition_key: string
+          detail: string | null
+          entry_id: string
+          id: string
+          label: string
+          state: string
+        }
+        Insert: {
+          checked_at?: string
+          condition_key: string
+          detail?: string | null
+          entry_id: string
+          id?: string
+          label: string
+          state?: string
+        }
+        Update: {
+          checked_at?: string
+          condition_key?: string
+          detail?: string | null
+          entry_id?: string
+          id?: string
+          label?: string
+          state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_conditions_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "commission_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_employees: {
+        Row: {
+          account_number: string | null
+          bank_iban: string | null
+          bank_name: string | null
+          commission_active: boolean
+          commission_group: string | null
+          contract_end: string | null
+          contract_start: string | null
+          cost_center: string | null
+          created_at: string
+          default_rule_id: string | null
+          department: string | null
+          employee_id: string
+          employment_type: string | null
+          exit_date: string | null
+          hire_date: string | null
+          id: string
+          individual_fixed: number | null
+          individual_percent: number | null
+          internal_notes: string | null
+          payout_method: string | null
+          personnel_number: string | null
+          supervisor_id: string | null
+          tax_treatment: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          bank_iban?: string | null
+          bank_name?: string | null
+          commission_active?: boolean
+          commission_group?: string | null
+          contract_end?: string | null
+          contract_start?: string | null
+          cost_center?: string | null
+          created_at?: string
+          default_rule_id?: string | null
+          department?: string | null
+          employee_id: string
+          employment_type?: string | null
+          exit_date?: string | null
+          hire_date?: string | null
+          id?: string
+          individual_fixed?: number | null
+          individual_percent?: number | null
+          internal_notes?: string | null
+          payout_method?: string | null
+          personnel_number?: string | null
+          supervisor_id?: string | null
+          tax_treatment?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          bank_iban?: string | null
+          bank_name?: string | null
+          commission_active?: boolean
+          commission_group?: string | null
+          contract_end?: string | null
+          contract_start?: string | null
+          cost_center?: string | null
+          created_at?: string
+          default_rule_id?: string | null
+          department?: string | null
+          employee_id?: string
+          employment_type?: string | null
+          exit_date?: string | null
+          hire_date?: string | null
+          id?: string
+          individual_fixed?: number | null
+          individual_percent?: number | null
+          internal_notes?: string | null
+          payout_method?: string | null
+          personnel_number?: string | null
+          supervisor_id?: string | null
+          tax_treatment?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_employees_default_rule_id_fkey"
+            columns: ["default_rule_id"]
+            isOneToOne: false
+            referencedRelation: "commission_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_employees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_employees_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_entries: {
+        Row: {
+          account_number: string | null
+          approval_state: string
+          approved_at: string | null
+          approved_by: string | null
+          basis: Database["public"]["Enums"]["commission_basis"]
+          basis_amount: number
+          block_reason: string | null
+          calc_hash: string | null
+          commission_amount: number
+          commission_percent: number
+          commission_type: Database["public"]["Enums"]["commission_type"]
+          cost_center: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          customer_name: string | null
+          customer_paid_percent: number
+          customer_payment_status: string | null
+          delivery_date: string | null
+          device_count: number
+          device_name: string | null
+          device_sku: string | null
+          discount_amount: number
+          effective_at: string | null
+          employee_id: string
+          employee_role: Database["public"]["Enums"]["commission_employee_role"]
+          entry_number: string
+          gross_amount: number
+          id: string
+          is_special: boolean
+          location: string | null
+          net_amount: number
+          notes: string | null
+          open_amount: number
+          order_date: string | null
+          order_id: string | null
+          order_number: string | null
+          paid_amount: number
+          parent_entry_id: string | null
+          payout_due_date: string | null
+          rule_id: string | null
+          rule_snapshot: Json
+          serial_number: string | null
+          special_reason: string | null
+          status: Database["public"]["Enums"]["commission_status"]
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_number?: string | null
+          approval_state?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          basis?: Database["public"]["Enums"]["commission_basis"]
+          basis_amount?: number
+          block_reason?: string | null
+          calc_hash?: string | null
+          commission_amount?: number
+          commission_percent?: number
+          commission_type?: Database["public"]["Enums"]["commission_type"]
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_paid_percent?: number
+          customer_payment_status?: string | null
+          delivery_date?: string | null
+          device_count?: number
+          device_name?: string | null
+          device_sku?: string | null
+          discount_amount?: number
+          effective_at?: string | null
+          employee_id: string
+          employee_role?: Database["public"]["Enums"]["commission_employee_role"]
+          entry_number?: string
+          gross_amount?: number
+          id?: string
+          is_special?: boolean
+          location?: string | null
+          net_amount?: number
+          notes?: string | null
+          open_amount?: number
+          order_date?: string | null
+          order_id?: string | null
+          order_number?: string | null
+          paid_amount?: number
+          parent_entry_id?: string | null
+          payout_due_date?: string | null
+          rule_id?: string | null
+          rule_snapshot?: Json
+          serial_number?: string | null
+          special_reason?: string | null
+          status?: Database["public"]["Enums"]["commission_status"]
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_number?: string | null
+          approval_state?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          basis?: Database["public"]["Enums"]["commission_basis"]
+          basis_amount?: number
+          block_reason?: string | null
+          calc_hash?: string | null
+          commission_amount?: number
+          commission_percent?: number
+          commission_type?: Database["public"]["Enums"]["commission_type"]
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_paid_percent?: number
+          customer_payment_status?: string | null
+          delivery_date?: string | null
+          device_count?: number
+          device_name?: string | null
+          device_sku?: string | null
+          discount_amount?: number
+          effective_at?: string | null
+          employee_id?: string
+          employee_role?: Database["public"]["Enums"]["commission_employee_role"]
+          entry_number?: string
+          gross_amount?: number
+          id?: string
+          is_special?: boolean
+          location?: string | null
+          net_amount?: number
+          notes?: string | null
+          open_amount?: number
+          order_date?: string | null
+          order_id?: string | null
+          order_number?: string | null
+          paid_amount?: number
+          parent_entry_id?: string | null
+          payout_due_date?: string | null
+          rule_id?: string | null
+          rule_snapshot?: Json
+          serial_number?: string | null
+          special_reason?: string | null
+          status?: Database["public"]["Enums"]["commission_status"]
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_entries_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_entries_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_alixsmart_customer_status"
+            referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "commission_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_entries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_entries_parent_entry_id_fkey"
+            columns: ["parent_entry_id"]
+            isOneToOne: false
+            referencedRelation: "commission_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_entries_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "commission_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_entries_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_entry_splits: {
+        Row: {
+          amount: number
+          created_at: string
+          employee_id: string
+          employee_role: Database["public"]["Enums"]["commission_employee_role"]
+          entry_id: string
+          id: string
+          priority: number
+          share_percent: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          employee_id: string
+          employee_role?: Database["public"]["Enums"]["commission_employee_role"]
+          entry_id: string
+          id?: string
+          priority?: number
+          share_percent?: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          employee_id?: string
+          employee_role?: Database["public"]["Enums"]["commission_employee_role"]
+          entry_id?: string
+          id?: string
+          priority?: number
+          share_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_entry_splits_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_entry_splits_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "commission_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_notifications: {
+        Row: {
+          created_at: string
+          entry_id: string | null
+          event_type: string
+          id: string
+          is_read: boolean
+          message: string | null
+          recipient_id: string | null
+          recipient_role: string | null
+          sent_at: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          entry_id?: string | null
+          event_type: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          recipient_id?: string | null
+          recipient_role?: string | null
+          sent_at?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          entry_id?: string | null
+          event_type?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          recipient_id?: string | null
+          recipient_role?: string | null
+          sent_at?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_notifications_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "commission_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_payment_items: {
+        Row: {
+          amount: number
+          created_at: string
+          entry_id: string
+          id: string
+          payment_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          entry_id: string
+          id?: string
+          payment_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          entry_id?: string
+          id?: string
+          payment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_payment_items_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "commission_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_payment_items_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "commission_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_payments: {
+        Row: {
+          amount: number
+          bank_account: string | null
+          booking_reference: string | null
+          cost_center: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          employee_id: string
+          id: string
+          note: string | null
+          payment_date: string
+          payment_method: string
+          payment_number: string | null
+          period_end: string | null
+          period_start: string | null
+          purpose: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          bank_account?: string | null
+          booking_reference?: string | null
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          employee_id: string
+          id?: string
+          note?: string | null
+          payment_date?: string
+          payment_method?: string
+          payment_number?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          purpose?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          bank_account?: string | null
+          booking_reference?: string | null
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          employee_id?: string
+          id?: string
+          note?: string | null
+          payment_date?: string
+          payment_method?: string
+          payment_number?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          purpose?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_payments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_reversals: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          entry_id: string
+          id: string
+          is_reclaim: boolean
+          reason: string | null
+          reason_code: string
+          related_return_debit_id: string | null
+          reversal_type: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          entry_id: string
+          id?: string
+          is_reclaim?: boolean
+          reason?: string | null
+          reason_code?: string
+          related_return_debit_id?: string | null
+          reversal_type?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          entry_id?: string
+          id?: string
+          is_reclaim?: boolean
+          reason?: string | null
+          reason_code?: string
+          related_return_debit_id?: string | null
+          reversal_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_reversals_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "commission_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_rule_employees: {
+        Row: {
+          created_at: string
+          employee_id: string
+          employee_role: Database["public"]["Enums"]["commission_employee_role"]
+          fixed_override: number | null
+          id: string
+          percent_override: number | null
+          priority: number
+          rule_id: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          employee_role?: Database["public"]["Enums"]["commission_employee_role"]
+          fixed_override?: number | null
+          id?: string
+          percent_override?: number | null
+          priority?: number
+          rule_id: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          employee_role?: Database["public"]["Enums"]["commission_employee_role"]
+          fixed_override?: number | null
+          id?: string
+          percent_override?: number | null
+          priority?: number
+          rule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rule_employees_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_rule_employees_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "commission_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_rule_mandants: {
+        Row: {
+          account_number: string | null
+          cost_center: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          percent_override: number | null
+          rule_id: string
+          tenant_id: string
+        }
+        Insert: {
+          account_number?: string | null
+          cost_center?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          percent_override?: number | null
+          rule_id: string
+          tenant_id: string
+        }
+        Update: {
+          account_number?: string | null
+          cost_center?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          percent_override?: number | null
+          rule_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rule_mandants_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "commission_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_rule_mandants_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_rule_products: {
+        Row: {
+          created_at: string
+          fixed_override: number | null
+          id: string
+          match_type: string
+          match_value: string
+          percent_override: number | null
+          rule_id: string
+        }
+        Insert: {
+          created_at?: string
+          fixed_override?: number | null
+          id?: string
+          match_type?: string
+          match_value: string
+          percent_override?: number | null
+          rule_id: string
+        }
+        Update: {
+          created_at?: string
+          fixed_override?: number | null
+          id?: string
+          match_type?: string
+          match_value?: string
+          percent_override?: number | null
+          rule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rule_products_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "commission_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_rules: {
+        Row: {
+          account_number: string | null
+          approval_limit_amount: number | null
+          approval_required: boolean
+          auto_calculate: boolean
+          auto_prepare_payout: boolean
+          basis: Database["public"]["Enums"]["commission_basis"]
+          cancellation_rule: string
+          commission_group: string | null
+          commission_type: Database["public"]["Enums"]["commission_type"]
+          cost_center: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          effective_conditions: Json
+          effective_event: Database["public"]["Enums"]["commission_effective_event"]
+          fixed_amount: number | null
+          id: string
+          installment_mode: string
+          installment_schedule: Json
+          internal_notes: string | null
+          is_active: boolean
+          location: string | null
+          max_discount_percent: number | null
+          min_margin: number | null
+          min_sales_price: number | null
+          name: string
+          order_type: string | null
+          payment_method: string | null
+          payout_grouped_monthly: boolean
+          payout_min_amount: number
+          payout_min_wait_days: number
+          payout_retention_days: number
+          payout_timing: Database["public"]["Enums"]["commission_payout_timing"]
+          payout_workdays_only: boolean
+          percent_value: number | null
+          reclaim_rule: string
+          tax_treatment: string | null
+          tenant_id: string | null
+          tier_period:
+            | Database["public"]["Enums"]["commission_tier_period"]
+            | null
+          tiers: Json
+          updated_at: string
+          valid_from: string | null
+          valid_to: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          approval_limit_amount?: number | null
+          approval_required?: boolean
+          auto_calculate?: boolean
+          auto_prepare_payout?: boolean
+          basis?: Database["public"]["Enums"]["commission_basis"]
+          cancellation_rule?: string
+          commission_group?: string | null
+          commission_type?: Database["public"]["Enums"]["commission_type"]
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          effective_conditions?: Json
+          effective_event?: Database["public"]["Enums"]["commission_effective_event"]
+          fixed_amount?: number | null
+          id?: string
+          installment_mode?: string
+          installment_schedule?: Json
+          internal_notes?: string | null
+          is_active?: boolean
+          location?: string | null
+          max_discount_percent?: number | null
+          min_margin?: number | null
+          min_sales_price?: number | null
+          name: string
+          order_type?: string | null
+          payment_method?: string | null
+          payout_grouped_monthly?: boolean
+          payout_min_amount?: number
+          payout_min_wait_days?: number
+          payout_retention_days?: number
+          payout_timing?: Database["public"]["Enums"]["commission_payout_timing"]
+          payout_workdays_only?: boolean
+          percent_value?: number | null
+          reclaim_rule?: string
+          tax_treatment?: string | null
+          tenant_id?: string | null
+          tier_period?:
+            | Database["public"]["Enums"]["commission_tier_period"]
+            | null
+          tiers?: Json
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          approval_limit_amount?: number | null
+          approval_required?: boolean
+          auto_calculate?: boolean
+          auto_prepare_payout?: boolean
+          basis?: Database["public"]["Enums"]["commission_basis"]
+          cancellation_rule?: string
+          commission_group?: string | null
+          commission_type?: Database["public"]["Enums"]["commission_type"]
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          effective_conditions?: Json
+          effective_event?: Database["public"]["Enums"]["commission_effective_event"]
+          fixed_amount?: number | null
+          id?: string
+          installment_mode?: string
+          installment_schedule?: Json
+          internal_notes?: string | null
+          is_active?: boolean
+          location?: string | null
+          max_discount_percent?: number | null
+          min_margin?: number | null
+          min_sales_price?: number | null
+          name?: string
+          order_type?: string | null
+          payment_method?: string | null
+          payout_grouped_monthly?: boolean
+          payout_min_amount?: number
+          payout_min_wait_days?: number
+          payout_retention_days?: number
+          payout_timing?: Database["public"]["Enums"]["commission_payout_timing"]
+          payout_workdays_only?: boolean
+          percent_value?: number | null
+          reclaim_rule?: string
+          tax_treatment?: string | null
+          tenant_id?: string | null
+          tier_period?:
+            | Database["public"]["Enums"]["commission_tier_period"]
+            | null
+          tiers?: Json
+          updated_at?: string
+          valid_from?: string | null
+          valid_to?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_settings: {
+        Row: {
+          approval_threshold_amount: number
+          auto_calculate_enabled: boolean
+          created_at: string
+          default_currency: string
+          four_eyes_enabled: boolean
+          id: string
+          max_percent_without_superadmin: number
+          notify_emails: string[]
+          rounding_decimals: number
+          rounding_mode: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_threshold_amount?: number
+          auto_calculate_enabled?: boolean
+          created_at?: string
+          default_currency?: string
+          four_eyes_enabled?: boolean
+          id?: string
+          max_percent_without_superadmin?: number
+          notify_emails?: string[]
+          rounding_decimals?: number
+          rounding_mode?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_threshold_amount?: number
+          auto_calculate_enabled?: boolean
+          created_at?: string
+          default_currency?: string
+          four_eyes_enabled?: boolean
+          id?: string
+          max_percent_without_superadmin?: number
+          notify_emails?: string[]
+          rounding_decimals?: number
+          rounding_mode?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_statements: {
+        Row: {
+          already_paid_amount: number
+          corrections_amount: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          document_id: string | null
+          employee_id: string
+          entry_ids: string[]
+          id: string
+          internal_notes: string | null
+          paid_at: string | null
+          payout_amount: number
+          pdf_url: string | null
+          period_end: string
+          period_start: string
+          reclaims_amount: number
+          released_at: string | null
+          released_by: string | null
+          statement_number: string | null
+          status: string
+          tenant_id: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          already_paid_amount?: number
+          corrections_amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          document_id?: string | null
+          employee_id: string
+          entry_ids?: string[]
+          id?: string
+          internal_notes?: string | null
+          paid_at?: string | null
+          payout_amount?: number
+          pdf_url?: string | null
+          period_end: string
+          period_start: string
+          reclaims_amount?: number
+          released_at?: string | null
+          released_by?: string | null
+          statement_number?: string | null
+          status?: string
+          tenant_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          already_paid_amount?: number
+          corrections_amount?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          document_id?: string | null
+          employee_id?: string
+          entry_ids?: string[]
+          id?: string
+          internal_notes?: string | null
+          paid_at?: string | null
+          payout_amount?: number
+          pdf_url?: string | null
+          period_end?: string
+          period_start?: string
+          reclaims_amount?: number
+          released_at?: string | null
+          released_by?: string | null
+          statement_number?: string | null
+          status?: string
+          tenant_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_statements_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_statements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commission_status_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          entry_id: string
+          id: string
+          new_status: Database["public"]["Enums"]["commission_status"]
+          old_status: Database["public"]["Enums"]["commission_status"] | null
+          reason: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          entry_id: string
+          id?: string
+          new_status: Database["public"]["Enums"]["commission_status"]
+          old_status?: Database["public"]["Enums"]["commission_status"] | null
+          reason?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          entry_id?: string
+          id?: string
+          new_status?: Database["public"]["Enums"]["commission_status"]
+          old_status?: Database["public"]["Enums"]["commission_status"] | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_status_history_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "commission_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       copilot_audit_log: {
         Row: {
           action: string
@@ -42592,6 +43874,8 @@ export type Database = {
         Returns: string
       }
       cmr_tenant_id: { Args: never; Returns: string }
+      comm_can_manage: { Args: { _uid: string }; Returns: boolean }
+      comm_can_read: { Args: { _uid: string }; Returns: boolean }
       complete_password_setup: { Args: never; Returns: undefined }
       create_finance_stakeholder: {
         Args: {
@@ -43283,6 +44567,87 @@ export type Database = {
         | "maschinell"
         | "geprueft"
         | "freigegeben"
+      commission_basis:
+        | "net"
+        | "gross"
+        | "net_after_discount"
+        | "gross_after_discount"
+        | "margin"
+        | "paid_amount"
+        | "paid_installment"
+        | "custom"
+      commission_effective_event:
+        | "order_created"
+        | "order_confirmed"
+        | "withdrawal_expired"
+        | "deposit_received"
+        | "fully_paid"
+        | "delivered"
+        | "handover_confirmed"
+        | "commissioned"
+        | "custom_deadline"
+        | "installment_received"
+        | "financing_approved"
+        | "admin_release"
+        | "custom"
+      commission_employee_role:
+        | "verkaeufer"
+        | "verkaufsberater"
+        | "vertriebsmitarbeiter"
+        | "teamleiter_vertrieb"
+        | "vermittler"
+        | "aussendienst"
+        | "empfehlungsgeber"
+        | "account_manager"
+        | "vertriebsleiter"
+        | "filialleiter"
+        | "kooperationspartner"
+        | "handelsvertreter"
+        | "weiterer_beteiligter"
+      commission_payout_timing:
+        | "immediate"
+        | "next_payroll"
+        | "month_end"
+        | "first_of_next_month"
+        | "fifteenth_of_next_month"
+        | "after_full_payment"
+        | "after_first_installment"
+        | "after_specific_installment"
+        | "pro_rata_installments"
+        | "after_handover"
+        | "after_withdrawal_period"
+        | "after_retention_period"
+        | "manual_release"
+        | "custom_date"
+      commission_status:
+        | "not_calculated"
+        | "preliminary"
+        | "condition_open"
+        | "effective"
+        | "blocked"
+        | "in_review"
+        | "pending_approval"
+        | "approved"
+        | "payout_scheduled"
+        | "paid"
+        | "partially_paid"
+        | "corrected"
+        | "cancelled"
+        | "reclaimed"
+        | "closed"
+      commission_tier_period:
+        | "monthly"
+        | "quarterly"
+        | "half_year"
+        | "yearly"
+        | "custom"
+      commission_type:
+        | "percent"
+        | "fixed_per_device"
+        | "tiered"
+        | "combined"
+        | "team"
+        | "special"
       delivery_appointment_type:
         | "auslieferung"
         | "auslieferung_installation"
@@ -43647,6 +45012,94 @@ export const Constants = {
         "maschinell",
         "geprueft",
         "freigegeben",
+      ],
+      commission_basis: [
+        "net",
+        "gross",
+        "net_after_discount",
+        "gross_after_discount",
+        "margin",
+        "paid_amount",
+        "paid_installment",
+        "custom",
+      ],
+      commission_effective_event: [
+        "order_created",
+        "order_confirmed",
+        "withdrawal_expired",
+        "deposit_received",
+        "fully_paid",
+        "delivered",
+        "handover_confirmed",
+        "commissioned",
+        "custom_deadline",
+        "installment_received",
+        "financing_approved",
+        "admin_release",
+        "custom",
+      ],
+      commission_employee_role: [
+        "verkaeufer",
+        "verkaufsberater",
+        "vertriebsmitarbeiter",
+        "teamleiter_vertrieb",
+        "vermittler",
+        "aussendienst",
+        "empfehlungsgeber",
+        "account_manager",
+        "vertriebsleiter",
+        "filialleiter",
+        "kooperationspartner",
+        "handelsvertreter",
+        "weiterer_beteiligter",
+      ],
+      commission_payout_timing: [
+        "immediate",
+        "next_payroll",
+        "month_end",
+        "first_of_next_month",
+        "fifteenth_of_next_month",
+        "after_full_payment",
+        "after_first_installment",
+        "after_specific_installment",
+        "pro_rata_installments",
+        "after_handover",
+        "after_withdrawal_period",
+        "after_retention_period",
+        "manual_release",
+        "custom_date",
+      ],
+      commission_status: [
+        "not_calculated",
+        "preliminary",
+        "condition_open",
+        "effective",
+        "blocked",
+        "in_review",
+        "pending_approval",
+        "approved",
+        "payout_scheduled",
+        "paid",
+        "partially_paid",
+        "corrected",
+        "cancelled",
+        "reclaimed",
+        "closed",
+      ],
+      commission_tier_period: [
+        "monthly",
+        "quarterly",
+        "half_year",
+        "yearly",
+        "custom",
+      ],
+      commission_type: [
+        "percent",
+        "fixed_per_device",
+        "tiered",
+        "combined",
+        "team",
+        "special",
       ],
       delivery_appointment_type: [
         "auslieferung",
