@@ -75,6 +75,7 @@ export default function DispatchSpeditionsversand() {
 
   const [statusFilter, setStatusFilter] = useState('alle');
   const [open, setOpen] = useState(false);
+  const [plansOpen, setPlansOpen] = useState(false);
   const [form, setForm] = useState({ ...EMPTY });
 
   const { data: rows, isPending } = useQuery({
