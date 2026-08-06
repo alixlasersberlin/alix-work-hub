@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
-import { Gauge, Leaf, Timer, TrendingUp, Truck, Users } from 'lucide-react';
+import { Gauge, Leaf, Star, Timer, TrendingUp, Truck, Users } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
