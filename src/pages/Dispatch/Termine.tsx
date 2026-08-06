@@ -22,6 +22,7 @@ export default function DispatchTermine() {
   const [status, setStatus] = useState('alle');
   const [readiness, setReadiness] = useState('alle');
   const [historyFor, setHistoryFor] = useState<{ id: string; label: string } | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const { data, isPending } = useQuery({
     queryKey: ['dispatch', 'appointments', status, readiness],
