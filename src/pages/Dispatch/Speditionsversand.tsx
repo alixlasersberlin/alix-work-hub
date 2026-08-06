@@ -50,8 +50,21 @@ function addrOf(a: any): string {
     .filter(Boolean).join(', ');
 }
 
+function planOrderNo(p: any): string | null {
+  return p?.order?.order_number ?? (p?.order_id ? `Auftrag ${String(p.order_id).slice(0, 8)}` : null);
+}
+
+function planCustomer(p: any): string | null {
+  return p?.order?.customer?.company_name || p?.order?.customer?.contact_name || p?.contact_name || null;
+}
+
+function planContact(p: any): string | null {
+  const c = p?.order?.customer;
+  return [p?.contact_name || c?.contact_name, p?.contact_email || c?.email, p?.contact_phone || c?.phone].filter(Boolean).join(' · ') || null;
+}
+
 function planLabel(p: any): string {
-  return [p.order_id ? `Auftrag ${String(p.order_id).slice(0, 8)}` : null, p.contact_name, p.device_model, p.device_serial_number, addrOf(p.location_address), p.planned_date ? format(new Date(p.planned_date), 'dd.MM.yyyy') : null]
+  return [planOrderNo(p), planCustomer(p), p.device_model, p.device_serial_number, addrOf(p.location_address), p.planned_date ? format(new Date(p.planned_date), 'dd.MM.yyyy') : null]
     .filter(Boolean).join(' · ');
 }
 
@@ -69,7 +82,7 @@ export default function DispatchSpeditionsversand() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('delivery_carrier_assignments')
-        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country), route_plan:route_plan_id(id, order_id, planned_date, planning_status, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, tour_type)')
+        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country), route_plan:route_plan_id(id, order_id, planned_date, planning_status, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, tour_type, order:order_id(order_number, customer:customer_id(company_name, contact_name, email, phone)))')
         .order('created_at', { ascending: false })
         .limit(300);
       if (error) throw error;
@@ -111,7 +124,7 @@ export default function DispatchSpeditionsversand() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('route_plans')
-        .select('id, order_id, planned_date, requested_date, planning_status, tour_type, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, planning_note')
+        .select('id, order_id, planned_date, requested_date, planning_status, tour_type, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, planning_note, order:order_id(order_number, customer:customer_id(company_name, contact_name, email, phone))')
         .order('planned_date', { ascending: false, nullsFirst: false })
         .limit(300);
       if (error) throw error;
@@ -147,7 +160,7 @@ export default function DispatchSpeditionsversand() {
       if (statusFilter !== 'alle' && r.status !== statusFilter) return false;
       if (!s) return true;
       return [r.tracking_number, r.carrier?.name, r.appointment?.order_number, r.appointment?.customer_name, r.appointment?.company_name, r.appointment?.serial_number,
-        r.route_plan?.contact_name, r.route_plan?.device_serial_number, r.route_plan?.device_model]
+        r.route_plan?.contact_name, r.route_plan?.device_serial_number, r.route_plan?.device_model, planOrderNo(r.route_plan), planCustomer(r.route_plan)]
         .some(v => String(v ?? '').toLowerCase().includes(s));
     });
   }, [rows, search, statusFilter]);
@@ -206,7 +219,8 @@ export default function DispatchSpeditionsversand() {
     }
   }
 
-  const customerEmailOf = (r: any) => r.appointment?.contact_email || r.route_plan?.contact_email || null;
+  const customerEmailOf = (r: any) =>
+    r.appointment?.contact_email || r.route_plan?.contact_email || r.route_plan?.order?.customer?.email || null;
 
   // Statuswechsel: sobald "abgeholt" gesetzt wird, automatisch Versandavis an den Kunden (CC K.trinh).
   async function changeStatus(row: any, next: string) {
@@ -264,7 +278,14 @@ export default function DispatchSpeditionsversand() {
             {openPlans.slice(0, 50).map((p: any) => (
               <div key={p.id} className="flex items-center justify-between gap-3 py-2">
                 <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{p.contact_name || 'Ohne Kontakt'} {p.device_model ? `· ${p.device_model}` : ''}</div>
+                  <div className="text-sm font-medium truncate">
+                    <span className="font-mono text-primary">{planOrderNo(p) ?? 'Ohne Auftrag'}</span>
+                    {' · '}{planCustomer(p) || 'Ohne Kunde'}
+                    {p.device_model ? ` · ${p.device_model}` : ''}
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {planContact(p) || 'Kein Kontakt hinterlegt'}
+                  </div>
                   <div className="text-xs text-muted-foreground truncate">
                     {[addrOf(p.location_address), p.device_serial_number, p.planning_status, p.planned_date ? format(new Date(p.planned_date), 'dd.MM.yyyy') : null].filter(Boolean).join(' · ')}
                   </div>
@@ -313,10 +334,10 @@ export default function DispatchSpeditionsversand() {
             {filtered.map((r: any) => (
               <TableRow key={r.id}>
                 <TableCell className="font-medium">
-                  {r.appointment?.order_number ?? (r.route_plan?.order_id ? `Tour ${String(r.route_plan.order_id).slice(0, 8)}` : '—')}
+                  {r.appointment?.order_number ?? planOrderNo(r.route_plan) ?? '—'}
                   {r.route_plan_id && <div className="text-[10px] uppercase tracking-wide text-muted-foreground">aus Tourenplanung</div>}
                 </TableCell>
-                <TableCell>{r.appointment?.company_name || r.appointment?.customer_name || r.route_plan?.contact_name || '—'}</TableCell>
+                <TableCell>{r.appointment?.company_name || r.appointment?.customer_name || planCustomer(r.route_plan) || '—'}</TableCell>
                 <TableCell>{[r.appointment?.device_name || r.route_plan?.device_model, r.appointment?.serial_number || r.route_plan?.device_serial_number].filter(Boolean).join(' · ') || '—'}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {[r.appointment?.delivery_street, [r.appointment?.delivery_zip, r.appointment?.delivery_city].filter(Boolean).join(' ')].filter(Boolean).join(', ') || addrOf(r.route_plan?.location_address) || '—'}
