@@ -218,9 +218,15 @@ Deno.serve(async (req) => {
           const eid = byName.get(String(o.salesperson_name).trim().toLowerCase());
           if (eid) targets = [{ employee_id: eid, employee_role: 'verkaeufer', share: 100, rule_id: null }];
         }
+        // Nur provisionsberechtigte Mitarbeiter berücksichtigen
+        targets = targets.filter((t) => (empByUser.get(t.employee_id)?.commission_active ?? true));
         if (!targets.length) { unassigned++; continue; }
 
-        const rule = rules.find((r) => r.id === targets[0].rule_id) ?? rules[0];
+        const defaultRuleId = empByUser.get(targets[0].employee_id)?.default_rule_id ?? null;
+        const rule = rules.find((r) => r.id === targets[0].rule_id)
+          ?? rules.find((r) => r.id === defaultRuleId)
+          ?? rules[0];
+
         const ev = evaluateConditions(o, rule);
         const base = round2(basisAmount(rule.basis, o));
         const gross = Number(o.total_amount ?? 0);
