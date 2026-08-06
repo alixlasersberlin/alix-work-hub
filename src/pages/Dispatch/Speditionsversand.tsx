@@ -139,8 +139,9 @@ export default function DispatchSpeditionsversand() {
     [rows],
   );
 
+  const CLOSED_PLAN_STATUSES = ['erledigt', 'abgeschlossen', 'storniert', 'abgesagt'];
   const openPlans = useMemo(
-    () => (routePlans ?? []).filter((p: any) => !assignedPlanIds.has(p.id) && p.planning_status !== 'abgeschlossen' && p.planning_status !== 'storniert'),
+    () => (routePlans ?? []).filter((p: any) => !assignedPlanIds.has(p.id) && !CLOSED_PLAN_STATUSES.includes(String(p.planning_status ?? '').toLowerCase())),
     [routePlans, assignedPlanIds],
   );
 
