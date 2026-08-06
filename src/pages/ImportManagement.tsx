@@ -294,6 +294,91 @@ export default function ImportManagement() {
   const [flexResult, setFlexResult] = useState<{ de: { imported: number; updated: number; failed: number }; at: { imported: number; updated: number; failed: number } } | null>(null);
   const [flexRegionFilter, setFlexRegionFilter] = useState<'all' | 'EU' | 'CH'>('all');
 
+  // ===== Einzelimport (Name oder Auftragsnummer) =====
+  const [flexSearch, setFlexSearch] = useState('');
+  const [flexSingleBusy, setFlexSingleBusy] = useState(false);
+  const [flexSingleResult, setFlexSingleResult] = useState<{ matched: number; imported: number; updated: number; failed: number } | null>(null);
+  const [invoiceSearch, setInvoiceSearch] = useState('');
+  const [invoiceSingleBusy, setInvoiceSingleBusy] = useState(false);
+  const [invoiceSingleResult, setInvoiceSingleResult] = useState<{ imported: number; updated: number; failed: number; profiles: number } | null>(null);
+
+  async function handleFlexSingleImport() {
+    const term = flexSearch.trim();
+    if (!term) { toast({ title: 'Bitte Name oder Auftragsnummer eingeben', variant: 'destructive' }); return; }
+    setFlexSingleBusy(true);
+    setFlexSingleResult(null);
+    const totals = { matched: 0, imported: 0, updated: 0, failed: 0 };
+    try {
+      for (const source of ['zoho_eu_1', 'zoho_eu_2'] as const) {
+        let page = 1;
+        for (let i = 0; i < 40; i++) {
+          const { data, error } = await supabase.functions.invoke('sync-zoho-recurring-profiles', {
+            body: { source_system: source, page, max_pages: 5, per_page: 200, region_filter: flexRegionFilter, search: term },
+          });
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+          totals.matched += data?.matched ?? 0;
+          totals.imported += data?.imported ?? 0;
+          totals.updated += data?.updated ?? 0;
+          totals.failed += data?.failed ?? 0;
+          if (!data?.has_more) break;
+          page = (data?.last_page ?? page) + 1;
+        }
+      }
+      setFlexSingleResult(totals);
+      toast({
+        title: totals.matched ? 'Einzelimport abgeschlossen' : 'Kein Treffer',
+        description: totals.matched
+          ? `${totals.matched} Treffer • ${totals.imported} neu • ${totals.updated} aktualisiert`
+          : `Für „${term}" wurde kein periodisches Profil gefunden.`,
+        variant: totals.matched ? undefined : 'destructive',
+      });
+    } catch (e: any) {
+      toast({ title: 'Einzelimport fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setFlexSingleBusy(false);
+    }
+  }
+
+  async function handleInvoiceSingleImport() {
+    const term = invoiceSearch.trim();
+    if (!term) { toast({ title: 'Bitte Name oder Auftragsnummer eingeben', variant: 'destructive' }); return; }
+    setInvoiceSingleBusy(true);
+    setInvoiceSingleResult(null);
+    const dateFrom = getInvoiceDateFrom();
+    const totals = { imported: 0, updated: 0, failed: 0, profiles: 0 };
+    try {
+      let page = 1;
+      for (let i = 0; i < 60; i++) {
+        const { data, error } = await supabase.functions.invoke('sync-zoho-recurring-invoices', {
+          body: { source_system: invoiceSource, date_from: dateFrom, page, max_pages: 2, per_page: 100, region_filter: invoiceRegionFilter, search: term },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        totals.imported += data?.imported ?? 0;
+        totals.updated += data?.updated ?? 0;
+        totals.failed += data?.failed ?? 0;
+        totals.profiles += data?.profiles_processed ?? 0;
+        if (!data?.profiles_have_more) break;
+        page = (data?.last_profile_page ?? page) + 1;
+      }
+      setInvoiceSingleResult(totals);
+      toast({
+        title: (totals.imported + totals.updated) ? 'Einzelimport abgeschlossen' : 'Kein Treffer',
+        description: (totals.imported + totals.updated)
+          ? `${totals.imported} neu • ${totals.updated} aktualisiert`
+          : `Für „${term}" wurden keine Rechnungen gefunden.`,
+        variant: (totals.imported + totals.updated) ? undefined : 'destructive',
+      });
+    } catch (e: any) {
+      toast({ title: 'Einzelimport fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setInvoiceSingleBusy(false);
+    }
+  }
+
+
+
   async function handleFlexImport() {
     setFlexImporting(true);
     setFlexResult(null);
@@ -2005,6 +2090,40 @@ export default function ImportManagement() {
                   </span>
                 </div>
 
+                {/* Einzelimport nach Name oder Auftragsnummer */}
+                <div className="rounded-lg border border-border bg-secondary/30 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Search className="w-4 h-4 text-primary" />
+                    Einzelnen Vorgang importieren (Name oder Auftragsnummer)
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Input
+                      value={invoiceSearch}
+                      onChange={(e) => setInvoiceSearch(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleInvoiceSingleImport(); }}
+                      placeholder="z.B. Müller GmbH oder 2026-04226"
+                      className="bg-secondary border-border"
+                    />
+                    <Button onClick={handleInvoiceSingleImport} disabled={invoiceSingleBusy || invoiceImporting} variant="outline" className="whitespace-nowrap">
+                      {invoiceSingleBusy ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Suche & Import…</>
+                      ) : (
+                        <><Search className="w-4 h-4 mr-2" /> Vorgang importieren</>
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Importiert nur die Rechnungen der Ratenzahler-Profile, die zu Name, Firma, Referenz-/Auftragsnummer oder E-Mail passen (Quelle & Zeitraum wie oben gewählt).
+                  </p>
+                  {invoiceSingleResult && (
+                    <div className="text-sm">
+                      neu: <strong className="text-[hsl(var(--success))]">{invoiceSingleResult.imported}</strong> • aktualisiert: <strong>{invoiceSingleResult.updated}</strong> • Fehler: <strong className="text-destructive">{invoiceSingleResult.failed}</strong> • geprüfte Profile: <strong>{invoiceSingleResult.profiles}</strong>
+                    </div>
+                  )}
+                </div>
+
+
+
                 {packagesResult && (
                   <div className="rounded-lg border border-border bg-secondary/40 p-4 space-y-1 text-sm">
                     <div>Pakete aus Zoho: <strong>{packagesResult.packages_fetched}</strong></div>
@@ -2085,6 +2204,40 @@ export default function ImportManagement() {
                     Synct DE (zoho_eu_1) und AT (zoho_eu_2) nacheinander.
                   </span>
                 </div>
+
+                {/* Einzelimport nach Name oder Auftragsnummer */}
+                <div className="rounded-lg border border-border bg-secondary/30 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Search className="w-4 h-4 text-primary" />
+                    Einzelnen Vorgang importieren (Name oder Auftragsnummer)
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Input
+                      value={flexSearch}
+                      onChange={(e) => setFlexSearch(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleFlexSingleImport(); }}
+                      placeholder="z.B. Müller GmbH oder 2026-04226"
+                      className="bg-secondary border-border"
+                    />
+                    <Button onClick={handleFlexSingleImport} disabled={flexSingleBusy || flexImporting} variant="outline" className="whitespace-nowrap">
+                      {flexSingleBusy ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Suche & Import…</>
+                      ) : (
+                        <><Search className="w-4 h-4 mr-2" /> Vorgang importieren</>
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Durchsucht DE + AT nach Kundenname, Firma, Profilname, Referenz-/Auftragsnummer oder E-Mail und importiert nur die Treffer.
+                  </p>
+                  {flexSingleResult && (
+                    <div className="text-sm">
+                      Treffer: <strong>{flexSingleResult.matched}</strong> • neu: <strong className="text-[hsl(var(--success))]">{flexSingleResult.imported}</strong> • aktualisiert: <strong>{flexSingleResult.updated}</strong> • Fehler: <strong className="text-destructive">{flexSingleResult.failed}</strong>
+                    </div>
+                  )}
+                </div>
+
+
 
 
                 {flexResult && (

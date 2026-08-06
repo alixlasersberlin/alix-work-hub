@@ -13,7 +13,24 @@ type Payload = {
   max_pages?: number;
   /** 'all' = alle, 'CH' = nur Schweiz-Profile, 'EU' = nur EU-Profile */
   region_filter?: "all" | "EU" | "CH";
+  /** Einzelimport: Name (Kunde/Firma) oder Auftrags-/Referenznummer */
+  search?: string;
 };
+
+function norm(v: unknown) {
+  return (v ?? "").toString().toLowerCase().trim();
+}
+
+function matchesSearch(p: any, needle: string): boolean {
+  const n = norm(needle);
+  if (!n) return true;
+  const fields = [
+    p?.customer_name, p?.company_name, p?.recurrence_name, p?.reference_number,
+    p?.email, p?.salesperson_name, p?.entity_name, p?.recurring_invoice_id,
+  ].map(norm);
+  return fields.some((f) => f && f.includes(n));
+}
+
 
 const CH_BRANCH_ID = "116240000000287001";
 const CH_MARKERS = ["alix lasers ® schweiz", "alix lasers (r) schweiz", "alix lasers schweiz"];
@@ -114,6 +131,7 @@ Deno.serve(async (req) => {
     const startPage = body.page ?? 1;
     const maxPages = Math.min(Math.max(body.max_pages ?? 5, 1), 20);
     const regionFilter = body.region_filter ?? "all";
+    const search = (body.search ?? "").toString().trim();
 
     const cfg = getZohoConfig(sourceSystem);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
@@ -122,7 +140,8 @@ Deno.serve(async (req) => {
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
 
     let imported = 0, updated = 0, failed = 0, processed = 0;
-    let skippedRegion = 0, importedCh = 0;
+    let skippedRegion = 0, importedCh = 0, matched = 0;
+
     let page = startPage;
     let hasMore = true;
     const startedAt = Date.now();
@@ -148,9 +167,13 @@ Deno.serve(async (req) => {
         const recurringId = String(p.recurring_invoice_id ?? "");
         if (!recurringId) { failed++; continue; }
 
+        if (search && !matchesSearch(p, search)) continue;
+        if (search) matched++;
+
         const region = detectProfileRegion(p);
         if (regionFilter !== "all" && region !== regionFilter) { skippedRegion++; continue; }
         if (region === "CH") importedCh++;
+
 
 
         const lineItems: any[] = p.line_items ?? [];
@@ -213,7 +236,10 @@ Deno.serve(async (req) => {
       region_filter: regionFilter,
       skipped_region: skippedRegion,
       imported_ch: importedCh,
+      search: search || null,
+      matched,
       has_more: hasMore,
+
     });
   } catch (e: any) {
     return json({ error: e?.message ?? String(e) }, 500);
