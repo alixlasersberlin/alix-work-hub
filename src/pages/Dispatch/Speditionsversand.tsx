@@ -284,12 +284,16 @@ export default function DispatchSpeditionsversand() {
             )}
             {filtered.map((r: any) => (
               <TableRow key={r.id}>
-                <TableCell className="font-medium">{r.appointment?.order_number ?? '—'}</TableCell>
-                <TableCell>{r.appointment?.company_name || r.appointment?.customer_name || '—'}</TableCell>
-                <TableCell>{[r.appointment?.device_name, r.appointment?.serial_number].filter(Boolean).join(' · ') || '—'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {[r.appointment?.delivery_street, [r.appointment?.delivery_zip, r.appointment?.delivery_city].filter(Boolean).join(' ')].filter(Boolean).join(', ') || '—'}
+                <TableCell className="font-medium">
+                  {r.appointment?.order_number ?? (r.route_plan?.order_id ? `Tour ${String(r.route_plan.order_id).slice(0, 8)}` : '—')}
+                  {r.route_plan_id && <div className="text-[10px] uppercase tracking-wide text-muted-foreground">aus Tourenplanung</div>}
                 </TableCell>
+                <TableCell>{r.appointment?.company_name || r.appointment?.customer_name || r.route_plan?.contact_name || '—'}</TableCell>
+                <TableCell>{[r.appointment?.device_name || r.route_plan?.device_model, r.appointment?.serial_number || r.route_plan?.device_serial_number].filter(Boolean).join(' · ') || '—'}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {[r.appointment?.delivery_street, [r.appointment?.delivery_zip, r.appointment?.delivery_city].filter(Boolean).join(' ')].filter(Boolean).join(', ') || addrOf(r.route_plan?.location_address) || '—'}
+                </TableCell>
+
                 <TableCell>{r.carrier?.name ?? '—'}</TableCell>
                 <TableCell>{r.assigned_date ? format(new Date(r.assigned_date), 'dd.MM.yyyy') : '—'}</TableCell>
                 <TableCell>
