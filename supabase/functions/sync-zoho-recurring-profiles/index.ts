@@ -236,7 +236,10 @@ Deno.serve(async (req) => {
       region_filter: regionFilter,
       skipped_region: skippedRegion,
       imported_ch: importedCh,
+      search: search || null,
+      matched,
       has_more: hasMore,
+
     });
   } catch (e: any) {
     return json({ error: e?.message ?? String(e) }, 500);
