@@ -11,9 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { PackageX, Plus, Loader2, Search } from 'lucide-react';
+import { PackageX, Plus, Loader2, Search, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { downloadReturnNotePdf } from '@/lib/dispatch/return-note-pdf';
 
 const TYPES: Record<string, string> = {
   rueckholung: 'Rückholung',
@@ -57,11 +58,13 @@ export default function DispatchRetouren() {
   const [form, setForm] = useState({ ...EMPTY });
 
   const { data: rows, isPending } = useQuery({
-    queryKey: ['dispatch', 'returns', statusFilter],
+    queryKey: ['dispatch', 'returns'],
     queryFn: async () => {
-      let q = supabase.from('delivery_returns').select('*').order('created_at', { ascending: false }).limit(300);
-      if (statusFilter !== 'alle') q = q.eq('status', statusFilter);
-      const { data, error } = await q;
+      const { data, error } = await supabase
+        .from('delivery_returns')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(500);
       if (error) throw error;
       return data ?? [];
     },
@@ -69,11 +72,14 @@ export default function DispatchRetouren() {
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
-    if (!s) return rows ?? [];
-    return (rows ?? []).filter((r: any) =>
+    let list = rows ?? [];
+    if (statusFilter !== 'alle') list = list.filter((r: any) => r.status === statusFilter);
+    if (!s) return list;
+    return list.filter((r: any) =>
       [r.return_number, r.order_number, r.customer_name, r.company_name, r.device_name, r.serial_number]
         .some(v => String(v ?? '').toLowerCase().includes(s)));
-  }, [rows, search]);
+  }, [rows, search, statusFilter]);
+
 
   const create = useMutation({
     mutationFn: async () => {
@@ -154,7 +160,22 @@ export default function DispatchRetouren() {
         }
       />
 
+      <div className="grid gap-3 md:grid-cols-4">
+        {[
+          { label: 'Offen', value: (rows ?? []).filter((r: any) => r.status === 'offen').length },
+          { label: 'Eingeplant / unterwegs', value: (rows ?? []).filter((r: any) => ['eingeplant', 'abgeholt'].includes(r.status)).length },
+          { label: 'In Werkstatt', value: (rows ?? []).filter((r: any) => r.status === 'werkstatt').length },
+          { label: 'Abgeschlossen', value: (rows ?? []).filter((r: any) => r.status === 'abgeschlossen').length },
+        ].map(k => (
+          <Card key={k.label} className="p-4">
+            <div className="text-xs text-muted-foreground">{k.label}</div>
+            <div className="text-2xl font-semibold">{k.value}</div>
+          </Card>
+        ))}
+      </div>
+
       <Card className="p-3 flex flex-wrap items-center gap-2">
+
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input className="pl-8" placeholder="Nummer, Auftrag, Kunde, Serie …" value={search} onChange={e => setSearch(e.target.value)} />
@@ -197,11 +218,18 @@ export default function DispatchRetouren() {
                 <TableCell>{r.pickup_date ? format(new Date(r.pickup_date), 'dd.MM.yyyy') : '—'}</TableCell>
                 <TableCell><Badge variant={statusVariant(r.status) as any}>{STATUSES[r.status] ?? r.status}</Badge></TableCell>
                 <TableCell>
-                  <Select value={r.status} onValueChange={v => setStatus.mutate({ id: r.id, status: v })}>
-                    <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                    <SelectContent>{Object.entries(STATUSES).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-1">
+                    <Select value={r.status} onValueChange={v => setStatus.mutate({ id: r.id, status: v })}>
+                      <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                      <SelectContent>{Object.entries(STATUSES).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Button size="icon" variant="outline" className="h-8 w-8 shrink-0" title="Retourenschein (PDF)"
+                      onClick={() => { downloadReturnNotePdf(r); toast.success('Retourenschein erstellt'); }}>
+                      <FileDown className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
+
               </TableRow>
             ))}
           </TableBody>
