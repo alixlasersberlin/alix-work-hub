@@ -69,10 +69,15 @@ export default function MobileTourStopp() {
 
   const setAppointmentStatus = async (status: string) => {
     setBusy(true);
-    const patch: any = { status };
-    if (status === 'unterwegs') patch.actual_start_at = new Date().toISOString();
-    if (status === 'angekommen') patch.arrived_at = new Date().toISOString();
-    const { error } = await supabase.from('delivery_appointments').update(patch).eq('id', appointmentId);
+    const { error } = await supabase.from('delivery_appointments').update({ status: status as any }).eq('id', appointmentId);
+    if (!error) {
+      await supabase.from('delivery_tour_stops')
+        .update({
+          stop_status: status as any,
+          ...(status === 'angekommen' ? { actual_arrival: new Date().toISOString() } : {}),
+        })
+        .eq('id', stopId!);
+    }
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success('Status aktualisiert');
@@ -83,18 +88,29 @@ export default function MobileTourStopp() {
     const min = parseInt(delay, 10);
     if (Number.isNaN(min)) return toast.error('Bitte Minuten angeben.');
     setBusy(true);
-    const { error } = await supabase.from('delivery_tour_stops').update({ delay_minutes: min }).eq('id', stopId!);
+    const { error } = await supabase.from('delivery_tour_stops')
+      .update({ delay_minutes: min, delay_reason: note || null })
+      .eq('id', stopId!);
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(`Verzögerung ${min} Min. gemeldet`);
   };
 
-  const uploadPhotos = async (): Promise<string[]> => {
+  const uploadPhotos = async (category: string): Promise<string[]> => {
     const paths: string[] = [];
+    const { data: u } = await supabase.auth.getUser();
     for (const f of photos) {
       const path = `${tourId}/${stopId}/${Date.now()}-${f.name.replace(/[^\w.-]/g, '_')}`;
       const { error } = await supabase.storage.from('dispatch-mobile').upload(path, f, { upsert: true });
       if (error) throw error;
+      await supabase.from('delivery_photos').insert({
+        appointment_id: appointmentId,
+        tour_id: tourId!,
+        storage_path: path,
+        category,
+        caption: note || null,
+        created_by: u.user?.id ?? null,
+      });
       paths.push(path);
     }
     return paths;
@@ -110,25 +126,31 @@ export default function MobileTourStopp() {
       const sigPath = `${tourId}/${stopId}/signature-${Date.now()}.png`;
       const { error: sErr } = await supabase.storage.from('dispatch-mobile').upload(sigPath, blob, { upsert: true, contentType: 'image/png' });
       if (sErr) throw sErr;
-      const photoPaths = await uploadPhotos();
+      await uploadPhotos('uebergabe');
       const { data: u } = await supabase.auth.getUser();
 
-      const { error } = await supabase.from('delivery_handovers').insert({
+      const { error } = await supabase.from('delivery_signatures').insert({
         appointment_id: appointmentId,
-        tour_id: tourId,
-        stop_id: stopId,
         signer_name: signer.trim(),
+        signer_role: 'kunde',
         signature_path: sigPath,
-        photo_paths: photoPaths,
-        serial_number: serial || null,
-        notes: note || null,
         created_by: u.user?.id ?? null,
-      } as any);
+      });
       if (error) throw error;
 
-      await supabase.from('delivery_appointments')
-        .update({ status: 'erfolgreich_ausgeliefert', completed_at: new Date().toISOString() })
+      const { error: aErr } = await supabase.from('delivery_appointments')
+        .update({
+          status: 'erfolgreich_ausgeliefert',
+          delivered_at: new Date().toISOString(),
+          serial_number: serial || null,
+          internal_notes: note || null,
+        })
         .eq('id', appointmentId);
+      if (aErr) throw aErr;
+
+      await supabase.from('delivery_tour_stops')
+        .update({ stop_status: 'erfolgreich_ausgeliefert', actual_departure: new Date().toISOString() })
+        .eq('id', stopId!);
 
       toast.success('Übergabe dokumentiert');
       navigate(`/m/tour/${tourId}`);
@@ -142,21 +164,22 @@ export default function MobileTourStopp() {
   const reportFailure = async () => {
     setBusy(true);
     try {
-      const photoPaths = await uploadPhotos();
+      await uploadPhotos('vorfall');
       const { data: u } = await supabase.auth.getUser();
       const { error } = await supabase.from('delivery_incidents').insert({
-        tour_id: tourId,
+        tour_id: tourId!,
         appointment_id: appointmentId,
         incident_type: 'lieferung_fehlgeschlagen',
         reason_code: reason,
         description: note || null,
-        photo_paths: photoPaths,
         created_by: u.user?.id ?? null,
-      } as any);
+      });
       if (error) throw error;
+      const newStatus = reason === 'nicht_angetroffen' ? 'nicht_angetroffen' : 'lieferung_fehlgeschlagen';
       await supabase.from('delivery_appointments')
-        .update({ status: reason === 'nicht_angetroffen' ? 'nicht_angetroffen' : 'lieferung_fehlgeschlagen' })
+        .update({ status: newStatus as any, failure_reason: reason })
         .eq('id', appointmentId);
+      await supabase.from('delivery_tour_stops').update({ stop_status: newStatus as any }).eq('id', stopId!);
       toast.success('Vorfall gemeldet');
       navigate(`/m/tour/${tourId}`);
     } catch (e: any) {
