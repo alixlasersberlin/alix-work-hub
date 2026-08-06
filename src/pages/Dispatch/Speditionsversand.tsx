@@ -233,6 +233,29 @@ export default function DispatchSpeditionsversand() {
                     {Object.entries(STATUSES).map(([k, v]) => <option key={k} value={k} className="bg-background text-foreground">{v}</option>)}
                   </select>
                 </TableCell>
+                <TableCell className="text-right whitespace-nowrap">
+                  <div className="inline-flex gap-1">
+                    <Button size="sm" variant="outline" className="h-8 gap-1" title="Frachtauftrag als PDF" onClick={() => downloadCarrierOrderPdf(r)}>
+                      <FileDown className="w-3.5 h-3.5" /> PDF
+                    </Button>
+                    <Button
+                      size="sm" variant="outline" className="h-8 gap-1"
+                      title={r.carrier?.email ? `Frachtauftrag an ${r.carrier.email}` : 'Keine E-Mail bei der Spedition hinterlegt'}
+                      disabled={!r.carrier?.email || sending === `${r.id}:carrier`}
+                      onClick={() => sendMail(r, 'carrier')}
+                    >
+                      {sending === `${r.id}:carrier` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />} Spedition
+                    </Button>
+                    <Button
+                      size="sm" variant="outline" className="h-8 gap-1"
+                      title={r.appointment?.contact_email ? `Versandavis an ${r.appointment.contact_email}` : 'Keine Kunden-E-Mail hinterlegt'}
+                      disabled={!r.appointment?.contact_email || sending === `${r.id}:customer`}
+                      onClick={() => sendMail(r, 'customer')}
+                    >
+                      {sending === `${r.id}:customer` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} Kunde
+                    </Button>
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
