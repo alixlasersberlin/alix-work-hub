@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Wrench, Plus, AlertTriangle } from 'lucide-react';
+import { Wrench, Plus, AlertTriangle, Mail } from 'lucide-react';
 import { differenceInDays, addMonths, format, parseISO } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Card } from '@/components/ui/card';
@@ -21,6 +21,7 @@ const fmt = (d?: string | null) => (d ? format(parseISO(d), 'dd.MM.yyyy') : '—
 export default function DispatchWartung() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [sending, setSending] = useState(false);
   const [form, setForm] = useState({
     vehicle_id: '', maintenance_type: 'Inspektion', due_date: '', performed_at: '',
     odometer_km: '', cost: '', workshop: '', notes: '',
@@ -97,7 +98,24 @@ export default function DispatchWartung() {
         title="Wartung & Prüfungen"
         subtitle="Serviceintervalle, HU-Termine und Werkstatthistorie des Fuhrparks"
         icon={Wrench}
-        actions={<Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Wartung erfassen</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled={sending}
+              onClick={async () => {
+                setSending(true);
+                const { data, error } = await supabase.functions.invoke('fleet-maintenance-alerts');
+                setSending(false);
+                if (error) toast.error('Erinnerung fehlgeschlagen: ' + error.message);
+                else toast.success(`${(data as any)?.alerts ?? 0} Hinweise · ${(data as any)?.overdue ?? 0} überfällig`);
+              }}
+            >
+              <Mail className="h-4 w-4 mr-2" />{sending ? 'Sende…' : 'Erinnerungen senden'}
+            </Button>
+            <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Wartung erfassen</Button>
+          </div>
+        }
       />
 
       {dueCount > 0 && (
