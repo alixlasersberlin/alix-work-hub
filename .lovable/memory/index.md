@@ -72,3 +72,4 @@
 - [Workspaces](mem://features/workspaces) — Workspace-System (Verkauf/Buchhaltung/Lager/Fertigung/Operation), Workspace-Bar, /w/:code Dashboards, Mandant Alix Medical
 - [Mandant Alix Medical](mem://features/alix-medical-mandant) — Phase 3: eigener Belegkreis /med (med_* Tabellen, Artikel, Belege, Buchhaltung, MDR/CE/ISO, Nummernkreise), Rolle „Medical"
 - [Alix License](mem://features/alix-license) — Mandant LIC (Systemmandant, Dubai): Lizenzmanagement unter /license, Rolle „License Manager", Royalty-Automatik aus Verkaufsrechnungen, Intercompany-Rechnungen, Nummernkreise LIC-RG/ROY/CON
+- [Produktion & Beschaffung](mem://features/plm-produktion-beschaffung) — PLM/MDR/ISO-13485-Modul unter /produktion, Tabellen plm_*, generische PlmCrudPage, Explosionszeichnungen mit Positionsnummern
