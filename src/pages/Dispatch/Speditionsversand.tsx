@@ -9,9 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Ship, Plus, Loader2, Search } from 'lucide-react';
+import { Ship, Plus, Loader2, Search, FileDown, Mail, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { downloadCarrierOrderPdf } from '@/lib/dispatch/carrier-order-pdf';
 
 const STATUSES: Record<string, string> = {
   angefragt: 'Angefragt',
@@ -53,7 +54,7 @@ export default function DispatchSpeditionsversand() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('delivery_carrier_assignments')
-        .select('*, carrier:carrier_id(name, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, delivery_street, delivery_zip, delivery_city, delivery_country)')
+        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country)')
         .order('created_at', { ascending: false })
         .limit(300);
       if (error) throw error;
@@ -135,6 +136,23 @@ export default function DispatchSpeditionsversand() {
     onError: (e: any) => toast.error(e.message ?? 'Aktualisierung fehlgeschlagen'),
   });
 
+  const [sending, setSending] = useState<string | null>(null);
+  async function sendMail(row: any, mode: 'carrier' | 'customer') {
+    setSending(`${row.id}:${mode}`);
+    try {
+      const { data, error } = await supabase.functions.invoke('carrier-shipment-send', {
+        body: { assignment_id: row.id, mode },
+      });
+      if (error) throw new Error((data as any)?.error ?? error.message);
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success(mode === 'carrier' ? `Frachtauftrag an ${(data as any)?.recipient} gesendet` : `Versandavis an ${(data as any)?.recipient} gesendet`);
+    } catch (e: any) {
+      toast.error(e.message ?? 'Versand fehlgeschlagen');
+    } finally {
+      setSending(null);
+    }
+  }
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       <PageHeader
@@ -176,12 +194,13 @@ export default function DispatchSpeditionsversand() {
               <TableHead>Sendungsnr.</TableHead>
               <TableHead>Preis</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isPending && <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Lädt…</TableCell></TableRow>}
+            {isPending && <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Lädt…</TableCell></TableRow>}
             {!isPending && filtered.length === 0 && (
-              <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Noch kein Speditionsversand erfasst.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Noch kein Speditionsversand erfasst.</TableCell></TableRow>
             )}
             {filtered.map((r: any) => (
               <TableRow key={r.id}>
@@ -213,6 +232,29 @@ export default function DispatchSpeditionsversand() {
                   >
                     {Object.entries(STATUSES).map(([k, v]) => <option key={k} value={k} className="bg-background text-foreground">{v}</option>)}
                   </select>
+                </TableCell>
+                <TableCell className="text-right whitespace-nowrap">
+                  <div className="inline-flex gap-1">
+                    <Button size="sm" variant="outline" className="h-8 gap-1" title="Frachtauftrag als PDF" onClick={() => downloadCarrierOrderPdf(r)}>
+                      <FileDown className="w-3.5 h-3.5" /> PDF
+                    </Button>
+                    <Button
+                      size="sm" variant="outline" className="h-8 gap-1"
+                      title={r.carrier?.email ? `Frachtauftrag an ${r.carrier.email}` : 'Keine E-Mail bei der Spedition hinterlegt'}
+                      disabled={!r.carrier?.email || sending === `${r.id}:carrier`}
+                      onClick={() => sendMail(r, 'carrier')}
+                    >
+                      {sending === `${r.id}:carrier` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />} Spedition
+                    </Button>
+                    <Button
+                      size="sm" variant="outline" className="h-8 gap-1"
+                      title={r.appointment?.contact_email ? `Versandavis an ${r.appointment.contact_email}` : 'Keine Kunden-E-Mail hinterlegt'}
+                      disabled={!r.appointment?.contact_email || sending === `${r.id}:customer`}
+                      onClick={() => sendMail(r, 'customer')}
+                    >
+                      {sending === `${r.id}:customer` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} Kunde
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
