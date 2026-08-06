@@ -102,6 +102,7 @@ const DispatchTermine = lazy(() => import("./pages/Dispatch/Termine"));
 const DispatchUngeplant = lazy(() => import("./pages/Dispatch/Ungeplant"));
 
 const DispatchTouren = lazy(() => import("./pages/Dispatch/Touren"));
+const DispatchTourDetail = lazy(() => import("./pages/Dispatch/TourDetail"));
 const DispatchTagesplanung = lazy(() => import("./pages/Dispatch/Tagesplanung"));
 
 const DispatchFahrzeuge = lazy(() => import("./pages/Dispatch/Fahrzeuge"));
