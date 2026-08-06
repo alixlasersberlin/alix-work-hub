@@ -122,7 +122,55 @@ export default function ProvisionZuordnung() {
           <TabsTrigger value="unassigned">Aufträge ohne Provisionszuordnung ({unassigned.length})</TabsTrigger>
           <TabsTrigger value="assigned">Zuordnungen ({assignments.length})</TabsTrigger>
           <TabsTrigger value="employees">Mitarbeiter-Stammdaten</TabsTrigger>
+          <TabsTrigger value="aliases">Verkäufer-Aliase ({salespersonNames.length})</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="aliases" className="mt-4">
+          <DataCard className="p-0">
+            <div className="p-5 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Verkäufernamen aus Zoho einem AlixWork-Mitarbeiter zuordnen. Die Provisions-Engine erkennt Aufträge dann automatisch.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+                    <tr>
+                      <th className="p-3 text-left">Verkäufer laut Auftrag</th>
+                      <th className="p-3 text-right">Aufträge</th>
+                      <th className="p-3 text-left">Mitarbeiter</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {salespersonNames.map(([name, count]) => (
+                      <tr key={name} className="border-t border-border">
+                        <td className="p-3">{name}</td>
+                        <td className="p-3 text-right">{count}</td>
+                        <td className="p-3">
+                          <Select
+                            value={aliases[name] ?? '__none__'}
+                            onValueChange={(v) => {
+                              const next = { ...aliases };
+                              if (v === '__none__') delete next[name]; else next[name] = v;
+                              saveAliases(next);
+                            }}
+                            disabled={!perms.canManage}
+                          >
+                            <SelectTrigger className="max-w-xs"><SelectValue placeholder="nicht zugeordnet" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">nicht zugeordnet</SelectItem>
+                              {profiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || p.email}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </DataCard>
+        </TabsContent>
+
 
         <TabsContent value="unassigned" className="mt-4 space-y-3">
           <Input placeholder="Auftrag oder Verkäufer suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
