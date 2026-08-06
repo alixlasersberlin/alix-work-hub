@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { CalendarClock, Search, PackageSearch, History } from 'lucide-react';
+import { CalendarClock, Search, PackageSearch, History, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -176,7 +176,17 @@ export default function DispatchTermine() {
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right whitespace-nowrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mr-1"
+                    disabled={sendingId === r.id}
+                    onClick={() => sendConfirmation(r)}
+                    title="Terminbestätigung an Kunden senden"
+                  >
+                    <Send className="h-3.5 w-3.5 mr-1" /> Bestätigung
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={() => setHistoryFor({ id: r.id, label: r.order_number ?? '' })}>
                     <History className="h-4 w-4" />
                   </Button>
