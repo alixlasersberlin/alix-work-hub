@@ -57,9 +57,10 @@ export default function DispatchAiAssistant() {
   const setStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       const { data: u } = await supabase.auth.getUser();
+      const patch: any = { status, reviewed_by: u.user?.id ?? null, reviewed_at: new Date().toISOString() };
       const { error } = await supabase
         .from('dispatch_ai_suggestions')
-        .update({ status, reviewed_by: u.user?.id ?? null, reviewed_at: new Date().toISOString() })
+        .update(patch)
         .eq('id', id);
       if (error) throw error;
     },
