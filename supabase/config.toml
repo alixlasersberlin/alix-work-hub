@@ -403,3 +403,12 @@ verify_jwt = false
 
 [functions.delivery-reminder-engine]
 verify_jwt = false
+
+[functions.fleet-maintenance-alerts]
+verify_jwt = false
+
+[functions.delivery-rating-report]
+verify_jwt = false
+
+[functions.telematics-ingest]
+verify_jwt = false
