@@ -112,7 +112,24 @@ export default function DispatchRetouren() {
     onError: (e: any) => toast.error(e.message ?? 'Aktualisierung fehlgeschlagen'),
   });
 
+  const sendMail = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('return-note-send', {
+        body: { return_id: mailRow?.id, email: mailTo.trim() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+    },
+    onSuccess: () => {
+      toast.success('Abholavis versendet');
+      setMailRow(null);
+      setMailTo('');
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Versand fehlgeschlagen'),
+  });
+
   const f = (k: keyof typeof EMPTY) => ({
+
     value: (form as any)[k],
     onChange: (e: any) => setForm({ ...form, [k]: e.target.value }),
   });
