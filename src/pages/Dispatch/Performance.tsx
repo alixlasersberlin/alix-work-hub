@@ -283,6 +283,7 @@ export default function DispatchPerformance() {
                           <TableCell className="text-right">{r.kmPerStop != null ? nf(r.kmPerStop, 1) : '—'}</TableCell>
                           <TableCell className="text-right">{r.costPerStop != null ? `${nf(r.costPerStop, 2)} €` : '—'}</TableCell>
                           <TableCell className="text-right">{nf(r.co2, 1)} kg</TableCell>
+                          <TableCell className="text-right">{r.avgRating != null ? `${nf(r.avgRating, 2)} ★` : '—'}</TableCell>
                           <TableCell className="text-right">{r.incidents ? <span className="text-red-400">{nf(r.incidents)}</span> : '0'}</TableCell>
                         </TableRow>
                       ))}
