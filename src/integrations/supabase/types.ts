@@ -31256,6 +31256,62 @@ export type Database = {
           },
         ]
       }
+      plm_calibrations: {
+        Row: {
+          calibrated_at: string
+          certificate_number: string | null
+          created_at: string
+          created_by: string | null
+          deviation: string | null
+          document_url: string | null
+          gauge_id: string
+          id: string
+          next_due: string | null
+          notes: string | null
+          provider: string | null
+          result: string
+          updated_at: string
+        }
+        Insert: {
+          calibrated_at?: string
+          certificate_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          deviation?: string | null
+          document_url?: string | null
+          gauge_id: string
+          id?: string
+          next_due?: string | null
+          notes?: string | null
+          provider?: string | null
+          result?: string
+          updated_at?: string
+        }
+        Update: {
+          calibrated_at?: string
+          certificate_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          deviation?: string | null
+          document_url?: string | null
+          gauge_id?: string
+          id?: string
+          next_due?: string | null
+          notes?: string | null
+          provider?: string | null
+          result?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_calibrations_gauge_id_fkey"
+            columns: ["gauge_id"]
+            isOneToOne: false
+            referencedRelation: "plm_gauges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plm_changes: {
         Row: {
           approved_at: string | null
@@ -31656,6 +31712,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plm_gauges: {
+        Row: {
+          calibration_interval_months: number
+          created_at: string
+          created_by: string | null
+          gauge_number: string | null
+          gauge_type: string | null
+          id: string
+          last_calibration: string | null
+          location: string | null
+          manufacturer: string | null
+          name: string
+          next_calibration: string | null
+          notes: string | null
+          responsible_user_id: string | null
+          serial_number: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          calibration_interval_months?: number
+          created_at?: string
+          created_by?: string | null
+          gauge_number?: string | null
+          gauge_type?: string | null
+          id?: string
+          last_calibration?: string | null
+          location?: string | null
+          manufacturer?: string | null
+          name: string
+          next_calibration?: string | null
+          notes?: string | null
+          responsible_user_id?: string | null
+          serial_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          calibration_interval_months?: number
+          created_at?: string
+          created_by?: string | null
+          gauge_number?: string | null
+          gauge_type?: string | null
+          id?: string
+          last_calibration?: string | null
+          location?: string | null
+          manufacturer?: string | null
+          name?: string
+          next_calibration?: string | null
+          notes?: string | null
+          responsible_user_id?: string | null
+          serial_number?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       plm_goods_receipts: {
         Row: {
@@ -32226,6 +32339,291 @@ export type Database = {
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_purchase_order_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          notes: string | null
+          part_id: string | null
+          po_id: string
+          position_no: number | null
+          price: number
+          quantity: number
+          received_quantity: number
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          part_id?: string | null
+          po_id: string
+          position_no?: number | null
+          price?: number
+          quantity?: number
+          received_quantity?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          part_id?: string | null
+          po_id?: string
+          position_no?: number | null
+          price?: number
+          quantity?: number
+          received_quantity?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_purchase_order_items_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_purchase_order_items_po_id_fkey"
+            columns: ["po_id"]
+            isOneToOne: false
+            referencedRelation: "plm_purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_purchase_orders: {
+        Row: {
+          contact_email: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          expected_date: string | null
+          id: string
+          notes: string | null
+          order_date: string | null
+          po_number: string | null
+          sent_at: string | null
+          status: string
+          supplier_id: string | null
+          total_net: number
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          expected_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string | null
+          po_number?: string | null
+          sent_at?: string | null
+          status?: string
+          supplier_id?: string | null
+          total_net?: number
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          expected_date?: string | null
+          id?: string
+          notes?: string | null
+          order_date?: string | null
+          po_number?: string | null
+          sent_at?: string | null
+          status?: string
+          supplier_id?: string | null
+          total_net?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_purchase_orders_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "plm_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_risks: {
+        Row: {
+          acceptable: boolean
+          assembly_id: string | null
+          category: string | null
+          cause: string | null
+          created_at: string
+          created_by: string | null
+          detection: number
+          device_id: string | null
+          effect: string | null
+          hazard: string
+          id: string
+          measures: string | null
+          notes: string | null
+          occurrence: number
+          part_id: string | null
+          residual_detection: number | null
+          residual_occurrence: number | null
+          residual_severity: number | null
+          responsible_user_id: string | null
+          reviewed_at: string | null
+          risk_number: string | null
+          severity: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          acceptable?: boolean
+          assembly_id?: string | null
+          category?: string | null
+          cause?: string | null
+          created_at?: string
+          created_by?: string | null
+          detection?: number
+          device_id?: string | null
+          effect?: string | null
+          hazard: string
+          id?: string
+          measures?: string | null
+          notes?: string | null
+          occurrence?: number
+          part_id?: string | null
+          residual_detection?: number | null
+          residual_occurrence?: number | null
+          residual_severity?: number | null
+          responsible_user_id?: string | null
+          reviewed_at?: string | null
+          risk_number?: string | null
+          severity?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          acceptable?: boolean
+          assembly_id?: string | null
+          category?: string | null
+          cause?: string | null
+          created_at?: string
+          created_by?: string | null
+          detection?: number
+          device_id?: string | null
+          effect?: string | null
+          hazard?: string
+          id?: string
+          measures?: string | null
+          notes?: string | null
+          occurrence?: number
+          part_id?: string | null
+          residual_detection?: number | null
+          residual_occurrence?: number | null
+          residual_severity?: number | null
+          responsible_user_id?: string | null
+          reviewed_at?: string | null
+          risk_number?: string | null
+          severity?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_risks_assembly_id_fkey"
+            columns: ["assembly_id"]
+            isOneToOne: false
+            referencedRelation: "plm_assemblies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_risks_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_risks_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_serial_records: {
+        Row: {
+          batch_number: string | null
+          created_at: string
+          created_by: string | null
+          device_id: string | null
+          id: string
+          lot_number: string | null
+          notes: string | null
+          produced_at: string | null
+          production_order_id: string | null
+          serial_number: string
+          status: string
+          udi_pi: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          id?: string
+          lot_number?: string | null
+          notes?: string | null
+          produced_at?: string | null
+          production_order_id?: string | null
+          serial_number: string
+          status?: string
+          udi_pi?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string | null
+          device_id?: string | null
+          id?: string
+          lot_number?: string | null
+          notes?: string | null
+          produced_at?: string | null
+          production_order_id?: string | null
+          serial_number?: string
+          status?: string
+          udi_pi?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_serial_records_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_serial_records_production_order_id_fkey"
+            columns: ["production_order_id"]
+            isOneToOne: false
+            referencedRelation: "plm_production_orders"
             referencedColumns: ["id"]
           },
         ]
