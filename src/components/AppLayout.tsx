@@ -2178,7 +2178,11 @@ export default function AppLayout() {
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <AuroraPrioTicker />
             {location.pathname.startsWith('/finance') && <RegionChip className="hidden lg:inline-flex" />}
-            <AccountingRegionSwitcher className="hidden md:flex" />
+            {(location.pathname.startsWith('/finance') ||
+              location.pathname.startsWith('/buchhaltung') ||
+              location.pathname.startsWith('/w/buchhaltung')) && (
+              <AccountingRegionSwitcher className="hidden md:flex" />
+            )}
 
             
 
