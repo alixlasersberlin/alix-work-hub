@@ -293,6 +293,8 @@ const EmailTemplates = lazy(() => import("./pages/EmailTemplates"));
 const Hilfe = lazy(() => import("./pages/Hilfe"));
 const Dokumentation = lazy(() => import("./pages/Dokumentation"));
 const Arbeitsanleitung = lazy(() => import("./pages/Arbeitsanleitung"));
+const TourenplanungDokumentation = lazy(() => import("./pages/TourenplanungDokumentation"));
+const TourenplanungArbeitsanleitung = lazy(() => import("./pages/TourenplanungArbeitsanleitung"));
 const Papiere = lazy(() => import("./pages/Papiere"));
 const VersandPlaceholder = lazy(() => import("./pages/VersandPlaceholder"));
 const LeasingBank = lazy(() => import("./pages/LeasingBank"));
@@ -1391,6 +1393,8 @@ function AppRoutes() {
           <Route path="/hilfe" element={<ProtectedRoute><Hilfe /></ProtectedRoute>} />
           <Route path="/hilfe/dokumentation" element={<ProtectedRoute><Dokumentation /></ProtectedRoute>} />
           <Route path="/hilfe/arbeitsanleitung" element={<ProtectedRoute><Arbeitsanleitung /></ProtectedRoute>} />
+          <Route path="/hilfe/tourenplanung/dokumentation" element={<ProtectedRoute><TourenplanungDokumentation /></ProtectedRoute>} />
+          <Route path="/hilfe/tourenplanung/arbeitsanleitung" element={<ProtectedRoute><TourenplanungArbeitsanleitung /></ProtectedRoute>} />
           <Route path="/operation/hilfe" element={<Navigate to="/hilfe" replace />} />
           <Route path="/papiere" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Papiere /></ProtectedRoute>} />
           <Route path="/versand/lieferscheine" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><VersandPlaceholder title="Lieferscheine" description="Versand & Lieferdokumente" icon={TruckIcon} /></ProtectedRoute>} />

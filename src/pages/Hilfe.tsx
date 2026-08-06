@@ -1,4 +1,4 @@
-import { HelpCircle, Mail, BookOpen, LifeBuoy, ClipboardList, GraduationCap } from 'lucide-react';
+import { HelpCircle, Mail, BookOpen, LifeBuoy, ClipboardList, GraduationCap, MapPinned, Route as RouteIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -68,6 +68,32 @@ export default function Hilfe() {
             </CardContent>
           </Card>
         </Link>
+
+        <Link to="/hilfe/tourenplanung/dokumentation" className="block">
+          <Card className="hover:border-primary/60 transition-colors h-full">
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <MapPinned className="h-6 w-6 text-primary" />
+              <CardTitle className="text-lg">Tourenplanung · Dokumentation</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              <p>Aufbau, Module, Statuswerte und Begriffe der Tourenplanung & Dispatch.</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/hilfe/tourenplanung/arbeitsanleitung" className="block">
+          <Card className="hover:border-primary/60 transition-colors h-full">
+            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+              <RouteIcon className="h-6 w-6 text-primary" />
+              <CardTitle className="text-lg">Tourenplanung · Arbeitsanleitung</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              <p>Schritt für Schritt: Disposition, Freigabe, Einsatz vor Ort und Nachbereitung.</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+
 
 
 
