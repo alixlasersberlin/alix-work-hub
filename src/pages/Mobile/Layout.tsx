@@ -82,10 +82,11 @@ export default function MobileLayout({ children }: { children?: ReactNode }) {
       </main>
 
       <nav
-        className="fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur border-t border-border grid grid-cols-4 text-[11px]"
+        className="fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur border-t border-border grid grid-cols-5 text-[11px]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <Tab to="/m" icon={Home} label="Touren" exact />
+        <Tab to="/m" icon={Home} label="Start" exact />
+        <Tab to="/m/tour" icon={Truck} label="Touren" />
         <Tab to="/m/heute" icon={CalendarDays} label="Heute" />
         <Tab to="/m/sync" icon={RefreshCw} label={pending ? `Sync ${pending}` : 'Sync'} />
         <Tab to="/m/profil" icon={User} label="Profil" />
