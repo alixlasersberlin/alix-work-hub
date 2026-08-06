@@ -294,6 +294,27 @@ export default function AngebotErstellen() {
         }
       } catch { /* ignore */ }
 
+      // Handoff aus Ticket ("Angebot erstellen" in der Ticket-Bearbeitungsmaske)
+      try {
+        const raw = sessionStorage.getItem('ticket_offer_handoff_v1');
+        if (raw) {
+          const h = JSON.parse(raw);
+          sessionStorage.removeItem('ticket_offer_handoff_v1');
+          if (h.customer_id) setCustomerId(h.customer_id);
+          else if (h.customer_email || h.customer_company) {
+            const match = (c ?? []).find((cu: any) =>
+              (h.customer_email && cu.email?.toLowerCase() === String(h.customer_email).toLowerCase()) ||
+              (h.customer_company && cu.company_name === h.customer_company)
+            );
+            if (match) setCustomerId(match.id);
+            else setCustomerSearch(h.customer_company || h.customer_email || '');
+          }
+          if (h.caseNumber) setCaseNumber(h.caseNumber);
+          if (h.notes) setNotes((prev: string) => prev ? `${prev}\n${h.notes}` : h.notes);
+          toast.info('Kundendaten und Fehlerbeschreibung aus dem Ticket übernommen.');
+        }
+      } catch { /* ignore */ }
+
       // Handoff aus Katalog → Portal-Anfragen ("Angebot erstellen")
       try {
         const raw = sessionStorage.getItem('portal_inquiry_handoff_v1');

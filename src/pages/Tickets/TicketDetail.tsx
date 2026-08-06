@@ -112,6 +112,7 @@ export default function TicketDetail() {
   const [attachments, setAttachments] = useState<Att[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [creatingOffer, setCreatingOffer] = useState(false);
   const [newMsg, setNewMsg] = useState('');
   const [msgInternal, setMsgInternal] = useState(false);
   const [myProfile, setMyProfile] = useState<{ full_name: string | null; job_title: string | null; avatar_url: string | null } | null>(null);
@@ -429,6 +430,63 @@ export default function TicketDetail() {
       }
     }
     if (copied > 0) toast.success(`${copied} Anhang/Anhänge übernommen`);
+  }
+
+  async function createOfferFromTicket() {
+    if (!ticket) return;
+    setCreatingOffer(true);
+    try {
+      // Kunde auflösen: über Auftragsnummer, sonst über E-Mail, sonst über Firma
+      let customerId: string | null = null;
+      if (ticket.order_number) {
+        const { data } = await supabase
+          .from('orders').select('customer_id').eq('order_number', ticket.order_number).maybeSingle();
+        customerId = (data as any)?.customer_id ?? null;
+      }
+      if (!customerId && ticket.customer_email) {
+        const { data } = await supabase
+          .from('customers').select('id').ilike('email', ticket.customer_email).limit(1).maybeSingle();
+        customerId = (data as any)?.id ?? null;
+      }
+      if (!customerId && ticket.company_name) {
+        const { data } = await supabase
+          .from('customers').select('id').ilike('company_name', ticket.company_name).limit(1).maybeSingle();
+        customerId = (data as any)?.id ?? null;
+      }
+
+      const ref = ticket.ticket_number || ticket.external_ticket_id || ticket.id.slice(0, 8);
+      const noteParts: string[] = [`Aus Ticket ${ref}${ticket.title ? ` – ${ticket.title}` : ''}`];
+      if (ticket.case_number) noteParts.push(`Vorgang: ${ticket.case_number}`);
+      if (ticket.device_name || ticket.serial_number) {
+        noteParts.push(`Gerät: ${[ticket.device_name, ticket.serial_number].filter(Boolean).join(' / ')}`);
+      }
+      if (ticket.order_number) noteParts.push(`Auftrag: ${ticket.order_number}`);
+      if (ticket.description) noteParts.push(`Fehlerbeschreibung:\n${ticket.description}`);
+
+      sessionStorage.setItem('ticket_offer_handoff_v1', JSON.stringify({
+        ticket_id: ticket.id,
+        customer_id: customerId,
+        customer_email: ticket.customer_email || '',
+        customer_company: ticket.company_name || ticket.customer_name || '',
+        caseNumber: ticket.case_number || null,
+        notes: noteParts.join('\n'),
+      }));
+
+      await supabase.from('ticket_messages').insert({
+        ticket_id: ticket.id,
+        sender_type: 'agent',
+        sender_name: user?.email || 'Mitarbeiter',
+        sender_email: user?.email || null,
+        message: 'Angebot aus Ticket erstellt (Kundendaten und Fehlerbeschreibung übernommen).',
+        is_internal: true,
+      });
+
+      navigate('/verkauf/angebot/neu');
+    } catch (e: any) {
+      toast.error(e.message || 'Angebot konnte nicht vorbereitet werden');
+    } finally {
+      setCreatingOffer(false);
+    }
   }
 
   async function createRepairFromTicket() {
@@ -921,18 +979,10 @@ export default function TicketDetail() {
               onClick={() => handover('tourenplanung', 'An Tourenplanung übergeben')}>
               <Truck className="w-4 h-4 mr-2" /> Tourenplanung übergeben
             </Button>
-            <Button variant="outline" className="w-full justify-start" disabled={!canEdit}
-              onClick={() => {
-                try {
-                  sessionStorage.setItem('sales_lead_handoff_v1', JSON.stringify({
-                    customer_email: ticket.customer_email || '',
-                    customer_company: (ticket as any).company_name || ticket.customer_name || '',
-                    notes: `Aus Ticket ${(ticket as any).ticket_number || ticket.id}${(ticket as any).subject ? ` – ${(ticket as any).subject}` : ''}`,
-                  }));
-                } catch { /* ignore */ }
-                navigate('/verkauf/angebot/neu');
-              }}>
-              <FileText className="w-4 h-4 mr-2" /> Angebot erstellen
+            <Button variant="outline" className="w-full justify-start" disabled={!canEdit || creatingOffer}
+              onClick={createOfferFromTicket}>
+              {creatingOffer ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
+              Angebot erstellen
             </Button>
           </div>
 
