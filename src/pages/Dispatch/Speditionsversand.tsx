@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Ship, Plus, Loader2, Search, FileDown, Mail, Send } from 'lucide-react';
+import { Ship, Plus, Loader2, Search, FileDown, Mail, Send, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { downloadCarrierOrderPdf } from '@/lib/dispatch/carrier-order-pdf';
