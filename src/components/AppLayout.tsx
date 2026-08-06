@@ -414,6 +414,8 @@ export const navItems: NavItem[] = [
       { path: '/produktion/arbeitsanweisungen', label: 'Arbeitsanweisungen', icon: FileText, roles: null },
       { path: '/produktion/rueckverfolgbarkeit', label: 'Rückverfolgbarkeit', icon: ClipboardCheck, roles: null },
       { path: '/produktion/geraeteakte', label: 'Geräteakte (Technische Akte)', icon: FileText, roles: null },
+      { path: '/produktion/lieferantenbewertung', label: 'Lieferantenbewertung', icon: Factory, roles: null },
+      { path: '/produktion/qualitaetskennzahlen', label: 'Qualitätskennzahlen', icon: BarChart3, roles: null },
 
       { path: '/produktion/aenderungen', label: 'Änderungen (ECR/ECO)', icon: GitBranch, roles: null },
       { path: '/produktion/dokumente', label: 'Technische Dokumentation', icon: FileCheck2, roles: null },
