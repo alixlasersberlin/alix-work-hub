@@ -167,9 +167,13 @@ Deno.serve(async (req) => {
         const recurringId = String(p.recurring_invoice_id ?? "");
         if (!recurringId) { failed++; continue; }
 
+        if (search && !matchesSearch(p, search)) continue;
+        if (search) matched++;
+
         const region = detectProfileRegion(p);
         if (regionFilter !== "all" && region !== regionFilter) { skippedRegion++; continue; }
         if (region === "CH") importedCh++;
+
 
 
         const lineItems: any[] = p.line_items ?? [];
