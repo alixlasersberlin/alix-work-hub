@@ -2056,6 +2056,9 @@ function AppRoutes() {
         <Route path="/m" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Technik','Tourenplanung','Service','Reparaturannahme']}><MobileLayout /></ProtectedRoute>}>
           <Route index element={<MobileHome />} />
           <Route path="heute" element={<MobileHome />} />
+          <Route path="tour" element={<MobileTouren />} />
+          <Route path="tour/:tourId" element={<MobileTourDetail />} />
+          <Route path="tour/:tourId/stopp/:stopId" element={<MobileTourStopp />} />
           <Route path="sync" element={<MobileSync />} />
           <Route path="profil" element={<MobileProfil />} />
           <Route path="einsatz/:id" element={<MobileEinsatz />} />
