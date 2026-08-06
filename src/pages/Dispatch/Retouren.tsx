@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { PackageX, Plus, Loader2, Search, FileDown } from 'lucide-react';
+import { PackageX, Plus, Loader2, Search, FileDown, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { downloadReturnNotePdf } from '@/lib/dispatch/return-note-pdf';
@@ -56,6 +56,9 @@ export default function DispatchRetouren() {
   const [statusFilter, setStatusFilter] = useState('alle');
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ ...EMPTY });
+  const [mailRow, setMailRow] = useState<any>(null);
+  const [mailTo, setMailTo] = useState('');
+
 
   const { data: rows, isPending } = useQuery({
     queryKey: ['dispatch', 'returns'],
@@ -109,7 +112,24 @@ export default function DispatchRetouren() {
     onError: (e: any) => toast.error(e.message ?? 'Aktualisierung fehlgeschlagen'),
   });
 
+  const sendMail = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('return-note-send', {
+        body: { return_id: mailRow?.id, email: mailTo.trim() },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+    },
+    onSuccess: () => {
+      toast.success('Abholavis versendet');
+      setMailRow(null);
+      setMailTo('');
+    },
+    onError: (e: any) => toast.error(e.message ?? 'Versand fehlgeschlagen'),
+  });
+
   const f = (k: keyof typeof EMPTY) => ({
+
     value: (form as any)[k],
     onChange: (e: any) => setForm({ ...form, [k]: e.target.value }),
   });
@@ -227,7 +247,12 @@ export default function DispatchRetouren() {
                       onClick={() => { downloadReturnNotePdf(r); toast.success('Retourenschein erstellt'); }}>
                       <FileDown className="h-4 w-4" />
                     </Button>
+                    <Button size="icon" variant="outline" className="h-8 w-8 shrink-0" title="Abholavis per E-Mail"
+                      onClick={() => { setMailRow(r); setMailTo(''); }}>
+                      <Mail className="h-4 w-4" />
+                    </Button>
                   </div>
+
                 </TableCell>
 
               </TableRow>
@@ -235,6 +260,26 @@ export default function DispatchRetouren() {
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={!!mailRow} onOpenChange={o => !o && setMailRow(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Abholavis senden – {mailRow?.return_number}</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <Label>E-Mail des Kunden</Label>
+            <Input type="email" placeholder="kunde@example.com" value={mailTo} onChange={e => setMailTo(e.target.value)} />
+            <p className="text-xs text-muted-foreground">
+              Enthält Retouren-Nr., Gerät, Seriennummer und Abholdatum. Eine Kopie geht per BCC ins Archiv.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMailRow(null)}>Abbrechen</Button>
+            <Button onClick={() => sendMail.mutate()} disabled={sendMail.isPending || !mailTo.trim()}>
+              {sendMail.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
