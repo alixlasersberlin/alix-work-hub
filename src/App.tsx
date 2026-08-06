@@ -112,6 +112,7 @@ const DispatchKosten = lazy(() => import("./pages/Dispatch/Kosten"));
 const DispatchArchiv = lazy(() => import("./pages/Dispatch/Archiv"));
 const DispatchSpediteure = lazy(() => import("./pages/Dispatch/Spediteure"));
 const DispatchRetouren = lazy(() => import("./pages/Dispatch/Retouren"));
+const DispatchSpeditionsversand = lazy(() => import("./pages/Dispatch/Speditionsversand"));
 const DispatchAiAssistant = lazy(() => import("./pages/Dispatch/AiAssistant"));
 const DispatchWartung = lazy(() => import("./pages/Dispatch/Wartung"));
 const DispatchTelematik = lazy(() => import("./pages/Dispatch/Telematik"));
@@ -1451,6 +1452,7 @@ function AppRoutes() {
           <Route path="/dispatch/kosten" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchKosten /></ProtectedRoute>} />
           <Route path="/dispatch/archiv" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchArchiv /></ProtectedRoute>} />
           <Route path="/dispatch/spediteure" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchSpediteure /></ProtectedRoute>} />
+          <Route path="/dispatch/speditionsversand" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchSpeditionsversand /></ProtectedRoute>} />
           <Route path="/dispatch/retouren" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchRetouren /></ProtectedRoute>} />
           <Route path="/dispatch/ki" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchAiAssistant /></ProtectedRoute>} />
           <Route path="/dispatch/performance" element={<ProtectedRoute requiredRoles={PLANNING_ROLES}><DispatchPerformance /></ProtectedRoute>} />
