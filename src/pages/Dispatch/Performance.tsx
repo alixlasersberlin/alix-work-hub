@@ -185,7 +185,10 @@ export default function DispatchPerformance() {
     { label: 'Ø Auslastung', value: agg?.totals.avgUtil != null ? `${nf(agg.totals.avgUtil, 1)} %` : '—', icon: Gauge },
     { label: 'Kilometer', value: agg ? `${nf(agg.totals.km)} km` : '—', icon: TrendingUp },
     { label: 'CO₂', value: agg ? `${nf(agg.totals.co2 / 1000, 2)} t` : '—', icon: Leaf },
+    { label: 'Kosten/Stopp', value: agg?.totals.costPerStop != null ? `${nf(agg.totals.costPerStop, 2)} €` : '—', icon: TrendingUp },
+    { label: 'Ø Kundenbewertung', value: agg?.totals.avgRating != null ? `${nf(agg.totals.avgRating, 2)} ★` : '—', icon: Star },
   ];
+
 
   return (
     <div className="space-y-6">
