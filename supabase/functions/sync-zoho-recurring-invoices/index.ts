@@ -15,7 +15,24 @@ type Payload = {
   max_pages?: number; // safety cap per call
   /** 'all' = alle, 'CH' = nur Schweiz-Rechnungen, 'EU' = nur EU-Rechnungen */
   region_filter?: "all" | "EU" | "CH";
+  /** Einzelimport: Name (Kunde/Firma) oder Auftrags-/Referenznummer */
+  search?: string;
 };
+
+function norm(v: unknown) {
+  return (v ?? "").toString().toLowerCase().trim();
+}
+
+function profileMatchesSearch(p: any, needle: string): boolean {
+  const n = norm(needle);
+  if (!n) return true;
+  const fields = [
+    p?.customer_name, p?.company_name, p?.recurrence_name, p?.reference_number,
+    p?.email, p?.salesperson_name, p?.entity_name, p?.recurring_invoice_id,
+  ].map(norm);
+  return fields.some((f) => f && f.includes(n));
+}
+
 
 const CH_BRANCH_ID = "116240000000287001";
 const CH_MARKERS = ["alix lasers ® schweiz", "alix lasers (r) schweiz", "alix lasers schweiz"];
