@@ -34,6 +34,7 @@ function statusClass(s?: string | null) {
 const EMPTY = {
   carrier_id: '',
   appointment_id: '',
+  route_plan_id: '',
   status: 'angefragt',
   assigned_date: '',
   agreed_price: '',
@@ -41,6 +42,18 @@ const EMPTY = {
   tracking_number: '',
   notes: '',
 };
+
+function addrOf(a: any): string {
+  if (!a) return '';
+  if (typeof a === 'string') return a;
+  return [a.street || a.strasse, [a.zip || a.plz, a.city || a.ort].filter(Boolean).join(' '), a.country || a.land]
+    .filter(Boolean).join(', ');
+}
+
+function planLabel(p: any): string {
+  return [p.order_id ? `Auftrag ${String(p.order_id).slice(0, 8)}` : null, p.contact_name, p.device_model, p.device_serial_number, addrOf(p.location_address), p.planned_date ? format(new Date(p.planned_date), 'dd.MM.yyyy') : null]
+    .filter(Boolean).join(' · ');
+}
 
 export default function DispatchSpeditionsversand() {
   const qc = useQueryClient();
@@ -54,7 +67,7 @@ export default function DispatchSpeditionsversand() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('delivery_carrier_assignments')
-        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country)')
+        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country), route_plan:route_plan_id(id, order_id, planned_date, planning_status, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, tour_type)')
         .order('created_at', { ascending: false })
         .limit(300);
       if (error) throw error;
@@ -91,15 +104,41 @@ export default function DispatchSpeditionsversand() {
     staleTime: 60_000,
   });
 
+  const { data: routePlans } = useQuery({
+    queryKey: ['dispatch', 'route-plans', 'for-carrier'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('route_plans')
+        .select('id, order_id, planned_date, requested_date, planning_status, tour_type, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, planning_note')
+        .order('planned_date', { ascending: false, nullsFirst: false })
+        .limit(300);
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  const assignedPlanIds = useMemo(
+    () => new Set((rows ?? []).map((r: any) => r.route_plan_id).filter(Boolean)),
+    [rows],
+  );
+
+  const openPlans = useMemo(
+    () => (routePlans ?? []).filter((p: any) => !assignedPlanIds.has(p.id) && p.planning_status !== 'abgeschlossen' && p.planning_status !== 'storniert'),
+    [routePlans, assignedPlanIds],
+  );
+
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
     return (rows ?? []).filter((r: any) => {
       if (statusFilter !== 'alle' && r.status !== statusFilter) return false;
       if (!s) return true;
-      return [r.tracking_number, r.carrier?.name, r.appointment?.order_number, r.appointment?.customer_name, r.appointment?.company_name, r.appointment?.serial_number]
+      return [r.tracking_number, r.carrier?.name, r.appointment?.order_number, r.appointment?.customer_name, r.appointment?.company_name, r.appointment?.serial_number,
+        r.route_plan?.contact_name, r.route_plan?.device_serial_number, r.route_plan?.device_model]
         .some(v => String(v ?? '').toLowerCase().includes(s));
     });
   }, [rows, search, statusFilter]);
+
 
   const create = useMutation({
     mutationFn: async () => {
@@ -108,6 +147,7 @@ export default function DispatchSpeditionsversand() {
       const { error } = await supabase.from('delivery_carrier_assignments').insert({
         carrier_id: form.carrier_id,
         appointment_id: form.appointment_id || null,
+        route_plan_id: form.route_plan_id || null,
         status: form.status,
         assigned_date: form.assigned_date || null,
         agreed_price: form.agreed_price ? Number(form.agreed_price) : null,
@@ -181,6 +221,46 @@ export default function DispatchSpeditionsversand() {
         </select>
       </Card>
 
+      <Card className="p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="font-semibold">Offene Termine aus der Tourenplanung</h2>
+            <p className="text-sm text-muted-foreground">Einträge aus <span className="font-mono">route_plans</span>, für die noch keine Spedition beauftragt wurde.</p>
+          </div>
+          <span className="text-sm text-muted-foreground">{openPlans.length} offen</span>
+        </div>
+        {openPlans.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Keine offenen Tourenplan-Einträge.</p>
+        ) : (
+          <div className="max-h-72 overflow-y-auto divide-y divide-border">
+            {openPlans.slice(0, 50).map((p: any) => (
+              <div key={p.id} className="flex items-center justify-between gap-3 py-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-medium truncate">{p.contact_name || 'Ohne Kontakt'} {p.device_model ? `· ${p.device_model}` : ''}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {[addrOf(p.location_address), p.device_serial_number, p.planning_status, p.planned_date ? format(new Date(p.planned_date), 'dd.MM.yyyy') : null].filter(Boolean).join(' · ')}
+                  </div>
+                </div>
+                <Button
+                  size="sm" variant="outline" className="h-8 gap-1 shrink-0"
+                  onClick={() => {
+                    setForm({
+                      ...EMPTY,
+                      route_plan_id: p.id,
+                      assigned_date: p.planned_date ? String(p.planned_date).slice(0, 10) : '',
+                      notes: [p.planning_note, addrOf(p.location_address)].filter(Boolean).join('\n'),
+                    });
+                    setOpen(true);
+                  }}
+                >
+                  <Ship className="w-3.5 h-3.5" /> Spedition beauftragen
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>
@@ -204,12 +284,16 @@ export default function DispatchSpeditionsversand() {
             )}
             {filtered.map((r: any) => (
               <TableRow key={r.id}>
-                <TableCell className="font-medium">{r.appointment?.order_number ?? '—'}</TableCell>
-                <TableCell>{r.appointment?.company_name || r.appointment?.customer_name || '—'}</TableCell>
-                <TableCell>{[r.appointment?.device_name, r.appointment?.serial_number].filter(Boolean).join(' · ') || '—'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {[r.appointment?.delivery_street, [r.appointment?.delivery_zip, r.appointment?.delivery_city].filter(Boolean).join(' ')].filter(Boolean).join(', ') || '—'}
+                <TableCell className="font-medium">
+                  {r.appointment?.order_number ?? (r.route_plan?.order_id ? `Tour ${String(r.route_plan.order_id).slice(0, 8)}` : '—')}
+                  {r.route_plan_id && <div className="text-[10px] uppercase tracking-wide text-muted-foreground">aus Tourenplanung</div>}
                 </TableCell>
+                <TableCell>{r.appointment?.company_name || r.appointment?.customer_name || r.route_plan?.contact_name || '—'}</TableCell>
+                <TableCell>{[r.appointment?.device_name || r.route_plan?.device_model, r.appointment?.serial_number || r.route_plan?.device_serial_number].filter(Boolean).join(' · ') || '—'}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {[r.appointment?.delivery_street, [r.appointment?.delivery_zip, r.appointment?.delivery_city].filter(Boolean).join(' ')].filter(Boolean).join(', ') || addrOf(r.route_plan?.location_address) || '—'}
+                </TableCell>
+
                 <TableCell>{r.carrier?.name ?? '—'}</TableCell>
                 <TableCell>{r.assigned_date ? format(new Date(r.assigned_date), 'dd.MM.yyyy') : '—'}</TableCell>
                 <TableCell>
@@ -278,6 +362,27 @@ export default function DispatchSpeditionsversand() {
                   <option key={a.id} value={a.id}>
                     {[a.order_number, a.company_name || a.customer_name, a.device_name, [a.delivery_zip, a.delivery_city].filter(Boolean).join(' ')].filter(Boolean).join(' · ')}
                   </option>
+                ))}
+              </select>
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Tourenplanung (route_plans)</Label>
+              <select
+                className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={form.route_plan_id}
+                onChange={e => {
+                  const id = e.target.value;
+                  const p = (routePlans ?? []).find((x: any) => x.id === id);
+                  setForm(f => ({
+                    ...f,
+                    route_plan_id: id,
+                    assigned_date: f.assigned_date || (p?.planned_date ? String(p.planned_date).slice(0, 10) : ''),
+                  }));
+                }}
+              >
+                <option value="">— ohne Tourenbezug —</option>
+                {(routePlans ?? []).map((p: any) => (
+                  <option key={p.id} value={p.id}>{planLabel(p)}</option>
                 ))}
               </select>
             </div>

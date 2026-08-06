@@ -16028,6 +16028,7 @@ export type Database = {
           notes: string | null
           pod_document_id: string | null
           pod_received_at: string | null
+          route_plan_id: string | null
           status: string
           tour_id: string | null
           tracking_number: string | null
@@ -16045,6 +16046,7 @@ export type Database = {
           notes?: string | null
           pod_document_id?: string | null
           pod_received_at?: string | null
+          route_plan_id?: string | null
           status?: string
           tour_id?: string | null
           tracking_number?: string | null
@@ -16062,6 +16064,7 @@ export type Database = {
           notes?: string | null
           pod_document_id?: string | null
           pod_received_at?: string | null
+          route_plan_id?: string | null
           status?: string
           tour_id?: string | null
           tracking_number?: string | null
@@ -16080,6 +16083,13 @@ export type Database = {
             columns: ["carrier_id"]
             isOneToOne: false
             referencedRelation: "delivery_carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_carrier_assignments_route_plan_id_fkey"
+            columns: ["route_plan_id"]
+            isOneToOne: false
+            referencedRelation: "route_plans"
             referencedColumns: ["id"]
           },
           {
