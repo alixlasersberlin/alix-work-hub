@@ -5,7 +5,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
-  Search, Users, ShoppingCart, LifeBuoy, Cpu, FileText, Package, Loader2,
+  Search, Users, ShoppingCart, LifeBuoy, Cpu, FileText, Package, Loader2, Truck, CalendarCheck,
 } from 'lucide-react';
 
 type Hit = {
