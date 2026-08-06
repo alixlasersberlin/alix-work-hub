@@ -29,20 +29,44 @@ export default function ProvisionZuordnung() {
   const [empOpen, setEmpOpen] = useState<any | null>(null);
   const [empForm, setEmpForm] = useState<any>({});
 
+  const [aliases, setAliases] = useState<Record<string, string>>({});
+
   const load = async () => {
-    const [{ data: o }, { data: a }, { data: p }, { data: r }, { data: es }] = await Promise.all([
+    const [{ data: o }, { data: a }, { data: p }, { data: r }, { data: es }, { data: al }] = await Promise.all([
       supabase.from('orders').select('id, order_number, customer_id, order_date, order_status, salesperson_name, total_amount').order('order_date', { ascending: false }).limit(500),
       supabase.from('commission_assignments').select('*'),
       supabase.from('user_profiles').select('id, full_name, email, is_active').order('full_name'),
       supabase.from('commission_rules').select('id, name, is_active'),
       supabase.from('commission_employees').select('*'),
+      supabase.from('app_settings').select('value').eq('key', 'commission_salesperson_aliases').maybeSingle(),
     ]);
     setOrders(o ?? []); setAssignments(a ?? []); setProfiles(p ?? []); setRules(r ?? []); setEmpSettings(es ?? []);
+    try { setAliases(JSON.parse(al?.value ?? '{}')); } catch { setAliases({}); }
   };
   useEffect(() => { load(); }, []);
 
+  const salespersonNames = useMemo(() => {
+    const set = new Map<string, number>();
+    orders.forEach((o) => {
+      const n = (o.salesperson_name ?? '').trim();
+      if (n) set.set(n, (set.get(n) ?? 0) + 1);
+    });
+    return [...set.entries()].sort((a, b) => b[1] - a[1]);
+  }, [orders]);
+
+  const saveAliases = async (next: Record<string, string>) => {
+    setAliases(next);
+    const { error } = await supabase.from('app_settings').upsert(
+      { key: 'commission_salesperson_aliases', value: JSON.stringify(next) },
+      { onConflict: 'key' },
+    );
+    if (error) return toast.error(error.message);
+    toast.success('Verkäufer-Zuordnung gespeichert');
+  };
+
   const nameOf = (id: string) => profiles.find((p) => p.id === id)?.full_name || profiles.find((p) => p.id === id)?.email || id;
   const assignedOrderIds = useMemo(() => new Set(assignments.map((a) => a.order_id)), [assignments]);
+
 
   const unassigned = useMemo(() => {
     const s = search.trim().toLowerCase();
