@@ -155,7 +155,22 @@ export default function DispatchRetouren() {
         }
       />
 
+      <div className="grid gap-3 md:grid-cols-4">
+        {[
+          { label: 'Offen', value: (rows ?? []).filter((r: any) => r.status === 'offen').length },
+          { label: 'Eingeplant / unterwegs', value: (rows ?? []).filter((r: any) => ['eingeplant', 'abgeholt'].includes(r.status)).length },
+          { label: 'In Werkstatt', value: (rows ?? []).filter((r: any) => r.status === 'werkstatt').length },
+          { label: 'Abgeschlossen', value: (rows ?? []).filter((r: any) => r.status === 'abgeschlossen').length },
+        ].map(k => (
+          <Card key={k.label} className="p-4">
+            <div className="text-xs text-muted-foreground">{k.label}</div>
+            <div className="text-2xl font-semibold">{k.value}</div>
+          </Card>
+        ))}
+      </div>
+
       <Card className="p-3 flex flex-wrap items-center gap-2">
+
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input className="pl-8" placeholder="Nummer, Auftrag, Kunde, Serie …" value={search} onChange={e => setSearch(e.target.value)} />
