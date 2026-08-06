@@ -393,6 +393,27 @@ export const navItems: NavItem[] = [
     ],
   },
 
+  {
+    path: '/produktion', label: 'PRODUKTION & BESCHAFFUNG', icon: Factory,
+    roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'],
+    children: [
+      { path: '/produktion', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+      { path: '/produktion/geraete', label: 'Geräte', icon: Cpu, roles: null },
+      { path: '/produktion/baugruppen', label: 'Baugruppen', icon: Boxes, roles: null },
+      { path: '/produktion/einzelteile', label: 'Einzelteile', icon: Wrench, roles: null },
+      { path: '/produktion/stueckliste', label: 'Stückliste (BOM)', icon: ListTree, roles: null },
+      { path: '/produktion/explosionszeichnungen', label: 'Explosionszeichnungen', icon: Layers, roles: null },
+      { path: '/produktion/lieferanten', label: 'Lieferanten', icon: Factory, roles: null },
+      { path: '/produktion/wareneingang', label: 'Wareneingang & Prüfung', icon: PackageCheck, roles: null },
+      { path: '/produktion/pruefplaene', label: 'Prüfpläne', icon: ClipboardCheck, roles: null },
+      { path: '/produktion/pruefmerkmale', label: 'Prüfmerkmale', icon: ClipboardList, roles: null },
+      { path: '/produktion/auftraege', label: 'Produktionsaufträge', icon: Factory, roles: null },
+      { path: '/produktion/arbeitsanweisungen', label: 'Arbeitsanweisungen', icon: FileText, roles: null },
+      { path: '/produktion/aenderungen', label: 'Änderungen (ECR/ECO)', icon: GitBranch, roles: null },
+      { path: '/produktion/dokumente', label: 'Technische Dokumentation', icon: FileCheck2, roles: null },
+    ],
+  },
+
 
   {
     path: '/warehouse-logistics', label: 'LAGER & WERKSTATT', icon: Warehouse,
