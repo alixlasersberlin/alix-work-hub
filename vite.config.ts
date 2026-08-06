@@ -2,32 +2,49 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import fs from "fs";
+import { execSync } from "child_process";
 import { componentTagger } from "lovable-tagger";
 
 const versionFile = path.resolve(__dirname, "./src/version.json");
 
-function readVersion(): string {
+function readVersionFile(): { version: string; anchorCommits: number } {
   try {
-    return JSON.parse(fs.readFileSync(versionFile, "utf-8")).version || "6.00";
+    const raw = JSON.parse(fs.readFileSync(versionFile, "utf-8"));
+    return {
+      version: raw.version || "6.00",
+      anchorCommits: Number(raw.anchorCommits) || 0,
+    };
   } catch {
-    return "6.00";
+    return { version: "6.00", anchorCommits: 0 };
   }
 }
 
-// Erhöht die App-Version bei jedem Production-Build (Publish) automatisch um 0.01.
-function bumpVersion(): string {
-  const next = (parseFloat(readVersion()) + 0.01).toFixed(2);
+function commitCount(): number | null {
   try {
-    fs.writeFileSync(versionFile, JSON.stringify({ version: next }, null, 2) + "\n");
+    return parseInt(execSync("git rev-list --count HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim(), 10) || null;
   } catch {
-    /* read-only FS: Version landet trotzdem korrekt im Bundle */
+    return null;
   }
-  return next;
+}
+
+/**
+ * Version wird aus der Commit-Anzahl abgeleitet: jeder Publish enthält neue Commits,
+ * dadurch erhöht sich die Version bei jedem Publish automatisch um 0.01 —
+ * auch wenn das Dateisystem beim Build read-only ist.
+ */
+function resolveVersion(isProd: boolean): string {
+  const { version, anchorCommits } = readVersionFile();
+  const base = parseFloat(version) || 6.0;
+  const count = commitCount();
+  if (!count || !anchorCommits) return isProd ? (base + 0.01).toFixed(2) : base.toFixed(2);
+  const delta = Math.max(0, count - anchorCommits);
+  return (base + delta * 0.01).toFixed(2);
 }
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const appVersion = mode === "development" ? readVersion() : bumpVersion();
+  const appVersion = resolveVersion(mode !== "development");
+
 
   return {
     define: {
