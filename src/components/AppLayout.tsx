@@ -2034,10 +2034,14 @@ export default function AppLayout() {
         {/* User Section */}
         <div className="border-t border-border p-2 flex-shrink-0">
           {(!collapsed || mobileOpen) && (
-            <div className={cn("px-2 py-2 mb-1", collapsed && "md:hidden")}>
-              <p className="text-[14.5px] font-medium text-foreground truncate">{profile?.full_name || 'Benutzer'}</p>
-              <p className="text-[11px] text-muted-foreground truncate">{profile?.email}</p>
+            <div className={cn("px-2 py-2 mb-1 flex items-center justify-between gap-2 flex-wrap", collapsed && "md:hidden")}>
+              <div className="min-w-0">
+                <p className="text-[14.5px] font-medium text-foreground truncate">{profile?.full_name || 'Benutzer'}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{profile?.email}</p>
+              </div>
+              <SidebarInfoBar inline />
             </div>
+
 
           )}
 

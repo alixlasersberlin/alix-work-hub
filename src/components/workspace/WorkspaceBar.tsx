@@ -15,9 +15,8 @@ export default function WorkspaceBar() {
   return (
     <div className="flex-shrink-0 border-b border-border bg-muted/30">
       <div className="flex items-center gap-1 px-2 md:px-4 py-1.5 overflow-x-auto scroll-touch">
-        <div className="hidden md:flex items-center pr-3 mr-1 border-r border-border flex-shrink-0">
-          <SidebarInfoBar inline />
-        </div>
+
+
 
         {workspaces.map((w) => {
           const Icon = iconFor(w.icon);
