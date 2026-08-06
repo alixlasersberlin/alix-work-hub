@@ -694,7 +694,7 @@ export const navItems: NavItem[] = [
   },
 
   {
-    path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin'],
+    path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin', 'Admin'],
     children: [
       {
         path: '#mdr-ce', label: 'MDR CE & ISO 13485', icon: ShieldCheck, roles: ['Super Admin'],
