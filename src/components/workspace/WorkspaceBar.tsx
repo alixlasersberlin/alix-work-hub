@@ -3,7 +3,6 @@ import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { cn } from '@/lib/utils';
 import { iconFor } from '@/lib/workspace/icons';
 import { Layers } from 'lucide-react';
-import { SidebarInfoBar } from '@/components/SidebarInfoBar';
 
 export default function WorkspaceBar() {
   const { workspaces, current, setCurrent, workspaceMode, setWorkspaceMode, loading } = useWorkspace();
