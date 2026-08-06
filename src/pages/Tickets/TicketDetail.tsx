@@ -112,6 +112,7 @@ export default function TicketDetail() {
   const [attachments, setAttachments] = useState<Att[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [creatingOffer, setCreatingOffer] = useState(false);
   const [newMsg, setNewMsg] = useState('');
   const [msgInternal, setMsgInternal] = useState(false);
   const [myProfile, setMyProfile] = useState<{ full_name: string | null; job_title: string | null; avatar_url: string | null } | null>(null);
