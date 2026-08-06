@@ -58,6 +58,8 @@ function planLabel(p: any): string {
 export default function DispatchSpeditionsversand() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
+  const [apptSearch, setApptSearch] = useState('');
+
   const [statusFilter, setStatusFilter] = useState('alle');
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ ...EMPTY });
