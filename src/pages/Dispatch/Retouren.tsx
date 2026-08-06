@@ -11,9 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { PackageX, Plus, Loader2, Search } from 'lucide-react';
+import { PackageX, Plus, Loader2, Search, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { downloadReturnNotePdf } from '@/lib/dispatch/return-note-pdf';
 
 const TYPES: Record<string, string> = {
   rueckholung: 'Rückholung',
