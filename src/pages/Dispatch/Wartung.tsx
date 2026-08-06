@@ -97,7 +97,24 @@ export default function DispatchWartung() {
         title="Wartung & Prüfungen"
         subtitle="Serviceintervalle, HU-Termine und Werkstatthistorie des Fuhrparks"
         icon={Wrench}
-        actions={<Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Wartung erfassen</Button>}
+        actions={
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled={sending}
+              onClick={async () => {
+                setSending(true);
+                const { data, error } = await supabase.functions.invoke('fleet-maintenance-alerts');
+                setSending(false);
+                if (error) toast.error('Erinnerung fehlgeschlagen: ' + error.message);
+                else toast.success(`${(data as any)?.alerts ?? 0} Hinweise · ${(data as any)?.overdue ?? 0} überfällig`);
+              }}
+            >
+              <Mail className="h-4 w-4 mr-2" />{sending ? 'Sende…' : 'Erinnerungen senden'}
+            </Button>
+            <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4 mr-2" />Wartung erfassen</Button>
+          </div>
+        }
       />
 
       {dueCount > 0 && (
