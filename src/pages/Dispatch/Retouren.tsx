@@ -260,6 +260,26 @@ export default function DispatchRetouren() {
           </TableBody>
         </Table>
       </Card>
+
+      <Dialog open={!!mailRow} onOpenChange={o => !o && setMailRow(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Abholavis senden – {mailRow?.return_number}</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <Label>E-Mail des Kunden</Label>
+            <Input type="email" placeholder="kunde@example.com" value={mailTo} onChange={e => setMailTo(e.target.value)} />
+            <p className="text-xs text-muted-foreground">
+              Enthält Retouren-Nr., Gerät, Seriennummer und Abholdatum. Eine Kopie geht per BCC ins Archiv.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMailRow(null)}>Abbrechen</Button>
+            <Button onClick={() => sendMail.mutate()} disabled={sendMail.isPending || !mailTo.trim()}>
+              {sendMail.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Senden
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
