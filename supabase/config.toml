@@ -412,3 +412,6 @@ verify_jwt = false
 
 [functions.telematics-ingest]
 verify_jwt = false
+
+[functions.plm-purchase-order-send]
+verify_jwt = true

@@ -133,8 +133,7 @@ Deno.serve(async (req) => {
       entity_type: "purchase_order",
       entity_id: poId,
       action: "email_sent",
-      user_id: userData.user.id,
-      details: { recipient: to, subject },
+      changes: { recipient: to, subject },
     }).then(() => {}, () => {});
 
     return json({ ok: true, recipient: to });
