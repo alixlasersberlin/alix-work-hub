@@ -21,6 +21,7 @@ const fmt = (d?: string | null) => (d ? format(parseISO(d), 'dd.MM.yyyy') : '—
 export default function DispatchWartung() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [sending, setSending] = useState(false);
   const [form, setForm] = useState({
     vehicle_id: '', maintenance_type: 'Inspektion', due_date: '', performed_at: '',
     odometer_km: '', cost: '', workshop: '', notes: '',
