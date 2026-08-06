@@ -9,10 +9,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Truck, ArrowLeft, PackageCheck, ClipboardCheck, ShieldCheck, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { Truck, ArrowLeft, PackageCheck, ClipboardCheck, ShieldCheck, AlertTriangle, RefreshCw, Loader2, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { TOUR_STATUS_LABELS, DELIVERY_STATUS_LABELS, statusClass } from './constants';
+import { tourPaperworkPdf, loadingListPdf } from '@/lib/dispatch/exports';
 
 const LOADING_STATUS_LABELS: Record<string, string> = {
   nicht_vorbereitet: 'Nicht vorbereitet',
