@@ -138,7 +138,7 @@ export default function DispatchTermine() {
               <TableHead>Art</TableHead>
               <TableHead>Ampel</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Verlauf</TableHead>
+              <TableHead className="text-right">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
