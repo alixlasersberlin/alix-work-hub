@@ -122,6 +122,40 @@ export default function TicketsList() {
     toast.success('Ticket gelöscht');
   }
 
+  // ---- Mehrfachauswahl (nur Super Admin) ----
+  const [selected, setSelected] = useState<string[]>([]);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const toggleOne = (id: string) =>
+    setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAll = (ids: string[], checked: boolean) =>
+    setSelected(prev => checked ? Array.from(new Set([...prev, ...ids])) : prev.filter(x => !ids.includes(x)));
+
+  async function bulkClose() {
+    if (!isSuperAdmin || selected.length === 0) return;
+    setBulkBusy(true);
+    const { error } = await supabase
+      .from('tickets')
+      .update({ status: 'geschlossen', closed_at: new Date().toISOString() })
+      .in('id', selected);
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.map(r => selected.includes(r.id) ? { ...r, status: 'geschlossen' } : r));
+    toast.success(`${selected.length} Ticket(s) geschlossen`);
+    setSelected([]);
+  }
+
+  async function bulkDelete() {
+    if (!isSuperAdmin || selected.length === 0) return;
+    if (!window.confirm(`${selected.length} Ticket(s) wirklich unwiderruflich löschen?`)) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from('tickets').delete().in('id', selected);
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.filter(r => !selected.includes(r.id)));
+    toast.success(`${selected.length} Ticket(s) gelöscht`);
+    setSelected([]);
+  }
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setCurrentUserId(data.user?.id ?? null));
   }, []);
