@@ -206,6 +206,21 @@ export default function DispatchSpeditionsversand() {
     }
   }
 
+  const customerEmailOf = (r: any) => r.appointment?.contact_email || r.route_plan?.contact_email || null;
+
+  // Statuswechsel: sobald "abgeholt" gesetzt wird, automatisch Versandavis an den Kunden (CC K.trinh).
+  async function changeStatus(row: any, next: string) {
+    const prev = row.status ?? 'angefragt';
+    await update.mutateAsync({ id: row.id, patch: { status: next } });
+    if (next === 'abgeholt' && prev !== 'abgeholt') {
+      if (!customerEmailOf(row)) {
+        toast.warning('Als abgeholt markiert – keine Kunden-E-Mail hinterlegt, kein Versandavis gesendet.');
+        return;
+      }
+      await sendMail(row, 'customer');
+    }
+  }
+
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
       <PageHeader
@@ -325,7 +340,7 @@ export default function DispatchSpeditionsversand() {
                   <select
                     className={`rounded-full border px-2 py-1 text-xs bg-transparent ${statusClass(r.status)}`}
                     value={r.status ?? 'angefragt'}
-                    onChange={e => update.mutate({ id: r.id, patch: { status: e.target.value } })}
+                    onChange={e => changeStatus(r, e.target.value)}
                   >
                     {Object.entries(STATUSES).map(([k, v]) => <option key={k} value={k} className="bg-background text-foreground">{v}</option>)}
                   </select>
@@ -345,8 +360,8 @@ export default function DispatchSpeditionsversand() {
                     </Button>
                     <Button
                       size="sm" variant="outline" className="h-8 gap-1"
-                      title={r.appointment?.contact_email ? `Versandavis an ${r.appointment.contact_email}` : 'Keine Kunden-E-Mail hinterlegt'}
-                      disabled={!r.appointment?.contact_email || sending === `${r.id}:customer`}
+                      title={customerEmailOf(r) ? `Versandavis an ${customerEmailOf(r)} (CC K.trinh@alix-operation.de)` : 'Keine Kunden-E-Mail hinterlegt'}
+                      disabled={!customerEmailOf(r) || sending === `${r.id}:customer`}
                       onClick={() => sendMail(r, 'customer')}
                     >
                       {sending === `${r.id}:customer` ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />} Kunde

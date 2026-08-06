@@ -12,6 +12,7 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const BCC = "rde@alix-lasers.com";
+const CUSTOMER_CC = "K.trinh@alix-operation.de";
 
 function esc(s: unknown) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -49,20 +50,31 @@ Deno.serve(async (req) => {
     const sb = createClient(SUPABASE_URL, SERVICE_ROLE);
     const { data: row, error } = await sb
       .from("delivery_carrier_assignments")
-      .select("*, carrier:carrier_id(name, contact_name, email, phone), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_email, delivery_street, delivery_zip, delivery_city, delivery_country, planned_date)")
+      .select("*, carrier:carrier_id(name, contact_name, email, phone), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_email, delivery_street, delivery_zip, delivery_city, delivery_country, planned_date), route_plan:route_plan_id(order_id, planned_date, contact_name, contact_email, device_model, device_serial_number, location_address)")
       .eq("id", assignmentId)
       .maybeSingle();
     if (error) return json({ error: error.message }, 500);
     if (!row) return json({ error: "Speditionsversand nicht gefunden" }, 404);
 
-    const a: any = row.appointment ?? {};
+    const rp: any = (row as any).route_plan ?? {};
+    const a: any = {
+      ...(row.appointment ?? {}),
+    };
+    a.contact_name = a.contact_name || rp.contact_name || null;
+    a.contact_email = a.contact_email || rp.contact_email || null;
+    a.device_name = a.device_name || rp.device_model || null;
+    a.serial_number = a.serial_number || rp.device_serial_number || null;
+    a.planned_date = a.planned_date || rp.planned_date || null;
     const c: any = row.carrier ?? {};
     const to = mode === "carrier" ? c.email : a.contact_email;
     if (!to) {
       return json({ error: mode === "carrier" ? "Für diese Spedition ist keine E-Mail hinterlegt." : "Für diesen Auftrag ist keine Kunden-E-Mail hinterlegt." }, 400);
     }
 
-    const addr = [a.delivery_street, [a.delivery_zip, a.delivery_city].filter(Boolean).join(" "), a.delivery_country].filter(Boolean).join(", ");
+    const rpAddr = typeof rp.location_address === "string"
+      ? rp.location_address
+      : [rp.location_address?.street, [rp.location_address?.zip, rp.location_address?.city].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+    const addr = [a.delivery_street, [a.delivery_zip, a.delivery_city].filter(Boolean).join(" "), a.delivery_country].filter(Boolean).join(", ") || rpAddr;
     let subject: string;
     let html: string;
 
@@ -88,17 +100,18 @@ Deno.serve(async (req) => {
           <p>Freundliche Grüße<br>Alix Auslieferung</p>
         </div>`;
     } else {
-      subject = `Ihre Lieferung ist unterwegs – Auftrag ${a.order_number ?? ""}`.trim();
+      subject = `Ihre Sendung wurde abgeholt – Auftrag ${a.order_number ?? ""}`.trim();
       html = `
         <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111">
-          <h2>Ihre Lieferung ist unterwegs</h2>
+          <h2>Ihre Sendung ist unterwegs</h2>
           <p>Guten Tag${a.contact_name ? " " + esc(a.contact_name) : ""},</p>
-          <p>Ihr Gerät wurde an unsere Spedition übergeben.</p>
+          <p>Ihr Gerät wurde von unserer Spedition abgeholt und ist jetzt zu Ihnen unterwegs.</p>
           <table cellpadding="6" style="border-collapse:collapse">
             <tr><td><b>Auftrag</b></td><td>${esc(a.order_number ?? "—")}</td></tr>
-            <tr><td><b>Gerät</b></td><td>${esc(a.device_name ?? "—")}</td></tr>
+            <tr><td><b>Gerät</b></td><td>${esc(a.device_name ?? "—")}${a.serial_number ? " · SN " + esc(a.serial_number) : ""}</td></tr>
             <tr><td><b>Spedition</b></td><td>${esc(c.name ?? "—")}</td></tr>
-            ${row.tracking_number ? `<tr><td><b>Sendungsnummer</b></td><td>${esc(row.tracking_number)}</td></tr>` : ""}
+            <tr><td><b>Sendungsnummer</b></td><td>${esc(row.tracking_number ?? "wird nachgereicht")}</td></tr>
+            <tr><td><b>Abholdatum</b></td><td>${esc(fmtDate(row.assigned_date))}</td></tr>
             <tr><td><b>Lieferadresse</b></td><td>${esc(addr || "—")}</td></tr>
           </table>
           <p>Die Spedition meldet sich zur Terminabstimmung bei Ihnen.</p>
@@ -115,6 +128,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: "Alix Auslieferung <no-reply@alixwork.de>",
         to: [to],
+        ...(mode === "customer" ? { cc: [CUSTOMER_CC] } : {}),
         bcc: [BCC],
         subject,
         html,
