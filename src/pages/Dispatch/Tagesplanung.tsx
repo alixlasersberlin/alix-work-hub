@@ -76,7 +76,8 @@ export default function DispatchTagesplanung() {
   const { data: drivers = [] } = useQuery({
     queryKey: ['dispatch', 'drivers-active'],
     queryFn: async () => {
-      const { data } = await supabase.from('drivers').select('id, full_name').eq('active', true).order('full_name');
+      const { data, error } = await supabase.from('drivers').select('id, full_name').eq('active', true).order('full_name');
+      if (error) { toast.error(`Fahrer konnten nicht geladen werden: ${error.message}`); return []; }
       return data ?? [];
     },
     staleTime: 300_000,
@@ -85,11 +86,13 @@ export default function DispatchTagesplanung() {
   const { data: vehicles = [] } = useQuery({
     queryKey: ['dispatch', 'vehicles-active'],
     queryFn: async () => {
-      const { data } = await supabase.from('vehicles').select('id, license_plate, name, status').eq('active', true).order('license_plate');
+      const { data, error } = await supabase.from('vehicles').select('id, license_plate, name, status').eq('active', true).order('license_plate');
+      if (error) { toast.error(`Fahrzeuge konnten nicht geladen werden: ${error.message}`); return []; }
       return data ?? [];
     },
     staleTime: 300_000,
   });
+
 
   const assignedIds = useMemo(() => new Set((stops as any[]).map((s) => s.appointment_id)), [stops]);
   const openAppointments = useMemo(
@@ -220,18 +223,33 @@ export default function DispatchTagesplanung() {
               <div><Label>Bezeichnung</Label><Input value={newTour.title} onChange={(e) => setNewTour({ ...newTour, title: e.target.value })} placeholder="z. B. Berlin Nord" /></div>
               <div>
                 <Label>Fahrer</Label>
-                <Select value={newTour.driver_id} onValueChange={(v) => setNewTour({ ...newTour, driver_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Fahrer wählen" /></SelectTrigger>
-                  <SelectContent>{(drivers as any[]).map((d) => <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>)}</SelectContent>
-                </Select>
+                <select
+                  value={newTour.driver_id}
+                  onChange={(e) => setNewTour({ ...newTour, driver_id: e.target.value })}
+                  className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">Fahrer wählen</option>
+                  {(drivers as any[]).map((d) => <option key={d.id} value={d.id}>{d.full_name}</option>)}
+                </select>
+                {(drivers as any[]).length === 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">Keine aktiven Fahrer vorhanden – unter Dispatch → Fahrer anlegen.</p>
+                )}
               </div>
               <div>
                 <Label>Fahrzeug</Label>
-                <Select value={newTour.vehicle_id} onValueChange={(v) => setNewTour({ ...newTour, vehicle_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Fahrzeug wählen" /></SelectTrigger>
-                  <SelectContent>{(vehicles as any[]).map((v) => <SelectItem key={v.id} value={v.id}>{v.license_plate} {v.name ? `· ${v.name}` : ''}</SelectItem>)}</SelectContent>
-                </Select>
+                <select
+                  value={newTour.vehicle_id}
+                  onChange={(e) => setNewTour({ ...newTour, vehicle_id: e.target.value })}
+                  className="mt-1 h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">Fahrzeug wählen</option>
+                  {(vehicles as any[]).map((v) => <option key={v.id} value={v.id}>{v.license_plate}{v.name ? ` · ${v.name}` : ''}</option>)}
+                </select>
+                {(vehicles as any[]).length === 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">Keine aktiven Fahrzeuge vorhanden – unter Dispatch → Fahrzeuge anlegen.</p>
+                )}
               </div>
+
               <div><Label>Startzeit</Label><Input type="time" value={newTour.start} onChange={(e) => setNewTour({ ...newTour, start: e.target.value })} /></div>
             </div>
             <DialogFooter><Button onClick={createTour}>Tour anlegen</Button></DialogFooter>
