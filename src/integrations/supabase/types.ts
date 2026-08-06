@@ -14538,6 +14538,1246 @@ export type Database = {
           },
         ]
       }
+      delivery_appointments: {
+        Row: {
+          accessories: string | null
+          appointment_type: Database["public"]["Enums"]["delivery_appointment_type"]
+          article_name: string | null
+          billing_address: string | null
+          company_name: string | null
+          confirmed_at: string | null
+          confirmed_channel: string | null
+          contact_email: string | null
+          contact_mobile: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_notes: string | null
+          customer_number: string | null
+          delivered_at: string | null
+          delivery_city: string | null
+          delivery_country: string | null
+          delivery_lat: number | null
+          delivery_lng: number | null
+          delivery_street: string | null
+          delivery_zip: string | null
+          device_model: string | null
+          device_name: string | null
+          document_ids: string[] | null
+          duration_minutes: number
+          esc_event_id: string | null
+          failure_reason: string | null
+          financing_type: string | null
+          id: string
+          internal_notes: string | null
+          invoice_number: string | null
+          is_vip: boolean
+          open_amount: number | null
+          order_id: string | null
+          order_number: string | null
+          payment_status: string | null
+          planned_arrival: string | null
+          planned_date: string | null
+          priority: string
+          promised_window: string | null
+          quote_number: string | null
+          readiness: Database["public"]["Enums"]["delivery_readiness"]
+          readiness_details: Json
+          readiness_override_at: string | null
+          readiness_override_by: string | null
+          readiness_override_reason: string | null
+          requested_date: string | null
+          requires_nisv_docs: boolean
+          requires_training: boolean
+          responsible_user_id: string | null
+          route_plan_id: string | null
+          salesperson_name: string | null
+          scope_of_delivery: string | null
+          serial_number: string | null
+          status: Database["public"]["Enums"]["delivery_status"]
+          time_window_end: string | null
+          time_window_start: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          accessories?: string | null
+          appointment_type?: Database["public"]["Enums"]["delivery_appointment_type"]
+          article_name?: string | null
+          billing_address?: string | null
+          company_name?: string | null
+          confirmed_at?: string | null
+          confirmed_channel?: string | null
+          contact_email?: string | null
+          contact_mobile?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_notes?: string | null
+          customer_number?: string | null
+          delivered_at?: string | null
+          delivery_city?: string | null
+          delivery_country?: string | null
+          delivery_lat?: number | null
+          delivery_lng?: number | null
+          delivery_street?: string | null
+          delivery_zip?: string | null
+          device_model?: string | null
+          device_name?: string | null
+          document_ids?: string[] | null
+          duration_minutes?: number
+          esc_event_id?: string | null
+          failure_reason?: string | null
+          financing_type?: string | null
+          id?: string
+          internal_notes?: string | null
+          invoice_number?: string | null
+          is_vip?: boolean
+          open_amount?: number | null
+          order_id?: string | null
+          order_number?: string | null
+          payment_status?: string | null
+          planned_arrival?: string | null
+          planned_date?: string | null
+          priority?: string
+          promised_window?: string | null
+          quote_number?: string | null
+          readiness?: Database["public"]["Enums"]["delivery_readiness"]
+          readiness_details?: Json
+          readiness_override_at?: string | null
+          readiness_override_by?: string | null
+          readiness_override_reason?: string | null
+          requested_date?: string | null
+          requires_nisv_docs?: boolean
+          requires_training?: boolean
+          responsible_user_id?: string | null
+          route_plan_id?: string | null
+          salesperson_name?: string | null
+          scope_of_delivery?: string | null
+          serial_number?: string | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          time_window_end?: string | null
+          time_window_start?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          accessories?: string | null
+          appointment_type?: Database["public"]["Enums"]["delivery_appointment_type"]
+          article_name?: string | null
+          billing_address?: string | null
+          company_name?: string | null
+          confirmed_at?: string | null
+          confirmed_channel?: string | null
+          contact_email?: string | null
+          contact_mobile?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_notes?: string | null
+          customer_number?: string | null
+          delivered_at?: string | null
+          delivery_city?: string | null
+          delivery_country?: string | null
+          delivery_lat?: number | null
+          delivery_lng?: number | null
+          delivery_street?: string | null
+          delivery_zip?: string | null
+          device_model?: string | null
+          device_name?: string | null
+          document_ids?: string[] | null
+          duration_minutes?: number
+          esc_event_id?: string | null
+          failure_reason?: string | null
+          financing_type?: string | null
+          id?: string
+          internal_notes?: string | null
+          invoice_number?: string | null
+          is_vip?: boolean
+          open_amount?: number | null
+          order_id?: string | null
+          order_number?: string | null
+          payment_status?: string | null
+          planned_arrival?: string | null
+          planned_date?: string | null
+          priority?: string
+          promised_window?: string | null
+          quote_number?: string | null
+          readiness?: Database["public"]["Enums"]["delivery_readiness"]
+          readiness_details?: Json
+          readiness_override_at?: string | null
+          readiness_override_by?: string | null
+          readiness_override_reason?: string | null
+          requested_date?: string | null
+          requires_nisv_docs?: boolean
+          requires_training?: boolean
+          responsible_user_id?: string | null
+          route_plan_id?: string | null
+          salesperson_name?: string | null
+          scope_of_delivery?: string | null
+          serial_number?: string | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          time_window_end?: string | null
+          time_window_start?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      delivery_checklists: {
+        Row: {
+          checked_at: string | null
+          checked_by: string | null
+          created_at: string
+          id: string
+          is_blocking: boolean
+          is_done: boolean
+          item_key: string
+          label: string
+          note: string | null
+          tour_id: string
+          updated_at: string
+        }
+        Insert: {
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          is_blocking?: boolean
+          is_done?: boolean
+          item_key: string
+          label: string
+          note?: string | null
+          tour_id: string
+          updated_at?: string
+        }
+        Update: {
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          is_blocking?: boolean
+          is_done?: boolean
+          item_key?: string
+          label?: string
+          note?: string | null
+          tour_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_checklists_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_confirmation_tokens: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          opened_at: string | null
+          revoked: boolean
+          token_hash: string
+          updated_at: string
+          used_at: string | null
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          opened_at?: string | null
+          revoked?: boolean
+          token_hash: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          opened_at?: string | null
+          revoked?: boolean
+          token_hash?: string
+          updated_at?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_confirmation_tokens_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_confirmations: {
+        Row: {
+          alternative_date: string | null
+          alternative_window_end: string | null
+          alternative_window_start: string | null
+          appointment_id: string
+          callback_requested: boolean
+          comment: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          corrected_address: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          pdf_document_id: string | null
+          pdf_path: string | null
+          response: string
+          user_agent: string | null
+        }
+        Insert: {
+          alternative_date?: string | null
+          alternative_window_end?: string | null
+          alternative_window_start?: string | null
+          appointment_id: string
+          callback_requested?: boolean
+          comment?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          corrected_address?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          pdf_document_id?: string | null
+          pdf_path?: string | null
+          response: string
+          user_agent?: string | null
+        }
+        Update: {
+          alternative_date?: string | null
+          alternative_window_end?: string | null
+          alternative_window_start?: string | null
+          appointment_id?: string
+          callback_requested?: boolean
+          comment?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          corrected_address?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          pdf_document_id?: string | null
+          pdf_path?: string | null
+          response?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_confirmations_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_costs: {
+        Row: {
+          amount: number
+          appointment_id: string | null
+          cost_center: string | null
+          cost_type: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          note: string | null
+          order_id: string | null
+          quantity: number | null
+          tour_id: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          appointment_id?: string | null
+          cost_center?: string | null
+          cost_type: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          quantity?: number | null
+          tour_id?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          appointment_id?: string | null
+          cost_center?: string | null
+          cost_type?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          quantity?: number | null
+          tour_id?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_costs_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_costs_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_documents: {
+        Row: {
+          alixdocs_document_id: string | null
+          appointment_id: string | null
+          created_at: string
+          created_by: string | null
+          doc_type: string
+          id: string
+          storage_path: string | null
+          title: string | null
+          tour_id: string | null
+        }
+        Insert: {
+          alixdocs_document_id?: string | null
+          appointment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          doc_type: string
+          id?: string
+          storage_path?: string | null
+          title?: string | null
+          tour_id?: string | null
+        }
+        Update: {
+          alixdocs_document_id?: string | null
+          appointment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          doc_type?: string
+          id?: string
+          storage_path?: string | null
+          title?: string | null
+          tour_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_documents_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_documents_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_email_logs: {
+        Row: {
+          appointment_id: string | null
+          bcc: string | null
+          cc: string | null
+          created_at: string
+          error: string | null
+          id: string
+          kind: string
+          provider_id: string | null
+          recipient: string
+          sent_at: string
+          status: string
+          subject: string | null
+          tour_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          bcc?: string | null
+          cc?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind: string
+          provider_id?: string | null
+          recipient: string
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          tour_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          bcc?: string | null
+          cc?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          provider_id?: string | null
+          recipient?: string
+          sent_at?: string
+          status?: string
+          subject?: string | null
+          tour_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_email_logs_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_email_logs_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_incidents: {
+        Row: {
+          appointment_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          extra_costs: number | null
+          follow_up_task_id: string | null
+          id: string
+          incident_type: string
+          reason_code: string | null
+          replacement_device: string | null
+          replacement_serial: string | null
+          resolved_at: string | null
+          returned_accessories: string | null
+          returned_condition: string | null
+          returned_device: string | null
+          returned_serial: string | null
+          target_location: string | null
+          tour_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          extra_costs?: number | null
+          follow_up_task_id?: string | null
+          id?: string
+          incident_type: string
+          reason_code?: string | null
+          replacement_device?: string | null
+          replacement_serial?: string | null
+          resolved_at?: string | null
+          returned_accessories?: string | null
+          returned_condition?: string | null
+          returned_device?: string | null
+          returned_serial?: string | null
+          target_location?: string | null
+          tour_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          extra_costs?: number | null
+          follow_up_task_id?: string | null
+          id?: string
+          incident_type?: string
+          reason_code?: string | null
+          replacement_device?: string | null
+          replacement_serial?: string | null
+          resolved_at?: string | null
+          returned_accessories?: string | null
+          returned_condition?: string | null
+          returned_device?: string | null
+          returned_serial?: string | null
+          target_location?: string | null
+          tour_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_incidents_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_incidents_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_loading_items: {
+        Row: {
+          appointment_id: string | null
+          checked_at: string | null
+          checked_by: string | null
+          created_at: string
+          description: string
+          dimensions: string | null
+          id: string
+          item_type: string
+          load_position: string | null
+          loading_list_id: string
+          notes: string | null
+          position: number
+          quantity: number
+          serial_number: string | null
+          status: Database["public"]["Enums"]["delivery_loading_status"]
+          updated_at: string
+          weight_kg: number | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          description: string
+          dimensions?: string | null
+          id?: string
+          item_type?: string
+          load_position?: string | null
+          loading_list_id: string
+          notes?: string | null
+          position?: number
+          quantity?: number
+          serial_number?: string | null
+          status?: Database["public"]["Enums"]["delivery_loading_status"]
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Update: {
+          appointment_id?: string | null
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          description?: string
+          dimensions?: string | null
+          id?: string
+          item_type?: string
+          load_position?: string | null
+          loading_list_id?: string
+          notes?: string | null
+          position?: number
+          quantity?: number
+          serial_number?: string | null
+          status?: Database["public"]["Enums"]["delivery_loading_status"]
+          updated_at?: string
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_loading_items_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_loading_items_loading_list_id_fkey"
+            columns: ["loading_list_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_loading_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_loading_lists: {
+        Row: {
+          checked_at: string | null
+          checked_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          total_weight_kg: number | null
+          tour_id: string
+          updated_at: string
+        }
+        Insert: {
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          total_weight_kg?: number | null
+          tour_id: string
+          updated_at?: string
+        }
+        Update: {
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          total_weight_kg?: number | null
+          tour_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_loading_lists_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_locations: {
+        Row: {
+          active: boolean
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          kind: string
+          lat: number | null
+          lng: number | null
+          name: string
+          notes: string | null
+          street: string | null
+          updated_at: string
+          zip: string | null
+        }
+        Insert: {
+          active?: boolean
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          kind?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          notes?: string | null
+          street?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Update: {
+          active?: boolean
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          kind?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          notes?: string | null
+          street?: string | null
+          updated_at?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      delivery_notifications: {
+        Row: {
+          appointment_id: string | null
+          body: string | null
+          channel: string
+          created_at: string
+          event_type: string
+          id: string
+          read_at: string | null
+          target_role: string | null
+          target_user_id: string | null
+          title: string
+          tour_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          body?: string | null
+          channel?: string
+          created_at?: string
+          event_type: string
+          id?: string
+          read_at?: string | null
+          target_role?: string | null
+          target_user_id?: string | null
+          title: string
+          tour_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          body?: string | null
+          channel?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          read_at?: string | null
+          target_role?: string | null
+          target_user_id?: string | null
+          title?: string
+          tour_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_notifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_notifications_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_photos: {
+        Row: {
+          appointment_id: string | null
+          caption: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          storage_path: string
+          taken_at: string
+          tour_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          caption?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          storage_path: string
+          taken_at?: string
+          tour_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          caption?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          storage_path?: string
+          taken_at?: string
+          tour_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_photos_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_photos_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      delivery_signatures: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          created_by: string | null
+          gps_consent: boolean
+          gps_lat: number | null
+          gps_lng: number | null
+          id: string
+          signature_path: string | null
+          signed_at: string
+          signer_name: string | null
+          signer_role: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          created_by?: string | null
+          gps_consent?: boolean
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          signature_path?: string | null
+          signed_at?: string
+          signer_name?: string | null
+          signer_role?: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          created_by?: string | null
+          gps_consent?: boolean
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          signature_path?: string | null
+          signed_at?: string
+          signer_name?: string | null
+          signer_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_signatures_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_status_history: {
+        Row: {
+          appointment_id: string | null
+          changed_by: string | null
+          changed_by_name: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          note: string | null
+          source: string
+          to_status: string
+          tour_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          source?: string
+          to_status: string
+          tour_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          source?: string
+          to_status?: string
+          tour_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_status_history_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_status_history_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_tour_stops: {
+        Row: {
+          actual_arrival: string | null
+          actual_departure: string | null
+          appointment_id: string | null
+          created_at: string
+          delay_minutes: number | null
+          delay_reason: string | null
+          distance_from_prev_km: number | null
+          drive_minutes_from_prev: number | null
+          id: string
+          notes: string | null
+          planned_arrival: string | null
+          planned_departure: string | null
+          position: number
+          stop_status: Database["public"]["Enums"]["delivery_status"] | null
+          tour_id: string
+          updated_at: string
+        }
+        Insert: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          appointment_id?: string | null
+          created_at?: string
+          delay_minutes?: number | null
+          delay_reason?: string | null
+          distance_from_prev_km?: number | null
+          drive_minutes_from_prev?: number | null
+          id?: string
+          notes?: string | null
+          planned_arrival?: string | null
+          planned_departure?: string | null
+          position?: number
+          stop_status?: Database["public"]["Enums"]["delivery_status"] | null
+          tour_id: string
+          updated_at?: string
+        }
+        Update: {
+          actual_arrival?: string | null
+          actual_departure?: string | null
+          appointment_id?: string | null
+          created_at?: string
+          delay_minutes?: number | null
+          delay_reason?: string | null
+          distance_from_prev_km?: number | null
+          drive_minutes_from_prev?: number | null
+          id?: string
+          notes?: string | null
+          planned_arrival?: string | null
+          planned_departure?: string | null
+          position?: number
+          stop_status?: Database["public"]["Enums"]["delivery_status"] | null
+          tour_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_tour_stops_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_tour_stops_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_tours: {
+        Row: {
+          actual_distance_km: number | null
+          actual_end_at: string | null
+          actual_start_at: string | null
+          archived_at: string | null
+          codriver_id: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          custom_start_address: string | null
+          driver_id: string | null
+          end_location_id: string | null
+          id: string
+          internal_notes: string | null
+          notes: string | null
+          planned_break_minutes: number
+          planned_distance_km: number | null
+          planned_drive_minutes: number | null
+          planned_end_time: string | null
+          planned_start_time: string | null
+          planned_work_minutes: number | null
+          region: string | null
+          released_at: string | null
+          released_by: string | null
+          start_location_id: string | null
+          status: Database["public"]["Enums"]["delivery_tour_status"]
+          title: string | null
+          tour_date: string
+          tour_number: string
+          updated_at: string
+          updated_by: string | null
+          utilization_pct: number | null
+          vehicle_id: string | null
+        }
+        Insert: {
+          actual_distance_km?: number | null
+          actual_end_at?: string | null
+          actual_start_at?: string | null
+          archived_at?: string | null
+          codriver_id?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_start_address?: string | null
+          driver_id?: string | null
+          end_location_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          notes?: string | null
+          planned_break_minutes?: number
+          planned_distance_km?: number | null
+          planned_drive_minutes?: number | null
+          planned_end_time?: string | null
+          planned_start_time?: string | null
+          planned_work_minutes?: number | null
+          region?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          start_location_id?: string | null
+          status?: Database["public"]["Enums"]["delivery_tour_status"]
+          title?: string | null
+          tour_date: string
+          tour_number?: string
+          updated_at?: string
+          updated_by?: string | null
+          utilization_pct?: number | null
+          vehicle_id?: string | null
+        }
+        Update: {
+          actual_distance_km?: number | null
+          actual_end_at?: string | null
+          actual_start_at?: string | null
+          archived_at?: string | null
+          codriver_id?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_start_address?: string | null
+          driver_id?: string | null
+          end_location_id?: string | null
+          id?: string
+          internal_notes?: string | null
+          notes?: string | null
+          planned_break_minutes?: number
+          planned_distance_km?: number | null
+          planned_drive_minutes?: number | null
+          planned_end_time?: string | null
+          planned_start_time?: string | null
+          planned_work_minutes?: number | null
+          region?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          start_location_id?: string | null
+          status?: Database["public"]["Enums"]["delivery_tour_status"]
+          title?: string | null
+          tour_date?: string
+          tour_number?: string
+          updated_at?: string
+          updated_by?: string | null
+          utilization_pct?: number | null
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_tours_codriver_id_fkey"
+            columns: ["codriver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_tours_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_tours_end_location_id_fkey"
+            columns: ["end_location_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_tours_start_location_id_fkey"
+            columns: ["start_location_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_tours_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           created_at: string
@@ -15106,6 +16346,168 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      driver_availability: {
+        Row: {
+          created_at: string
+          driver_id: string
+          ends_at: string
+          id: string
+          kind: string
+          reason: string | null
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          ends_at: string
+          id?: string
+          kind?: string
+          reason?: string | null
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          ends_at?: string
+          id?: string
+          kind?: string
+          reason?: string | null
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_availability_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_qualifications: {
+        Row: {
+          created_at: string
+          document_id: string | null
+          driver_id: string
+          id: string
+          notes: string | null
+          qualification: string
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          document_id?: string | null
+          driver_id: string
+          id?: string
+          notes?: string | null
+          qualification: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          document_id?: string | null
+          driver_id?: string
+          id?: string
+          notes?: string | null
+          qualification?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_qualifications_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drivers: {
+        Row: {
+          active: boolean
+          can_train: boolean
+          country_clearances: string[] | null
+          created_at: string
+          department: string | null
+          email: string | null
+          full_name: string
+          home_location_id: string | null
+          id: string
+          languages: string[] | null
+          license_classes: string[] | null
+          license_status: string | null
+          license_valid_until: string | null
+          max_daily_work_minutes: number
+          mobile: string | null
+          notes: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string | null
+          work_end: string | null
+          work_start: string | null
+        }
+        Insert: {
+          active?: boolean
+          can_train?: boolean
+          country_clearances?: string[] | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          full_name: string
+          home_location_id?: string | null
+          id?: string
+          languages?: string[] | null
+          license_classes?: string[] | null
+          license_status?: string | null
+          license_valid_until?: string | null
+          max_daily_work_minutes?: number
+          mobile?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string | null
+          work_end?: string | null
+          work_start?: string | null
+        }
+        Update: {
+          active?: boolean
+          can_train?: boolean
+          country_clearances?: string[] | null
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          full_name?: string
+          home_location_id?: string | null
+          id?: string
+          languages?: string[] | null
+          license_classes?: string[] | null
+          license_status?: string | null
+          license_valid_until?: string | null
+          max_daily_work_minutes?: number
+          mobile?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string | null
+          work_end?: string | null
+          work_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drivers_home_location_id_fkey"
+            columns: ["home_location_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_locations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_send_log: {
         Row: {
@@ -26062,6 +27464,76 @@ export type Database = {
         }
         Relationships: []
       }
+      mileage_logs: {
+        Row: {
+          actual_km: number | null
+          created_at: string
+          created_by: string | null
+          driver_id: string | null
+          end_km: number | null
+          id: string
+          log_date: string
+          note: string | null
+          planned_km: number | null
+          start_km: number | null
+          tour_id: string | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          actual_km?: number | null
+          created_at?: string
+          created_by?: string | null
+          driver_id?: string | null
+          end_km?: number | null
+          id?: string
+          log_date?: string
+          note?: string | null
+          planned_km?: number | null
+          start_km?: number | null
+          tour_id?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          actual_km?: number | null
+          created_at?: string
+          created_by?: string | null
+          driver_id?: string | null
+          end_km?: number | null
+          id?: string
+          log_date?: string
+          note?: string | null
+          planned_km?: number | null
+          start_km?: number | null
+          tour_id?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mileage_logs_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mileage_logs_tour_id_fkey"
+            columns: ["tour_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_tours"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mileage_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mobile_push_subscriptions: {
         Row: {
           app_version: string | null
@@ -30319,6 +31791,51 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+        }
+        Relationships: []
+      }
+      route_calculations: {
+        Row: {
+          cache_key: string
+          created_at: string
+          destination: string
+          distance_km: number | null
+          duration_minutes: number | null
+          expires_at: string
+          ferry: boolean
+          id: string
+          origin: string
+          provider: string
+          raw: Json | null
+          toll: boolean
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          destination: string
+          distance_km?: number | null
+          duration_minutes?: number | null
+          expires_at?: string
+          ferry?: boolean
+          id?: string
+          origin: string
+          provider?: string
+          raw?: Json | null
+          toll?: boolean
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          destination?: string
+          distance_km?: number | null
+          duration_minutes?: number | null
+          expires_at?: string
+          ferry?: boolean
+          id?: string
+          origin?: string
+          provider?: string
+          raw?: Json | null
+          toll?: boolean
         }
         Relationships: []
       }
@@ -37798,6 +39315,186 @@ export type Database = {
           },
         ]
       }
+      vehicle_availability: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          is_blocking: boolean
+          reason: string | null
+          starts_at: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          is_blocking?: boolean
+          reason?: string | null
+          starts_at: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          is_blocking?: boolean
+          reason?: string | null
+          starts_at?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_availability_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_maintenance: {
+        Row: {
+          cost: number | null
+          created_at: string
+          due_date: string | null
+          id: string
+          maintenance_type: string
+          notes: string | null
+          odometer_km: number | null
+          performed_at: string | null
+          updated_at: string
+          vehicle_id: string
+          workshop: string | null
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          maintenance_type: string
+          notes?: string | null
+          odometer_km?: number | null
+          performed_at?: string | null
+          updated_at?: string
+          vehicle_id: string
+          workshop?: string | null
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          maintenance_type?: string
+          notes?: string | null
+          odometer_km?: number | null
+          performed_at?: string | null
+          updated_at?: string
+          vehicle_id?: string
+          workshop?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_maintenance_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          active: boolean
+          created_at: string
+          fuel_level_pct: number | null
+          has_trailer_hitch: boolean
+          hu_due_date: string | null
+          id: string
+          insurance_until: string | null
+          is_electric: boolean
+          license_plate: string
+          load_volume_m3: number | null
+          location_id: string | null
+          manufacturer: string | null
+          max_payload_kg: number | null
+          model: string | null
+          name: string | null
+          next_service_date: string | null
+          notes: string | null
+          odometer_km: number | null
+          range_km: number | null
+          special_equipment: string | null
+          status: Database["public"]["Enums"]["delivery_vehicle_status"]
+          tire_status: string | null
+          updated_at: string
+          vehicle_type: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          fuel_level_pct?: number | null
+          has_trailer_hitch?: boolean
+          hu_due_date?: string | null
+          id?: string
+          insurance_until?: string | null
+          is_electric?: boolean
+          license_plate: string
+          load_volume_m3?: number | null
+          location_id?: string | null
+          manufacturer?: string | null
+          max_payload_kg?: number | null
+          model?: string | null
+          name?: string | null
+          next_service_date?: string | null
+          notes?: string | null
+          odometer_km?: number | null
+          range_km?: number | null
+          special_equipment?: string | null
+          status?: Database["public"]["Enums"]["delivery_vehicle_status"]
+          tire_status?: string | null
+          updated_at?: string
+          vehicle_type?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          fuel_level_pct?: number | null
+          has_trailer_hitch?: boolean
+          hu_due_date?: string | null
+          id?: string
+          insurance_until?: string | null
+          is_electric?: boolean
+          license_plate?: string
+          load_volume_m3?: number | null
+          location_id?: string | null
+          manufacturer?: string | null
+          max_payload_kg?: number | null
+          model?: string | null
+          name?: string | null
+          next_service_date?: string | null
+          notes?: string | null
+          odometer_km?: number | null
+          range_km?: number | null
+          special_equipment?: string | null
+          status?: Database["public"]["Enums"]["delivery_vehicle_status"]
+          tire_status?: string | null
+          updated_at?: string
+          vehicle_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       warranty_claims: {
         Row: {
           approval_status: string
@@ -40342,15 +42039,18 @@ export type Database = {
       can_manage_tickets: { Args: never; Returns: boolean }
       can_manage_warranty: { Args: never; Returns: boolean }
       can_manage_whatsapp_automation: { Args: never; Returns: boolean }
+      can_plan_delivery: { Args: never; Returns: boolean }
       can_read_media_packages: { Args: never; Returns: boolean }
       can_read_pdf_import: { Args: { p_import_id: string }; Returns: boolean }
       can_read_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      can_release_delivery_tour: { Args: never; Returns: boolean }
       can_run_ai_service: { Args: never; Returns: boolean }
       can_send_customer_sms: { Args: never; Returns: boolean }
       can_send_whatsapp: { Args: never; Returns: boolean }
       can_upload_factory_invoice: { Args: never; Returns: boolean }
       can_use_alix_sign: { Args: never; Returns: boolean }
       can_view_backups: { Args: never; Returns: boolean }
+      can_view_delivery: { Args: never; Returns: boolean }
       can_view_finance_module: { Args: never; Returns: boolean }
       can_view_mail_audit: { Args: never; Returns: boolean }
       can_write_esc_operational: { Args: never; Returns: boolean }
@@ -41045,6 +42745,67 @@ export type Database = {
         | "maschinell"
         | "geprueft"
         | "freigegeben"
+      delivery_appointment_type:
+        | "auslieferung"
+        | "auslieferung_installation"
+        | "auslieferung_einweisung"
+        | "auslieferung_schulung"
+        | "abholung"
+        | "geraetetausch"
+        | "ersatzgeraet"
+        | "rueckholung"
+        | "wartung"
+        | "reparaturabholung"
+        | "servicetermin"
+        | "messe_lieferung"
+        | "interne_transportfahrt"
+      delivery_loading_status:
+        | "nicht_vorbereitet"
+        | "vorbereitet"
+        | "kontrolliert"
+        | "geladen"
+        | "fehlt"
+        | "beschaedigt"
+      delivery_readiness: "gruen" | "gelb" | "rot"
+      delivery_status:
+        | "entwurf"
+        | "intern_geplant"
+        | "kundenanfrage_vorbereitet"
+        | "bestaetigung_versendet"
+        | "kunde_geoeffnet"
+        | "kunde_bestaetigt"
+        | "kunde_abgelehnt"
+        | "kunde_alternativtermin"
+        | "intern_bestaetigt"
+        | "fahrer_zugeteilt"
+        | "fahrzeug_zugeteilt"
+        | "tour_freigegeben"
+        | "unterwegs"
+        | "angekommen"
+        | "lieferung_begonnen"
+        | "erfolgreich_ausgeliefert"
+        | "teilweise_ausgeliefert"
+        | "nicht_angetroffen"
+        | "lieferung_fehlgeschlagen"
+        | "verschoben"
+        | "storniert"
+        | "abgeschlossen"
+      delivery_tour_status:
+        | "entwurf"
+        | "geplant"
+        | "geprueft"
+        | "freigegeben"
+        | "aktiv"
+        | "abgeschlossen"
+        | "archiviert"
+        | "storniert"
+      delivery_vehicle_status:
+        | "verfuegbar"
+        | "reserviert"
+        | "unterwegs"
+        | "in_wartung"
+        | "defekt"
+        | "gesperrt"
       media_package_service_type: "website" | "flyer" | "social_media"
       media_package_status:
         | "not_started"
@@ -41348,6 +43109,72 @@ export const Constants = {
         "maschinell",
         "geprueft",
         "freigegeben",
+      ],
+      delivery_appointment_type: [
+        "auslieferung",
+        "auslieferung_installation",
+        "auslieferung_einweisung",
+        "auslieferung_schulung",
+        "abholung",
+        "geraetetausch",
+        "ersatzgeraet",
+        "rueckholung",
+        "wartung",
+        "reparaturabholung",
+        "servicetermin",
+        "messe_lieferung",
+        "interne_transportfahrt",
+      ],
+      delivery_loading_status: [
+        "nicht_vorbereitet",
+        "vorbereitet",
+        "kontrolliert",
+        "geladen",
+        "fehlt",
+        "beschaedigt",
+      ],
+      delivery_readiness: ["gruen", "gelb", "rot"],
+      delivery_status: [
+        "entwurf",
+        "intern_geplant",
+        "kundenanfrage_vorbereitet",
+        "bestaetigung_versendet",
+        "kunde_geoeffnet",
+        "kunde_bestaetigt",
+        "kunde_abgelehnt",
+        "kunde_alternativtermin",
+        "intern_bestaetigt",
+        "fahrer_zugeteilt",
+        "fahrzeug_zugeteilt",
+        "tour_freigegeben",
+        "unterwegs",
+        "angekommen",
+        "lieferung_begonnen",
+        "erfolgreich_ausgeliefert",
+        "teilweise_ausgeliefert",
+        "nicht_angetroffen",
+        "lieferung_fehlgeschlagen",
+        "verschoben",
+        "storniert",
+        "abgeschlossen",
+      ],
+      delivery_tour_status: [
+        "entwurf",
+        "geplant",
+        "geprueft",
+        "freigegeben",
+        "aktiv",
+        "abgeschlossen",
+        "archiviert",
+        "storniert",
+      ],
+      delivery_vehicle_status: [
+        "verfuegbar",
+        "reserviert",
+        "unterwegs",
+        "in_wartung",
+        "defekt",
+        "gesperrt",
       ],
       media_package_service_type: ["website", "flyer", "social_media"],
       media_package_status: [
