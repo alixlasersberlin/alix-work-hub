@@ -1,19 +1,27 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { CalendarClock, Search } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import { CalendarClock, Search, PackageSearch, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { DELIVERY_STATUS_LABELS, DELIVERY_TYPE_LABELS, READINESS_LABELS, readinessClass, statusClass } from './constants';
 
 export default function DispatchTermine() {
+  const { user, profile } = useAuth();
+  const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('alle');
   const [readiness, setReadiness] = useState('alle');
+  const [historyFor, setHistoryFor] = useState<{ id: string; label: string } | null>(null);
 
   const { data, isPending } = useQuery({
     queryKey: ['dispatch', 'appointments', status, readiness],
@@ -32,6 +40,38 @@ export default function DispatchTermine() {
     staleTime: 30_000,
   });
 
+  const { data: history } = useQuery({
+    queryKey: ['dispatch', 'status-history', historyFor?.id],
+    enabled: !!historyFor,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('delivery_status_history')
+        .select('id, from_status, to_status, changed_by_name, source, note, created_at')
+        .eq('appointment_id', historyFor!.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  async function changeStatus(row: any, next: string) {
+    const { error } = await supabase
+      .from('delivery_appointments')
+      .update({ status: next as never, updated_by: user?.id ?? null })
+      .eq('id', row.id);
+    if (error) { toast.error(error.message); return; }
+    await supabase.from('delivery_status_history').insert({
+      appointment_id: row.id,
+      from_status: row.status,
+      to_status: next,
+      changed_by: user?.id ?? null,
+      changed_by_name: profile?.full_name ?? null,
+      source: 'dispatch_ui',
+    });
+    toast.success(`Status: ${DELIVERY_STATUS_LABELS[next] ?? next}`);
+    qc.invalidateQueries({ queryKey: ['dispatch'] });
+  }
+
   const term = search.trim().toLowerCase();
   const rows = (data ?? []).filter(r =>
     !term ||
@@ -41,7 +81,16 @@ export default function DispatchTermine() {
 
   return (
     <div className="p-6 lg:p-8 animate-fade-in">
-      <PageHeader title="Liefertermine" subtitle="Alle geplanten und offenen Liefer- und Servicetermine" icon={CalendarClock} />
+      <PageHeader
+        title="Liefertermine"
+        subtitle="Alle geplanten und offenen Liefer- und Servicetermine"
+        icon={CalendarClock}
+        actions={
+          <Button asChild variant="outline">
+            <Link to="/dispatch/ungeplant"><PackageSearch className="h-4 w-4 mr-2" /> Ungeplante Auslieferungen</Link>
+          </Button>
+        }
+      />
 
       <Card className="p-4 mb-4 flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative flex-1">
@@ -75,14 +124,15 @@ export default function DispatchTermine() {
               <TableHead>Art</TableHead>
               <TableHead>Ampel</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Verlauf</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isPending && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Lädt…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Lädt…</TableCell></TableRow>
             )}
             {!isPending && rows.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Keine Liefertermine gefunden.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Keine Liefertermine gefunden.</TableCell></TableRow>
             )}
             {rows.map(r => (
               <TableRow key={r.id}>
@@ -103,15 +153,46 @@ export default function DispatchTermine() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${statusClass(r.status)}`}>
-                    {DELIVERY_STATUS_LABELS[r.status] ?? r.status}
-                  </span>
+                  <Select value={r.status} onValueChange={v => changeStatus(r, v)}>
+                    <SelectTrigger className={`h-8 w-56 text-xs ${statusClass(r.status)}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(DELIVERY_STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" onClick={() => setHistoryFor({ id: r.id, label: r.order_number ?? '' })}>
+                    <History className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </Card>
+
+      <Sheet open={!!historyFor} onOpenChange={v => { if (!v) setHistoryFor(null); }}>
+        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Statusverlauf {historyFor?.label}</SheetTitle></SheetHeader>
+          <div className="mt-4 space-y-3">
+            {(history ?? []).length === 0 && <p className="text-sm text-muted-foreground">Noch kein Verlauf.</p>}
+            {(history ?? []).map(h => (
+              <div key={h.id} className="rounded-lg border p-3">
+                <div className="text-sm">
+                  {h.from_status ? `${DELIVERY_STATUS_LABELS[h.from_status] ?? h.from_status} → ` : ''}
+                  <span className="font-medium">{DELIVERY_STATUS_LABELS[h.to_status] ?? h.to_status}</span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {format(new Date(h.created_at), 'dd.MM.yyyy HH:mm')} · {h.changed_by_name || 'System'} · {h.source || '—'}
+                </div>
+                {h.note && <div className="text-xs mt-1">{h.note}</div>}
+              </div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
