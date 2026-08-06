@@ -628,6 +628,7 @@ const PlmRueckverfolgbarkeit = lazy(() => import("./pages/PLM/Rueckverfolgbarkei
 const PlmGeraeteakte = lazy(() => import("./pages/PLM/Geraeteakte"));
 const PlmLieferantenbewertung = lazy(() => import("./pages/PLM/Lieferantenbewertung"));
 const PlmQualitaetskennzahlen = lazy(() => import("./pages/PLM/Qualitaetskennzahlen"));
+const PlmErsatzteilkatalog = lazy(() => import("./pages/PLM/Ersatzteilkatalog"));
 
 const PlmStuecklistenbaum = lazy(() => import("./pages/PLM/Stuecklistenbaum"));
 const Iso13485 = lazy(() => import("./pages/Iso13485"));
@@ -2030,6 +2031,7 @@ function AppRoutes() {
           <Route path="/produktion/geraeteakte" element={<ProtectedRoute><PlmGeraeteakte /></ProtectedRoute>} />
           <Route path="/produktion/lieferantenbewertung" element={<ProtectedRoute><PlmLieferantenbewertung /></ProtectedRoute>} />
           <Route path="/produktion/qualitaetskennzahlen" element={<ProtectedRoute><PlmQualitaetskennzahlen /></ProtectedRoute>} />
+          <Route path="/produktion/ersatzteilkatalog" element={<ProtectedRoute><PlmErsatzteilkatalog /></ProtectedRoute>} />
 
           <Route path="/produktion/beschaffung" element={<ProtectedRoute><PlmBeschaffung /></ProtectedRoute>} />
           <Route path="/produktion/explosionszeichnungen" element={<ProtectedRoute><PlmExplosionszeichnungen /></ProtectedRoute>} />
