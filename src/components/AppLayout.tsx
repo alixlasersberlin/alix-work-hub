@@ -43,6 +43,7 @@ import { NotificationCenter } from '@/components/infinity/NotificationCenter';
 import { useNotificationFeed } from '@/hooks/useNotificationFeed';
 import { Briefcase, Bell, BellRing, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2, Zap, Quote } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
+import appVersion from '@/version.json';
 
 
 
