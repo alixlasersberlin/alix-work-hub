@@ -112,7 +112,7 @@ export default function DispatchRetouren() {
     <div className="space-y-4">
       <PageHeader
         title="Retouren & Gerätetausch"
-        description="Rückholungen, Tauschgeräte und Werkstattübergaben verwalten"
+        subtitle="Rückholungen, Tauschgeräte und Werkstattübergaben verwalten"
         icon={PackageX}
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
