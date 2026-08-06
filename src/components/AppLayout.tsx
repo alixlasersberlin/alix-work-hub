@@ -407,6 +407,7 @@ export const navItems: NavItem[] = [
       { path: '/produktion/lieferanten', label: 'Lieferanten', icon: Factory, roles: null },
       { path: '/produktion/beschaffung', label: 'Beschaffung (Bezugsquellen)', icon: PackageCheck, roles: null },
       { path: '/produktion/materialbedarf', label: 'Materialbedarf (MRP)', icon: ClipboardList, roles: null },
+      { path: '/produktion/bestellungen', label: 'Bestellungen', icon: PackageCheck, roles: null },
       { path: '/produktion/wareneingang', label: 'Wareneingang & Prüfung', icon: PackageCheck, roles: null },
       { path: '/produktion/pruefplaene', label: 'Prüfpläne', icon: ClipboardCheck, roles: null },
       { path: '/produktion/pruefmerkmale', label: 'Prüfmerkmale', icon: ClipboardList, roles: null },
@@ -421,6 +422,9 @@ export const navItems: NavItem[] = [
       { path: '/produktion/pruefprotokolle', label: 'Prüfprotokolle', icon: ClipboardCheck, roles: null },
       { path: '/produktion/aenderungsfreigabe', label: 'Änderungsfreigabe', icon: GitBranch, roles: null },
       { path: '/produktion/konformitaet', label: 'Konformität (CE/MDR)', icon: ShieldCheck, roles: null },
+      { path: '/produktion/risikomanagement', label: 'Risikomanagement (ISO 14971)', icon: ShieldCheck, roles: null },
+      { path: '/produktion/pruefmittel', label: 'Prüfmittel & Kalibrierung', icon: ClipboardCheck, roles: null },
+      { path: '/produktion/seriennummern', label: 'Serien- & Chargenvergabe', icon: Package, roles: null },
 
       { path: '/produktion/aenderungen', label: 'Änderungen (ECR/ECO)', icon: GitBranch, roles: null },
       { path: '/produktion/dokumente', label: 'Technische Dokumentation', icon: FileCheck2, roles: null },
