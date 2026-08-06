@@ -25,6 +25,21 @@ export const FUEL_TYPES: { value: string; label: string; co2: number; unit: stri
 export const DEFAULT_CO2 = (fuel?: string | null) =>
   FUEL_TYPES.find(f => f.value === (fuel ?? 'diesel'))?.co2 ?? 250;
 
+// Branchenübliche Richtwerte je Fahrzeugklasse – dienen als Startwerte,
+// solange keine eigenen Verbrauchs- und Kostendaten gepflegt sind.
+export const VEHICLE_PRESETS: Record<string, {
+  label: string; vehicle_type: string; fuel_type: string;
+  consumption_per_100km: number; co2_g_per_km: number;
+  cost_per_km: number; fixed_cost_per_day: number;
+  service_interval_km: number; service_interval_months: number;
+}> = {
+  pkw: { label: 'PKW (Kombi)', vehicle_type: 'PKW', fuel_type: 'diesel', consumption_per_100km: 6.5, co2_g_per_km: 171, cost_per_km: 0.38, fixed_cost_per_day: 22, service_interval_km: 30000, service_interval_months: 12 },
+  transporter: { label: 'Transporter (3,5 t)', vehicle_type: 'Transporter', fuel_type: 'diesel', consumption_per_100km: 9.5, co2_g_per_km: 250, cost_per_km: 0.55, fixed_cost_per_day: 35, service_interval_km: 40000, service_interval_months: 12 },
+  transporter_e: { label: 'E-Transporter', vehicle_type: 'Transporter', fuel_type: 'electric', consumption_per_100km: 25, co2_g_per_km: 60, cost_per_km: 0.42, fixed_cost_per_day: 38, service_interval_km: 40000, service_interval_months: 24 },
+  lkw75: { label: 'LKW 7,5 t', vehicle_type: 'LKW 7,5t', fuel_type: 'diesel', consumption_per_100km: 18, co2_g_per_km: 474, cost_per_km: 0.85, fixed_cost_per_day: 70, service_interval_km: 50000, service_interval_months: 12 },
+  lkw12: { label: 'LKW 12 t', vehicle_type: 'LKW 12t', fuel_type: 'diesel', consumption_per_100km: 24, co2_g_per_km: 632, cost_per_km: 1.05, fixed_cost_per_day: 95, service_interval_km: 60000, service_interval_months: 12 },
+};
+
 const emptyForm = {
   license_plate: '', name: '', vehicle_type: '',
   load_volume_m3: '', max_payload_kg: '',
