@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Loader2, Search, FileText, FileSignature, ShoppingCart, Receipt, Undo2, ArrowDownToLine, Layers,
+  Loader2, Search, ChevronRight, FileText, FileSignature, ShoppingCart, Receipt, Undo2, ArrowDownToLine, Layers,
 } from 'lucide-react';
 import { EmptyState } from '@/components/infinity/EmptyState';
 
@@ -55,6 +55,7 @@ export default function CustomerAllTransactions({
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [kind, setKind] = useState<Kind | 'all'>('all');
+  const [open, setOpen] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let cancelled = false;
