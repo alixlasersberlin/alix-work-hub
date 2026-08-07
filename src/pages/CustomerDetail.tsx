@@ -130,6 +130,17 @@ export default function CustomerDetail() {
           />
         </TabsContent>
 
+        <TabsContent value="kontoauszug" className="mt-4">
+          <CustomerKontoauszug
+            customerId={customer.id}
+            externalCustomerId={customer.external_customer_id}
+            customerName={customer.company_name || customer.contact_name}
+            customerNumber={customer.customer_number}
+            customerAddress={addr(customer.billing_address)}
+          />
+        </TabsContent>
+
+
 
         <TabsContent value="overview" className="mt-4">
           <div className="grid gap-6 lg:grid-cols-2">
