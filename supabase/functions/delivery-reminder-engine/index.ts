@@ -25,8 +25,11 @@ Deno.serve(async (req) => {
   try {
     const { data: settingsRows } = await sb.from("delivery_settings").select("setting_key, setting_value");
     const settings = Object.fromEntries((settingsRows ?? []).map((r: any) => [r.setting_key, r.setting_value]));
-    const stages: number[] = settings?.reminder_hours?.stages ?? [24, 48, 72];
+    // Täglich 1 Erinnerung über 3 Tage, danach Stornierung.
+    const stages: number[] = settings?.reminder_hours?.stages ?? [24, 48, 72, 96];
+    const cancelAfterHours: number = Number(settings?.reminder_cancel_hours?.value ?? 96);
     const escalateTo: string = settings?.reminder_escalation_email?.value ?? "tour@alix-lasers.com";
+
 
     const { data: appts } = await sb
       .from("delivery_appointments")
