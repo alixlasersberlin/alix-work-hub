@@ -116,8 +116,7 @@ async function runEntity(supabase: any, entity: Entity, trigger: string) {
   let newestAt: string | null = null;
 
   try {
-    const page = await fetchPage(entity, since);
-    const items: any[] = Array.isArray(page) ? page : (page.items ?? page.data ?? []);
+    const items: any[] = await fetchAllItems(entity, since);
     processed = items.length;
 
     for (const item of items) {
@@ -211,8 +210,8 @@ async function runEntity(supabase: any, entity: Entity, trigger: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  if (!API_BASE || !API_KEY) {
-    return new Response(JSON.stringify({ error: "ALIXSMART_API_BASE_URL / ALIXSMART_API_KEY not configured" }),
+  if ((!API_BASE && !EXPORT_URL) || (!EXPORT_KEY && !API_KEY)) {
+    return new Response(JSON.stringify({ error: "ALIXSMART_API_BASE_URL / ALIXSMART_EXPORT_KEY not configured" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 
@@ -220,6 +219,14 @@ Deno.serve(async (req) => {
   let body: any = {};
   try { body = req.method === "POST" ? await req.json() : {}; } catch {}
   const trigger = body.trigger ?? "manual";
+  const action = body.action ?? new URL(req.url).searchParams.get("action");
+  if (action === "list_counts" || action === "dry_run") {
+    const url = new URL(exportBase());
+    url.searchParams.set("action", action);
+    const res = await fetch(url.toString(), { headers: exportHeaders() });
+    const text = await res.text();
+    return new Response(text, { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
   const entities: Entity[] = Array.isArray(body.entities) && body.entities.length
     ? body.entities.filter((e: string) => ENTITIES.includes(e as Entity))
     : [...ENTITIES];
