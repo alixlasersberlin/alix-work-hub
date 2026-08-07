@@ -74,6 +74,7 @@ export default function DispatchSpeditionsversand() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [apptSearch, setApptSearch] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
 
   const [statusFilter, setStatusFilter] = useState('alle');
   const [open, setOpen] = useState(false);
