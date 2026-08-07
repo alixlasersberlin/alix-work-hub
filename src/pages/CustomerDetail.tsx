@@ -114,6 +114,7 @@ export default function CustomerDetail() {
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="vorgaenge">Alle Vorgänge</TabsTrigger>
+          <TabsTrigger value="kontoauszug">Kontoauszug</TabsTrigger>
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
           <TabsTrigger value="finance">Finanzakte</TabsTrigger>
           <TabsTrigger value="portal">Kundenportal</TabsTrigger>
