@@ -225,9 +225,22 @@ export default function DispatchTermine() {
                   >
                     <Send className="h-3.5 w-3.5 mr-1" /> Bestätigung
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Test-Mail mit echten Termindaten senden"
+                    onClick={() => {
+                      setTestRow(r);
+                      setTestEmail(user?.email ?? '');
+                      setTestResult(null);
+                    }}
+                  >
+                    <FlaskConical className="h-4 w-4" />
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={() => setHistoryFor({ id: r.id, label: r.order_number ?? '' })}>
                     <History className="h-4 w-4" />
                   </Button>
+
                 </TableCell>
               </TableRow>
             ))}
