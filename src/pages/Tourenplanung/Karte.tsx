@@ -33,14 +33,29 @@ async function resolveMapsKey(): Promise<{ key: string; channel: string }> {
 }
 
 async function loadGoogleMaps(): Promise<void> {
-  if (window.google?.maps) return;
+  // Mit loading=async existiert window.google.maps bereits, bevor die
+  // Bibliotheken geladen sind -> immer über importLibrary sicherstellen.
+  const ensureLibs = async () => {
+    const g: any = (window as any).google?.maps;
+    if (!g) throw new Error('Google Maps konnte nicht geladen werden');
+    if (typeof g.importLibrary === 'function') {
+      await Promise.all([g.importLibrary('maps'), g.importLibrary('geocoding')]);
+    }
+  };
+
+  if ((window as any).google?.maps?.Map) return;
+
   const { key, channel } = await resolveMapsKey();
   if (!key) throw new Error('Google Maps Browser-Key fehlt');
 
-  return new Promise<void>((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     const id = 'gmaps-js';
     if (document.getElementById(id)) {
-      const i = setInterval(() => { if (window.google?.maps) { clearInterval(i); resolve(); } }, 100);
+      let waited = 0;
+      const i = setInterval(() => {
+        if ((window as any).google?.maps) { clearInterval(i); resolve(); }
+        else if ((waited += 100) > 15000) { clearInterval(i); reject(new Error('Google Maps konnte nicht geladen werden')); }
+      }, 100);
       return;
     }
     (window as any).gm_authFailure = () => reject(new Error(
@@ -51,11 +66,14 @@ async function loadGoogleMaps(): Promise<void> {
     s.id = id;
     s.async = true;
     const channelParam = channel ? `&channel=${encodeURIComponent(channel)}` : '';
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&loading=async&callback=initDispatchMap${channelParam}`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&loading=async&libraries=maps,geocoding&callback=initDispatchMap${channelParam}`;
     s.onerror = () => reject(new Error('Google Maps konnte nicht geladen werden'));
     document.head.appendChild(s);
   });
+
+  await ensureLibs();
 }
+
 
 
 function addressString(a: any): string {
