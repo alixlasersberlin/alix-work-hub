@@ -298,7 +298,13 @@ Deno.serve(async (req) => {
 
     const missing = stops.filter((s) => !s.coords).map((s) => s.label);
     const geoStops = stops.filter((s) => s.coords);
-    if (geoStops.length === 0) throw new Error("Keine Adresse konnte geokodiert werden");
+    if (geoStops.length === 0) {
+      await admin
+        .from("delivery_tours")
+        .update({ planned_distance_km: 0, planned_drive_minutes: 0, planned_work_minutes: 0, utilization_pct: 0 })
+        .eq("id", tourId);
+      throw new Error(`Keine gültige Lieferadresse vorhanden: ${missing.join(", ")}`);
+    }
 
     const locations: [number, number][] = [startCoords, ...geoStops.map((s) => s.coords!)];
     const { dist, dur, provider } = await buildMatrix(locations, Deno.env.get("OPENROUTESERVICE_API_KEY"));
