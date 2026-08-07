@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const appointmentId: string = body?.appointmentId;
+    const testMode: boolean = body?.testMode === true;
     let baseUrl: string = (body?.baseUrl || "https://app.alixwork.de").replace(/\/+$/, "");
     // Never expose Lovable infrastructure domains in customer emails
     if (/lovable|supabase/i.test(baseUrl)) baseUrl = "https://app.alixwork.de";
@@ -117,18 +118,28 @@ Deno.serve(async (req) => {
     const { data: appt } = await sb.from("delivery_appointments").select("*").eq("id", appointmentId).maybeSingle();
     if (!appt) return Response.json({ error: "Termin nicht gefunden" }, { status: 404, headers: corsHeaders });
 
-    const to = (body?.to || appt.contact_email || "").trim();
-    if (!to.includes("@")) return Response.json({ error: "Keine gültige Kunden-E-Mail hinterlegt" }, { status: 400, headers: corsHeaders });
+    const to = String(testMode ? (body?.testTo || u.user.email || "") : (body?.to || appt.contact_email || "")).trim();
+    if (!to.includes("@")) {
+      return Response.json(
+        { error: testMode ? "Keine gültige Test-E-Mail angegeben" : "Keine gültige Kunden-E-Mail hinterlegt" },
+        { status: 400, headers: corsHeaders },
+      );
+    }
 
-    // Alte Token entwerten, neuen erzeugen
-    await sb.from("delivery_confirmation_tokens").update({ revoked: true }).eq("appointment_id", appointmentId).is("used_at", null);
-    const raw = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+    let raw = "TESTLINK-" + crypto.randomUUID().replace(/-/g, "");
     const expiresAt = new Date(Date.now() + validDays * 86400_000).toISOString();
-    await sb.from("delivery_confirmation_tokens").insert({
-      appointment_id: appointmentId,
-      token_hash: await sha256(raw),
-      expires_at: expiresAt,
-    });
+
+    if (!testMode) {
+      // Alte Token entwerten, neuen erzeugen
+      await sb.from("delivery_confirmation_tokens").update({ revoked: true }).eq("appointment_id", appointmentId).is("used_at", null);
+      raw = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+      await sb.from("delivery_confirmation_tokens").insert({
+        appointment_id: appointmentId,
+        token_hash: await sha256(raw),
+        expires_at: expiresAt,
+      });
+    }
+
 
     const link = `${baseUrl}/liefertermin/${raw}`;
     const address = [appt.delivery_street, `${appt.delivery_zip ?? ""} ${appt.delivery_city ?? ""}`.trim(), appt.delivery_country].filter(Boolean).join(", ");
