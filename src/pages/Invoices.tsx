@@ -1271,6 +1271,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             </SelectContent>
           </Select>
         </div>
+        {!mietkaufOnly && (
+          <label className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap cursor-pointer">
+            <input
+              type="checkbox"
+              className="accent-primary"
+              checked={includeUnpaid}
+              onChange={(e) => setIncludeUnpaidPersist(e.target.checked)}
+            />
+            inkl. wiederkehrende Rechnungen (Offene Posten)
+          </label>
+        )}
+
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
           <Select value={docStatusFilter} onValueChange={setDocStatusFilter}>
