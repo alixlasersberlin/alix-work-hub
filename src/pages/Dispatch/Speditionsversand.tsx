@@ -13,6 +13,8 @@ import { Ship, Plus, Loader2, Search, FileDown, Mail, Send, ChevronDown } from '
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { downloadCarrierOrderPdf } from '@/lib/dispatch/carrier-order-pdf';
+import { downloadShipmentsPdf } from '@/lib/dispatch/tour-pdf';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const STATUSES: Record<string, string> = {
   angefragt: 'Angefragt',
@@ -72,6 +74,7 @@ export default function DispatchSpeditionsversand() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [apptSearch, setApptSearch] = useState('');
+  const [selected, setSelected] = useState<string[]>([]);
 
   const [statusFilter, setStatusFilter] = useState('alle');
   const [open, setOpen] = useState(false);
@@ -167,6 +170,17 @@ export default function DispatchSpeditionsversand() {
     });
   }, [rows, search, statusFilter]);
 
+  const allSelected = filtered.length > 0 && filtered.every((r: any) => selected.includes(r.id));
+  const toggle = (id: string) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const toggleAll = () => setSelected(allSelected ? [] : filtered.map((r: any) => r.id));
+
+  function exportSelectedPdf() {
+    const list = filtered.filter((r: any) => selected.includes(r.id));
+    if (!list.length) { toast.error('Keine Einträge markiert'); return; }
+    downloadShipmentsPdf(list);
+    toast.success(`${list.length} Speditionsaufträge als PDF exportiert`);
+  }
+
 
   const create = useMutation({
     mutationFn: async () => {
@@ -244,9 +258,14 @@ export default function DispatchSpeditionsversand() {
         subtitle="Geräte per Spedition abholen lassen und an den Kunden versenden"
         icon={Ship}
         actions={
-          <Button onClick={() => setOpen(true)} className="gap-2">
-            <Plus className="w-4 h-4" /> Neuer Speditionsversand
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" disabled={selected.length === 0} onClick={exportSelectedPdf}>
+              <FileDown className="w-4 h-4" /> PDF ({selected.length})
+            </Button>
+            <Button onClick={() => setOpen(true)} className="gap-2">
+              <Plus className="w-4 h-4" /> Neuer Speditionsversand
+            </Button>
+          </div>
         }
       />
 
@@ -324,6 +343,9 @@ export default function DispatchSpeditionsversand() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Alle markieren" />
+              </TableHead>
               <TableHead>Auftrag</TableHead>
               <TableHead>Kunde</TableHead>
               <TableHead>Gerät</TableHead>
@@ -337,12 +359,19 @@ export default function DispatchSpeditionsversand() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isPending && <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Lädt…</TableCell></TableRow>}
+            {isPending && <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Lädt…</TableCell></TableRow>}
             {!isPending && filtered.length === 0 && (
-              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Noch kein Speditionsversand erfasst.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Noch kein Speditionsversand erfasst.</TableCell></TableRow>
             )}
             {filtered.map((r: any) => (
-              <TableRow key={r.id}>
+              <TableRow key={r.id} data-state={selected.includes(r.id) ? 'selected' : undefined}>
+                <TableCell>
+                  <Checkbox
+                    checked={selected.includes(r.id)}
+                    onCheckedChange={() => toggle(r.id)}
+                    aria-label="Eintrag markieren"
+                  />
+                </TableCell>
                 <TableCell className="font-medium">
                   {r.appointment?.order_number ?? planOrderNo(r.route_plan) ?? '—'}
                   {r.route_plan_id && <div className="text-[10px] uppercase tracking-wide text-muted-foreground">aus Tourenplanung</div>}
