@@ -161,8 +161,7 @@ async function runEntity(supabase: any, entity: Entity, trigger: string, full = 
           registered_at: item.created_at ?? null,
           last_checked_at: nowIso,
         };
-        const existingId = linkByCustomer.get(customerId);
-        if (existingId) { row.id = existingId; updated++; } else { created++; }
+        if (linkByCustomer.has(customerId)) updated++; else created++;
         rows.push(row);
       }
       for (let i = 0; i < rows.length; i += 500) {
