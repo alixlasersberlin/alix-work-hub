@@ -45658,6 +45658,10 @@ export type Database = {
         Args: { p_tour_id: string }
         Returns: string
       }
+      delivery_rating_token_valid: {
+        Args: { _appointment_id: string; _token: string }
+        Returns: boolean
+      }
       delivery_release_tour: { Args: { p_tour_id: string }; Returns: Json }
       delivery_seed_release_checklist: {
         Args: { p_tour_id: string }
