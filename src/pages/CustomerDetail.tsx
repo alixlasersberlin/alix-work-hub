@@ -138,6 +138,7 @@ export default function CustomerDetail() {
             customerName={customer.company_name || customer.contact_name}
             customerNumber={customer.external_customer_id}
             customerAddress={addr(customer.billing_address)}
+            customerEmail={customer.email}
           />
         </TabsContent>
 
