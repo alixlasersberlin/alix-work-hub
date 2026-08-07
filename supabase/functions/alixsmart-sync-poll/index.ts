@@ -150,7 +150,7 @@ async function runEntity(supabase: any, entity: Entity, trigger: string) {
 
   await supabase.from("alixsmart_sync_state").upsert({
     entity,
-    last_synced_at: newestAt ?? new Date().toISOString(),
+    last_synced_at: error ? (since ?? null) : (newestAt ?? new Date().toISOString()),
     last_status: error ? "failed" : "success",
     last_error: error,
     items_processed: processed,
