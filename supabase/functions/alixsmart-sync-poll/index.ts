@@ -86,15 +86,6 @@ async function fetchAllItems(entity: Entity, since: string | null): Promise<any[
   });
 }
 
-/** Diagnose: action=list_counts */
-async function listCounts(): Promise<any> {
-  const url = new URL(exportBase());
-  url.searchParams.set("action", "list_counts");
-  const res = await fetch(url.toString(), { method: "GET", headers: exportHeaders() });
-  const text = await res.text();
-  try { return { status: res.status, data: JSON.parse(text) }; }
-  catch { return { status: res.status, raw: text.slice(0, 800) }; }
-}
 
 
 async function runEntity(supabase: any, entity: Entity, trigger: string) {
