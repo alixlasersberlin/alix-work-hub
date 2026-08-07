@@ -13,6 +13,8 @@ import FinanceAccountTab from '@/components/finance/FinanceAccountTab';
 import PortalAccessTab from '@/components/customer/PortalAccessTab';
 import AlixDocsPanel from '@/components/alixdocs/AlixDocsPanel';
 import CustomerSocialMediaTab from '@/components/customer/CustomerSocialMediaTab';
+import CustomerAllTransactions from '@/components/customer/CustomerAllTransactions';
+
 import CustomerReturnDebits, { PaymentRiskWarning } from '@/components/finance/CustomerReturnDebits';
 import { withAt } from '@/lib/atSuffix';
 
