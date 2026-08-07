@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Loader2, Search, FileText, FileSignature, ShoppingCart, Receipt, Undo2, ArrowDownToLine, Layers,
+  Loader2, Search, ChevronRight, FileText, FileSignature, ShoppingCart, Receipt, Undo2, ArrowDownToLine, Layers,
 } from 'lucide-react';
 import { EmptyState } from '@/components/infinity/EmptyState';
 
@@ -55,6 +55,7 @@ export default function CustomerAllTransactions({
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [kind, setKind] = useState<Kind | 'all'>('all');
+  const [open, setOpen] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -220,21 +221,30 @@ export default function CustomerAllTransactions({
     );
   }
 
+  const groups = useMemo(() => {
+    return (Object.keys(KIND_META) as Kind[])
+      .map((k) => ({ kind: k, items: filtered.filter((r) => r.kind === k) }))
+      .filter((g) => g.items.length > 0);
+  }, [filtered]);
+
+  const toggle = (k: Kind) =>
+    setOpen((o) => ({ ...o, [k]: !o[k] }));
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-border bg-card p-4">
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Suche: Nummer, Betreff, Status, Betrag…"
-              className="pl-9"
-            />
-          </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Suche: Nummer, Betreff, Status, Betrag…"
+            className="pl-9"
+          />
+        </div>
+        <div className="mt-3">
           <Select value={kind} onValueChange={(v) => setKind(v as any)}>
-            <SelectTrigger className="w-[190px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[240px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Alle Vorgänge ({rows.length})</SelectItem>
               {(Object.keys(KIND_META) as Kind[]).map((k) => (
@@ -248,54 +258,66 @@ export default function CustomerAllTransactions({
         <div className="mt-2 text-xs text-muted-foreground">{filtered.length} Einträge</div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        {filtered.length === 0 ? (
-          <div className="p-8">
-            <EmptyState icon={Layers} title="Keine Vorgänge" description="Für diesen Kunden liegen keine Vorgänge vor." />
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/50 text-muted-foreground">
-              <tr>
-                <th className="text-left px-4 py-3">Typ</th>
-                <th className="text-left px-4 py-3">Datum</th>
-                <th className="text-left px-4 py-3">Nummer</th>
-                <th className="text-left px-4 py-3">Bezeichnung</th>
-                <th className="text-left px-4 py-3">Status</th>
-                <th className="text-right px-4 py-3">Betrag</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map((r) => {
-                const meta = KIND_META[r.kind];
-                const Icon = meta.icon;
-                return (
-                  <tr
-                    key={r.id}
-                    className={`hover:bg-secondary/30 ${r.href ? 'cursor-pointer' : ''}`}
-                    onClick={() => r.href && navigate(r.href)}
-                  >
-                    <td className="px-4 py-2">
-                      <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${meta.className}`}>
-                        <Icon className="w-3.5 h-3.5" /> {meta.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap">{fmtDate(r.date)}</td>
-                    <td className="px-4 py-2 font-medium">{r.number}</td>
-                    <td className="px-4 py-2 text-muted-foreground max-w-[320px] truncate">{r.title}</td>
-                    <td className="px-4 py-2">
-                      {r.status ? <Badge variant="outline" className="text-[10px]">{r.status}</Badge> : '—'}
-                    </td>
-                    <td className={`px-4 py-2 text-right font-medium ${r.kind === 'zahlung' ? 'text-success' : ''}`}>
-                      {r.kind === 'beleg' ? '—' : fmtMoney(r.amount, r.currency)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {groups.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card p-8">
+          <EmptyState icon={Layers} title="Keine Vorgänge" description="Für diesen Kunden liegen keine Vorgänge vor." />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {groups.map(({ kind: k, items }) => {
+            const meta = KIND_META[k];
+            const Icon = meta.icon;
+            const isOpen = !!open[k];
+            return (
+              <div key={k} className="rounded-xl border border-border bg-card overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => toggle(k)}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors text-left"
+                >
+                  <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+                  <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${meta.className}`}>
+                    <Icon className="w-3.5 h-3.5" /> {meta.label}
+                  </span>
+                  <span className="text-sm font-medium">{items.length} Einträge</span>
+                </button>
+                {isOpen && (
+                  <table className="w-full text-sm border-t border-border">
+                    <thead className="bg-secondary/50 text-muted-foreground">
+                      <tr>
+                        <th className="text-left px-4 py-3">Datum</th>
+                        <th className="text-left px-4 py-3">Nummer</th>
+                        <th className="text-left px-4 py-3">Bezeichnung</th>
+                        <th className="text-left px-4 py-3">Status</th>
+                        <th className="text-right px-4 py-3">Betrag</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {items.map((r) => (
+                        <tr
+                          key={r.id}
+                          className={`hover:bg-secondary/30 ${r.href ? 'cursor-pointer' : ''}`}
+                          onClick={() => r.href && navigate(r.href)}
+                        >
+                          <td className="px-4 py-2 whitespace-nowrap">{fmtDate(r.date)}</td>
+                          <td className="px-4 py-2 font-medium">{r.number}</td>
+                          <td className="px-4 py-2 text-muted-foreground max-w-[320px] truncate">{r.title}</td>
+                          <td className="px-4 py-2">
+                            {r.status ? <Badge variant="outline" className="text-[10px]">{r.status}</Badge> : '—'}
+                          </td>
+                          <td className={`px-4 py-2 text-right font-medium ${r.kind === 'zahlung' ? 'text-success' : ''}`}>
+                            {r.kind === 'beleg' ? '—' : fmtMoney(r.amount, r.currency)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
