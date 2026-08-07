@@ -486,6 +486,24 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
                 <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 bg-secondary border-border" />
               </div>
 
+              {status === 'sent' && (
+                <div className="rounded-lg border border-border bg-secondary/40 p-3 space-y-2">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} />
+                    Rechnung direkt per E-Mail an den Kunden senden
+                  </label>
+                  {sendEmail && (
+                    <div>
+                      <Label className="text-xs">E-Mail Kunde</Label>
+                      <Input type="email" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} placeholder="kunde@example.com" className="mt-1 bg-secondary border-border" />
+                      <p className="text-[11px] text-muted-foreground mt-1">Kopie (BCC) geht automatisch an k.trinh@alix-operation.de</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+
+
               <div className="rounded-lg border border-border bg-secondary/40 p-3 text-sm font-mono space-y-1">
                 <div className="flex justify-between"><span className="text-muted-foreground">Zwischensumme</span><span>{fmt(subtotal)} {currency}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">USt. ({taxRate}%)</span><span>{fmt(taxAmount)} {currency}</span></div>
