@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { DELIVERY_TYPE_LABELS, TOUR_STATUS_LABELS, statusClass, readinessClass, READINESS_LABELS } from './constants';
+import { TourOrderPicker, type PickedItem, type PickedOrder } from '@/components/dispatch/TourOrderPicker';
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd');
 
@@ -25,6 +26,11 @@ export default function DispatchTagesplanung() {
   const [calcLoading, setCalcLoading] = useState(false);
   const [newTourOpen, setNewTourOpen] = useState(false);
   const [newTour, setNewTour] = useState({ title: '', driver_id: '', vehicle_id: '', start: '08:00' });
+  const [pickedOrder, setPickedOrder] = useState<PickedOrder | null>(null);
+  const [pickedItems, setPickedItems] = useState<PickedItem[]>([]);
+  const [partialDelivery, setPartialDelivery] = useState(false);
+  const [creating, setCreating] = useState(false);
+
 
   const { data: tours = [], isPending: toursLoading } = useQuery({
     queryKey: ['dispatch', 'tagesplanung', 'tours', day],
