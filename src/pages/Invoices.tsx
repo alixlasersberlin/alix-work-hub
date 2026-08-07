@@ -270,7 +270,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             source_system: null,
             invoice_number: r.invoice_number ?? null,
             reference_number: null,
-            customer_id: null,
+            customer_id: (r.raw?.customer_id ? String(r.raw.customer_id) : null),
             customer_name: r.customer_name ?? null,
             city: null,
             invoice_date: r.invoice_date ?? null,
