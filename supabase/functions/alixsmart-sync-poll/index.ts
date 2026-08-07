@@ -8,46 +8,94 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const API_BASE = (Deno.env.get("ALIXSMART_API_BASE_URL") ?? "").replace(/\/$/, "");
 const API_KEY = Deno.env.get("ALIXSMART_API_KEY") ?? "";
+const EXPORT_KEY = Deno.env.get("ALIXSMART_EXPORT_KEY") ?? "";
+const EXPORT_URL = (Deno.env.get("ALIXSMART_EXPORT_URL") ?? "").replace(/\/$/, "");
 
 const ENTITIES = ["users", "devices", "registrations", "events"] as const;
 type Entity = typeof ENTITIES[number];
 
-// Optional override: ALIXSMART_API_PATHS = {"users":"/alixwork-readapi/users", ...}
+// AlixSmart stellt genau eine Export-Funktion bereit:
+//   <base>/alixsmart-export-readonly?action=export&table=<tabelle>&limit=100&offset=0
+// Header: x-alix-export-key
+const TABLE_MAP: Record<Entity, string> = {
+  users: "profiles",
+  devices: "devices",
+  registrations: "academy_bookings",
+  events: "academy_sessions",
+};
+
+// Optional override: ALIXSMART_API_PATHS = {"devices":"/alixsmart-export-readonly?action=export&table=devices", ...}
 let PATH_OVERRIDES: Partial<Record<Entity, string>> = {};
 try { PATH_OVERRIDES = JSON.parse(Deno.env.get("ALIXSMART_API_PATHS") ?? "{}"); } catch { /* ignore */ }
 
-// Candidate remote endpoint paths per entity (tried in order until one is not 404)
-function candidates(entity: Entity): string[] {
-  const override = PATH_OVERRIDES[entity];
-  const base = [
-    `/api/${entity}`,
-    `/alixwork-readapi/${entity}`,
-    `/readapi/${entity}`,
-    `/alixsmart-readapi/${entity}`,
-    `/${entity}`,
-  ];
-  return override ? [override, ...base.filter((p) => p !== override)] : base;
+function exportBase(): string {
+  return EXPORT_URL || `${API_BASE}/alixsmart-export-readonly`;
 }
 
-async function fetchPage(entity: Entity, since: string | null, limit = 200) {
-  const tried: string[] = [];
-  for (const path of candidates(entity)) {
-    const url = new URL(API_BASE + path);
-    if (since) url.searchParams.set("since", since);
-    url.searchParams.set("limit", String(limit));
-    const res = await fetch(url.toString(), {
-      headers: { "x-api-key": API_KEY, "Content-Type": "application/json" },
-    });
-    const text = await res.text();
-    if (res.status === 404) { tried.push(`${path} -> 404`); continue; }
-    if (!res.ok) throw new Error(`AlixSmart ${entity} ${res.status} (${path}): ${text.slice(0, 300)}`);
-    try { return JSON.parse(text); } catch { throw new Error(`Invalid JSON from ${entity} (${path})`); }
-  }
-  throw new Error(
-    `AlixSmart ${entity}: kein gültiger Endpunkt gefunden (404). Geprüft: ${tried.join(", ")}. ` +
-    `Bitte ALIXSMART_API_BASE_URL prüfen oder ALIXSMART_API_PATHS setzen, z.B. {"${entity}":"/api/v1/${entity}"}.`,
-  );
+function exportHeaders(): Record<string, string> {
+  return {
+    "x-alix-export-key": EXPORT_KEY || API_KEY,
+    "x-api-key": API_KEY,
+    "Content-Type": "application/json",
+  };
 }
+
+function entityUrl(entity: Entity, limit: number, offset: number): URL {
+  const override = PATH_OVERRIDES[entity];
+  const url = override
+    ? new URL(API_BASE + override)
+    : new URL(exportBase());
+  if (!override) {
+    url.searchParams.set("action", "export");
+    url.searchParams.set("table", TABLE_MAP[entity]);
+  }
+  url.searchParams.set("limit", String(limit));
+  url.searchParams.set("offset", String(offset));
+  return url;
+}
+
+function extractItems(payload: any): any[] {
+  if (Array.isArray(payload)) return payload;
+  return payload?.items ?? payload?.data ?? payload?.rows ?? payload?.records ?? [];
+}
+
+/** Ruft die Export-Funktion seitenweise ab (limit max. 100) und filtert lokal nach `since`. */
+async function fetchAllItems(entity: Entity, since: string | null): Promise<any[]> {
+  const limit = 100;
+  const maxPages = 50;
+  const all: any[] = [];
+  for (let page = 0; page < maxPages; page++) {
+    const url = entityUrl(entity, limit, page * limit);
+    const res = await fetch(url.toString(), { method: "GET", headers: exportHeaders() });
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(
+        `AlixSmart ${entity} (${TABLE_MAP[entity]}) ${res.status}: ${text.slice(0, 300)} — Endpunkt: ${url.pathname}${url.search}`,
+      );
+    }
+    let json: any;
+    try { json = JSON.parse(text); } catch { throw new Error(`Ungültiges JSON von ${entity}`); }
+    const items = extractItems(json);
+    all.push(...items);
+    if (items.length < limit) break;
+  }
+  if (!since) return all;
+  return all.filter((i) => {
+    const at = i.updated_at ?? i.created_at ?? i.event_at;
+    return !at || String(at) > since;
+  });
+}
+
+/** Diagnose: action=list_counts */
+async function listCounts(): Promise<any> {
+  const url = new URL(exportBase());
+  url.searchParams.set("action", "list_counts");
+  const res = await fetch(url.toString(), { method: "GET", headers: exportHeaders() });
+  const text = await res.text();
+  try { return { status: res.status, data: JSON.parse(text) }; }
+  catch { return { status: res.status, raw: text.slice(0, 800) }; }
+}
+
 
 async function runEntity(supabase: any, entity: Entity, trigger: string) {
   const { data: state } = await supabase
