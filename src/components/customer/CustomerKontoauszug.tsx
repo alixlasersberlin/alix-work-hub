@@ -299,6 +299,38 @@ export default function CustomerKontoauszug({
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Kontoauszug per E-Mail senden</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Empfänger</Label>
+              <Input value={mailTo} onChange={(e) => setMailTo(e.target.value)} placeholder="kunde@example.com" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Betreff</Label>
+              <Input value={mailSubject} onChange={(e) => setMailSubject(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nachricht</Label>
+              <Textarea rows={8} value={mailText} onChange={(e) => setMailText(e.target.value)} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Anhang: Kontoauszug als PDF ({items.length} Positionen · {money(sums.openSum, currency)} offen)
+            </p>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="outline" onClick={() => setMailOpen(false)} disabled={sending}>Abbrechen</Button>
+              <Button onClick={sendMail} disabled={sending}>
+                {sending ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Mail className="w-4 h-4 mr-1.5" />}
+                Senden
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
