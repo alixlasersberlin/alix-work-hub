@@ -511,11 +511,36 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     return sorted;
   }, [rows, search, statusFilter, docStatusFilter, listSort, viewMode]);
 
-  // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst
+  // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst,
+  // "Älteste OP" = nur offene Posten, Konten nach ältester offener Rechnung
   const displayAccounts = useMemo<Account[]>(() => {
-    if (viewMode !== 'highest') return accounts;
-    return [...accounts].sort((a, b) => b.totalAmount - a.totalAmount);
+    if (viewMode === 'highest') return [...accounts].sort((a, b) => b.totalAmount - a.totalAmount);
+    if (viewMode === 'oldest') {
+      const withOpen = accounts
+        .map((a) => {
+          const openRows = a.rows.filter((r) => Number(r.balance ?? 0) > 0);
+          if (openRows.length === 0) return null;
+          const sorted = [...openRows].sort((x, y) =>
+            String(x.invoice_date ?? '9999').localeCompare(String(y.invoice_date ?? '9999')),
+          );
+          return {
+            ...a,
+            rows: sorted,
+            totalInvoices: sorted.filter((r) => r.source === 'invoice').length,
+            totalRecurring: sorted.filter((r) => r.source !== 'invoice').length,
+            totalAmount: sorted.reduce((s, r) => s + Number(r.total ?? 0), 0),
+            totalOpen: sorted.reduce((s, r) => s + Number(r.balance ?? 0), 0),
+            oldestOpenDate: sorted[0]?.invoice_date ?? null,
+          } as Account & { oldestOpenDate: string | null };
+        })
+        .filter(Boolean) as (Account & { oldestOpenDate: string | null })[];
+      return withOpen.sort((a, b) =>
+        String(a.oldestOpenDate ?? '9999').localeCompare(String(b.oldestOpenDate ?? '9999')),
+      );
+    }
+    return accounts;
   }, [accounts, viewMode]);
+
 
   // Regionsübergreifende Fallback-Suche: findet Rechnungen aus anderer Region / Mietkauf-Ansicht
   const [globalHits, setGlobalHits] = useState<any[]>([]);
