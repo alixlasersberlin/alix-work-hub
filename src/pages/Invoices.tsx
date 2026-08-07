@@ -1001,6 +1001,38 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     }
   };
 
+  const openStatusDialog = (r: Row) => {
+    setStatusForm({ payment_status: r.payment_status ?? '', status: isDraftInvoice(r) ? 'draft' : 'sent' });
+    setStatusRow(r);
+  };
+
+  const saveStatus = async () => {
+    if (!statusRow) return;
+    if (statusRow.source === 'unpaid') {
+      toast({ title: 'Nur Ansicht', description: 'Offene-Posten-Rechnungen sind hier schreibgeschützt.', variant: 'destructive' });
+      return;
+    }
+    setStatusSaving(true);
+    try {
+      const table = tableFor(statusRow.source);
+      const patch: any = { payment_status: statusForm.payment_status || null };
+      if (statusForm.status) {
+        patch.status = statusForm.status;
+        const raw = await loadRawData(statusRow);
+        patch.raw_data = { ...raw, is_draft: statusForm.status === 'draft' };
+      }
+      const { error } = await (supabase as any).from(table).update(patch).eq('id', statusRow.id);
+      if (error) throw error;
+      setRows((prev) => prev.map((x) => (x.id === statusRow.id && x.source === statusRow.source ? { ...x, ...patch } : x)));
+      toast({ title: 'Status geändert', description: `Rechnung ${statusRow.invoice_number ?? ''} aktualisiert.` });
+      setStatusRow(null);
+    } catch (e: any) {
+      toast({ title: 'Statusänderung fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setStatusSaving(false);
+    }
+  };
+
   const openEmail = async (r: Row) => {
     console.log('[Invoices] openEmail clicked', { id: r.id, invoice_number: r.invoice_number });
     setEmailPreparing(true);
