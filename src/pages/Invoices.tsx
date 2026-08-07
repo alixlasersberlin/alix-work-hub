@@ -1308,6 +1308,24 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           >
             <FileText className="w-3.5 h-3.5" /> Rechnungsliste
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === 'highest' ? 'default' : 'ghost'}
+            className="h-8 px-3 gap-1.5"
+            onClick={() => setViewModePersist('highest')}
+          >
+            <TrendingUp className="w-3.5 h-3.5" /> Höchste
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === 'oldest' ? 'default' : 'ghost'}
+            className="h-8 px-3 gap-1.5"
+            onClick={() => setViewModePersist('oldest')}
+          >
+            <Clock className="w-3.5 h-3.5" /> Älteste
+          </Button>
         </div>
         {viewMode === 'list' && (
           <div className="flex items-center gap-2">
@@ -1320,6 +1338,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
               </SelectContent>
             </Select>
           </div>
+        )}
+        {viewMode === 'highest' && (
+          <span className="text-xs text-muted-foreground">Kundenkonten nach Rechnungsvolumen (absteigend)</span>
+        )}
+        {viewMode === 'oldest' && (
+          <span className="text-xs text-muted-foreground">Älteste Rechnungen zuerst</span>
         )}
       </div>
 
