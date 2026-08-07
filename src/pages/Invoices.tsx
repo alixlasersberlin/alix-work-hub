@@ -177,7 +177,7 @@ const ROWS_CACHE_TTL = 60_000;
 
 export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const { roles } = useAuth();
-  const { region } = useAccountingRegion();
+  const { region, setRegion } = useAccountingRegion();
 
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const isAdmin = roles.includes('Admin') || isSuperAdmin;
@@ -490,6 +490,25 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     });
     return sorted;
   }, [rows, search, statusFilter, docStatusFilter, listSort]);
+
+  // Regionsübergreifende Fallback-Suche: findet Rechnungen aus anderer Region / Mietkauf-Ansicht
+  const [globalHits, setGlobalHits] = useState<any[]>([]);
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 3 || flatRows.length > 0) { setGlobalHits([]); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      const like = `%${q}%`;
+      const { data } = await (supabase.from('zoho_invoices') as any)
+        .select('id, invoice_number, customer_name, invoice_date, total, balance, status, accounting_region, is_mietkauf, reference_number')
+        .or(`invoice_number.ilike.${like},customer_name.ilike.${like},reference_number.ilike.${like}`)
+        .limit(25);
+      if (!cancelled) setGlobalHits(data ?? []);
+    }, 350);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [search, flatRows.length]);
+
+
 
 
   const handleMove = async (r: Row) => {
@@ -1336,6 +1355,33 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </div>
         )}
       </ListToolbar>
+
+      {globalHits.length > 0 && (
+        <div className="mb-3 rounded-lg border border-primary/40 bg-primary/5 p-3">
+          <div className="text-sm font-medium mb-2">
+            Keine Treffer in der aktuellen Ansicht — aber {globalHits.length} Treffer regionsübergreifend:
+          </div>
+          <div className="space-y-1">
+            {globalHits.map((h) => (
+              <div key={h.id} className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="font-mono font-semibold">{h.invoice_number}</span>
+                <span className="text-muted-foreground">{h.customer_name}</span>
+                <span className="text-muted-foreground">{h.invoice_date}</span>
+                <span className="font-medium">{fmtMoney(Number(h.total ?? 0))}</span>
+                <span className="rounded bg-secondary px-1.5 py-0.5">{h.accounting_region ?? 'EU'}</span>
+                {h.is_mietkauf && <span className="rounded bg-secondary px-1.5 py-0.5">Mietkauf</span>}
+                {h.accounting_region && h.accounting_region !== region && (
+                  <Button size="sm" variant="outline" className="h-6 px-2"
+                    onClick={() => setRegion(h.accounting_region)}>
+                    Zu {h.accounting_region} wechseln
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {progress && <div className="text-xs text-primary mb-3">{progress}</div>}
 
       {error && <PageError message={error} onRetry={fetchRows} />}
