@@ -14,6 +14,7 @@ import PortalAccessTab from '@/components/customer/PortalAccessTab';
 import AlixDocsPanel from '@/components/alixdocs/AlixDocsPanel';
 import CustomerSocialMediaTab from '@/components/customer/CustomerSocialMediaTab';
 import CustomerAllTransactions from '@/components/customer/CustomerAllTransactions';
+import CustomerKontoauszug from '@/components/customer/CustomerKontoauszug';
 
 import CustomerReturnDebits, { PaymentRiskWarning } from '@/components/finance/CustomerReturnDebits';
 import { withAt } from '@/lib/atSuffix';
@@ -114,6 +115,7 @@ export default function CustomerDetail() {
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
           <TabsTrigger value="vorgaenge">Alle Vorgänge</TabsTrigger>
+          <TabsTrigger value="kontoauszug">Kontoauszug</TabsTrigger>
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
           <TabsTrigger value="finance">Finanzakte</TabsTrigger>
           <TabsTrigger value="portal">Kundenportal</TabsTrigger>
@@ -128,6 +130,17 @@ export default function CustomerDetail() {
             customerName={customer.company_name || customer.contact_name}
           />
         </TabsContent>
+
+        <TabsContent value="kontoauszug" className="mt-4">
+          <CustomerKontoauszug
+            customerId={customer.id}
+            externalCustomerId={customer.external_customer_id}
+            customerName={customer.company_name || customer.contact_name}
+            customerNumber={customer.external_customer_id}
+            customerAddress={addr(customer.billing_address)}
+          />
+        </TabsContent>
+
 
 
         <TabsContent value="overview" className="mt-4">
