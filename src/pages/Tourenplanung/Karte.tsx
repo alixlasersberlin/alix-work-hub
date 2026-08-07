@@ -176,7 +176,8 @@ export default function TourenKarte() {
       try {
         await loadGoogleMaps();
         if (cancelled || !mapRef.current) return;
-        const g = window.google.maps;
+        const g: any = (window as any).google?.maps;
+        if (!g?.Map) throw new Error('Google Maps konnte nicht geladen werden');
         const map = new g.Map(mapRef.current, { center: { lat: 51.1657, lng: 10.4515 }, zoom: 6 });
         const bounds = new g.LatLngBounds();
         const geocoder = new g.Geocoder();
