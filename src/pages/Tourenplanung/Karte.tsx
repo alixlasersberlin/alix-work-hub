@@ -12,7 +12,13 @@ declare global { interface Window { google?: any; initDispatchMap?: () => void }
 function loadGoogleMaps(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (window.google?.maps) return resolve();
-    const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+    // The BYOK connection is the second linked Google Maps connection and
+    // therefore receives the `_1` suffix. Prefer it over Lovable's managed key
+    // so Maps also works on app.alixwork.de.
+    const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY_1
+      || import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+    const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID_1
+      || import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
     if (!key) return reject(new Error('Google Maps Browser-Key fehlt'));
     const id = 'gmaps-js';
     if (document.getElementById(id)) {
@@ -23,7 +29,8 @@ function loadGoogleMaps(): Promise<void> {
     const s = document.createElement('script');
     s.id = id;
     s.async = true;
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&loading=async&callback=initDispatchMap`;
+    const channelParam = channel ? `&channel=${encodeURIComponent(channel)}` : '';
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&loading=async&callback=initDispatchMap${channelParam}`;
     s.onerror = () => reject(new Error('Google Maps konnte nicht geladen werden'));
     document.head.appendChild(s);
   });
