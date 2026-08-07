@@ -11,6 +11,7 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") || "";
 const BCC = "rde@alix-lasers.com";
 
 function esc(s: unknown) {
@@ -78,9 +79,13 @@ Deno.serve(async (req) => {
         : `<div style="font-family:Arial;font-size:14px"><p>Guten Tag ${esc(appt.contact_name || appt.customer_name || "")},</p><p>wir haben Ihnen einen Liefertermin vorgeschlagen und bisher keine Rückmeldung erhalten. Bitte bestätigen Sie den Termin über den Link aus unserer letzten E-Mail.</p><p>Ohne Bestätigung müssen wir den Termin nach drei Erinnerungen leider stornieren.</p><p>Freundliche Grüße<br/>Ihr Alix Auslieferungsteam</p></div>`;
 
       if (RESEND_API_KEY) {
-        await fetch("https://api.resend.com/emails", {
+        await fetch("https://connector-gateway.lovable.dev/resend/emails", {
           method: "POST",
-          headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "X-Connection-Api-Key": RESEND_API_KEY,
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             from: "Alix Auslieferung <no-reply@alixwork.de>",
             to: [to],

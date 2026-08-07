@@ -11,6 +11,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") || "";
 const BCC = "rde@alix-lasers.com";
 
 function esc(s: unknown) {
@@ -42,9 +43,13 @@ async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: strin
   let providerId: string | null = null;
   let error: string | null = null;
   try {
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
       method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "X-Connection-Api-Key": RESEND_API_KEY,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         from: "Alix Auslieferung <no-reply@alixwork.de>",
         to: opts.to,
