@@ -83,7 +83,7 @@ export function OrderQuickViewDialog({ orderNumber, onOpenChange }: Props) {
 
             <div className="flex justify-end">
               <Button asChild variant="outline" size="sm">
-                <Link to={`/orders/${o.id}`} target="_blank">
+                <Link to={`/auftraege/${o.id}`} target="_blank">
                   <ExternalLink className="h-3.5 w-3.5 mr-1" /> Auftrag öffnen
                 </Link>
               </Button>
