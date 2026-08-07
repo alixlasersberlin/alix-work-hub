@@ -198,7 +198,9 @@ export default function CustomerAllTransactions({
           number: r.original_filename || '—',
           title: r.title || r.original_filename || 'Dokument',
           status: r.status,
+          docId: r.id,
           href: `/alixdocs/preview/${r.id}`,
+
         }),
       );
 
