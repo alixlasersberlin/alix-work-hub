@@ -34,6 +34,8 @@ export default function DispatchTouren() {
         .from('delivery_tours')
         .select('id, tour_number, tour_date, title, status, planned_distance_km, planned_drive_minutes, planned_start_time, drivers:driver_id(full_name), vehicles:vehicle_id(license_plate)')
         .order('tour_date', { ascending: false })
+        .order('planned_start_time', { ascending: true, nullsFirst: false })
+        .order('tour_number', { ascending: true })
         .limit(200);
       if (error) throw error;
       return data ?? [];
