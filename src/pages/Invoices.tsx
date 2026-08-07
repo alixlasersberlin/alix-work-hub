@@ -65,7 +65,8 @@ function addrLinesFromObj(a: any): string[] {
 
 type Row = {
   id: string;
-  source: 'invoice' | 'recurring';
+  source: 'invoice' | 'recurring' | 'unpaid';
+
   zoho_invoice_id: string | null;
   source_system: string | null;
   invoice_number: string | null;
@@ -149,9 +150,17 @@ function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docSt
 
 type InvoicesProps = { mietkaufOnly?: boolean };
 
+// Zieltabelle je Datenquelle
+function tableFor(source: Row['source']) {
+  if (source === 'recurring') return 'zoho_recurring_invoices';
+  if (source === 'unpaid') return 'zoho_unpaid_invoices';
+  return 'zoho_invoices';
+}
+
 // Modul-Cache: Rechnungsliste bleibt beim Zurücknavigieren sofort sichtbar
 const ROWS_CACHE = new Map<string, { ts: number; rows: Row[] }>();
 const ROWS_CACHE_TTL = 60_000;
+
 
 
 export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
@@ -166,6 +175,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [docStatusFilter, setDocStatusFilter] = useState<string>('all');
+  const [includeUnpaid, setIncludeUnpaid] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('invoices_include_unpaid') === '1';
+  });
+  const setIncludeUnpaidPersist = (v: boolean) => {
+    setIncludeUnpaid(v);
+    try { localStorage.setItem('invoices_include_unpaid', v ? '1' : '0'); } catch {}
+  };
+
 
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
@@ -200,7 +218,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   };
 
   const fetchRows = async (opts?: { silent?: boolean }) => {
-    const cacheKey = `${region}|${mietkaufOnly}`;
+    const cacheKey = `${region}|${mietkaufOnly}|${includeUnpaid}`;
     const cached = ROWS_CACHE.get(cacheKey);
     if (!opts?.silent && cached && Date.now() - cached.ts < ROWS_CACHE_TTL) {
       // Sofort aus dem Cache anzeigen und im Hintergrund aktualisieren
@@ -218,9 +236,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const refetchRows = async (cacheKey: string, showError: boolean) => {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
     const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
-    const [inv, rec] = await Promise.all([
+    const [inv, rec, unp] = await Promise.all([
       (supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf`).eq('accounting_region', region).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
       (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
+      includeUnpaid && !mietkaufOnly
+        ? (supabase.from('zoho_unpaid_invoices') as any)
+            .select('id, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status')
+            .order('invoice_date', { ascending: false })
+            .limit(10000)
+        : Promise.resolve({ data: [], error: null } as any),
     ]);
     if (inv.error || rec.error) {
       if (showError) {
@@ -229,22 +253,56 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       }
     } else {
       const isChCurrency = (c?: string | null) => (c ?? '').toUpperCase() === 'CHF';
+      const knownNumbers = new Set<string>([
+        ...(inv.data ?? []).map((r: any) => String(r.invoice_number ?? '')),
+        ...(rec.data ?? []).map((r: any) => String(r.invoice_number ?? '')),
+      ]);
+      const unpaidRows: Row[] = (unp?.data ?? [])
+        .filter((r: any) => !knownNumbers.has(String(r.invoice_number ?? '')))
+        .filter((r: any) => (region === 'CH' ? isChCurrency(r.currency_code) : !isChCurrency(r.currency_code)))
+        .map((r: any) => {
+          const st = String(r.status ?? '').toLowerCase();
+          const paymentStatus = st === 'overdue' ? 'Überfällig' : st === 'partially_paid' ? 'Teilweise bezahlt' : 'Offen';
+          return {
+            id: r.id,
+            source: 'unpaid' as const,
+            zoho_invoice_id: r.invoice_id ?? null,
+            source_system: null,
+            invoice_number: r.invoice_number ?? null,
+            reference_number: null,
+            customer_id: null,
+            customer_name: r.customer_name ?? null,
+            city: null,
+            invoice_date: r.invoice_date ?? null,
+            due_date: r.due_date ?? null,
+            total: r.total ?? null,
+            balance: r.balance ?? null,
+            currency: r.currency_code ?? 'EUR',
+            status: r.status ?? null,
+            payment_status: paymentStatus,
+            last_payment_date: null,
+            is_mietkauf: false,
+          } as Row;
+        });
       const merged: Row[] = [
         ...(inv.data ?? []).map((r: any) => ({ ...r, source: 'invoice' as const })),
         ...(rec.data ?? [])
           .filter((r: any) => (region === 'CH' ? isChCurrency(r.currency) : !isChCurrency(r.currency)))
           .map((r: any) => ({ ...r, source: 'recurring' as const })),
+        ...unpaidRows,
       ];
       ROWS_CACHE.set(cacheKey, { ts: Date.now(), rows: merged });
       setRows(merged);
     }
+
     setLoading(false);
   };
 
 
   const [mietkaufBusyId, setMietkaufBusyId] = useState<string | null>(null);
   const toggleMietkauf = async (r: Row) => {
-    const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+    if (r.source === 'unpaid') { toast({ title: 'Nur Ansicht', description: 'Diese Rechnung stammt aus den Offenen Posten und kann hier nicht bearbeitet werden.', variant: 'destructive' }); return; }
+    const table = tableFor(r.source);
     const next = !r.is_mietkauf;
     setMietkaufBusyId(r.id);
     const { data: auth } = await supabase.auth.getUser();
@@ -304,7 +362,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     });
   };
 
-  useEffect(() => { fetchRows(); }, [region, mietkaufOnly]);
+  useEffect(() => { fetchRows(); }, [region, mietkaufOnly, includeUnpaid]);
 
 
 
@@ -432,9 +490,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const handleDelete = async (r: Row) => {
     if (!isSuperAdmin) return;
+    if (r.source === 'unpaid') { toast({ title: 'Nicht möglich', description: 'Offene-Posten-Rechnungen werden in den Offenen Posten verwaltet.', variant: 'destructive' }); return; }
     if (!confirm(`Rechnung ${r.invoice_number ?? ''} unwiderruflich löschen?`)) return;
     try {
-      const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const table = tableFor(r.source);
       const { error } = await supabase.from(table).delete().eq('id', r.id);
       if (error) throw error;
       toast({ title: 'Gelöscht', description: `Rechnung ${r.invoice_number ?? ''} gelöscht.` });
@@ -780,7 +839,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   // Lädt raw_data erst bei Bedarf nach (nicht mehr in der Listenabfrage enthalten).
   const loadRawData = async (r: Row): Promise<any> => {
     if (r.raw_data && typeof r.raw_data === 'object' && !Array.isArray(r.raw_data)) return r.raw_data;
-    const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+    if (r.source === 'unpaid') return {};
+    const table = tableFor(r.source);
     const { data } = await (supabase as any).from(table).select('raw_data').eq('id', r.id).maybeSingle();
     const raw = data?.raw_data;
     return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
@@ -788,8 +848,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const commitDraft = async (r: Row) => {
     if (!isDraftInvoice(r)) return;
+    if (r.source === 'unpaid') return;
     try {
-      const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const table = tableFor(r.source);
       const raw = await loadRawData(r);
       const patch: any = {
         status: 'sent',
@@ -808,9 +869,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const saveEdit = async () => {
     if (!editRow) return;
+    if (editRow.source === 'unpaid') { toast({ title: 'Nur Ansicht', description: 'Offene-Posten-Rechnungen sind hier schreibgeschützt.', variant: 'destructive' }); return; }
     setEditSaving(true);
     try {
-      const table = editRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const table = tableFor(editRow.source);
       const patch: any = {
         reference_number: editForm.reference_number || null,
         due_date: editForm.due_date || null,
@@ -1054,7 +1116,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       if (pay <= 0) throw new Error('Bitte einen Zahlbetrag größer 0 eingeben.');
       const newBalance = Math.max(0, +(openBefore - pay).toFixed(2));
       const fullyPaid = newBalance <= 0.0049;
-      const table = bookRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      if (bookRow.source === 'unpaid') throw new Error('Offene-Posten-Rechnungen können hier nicht gebucht werden.');
+      const table = tableFor(bookRow.source);
       const patch: any = {
         payment_status: fullyPaid ? 'Bezahlt' : 'Teilweise bezahlt',
         balance: newBalance,
@@ -1214,6 +1277,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             </SelectContent>
           </Select>
         </div>
+        {!mietkaufOnly && (
+          <label className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap cursor-pointer">
+            <input
+              type="checkbox"
+              className="accent-primary"
+              checked={includeUnpaid}
+              onChange={(e) => setIncludeUnpaidPersist(e.target.checked)}
+            />
+            inkl. wiederkehrende Rechnungen (Offene Posten)
+          </label>
+        )}
+
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
           <Select value={docStatusFilter} onValueChange={setDocStatusFilter}>
@@ -1312,6 +1387,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         {r.source === 'recurring' ? (
                           <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
                             <Repeat className="w-3 h-3 mr-1" />Periodisch
+                          </Badge>
+                        ) : r.source === 'unpaid' ? (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+                            <Repeat className="w-3 h-3 mr-1" />Wiederkehrend (OP)
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
@@ -1478,6 +1557,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                               {r.source === 'recurring' ? (
                                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
                                   <Repeat className="w-3 h-3 mr-1" />Periodisch
+                                </Badge>
+                              ) : r.source === 'unpaid' ? (
+                                <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+                                  <Repeat className="w-3 h-3 mr-1" />Wiederkehrend (OP)
                                 </Badge>
                               ) : (
                                 <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
