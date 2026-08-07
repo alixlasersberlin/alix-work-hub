@@ -115,32 +115,58 @@ async function runEntity(supabase: any, entity: Entity, trigger: string, full = 
     const items: any[] = await fetchAllItems(entity, since);
     processed = items.length;
 
+    for (const it of items) {
+      const at = it.updated_at ?? it.created_at ?? it.event_at;
+      if (at && (!newestAt || at > newestAt)) newestAt = at;
+    }
+
+    // Users: Bulk-Verarbeitung (bis zu mehrere tausend Profile)
+    if (entity === "users") {
+      const nowIso = new Date().toISOString();
+      const { data: existingRows } = await supabase
+        .from("alixsmart_customer_links")
+        .select("id, customer_email")
+        .limit(20000);
+      const byEmail = new Map<string, string>();
+      for (const r of existingRows ?? []) {
+        if (r.customer_email) byEmail.set(String(r.customer_email).toLowerCase(), r.id);
+      }
+      const inserts: any[] = [];
+      const updates: any[] = [];
+      const seen = new Set<string>();
+      for (const item of items) {
+        const email = (item.email ?? "").toLowerCase();
+        if (!email || seen.has(email)) continue;
+        seen.add(email);
+        const base = {
+          customer_email: email,
+          alixsmart_user_id: item.id ?? item.user_id ?? null,
+          match_method: "api_sync",
+          last_synced_at: nowIso,
+        };
+        const existingId = byEmail.get(email);
+        if (existingId) updates.push({ id: existingId, ...base });
+        else inserts.push({ ...base, manually_confirmed: false });
+      }
+      for (let i = 0; i < inserts.length; i += 500) {
+        const chunk = inserts.slice(i, i + 500);
+        const { error: e } = await supabase.from("alixsmart_customer_links").insert(chunk);
+        if (e) failed += chunk.length; else created += chunk.length;
+      }
+      for (let i = 0; i < updates.length; i += 500) {
+        const chunk = updates.slice(i, i + 500);
+        const { error: e } = await supabase.from("alixsmart_customer_links").upsert(chunk, { onConflict: "id" });
+        if (e) failed += chunk.length; else updated += chunk.length;
+      }
+      items.length = 0;
+    }
+
     for (const item of items) {
       try {
-        const at = item.updated_at ?? item.created_at ?? item.event_at;
-        if (at && (!newestAt || at > newestAt)) newestAt = at;
-
-        if (entity === "users") {
-          const email = (item.email ?? "").toLowerCase();
-          if (!email) continue;
-          const { data: existing } = await supabase
-            .from("alixsmart_customer_links")
-            .select("id").eq("customer_email", email).maybeSingle();
-          const payload = {
-            customer_email: email,
-            alixsmart_user_id: item.id ?? item.user_id ?? null,
-            match_method: "api_sync",
-            manually_confirmed: false,
-            last_synced_at: new Date().toISOString(),
-          };
-          if (existing) {
-            await supabase.from("alixsmart_customer_links").update(payload).eq("id", existing.id);
-            updated++;
-          } else {
-            await supabase.from("alixsmart_customer_links").insert(payload);
-            created++;
-          }
+        if (false) {
+          // users werden oben gebündelt verarbeitet
         } else if (entity === "devices" || entity === "registrations") {
+
           const serial = item.serial_number ?? item.serial ?? item.device_serial;
           if (!serial) continue;
           const registered = entity === "registrations" ? true : !!item.registered;
