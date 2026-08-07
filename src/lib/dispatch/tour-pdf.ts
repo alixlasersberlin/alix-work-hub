@@ -78,9 +78,10 @@ export function buildToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }
     `Erstellt am ${new Date().toLocaleString('de-DE')} · AlixWork Dispatch Center`,
   );
 
-  const cols = entries.length <= 1 ? 2 : entries.length <= 4 ? 3 : 4;
+  const cols = entries.length <= 1 ? 2 : entries.length <= 4 ? 3 : entries.length <= 8 ? 4 : 5;
   const gap = 6;
   const colW = (PAGE_W - 2 * M - gap * (cols - 1)) / cols;
+
 
   // Blöcke aufbauen (Textzeilen je Tour) und dann auf Spalten verteilen
   type Line = { text: string; size: number; muted?: boolean; indent?: number; h: number };
