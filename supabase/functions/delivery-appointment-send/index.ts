@@ -12,7 +12,8 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY") || "";
-const BCC = "rde@alix-lasers.com";
+const BCC = ["rde@alix-lasers.com", "k.trinh@alix-operation.de", "jh@alix-operation.de"];
+const BCC_STR = BCC.join(", ");
 
 function esc(s: unknown) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -53,7 +54,7 @@ async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: strin
       body: JSON.stringify({
         from: "Alix Auslieferung <no-reply@alixwork.de>",
         to: opts.to,
-        bcc: [BCC],
+        bcc: BCC,
         subject: opts.subject,
         html: opts.html,
       }),
@@ -68,7 +69,7 @@ async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: strin
   await sb.from("delivery_email_logs").insert({
     ...log,
     recipient: opts.to.join(", "),
-    bcc: BCC,
+    bcc: BCC_STR,
     subject: opts.subject,
     status,
     provider_id: providerId,

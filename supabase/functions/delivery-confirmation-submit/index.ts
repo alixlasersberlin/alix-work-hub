@@ -10,7 +10,8 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-const BCC = "rde@alix-lasers.com";
+const BCC = ["rde@alix-lasers.com", "k.trinh@alix-operation.de", "jh@alix-operation.de"];
+const BCC_STR = BCC.join(", ");
 
 function esc(s: unknown) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -171,14 +172,14 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           from: "Alix Auslieferung <no-reply@alixwork.de>",
           to: ["tour@alix-lasers.com"],
-          bcc: [BCC],
+          bcc: BCC,
           subject: `Kundenrückmeldung Liefertermin – ${appt.customer_name ?? ""} (${appt.order_number ?? "-"})`,
           html,
         }),
       }).catch(() => {});
       await sb.from("delivery_email_logs").insert({
         appointment_id: appt.id, kind: "customer_response", recipient: "tour@alix-lasers.com",
-        bcc: BCC, subject: "Kundenrückmeldung Liefertermin", status: "sent", sent_at: new Date().toISOString(),
+        bcc: BCC_STR, subject: "Kundenrückmeldung Liefertermin", status: "sent", sent_at: new Date().toISOString(),
       }).then(() => {}, () => {});
     }
 
