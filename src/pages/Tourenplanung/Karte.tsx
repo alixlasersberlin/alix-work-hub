@@ -12,22 +12,40 @@ declare global { interface Window { google?: any; initDispatchMap?: () => void }
 
 const TOUR_COLORS = ['#facc15', '#38bdf8', '#a78bfa', '#34d399', '#fb7185', '#f97316'];
 
-function loadGoogleMaps(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (window.google?.maps) return resolve();
-    // The BYOK connection is the second linked Google Maps connection and
-    // therefore receives the `_1` suffix. Prefer it over Lovable's managed key
-    // so Maps also works on app.alixwork.de.
-    const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY_1
-      || import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-    const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID_1
-      || import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
-    if (!key) return reject(new Error('Google Maps Browser-Key fehlt'));
+async function resolveMapsKey(): Promise<{ key: string; channel: string }> {
+  // BYOK-Key (gültig für app.alixwork.de) liegt nur serverseitig vor.
+  try {
+    const { data } = await supabase.functions.invoke('maps-browser-key');
+    if (data?.key) return { key: data.key as string, channel: (data.channel as string) || '' };
+  } catch {
+    // Fallback auf Build-Variablen
+  }
+  return {
+    key:
+      import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY_1 ||
+      import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY ||
+      '',
+    channel:
+      import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID_1 ||
+      import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID ||
+      '',
+  };
+}
+
+async function loadGoogleMaps(): Promise<void> {
+  if (window.google?.maps) return;
+  const { key, channel } = await resolveMapsKey();
+  if (!key) throw new Error('Google Maps Browser-Key fehlt');
+
+  return new Promise<void>((resolve, reject) => {
     const id = 'gmaps-js';
     if (document.getElementById(id)) {
       const i = setInterval(() => { if (window.google?.maps) { clearInterval(i); resolve(); } }, 100);
       return;
     }
+    (window as any).gm_authFailure = () => reject(new Error(
+      'Google Maps hat den Schlüssel für diese Domain abgelehnt. Bitte in der Google Cloud Console die Domain zur Referrer-Liste des Keys hinzufügen.',
+    ));
     window.initDispatchMap = () => resolve();
     const s = document.createElement('script');
     s.id = id;
@@ -38,6 +56,7 @@ function loadGoogleMaps(): Promise<void> {
     document.head.appendChild(s);
   });
 }
+
 
 function addressString(a: any): string {
   if (!a) return '';
