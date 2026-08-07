@@ -137,11 +137,23 @@ function matchesDocStatus(r: Row, docStatus: string) {
   return !isDraftInvoice(r) && !(s === 'void' || s === 'storniert' || s === 'cancelled');
 }
 
+// "Offen" umfasst auch teilweise bezahlte / überfällige Rechnungen mit Restsaldo
+export function matchesPayStatus(r: Row, statusFilter: string): boolean {
+  if (statusFilter === 'all') return true;
+  const ps = (r.payment_status ?? '').toLowerCase();
+  if (statusFilter.toLowerCase() === 'offen') {
+    if (ps === 'bezahlt' || ps === 'paid') return false;
+    return ps === 'offen' || ps === 'teilweise bezahlt' || ps === 'überfällig' || Number(r.balance ?? 0) > 0;
+  }
+  return ps === statusFilter.toLowerCase();
+}
+
 function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docStatus = 'all'): number {
   let res = rows;
   if (statusFilter !== 'all') {
-    res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
+    res = res.filter((r) => matchesPayStatus(r, statusFilter));
   }
+
   res = res.filter((r) => matchesDocStatus(r, docStatus));
   res = res.filter((r) => matchesQuery(r, search));
   return res.reduce((s, r) => s + Number(r.balance ?? 0), 0);
@@ -398,7 +410,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const accounts = useMemo<Account[]>(() => {
     let res = rows;
     if (statusFilter !== 'all') {
-      res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
+      res = res.filter((r) => matchesPayStatus(r, statusFilter));
     }
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
@@ -452,7 +464,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const flatRows = useMemo<Row[]>(() => {
     let res = rows;
     if (statusFilter !== 'all') {
-      res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
+      res = res.filter((r) => matchesPayStatus(r, statusFilter));
     }
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
@@ -1272,7 +1284,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             <SelectContent>
               <SelectItem value="all">Alle</SelectItem>
               <SelectItem value="Bezahlt">Bezahlt</SelectItem>
-              <SelectItem value="Offen">Unbezahlt / Offen</SelectItem>
+              <SelectItem value="Offen">Unbezahlt / Offen (inkl. teilweise)</SelectItem>
               <SelectItem value="Überfällig">Überfällig</SelectItem>
               <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
             </SelectContent>
