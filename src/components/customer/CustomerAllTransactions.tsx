@@ -69,6 +69,29 @@ export default function CustomerAllTransactions({
   const [search, setSearch] = useState('');
   const [kind, setKind] = useState<Kind | 'all'>('all');
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [docPreview, setDocPreview] = useState<{ id: string; title: string } | null>(null);
+  const [docOpen, setDocOpen] = useState(false);
+
+  const openRow = (r: Row) => {
+    if (r.kind === 'rechnung' && r.zohoInvoiceId) {
+      setPdfInvoice({
+        zoho_invoice_id: r.zohoInvoiceId,
+        invoice_number: r.number,
+        source_system: r.sourceSystem ?? 'zoho_eu_1',
+      });
+      setPdfOpen(true);
+      return;
+    }
+    if (r.kind === 'beleg' && r.docId) {
+      setDocPreview({ id: r.docId, title: r.title });
+      setDocOpen(true);
+      return;
+    }
+    if (r.href) navigate(r.href);
+  };
+
 
   useEffect(() => {
     let cancelled = false;
