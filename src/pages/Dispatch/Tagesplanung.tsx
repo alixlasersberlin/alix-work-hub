@@ -296,13 +296,14 @@ export default function DispatchTagesplanung() {
             </SelectContent>
           </Select>
         </div>
-        <Dialog open={newTourOpen} onOpenChange={setNewTourOpen}>
+        <Dialog open={newTourOpen} onOpenChange={(o) => { setNewTourOpen(o); if (o) setNewTour((p) => ({ ...p, date: day })); }}>
           <DialogTrigger asChild>
             <Button size="sm" className="ml-auto"><Plus className="mr-1 h-4 w-4" />Neue Tour</Button>
           </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-            <DialogHeader><DialogTitle>Neue Tour am {format(new Date(day), 'dd.MM.yyyy')}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Neue Tour am {format(new Date(newTour.date || day), 'dd.MM.yyyy')}</DialogTitle></DialogHeader>
             <div className="space-y-3">
+              <div><Label>Tourdatum</Label><Input type="date" value={newTour.date} onChange={(e) => setNewTour({ ...newTour, date: e.target.value })} /></div>
               <TourOrderPicker
                 order={pickedOrder}
                 setOrder={setPickedOrder}
