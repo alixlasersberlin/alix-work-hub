@@ -164,8 +164,9 @@ export function buildToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }
     // Test-Render auf Hilfsseite vermeiden: wir rendern direkt und leeren bei Bedarf.
     const ok = render(scale);
     if (ok) break;
-    doc.deletePage(1);
     doc.addPage('a4', 'landscape');
+    doc.deletePage(1);
+
     header(
       doc,
       entries.length === 1 ? 'Tourenplan' : `Tourenpläne (${entries.length})`,
