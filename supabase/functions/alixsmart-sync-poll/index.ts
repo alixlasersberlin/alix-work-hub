@@ -12,24 +12,41 @@ const API_KEY = Deno.env.get("ALIXSMART_API_KEY") ?? "";
 const ENTITIES = ["users", "devices", "registrations", "events"] as const;
 type Entity = typeof ENTITIES[number];
 
-// Map entity to remote endpoint path
-const ENDPOINT: Record<Entity, string> = {
-  users: "/api/users",
-  devices: "/api/devices",
-  registrations: "/api/registrations",
-  events: "/api/events",
-};
+// Optional override: ALIXSMART_API_PATHS = {"users":"/alixwork-readapi/users", ...}
+let PATH_OVERRIDES: Partial<Record<Entity, string>> = {};
+try { PATH_OVERRIDES = JSON.parse(Deno.env.get("ALIXSMART_API_PATHS") ?? "{}"); } catch { /* ignore */ }
+
+// Candidate remote endpoint paths per entity (tried in order until one is not 404)
+function candidates(entity: Entity): string[] {
+  const override = PATH_OVERRIDES[entity];
+  const base = [
+    `/api/${entity}`,
+    `/alixwork-readapi/${entity}`,
+    `/readapi/${entity}`,
+    `/alixsmart-readapi/${entity}`,
+    `/${entity}`,
+  ];
+  return override ? [override, ...base.filter((p) => p !== override)] : base;
+}
 
 async function fetchPage(entity: Entity, since: string | null, limit = 200) {
-  const url = new URL(API_BASE + ENDPOINT[entity]);
-  if (since) url.searchParams.set("since", since);
-  url.searchParams.set("limit", String(limit));
-  const res = await fetch(url.toString(), {
-    headers: { "x-api-key": API_KEY, "Content-Type": "application/json" },
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(`AlixSmart ${entity} ${res.status}: ${text.slice(0, 300)}`);
-  try { return JSON.parse(text); } catch { throw new Error(`Invalid JSON from ${entity}`); }
+  const tried: string[] = [];
+  for (const path of candidates(entity)) {
+    const url = new URL(API_BASE + path);
+    if (since) url.searchParams.set("since", since);
+    url.searchParams.set("limit", String(limit));
+    const res = await fetch(url.toString(), {
+      headers: { "x-api-key": API_KEY, "Content-Type": "application/json" },
+    });
+    const text = await res.text();
+    if (res.status === 404) { tried.push(`${path} -> 404`); continue; }
+    if (!res.ok) throw new Error(`AlixSmart ${entity} ${res.status} (${path}): ${text.slice(0, 300)}`);
+    try { return JSON.parse(text); } catch { throw new Error(`Invalid JSON from ${entity} (${path})`); }
+  }
+  throw new Error(
+    `AlixSmart ${entity}: kein gültiger Endpunkt gefunden (404). Geprüft: ${tried.join(", ")}. ` +
+    `Bitte ALIXSMART_API_BASE_URL prüfen oder ALIXSMART_API_PATHS setzen, z.B. {"${entity}":"/api/v1/${entity}"}.`,
+  );
 }
 
 async function runEntity(supabase: any, entity: Entity, trigger: string) {
