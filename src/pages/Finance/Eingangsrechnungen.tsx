@@ -46,7 +46,7 @@ export default function FinanceEingangsrechnungen() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_incoming_invoices' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('invoice_date', { ascending: false }).limit(300);
+    let q = supabase.from('finance_incoming_invoices' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('invoice_date', { ascending: false }).limit(300);
     if (statusFilter !== 'alle') q = q.eq('status', statusFilter);
     const { data, error } = await q;
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
@@ -113,7 +113,7 @@ export default function FinanceEingangsrechnungen() {
         amount_net: form.amount_net ? Number(form.amount_net) : null,
         amount_tax: form.amount_tax ? Number(form.amount_tax) : null,
         tax_rate: form.tax_rate ? Number(form.tax_rate) : null,
-        currency: form.currency || cur, accounting_region: (region === 'ALL' ? 'EU' : region),
+        currency: form.currency || cur, accounting_region: (String(region) === 'ALL' ? 'EU' : region),
         description: form.description || null,
         xml_path,
         is_einvoice: !!form._xml_file,

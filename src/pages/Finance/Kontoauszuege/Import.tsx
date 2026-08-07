@@ -38,7 +38,7 @@ export default function BankImport() {
   const account = accounts.find(a => a.id === accountId);
 
   useEffect(() => {
-    listBankAccounts(region).then(a => {
+    listBankAccounts((region as any)).then(a => {
       setAccounts(a);
       setAccountId(prev => (a.some(x => x.id === prev) ? prev : (a[0]?.id ?? '')));
     }).catch(e => toast.error(e.message));
@@ -196,8 +196,8 @@ export default function BankImport() {
 
       // 4. Automatischer Abgleich gegen offene Rechnungen
       setProgress(70);
-      const invoices = await loadOpenInvoices(region);
-      const rules = await loadMatchRules(region);
+      const invoices = await loadOpenInvoices((region as any));
+      const rules = await loadMatchRules((region as any));
       let auto = 0, unmatched = 0, autoBooked = 0;
       for (const row of insertedRows) {
         if (row.is_duplicate || row.is_return_debit) { unmatched++; continue; }

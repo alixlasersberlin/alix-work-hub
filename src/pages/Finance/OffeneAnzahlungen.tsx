@@ -125,7 +125,7 @@ export default function OffeneAnzahlungen() {
     const { data, error } = await supabase
       .from('finance_deposits')
       .select('*')
-      .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
+      .in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any)
       .not('status', 'in', '("gebucht","bezahlt")')
       .order('created_at', { ascending: false, nullsFirst: false })
       .limit(2000);

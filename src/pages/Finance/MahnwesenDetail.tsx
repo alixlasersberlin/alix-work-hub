@@ -21,7 +21,7 @@ export default function FinanceMahnwesenDetail() {
   const { roles } = useAuth();
   const { region } = useAccountingRegion();
   const fmt = (n: number | null | undefined) => typeof n === 'number'
-    ? new Intl.NumberFormat(region === 'CH' ? 'de-CH' : 'de-DE', { style: 'currency', currency: regionCurrency(region) }).format(n) : '–';
+    ? new Intl.NumberFormat(region === 'CH' ? 'de-CH' : 'de-DE', { style: 'currency', currency: regionCurrency((region as any)) }).format(n) : '–';
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
 
   const [customer, setCustomer] = useState<any>(null);
@@ -36,8 +36,8 @@ export default function FinanceMahnwesenDetail() {
     setLoading(true);
     const [c, a, r, bd] = await Promise.all([
       supabase.from('customers').select('id, company_name, contact_name, email').eq('id', customerId).maybeSingle(),
-      supabase.from('finance_accounts' as any).select('*').eq('customer_id', customerId).in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).maybeSingle(),
-      supabase.from('finance_reminders' as any).select('*').eq('customer_id', customerId).in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
+      supabase.from('finance_accounts' as any).select('*').eq('customer_id', customerId).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).maybeSingle(),
+      supabase.from('finance_reminders' as any).select('*').eq('customer_id', customerId).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
       supabase.from('customer_bank_details').select('iban, bic, bank_name').eq('customer_id', customerId).maybeSingle(),
     ]);
     setCustomer(c.data ? { ...c.data, ...(bd.data ?? { iban: null, bic: null, bank_name: null }) } : null);

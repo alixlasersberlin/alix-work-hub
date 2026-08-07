@@ -41,7 +41,7 @@ export default function TxListPage({
   const [accountsError, setAccountsError] = useState<BankLoadError | null>(null);
 
   useEffect(() => {
-    listBankAccounts(region)
+    listBankAccounts((region as any))
       .then(a => { setAccounts(a); setAccountsError(null); })
       .catch(e => setAccountsError(describeBankLoadError(e, 'GET /rest/v1/bank_accounts')));
   }, [region]);
@@ -52,7 +52,7 @@ export default function TxListPage({
     setLoadError(null);
     try {
       const res = await listTransactions({
-        area: region,
+        area: region as any,
         status: status ? [status] : statuses,
         bankAccountId: accountId || undefined,
         search: search || undefined,
@@ -244,7 +244,7 @@ export default function TxListPage({
         </CardContent>
       </Card>
 
-      <TxDetailPanel tx={selected} region={region} onClose={() => setSelected(null)} onChanged={load} />
+      <TxDetailPanel tx={selected} region={region as any} onClose={() => setSelected(null)} onChanged={load} />
     </div>
   );
 }

@@ -45,8 +45,8 @@ export default function FinanceBwa() {
       const startPrev = `${year - 1}-01-01`;
       const endPrev = `${year - 1}-12-31`;
       const [t, tp, a, ii] = await Promise.all([
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', start).lte('booking_date', end).in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', startPrev).lte('booking_date', endPrev).in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', start).lte('booking_date', end).in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', startPrev).lte('booking_date', endPrev).in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any),
         supabase.from('finance_asset_depreciations').select('amount, period').gte('period', start).lte('period', end),
         supabase.from('finance_incoming_invoices').select('amount_gross, amount_net, invoice_date, description').gte('invoice_date', start).lte('invoice_date', end),
       ]);

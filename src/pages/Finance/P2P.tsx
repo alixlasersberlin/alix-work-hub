@@ -28,10 +28,10 @@ export default function FinanceP2P() {
   const load = async () => {
     setLoading(true);
     const [{ data: pr }, { data: po }, { data: gr }, { data: m }] = await Promise.all([
-      supabase.from('finance_purchase_requisitions' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(50),
-      supabase.from('finance_purchase_orders' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(50),
-      supabase.from('finance_goods_receipts' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('received_at', { ascending: false }).limit(50),
-      supabase.from('finance_three_way_matches' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(50),
+      supabase.from('finance_purchase_requisitions' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(50),
+      supabase.from('finance_purchase_orders' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(50),
+      supabase.from('finance_goods_receipts' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('received_at', { ascending: false }).limit(50),
+      supabase.from('finance_three_way_matches' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(50),
     ]);
     setPrs((pr ?? []) as any);
     setPos((po ?? []) as any);
@@ -49,7 +49,7 @@ export default function FinanceP2P() {
       total_amount: qty * price,
       needed_by: newPr.needed_by || null,
       notes: newPr.description,
-      accounting_region: (region === 'ALL' ? 'EU' : region),
+      accounting_region: (String(region) === 'ALL' ? 'EU' : region),
     }).select('id').single();
     if (error || !ins) return toast({ title: 'Fehler', description: error?.message, variant: 'destructive' });
     await supabase.from('finance_purchase_requisition_items' as any).insert({
@@ -80,7 +80,7 @@ export default function FinanceP2P() {
       total_amount: pr.total_amount,
       currency: pr.currency,
       ordered_at: new Date().toISOString().slice(0, 10),
-      accounting_region: (region === 'ALL' ? 'EU' : region),
+      accounting_region: (String(region) === 'ALL' ? 'EU' : region),
     }).select('id').single();
     if (error || !po) return toast({ title: 'Fehler', description: error?.message, variant: 'destructive' });
     if (items && items.length) {
@@ -114,7 +114,7 @@ export default function FinanceP2P() {
       invoiced_amount: 0,
       currency: po.currency,
       matched_at: new Date().toISOString(),
-      accounting_region: (region === 'ALL' ? 'EU' : region),
+      accounting_region: (String(region) === 'ALL' ? 'EU' : region),
     });
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     else { toast({ title: '3-Way-Match erzeugt' }); load(); }

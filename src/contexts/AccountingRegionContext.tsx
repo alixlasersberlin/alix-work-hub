@@ -44,7 +44,7 @@ export function useAccountingRegion(): Ctx {
   return c;
 }
 
-/** Utility for supabase query builders: chain `.in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])`. */
+/** Utility for supabase query builders: chain `.in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region])`. */
 export function withRegion<T extends { in: (col: string, val: any[]) => T }>(q: T, region: AccountingRegion): T {
-  return q.in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]);
+  return q.in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]);
 }

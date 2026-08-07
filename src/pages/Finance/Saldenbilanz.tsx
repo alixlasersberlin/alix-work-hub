@@ -37,10 +37,10 @@ export default function Saldenbilanz() {
     const [accRes, jRes] = await Promise.all([
       (supabase as any).from('finance_chart_of_accounts')
         .select('account_number, name, account_class, account_type')
-        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('account_number'),
+        .in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('account_number'),
       (supabase as any).from('finance_journal')
         .select('account, contra_account, amount_gross, amount_net, booking_date, status')
-        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
+        .in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region])
         .gte('booking_date', from).lte('booking_date', to)
         .limit(10000),
     ]);

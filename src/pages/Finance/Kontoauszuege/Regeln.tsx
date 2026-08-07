@@ -20,7 +20,7 @@ export default function Importregeln() {
   const [rows, setRows] = useState<any[]>([]);
 
   const load = async () => {
-    const accs = await listBankAccounts(region);
+    const accs = await listBankAccounts((region as any));
     setAccounts(accs);
     const ids = accs.map(a => a.id);
     if (!ids.length) { setRows([]); return; }
@@ -73,8 +73,8 @@ export default function Importregeln() {
         </table>
       </CardContent>
     </Card>
-    <LearnedRules region={region} />
-    <AutoReconcileCard region={region} />
+    <LearnedRules region={region as any} />
+    <AutoReconcileCard region={region as any} />
     <ReturnDebitRulesCard />
     <ReturnDunningEscalationCard />
 

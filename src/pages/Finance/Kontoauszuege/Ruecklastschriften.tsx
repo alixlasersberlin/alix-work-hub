@@ -51,7 +51,7 @@ export default function Ruecklastschriften() {
     setLoadError(null);
     let endpoint = 'GET /rest/v1/bank_return_debits';
     try {
-      const list = await listReturnDebits(region, status || undefined);
+      const list = await listReturnDebits((region as any), status || undefined);
       // Aktuellen Status der verknüpften Gebührenrechnungen nachladen
       const ids = list.map((r: any) => r.fee_invoice_id).filter(Boolean);
       if (ids.length) {
@@ -171,11 +171,11 @@ export default function Ruecklastschriften() {
         </CardContent>
       </Card>
 
-      <ManualReturnDebitDialog region={region} open={manualOpen}
+      <ManualReturnDebitDialog region={region as any} open={manualOpen}
         onOpenChange={setManualOpen} onCreated={load} />
 
       {tx && (
-        <ReturnDebitDialog tx={tx} region={region} open={!!tx}
+        <ReturnDebitDialog tx={tx} region={region as any} open={!!tx}
           onOpenChange={o => { if (!o) setTx(null); }} onChanged={load} />
       )}
     </div>

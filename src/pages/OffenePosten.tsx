@@ -195,14 +195,14 @@ export default function OffenePosten() {
         supabase
           .from('zoho_invoices')
           .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status, zoho_invoice_id, source_system')
-          .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
+          .in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any)
           .gt('balance', 0)
           .order('due_date', { ascending: true })
           .limit(2000),
         supabase
           .from('zoho_recurring_invoices')
           .select('id, invoice_number, reference_number, customer_name, city, billing_address, due_date, total, balance, currency, status, zoho_invoice_id, source_system')
-          .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
+          .in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any)
           .gt('balance', 0)
           .order('due_date', { ascending: true })
           .limit(2000),
@@ -566,7 +566,7 @@ export default function OffenePosten() {
         return;
       }
       const confirmed = window.confirm(
-        `${opts.label} von ${regionLabel(region)} nach ${regionLabel(targetRegion)} verschieben?\n\n` +
+        `${opts.label} von ${regionLabel((region as any))} nach ${regionLabel(targetRegion)} verschieben?\n\n` +
           (opts.names?.length
             ? 'Es werden Kundenkonto, Aufträge, alle Rechnungen, Abos, Forderungen, Anzahlungen, Mahnungen und Buchungen übernommen.'
             : 'Es werden die markierten Rechnungen inkl. zugehöriger Buchungen übernommen.'),

@@ -51,7 +51,7 @@ export default function Revisionsexport() {
   const [loading, setLoading] = useState(true);
 
   async function fetchRows(p: Pack) {
-    let q: any = (supabase as any).from(p.table).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).limit(10000);
+    let q: any = (supabase as any).from(p.table).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).limit(10000);
     if (p.dateCol) q = q.gte(p.dateCol, from).lte(p.dateCol, p.dateCol === 'created_at' ? `${to}T23:59:59` : to).order(p.dateCol, { ascending: true });
     const { data, error } = await q;
     if (error) throw error;
@@ -63,7 +63,7 @@ export default function Revisionsexport() {
     const next: Record<string, number> = {};
     for (const p of PACKS) {
       try {
-        let q: any = (supabase as any).from(p.table).select('id', { count: 'exact', head: true }).in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]);
+        let q: any = (supabase as any).from(p.table).select('id', { count: 'exact', head: true }).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]);
         if (p.dateCol) q = q.gte(p.dateCol, from).lte(p.dateCol, p.dateCol === 'created_at' ? `${to}T23:59:59` : to);
         const { count } = await q;
         next[p.key] = count ?? 0;

@@ -47,7 +47,7 @@ export default function KontoauszuegeBankApi() {
       setLoading(true);
       const [{ data }, accs] = await Promise.all([
         supabase.from('app_settings').select('value').eq('key', SETTINGS_KEY).maybeSingle(),
-        listBankAccounts(region).catch(() => [] as BankAccount[]),
+        listBankAccounts((region as any)).catch(() => [] as BankAccount[]),
       ]);
       setConns(((data?.value as any)?.connections ?? []) as Conn[]);
       setAccounts(accs);
@@ -104,7 +104,7 @@ export default function KontoauszuegeBankApi() {
             hier werden nur Endpunkt, Format und Zeitraum konfiguriert.
           </p>
           <div className="flex gap-2 pt-1">
-            <Button size="sm" onClick={() => save([...conns, emptyConn(region)])}>
+            <Button size="sm" onClick={() => save([...conns, emptyConn((region as any))])}>
               <Plus className="w-4 h-4 mr-2" />Verbindung hinzufügen
             </Button>
             <Button size="sm" variant="outline" onClick={() => fetchNow()} disabled={busy !== null || !visible.some(c => c.enabled)}>

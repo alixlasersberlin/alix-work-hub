@@ -49,8 +49,8 @@ export default function FinanceAutomations() {
   const load = async () => {
     setLoading(true);
     const [{ data: r1 }, { data: r2 }] = await Promise.all([
-      supabase.from('finance_automations' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
-      supabase.from('finance_automation_runs' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('executed_at', { ascending: false }).limit(50),
+      supabase.from('finance_automations' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
+      supabase.from('finance_automation_runs' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('executed_at', { ascending: false }).limit(50),
     ]);
     setRows((r1 ?? []) as any[]);
     setRuns((r2 ?? []) as any[]);
@@ -60,7 +60,7 @@ export default function FinanceAutomations() {
 
   const save = async () => {
     try {
-      const payload: any = { ...form, accounting_region: (region === 'ALL' ? 'EU' : region) };
+      const payload: any = { ...form, accounting_region: (String(region) === 'ALL' ? 'EU' : region) };
       payload.condition_json = JSON.parse(form.condition_json || '{}');
       payload.action_config = JSON.parse(form.action_config || '{}');
       const { error } = await supabase.from('finance_automations' as any).insert(payload);
