@@ -148,6 +148,8 @@ export function matchesPayStatus(r: Row, statusFilter: string): boolean {
   return ps === statusFilter.toLowerCase();
 }
 
+type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest';
+
 function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docStatus = 'all'): number {
   let res = rows;
   if (statusFilter !== 'all') {
