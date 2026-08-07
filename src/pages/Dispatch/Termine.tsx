@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { CalendarClock, Search, PackageSearch, History, Send } from 'lucide-react';
+import { CalendarClock, Search, PackageSearch, History, Send, FlaskConical } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,8 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
 import { OrderQuickViewDialog } from '@/components/dispatch/OrderQuickViewDialog';
 import { DELIVERY_STATUS_LABELS, DELIVERY_TYPE_LABELS, READINESS_LABELS, readinessClass, statusClass } from './constants';
 
@@ -25,6 +27,11 @@ export default function DispatchTermine() {
   const [historyFor, setHistoryFor] = useState<{ id: string; label: string } | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [orderPreview, setOrderPreview] = useState<string | null>(null);
+  const [testRow, setTestRow] = useState<any | null>(null);
+  const [testEmail, setTestEmail] = useState('');
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; from: string | null; message: string } | null>(null);
+
 
   const { data, isPending } = useQuery({
     queryKey: ['dispatch', 'appointments', status, readiness],
@@ -87,6 +94,27 @@ export default function DispatchTermine() {
     toast.success(`Bestätigungslink an ${row.contact_email} versendet`);
     qc.invalidateQueries({ queryKey: ['dispatch'] });
   }
+
+  async function sendTestMail() {
+    if (!testRow) return;
+    const to = testEmail.trim();
+    if (!to.includes('@')) { toast.error('Bitte eine gültige E-Mail-Adresse eingeben'); return; }
+    setTestSending(true);
+    setTestResult(null);
+    const { data, error } = await supabase.functions.invoke('delivery-appointment-send', {
+      body: { appointmentId: testRow.id, testMode: true, testTo: to, baseUrl: 'https://app.alixwork.de' },
+    });
+    setTestSending(false);
+    const res = data as any;
+    if (error || res?.error) {
+      setTestResult({ ok: false, from: res?.from ?? null, message: res?.error ?? error?.message ?? 'Testversand fehlgeschlagen' });
+      toast.error(res?.error ?? error?.message ?? 'Testversand fehlgeschlagen');
+      return;
+    }
+    setTestResult({ ok: true, from: res?.from ?? null, message: `Testmail an ${res?.to ?? to} versendet` });
+    toast.success(`Testmail an ${res?.to ?? to} versendet`);
+  }
+
 
   const term = search.trim().toLowerCase();
   const rows = (data ?? []).filter(r =>
@@ -199,9 +227,22 @@ export default function DispatchTermine() {
                   >
                     <Send className="h-3.5 w-3.5 mr-1" /> Bestätigung
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Test-Mail mit echten Termindaten senden"
+                    onClick={() => {
+                      setTestRow(r);
+                      setTestEmail(user?.email ?? '');
+                      setTestResult(null);
+                    }}
+                  >
+                    <FlaskConical className="h-4 w-4" />
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={() => setHistoryFor({ id: r.id, label: r.order_number ?? '' })}>
                     <History className="h-4 w-4" />
                   </Button>
+
                 </TableCell>
               </TableRow>
             ))}
@@ -230,7 +271,42 @@ export default function DispatchTermine() {
         </SheetContent>
       </Sheet>
 
+      <Dialog open={!!testRow} onOpenChange={v => { if (!v) { setTestRow(null); setTestResult(null); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Test-Mail Liefertermin</DialogTitle>
+            <DialogDescription>
+              Sendet die echte Liefertermin-Mail zu {testRow?.order_number || 'diesem Termin'} an eine Testadresse.
+              Der Kunde wird nicht benachrichtigt, es wird kein Status geändert und kein gültiger Bestätigungslink erzeugt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Empfänger</label>
+              <Input type="email" value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="test@alix-operation.de" />
+            </div>
+            <div className="rounded-lg border p-3 text-sm">
+              <div className="text-muted-foreground text-xs">Absender</div>
+              <div className="font-medium">Alix Tourenplanung &lt;no-reply@alixwork.de&gt;</div>
+            </div>
+            {testResult && (
+              <div className={`rounded-lg border p-3 text-sm ${testResult.ok ? 'border-emerald-500/40 text-emerald-500' : 'border-destructive/40 text-destructive'}`}>
+                <div>{testResult.message}</div>
+                {testResult.from && <div className="text-xs mt-1">Bestätigter Absender: {testResult.from}</div>}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTestRow(null)}>Schließen</Button>
+            <Button onClick={sendTestMail} disabled={testSending}>
+              <FlaskConical className="h-4 w-4 mr-2" /> {testSending ? 'Sende…' : 'Test-Mail senden'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <OrderQuickViewDialog orderNumber={orderPreview} onOpenChange={v => { if (!v) setOrderPreview(null); }} />
+
     </div>
   );
 }

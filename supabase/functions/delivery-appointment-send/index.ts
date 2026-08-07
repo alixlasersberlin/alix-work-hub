@@ -38,8 +38,17 @@ function fmtWindow(a: any) {
   return a.promised_window || "wird noch mitgeteilt";
 }
 
-async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: string[]; subject: string; html: string }) {
-  if (!RESEND_API_KEY || opts.to.length === 0) return;
+const MAIL_FROM = "Alix Tourenplanung <no-reply@alixwork.de>";
+
+async function sendMail(
+  sb: any,
+  log: Record<string, unknown>,
+  opts: { to: string[]; subject: string; html: string; bcc?: string[] },
+) {
+  const bcc = opts.bcc ?? BCC;
+  if (!RESEND_API_KEY || opts.to.length === 0) {
+    return { status: "skipped", error: RESEND_API_KEY ? "Kein Empfänger" : "RESEND_API_KEY fehlt", providerId: null, from: MAIL_FROM, bcc };
+  }
   let status = "sent";
   let providerId: string | null = null;
   let error: string | null = null;
@@ -52,15 +61,15 @@ async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: strin
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Alix Tourenplanung <no-reply@alixwork.de>",
+        from: MAIL_FROM,
         to: opts.to,
-        bcc: BCC,
+        ...(bcc.length ? { bcc } : {}),
         subject: opts.subject,
         html: opts.html,
       }),
     });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) { status = "failed"; error = out?.message || `HTTP ${res.status}`; }
+    if (!res.ok) { status = "failed"; error = out?.message || out?.error || `HTTP ${res.status}`; }
     providerId = out?.id ?? null;
   } catch (e) {
     status = "failed";
@@ -69,14 +78,16 @@ async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: strin
   await sb.from("delivery_email_logs").insert({
     ...log,
     recipient: opts.to.join(", "),
-    bcc: BCC_STR,
+    bcc: bcc.join(", "),
     subject: opts.subject,
     status,
     provider_id: providerId,
     error,
     sent_at: new Date().toISOString(),
   }).then(() => {}, () => {});
+  return { status, error, providerId, from: MAIL_FROM, bcc };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -96,6 +107,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const appointmentId: string = body?.appointmentId;
+    const testMode: boolean = body?.testMode === true;
     let baseUrl: string = (body?.baseUrl || "https://app.alixwork.de").replace(/\/+$/, "");
     // Never expose Lovable infrastructure domains in customer emails
     if (/lovable|supabase/i.test(baseUrl)) baseUrl = "https://app.alixwork.de";
@@ -106,18 +118,28 @@ Deno.serve(async (req) => {
     const { data: appt } = await sb.from("delivery_appointments").select("*").eq("id", appointmentId).maybeSingle();
     if (!appt) return Response.json({ error: "Termin nicht gefunden" }, { status: 404, headers: corsHeaders });
 
-    const to = (body?.to || appt.contact_email || "").trim();
-    if (!to.includes("@")) return Response.json({ error: "Keine gültige Kunden-E-Mail hinterlegt" }, { status: 400, headers: corsHeaders });
+    const to = String(testMode ? (body?.testTo || u.user.email || "") : (body?.to || appt.contact_email || "")).trim();
+    if (!to.includes("@")) {
+      return Response.json(
+        { error: testMode ? "Keine gültige Test-E-Mail angegeben" : "Keine gültige Kunden-E-Mail hinterlegt" },
+        { status: 400, headers: corsHeaders },
+      );
+    }
 
-    // Alte Token entwerten, neuen erzeugen
-    await sb.from("delivery_confirmation_tokens").update({ revoked: true }).eq("appointment_id", appointmentId).is("used_at", null);
-    const raw = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+    let raw = "TESTLINK-" + crypto.randomUUID().replace(/-/g, "");
     const expiresAt = new Date(Date.now() + validDays * 86400_000).toISOString();
-    await sb.from("delivery_confirmation_tokens").insert({
-      appointment_id: appointmentId,
-      token_hash: await sha256(raw),
-      expires_at: expiresAt,
-    });
+
+    if (!testMode) {
+      // Alte Token entwerten, neuen erzeugen
+      await sb.from("delivery_confirmation_tokens").update({ revoked: true }).eq("appointment_id", appointmentId).is("used_at", null);
+      raw = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+      await sb.from("delivery_confirmation_tokens").insert({
+        appointment_id: appointmentId,
+        token_hash: await sha256(raw),
+        expires_at: expiresAt,
+      });
+    }
+
 
     const link = `${baseUrl}/liefertermin/${raw}`;
     const address = [appt.delivery_street, `${appt.delivery_zip ?? ""} ${appt.delivery_city ?? ""}`.trim(), appt.delivery_country].filter(Boolean).join(", ");
@@ -185,11 +207,34 @@ Deno.serve(async (req) => {
         <p>Freundliche Grüße<br/>Ihr Alix Auslieferungsteam</p>
       </div>`;
 
-    await sendMail(sb, { appointment_id: appointmentId, kind: "confirmation_request" }, {
+    const testBanner = testMode
+      ? `<div style="font-family:Arial;font-size:13px;background:#FFF4CC;border:1px solid #C9A227;padding:10px 14px;border-radius:6px;margin-bottom:16px">
+           <b>TESTMAIL</b> – interne Vorschau mit echten Termindaten. Der Bestätigungslink ist bewusst ungültig, der Kunde wurde nicht benachrichtigt.
+         </div>`
+      : "";
+
+    const mailResult = await sendMail(sb, { appointment_id: appointmentId, kind: testMode ? "confirmation_request_test" : "confirmation_request" }, {
       to: [to],
-      subject: `Ihr Liefertermin ${appt.order_number ? `zum Auftrag ${appt.order_number}` : ""} – bitte bestätigen`.replace(/\s+/g, " "),
-      html: customerHtml,
+      bcc: testMode ? [] : undefined,
+      subject: `${testMode ? "[TEST] " : ""}Ihr Liefertermin ${appt.order_number ? `zum Auftrag ${appt.order_number}` : ""} – bitte bestätigen`.replace(/\s+/g, " "),
+      html: testBanner + customerHtml,
     });
+
+    if (testMode) {
+      return Response.json(
+        {
+          ok: mailResult.status === "sent",
+          test: true,
+          to,
+          from: mailResult.from,
+          status: mailResult.status,
+          error: mailResult.error,
+          provider_id: mailResult.providerId,
+          subject: `[TEST] Ihr Liefertermin ${appt.order_number ? `zum Auftrag ${appt.order_number}` : ""} – bitte bestätigen`.replace(/\s+/g, " "),
+        },
+        { headers: corsHeaders },
+      );
+    }
 
     // Interne Information (Verkäufer / Operations)
     const internalTo: string[] = Array.isArray(body?.internalRecipients) ? body.internalRecipients.filter((x: string) => x?.includes("@")) : [];
@@ -202,6 +247,7 @@ Deno.serve(async (req) => {
     }
 
     // Status + Historie
+
     await sb.from("delivery_appointments").update({ status: "bestaetigung_versendet" }).eq("id", appointmentId);
     await sb.from("delivery_status_history").insert({
       appointment_id: appointmentId,
