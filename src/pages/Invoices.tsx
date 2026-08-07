@@ -1263,6 +1263,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           pageSize === 'all' ? (viewMode === 'accounts' ? accounts.length : flatRows.length) : pageSize,
         )}
         placeholder="Suche: Rechnungsnr., Auftragsnr., Name, Stadt, PLZ, Betrag…"
+        searchBelow
       >
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Zahlungsstatus:</span>
