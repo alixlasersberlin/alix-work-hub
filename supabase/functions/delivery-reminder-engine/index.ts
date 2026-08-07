@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
         appointment_id: appt.id,
         kind,
         recipient: to,
-        bcc: BCC,
+        bcc: BCC_STR,
         subject,
         status: RESEND_API_KEY ? "sent" : "skipped",
         sent_at: new Date().toISOString(),

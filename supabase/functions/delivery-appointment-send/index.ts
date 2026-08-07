@@ -69,7 +69,7 @@ async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: strin
   await sb.from("delivery_email_logs").insert({
     ...log,
     recipient: opts.to.join(", "),
-    bcc: BCC,
+    bcc: BCC_STR,
     subject: opts.subject,
     status,
     provider_id: providerId,
