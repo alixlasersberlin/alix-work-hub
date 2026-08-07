@@ -440,6 +440,8 @@ Deno.serve(async (req) => {
         return_km: Number(backKm.toFixed(1)),
         stops: resultStops,
         missing_geocode: missing,
+        billing_fallback: fallbackUsed,
+        origin: startAddress,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
