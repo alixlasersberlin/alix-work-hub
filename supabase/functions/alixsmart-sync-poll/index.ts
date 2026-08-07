@@ -211,9 +211,10 @@ Deno.serve(async (req) => {
   try { body = req.method === "POST" ? await req.json() : {}; } catch {}
   const trigger = body.trigger ?? "manual";
   const action = body.action ?? new URL(req.url).searchParams.get("action");
-  if (action === "list_counts" || action === "dry_run") {
+  if (action === "list_counts" || action === "dry_run" || action === "peek") {
     const url = new URL(exportBase());
-    url.searchParams.set("action", action);
+    url.searchParams.set("action", action === "peek" ? "export" : action);
+    if (action === "peek") { url.searchParams.set("table", body.table ?? "devices"); url.searchParams.set("limit", "1"); }
     const res = await fetch(url.toString(), { headers: exportHeaders() });
     const text = await res.text();
     return new Response(text, { status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
