@@ -17,7 +17,7 @@ export default function FinanceZahlungen() {
   const [pageSize, setPageSize] = useState<PageSize>(50);
   useEffect(() => {
     setLoading(true);
-    getTransactions({ transaction_type: 'Zahlung', accounting_region: (String(region) === 'ALL' ? 'EU' : region) }).then(r => { setRows(r); setLoading(false); }).catch(() => setLoading(false));
+    getTransactions({ transaction_type: 'Zahlung', accounting_region: (String(region) === 'ALL' ? 'EU' : region) as any }).then(r => { setRows(r); setLoading(false); }).catch(() => setLoading(false));
   }, [region]);
   const fmt = (n: number) => Number(n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
   const filtered = useMemo(() => rows.filter((r) => matchesQuery({ ...r, total: r.amount, balance: r.amount }, search)), [rows, search]);
