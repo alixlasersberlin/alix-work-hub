@@ -282,8 +282,16 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       toast.success(`Entwurf ${invoiceNumber} gespeichert (keine Übergabe an Finance)`);
     } else {
       toast.success(`Rechnung ${invoiceNumber} erstellt und festgeschrieben`);
+      if (sendEmail) {
+        if (!recipientEmail.trim() || !recipientEmail.includes('@')) {
+          toast.error('Keine gültige Kunden-E-Mail – Rechnung wurde nicht versendet.');
+        } else {
+          void sendInvoiceEmail();
+        }
+      }
     }
     setOpen(false);
+
   };
 
   return (
