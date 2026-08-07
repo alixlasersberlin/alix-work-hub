@@ -25,8 +25,11 @@ Deno.serve(async (req) => {
   try {
     const { data: settingsRows } = await sb.from("delivery_settings").select("setting_key, setting_value");
     const settings = Object.fromEntries((settingsRows ?? []).map((r: any) => [r.setting_key, r.setting_value]));
-    const stages: number[] = settings?.reminder_hours?.stages ?? [24, 48, 72];
+    // Täglich 1 Erinnerung über 3 Tage, danach Stornierung.
+    const stages: number[] = settings?.reminder_hours?.stages ?? [24, 48, 72, 96];
+    const cancelAfterHours: number = Number(settings?.reminder_cancel_hours?.value ?? 96);
     const escalateTo: string = settings?.reminder_escalation_email?.value ?? "tour@alix-lasers.com";
+
 
     const { data: appts } = await sb
       .from("delivery_appointments")
@@ -52,36 +55,44 @@ Deno.serve(async (req) => {
       const dueStage = [...stages].sort((a, b) => b - a).find((h) => hoursSince >= h);
       if (dueStage == null) continue;
 
+      const isCancellation = dueStage >= cancelAfterHours;
+      const kind = isCancellation ? "cancellation" : `reminder_${dueStage}h`;
+
       const { count } = await sb
         .from("delivery_email_logs")
         .select("id", { count: "exact", head: true })
         .eq("appointment_id", appt.id)
-        .eq("kind", `reminder_${dueStage}h`);
+        .eq("kind", kind);
       if ((count ?? 0) > 0) continue;
 
-      const isEscalation = dueStage === Math.max(...stages);
-      const to = isEscalation ? escalateTo : (appt.contact_email || "");
+      const to = (appt.contact_email || "").trim();
       if (!to.includes("@")) continue;
 
-      const subject = isEscalation
-        ? `Eskalation: Keine Terminrückmeldung – ${appt.customer_name ?? ""} (${appt.order_number ?? "-"})`
+      const subject = isCancellation
+        ? `Stornierung Ihres Liefertermins${appt.order_number ? ` (${appt.order_number})` : ""}`
         : `Erinnerung: Bitte bestätigen Sie Ihren Liefertermin${appt.order_number ? ` (${appt.order_number})` : ""}`;
 
-      const html = isEscalation
-        ? `<div style="font-family:Arial;font-size:14px">Der Kunde <b>${esc(appt.customer_name)}</b> (Auftrag ${esc(appt.order_number)}) hat seit ${Math.round(hoursSince)} Stunden nicht auf die Terminanfrage reagiert. Bitte telefonisch nachfassen.</div>`
-        : `<div style="font-family:Arial;font-size:14px"><p>Guten Tag ${esc(appt.contact_name || appt.customer_name || "")},</p><p>wir haben Ihnen einen Liefertermin vorgeschlagen und bisher keine Rückmeldung erhalten. Bitte bestätigen Sie den Termin über den Link aus unserer letzten E-Mail.</p><p>Freundliche Grüße<br/>Ihr Alix Auslieferungsteam</p></div>`;
+      const html = isCancellation
+        ? `<div style="font-family:Arial;font-size:14px"><p>Guten Tag ${esc(appt.contact_name || appt.customer_name || "")},</p><p>leider haben wir trotz mehrfacher Erinnerung keine Bestätigung für den vorgeschlagenen Liefertermin erhalten. Wir müssen den Termin daher <b>stornieren</b>.</p><p>Bitte melden Sie sich bei uns, damit wir einen neuen Termin vereinbaren können.</p><p>Freundliche Grüße<br/>Ihr Alix Auslieferungsteam</p></div>`
+        : `<div style="font-family:Arial;font-size:14px"><p>Guten Tag ${esc(appt.contact_name || appt.customer_name || "")},</p><p>wir haben Ihnen einen Liefertermin vorgeschlagen und bisher keine Rückmeldung erhalten. Bitte bestätigen Sie den Termin über den Link aus unserer letzten E-Mail.</p><p>Ohne Bestätigung müssen wir den Termin nach drei Erinnerungen leider stornieren.</p><p>Freundliche Grüße<br/>Ihr Alix Auslieferungsteam</p></div>`;
 
       if (RESEND_API_KEY) {
         await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ from: "Alix Auslieferung <no-reply@alixwork.de>", to: [to], bcc: [BCC], subject, html }),
+          body: JSON.stringify({
+            from: "Alix Auslieferung <no-reply@alixwork.de>",
+            to: [to],
+            bcc: isCancellation ? [BCC, escalateTo] : [BCC],
+            subject,
+            html,
+          }),
         }).catch(() => {});
       }
 
       await sb.from("delivery_email_logs").insert({
         appointment_id: appt.id,
-        kind: `reminder_${dueStage}h`,
+        kind,
         recipient: to,
         bcc: BCC,
         subject,
@@ -89,13 +100,15 @@ Deno.serve(async (req) => {
         sent_at: new Date().toISOString(),
       }).then(() => {}, () => {});
 
-      if (isEscalation) {
+      if (isCancellation) {
         result.escalations++;
+        await sb.from("delivery_confirmation_tokens").update({ revoked: true }).eq("appointment_id", appt.id).is("used_at", null);
+        await sb.from("delivery_appointments").update({ status: "storniert", failure_reason: "Keine Terminbestätigung durch den Kunden (3 Erinnerungen)" }).eq("id", appt.id);
         await sb.from("delivery_notifications").insert({
           appointment_id: appt.id,
-          event_type: "confirmation_escalation",
-          title: `Keine Terminrückmeldung – ${appt.customer_name ?? ""}`,
-          body: `Seit ${Math.round(hoursSince)} h keine Antwort auf die Terminanfrage.`,
+          event_type: "confirmation_cancelled",
+          title: `Termin storniert – ${appt.customer_name ?? ""}`,
+          body: `Keine Bestätigung nach 3 Erinnerungen (Auftrag ${appt.order_number ?? "-"}).`,
           target_role: "Tourenplanung",
           channel: "app",
         }).then(() => {}, () => {});
@@ -103,6 +116,7 @@ Deno.serve(async (req) => {
         result.reminders++;
       }
     }
+
 
     return Response.json({ ok: true, ...result }, { headers: corsHeaders });
   } catch (e) {

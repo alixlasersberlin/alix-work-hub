@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { DELIVERY_TYPE_LABELS, TOUR_STATUS_LABELS, statusClass, readinessClass, READINESS_LABELS } from './constants';
+import { TourOrderPicker, type PickedItem, type PickedOrder } from '@/components/dispatch/TourOrderPicker';
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd');
 
@@ -25,6 +26,11 @@ export default function DispatchTagesplanung() {
   const [calcLoading, setCalcLoading] = useState(false);
   const [newTourOpen, setNewTourOpen] = useState(false);
   const [newTour, setNewTour] = useState({ title: '', driver_id: '', vehicle_id: '', start: '08:00' });
+  const [pickedOrder, setPickedOrder] = useState<PickedOrder | null>(null);
+  const [pickedItems, setPickedItems] = useState<PickedItem[]>([]);
+  const [partialDelivery, setPartialDelivery] = useState(false);
+  const [creating, setCreating] = useState(false);
+
 
   const { data: tours = [], isPending: toursLoading } = useQuery({
     queryKey: ['dispatch', 'tagesplanung', 'tours', day],
@@ -110,25 +116,100 @@ export default function DispatchTagesplanung() {
   }
 
   async function createTour() {
-    const { data, error } = await supabase
-      .from('delivery_tours')
-      .insert({
-        tour_date: day,
-        title: newTour.title || `Tour ${format(new Date(day), 'dd.MM.yyyy')}`,
-        driver_id: newTour.driver_id || null,
-        vehicle_id: newTour.vehicle_id || null,
-        planned_start_time: newTour.start || '08:00',
-        status: 'entwurf' as any,
-      })
-      .select('id')
-      .single();
-    if (error) { toast.error(error.message); return; }
-    toast.success('Tour angelegt');
-    setNewTourOpen(false);
-    setNewTour({ title: '', driver_id: '', vehicle_id: '', start: '08:00' });
-    setSelectedTour(data.id);
-    refresh();
+    setCreating(true);
+    try {
+      const { data, error } = await supabase
+        .from('delivery_tours')
+        .insert({
+          tour_date: day,
+          title: newTour.title || `Tour ${format(new Date(day), 'dd.MM.yyyy')}`,
+          driver_id: newTour.driver_id || null,
+          vehicle_id: newTour.vehicle_id || null,
+          planned_start_time: newTour.start || '08:00',
+          status: (pickedOrder ? 'geplant' : 'entwurf') as any,
+        })
+        .select('id')
+        .single();
+      if (error) { toast.error(error.message); return; }
+      const tourId = data.id;
+
+      if (pickedOrder) {
+        const included = pickedItems.filter((i) => i.include && i.description.trim());
+        const { data: appt, error: aErr } = await supabase
+          .from('delivery_appointments')
+          .insert({
+            order_id: pickedOrder.id,
+            customer_id: pickedOrder.customer_id,
+            order_number: pickedOrder.order_number,
+            customer_name: pickedOrder.customer_name || null,
+            company_name: pickedOrder.company_name || null,
+            contact_name: pickedOrder.contact_name || null,
+            contact_email: pickedOrder.contact_email || null,
+            contact_phone: pickedOrder.contact_phone || null,
+            delivery_street: pickedOrder.street || null,
+            delivery_zip: pickedOrder.zip || null,
+            delivery_city: pickedOrder.city || null,
+            delivery_country: pickedOrder.country || null,
+            appointment_type: 'auslieferung' as any,
+            status: 'intern_geplant' as any,
+            planned_date: day,
+            time_window_start: newTour.start || '08:00',
+            scope_of_delivery: `${partialDelivery ? 'Teillieferung' : 'Komplettlieferung'}: ${included.map((i) => `${i.quantity}× ${i.description}`).join(', ') || '—'}`,
+          })
+          .select('id, contact_email')
+          .single();
+        if (aErr) { toast.error(aErr.message); return; }
+
+        await supabase.from('delivery_tour_stops').insert({ tour_id: tourId, appointment_id: appt.id, position: 1 });
+
+        if (included.length) {
+          const { data: list } = await supabase
+            .from('delivery_loading_lists')
+            .insert({ tour_id: tourId, notes: partialDelivery ? 'Teillieferung' : null })
+            .select('id')
+            .single();
+          if (list) {
+            await supabase.from('delivery_loading_items').insert(
+              included.map((i, idx) => ({
+                loading_list_id: list.id,
+                appointment_id: appt.id,
+                position: idx + 1,
+                description: i.description,
+                quantity: i.quantity,
+                serial_number: i.serial_number || null,
+              })),
+            );
+          }
+        }
+
+        if (appt.contact_email) {
+          const { data: sendRes, error: sendErr } = await supabase.functions.invoke('delivery-appointment-send', {
+            body: { appointmentId: appt.id, baseUrl: 'https://app.alixwork.de' },
+          });
+          if (sendErr || (sendRes as any)?.error) {
+            toast.warning('Tour angelegt – Bestätigungs-E-Mail konnte nicht versendet werden.');
+          } else {
+            toast.success('Tour geplant · Bestätigungs-E-Mail an den Kunden versendet');
+          }
+        } else {
+          toast.warning('Tour geplant – keine Kunden-E-Mail hinterlegt, keine Bestätigung versendet.');
+        }
+      } else {
+        toast.success('Tour angelegt');
+      }
+
+      setNewTourOpen(false);
+      setNewTour({ title: '', driver_id: '', vehicle_id: '', start: '08:00' });
+      setPickedOrder(null);
+      setPickedItems([]);
+      setPartialDelivery(false);
+      setSelectedTour(tourId);
+      refresh();
+    } finally {
+      setCreating(false);
+    }
   }
+
 
   async function assignToTour(appointmentId: string, tourId: string) {
     const existing = (stops as any[]).filter((s) => s.tour_id === tourId);
@@ -217,10 +298,19 @@ export default function DispatchTagesplanung() {
           <DialogTrigger asChild>
             <Button size="sm" className="ml-auto"><Plus className="mr-1 h-4 w-4" />Neue Tour</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
             <DialogHeader><DialogTitle>Neue Tour am {format(new Date(day), 'dd.MM.yyyy')}</DialogTitle></DialogHeader>
             <div className="space-y-3">
+              <TourOrderPicker
+                order={pickedOrder}
+                setOrder={setPickedOrder}
+                items={pickedItems}
+                setItems={setPickedItems}
+                partial={partialDelivery}
+                setPartial={setPartialDelivery}
+              />
               <div><Label>Bezeichnung</Label><Input value={newTour.title} onChange={(e) => setNewTour({ ...newTour, title: e.target.value })} placeholder="z. B. Berlin Nord" /></div>
+
               <div>
                 <Label>Fahrer</Label>
                 <select
@@ -252,7 +342,12 @@ export default function DispatchTagesplanung() {
 
               <div><Label>Startzeit</Label><Input type="time" value={newTour.start} onChange={(e) => setNewTour({ ...newTour, start: e.target.value })} /></div>
             </div>
-            <DialogFooter><Button onClick={createTour}>Tour anlegen</Button></DialogFooter>
+            <DialogFooter>
+              <Button onClick={createTour} disabled={creating}>
+                {creating ? 'Wird angelegt…' : pickedOrder ? 'Tour anlegen & Bestätigung senden' : 'Tour anlegen'}
+              </Button>
+            </DialogFooter>
+
           </DialogContent>
         </Dialog>
       </div>
