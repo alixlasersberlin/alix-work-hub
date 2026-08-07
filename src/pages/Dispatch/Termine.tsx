@@ -287,7 +287,7 @@ export default function DispatchTermine() {
             </div>
             <div className="rounded-lg border p-3 text-sm">
               <div className="text-muted-foreground text-xs">Absender</div>
-              <div className="font-medium">Alix Tourenplanung &lt;no-reply@alixwork.de&gt;</div>
+              <div className="font-medium">Alix Lasers ® &lt;no-reply@alixwork.de&gt;</div>
             </div>
             {testResult && (
               <div className={`rounded-lg border p-3 text-sm ${testResult.ok ? 'border-emerald-500/40 text-emerald-500' : 'border-destructive/40 text-destructive'}`}>
