@@ -361,7 +361,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     });
   };
 
-  useEffect(() => { fetchRows(); }, [region, mietkaufOnly]);
+  useEffect(() => { fetchRows(); }, [region, mietkaufOnly, includeUnpaid]);
 
 
 
