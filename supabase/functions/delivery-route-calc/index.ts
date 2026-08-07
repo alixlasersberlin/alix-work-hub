@@ -256,11 +256,15 @@ Deno.serve(async (req) => {
     const stops: StopInput[] = [];
     for (const r of rows) {
       const a: any = (r as any).delivery_appointments;
-      const address = [a?.delivery_street, `${a?.delivery_zip ?? ""} ${a?.delivery_city ?? ""}`.trim(), a?.delivery_country || "Deutschland"]
-        .filter(Boolean)
-        .join(", ");
+      const address = usableAddress(a);
       let coords: [number, number] | null =
         a?.delivery_lat != null && a?.delivery_lng != null ? [Number(a.delivery_lng), Number(a.delivery_lat)] : null;
+      // Ohne belastbare Adresse sind gespeicherte Koordinaten oft ein Länder-Mittelpunkt → verwerfen.
+      if (coords && !address) {
+        console.warn("verwerfe Koordinaten ohne Adresse", a?.id);
+        coords = null;
+        await admin.from("delivery_appointments").update({ delivery_lat: null, delivery_lng: null }).eq("id", a.id);
+      }
       if (!coords && address) {
         coords = await geocode(address);
         if (coords) {
@@ -273,7 +277,7 @@ Deno.serve(async (req) => {
       stops.push({
         id: (r as any).id,
         appointment_id: (r as any).appointment_id,
-        label: a?.company_name || a?.customer_name || address,
+        label: a?.company_name || a?.customer_name || address || "Ohne Adresse",
         coords,
         duration_minutes: Number(a?.duration_minutes) || 60,
         is_vip: !!a?.is_vip,
@@ -282,6 +286,15 @@ Deno.serve(async (req) => {
         window_end: a?.time_window_end ?? null,
       });
     }
+
+    // Stopps ohne Koordinaten dürfen keine Kilometer/Zeiten aus einer alten Berechnung behalten.
+    for (const s of stops.filter((x) => !x.coords)) {
+      await admin
+        .from("delivery_tour_stops")
+        .update({ distance_from_prev_km: null, drive_minutes_from_prev: null, planned_arrival: null, planned_departure: null })
+        .eq("id", s.id);
+    }
+
 
     const missing = stops.filter((s) => !s.coords).map((s) => s.label);
     const geoStops = stops.filter((s) => s.coords);
