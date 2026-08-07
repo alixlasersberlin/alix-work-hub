@@ -21,6 +21,9 @@ function haversineKm(a: [number, number], b: [number, number]) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
+/** Zu ungenaue Treffer (Land/Bundesland/Region) sind für Routen unbrauchbar. */
+const COARSE_TYPES = new Set(["country", "state", "region", "county", "continent"]);
+
 async function geocode(address: string): Promise<[number, number] | null> {
   const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(address)}&limit=1&lang=de`;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -28,7 +31,13 @@ async function geocode(address: string): Promise<[number, number] | null> {
       const r = await fetch(url, { headers: { "User-Agent": "AlixWork/1.0 dispatch" } });
       if (r.ok) {
         const j = await r.json();
-        const c = j?.features?.[0]?.geometry?.coordinates;
+        const f = j?.features?.[0];
+        const c = f?.geometry?.coordinates;
+        const type = String(f?.properties?.type ?? "");
+        if (COARSE_TYPES.has(type)) {
+          console.warn("geocode too coarse", address, type);
+          return null;
+        }
         if (Array.isArray(c) && c.length >= 2) return [c[0], c[1]];
         return null;
       }
@@ -40,6 +49,16 @@ async function geocode(address: string): Promise<[number, number] | null> {
   }
   return null;
 }
+
+/** Ohne Straße + (PLZ oder Ort) ist eine Geokodierung wertlos. */
+function usableAddress(a: any): string | null {
+  const street = String(a?.delivery_street ?? "").trim();
+  const zip = String(a?.delivery_zip ?? "").trim();
+  const city = String(a?.delivery_city ?? "").trim();
+  if (!street || (!zip && !city)) return null;
+  return [street, `${zip} ${city}`.trim(), a?.delivery_country || "Deutschland"].filter(Boolean).join(", ");
+}
+
 
 /** NxN Distanz-/Zeitmatrix. Fällt bei ORS-Problemen auf Luftlinie zurück. */
 async function buildMatrix(locations: [number, number][], apiKey: string | undefined) {
@@ -237,11 +256,15 @@ Deno.serve(async (req) => {
     const stops: StopInput[] = [];
     for (const r of rows) {
       const a: any = (r as any).delivery_appointments;
-      const address = [a?.delivery_street, `${a?.delivery_zip ?? ""} ${a?.delivery_city ?? ""}`.trim(), a?.delivery_country || "Deutschland"]
-        .filter(Boolean)
-        .join(", ");
+      const address = usableAddress(a);
       let coords: [number, number] | null =
         a?.delivery_lat != null && a?.delivery_lng != null ? [Number(a.delivery_lng), Number(a.delivery_lat)] : null;
+      // Ohne belastbare Adresse sind gespeicherte Koordinaten oft ein Länder-Mittelpunkt → verwerfen.
+      if (coords && !address) {
+        console.warn("verwerfe Koordinaten ohne Adresse", a?.id);
+        coords = null;
+        await admin.from("delivery_appointments").update({ delivery_lat: null, delivery_lng: null }).eq("id", a.id);
+      }
       if (!coords && address) {
         coords = await geocode(address);
         if (coords) {
@@ -254,7 +277,7 @@ Deno.serve(async (req) => {
       stops.push({
         id: (r as any).id,
         appointment_id: (r as any).appointment_id,
-        label: a?.company_name || a?.customer_name || address,
+        label: a?.company_name || a?.customer_name || address || "Ohne Adresse",
         coords,
         duration_minutes: Number(a?.duration_minutes) || 60,
         is_vip: !!a?.is_vip,
@@ -264,9 +287,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Stopps ohne Koordinaten dürfen keine Kilometer/Zeiten aus einer alten Berechnung behalten.
+    for (const s of stops.filter((x) => !x.coords)) {
+      await admin
+        .from("delivery_tour_stops")
+        .update({ distance_from_prev_km: null, drive_minutes_from_prev: null, planned_arrival: null, planned_departure: null })
+        .eq("id", s.id);
+    }
+
+
     const missing = stops.filter((s) => !s.coords).map((s) => s.label);
     const geoStops = stops.filter((s) => s.coords);
-    if (geoStops.length === 0) throw new Error("Keine Adresse konnte geokodiert werden");
+    if (geoStops.length === 0) {
+      await admin
+        .from("delivery_tours")
+        .update({ planned_distance_km: 0, planned_drive_minutes: 0, planned_work_minutes: 0, utilization_pct: 0 })
+        .eq("id", tourId);
+      throw new Error(`Keine gültige Lieferadresse vorhanden: ${missing.join(", ")}`);
+    }
 
     const locations: [number, number][] = [startCoords, ...geoStops.map((s) => s.coords!)];
     const { dist, dur, provider } = await buildMatrix(locations, Deno.env.get("OPENROUTESERVICE_API_KEY"));

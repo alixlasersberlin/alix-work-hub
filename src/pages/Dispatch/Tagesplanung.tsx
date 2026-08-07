@@ -258,7 +258,8 @@ export default function DispatchTagesplanung() {
       toast.success(
         `${optimize ? 'Tour optimiert' : 'Route berechnet'}: ${d.total_distance_km} km · ${Math.round(d.total_drive_minutes)} Min. Fahrzeit`,
       );
-      if (d.missing_geocode?.length) toast.warning(`Ohne Koordinaten: ${d.missing_geocode.join(', ')}`);
+      if (d.missing_geocode?.length) toast.warning(`Ohne gültige Lieferadresse (nicht in Route): ${d.missing_geocode.join(', ')}`);
+      if (d.provider === 'haversine') toast.warning('Schätzung per Luftlinie – kein Routing-Dienst verfügbar');
       refresh();
     } catch (e: any) {
       toast.error(e.message || 'Routenberechnung fehlgeschlagen');
