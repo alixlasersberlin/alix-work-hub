@@ -231,7 +231,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const setListSortPersist = (s: 'number' | 'date') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
-  const isListView = viewMode === 'list' || viewMode === 'oldest';
+  const isListView = viewMode === 'list';
   const isAccountView = !isListView;
 
   const fetchRows = async (opts?: { silent?: boolean }) => {
@@ -1266,8 +1266,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title={mietkaufOnly ? (isAccountView ? 'In Vermietung nach Kundenkonto' : 'In Vermietung – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'oldest' ? 'Älteste Rechnungen' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
-        subtitle={mietkaufOnly ? 'Alle als Mietkauf gebuchten Vorgänge und Geräte in der Vermietung' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'oldest' ? 'Alle Rechnungen, älteste zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+        title={mietkaufOnly ? (isAccountView ? 'In Vermietung nach Kundenkonto' : 'In Vermietung – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
+        subtitle={mietkaufOnly ? 'Alle als Mietkauf gebuchten Vorgänge und Geräte in der Vermietung' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
@@ -1349,7 +1349,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             className="h-8 px-3 gap-1.5"
             onClick={() => setViewModePersist('oldest')}
           >
-            <Clock className="w-3.5 h-3.5" /> Älteste
+            <Clock className="w-3.5 h-3.5" /> Älteste OP
           </Button>
         </div>
         {viewMode === 'list' && (
@@ -1368,7 +1368,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           <span className="text-xs text-muted-foreground">Kundenkonten nach Rechnungsvolumen (absteigend)</span>
         )}
         {viewMode === 'oldest' && (
-          <span className="text-xs text-muted-foreground">Älteste Rechnungen zuerst</span>
+          <span className="text-xs text-muted-foreground">Nur offene Posten – älteste zuerst</span>
         )}
       </div>
 
