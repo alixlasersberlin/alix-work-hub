@@ -301,6 +301,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const [mietkaufBusyId, setMietkaufBusyId] = useState<string | null>(null);
   const toggleMietkauf = async (r: Row) => {
+    if (r.source === 'unpaid') { toast({ title: 'Nur Ansicht', description: 'Diese Rechnung stammt aus den Offenen Posten und kann hier nicht bearbeitet werden.', variant: 'destructive' }); return; }
     const table = tableFor(r.source);
     const next = !r.is_mietkauf;
     setMietkaufBusyId(r.id);
@@ -489,6 +490,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const handleDelete = async (r: Row) => {
     if (!isSuperAdmin) return;
+    if (r.source === 'unpaid') { toast({ title: 'Nicht möglich', description: 'Offene-Posten-Rechnungen werden in den Offenen Posten verwaltet.', variant: 'destructive' }); return; }
     if (!confirm(`Rechnung ${r.invoice_number ?? ''} unwiderruflich löschen?`)) return;
     try {
       const table = tableFor(r.source);
@@ -837,6 +839,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   // Lädt raw_data erst bei Bedarf nach (nicht mehr in der Listenabfrage enthalten).
   const loadRawData = async (r: Row): Promise<any> => {
     if (r.raw_data && typeof r.raw_data === 'object' && !Array.isArray(r.raw_data)) return r.raw_data;
+    if (r.source === 'unpaid') return {};
     const table = tableFor(r.source);
     const { data } = await (supabase as any).from(table).select('raw_data').eq('id', r.id).maybeSingle();
     const raw = data?.raw_data;
@@ -845,6 +848,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const commitDraft = async (r: Row) => {
     if (!isDraftInvoice(r)) return;
+    if (r.source === 'unpaid') return;
     try {
       const table = tableFor(r.source);
       const raw = await loadRawData(r);
@@ -865,6 +869,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const saveEdit = async () => {
     if (!editRow) return;
+    if (editRow.source === 'unpaid') { toast({ title: 'Nur Ansicht', description: 'Offene-Posten-Rechnungen sind hier schreibgeschützt.', variant: 'destructive' }); return; }
     setEditSaving(true);
     try {
       const table = tableFor(editRow.source);
@@ -1111,6 +1116,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       if (pay <= 0) throw new Error('Bitte einen Zahlbetrag größer 0 eingeben.');
       const newBalance = Math.max(0, +(openBefore - pay).toFixed(2));
       const fullyPaid = newBalance <= 0.0049;
+      if (bookRow.source === 'unpaid') throw new Error('Offene-Posten-Rechnungen können hier nicht gebucht werden.');
       const table = tableFor(bookRow.source);
       const patch: any = {
         payment_status: fullyPaid ? 'Bezahlt' : 'Teilweise bezahlt',
