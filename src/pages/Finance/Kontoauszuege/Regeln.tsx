@@ -73,8 +73,8 @@ export default function Importregeln() {
         </table>
       </CardContent>
     </Card>
-    <LearnedRules (region as any)={region} />
-    <AutoReconcileCard (region as any)={region} />
+    <LearnedRules region={region as any} />
+    <AutoReconcileCard region={region as any} />
     <ReturnDebitRulesCard />
     <ReturnDunningEscalationCard />
 

@@ -53,12 +53,12 @@ export default function Stammdaten() {
           <TabsTrigger value="ob">Saldovortrag</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="coa"><CoaTab (region as any)={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
-        <TabsContent value="tax"><TaxTab (region as any)={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
-        <TabsContent value="cc"><CcTab (region as any)={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
-        <TabsContent value="cu"><CuTab (region as any)={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
-        <TabsContent value="per"><PerTab (region as any)={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
-        <TabsContent value="ob"><ObTab (region as any)={region} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
+        <TabsContent value="coa"><CoaTab region={region as any} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
+        <TabsContent value="tax"><TaxTab region={region as any} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
+        <TabsContent value="cc"><CcTab region={region as any} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
+        <TabsContent value="cu"><CuTab region={region as any} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
+        <TabsContent value="per"><PerTab region={region as any} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
+        <TabsContent value="ob"><ObTab region={region as any} canWrite={isAdmin} canDelete={isSuperAdmin} /></TabsContent>
       </Tabs>
     </div>
   );

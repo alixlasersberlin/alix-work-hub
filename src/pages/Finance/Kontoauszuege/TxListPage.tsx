@@ -244,7 +244,7 @@ export default function TxListPage({
         </CardContent>
       </Card>
 
-      <TxDetailPanel tx={selected} (region as any)={region} onClose={() => setSelected(null)} onChanged={load} />
+      <TxDetailPanel tx={selected} region={region as any} onClose={() => setSelected(null)} onChanged={load} />
     </div>
   );
 }

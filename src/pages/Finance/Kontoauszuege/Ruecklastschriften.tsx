@@ -171,11 +171,11 @@ export default function Ruecklastschriften() {
         </CardContent>
       </Card>
 
-      <ManualReturnDebitDialog (region as any)={region} open={manualOpen}
+      <ManualReturnDebitDialog region={region as any} open={manualOpen}
         onOpenChange={setManualOpen} onCreated={load} />
 
       {tx && (
-        <ReturnDebitDialog tx={tx} (region as any)={region} open={!!tx}
+        <ReturnDebitDialog tx={tx} region={region as any} open={!!tx}
           onOpenChange={o => { if (!o) setTx(null); }} onChanged={load} />
       )}
     </div>
