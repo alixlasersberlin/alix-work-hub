@@ -175,6 +175,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [docStatusFilter, setDocStatusFilter] = useState<string>('all');
+  const [includeUnpaid, setIncludeUnpaid] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('invoices_include_unpaid') === '1';
+  });
+  const setIncludeUnpaidPersist = (v: boolean) => {
+    setIncludeUnpaid(v);
+    try { localStorage.setItem('invoices_include_unpaid', v ? '1' : '0'); } catch {}
+  };
+
 
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
