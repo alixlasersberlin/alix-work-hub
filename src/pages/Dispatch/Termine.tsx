@@ -269,7 +269,42 @@ export default function DispatchTermine() {
         </SheetContent>
       </Sheet>
 
+      <Dialog open={!!testRow} onOpenChange={v => { if (!v) { setTestRow(null); setTestResult(null); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Test-Mail Liefertermin</DialogTitle>
+            <DialogDescription>
+              Sendet die echte Liefertermin-Mail zu {testRow?.order_number || 'diesem Termin'} an eine Testadresse.
+              Der Kunde wird nicht benachrichtigt, es wird kein Status geändert und kein gültiger Bestätigungslink erzeugt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium">Empfänger</label>
+              <Input type="email" value={testEmail} onChange={e => setTestEmail(e.target.value)} placeholder="test@alix-operation.de" />
+            </div>
+            <div className="rounded-lg border p-3 text-sm">
+              <div className="text-muted-foreground text-xs">Absender</div>
+              <div className="font-medium">Alix Tourenplanung &lt;no-reply@alixwork.de&gt;</div>
+            </div>
+            {testResult && (
+              <div className={`rounded-lg border p-3 text-sm ${testResult.ok ? 'border-emerald-500/40 text-emerald-500' : 'border-destructive/40 text-destructive'}`}>
+                <div>{testResult.message}</div>
+                {testResult.from && <div className="text-xs mt-1">Bestätigter Absender: {testResult.from}</div>}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTestRow(null)}>Schließen</Button>
+            <Button onClick={sendTestMail} disabled={testSending}>
+              <FlaskConical className="h-4 w-4 mr-2" /> {testSending ? 'Sende…' : 'Test-Mail senden'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <OrderQuickViewDialog orderNumber={orderPreview} onOpenChange={v => { if (!v) setOrderPreview(null); }} />
+
     </div>
   );
 }
