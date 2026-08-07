@@ -293,7 +293,11 @@ export default function CustomerAllTransactions({
                   </span>
                 </button>
 
-                {isOpen && (
+                {isOpen && items.length === 0 && (
+                  <div className="border-t border-border px-4 py-6 text-sm text-muted-foreground">Keine Einträge</div>
+                )}
+                {isOpen && items.length > 0 && (
+
                   <table className="w-full text-sm border-t border-border">
                     <thead className="bg-secondary/50 text-muted-foreground">
                       <tr>
