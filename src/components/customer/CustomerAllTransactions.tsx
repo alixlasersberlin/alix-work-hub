@@ -213,6 +213,15 @@ export default function CustomerAllTransactions({
     return c;
   }, [rows]);
 
+  const groups = useMemo(() => {
+    return (Object.keys(KIND_META) as Kind[])
+      .filter((k) => kind === 'all' || kind === k)
+      .map((k) => ({ kind: k, items: filtered.filter((r) => r.kind === k) }));
+  }, [filtered, kind]);
+
+  const toggle = (k: Kind) =>
+    setOpen((o) => ({ ...o, [k]: !o[k] }));
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -221,14 +230,6 @@ export default function CustomerAllTransactions({
     );
   }
 
-  const groups = useMemo(() => {
-    return (Object.keys(KIND_META) as Kind[])
-      .map((k) => ({ kind: k, items: filtered.filter((r) => r.kind === k) }))
-      .filter((g) => g.items.length > 0);
-  }, [filtered]);
-
-  const toggle = (k: Kind) =>
-    setOpen((o) => ({ ...o, [k]: !o[k] }));
 
   return (
     <div className="space-y-4">
