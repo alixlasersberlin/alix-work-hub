@@ -183,6 +183,40 @@ Deno.serve(async (req) => {
       }).then(() => {}, () => {});
     }
 
+    // Dedizierte Benachrichtigung bei bestätigtem Liefertermin
+    if (RESEND_API_KEY && response === "confirm") {
+      const CONFIRM_TO = ["k.trinh@alix-operation.de", "jh@alix-operation.de"];
+      const dateStr = appt.planned_date
+        ? new Date(appt.planned_date).toLocaleDateString("de-DE")
+        : "-";
+      const win = [appt.time_window_start, appt.time_window_end].filter(Boolean).join(" – ");
+      const chtml = `<div style="font-family:Arial;font-size:14px">
+        <p><b>Liefertermin bestätigt</b></p>
+        <p>Kunde: <b>${esc(appt.customer_name)}</b>${appt.company_name ? ` (${esc(appt.company_name)})` : ""}<br/>
+        Auftrag: <b>${esc(appt.order_number ?? "-")}</b><br/>
+        Termin: <b>${esc(dateStr)}</b>${win ? ` (${esc(win)})` : ""}<br/>
+        Gerät: ${esc(appt.device_name ?? appt.article_name ?? "-")}<br/>
+        Adresse: ${esc([appt.delivery_street, `${appt.delivery_zip ?? ""} ${appt.delivery_city ?? ""}`.trim(), appt.delivery_country].filter(Boolean).join(", "))}</p>
+        ${body?.contactName ? `<p>Ansprechpartner: ${esc(body.contactName)}</p>` : ""}
+        ${body?.contactPhone ? `<p>Telefon: ${esc(body.contactPhone)}</p>` : ""}
+        ${body?.comment ? `<p>Bemerkung: ${esc(body.comment)}</p>` : ""}
+      </div>`;
+      await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "Alix Lasers ® <no-reply@alixwork.de>",
+          to: CONFIRM_TO,
+          subject: `Liefertermin bestätigt – ${appt.customer_name ?? ""} (${appt.order_number ?? "-"}) am ${dateStr}`,
+          html: chtml,
+        }),
+      }).catch(() => {});
+      await sb.from("delivery_email_logs").insert({
+        appointment_id: appt.id, kind: "delivery_confirmed_internal", recipient: CONFIRM_TO.join(", "),
+        subject: "Liefertermin bestätigt", status: "sent", sent_at: new Date().toISOString(),
+      }).then(() => {}, () => {});
+    }
+
     return Response.json({ ok: true, confirmation_id: conf?.id ?? null, status: nextStatus }, { headers: corsHeaders });
   } catch (e) {
     return Response.json({ error: String((e as Error).message ?? e) }, { status: 500, headers: corsHeaders });
