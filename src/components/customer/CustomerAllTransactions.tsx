@@ -79,7 +79,7 @@ export default function CustomerAllTransactions({
 
       const invQ = supabase
         .from('zoho_invoices')
-        .select('id, invoice_number, invoice_date, status, payment_status, total, balance, currency')
+        .select('id, invoice_number, invoice_date, status, payment_status, total, balance, currency, zoho_invoice_id, source_system')
         .order('invoice_date', { ascending: false })
         .limit(300);
       const cnQ = supabase
