@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
       ["Lieferumfang", appt.scope_of_delivery || "-"],
       ["Tour", tour ? [tour.tour_number, tour.title].filter(Boolean).join(" · ") : "-"],
       ["Hinweise", appt.customer_notes || appt.notes || "-"],
-    ].filter(([, v]) => v && v !== "-" ? true : ["Datum", "Zeitfenster", "Lieferadresse", "Auftrag"].includes(String()) );
+    ];
 
     const infoRows = rows
       .filter(([label, value]) => value && (value !== "-" || ["Datum", "Zeitfenster", "Lieferadresse", "Auftrag"].includes(label)))
