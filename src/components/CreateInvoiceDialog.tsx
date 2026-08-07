@@ -108,7 +108,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [notes, setNotes] = useState('');
   const [taxRate, setTaxRate] = useState(19);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
-  const [sendEmail, setSendEmail] = useState(true);
+  
   const [recipientEmail, setRecipientEmail] = useState('');
 
 
