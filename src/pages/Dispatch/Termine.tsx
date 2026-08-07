@@ -80,7 +80,7 @@ export default function DispatchTermine() {
     if (!row.planned_date) { toast.error('Bitte zuerst ein Lieferdatum setzen'); return; }
     setSendingId(row.id);
     const { data, error } = await supabase.functions.invoke('delivery-appointment-send', {
-      body: { appointmentId: row.id, baseUrl: window.location.origin },
+      body: { appointmentId: row.id, baseUrl: 'https://app.alixwork.de' },
     });
     setSendingId(null);
     if (error || (data as any)?.error) { toast.error((data as any)?.error ?? error?.message ?? 'Versand fehlgeschlagen'); return; }
