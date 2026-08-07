@@ -8,6 +8,9 @@ import {
   Loader2, Search, ChevronRight, FileText, FileSignature, ShoppingCart, Receipt, Undo2, ArrowDownToLine, Layers,
 } from 'lucide-react';
 import { EmptyState } from '@/components/infinity/EmptyState';
+import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
+import { DocumentPreviewDialog } from '@/components/customer/DocumentPreviewDialog';
+
 
 type Kind = 'beleg' | 'angebot' | 'auftrag' | 'rechnung' | 'gutschrift' | 'zahlung';
 
@@ -21,7 +24,11 @@ type Row = {
   amount?: number | null;
   currency?: string | null;
   href?: string | null;
+  zohoInvoiceId?: string | null;
+  sourceSystem?: string | null;
+  docId?: string | null;
 };
+
 
 const KIND_META: Record<Kind, { label: string; icon: any; className: string }> = {
   beleg: { label: 'Beleg', icon: FileText, className: 'bg-muted text-muted-foreground' },
@@ -65,6 +72,29 @@ export default function CustomerAllTransactions({
   const [search, setSearch] = useState('');
   const [kind, setKind] = useState<Kind | 'all'>('all');
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [pdfInvoice, setPdfInvoice] = useState<PdfInvoiceRef | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
+  const [docPreview, setDocPreview] = useState<{ id: string; title: string } | null>(null);
+  const [docOpen, setDocOpen] = useState(false);
+
+  const openRow = (r: Row) => {
+    if (r.kind === 'rechnung' && r.zohoInvoiceId) {
+      setPdfInvoice({
+        zoho_invoice_id: r.zohoInvoiceId,
+        invoice_number: r.number,
+        source_system: r.sourceSystem ?? 'zoho_eu_1',
+      });
+      setPdfOpen(true);
+      return;
+    }
+    if (r.kind === 'beleg' && r.docId) {
+      setDocPreview({ id: r.docId, title: r.title });
+      setDocOpen(true);
+      return;
+    }
+    if (r.href) navigate(r.href);
+  };
+
 
   useEffect(() => {
     let cancelled = false;
@@ -75,7 +105,7 @@ export default function CustomerAllTransactions({
 
       const invQ = supabase
         .from('zoho_invoices')
-        .select('id, invoice_number, invoice_date, status, payment_status, total, balance, currency')
+        .select('id, invoice_number, invoice_date, status, payment_status, total, balance, currency, zoho_invoice_id, source_system')
         .order('invoice_date', { ascending: false })
         .limit(300);
       const cnQ = supabase
@@ -154,6 +184,9 @@ export default function CustomerAllTransactions({
           status: r.payment_status || r.status,
           amount: r.total,
           currency: r.currency,
+          zohoInvoiceId: r.zoho_invoice_id,
+          sourceSystem: r.source_system,
+
         }),
       );
 
@@ -191,7 +224,9 @@ export default function CustomerAllTransactions({
           number: r.original_filename || '—',
           title: r.title || r.original_filename || 'Dokument',
           status: r.status,
+          docId: r.id,
           href: `/alixdocs/preview/${r.id}`,
+
         }),
       );
 
@@ -310,13 +345,21 @@ export default function CustomerAllTransactions({
                     </thead>
                     <tbody className="divide-y divide-border">
                       {items.map((r) => (
-                        <tr
-                          key={r.id}
-                          className={`hover:bg-secondary/30 ${r.href ? 'cursor-pointer' : ''}`}
-                          onClick={() => r.href && navigate(r.href)}
-                        >
+                        <tr key={r.id} className="hover:bg-secondary/30">
                           <td className="px-4 py-2 whitespace-nowrap">{fmtDate(r.date)}</td>
-                          <td className="px-4 py-2 font-medium">{r.number}</td>
+                          <td className="px-4 py-2 font-medium">
+                            {r.zohoInvoiceId || r.docId || r.href ? (
+                              <button
+                                type="button"
+                                className="text-primary hover:underline text-left"
+                                onClick={() => openRow(r)}
+                              >
+                                {r.number}
+                              </button>
+                            ) : (
+                              r.number
+                            )}
+                          </td>
                           <td className="px-4 py-2 text-muted-foreground max-w-[320px] truncate">{r.title}</td>
                           <td className="px-4 py-2">
                             {r.status ? <Badge variant="outline" className="text-[10px]">{r.status}</Badge> : '—'}
@@ -326,6 +369,7 @@ export default function CustomerAllTransactions({
                           </td>
                         </tr>
                       ))}
+
                     </tbody>
                   </table>
                 )}
@@ -334,6 +378,15 @@ export default function CustomerAllTransactions({
           })}
         </div>
       )}
+
+      <InvoicePdfDialog invoice={pdfInvoice} open={pdfOpen} onOpenChange={setPdfOpen} />
+      <DocumentPreviewDialog
+        documentId={docPreview?.id ?? null}
+        title={docPreview?.title}
+        open={docOpen}
+        onOpenChange={setDocOpen}
+      />
+
     </div>
   );
 }
