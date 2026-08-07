@@ -1367,7 +1367,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 <span className="font-mono font-semibold">{h.invoice_number}</span>
                 <span className="text-muted-foreground">{h.customer_name}</span>
                 <span className="text-muted-foreground">{h.invoice_date}</span>
-                <span className="font-medium">{fmtEUR(Number(h.total ?? 0))}</span>
+                <span className="font-medium">{fmtMoney(Number(h.total ?? 0))}</span>
                 <span className="rounded bg-secondary px-1.5 py-0.5">{h.accounting_region ?? 'EU'}</span>
                 {h.is_mietkauf && <span className="rounded bg-secondary px-1.5 py-0.5">Mietkauf</span>}
                 {h.accounting_region && h.accounting_region !== region && (
