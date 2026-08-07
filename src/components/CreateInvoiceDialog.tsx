@@ -257,7 +257,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
     try {
       const { error: mailErr } = await supabase.functions.invoke('send-invoice-mail', {
         body: {
-          to_email: recipientEmail.trim(),
+          to_email: to,
           to_name: customerName || undefined,
           subject: `Rechnung ${invoiceNumber}`,
           body_text: `Ihre Rechnung ${invoiceNumber} über ${fmt(total)} ${currency}, zahlbar bis ${new Date(dueDate).toLocaleDateString('de-DE')}.`,
@@ -267,7 +267,8 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
         },
       });
       if (mailErr) throw mailErr;
-      toast.success(`Rechnung per E-Mail an ${recipientEmail.trim()} versendet (BCC k.trinh@alix-operation.de)`);
+      toast.success(`Rechnung per E-Mail an ${to} versendet (BCC k.trinh@alix-operation.de)`);
+
     } catch (e: any) {
       toast.error('E-Mail-Versand fehlgeschlagen: ' + (e?.message ?? 'unbekannter Fehler'));
     }
