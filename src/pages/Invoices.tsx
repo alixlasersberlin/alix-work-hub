@@ -65,7 +65,8 @@ function addrLinesFromObj(a: any): string[] {
 
 type Row = {
   id: string;
-  source: 'invoice' | 'recurring';
+  source: 'invoice' | 'recurring' | 'unpaid';
+
   zoho_invoice_id: string | null;
   source_system: string | null;
   invoice_number: string | null;
@@ -149,9 +150,17 @@ function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docSt
 
 type InvoicesProps = { mietkaufOnly?: boolean };
 
+// Zieltabelle je Datenquelle
+function tableFor(source: Row['source']) {
+  if (source === 'recurring') return 'zoho_recurring_invoices';
+  if (source === 'unpaid') return 'zoho_unpaid_invoices';
+  return 'zoho_invoices';
+}
+
 // Modul-Cache: Rechnungsliste bleibt beim Zurücknavigieren sofort sichtbar
 const ROWS_CACHE = new Map<string, { ts: number; rows: Row[] }>();
 const ROWS_CACHE_TTL = 60_000;
+
 
 
 export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
