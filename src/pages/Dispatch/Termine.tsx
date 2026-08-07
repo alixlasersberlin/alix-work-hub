@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { OrderQuickViewDialog } from '@/components/dispatch/OrderQuickViewDialog';
 import { DELIVERY_STATUS_LABELS, DELIVERY_TYPE_LABELS, READINESS_LABELS, readinessClass, statusClass } from './constants';
 
 export default function DispatchTermine() {
@@ -228,6 +229,8 @@ export default function DispatchTermine() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <OrderQuickViewDialog orderNumber={orderPreview} onOpenChange={v => { if (!v) setOrderPreview(null); }} />
     </div>
   );
 }
