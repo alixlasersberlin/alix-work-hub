@@ -59,6 +59,23 @@ function usableAddress(a: any): string | null {
   return [street, `${zip} ${city}`.trim(), a?.delivery_country || "Deutschland"].filter(Boolean).join(", ");
 }
 
+/** Rechnungsadresse (Termin oder Kunde) als Fallback für die Routenberechnung. */
+function billingAddress(raw: any): string | null {
+  if (!raw) return null;
+  if (typeof raw === "string") {
+    const s = raw.replace(/\s+/g, " ").trim();
+    // Nur brauchbar, wenn Hausnummer/PLZ erkennbar sind
+    return s.length > 8 && /\d/.test(s) ? s : null;
+  }
+  const street = String(raw.address ?? raw.street ?? raw.address1 ?? "").trim();
+  const zip = String(raw.zip ?? raw.postal_code ?? raw.plz ?? "").trim();
+  const city = String(raw.city ?? raw.ort ?? "").trim();
+  const country = String(raw.country ?? "Deutschland").trim() || "Deutschland";
+  if (!street || (!zip && !city)) return null;
+  return [street, `${zip} ${city}`.trim(), country].filter(Boolean).join(", ");
+}
+
+
 
 /** NxN Distanz-/Zeitmatrix. Fällt bei ORS-Problemen auf Luftlinie zurück. */
 async function buildMatrix(locations: [number, number][], apiKey: string | undefined) {
