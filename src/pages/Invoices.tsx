@@ -85,6 +85,7 @@ type Row = {
   raw_data?: any;
   raw_is_draft?: boolean | null;
   is_mietkauf?: boolean | null;
+  created_at?: string | null;
 };
 
 type Account = {
@@ -148,7 +149,7 @@ export function matchesPayStatus(r: Row, statusFilter: string): boolean {
   return ps === statusFilter.toLowerCase();
 }
 
-type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest';
+type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest' | 'newest';
 
 function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docStatus = 'all'): number {
   let res = rows;
@@ -222,7 +223,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === 'undefined') return 'highest';
     const v = localStorage.getItem('invoices_view_mode') as ViewMode | null;
-    return v && ['accounts', 'list', 'highest', 'oldest'].includes(v) ? v : 'highest';
+    return v && ['accounts', 'list', 'highest', 'oldest', 'newest'].includes(v) ? v : 'highest';
   });
   const [listSort, setListSort] = useState<'number' | 'date'>(() => {
     if (typeof window === 'undefined') return 'date';
@@ -234,7 +235,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const setListSortPersist = (s: 'number' | 'date') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
-  const isListView = viewMode === 'list';
+  const isListView = viewMode === 'list' || viewMode === 'newest';
   const isAccountView = !isListView;
 
   const fetchRows = async (opts?: { silent?: boolean }) => {
@@ -255,7 +256,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const refetchRows = async (cacheKey: string, showError: boolean) => {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
-    const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
+    const cols = 'id, created_at, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
     // PostgREST liefert max. 1000 Zeilen je Request -> seitenweise laden
     const fetchAllPages = async (build: () => any, page = 1000, max = 20000) => {
       const out: any[] = [];
@@ -272,7 +273,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       fetchAllPages(() => (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false })),
       includeUnpaid && !mietkaufOnly
         ? fetchAllPages(() => (supabase.from('zoho_unpaid_invoices') as any)
-            .select('id, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw')
+            .select('id, created_at, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw')
             .order('invoice_date', { ascending: false }))
         : Promise.resolve({ data: [], error: null } as any),
     ]);
@@ -313,6 +314,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             payment_status: paymentStatus,
             last_payment_date: null,
             is_mietkauf: false,
+            created_at: (r as any).created_at ?? null,
           } as Row;
         });
       const mergedRaw: Row[] = [
@@ -502,6 +504,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
     const sorted = [...res].sort((a, b) => {
+      if (viewMode === 'newest') {
+        // Neueste zuerst nach Erfassungsdatum (created_at), Fallback Rechnungsdatum
+        const av = String(a.created_at ?? a.invoice_date ?? '');
+        const bv = String(b.created_at ?? b.invoice_date ?? '');
+        return bv.localeCompare(av);
+      }
       if (viewMode === 'oldest') {
         // Älteste Rechnungen zuerst
         return String(a.invoice_date ?? '9999').localeCompare(String(b.invoice_date ?? '9999'));
@@ -1301,8 +1309,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
-        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+        title={mietkaufOnly ? (isAccountView ? 'Mietkauf Geräte nach Kundenkonto' : 'Mietkauf Geräte – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'newest' ? 'Neuste Rechnungen' : viewMode === 'oldest' ? 'Älteste OP nach Kundenkonto' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
+        subtitle={mietkaufOnly ? 'Alle als Mietkauf Geräte gebuchten Vorgänge' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'newest' ? 'Zuletzt erfasste Rechnungen zuerst' : viewMode === 'oldest' ? 'Offene Posten je Kundenkonto – älteste offene Rechnung zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
@@ -1386,6 +1394,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           >
             <Clock className="w-3.5 h-3.5" /> Älteste OP
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === 'newest' ? 'default' : 'ghost'}
+            className="h-8 px-3 gap-1.5"
+            onClick={() => setViewModePersist('newest')}
+          >
+            <Clock className="w-3.5 h-3.5" /> Neuste
+          </Button>
         </div>
         {viewMode === 'list' && (
           <div className="flex items-center gap-2">
@@ -1404,6 +1421,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         )}
         {viewMode === 'oldest' && (
           <span className="text-xs text-muted-foreground">Nur offene Posten – älteste zuerst</span>
+        )}
+        {viewMode === 'newest' && (
+          <span className="text-xs text-muted-foreground">Alle Rechnungen nach Erfassungsdatum (absteigend)</span>
         )}
       </div>
 
