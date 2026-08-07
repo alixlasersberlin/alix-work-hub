@@ -170,6 +170,17 @@ export default function DispatchSpeditionsversand() {
     });
   }, [rows, search, statusFilter]);
 
+  const allSelected = filtered.length > 0 && filtered.every((r: any) => selected.includes(r.id));
+  const toggle = (id: string) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const toggleAll = () => setSelected(allSelected ? [] : filtered.map((r: any) => r.id));
+
+  function exportSelectedPdf() {
+    const list = filtered.filter((r: any) => selected.includes(r.id));
+    if (!list.length) { toast.error('Keine Einträge markiert'); return; }
+    downloadShipmentsPdf(list);
+    toast.success(`${list.length} Speditionsaufträge als PDF exportiert`);
+  }
+
 
   const create = useMutation({
     mutationFn: async () => {
