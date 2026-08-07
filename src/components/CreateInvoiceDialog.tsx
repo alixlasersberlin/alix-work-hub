@@ -146,7 +146,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       customer?.raw_data?.email ||
       ''
     );
-    setSendEmail(true);
+    
 
 
     const source = Array.isArray(items) && items.length > 0
