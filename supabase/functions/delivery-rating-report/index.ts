@@ -11,7 +11,8 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
-const BCC = "rde@alix-lasers.com";
+const BCC = ["rde@alix-lasers.com", "k.trinh@alix-operation.de", "jh@alix-operation.de"];
+const BCC_STR = BCC.join(", ");
 const FLEET_EMAIL = Deno.env.get("FLEET_NOTIFY_EMAIL") || "tour@alix-lasers.com";
 
 const esc = (s: unknown) =>
@@ -103,7 +104,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: "Alix Auslieferung <no-reply@alixwork.de>",
         to: [FLEET_EMAIL],
-        bcc: [BCC],
+        bcc: BCC,
         subject: `Bewertungs-Report Auslieferung ${label}: Ø ${f1(overall)} / 5 (${list.length})`,
         html,
       }),
