@@ -13,6 +13,8 @@ type Props = {
   placeholder?: string;
   className?: string;
   children?: React.ReactNode;
+  /** Suchfeld unterhalb der Filterzeile anzeigen */
+  searchBelow?: boolean;
 };
 
 /**
