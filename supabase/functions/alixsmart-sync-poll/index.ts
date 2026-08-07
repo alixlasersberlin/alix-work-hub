@@ -204,10 +204,17 @@ async function runEntity(supabase: any, entity: Entity, trigger: string, full = 
         if (existingId) { row.id = existingId; updated++; } else { created++; }
         rows.push(row);
       }
-      for (let i = 0; i < rows.length; i += 500) {
-        const chunk = rows.slice(i, i + 500);
+      const newRows = rows.filter((r) => !r.id);
+      const oldRows = rows.filter((r) => r.id);
+      for (let i = 0; i < newRows.length; i += 500) {
+        const chunk = newRows.slice(i, i + 500);
+        const { error: e } = await supabase.from("alixsmart_device_links").insert(chunk);
+        if (e) { failed += chunk.length; created = Math.max(0, created - chunk.length); console.error("[devices] insert:", e.message); }
+      }
+      for (let i = 0; i < oldRows.length; i += 500) {
+        const chunk = oldRows.slice(i, i + 500);
         const { error: e } = await supabase.from("alixsmart_device_links").upsert(chunk, { onConflict: "id" });
-        if (e) { failed += chunk.length; created = Math.max(0, created - chunk.length); console.error("[devices] upsert:", e.message); }
+        if (e) { failed += chunk.length; updated = Math.max(0, updated - chunk.length); console.error("[devices] upsert:", e.message); }
       }
       items.length = 0;
     }
