@@ -32,19 +32,24 @@ export function ListToolbar({
   placeholder = 'Suche: Rechnungsnr., Auftragsnr., Name, Stadt, PLZ, Betrag…',
   className,
   children,
+  searchBelow = false,
 }: Props) {
+  const searchField = (
+    <div className="relative flex-1">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <Input
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder={placeholder}
+        className="pl-9"
+      />
+    </div>
+  );
+
   return (
     <div className={`rounded-xl border border-border bg-card p-4 mb-4 ${className ?? ''}`}>
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={placeholder}
-            className="pl-9"
-          />
-        </div>
+        {!searchBelow && searchField}
         {children}
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Anzeige:</span>
@@ -61,6 +66,7 @@ export function ListToolbar({
           </Select>
         </div>
       </div>
+      {searchBelow && <div className="flex mt-3">{searchField}</div>}
       <div className="mt-2 text-xs text-muted-foreground">
         {total} Treffer{search ? ` für "${search}"` : ''} • angezeigt: {visible}
       </div>
