@@ -169,20 +169,37 @@ export function TourOrderPicker({
       </div>
 
       {results.length > 0 && (
-        <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-border p-1">
-          {results.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              onClick={() => choose(r)}
-              className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-muted"
-            >
-              <span className="font-medium">{r.order_number}</span>
-              <span className="text-muted-foreground"> · {r.customers?.company_name || r.customers?.contact_name || '—'}</span>
-            </button>
-          ))}
+        <div className="mt-2 max-h-72 space-y-1 overflow-y-auto rounded-md border border-border p-1">
+          {results.map((r) => {
+            const arts = itemsByOrder[r.id] ?? [];
+            const money = fmtMoney(r.total_amount, r.currency);
+            return (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => choose(r)}
+                className="w-full rounded px-2 py-2 text-left text-xs hover:bg-muted"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{r.order_number}</span>
+                  <span className="text-muted-foreground truncate">{r.customers?.company_name || r.customers?.contact_name || '—'}</span>
+                  {money && <span className="ml-auto shrink-0 font-medium text-primary">{money}</span>}
+                </div>
+                <div className="text-muted-foreground truncate">
+                  {rowAddress(r) || 'Keine Lieferadresse'}
+                  {r.order_date ? ` · ${new Date(r.order_date).toLocaleDateString('de-DE')}` : ''}
+                </div>
+                {arts.length > 0 && (
+                  <div className="text-muted-foreground/80 truncate">
+                    {arts.slice(0, 3).join(' · ')}{arts.length > 3 ? ` · +${arts.length - 3} weitere` : ''}
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
+
 
       {order && (
         <div className="mt-3 space-y-3">
