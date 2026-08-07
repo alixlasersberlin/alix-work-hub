@@ -342,7 +342,12 @@ export default function DispatchTagesplanung() {
 
               <div><Label>Startzeit</Label><Input type="time" value={newTour.start} onChange={(e) => setNewTour({ ...newTour, start: e.target.value })} /></div>
             </div>
-            <DialogFooter><Button onClick={createTour}>Tour anlegen</Button></DialogFooter>
+            <DialogFooter>
+              <Button onClick={createTour} disabled={creating}>
+                {creating ? 'Wird angelegt…' : pickedOrder ? 'Tour anlegen & Bestätigung senden' : 'Tour anlegen'}
+              </Button>
+            </DialogFooter>
+
           </DialogContent>
         </Dialog>
       </div>
