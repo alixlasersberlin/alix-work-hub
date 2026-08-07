@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-export type AccountingRegion = 'EU' | 'CH';
+export type AccountingRegion = 'EU' | 'CH' | 'ALL';
 
 interface Ctx {
   region: AccountingRegion;
@@ -14,7 +14,7 @@ export function AccountingRegionProvider({ children }: { children: React.ReactNo
   const [region, setRegionState] = useState<AccountingRegion>(() => {
     if (typeof window === 'undefined') return 'EU';
     const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === 'CH' ? 'CH' : 'EU';
+    return v === 'CH' ? 'CH' : v === 'ALL' ? 'ALL' : 'EU';
   });
 
   const setRegion = (r: AccountingRegion) => {
@@ -26,7 +26,7 @@ export function AccountingRegionProvider({ children }: { children: React.ReactNo
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && (e.newValue === 'EU' || e.newValue === 'CH')) {
+      if (e.key === STORAGE_KEY && (e.newValue === 'EU' || e.newValue === 'CH' || e.newValue === 'ALL')) {
         setRegionState(e.newValue as AccountingRegion);
       }
     };

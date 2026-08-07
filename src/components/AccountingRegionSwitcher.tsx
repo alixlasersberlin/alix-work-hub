@@ -18,6 +18,7 @@ export function AccountingRegionSwitcher({ className }: { className?: string }) 
 
   // Erzwinge erlaubte Region, falls unerlaubte Region aus localStorage geladen wurde
   useEffect(() => {
+    if (region === 'ALL' && !(canEu && canCh)) setRegion(canCh ? 'CH' : 'EU');
     if (region === 'CH' && !canCh) setRegion('EU');
     if (region === 'EU' && !canEu && canCh) setRegion('CH');
   }, [canCh, canEu, region, setRegion]);
@@ -52,6 +53,7 @@ export function AccountingRegionSwitcher({ className }: { className?: string }) 
       aria-label="Buchhaltungsregion"
     >
       <Banknote className="w-3.5 h-3.5 text-muted-foreground ml-1" />
+      <Item value="ALL" label="ALLE" flag="🌐" />
       <Item value="EU" label="EU" flag="🇪🇺" />
       <Item value="CH" label="CH" flag="🇨🇭" />
     </div>
