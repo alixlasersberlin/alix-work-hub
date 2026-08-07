@@ -5,7 +5,7 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, X as LucideXIcon } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, X as LucideXIcon } from 'lucide-react';
 import { postPaymentToJournal } from '@/lib/finance/journal';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -148,6 +148,8 @@ export function matchesPayStatus(r: Row, statusFilter: string): boolean {
   return ps === statusFilter.toLowerCase();
 }
 
+type ViewMode = 'accounts' | 'list' | 'highest' | 'oldest';
+
 function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docStatus = 'all'): number {
   let res = rows;
   if (statusFilter !== 'all') {
@@ -214,20 +216,23 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [bookDate, setBookDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [bookSaving, setBookSaving] = useState(false);
   const [bookAmount, setBookAmount] = useState<string>('0');
-  const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
-    if (typeof window === 'undefined') return 'accounts';
-    return (localStorage.getItem('invoices_view_mode') as 'accounts' | 'list') || 'accounts';
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window === 'undefined') return 'highest';
+    const v = localStorage.getItem('invoices_view_mode') as ViewMode | null;
+    return v && ['accounts', 'list', 'highest', 'oldest'].includes(v) ? v : 'highest';
   });
   const [listSort, setListSort] = useState<'number' | 'date'>(() => {
     if (typeof window === 'undefined') return 'date';
     return (localStorage.getItem('invoices_list_sort') as 'number' | 'date') || 'date';
   });
-  const setViewModePersist = (m: 'accounts' | 'list') => {
+  const setViewModePersist = (m: ViewMode) => {
     setViewMode(m); try { localStorage.setItem('invoices_view_mode', m); } catch {}
   };
   const setListSortPersist = (s: 'number' | 'date') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
+  const isListView = viewMode === 'list' || viewMode === 'oldest';
+  const isAccountView = !isListView;
 
   const fetchRows = async (opts?: { silent?: boolean }) => {
     const cacheKey = `${region}|${mietkaufOnly}|${includeUnpaid}`;
@@ -494,13 +499,23 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
     const sorted = [...res].sort((a, b) => {
+      if (viewMode === 'oldest') {
+        // Älteste Rechnungen zuerst
+        return String(a.invoice_date ?? '9999').localeCompare(String(b.invoice_date ?? '9999'));
+      }
       if (listSort === 'number') {
         return String(b.invoice_number ?? '').localeCompare(String(a.invoice_number ?? ''), 'de', { numeric: true });
       }
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [rows, search, statusFilter, docStatusFilter, listSort]);
+  }, [rows, search, statusFilter, docStatusFilter, listSort, viewMode]);
+
+  // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst
+  const displayAccounts = useMemo<Account[]>(() => {
+    if (viewMode !== 'highest') return accounts;
+    return [...accounts].sort((a, b) => b.totalAmount - a.totalAmount);
+  }, [accounts, viewMode]);
 
   // Regionsübergreifende Fallback-Suche: findet Rechnungen aus anderer Region / Mietkauf-Ansicht
   const [globalHits, setGlobalHits] = useState<any[]>([]);
@@ -1226,8 +1241,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title={mietkaufOnly ? (viewMode === 'accounts' ? 'In Vermietung nach Kundenkonto' : 'In Vermietung – Rechnungsliste') : (viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
-        subtitle={mietkaufOnly ? 'Alle als Mietkauf gebuchten Vorgänge und Geräte in der Vermietung' : (viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+        title={mietkaufOnly ? (isAccountView ? 'In Vermietung nach Kundenkonto' : 'In Vermietung – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'oldest' ? 'Älteste Rechnungen' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
+        subtitle={mietkaufOnly ? 'Alle als Mietkauf gebuchten Vorgänge und Geräte in der Vermietung' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'oldest' ? 'Alle Rechnungen, älteste zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
@@ -1293,6 +1308,24 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           >
             <FileText className="w-3.5 h-3.5" /> Rechnungsliste
           </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === 'highest' ? 'default' : 'ghost'}
+            className="h-8 px-3 gap-1.5"
+            onClick={() => setViewModePersist('highest')}
+          >
+            <TrendingUp className="w-3.5 h-3.5" /> Höchste
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={viewMode === 'oldest' ? 'default' : 'ghost'}
+            className="h-8 px-3 gap-1.5"
+            onClick={() => setViewModePersist('oldest')}
+          >
+            <Clock className="w-3.5 h-3.5" /> Älteste
+          </Button>
         </div>
         {viewMode === 'list' && (
           <div className="flex items-center gap-2">
@@ -1306,6 +1339,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             </Select>
           </div>
         )}
+        {viewMode === 'highest' && (
+          <span className="text-xs text-muted-foreground">Kundenkonten nach Rechnungsvolumen (absteigend)</span>
+        )}
+        {viewMode === 'oldest' && (
+          <span className="text-xs text-muted-foreground">Älteste Rechnungen zuerst</span>
+        )}
       </div>
 
       <ListToolbar
@@ -1313,10 +1352,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         onSearchChange={setSearch}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
-        total={viewMode === 'accounts' ? accounts.length : flatRows.length}
+        total={isAccountView ? displayAccounts.length : flatRows.length}
         visible={Math.min(
-          viewMode === 'accounts' ? accounts.length : flatRows.length,
-          pageSize === 'all' ? (viewMode === 'accounts' ? accounts.length : flatRows.length) : pageSize,
+          isAccountView ? displayAccounts.length : flatRows.length,
+          pageSize === 'all' ? (isAccountView ? displayAccounts.length : flatRows.length) : pageSize,
         )}
         placeholder="Suche: Rechnungsnr., Auftragsnr., Name, Stadt, PLZ, Betrag…"
         searchBelow
@@ -1359,7 +1398,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </Select>
 
         </div>
-        {viewMode === 'accounts' && (
+        {isAccountView && (
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={expandAll}>Alle öffnen</Button>
             <Button size="sm" variant="outline" onClick={collapseAll}>Alle schließen</Button>
@@ -1397,7 +1436,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
       {error && <PageError message={error} onRetry={fetchRows} />}
 
-      {loading ? <DataCard><SkeletonTable rows={8} cols={6} /></DataCard> : viewMode === 'list' ? (
+      {loading ? <DataCard><SkeletonTable rows={8} cols={6} /></DataCard> : isListView ? (
         <DataCard className="overflow-hidden">
           {flatRows.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">Keine Daten gefunden.</div>
@@ -1580,11 +1619,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         </DataCard>
       ) : (
         <div className="space-y-3">
-          {accounts.length === 0 ? (
+          {displayAccounts.length === 0 ? (
             <DataCard className="p-12 text-center text-muted-foreground">
               Keine Daten gefunden.
             </DataCard>
-          ) : paginate(accounts, pageSize).map((a) => {
+          ) : paginate(displayAccounts, pageSize).map((a) => {
             const open = !!expanded[a.key];
             return (
               <DataCard key={a.key} className="overflow-hidden">
