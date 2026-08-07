@@ -29,7 +29,7 @@ export default function Bankbuchungen() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await (supabase as any).from('finance_bank_postings').select('*').eq('accounting_region', region).order('posting_date', { ascending: false }).limit(500);
+    const { data, error } = await (supabase as any).from('finance_bank_postings').select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('posting_date', { ascending: false }).limit(500);
     if (error) toast.error(error.message); else setRows(data || []);
     setLoading(false);
   }

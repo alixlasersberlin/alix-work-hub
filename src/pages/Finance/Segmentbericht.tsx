@@ -159,7 +159,7 @@ function Master({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
 
   const load = async () => {
     const { data, error } = await supabase.from('finance_segments')
-      .select('*').eq('accounting_region', region).order('code');
+      .select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('code');
     if (error) toast.error(error.message);
     else setRows((data as any) ?? []);
   };

@@ -16,11 +16,11 @@ export default function Zahlungsuebersicht() {
     setLoading(true);
     (async () => {
       const [accs, tx, dep, cb, bp] = await Promise.all([
-        (supabase as any).from('finance_accounts').select('current_balance, overdue_balance').eq('accounting_region', region),
-        (supabase as any).from('finance_transactions').select('amount, transaction_type').eq('accounting_region', region),
-        (supabase as any).from('finance_deposits').select('open_amount').eq('accounting_region', region),
-        (supabase as any).from('finance_cashbook').select('amount_gross, booking_type, status').eq('accounting_region', region),
-        (supabase as any).from('finance_bank_postings').select('amount, posting_type, status').eq('accounting_region', region),
+        (supabase as any).from('finance_accounts').select('current_balance, overdue_balance').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
+        (supabase as any).from('finance_transactions').select('amount, transaction_type').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
+        (supabase as any).from('finance_deposits').select('open_amount').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
+        (supabase as any).from('finance_cashbook').select('amount_gross, booking_type, status').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
+        (supabase as any).from('finance_bank_postings').select('amount, posting_type, status').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
       ]);
       const offeneRg = (accs.data || []).reduce((s: number, a: any) => s + Number(a.current_balance || 0), 0);
       const ueberfaellig = (accs.data || []).reduce((s: number, a: any) => s + Number(a.overdue_balance || 0), 0);

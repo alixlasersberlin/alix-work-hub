@@ -28,10 +28,10 @@ export default function FinanceP2P() {
   const load = async () => {
     setLoading(true);
     const [{ data: pr }, { data: po }, { data: gr }, { data: m }] = await Promise.all([
-      supabase.from('finance_purchase_requisitions' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(50),
-      supabase.from('finance_purchase_orders' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(50),
-      supabase.from('finance_goods_receipts' as any).select('*').eq('accounting_region', region).order('received_at', { ascending: false }).limit(50),
-      supabase.from('finance_three_way_matches' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(50),
+      supabase.from('finance_purchase_requisitions' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(50),
+      supabase.from('finance_purchase_orders' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(50),
+      supabase.from('finance_goods_receipts' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('received_at', { ascending: false }).limit(50),
+      supabase.from('finance_three_way_matches' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(50),
     ]);
     setPrs((pr ?? []) as any);
     setPos((po ?? []) as any);

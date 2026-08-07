@@ -23,7 +23,7 @@ export default function FinanceBudget() {
 
   async function load() {
     setLoading(true);
-    const { data: rows } = await supabase.from('finance_budgets' as any).select('*').eq('accounting_region', region).eq('fiscal_year', year);
+    const { data: rows } = await supabase.from('finance_budgets' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).eq('fiscal_year', year);
     const map: BudgetMap = {};
     for (const cat of BUDGET_CATEGORIES) map[cat] = {};
     for (const r of (rows ?? []) as any[]) {
@@ -59,8 +59,8 @@ export default function FinanceBudget() {
   async function copyFromPriorYearActual() {
     const s = `${year - 1}-01-01`, e = `${year - 1}-12-31`;
     const [tx, ii] = await Promise.all([
-      supabase.from('finance_transactions').select('amount, transaction_type, booking_date').eq('accounting_region', region).gte('booking_date', s).lte('booking_date', e),
-      supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').eq('accounting_region', region).gte('invoice_date', s).lte('invoice_date', e),
+      supabase.from('finance_transactions').select('amount, transaction_type, booking_date').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', s).lte('booking_date', e),
+      supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).gte('invoice_date', s).lte('invoice_date', e),
     ]);
     const map: BudgetMap = {};
     for (const cat of BUDGET_CATEGORIES) map[cat] = {};

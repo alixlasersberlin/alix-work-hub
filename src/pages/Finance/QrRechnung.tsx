@@ -42,7 +42,7 @@ export default function QrRechnung() {
   const load = async () => {
     setLoading(true);
     const { data } = await (supabase as any).from('finance_qr_invoices')
-      .select('*').eq('accounting_region', region)
+      .select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
       .order('created_at', { ascending: false }).limit(500);
     setRows(data ?? []);
     setLoading(false);

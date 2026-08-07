@@ -87,12 +87,12 @@ export default function Lohnbuchhaltung() {
     setLoading(true);
     const [rRes, wRes, sRes] = await Promise.all([
       (supabase as any).from('finance_payroll_runs').select('*')
-        .eq('accounting_region', region).eq('period_year', year)
+        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).eq('period_year', year)
         .order('period_month', { ascending: true }),
       (supabase as any).from('finance_wage_types').select('*')
-        .eq('accounting_region', region).order('sort_order', { ascending: true }),
+        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('sort_order', { ascending: true }),
       (supabase as any).from('finance_social_rates').select('*')
-        .eq('accounting_region', region).order('code', { ascending: true }),
+        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('code', { ascending: true }),
     ]);
     if (rRes.error) toast.error(rRes.error.message);
     if (wRes.error) toast.error(wRes.error.message);

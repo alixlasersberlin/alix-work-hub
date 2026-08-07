@@ -45,7 +45,7 @@ export default function FinanceJahresabschluss() {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase.from('finance_year_end_runs' as any).select('*').eq('accounting_region', region).order('fiscal_year', { ascending: false });
+    const { data } = await supabase.from('finance_year_end_runs' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('fiscal_year', { ascending: false });
     const list = (data ?? []) as any as Run[];
     setRuns(list);
     setSelected(list[0] ?? null);

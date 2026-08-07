@@ -30,8 +30,8 @@ export default function FinanceBank() {
   const load = async () => {
     setLoading(true);
     const [s, l] = await Promise.all([
-      supabase.from('finance_bank_statements' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(100),
-      supabase.from('finance_bank_lines' as any).select('*, customers:matched_customer_id(company_name, contact_name)').eq('accounting_region', region).order('booking_date', { ascending: false }).limit(500),
+      supabase.from('finance_bank_statements' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100),
+      supabase.from('finance_bank_lines' as any).select('*, customers:matched_customer_id(company_name, contact_name)').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('booking_date', { ascending: false }).limit(500),
     ]);
     setStatements((s.data ?? []) as any[]);
     setLines((l.data ?? []) as any[]);

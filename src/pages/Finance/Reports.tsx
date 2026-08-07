@@ -60,7 +60,7 @@ export default function FinanceReports() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from('finance_reports' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false });
+    const { data } = await supabase.from('finance_reports' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false });
     setRows((data ?? []) as any[]);
     setLoading(false);
   };

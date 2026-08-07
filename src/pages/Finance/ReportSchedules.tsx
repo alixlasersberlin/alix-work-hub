@@ -38,8 +38,8 @@ export default function FinanceReportSchedules() {
   const load = async () => {
     setLoading(true);
     const [{ data: r1 }, { data: r2 }] = await Promise.all([
-      supabase.from('finance_report_schedules' as any).select('*, finance_reports(name)').eq('accounting_region', region).order('created_at', { ascending: false }),
-      supabase.from('finance_reports' as any).select('id,name').eq('accounting_region', region).order('name'),
+      supabase.from('finance_report_schedules' as any).select('*, finance_reports(name)').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
+      supabase.from('finance_reports' as any).select('id,name').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('name'),
     ]);
     setRows((r1 ?? []) as any[]);
     setReports((r2 ?? []) as any[]);

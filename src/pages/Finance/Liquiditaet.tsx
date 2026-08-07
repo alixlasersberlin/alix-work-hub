@@ -47,7 +47,7 @@ export default function FinanceLiquiditaet() {
   const loadPlans = async () => {
     setLoading(true);
     const [{ data: p }, { data: t }] = await Promise.all([
-      supabase.from('finance_cashflow_plans' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }),
+      supabase.from('finance_cashflow_plans' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
       supabase.from('tenants').select('id, name'),
     ]);
     setPlans((p ?? []) as any[]);
@@ -148,12 +148,12 @@ export default function FinanceLiquiditaet() {
       const { data: rec } = await supabase.from('zoho_recurring_profiles' as any).select('amount, next_invoice_date, customer_name').gte('next_invoice_date', start).lte('next_invoice_date', end);
 
       // Ausgaben: Eingangsrechnungen
-      let inQ = supabase.from('finance_incoming_invoices' as any).select('amount_gross, due_date, supplier_name, tenant_id, status').eq('accounting_region', region).gte('due_date', start).lte('due_date', end).not('status', 'in', '("bezahlt","storniert","abgelehnt")');
+      let inQ = supabase.from('finance_incoming_invoices' as any).select('amount_gross, due_date, supplier_name, tenant_id, status').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).gte('due_date', start).lte('due_date', end).not('status', 'in', '("bezahlt","storniert","abgelehnt")');
       if (tenantFilter) inQ = inQ.eq('tenant_id', tenantFilter);
       const { data: incoming } = await inQ;
 
       // Geplante AfA (informativ)
-      const { data: assets } = await supabase.from('finance_assets' as any).select('acquisition_value, useful_life_months, depreciation_method, book_value, tenant_id').eq('accounting_region', region).eq('status', 'aktiv');
+      const { data: assets } = await supabase.from('finance_assets' as any).select('acquisition_value, useful_life_months, depreciation_method, book_value, tenant_id').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).eq('status', 'aktiv');
 
       const inserts: any[] = [];
       const monthKey = (d: string) => d.slice(0, 7) + '-01';

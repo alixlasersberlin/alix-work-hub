@@ -78,7 +78,7 @@ function CoaTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('finance_chart_of_accounts')
-      .select('*').eq('accounting_region', region)
+      .select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
       .order('account_number', { ascending: true }).limit(2000);
     if (error) toast.error(error.message); else setRows((data as any) || []);
     setLoading(false);
@@ -219,7 +219,7 @@ function CcTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: b
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('finance_cost_centers')
-      .select('*').eq('accounting_region', region).order('code');
+      .select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('code');
     if (error) toast.error(error.message); else setRows((data as any) || []);
     setLoading(false);
   };
@@ -302,7 +302,7 @@ function CuTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: b
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('finance_cost_units')
-      .select('*').eq('accounting_region', region).order('code');
+      .select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('code');
     if (error) toast.error(error.message); else setRows((data as any) || []);
     setLoading(false);
   };
@@ -377,7 +377,7 @@ function PerTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('finance_periods')
-      .select('*').eq('accounting_region', region).eq('fiscal_year', year)
+      .select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).eq('fiscal_year', year)
       .order('period_month');
     if (error) toast.error(error.message); else setRows((data as any) || []);
     setLoading(false);
@@ -460,7 +460,7 @@ function ObTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: b
   const load = async () => {
     setLoading(true);
     const { data, error } = await supabase.from('finance_opening_balances')
-      .select('*').eq('accounting_region', region).eq('fiscal_year', year).order('account_number');
+      .select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).eq('fiscal_year', year).order('account_number');
     if (error) toast.error(error.message); else setRows((data as any) || []);
     setLoading(false);
   };
@@ -570,7 +570,7 @@ function TaxTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
   const load = async () => {
     setLoading(true);
     const [{ data: c }, { data: w }] = await Promise.all([
-      supabase.from('finance_tax_codes' as any).select('*').eq('accounting_region', region).order('code'),
+      supabase.from('finance_tax_codes' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('code'),
       region === 'CH'
         ? supabase.from('finance_withholding_tax' as any).select('*').eq('accounting_region', 'CH').order('booking_date', { ascending: false }).limit(200)
         : Promise.resolve({ data: [] as any[] }),

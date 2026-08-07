@@ -32,8 +32,8 @@ export default function ChLastschriften() {
   const load = async () => {
     setLoading(true);
     const [m, r] = await Promise.all([
-      (supabase as any).from('finance_ch_dd_mandates').select('*, customer:customer_id(company_name, contact_name)').eq('accounting_region', region).order('created_at', { ascending: false }),
-      (supabase as any).from('finance_ch_dd_runs').select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(100),
+      (supabase as any).from('finance_ch_dd_mandates').select('*, customer:customer_id(company_name, contact_name)').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
+      (supabase as any).from('finance_ch_dd_runs').select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100),
     ]);
     setMandates(m.data ?? []); setRuns(r.data ?? []); setLoading(false);
   };

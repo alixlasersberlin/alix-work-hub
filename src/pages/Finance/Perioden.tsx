@@ -57,10 +57,10 @@ export default function Perioden() {
     const to = `${year}-12-31`;
     const [{ data: per, error: perErr }, { data: jour, error: jErr }] = await Promise.all([
       (supabase as any).from('finance_periods').select('*')
-        .eq('accounting_region', region).eq('fiscal_year', year).order('period_month'),
+        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).eq('fiscal_year', year).order('period_month'),
       (supabase as any).from('finance_journal')
         .select('booking_date, amount_net, amount_vat, amount_gross')
-        .eq('accounting_region', region).gte('booking_date', from).lte('booking_date', to),
+        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', from).lte('booking_date', to),
     ]);
     if (perErr) toast({ title: 'Fehler', description: perErr.message, variant: 'destructive' });
     if (jErr) toast({ title: 'Fehler', description: jErr.message, variant: 'destructive' });

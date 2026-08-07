@@ -45,7 +45,7 @@ export default function FinanceAnlagen() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_assets' as any).select('*').eq('accounting_region', region).order('acquisition_date', { ascending: false }).limit(1000);
+    let q = supabase.from('finance_assets' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('acquisition_date', { ascending: false }).limit(1000);
     if (catFilter !== 'alle') q = q.eq('category', catFilter);
     if (statusFilter !== 'alle') q = q.eq('status', statusFilter);
     const { data, error } = await q;

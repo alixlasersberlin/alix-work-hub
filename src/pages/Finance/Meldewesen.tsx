@@ -43,7 +43,7 @@ export default function FinanceMeldewesen() {
     setLoading(true);
     const [{ data: t }, { data: f }] = await Promise.all([
       supabase.from('tenants' as any).select('id,name,flag_emoji').eq('is_active', true).order('sort_order'),
-      supabase.from('finance_tax_filings' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }).limit(100),
+      supabase.from('finance_tax_filings' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100),
     ]);
     setTenants((t ?? []) as any);
     setFilings((f ?? []) as any);

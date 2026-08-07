@@ -27,8 +27,8 @@ export default function FinanceBilanz() {
       setLoading(true);
       const [a, ac, bl, ii] = await Promise.all([
         supabase.from('finance_assets').select('book_value, acquisition_value, status, acquisition_date').lte('acquisition_date', stichtag),
-        supabase.from('finance_accounts').select('current_balance, overdue_balance').eq('accounting_region', region),
-        supabase.from('finance_bank_lines').select('amount, value_date, statement_id').lte('value_date', stichtag).eq('accounting_region', region),
+        supabase.from('finance_accounts').select('current_balance, overdue_balance').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
+        supabase.from('finance_bank_lines').select('amount, value_date, statement_id').lte('value_date', stichtag).in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
         supabase.from('finance_incoming_invoices').select('amount_gross, paid_at, invoice_date').lte('invoice_date', stichtag),
       ]);
       setAssets(a.data ?? []);

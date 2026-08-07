@@ -34,7 +34,7 @@ export default function DatevExport() {
   async function downloadJournalCsv() {
     setBusy(true);
     try {
-      const { data, error } = await (supabase as any).from('finance_journal').select('*').eq('accounting_region', region).gte('booking_date', from).lte('booking_date', to).order('booking_date');
+      const { data, error } = await (supabase as any).from('finance_journal').select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', from).lte('booking_date', to).order('booking_date');
       if (error) throw error;
       const cols = ['journal_number','booking_date','source_module','vorgang','reference','order_number','invoice_number','amount_net','amount_vat','amount_gross','account','contra_account','description','status'];
       const head = cols.join(';');
