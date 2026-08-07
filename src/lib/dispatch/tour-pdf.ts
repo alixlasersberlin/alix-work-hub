@@ -1,4 +1,23 @@
 import jsPDF from 'jspdf';
+import tourBg from '@/assets/tour-vorlage.png.asset.json';
+
+/** Lädt die Alix-Vorlage einmalig als DataURL (für den PDF-Hintergrund). */
+let bgPromise: Promise<string | null> | null = null;
+export function loadTourBackground(): Promise<string | null> {
+  if (!bgPromise) {
+    bgPromise = fetch((tourBg as any).url)
+      .then((r) => r.blob())
+      .then((b) => new Promise<string>((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(String(fr.result));
+        fr.onerror = rej;
+        fr.readAsDataURL(b);
+      }))
+      .catch(() => null);
+  }
+  return bgPromise;
+}
+
 
 export type TourStopLike = {
   position?: number | null;
@@ -63,33 +82,22 @@ function header(doc: jsPDF, title: string, subtitle: string) {
   doc.setTextColor(20);
 }
 
-export function buildToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }[]) {
-  // A4 quer, alle Touren auf einer Seite (mehrspaltig, automatische Skalierung)
-  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
-  const PAGE_W = 297;
-  const PAGE_H = 210;
-  const M = 12;
-  const TOP = 30;
-  const BOTTOM = PAGE_H - 10;
+const PAGE_W = 210;
+const PAGE_H = 297;
+const LEFT = 28;   // Platz für den blauen Vorlagen-Balken links
+const RIGHT = 15;
+const TOP = 34;
+const BOTTOM = PAGE_H - 20;
+const CONTENT_W = PAGE_W - LEFT - RIGHT;
 
-  header(
-    doc,
-    entries.length === 1 ? 'Tourenplan' : `Tourenpläne (${entries.length})`,
-    `Erstellt am ${new Date().toLocaleString('de-DE')} · AlixWork Dispatch Center`,
-  );
+type Line = { text: string; size: number; muted?: boolean; indent?: number; h: number; bold?: boolean };
 
-  const cols = entries.length <= 1 ? 2 : entries.length <= 4 ? 3 : entries.length <= 8 ? 4 : 5;
-  const gap = 6;
-  const colW = (PAGE_W - 2 * M - gap * (cols - 1)) / cols;
-
-
-  // Blöcke aufbauen (Textzeilen je Tour) und dann auf Spalten verteilen
-  type Line = { text: string; size: number; muted?: boolean; indent?: number; h: number };
-  const blocks: Line[][] = entries.map(({ tour, stops }) => {
+function buildBlocks(entries: { tour: TourLike; stops: TourStopLike[] }[]): Line[][] {
+  return entries.map(({ tour, stops }) => {
     const lines: Line[] = [];
     lines.push({
       text: `Tour ${tour.tour_number ?? '—'}${tour.title ? ` · ${tour.title}` : ''}`,
-      size: 10, h: 5,
+      size: 12, h: 7, bold: true,
     });
     const info = [
       `Datum ${d(tour.tour_date)}`,
@@ -100,92 +108,104 @@ export function buildToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }
       tour.planned_drive_minutes ? `${tour.planned_drive_minutes} Min.` : null,
       tour.status ? String(tour.status) : null,
     ].filter(Boolean).join(' · ');
-    lines.push({ text: info, size: 7, muted: true, h: 4 });
+    lines.push({ text: info, size: 9, muted: true, h: 5.5 });
 
     const sorted = stops.slice().sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
-    lines.push({ text: `Stopps (${sorted.length})`, size: 7.5, h: 4.5 });
+    lines.push({ text: `Stopps (${sorted.length})`, size: 9.5, h: 6, bold: true });
     if (!sorted.length) {
-      lines.push({ text: 'Keine Stopps zugeordnet.', size: 7, muted: true, indent: 3, h: 4 });
+      lines.push({ text: 'Keine Stopps zugeordnet.', size: 9, muted: true, indent: 4, h: 5 });
     }
     sorted.forEach((s, i) => {
       const a = s.appointment ?? {};
       lines.push({
         text: `${s.position ?? i + 1}. ${a.order_number ?? 'Ohne Auftrag'} · ${a.company_name || a.customer_name || 'Ohne Kunde'}`,
-        size: 7.5, h: 3.8,
+        size: 9.5, h: 5,
       });
-      lines.push({ text: stopAddress(a), size: 6.5, muted: true, indent: 3, h: 3.4 });
+      lines.push({ text: stopAddress(a), size: 8.5, muted: true, indent: 4, h: 4.4 });
       const meta = [
         [a.device_name, a.serial_number].filter(Boolean).join(' · '),
         [a.contact_name, a.contact_phone].filter(Boolean).join(' · '),
         s.planned_arrival ? `Ankunft ${t(s.planned_arrival)}` : null,
         s.distance_from_prev_km != null ? `${s.distance_from_prev_km} km` : null,
       ].filter(Boolean).join(' · ');
-      if (meta) lines.push({ text: meta, size: 6.5, muted: true, indent: 3, h: 3.4 });
-      if (s.notes) lines.push({ text: String(s.notes), size: 6.5, muted: true, indent: 3, h: 3.4 });
+      if (meta) lines.push({ text: meta, size: 8.5, muted: true, indent: 4, h: 4.4 });
+      if (s.notes) lines.push({ text: String(s.notes), size: 8.5, muted: true, indent: 4, h: 4.4 });
     });
-    lines.push({ text: '', size: 6, h: 3 });
+    lines.push({ text: '', size: 8, h: 5 });
     return lines;
   });
+}
 
-  const all = blocks.flat();
-  const totalH = all.reduce((sum, l) => sum + l.h, 0);
-  const colH = BOTTOM - TOP;
-  // Alles muss auf EINE Seite: Skalierung so wählen, dass der Inhalt in die Spalten passt.
-  // Puffer 0.92, da Blöcke nicht exakt an Spaltengrenzen brechen.
-  let scale = Math.min(1, (colH * cols * 0.92) / Math.max(totalH, 1));
+/**
+ * A4 hochkant, Alix-Vorlage als Hintergrund auf JEDER Seite,
+ * Inhalt wird bei Bedarf über mehrere Seiten verteilt.
+ */
+export async function buildToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }[]) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+  const bg = await loadTourBackground();
 
-  const render = (s: number): boolean => {
-    let col = 0;
-    let y = TOP;
-    let overflow = false;
-    const draw = (l: Line) => {
-      const h = l.h * s;
-      if (y + h > BOTTOM) {
-        col += 1;
-        y = TOP;
-        if (col >= cols) { overflow = true; col = cols - 1; }
-      }
-      if (overflow) return;
-      const x = M + col * (colW + gap) + (l.indent ?? 0);
-      if (l.text) {
-        doc.setFontSize(Math.max(3.5, l.size * s));
-        doc.setTextColor(l.muted ? 110 : 20);
-        const wrapped = doc.splitTextToSize(l.text, colW - (l.indent ?? 0));
-        doc.text(wrapped[0] ?? '', x, y);
-      }
-      y += h;
-    };
-    blocks.forEach((b) => b.forEach(draw));
-    return !overflow;
+  const title = entries.length === 1 ? 'Tourenplan' : `Tourenpläne (${entries.length})`;
+  const subtitle = `Erstellt am ${new Date().toLocaleString('de-DE')} · AlixWork Dispatch Center`;
+
+  const paintPage = (first: boolean) => {
+    if (bg) {
+      try { doc.addImage(bg, 'PNG', 0, 0, PAGE_W, PAGE_H, undefined, 'FAST'); } catch { /* ignore */ }
+    }
+    doc.setFontSize(first ? 18 : 12);
+    doc.setTextColor(20);
+    doc.text(title, LEFT, first ? 22 : 20);
+    doc.setFontSize(9);
+    doc.setTextColor(110);
+    doc.text(subtitle, LEFT, first ? 28 : 25);
+    doc.setTextColor(20);
   };
 
-  // Bei Überlauf schrittweise weiter verkleinern, bis alles auf eine Seite passt.
-  for (let i = 0; i < 12; i++) {
-    // Test-Render auf Hilfsseite vermeiden: wir rendern direkt und leeren bei Bedarf.
-    const ok = render(scale);
-    if (ok) break;
-    doc.addPage('a4', 'landscape');
-    doc.deletePage(1);
+  paintPage(true);
+  let y = TOP;
 
-    header(
-      doc,
-      entries.length === 1 ? 'Tourenplan' : `Tourenpläne (${entries.length})`,
-      `Erstellt am ${new Date().toLocaleString('de-DE')} · AlixWork Dispatch Center`,
-    );
-    scale *= 0.85;
+  const blocks = buildBlocks(entries);
+  blocks.forEach((block) => {
+    block.forEach((l) => {
+      const wrapped = l.text
+        ? (doc.setFontSize(l.size), doc.splitTextToSize(l.text, CONTENT_W - (l.indent ?? 0)) as string[])
+        : [''];
+      wrapped.forEach((part, idx) => {
+        if (y + l.h > BOTTOM) {
+          doc.addPage('a4', 'portrait');
+          paintPage(false);
+          y = TOP;
+        }
+        if (part) {
+          doc.setFontSize(l.size);
+          doc.setTextColor(l.muted ? 110 : 20);
+          doc.text(part, LEFT + (l.indent ?? 0) + (idx > 0 ? 3 : 0), y);
+        }
+        y += l.h;
+      });
+    });
+  });
+
+  // Seitenzahlen
+  const pages = doc.getNumberOfPages();
+  for (let p = 1; p <= pages; p++) {
+    doc.setPage(p);
+    doc.setFontSize(8);
+    doc.setTextColor(130);
+    doc.text(`Seite ${p} / ${pages}`, PAGE_W - RIGHT, PAGE_H - 10, { align: 'right' });
   }
 
   doc.setTextColor(20);
   return doc;
 }
 
-export function downloadToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }[]) {
-  const doc = buildToursPdf(entries);
+export async function downloadToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }[]) {
+  const doc = await buildToursPdf(entries);
   const name = entries.length === 1
     ? `Tour_${entries[0].tour.tour_number ?? entries[0].tour.id}.pdf`
     : `Touren_${new Date().toISOString().slice(0, 10)}.pdf`;
   doc.save(name);
 }
+
 
 /* ---------- Speditionsversand ---------- */
 
