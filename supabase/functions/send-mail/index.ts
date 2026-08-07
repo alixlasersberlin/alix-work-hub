@@ -253,7 +253,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: (() => { const lp = String(from_email).split("@")[0]; return `Alix Lasers | ${lp.charAt(0).toUpperCase() + lp.slice(1)} <${from_email}>`; })(),
+        from: `Alix Lasers ® <${from_email}>`,
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         bcc: (() => {
           const list = Array.isArray(bcc) ? [...bcc] : (bcc ? [bcc] : []);

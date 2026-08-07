@@ -19,7 +19,7 @@ const corsHeaders = {
 
 const SITE_NAME = 'AlixWork'
 const ROOT_DOMAIN = 'alixwork.de'
-const FROM_ADDRESS = `AlixWork <noreply@notify.alixlasers.ai>`
+const FROM_ADDRESS = `Alix Lasers ® <noreply@notify.alixlasers.ai>`
 
 const EMAIL_SUBJECTS: Record<string, string> = {
   signup: 'AlixWork · E-Mail bestätigen',

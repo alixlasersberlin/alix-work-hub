@@ -68,7 +68,7 @@ export async function sendMail(to: string | string[], subject: string, html: str
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'Alix Portal <no-reply@alixwork.de>',
+      from: 'Alix Lasers ® <no-reply@alixwork.de>',
       to: recipients,
       bcc: ['rde@alix-lasers.com'],
       subject,

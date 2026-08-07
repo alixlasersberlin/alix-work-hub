@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Alix Einkauf <no-reply@alixwork.de>",
+        from: "Alix Lasers ® <no-reply@alixwork.de>",
         to: [to],
         bcc: [BCC],
         subject,

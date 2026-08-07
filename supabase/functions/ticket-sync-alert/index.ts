@@ -12,7 +12,7 @@ const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const ALERT_RECIPIENT = "rde@alix-lasers.com";
 const COOLDOWN_MINUTES = 30;
-const FROM_ADDRESS = "Alix Sync Alert <alerts@alixwork.de>";
+const FROM_ADDRESS = "Alix Lasers ® <alerts@alixwork.de>";
 
 type AlertGroup =
   | "sync_failed_streak"

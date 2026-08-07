@@ -38,7 +38,7 @@ function fmtWindow(a: any) {
   return a.promised_window || "wird noch mitgeteilt";
 }
 
-const MAIL_FROM = "Alix Tourenplanung <no-reply@alixwork.de>";
+const MAIL_FROM = "Alix Lasers ® <no-reply@alixwork.de>";
 
 async function sendMail(
   sb: any,
