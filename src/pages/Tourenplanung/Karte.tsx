@@ -123,6 +123,16 @@ export default function TourenKarte() {
     [tours, tech],
   );
 
+  const exportTours = (list: any[]) => {
+    if (!list.length) return;
+    downloadToursPdf(list.map((t: any) => ({
+      tour: t,
+      stops: (t.stops ?? []).slice().sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0)),
+    })));
+  };
+
+
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
