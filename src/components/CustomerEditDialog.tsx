@@ -49,6 +49,30 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
   });
 
   const [saving, setSaving] = useState(false);
+  const [sameAddress, setSameAddress] = useState(() => {
+    const b = [ba.address ?? ba.street ?? '', ba.zip ?? '', ba.city ?? '', ba.country ?? ''].join('|').trim();
+    const s = [sa.address ?? sa.street ?? '', sa.zip ?? '', sa.city ?? '', sa.country ?? ''].join('|').trim();
+    return b !== '|||' && b === s;
+  });
+
+  useEffect(() => {
+    if (!sameAddress) return;
+    setForm(f => (
+      f.shipping_street === f.billing_street &&
+      f.shipping_zip === f.billing_zip &&
+      f.shipping_city === f.billing_city &&
+      f.shipping_country === f.billing_country
+        ? f
+        : {
+            ...f,
+            shipping_street: f.billing_street,
+            shipping_zip: f.billing_zip,
+            shipping_city: f.billing_city,
+            shipping_country: f.billing_country,
+          }
+    ));
+  }, [sameAddress, form.billing_street, form.billing_zip, form.billing_city, form.billing_country]);
+
   const [tenants, setTenants] = useState<Array<{ id: string; name: string; flag_emoji: string | null; code: string }>>([]);
 
   useEffect(() => {
@@ -347,12 +371,34 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
 
           <h3 className="text-sm font-medium text-foreground pt-2">Lieferadresse</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">{renderField("Straße", "shipping_street")}</div>
-            {renderField("PLZ", "shipping_zip")}
-            {renderField("Stadt", "shipping_city")}
-            {renderField("Land", "shipping_country")}
-          </div>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+            <Checkbox
+              checked={sameAddress}
+              onCheckedChange={(v) => {
+                const checked = !!v;
+                setSameAddress(checked);
+                if (checked) {
+                  setForm(f => ({
+                    ...f,
+                    shipping_street: f.billing_street,
+                    shipping_zip: f.billing_zip,
+                    shipping_city: f.billing_city,
+                    shipping_country: f.billing_country,
+                  }));
+                }
+              }}
+            />
+            Rechnungsanschrift ist gleich Lieferanschrift
+          </label>
+          <fieldset disabled={sameAddress} className={sameAddress ? 'opacity-60' : undefined}>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">{renderField("Straße", "shipping_street")}</div>
+              {renderField("PLZ", "shipping_zip")}
+              {renderField("Stadt", "shipping_city")}
+              {renderField("Land", "shipping_country")}
+            </div>
+          </fieldset>
+
 
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
