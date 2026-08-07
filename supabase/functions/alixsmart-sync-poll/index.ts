@@ -196,7 +196,7 @@ async function runEntity(supabase: any, entity: Entity, trigger: string, full = 
           device_model: item.model ?? item.device_model ?? null,
           device_name: item.device_name ?? item.model ?? null,
           alixsmart_device_id: String(item.id ?? ""),
-          registration_status: registered ? "registered" : (item.status ?? "unregistered"),
+          registration_status: registered ? "registered" : (item.status === "possible" ? "possible" : "unregistered"),
           registered_at: registered ? (item.registered_at ?? item.commissioning_date ?? null) : null,
           last_checked_at: nowIso,
         };
