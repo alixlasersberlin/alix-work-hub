@@ -21,7 +21,11 @@ type Row = {
   amount?: number | null;
   currency?: string | null;
   href?: string | null;
+  zohoInvoiceId?: string | null;
+  sourceSystem?: string | null;
+  docId?: string | null;
 };
+
 
 const KIND_META: Record<Kind, { label: string; icon: any; className: string }> = {
   beleg: { label: 'Beleg', icon: FileText, className: 'bg-muted text-muted-foreground' },
