@@ -252,7 +252,7 @@ Deno.serve(async (req) => {
     const { data: stopRows, error: stopErr } = await admin
       .from("delivery_tour_stops")
       .select(
-        "id, appointment_id, position, delivery_appointments:appointment_id(id, customer_name, company_name, delivery_street, delivery_zip, delivery_city, delivery_country, delivery_lat, delivery_lng, duration_minutes, is_vip, priority, time_window_start, time_window_end)",
+        "id, appointment_id, position, delivery_appointments:appointment_id(id, customer_name, company_name, customer_id, billing_address, delivery_street, delivery_zip, delivery_city, delivery_country, delivery_lat, delivery_lng, duration_minutes, is_vip, priority, time_window_start, time_window_end)",
       )
       .eq("tour_id", tourId)
       .order("position", { ascending: true });
@@ -266,14 +266,37 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Rechnungsadressen der Kunden als Fallback laden
+    const customerIds = [
+      ...new Set(rows.map((r: any) => r.delivery_appointments?.customer_id).filter(Boolean)),
+    ];
+    const billingByCustomer = new Map<string, any>();
+    if (customerIds.length > 0) {
+      const { data: custRows } = await admin
+        .from("customers")
+        .select("id, billing_address, shipping_address")
+        .in("id", customerIds);
+      for (const c of custRows ?? []) {
+        billingByCustomer.set((c as any).id, c);
+      }
+    }
+
     const startAddress = body?.start_address || tour.custom_start_address || DEFAULT_START;
     const startCoords =
       startAddress === DEFAULT_START ? DEFAULT_START_COORDS : (await geocode(startAddress)) ?? DEFAULT_START_COORDS;
 
     const stops: StopInput[] = [];
+    const fallbackUsed: string[] = [];
     for (const r of rows) {
       const a: any = (r as any).delivery_appointments;
-      const address = usableAddress(a);
+      const delivery = usableAddress(a);
+      const cust = a?.customer_id ? billingByCustomer.get(a.customer_id) : null;
+      const billing =
+        billingAddress(a?.billing_address) ??
+        billingAddress(cust?.billing_address) ??
+        billingAddress(cust?.shipping_address);
+      const address = delivery ?? billing;
+      const usedFallback = !delivery && !!billing;
       let coords: [number, number] | null =
         a?.delivery_lat != null && a?.delivery_lng != null ? [Number(a.delivery_lng), Number(a.delivery_lat)] : null;
       // Ohne belastbare Adresse sind gespeicherte Koordinaten oft ein Länder-Mittelpunkt → verwerfen.
@@ -291,10 +314,12 @@ Deno.serve(async (req) => {
             .eq("id", a.id);
         }
       }
+      const label = a?.company_name || a?.customer_name || address || "Ohne Adresse";
+      if (usedFallback && coords) fallbackUsed.push(label);
       stops.push({
         id: (r as any).id,
         appointment_id: (r as any).appointment_id,
-        label: a?.company_name || a?.customer_name || address || "Ohne Adresse",
+        label,
         coords,
         duration_minutes: Number(a?.duration_minutes) || 60,
         is_vip: !!a?.is_vip,
@@ -303,6 +328,7 @@ Deno.serve(async (req) => {
         window_end: a?.time_window_end ?? null,
       });
     }
+
 
     // Stopps ohne Koordinaten dürfen keine Kilometer/Zeiten aus einer alten Berechnung behalten.
     for (const s of stops.filter((x) => !x.coords)) {
