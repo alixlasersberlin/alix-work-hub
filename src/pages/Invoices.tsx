@@ -177,7 +177,7 @@ const ROWS_CACHE_TTL = 60_000;
 
 export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const { roles } = useAuth();
-  const { region } = useAccountingRegion();
+  const { region, setRegion } = useAccountingRegion();
 
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const isAdmin = roles.includes('Admin') || isSuperAdmin;
