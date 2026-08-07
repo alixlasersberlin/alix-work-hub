@@ -241,7 +241,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
       includeUnpaid && !mietkaufOnly
         ? (supabase.from('zoho_unpaid_invoices') as any)
-            .select('id, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status')
+            .select('id, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw')
             .order('invoice_date', { ascending: false })
             .limit(10000)
         : Promise.resolve({ data: [], error: null } as any),
