@@ -13,6 +13,8 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
 import { OrderQuickViewDialog } from '@/components/dispatch/OrderQuickViewDialog';
 import { DELIVERY_STATUS_LABELS, DELIVERY_TYPE_LABELS, READINESS_LABELS, readinessClass, statusClass } from './constants';
 
