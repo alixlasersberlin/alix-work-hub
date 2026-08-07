@@ -139,6 +139,15 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
     setPaymentStatus('Offen');
     setNotes('');
     setTaxRate(order?.source_system === 'zoho_eu_2' ? 20 : 19);
+    setRecipientEmail(
+      customer?.email ||
+      order?.customer_email ||
+      order?.raw_data?.email ||
+      customer?.raw_data?.email ||
+      ''
+    );
+    setSendEmail(true);
+
 
     const source = Array.isArray(items) && items.length > 0
       ? items.map((it) => ({
