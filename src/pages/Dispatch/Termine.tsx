@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { OrderQuickViewDialog } from '@/components/dispatch/OrderQuickViewDialog';
 import { DELIVERY_STATUS_LABELS, DELIVERY_TYPE_LABELS, READINESS_LABELS, readinessClass, statusClass } from './constants';
 
 export default function DispatchTermine() {
@@ -23,6 +24,7 @@ export default function DispatchTermine() {
   const [readiness, setReadiness] = useState('alle');
   const [historyFor, setHistoryFor] = useState<{ id: string; label: string } | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [orderPreview, setOrderPreview] = useState<string | null>(null);
 
   const { data, isPending } = useQuery({
     queryKey: ['dispatch', 'appointments', status, readiness],
@@ -154,7 +156,17 @@ export default function DispatchTermine() {
                   {r.planned_date ? format(new Date(r.planned_date), 'dd.MM.yyyy') : <span className="text-muted-foreground">offen</span>}
                   {r.time_window_start && <span className="text-muted-foreground ml-2 text-xs">{r.time_window_start.slice(0, 5)}–{(r.time_window_end ?? '').slice(0, 5)}</span>}
                 </TableCell>
-                <TableCell className="font-medium">{r.order_number ?? '—'}</TableCell>
+                <TableCell className="font-medium">
+                  {r.order_number ? (
+                    <button
+                      type="button"
+                      className="text-primary underline underline-offset-2 hover:opacity-80"
+                      onClick={() => setOrderPreview(r.order_number)}
+                    >
+                      {r.order_number}
+                    </button>
+                  ) : '—'}
+                </TableCell>
                 <TableCell>
                   {r.is_vip && <span className="mr-1">👑</span>}
                   {r.company_name || r.customer_name || '—'}
@@ -217,6 +229,8 @@ export default function DispatchTermine() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <OrderQuickViewDialog orderNumber={orderPreview} onOpenChange={v => { if (!v) setOrderPreview(null); }} />
     </div>
   );
 }
