@@ -488,19 +488,15 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
 
               {status === 'sent' && (
                 <div className="rounded-lg border border-border bg-secondary/40 p-3 space-y-2">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} />
-                    Rechnung direkt per E-Mail an den Kunden senden
-                  </label>
-                  {sendEmail && (
-                    <div>
-                      <Label className="text-xs">E-Mail Kunde</Label>
-                      <Input type="email" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} placeholder="kunde@example.com" className="mt-1 bg-secondary border-border" />
-                      <p className="text-[11px] text-muted-foreground mt-1">Kopie (BCC) geht automatisch an k.trinh@alix-operation.de</p>
-                    </div>
-                  )}
+                  <p className="text-sm">Die Rechnung wird nach dem Festschreiben <strong>automatisch per E-Mail</strong> an den Kunden versendet.</p>
+                  <div>
+                    <Label className="text-xs">E-Mail Kunde</Label>
+                    <Input type="email" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} placeholder="kunde@example.com" className="mt-1 bg-secondary border-border" />
+                    <p className="text-[11px] text-muted-foreground mt-1">Kopie (BCC) geht automatisch an k.trinh@alix-operation.de</p>
+                  </div>
                 </div>
               )}
+
 
 
 
