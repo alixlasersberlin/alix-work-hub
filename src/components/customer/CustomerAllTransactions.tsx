@@ -259,7 +259,7 @@ export default function CustomerAllTransactions({
         <div className="mt-2 text-xs text-muted-foreground">{filtered.length} Einträge</div>
       </div>
 
-      {groups.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-8">
           <EmptyState icon={Layers} title="Keine Vorgänge" description="Für diesen Kunden liegen keine Vorgänge vor." />
         </div>
@@ -274,14 +274,16 @@ export default function CustomerAllTransactions({
                 <button
                   type="button"
                   onClick={() => toggle(k)}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary/30 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary/30 transition-colors text-left"
                 >
                   <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`} />
-                  <span className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ${meta.className}`}>
-                    <Icon className="w-3.5 h-3.5" /> {meta.label}
+                  <Icon className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-base font-semibold">{PLURAL[k]}</span>
+                  <span className={`ml-auto inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${meta.className}`}>
+                    {items.length}
                   </span>
-                  <span className="text-sm font-medium">{items.length} Einträge</span>
                 </button>
+
                 {isOpen && (
                   <table className="w-full text-sm border-t border-border">
                     <thead className="bg-secondary/50 text-muted-foreground">
