@@ -210,16 +210,17 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       (order as any)?.raw_data?.email ||
       '';
     if (String(fallback).includes('@')) return String(fallback).trim();
-    const zohoId = (order as any)?.zoho_customer_id ?? (customer as any)?.zoho_customer_id ?? null;
-    if (zohoId) {
+    const custId = (customer as any)?.id ?? (order as any)?.customer_id ?? null;
+    if (custId) {
       const { data } = await supabase
         .from('customers')
         .select('email')
-        .eq('zoho_customer_id', zohoId)
+        .eq('id', custId)
         .limit(1);
       const mail = (data ?? [])[0]?.email;
       if (mail && String(mail).includes('@')) return String(mail).trim();
     }
+
     return null;
   };
 
