@@ -491,6 +491,25 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     return sorted;
   }, [rows, search, statusFilter, docStatusFilter, listSort]);
 
+  // Regionsübergreifende Fallback-Suche: findet Rechnungen aus anderer Region / Mietkauf-Ansicht
+  const [globalHits, setGlobalHits] = useState<any[]>([]);
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 3 || flatRows.length > 0) { setGlobalHits([]); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      const like = `%${q}%`;
+      const { data } = await (supabase.from('zoho_invoices') as any)
+        .select('id, invoice_number, customer_name, invoice_date, total, balance, status, accounting_region, is_mietkauf, reference_number')
+        .or(`invoice_number.ilike.${like},customer_name.ilike.${like},reference_number.ilike.${like}`)
+        .limit(25);
+      if (!cancelled) setGlobalHits(data ?? []);
+    }, 350);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [search, flatRows.length]);
+
+
+
 
   const handleMove = async (r: Row) => {
     if (!isAdmin || r.source !== 'invoice') return;
