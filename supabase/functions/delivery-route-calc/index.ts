@@ -5,8 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const DEFAULT_START = "Buchbaumweg 53, 12357 Berlin, Germany";
-const DEFAULT_START_COORDS: [number, number] = [13.4561, 52.4231];
+const DEFAULT_START = "Zeppelinstraße 3, 12529 Schönefeld, Germany";
+const DEFAULT_START_COORDS: [number, number] = [13.5236, 52.3705];
 const ORS_BASE = "https://api.openrouteservice.org";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
