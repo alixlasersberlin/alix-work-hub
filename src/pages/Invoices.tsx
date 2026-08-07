@@ -296,15 +296,29 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             is_mietkauf: false,
           } as Row;
         });
-      const merged: Row[] = [
+      const mergedRaw: Row[] = [
         ...(inv.data ?? []).map((r: any) => ({ ...r, source: 'invoice' as const })),
         ...(rec.data ?? [])
           .filter((r: any) => (region === 'CH' ? isChCurrency(r.currency) : !isChCurrency(r.currency)))
           .map((r: any) => ({ ...r, source: 'recurring' as const })),
         ...unpaidRows,
       ];
+      // Quellenübergreifende Deduplizierung: gleiche Rechnungsnummer nur einmal.
+      // Priorität: invoice (regulärer Sync) > recurring > unpaid
+      const prio: Record<string, number> = { invoice: 0, recurring: 1, unpaid: 2 };
+      const byNumber = new Map<string, Row>();
+      const merged: Row[] = [];
+      for (const r of mergedRaw) {
+        const key = (r.invoice_number ?? '').trim().toLowerCase();
+        if (!key) { merged.push(r); continue; }
+        const existing = byNumber.get(key);
+        if (!existing) { byNumber.set(key, r); continue; }
+        if (prio[r.source] < prio[existing.source]) byNumber.set(key, r);
+      }
+      merged.push(...byNumber.values());
       ROWS_CACHE.set(cacheKey, { ts: Date.now(), rows: merged });
       setRows(merged);
+
     }
 
     setLoading(false);
