@@ -63,85 +63,94 @@ function header(doc: jsPDF, title: string, subtitle: string) {
   doc.setTextColor(20);
 }
 
-function renderTour(doc: jsPDF, tour: TourLike, stops: TourStopLike[], startY: number) {
-  let y = startY;
-  const line = (label: string, value: string) => {
-    doc.setFontSize(10);
-    doc.setTextColor(110);
-    doc.text(label, 20, y);
-    doc.setTextColor(20);
-    doc.text(value, 60, y);
-    y += 5.5;
-  };
+export function buildToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }[]) {
+  // A4 quer, alle Touren auf einer Seite (mehrspaltig, automatische Skalierung)
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' });
+  const PAGE_W = 297;
+  const PAGE_H = 210;
+  const M = 12;
+  const TOP = 30;
+  const BOTTOM = PAGE_H - 10;
 
-  doc.setFontSize(13);
-  doc.text(`Tour ${tour.tour_number ?? '—'}${tour.title ? ` · ${tour.title}` : ''}`, 20, y);
-  y += 7;
+  header(
+    doc,
+    entries.length === 1 ? 'Tourenplan' : `Tourenpläne (${entries.length})`,
+    `Erstellt am ${new Date().toLocaleString('de-DE')} · AlixWork Dispatch Center`,
+  );
 
-  line('Datum', d(tour.tour_date));
-  line('Start', tour.planned_start_time ? String(tour.planned_start_time).slice(0, 5) + ' Uhr' : '—');
-  line('Fahrer', tour.drivers?.full_name ?? '—');
-  line('Fahrzeug', tour.vehicles?.license_plate ?? '—');
-  line('Strecke', tour.planned_distance_km != null ? `${tour.planned_distance_km} km` : '—');
-  line('Fahrzeit', tour.planned_drive_minutes ? `${tour.planned_drive_minutes} Min.` : '—');
-  line('Status', String(tour.status ?? '—'));
-  y += 3;
+  const cols = entries.length <= 1 ? 2 : entries.length <= 4 ? 3 : 4;
+  const gap = 6;
+  const colW = (PAGE_W - 2 * M - gap * (cols - 1)) / cols;
 
-  doc.setFontSize(11);
-  doc.text(`Aufträge / Stopps (${stops.length})`, 20, y);
-  y += 6;
+  // Blöcke aufbauen (Textzeilen je Tour) und dann auf Spalten verteilen
+  type Line = { text: string; size: number; muted?: boolean; indent?: number; h: number };
+  const blocks: Line[][] = entries.map(({ tour, stops }) => {
+    const lines: Line[] = [];
+    lines.push({
+      text: `Tour ${tour.tour_number ?? '—'}${tour.title ? ` · ${tour.title}` : ''}`,
+      size: 10, h: 5,
+    });
+    const info = [
+      `Datum ${d(tour.tour_date)}`,
+      tour.planned_start_time ? `Start ${String(tour.planned_start_time).slice(0, 5)}` : null,
+      tour.drivers?.full_name ? `Fahrer ${tour.drivers.full_name}` : null,
+      tour.vehicles?.license_plate ?? null,
+      tour.planned_distance_km != null ? `${tour.planned_distance_km} km` : null,
+      tour.planned_drive_minutes ? `${tour.planned_drive_minutes} Min.` : null,
+      tour.status ? String(tour.status) : null,
+    ].filter(Boolean).join(' · ');
+    lines.push({ text: info, size: 7, muted: true, h: 4 });
 
-  if (!stops.length) {
-    doc.setFontSize(10);
-    doc.setTextColor(110);
-    doc.text('Keine Stopps zugeordnet.', 20, y);
-    doc.setTextColor(20);
-    return y + 8;
-  }
-
-  stops
-    .slice()
-    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-    .forEach((s, i) => {
-      if (y > 265) { doc.addPage(); y = 20; }
+    const sorted = stops.slice().sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+    lines.push({ text: `Stopps (${sorted.length})`, size: 7.5, h: 4.5 });
+    if (!sorted.length) {
+      lines.push({ text: 'Keine Stopps zugeordnet.', size: 7, muted: true, indent: 3, h: 4 });
+    }
+    sorted.forEach((s, i) => {
       const a = s.appointment ?? {};
-      doc.setFontSize(10);
-      doc.text(
-        `${s.position ?? i + 1}. ${a.order_number ?? 'Ohne Auftrag'} · ${a.company_name || a.customer_name || 'Ohne Kunde'}`,
-        20, y,
-      );
-      y += 5;
-      doc.setTextColor(110);
-      doc.setFontSize(9);
-      doc.text(stopAddress(a), 25, y);
-      y += 4.5;
+      lines.push({
+        text: `${s.position ?? i + 1}. ${a.order_number ?? 'Ohne Auftrag'} · ${a.company_name || a.customer_name || 'Ohne Kunde'}`,
+        size: 7.5, h: 3.8,
+      });
+      lines.push({ text: stopAddress(a), size: 6.5, muted: true, indent: 3, h: 3.4 });
       const meta = [
         [a.device_name, a.serial_number].filter(Boolean).join(' · '),
         [a.contact_name, a.contact_phone].filter(Boolean).join(' · '),
         s.planned_arrival ? `Ankunft ${t(s.planned_arrival)}` : null,
         s.distance_from_prev_km != null ? `${s.distance_from_prev_km} km` : null,
       ].filter(Boolean).join(' · ');
-      if (meta) { doc.text(meta, 25, y); y += 4.5; }
-      if (s.notes) { doc.text(String(s.notes).slice(0, 120), 25, y); y += 4.5; }
-      doc.setTextColor(20);
-      y += 2;
+      if (meta) lines.push({ text: meta, size: 6.5, muted: true, indent: 3, h: 3.4 });
+      if (s.notes) lines.push({ text: String(s.notes), size: 6.5, muted: true, indent: 3, h: 3.4 });
     });
-
-  return y + 6;
-}
-
-export function buildToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }[]) {
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  header(
-    doc,
-    entries.length === 1 ? 'Tourenplan' : `Tourenpläne (${entries.length})`,
-    `Erstellt am ${new Date().toLocaleString('de-DE')} · AlixWork Dispatch Center`,
-  );
-  let y = 38;
-  entries.forEach((e, idx) => {
-    if (idx > 0) { doc.addPage(); y = 20; }
-    y = renderTour(doc, e.tour, e.stops, y);
+    lines.push({ text: '', size: 6, h: 3 });
+    return lines;
   });
+
+  const all = blocks.flat();
+  const totalH = all.reduce((sum, l) => sum + l.h, 0);
+  const available = (BOTTOM - TOP) * cols;
+  const scale = totalH > available ? Math.max(0.55, available / totalH) : 1;
+
+  let col = 0;
+  let y = TOP;
+  const draw = (l: Line) => {
+    const h = l.h * scale;
+    if (y + h > BOTTOM) {
+      col += 1;
+      y = TOP;
+      if (col >= cols) { doc.addPage(); col = 0; }
+    }
+    const x = M + col * (colW + gap) + (l.indent ?? 0);
+    if (l.text) {
+      doc.setFontSize(l.size * scale);
+      doc.setTextColor(l.muted ? 110 : 20);
+      const wrapped = doc.splitTextToSize(l.text, colW - (l.indent ?? 0));
+      doc.text(wrapped[0] ?? '', x, y);
+    }
+    y += h;
+  };
+  blocks.forEach((b) => b.forEach(draw));
+  doc.setTextColor(20);
   return doc;
 }
 
