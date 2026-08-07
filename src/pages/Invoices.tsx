@@ -248,16 +248,27 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const refetchRows = async (cacheKey: string, showError: boolean) => {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
     const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
+    // PostgREST liefert max. 1000 Zeilen je Request -> seitenweise laden
+    const fetchAllPages = async (build: () => any, page = 1000, max = 20000) => {
+      const out: any[] = [];
+      for (let from = 0; from < max; from += page) {
+        const { data, error } = await build().range(from, from + page - 1);
+        if (error) return { data: out, error };
+        out.push(...(data ?? []));
+        if (!data || data.length < page) break;
+      }
+      return { data: out, error: null };
+    };
     const [inv, rec, unp] = await Promise.all([
-      (supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
-      (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
+      fetchAllPages(() => (supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false })),
+      fetchAllPages(() => (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false })),
       includeUnpaid && !mietkaufOnly
-        ? (supabase.from('zoho_unpaid_invoices') as any)
+        ? fetchAllPages(() => (supabase.from('zoho_unpaid_invoices') as any)
             .select('id, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw')
-            .order('invoice_date', { ascending: false })
-            .limit(10000)
+            .order('invoice_date', { ascending: false }))
         : Promise.resolve({ data: [], error: null } as any),
     ]);
+
     if (inv.error || rec.error) {
       if (showError) {
         setError(inv.error?.message || rec.error?.message || 'Fehler beim Laden');
@@ -271,7 +282,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       ]);
       const unpaidRows: Row[] = (unp?.data ?? [])
         .filter((r: any) => !knownNumbers.has(String(r.invoice_number ?? '')))
-        .filter((r: any) => (region === 'CH' ? isChCurrency(r.currency_code) : !isChCurrency(r.currency_code)))
+        .filter((r: any) => (String(region) === 'ALL' ? true : region === 'CH' ? isChCurrency(r.currency_code) : !isChCurrency(r.currency_code)))
         .map((r: any) => {
           const st = String(r.status ?? '').toLowerCase();
           const paymentStatus = st === 'overdue' ? 'Überfällig' : st === 'partially_paid' ? 'Teilweise bezahlt' : 'Offen';
@@ -299,7 +310,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       const mergedRaw: Row[] = [
         ...(inv.data ?? []).map((r: any) => ({ ...r, source: 'invoice' as const })),
         ...(rec.data ?? [])
-          .filter((r: any) => (region === 'CH' ? isChCurrency(r.currency) : !isChCurrency(r.currency)))
+          .filter((r: any) => (String(region) === 'ALL' ? true : region === 'CH' ? isChCurrency(r.currency) : !isChCurrency(r.currency)))
           .map((r: any) => ({ ...r, source: 'recurring' as const })),
         ...unpaidRows,
       ];
