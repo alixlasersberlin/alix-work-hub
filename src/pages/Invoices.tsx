@@ -499,13 +499,23 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
     const sorted = [...res].sort((a, b) => {
+      if (viewMode === 'oldest') {
+        // Älteste Rechnungen zuerst
+        return String(a.invoice_date ?? '9999').localeCompare(String(b.invoice_date ?? '9999'));
+      }
       if (listSort === 'number') {
         return String(b.invoice_number ?? '').localeCompare(String(a.invoice_number ?? ''), 'de', { numeric: true });
       }
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [rows, search, statusFilter, docStatusFilter, listSort]);
+  }, [rows, search, statusFilter, docStatusFilter, listSort, viewMode]);
+
+  // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst
+  const displayAccounts = useMemo<Account[]>(() => {
+    if (viewMode !== 'highest') return accounts;
+    return [...accounts].sort((a, b) => b.totalAmount - a.totalAmount);
+  }, [accounts, viewMode]);
 
   // Regionsübergreifende Fallback-Suche: findet Rechnungen aus anderer Region / Mietkauf-Ansicht
   const [globalHits, setGlobalHits] = useState<any[]>([]);
