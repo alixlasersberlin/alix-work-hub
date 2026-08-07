@@ -13,6 +13,8 @@ import FinanceAccountTab from '@/components/finance/FinanceAccountTab';
 import PortalAccessTab from '@/components/customer/PortalAccessTab';
 import AlixDocsPanel from '@/components/alixdocs/AlixDocsPanel';
 import CustomerSocialMediaTab from '@/components/customer/CustomerSocialMediaTab';
+import CustomerAllTransactions from '@/components/customer/CustomerAllTransactions';
+
 import CustomerReturnDebits, { PaymentRiskWarning } from '@/components/finance/CustomerReturnDebits';
 import { withAt } from '@/lib/atSuffix';
 
@@ -111,12 +113,22 @@ export default function CustomerDetail() {
       <Tabs value={tab} onValueChange={(v) => { setTab(v); if (v === 'social') ensureRawData(); }} className="w-full">
         <TabsList>
           <TabsTrigger value="overview">Übersicht</TabsTrigger>
+          <TabsTrigger value="vorgaenge">Alle Vorgänge</TabsTrigger>
           <TabsTrigger value="communication">Kommunikation</TabsTrigger>
           <TabsTrigger value="finance">Finanzakte</TabsTrigger>
           <TabsTrigger value="portal">Kundenportal</TabsTrigger>
           <TabsTrigger value="alixdocs">AlixDocs</TabsTrigger>
           <TabsTrigger value="social">Social Media</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="vorgaenge" className="mt-4">
+          <CustomerAllTransactions
+            customerId={customer.id}
+            externalCustomerId={customer.external_customer_id}
+            customerName={customer.company_name || customer.contact_name}
+          />
+        </TabsContent>
+
 
         <TabsContent value="overview" className="mt-4">
           <div className="grid gap-6 lg:grid-cols-2">
