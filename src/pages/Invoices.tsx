@@ -410,7 +410,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const accounts = useMemo<Account[]>(() => {
     let res = rows;
     if (statusFilter !== 'all') {
-      res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
+      res = res.filter((r) => matchesPayStatus(r, statusFilter));
     }
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
@@ -464,7 +464,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const flatRows = useMemo<Row[]>(() => {
     let res = rows;
     if (statusFilter !== 'all') {
-      res = res.filter((r) => (r.payment_status ?? '').toLowerCase() === statusFilter.toLowerCase());
+      res = res.filter((r) => matchesPayStatus(r, statusFilter));
     }
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
     res = res.filter((r) => matchesQuery(r, search));
@@ -1284,7 +1284,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             <SelectContent>
               <SelectItem value="all">Alle</SelectItem>
               <SelectItem value="Bezahlt">Bezahlt</SelectItem>
-              <SelectItem value="Offen">Unbezahlt / Offen</SelectItem>
+              <SelectItem value="Offen">Unbezahlt / Offen (inkl. teilweise)</SelectItem>
               <SelectItem value="Überfällig">Überfällig</SelectItem>
               <SelectItem value="Teilweise bezahlt">Teilweise bezahlt</SelectItem>
             </SelectContent>
