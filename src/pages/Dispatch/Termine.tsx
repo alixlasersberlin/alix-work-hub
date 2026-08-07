@@ -154,7 +154,17 @@ export default function DispatchTermine() {
                   {r.planned_date ? format(new Date(r.planned_date), 'dd.MM.yyyy') : <span className="text-muted-foreground">offen</span>}
                   {r.time_window_start && <span className="text-muted-foreground ml-2 text-xs">{r.time_window_start.slice(0, 5)}–{(r.time_window_end ?? '').slice(0, 5)}</span>}
                 </TableCell>
-                <TableCell className="font-medium">{r.order_number ?? '—'}</TableCell>
+                <TableCell className="font-medium">
+                  {r.order_number ? (
+                    <button
+                      type="button"
+                      className="text-primary underline underline-offset-2 hover:opacity-80"
+                      onClick={() => setOrderPreview(r.order_number)}
+                    >
+                      {r.order_number}
+                    </button>
+                  ) : '—'}
+                </TableCell>
                 <TableCell>
                   {r.is_vip && <span className="mr-1">👑</span>}
                   {r.company_name || r.customer_name || '—'}
