@@ -55,8 +55,13 @@ function entityUrl(entity: Entity, limit: number, offset: number): URL {
 }
 
 function extractItems(payload: any): any[] {
-  if (Array.isArray(payload)) return payload;
-  return payload?.items ?? payload?.data ?? payload?.rows ?? payload?.records ?? [];
+  const raw: any[] = Array.isArray(payload)
+    ? payload
+    : (payload?.rows ?? payload?.items ?? payload?.data ?? payload?.records ?? []);
+  // Export-Format: { rows: [{ source_id, source_table, updated_at, payload: {...} }] }
+  return raw.map((r: any) => (r && typeof r === "object" && r.payload && typeof r.payload === "object"
+    ? { ...r.payload, updated_at: r.updated_at ?? r.payload.updated_at }
+    : r));
 }
 
 /** Ruft die Export-Funktion seitenweise ab (limit max. 100) und filtert lokal nach `since`. */
