@@ -108,6 +108,9 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [notes, setNotes] = useState('');
   const [taxRate, setTaxRate] = useState(19);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const [sendEmail, setSendEmail] = useState(true);
+  const [recipientEmail, setRecipientEmail] = useState('');
+
 
   const openDialog = useCallback(async () => {
     if (disabled || createdId || existingInvoice) return;
@@ -136,6 +139,15 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
     setPaymentStatus('Offen');
     setNotes('');
     setTaxRate(order?.source_system === 'zoho_eu_2' ? 20 : 19);
+    setRecipientEmail(
+      customer?.email ||
+      order?.customer_email ||
+      order?.raw_data?.email ||
+      customer?.raw_data?.email ||
+      ''
+    );
+    setSendEmail(true);
+
 
     const source = Array.isArray(items) && items.length > 0
       ? items.map((it) => ({
@@ -188,7 +200,56 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const addItem = () => setLineItems((prev) => [...prev, { name: '', description: '', quantity: 1, rate: 0 }]);
   const removeItem = (idx: number) => setLineItems((prev) => prev.filter((_, i) => i !== idx));
 
+  const sendInvoiceEmail = async () => {
+    const rows = lineItems.map((it) => `
+      <tr>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee">${it.name}${it.description ? `<br><span style="color:#666;font-size:12px">${it.description}</span>` : ''}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${it.quantity}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${fmt(Number(it.rate) || 0)} ${currency}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${fmt((Number(it.quantity) || 0) * (Number(it.rate) || 0))} ${currency}</td>
+      </tr>`).join('');
+
+    const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#111">
+      <p>Guten Tag ${customerName || ''},</p>
+      <p>anbei erhalten Sie Ihre Rechnung <strong>${invoiceNumber}</strong> vom ${new Date(invoiceDate).toLocaleDateString('de-DE')}.</p>
+      <table style="border-collapse:collapse;width:100%;margin:16px 0">
+        <thead><tr>
+          <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333">Position</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #333">Menge</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #333">Preis</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #333">Betrag</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="margin:0">Zwischensumme: ${fmt(subtotal)} ${currency}<br>
+      USt. (${taxRate}%): ${fmt(taxAmount)} ${currency}<br>
+      <strong>Gesamt: ${fmt(total)} ${currency}</strong></p>
+      <p>Zahlbar bis zum ${new Date(dueDate).toLocaleDateString('de-DE')}.</p>
+      ${notes ? `<p>${notes}</p>` : ''}
+      <p>Mit freundlichen Grüßen<br>Alix Lasers</p>
+    </div>`;
+
+    try {
+      const { error: mailErr } = await supabase.functions.invoke('send-invoice-mail', {
+        body: {
+          to_email: recipientEmail.trim(),
+          to_name: customerName || undefined,
+          subject: `Rechnung ${invoiceNumber}`,
+          body_text: `Ihre Rechnung ${invoiceNumber} über ${fmt(total)} ${currency}, zahlbar bis ${new Date(dueDate).toLocaleDateString('de-DE')}.`,
+          body_html: html,
+          bcc: ['k.trinh@alix-operation.de'],
+          invoice_number: invoiceNumber,
+        },
+      });
+      if (mailErr) throw mailErr;
+      toast.success(`Rechnung per E-Mail an ${recipientEmail.trim()} versendet (BCC k.trinh@alix-operation.de)`);
+    } catch (e: any) {
+      toast.error('E-Mail-Versand fehlgeschlagen: ' + (e?.message ?? 'unbekannter Fehler'));
+    }
+  };
+
   const handleCreate = async () => {
+
     if (savingRef.current) return;
     if (existingInvoice) {
       toast.error(`Für diesen Auftrag existiert bereits Rechnung ${existingInvoice.invoice_number ?? ''}`);
@@ -270,8 +331,16 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       toast.success(`Entwurf ${invoiceNumber} gespeichert (keine Übergabe an Finance)`);
     } else {
       toast.success(`Rechnung ${invoiceNumber} erstellt und festgeschrieben`);
+      if (sendEmail) {
+        if (!recipientEmail.trim() || !recipientEmail.includes('@')) {
+          toast.error('Keine gültige Kunden-E-Mail – Rechnung wurde nicht versendet.');
+        } else {
+          void sendInvoiceEmail();
+        }
+      }
     }
     setOpen(false);
+
   };
 
   return (
@@ -416,6 +485,24 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
                 <Label className="text-xs">Notiz (optional)</Label>
                 <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="mt-1 bg-secondary border-border" />
               </div>
+
+              {status === 'sent' && (
+                <div className="rounded-lg border border-border bg-secondary/40 p-3 space-y-2">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} />
+                    Rechnung direkt per E-Mail an den Kunden senden
+                  </label>
+                  {sendEmail && (
+                    <div>
+                      <Label className="text-xs">E-Mail Kunde</Label>
+                      <Input type="email" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} placeholder="kunde@example.com" className="mt-1 bg-secondary border-border" />
+                      <p className="text-[11px] text-muted-foreground mt-1">Kopie (BCC) geht automatisch an k.trinh@alix-operation.de</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+
 
               <div className="rounded-lg border border-border bg-secondary/40 p-3 text-sm font-mono space-y-1">
                 <div className="flex justify-between"><span className="text-muted-foreground">Zwischensumme</span><span>{fmt(subtotal)} {currency}</span></div>
