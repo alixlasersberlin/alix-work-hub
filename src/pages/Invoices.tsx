@@ -1355,6 +1355,33 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </div>
         )}
       </ListToolbar>
+
+      {globalHits.length > 0 && (
+        <div className="mb-3 rounded-lg border border-primary/40 bg-primary/5 p-3">
+          <div className="text-sm font-medium mb-2">
+            Keine Treffer in der aktuellen Ansicht — aber {globalHits.length} Treffer regionsübergreifend:
+          </div>
+          <div className="space-y-1">
+            {globalHits.map((h) => (
+              <div key={h.id} className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="font-mono font-semibold">{h.invoice_number}</span>
+                <span className="text-muted-foreground">{h.customer_name}</span>
+                <span className="text-muted-foreground">{h.invoice_date}</span>
+                <span className="font-medium">{fmtEUR(Number(h.total ?? 0))}</span>
+                <span className="rounded bg-secondary px-1.5 py-0.5">{h.accounting_region ?? 'EU'}</span>
+                {h.is_mietkauf && <span className="rounded bg-secondary px-1.5 py-0.5">Mietkauf</span>}
+                {h.accounting_region && h.accounting_region !== region && (
+                  <Button size="sm" variant="outline" className="h-6 px-2"
+                    onClick={() => setRegion(h.accounting_region)}>
+                    Zu {h.accounting_region} wechseln
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {progress && <div className="text-xs text-primary mb-3">{progress}</div>}
 
       {error && <PageError message={error} onRetry={fetchRows} />}
