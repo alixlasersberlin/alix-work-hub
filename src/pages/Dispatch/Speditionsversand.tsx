@@ -343,6 +343,9 @@ export default function DispatchSpeditionsversand() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label="Alle markieren" />
+              </TableHead>
               <TableHead>Auftrag</TableHead>
               <TableHead>Kunde</TableHead>
               <TableHead>Gerät</TableHead>
@@ -356,12 +359,19 @@ export default function DispatchSpeditionsversand() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isPending && <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Lädt…</TableCell></TableRow>}
+            {isPending && <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Lädt…</TableCell></TableRow>}
             {!isPending && filtered.length === 0 && (
-              <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">Noch kein Speditionsversand erfasst.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={11} className="text-center py-8 text-muted-foreground">Noch kein Speditionsversand erfasst.</TableCell></TableRow>
             )}
             {filtered.map((r: any) => (
-              <TableRow key={r.id}>
+              <TableRow key={r.id} data-state={selected.includes(r.id) ? 'selected' : undefined}>
+                <TableCell>
+                  <Checkbox
+                    checked={selected.includes(r.id)}
+                    onCheckedChange={() => toggle(r.id)}
+                    aria-label="Eintrag markieren"
+                  />
+                </TableCell>
                 <TableCell className="font-medium">
                   {r.appointment?.order_number ?? planOrderNo(r.route_plan) ?? '—'}
                   {r.route_plan_id && <div className="text-[10px] uppercase tracking-wide text-muted-foreground">aus Tourenplanung</div>}
