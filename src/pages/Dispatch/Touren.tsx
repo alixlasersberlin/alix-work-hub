@@ -95,6 +95,36 @@ export default function DispatchTouren() {
     toast.success(entries.length === 1 ? 'Tourenplan als PDF erstellt' : `${entries.length} Touren als PDF erstellt`);
   }
 
+  async function recalcTours(ids: string[]) {
+    if (!ids.length) { toast.error('Keine Tour vorhanden'); return; }
+    setRecalc(true);
+    let ok = 0;
+    const failed: string[] = [];
+    const fallback = new Set<string>();
+    const missing = new Set<string>();
+    for (const id of ids) {
+      const tour = (data ?? []).find((t: any) => t.id === id);
+      try {
+        const { data: res, error } = await supabase.functions.invoke('delivery-route-calc', {
+          body: { tour_id: id, optimize: false },
+        });
+        if (error) throw error;
+        if ((res as any)?.error) throw new Error((res as any).error);
+        ok++;
+        ((res as any)?.billing_fallback ?? []).forEach((v: string) => fallback.add(v));
+        ((res as any)?.missing_geocode ?? []).forEach((v: string) => missing.add(v));
+      } catch (e: any) {
+        failed.push(tour?.tour_number ?? id);
+      }
+    }
+    setRecalc(false);
+    toast.success(`${ok} von ${ids.length} Touren neu berechnet`);
+    if (fallback.size) toast.info(`Rechnungsadresse genutzt: ${Array.from(fallback).join(', ')}`);
+    if (missing.size) toast.warning(`Ohne gültige Adresse: ${Array.from(missing).join(', ')}`);
+    if (failed.length) toast.error(`Fehlgeschlagen: ${failed.join(', ')}`);
+    queryClient.invalidateQueries({ queryKey: ['dispatch'] });
+  }
+
   async function handleDelete() {
     if (!target) return;
     setDeleting(true);
