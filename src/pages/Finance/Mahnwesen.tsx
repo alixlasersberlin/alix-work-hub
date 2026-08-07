@@ -49,14 +49,14 @@ export default function FinanceMahnwesen() {
     setLoading(true);
     let remQ: any = supabase.from('finance_reminders' as any)
       .select('id, customer_id, level, total, status, created_at')
-      .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
+      .in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region])
       .order('created_at', { ascending: false });
     if (statusFilter !== 'alle') remQ = remQ.eq('status', statusFilter);
     const [accRes, draftRes] = await Promise.all([
       supabase.from('finance_accounts' as any)
         .select('id, customer_id, reminder_level, overdue_balance, last_reminder_at, customers(company_name, contact_name, email)')
         .gt('overdue_balance', 0)
-        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
+        .in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region])
         .order('overdue_balance', { ascending: false })
         .limit(500),
       remQ,

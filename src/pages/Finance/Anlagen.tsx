@@ -45,7 +45,7 @@ export default function FinanceAnlagen() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_assets' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('acquisition_date', { ascending: false }).limit(1000);
+    let q = supabase.from('finance_assets' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('acquisition_date', { ascending: false }).limit(1000);
     if (catFilter !== 'alle') q = q.eq('category', catFilter);
     if (statusFilter !== 'alle') q = q.eq('status', statusFilter);
     const { data, error } = await q;
@@ -100,7 +100,7 @@ export default function FinanceAnlagen() {
       disposal_reason: editing.disposal_reason || null,
       disposal_value: editing.disposal_value ? Number(editing.disposal_value) : null,
       notes: editing.notes ?? null,
-      accounting_region: (region === 'ALL' ? 'EU' : region),
+      accounting_region: (String(region) === 'ALL' ? 'EU' : region),
     };
     let res;
     if (editing.id) {

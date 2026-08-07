@@ -65,8 +65,8 @@ export default function FinanceSteuerkonto() {
   const load = async () => {
     setLoading(true);
     const [{ data: p }, { data: f }, { data: t }] = await Promise.all([
-      supabase.from('finance_tax_payments' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('due_date', { ascending: false }).limit(300),
-      supabase.from('finance_tax_filings' as any).select('id,filing_type,period_value,total_amount,currency,tenant_id,status').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100),
+      supabase.from('finance_tax_payments' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('due_date', { ascending: false }).limit(300),
+      supabase.from('finance_tax_filings' as any).select('id,filing_type,period_value,total_amount,currency,tenant_id,status').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100),
       supabase.from('tenants' as any).select('id,name,flag_emoji').eq('is_active', true).order('sort_order'),
     ]);
     setPayments((p ?? []) as any);
@@ -96,7 +96,7 @@ export default function FinanceSteuerkonto() {
     const { error } = await supabase.from('finance_tax_payments' as any).insert({
       filing_id: selectedFiling.id,
       tenant_id: selectedFiling.tenant_id ?? null,
-      accounting_region: (region === 'ALL' ? 'EU' : region),
+      accounting_region: (String(region) === 'ALL' ? 'EU' : region),
       filing_type: selectedFiling.filing_type,
       period_value: selectedFiling.period_value,
       due_date: dueDate || computeDueDate(selectedFiling.period_value, region),

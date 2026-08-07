@@ -52,8 +52,8 @@ export default function FinanceSepa() {
   const load = async () => {
     setLoading(true);
     const [m, r, c, t] = await Promise.all([
-      supabase.from('finance_sepa_mandates' as any).select('*, customer:customer_id(company_name, contact_name)').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
-      supabase.from('finance_sepa_runs' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100),
+      supabase.from('finance_sepa_mandates' as any).select('*, customer:customer_id(company_name, contact_name)').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
+      supabase.from('finance_sepa_runs' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100),
       supabase.from('customers').select('id, company_name, contact_name').order('company_name').limit(1000),
       supabase.from('tenants').select('id, name, flag_emoji').eq('is_active', true).order('sort_order'),
     ]);
@@ -85,7 +85,7 @@ export default function FinanceSepa() {
       toast({ title: 'Fehlende Felder', description: 'Kunde, IBAN und Mandatsreferenz sind Pflicht', variant: 'destructive' });
       return;
     }
-    const payload = { ...mForm, iban: mForm.iban.replace(/\s+/g, '').toUpperCase(), accounting_region: (region === 'ALL' ? 'EU' : region) };
+    const payload = { ...mForm, iban: mForm.iban.replace(/\s+/g, '').toUpperCase(), accounting_region: (String(region) === 'ALL' ? 'EU' : region) };
     const { error } = mForm.id
       ? await supabase.from('finance_sepa_mandates' as any).update(payload).eq('id', mForm.id)
       : await supabase.from('finance_sepa_mandates' as any).insert(payload);
@@ -107,7 +107,7 @@ export default function FinanceSepa() {
       toast({ title: 'Fehlende Felder', description: 'Gläubiger-Name, IBAN und Gläubiger-ID sind Pflicht', variant: 'destructive' });
       return;
     }
-    const { data, error } = await supabase.from('finance_sepa_runs' as any).insert({ ...rForm, accounting_region: (region === 'ALL' ? 'EU' : region) }).select().single();
+    const { data, error } = await supabase.from('finance_sepa_runs' as any).insert({ ...rForm, accounting_region: (String(region) === 'ALL' ? 'EU' : region) }).select().single();
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     setRDlg(false);
     load();

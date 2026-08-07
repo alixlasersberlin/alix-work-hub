@@ -60,7 +60,7 @@ export default function FinanceReports() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase.from('finance_reports' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false });
+    const { data } = await supabase.from('finance_reports' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false });
     setRows((data ?? []) as any[]);
     setLoading(false);
   };
@@ -68,7 +68,7 @@ export default function FinanceReports() {
 
   const save = async () => {
     try {
-      const payload: any = { ...form, filters: JSON.parse(form.filters || '{}'), accounting_region: (region === 'ALL' ? 'EU' : region) };
+      const payload: any = { ...form, filters: JSON.parse(form.filters || '{}'), accounting_region: (String(region) === 'ALL' ? 'EU' : region) };
       const { error } = await supabase.from('finance_reports' as any).insert(payload);
       if (error) throw error;
       toast({ title: 'Bericht gespeichert' });

@@ -23,9 +23,9 @@ export default function FinanceSollIst() {
       setLoading(true);
       const s = `${year}-01-01`, e = `${year}-12-31`;
       const [b, t, ii, a] = await Promise.all([
-        supabase.from('finance_budgets' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).eq('fiscal_year', year),
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', s).lte('booking_date', e),
-        supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).gte('invoice_date', s).lte('invoice_date', e),
+        supabase.from('finance_budgets' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('fiscal_year', year),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', s).lte('booking_date', e),
+        supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).gte('invoice_date', s).lte('invoice_date', e),
         supabase.from('finance_asset_depreciations').select('amount, period').gte('period', s).lte('period', e),
       ]);
       const bMap: Record<string, number[]> = {};

@@ -61,7 +61,7 @@ export default function FinanceSteuer() {
     const { from, to } = range();
     let q = supabase.from('finance_transactions')
       .select('id, customer_id, amount, transaction_type, booking_date, reference, customer:customer_id(source_system)')
-      .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
+      .in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region])
       .gte('booking_date', from)
       .lte('booking_date', to)
       .order('booking_date');

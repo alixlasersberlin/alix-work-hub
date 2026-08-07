@@ -159,7 +159,7 @@ function Master({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
 
   const load = async () => {
     const { data, error } = await supabase.from('finance_segments')
-      .select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('code');
+      .select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('code');
     if (error) toast.error(error.message);
     else setRows((data as any) ?? []);
   };
@@ -168,7 +168,7 @@ function Master({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
   const save = async () => {
     if (!form.code || !form.name) return toast.error('Code & Name Pflicht');
     const { error } = await supabase.from('finance_segments').insert({
-      accounting_region: (region === 'ALL' ? 'EU' : region), code: form.code, name: form.name, description: form.description || null,
+      accounting_region: (String(region) === 'ALL' ? 'EU' : region), code: form.code, name: form.name, description: form.description || null,
     } as any);
     if (error) return toast.error(error.message);
     toast.success('Segment gespeichert');

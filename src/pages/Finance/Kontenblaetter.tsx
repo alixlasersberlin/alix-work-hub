@@ -35,7 +35,7 @@ export default function Kontenblaetter() {
     const { data } = await (supabase as any)
       .from('finance_chart_of_accounts')
       .select('account_number, name')
-      .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
+      .in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region])
       .order('account_number');
     setAccounts((data || []) as any[]);
   }
@@ -45,7 +45,7 @@ export default function Kontenblaetter() {
     let q: any = (supabase as any)
       .from('finance_journal')
       .select('id, journal_number, booking_date, account, contra_account, description, reference, amount_net, amount_vat, amount_gross, status')
-      .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
+      .in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region])
       .gte('booking_date', from)
       .lte('booking_date', to)
       .order('booking_date', { ascending: true })

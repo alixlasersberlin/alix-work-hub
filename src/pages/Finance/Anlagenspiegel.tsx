@@ -71,7 +71,7 @@ export default function Anlagenspiegel() {
     const aRes = await (supabase as any)
       .from('finance_assets')
       .select('id, inventory_number, name, category, acquisition_date, acquisition_value, useful_life_months, depreciation_method, book_value, accumulated_depreciation, location, datev_account, status, disposal_date, disposal_value, supplier_name')
-      .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
+      .in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region])
       .order('inventory_number', { ascending: true })
       .limit(2000);
     if (aRes.error) toast.error(aRes.error.message);

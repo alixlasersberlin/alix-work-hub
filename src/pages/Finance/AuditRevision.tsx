@@ -19,7 +19,7 @@ export default function AuditRevision() {
 
   async function load() {
     setLoading(true);
-    let q: any = (supabase as any).from('finance_audit_trail').select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(500);
+    let q: any = (supabase as any).from('finance_audit_trail').select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(500);
     if (tbl !== 'alle') q = q.eq('entity_table', tbl);
     const { data, error } = await q;
     if (error) toast.error(error.message); else setRows(data || []);

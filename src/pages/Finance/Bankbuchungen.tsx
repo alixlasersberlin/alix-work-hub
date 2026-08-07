@@ -29,7 +29,7 @@ export default function Bankbuchungen() {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await (supabase as any).from('finance_bank_postings').select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('posting_date', { ascending: false }).limit(500);
+    const { data, error } = await (supabase as any).from('finance_bank_postings').select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('posting_date', { ascending: false }).limit(500);
     if (error) toast.error(error.message); else setRows(data || []);
     setLoading(false);
   }
@@ -38,7 +38,7 @@ export default function Bankbuchungen() {
   async function save() {
     const { error } = await (supabase as any).from('finance_bank_postings').insert({
       ...form,
-      accounting_region: (region === 'ALL' ? 'EU' : region),
+      accounting_region: (String(region) === 'ALL' ? 'EU' : region),
       user_id: (await supabase.auth.getUser()).data.user?.id,
     });
     if (error) toast.error(error.message); else { toast.success('Buchung gespeichert'); setOpen(false); setForm(empty); load(); }

@@ -32,7 +32,7 @@ export default function FinanceFreigaben() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_approvals' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(300);
+    let q = supabase.from('finance_approvals' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(300);
     if (filter !== 'alle') q = q.eq('status', filter);
     const { data, error } = await q;
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });

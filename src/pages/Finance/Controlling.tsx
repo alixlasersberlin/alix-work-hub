@@ -24,10 +24,10 @@ export default function FinanceControlling() {
       const start = new Date(); start.setMonth(start.getMonth() - 11); start.setDate(1);
       const s = start.toISOString().slice(0, 10);
       const [t, a, ii, bl] = await Promise.all([
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', s),
-        supabase.from('finance_accounts').select('current_balance, overdue_balance, last_payment_at').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
-        supabase.from('finance_incoming_invoices').select('amount_gross, invoice_date, due_date, paid_at').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
-        supabase.from('finance_bank_lines').select('amount, value_date').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', s),
+        supabase.from('finance_accounts').select('current_balance, overdue_balance, last_payment_at').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
+        supabase.from('finance_incoming_invoices').select('amount_gross, invoice_date, due_date, paid_at').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
+        supabase.from('finance_bank_lines').select('amount, value_date').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
       ]);
       setTx(t.data ?? []);
       setAccounts(a.data ?? []);
