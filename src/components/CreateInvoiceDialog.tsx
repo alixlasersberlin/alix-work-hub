@@ -200,7 +200,56 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const addItem = () => setLineItems((prev) => [...prev, { name: '', description: '', quantity: 1, rate: 0 }]);
   const removeItem = (idx: number) => setLineItems((prev) => prev.filter((_, i) => i !== idx));
 
+  const sendInvoiceEmail = async () => {
+    const rows = lineItems.map((it) => `
+      <tr>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee">${it.name}${it.description ? `<br><span style="color:#666;font-size:12px">${it.description}</span>` : ''}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${it.quantity}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${fmt(Number(it.rate) || 0)} ${currency}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${fmt((Number(it.quantity) || 0) * (Number(it.rate) || 0))} ${currency}</td>
+      </tr>`).join('');
+
+    const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#111">
+      <p>Guten Tag ${customerName || ''},</p>
+      <p>anbei erhalten Sie Ihre Rechnung <strong>${invoiceNumber}</strong> vom ${new Date(invoiceDate).toLocaleDateString('de-DE')}.</p>
+      <table style="border-collapse:collapse;width:100%;margin:16px 0">
+        <thead><tr>
+          <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #333">Position</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #333">Menge</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #333">Preis</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #333">Betrag</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="margin:0">Zwischensumme: ${fmt(subtotal)} ${currency}<br>
+      USt. (${taxRate}%): ${fmt(taxAmount)} ${currency}<br>
+      <strong>Gesamt: ${fmt(total)} ${currency}</strong></p>
+      <p>Zahlbar bis zum ${new Date(dueDate).toLocaleDateString('de-DE')}.</p>
+      ${notes ? `<p>${notes}</p>` : ''}
+      <p>Mit freundlichen Grüßen<br>Alix Lasers</p>
+    </div>`;
+
+    try {
+      const { error: mailErr } = await supabase.functions.invoke('send-invoice-mail', {
+        body: {
+          to_email: recipientEmail.trim(),
+          to_name: customerName || undefined,
+          subject: `Rechnung ${invoiceNumber}`,
+          body_text: `Ihre Rechnung ${invoiceNumber} über ${fmt(total)} ${currency}, zahlbar bis ${new Date(dueDate).toLocaleDateString('de-DE')}.`,
+          body_html: html,
+          bcc: ['k.trinh@alix-operation.de'],
+          invoice_number: invoiceNumber,
+        },
+      });
+      if (mailErr) throw mailErr;
+      toast.success(`Rechnung per E-Mail an ${recipientEmail.trim()} versendet (BCC k.trinh@alix-operation.de)`);
+    } catch (e: any) {
+      toast.error('E-Mail-Versand fehlgeschlagen: ' + (e?.message ?? 'unbekannter Fehler'));
+    }
+  };
+
   const handleCreate = async () => {
+
     if (savingRef.current) return;
     if (existingInvoice) {
       toast.error(`Für diesen Auftrag existiert bereits Rechnung ${existingInvoice.invoice_number ?? ''}`);
