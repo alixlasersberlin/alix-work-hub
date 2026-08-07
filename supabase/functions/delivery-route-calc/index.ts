@@ -21,6 +21,9 @@ function haversineKm(a: [number, number], b: [number, number]) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
+/** Zu ungenaue Treffer (Land/Bundesland/Region) sind für Routen unbrauchbar. */
+const COARSE_TYPES = new Set(["country", "state", "region", "county", "continent"]);
+
 async function geocode(address: string): Promise<[number, number] | null> {
   const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(address)}&limit=1&lang=de`;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -28,7 +31,13 @@ async function geocode(address: string): Promise<[number, number] | null> {
       const r = await fetch(url, { headers: { "User-Agent": "AlixWork/1.0 dispatch" } });
       if (r.ok) {
         const j = await r.json();
-        const c = j?.features?.[0]?.geometry?.coordinates;
+        const f = j?.features?.[0];
+        const c = f?.geometry?.coordinates;
+        const type = String(f?.properties?.type ?? "");
+        if (COARSE_TYPES.has(type)) {
+          console.warn("geocode too coarse", address, type);
+          return null;
+        }
         if (Array.isArray(c) && c.length >= 2) return [c[0], c[1]];
         return null;
       }
@@ -40,6 +49,16 @@ async function geocode(address: string): Promise<[number, number] | null> {
   }
   return null;
 }
+
+/** Ohne Straße + (PLZ oder Ort) ist eine Geokodierung wertlos. */
+function usableAddress(a: any): string | null {
+  const street = String(a?.delivery_street ?? "").trim();
+  const zip = String(a?.delivery_zip ?? "").trim();
+  const city = String(a?.delivery_city ?? "").trim();
+  if (!street || (!zip && !city)) return null;
+  return [street, `${zip} ${city}`.trim(), a?.delivery_country || "Deutschland"].filter(Boolean).join(", ");
+}
+
 
 /** NxN Distanz-/Zeitmatrix. Fällt bei ORS-Problemen auf Luftlinie zurück. */
 async function buildMatrix(locations: [number, number][], apiKey: string | undefined) {
