@@ -52,7 +52,7 @@ export default function TxListPage({
     setLoadError(null);
     try {
       const res = await listTransactions({
-        area: region,
+        area: region as any,
         status: status ? [status] : statuses,
         bankAccountId: accountId || undefined,
         search: search || undefined,
