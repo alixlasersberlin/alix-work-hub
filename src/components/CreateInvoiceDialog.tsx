@@ -108,7 +108,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const [notes, setNotes] = useState('');
   const [taxRate, setTaxRate] = useState(19);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
-  const [sendEmail, setSendEmail] = useState(true);
+  
   const [recipientEmail, setRecipientEmail] = useState('');
 
 
@@ -146,7 +146,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       customer?.raw_data?.email ||
       ''
     );
-    setSendEmail(true);
+    
 
 
     const source = Array.isArray(items) && items.length > 0
@@ -200,7 +200,32 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const addItem = () => setLineItems((prev) => [...prev, { name: '', description: '', quantity: 1, rate: 0 }]);
   const removeItem = (idx: number) => setLineItems((prev) => prev.filter((_, i) => i !== idx));
 
-  const sendInvoiceEmail = async () => {
+  /** Empfänger ermitteln: Eingabefeld → Auftrag/Kunde → Nachschlag in customers */
+  const resolveRecipient = async (): Promise<string | null> => {
+    const direct = recipientEmail.trim();
+    if (direct.includes('@')) return direct;
+    const fallback =
+      (customer as any)?.email ||
+      (order as any)?.customer_email ||
+      (order as any)?.raw_data?.email ||
+      '';
+    if (String(fallback).includes('@')) return String(fallback).trim();
+    const custId = (customer as any)?.id ?? (order as any)?.customer_id ?? null;
+    if (custId) {
+      const { data } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('id', custId)
+        .limit(1);
+      const mail = (data ?? [])[0]?.email;
+      if (mail && String(mail).includes('@')) return String(mail).trim();
+    }
+
+    return null;
+  };
+
+  const sendInvoiceEmail = async (to: string) => {
+
     const rows = lineItems.map((it) => `
       <tr>
         <td style="padding:6px 8px;border-bottom:1px solid #eee">${it.name}${it.description ? `<br><span style="color:#666;font-size:12px">${it.description}</span>` : ''}</td>
@@ -232,7 +257,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
     try {
       const { error: mailErr } = await supabase.functions.invoke('send-invoice-mail', {
         body: {
-          to_email: recipientEmail.trim(),
+          to_email: to,
           to_name: customerName || undefined,
           subject: `Rechnung ${invoiceNumber}`,
           body_text: `Ihre Rechnung ${invoiceNumber} über ${fmt(total)} ${currency}, zahlbar bis ${new Date(dueDate).toLocaleDateString('de-DE')}.`,
@@ -242,7 +267,8 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
         },
       });
       if (mailErr) throw mailErr;
-      toast.success(`Rechnung per E-Mail an ${recipientEmail.trim()} versendet (BCC k.trinh@alix-operation.de)`);
+      toast.success(`Rechnung per E-Mail an ${to} versendet (BCC k.trinh@alix-operation.de)`);
+
     } catch (e: any) {
       toast.error('E-Mail-Versand fehlgeschlagen: ' + (e?.message ?? 'unbekannter Fehler'));
     }
@@ -331,14 +357,17 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       toast.success(`Entwurf ${invoiceNumber} gespeichert (keine Übergabe an Finance)`);
     } else {
       toast.success(`Rechnung ${invoiceNumber} erstellt und festgeschrieben`);
-      if (sendEmail) {
-        if (!recipientEmail.trim() || !recipientEmail.includes('@')) {
-          toast.error('Keine gültige Kunden-E-Mail – Rechnung wurde nicht versendet.');
-        } else {
-          void sendInvoiceEmail();
+      // Automatischer Versand für jede festgeschriebene Rechnung
+      void (async () => {
+        const to = await resolveRecipient();
+        if (!to) {
+          toast.error('Keine gültige Kunden-E-Mail hinterlegt – Rechnung wurde nicht versendet.');
+          return;
         }
-      }
+        await sendInvoiceEmail(to);
+      })();
     }
+
     setOpen(false);
 
   };
@@ -488,19 +517,15 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
 
               {status === 'sent' && (
                 <div className="rounded-lg border border-border bg-secondary/40 p-3 space-y-2">
-                  <label className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} />
-                    Rechnung direkt per E-Mail an den Kunden senden
-                  </label>
-                  {sendEmail && (
-                    <div>
-                      <Label className="text-xs">E-Mail Kunde</Label>
-                      <Input type="email" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} placeholder="kunde@example.com" className="mt-1 bg-secondary border-border" />
-                      <p className="text-[11px] text-muted-foreground mt-1">Kopie (BCC) geht automatisch an k.trinh@alix-operation.de</p>
-                    </div>
-                  )}
+                  <p className="text-sm">Die Rechnung wird nach dem Festschreiben <strong>automatisch per E-Mail</strong> an den Kunden versendet.</p>
+                  <div>
+                    <Label className="text-xs">E-Mail Kunde</Label>
+                    <Input type="email" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} placeholder="kunde@example.com" className="mt-1 bg-secondary border-border" />
+                    <p className="text-[11px] text-muted-foreground mt-1">Kopie (BCC) geht automatisch an k.trinh@alix-operation.de</p>
+                  </div>
                 </div>
               )}
+
 
 
 
