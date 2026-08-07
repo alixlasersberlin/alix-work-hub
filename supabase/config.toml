@@ -415,3 +415,6 @@ verify_jwt = false
 
 [functions.plm-purchase-order-send]
 verify_jwt = true
+
+[functions.maps-browser-key]
+verify_jwt = true
