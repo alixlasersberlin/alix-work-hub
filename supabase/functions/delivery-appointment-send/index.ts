@@ -95,7 +95,9 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const appointmentId: string = body?.appointmentId;
-    const baseUrl: string = (body?.baseUrl || "https://app.alixwork.de").replace(/\/+$/, "");
+    let baseUrl: string = (body?.baseUrl || "https://app.alixwork.de").replace(/\/+$/, "");
+    // Never expose Lovable infrastructure domains in customer emails
+    if (/lovable|supabase/i.test(baseUrl)) baseUrl = "https://app.alixwork.de";
     const validDays: number = Number(body?.validDays ?? 14);
     if (!appointmentId) return Response.json({ error: "appointmentId erforderlich" }, { status: 400, headers: corsHeaders });
 
