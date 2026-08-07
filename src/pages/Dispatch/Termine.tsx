@@ -88,6 +88,27 @@ export default function DispatchTermine() {
     qc.invalidateQueries({ queryKey: ['dispatch'] });
   }
 
+  async function sendTestMail() {
+    if (!testRow) return;
+    const to = testEmail.trim();
+    if (!to.includes('@')) { toast.error('Bitte eine gültige E-Mail-Adresse eingeben'); return; }
+    setTestSending(true);
+    setTestResult(null);
+    const { data, error } = await supabase.functions.invoke('delivery-appointment-send', {
+      body: { appointmentId: testRow.id, testMode: true, testTo: to, baseUrl: 'https://app.alixwork.de' },
+    });
+    setTestSending(false);
+    const res = data as any;
+    if (error || res?.error) {
+      setTestResult({ ok: false, from: res?.from ?? null, message: res?.error ?? error?.message ?? 'Testversand fehlgeschlagen' });
+      toast.error(res?.error ?? error?.message ?? 'Testversand fehlgeschlagen');
+      return;
+    }
+    setTestResult({ ok: true, from: res?.from ?? null, message: `Testmail an ${res?.to ?? to} versendet` });
+    toast.success(`Testmail an ${res?.to ?? to} versendet`);
+  }
+
+
   const term = search.trim().toLowerCase();
   const rows = (data ?? []).filter(r =>
     !term ||
