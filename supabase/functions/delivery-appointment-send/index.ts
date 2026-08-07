@@ -38,8 +38,17 @@ function fmtWindow(a: any) {
   return a.promised_window || "wird noch mitgeteilt";
 }
 
-async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: string[]; subject: string; html: string }) {
-  if (!RESEND_API_KEY || opts.to.length === 0) return;
+const MAIL_FROM = "Alix Tourenplanung <no-reply@alixwork.de>";
+
+async function sendMail(
+  sb: any,
+  log: Record<string, unknown>,
+  opts: { to: string[]; subject: string; html: string; bcc?: string[] },
+) {
+  const bcc = opts.bcc ?? BCC;
+  if (!RESEND_API_KEY || opts.to.length === 0) {
+    return { status: "skipped", error: RESEND_API_KEY ? "Kein Empfänger" : "RESEND_API_KEY fehlt", providerId: null, from: MAIL_FROM, bcc };
+  }
   let status = "sent";
   let providerId: string | null = null;
   let error: string | null = null;
@@ -52,15 +61,15 @@ async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: strin
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Alix Tourenplanung <no-reply@alixwork.de>",
+        from: MAIL_FROM,
         to: opts.to,
-        bcc: BCC,
+        ...(bcc.length ? { bcc } : {}),
         subject: opts.subject,
         html: opts.html,
       }),
     });
     const out = await res.json().catch(() => ({}));
-    if (!res.ok) { status = "failed"; error = out?.message || `HTTP ${res.status}`; }
+    if (!res.ok) { status = "failed"; error = out?.message || out?.error || `HTTP ${res.status}`; }
     providerId = out?.id ?? null;
   } catch (e) {
     status = "failed";
@@ -69,14 +78,16 @@ async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: strin
   await sb.from("delivery_email_logs").insert({
     ...log,
     recipient: opts.to.join(", "),
-    bcc: BCC_STR,
+    bcc: bcc.join(", "),
     subject: opts.subject,
     status,
     provider_id: providerId,
     error,
     sent_at: new Date().toISOString(),
   }).then(() => {}, () => {});
+  return { status, error, providerId, from: MAIL_FROM, bcc };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
