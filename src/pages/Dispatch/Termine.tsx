@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { CalendarClock, Search, PackageSearch, History, Send } from 'lucide-react';
+import { CalendarClock, Search, PackageSearch, History, Send, FlaskConical } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,11 @@ export default function DispatchTermine() {
   const [historyFor, setHistoryFor] = useState<{ id: string; label: string } | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [orderPreview, setOrderPreview] = useState<string | null>(null);
+  const [testRow, setTestRow] = useState<any | null>(null);
+  const [testEmail, setTestEmail] = useState('');
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; from: string | null; message: string } | null>(null);
+
 
   const { data, isPending } = useQuery({
     queryKey: ['dispatch', 'appointments', status, readiness],
