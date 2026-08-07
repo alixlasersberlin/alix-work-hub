@@ -158,6 +158,9 @@ export default function CustomerAllTransactions({
           status: r.payment_status || r.status,
           amount: r.total,
           currency: r.currency,
+          zohoInvoiceId: r.zoho_invoice_id,
+          sourceSystem: r.source_system,
+
         }),
       );
 
