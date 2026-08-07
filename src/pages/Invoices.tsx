@@ -1241,8 +1241,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     <div className="p-4 sm:p-6">
       <PageHeader
         icon={FileText}
-        title={mietkaufOnly ? (viewMode === 'accounts' ? 'In Vermietung nach Kundenkonto' : 'In Vermietung – Rechnungsliste') : (viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
-        subtitle={mietkaufOnly ? 'Alle als Mietkauf gebuchten Vorgänge und Geräte in der Vermietung' : (viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
+        title={mietkaufOnly ? (isAccountView ? 'In Vermietung nach Kundenkonto' : 'In Vermietung – Rechnungsliste') : (viewMode === 'highest' ? 'Höchste Kundenkonten' : viewMode === 'oldest' ? 'Älteste Rechnungen' : viewMode === 'accounts' ? 'Rechnungen nach Kundenkonto' : 'Rechnungsliste')}
+        subtitle={mietkaufOnly ? 'Alle als Mietkauf gebuchten Vorgänge und Geräte in der Vermietung' : (viewMode === 'highest' ? 'Kundenkonten mit dem höchsten Rechnungsvolumen – absteigend' : viewMode === 'oldest' ? 'Alle Rechnungen, älteste zuerst' : viewMode === 'accounts' ? 'Konsolidierte Übersicht aller Zoho-Rechnungen (einmalig + periodisch) je Kunde' : 'Alle Rechnungen sortiert nach Datum oder Rechnungsnummer')}
         noBreadcrumbs
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${kpi.accounts} Konten`} pulse={loading} />}
         actions={
@@ -1352,10 +1352,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         onSearchChange={setSearch}
         pageSize={pageSize}
         onPageSizeChange={setPageSize}
-        total={viewMode === 'accounts' ? accounts.length : flatRows.length}
+        total={isAccountView ? displayAccounts.length : flatRows.length}
         visible={Math.min(
-          viewMode === 'accounts' ? accounts.length : flatRows.length,
-          pageSize === 'all' ? (viewMode === 'accounts' ? accounts.length : flatRows.length) : pageSize,
+          isAccountView ? displayAccounts.length : flatRows.length,
+          pageSize === 'all' ? (isAccountView ? displayAccounts.length : flatRows.length) : pageSize,
         )}
         placeholder="Suche: Rechnungsnr., Auftragsnr., Name, Stadt, PLZ, Betrag…"
         searchBelow
@@ -1398,7 +1398,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </Select>
 
         </div>
-        {viewMode === 'accounts' && (
+        {isAccountView && (
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={expandAll}>Alle öffnen</Button>
             <Button size="sm" variant="outline" onClick={collapseAll}>Alle schließen</Button>
@@ -1436,7 +1436,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
       {error && <PageError message={error} onRetry={fetchRows} />}
 
-      {loading ? <DataCard><SkeletonTable rows={8} cols={6} /></DataCard> : viewMode === 'list' ? (
+      {loading ? <DataCard><SkeletonTable rows={8} cols={6} /></DataCard> : isListView ? (
         <DataCard className="overflow-hidden">
           {flatRows.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">Keine Daten gefunden.</div>
@@ -1619,11 +1619,11 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         </DataCard>
       ) : (
         <div className="space-y-3">
-          {accounts.length === 0 ? (
+          {displayAccounts.length === 0 ? (
             <DataCard className="p-12 text-center text-muted-foreground">
               Keine Daten gefunden.
             </DataCard>
-          ) : paginate(accounts, pageSize).map((a) => {
+          ) : paginate(displayAccounts, pageSize).map((a) => {
             const open = !!expanded[a.key];
             return (
               <DataCard key={a.key} className="overflow-hidden">
