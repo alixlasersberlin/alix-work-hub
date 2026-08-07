@@ -32,6 +32,15 @@ const KIND_META: Record<Kind, { label: string; icon: any; className: string }> =
   zahlung: { label: 'Zahlung', icon: ArrowDownToLine, className: 'bg-emerald-500/15 text-emerald-400' },
 };
 
+const PLURAL: Record<Kind, string> = {
+  beleg: 'Belege',
+  angebot: 'Angebote',
+  auftrag: 'Aufträge',
+  rechnung: 'Rechnungen',
+  gutschrift: 'Gutschriften',
+  zahlung: 'Zahlungen',
+};
+
 const fmtMoney = (n?: number | null, c?: string | null) =>
   n == null ? '—' : Number(n).toLocaleString('de-DE', { style: 'currency', currency: c || 'EUR' });
 
