@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Loader2, Truck, Package } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Loader2, Truck, Package, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { downloadToursPdf } from '@/lib/dispatch/tour-pdf';
 
 declare global { interface Window { google?: any; initDispatchMap?: () => void } }
 
@@ -121,6 +123,16 @@ export default function TourenKarte() {
     [tours, tech],
   );
 
+  const exportTours = (list: any[]) => {
+    if (!list.length) return;
+    downloadToursPdf(list.map((t: any) => ({
+      tour: t,
+      stops: (t.stops ?? []).slice().sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0)),
+    })));
+  };
+
+
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -228,6 +240,14 @@ export default function TourenKarte() {
                 {techs.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={visibleTours.length === 0}
+              onClick={() => exportTours(visibleTours)}
+            >
+              <FileDown className="w-4 h-4 mr-1" /> Tour als PDF
+            </Button>
           </>
         }
       />
@@ -258,19 +278,24 @@ export default function TourenKarte() {
               const color = TOUR_COLORS[ti % TOUR_COLORS.length];
               return (
                 <div key={t.id} className="rounded-lg border border-border bg-card p-3">
-                  <button
-                    onClick={() => navigate(`/dispatch/touren/${t.id}`)}
-                    className="w-full text-left"
-                  >
-                    <div className="flex items-center gap-2 text-sm font-bold">
-                      <span className="inline-block w-3 h-3 rounded-full" style={{ background: color }} />
-                      {t.tour_number}{t.title ? ` · ${t.title}` : ''}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {[t.drivers?.full_name ?? 'Ohne Fahrer', t.vehicles?.license_plate, t.planned_start_time ? `${String(t.planned_start_time).slice(0, 5)} Uhr` : null,
-                        t.planned_distance_km != null ? `${t.planned_distance_km} km` : null, t.status].filter(Boolean).join(' · ')}
-                    </div>
-                  </button>
+                  <div className="flex items-start gap-2">
+                    <button
+                      onClick={() => navigate(`/dispatch/touren/${t.id}`)}
+                      className="flex-1 text-left"
+                    >
+                      <div className="flex items-center gap-2 text-sm font-bold">
+                        <span className="inline-block w-3 h-3 rounded-full" style={{ background: color }} />
+                        {t.tour_number}{t.title ? ` · ${t.title}` : ''}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {[t.drivers?.full_name ?? 'Ohne Fahrer', t.vehicles?.license_plate, t.planned_start_time ? `${String(t.planned_start_time).slice(0, 5)} Uhr` : null,
+                          t.planned_distance_km != null ? `${t.planned_distance_km} km` : null, t.status].filter(Boolean).join(' · ')}
+                      </div>
+                    </button>
+                    <Button variant="ghost" size="icon" title="Tour als PDF" onClick={() => exportTours([t])}>
+                      <FileDown className="w-4 h-4" />
+                    </Button>
+                  </div>
                   <ol className="mt-2 space-y-1">
                     {stops.length === 0 && <li className="text-xs text-muted-foreground">Keine Stopps zugeordnet.</li>}
                     {stops.map((s: any, i: number) => (
