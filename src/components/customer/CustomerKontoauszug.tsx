@@ -3,7 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, FileDown, Eye, Wallet } from 'lucide-react';
+import { Loader2, FileDown, Eye, Wallet, Mail } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { generateKontoauszugPdf, type KontoauszugItem } from '@/lib/finance/kontoauszug-pdf';
 
@@ -13,6 +17,7 @@ type Props = {
   customerName?: string | null;
   customerNumber?: string | null;
   customerAddress?: string | null;
+  customerEmail?: string | null;
 };
 
 const money = (n?: number | null, c?: string | null) =>
@@ -39,11 +44,17 @@ export default function CustomerKontoauszug({
   customerName,
   customerNumber,
   customerAddress,
+  customerEmail,
 }: Props) {
   const [items, setItems] = useState<KontoauszugItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const [mailOpen, setMailOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [mailTo, setMailTo] = useState(customerEmail || '');
+  const [mailSubject, setMailSubject] = useState('');
+  const [mailText, setMailText] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -146,6 +157,48 @@ export default function CustomerKontoauszug({
     doc.save(`Kontoauszug_${(customerName || 'Kunde').replace(/[^\w-]+/g, '_')}.pdf`);
   };
 
+  const openMail = () => {
+    setMailTo(customerEmail || '');
+    setMailSubject(`Kontoauszug ${new Date().toLocaleDateString('de-DE')}`);
+    setMailText(
+      `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie Ihren aktuellen Kontoauszug mit einem offenen Gesamtsaldo von ${money(
+        sums.openSum,
+        currency,
+      )}.\n\nBitte gleichen Sie offene Posten zeitnah aus. Sollten Zahlungen sich überschnitten haben, betrachten Sie dieses Schreiben als gegenstandslos.\n\nMit freundlichen Grüßen\nAlix Lasers ®`,
+    );
+    setMailOpen(true);
+  };
+
+  const sendMail = async () => {
+    if (!mailTo.includes('@')) {
+      toast.error('Bitte eine gültige E-Mail-Adresse angeben');
+      return;
+    }
+    setSending(true);
+    try {
+      const doc = buildDoc();
+      const base64 = (doc.output('datauristring') as string).split(',')[1];
+      const filename = `Kontoauszug_${(customerName || 'Kunde').replace(/[^\w-]+/g, '_')}.pdf`;
+      const { error } = await supabase.functions.invoke('send-invoice-mail', {
+        body: {
+          to_email: mailTo,
+          to_name: customerName || undefined,
+          subject: mailSubject || 'Kontoauszug',
+          body_text: mailText,
+          invoice_number: `kontoauszug-${customerId}`,
+          attachments: [{ filename, content: base64, contentType: 'application/pdf' }],
+        },
+      });
+      if (error) throw error;
+      toast.success(`Kontoauszug an ${mailTo} gesendet`);
+      setMailOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message || 'Versand fehlgeschlagen');
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -172,6 +225,9 @@ export default function CustomerKontoauszug({
         <div className="flex gap-2 ml-auto">
           <Button variant="outline" size="sm" onClick={preview} disabled={!items.length}>
             <Eye className="w-4 h-4 mr-1.5" /> Vorschau
+          </Button>
+          <Button variant="outline" size="sm" onClick={openMail} disabled={!items.length}>
+            <Mail className="w-4 h-4 mr-1.5" /> Kontoauszug per E-Mail
           </Button>
           <Button size="sm" onClick={download} disabled={!items.length}>
             <FileDown className="w-4 h-4 mr-1.5" /> PDF herunterladen
