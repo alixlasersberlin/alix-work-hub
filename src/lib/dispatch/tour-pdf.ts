@@ -1,4 +1,23 @@
 import jsPDF from 'jspdf';
+import tourBg from '@/assets/tour-vorlage.png.asset.json';
+
+/** Lädt die Alix-Vorlage einmalig als DataURL (für den PDF-Hintergrund). */
+let bgPromise: Promise<string | null> | null = null;
+export function loadTourBackground(): Promise<string | null> {
+  if (!bgPromise) {
+    bgPromise = fetch((tourBg as any).url)
+      .then((r) => r.blob())
+      .then((b) => new Promise<string>((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(String(fr.result));
+        fr.onerror = rej;
+        fr.readAsDataURL(b);
+      }))
+      .catch(() => null);
+  }
+  return bgPromise;
+}
+
 
 export type TourStopLike = {
   position?: number | null;
