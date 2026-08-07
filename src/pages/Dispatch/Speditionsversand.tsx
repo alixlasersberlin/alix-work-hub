@@ -258,9 +258,14 @@ export default function DispatchSpeditionsversand() {
         subtitle="Geräte per Spedition abholen lassen und an den Kunden versenden"
         icon={Ship}
         actions={
-          <Button onClick={() => setOpen(true)} className="gap-2">
-            <Plus className="w-4 h-4" /> Neuer Speditionsversand
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" disabled={selected.length === 0} onClick={exportSelectedPdf}>
+              <FileDown className="w-4 h-4" /> PDF ({selected.length})
+            </Button>
+            <Button onClick={() => setOpen(true)} className="gap-2">
+              <Plus className="w-4 h-4" /> Neuer Speditionsversand
+            </Button>
+          </div>
         }
       />
 
