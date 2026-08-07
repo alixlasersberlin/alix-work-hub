@@ -214,20 +214,23 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [bookDate, setBookDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [bookSaving, setBookSaving] = useState(false);
   const [bookAmount, setBookAmount] = useState<string>('0');
-  const [viewMode, setViewMode] = useState<'accounts' | 'list'>(() => {
-    if (typeof window === 'undefined') return 'accounts';
-    return (localStorage.getItem('invoices_view_mode') as 'accounts' | 'list') || 'accounts';
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window === 'undefined') return 'highest';
+    const v = localStorage.getItem('invoices_view_mode') as ViewMode | null;
+    return v && ['accounts', 'list', 'highest', 'oldest'].includes(v) ? v : 'highest';
   });
   const [listSort, setListSort] = useState<'number' | 'date'>(() => {
     if (typeof window === 'undefined') return 'date';
     return (localStorage.getItem('invoices_list_sort') as 'number' | 'date') || 'date';
   });
-  const setViewModePersist = (m: 'accounts' | 'list') => {
+  const setViewModePersist = (m: ViewMode) => {
     setViewMode(m); try { localStorage.setItem('invoices_view_mode', m); } catch {}
   };
   const setListSortPersist = (s: 'number' | 'date') => {
     setListSort(s); try { localStorage.setItem('invoices_list_sort', s); } catch {}
   };
+  const isListView = viewMode === 'list' || viewMode === 'oldest';
+  const isAccountView = !isListView;
 
   const fetchRows = async (opts?: { silent?: boolean }) => {
     const cacheKey = `${region}|${mietkaufOnly}|${includeUnpaid}`;
