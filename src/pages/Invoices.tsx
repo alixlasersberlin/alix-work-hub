@@ -207,6 +207,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [editRow, setEditRow] = useState<Row | null>(null);
   const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '', status: '' });
   const [editSaving, setEditSaving] = useState(false);
+  const [statusRow, setStatusRow] = useState<Row | null>(null);
+  const [statusForm, setStatusForm] = useState({ payment_status: '', status: '' });
+  const [statusSaving, setStatusSaving] = useState(false);
   const [emailRow, setEmailRow] = useState<Row | null>(null);
   const [emailForm, setEmailForm] = useState({ to_email: '', to_name: '', bcc: '', subject: '', body_text: '' });
   const [emailSending, setEmailSending] = useState(false);
@@ -998,6 +1001,38 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     }
   };
 
+  const openStatusDialog = (r: Row) => {
+    setStatusForm({ payment_status: r.payment_status ?? '', status: isDraftInvoice(r) ? 'draft' : 'sent' });
+    setStatusRow(r);
+  };
+
+  const saveStatus = async () => {
+    if (!statusRow) return;
+    if (statusRow.source === 'unpaid') {
+      toast({ title: 'Nur Ansicht', description: 'Offene-Posten-Rechnungen sind hier schreibgeschützt.', variant: 'destructive' });
+      return;
+    }
+    setStatusSaving(true);
+    try {
+      const table = tableFor(statusRow.source);
+      const patch: any = { payment_status: statusForm.payment_status || null };
+      if (statusForm.status) {
+        patch.status = statusForm.status;
+        const raw = await loadRawData(statusRow);
+        patch.raw_data = { ...raw, is_draft: statusForm.status === 'draft' };
+      }
+      const { error } = await (supabase as any).from(table).update(patch).eq('id', statusRow.id);
+      if (error) throw error;
+      setRows((prev) => prev.map((x) => (x.id === statusRow.id && x.source === statusRow.source ? { ...x, ...patch } : x)));
+      toast({ title: 'Status geändert', description: `Rechnung ${statusRow.invoice_number ?? ''} aktualisiert.` });
+      setStatusRow(null);
+    } catch (e: any) {
+      toast({ title: 'Statusänderung fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setStatusSaving(false);
+    }
+  };
+
   const openEmail = async (r: Row) => {
     console.log('[Invoices] openEmail clicked', { id: r.id, invoice_number: r.invoice_number });
     setEmailPreparing(true);
@@ -1604,6 +1639,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                               <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
                             </Button>
                           )}
+                          {isAdmin && r.source !== 'unpaid' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              type="button"
+                              title="Status ändern"
+                              className="h-8 px-2 gap-1 border-sky-500/40 text-sky-400 hover:bg-sky-500/10"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); openStatusDialog(r); }}
+                            >
+                              <RefreshCw className="w-3.5 h-3.5" /> Status Änderung
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="outline"
@@ -1782,6 +1829,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                                     <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
                                   </Button>
                                 )}
+                                {isAdmin && r.source !== 'unpaid' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    type="button"
+                                    title="Status ändern"
+                                    className="h-8 px-2 gap-1 border-sky-500/40 text-sky-400 hover:bg-sky-500/10"
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); openStatusDialog(r); }}
+                                  >
+                                    <RefreshCw className="w-3.5 h-3.5" /> Status Änderung
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -1917,6 +1976,58 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </div>
         </div>
       )}
+
+      <Dialog open={!!statusRow} onOpenChange={(o) => !o && !statusSaving && setStatusRow(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-primary" />
+              Status Änderung {statusRow?.invoice_number ?? ''}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="stps">Zahlungsstatus</Label>
+              <select
+                id="stps"
+                value={statusForm.payment_status}
+                onChange={(e) => setStatusForm((f) => ({ ...f, payment_status: e.target.value }))}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Status wählen</option>
+                <option value="Offen">Offen</option>
+                <option value="Teilweise bezahlt">Teilweise bezahlt</option>
+                <option value="Bezahlt">Bezahlt</option>
+                <option value="Überfällig">Überfällig</option>
+                <option value="Storniert">Storniert</option>
+                <option value="Anwalt">Anwalt</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="strs">Rechnungsstatus</Label>
+              <select
+                id="strs"
+                value={statusForm.status || 'sent'}
+                onChange={(e) => setStatusForm((f) => ({ ...f, status: e.target.value }))}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="draft">Entwurf</option>
+                <option value="sent">Festgeschrieben (versendet)</option>
+                <option value="void">Storniert</option>
+              </select>
+            </div>
+            <p className="text-xs text-muted-foreground">Änderung wirkt lokal in Alix Work, kein Zoho-Sync.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusRow(null)} disabled={statusSaving}>Abbrechen</Button>
+            <Button onClick={saveStatus} disabled={statusSaving} className="gold-gradient text-primary-foreground">
+              {statusSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
 
       <Dialog open={!!emailRow} onOpenChange={(o) => !o && !emailSending && setEmailRow(null)}>
         <DialogContent className="max-w-xl">
