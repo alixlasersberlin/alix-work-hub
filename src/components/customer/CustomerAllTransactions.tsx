@@ -319,13 +319,21 @@ export default function CustomerAllTransactions({
                     </thead>
                     <tbody className="divide-y divide-border">
                       {items.map((r) => (
-                        <tr
-                          key={r.id}
-                          className={`hover:bg-secondary/30 ${r.href ? 'cursor-pointer' : ''}`}
-                          onClick={() => r.href && navigate(r.href)}
-                        >
+                        <tr key={r.id} className="hover:bg-secondary/30">
                           <td className="px-4 py-2 whitespace-nowrap">{fmtDate(r.date)}</td>
-                          <td className="px-4 py-2 font-medium">{r.number}</td>
+                          <td className="px-4 py-2 font-medium">
+                            {r.zohoInvoiceId || r.docId || r.href ? (
+                              <button
+                                type="button"
+                                className="text-primary hover:underline text-left"
+                                onClick={() => openRow(r)}
+                              >
+                                {r.number}
+                              </button>
+                            ) : (
+                              r.number
+                            )}
+                          </td>
                           <td className="px-4 py-2 text-muted-foreground max-w-[320px] truncate">{r.title}</td>
                           <td className="px-4 py-2">
                             {r.status ? <Badge variant="outline" className="text-[10px]">{r.status}</Badge> : '—'}
@@ -335,6 +343,7 @@ export default function CustomerAllTransactions({
                           </td>
                         </tr>
                       ))}
+
                     </tbody>
                   </table>
                 )}
