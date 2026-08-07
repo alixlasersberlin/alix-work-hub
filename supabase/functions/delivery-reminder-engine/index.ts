@@ -1,4 +1,5 @@
-// Phase 3 – Erinnerungs-Engine: 24h / 48h / 72h Eskalation für unbeantwortete Terminanfragen.
+// Phase 3 – Erinnerungs-Engine: 1x pro Tag eine Erinnerung (24h, 48h, 72h) = insgesamt 3 Tage,
+// danach (96h) automatische Stornierung. Pro Stufe wird max. 1 E-Mail versendet (Dedupe über delivery_email_logs).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
