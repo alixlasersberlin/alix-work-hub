@@ -282,7 +282,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       ]);
       const unpaidRows: Row[] = (unp?.data ?? [])
         .filter((r: any) => !knownNumbers.has(String(r.invoice_number ?? '')))
-        .filter((r: any) => (region === 'CH' ? isChCurrency(r.currency_code) : !isChCurrency(r.currency_code)))
+        .filter((r: any) => (String(region) === 'ALL' ? true : region === 'CH' ? isChCurrency(r.currency_code) : !isChCurrency(r.currency_code)))
         .map((r: any) => {
           const st = String(r.status ?? '').toLowerCase();
           const paymentStatus = st === 'overdue' ? 'Überfällig' : st === 'partially_paid' ? 'Teilweise bezahlt' : 'Offen';
@@ -310,7 +310,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       const mergedRaw: Row[] = [
         ...(inv.data ?? []).map((r: any) => ({ ...r, source: 'invoice' as const })),
         ...(rec.data ?? [])
-          .filter((r: any) => (region === 'CH' ? isChCurrency(r.currency) : !isChCurrency(r.currency)))
+          .filter((r: any) => (String(region) === 'ALL' ? true : region === 'CH' ? isChCurrency(r.currency) : !isChCurrency(r.currency)))
           .map((r: any) => ({ ...r, source: 'recurring' as const })),
         ...unpaidRows,
       ];
