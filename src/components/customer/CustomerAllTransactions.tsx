@@ -8,6 +8,9 @@ import {
   Loader2, Search, ChevronRight, FileText, FileSignature, ShoppingCart, Receipt, Undo2, ArrowDownToLine, Layers,
 } from 'lucide-react';
 import { EmptyState } from '@/components/infinity/EmptyState';
+import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
+import { DocumentPreviewDialog } from '@/components/customer/DocumentPreviewDialog';
+
 
 type Kind = 'beleg' | 'angebot' | 'auftrag' | 'rechnung' | 'gutschrift' | 'zahlung';
 
