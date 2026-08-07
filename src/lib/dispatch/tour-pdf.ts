@@ -78,9 +78,10 @@ export function buildToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }
     `Erstellt am ${new Date().toLocaleString('de-DE')} · AlixWork Dispatch Center`,
   );
 
-  const cols = entries.length <= 1 ? 2 : entries.length <= 4 ? 3 : 4;
+  const cols = entries.length <= 1 ? 2 : entries.length <= 4 ? 3 : entries.length <= 8 ? 4 : 5;
   const gap = 6;
   const colW = (PAGE_W - 2 * M - gap * (cols - 1)) / cols;
+
 
   // Blöcke aufbauen (Textzeilen je Tour) und dann auf Spalten verteilen
   type Line = { text: string; size: number; muted?: boolean; indent?: number; h: number };
@@ -128,28 +129,52 @@ export function buildToursPdf(entries: { tour: TourLike; stops: TourStopLike[] }
 
   const all = blocks.flat();
   const totalH = all.reduce((sum, l) => sum + l.h, 0);
-  const available = (BOTTOM - TOP) * cols;
-  const scale = totalH > available ? Math.max(0.55, available / totalH) : 1;
+  const colH = BOTTOM - TOP;
+  // Alles muss auf EINE Seite: Skalierung so wählen, dass der Inhalt in die Spalten passt.
+  // Puffer 0.92, da Blöcke nicht exakt an Spaltengrenzen brechen.
+  let scale = Math.min(1, (colH * cols * 0.92) / Math.max(totalH, 1));
 
-  let col = 0;
-  let y = TOP;
-  const draw = (l: Line) => {
-    const h = l.h * scale;
-    if (y + h > BOTTOM) {
-      col += 1;
-      y = TOP;
-      if (col >= cols) { doc.addPage(); col = 0; }
-    }
-    const x = M + col * (colW + gap) + (l.indent ?? 0);
-    if (l.text) {
-      doc.setFontSize(l.size * scale);
-      doc.setTextColor(l.muted ? 110 : 20);
-      const wrapped = doc.splitTextToSize(l.text, colW - (l.indent ?? 0));
-      doc.text(wrapped[0] ?? '', x, y);
-    }
-    y += h;
+  const render = (s: number): boolean => {
+    let col = 0;
+    let y = TOP;
+    let overflow = false;
+    const draw = (l: Line) => {
+      const h = l.h * s;
+      if (y + h > BOTTOM) {
+        col += 1;
+        y = TOP;
+        if (col >= cols) { overflow = true; col = cols - 1; }
+      }
+      if (overflow) return;
+      const x = M + col * (colW + gap) + (l.indent ?? 0);
+      if (l.text) {
+        doc.setFontSize(Math.max(3.5, l.size * s));
+        doc.setTextColor(l.muted ? 110 : 20);
+        const wrapped = doc.splitTextToSize(l.text, colW - (l.indent ?? 0));
+        doc.text(wrapped[0] ?? '', x, y);
+      }
+      y += h;
+    };
+    blocks.forEach((b) => b.forEach(draw));
+    return !overflow;
   };
-  blocks.forEach((b) => b.forEach(draw));
+
+  // Bei Überlauf schrittweise weiter verkleinern, bis alles auf eine Seite passt.
+  for (let i = 0; i < 12; i++) {
+    // Test-Render auf Hilfsseite vermeiden: wir rendern direkt und leeren bei Bedarf.
+    const ok = render(scale);
+    if (ok) break;
+    doc.addPage('a4', 'landscape');
+    doc.deletePage(1);
+
+    header(
+      doc,
+      entries.length === 1 ? 'Tourenplan' : `Tourenpläne (${entries.length})`,
+      `Erstellt am ${new Date().toLocaleString('de-DE')} · AlixWork Dispatch Center`,
+    );
+    scale *= 0.85;
+  }
+
   doc.setTextColor(20);
   return doc;
 }
