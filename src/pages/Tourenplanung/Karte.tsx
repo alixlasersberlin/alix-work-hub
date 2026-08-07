@@ -2,9 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapPin, Loader2, Truck, Package } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Loader2, Truck, Package, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { downloadToursPdf } from '@/lib/dispatch/tour-pdf';
 
 declare global { interface Window { google?: any; initDispatchMap?: () => void } }
 
