@@ -40,8 +40,8 @@ export default function FinanceForecast() {
     const s = `${year}-01-01`, e = `${year}-12-31`;
     const [f, t, ii] = await Promise.all([
       supabase.from('finance_forecasts' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('scenario', scenario).gte('period_date', s).lte('period_date', e),
-      supabase.from('finance_transactions').select('amount, transaction_type, booking_date').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', s).lte('booking_date', e),
-      supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).gte('invoice_date', s).lte('invoice_date', e),
+      supabase.from('finance_transactions').select('amount, transaction_type, booking_date').in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any).gte('booking_date', s).lte('booking_date', e),
+      supabase.from('finance_incoming_invoices').select('amount_net, amount_gross, invoice_date, description').in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any).gte('invoice_date', s).lte('invoice_date', e),
     ]);
     const fMap: Record<string, number[]> = {};
     for (const cat of BUDGET_CATEGORIES) fMap[cat] = Array(12).fill(0);

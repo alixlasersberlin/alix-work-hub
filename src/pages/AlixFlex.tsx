@@ -116,7 +116,7 @@ export default function AlixFlex() {
     const { data, error } = await supabase
       .from('zoho_recurring_profiles')
       .select('id, source_system, recurrence_name, reference_number, status, customer_name, company_name, recurrence_frequency, repeat_every, start_date, next_invoice_date, last_sent_date, total, currency, device_name, created_at')
-      .in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region])
+      .in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any)
       .order('created_at', { ascending: false, nullsFirst: false })
       .limit(5000);
     if (error) { setError(error.message); setRows([]); }

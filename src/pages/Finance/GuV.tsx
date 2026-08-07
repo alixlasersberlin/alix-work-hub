@@ -25,7 +25,7 @@ export default function FinanceGuV() {
       setLoading(true);
       const s = `${year}-01-01`, e = `${year}-12-31`;
       const [t, a, ii] = await Promise.all([
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').gte('booking_date', s).lte('booking_date', e).in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any),
         supabase.from('finance_asset_depreciations').select('amount, period').gte('period', s).lte('period', e),
         supabase.from('finance_incoming_invoices').select('amount_gross, amount_net, description').gte('invoice_date', s).lte('invoice_date', e),
       ]);

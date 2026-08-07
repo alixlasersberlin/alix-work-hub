@@ -21,7 +21,7 @@ export default function FinanceMahnwesenDetail() {
   const { roles } = useAuth();
   const { region } = useAccountingRegion();
   const fmt = (n: number | null | undefined) => typeof n === 'number'
-    ? new Intl.NumberFormat(region === 'CH' ? 'de-CH' : 'de-DE', { style: 'currency', currency: regionCurrency(region) }).format(n) : '–';
+    ? new Intl.NumberFormat(region === 'CH' ? 'de-CH' : 'de-DE', { style: 'currency', currency: regionCurrency((region as any)) }).format(n) : '–';
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
 
   const [customer, setCustomer] = useState<any>(null);

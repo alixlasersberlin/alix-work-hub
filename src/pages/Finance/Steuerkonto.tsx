@@ -86,7 +86,7 @@ export default function FinanceSteuerkonto() {
   useEffect(() => {
     if (!selectedFiling) return;
     setAmount(String(Number(selectedFiling.total_amount ?? 0).toFixed(2)));
-    setDueDate(computeDueDate(selectedFiling.period_value, region));
+    setDueDate(computeDueDate(selectedFiling.period_value, (region as any)));
   }, [filingId]);
 
   const createPayment = async () => {
@@ -99,7 +99,7 @@ export default function FinanceSteuerkonto() {
       accounting_region: (String(region) === 'ALL' ? 'EU' : region),
       filing_type: selectedFiling.filing_type,
       period_value: selectedFiling.period_value,
-      due_date: dueDate || computeDueDate(selectedFiling.period_value, region),
+      due_date: dueDate || computeDueDate(selectedFiling.period_value, (region as any)),
       amount: Number(amount) || 0,
       currency,
       created_by: auth?.user?.id ?? null,

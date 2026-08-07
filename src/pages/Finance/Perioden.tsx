@@ -43,7 +43,7 @@ export default function Perioden() {
   const { hasRole } = useAuth();
   const { canWrite } = useFinancePermissions();
   const isSuperAdmin = hasRole('Super Admin');
-  const currency = regionCurrency(region);
+  const currency = regionCurrency((region as any));
 
   const [year, setYear] = useState(new Date().getFullYear());
   const [rows, setRows] = useState<Period[]>([]);
@@ -145,7 +145,7 @@ export default function Perioden() {
     const blob = new Blob(['\ufeff' + [head.join(';'), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = regionFileName(`Periodenabschluss_${year}`, region, 'csv');
+    a.download = regionFileName(`Periodenabschluss_${year}`, (region as any), 'csv');
     a.click();
   };
 

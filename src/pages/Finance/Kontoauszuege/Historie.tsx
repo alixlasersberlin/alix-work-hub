@@ -17,7 +17,7 @@ export default function Importhistorie() {
 
   useEffect(() => {
     setLoading(true);
-    listImports(region).then(setRows).catch(e => toast.error(e.message)).finally(() => setLoading(false));
+    listImports((region as any)).then(setRows).catch(e => toast.error(e.message)).finally(() => setLoading(false));
   }, [region]);
 
   const download = async (path: string, name: string) => {

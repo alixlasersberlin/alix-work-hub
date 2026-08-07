@@ -42,8 +42,8 @@ export default function Segmentbericht() {
           <TabsTrigger value="report">Auswertung</TabsTrigger>
           <TabsTrigger value="master">Segmente pflegen</TabsTrigger>
         </TabsList>
-        <TabsContent value="report"><Report region={region} cur={cur} /></TabsContent>
-        <TabsContent value="master"><Master region={region} canWrite={canWrite} canDelete={canDelete} /></TabsContent>
+        <TabsContent value="report"><Report (region as any)={region} cur={cur} /></TabsContent>
+        <TabsContent value="master"><Master (region as any)={region} canWrite={canWrite} canDelete={canDelete} /></TabsContent>
       </Tabs>
     </div>
   );

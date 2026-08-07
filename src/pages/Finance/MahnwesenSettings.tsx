@@ -43,7 +43,7 @@ export default function FinanceMahnwesenSettings() {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data } = await supabase.from('app_settings' as any).select('value').eq('key', cfgKey(region)).maybeSingle();
+      const { data } = await supabase.from('app_settings' as any).select('value').eq('key', cfgKey((region as any))).maybeSingle();
       if (cancelled) return;
       let next = DEFAULT_CFG;
       try { if ((data as any)?.value) next = { ...DEFAULT_CFG, ...JSON.parse((data as any).value) }; } catch { /* ignore */ }
@@ -57,7 +57,7 @@ export default function FinanceMahnwesenSettings() {
     if (!isSuperAdmin) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from('app_settings' as any).upsert({ key: cfgKey(region), value: JSON.stringify(cfg), updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      const { error } = await supabase.from('app_settings' as any).upsert({ key: cfgKey((region as any)), value: JSON.stringify(cfg), updated_at: new Date().toISOString() }, { onConflict: 'key' });
       if (error) throw error;
       toast({ title: `Gespeichert (${region})` });
     } catch (e: any) { toast({ title: 'Fehler', description: e?.message, variant: 'destructive' }); }
@@ -96,7 +96,7 @@ export default function FinanceMahnwesenSettings() {
               <th className="text-left px-4 py-3 font-medium">Stufe</th>
               <th className="text-left px-4 py-3 font-medium">Bezeichnung</th>
               <th className="text-left px-4 py-3 font-medium">Tage überfällig</th>
-              <th className="text-left px-4 py-3 font-medium">Mahngebühr ({regionCurrency(region) === 'CHF' ? 'CHF' : '€'})</th>
+              <th className="text-left px-4 py-3 font-medium">Mahngebühr ({regionCurrency((region as any)) === 'CHF' ? 'CHF' : '€'})</th>
               <th className="text-left px-4 py-3 font-medium">Verzugszinsen (% p.a.)</th>
             </tr>
           </thead>

@@ -21,7 +21,7 @@ export default function Bankkonten() {
   const [rows, setRows] = useState<BankAccount[]>([]);
   const [edit, setEdit] = useState<Partial<BankAccount> | null>(null);
 
-  const load = () => listBankAccounts(region).then(setRows).catch(e => toast.error(e.message));
+  const load = () => listBankAccounts((region as any)).then(setRows).catch(e => toast.error(e.message));
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [region]);
 
   const save = async () => {

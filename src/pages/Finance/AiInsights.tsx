@@ -32,9 +32,9 @@ export default function FinanceAiInsights() {
       const year = new Date().getFullYear();
       const s = `${year}-01-01`, e = new Date().toISOString().slice(0, 10);
       const [{ data: tx }, { data: ii }, { data: acc }] = await Promise.all([
-        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', s).lte('booking_date', e),
-        supabase.from('finance_incoming_invoices').select('amount_gross, invoice_date, paid_at, description').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).gte('invoice_date', s).lte('invoice_date', e),
-        supabase.from('finance_accounts').select('current_balance, overdue_balance').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]),
+        supabase.from('finance_transactions').select('amount, transaction_type, booking_date').in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any).gte('booking_date', s).lte('booking_date', e),
+        supabase.from('finance_incoming_invoices').select('amount_gross, invoice_date, paid_at, description').in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any).gte('invoice_date', s).lte('invoice_date', e),
+        supabase.from('finance_accounts').select('current_balance, overdue_balance').in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any),
       ]);
       const byCat: Record<string, number> = {};
       for (const c of BUDGET_CATEGORIES) byCat[c] = 0;
