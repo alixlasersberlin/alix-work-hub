@@ -120,89 +120,112 @@ async function runEntity(supabase: any, entity: Entity, trigger: string, full = 
       if (at && (!newestAt || at > newestAt)) newestAt = at;
     }
 
-    // Users: Bulk-Verarbeitung (bis zu mehrere tausend Profile)
+    const nowIso = new Date().toISOString();
+
+    // Users: auf AlixWork-Kunden per E-Mail matchen (alixwork_customer_id ist Pflicht)
     if (entity === "users") {
-      const nowIso = new Date().toISOString();
-      const { data: existingRows } = await supabase
-        .from("alixsmart_customer_links")
-        .select("id, customer_email")
-        .limit(20000);
-      const byEmail = new Map<string, string>();
-      for (const r of existingRows ?? []) {
-        if (r.customer_email) byEmail.set(String(r.customer_email).toLowerCase(), r.id);
-      }
-      const inserts: any[] = [];
-      const updates: any[] = [];
-      const seen = new Set<string>();
+      const emails = new Map<string, any>();
       for (const item of items) {
-        const email = (item.email ?? "").toLowerCase();
-        if (!email || seen.has(email)) continue;
-        seen.add(email);
-        const base = {
-          customer_email: email,
-          alixsmart_user_id: item.id ?? item.user_id ?? null,
+        const email = String(item.email ?? "").toLowerCase().trim();
+        if (email) emails.set(email, item);
+      }
+      // Kunden laden (seitenweise)
+      const custByEmail = new Map<string, string>();
+      for (let off = 0; off < 50000; off += 1000) {
+        const { data } = await supabase.from("customers").select("id, email").range(off, off + 999);
+        if (!data?.length) break;
+        for (const c of data) {
+          if (c.email) custByEmail.set(String(c.email).toLowerCase().trim(), c.id);
+        }
+        if (data.length < 1000) break;
+      }
+      const { data: existingLinks } = await supabase
+        .from("alixsmart_customer_links")
+        .select("id, alixwork_customer_id")
+        .limit(20000);
+      const linkByCustomer = new Map<string, string>();
+      for (const l of existingLinks ?? []) linkByCustomer.set(l.alixwork_customer_id, l.id);
+
+      const rows: any[] = [];
+      for (const [email, item] of emails) {
+        const customerId = custByEmail.get(email);
+        if (!customerId) continue; // kein AlixWork-Kunde -> kein Link möglich
+        const row: any = {
+          alixwork_customer_id: customerId,
+          alixsmart_user_id: String(item.id ?? item.user_id ?? ""),
+          alixsmart_email: email,
+          alixsmart_phone: item.phone ?? null,
+          match_status: "registered",
+          match_score: 100,
           match_method: "api_sync",
-          last_synced_at: nowIso,
+          registered_at: item.created_at ?? null,
+          last_checked_at: nowIso,
         };
-        const existingId = byEmail.get(email);
-        if (existingId) updates.push({ id: existingId, ...base });
-        else inserts.push({ ...base, manually_confirmed: false });
+        const existingId = linkByCustomer.get(customerId);
+        if (existingId) { row.id = existingId; updated++; } else { created++; }
+        rows.push(row);
       }
-      for (let i = 0; i < inserts.length; i += 500) {
-        const chunk = inserts.slice(i, i + 500);
-        const { error: e } = await supabase.from("alixsmart_customer_links").insert(chunk);
-        if (e) failed += chunk.length; else created += chunk.length;
-      }
-      for (let i = 0; i < updates.length; i += 500) {
-        const chunk = updates.slice(i, i + 500);
-        const { error: e } = await supabase.from("alixsmart_customer_links").upsert(chunk, { onConflict: "id" });
-        if (e) failed += chunk.length; else updated += chunk.length;
+      for (let i = 0; i < rows.length; i += 500) {
+        const chunk = rows.slice(i, i + 500);
+        const { error: e } = await supabase
+          .from("alixsmart_customer_links")
+          .upsert(chunk, { onConflict: "alixwork_customer_id" });
+        if (e) { failed += chunk.length; created = Math.max(0, created - chunk.length); console.error("[users] upsert:", e.message); }
       }
       items.length = 0;
     }
 
-    for (const item of items) {
-      try {
-        if (false) {
-          // users werden oben gebündelt verarbeitet
-        } else if (entity === "devices" || entity === "registrations") {
+    // Devices / Registrations
+    if (entity === "devices" || entity === "registrations") {
+      const { data: existingDevs } = await supabase
+        .from("alixsmart_device_links")
+        .select("id, serial_number")
+        .limit(20000);
+      const bySerial = new Map<string, string>();
+      for (const d of existingDevs ?? []) bySerial.set(String(d.serial_number), d.id);
 
-          const serial = item.serial_number ?? item.serial ?? item.device_serial;
-          if (!serial) continue;
-          const registered = entity === "registrations" ? true : !!item.registered;
-          const { data: existing } = await supabase
-            .from("alixsmart_device_links")
-            .select("id").eq("serial_number", serial).maybeSingle();
-          const payload = {
-            serial_number: serial,
-            alixsmart_user_id: item.user_id ?? item.alixsmart_user_id ?? null,
-            registered_at: registered ? (item.registered_at ?? new Date().toISOString()) : null,
-            status: registered ? "registered" : "unregistered",
-            last_synced_at: new Date().toISOString(),
-          };
-          if (existing) {
-            await supabase.from("alixsmart_device_links").update(payload).eq("id", existing.id);
-            updated++;
-          } else {
-            await supabase.from("alixsmart_device_links").insert(payload);
-            created++;
-          }
-        } else if (entity === "events") {
-          await supabase.from("alixsmart_events").upsert({
-            external_id: item.id ?? item.event_id ?? null,
-            alixsmart_user_id: item.user_id ?? null,
-            device_serial: item.serial_number ?? item.serial ?? null,
-            event_type: item.type ?? item.event_type ?? "unknown",
-            event_at: item.event_at ?? item.created_at ?? new Date().toISOString(),
-            payload: item,
-          }, { onConflict: "external_id", ignoreDuplicates: false });
-          created++;
-        }
-      } catch (e) {
-        failed++;
-        console.error(`[${entity}] item failed:`, (e as Error).message);
+      const rows: any[] = [];
+      const seen = new Set<string>();
+      for (const item of items) {
+        const serial = item.serial_number ?? item.serial ?? item.device_serial;
+        if (!serial || seen.has(serial)) continue;
+        seen.add(serial);
+        const registered = entity === "registrations" ? true : (item.status === "registered" || !!item.registered);
+        const row: any = {
+          serial_number: String(serial),
+          device_model: item.model ?? item.device_model ?? null,
+          device_name: item.device_name ?? item.model ?? null,
+          alixsmart_device_id: String(item.id ?? ""),
+          registration_status: registered ? "registered" : (item.status ?? "unregistered"),
+          registered_at: registered ? (item.registered_at ?? item.commissioning_date ?? null) : null,
+          last_checked_at: nowIso,
+        };
+        const existingId = bySerial.get(String(serial));
+        if (existingId) { row.id = existingId; updated++; } else { created++; }
+        rows.push(row);
+      }
+      for (let i = 0; i < rows.length; i += 500) {
+        const chunk = rows.slice(i, i + 500);
+        const { error: e } = await supabase.from("alixsmart_device_links").upsert(chunk, { onConflict: "id" });
+        if (e) { failed += chunk.length; created = Math.max(0, created - chunk.length); console.error("[devices] upsert:", e.message); }
+      }
+      items.length = 0;
+    }
+
+    if (entity === "events") {
+      for (const item of items) {
+        const { error: e } = await supabase.from("alixsmart_events").upsert({
+          external_id: String(item.id ?? item.event_id ?? crypto.randomUUID()),
+          alixsmart_user_id: item.user_id ?? null,
+          device_serial: item.serial_number ?? item.serial ?? null,
+          event_type: item.type ?? item.event_type ?? "academy_session",
+          event_at: item.event_at ?? item.session_date ?? item.created_at ?? nowIso,
+          payload: item,
+        }, { onConflict: "external_id" });
+        if (e) { failed++; console.error("[events] upsert:", e.message); } else created++;
       }
     }
+
   } catch (e) {
     error = (e as Error).message;
   }
