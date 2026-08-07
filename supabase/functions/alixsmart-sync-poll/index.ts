@@ -88,7 +88,7 @@ async function fetchAllItems(entity: Entity, since: string | null): Promise<any[
 
 
 
-async function runEntity(supabase: any, entity: Entity, trigger: string) {
+async function runEntity(supabase: any, entity: Entity, trigger: string, full = false) {
   const { data: state } = await supabase
     .from("alixsmart_sync_state")
     .select("*")
@@ -101,7 +101,7 @@ async function runEntity(supabase: any, entity: Entity, trigger: string) {
     .select()
     .single();
 
-  const since = state?.last_synced_at ?? null;
+  const since = full ? null : (state?.last_synced_at ?? null);
   let processed = 0, created = 0, updated = 0, failed = 0;
   let error: string | null = null;
   let newestAt: string | null = null;
@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
     : [...ENTITIES];
 
   const results = [];
-  for (const e of entities) results.push(await runEntity(supabase, e, trigger));
+  for (const e of entities) results.push(await runEntity(supabase, e, trigger, !!body.full));
 
   return new Response(JSON.stringify({ ok: true, results }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
