@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: 'Alix Lasers | Feedback <news@alixwork.de>',
+              from: 'Alix Lasers ® <news@alixwork.de>',
               reply_to: tpl?.reply_to || 'support@alix-operation.de',
               to: [r.email], subject, html,
             }),
