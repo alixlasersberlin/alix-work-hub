@@ -50,13 +50,14 @@ export function TourOrderPicker({
   const [term, setTerm] = useState('');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<any[]>([]);
+  const [itemsByOrder, setItemsByOrder] = useState<Record<string, string[]>>({});
 
   async function search() {
     const q = term.trim();
     if (q.length < 2) { toast.error('Bitte mindestens 2 Zeichen eingeben'); return; }
     setSearching(true);
     try {
-      const sel = 'id, order_number, customer_id, shipping_address, billing_address, customers:customer_id(company_name, contact_name, email, phone, shipping_address, billing_address)';
+      const sel = 'id, order_number, customer_id, total_amount, currency, order_date, shipping_address, billing_address, customers:customer_id(company_name, contact_name, email, phone, shipping_address, billing_address)';
       const [byNumber, byCustomer] = await Promise.all([
         supabase.from('orders').select(sel).ilike('order_number', `%${q}%`).limit(25),
         supabase.from('customers').select('id').or(`company_name.ilike.%${q}%,contact_name.ilike.%${q}%`).limit(25),
@@ -70,6 +71,22 @@ export function TourOrderPicker({
         rows = [...rows, ...(byName ?? []).filter((r: any) => !seen.has(r.id))];
       }
       setResults(rows);
+      const ids = rows.map((r: any) => r.id);
+      if (ids.length) {
+        const { data: oi } = await supabase
+          .from('order_items')
+          .select('order_id, item_name, sku, quantity')
+          .in('order_id', ids)
+          .limit(1000);
+        const map: Record<string, string[]> = {};
+        (oi ?? []).forEach((it: any) => {
+          if (!it.order_id) return;
+          (map[it.order_id] ||= []).push(`${Number(it.quantity ?? 1)}× ${it.item_name || it.sku || 'Position'}`);
+        });
+        setItemsByOrder(map);
+      } else {
+        setItemsByOrder({});
+      }
       if (!rows.length) toast.info('Kein Auftrag gefunden');
     } catch (e: any) {
       toast.error(e.message ?? 'Suche fehlgeschlagen');
@@ -77,6 +94,23 @@ export function TourOrderPicker({
       setSearching(false);
     }
   }
+
+  function fmtMoney(v: any, cur?: string) {
+    const n = Number(v);
+    if (!v || Number.isNaN(n)) return null;
+    return n.toLocaleString('de-DE', { style: 'currency', currency: cur || 'EUR', maximumFractionDigits: 2 });
+  }
+
+  function rowAddress(r: any) {
+    const c = r.customers ?? {};
+    const ship = r.shipping_address ?? c.shipping_address ?? c.billing_address ?? r.billing_address;
+    return [
+      addrPart(ship, ['street', 'address', 'address1', 'street1']),
+      `${addrPart(ship, ['zip', 'zipcode', 'postal_code', 'zip_code'])} ${addrPart(ship, ['city', 'town'])}`.trim(),
+      addrPart(ship, ['country']),
+    ].filter(Boolean).join(', ');
+  }
+
 
   async function choose(row: any) {
     const c = row.customers ?? {};
@@ -135,20 +169,37 @@ export function TourOrderPicker({
       </div>
 
       {results.length > 0 && (
-        <div className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded-md border border-border p-1">
-          {results.map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              onClick={() => choose(r)}
-              className="w-full rounded px-2 py-1.5 text-left text-xs hover:bg-muted"
-            >
-              <span className="font-medium">{r.order_number}</span>
-              <span className="text-muted-foreground"> · {r.customers?.company_name || r.customers?.contact_name || '—'}</span>
-            </button>
-          ))}
+        <div className="mt-2 max-h-72 space-y-1 overflow-y-auto rounded-md border border-border p-1">
+          {results.map((r) => {
+            const arts = itemsByOrder[r.id] ?? [];
+            const money = fmtMoney(r.total_amount, r.currency);
+            return (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => choose(r)}
+                className="w-full rounded px-2 py-2 text-left text-xs hover:bg-muted"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{r.order_number}</span>
+                  <span className="text-muted-foreground truncate">{r.customers?.company_name || r.customers?.contact_name || '—'}</span>
+                  {money && <span className="ml-auto shrink-0 font-medium text-primary">{money}</span>}
+                </div>
+                <div className="text-muted-foreground truncate">
+                  {rowAddress(r) || 'Keine Lieferadresse'}
+                  {r.order_date ? ` · ${new Date(r.order_date).toLocaleDateString('de-DE')}` : ''}
+                </div>
+                {arts.length > 0 && (
+                  <div className="text-muted-foreground/80 truncate">
+                    {arts.slice(0, 3).join(' · ')}{arts.length > 3 ? ` · +${arts.length - 3} weitere` : ''}
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
+
 
       {order && (
         <div className="mt-3 space-y-3">
