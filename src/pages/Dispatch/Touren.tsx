@@ -150,14 +150,25 @@ export default function DispatchTouren() {
         subtitle="Tagesplanung, Auslastung und Freigabe der Touren"
         icon={Truck}
         actions={
-          <Button
-            variant="outline"
-            className="gap-2"
-            disabled={selected.length === 0}
-            onClick={() => exportPdf(selected)}
-          >
-            <FileDown className="w-4 h-4" /> PDF ({selected.length})
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              className="gap-2"
+              disabled={recalc || (data ?? []).length === 0}
+              onClick={() => recalcTours(selected.length ? selected : filtered.map((t: any) => t.id))}
+            >
+              {recalc ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              {selected.length ? `Neu berechnen (${selected.length})` : 'Alle neu berechnen'}
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2"
+              disabled={selected.length === 0}
+              onClick={() => exportPdf(selected)}
+            >
+              <FileDown className="w-4 h-4" /> PDF ({selected.length})
+            </Button>
+          </>
         }
       />
 
