@@ -1977,6 +1977,58 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         </div>
       )}
 
+      <Dialog open={!!statusRow} onOpenChange={(o) => !o && !statusSaving && setStatusRow(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-primary" />
+              Status Änderung {statusRow?.invoice_number ?? ''}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label htmlFor="stps">Zahlungsstatus</Label>
+              <select
+                id="stps"
+                value={statusForm.payment_status}
+                onChange={(e) => setStatusForm((f) => ({ ...f, payment_status: e.target.value }))}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Status wählen</option>
+                <option value="Offen">Offen</option>
+                <option value="Teilweise bezahlt">Teilweise bezahlt</option>
+                <option value="Bezahlt">Bezahlt</option>
+                <option value="Überfällig">Überfällig</option>
+                <option value="Storniert">Storniert</option>
+                <option value="Anwalt">Anwalt</option>
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="strs">Rechnungsstatus</Label>
+              <select
+                id="strs"
+                value={statusForm.status || 'sent'}
+                onChange={(e) => setStatusForm((f) => ({ ...f, status: e.target.value }))}
+                className="mt-1 w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="draft">Entwurf</option>
+                <option value="sent">Festgeschrieben (versendet)</option>
+                <option value="void">Storniert</option>
+              </select>
+            </div>
+            <p className="text-xs text-muted-foreground">Änderung wirkt lokal in Alix Work, kein Zoho-Sync.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusRow(null)} disabled={statusSaving}>Abbrechen</Button>
+            <Button onClick={saveStatus} disabled={statusSaving} className="gold-gradient text-primary-foreground">
+              {statusSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}Speichern
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+
+
       <Dialog open={!!emailRow} onOpenChange={(o) => !o && !emailSending && setEmailRow(null)}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
