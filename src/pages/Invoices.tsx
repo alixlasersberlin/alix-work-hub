@@ -301,7 +301,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const [mietkaufBusyId, setMietkaufBusyId] = useState<string | null>(null);
   const toggleMietkauf = async (r: Row) => {
-    const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+    const table = tableFor(r.source);
     const next = !r.is_mietkauf;
     setMietkaufBusyId(r.id);
     const { data: auth } = await supabase.auth.getUser();
@@ -491,7 +491,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     if (!isSuperAdmin) return;
     if (!confirm(`Rechnung ${r.invoice_number ?? ''} unwiderruflich löschen?`)) return;
     try {
-      const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const table = tableFor(r.source);
       const { error } = await supabase.from(table).delete().eq('id', r.id);
       if (error) throw error;
       toast({ title: 'Gelöscht', description: `Rechnung ${r.invoice_number ?? ''} gelöscht.` });
@@ -837,7 +837,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   // Lädt raw_data erst bei Bedarf nach (nicht mehr in der Listenabfrage enthalten).
   const loadRawData = async (r: Row): Promise<any> => {
     if (r.raw_data && typeof r.raw_data === 'object' && !Array.isArray(r.raw_data)) return r.raw_data;
-    const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+    const table = tableFor(r.source);
     const { data } = await (supabase as any).from(table).select('raw_data').eq('id', r.id).maybeSingle();
     const raw = data?.raw_data;
     return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
@@ -846,7 +846,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const commitDraft = async (r: Row) => {
     if (!isDraftInvoice(r)) return;
     try {
-      const table = r.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const table = tableFor(r.source);
       const raw = await loadRawData(r);
       const patch: any = {
         status: 'sent',
@@ -867,7 +867,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     if (!editRow) return;
     setEditSaving(true);
     try {
-      const table = editRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const table = tableFor(editRow.source);
       const patch: any = {
         reference_number: editForm.reference_number || null,
         due_date: editForm.due_date || null,
@@ -1111,7 +1111,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       if (pay <= 0) throw new Error('Bitte einen Zahlbetrag größer 0 eingeben.');
       const newBalance = Math.max(0, +(openBefore - pay).toFixed(2));
       const fullyPaid = newBalance <= 0.0049;
-      const table = bookRow.source === 'recurring' ? 'zoho_recurring_invoices' : 'zoho_invoices';
+      const table = tableFor(bookRow.source);
       const patch: any = {
         payment_status: fullyPaid ? 'Bezahlt' : 'Teilweise bezahlt',
         balance: newBalance,
