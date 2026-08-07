@@ -25,7 +25,7 @@ export default function DispatchTagesplanung() {
   const [filterStatus, setFilterStatus] = useState<string>('alle');
   const [calcLoading, setCalcLoading] = useState(false);
   const [newTourOpen, setNewTourOpen] = useState(false);
-  const [newTour, setNewTour] = useState({ title: '', driver_id: '', vehicle_id: '', start: '08:00' });
+  const [newTour, setNewTour] = useState({ title: '', driver_id: '', vehicle_id: '', start: '08:00', date: todayStr() });
   const [pickedOrder, setPickedOrder] = useState<PickedOrder | null>(null);
   const [pickedItems, setPickedItems] = useState<PickedItem[]>([]);
   const [partialDelivery, setPartialDelivery] = useState(false);
@@ -117,12 +117,13 @@ export default function DispatchTagesplanung() {
 
   async function createTour() {
     setCreating(true);
+    const tourDate = newTour.date || day;
     try {
       const { data, error } = await supabase
         .from('delivery_tours')
         .insert({
-          tour_date: day,
-          title: newTour.title || `Tour ${format(new Date(day), 'dd.MM.yyyy')}`,
+          tour_date: tourDate,
+          title: newTour.title || `Tour ${format(new Date(tourDate), 'dd.MM.yyyy')}`,
           driver_id: newTour.driver_id || null,
           vehicle_id: newTour.vehicle_id || null,
           planned_start_time: newTour.start || '08:00',
@@ -152,7 +153,7 @@ export default function DispatchTagesplanung() {
             delivery_country: pickedOrder.country || null,
             appointment_type: 'auslieferung' as any,
             status: 'intern_geplant' as any,
-            planned_date: day,
+            planned_date: tourDate,
             time_window_start: newTour.start || '08:00',
             scope_of_delivery: `${partialDelivery ? 'Teillieferung' : 'Komplettlieferung'}: ${included.map((i) => `${i.quantity}× ${i.description}`).join(', ') || '—'}`,
           })
@@ -199,10 +200,11 @@ export default function DispatchTagesplanung() {
       }
 
       setNewTourOpen(false);
-      setNewTour({ title: '', driver_id: '', vehicle_id: '', start: '08:00' });
+      setNewTour({ title: '', driver_id: '', vehicle_id: '', start: '08:00', date: tourDate });
       setPickedOrder(null);
       setPickedItems([]);
       setPartialDelivery(false);
+      if (tourDate !== day) setDay(tourDate);
       setSelectedTour(tourId);
       refresh();
     } finally {
