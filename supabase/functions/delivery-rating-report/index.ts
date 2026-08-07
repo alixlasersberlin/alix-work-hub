@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: "Alix Auslieferung <no-reply@alixwork.de>",
+        from: "Alix Tourenplanung <no-reply@alixwork.de>",
         to: [FLEET_EMAIL],
         bcc: BCC,
         subject: `Bewertungs-Report Auslieferung ${label}: Ø ${f1(overall)} / 5 (${list.length})`,

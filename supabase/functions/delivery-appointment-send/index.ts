@@ -52,7 +52,7 @@ async function sendMail(sb: any, log: Record<string, unknown>, opts: { to: strin
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Alix Auslieferung <no-reply@alixwork.de>",
+        from: "Alix Tourenplanung <no-reply@alixwork.de>",
         to: opts.to,
         bcc: BCC,
         subject: opts.subject,
