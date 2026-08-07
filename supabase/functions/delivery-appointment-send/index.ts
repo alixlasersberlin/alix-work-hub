@@ -122,17 +122,62 @@ Deno.serve(async (req) => {
     const link = `${baseUrl}/liefertermin/${raw}`;
     const address = [appt.delivery_street, `${appt.delivery_zip ?? ""} ${appt.delivery_city ?? ""}`.trim(), appt.delivery_country].filter(Boolean).join(", ");
 
+    // Alle zugehörigen Daten laden: Positionen + Tour
+    const { data: items } = await sb
+      .from("delivery_loading_items")
+      .select("description, quantity, serial_number, item_type, position")
+      .eq("appointment_id", appointmentId)
+      .order("position", { ascending: true });
+
+    const { data: stop } = await sb
+      .from("delivery_tour_stops")
+      .select("tour_id, position")
+      .eq("appointment_id", appointmentId)
+      .maybeSingle();
+    let tour: any = null;
+    if (stop?.tour_id) {
+      const { data: t } = await sb
+        .from("delivery_tours")
+        .select("tour_number, title, tour_date, planned_start_time, region")
+        .eq("id", stop.tour_id)
+        .maybeSingle();
+      tour = t;
+    }
+
+    const rows: Array<[string, string]> = [
+      ["Auftrag", appt.order_number || "-"],
+      ["Kunde", [appt.company_name, appt.customer_name].filter(Boolean).join(" · ") || "-"],
+      ["Ansprechpartner", appt.contact_name || "-"],
+      ["Telefon", appt.contact_phone || appt.contact_mobile || "-"],
+      ["E-Mail", to],
+      ["Terminart", String(appt.appointment_type || "auslieferung").replace(/_/g, " ")],
+      ["Datum", fmtDate(appt.planned_date || tour?.tour_date)],
+      ["Zeitfenster", fmtWindow(appt)],
+      ["Voraussichtliche Dauer", appt.duration_minutes ? `${appt.duration_minutes} Minuten` : "-"],
+      ["Lieferadresse", address || "-"],
+      ["Etage / Zugang", [appt.floor, appt.access_notes].filter(Boolean).join(" · ") || "-"],
+      ["Gerät", appt.device_name || appt.article_name || "-"],
+      ["Seriennummer", appt.serial_number || "-"],
+      ["Lieferumfang", appt.scope_of_delivery || "-"],
+      ["Tour", tour ? [tour.tour_number, tour.title].filter(Boolean).join(" · ") : "-"],
+      ["Hinweise", appt.customer_notes || appt.notes || "-"],
+    ].filter(([, v]) => v && v !== "-" ? true : ["Datum", "Zeitfenster", "Lieferadresse", "Auftrag"].includes(String()) );
+
+    const infoRows = rows
+      .filter(([label, value]) => value && (value !== "-" || ["Datum", "Zeitfenster", "Lieferadresse", "Auftrag"].includes(label)))
+      .map(([label, value]) => `<tr><td style="padding:5px 14px 5px 0;vertical-align:top;white-space:nowrap"><b>${esc(label)}</b></td><td style="padding:5px 0">${esc(value)}</td></tr>`)
+      .join("");
+
+    const itemRows = (items ?? [])
+      .map((i: any) => `<tr><td style="padding:4px 14px 4px 0">${esc(i.quantity ?? 1)}×</td><td style="padding:4px 14px 4px 0">${esc(i.description)}</td><td style="padding:4px 0;color:#555">${esc(i.serial_number || "")}</td></tr>`)
+      .join("");
+
     const customerHtml = `
       <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111">
         <p>Guten Tag ${esc(appt.contact_name || appt.customer_name || "")},</p>
-        <p>wir möchten Ihnen Ihr Gerät ausliefern und schlagen folgenden Termin vor:</p>
-        <table style="border-collapse:collapse;font-size:14px">
-          <tr><td style="padding:4px 12px 4px 0"><b>Datum</b></td><td>${esc(fmtDate(appt.planned_date))}</td></tr>
-          <tr><td style="padding:4px 12px 4px 0"><b>Zeitfenster</b></td><td>${esc(fmtWindow(appt))}</td></tr>
-          <tr><td style="padding:4px 12px 4px 0"><b>Adresse</b></td><td>${esc(address)}</td></tr>
-          <tr><td style="padding:4px 12px 4px 0"><b>Gerät</b></td><td>${esc(appt.device_name || appt.article_name || "-")}</td></tr>
-          <tr><td style="padding:4px 12px 4px 0"><b>Auftrag</b></td><td>${esc(appt.order_number || "-")}</td></tr>
-        </table>
+        <p>wir möchten Ihnen Ihre Lieferung zustellen und schlagen folgenden Termin vor:</p>
+        <table style="border-collapse:collapse;font-size:14px">${infoRows}</table>
+        ${itemRows ? `<h3 style="font-size:14px;margin:20px 0 6px">Lieferpositionen</h3><table style="border-collapse:collapse;font-size:14px">${itemRows}</table>` : ""}
         <p style="margin:20px 0">
           <a href="${esc(link)}" style="background:#C9A227;color:#111;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:bold">Termin jetzt bestätigen</a>
         </p>
