@@ -207,11 +207,34 @@ Deno.serve(async (req) => {
         <p>Freundliche Grüße<br/>Ihr Alix Auslieferungsteam</p>
       </div>`;
 
-    await sendMail(sb, { appointment_id: appointmentId, kind: "confirmation_request" }, {
+    const testBanner = testMode
+      ? `<div style="font-family:Arial;font-size:13px;background:#FFF4CC;border:1px solid #C9A227;padding:10px 14px;border-radius:6px;margin-bottom:16px">
+           <b>TESTMAIL</b> – interne Vorschau mit echten Termindaten. Der Bestätigungslink ist bewusst ungültig, der Kunde wurde nicht benachrichtigt.
+         </div>`
+      : "";
+
+    const mailResult = await sendMail(sb, { appointment_id: appointmentId, kind: testMode ? "confirmation_request_test" : "confirmation_request" }, {
       to: [to],
-      subject: `Ihr Liefertermin ${appt.order_number ? `zum Auftrag ${appt.order_number}` : ""} – bitte bestätigen`.replace(/\s+/g, " "),
-      html: customerHtml,
+      bcc: testMode ? [] : undefined,
+      subject: `${testMode ? "[TEST] " : ""}Ihr Liefertermin ${appt.order_number ? `zum Auftrag ${appt.order_number}` : ""} – bitte bestätigen`.replace(/\s+/g, " "),
+      html: testBanner + customerHtml,
     });
+
+    if (testMode) {
+      return Response.json(
+        {
+          ok: mailResult.status === "sent",
+          test: true,
+          to,
+          from: mailResult.from,
+          status: mailResult.status,
+          error: mailResult.error,
+          provider_id: mailResult.providerId,
+          subject: `[TEST] Ihr Liefertermin ${appt.order_number ? `zum Auftrag ${appt.order_number}` : ""} – bitte bestätigen`.replace(/\s+/g, " "),
+        },
+        { headers: corsHeaders },
+      );
+    }
 
     // Interne Information (Verkäufer / Operations)
     const internalTo: string[] = Array.isArray(body?.internalRecipients) ? body.internalRecipients.filter((x: string) => x?.includes("@")) : [];
@@ -224,6 +247,7 @@ Deno.serve(async (req) => {
     }
 
     // Status + Historie
+
     await sb.from("delivery_appointments").update({ status: "bestaetigung_versendet" }).eq("id", appointmentId);
     await sb.from("delivery_status_history").insert({
       appointment_id: appointmentId,
