@@ -240,6 +240,14 @@ export default function TourenKarte() {
                 {techs.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={visibleTours.length === 0}
+              onClick={() => exportTours(visibleTours)}
+            >
+              <FileDown className="w-4 h-4 mr-1" /> Tour als PDF
+            </Button>
           </>
         }
       />
