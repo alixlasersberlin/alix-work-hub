@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
   try {
     await sendLovableEmail({
       to: recipient,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+      from: `Alix Lasers ® <noreply@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
       subject,
       html, text,

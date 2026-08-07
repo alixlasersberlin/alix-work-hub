@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
           return await sendLovableEmail(
             {
               to: r.email,
-              from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
+              from: `Alix Lasers ® <noreply@${FROM_DOMAIN}>`,
               sender_domain: SENDER_DOMAIN,
               subject: `${r.subjectPrefix ?? ''}${baseSubject}`,
               html,
