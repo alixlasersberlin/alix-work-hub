@@ -378,6 +378,15 @@ export default function CustomerAllTransactions({
           })}
         </div>
       )}
+
+      <InvoicePdfDialog invoice={pdfInvoice} open={pdfOpen} onOpenChange={setPdfOpen} />
+      <DocumentPreviewDialog
+        documentId={docPreview?.id ?? null}
+        title={docPreview?.title}
+        open={docOpen}
+        onOpenChange={setDocOpen}
+      />
+
     </div>
   );
 }
