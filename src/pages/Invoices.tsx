@@ -1829,6 +1829,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                                     <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
                                   </Button>
                                 )}
+                                {isAdmin && r.source !== 'unpaid' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    type="button"
+                                    title="Status ändern"
+                                    className="h-8 px-2 gap-1 border-sky-500/40 text-sky-400 hover:bg-sky-500/10"
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); openStatusDialog(r); }}
+                                  >
+                                    <RefreshCw className="w-3.5 h-3.5" /> Status Änderung
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
                                   variant="outline"
