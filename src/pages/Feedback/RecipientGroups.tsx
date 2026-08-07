@@ -146,7 +146,7 @@ export default function RecipientGroups() {
         if (limitIds) q = q.in('id', limitIds.slice(0, 1000));
         if (fVip) q = q.eq('is_vip', true);
         if (fEmail) q = q.not('email', 'is', null);
-        if (region !== 'alle') q = q.eq('accounting_region', region);
+        if (region !== 'alle') q = q.in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]);
         if (source !== 'alle') q = q.eq('source_system', source);
         if (t.length >= 2) {
           q = q.or(`company_name.ilike.%${t}%,contact_name.ilike.%${t}%,email.ilike.%${t}%,external_customer_id.ilike.%${t}%`);

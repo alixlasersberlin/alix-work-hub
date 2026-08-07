@@ -60,7 +60,7 @@ export default function FinanceRaten() {
       const { data, error } = await supabase
         .from('zoho_recurring_profiles' as any)
         .select('id, source_system, zoho_recurring_invoice_id, customer_name, company_name, reference_number, status, total, next_invoice_date, last_sent_date, end_date, start_date, currency, raw_data')
-        .eq('accounting_region', region)
+        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
         .limit(3000);
       if (cancelled) return;
       if (error) { setError(error.message); setRows([]); }

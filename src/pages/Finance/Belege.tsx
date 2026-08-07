@@ -42,7 +42,7 @@ export default function FinanceBelege() {
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('finance_documents' as any).select('*').eq('accounting_region', region).order('document_date', { ascending: false }).limit(500);
+    let q = supabase.from('finance_documents' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('document_date', { ascending: false }).limit(500);
     if (typeFilter !== 'alle') q = q.eq('document_type', typeFilter);
     const { data, error } = await q;
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
@@ -68,7 +68,7 @@ export default function FinanceBelege() {
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
-        hash_sha256: hash, accounting_region: region,
+        hash_sha256: hash, accounting_region: (region === 'ALL' ? 'EU' : region),
       });
       if (error) throw error;
       toast({ title: 'Beleg hochgeladen', description: file.name });

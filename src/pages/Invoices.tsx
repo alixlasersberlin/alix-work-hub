@@ -249,7 +249,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
     const cols = 'id, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
     const [inv, rec, unp] = await Promise.all([
-      (supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf`).eq('accounting_region', region).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
+      (supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf`).in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
       (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false }).limit(10000),
       includeUnpaid && !mietkaufOnly
         ? (supabase.from('zoho_unpaid_invoices') as any)

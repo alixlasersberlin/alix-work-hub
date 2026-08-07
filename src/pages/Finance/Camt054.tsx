@@ -24,7 +24,7 @@ export default function Camt054() {
   const load = async () => {
     setLoading(true);
     const { data } = await (supabase as any).from('finance_camt054_notifications')
-      .select('*').eq('accounting_region', region)
+      .select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
       .order('created_at', { ascending: false }).limit(100);
     setRows(data ?? []); setLoading(false);
   };

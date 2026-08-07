@@ -26,7 +26,7 @@ export default function Buchungsjournal() {
 
   async function load() {
     setLoading(true);
-    let q: any = (supabase as any).from('finance_journal').select('*').gte('booking_date', from).lte('booking_date', to).eq('accounting_region', region).order('booking_date', { ascending: false }).order('created_at', { ascending: false }).limit(1000);
+    let q: any = (supabase as any).from('finance_journal').select('*').gte('booking_date', from).lte('booking_date', to).in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('booking_date', { ascending: false }).order('created_at', { ascending: false }).limit(1000);
     if (src !== 'alle') q = q.eq('source_module', src);
     if (status !== 'alle') q = q.eq('status', status);
     const { data, error } = await q;

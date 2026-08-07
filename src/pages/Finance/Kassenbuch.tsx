@@ -44,7 +44,7 @@ export default function Kassenbuch() {
 
   async function load() {
     setLoading(true);
-    let q: any = (supabase as any).from('finance_cashbook').select('*').gte('booking_date', from).lte('booking_date', to).eq('accounting_region', region).order('booking_date', { ascending: false }).order('booking_time', { ascending: false });
+    let q: any = (supabase as any).from('finance_cashbook').select('*').gte('booking_date', from).lte('booking_date', to).in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('booking_date', { ascending: false }).order('booking_time', { ascending: false });
     if (type !== 'alle') q = q.eq('booking_type', type);
     const { data, error } = await q;
     if (error) toast.error(error.message); else setRows(data || []);
@@ -86,7 +86,7 @@ export default function Kassenbuch() {
         document_number: form.document_number || null,
         cost_center: form.cost_center || null,
         attachment_path,
-        accounting_region: region,
+        accounting_region: (region === 'ALL' ? 'EU' : region),
         user_id: (await supabase.auth.getUser()).data.user?.id,
       });
       if (error) throw error;
@@ -111,7 +111,7 @@ export default function Kassenbuch() {
       counted_balance: Number(closing.counted),
       note: closing.note,
       status: 'offen',
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
     });
     if (error) toast.error(error.message); else { toast.success('Tagesabschluss gespeichert'); setOpenClose(false); setClosing({ counted: 0, note: '' }); }
   }

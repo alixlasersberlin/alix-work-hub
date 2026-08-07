@@ -42,7 +42,7 @@ export default function QrRechnung() {
   const load = async () => {
     setLoading(true);
     const { data } = await (supabase as any).from('finance_qr_invoices')
-      .select('*').eq('accounting_region', region)
+      .select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
       .order('created_at', { ascending: false }).limit(500);
     setRows(data ?? []);
     setLoading(false);
@@ -55,7 +55,7 @@ export default function QrRechnung() {
       return;
     }
     setSaving(true);
-    const payload = { ...form, amount: Number(form.amount), due_date: form.due_date || null, accounting_region: region };
+    const payload = { ...form, amount: Number(form.amount), due_date: form.due_date || null, accounting_region: (region === 'ALL' ? 'EU' : region) };
     const { error } = await (supabase as any).from('finance_qr_invoices').insert(payload);
     setSaving(false);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }

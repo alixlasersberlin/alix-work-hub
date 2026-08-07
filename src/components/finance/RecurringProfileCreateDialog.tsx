@@ -167,7 +167,7 @@ export function RecurringProfileCreateDialog({ open, onOpenChange, region, onCre
       next_invoice_date: form.next_invoice_date || null,
       total: form.total,
       currency: form.currency || 'EUR',
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
       raw_data: form.order_id ? { created_from_order_id: form.order_id, order_number: form.order_number, manual: true } : { manual: true },
     };
     const { error } = await supabase.from('zoho_recurring_profiles').insert(payload as any);

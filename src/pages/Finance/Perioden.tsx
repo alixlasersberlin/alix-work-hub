@@ -57,10 +57,10 @@ export default function Perioden() {
     const to = `${year}-12-31`;
     const [{ data: per, error: perErr }, { data: jour, error: jErr }] = await Promise.all([
       (supabase as any).from('finance_periods').select('*')
-        .eq('accounting_region', region).eq('fiscal_year', year).order('period_month'),
+        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).eq('fiscal_year', year).order('period_month'),
       (supabase as any).from('finance_journal')
         .select('booking_date, amount_net, amount_vat, amount_gross')
-        .eq('accounting_region', region).gte('booking_date', from).lte('booking_date', to),
+        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).gte('booking_date', from).lte('booking_date', to),
     ]);
     if (perErr) toast({ title: 'Fehler', description: perErr.message, variant: 'destructive' });
     if (jErr) toast({ title: 'Fehler', description: jErr.message, variant: 'destructive' });
@@ -98,7 +98,7 @@ export default function Perioden() {
     const existing = new Set(rows.map(r => r.period_month));
     const toCreate = Array.from({ length: 12 }, (_, i) => i + 1)
       .filter(m => !existing.has(m))
-      .map(m => ({ accounting_region: region, fiscal_year: year, period_month: m, status: 'open' }));
+      .map(m => ({ accounting_region: (region === 'ALL' ? 'EU' : region), fiscal_year: year, period_month: m, status: 'open' }));
     if (!toCreate.length) return toast({ title: 'Alle Perioden bereits angelegt' });
     const { error } = await (supabase as any).from('finance_periods').insert(toCreate);
     if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
@@ -122,7 +122,7 @@ export default function Perioden() {
     const { error } = row
       ? await (supabase as any).from('finance_periods').update(patch).eq('id', row.id)
       : await (supabase as any).from('finance_periods').insert({
-          accounting_region: region, fiscal_year: year, period_month: month, ...patch,
+          accounting_region: (region === 'ALL' ? 'EU' : region), fiscal_year: year, period_month: month, ...patch,
         });
     setBusy(null);
     if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });

@@ -34,7 +34,7 @@ export default function FinanceAnomalien() {
 
   async function load() {
     setLoading(true);
-    let q: any = supabase.from('finance_anomalies' as any).select('*').eq('accounting_region', region).order('detected_at', { ascending: false }).limit(500);
+    let q: any = supabase.from('finance_anomalies' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('detected_at', { ascending: false }).limit(500);
     if (statusFilter !== 'all') q = q.eq('status', statusFilter);
     const { data } = await q;
     setRows((data as any[]) ?? []);

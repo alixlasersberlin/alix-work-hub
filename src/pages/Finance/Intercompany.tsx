@@ -32,12 +32,12 @@ export default function FinanceIntercompany() {
     setLoading(true);
     const [{ data: t }, { data: r }, { data: u }] = await Promise.all([
       supabase.from('tenants' as any).select('id,name,flag_emoji').eq('is_active', true).order('sort_order'),
-      supabase.from('finance_intercompany_relations' as any).select('*').eq('accounting_region', region).order('created_at', { ascending: false }),
+      supabase.from('finance_intercompany_relations' as any).select('*').in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
       supabase
         .from('finance_transactions' as any)
         .select('id, tenant_id, counterparty_tenant_id, amount, currency, booking_date, transaction_type, reference')
         .eq('is_intercompany', true)
-        .eq('accounting_region', region)
+        .in('accounting_region', region === 'ALL' ? ['EU','CH'] : [region])
         .order('booking_date', { ascending: false })
         .limit(50),
     ]);
@@ -54,7 +54,7 @@ export default function FinanceIntercompany() {
       return;
     }
     const { error } = await supabase.from('finance_intercompany_relations' as any).insert({
-      source_tenant_id: source, target_tenant_id: target, label: label || null, accounting_region: region,
+      source_tenant_id: source, target_tenant_id: target, label: label || null, accounting_region: (region === 'ALL' ? 'EU' : region),
     });
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     else { setLabel(''); await load(); }

@@ -29,7 +29,7 @@ export default function FinanceAsk() {
     if (!text) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('finance-ai-ask', { body: { question: text, accounting_region: region } });
+      const { data, error } = await supabase.functions.invoke('finance-ai-ask', { body: { question: text, accounting_region: (region === 'ALL' ? 'EU' : region) } });
       if (error) throw error;
 
       if ((data as any)?.error) throw new Error((data as any).error);
