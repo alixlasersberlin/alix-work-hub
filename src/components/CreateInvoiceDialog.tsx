@@ -200,7 +200,31 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
   const addItem = () => setLineItems((prev) => [...prev, { name: '', description: '', quantity: 1, rate: 0 }]);
   const removeItem = (idx: number) => setLineItems((prev) => prev.filter((_, i) => i !== idx));
 
-  const sendInvoiceEmail = async () => {
+  /** Empfänger ermitteln: Eingabefeld → Auftrag/Kunde → Nachschlag in customers */
+  const resolveRecipient = async (): Promise<string | null> => {
+    const direct = recipientEmail.trim();
+    if (direct.includes('@')) return direct;
+    const fallback =
+      (customer as any)?.email ||
+      (order as any)?.customer_email ||
+      (order as any)?.raw_data?.email ||
+      '';
+    if (String(fallback).includes('@')) return String(fallback).trim();
+    const zohoId = (order as any)?.zoho_customer_id ?? (customer as any)?.zoho_customer_id ?? null;
+    if (zohoId) {
+      const { data } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('zoho_customer_id', zohoId)
+        .limit(1);
+      const mail = (data ?? [])[0]?.email;
+      if (mail && String(mail).includes('@')) return String(mail).trim();
+    }
+    return null;
+  };
+
+  const sendInvoiceEmail = async (to: string) => {
+
     const rows = lineItems.map((it) => `
       <tr>
         <td style="padding:6px 8px;border-bottom:1px solid #eee">${it.name}${it.description ? `<br><span style="color:#666;font-size:12px">${it.description}</span>` : ''}</td>
