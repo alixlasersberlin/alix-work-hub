@@ -120,7 +120,7 @@ export default function FinanceLiquiditaet() {
       period_start: start, period_end: end,
       opening_balance: Number(newPlan.opening_balance || 0),
       status: 'aktiv',
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
     }).select().single();
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Plan angelegt' });
@@ -160,15 +160,15 @@ export default function FinanceLiquiditaet() {
 
       for (const i of (invs ?? []) as any[]) {
         if (!i.due_date) continue;
-        inserts.push({ plan_id: selectedPlan.id, month: monthKey(i.due_date), category: 'Forderungen Zoho', flow_type: 'einnahme', planned_amount: Number(i.balance), source: 'auto_zoho', description: i.customer_name, accounting_region: region });
+        inserts.push({ plan_id: selectedPlan.id, month: monthKey(i.due_date), category: 'Forderungen Zoho', flow_type: 'einnahme', planned_amount: Number(i.balance), source: 'auto_zoho', description: i.customer_name, accounting_region: (region === 'ALL' ? 'EU' : region) });
       }
       for (const r of (rec ?? []) as any[]) {
         if (!r.next_invoice_date) continue;
-        inserts.push({ plan_id: selectedPlan.id, month: monthKey(r.next_invoice_date), category: 'Wiederkehrend', flow_type: 'einnahme', planned_amount: Number(r.amount), source: 'auto_recurring', description: r.customer_name, accounting_region: region });
+        inserts.push({ plan_id: selectedPlan.id, month: monthKey(r.next_invoice_date), category: 'Wiederkehrend', flow_type: 'einnahme', planned_amount: Number(r.amount), source: 'auto_recurring', description: r.customer_name, accounting_region: (region === 'ALL' ? 'EU' : region) });
       }
       for (const x of (incoming ?? []) as any[]) {
         if (!x.due_date) continue;
-        inserts.push({ plan_id: selectedPlan.id, month: monthKey(x.due_date), category: 'Eingangsrechnungen', flow_type: 'ausgabe', planned_amount: Number(x.amount_gross || 0), source: 'auto_incoming', description: x.supplier_name, accounting_region: region });
+        inserts.push({ plan_id: selectedPlan.id, month: monthKey(x.due_date), category: 'Eingangsrechnungen', flow_type: 'ausgabe', planned_amount: Number(x.amount_gross || 0), source: 'auto_incoming', description: x.supplier_name, accounting_region: (region === 'ALL' ? 'EU' : region) });
       }
       // AfA monatlich (informativ) – über alle Planmonate verteilen
       const afaMonthly = ((assets ?? []) as any[]).reduce((sum: number, a: any) => {
@@ -178,7 +178,7 @@ export default function FinanceLiquiditaet() {
       }, 0);
       if (afaMonthly > 0) {
         for (const m of monthsList) {
-          inserts.push({ plan_id: selectedPlan.id, month: m + '-01', category: 'AfA (kalkulatorisch)', flow_type: 'ausgabe', planned_amount: Math.round(afaMonthly * 100) / 100, source: 'auto_afa', description: 'Monatliche Abschreibung', accounting_region: region });
+          inserts.push({ plan_id: selectedPlan.id, month: m + '-01', category: 'AfA (kalkulatorisch)', flow_type: 'ausgabe', planned_amount: Math.round(afaMonthly * 100) / 100, source: 'auto_afa', description: 'Monatliche Abschreibung', accounting_region: (region === 'ALL' ? 'EU' : region) });
         }
       }
 

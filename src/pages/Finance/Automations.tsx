@@ -60,7 +60,7 @@ export default function FinanceAutomations() {
 
   const save = async () => {
     try {
-      const payload: any = { ...form, accounting_region: region };
+      const payload: any = { ...form, accounting_region: (region === 'ALL' ? 'EU' : region) };
       payload.condition_json = JSON.parse(form.condition_json || '{}');
       payload.action_config = JSON.parse(form.action_config || '{}');
       const { error } = await supabase.from('finance_automations' as any).insert(payload);

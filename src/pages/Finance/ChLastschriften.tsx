@@ -43,7 +43,7 @@ export default function ChLastschriften() {
     if (!mForm.mandate_reference || !mForm.iban || !mForm.account_holder) {
       toast({ title: 'Pflichtfelder', description: 'Mandatsreferenz, IBAN und Kontoinhaber sind erforderlich.', variant: 'destructive' }); return;
     }
-    const { error } = await (supabase as any).from('finance_ch_dd_mandates').insert({ ...mForm, accounting_region: region });
+    const { error } = await (supabase as any).from('finance_ch_dd_mandates').insert({ ...mForm, accounting_region: (region === 'ALL' ? 'EU' : region) });
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     setMDlg(false); setMForm({ scheme: 'LSV+', status: 'aktiv', signed_at: today }); load();
   };
@@ -52,7 +52,7 @@ export default function ChLastschriften() {
     if (!rForm.creditor_name || !rForm.creditor_iban) {
       toast({ title: 'Pflichtfelder', description: 'Gläubiger-Name und -IBAN sind erforderlich.', variant: 'destructive' }); return;
     }
-    const { error } = await (supabase as any).from('finance_ch_dd_runs').insert({ ...rForm, accounting_region: region });
+    const { error } = await (supabase as any).from('finance_ch_dd_runs').insert({ ...rForm, accounting_region: (region === 'ALL' ? 'EU' : region) });
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     setRDlg(false); setRForm({ scheme: 'LSV+', collection_date: today }); load();
   };

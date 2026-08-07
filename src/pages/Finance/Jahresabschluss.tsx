@@ -59,7 +59,7 @@ export default function FinanceJahresabschluss() {
       toast.error('Geschäftsjahr existiert bereits');
       return;
     }
-    const { error } = await supabase.from('finance_year_end_runs' as any).insert({ fiscal_year: newYear, status: 'in_arbeit', checklist: {}, accounting_region: region });
+    const { error } = await supabase.from('finance_year_end_runs' as any).insert({ fiscal_year: newYear, status: 'in_arbeit', checklist: {}, accounting_region: (region === 'ALL' ? 'EU' : region) });
     if (error) return toast.error(error.message);
     toast.success(`Geschäftsjahr ${newYear} angelegt`);
     load();

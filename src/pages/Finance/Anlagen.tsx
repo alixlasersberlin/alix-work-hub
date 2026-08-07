@@ -100,7 +100,7 @@ export default function FinanceAnlagen() {
       disposal_reason: editing.disposal_reason || null,
       disposal_value: editing.disposal_value ? Number(editing.disposal_value) : null,
       notes: editing.notes ?? null,
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
     };
     let res;
     if (editing.id) {

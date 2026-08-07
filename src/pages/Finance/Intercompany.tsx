@@ -54,7 +54,7 @@ export default function FinanceIntercompany() {
       return;
     }
     const { error } = await supabase.from('finance_intercompany_relations' as any).insert({
-      source_tenant_id: source, target_tenant_id: target, label: label || null, accounting_region: region,
+      source_tenant_id: source, target_tenant_id: target, label: label || null, accounting_region: (region === 'ALL' ? 'EU' : region),
     });
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     else { setLabel(''); await load(); }

@@ -96,7 +96,7 @@ export default function FinanceSteuerkonto() {
     const { error } = await supabase.from('finance_tax_payments' as any).insert({
       filing_id: selectedFiling.id,
       tenant_id: selectedFiling.tenant_id ?? null,
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
       filing_type: selectedFiling.filing_type,
       period_value: selectedFiling.period_value,
       due_date: dueDate || computeDueDate(selectedFiling.period_value, region),

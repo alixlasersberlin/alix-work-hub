@@ -52,7 +52,7 @@ export default function FinanceReportSchedules() {
       const payload: any = {
         ...form,
         recipients: form.recipients.split(',').map((s: string) => s.trim()).filter(Boolean),
-        accounting_region: region,
+        accounting_region: (region === 'ALL' ? 'EU' : region),
       };
       const { error } = await supabase.from('finance_report_schedules' as any).insert(payload);
       if (error) throw error;

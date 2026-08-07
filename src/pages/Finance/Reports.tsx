@@ -68,7 +68,7 @@ export default function FinanceReports() {
 
   const save = async () => {
     try {
-      const payload: any = { ...form, filters: JSON.parse(form.filters || '{}'), accounting_region: region };
+      const payload: any = { ...form, filters: JSON.parse(form.filters || '{}'), accounting_region: (region === 'ALL' ? 'EU' : region) };
       const { error } = await supabase.from('finance_reports' as any).insert(payload);
       if (error) throw error;
       toast({ title: 'Bericht gespeichert' });

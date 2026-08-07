@@ -56,7 +56,7 @@ export default function FinanceTreasury() {
       bank_name: newAcc.bank_name || null,
       iban: newAcc.iban || null,
       currency: newAcc.currency || (region === 'CH' ? 'CHF' : 'EUR'),
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
     });
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     else { setNewAcc({ tenant_id: '', account_name: '', bank_name: '', iban: '', currency: region === 'CH' ? 'CHF' : 'EUR' }); load(); }
@@ -70,7 +70,7 @@ export default function FinanceTreasury() {
       purpose: newApr.purpose || null,
       due_date: newApr.due_date || null,
       status: 'pending',
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
     });
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     else { setNewApr({ payee_name: '', amount: '', purpose: '', due_date: '' }); load(); }

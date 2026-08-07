@@ -67,7 +67,7 @@ export default function FinanceMeldewesen() {
     setBusy(true);
     try {
       const { data, error } = await supabase.functions.invoke('finance-tax-export', {
-        body: { filing_type: tab, period_value: period, tenant_id: tenantId || null, accounting_region: region },
+        body: { filing_type: tab, period_value: period, tenant_id: tenantId || null, accounting_region: (region === 'ALL' ? 'EU' : region) },
       });
       if (error) throw error;
       toast({ title: 'Meldung erzeugt', description: `${(data as any)?.filing_id?.slice(0, 8)}…` });

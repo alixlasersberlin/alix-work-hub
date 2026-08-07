@@ -93,7 +93,7 @@ function CoaTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
   const save = async () => {
     if (!form.account_number || !form.name) return toast.error('Kontonummer & Name erforderlich');
     const { error } = await supabase.from('finance_chart_of_accounts').insert({
-      ...form, accounting_region: region,
+      ...form, accounting_region: (region === 'ALL' ? 'EU' : region),
     } as any);
     if (error) return toast.error(error.message);
     toast.success('Konto angelegt');
@@ -227,7 +227,7 @@ function CcTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: b
 
   const save = async () => {
     if (!form.code || !form.name) return toast.error('Code & Name erforderlich');
-    const { error } = await supabase.from('finance_cost_centers').insert({ ...form, accounting_region: region } as any);
+    const { error } = await supabase.from('finance_cost_centers').insert({ ...form, accounting_region: (region === 'ALL' ? 'EU' : region) } as any);
     if (error) return toast.error(error.message);
     toast.success('Kostenstelle angelegt'); setOpenNew(false); load();
   };
@@ -310,7 +310,7 @@ function CuTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: b
 
   const save = async () => {
     if (!form.code || !form.name) return toast.error('Code & Name erforderlich');
-    const { error } = await supabase.from('finance_cost_units').insert({ ...form, accounting_region: region } as any);
+    const { error } = await supabase.from('finance_cost_units').insert({ ...form, accounting_region: (region === 'ALL' ? 'EU' : region) } as any);
     if (error) return toast.error(error.message);
     toast.success('Kostenträger angelegt'); setOpenNew(false); load();
   };
@@ -387,7 +387,7 @@ function PerTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
   const ensureAll = async () => {
     const existing = new Set(rows.map(r=>r.period_month));
     const toCreate = [] as any[];
-    for (let m=1; m<=12; m++) if (!existing.has(m)) toCreate.push({ accounting_region: region, fiscal_year: year, period_month: m, status: 'open' });
+    for (let m=1; m<=12; m++) if (!existing.has(m)) toCreate.push({ accounting_region: (region === 'ALL' ? 'EU' : region), fiscal_year: year, period_month: m, status: 'open' });
     if (toCreate.length===0) return toast.info('Alle Perioden bereits angelegt');
     const { error } = await supabase.from('finance_periods').insert(toCreate);
     if (error) return toast.error(error.message);
@@ -401,7 +401,7 @@ function PerTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
       if (error) return toast.error(error.message);
     } else {
       const { error } = await supabase.from('finance_periods').insert({
-        accounting_region: region, fiscal_year: year, period_month: month, status,
+        accounting_region: (region === 'ALL' ? 'EU' : region), fiscal_year: year, period_month: month, status,
         closed_at: status!=='open'?new Date().toISOString():null,
       } as any);
       if (error) return toast.error(error.message);
@@ -468,7 +468,7 @@ function ObTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: b
 
   const save = async () => {
     if (!form.account_number) return toast.error('Kontonummer erforderlich');
-    const { error } = await supabase.from('finance_opening_balances').insert({ ...form, accounting_region: region, fiscal_year: year } as any);
+    const { error } = await supabase.from('finance_opening_balances').insert({ ...form, accounting_region: (region === 'ALL' ? 'EU' : region), fiscal_year: year } as any);
     if (error) return toast.error(error.message);
     toast.success('Saldovortrag gespeichert'); setOpenNew(false); setForm({account_number:'',debit:0,credit:0,currency:region==='CH'?'CHF':'EUR',note:''}); load();
   };
@@ -581,7 +581,7 @@ function TaxTab({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
 
   const saveCode = async () => {
     if (!codeForm.code || !codeForm.name) return toast.error('Code & Name erforderlich');
-    const { error } = await supabase.from('finance_tax_codes' as any).insert({ ...codeForm, accounting_region: region } as any);
+    const { error } = await supabase.from('finance_tax_codes' as any).insert({ ...codeForm, accounting_region: (region === 'ALL' ? 'EU' : region) } as any);
     if (error) return toast.error(error.message);
     toast.success('Steuercode angelegt'); setOpenCode(false); load();
   };

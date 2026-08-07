@@ -113,7 +113,7 @@ export default function FinanceEingangsrechnungen() {
         amount_net: form.amount_net ? Number(form.amount_net) : null,
         amount_tax: form.amount_tax ? Number(form.amount_tax) : null,
         tax_rate: form.tax_rate ? Number(form.tax_rate) : null,
-        currency: form.currency || cur, accounting_region: region,
+        currency: form.currency || cur, accounting_region: (region === 'ALL' ? 'EU' : region),
         description: form.description || null,
         xml_path,
         is_einvoice: !!form._xml_file,

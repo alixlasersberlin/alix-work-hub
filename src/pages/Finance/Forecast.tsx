@@ -103,7 +103,7 @@ export default function FinanceForecast() {
           category: cat,
           scenario,
           forecast_amount: forecast[cat][m] || 0,
-          accounting_region: region,
+          accounting_region: (region === 'ALL' ? 'EU' : region),
         });
       }
     }

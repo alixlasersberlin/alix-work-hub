@@ -144,7 +144,7 @@ export default function Lohnbuchhaltung() {
     const wt = wageTypes; // noop guard
     void wt;
     const { data, error } = await (supabase as any).from('finance_payroll_runs').insert({
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
       period_year: year,
       period_month: newRunMonth,
       label: `${MONTHS[newRunMonth - 1]} ${year}`,

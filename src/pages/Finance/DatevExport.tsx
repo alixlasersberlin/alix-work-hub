@@ -21,7 +21,7 @@ export default function DatevExport() {
   async function downloadDatev() {
     setBusy(true);
     try {
-      const { data, error } = await supabase.functions.invoke('finance-datev-export', { body: { date_from: from, date_to: to, accounting_region: region } });
+      const { data, error } = await supabase.functions.invoke('finance-datev-export', { body: { date_from: from, date_to: to, accounting_region: (region === 'ALL' ? 'EU' : region) } });
       if (error) throw error;
       const text = typeof data === 'string' ? data : await (data as Blob).text?.();
       const blob = new Blob([text || ''], { type: 'text/csv;charset=windows-1252' });

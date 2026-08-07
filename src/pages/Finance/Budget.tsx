@@ -47,7 +47,7 @@ export default function FinanceBudget() {
     const rows: any[] = [];
     for (const cat of Object.keys(data)) {
       for (let m = 1; m <= 12; m++) {
-        rows.push({ fiscal_year: year, month: m, category: cat, planned_amount: data[cat]?.[m] || 0, accounting_region: region });
+        rows.push({ fiscal_year: year, month: m, category: cat, planned_amount: data[cat]?.[m] || 0, accounting_region: (region === 'ALL' ? 'EU' : region) });
       }
     }
     const { error } = await supabase.from('finance_budgets' as any).upsert(rows, { onConflict: 'tenant_id,fiscal_year,month,category,accounting_region' });

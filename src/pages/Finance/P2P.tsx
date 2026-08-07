@@ -49,7 +49,7 @@ export default function FinanceP2P() {
       total_amount: qty * price,
       needed_by: newPr.needed_by || null,
       notes: newPr.description,
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
     }).select('id').single();
     if (error || !ins) return toast({ title: 'Fehler', description: error?.message, variant: 'destructive' });
     await supabase.from('finance_purchase_requisition_items' as any).insert({
@@ -80,7 +80,7 @@ export default function FinanceP2P() {
       total_amount: pr.total_amount,
       currency: pr.currency,
       ordered_at: new Date().toISOString().slice(0, 10),
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
     }).select('id').single();
     if (error || !po) return toast({ title: 'Fehler', description: error?.message, variant: 'destructive' });
     if (items && items.length) {
@@ -114,7 +114,7 @@ export default function FinanceP2P() {
       invoiced_amount: 0,
       currency: po.currency,
       matched_at: new Date().toISOString(),
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
     });
     if (error) toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     else { toast({ title: '3-Way-Match erzeugt' }); load(); }

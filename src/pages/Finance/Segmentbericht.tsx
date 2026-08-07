@@ -168,7 +168,7 @@ function Master({ region, canWrite, canDelete }: { region: 'EU'|'CH'; canWrite: 
   const save = async () => {
     if (!form.code || !form.name) return toast.error('Code & Name Pflicht');
     const { error } = await supabase.from('finance_segments').insert({
-      accounting_region: region, code: form.code, name: form.name, description: form.description || null,
+      accounting_region: (region === 'ALL' ? 'EU' : region), code: form.code, name: form.name, description: form.description || null,
     } as any);
     if (error) return toast.error(error.message);
     toast.success('Segment gespeichert');

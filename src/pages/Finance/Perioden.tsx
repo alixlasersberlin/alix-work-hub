@@ -98,7 +98,7 @@ export default function Perioden() {
     const existing = new Set(rows.map(r => r.period_month));
     const toCreate = Array.from({ length: 12 }, (_, i) => i + 1)
       .filter(m => !existing.has(m))
-      .map(m => ({ accounting_region: region, fiscal_year: year, period_month: m, status: 'open' }));
+      .map(m => ({ accounting_region: (region === 'ALL' ? 'EU' : region), fiscal_year: year, period_month: m, status: 'open' }));
     if (!toCreate.length) return toast({ title: 'Alle Perioden bereits angelegt' });
     const { error } = await (supabase as any).from('finance_periods').insert(toCreate);
     if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
@@ -122,7 +122,7 @@ export default function Perioden() {
     const { error } = row
       ? await (supabase as any).from('finance_periods').update(patch).eq('id', row.id)
       : await (supabase as any).from('finance_periods').insert({
-          accounting_region: region, fiscal_year: year, period_month: month, ...patch,
+          accounting_region: (region === 'ALL' ? 'EU' : region), fiscal_year: year, period_month: month, ...patch,
         });
     setBusy(null);
     if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });

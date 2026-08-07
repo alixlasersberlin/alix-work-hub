@@ -68,7 +68,7 @@ export default function FinanceBelege() {
         file_name: file.name,
         file_size: file.size,
         mime_type: file.type,
-        hash_sha256: hash, accounting_region: region,
+        hash_sha256: hash, accounting_region: (region === 'ALL' ? 'EU' : region),
       });
       if (error) throw error;
       toast({ title: 'Beleg hochgeladen', description: file.name });

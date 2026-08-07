@@ -45,7 +45,7 @@ export default function FinanceBank() {
     setUploading(true);
     try {
       const content = await file.text();
-      const { data, error } = await supabase.functions.invoke("finance-bank-import", { body: { filename: file.name, content, accounting_region: region } });
+      const { data, error } = await supabase.functions.invoke("finance-bank-import", { body: { filename: file.name, content, accounting_region: (region === 'ALL' ? 'EU' : region) } });
       if (error) throw error;
       if (data?.duplicate) toast({ title: 'Bereits importiert', description: `Statement existiert (${data.lines} Buchungen).` });
       else toast({ title: 'Import erfolgreich', description: `${data.lines} Buchungen, ${data.matched} automatisch zugeordnet.` });

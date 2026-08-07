@@ -85,7 +85,7 @@ export default function FinanceSepa() {
       toast({ title: 'Fehlende Felder', description: 'Kunde, IBAN und Mandatsreferenz sind Pflicht', variant: 'destructive' });
       return;
     }
-    const payload = { ...mForm, iban: mForm.iban.replace(/\s+/g, '').toUpperCase(), accounting_region: region };
+    const payload = { ...mForm, iban: mForm.iban.replace(/\s+/g, '').toUpperCase(), accounting_region: (region === 'ALL' ? 'EU' : region) };
     const { error } = mForm.id
       ? await supabase.from('finance_sepa_mandates' as any).update(payload).eq('id', mForm.id)
       : await supabase.from('finance_sepa_mandates' as any).insert(payload);
@@ -107,7 +107,7 @@ export default function FinanceSepa() {
       toast({ title: 'Fehlende Felder', description: 'Gläubiger-Name, IBAN und Gläubiger-ID sind Pflicht', variant: 'destructive' });
       return;
     }
-    const { data, error } = await supabase.from('finance_sepa_runs' as any).insert({ ...rForm, accounting_region: region }).select().single();
+    const { data, error } = await supabase.from('finance_sepa_runs' as any).insert({ ...rForm, accounting_region: (region === 'ALL' ? 'EU' : region) }).select().single();
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     setRDlg(false);
     load();

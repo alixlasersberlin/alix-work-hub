@@ -214,7 +214,7 @@ export async function createReturnDebitFeeInvoice(
       balance: RD_FEE_TOTAL,
       status: 'offen',
       payment_status: 'offen',
-      accounting_region: region,
+      accounting_region: (region === 'ALL' ? 'EU' : region),
       tenant_id: rd.tenant_id ?? null,
       raw_data: {
         source: 'ruecklastschrift_gebuehrenrechnung',

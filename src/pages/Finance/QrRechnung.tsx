@@ -55,7 +55,7 @@ export default function QrRechnung() {
       return;
     }
     setSaving(true);
-    const payload = { ...form, amount: Number(form.amount), due_date: form.due_date || null, accounting_region: region };
+    const payload = { ...form, amount: Number(form.amount), due_date: form.due_date || null, accounting_region: (region === 'ALL' ? 'EU' : region) };
     const { error } = await (supabase as any).from('finance_qr_invoices').insert(payload);
     setSaving(false);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
