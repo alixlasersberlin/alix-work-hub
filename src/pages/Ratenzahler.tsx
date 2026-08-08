@@ -31,6 +31,43 @@ type Row = {
   status: string | null;
   payment_status: string | null;
 };
+type ChangeDiff = { field: string; old: unknown; new: unknown };
+type ChangeEntry = {
+  kind: 'new' | 'update';
+  invoice_number: string | null;
+  customer_name: string | null;
+  invoice_date: string | null;
+  total: number | null;
+  currency: string | null;
+  diffs: ChangeDiff[];
+};
+type PreviewResult = {
+  newCount: number;
+  updateCount: number;
+  unchanged: number;
+  duplicates: number;
+  failed: number;
+  profiles: number;
+  truncated: boolean;
+  changes: ChangeEntry[];
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  invoice_number: 'Rechnungsnr.',
+  reference_number: 'Auftragsnr.',
+  customer_name: 'Kunde',
+  device_name: 'Gerät',
+  city: 'Ort',
+  invoice_date: 'Datum',
+  due_date: 'Fällig',
+  currency: 'Währung',
+  total: 'Betrag',
+  balance: 'Saldo',
+  status: 'Status',
+  payment_status: 'Zahlungsstatus',
+  last_payment_date: 'Letzte Zahlung',
+  accounting_region: 'Buchungskreis',
+};
 
 
 
