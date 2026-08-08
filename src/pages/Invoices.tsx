@@ -709,7 +709,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     totalAmount: accounts.reduce((s, a) => s + a.totalAmount, 0),
     // Offene Beträge = Live-Summe der Salden aller aktuell sichtbaren Rechnungen
     totalOpen: flatRowsForKpi(rows, search, statusFilter, docStatusFilter),
-  }), [accounts, rows, search, statusFilter, docStatusFilter]);
+    // OP Total = Summe aller Konten (Mietkauf-Geräte-Volumen minus geleistete Zahlungen)
+    opTotal: accounts.reduce((s, a) => {
+      const mk = Number(mietkaufTotals[a.key] ?? 0);
+      if (mk <= 0) return s;
+      const paid = a.rows.reduce((p, r) => p + (Number(r.total ?? 0) - Number(r.balance ?? 0)), 0);
+      return s + (mk - paid);
+    }, 0),
+  }), [accounts, rows, search, statusFilter, docStatusFilter, mietkaufTotals]);
 
   const flatRows = useMemo<Row[]>(() => {
     let res = rows;
