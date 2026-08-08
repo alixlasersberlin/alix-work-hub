@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 import { ListToolbar } from '@/components/finance/ListToolbar';
+import { AccountStatementActions } from '@/components/finance/AccountStatementActions';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
