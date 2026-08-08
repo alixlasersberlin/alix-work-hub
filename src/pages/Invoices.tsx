@@ -1776,7 +1776,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 {paginate(flatRows, pageSize).map((r, idx) => (
                   <tbody
                     key={`${r.source}-${r.id}`}
-                    className={`border border-border/60 ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}
+                    className={`group border border-border/60 transition-colors [&>tr]:bg-transparent [&>tr>td]:bg-transparent ${idx % 2 === 1 ? 'bg-muted/30 hover:bg-primary/10' : 'bg-transparent hover:bg-primary/10'}`}
                   >
                     <tr className="[&>td]:pb-0">
 
@@ -1903,7 +1903,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       {a.rows.map((r, idx) => (
                         <tbody
                           key={`${r.source}-${r.id}`}
-                          className={`border border-border/60 ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}
+                          className={`group border border-border/60 transition-colors [&>tr]:bg-transparent [&>tr>td]:bg-transparent ${idx % 2 === 1 ? 'bg-muted/30 hover:bg-primary/10' : 'bg-transparent hover:bg-primary/10'}`}
                         >
                           <tr className="[&>td]:pb-0">
 
