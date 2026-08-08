@@ -216,6 +216,8 @@ Deno.serve(async (req) => {
               estimate_number: est.estimate_number,
               status: est.status,
               reference_number: est.reference_number ?? null,
+              salesperson_name: full.salesperson_name ?? est.salesperson_name ?? null,
+              salesperson_id: full.salesperson_id ?? est.salesperson_id ?? null,
             },
           };
 
@@ -231,7 +233,9 @@ Deno.serve(async (req) => {
             total_gross: gross,
             status: statusMap(est.status),
             payload,
-            created_by_name: `Zoho ${isAT ? "AT" : "DE"}`,
+            created_by_name:
+              (full.salesperson_name ?? est.salesperson_name ?? '').trim() ||
+              `Zoho ${isAT ? "AT" : "DE"}`,
           };
 
           const { data: existing } = await admin
