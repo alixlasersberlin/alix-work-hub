@@ -18,7 +18,9 @@ Deno.serve(async (req) => {
 
   try {
     const cronSecret = req.headers.get('x-cron-secret');
-    const isCron = !!cronSecret && cronSecret === (Deno.env.get('CRON_SECRET') ?? '');
+    const bearer = (req.headers.get('Authorization') ?? '').replace('Bearer ', '');
+    const isCron = (!!cronSecret && cronSecret === (Deno.env.get('CRON_SECRET') ?? ''))
+      || (!!bearer && bearer === SERVICE_KEY);
     let actor: string | null = null;
 
     if (!isCron) {

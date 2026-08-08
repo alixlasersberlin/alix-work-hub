@@ -23,7 +23,9 @@ Deno.serve(async (req) => {
   try {
     // Cron darf ohne User laufen (x-cron-secret), sonst Rollenprüfung
     const cronSecret = req.headers.get('x-cron-secret');
-    const isCron = !!cronSecret && cronSecret === (Deno.env.get('CRON_SECRET') ?? '');
+    const bearer = (req.headers.get('Authorization') ?? '').replace('Bearer ', '');
+    const isCron = (!!cronSecret && cronSecret === (Deno.env.get('CRON_SECRET') ?? ''))
+      || (!!bearer && bearer === SERVICE_KEY);
 
     if (!isCron) {
       const authHeader = req.headers.get('Authorization') ?? '';

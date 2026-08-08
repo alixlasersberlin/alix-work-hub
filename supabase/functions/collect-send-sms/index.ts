@@ -8,8 +8,8 @@ const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 
 const TWILIO_SID = Deno.env.get('TWILIO_ACCOUNT_SID') ?? '';
 const TWILIO_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN') ?? '';
-const TWILIO_FROM = Deno.env.get('TWILIO_PHONE_NUMBER') ?? '';
-const TWILIO_WA_FROM = Deno.env.get('TWILIO_WHATSAPP_FROM') ?? '';
+const TWILIO_FROM = Deno.env.get('TWILIO_SMS_FROM_NUMBER') || Deno.env.get('TWILIO_FROM_SMS') || Deno.env.get('TWILIO_FROM_NUMBER') || '';
+const TWILIO_WA_FROM = Deno.env.get('TWILIO_WHATSAPP_FROM_NUMBER') || '';
 
 const ALLOWED = ['Super Admin', 'Admin', 'Finance', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'];
 
@@ -34,7 +34,9 @@ Deno.serve(async (req) => {
 
   try {
     const cronSecret = req.headers.get('x-cron-secret');
-    const isCron = !!cronSecret && cronSecret === (Deno.env.get('CRON_SECRET') ?? '');
+    const bearer = (req.headers.get('Authorization') ?? '').replace('Bearer ', '');
+    const isCron = (!!cronSecret && cronSecret === (Deno.env.get('CRON_SECRET') ?? ''))
+      || (!!bearer && bearer === SERVICE_KEY);
     let actor: string | null = null;
 
     if (!isCron) {
