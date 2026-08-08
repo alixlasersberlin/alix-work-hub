@@ -62,17 +62,26 @@ export default function FinanceCollectCase() {
     setBlocks((bl.data as any) ?? []);
     setStages((st.data as any) ?? []);
     setMailStage((a.data as any)?.stage_code ?? '');
-    setMailTo((a.data as any)?.customer_email ?? '');
+    const caseEmail = ((a.data as any)?.customer_email ?? '').trim();
+    setMailTo(caseEmail);
 
     const cid = (a.data as any)?.customer_id;
     const cname = (a.data as any)?.customer_name;
+    let cu: any = null;
     if (cid) {
-      const { data: cu } = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('id', cid).maybeSingle();
-      setCustomer(cu ?? null);
+      const r = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('id', cid).maybeSingle();
+      cu = r.data ?? null;
     } else if (cname) {
-      const { data: cu } = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('company_name', cname).limit(1).maybeSingle();
-      setCustomer(cu ?? null);
-    } else setCustomer(null);
+      const r = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('company_name', cname).limit(1).maybeSingle();
+      cu = r.data ?? null;
+    }
+    setCustomer(cu);
+    // Fallback: E-Mail aus dem Kundenstamm übernehmen, wenn der Fall keine hat
+    if (!caseEmail && cu?.email) {
+      setMailTo(cu.email);
+      supabase.from('collect_cases' as any).update({ customer_email: cu.email }).eq('id', caseId).then(() => {});
+    }
+
     const limQ = cid
       ? supabase.from('collect_credit_limits' as any).select('*').eq('customer_id', cid).maybeSingle()
       : supabase.from('collect_credit_limits' as any).select('*').eq('customer_name', cname ?? '').maybeSingle();
