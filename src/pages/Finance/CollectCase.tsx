@@ -181,6 +181,50 @@ export default function FinanceCollectCase() {
         </div>
       </div>
 
+      <DataCard title="Kunde 360°" icon={<ShieldCheck className="h-4 w-4" />}>
+        <div className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <div className="text-xs text-muted-foreground">Kunde</div>
+            <div className="font-medium">{customer?.company_name ?? c.customer_name ?? '–'}</div>
+            <div className="text-muted-foreground whitespace-pre-line">{customer?.billing_address ?? '–'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Kontakt</div>
+            <div>{customer?.email ?? c.customer_email ?? '–'}</div>
+            <div>{customer?.phone ?? c.customer_phone ?? '–'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Kreditlimit</div>
+            <div className="font-medium">
+              {limit?.unlimited ? 'Unbegrenzt' : limit?.credit_limit != null ? fmt(limit.credit_limit, cur) : 'nicht gesetzt'}
+            </div>
+            <div className="text-muted-foreground">Genutzt: {fmt(limit?.used_amount ?? c.open_amount, cur)}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Status</div>
+            <div className="flex flex-wrap gap-1">
+              <Badge variant="outline" className={AMPEL[limit?.traffic_light ?? c.ampel ?? 'gruen']}>
+                {limit?.blocked ? 'Gesperrt' : 'Freigegeben'}
+              </Badge>
+              {c.risk_class && <Badge variant="outline">{c.risk_class}</Badge>}
+              {limit?.rating_class && <Badge variant="outline">{limit.rating_class}</Badge>}
+            </div>
+            <div className="text-muted-foreground mt-1">
+              Ältester OP: {c.oldest_due_date ?? '–'} · Ø Verzug {c.max_days_overdue ?? 0} T
+            </div>
+          </div>
+        </div>
+        {customer?.id && (
+          <div className="mt-3">
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`/kunden/${customer.id}`}>Kundenakte öffnen</Link>
+            </Button>
+          </div>
+        )}
+      </DataCard>
+
+
+
       {(c.ai_recommendation || c.risk_score != null) && (
         <DataCard title="KI-Einschätzung" icon={<Sparkles className="h-4 w-4 text-primary" />}>
           <div className="grid gap-3 sm:grid-cols-3">
