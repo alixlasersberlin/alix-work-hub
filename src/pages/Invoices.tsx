@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 import { ListToolbar } from '@/components/finance/ListToolbar';
+import { AccountStatementActions } from '@/components/finance/AccountStatementActions';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -1889,9 +1890,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             const open = !!expanded[a.key];
             return (
               <DataCard key={a.key} className="overflow-hidden">
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => toggle(a.key)}
-                  className="w-full flex items-center gap-3 p-4 hover:bg-muted/20 text-left"
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(a.key); } }}
+                  className="w-full flex items-center gap-3 p-4 hover:bg-muted/20 text-left cursor-pointer"
                 >
                   {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   <div className="flex-1 min-w-0">
@@ -1917,7 +1921,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     <div className="text-sm font-semibold">{fmtMoney(a.totalAmount)}</div>
                     {a.totalOpen > 0 && <div className="text-xs font-medium text-amber-400">offen: {fmtMoney(a.totalOpen)}</div>}
                   </div>
-                </button>
+                  <AccountStatementActions
+                    customerName={a.customer_name}
+                    customerNumber={a.customer_id}
+                    city={a.city}
+                    rows={a.rows as any}
+                  />
+                </div>
                 {open && (
                   <div className="border-t border-border overflow-x-auto">
                     <table className="w-full text-sm">
