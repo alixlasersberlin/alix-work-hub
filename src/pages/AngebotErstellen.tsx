@@ -1257,7 +1257,7 @@ export default function AngebotErstellen() {
           total_amount: totals.gross,
           order_date: orderDateIso,
           expected_shipment_date: expectedShipmentIso,
-          case_number: caseNumber || null,
+          case_number: caseNumberRef.current || caseNumber || null,
           salesperson_name: salesAdvisor || null,
           billing_address: (selectedCustomer as any).billing_address || null,
           shipping_address: (selectedCustomer as any).shipping_address || (selectedCustomer as any).billing_address || null,
