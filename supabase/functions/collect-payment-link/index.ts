@@ -55,6 +55,7 @@ Deno.serve(async (req) => {
       amount,
       currency: c.currency ?? 'EUR',
       allow_installments: allowInstallments,
+      max_installments: Math.min(Math.max(Number(body?.max_installments ?? 12), 2), 24),
       expires_at: expires,
       created_by: user.id,
       status: 'open',
@@ -90,7 +91,7 @@ Deno.serve(async (req) => {
       }
       sent = true;
       await admin.from('collect_payment_links').update({
-        sent_at: new Date().toISOString(), sent_to: recipient,
+        status: 'sent', note: `Versendet an ${recipient} am ${new Date().toLocaleString('de-DE')}`,
       }).eq('id', link.id);
     }
 

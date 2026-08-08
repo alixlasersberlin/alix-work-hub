@@ -48,38 +48,33 @@ Deno.serve(async (req) => {
     const failures: string[] = [];
 
     for (const l of links) {
-      const blocked = !!(l.spare_parts_blocked || l.comfort_blocked || l.full_block);
+      const blocked = !!(l.spare_parts_block || l.comfort_features_block);
       const eventType = blocked ? 'collect_block' : 'collect_unblock';
 
       const { error: evErr } = await admin.from('alixsmart_events').insert({
-        device_serial: l.device_serial,
+        device_serial: l.device_serial ?? l.serial_number,
         event_type: eventType,
         event_at: new Date().toISOString(),
         payload: {
           source: 'alix_collect',
           case_id: l.case_id,
           customer_name: l.customer_name,
-          spare_parts_blocked: !!l.spare_parts_blocked,
-          comfort_blocked: !!l.comfort_blocked,
-          full_block: !!l.full_block,
-          days_overdue: l.days_overdue ?? 0,
-          reason: l.block_reason ?? 'Zahlungsverzug',
+          spare_parts_block: !!l.spare_parts_block,
+          comfort_features_block: !!l.comfort_features_block,
+          serial_number: l.serial_number ?? null,
+          reason: l.block_note ?? 'Zahlungsverzug',
         },
       });
 
       if (evErr) {
-        console.error('push failed', l.device_serial, evErr.message);
-        failures.push(`${l.device_serial}: ${evErr.message}`);
-        await admin.from('collect_device_links').update({
-          push_status: 'failed', push_error: evErr.message, push_attempted_at: new Date().toISOString(),
-        }).eq('id', l.id);
+        console.error('push failed', l.id, evErr.message);
+        failures.push(`${l.device_serial ?? l.serial_number}: ${evErr.message}`);
+        await admin.from('collect_device_links').update({ push_status: 'failed' }).eq('id', l.id);
         continue;
       }
 
       await admin.from('collect_device_links').update({
         push_status: 'pushed',
-        push_error: null,
-        push_attempted_at: new Date().toISOString(),
         pushed_at: new Date().toISOString(),
       }).eq('id', l.id);
       pushed++;
@@ -90,10 +85,10 @@ Deno.serve(async (req) => {
           event_type: blocked ? 'device_blocked' : 'device_unblocked',
           channel: 'device',
           direction: 'outbound',
-          subject: `${blocked ? 'Sperre' : 'Entsperrung'} an Gerät ${l.device_serial} übertragen`,
+          subject: `${blocked ? 'Sperre' : 'Entsperrung'} an Gerät ${l.device_serial ?? l.serial_number} übertragen`,
           actor,
           automated: isCron,
-          meta: { device_serial: l.device_serial, full_block: !!l.full_block },
+          meta: { device_serial: l.device_serial ?? l.serial_number, blocked },
         });
       }
     }

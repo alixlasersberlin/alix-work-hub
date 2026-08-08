@@ -73,7 +73,6 @@ Deno.serve(async (req) => {
         amount,
         currency: link.currency ?? 'EUR',
         status: 'open',
-        source: 'portal',
         note: 'Zahlungszusage über Kundenportal',
       });
       await admin.from('collect_events').insert({
@@ -84,7 +83,7 @@ Deno.serve(async (req) => {
         subject: `Kunde sagt Zahlung zu: ${amount} zum ${date}`,
         automated: true,
       });
-      await admin.from('collect_payment_links').update({ status: 'promised' }).eq('id', link.id);
+      await admin.from('collect_payment_links').update({ status: 'promised', customer_response: `Zusage ${amount} zum ${date}`, responded_at: new Date().toISOString() }).eq('id', link.id);
       return json({ success: true, message: 'Vielen Dank – Ihre Zahlungszusage wurde erfasst.' });
     }
 
@@ -101,6 +100,7 @@ Deno.serve(async (req) => {
         description: `Kundenantrag über Portal.${note ? ` Anmerkung: ${note}` : ''}`,
         priority: 'high',
         status: 'open',
+        source: 'portal',
         due_date: new Date().toISOString().slice(0, 10),
       });
       await admin.from('collect_events').insert({
@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
         body: note || null,
         automated: true,
       });
-      await admin.from('collect_payment_links').update({ status: 'installment_requested' }).eq('id', link.id);
+      await admin.from('collect_payment_links').update({ status: 'installment_requested', customer_response: `Ratenantrag ${months} Monate${note ? ': ' + note : ''}`, responded_at: new Date().toISOString() }).eq('id', link.id);
       return json({ success: true, message: 'Ihr Ratenzahlungsantrag ist eingegangen. Wir melden uns kurzfristig.' });
     }
 
