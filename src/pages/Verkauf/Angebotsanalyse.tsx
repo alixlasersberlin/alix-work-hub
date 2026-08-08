@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BarChart3, Download, RefreshCw } from 'lucide-react';
+import { BarChart3, Download, RefreshCw, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader, PageLoading, PageError } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
