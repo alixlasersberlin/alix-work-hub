@@ -1900,10 +1900,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           <th className="text-right px-4 py-2 font-medium">Aktion</th>
                         </tr>
                       </thead>
-                      <tbody>
-                        {a.rows.map((r, idx) => (
-                          <Fragment key={`${r.source}-${r.id}`}>
-                          <tr className={`border-t-2 border-border ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'} [&>td]:pb-0`}>
+                      {a.rows.map((r, idx) => (
+                        <tbody
+                          key={`${r.source}-${r.id}`}
+                          className={`border-t-2 border-border ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}
+                        >
+                          <tr className="[&>td]:pb-0">
+
 
 
                             <td className="px-4 py-2">
