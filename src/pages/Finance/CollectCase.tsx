@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -332,12 +332,16 @@ export default function FinanceCollectCase() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="text-xs text-muted-foreground">Mahnstufe</label>
-                <Select value={mailStage} onValueChange={(v) => setMailStage(v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {stages.map((s) => <SelectItem key={s.code} value={s.code}>{s.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <select
+                  value={mailStage}
+                  onChange={(e) => setMailStage(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  {!mailStage && <option value="">Bitte wählen…</option>}
+                  {stages.map((s) => (
+                    <option key={s.code} value={s.code} className="bg-background text-foreground">{s.label}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Empfänger</label>
