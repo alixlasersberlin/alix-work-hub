@@ -1540,6 +1540,7 @@ function AppRoutes() {
           <Route path="/finance/collect/aufgaben" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectTasks /></ProtectedRoute>} />
           <Route path="/finance/collect/auswertungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectBi /></ProtectedRoute>} />
           <Route path="/finance/collect/recht" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectLegal /></ProtectedRoute>} />
+          <Route path="/finance/collect/limits" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectLimits /></ProtectedRoute>} />
           <Route path="/finance/collect/copilot" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCopilot /></ProtectedRoute>} />
           <Route path="/finance/collect/:caseId" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCase /></ProtectedRoute>} />
           <Route path="/operation/anzahlung-mahnung-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin']}><OperationMahnungKonfiguration /></ProtectedRoute>} />
