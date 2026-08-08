@@ -126,25 +126,44 @@ export default function Angebotsanalyse() {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2 mb-5">
-        <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={range} onChange={(e) => setRange(e.target.value)}>
-          {RANGES.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
-        </select>
-        <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={rep} onChange={(e) => setRep(e.target.value)}>
-          <option value="">Alle Verkäufer</option>
-          {reps.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-        <Input placeholder="Suche Kunde, Angebot, Produkt…" value={q} onChange={(e) => setQ(e.target.value)} className="h-9 w-64" />
+      <div className="sticky top-0 z-10 -mx-6 px-6 py-2 mb-5 bg-background/85 backdrop-blur border-b border-border/60">
+        <div className="flex flex-wrap items-center gap-2">
+          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={range} onChange={(e) => setRange(e.target.value)}>
+            {RANGES.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
+          </select>
+          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={rep} onChange={(e) => setRep(e.target.value)}>
+            <option value="">Alle Verkäufer</option>
+            {reps.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={stage} onChange={(e) => setStage(e.target.value)}>
+            <option value="">Alle Phasen</option>
+            {STAGES.map((s) => <option key={s.code} value={s.code}>{s.label}</option>)}
+          </select>
+          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={outcome} onChange={(e) => setOutcome(e.target.value)}>
+            {OUTCOMES.map((s) => <option key={s.code} value={s.code}>{s.label}</option>)}
+          </select>
+          <Input placeholder="Suche Kunde, Angebot, Produkt…" value={q} onChange={(e) => setQ(e.target.value)} className="h-9 w-64" />
+          {filtersActive && (
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <X className="h-4 w-4 mr-1" />Filter zurücksetzen
+            </Button>
+          )}
+          <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+            {offers.length} von {rows.length} Angeboten
+          </span>
+        </div>
       </div>
 
       {error && <PageError message={error} onRetry={load} />}
       {loading ? (
         <PageLoading />
       ) : (
-        <Tabs defaultValue="uebersicht" className="space-y-4">
+        <Tabs value={tab} onValueChange={setTab} className="space-y-4">
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
+            <TabsTrigger value="verlauf">Verlauf</TabsTrigger>
             <TabsTrigger value="funnel">Funnel & Alter</TabsTrigger>
+
             <TabsTrigger value="verkaeufer">Verkäufer</TabsTrigger>
             <TabsTrigger value="produkte">Produkte</TabsTrigger>
             <TabsTrigger value="verluste">Verluste & Konkurrenz</TabsTrigger>
