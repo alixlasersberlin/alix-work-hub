@@ -100,6 +100,8 @@ type Account = {
   totalOpen: number;
   overdueCount: number;
   lastInvoiceDate: string | null;
+  /** Neuestes Datum einer gestellten/festgeschriebenen Rechnung (kein Entwurf/Storno) */
+  lastFinalizedDate?: string | null;
 };
 
 function statusVariant(s: string | null) {
