@@ -532,6 +532,33 @@ export const navItems: NavItem[] = [
         ],
       },
       {
+        path: '/finance/raten', label: 'RATENZAHLER', icon: ScrollText, roles: ['Admin', 'Super Admin'],
+        children: [
+          { path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/bestandsuebersicht', label: 'Bestandsübersicht', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/vertraege', label: 'PRÜFUNG', icon: FileText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/raten', label: 'Laufende Raten', icon: ScrollText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/ratenplan-sync', label: 'Ratenplan synchronisieren', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/alix-flex', label: 'SEPA MANDAT', icon: Banknote, roles: ['Admin', 'Super Admin'] },
+          {
+            path: '/finanzierungen', label: 'FREMD LEASING', icon: Landmark, roles: ['Admin', 'Super Admin'],
+            children: [
+              { path: '/finanzierungen/leasing-bank', label: 'Verfügbare Aufträge', icon: Landmark, roles: ['Admin', 'Super Admin'] },
+              { path: '/finanzierungen/beantragen', label: 'Finanzierung beantragen', icon: FileSignature, roles: ['Admin', 'Super Admin'] },
+              { path: '/finanzierungen/anfragen-offen', label: 'Anfragen offen', icon: Clock, roles: ['Admin', 'Super Admin'] },
+              { path: '/finanzierungen/zusagen-bank', label: 'Zusagen Bank', icon: CheckCircle2, roles: ['Admin', 'Super Admin'] },
+              { path: '/finanzierungen/absagen-bank', label: 'Absagen Bank', icon: X, roles: ['Admin', 'Super Admin'] },
+            ],
+          },
+        ],
+      },
+      {
+        path: '/finance/mahnwesen', label: 'MAHNUNGEN', icon: AlertTriangle, roles: ['Admin', 'Super Admin'],
+        children: [
+          { path: '/finance/mahnwesen', label: 'Mahnwesen', icon: FileText, roles: ['Admin', 'Super Admin'] },
+        ],
+      },
+      {
         path: '/finance/kassenbuch', label: 'KASSENBUCH & JOURNAL', icon: BookOpen, roles: ['Admin', 'Super Admin'],
         children: [
           { path: '/finance/kassenbuch', label: 'Kassenbuch', icon: BookOpen, roles: ['Admin', 'Super Admin'] },
@@ -561,30 +588,9 @@ export const navItems: NavItem[] = [
         ],
       },
       {
-        path: '/finance/raten', label: 'RATENZAHLER', icon: ScrollText, roles: ['Admin', 'Super Admin'],
+        path: '/finance/anwaltsfaelle', label: 'ANWALTSFÄLLE', icon: Gavel, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
         children: [
-          { path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin'] },
-          { path: '/finance/bestandsuebersicht', label: 'Bestandsübersicht', icon: Repeat, roles: ['Admin', 'Super Admin'] },
-          { path: '/finance/vertraege', label: 'PRÜFUNG', icon: FileText, roles: ['Admin', 'Super Admin'] },
-          { path: '/finance/raten', label: 'Laufende Raten', icon: ScrollText, roles: ['Admin', 'Super Admin'] },
-          { path: '/finance/ratenplan-sync', label: 'Ratenplan synchronisieren', icon: Repeat, roles: ['Admin', 'Super Admin'] },
-          { path: '/finance/alix-flex', label: 'SEPA MANDAT', icon: Banknote, roles: ['Admin', 'Super Admin'] },
-          {
-            path: '/finanzierungen', label: 'FREMD LEASING', icon: Landmark, roles: ['Admin', 'Super Admin'],
-            children: [
-              { path: '/finanzierungen/leasing-bank', label: 'Verfügbare Aufträge', icon: Landmark, roles: ['Admin', 'Super Admin'] },
-              { path: '/finanzierungen/beantragen', label: 'Finanzierung beantragen', icon: FileSignature, roles: ['Admin', 'Super Admin'] },
-              { path: '/finanzierungen/anfragen-offen', label: 'Anfragen offen', icon: Clock, roles: ['Admin', 'Super Admin'] },
-              { path: '/finanzierungen/zusagen-bank', label: 'Zusagen Bank', icon: CheckCircle2, roles: ['Admin', 'Super Admin'] },
-              { path: '/finanzierungen/absagen-bank', label: 'Absagen Bank', icon: X, roles: ['Admin', 'Super Admin'] },
-            ],
-          },
-        ],
-      },
-      {
-        path: '/finance/mahnwesen', label: 'MAHNUNGEN', icon: AlertTriangle, roles: ['Admin', 'Super Admin'],
-        children: [
-          { path: '/finance/mahnwesen', label: 'Mahnwesen', icon: FileText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/anwaltsfaelle', label: 'Anwaltsfälle', icon: Gavel, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'] },
         ],
       },
       {
@@ -630,12 +636,6 @@ export const navItems: NavItem[] = [
           { path: '/finance/automations', label: 'Automations', icon: Cog, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/compliance', label: 'Compliance', icon: BadgeCheck, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/einstellungen/systemstatus', label: 'Systemstatus', icon: FileText, roles: ['Admin', 'Super Admin'] },
-        ],
-      },
-      {
-        path: '/finance/anwaltsfaelle', label: 'ANWALTSFÄLLE', icon: Gavel, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'],
-        children: [
-          { path: '/finance/anwaltsfaelle', label: 'Anwaltsfälle', icon: Gavel, roles: ['Admin', 'Super Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Buchhaltung Admin'] },
         ],
       },
       {
