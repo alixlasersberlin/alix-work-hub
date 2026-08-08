@@ -43,16 +43,24 @@ function emailFromRows(rows: AnyRow[]): string {
 
 function addressFromRows(rows: AnyRow[]): string | null {
   for (const r of rows) {
-    const a = r.raw_data?.billing_address;
+    const rd = r.raw_data || {};
+    const a = rd.billing_address || rd.shipping_address;
     if (a && typeof a === 'object') {
-      const parts = [a.address || a.street, a.street2, [a.zip || a.postal_code, a.city].filter(Boolean).join(' '), a.country]
-        .filter(Boolean)
+      const parts = [
+        a.attention && a.attention !== rd.customer_name ? a.attention : null,
+        a.address || a.street,
+        a.street2,
+        [a.zip || a.postal_code, a.city].filter(Boolean).join(' '),
+        [a.state, a.country].filter(Boolean).join(', '),
+      ]
+        .filter((p) => p && String(p).trim())
         .map(String);
       if (parts.length) return parts.join('\n');
     }
   }
   return null;
 }
+
 
 /** Kontoauszug (offene Posten) für ein Kundenkonto: PDF/CSV-Download und E-Mail mit Vorschau. */
 export function AccountStatementActions({ customerName, customerNumber, city, rows }: Props) {
