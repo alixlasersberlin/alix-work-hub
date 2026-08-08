@@ -511,9 +511,6 @@ export const navItems: NavItem[] = [
         ],
       },
       {
-        path: '/finance/kassenbuch', label: 'KASSENBUCH & JOURNAL', icon: BookOpen, roles: ['Admin', 'Super Admin'],
-        children: [
-      {
         path: '/finance/rechnungen', label: 'RECHNUNGEN', icon: FileText, roles: ['Admin', 'Super Admin'],
         children: [
           { path: '/finance/rechnungen', label: 'Rechnungen', icon: FileText, roles: ['Admin', 'Super Admin'] },
@@ -534,6 +531,9 @@ export const navItems: NavItem[] = [
           { path: '/finance/treasury', label: 'Treasury', icon: Banknote, roles: ['Admin', 'Super Admin'] },
         ],
       },
+      {
+        path: '/finance/kassenbuch', label: 'KASSENBUCH & JOURNAL', icon: BookOpen, roles: ['Admin', 'Super Admin'],
+        children: [
           { path: '/finance/kassenbuch', label: 'Kassenbuch', icon: BookOpen, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/buchungsjournal', label: 'Buchungsjournal', icon: ScrollText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/zahlungsuebersicht', label: 'Zahlungsübersicht', icon: Wallet, roles: ['Admin', 'Super Admin'] },
