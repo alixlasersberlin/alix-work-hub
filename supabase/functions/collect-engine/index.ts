@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
     const proposals = newEvents.length;
     const blocksSet = newBlocks.length;
 
-    return json({ ok: true, sync: syncRes, cases: cases?.length ?? 0, proposals, blocks_set: blocksSet, ms: Date.now() - started });
+    return json({ ok: true, sync: syncRes, cases: cases?.length ?? 0, proposals, blocks_set: blocksSet, tasks_created: newTasks.length, promises_broken: brokenPromises, ms: Date.now() - started });
   } catch (e: any) {
     console.error('collect-engine failed:', e?.message ?? e);
     return json({ ok: false, error: e?.message ?? 'internal' }, 500);
