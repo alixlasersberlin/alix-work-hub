@@ -34,6 +34,8 @@ export default function FinanceCollectCase() {
   const [events, setEvents] = useState<any[]>([]);
   const [blocks, setBlocks] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
+  const [customer, setCustomer] = useState<any>(null);
+  const [limit, setLimit] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
