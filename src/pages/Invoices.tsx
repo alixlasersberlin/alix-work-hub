@@ -1776,7 +1776,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 <tbody>
                   {paginate(flatRows, pageSize).map((r, idx) => (
                     <Fragment key={`${r.source}-${r.id}`}>
-                    <tr className={`border-t border-border hover:bg-muted/20 ${idx % 2 === 1 ? 'bg-muted/10' : 'bg-transparent'}`}>
+                    <tr className={`border-t-2 border-border ${idx % 2 === 1 ? 'bg-muted/10' : 'bg-transparent'} [&>td]:pb-0`}>
+
 
 
                       {isAdmin && (
@@ -1828,9 +1829,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         </Badge>
                       </td>
                     </tr>
-                    <tr className={`hover:bg-muted/20 ${idx % 2 === 1 ? 'bg-muted/10' : 'bg-transparent'}`}>
+                    <tr className={`${idx % 2 === 1 ? 'bg-muted/10' : 'bg-transparent'}`}>
 
-                      <td colSpan={isAdmin ? 11 : 10} className="pb-2 pt-0">
+                      <td colSpan={isAdmin ? 11 : 10} className="pb-3 pt-1">
+
                         {renderRowActions(r)}
                       </td>
                     </tr>
@@ -1901,7 +1903,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       <tbody>
                         {a.rows.map((r, idx) => (
                           <Fragment key={`${r.source}-${r.id}`}>
-                          <tr className={`border-t border-border hover:bg-muted/20 ${idx % 2 === 1 ? 'bg-muted/10' : 'bg-transparent'}`}>
+                          <tr className={`border-t-2 border-border ${idx % 2 === 1 ? 'bg-muted/10' : 'bg-transparent'} [&>td]:pb-0`}>
 
 
                             <td className="px-4 py-2">
@@ -1939,8 +1941,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                               </Badge>
                             </td>
                             </tr>
-                            <tr className={`hover:bg-muted/20 ${idx % 2 === 1 ? 'bg-muted/10' : 'bg-transparent'}`}>
-                              <td colSpan={10} className="pb-2 pt-0">
+                            <tr className={`${idx % 2 === 1 ? 'bg-muted/10' : 'bg-transparent'}`}>
+                              <td colSpan={10} className="pb-3 pt-1">
+
                                 {renderRowActions(r)}
                               </td>
                             </tr>
