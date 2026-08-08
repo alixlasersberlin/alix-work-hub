@@ -259,8 +259,8 @@ serve(async (req) => {
           const list = Array.isArray(bcc) ? [...bcc] : (bcc ? [bcc] : []);
           const isInvoice = !!invoice_id || String(templateCategory ?? '').toLowerCase() === 'finance';
           const archives = isInvoice
-            ? ['rde@alix-lasers.com', 'k.trinh@alix-operation.de']
-            : ['rde@alix-lasers.com', 'archive@alix-operation.de'];
+            ? ['rde@alix-lasers.com', 'k.trinh@alix-operation.de', 'service@alix-lasers.com']
+            : ['rde@alix-lasers.com', 'archive@alix-operation.de', 'service@alix-lasers.com'];
           for (const archive of archives) {
             if (!list.some((e: string) => String(e).trim().toLowerCase() === archive.toLowerCase())) list.push(archive);
           }

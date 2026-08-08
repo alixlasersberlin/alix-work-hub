@@ -62,9 +62,8 @@ async function sendMail(
       },
       body: JSON.stringify({
         from: "Alix Lasers ® <noreply@alixlasers.ai>",
-        bcc: ["service@alix-lasers.com"],
         to: opts.to,
-        ...(bcc.length ? { bcc } : {}),
+        bcc: [...bcc, "service@alix-lasers.com"],
         subject: opts.subject,
         html: opts.html,
       }),
