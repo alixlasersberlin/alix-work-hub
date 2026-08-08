@@ -27,6 +27,8 @@ function priorityFor(dueAt: string, stage: number): 'gruen' | 'gelb' | 'orange' 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+  const reqBody = req.method === 'POST' ? await req.json().catch(() => ({} as any)) : {};
+  const dryRun = reqBody?.dryRun === true;
 
   try {
     const { data: settings } = await admin
@@ -96,7 +98,7 @@ Deno.serve(async (req) => {
       // Stage-5 inactive marking
       const stage5Due = new Date(base);
       stage5Due.setDate(stage5Due.getDate() + (stageDays[4] || 21));
-      if (Date.now() > stage5Due.getTime() && (!oc || oc === 'offen')) {
+      if (!dryRun && Date.now() > stage5Due.getTime() && (!oc || oc === 'offen')) {
         await admin.from('offer_outcomes').upsert({
           offer_number: o.offer_number,
           outcome: 'inaktiv',
@@ -107,6 +109,12 @@ Deno.serve(async (req) => {
     }
 
     let inserted = 0, updated = 0;
+    if (dryRun) {
+      return new Response(
+        JSON.stringify({ ok: true, dryRun: true, scanned: offers?.length || 0, wouldInsert: toInsert.length, wouldUpdate: toUpdate.length }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
     if (toInsert.length) {
       const { error } = await admin.from('offer_followup_tasks').insert(toInsert);
       if (!error) inserted = toInsert.length;
@@ -162,6 +170,7 @@ Deno.serve(async (req) => {
 
         for (const [ownerId, tasks] of byOwner) {
           const owner = ownerMap.get(ownerId);
+          if (!owner?.email || owner.is_active === false) continue;
           const res = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
