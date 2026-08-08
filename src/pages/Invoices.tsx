@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { maskRevenueString } from '@/lib/revenue-mask';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
@@ -188,6 +188,104 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const isAdmin = roles.includes('Admin') || isSuperAdmin;
+  /** Löschen ist ausschließlich Super Admin erlaubt */
+  const canDelete = roles.includes('Super Admin');
+
+  /** Aktionsleiste – wird als eigene Zeile unter der Rechnungszeile gerendert */
+  const renderRowActions = (r: Row) => (
+    <div className="flex flex-wrap items-center gap-1.5 px-4 py-2">
+      {isAdmin && (
+        <Button size="sm" variant="ghost" title="Bearbeiten" onClick={(event) => handleEditClick(event, r)}>
+          <Pencil className="w-3.5 h-3.5" />
+        </Button>
+      )}
+      <Button size="sm" variant="ghost" title="Drucken" disabled={pdfLoadingId === r.id} onClick={() => handlePrint(r)}>
+        {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
+      </Button>
+      <Button size="sm" variant="ghost" title="Download PDF" disabled={pdfLoadingId === r.id} onClick={() => handleDownload(r)}>
+        {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+      </Button>
+      {isAdmin && isDraftInvoice(r) && (
+        <Button
+          size="sm"
+          variant="outline"
+          title="Entwurf festschreiben"
+          className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+          onClick={() => commitDraft(r)}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" /> Festschreiben
+        </Button>
+      )}
+      {isAdmin && (r.payment_status ?? '').toLowerCase() !== 'bezahlt' && (
+        <Button
+          size="sm"
+          variant="outline"
+          title="Als bezahlt buchen"
+          className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+          onClick={(event) => handleBookClick(event, r)}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
+        </Button>
+      )}
+      {isAdmin && r.source !== 'unpaid' && (
+        <Button
+          size="sm"
+          variant="outline"
+          type="button"
+          title="Status ändern"
+          className="h-8 px-2 gap-1 border-sky-500/40 text-sky-400 hover:bg-sky-500/10"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); openStatusDialog(r); }}
+        >
+          <RefreshCw className="w-3.5 h-3.5" /> Status Änderung
+        </Button>
+      )}
+      <Button
+        size="sm"
+        variant="outline"
+        type="button"
+        title="Rechnung per E-Mail versenden"
+        className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEmail(r); }}
+      >
+        <Mail className="w-3.5 h-3.5" /> Rechnung/Email
+      </Button>
+      {isAdmin && (
+        <Button
+          size="sm"
+          variant="outline"
+          type="button"
+          title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als Mietkauf Geräte buchen und nach „In Vermietung" verschieben'}
+          disabled={mietkaufBusyId === r.id}
+          className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMietkauf(r); }}
+        >
+          {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
+          {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
+        </Button>
+      )}
+      {r.source !== 'unpaid' && (
+        <Button
+          size="sm"
+          variant="outline"
+          type="button"
+          title={r.is_deposit ? 'Anzahlungs-Markierung entfernen' : 'Als Anzahlung markieren – erscheint zusätzlich unter Offene Anzahlungen'}
+          disabled={depositBusyId === r.id}
+          className={`h-8 px-2 gap-1 ${r.is_deposit ? 'border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10' : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'}`}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleDeposit(r); }}
+        >
+          {depositBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wallet className="w-3.5 h-3.5" />}
+          {r.is_deposit ? 'Ist Anzahlung ✓' : 'Ist Anzahlung'}
+        </Button>
+      )}
+      {canDelete && (
+        <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
+      )}
+    </div>
+  );
+
+
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1677,7 +1775,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 </thead>
                 <tbody>
                   {paginate(flatRows, pageSize).map((r) => (
-                    <tr key={`${r.source}-${r.id}`} className="border-t border-border hover:bg-muted/10">
+                    <Fragment key={`${r.source}-${r.id}`}>
+                    <tr className="border-t border-border hover:bg-muted/10">
+
                       {isAdmin && (
                         <td className="px-3 py-2">
                           <input
@@ -1726,101 +1826,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           {r.payment_status ?? '–'}
                         </Badge>
                       </td>
-                      <td className="px-4 py-2 text-right whitespace-nowrap">
-                        <div className="inline-flex items-center gap-1">
-                          {isAdmin && (
-                            <Button size="sm" variant="ghost" title="Bearbeiten" onClick={(event) => handleEditClick(event, r)}>
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
-                          <Button size="sm" variant="ghost" title="Drucken" disabled={pdfLoadingId === r.id} onClick={() => handlePrint(r)}>
-                            {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
-                          </Button>
-                          <Button size="sm" variant="ghost" title="Download PDF" disabled={pdfLoadingId === r.id} onClick={() => handleDownload(r)}>
-                            {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                          </Button>
-                          {isAdmin && isDraftInvoice(r) && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              title="Entwurf festschreiben"
-                              className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-                              onClick={() => commitDraft(r)}
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Festschreiben
-                            </Button>
-                          )}
-                          {isAdmin && (r.payment_status ?? '').toLowerCase() !== 'bezahlt' && (
-
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              title="Als bezahlt buchen"
-                              className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                              onClick={(event) => handleBookClick(event, r)}
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
-                            </Button>
-                          )}
-                          {isAdmin && r.source !== 'unpaid' && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              type="button"
-                              title="Status ändern"
-                              className="h-8 px-2 gap-1 border-sky-500/40 text-sky-400 hover:bg-sky-500/10"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); openStatusDialog(r); }}
-                            >
-                              <RefreshCw className="w-3.5 h-3.5" /> Status Änderung
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            type="button"
-                            title="Rechnung per E-Mail versenden"
-                            className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEmail(r); }}
-                          >
-                            <Mail className="w-3.5 h-3.5" /> Rechnung/Email
-                          </Button>
-                          {isAdmin && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              type="button"
-                              title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als Mietkauf Geräte buchen und nach „In Vermietung" verschieben'}
-                              disabled={mietkaufBusyId === r.id}
-                              className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMietkauf(r); }}
-                            >
-                              {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
-                              {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
-                            </Button>
-                           )}
-                           {r.source !== 'unpaid' && (
-                             <Button
-                               size="sm"
-                               variant="outline"
-                               type="button"
-                               title={r.is_deposit ? 'Anzahlungs-Markierung entfernen' : 'Als Anzahlung markieren – erscheint zusätzlich unter Offene Anzahlungen'}
-                               disabled={depositBusyId === r.id}
-                               className={`h-8 px-2 gap-1 ${r.is_deposit ? 'border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10' : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'}`}
-                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleDeposit(r); }}
-                             >
-                               {depositBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wallet className="w-3.5 h-3.5" />}
-                               {r.is_deposit ? 'Ist Anzahlung ✓' : 'Ist Anzahlung'}
-                             </Button>
-                           )}
-                          {isSuperAdmin && (
-                            <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
-                        </div>
+                    </tr>
+                    <tr className="hover:bg-muted/10">
+                      <td colSpan={isAdmin ? 11 : 10} className="pb-2 pt-0">
+                        {renderRowActions(r)}
                       </td>
                     </tr>
+                    </Fragment>
                   ))}
+
                 </tbody>
               </table>
             </div>
@@ -1884,7 +1898,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       </thead>
                       <tbody>
                         {a.rows.map((r) => (
-                          <tr key={`${r.source}-${r.id}`} className="border-t border-border hover:bg-muted/10">
+                          <Fragment key={`${r.source}-${r.id}`}>
+                          <tr className="border-t border-border hover:bg-muted/10">
+
                             <td className="px-4 py-2">
                               {r.source === 'recurring' ? (
                                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
@@ -1919,117 +1935,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                                 {r.payment_status ?? '–'}
                               </Badge>
                             </td>
-                            <td className="px-4 py-2 text-right whitespace-nowrap">
-                              <div className="inline-flex items-center gap-1">
-                                {isAdmin && (
-                                  <Button size="sm" variant="ghost" title="Bearbeiten" onClick={(event) => handleEditClick(event, r)}>
-                                    <Pencil className="w-3.5 h-3.5" />
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  title="Drucken"
-                                  disabled={pdfLoadingId === r.id}
-                                  onClick={() => handlePrint(r)}
-                                >
-                                  {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Printer className="w-3.5 h-3.5" />}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  title="Download PDF"
-                                  disabled={pdfLoadingId === r.id}
-                                  onClick={() => handleDownload(r)}
-                                >
-                                  {pdfLoadingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                                </Button>
-                                {isAdmin && isDraftInvoice(r) && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    title="Entwurf festschreiben"
-                                    className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-                                    onClick={() => commitDraft(r)}
-                                  >
-                                    <CheckCircle2 className="w-3.5 h-3.5" /> Festschreiben
-                                  </Button>
-                                )}
-                                {isAdmin && (r.payment_status ?? '').toLowerCase() !== 'bezahlt' && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    title="Als bezahlt buchen"
-                                    className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                                    onClick={(event) => handleBookClick(event, r)}
-                                  >
-                                    <CheckCircle2 className="w-3.5 h-3.5" /> Buchen
-                                  </Button>
-                                )}
-                                {isAdmin && r.source !== 'unpaid' && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    type="button"
-                                    title="Status ändern"
-                                    className="h-8 px-2 gap-1 border-sky-500/40 text-sky-400 hover:bg-sky-500/10"
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); openStatusDialog(r); }}
-                                  >
-                                    <RefreshCw className="w-3.5 h-3.5" /> Status Änderung
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  type="button"
-                                  title="Rechnung per E-Mail versenden"
-                                  className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
-                                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEmail(r); }}
-                                >
-                                  <Mail className="w-3.5 h-3.5" /> Rechnung/Email
-                                </Button>
-                                {isAdmin && r.source === 'invoice' && (
-                                  <Button size="sm" variant="outline" onClick={() => handleMove(r)}>
-                                    <ArrowRightLeft className="w-3.5 h-3.5 mr-1" /> Ratenzahler
-                                  </Button>
-                                )}
-                                {isAdmin && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    type="button"
-                                    title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als Mietkauf Geräte buchen und nach „In Vermietung" verschieben'}
-                                    disabled={mietkaufBusyId === r.id}
-                                    className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMietkauf(r); }}
-                                  >
-                                    {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
-                                    {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
-                                  </Button>
-                                )}
-                                {r.source !== 'unpaid' && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    type="button"
-                                    title={r.is_deposit ? 'Anzahlungs-Markierung entfernen' : 'Als Anzahlung markieren – erscheint zusätzlich unter Offene Anzahlungen'}
-                                    disabled={depositBusyId === r.id}
-                                    className={`h-8 px-2 gap-1 ${r.is_deposit ? 'border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10' : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'}`}
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleDeposit(r); }}
-                                  >
-                                    {depositBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wallet className="w-3.5 h-3.5" />}
-                                    {r.is_deposit ? 'Ist Anzahlung ✓' : 'Ist Anzahlung'}
-                                  </Button>
-                                )}
-                                {isSuperAdmin && (
-                                  <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </Button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
+                            </tr>
+                            <tr className="hover:bg-muted/10">
+                              <td colSpan={10} className="pb-2 pt-0">
+                                {renderRowActions(r)}
+                              </td>
+                            </tr>
+                            </Fragment>
                         ))}
+
                       </tbody>
                     </table>
                   </div>
