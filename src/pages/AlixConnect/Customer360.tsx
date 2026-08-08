@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Sparkles, Search, Mail, MessageSquare, PhoneCall, Ticket, TrendingDown, TrendingUp } from "lucide-react";
 
-type Contact = { id: string; display_name: string | null; phone: string | null; email: string | null; lifetime_value: number | null; last_interaction_at: string | null };
+type Contact = { id: string; full_name: string | null; phone: string | null; email: string | null; lifetime_value: number | null; last_interaction_at: string | null };
 type Score = { churn_score: number; engagement_score: number; segment: string | null; next_best_action: string | null; reasoning: string | null; computed_at: string };
 type TimelineItem = { at: string; type: "message" | "call" | "email" | "ticket"; title: string; detail?: string };
 
@@ -21,8 +21,8 @@ export default function Customer360() {
 
   async function search() {
     const query = q.trim();
-    let req = supabase.from("ac_contacts").select("id,display_name,phone,email,lifetime_value,last_interaction_at").order("last_interaction_at", { ascending: false, nullsFirst: false }).limit(50);
-    if (query) req = req.or(`display_name.ilike.%${query}%,phone.ilike.%${query}%,email.ilike.%${query}%`);
+    let req = supabase.from("ac_contacts").select("id,full_name,phone,email,lifetime_value,last_interaction_at").order("last_interaction_at", { ascending: false, nullsFirst: false }).limit(50);
+    if (query) req = req.or(`full_name.ilike.%${query}%,phone.ilike.%${query}%,email.ilike.%${query}%`);
     const { data, error } = await req;
     if (error) return toast.error(error.message);
     setContacts((data as any) ?? []);
@@ -86,7 +86,7 @@ export default function Customer360() {
           <CardContent className="space-y-1 max-h-[600px] overflow-auto">
             {contacts.map((c) => (
               <button key={c.id} onClick={() => open(c)} className={`w-full text-left rounded-md border p-2.5 text-sm ${selected?.id === c.id ? "border-primary bg-primary/10" : "border-border/50 hover:bg-muted/40"}`}>
-                <div className="font-medium">{c.display_name ?? "—"}</div>
+                <div className="font-medium">{c.full_name ?? "—"}</div>
                 <div className="text-xs text-muted-foreground">{c.phone ?? c.email ?? "—"}</div>
               </button>
             ))}
@@ -102,7 +102,7 @@ export default function Customer360() {
               <Card>
                 <CardHeader className="flex flex-row items-start justify-between">
                   <div>
-                    <CardTitle>{selected.display_name}</CardTitle>
+                    <CardTitle>{selected.full_name}</CardTitle>
                     <p className="text-xs text-muted-foreground mt-1">{selected.phone ?? "—"} · {selected.email ?? "—"}</p>
                   </div>
                   <Button size="sm" onClick={computeScore} disabled={computing}><Sparkles className="h-4 w-4 mr-2" />{computing ? "Rechne…" : "Score berechnen"}</Button>
