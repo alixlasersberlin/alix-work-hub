@@ -118,8 +118,79 @@ Deno.serve(async (req) => {
       updated++;
     }
 
+    // --- Nachfass-Automatik: E-Mail-Digest an Angebots-Owner ---
+    let notified = 0;
+    try {
+      const nowISO = new Date().toISOString();
+      const { data: dueTasks } = await admin
+        .from('offer_followup_tasks')
+        .select('id, offer_number, customer_id, owner_user_id, stage, due_at, title, priority')
+        .eq('status', 'offen')
+        .is('reminder_sent_at', null)
+        .lte('due_at', nowISO)
+        .not('owner_user_id', 'is', null)
+        .limit(500);
+
+      if (dueTasks?.length) {
+        const ownerIds = [...new Set(dueTasks.map((t: any) => t.owner_user_id))];
+        const { data: owners } = await admin
+          .from('user_profiles').select('id, full_name, email, is_active').in('id', ownerIds);
+        const ownerMap = new Map((owners || []).map((o: any) => [o.id, o]));
+
+        const custIds = [...new Set(dueTasks.map((t: any) => t.customer_id).filter(Boolean))];
+        const { data: customers } = custIds.length
+          ? await admin.from('customers').select('id, customer_name').in('id', custIds)
+          : { data: [] as any[] };
+        const custMap = new Map((customers || []).map((c: any) => [c.id, c.customer_name]));
+
+        const byOwner = new Map<string, any[]>();
+        for (const t of dueTasks) {
+          const o = ownerMap.get(t.owner_user_id);
+          if (!o?.email || o.is_active === false) continue;
+          const list = byOwner.get(t.owner_user_id) || [];
+          list.push({
+            offer_number: t.offer_number,
+            customer_name: custMap.get(t.customer_id) || '',
+            title: t.title,
+            stage: t.stage,
+            due_at: t.due_at,
+            priority: t.priority,
+            overdue_days: Math.max(0, Math.floor((Date.now() - new Date(t.due_at).getTime()) / 86_400_000)),
+          });
+          byOwner.set(t.owner_user_id, list);
+        }
+
+        for (const [ownerId, tasks] of byOwner) {
+          const owner = ownerMap.get(ownerId);
+          const res = await fetch(`${SUPABASE_URL}/functions/v1/send-transactional-email`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipientEmail: owner.email,
+              templateName: 'offer-followup-digest',
+              templateData: {
+                ownerName: owner.full_name || '',
+                tasks,
+                portalUrl: 'https://app.alixwork.de/verkauf/angebotsanalyse',
+              },
+            }),
+          });
+          if (res.ok) {
+            notified += tasks.length;
+            const ids = dueTasks.filter((t: any) => t.owner_user_id === ownerId).map((t: any) => t.id);
+            await admin.from('offer_followup_tasks')
+              .update({ reminder_sent_at: new Date().toISOString() }).in('id', ids);
+          } else {
+            console.error('followup digest mail failed', await res.text());
+          }
+        }
+      }
+    } catch (e) {
+      console.error('followup notification error', e);
+    }
+
     return new Response(
-      JSON.stringify({ ok: true, scanned: offers?.length || 0, inserted, updated }),
+      JSON.stringify({ ok: true, scanned: offers?.length || 0, inserted, updated, notified }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (e) {
