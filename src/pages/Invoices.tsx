@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { maskRevenueString } from '@/lib/revenue-mask';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
@@ -1773,10 +1773,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     <th className="text-right px-4 py-2 font-medium">Aktion</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {paginate(flatRows, pageSize).map((r, idx) => (
-                    <Fragment key={`${r.source}-${r.id}`}>
-                    <tr className={`border-t-2 border-border ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'} [&>td]:pb-0`}>
+                {paginate(flatRows, pageSize).map((r, idx) => (
+                  <tbody
+                    key={`${r.source}-${r.id}`}
+                    className={`border-t-2 border-border ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}
+                  >
+                    <tr className="[&>td]:pb-0">
+
 
 
 
@@ -1829,17 +1832,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         </Badge>
                       </td>
                     </tr>
-                    <tr className={`${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}>
-
+                    <tr>
                       <td colSpan={isAdmin ? 11 : 10} className="pb-3 pt-1">
-
                         {renderRowActions(r)}
                       </td>
                     </tr>
-                    </Fragment>
-                  ))}
+                  </tbody>
+                ))}
 
-                </tbody>
               </table>
             </div>
           )}
@@ -1900,10 +1900,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           <th className="text-right px-4 py-2 font-medium">Aktion</th>
                         </tr>
                       </thead>
-                      <tbody>
-                        {a.rows.map((r, idx) => (
-                          <Fragment key={`${r.source}-${r.id}`}>
-                          <tr className={`border-t-2 border-border ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'} [&>td]:pb-0`}>
+                      {a.rows.map((r, idx) => (
+                        <tbody
+                          key={`${r.source}-${r.id}`}
+                          className={`border-t-2 border-border ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}
+                        >
+                          <tr className="[&>td]:pb-0">
+
 
 
                             <td className="px-4 py-2">
@@ -1941,16 +1944,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                               </Badge>
                             </td>
                             </tr>
-                            <tr className={`${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}>
-                              <td colSpan={10} className="pb-3 pt-1">
+                          <tr>
+                            <td colSpan={10} className="pb-3 pt-1">
+                              {renderRowActions(r)}
+                            </td>
+                          </tr>
+                        </tbody>
+                      ))}
 
-                                {renderRowActions(r)}
-                              </td>
-                            </tr>
-                            </Fragment>
-                        ))}
-
-                      </tbody>
                     </table>
                   </div>
                 )}
