@@ -309,6 +309,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const [editRow, setEditRow] = useState<Row | null>(null);
   const [previewRow, setPreviewRow] = useState<Row | null>(null);
+  const [openActions, setOpenActions] = useState<Record<string, boolean>>({});
+  const toggleActions = (key: string) => setOpenActions((s) => ({ ...s, [key]: !s[key] }));
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '', status: '' });
   const [editSaving, setEditSaving] = useState(false);
