@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
           <p style="margin-top:16px">Mit freundlichen Grüßen<br/><strong>Alix Lasers Finance – Buchhaltung</strong></p>
         </div>
         <div style="background:#faf8f3;border-top:1px solid #ece5d3;padding:12px 24px;font-size:11px;color:#777">
-          Alix Lasers GmbH · Buchsbaumweg 53 · 12357 Berlin · Telefon +49 30 577 127 45 · info@alix-lasers.com<br/>
+          Alix Lasers GmbH · Buchsbaumweg 53 · 12357 Berlin · Telefon +49 30 577 127 45 · service@alix-lasers.com<br/>
           Bankverbindung: Deutsche Bank · IBAN DE07 1007 0100 0142 6600 00 · BIC DEUTDEBB101
         </div>
       </div>`;

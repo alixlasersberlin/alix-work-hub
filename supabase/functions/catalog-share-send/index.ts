@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const linkId = String(body.link_id ?? "").trim();
     const channel = String(body.channel ?? "").trim(); // 'email' | 'whatsapp' | 'sms'
-    const fromEmail = String(body.from_email ?? "info@alix-lasers.com");
+    const fromEmail = String(body.from_email ?? "service@alix-lasers.com");
     const baseUrl = String(body.base_url ?? "https://alixwork.de/catalog/share/");
     const customSubject = body.subject ? String(body.subject) : null;
     const customBody = body.body ? String(body.body) : null;
