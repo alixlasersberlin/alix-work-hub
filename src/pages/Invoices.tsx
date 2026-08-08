@@ -1832,17 +1832,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         </Badge>
                       </td>
                     </tr>
-                    <tr className={`${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}>
-
+                    <tr>
                       <td colSpan={isAdmin ? 11 : 10} className="pb-3 pt-1">
-
                         {renderRowActions(r)}
                       </td>
                     </tr>
-                    </Fragment>
-                  ))}
+                  </tbody>
+                ))}
 
-                </tbody>
               </table>
             </div>
           )}
