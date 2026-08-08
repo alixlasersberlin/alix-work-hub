@@ -63,6 +63,18 @@ export default function FinanceCollectCase() {
     setStages((st.data as any) ?? []);
     setMailStage((a.data as any)?.stage_code ?? '');
     setMailTo((a.data as any)?.customer_email ?? '');
+
+    const cid = (a.data as any)?.customer_id;
+    const cname = (a.data as any)?.customer_name;
+    if (cid) {
+      const { data: cu } = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('id', cid).maybeSingle();
+      setCustomer(cu ?? null);
+    } else if (cname) {
+      const { data: cu } = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('company_name', cname).limit(1).maybeSingle();
+      setCustomer(cu ?? null);
+    } else setCustomer(null);
+    const { data: lim } = await supabase.from('collect_credit_limits' as any).select('*').eq('case_id', caseId).maybeSingle();
+    setLimit(lim ?? null);
     setLoading(false);
   };
 
