@@ -1757,6 +1757,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                   <tr>
+                    <th className="px-2 py-2 w-8"></th>
                     {isAdmin && (
                       <th className="px-3 py-2 w-8">
                         <input
@@ -1794,6 +1795,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       className={`cursor-pointer ${openActions[`${r.source}-${r.id}`] ? '[&>td]:pb-0' : ''}`}
                       onClick={() => toggleActions(`${r.source}-${r.id}`)}
                     >
+                      <td className="px-2 py-2 w-8">
+                        <button
+                          type="button"
+                          aria-label="Aktionen ein-/ausklappen"
+                          onClick={(e) => { e.stopPropagation(); toggleActions(`${r.source}-${r.id}`); }}
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          {openActions[`${r.source}-${r.id}`]
+                            ? <ChevronDown className="w-4 h-4" />
+                            : <ChevronRight className="w-4 h-4" />}
+                        </button>
+                      </td>
                       {isAdmin && (
                         <td className="px-3 py-2">
                           <input
@@ -1806,7 +1819,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         </td>
                       )}
                       <td className="px-4 py-2">
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-nowrap whitespace-nowrap">
                           <Badge variant="outline" className={statusVariant(r.payment_status)}>
                             {r.payment_status ?? '–'}
                           </Badge>
@@ -1825,16 +1838,6 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       </td>
                       <td className="px-4 py-2 font-medium">
                         <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            aria-label="Aktionen ein-/ausklappen"
-                            onClick={(e) => { e.stopPropagation(); toggleActions(`${r.source}-${r.id}`); }}
-                            className="text-muted-foreground hover:text-primary transition-colors"
-                          >
-                            {openActions[`${r.source}-${r.id}`]
-                              ? <ChevronDown className="w-4 h-4" />
-                              : <ChevronRight className="w-4 h-4" />}
-                          </button>
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handlePreview(r); }}
@@ -1862,7 +1865,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     </tr>
                     {openActions[`${r.source}-${r.id}`] && (
                       <tr>
-                        <td colSpan={isAdmin ? 10 : 9} className="pb-3 pt-1">
+                        <td colSpan={isAdmin ? 11 : 10} className="pb-3 pt-1">
                           {renderRowActions(r)}
                         </td>
                       </tr>
