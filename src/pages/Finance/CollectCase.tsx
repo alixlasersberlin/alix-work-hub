@@ -202,6 +202,10 @@ export default function FinanceCollectCase() {
         </div>
       </DataCard>
 
+      <CollectCaseActions c={c} items={items} onChange={load} />
+
+
+
       <div className="grid gap-6 lg:grid-cols-2">
         <DataCard title="Eskalation & Sperren" icon={<Gavel className="h-4 w-4" />}>
           <div className="flex flex-wrap gap-2">
