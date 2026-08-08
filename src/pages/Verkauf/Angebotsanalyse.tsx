@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BarChart3, Download, RefreshCw, X } from 'lucide-react';
+import { BarChart3, Download, FileText, RefreshCw, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader, PageLoading, PageError } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
@@ -113,6 +113,41 @@ export default function Angebotsanalyse() {
     URL.revokeObjectURL(a.href);
   };
 
+  const exportPdf = async () => {
+    const { default: jsPDF } = await import('jspdf');
+    const { default: autoTable } = await import('jspdf-autotable');
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    const total = offers.reduce((s, o) => s + offerValue(o), 0);
+    const won = offers.filter(isWon);
+    const wonSum = won.reduce((s, o) => s + offerValue(o), 0);
+    const rate = offers.length ? (won.length / offers.length) * 100 : 0;
+
+    doc.setFontSize(16);
+    doc.text('Angebotsanalyse – Vertriebs-Cockpit', 14, 15);
+    doc.setFontSize(10);
+    doc.text(
+      `Stand: ${new Date().toLocaleString('de-DE')}  ·  ${offers.length} Angebote  ·  Pipeline ${eur(total)}  ·  Gewonnen ${won.length} (${eur(wonSum)})  ·  Quote ${rate.toFixed(1)}%`,
+      14, 22,
+    );
+
+    autoTable(doc, {
+      startY: 28,
+      head: [['Angebot', 'Datum', 'Kunde', 'Verkäufer', 'Phase', 'Produkt', 'Wert', 'Status', 'Lead', 'Wettbewerber']],
+      body: offers.slice(0, 800).map((o) => [
+        o.offer_number ?? '', o.offer_date ?? '', o.customer_name ?? '', o.created_by_name ?? '',
+        stageOf(o) ?? '', productOf(o) ?? '', eur(offerValue(o)),
+        isWon(o) ? 'Gewonnen' : isLost(o) ? 'Verloren' : 'Offen',
+        o.lead_source ?? '', o.competitor ?? '',
+      ]),
+      styles: { fontSize: 7, cellPadding: 1.5 },
+      headStyles: { fillColor: [24, 24, 27] },
+      columnStyles: { 6: { halign: 'right' } },
+    });
+
+    doc.save(`angebotsanalyse-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div className="p-6 max-w-[1600px] mx-auto">
       <PageHeader
@@ -122,6 +157,7 @@ export default function Angebotsanalyse() {
         actions={
           <>
             <Button variant="outline" size="sm" onClick={exportCsv}><Download className="h-4 w-4 mr-2" />CSV</Button>
+            <Button variant="outline" size="sm" onClick={exportPdf}><FileText className="h-4 w-4 mr-2" />PDF</Button>
             <Button variant="outline" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-2" />Aktualisieren</Button>
           </>
         }
