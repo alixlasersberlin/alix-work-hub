@@ -10,7 +10,7 @@ export const COMPANY = {
   country: 'Deutschland',
   phone: '+49 30 577 127 45',
   fax: '+49 30 577 127 46',
-  mail: 'info@alix-lasers.com',
+  mail: 'service@alix-lasers.com',
   bank: 'Deutsche Bank',
   iban: 'DE07 1007 0100 0142 6600 00',
   bic: 'DEUTDEBB101',
