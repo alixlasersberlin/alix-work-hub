@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Phone, HandCoins, CalendarClock, CreditCard, Gavel, Scale, Plus, Check } from 'lucide-react';
+import { Phone, HandCoins, CalendarClock, CreditCard, Gavel, Scale, Plus, Check, FileText, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
