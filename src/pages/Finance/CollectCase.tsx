@@ -66,14 +66,33 @@ export default function FinanceCollectCase() {
     setMailTo(caseEmail);
 
     const cid = (a.data as any)?.customer_id;
-    const cname = (a.data as any)?.customer_name;
+    const cname = ((a.data as any)?.customer_name ?? '').trim();
+    const COLS = 'id, company_name, contact_name, email, phone, billing_address';
     let cu: any = null;
     if (cid) {
-      const r = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('id', cid).maybeSingle();
+      const r = await supabase.from('customers').select(COLS).eq('id', cid).maybeSingle();
       cu = r.data ?? null;
-    } else if (cname) {
-      const r = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('company_name', cname).limit(1).maybeSingle();
+    }
+    if (!cu && cname) {
+      // 1) exakter Firmenname
+      let r = await supabase.from('customers').select(COLS).eq('company_name', cname).limit(1).maybeSingle();
       cu = r.data ?? null;
+      // 2) exakter Ansprechpartner-Name
+      if (!cu) {
+        r = await supabase.from('customers').select(COLS).eq('contact_name', cname).limit(1).maybeSingle();
+        cu = r.data ?? null;
+      }
+      // 3) unscharfe Suche (Firmenname oder Ansprechpartner), bevorzugt mit E-Mail
+      if (!cu) {
+        const like = `%${cname.replace(/[%,]/g, ' ').trim()}%`;
+        const rl = await supabase
+          .from('customers')
+          .select(COLS)
+          .or(`company_name.ilike.${like},contact_name.ilike.${like}`)
+          .limit(10);
+        const rows = (rl.data as any[]) ?? [];
+        cu = rows.find((x) => (x.email ?? '').trim()) ?? rows[0] ?? null;
+      }
     }
     setCustomer(cu);
     // Fallback: E-Mail aus dem Kundenstamm übernehmen, wenn der Fall keine hat
