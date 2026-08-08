@@ -343,7 +343,7 @@ export default function Ratenzahler() {
                 {visible.length === 0 ? (
                   <tr>
                     <td colSpan={isAdmin ? 11 : 10} className="px-4 py-12 text-center text-muted-foreground">
-                      Keine Daten. Klicken Sie auf „Aus Zoho importieren", um zu starten.
+                      Keine Daten. Klicken Sie auf „Bestand prüfen", um Änderungen aus Zoho zu ermitteln.
                     </td>
                   </tr>
                 ) : (
