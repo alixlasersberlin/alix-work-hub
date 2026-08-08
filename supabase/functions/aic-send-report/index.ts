@@ -127,8 +127,7 @@ Deno.serve(async (req) => {
         headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "Alix Lasers ® <noreply@alixlasers.ai>",
-          bcc: ["service@alix-lasers.com"],
-          to: recipients, bcc: ['rde@alix-lasers.com', 'archive@alix-operation.de'], subject: title, html,
+          to: recipients, bcc: ['rde@alix-lasers.com', 'archive@alix-operation.de', 'service@alix-lasers.com'], subject: title, html,
         }),
       });
       if (!r.ok) {
