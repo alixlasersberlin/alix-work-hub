@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import CollectCaseActions from '@/components/collect/CollectCaseActions';
+import { generateMahnungPdf } from '@/lib/finance/mahnung-pdf';
 
 const fmt = (n: any, cur = 'EUR') =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(Number(n ?? 0));
@@ -138,10 +139,51 @@ export default function FinanceCollectCase() {
     setMailOpen(true);
   };
 
+  /** Mahnschreiben als PDF auf der Alix-Briefvorlage (identisch zum Kontoauszug). */
+  const buildMahnungPdf = async () => {
+    const stage = stages.find((s) => s.code === mailStage);
+    return generateMahnungPdf({
+      customerName: c?.customer_name || 'Kunde',
+      customerAddress: customer?.billing_address ? formatAddress(customer.billing_address) : null,
+      customerNumber: customer?.id ? null : null,
+      currency: c?.currency || 'EUR',
+      stageLabel: stage?.label || 'Zahlungserinnerung',
+      intro: stage?.email_body || null,
+      items: items.map((i) => ({
+        invoice_number: i.invoice_number,
+        invoice_date: i.invoice_date,
+        due_date: i.due_date,
+        balance: i.balance,
+        currency: i.currency,
+        days_overdue: i.days_overdue,
+      })),
+      openAmount: c?.open_amount,
+      feeAmount: c?.fee_amount,
+      interestAmount: c?.interest_amount,
+    });
+  };
+
+  const previewPdf = async () => {
+    const doc = await buildMahnungPdf();
+    window.open(String(doc.output('bloburl')), '_blank');
+  };
+
   const send = async () => {
     setBusy(true);
+    let attachments: { filename: string; content: string; contentType: string }[] = [];
+    try {
+      const doc = await buildMahnungPdf();
+      const base64 = String(doc.output('datauristring')).split(',')[1];
+      const name = `Mahnung_${(c?.customer_name || 'Kunde').replace(/[^\w-]+/g, '_')}.pdf`;
+      attachments = [{ filename: name, content: base64, contentType: 'application/pdf' }];
+    } catch {
+      attachments = [];
+    }
     const { error } = await supabase.functions.invoke('collect-send-dunning', {
-      body: { case_id: caseId, stage_code: mailStage, to_email: mailTo, subject: mailSubject, body_html: mailHtml },
+      body: {
+        case_id: caseId, stage_code: mailStage, to_email: mailTo,
+        subject: mailSubject, body_html: mailHtml, attachments,
+      },
     });
     setBusy(false);
     if (error) { toast({ title: 'Versand fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
@@ -392,6 +434,7 @@ export default function FinanceCollectCase() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={preview} disabled={busy}>Neu generieren</Button>
+            <Button variant="outline" onClick={previewPdf} disabled={busy}>PDF-Vorschau</Button>
             <Button onClick={send} disabled={busy || !mailTo}>
               <Mail className="h-4 w-4 mr-2" />Versenden
             </Button>
