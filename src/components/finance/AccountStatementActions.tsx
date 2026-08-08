@@ -111,13 +111,14 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
 
   const currency = items[0]?.currency || 'EUR';
   const openSum = items.reduce((s, i) => s + Number(i.balance ?? i.total ?? 0), 0);
-  const address = useMemo(() => addressFromRows(rows), [rows]);
+  const addresses = useMemo(() => addressesFromRows(rows), [rows]);
   const fileBase = `Kontoauszug_${(customerName || 'Kunde').replace(/[^\w-]+/g, '_')}`;
 
   const buildDoc = () =>
     generateKontoauszugPdf({
       customerName: customerName || 'Kunde',
-      customerAddress: address,
+      customerAddress: addresses.billing,
+      shippingAddress: addresses.shipping,
       customerNumber: customerNumber ?? null,
       currency,
       items,
