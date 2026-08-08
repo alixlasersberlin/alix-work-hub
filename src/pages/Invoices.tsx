@@ -111,7 +111,7 @@ function statusVariant(s: string | null) {
   if (v.includes('bezahlt') && !v.includes('teil')) return 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30';
   if (v.includes('teil')) return 'bg-amber-500/15 text-amber-500 border-amber-500/30';
   if (v.includes('über')) return 'bg-destructive text-destructive-foreground border-destructive font-semibold';
-  if (v.includes('offen')) return 'bg-blue-500/15 text-blue-500 border-blue-500/30';
+  if (v.includes('offen')) return 'bg-destructive text-destructive-foreground border-destructive font-semibold';
   return 'bg-muted text-muted-foreground border-border';
 }
 
