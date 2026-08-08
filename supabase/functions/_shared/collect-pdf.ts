@@ -6,6 +6,7 @@ export type Block =
   | { type: 'h2'; text: string }
   | { type: 'p'; text: string }
   | { type: 'spacer'; size?: number }
+  | { type: 'image'; dataUrl: string; width?: number; height?: number; caption?: string }
   | { type: 'table'; head: string[]; rows: string[][]; widths?: number[] };
 
 // pdf-lib StandardFonts können nur WinAnsi kodieren – Sonderzeichen ersetzen
