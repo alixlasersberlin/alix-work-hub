@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import FullBackfillCard from '@/components/import/FullBackfillCard';
+import AutoImportTab from '@/components/import/AutoImportTab';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -962,7 +963,14 @@ export default function ImportManagement() {
           {canWrite && <TabsTrigger value="actions">Import-Aktionen</TabsTrigger>}
           {canWrite && <TabsTrigger value="invoices">Rechnung Import</TabsTrigger>}
           {canWrite && <TabsTrigger value="sync">Einzel-Sync</TabsTrigger>}
+          {canWrite && <TabsTrigger value="auto">AUTO IMPORT</TabsTrigger>}
         </TabsList>
+
+        {canWrite && (
+          <TabsContent value="auto" className="space-y-4">
+            <AutoImportTab />
+          </TabsContent>
+        )}
 
         {/* ============ OVERVIEW TAB ============ */}
         <TabsContent value="overview" className="space-y-4">
