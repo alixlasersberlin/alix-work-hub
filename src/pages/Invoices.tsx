@@ -1463,6 +1463,34 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const expandAll = () => setExpanded(Object.fromEntries(accounts.map((a) => [a.key, true])));
   const collapseAll = () => setExpanded({});
 
+  /** Öffnet den ALIX COLLECT Fall des Kundenkontos (sonst Command Center). */
+  const openDunning = async (a: { customer_id?: string | null; customer_name?: string | null }) => {
+    try {
+      let caseId: string | null = null;
+      if (a.customer_id) {
+        const { data } = await supabase
+          .from('collect_cases' as any)
+          .select('id')
+          .eq('customer_key', a.customer_id)
+          .maybeSingle();
+        caseId = (data as any)?.id ?? null;
+      }
+      if (!caseId && a.customer_name) {
+        const { data } = await supabase
+          .from('collect_cases' as any)
+          .select('id')
+          .ilike('customer_name', `%${a.customer_name}%`)
+          .limit(1);
+        caseId = (data as any)?.[0]?.id ?? null;
+      }
+      window.open(caseId ? `/finance/collect/${caseId}` : '/finance/collect', '_blank');
+      if (!caseId) toast({ title: 'Kein Mahnfall gefunden', description: 'Command Center geöffnet.' });
+    } catch (e: any) {
+      toast({ title: 'Öffnen fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    }
+  };
+
+
   const openBook = (r: Row) => {
     setBookRow(r);
     setBookMethod('Überweisung');
