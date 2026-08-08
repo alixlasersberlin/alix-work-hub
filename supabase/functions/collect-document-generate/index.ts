@@ -150,13 +150,32 @@ Deno.serve(async (req) => {
             String(r.seq), de(r.due_date), eur(r.amount, cur), san(r.status ?? 'offen'),
           ]),
         });
-        blocks.push({ type: 'spacer', size: 30 });
-        blocks.push({
-          type: 'table',
-          head: ['Ort, Datum / Kunde', 'Alix Lasers (R)'],
-          widths: [250, 245],
-          rows: [['____________________________', '____________________________']],
-        });
+        blocks.push({ type: 'spacer', size: 24 });
+
+        if (plan.signed_at && plan.signature_data_url) {
+          blocks.push({ type: 'h2', text: 'Digitale Unterschrift des Kunden' });
+          blocks.push({
+            type: 'image',
+            dataUrl: String(plan.signature_data_url),
+            width: 180,
+            caption: `${san(plan.signed_name ?? '')} | ${new Date(plan.signed_at).toLocaleString('de-DE')}${plan.signed_ip ? ` | IP ${san(plan.signed_ip)}` : ''}`,
+          });
+          blocks.push({ type: 'p', text: 'Elektronisch unterzeichnet ueber das Alix Zahlungsportal. Name, Zeitstempel und IP-Adresse sind revisionssicher gespeichert.' });
+          blocks.push({ type: 'spacer', size: 12 });
+          blocks.push({
+            type: 'table',
+            head: ['Alix Lasers (R)'],
+            widths: [495],
+            rows: [['____________________________']],
+          });
+        } else {
+          blocks.push({
+            type: 'table',
+            head: ['Ort, Datum / Kunde', 'Alix Lasers (R)'],
+            widths: [250, 245],
+            rows: [['____________________________', '____________________________']],
+          });
+        }
       } else {
         blocks.push({ type: 'p', text: bodyText(docType, c.customer_name ?? '', eur(total, cur), deadlineStr, extra) });
         blocks.push({ type: 'p', text: 'Hinweis: Zu diesem Fall ist noch kein Ratenplan hinterlegt.' });
