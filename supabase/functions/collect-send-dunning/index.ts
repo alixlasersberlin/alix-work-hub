@@ -101,10 +101,24 @@ Deno.serve(async (req) => {
     const bcc = ['service@alix-lasers.com'];
     if (stage?.cc_management) bcc.push('rde@alix-lasers.com');
 
-    const { error: mailErr } = await admin.functions.invoke('send-invoice-mail', {
-      body: { to_email: recipient, to_name: c.customer_name, subject, body_html: html, body_text: subject, bcc, invoice_number: `collect-${code}` },
+    const mailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-invoice-mail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: ANON_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+      },
+      body: JSON.stringify({
+        to_email: recipient, to_name: c.customer_name, subject,
+        body_html: html, body_text: subject, bcc, invoice_number: `collect-${code}`,
+      }),
     });
-    if (mailErr) throw mailErr;
+    const mailText = await mailRes.text();
+    if (!mailRes.ok) {
+      console.error('send-invoice-mail error', mailRes.status, mailText);
+      return json({ ok: false, error: `Mailversand fehlgeschlagen (${mailRes.status}): ${mailText.slice(0, 300)}` }, 502);
+    }
+    console.log('send-invoice-mail ok', mailText.slice(0, 200));
 
     await admin.from('collect_events').insert({
       case_id, event_type: 'email_sent', channel: 'email', direction: 'out', stage_code: code,
