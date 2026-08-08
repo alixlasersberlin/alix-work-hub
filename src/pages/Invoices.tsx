@@ -1889,9 +1889,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
             const open = !!expanded[a.key];
             return (
               <DataCard key={a.key} className="overflow-hidden">
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => toggle(a.key)}
-                  className="w-full flex items-center gap-3 p-4 hover:bg-muted/20 text-left"
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(a.key); } }}
+                  className="w-full flex items-center gap-3 p-4 hover:bg-muted/20 text-left cursor-pointer"
                 >
                   {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   <div className="flex-1 min-w-0">
