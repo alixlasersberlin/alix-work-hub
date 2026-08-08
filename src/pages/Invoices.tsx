@@ -1820,7 +1820,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       </td>
                       <td className="px-4 py-2 font-medium">
                         <div className="flex items-center gap-2">
-                          <span>{r.invoice_number ?? '–'}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handlePreview(r); }}
+                            className="text-primary underline underline-offset-2 hover:text-primary/80"
+                            title="Rechnung anzeigen"
+                          >
+                            {r.invoice_number ?? '–'}
+                          </button>
                           {isDraftInvoice(r) && (
                             <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/40 text-[10px] uppercase tracking-wide">
                               Entwurf
