@@ -48,6 +48,7 @@
 - [Kassenbuch & Buchungsjournal Pro](mem://features/finance-kassenbuch-journal) — GoBD-Kassenbuch, Buchungsjournal, Bankbuchungen, DATEV-Export, Audit-Trail unter /finance/kassenbuch & Co.
 - [Copilot Steuerzentrale](mem://features/copilot-config) — /operations/alix-copilot-config, Tabellen copilot_sources/_files/_departments/_module_access/_import_jobs/_knowledge_entries/_settings/_audit_log, Zugriff Super Admin/Admin/Geschäftsführung/QM
 - [Sales Leads / Zoho Forms](mem://features/sales-leads) — SALES MANAGEMENT → Anfragen + Nachfassen, Tabellen sales_leads/_history/_followups + integration_logs, Edge Function zoho-forms-import (x-api-key), Angebots-Handoff per sessionStorage
+- [Angebotsanalyse](mem://features/angebotsanalyse) — Vertriebs-Cockpit /verkauf/angebotsanalyse, offers-Zusatzfelder + offer_activities, Edge Function offers-ai-score, KPIs/Funnel/Score/Forecast
 - [Finance Phase 13 Konzern-Konsolidierung](mem://features/finance-phase13) — Monatskonsolidierung mit IC-Eliminierung + FX-Umrechnung
 - [Finance Phase 14 Treasury+P2P+Meldewesen](mem://features/finance-phase14) — Bankkonten/Liquidität/Freigaben, PR→PO→Wareneingang→3-Way-Match, UStVA/ZM/OSS/Intrastat/E-Bilanz Export
 - [Customer SMS Versand](mem://features/customer-sms) — Tab in Kundenakte sendet PDF-Dokumente per Twilio-SMS mit signiertem /d/:token-Link, Tabelle customer_sms_logs, Edge Function send-customer-sms
