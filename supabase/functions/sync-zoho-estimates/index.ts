@@ -23,6 +23,21 @@ function json(body: unknown, status = 200) {
   });
 }
 
+// Vereinheitlichung der Berater-Namen (Zoho-Schreibweise -> AlixWork-Schreibweise)
+const SALESPERSON_ALIASES: Record<string, string> = {
+  "scheidler lars": "L. Scheidler",
+  "lars scheidler": "L. Scheidler",
+  "natalia piastun": "Natalia P",
+  "piastun natalia": "Natalia P",
+};
+
+function normalizeSalesperson(name: string): string {
+  const trimmed = (name ?? "").trim().replace(/\s+/g, " ");
+  if (!trimmed) return "";
+  return SALESPERSON_ALIASES[trimmed.toLowerCase()] ?? trimmed;
+}
+
+
 function getZohoConfig(source: string) {
   const map: Record<string, { prefix: string; accountsBase: string; apiBase: string }> = {
     zoho_eu_1: { prefix: "ZOHO_EU_1", accountsBase: "https://accounts.zoho.eu", apiBase: "https://www.zohoapis.eu/books/v3" },
@@ -239,7 +254,7 @@ Deno.serve(async (req) => {
             status: statusMap(est.status),
             payload,
             created_by_name:
-              (full.salesperson_name ?? est.salesperson_name ?? '').trim() ||
+              normalizeSalesperson(full.salesperson_name ?? est.salesperson_name ?? '') ||
               `Zoho ${isAT ? "AT" : "DE"}`,
           };
 
