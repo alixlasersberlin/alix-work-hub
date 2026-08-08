@@ -137,9 +137,11 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Nach Kundenname eindeutig machen (gleicher Name aus mehreren Quellen)
+    const uniqueRows = Array.from(new Map(healthRows.map((r) => [r.customer_name, r])).values());
     let healthSaved = 0;
-    for (let i = 0; i < healthRows.length; i += 300) {
-      const chunk = healthRows.slice(i, i + 300);
+    for (let i = 0; i < uniqueRows.length; i += 300) {
+      const chunk = uniqueRows.slice(i, i + 300);
       const { error } = await admin.from('collect_health_scores').upsert(chunk, { onConflict: 'customer_name' });
       if (error) console.warn('health upsert failed', error.message);
       else healthSaved += chunk.length;
