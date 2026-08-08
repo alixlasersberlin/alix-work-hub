@@ -31,6 +31,7 @@ import { template as ordersMissingAlert } from './orders-missing-alert.tsx'
 import { template as alixdocsAccessGranted } from './alixdocs-access-granted.tsx'
 import { template as ruecklastschriftMahnung } from './ruecklastschrift-mahnung.tsx'
 import { template as ruecklastschriftGebuehrenrechnung } from './ruecklastschrift-gebuehrenrechnung.tsx'
+import { template as offerFollowupDigest } from './offer-followup-digest.tsx'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'otp-code': otpCode,
@@ -55,4 +56,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'alixdocs-access-granted': alixdocsAccessGranted,
   'ruecklastschrift-mahnung': ruecklastschriftMahnung,
   'ruecklastschrift-gebuehrenrechnung': ruecklastschriftGebuehrenrechnung,
+  'offer-followup-digest': offerFollowupDigest,
 }
