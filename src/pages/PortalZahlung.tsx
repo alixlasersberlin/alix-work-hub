@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CalendarClock, CheckCircle2, CreditCard, ShieldCheck } from 'lucide-react';
+import { CalendarClock, CheckCircle2, CreditCard, PenLine, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import SignaturePad from '@/components/finance/SignaturePad';
 
 const fmt = (n: any, cur = 'EUR') =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur || 'EUR' }).format(Number(n ?? 0));
@@ -25,6 +26,9 @@ export default function PortalZahlung() {
   const [months, setMonths] = useState('3');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [signedName, setSignedName] = useState('');
+
 
   useEffect(() => {
     document.title = 'Offene Posten – Alix Lasers ®';
