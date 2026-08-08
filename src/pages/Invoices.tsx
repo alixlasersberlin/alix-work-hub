@@ -1942,6 +1942,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                   <div className="text-right tabular-nums w-40">
                     <div className="text-sm font-semibold">{fmtMoney(a.totalAmount)}</div>
                     {a.totalOpen > 0 && <div className="text-xs font-medium text-amber-400">offen: {fmtMoney(a.totalOpen)}</div>}
+                    {(() => {
+                      const mk = Number(mietkaufTotals[a.key] ?? 0);
+                      if (mk <= 0) return null;
+                      const paid = a.rows.reduce((s, r) => s + (Number(r.total ?? 0) - Number(r.balance ?? 0)), 0);
+                      const op = mk - paid;
+                      return (
+                        <div className={`text-xs font-semibold ${op > 0 ? 'text-destructive' : 'text-emerald-400'}`}>
+                          OP Total: {fmtMoney(op)}
+                        </div>
+                      );
+                    })()}
+
                   </div>
                   <AccountStatementActions
                     customerName={a.customer_name}
