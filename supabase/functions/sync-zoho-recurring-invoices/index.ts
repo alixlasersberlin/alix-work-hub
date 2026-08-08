@@ -273,6 +273,16 @@ Deno.serve(async (req) => {
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
 
     let imported = 0, updated = 0, failed = 0, duplicates = 0;
+    let unchanged = 0;
+    const changes: Array<{
+      kind: "new" | "update";
+      invoice_number: string | null;
+      customer_name: string | null;
+      invoice_date: string | null;
+      total: number | null;
+      currency: string | null;
+      diffs: Array<{ field: string; old: unknown; new: unknown }>;
+    }> = [];
     let skippedRegion = 0, importedCh = 0;
 
     let profilesProcessed = 0;
