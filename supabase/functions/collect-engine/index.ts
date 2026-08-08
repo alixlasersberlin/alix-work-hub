@@ -37,6 +37,26 @@ Deno.serve(async (req) => {
       .order('overdue_amount', { ascending: false })
       .limit(2000);
 
+    // 3b) Fehlende Kontaktdaten aus Kundenstamm nachtragen
+    const missing = (cases ?? []).filter((c: any) => !c.customer_email && c.customer_name);
+    if (missing.length) {
+      const names = Array.from(new Set(missing.map((c: any) => c.customer_name)));
+      const contacts = new Map<string, { email: string | null; phone: string | null }>();
+      for (let i = 0; i < names.length; i += 200) {
+        const { data: cust } = await admin
+          .from('customers').select('company_name, email, phone').in('company_name', names.slice(i, i + 200));
+        (cust ?? []).forEach((x: any) => { if (x.email || x.phone) contacts.set(x.company_name, { email: x.email, phone: x.phone }); });
+      }
+      for (const c of missing) {
+        const hit = contacts.get(c.customer_name);
+        if (!hit?.email && !hit?.phone) continue;
+        await admin.from('collect_cases')
+          .update({ customer_email: hit.email, customer_phone: hit.phone }).eq('id', c.id);
+        c.customer_email = hit.email;
+      }
+    }
+
+
     const today = new Date().toISOString().slice(0, 10);
     const caseIds = (cases ?? []).map((c: any) => c.id);
 
