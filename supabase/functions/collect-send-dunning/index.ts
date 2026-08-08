@@ -31,8 +31,9 @@ Deno.serve(async (req) => {
     if (!roleNames.some((n: string) => ALLOWED.includes(n))) return json({ error: 'Keine Berechtigung' }, 403);
 
     const body = await req.json().catch(() => ({}));
-    const { case_id, stage_code, to_email, subject: subjOverride, body_html: htmlOverride, preview } = body as {
+    const { case_id, stage_code, to_email, subject: subjOverride, body_html: htmlOverride, preview, attachments } = body as {
       case_id?: string; stage_code?: string; to_email?: string; subject?: string; body_html?: string; preview?: boolean;
+      attachments?: { filename: string; content: string; contentType?: string }[];
     };
     if (!case_id) return json({ error: 'case_id erforderlich' }, 400);
 
@@ -66,31 +67,43 @@ Deno.serve(async (req) => {
     const intro = (stage?.email_body ?? 'wir möchten Sie freundlich an die unten aufgeführten offenen Posten erinnern.')
       .replace('{{kunde}}', c.customer_name ?? '');
 
+    // Gleiche Brief-Optik wie beim Kontoauszug (Alix-Briefvorlage)
     const html = htmlOverride ?? `
-      <div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;color:#111">
-        <h2 style="margin:0 0 4px">${esc(stage?.label ?? 'Zahlungserinnerung')}</h2>
-        <p>Sehr geehrte Damen und Herren${c.customer_name ? ` (${esc(c.customer_name)})` : ''},</p>
-        <p>${esc(intro)}</p>
-        <table style="border-collapse:collapse;width:100%;font-size:13px;margin:16px 0">
-          <thead>
-            <tr style="background:#f5f5f5">
-              <th style="padding:8px;text-align:left">Beleg</th>
-              <th style="padding:8px;text-align:left">Datum</th>
-              <th style="padding:8px;text-align:left">Fällig</th>
-              <th style="padding:8px;text-align:right">Verzug (Tage)</th>
-              <th style="padding:8px;text-align:right">Offen</th>
-            </tr>
-          </thead>
-          <tbody>${rows || '<tr><td colspan="5" style="padding:8px">Keine offenen Positionen</td></tr>'}</tbody>
-        </table>
-        <table style="font-size:14px">
-          <tr><td style="padding:2px 12px 2px 0">Offene Posten</td><td style="text-align:right">${eur(c.open_amount, cur)}</td></tr>
-          ${Number(c.fee_amount) > 0 ? `<tr><td style="padding:2px 12px 2px 0">Mahngebühren</td><td style="text-align:right">${eur(c.fee_amount, cur)}</td></tr>` : ''}
-          ${Number(c.interest_amount) > 0 ? `<tr><td style="padding:2px 12px 2px 0">Verzugszinsen</td><td style="text-align:right">${eur(c.interest_amount, cur)}</td></tr>` : ''}
-          <tr><td style="padding:6px 12px 2px 0"><strong>Gesamtbetrag</strong></td><td style="text-align:right"><strong>${eur(totalDue, cur)}</strong></td></tr>
-        </table>
-        <p style="margin-top:16px">Bitte begleichen Sie den Betrag zeitnah. Sollten Sie die Zahlung bereits veranlasst haben, betrachten Sie dieses Schreiben als gegenstandslos.</p>
-        <p style="margin-top:16px">Mit freundlichen Grüßen<br/>Alix Lasers ® – Buchhaltung</p>
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:0 auto;color:#111;border:1px solid #ece5d3">
+        <div style="background:#f3f0e8;padding:18px 24px;border-bottom:3px solid #c9a227">
+          <div style="font-size:16px;font-weight:bold;color:#111">Alix Lasers GmbH</div>
+          <div style="font-size:11px;color:#666">Buchsbaumweg 53 · 12357 Berlin · Deutschland</div>
+        </div>
+        <div style="padding:24px">
+          <h2 style="margin:0 0 12px;font-size:17px;color:#111">${esc(stage?.label ?? 'Zahlungserinnerung')}</h2>
+          <p style="margin:0 0 4px;font-weight:bold">${esc(c.customer_name ?? '')}</p>
+          <p style="margin:12px 0">Sehr geehrte Damen und Herren,</p>
+          <p style="margin:0 0 12px">${esc(intro)}</p>
+          <table style="border-collapse:collapse;width:100%;font-size:13px;margin:16px 0">
+            <thead>
+              <tr style="background:#f3f0e8">
+                <th style="padding:8px;text-align:left">Rechnung</th>
+                <th style="padding:8px;text-align:left">Datum</th>
+                <th style="padding:8px;text-align:left">Fällig</th>
+                <th style="padding:8px;text-align:right">Verzug</th>
+                <th style="padding:8px;text-align:right">Offen</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="5" style="padding:8px">Keine offenen Positionen</td></tr>'}</tbody>
+          </table>
+          <table style="font-size:14px;margin-left:auto;background:#faf8f3;border:1px solid #ece5d3;padding:8px">
+            <tr><td style="padding:2px 16px 2px 8px">Offene Posten</td><td style="text-align:right;padding-right:8px">${eur(c.open_amount, cur)}</td></tr>
+            ${Number(c.fee_amount) > 0 ? `<tr><td style="padding:2px 16px 2px 8px">Mahngebühren</td><td style="text-align:right;padding-right:8px">${eur(c.fee_amount, cur)}</td></tr>` : ''}
+            ${Number(c.interest_amount) > 0 ? `<tr><td style="padding:2px 16px 2px 8px">Verzugszinsen</td><td style="text-align:right;padding-right:8px">${eur(c.interest_amount, cur)}</td></tr>` : ''}
+            <tr><td style="padding:6px 16px 6px 8px"><strong>Gesamtbetrag</strong></td><td style="text-align:right;padding-right:8px"><strong>${eur(totalDue, cur)}</strong></td></tr>
+          </table>
+          <p style="margin-top:16px">Bitte überweisen Sie den Gesamtbetrag auf folgendes Konto: Deutsche Bank, IBAN DE07 1007 0100 0142 6600 00, BIC DEUTDEBB101. Sollten sich Zahlungen mit diesem Schreiben überschnitten haben, betrachten Sie es bitte als gegenstandslos.</p>
+          <p style="margin-top:16px">Mit freundlichen Grüßen<br/><strong>Alix Lasers Finance – Buchhaltung</strong></p>
+        </div>
+        <div style="background:#faf8f3;border-top:1px solid #ece5d3;padding:12px 24px;font-size:11px;color:#777">
+          Alix Lasers GmbH · Buchsbaumweg 53 · 12357 Berlin · Telefon +49 30 577 127 45 · info@alix-lasers.com<br/>
+          Bankverbindung: Deutsche Bank · IBAN DE07 1007 0100 0142 6600 00 · BIC DEUTDEBB101
+        </div>
       </div>`;
 
     if (preview) return json({ ok: true, subject, html });
@@ -112,6 +125,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         to_email: recipient, to_name: c.customer_name, subject,
         body_html: html, body_text: subject, bcc, invoice_number: `collect-${code}`,
+        attachments: Array.isArray(attachments) && attachments.length ? attachments : undefined,
       }),
     });
     const mailText = await mailRes.text();
@@ -124,7 +138,7 @@ Deno.serve(async (req) => {
     await admin.from('collect_events').insert({
       case_id, event_type: 'email_sent', channel: 'email', direction: 'out', stage_code: code,
       subject, body: html, actor: user.id, actor_email: user.email ?? null, automated: false,
-      meta: { to: recipient, bcc },
+      meta: { to: recipient, bcc, attachments: (attachments ?? []).map((a) => a.filename) },
     });
     await admin.from('collect_cases').update({
       last_contact_at: new Date().toISOString(), stage_code: code, next_action: null, next_action_at: null,
