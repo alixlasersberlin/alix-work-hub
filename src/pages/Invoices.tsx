@@ -1980,6 +1980,20 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                                     {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
                                   </Button>
                                 )}
+                                {r.source !== 'unpaid' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    type="button"
+                                    title={r.is_deposit ? 'Anzahlungs-Markierung entfernen' : 'Als Anzahlung markieren – erscheint zusätzlich unter Offene Anzahlungen'}
+                                    disabled={depositBusyId === r.id}
+                                    className={`h-8 px-2 gap-1 ${r.is_deposit ? 'border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10' : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'}`}
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleDeposit(r); }}
+                                  >
+                                    {depositBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wallet className="w-3.5 h-3.5" />}
+                                    {r.is_deposit ? 'Ist Anzahlung ✓' : 'Ist Anzahlung'}
+                                  </Button>
+                                )}
                                 {isSuperAdmin && (
                                   <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
                                     <Trash2 className="w-3.5 h-3.5" />
