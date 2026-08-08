@@ -193,7 +193,7 @@ Deno.serve(async (req) => {
       customer_name: c.customer_name,
       doc_type: docType,
       title: `${meta.label} ${c.customer_name ?? ''}`.trim(),
-      amount: total,
+      amount: planTotal ?? total,
       currency: cur,
       content: { deadline: deadline.toISOString().slice(0, 10), note: extra, items: items ?? [] },
       created_by: user.id,
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
           bcc: [BCC],
           subject: `${meta.subject} - ${c.customer_name ?? ''}`,
           html: `<p>Sehr geehrte Damen und Herren,</p><p>anbei erhalten Sie unser Schreiben als PDF.</p>
-                 <p>Offener Betrag: <b>${eur(total, cur)}</b><br/>Zahlungsziel: <b>${deadlineStr}</b></p>
+                 <p>Offener Betrag: <b>${eur(planTotal ?? total, cur)}</b><br/>Zahlungsziel: <b>${deadlineStr}</b></p>
                  <p>Mit freundlichen Grüßen<br/>Alix Lasers ®<br/>Forderungsmanagement</p>`,
           attachments: [{ filename: `${meta.label.toLowerCase().replace(/\s+/g, '-')}.pdf`, content: b64 }],
         }),
