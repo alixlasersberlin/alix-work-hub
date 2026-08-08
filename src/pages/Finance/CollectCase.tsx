@@ -434,6 +434,7 @@ export default function FinanceCollectCase() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={preview} disabled={busy}>Neu generieren</Button>
+            <Button variant="outline" onClick={previewPdf} disabled={busy}>PDF-Vorschau</Button>
             <Button onClick={send} disabled={busy || !mailTo}>
               <Mail className="h-4 w-4 mr-2" />Versenden
             </Button>
