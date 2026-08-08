@@ -1775,7 +1775,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         />
                       </th>
                     )}
-                    <th className="text-left px-4 py-2 font-medium">Status / Typ</th>
+                    <th className="text-left px-4 py-2 font-medium">Status</th>
                     <th className="text-left px-4 py-2 font-medium">Rechnung</th>
                     <th className="text-left px-4 py-2 font-medium">Kunde</th>
                     <th className="text-left px-4 py-2 font-medium">Referenz</th>
@@ -1823,17 +1823,6 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           <Badge variant="outline" className={statusVariant(r.payment_status)}>
                             {r.payment_status ?? '–'}
                           </Badge>
-                          {r.source === 'recurring' ? (
-                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                              <Repeat className="w-3 h-3 mr-1" />Periodisch
-                            </Badge>
-                          ) : r.source === 'unpaid' ? (
-                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
-                              <Repeat className="w-3 h-3 mr-1" />Wiederkehrend (OP)
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
-                          )}
                         </div>
                       </td>
                       <td className="px-4 py-2 font-medium">
@@ -1866,7 +1855,20 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     {openActions[`${r.source}-${r.id}`] && (
                       <tr>
                         <td colSpan={isAdmin ? 11 : 10} className="pb-3 pt-1">
-                          {renderRowActions(r)}
+                          <div className="flex items-center gap-3 flex-wrap">
+                            {r.source === 'recurring' ? (
+                              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                                <Repeat className="w-3 h-3 mr-1" />Periodisch
+                              </Badge>
+                            ) : r.source === 'unpaid' ? (
+                              <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+                                <Repeat className="w-3 h-3 mr-1" />Wiederkehrend (OP)
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
+                            )}
+                            {renderRowActions(r)}
+                          </div>
                         </td>
                       </tr>
                     )}
