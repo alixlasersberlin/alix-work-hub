@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/infinity/PageHeader';
 
 type Call = { id: string; caller_number: string | null; started_at: string | null; direction: string | null; status: string | null; transcript: string | null; summary: string | null; sentiment: string | null; contact_id: string | null };
-type Contact = { id: string; display_name: string | null; email: string | null; phone: string | null };
+type Contact = { id: string; full_name: string | null; email: string | null; phone: string | null };
 type Suggestion = { id: string; suggestion: string | null; category: string | null; created_at: string };
 type Article = { id: string; title: string; content: string | null };
 
@@ -34,7 +34,7 @@ export default function AgentWorkspace() {
     setContact(null); setSuggestions([]);
     if (c.contact_id) {
       const { data: ct } = await supabase.from('ac_contacts' as any)
-        .select('id, display_name, email, phone').eq('id', c.contact_id).maybeSingle();
+        .select('id, full_name, email, phone').eq('id', c.contact_id).maybeSingle();
       setContact((ct as any) ?? null);
     }
     const { data: sug } = await supabase.from('ac_copilot_suggestions' as any)
@@ -120,7 +120,7 @@ export default function AgentWorkspace() {
               {!contact && <p className="text-muted-foreground">Kein Kontakt verknüpft.</p>}
               {contact && (
                 <div className="space-y-1">
-                  <div className="font-medium">{contact.display_name ?? '—'}</div>
+                  <div className="font-medium">{contact.full_name ?? '—'}</div>
                   <div className="text-muted-foreground">{contact.email ?? ''}</div>
                   <div className="text-muted-foreground">{contact.phone ?? ''}</div>
                 </div>

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Ban, Search } from "lucide-react";
 
-type Contact = { id: string; display_name: string | null; phone: string | null; email: string | null; sms_opt_out: boolean; email_opt_out: boolean; sms_opt_out_at: string | null; email_opt_out_at: string | null };
+type Contact = { id: string; full_name: string | null; phone: string | null; email: string | null; sms_opt_out: boolean; email_opt_out: boolean; sms_opt_out_at: string | null; email_opt_out_at: string | null };
 
 export default function OptOut() {
   const [items, setItems] = useState<Contact[]>([]);
@@ -18,11 +18,11 @@ export default function OptOut() {
     setLoading(true);
     let query = supabase
       .from("ac_contacts")
-      .select("id,display_name,phone,email,sms_opt_out,email_opt_out,sms_opt_out_at,email_opt_out_at")
+      .select("id,full_name,phone,email,sms_opt_out,email_opt_out,sms_opt_out_at,email_opt_out_at")
       .or("sms_opt_out.eq.true,email_opt_out.eq.true")
       .order("sms_opt_out_at", { ascending: false, nullsFirst: false })
       .limit(200);
-    if (q) query = query.or(`display_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`);
+    if (q) query = query.or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,email.ilike.%${q}%`);
     const { data, error } = await query;
     if (error) toast.error(error.message);
     else setItems((data as any) ?? []);
@@ -66,7 +66,7 @@ export default function OptOut() {
               {items.map((c) => (
                 <div key={c.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border/50 p-3">
                   <div>
-                    <div className="font-medium text-sm">{c.display_name ?? "—"}</div>
+                    <div className="font-medium text-sm">{c.full_name ?? "—"}</div>
                     <div className="text-xs text-muted-foreground">{c.phone ?? "—"} · {c.email ?? "—"}</div>
                   </div>
                   <div className="flex items-center gap-2">
