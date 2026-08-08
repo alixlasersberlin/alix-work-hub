@@ -12538,6 +12538,484 @@ export type Database = {
           },
         ]
       }
+      collect_blocks: {
+        Row: {
+          active: boolean
+          block_type: string
+          case_id: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          reason: string | null
+          release_reason: string | null
+          released_at: string | null
+          released_by: string | null
+          set_automatically: boolean
+          set_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          block_type: string
+          case_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          reason?: string | null
+          release_reason?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          set_automatically?: boolean
+          set_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          block_type?: string
+          case_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          reason?: string | null
+          release_reason?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          set_automatically?: boolean
+          set_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_blocks_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collect_case_items: {
+        Row: {
+          balance: number
+          case_id: string
+          created_at: string
+          currency: string
+          days_overdue: number
+          due_date: string | null
+          fee_amount: number
+          id: string
+          interest_amount: number
+          invoice_date: string | null
+          invoice_id: string | null
+          invoice_number: string | null
+          is_deposit: boolean
+          source: string | null
+          stage_code: string | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          case_id: string
+          created_at?: string
+          currency?: string
+          days_overdue?: number
+          due_date?: string | null
+          fee_amount?: number
+          id?: string
+          interest_amount?: number
+          invoice_date?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          is_deposit?: boolean
+          source?: string | null
+          stage_code?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          case_id?: string
+          created_at?: string
+          currency?: string
+          days_overdue?: number
+          due_date?: string | null
+          fee_amount?: number
+          id?: string
+          interest_amount?: number
+          invoice_date?: string | null
+          invoice_id?: string | null
+          invoice_number?: string | null
+          is_deposit?: boolean
+          source?: string | null
+          stage_code?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_case_items_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collect_cases: {
+        Row: {
+          ai_reasoning: string | null
+          ai_recommendation: string | null
+          ai_updated_at: string | null
+          ampel: string
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_id: string | null
+          customer_key: string | null
+          customer_name: string
+          customer_phone: string | null
+          fee_amount: number
+          id: string
+          interest_amount: number
+          last_contact_at: string | null
+          max_days_overdue: number
+          next_action: string | null
+          next_action_at: string | null
+          notes: string | null
+          oldest_due_date: string | null
+          open_amount: number
+          overdue_amount: number
+          paused_until: string | null
+          pay_probability_pct: number | null
+          priority: number
+          risk_class: string | null
+          risk_score: number | null
+          stage_code: string
+          stage_day: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ai_reasoning?: string | null
+          ai_recommendation?: string | null
+          ai_updated_at?: string | null
+          ampel?: string
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_key?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          fee_amount?: number
+          id?: string
+          interest_amount?: number
+          last_contact_at?: string | null
+          max_days_overdue?: number
+          next_action?: string | null
+          next_action_at?: string | null
+          notes?: string | null
+          oldest_due_date?: string | null
+          open_amount?: number
+          overdue_amount?: number
+          paused_until?: string | null
+          pay_probability_pct?: number | null
+          priority?: number
+          risk_class?: string | null
+          risk_score?: number | null
+          stage_code?: string
+          stage_day?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_reasoning?: string | null
+          ai_recommendation?: string | null
+          ai_updated_at?: string | null
+          ampel?: string
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_key?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          fee_amount?: number
+          id?: string
+          interest_amount?: number
+          last_contact_at?: string | null
+          max_days_overdue?: number
+          next_action?: string | null
+          next_action_at?: string | null
+          notes?: string | null
+          oldest_due_date?: string | null
+          open_amount?: number
+          overdue_amount?: number
+          paused_until?: string | null
+          pay_probability_pct?: number | null
+          priority?: number
+          risk_class?: string | null
+          risk_score?: number | null
+          stage_code?: string
+          stage_day?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      collect_events: {
+        Row: {
+          actor: string | null
+          actor_email: string | null
+          attachments: Json
+          automated: boolean
+          body: string | null
+          case_id: string
+          channel: string | null
+          created_at: string
+          direction: string
+          event_type: string
+          id: string
+          meta: Json
+          occurred_at: string
+          stage_code: string | null
+          subject: string | null
+        }
+        Insert: {
+          actor?: string | null
+          actor_email?: string | null
+          attachments?: Json
+          automated?: boolean
+          body?: string | null
+          case_id: string
+          channel?: string | null
+          created_at?: string
+          direction?: string
+          event_type: string
+          id?: string
+          meta?: Json
+          occurred_at?: string
+          stage_code?: string | null
+          subject?: string | null
+        }
+        Update: {
+          actor?: string | null
+          actor_email?: string | null
+          attachments?: Json
+          automated?: boolean
+          body?: string | null
+          case_id?: string
+          channel?: string | null
+          created_at?: string
+          direction?: string
+          event_type?: string
+          id?: string
+          meta?: Json
+          occurred_at?: string
+          stage_code?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collect_payment_plan_items: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          paid_amount: number
+          paid_at: string | null
+          plan_id: string
+          seq: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          due_date: string
+          id?: string
+          paid_amount?: number
+          paid_at?: string | null
+          plan_id: string
+          seq: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          paid_amount?: number
+          paid_at?: string | null
+          plan_id?: string
+          seq?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_payment_plan_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "collect_payment_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collect_payment_plans: {
+        Row: {
+          case_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          downpayment: number
+          id: string
+          monthly_amount: number
+          notes: string | null
+          sepa_iban_masked: string | null
+          sepa_mandate_ref: string | null
+          signature_request_id: string | null
+          signed_at: string | null
+          start_date: string
+          status: string
+          term_months: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          downpayment?: number
+          id?: string
+          monthly_amount?: number
+          notes?: string | null
+          sepa_iban_masked?: string | null
+          sepa_mandate_ref?: string | null
+          signature_request_id?: string | null
+          signed_at?: string | null
+          start_date?: string
+          status?: string
+          term_months?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          downpayment?: number
+          id?: string
+          monthly_amount?: number
+          notes?: string | null
+          sepa_iban_masked?: string | null
+          sepa_mandate_ref?: string | null
+          signature_request_id?: string | null
+          signed_at?: string | null
+          start_date?: string
+          status?: string
+          term_months?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_payment_plans_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collect_stage_config: {
+        Row: {
+          active: boolean
+          ampel: string
+          attach_pdf: boolean
+          cc_management: boolean
+          channels: string[]
+          code: string
+          create_call_task: boolean
+          created_at: string
+          day_offset: number
+          decision_stage: boolean
+          email_body: string | null
+          email_subject: string | null
+          fee_amount: number
+          id: string
+          interest_rate_pct: number
+          label: string
+          notify_sales: boolean
+          pay_now_link: boolean
+          set_blocks: string[]
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          ampel?: string
+          attach_pdf?: boolean
+          cc_management?: boolean
+          channels?: string[]
+          code: string
+          create_call_task?: boolean
+          created_at?: string
+          day_offset: number
+          decision_stage?: boolean
+          email_body?: string | null
+          email_subject?: string | null
+          fee_amount?: number
+          id?: string
+          interest_rate_pct?: number
+          label: string
+          notify_sales?: boolean
+          pay_now_link?: boolean
+          set_blocks?: string[]
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          ampel?: string
+          attach_pdf?: boolean
+          cc_management?: boolean
+          channels?: string[]
+          code?: string
+          create_call_task?: boolean
+          created_at?: string
+          day_offset?: number
+          decision_stage?: boolean
+          email_body?: string | null
+          email_subject?: string | null
+          fee_amount?: number
+          id?: string
+          interest_rate_pct?: number
+          label?: string
+          notify_sales?: boolean
+          pay_now_link?: boolean
+          set_blocks?: string[]
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       commission_adjustments: {
         Row: {
           adjustment_type: string
@@ -45663,6 +46141,8 @@ export type Database = {
         Returns: string
       }
       cmr_tenant_id: { Args: never; Returns: string }
+      collect_dashboard_kpis: { Args: never; Returns: Json }
+      collect_sync_cases: { Args: never; Returns: Json }
       comm_can_manage: { Args: { _uid: string }; Returns: boolean }
       comm_can_read: { Args: { _uid: string }; Returns: boolean }
       complete_password_setup: { Args: never; Returns: undefined }
