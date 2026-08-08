@@ -195,9 +195,13 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
   doc.text(`Sehr geehrte Damen und Herren${data.customerName ? ` von ${data.customerName}` : ''},`, m, y);
   y += 6;
   const intro = doc.splitTextToSize(
-    'anbei erhalten Sie den aktuellen Kontoauszug Ihres Kundenkontos mit einer Aufstellung aller offenen Posten. ' +
-      'Bitte prüfen Sie die aufgeführten Positionen und gleichen Sie offene Beträge zeitnah aus. ' +
-      'Sollten sich Zahlungen mit diesem Schreiben überschnitten haben, betrachten Sie es bitte als gegenstandslos.',
+    data.showAll
+      ? 'anbei erhalten Sie den aktuellen Kontoauszug Ihres Kundenkontos mit einer vollständigen Aufstellung aller Buchungen ' +
+        '(bezahlte und offene Rechnungen). Bitte prüfen Sie die aufgeführten Positionen und gleichen Sie offene Beträge zeitnah aus. ' +
+        'Sollten sich Zahlungen mit diesem Schreiben überschnitten haben, betrachten Sie es bitte als gegenstandslos.'
+      : 'anbei erhalten Sie den aktuellen Kontoauszug Ihres Kundenkontos mit einer Aufstellung aller offenen Posten. ' +
+        'Bitte prüfen Sie die aufgeführten Positionen und gleichen Sie offene Beträge zeitnah aus. ' +
+        'Sollten sich Zahlungen mit diesem Schreiben überschnitten haben, betrachten Sie es bitte als gegenstandslos.',
     right - m,
   ) as string[];
   doc.text(intro, m, y);
