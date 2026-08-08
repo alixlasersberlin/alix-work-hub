@@ -559,6 +559,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/collect/liste', label: 'Prioritätenliste', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/aufgaben', label: 'Aufgaben & Wiedervorlagen', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/auswertungen', label: 'Collect Auswertungen', icon: FileText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/collect/limits', label: 'Kreditlimits & Sperren', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/recht', label: 'Recht & Inkasso', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/copilot', label: 'Finance AI', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/mahnwesen', label: 'Mahnwesen', icon: FileText, roles: ['Admin', 'Super Admin'] },
