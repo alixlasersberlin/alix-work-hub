@@ -231,18 +231,23 @@ Deno.serve(async (req) => {
     let userId: string | null = null;
 
     if (!isService) {
-      if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader } },
         auth: { autoRefreshToken: false, persistSession: false },
       });
-      const { data: { user } } = await userClient.auth.getUser();
-      if (!user) return json({ error: "Unauthorized" }, 401);
-      userId = user.id;
-      const { data: roleRows } = await admin.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
-      const names = (roleRows ?? []).map((r: any) => r.roles?.name);
-      if (!names.includes("Admin") && !names.includes("Super Admin")) return json({ error: "Forbidden" }, 403);
+      const { data: { user } } = authHeader.startsWith("Bearer ")
+        ? await userClient.auth.getUser()
+        : { data: { user: null } } as any;
+      if (user) {
+        // Angemeldeter Aufruf (manueller Start): nur Admin / Super Admin
+        userId = user.id;
+        const { data: roleRows } = await admin.from("user_roles").select("roles!inner(name)").eq("user_id", user.id);
+        const names = (roleRows ?? []).map((r: any) => r.roles?.name);
+        if (!names.includes("Admin") && !names.includes("Super Admin")) return json({ error: "Forbidden" }, 403);
+      }
+      // Ohne Benutzer-Session = geplanter Cron-Aufruf (pg_cron mit apikey), wie bei den übrigen Job-Funktionen
     }
+
 
     const body = (await req.json().catch(() => ({}))) as Payload;
     const triggerType = body.trigger_type ?? (isService ? "cron" : "manual");
