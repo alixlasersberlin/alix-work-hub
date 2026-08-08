@@ -11,6 +11,8 @@ function json(b: unknown, status = 200) {
   return new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const asUuid = (v: any) => (typeof v === 'string' && UUID_RE.test(v) ? v : null);
 const clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, Math.round(n)));
 const gradeFor = (s: number) => (s >= 85 ? 'A' : s >= 70 ? 'B' : s >= 55 ? 'C' : s >= 40 ? 'D' : 'E');
 
@@ -126,7 +128,7 @@ Deno.serve(async (req) => {
       scoreByKey.set(k, score);
 
       healthRows.push({
-        customer_id: a.id, customer_name: a.name, score, grade: gradeFor(score),
+        customer_id: asUuid(a.id), customer_name: a.name, score, grade: gradeFor(score),
         revenue_score, complaint_score, service_score, return_debit_score, dunning_score,
         ticket_score, response_score, leasing_score, warranty_score, order_frequency_score,
         credit_score, tenure_score,
@@ -142,13 +144,16 @@ Deno.serve(async (req) => {
       const withoutId = chunk.filter((r) => !r.customer_id);
       if (withId.length) {
         const { error } = await admin.from('collect_health_scores').upsert(withId, { onConflict: 'customer_id' });
-        if (!error) healthSaved += withId.length;
+        if (error) console.warn('health upsert failed', error.message);
+        else healthSaved += withId.length;
       }
       for (const r of withoutId) {
         const { data: ex } = await admin.from('collect_health_scores').select('id').is('customer_id', null).eq('customer_name', r.customer_name).maybeSingle();
-        if (ex?.id) await admin.from('collect_health_scores').update(r).eq('id', ex.id);
-        else await admin.from('collect_health_scores').insert(r);
-        healthSaved++;
+        const res = ex?.id
+          ? await admin.from('collect_health_scores').update(r).eq('id', ex.id)
+          : await admin.from('collect_health_scores').insert(r);
+        if (res.error) console.warn('health save failed', r.customer_name, res.error.message);
+        else healthSaved++;
       }
     }
 
