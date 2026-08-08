@@ -410,6 +410,7 @@ export default function OffeneAnzahlungen() {
               <SelectItem value="alle">Alle</SelectItem>
               <SelectItem value="alixwork">AlixWork</SelectItem>
               <SelectItem value="zoho">Zoho</SelectItem>
+              <SelectItem value="rechnung">Rechnung</SelectItem>
             </SelectContent>
           </Select>
         </div>
