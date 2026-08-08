@@ -1979,11 +1979,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                               </Badge>
                             </td>
                             </tr>
-                          <tr>
-                            <td colSpan={10} className="pb-3 pt-1">
-                              {renderRowActions(r)}
-                            </td>
-                          </tr>
+                          {openActions[`acc-${r.source}-${r.id}`] && (
+                            <tr>
+                              <td colSpan={10} className="pb-3 pt-1">
+                                {renderRowActions(r)}
+                              </td>
+                            </tr>
+                          )}
                         </tbody>
                       ))}
 
