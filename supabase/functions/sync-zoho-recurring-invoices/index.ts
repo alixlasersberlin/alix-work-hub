@@ -17,7 +17,25 @@ type Payload = {
   region_filter?: "all" | "EU" | "CH";
   /** Einzelimport: Name (Kunde/Firma) oder Auftrags-/Referenznummer */
   search?: string;
+  /** Vorschau-Modus: nichts schreiben, nur Änderungen gegen Bestand ermitteln */
+  dry_run?: boolean;
 };
+
+/** Felder, die im Vorschau-Modus mit dem Bestand verglichen werden */
+const DIFF_FIELDS = [
+  "invoice_number", "reference_number", "customer_name", "device_name", "city",
+  "invoice_date", "due_date", "currency", "total", "balance", "status",
+  "payment_status", "last_payment_date", "accounting_region",
+] as const;
+
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a == null && b == null) return true;
+  if (typeof a === "number" || typeof b === "number") {
+    const na = Number(a ?? 0), nb = Number(b ?? 0);
+    if (Number.isFinite(na) && Number.isFinite(nb)) return Math.abs(na - nb) < 0.005;
+  }
+  return String(a ?? "") === String(b ?? "");
+}
 
 function norm(v: unknown) {
   return (v ?? "").toString().toLowerCase().trim();
