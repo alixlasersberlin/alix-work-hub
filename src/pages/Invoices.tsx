@@ -2236,6 +2236,44 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </div>
         </div>
       )}
+
+      <Dialog
+        open={!!previewRow}
+        onOpenChange={(v) => {
+          if (!v) {
+            setPreviewRow(null);
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-5 pb-3 border-b border-border">
+            <DialogTitle className="flex items-center gap-3 text-base">
+              <span>Rechnung {previewRow?.invoice_number ?? '—'}</span>
+              {previewUrl && (
+                <span className="ml-auto flex items-center gap-2">
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={previewUrl} download={`${previewRow?.invoice_number ?? 'rechnung'}.pdf`}>
+                      <Download className="w-4 h-4 mr-1" /> Download
+                    </a>
+                  </Button>
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 bg-neutral-900/40">
+            {!previewUrl ? (
+              <div className="h-full flex items-center justify-center gap-2 text-muted-foreground text-sm">
+                <Loader2 className="w-5 h-5 animate-spin" /> Rechnung wird geladen…
+              </div>
+            ) : (
+              <iframe src={previewUrl} title="Rechnung" className="w-full h-full border-0 bg-white" />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
