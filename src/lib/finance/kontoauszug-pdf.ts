@@ -159,7 +159,23 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
   if (data.customerNumber) {
     doc.text(`Kundennr.: ${data.customerNumber}`, right, y - 5, { align: 'right' });
   }
-  y += 8;
+  y += 10;
+
+  // Anrede + Einleitungstext
+  doc.setFont('Inter', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(40);
+  doc.text(`Sehr geehrte Damen und Herren${data.customerName ? ` von ${data.customerName}` : ''},`, m, y);
+  y += 6;
+  const intro = doc.splitTextToSize(
+    'anbei erhalten Sie den aktuellen Kontoauszug Ihres Kundenkontos mit einer Aufstellung aller offenen Posten. ' +
+      'Bitte prüfen Sie die aufgeführten Positionen und gleichen Sie offene Beträge zeitnah aus. ' +
+      'Sollten sich Zahlungen mit diesem Schreiben überschnitten haben, betrachten Sie es bitte als gegenstandslos.',
+    right - m,
+  ) as string[];
+  doc.text(intro, m, y);
+  y += intro.length * 5 + 6;
+
 
   // Tabellenkopf
   const cols = {
