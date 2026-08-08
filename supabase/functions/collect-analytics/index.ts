@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 
     // Datenbasis laden
     const [{ data: cases }, { data: customers }, { data: limits }] = await Promise.all([
-      admin.from('collect_cases').select('id, customer_id, customer_name, open_amount, overdue_amount, max_days_overdue, risk_score, pay_probability_pct, status, seller_name').limit(3000),
+      admin.from('collect_cases').select('id, customer_id, customer_name, open_amount, overdue_amount, max_days_overdue, risk_score, pay_probability_pct, status, seller_name, health_score').limit(3000),
       admin.from('customers').select('id, company_name, created_at').limit(5000),
       admin.from('collect_credit_limits').select('*').limit(2000),
     ]);
