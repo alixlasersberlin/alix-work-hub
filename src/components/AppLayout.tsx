@@ -743,6 +743,7 @@ export const navItems: NavItem[] = [
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin', 'Admin'],
     children: [
+      { path: '/connect/customer-360', label: 'Kunde 360°', icon: Users, roles: ['Super Admin'] },
       {
         path: '#mdr-ce', label: 'MDR CE & ISO 13485', icon: ShieldCheck, roles: ['Super Admin'],
         children: [
