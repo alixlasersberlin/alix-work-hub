@@ -1774,6 +1774,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         />
                       </th>
                     )}
+                    <th className="text-left px-4 py-2 font-medium">Status / Typ</th>
                     <th className="text-left px-4 py-2 font-medium">Rechnung</th>
                     <th className="text-left px-4 py-2 font-medium">Kunde</th>
                     <th className="text-left px-4 py-2 font-medium">Referenz</th>
@@ -1781,7 +1782,6 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     <th className="text-left px-4 py-2 font-medium">Fällig</th>
                     <th className="text-right px-4 py-2 font-medium">Betrag</th>
                     <th className="text-right px-4 py-2 font-medium">Saldo</th>
-                    <th className="text-right px-4 py-2 font-medium">Status / Typ</th>
                     <th className="text-right px-4 py-2 font-medium">Aktion</th>
                   </tr>
                 </thead>
@@ -1805,6 +1805,24 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           />
                         </td>
                       )}
+                      <td className="px-4 py-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className={statusVariant(r.payment_status)}>
+                            {r.payment_status ?? '–'}
+                          </Badge>
+                          {r.source === 'recurring' ? (
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                              <Repeat className="w-3 h-3 mr-1" />Periodisch
+                            </Badge>
+                          ) : r.source === 'unpaid' ? (
+                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+                              <Repeat className="w-3 h-3 mr-1" />Wiederkehrend (OP)
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-2 font-medium">
                         <div className="flex items-center gap-2">
                           <button
@@ -1841,24 +1859,6 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       <td className="px-4 py-2">{fmtDate(r.due_date)}</td>
                       <td className="px-4 py-2 text-right tabular-nums">{fmtMoney(r.total, r.currency)}</td>
                       <td className="px-4 py-2 text-right tabular-nums">{fmtMoney(r.balance, r.currency)}</td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center justify-end gap-2 flex-wrap">
-                          <Badge variant="outline" className={statusVariant(r.payment_status)}>
-                            {r.payment_status ?? '–'}
-                          </Badge>
-                          {r.source === 'recurring' ? (
-                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                              <Repeat className="w-3 h-3 mr-1" />Periodisch
-                            </Badge>
-                          ) : r.source === 'unpaid' ? (
-                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
-                              <Repeat className="w-3 h-3 mr-1" />Wiederkehrend (OP)
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
-                          )}
-                        </div>
-                      </td>
                     </tr>
                     {openActions[`${r.source}-${r.id}`] && (
                       <tr>
