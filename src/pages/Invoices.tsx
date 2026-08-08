@@ -308,6 +308,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [pageSize, setPageSize] = useState<PageSize>(20);
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const [editRow, setEditRow] = useState<Row | null>(null);
+  const [previewRow, setPreviewRow] = useState<Row | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '', status: '' });
   const [editSaving, setEditSaving] = useState(false);
   const [statusRow, setStatusRow] = useState<Row | null>(null);
@@ -1097,6 +1099,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
+  const handlePreview = async (r: Row) => {
+    setPreviewRow(r);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    const blob = await fetchInvoicePdf(r);
+    if (!blob) { setPreviewRow(null); return; }
+    setPreviewUrl(URL.createObjectURL(blob));
+  };
+
   const handleDownload = async (r: Row) => {
     const blob = await fetchInvoicePdf(r);
     if (!blob) return;
@@ -1809,7 +1820,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       </td>
                       <td className="px-4 py-2 font-medium">
                         <div className="flex items-center gap-2">
-                          <span>{r.invoice_number ?? '–'}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handlePreview(r); }}
+                            className="text-primary underline underline-offset-2 hover:text-primary/80"
+                            title="Rechnung anzeigen"
+                          >
+                            {r.invoice_number ?? '–'}
+                          </button>
                           {isDraftInvoice(r) && (
                             <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/40 text-[10px] uppercase tracking-wide">
                               Entwurf
@@ -1924,7 +1942,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                             </td>
                             <td className="px-4 py-2 font-medium">
                               <div className="flex items-center gap-2">
-                                <span>{r.invoice_number ?? '–'}</span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handlePreview(r); }}
+                                  className="text-primary underline underline-offset-2 hover:text-primary/80"
+                                  title="Rechnung anzeigen"
+                                >
+                                  {r.invoice_number ?? '–'}
+                                </button>
                                 {isDraftInvoice(r) && (
                                   <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/40 text-[10px] uppercase tracking-wide">
                                     Entwurf
@@ -2234,6 +2259,44 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </div>
         </div>
       )}
+
+      <Dialog
+        open={!!previewRow}
+        onOpenChange={(v) => {
+          if (!v) {
+            setPreviewRow(null);
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-5xl w-[95vw] h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-5 pb-3 border-b border-border">
+            <DialogTitle className="flex items-center gap-3 text-base">
+              <span>Rechnung {previewRow?.invoice_number ?? '—'}</span>
+              {previewUrl && (
+                <span className="ml-auto flex items-center gap-2">
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={previewUrl} download={`${previewRow?.invoice_number ?? 'rechnung'}.pdf`}>
+                      <Download className="w-4 h-4 mr-1" /> Download
+                    </a>
+                  </Button>
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 bg-neutral-900/40">
+            {!previewUrl ? (
+              <div className="h-full flex items-center justify-center gap-2 text-muted-foreground text-sm">
+                <Loader2 className="w-5 h-5 animate-spin" /> Rechnung wird geladen…
+              </div>
+            ) : (
+              <iframe src={previewUrl} title="Rechnung" className="w-full h-full border-0 bg-white" />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
