@@ -255,7 +255,18 @@ export default function CollectCaseActions({ c, items, onChange }: { c: any; ite
                   Anzahlung {fmt(p.downpayment, p.currency ?? cur)} · Start {p.start_date}
                   {p.sepa_iban_masked ? ` · SEPA ${p.sepa_iban_masked}` : ''}
                 </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" disabled={busyPlan === p.id}
+                    onClick={() => planDoc(p.id, false)}>
+                    <FileText className="h-3.5 w-3.5 mr-1.5" />Vereinbarung als PDF
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={busyPlan === p.id || !c.customer_email}
+                    onClick={() => planDoc(p.id, true)}>
+                    <Send className="h-3.5 w-3.5 mr-1.5" />An Kunden senden
+                  </Button>
+                </div>
               </div>
+
             ))}
           </div>
         </DataCard>
