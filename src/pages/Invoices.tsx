@@ -377,6 +377,82 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     });
   };
 
+  // ---- „ist Anzahlung" (Rechnung zusätzlich in Offene Anzahlungen führen) ----
+  const [depositBusyId, setDepositBusyId] = useState<string | null>(null);
+  const toggleDeposit = async (r: Row) => {
+    if (r.source === 'unpaid') {
+      toast({ title: 'Nur Ansicht', description: 'Diese Rechnung stammt aus den Offenen Posten und kann hier nicht bearbeitet werden.', variant: 'destructive' });
+      return;
+    }
+    const table = tableFor(r.source);
+    const next = !r.is_deposit;
+    setDepositBusyId(r.id);
+    try {
+      let depositId: string | null = r.deposit_id ?? null;
+
+      if (next) {
+        const gross = Number(r.total ?? 0) || 0;
+        const paid = Math.max(0, gross - (Number(r.balance ?? gross) || 0));
+        const isPaid = (Number(r.balance ?? 0) || 0) <= 0.009 && gross > 0;
+        const payload: any = {
+          source: 'rechnung',
+          source_ref: `${table}:${r.id}`,
+          deposit_number: r.invoice_number ?? null,
+          customer_name: r.customer_name ?? null,
+          company_name: r.customer_name ?? null,
+          invoice_number: r.invoice_number ?? null,
+          currency: r.currency ?? 'EUR',
+          net_amount: 0,
+          vat_amount: 0,
+          gross_amount: gross,
+          paid_amount: paid,
+          open_amount: Math.max(0, gross - paid),
+          issue_date: r.invoice_date ?? null,
+          due_date: r.due_date ?? null,
+          status: isPaid ? 'gebucht' : (paid > 0 ? 'teilweise' : 'offen'),
+          accounting_region: (r.currency ?? '').toUpperCase() === 'CHF' ? 'CH' : 'EU',
+          linked_invoice_table: table,
+          linked_invoice_id: r.id,
+          note: 'Aus Rechnungsliste als Anzahlung markiert',
+        };
+        if (depositId) {
+          const { error } = await supabase.from('finance_deposits' as any).update(payload).eq('id', depositId);
+          if (error) throw error;
+        } else {
+          const { data, error } = await supabase.from('finance_deposits' as any).insert(payload).select('id').single();
+          if (error) throw error;
+          depositId = (data as any)?.id ?? null;
+        }
+      } else if (depositId) {
+        const { error } = await supabase.from('finance_deposits' as any).delete().eq('id', depositId);
+        if (error) throw error;
+        depositId = null;
+      }
+
+      const { error: upErr } = await supabase
+        .from(table as any)
+        .update({ is_deposit: next, deposit_id: depositId } as any)
+        .eq('id', r.id);
+      if (upErr) throw upErr;
+
+      setRows((prev) => prev.map((x) =>
+        x.id === r.id && x.source === r.source ? { ...x, is_deposit: next, deposit_id: depositId } : x,
+      ));
+      toast({
+        title: next ? 'Als Anzahlung markiert' : 'Anzahlungs-Markierung entfernt',
+        description: next
+          ? `Rechnung ${r.invoice_number ?? ''} erscheint jetzt zusätzlich unter Offene Anzahlungen.`
+          : `Rechnung ${r.invoice_number ?? ''} wird nicht mehr in Offene Anzahlungen geführt.`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? 'Unbekannt', variant: 'destructive' });
+    } finally {
+      setDepositBusyId(null);
+    }
+  };
+
+
+
   // ---- Mehrfachauswahl (Rechnungsliste) ----
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkBusy, setBulkBusy] = useState(false);
