@@ -1858,9 +1858,22 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       <td className="px-4 py-2 text-right tabular-nums">{fmtMoney(r.total, r.currency)}</td>
                       <td className="px-4 py-2 text-right tabular-nums">{fmtMoney(r.balance, r.currency)}</td>
                       <td className="px-4 py-2">
-                        <Badge variant="outline" className={statusVariant(r.payment_status)}>
-                          {r.payment_status ?? '–'}
-                        </Badge>
+                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                          <Badge variant="outline" className={statusVariant(r.payment_status)}>
+                            {r.payment_status ?? '–'}
+                          </Badge>
+                          {r.source === 'recurring' ? (
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                              <Repeat className="w-3 h-3 mr-1" />Periodisch
+                            </Badge>
+                          ) : r.source === 'unpaid' ? (
+                            <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+                              <Repeat className="w-3 h-3 mr-1" />Wiederkehrend (OP)
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
+                          )}
+                        </div>
                       </td>
                     </tr>
                     {openActions[`${r.source}-${r.id}`] && (
