@@ -1,4 +1,5 @@
 import { createPDF } from '../pdf-utils';
+import kontoauszugBg from '@/assets/kontoauszug-vorlage.png.asset.json';
 
 export type KontoauszugItem = {
   invoice_number: string;
@@ -41,64 +42,137 @@ const daysOverdue = (due?: string | null) => {
   return diff > 0 ? diff : 0;
 };
 
-/** Erzeugt den Kontoauszug (offene Posten) im Alix-Layout wie bei Rechnungen. */
-export function generateKontoauszugPdf(data: KontoauszugData) {
+/** Lädt die Alix-Briefvorlage einmalig als DataURL (PDF-Hintergrund). */
+let bgPromise: Promise<string | null> | null = null;
+export function loadKontoauszugBackground(): Promise<string | null> {
+  if (!bgPromise) {
+    bgPromise = fetch((kontoauszugBg as any).url)
+      .then((r) => r.blob())
+      .then((b) => new Promise<string>((res, rej) => {
+        const fr = new FileReader();
+        fr.onload = () => res(String(fr.result));
+        fr.onerror = rej;
+        fr.readAsDataURL(b);
+      }))
+      .catch(() => null);
+  }
+  return bgPromise;
+}
+
+const COMPANY = {
+  name: 'Alix Lasers GmbH',
+  street: 'Buchsbaumweg 53',
+  city: '12357 Berlin',
+  country: 'Deutschland',
+  phone: '+49 30 577 127 45',
+  fax: '+49 30 577 127 46',
+  mail: 'info@alix-lasers.com',
+  bank: 'Deutsche Bank',
+  iban: 'DE07 1007 0100 0142 6600 00',
+  bic: 'DEUTDEBB101',
+};
+
+/** Erzeugt den Kontoauszug (offene Posten) auf der Alix-Briefvorlage. */
+export async function generateKontoauszugPdf(data: KontoauszugData) {
   const doc = createPDF({ unit: 'mm', format: 'a4' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const m = 18;
+  const bg = await loadKontoauszugBackground();
+
+  const m = 28;                 // links: rechts vom blauen Balken
+  const right = pageW - 15;
+  const footerTop = pageH - 34;
   const cur = data.currency || 'EUR';
-  let y = 22;
 
-  // Kopf
+  const paintPage = () => {
+    if (bg) {
+      try { doc.addImage(bg, 'PNG', 0, 0, pageW, pageH, undefined, 'FAST'); } catch { /* ignore */ }
+    }
+    // Falzmarken (DIN 5008) + Lochmarke
+    doc.setDrawColor(120);
+    doc.setLineWidth(0.3);
+    [87, 148.5, 192].forEach((yy) => doc.line(19, yy, 25, yy));
+
+    // Fußzeile: Anschrift + Bankverbindung
+    doc.setDrawColor(215);
+    doc.setLineWidth(0.2);
+    doc.line(m, footerTop, right, footerTop);
+    doc.setFont('Inter', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(60);
+    doc.text(COMPANY.name, m, footerTop + 5);
+    doc.setFont('Inter', 'normal');
+    doc.setTextColor(120);
+    doc.text(`${COMPANY.street} · ${COMPANY.city} · ${COMPANY.country}`, m, footerTop + 9);
+    doc.text(`Telefon ${COMPANY.phone} · Fax ${COMPANY.fax} · ${COMPANY.mail}`, m, footerTop + 13);
+    doc.setFont('Inter', 'bold');
+    doc.setTextColor(60);
+    doc.text('Bankverbindung', right, footerTop + 5, { align: 'right' });
+    doc.setFont('Inter', 'normal');
+    doc.setTextColor(120);
+    doc.text(`${COMPANY.bank} · IBAN ${COMPANY.iban}`, right, footerTop + 9, { align: 'right' });
+    doc.text(`BIC ${COMPANY.bic}`, right, footerTop + 13, { align: 'right' });
+    doc.setTextColor(20);
+  };
+
+  paintPage();
+
+  // Absenderdaten oben rechts
+  let y = 26;
   doc.setFont('Inter', 'bold');
-  doc.setFontSize(18);
-  doc.setTextColor(15);
-  doc.text('Kontoauszug', m, y);
-
-  doc.setFont('Inter', 'normal');
   doc.setFontSize(10);
-  doc.setTextColor(110);
-  doc.text('Alix Lasers ®', pageW - m, y, { align: 'right' });
-  y += 4;
-  doc.text(`Erstellt am ${new Date().toLocaleDateString('de-DE')}`, pageW - m, y, { align: 'right' });
-  y += 8;
+  doc.setTextColor(30);
+  doc.text(COMPANY.name, right, y, { align: 'right' });
+  doc.setFont('Inter', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(120);
+  doc.text(COMPANY.street, right, y + 4.5, { align: 'right' });
+  doc.text(COMPANY.city, right, y + 9, { align: 'right' });
+  doc.text(`Tel. ${COMPANY.phone}`, right, y + 13.5, { align: 'right' });
+  doc.text(COMPANY.mail, right, y + 18, { align: 'right' });
 
-  doc.setDrawColor(220);
-  doc.line(m, y, pageW - m, y);
-  y += 8;
-
-  // Kundenblock
-  doc.setFillColor(250, 248, 243);
-  doc.setDrawColor(236, 229, 211);
-  const addrLines = doc.splitTextToSize(data.customerAddress || '', pageW / 2 - m) as string[];
-  const boxH = 14 + addrLines.length * 5;
-  doc.roundedRect(m, y, pageW - m * 2, boxH, 2, 2, 'FD');
+  // Anschriftenfeld (Empfänger) oben links
+  doc.setFont('Inter', 'normal');
+  doc.setFontSize(6.5);
+  doc.setTextColor(150);
+  doc.text(`${COMPANY.name} · ${COMPANY.street} · ${COMPANY.city}`, m, 42);
   doc.setFont('Inter', 'bold');
   doc.setFontSize(11);
-  doc.setTextColor(15);
-  doc.text(data.customerName, m + 4, y + 7);
+  doc.setTextColor(20);
+  doc.text(data.customerName, m, 50);
   doc.setFont('Inter', 'normal');
   doc.setFontSize(9.5);
-  doc.setTextColor(90);
-  if (addrLines.length) doc.text(addrLines, m + 4, y + 13);
+  doc.setTextColor(70);
+  const addrLines = doc.splitTextToSize(data.customerAddress || '', 80) as string[];
+  if (addrLines.length) doc.text(addrLines, m, 55.5);
+
+  // Titel
+  y = 92;
+  doc.setFont('Inter', 'bold');
+  doc.setFontSize(16);
+  doc.setTextColor(15);
+  doc.text('Kontoauszug', m, y);
+  doc.setFont('Inter', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(110);
+  doc.text(`Erstellt am ${new Date().toLocaleDateString('de-DE')}`, right, y, { align: 'right' });
   if (data.customerNumber) {
-    doc.text(`Kundennr.: ${data.customerNumber}`, pageW - m - 4, y + 7, { align: 'right' });
+    doc.text(`Kundennr.: ${data.customerNumber}`, right, y - 5, { align: 'right' });
   }
-  y += boxH + 8;
+  y += 8;
 
   // Tabellenkopf
   const cols = {
     nr: m,
-    datum: m + 40,
-    faellig: m + 66,
-    tage: m + 92,
-    total: pageW - m - 62,
-    offen: pageW - m,
+    datum: m + 38,
+    faellig: m + 62,
+    tage: m + 86,
+    total: right - 34,
+    offen: right,
   };
   const header = () => {
     doc.setFillColor(243, 240, 232);
-    doc.rect(m, y - 5, pageW - m * 2, 8, 'F');
+    doc.rect(m, y - 5, right - m, 8, 'F');
     doc.setFont('Inter', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(60);
@@ -118,16 +192,17 @@ export function generateKontoauszugPdf(data: KontoauszugData) {
   let sumOpen = 0;
 
   data.items.forEach((it, i) => {
-    if (y > pageH - 40) {
+    if (y > footerTop - 34) {
       doc.addPage();
-      y = 22;
+      paintPage();
+      y = 30;
       header();
       doc.setFont('Inter', 'normal');
       doc.setFontSize(9);
     }
     if (i % 2 === 1) {
       doc.setFillColor(250, 250, 248);
-      doc.rect(m, y - 4.5, pageW - m * 2, 7, 'F');
+      doc.rect(m, y - 4.5, right - m, 7, 'F');
     }
     const od = daysOverdue(it.due_date);
     sumTotal += Number(it.total ?? 0);
@@ -157,32 +232,23 @@ export function generateKontoauszugPdf(data: KontoauszugData) {
 
   // Summe
   y += 3;
+  if (y > footerTop - 26) { doc.addPage(); paintPage(); y = 30; }
   doc.setDrawColor(220);
-  doc.line(m, y, pageW - m, y);
+  doc.line(m, y, right, y);
   y += 8;
   doc.setFillColor(250, 248, 243);
   doc.setDrawColor(236, 229, 211);
-  doc.roundedRect(pageW - m - 90, y - 6, 90, 20, 2, 2, 'FD');
+  doc.roundedRect(right - 90, y - 6, 90, 20, 2, 2, 'FD');
   doc.setFont('Inter', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(110);
-  doc.text('Rechnungsbetrag gesamt', pageW - m - 86, y, { align: 'left' });
-  doc.text(money(sumTotal, cur), pageW - m - 4, y, { align: 'right' });
+  doc.text('Rechnungsbetrag gesamt', right - 86, y, { align: 'left' });
+  doc.text(money(sumTotal, cur), right - 4, y, { align: 'right' });
   doc.setFont('Inter', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(15);
-  doc.text('Offener Gesamtsaldo', pageW - m - 86, y + 8, { align: 'left' });
-  doc.text(money(sumOpen, cur), pageW - m - 4, y + 8, { align: 'right' });
-
-  // Fuß
-  doc.setFont('Inter', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(140);
-  doc.text(
-    'Alix Lasers ® · Kontoauszug offener Posten · Stand: ' + new Date().toLocaleString('de-DE'),
-    m,
-    pageH - 12,
-  );
+  doc.text('Offener Gesamtsaldo', right - 86, y + 8, { align: 'left' });
+  doc.text(money(sumOpen, cur), right - 4, y + 8, { align: 'right' });
 
   return doc;
 }
