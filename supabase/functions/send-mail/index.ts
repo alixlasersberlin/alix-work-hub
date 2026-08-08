@@ -253,7 +253,8 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: `Alix Lasers ® <${from_email}>`,
+        from: "Alix Lasers ® <noreply@alixlasers.ai>",
+        bcc: ["service@alix-lasers.com"],
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
         bcc: (() => {
           const list = Array.isArray(bcc) ? [...bcc] : (bcc ? [bcc] : []);

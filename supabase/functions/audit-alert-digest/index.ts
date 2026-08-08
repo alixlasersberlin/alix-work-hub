@@ -69,7 +69,8 @@ Deno.serve(async (req) => {
     if (resendKey) {
       const resend = new Resend(resendKey);
       await resend.emails.send({
-        from: "Alix Lasers ® <audit@alixwork.de>",
+        from: "Alix Lasers ® <noreply@alixlasers.ai>",
+        bcc: ["service@alix-lasers.com"],
         to: recipients,
         bcc: "rde@alix-lasers.com",
         subject: `[AlixWork Audit] ${alerts.length} Sicherheits-Alerts`,

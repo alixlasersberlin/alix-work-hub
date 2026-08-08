@@ -162,7 +162,8 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            from: `Alix Lasers ® <${campaign.sender_email}>`,
+            from: "Alix Lasers ® <noreply@alixlasers.ai>",
+            bcc: ["service@alix-lasers.com"],
             to: [rec.name ? `${rec.name} <${rec.email}>` : rec.email],
             bcc: ['rde@alix-lasers.com', 'archive@alix-operation.de'],
             subject: subj,

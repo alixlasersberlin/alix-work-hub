@@ -136,7 +136,8 @@ Deno.serve(async (req) => {
             to: 'social@alix-operation.de',
             subject: `Social Onboarding abgeschlossen – ${(client as any).company_name}`,
             html,
-            from: 'news@alixwork.de',
+            from: "Alix Lasers ® <noreply@alixlasers.ai>",
+            bcc: ["service@alix-lasers.com"],
           },
         }).catch(() => null);
       }

@@ -284,7 +284,8 @@ serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: `Alix Lasers ® <${senderEmail}>`,
+              from: "Alix Lasers ® <noreply@alixlasers.ai>",
+              bcc: ["service@alix-lasers.com"],
               to: [cust.contact_name ? `${cust.contact_name} <${cust.email}>` : cust.email],
               bcc: ['rde@alix-lasers.com', 'archive@alix-operation.de'],
               reply_to: REPLY_TO_MAP[String(a.sender_email || "news@alixwork.de").toLowerCase()] || undefined,

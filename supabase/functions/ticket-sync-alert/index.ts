@@ -167,7 +167,8 @@ Deno.serve(async (req) => {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${RESEND_API_KEY}` },
           body: JSON.stringify({
-            from: FROM_ADDRESS,
+            from: "Alix Lasers ® <noreply@alixlasers.ai>",
+            bcc: ["service@alix-lasers.com"],
             to: [ALERT_RECIPIENT],
             bcc: ['rde@alix-lasers.com', 'archive@alix-operation.de'],
             subject,
