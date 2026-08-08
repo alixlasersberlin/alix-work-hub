@@ -12,6 +12,7 @@ import {
 } from '@/components/sales/analyse/BreakdownSections';
 import { FollowupSection, ForecastSection, AiSection, ExecutiveSection } from '@/components/sales/analyse/FollowupSections';
 import { TrendSection } from '@/components/sales/analyse/TrendSection';
+import { OfferTableSection } from '@/components/sales/analyse/OfferTableSection';
 import {
   computeReps, eur, isLost, isOpen, isWon, offerValue, productOf, stageOf, STAGES, type OfferRow,
 } from '@/lib/sales/offer-analytics';
@@ -171,6 +172,7 @@ export default function Angebotsanalyse() {
             <TabsTrigger value="nachfassen">Nachfassen</TabsTrigger>
             <TabsTrigger value="ki">KI & Forecast</TabsTrigger>
             <TabsTrigger value="region">Region & Zeiten</TabsTrigger>
+            <TabsTrigger value="liste">Angebotsliste</TabsTrigger>
             <TabsTrigger value="gf">GF-Cockpit</TabsTrigger>
           </TabsList>
 
@@ -207,6 +209,7 @@ export default function Angebotsanalyse() {
             <MapSection offers={offers} />
             <HeatmapSection offers={offers} />
           </TabsContent>
+          <TabsContent value="liste"><OfferTableSection offers={offers} onRefresh={load} /></TabsContent>
           <TabsContent value="gf"><ExecutiveSection offers={offers} /></TabsContent>
         </Tabs>
       )}
