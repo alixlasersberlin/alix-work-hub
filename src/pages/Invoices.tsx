@@ -1996,12 +1996,22 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     })()}
 
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                    title="Mahnung im ALIX COLLECT Command Center öffnen"
+                    onClick={(e) => { e.stopPropagation(); openDunning(a); }}
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" /> Mahnung
+                  </Button>
                   <AccountStatementActions
                     customerName={a.customer_name}
                     customerNumber={a.customer_id}
                     city={a.city}
                     rows={a.rows as any}
                   />
+
                 </div>
                 {open && (
                   <div className="border-t border-border overflow-x-auto">
