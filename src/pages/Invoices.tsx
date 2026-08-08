@@ -1358,6 +1358,19 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         throw new Error('Buchung nicht gespeichert – keine Berechtigung zum Ändern dieser Rechnung (nur Admin/Super Admin).');
       }
 
+      // Verknüpfte Anzahlung mitführen (verschwindet bei Vollzahlung aus „Offene Anzahlungen")
+      if (bookRow.deposit_id) {
+        const grossDep = Number(bookRow.total ?? 0) || 0;
+        const paidDep = Math.max(0, +(grossDep - newBalance).toFixed(2));
+        await supabase.from('finance_deposits' as any).update({
+          paid_amount: paidDep,
+          open_amount: Math.max(0, +(grossDep - paidDep).toFixed(2)),
+          status: fullyPaid ? 'gebucht' : 'teilweise',
+        } as any).eq('id', bookRow.deposit_id);
+      }
+
+
+
 
       const gross = +pay.toFixed(2);
       const net = +(gross / 1.19).toFixed(2);
