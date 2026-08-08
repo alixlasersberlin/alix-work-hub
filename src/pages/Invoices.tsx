@@ -1855,11 +1855,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         </Badge>
                       </td>
                     </tr>
-                    <tr>
-                      <td colSpan={isAdmin ? 11 : 10} className="pb-3 pt-1">
-                        {renderRowActions(r)}
-                      </td>
-                    </tr>
+                    {openActions[`${r.source}-${r.id}`] && (
+                      <tr>
+                        <td colSpan={isAdmin ? 11 : 10} className="pb-3 pt-1">
+                          {renderRowActions(r)}
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 ))}
 
