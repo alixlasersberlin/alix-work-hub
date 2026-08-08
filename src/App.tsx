@@ -178,6 +178,8 @@ const FinanceCollectFees = lazy(() => import("./pages/Finance/CollectFees"));
 const FinanceCollectGovernance = lazy(() => import("./pages/Finance/CollectGovernance"));
 const FinanceCollectCockpit = lazy(() => import("./pages/Finance/CollectCockpit"));
 const FinanceCollectCopilot = lazy(() => import("./pages/Finance/CollectCopilot"));
+const FinanceCollectDevices = lazy(() => import("./pages/Finance/CollectDevices"));
+const FinanceCollectDossier = lazy(() => import("./pages/Finance/CollectDossier"));
 const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
 const FinanceBank = lazy(() => import("./pages/Finance/Bank"));
 const KontoauszuegeLayout = lazy(() => import("./pages/Finance/Kontoauszuege/Layout"));
@@ -1554,6 +1556,8 @@ function AppRoutes() {
           <Route path="/finance/collect/freigaben" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectGovernance /></ProtectedRoute>} />
           <Route path="/finance/collect/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCockpit /></ProtectedRoute>} />
           <Route path="/finance/collect/copilot" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCopilot /></ProtectedRoute>} />
+          <Route path="/finance/collect/geraete" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectDevices /></ProtectedRoute>} />
+          <Route path="/finance/collect/akte" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectDossier /></ProtectedRoute>} />
           <Route path="/finance/collect/:caseId" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCase /></ProtectedRoute>} />
           <Route path="/operation/anzahlung-mahnung-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin']}><OperationMahnungKonfiguration /></ProtectedRoute>} />
           <Route path="/finance/datev" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatev /></ProtectedRoute>} />
