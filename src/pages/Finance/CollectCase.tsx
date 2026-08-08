@@ -273,7 +273,7 @@ export default function FinanceCollectCase() {
               <label className="text-xs text-muted-foreground">Betreff</label>
               <Input value={mailSubject} onChange={(e) => setMailSubject(e.target.value)} />
             </div>
-            <div className="max-h-72 overflow-auto rounded-lg border border-border bg-background p-3">
+            <div className="max-h-72 overflow-auto rounded-lg border border-border mail-paper p-4">
               <div dangerouslySetInnerHTML={{ __html: mailHtml }} />
             </div>
           </div>
