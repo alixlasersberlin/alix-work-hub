@@ -410,6 +410,7 @@ export default function OffeneAnzahlungen() {
               <SelectItem value="alle">Alle</SelectItem>
               <SelectItem value="alixwork">AlixWork</SelectItem>
               <SelectItem value="zoho">Zoho</SelectItem>
+              <SelectItem value="rechnung">Rechnung</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -515,7 +516,7 @@ export default function OffeneAnzahlungen() {
                   <TableCell className="font-mono text-xs">{r.invoice_number || r.deposit_number || '—'}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-[10px]">
-                      {r.source === 'zoho' ? 'Zoho' : 'AlixWork'}
+                      {r.source === 'zoho' ? 'Zoho' : (r.source as string) === 'rechnung' ? 'Rechnung' : 'AlixWork'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">{fmtMoney(r.gross_amount, r.currency || 'EUR')}</TableCell>

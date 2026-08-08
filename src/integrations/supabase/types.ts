@@ -22053,6 +22053,8 @@ export type Database = {
           invoice_id: string | null
           invoice_number: string | null
           issue_date: string | null
+          linked_invoice_id: string | null
+          linked_invoice_table: string | null
           meta: Json | null
           net_amount: number
           note: string | null
@@ -22092,6 +22094,8 @@ export type Database = {
           invoice_id?: string | null
           invoice_number?: string | null
           issue_date?: string | null
+          linked_invoice_id?: string | null
+          linked_invoice_table?: string | null
           meta?: Json | null
           net_amount?: number
           note?: string | null
@@ -22131,6 +22135,8 @@ export type Database = {
           invoice_id?: string | null
           invoice_number?: string | null
           issue_date?: string | null
+          linked_invoice_id?: string | null
+          linked_invoice_table?: string | null
           meta?: Json | null
           net_amount?: number
           note?: string | null
@@ -43966,10 +43972,12 @@ export type Database = {
           currency: string | null
           customer_id: string | null
           customer_name: string | null
+          deposit_id: string | null
           due_date: string | null
           id: string
           invoice_date: string | null
           invoice_number: string | null
+          is_deposit: boolean
           is_mietkauf: boolean
           last_payment_date: string | null
           mietkauf_booked_at: string | null
@@ -43994,10 +44002,12 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          deposit_id?: string | null
           due_date?: string | null
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          is_deposit?: boolean
           is_mietkauf?: boolean
           last_payment_date?: string | null
           mietkauf_booked_at?: string | null
@@ -44022,10 +44032,12 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          deposit_id?: string | null
           due_date?: string | null
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          is_deposit?: boolean
           is_mietkauf?: boolean
           last_payment_date?: string | null
           mietkauf_booked_at?: string | null
@@ -44198,11 +44210,13 @@ export type Database = {
           currency: string | null
           customer_id: string | null
           customer_name: string | null
+          deposit_id: string | null
           device_name: string | null
           due_date: string | null
           id: string
           invoice_date: string | null
           invoice_number: string | null
+          is_deposit: boolean
           is_mietkauf: boolean
           last_payment_date: string | null
           mietkauf_booked_at: string | null
@@ -44228,11 +44242,13 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          deposit_id?: string | null
           device_name?: string | null
           due_date?: string | null
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          is_deposit?: boolean
           is_mietkauf?: boolean
           last_payment_date?: string | null
           mietkauf_booked_at?: string | null
@@ -44258,11 +44274,13 @@ export type Database = {
           currency?: string | null
           customer_id?: string | null
           customer_name?: string | null
+          deposit_id?: string | null
           device_name?: string | null
           due_date?: string | null
           id?: string
           invoice_date?: string | null
           invoice_number?: string | null
+          is_deposit?: boolean
           is_mietkauf?: boolean
           last_payment_date?: string | null
           mietkauf_booked_at?: string | null

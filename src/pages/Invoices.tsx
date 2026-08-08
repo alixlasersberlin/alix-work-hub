@@ -85,6 +85,8 @@ type Row = {
   raw_data?: any;
   raw_is_draft?: boolean | null;
   is_mietkauf?: boolean | null;
+  is_deposit?: boolean | null;
+  deposit_id?: string | null;
   created_at?: string | null;
 };
 
@@ -271,8 +273,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return { data: out, error: null };
     };
     const [inv, rec, unp] = await Promise.all([
-      fetchAllPages(() => (supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false })),
-      fetchAllPages(() => (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false })),
+      fetchAllPages(() => (supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false })),
+      fetchAllPages(() => (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false })),
       includeUnpaid && !mietkaufOnly
         ? fetchAllPages(() => (supabase.from('zoho_unpaid_invoices') as any)
             .select('id, created_at, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw')
@@ -374,6 +376,82 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       description: `Rechnung ${r.invoice_number ?? ''} wurde ${next ? 'als Mietkauf gebucht' : 'aus der Vermietung entfernt'}.`,
     });
   };
+
+  // ---- „ist Anzahlung" (Rechnung zusätzlich in Offene Anzahlungen führen) ----
+  const [depositBusyId, setDepositBusyId] = useState<string | null>(null);
+  const toggleDeposit = async (r: Row) => {
+    if (r.source === 'unpaid') {
+      toast({ title: 'Nur Ansicht', description: 'Diese Rechnung stammt aus den Offenen Posten und kann hier nicht bearbeitet werden.', variant: 'destructive' });
+      return;
+    }
+    const table = tableFor(r.source);
+    const next = !r.is_deposit;
+    setDepositBusyId(r.id);
+    try {
+      let depositId: string | null = r.deposit_id ?? null;
+
+      if (next) {
+        const gross = Number(r.total ?? 0) || 0;
+        const paid = Math.max(0, gross - (Number(r.balance ?? gross) || 0));
+        const isPaid = (Number(r.balance ?? 0) || 0) <= 0.009 && gross > 0;
+        const payload: any = {
+          source: 'rechnung',
+          source_ref: `${table}:${r.id}`,
+          deposit_number: r.invoice_number ?? null,
+          customer_name: r.customer_name ?? null,
+          company_name: r.customer_name ?? null,
+          invoice_number: r.invoice_number ?? null,
+          currency: r.currency ?? 'EUR',
+          net_amount: 0,
+          vat_amount: 0,
+          gross_amount: gross,
+          paid_amount: paid,
+          open_amount: Math.max(0, gross - paid),
+          issue_date: r.invoice_date ?? null,
+          due_date: r.due_date ?? null,
+          status: isPaid ? 'gebucht' : (paid > 0 ? 'teilweise' : 'offen'),
+          accounting_region: (r.currency ?? '').toUpperCase() === 'CHF' ? 'CH' : 'EU',
+          linked_invoice_table: table,
+          linked_invoice_id: r.id,
+          note: 'Aus Rechnungsliste als Anzahlung markiert',
+        };
+        if (depositId) {
+          const { error } = await supabase.from('finance_deposits' as any).update(payload).eq('id', depositId);
+          if (error) throw error;
+        } else {
+          const { data, error } = await supabase.from('finance_deposits' as any).insert(payload).select('id').single();
+          if (error) throw error;
+          depositId = (data as any)?.id ?? null;
+        }
+      } else if (depositId) {
+        const { error } = await supabase.from('finance_deposits' as any).delete().eq('id', depositId);
+        if (error) throw error;
+        depositId = null;
+      }
+
+      const { error: upErr } = await supabase
+        .from(table as any)
+        .update({ is_deposit: next, deposit_id: depositId } as any)
+        .eq('id', r.id);
+      if (upErr) throw upErr;
+
+      setRows((prev) => prev.map((x) =>
+        x.id === r.id && x.source === r.source ? { ...x, is_deposit: next, deposit_id: depositId } : x,
+      ));
+      toast({
+        title: next ? 'Als Anzahlung markiert' : 'Anzahlungs-Markierung entfernt',
+        description: next
+          ? `Rechnung ${r.invoice_number ?? ''} erscheint jetzt zusätzlich unter Offene Anzahlungen.`
+          : `Rechnung ${r.invoice_number ?? ''} wird nicht mehr in Offene Anzahlungen geführt.`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? 'Unbekannt', variant: 'destructive' });
+    } finally {
+      setDepositBusyId(null);
+    }
+  };
+
+
 
   // ---- Mehrfachauswahl (Rechnungsliste) ----
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -1280,6 +1358,19 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         throw new Error('Buchung nicht gespeichert – keine Berechtigung zum Ändern dieser Rechnung (nur Admin/Super Admin).');
       }
 
+      // Verknüpfte Anzahlung mitführen (verschwindet bei Vollzahlung aus „Offene Anzahlungen")
+      if (bookRow.deposit_id) {
+        const grossDep = Number(bookRow.total ?? 0) || 0;
+        const paidDep = Math.max(0, +(grossDep - newBalance).toFixed(2));
+        await supabase.from('finance_deposits' as any).update({
+          paid_amount: paidDep,
+          open_amount: Math.max(0, +(grossDep - paidDep).toFixed(2)),
+          status: fullyPaid ? 'gebucht' : 'teilweise',
+        } as any).eq('id', bookRow.deposit_id);
+      }
+
+
+
 
       const gross = +pay.toFixed(2);
       const net = +(gross / 1.19).toFixed(2);
@@ -1706,7 +1797,21 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                               {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
                               {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
                             </Button>
-                          )}
+                           )}
+                           {r.source !== 'unpaid' && (
+                             <Button
+                               size="sm"
+                               variant="outline"
+                               type="button"
+                               title={r.is_deposit ? 'Anzahlungs-Markierung entfernen' : 'Als Anzahlung markieren – erscheint zusätzlich unter Offene Anzahlungen'}
+                               disabled={depositBusyId === r.id}
+                               className={`h-8 px-2 gap-1 ${r.is_deposit ? 'border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10' : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'}`}
+                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleDeposit(r); }}
+                             >
+                               {depositBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wallet className="w-3.5 h-3.5" />}
+                               {r.is_deposit ? 'Ist Anzahlung ✓' : 'Ist Anzahlung'}
+                             </Button>
+                           )}
                           {isSuperAdmin && (
                             <Button size="sm" variant="ghost" title="Löschen" className="text-destructive hover:text-destructive" onClick={() => handleDelete(r)}>
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1900,6 +2005,20 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                                   >
                                     {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
                                     {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
+                                  </Button>
+                                )}
+                                {r.source !== 'unpaid' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    type="button"
+                                    title={r.is_deposit ? 'Anzahlungs-Markierung entfernen' : 'Als Anzahlung markieren – erscheint zusätzlich unter Offene Anzahlungen'}
+                                    disabled={depositBusyId === r.id}
+                                    className={`h-8 px-2 gap-1 ${r.is_deposit ? 'border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10' : 'border-amber-500/40 text-amber-400 hover:bg-amber-500/10'}`}
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleDeposit(r); }}
+                                  >
+                                    {depositBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wallet className="w-3.5 h-3.5" />}
+                                    {r.is_deposit ? 'Ist Anzahlung ✓' : 'Ist Anzahlung'}
                                   </Button>
                                 )}
                                 {isSuperAdmin && (
