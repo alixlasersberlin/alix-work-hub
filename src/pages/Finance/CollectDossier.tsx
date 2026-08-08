@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, FileArchive, FolderOpen, Sparkles } from 'lucide-react';
+import { Download, FileArchive, FileText, FolderOpen, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,7 @@ export default function FinanceCollectDossier() {
   const [caseId, setCaseId] = useState('');
   const [purpose, setPurpose] = useState('inkasso');
   const [open, setOpen] = useState<any | null>(null);
+  const [pdfBusy, setPdfBusy] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -97,6 +98,29 @@ export default function FinanceCollectDossier() {
     } finally {
       setGenerating(false);
     }
+  };
+
+  const archivePdf = async (row: any) => {
+    setPdfBusy(row.id);
+    const { data, error } = await supabase.functions.invoke('collect-dossier-pdf', { body: { dossier_id: row.id } });
+    setPdfBusy(null);
+    if (error) {
+      toast({ title: 'PDF fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    const url = (data as any)?.url;
+    if (url) window.open(url, '_blank');
+    toast({ title: 'PDF archiviert', description: 'Die Akte wurde als PDF im Dokumentenarchiv gespeichert.' });
+    load();
+  };
+
+  const openArchived = async (row: any) => {
+    const { data, error } = await supabase.storage.from('finance-documents').createSignedUrl(row.file_url, 3600);
+    if (error || !data?.signedUrl) {
+      toast({ title: 'Datei nicht verfügbar', description: error?.message, variant: 'destructive' });
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
   };
 
   const download = (row: any) => {
@@ -220,7 +244,16 @@ export default function FinanceCollectDossier() {
                     <td className="py-2 pr-3">
                       <div className="flex gap-2">
                         <Button size="sm" variant="outline" onClick={() => setOpen(r)}>Ansehen</Button>
-                        <Button size="sm" variant="outline" onClick={() => printDossier(r)}>PDF / Druck</Button>
+                        <Button size="sm" variant="outline" onClick={() => printDossier(r)}>Druck</Button>
+                        {r.file_url ? (
+                          <Button size="sm" variant="outline" onClick={() => openArchived(r)}>
+                            <FileText className="mr-1 h-4 w-4" />PDF öffnen
+                          </Button>
+                        ) : (
+                          <Button size="sm" onClick={() => archivePdf(r)} disabled={pdfBusy === r.id}>
+                            <FileText className="mr-1 h-4 w-4" />{pdfBusy === r.id ? 'Erzeuge…' : 'PDF erzeugen'}
+                          </Button>
+                        )}
                         <Button size="sm" variant="ghost" onClick={() => download(r)}><Download className="h-4 w-4" /></Button>
                       </div>
                     </td>
