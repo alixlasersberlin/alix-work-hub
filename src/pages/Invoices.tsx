@@ -1818,19 +1818,6 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           />
                         </td>
                       )}
-                      <td className="px-4 py-2">
-                        {r.source === 'recurring' ? (
-                          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-                            <Repeat className="w-3 h-3 mr-1" />Periodisch
-                          </Badge>
-                        ) : r.source === 'unpaid' ? (
-                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
-                            <Repeat className="w-3 h-3 mr-1" />Wiederkehrend (OP)
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-muted/40">Einmalig</Badge>
-                        )}
-                      </td>
                       <td className="px-4 py-2 font-medium">
                         <div className="flex items-center gap-2">
                           <button
