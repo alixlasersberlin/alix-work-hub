@@ -1757,6 +1757,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                   <tr>
+                    <th className="px-2 py-2 w-8"></th>
                     {isAdmin && (
                       <th className="px-3 py-2 w-8">
                         <input
