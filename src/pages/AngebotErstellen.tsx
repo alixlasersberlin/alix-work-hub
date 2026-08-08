@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -71,6 +71,10 @@ export default function AngebotErstellen() {
   const [itemSearch, setItemSearch] = useState('');
   const [offerNumber, setOfferNumber] = useState(`${sofortMode ? 'AUF' : 'ANG'}-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
   const [caseNumber, setCaseNumber] = useState<string | null>(null);
+  // Synchroner Spiegel der Vorgangs-Stammnummer: State-Updates sind innerhalb
+  // desselben Ticks noch nicht sichtbar (Sofortauftrag zog sonst eine eigene AB-Nummer).
+  const caseNumberRef = useRef<string | null>(null);
+  useEffect(() => { caseNumberRef.current = caseNumber; }, [caseNumber]);
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
   const [salesAdvisor, setSalesAdvisor] = useState('');
@@ -1139,16 +1143,17 @@ export default function AngebotErstellen() {
       // dem zentralen Nummernkreis ziehen (atomar, fortlaufend). Bei aktivem
       // Kreis ersetzt das die zur Vorschau gezogene Nummer.
       let effectiveOfferNumber = offerNumber;
-      let effectiveCaseNumber = caseNumber;
+      let effectiveCaseNumber = caseNumberRef.current ?? caseNumber;
       try {
         const existing = await getOffer(offerNumber);
         if (!existing) {
           // Stammnummer (Vorgangs-Nummer) sicherstellen – einmal pro Vorgang.
           // Bei deaktiviertem Master-Kreis liefert ensureCaseNumber `null` und
           // der Kreis 'offer' fällt automatisch auf seinen eigenen Zähler zurück.
-          const cn = await ensureCaseNumber(caseNumber);
-          if (cn && cn !== caseNumber) {
+          const cn = await ensureCaseNumber(effectiveCaseNumber);
+          if (cn && cn !== effectiveCaseNumber) {
             effectiveCaseNumber = cn;
+            caseNumberRef.current = cn;
             setCaseNumber(cn);
           }
           const nr = await nextNumber('offer', () => offerNumber, { caseNumber: effectiveCaseNumber });
@@ -1206,9 +1211,12 @@ export default function AngebotErstellen() {
       const ok = await saveOffer(true);
       if (!ok) { setConfirming(false); return; }
 
-      // 2) Auftragsnummer ziehen (zentraler Nummernkreis 'order', sonst Fallback auf ANG→AUF)
+      // 2) Auftragsnummer ziehen (zentraler Nummernkreis 'order', gekoppelt an die
+      //    Vorgangs-Stammnummer aus Schritt 1 – Ref, da State hier noch veraltet wäre)
+      const effCase = caseNumberRef.current ?? (await ensureCaseNumber(caseNumber));
+      if (effCase && effCase !== caseNumberRef.current) { caseNumberRef.current = effCase; setCaseNumber(effCase); }
       const fallbackOrderNr = offerNumber.replace(/^ANG-/i, 'AUF-');
-      const orderNr = (await nextNumber('order', () => fallbackOrderNr, { caseNumber })) || fallbackOrderNr;
+      const orderNr = (await nextNumber('order', () => fallbackOrderNr, { caseNumber: effCase })) || fallbackOrderNr;
 
       // 3) Auftrag in orders anlegen (nur wenn Auftragsnummer noch nicht existiert)
       const { data: dupe } = await supabase.from('orders').select('id').eq('order_number', orderNr).maybeSingle();
@@ -1249,7 +1257,7 @@ export default function AngebotErstellen() {
           total_amount: totals.gross,
           order_date: orderDateIso,
           expected_shipment_date: expectedShipmentIso,
-          case_number: caseNumber || null,
+          case_number: caseNumberRef.current || caseNumber || null,
           salesperson_name: salesAdvisor || null,
           billing_address: (selectedCustomer as any).billing_address || null,
           shipping_address: (selectedCustomer as any).shipping_address || (selectedCustomer as any).billing_address || null,
