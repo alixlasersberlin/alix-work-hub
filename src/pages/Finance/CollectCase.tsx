@@ -73,7 +73,10 @@ export default function FinanceCollectCase() {
       const { data: cu } = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('company_name', cname).limit(1).maybeSingle();
       setCustomer(cu ?? null);
     } else setCustomer(null);
-    const { data: lim } = await supabase.from('collect_credit_limits' as any).select('*').eq('case_id', caseId).maybeSingle();
+    const limQ = cid
+      ? supabase.from('collect_credit_limits' as any).select('*').eq('customer_id', cid).maybeSingle()
+      : supabase.from('collect_credit_limits' as any).select('*').eq('customer_name', cname ?? '').maybeSingle();
+    const { data: lim } = await limQ;
     setLimit(lim ?? null);
     setLoading(false);
   };
