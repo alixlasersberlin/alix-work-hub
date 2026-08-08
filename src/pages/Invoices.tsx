@@ -1920,7 +1920,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     <div className="text-sm font-semibold">{fmtMoney(a.totalAmount)}</div>
                     {a.totalOpen > 0 && <div className="text-xs font-medium text-amber-400">offen: {fmtMoney(a.totalOpen)}</div>}
                   </div>
-                </button>
+                  <AccountStatementActions
+                    customerName={a.customer_name}
+                    customerNumber={a.customer_id}
+                    city={a.city}
+                    rows={a.rows as any}
+                  />
+                </div>
                 {open && (
                   <div className="border-t border-border overflow-x-auto">
                     <table className="w-full text-sm">
