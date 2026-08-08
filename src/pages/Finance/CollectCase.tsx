@@ -214,7 +214,7 @@ export default function FinanceCollectCase() {
           <div>
             <div className="text-xs text-muted-foreground">Kunde</div>
             <div className="font-medium">{customer?.company_name ?? c.customer_name ?? '–'}</div>
-            <div className="text-muted-foreground whitespace-pre-line">{customer?.billing_address ?? '–'}</div>
+            <div className="text-muted-foreground whitespace-pre-line">{formatAddress(customer?.billing_address)}</div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Kontakt</div>
