@@ -73,7 +73,7 @@ export default function FinanceCollect() {
   const [busy, setBusy] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState('offen');
-  const [sort, setSort] = useState('overdue');
+  const [sort, setSort] = useState('probability');
 
   const load = async () => {
     setLoading(true);
