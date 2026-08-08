@@ -321,6 +321,32 @@ export default function OffeneAnzahlungen() {
     });
   }, [rows, search, statusFilter, releaseFilter, sourceFilter, countryFilter, overdueOnly]);
 
+  /** Kontoauszug-Zeilen je Kundenkonto (aus allen Anzahlungen des Kunden). */
+  const statementByCustomer = useMemo(() => {
+    const map = new Map<string, { name: string; number: string | null; rows: any[] }>();
+    for (const r of rows) {
+      const name = r.company_name || r.customer_name || 'Unbekannt';
+      const key = r.customer_id || `name:${name.toLowerCase()}`;
+      if (!map.has(key)) map.set(key, { name, number: r.customer_id, rows: [] });
+      map.get(key)!.rows.push({
+        invoice_number: r.invoice_number || r.deposit_number || '—',
+        invoice_date: r.issue_date || (r.created_at ? r.created_at.slice(0, 10) : null),
+        due_date: r.due_date,
+        total: Number(r.gross_amount) || 0,
+        balance: Number(r.open_amount) || 0,
+        currency: r.currency || 'EUR',
+        status: r.status,
+        payment_status: r.status,
+      });
+    }
+    return map;
+  }, [rows]);
+
+  const statementKey = (r: Deposit) =>
+    r.customer_id || `name:${(r.company_name || r.customer_name || 'Unbekannt').toLowerCase()}`;
+
+
+
   const kpis = useMemo(() => {
     const today = new Date(); today.setHours(0,0,0,0);
     const monthStart = startOfMonth(today);
