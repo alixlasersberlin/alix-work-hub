@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BarChart3, Download, RefreshCw } from 'lucide-react';
+import { BarChart3, Download, RefreshCw, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { PageHeader, PageLoading, PageError } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,10 @@ import {
   RepSection, HeatmapSection, MapSection,
 } from '@/components/sales/analyse/BreakdownSections';
 import { FollowupSection, ForecastSection, AiSection, ExecutiveSection } from '@/components/sales/analyse/FollowupSections';
-import { computeReps, eur, offerValue, productOf, stageOf, type OfferRow } from '@/lib/sales/offer-analytics';
+import { TrendSection } from '@/components/sales/analyse/TrendSection';
+import {
+  computeReps, eur, isLost, isOpen, isWon, offerValue, productOf, stageOf, STAGES, type OfferRow,
+} from '@/lib/sales/offer-analytics';
 
 const RANGES = [
   { code: '30', label: '30 Tage' },
@@ -20,13 +23,45 @@ const RANGES = [
   { code: 'all', label: 'Alle' },
 ];
 
+const OUTCOMES = [
+  { code: '', label: 'Alle Status' },
+  { code: 'open', label: 'Offen' },
+  { code: 'won', label: 'Gewonnen' },
+  { code: 'lost', label: 'Verloren' },
+];
+
+const PREFS_KEY = 'angebotsanalyse.prefs.v1';
+
+type Prefs = { range: string; rep: string; stage: string; outcome: string; tab: string };
+
+const DEFAULT_PREFS: Prefs = { range: '365', rep: '', stage: '', outcome: '', tab: 'uebersicht' };
+
+function loadPrefs(): Prefs {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    return raw ? { ...DEFAULT_PREFS, ...JSON.parse(raw) } : DEFAULT_PREFS;
+  } catch {
+    return DEFAULT_PREFS;
+  }
+}
+
 export default function Angebotsanalyse() {
+  const initial = useMemo(loadPrefs, []);
   const [rows, setRows] = useState<OfferRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [range, setRange] = useState('365');
-  const [rep, setRep] = useState('');
+  const [range, setRange] = useState(initial.range);
+  const [rep, setRep] = useState(initial.rep);
+  const [stage, setStage] = useState(initial.stage);
+  const [outcome, setOutcome] = useState(initial.outcome);
+  const [tab, setTab] = useState(initial.tab);
   const [q, setQ] = useState('');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ range, rep, stage, outcome, tab }));
+    } catch { /* ignore */ }
+  }, [range, rep, stage, outcome, tab]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,13 +83,20 @@ export default function Angebotsanalyse() {
     const term = q.trim().toLowerCase();
     return rows.filter((o) => {
       if (rep && (o.created_by_name || 'Unbekannt') !== rep) return false;
+      if (stage && stageOf(o) !== stage) return false;
+      if (outcome === 'open' && !isOpen(o)) return false;
+      if (outcome === 'won' && !isWon(o)) return false;
+      if (outcome === 'lost' && !isLost(o)) return false;
       if (!term) return true;
       return [o.offer_number, o.customer_name, o.competitor, o.lead_source, productOf(o)]
         .some((v) => String(v ?? '').toLowerCase().includes(term));
     });
-  }, [rows, rep, q]);
+  }, [rows, rep, stage, outcome, q]);
 
   const reps = useMemo(() => computeReps(rows).map((r) => r.name), [rows]);
+  const filtersActive = Boolean(rep || stage || outcome || q);
+  const resetFilters = () => { setRep(''); setStage(''); setOutcome(''); setQ(''); };
+
 
   const exportCsv = () => {
     const head = ['Angebot', 'Datum', 'Kunde', 'Verkäufer', 'Phase', 'Produkt', 'Wert', 'Status', 'Lead', 'Finanzierung', 'Wettbewerber', 'Verlustgrund'];
@@ -84,25 +126,44 @@ export default function Angebotsanalyse() {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-2 mb-5">
-        <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={range} onChange={(e) => setRange(e.target.value)}>
-          {RANGES.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
-        </select>
-        <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={rep} onChange={(e) => setRep(e.target.value)}>
-          <option value="">Alle Verkäufer</option>
-          {reps.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-        <Input placeholder="Suche Kunde, Angebot, Produkt…" value={q} onChange={(e) => setQ(e.target.value)} className="h-9 w-64" />
+      <div className="sticky top-0 z-10 -mx-6 px-6 py-2 mb-5 bg-background/85 backdrop-blur border-b border-border/60">
+        <div className="flex flex-wrap items-center gap-2">
+          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={range} onChange={(e) => setRange(e.target.value)}>
+            {RANGES.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
+          </select>
+          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={rep} onChange={(e) => setRep(e.target.value)}>
+            <option value="">Alle Verkäufer</option>
+            {reps.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={stage} onChange={(e) => setStage(e.target.value)}>
+            <option value="">Alle Phasen</option>
+            {STAGES.map((s) => <option key={s.code} value={s.code}>{s.label}</option>)}
+          </select>
+          <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={outcome} onChange={(e) => setOutcome(e.target.value)}>
+            {OUTCOMES.map((s) => <option key={s.code} value={s.code}>{s.label}</option>)}
+          </select>
+          <Input placeholder="Suche Kunde, Angebot, Produkt…" value={q} onChange={(e) => setQ(e.target.value)} className="h-9 w-64" />
+          {filtersActive && (
+            <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <X className="h-4 w-4 mr-1" />Filter zurücksetzen
+            </Button>
+          )}
+          <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+            {offers.length} von {rows.length} Angeboten
+          </span>
+        </div>
       </div>
 
       {error && <PageError message={error} onRetry={load} />}
       {loading ? (
         <PageLoading />
       ) : (
-        <Tabs defaultValue="uebersicht" className="space-y-4">
+        <Tabs value={tab} onValueChange={setTab} className="space-y-4">
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="uebersicht">Übersicht</TabsTrigger>
+            <TabsTrigger value="verlauf">Verlauf</TabsTrigger>
             <TabsTrigger value="funnel">Funnel & Alter</TabsTrigger>
+
             <TabsTrigger value="verkaeufer">Verkäufer</TabsTrigger>
             <TabsTrigger value="produkte">Produkte</TabsTrigger>
             <TabsTrigger value="verluste">Verluste & Konkurrenz</TabsTrigger>
@@ -115,8 +176,14 @@ export default function Angebotsanalyse() {
 
           <TabsContent value="uebersicht" className="space-y-4">
             <KpiSection offers={offers} />
+            <TrendSection offers={offers} />
             <FunnelSection offers={offers} />
           </TabsContent>
+          <TabsContent value="verlauf" className="space-y-4">
+            <TrendSection offers={offers} />
+            <AgeSection offers={offers} />
+          </TabsContent>
+
           <TabsContent value="funnel" className="space-y-4">
             <FunnelSection offers={offers} />
             <AgeSection offers={offers} />

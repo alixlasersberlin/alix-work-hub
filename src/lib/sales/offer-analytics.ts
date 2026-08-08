@@ -446,3 +446,45 @@ export function computePlzZones(offers: OfferRow[]) {
   });
   return Array.from(zones.entries()).map(([zone, v]) => ({ zone, ...v })).sort((a, b) => b.value - a.value);
 }
+
+/* ------------------------------------------------------- Monatlicher Verlauf */
+
+export interface MonthlyPoint {
+  month: string;        // YYYY-MM
+  label: string;        // MM/YY
+  count: number;
+  value: number;
+  won: number;
+  lost: number;
+  wonValue: number;
+  winRate: number;      // 0..1
+}
+
+/** Zeitreihe je Monat: Anzahl, Volumen, Gewinne/Verluste und Abschlussquote. */
+export function computeMonthly(offers: OfferRow[], months = 12): MonthlyPoint[] {
+  const map = new Map<string, MonthlyPoint>();
+  const now = new Date();
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    map.set(key, {
+      month: key,
+      label: `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(2)}`,
+      count: 0, value: 0, won: 0, lost: 0, wonValue: 0, winRate: 0,
+    });
+  }
+  offers.forEach((o) => {
+    const d = offerDate(o);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const p = map.get(key);
+    if (!p) return;
+    p.count += 1;
+    p.value += offerValue(o);
+    if (isWon(o)) { p.won += 1; p.wonValue += offerValue(o); }
+    else if (isLost(o)) p.lost += 1;
+  });
+  return Array.from(map.values()).map((p) => ({
+    ...p,
+    winRate: p.won + p.lost ? p.won / (p.won + p.lost) : 0,
+  }));
+}
