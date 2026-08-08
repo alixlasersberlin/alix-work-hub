@@ -46597,6 +46597,8 @@ export type Database = {
         Returns: string
       }
       cmr_tenant_id: { Args: never; Returns: string }
+      collect_bi: { Args: never; Returns: Json }
+      collect_dashboard: { Args: never; Returns: Json }
       collect_dashboard_kpis: { Args: never; Returns: Json }
       collect_sync_cases: { Args: never; Returns: Json }
       comm_can_manage: { Args: { _uid: string }; Returns: boolean }
