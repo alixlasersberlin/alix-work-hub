@@ -41,25 +41,39 @@ function emailFromRows(rows: AnyRow[]): string {
   return '';
 }
 
-function addressFromRows(rows: AnyRow[]): string | null {
+function formatAddress(a: any, customerName?: string): string | null {
+  if (!a || typeof a !== 'object') return null;
+  const parts = [
+    a.attention && a.attention !== customerName ? a.attention : null,
+    a.address || a.street,
+    a.street2,
+    [a.zip || a.postal_code, a.city].filter(Boolean).join(' '),
+    [a.state, a.country].filter(Boolean).join(', '),
+  ]
+    .filter((p) => p && String(p).trim())
+    .map(String);
+  return parts.length ? parts.join('\n') : null;
+}
+
+/** Rechnungs- und Lieferanschrift aus den Zoho-Rohdaten ermitteln. */
+function addressesFromRows(rows: AnyRow[]): { billing: string | null; shipping: string | null } {
+  let billing: string | null = null;
+  let shipping: string | null = null;
   for (const r of rows) {
     const rd = r.raw_data || {};
-    const a = rd.billing_address || rd.shipping_address;
-    if (a && typeof a === 'object') {
-      const parts = [
-        a.attention && a.attention !== rd.customer_name ? a.attention : null,
-        a.address || a.street,
-        a.street2,
-        [a.zip || a.postal_code, a.city].filter(Boolean).join(' '),
-        [a.state, a.country].filter(Boolean).join(', '),
-      ]
-        .filter((p) => p && String(p).trim())
-        .map(String);
-      if (parts.length) return parts.join('\n');
-    }
+    if (!billing) billing = formatAddress(rd.billing_address, rd.customer_name);
+    if (!shipping) shipping = formatAddress(rd.shipping_address, rd.customer_name);
+    if (billing && shipping) break;
   }
-  return null;
+  // Wenn nur eine Anschrift vorhanden ist, nur diese verwenden
+  if (billing && shipping && billing === shipping) shipping = null;
+  if (!billing && shipping) {
+    billing = shipping;
+    shipping = null;
+  }
+  return { billing, shipping };
 }
+
 
 
 /** Kontoauszug (offene Posten) für ein Kundenkonto: PDF/CSV-Download und E-Mail mit Vorschau. */
