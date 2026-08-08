@@ -43797,6 +43797,69 @@ export type Database = {
         }
         Relationships: []
       }
+      zoho_auto_import_runs: {
+        Row: {
+          changed_count: number
+          changes: Json
+          created_at: string
+          created_by: string | null
+          email_error: string | null
+          email_sent: boolean
+          error_message: string | null
+          failed_count: number
+          finished_at: string | null
+          id: string
+          new_count: number
+          processed_count: number
+          sources: string[]
+          started_at: string
+          status: string
+          trigger_type: string
+          unchanged_count: number
+          updated_at: string
+        }
+        Insert: {
+          changed_count?: number
+          changes?: Json
+          created_at?: string
+          created_by?: string | null
+          email_error?: string | null
+          email_sent?: boolean
+          error_message?: string | null
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          new_count?: number
+          processed_count?: number
+          sources?: string[]
+          started_at?: string
+          status?: string
+          trigger_type?: string
+          unchanged_count?: number
+          updated_at?: string
+        }
+        Update: {
+          changed_count?: number
+          changes?: Json
+          created_at?: string
+          created_by?: string | null
+          email_error?: string | null
+          email_sent?: boolean
+          error_message?: string | null
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          new_count?: number
+          processed_count?: number
+          sources?: string[]
+          started_at?: string
+          status?: string
+          trigger_type?: string
+          unchanged_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       zoho_credit_notes: {
         Row: {
           accounting_region: Database["public"]["Enums"]["accounting_region"]
