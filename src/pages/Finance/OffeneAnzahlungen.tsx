@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { AccountStatementActions } from '@/components/finance/AccountStatementActions';
 
 type Deposit = {
   id: string;
