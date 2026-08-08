@@ -278,11 +278,18 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={downloadPdf}>
-            <FileText className="w-4 h-4 mr-2" /> Als PDF
+          <DropdownMenuItem onClick={() => downloadPdf(false)}>
+            <FileText className="w-4 h-4 mr-2" /> Offene Posten – PDF
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={downloadCsv}>
-            <FileSpreadsheet className="w-4 h-4 mr-2" /> Als CSV
+          <DropdownMenuItem onClick={() => downloadCsv(false)}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> Offene Posten – CSV
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => downloadPdf(true)}>
+            <FileText className="w-4 h-4 mr-2" /> Alle Buchungen – PDF
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => downloadCsv(true)}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> Alle Buchungen – CSV
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
