@@ -1046,6 +1046,7 @@ const LicenseAuswertungen = lazy(() => import("./pages/License/Auswertungen"));
 const LicenseLaufzeiten = lazy(() => import("./pages/License/Laufzeiten"));
 const LicenseEinstellungen = lazy(() => import("./pages/License/Einstellungen"));
 import MaintenanceGate from "./components/MaintenanceGate";
+import BackupWarningGate from "./components/BackupWarningGate";
 import LeihgeraetReminder from "./components/LeihgeraetReminder";
 
 const queryClient = new QueryClient({
@@ -2399,6 +2400,7 @@ const App = () => (
                     <ShortcutsOverlay />
                     <TopProgressBar />
                     <LeihgeraetReminder />
+                    <BackupWarningGate />
                     {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                   </MaintenanceGate>
                   </AccountingRegionProvider>
