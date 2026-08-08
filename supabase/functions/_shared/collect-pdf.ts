@@ -6,6 +6,7 @@ export type Block =
   | { type: 'h2'; text: string }
   | { type: 'p'; text: string }
   | { type: 'spacer'; size?: number }
+  | { type: 'image'; dataUrl: string; width?: number; height?: number; caption?: string }
   | { type: 'table'; head: string[]; rows: string[][]; widths?: number[] };
 
 // pdf-lib StandardFonts können nur WinAnsi kodieren – Sonderzeichen ersetzen
@@ -120,6 +121,30 @@ export async function renderPdf(opts: {
       y -= 4;
       continue;
     }
+
+    if (b.type === 'image') {
+      try {
+        const base64 = b.dataUrl.split(',')[1] ?? '';
+        const raw = Uint8Array.from(atob(base64), (ch) => ch.charCodeAt(0));
+        const png = await doc.embedPng(raw);
+        const w = b.width ?? 180;
+        const scale = w / png.width;
+        const h = b.height ?? png.height * scale;
+        ensure(h + 22);
+        page.drawImage(png, { x: MARGIN, y: y - h, width: w, height: h });
+        y -= h + 4;
+        page.drawLine({ start: { x: MARGIN, y }, end: { x: MARGIN + w, y }, thickness: 0.5, color: grey });
+        y -= 12;
+        if (b.caption) {
+          page.drawText(san(b.caption), { x: MARGIN, y, size: 8, font: helv, color: grey });
+          y -= 12;
+        }
+      } catch {
+        // Bild nicht lesbar – überspringen
+      }
+      continue;
+    }
+
 
     if (b.type === 'table') {
       const cols = b.head.length;
