@@ -198,6 +198,7 @@ export default function FinanceCollect() {
             <Select value={sort} onValueChange={setSort}>
               <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="probability">Zahlt heute wahrscheinlich</SelectItem>
                 <SelectItem value="overdue">Höchste Forderung</SelectItem>
                 <SelectItem value="days">Längster Verzug</SelectItem>
                 <SelectItem value="risk">Höchstes Risiko</SelectItem>
