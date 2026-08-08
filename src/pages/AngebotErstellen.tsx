@@ -1143,16 +1143,17 @@ export default function AngebotErstellen() {
       // dem zentralen Nummernkreis ziehen (atomar, fortlaufend). Bei aktivem
       // Kreis ersetzt das die zur Vorschau gezogene Nummer.
       let effectiveOfferNumber = offerNumber;
-      let effectiveCaseNumber = caseNumber;
+      let effectiveCaseNumber = caseNumberRef.current ?? caseNumber;
       try {
         const existing = await getOffer(offerNumber);
         if (!existing) {
           // Stammnummer (Vorgangs-Nummer) sicherstellen – einmal pro Vorgang.
           // Bei deaktiviertem Master-Kreis liefert ensureCaseNumber `null` und
           // der Kreis 'offer' fällt automatisch auf seinen eigenen Zähler zurück.
-          const cn = await ensureCaseNumber(caseNumber);
-          if (cn && cn !== caseNumber) {
+          const cn = await ensureCaseNumber(effectiveCaseNumber);
+          if (cn && cn !== effectiveCaseNumber) {
             effectiveCaseNumber = cn;
+            caseNumberRef.current = cn;
             setCaseNumber(cn);
           }
           const nr = await nextNumber('offer', () => offerNumber, { caseNumber: effectiveCaseNumber });
