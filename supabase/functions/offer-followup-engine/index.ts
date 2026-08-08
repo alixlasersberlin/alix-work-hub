@@ -139,9 +139,9 @@ Deno.serve(async (req) => {
 
         const custIds = [...new Set(dueTasks.map((t: any) => t.customer_id).filter(Boolean))];
         const { data: customers } = custIds.length
-          ? await admin.from('customers').select('id, customer_name').in('id', custIds)
+          ? await admin.from('customers').select('id, company_name, contact_name').in('id', custIds)
           : { data: [] as any[] };
-        const custMap = new Map((customers || []).map((c: any) => [c.id, c.customer_name]));
+        const custMap = new Map((customers || []).map((c: any) => [c.id, c.company_name || c.contact_name]));
 
         const byOwner = new Map<string, any[]>();
         for (const t of dueTasks) {
