@@ -515,7 +515,7 @@ export default function OffeneAnzahlungen() {
                   <TableCell className="font-mono text-xs">{r.invoice_number || r.deposit_number || '—'}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-[10px]">
-                      {r.source === 'zoho' ? 'Zoho' : 'AlixWork'}
+                      {r.source === 'zoho' ? 'Zoho' : (r.source as string) === 'rechnung' ? 'Rechnung' : 'AlixWork'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">{fmtMoney(r.gross_amount, r.currency || 'EUR')}</TableCell>
