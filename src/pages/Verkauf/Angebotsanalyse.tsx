@@ -11,7 +11,10 @@ import {
   RepSection, HeatmapSection, MapSection,
 } from '@/components/sales/analyse/BreakdownSections';
 import { FollowupSection, ForecastSection, AiSection, ExecutiveSection } from '@/components/sales/analyse/FollowupSections';
-import { computeReps, eur, offerValue, productOf, stageOf, type OfferRow } from '@/lib/sales/offer-analytics';
+import { TrendSection } from '@/components/sales/analyse/TrendSection';
+import {
+  computeReps, eur, isLost, isOpen, isWon, offerValue, productOf, stageOf, STAGES, type OfferRow,
+} from '@/lib/sales/offer-analytics';
 
 const RANGES = [
   { code: '30', label: '30 Tage' },
@@ -20,13 +23,45 @@ const RANGES = [
   { code: 'all', label: 'Alle' },
 ];
 
+const OUTCOMES = [
+  { code: '', label: 'Alle Status' },
+  { code: 'open', label: 'Offen' },
+  { code: 'won', label: 'Gewonnen' },
+  { code: 'lost', label: 'Verloren' },
+];
+
+const PREFS_KEY = 'angebotsanalyse.prefs.v1';
+
+type Prefs = { range: string; rep: string; stage: string; outcome: string; tab: string };
+
+const DEFAULT_PREFS: Prefs = { range: '365', rep: '', stage: '', outcome: '', tab: 'uebersicht' };
+
+function loadPrefs(): Prefs {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    return raw ? { ...DEFAULT_PREFS, ...JSON.parse(raw) } : DEFAULT_PREFS;
+  } catch {
+    return DEFAULT_PREFS;
+  }
+}
+
 export default function Angebotsanalyse() {
+  const initial = useMemo(loadPrefs, []);
   const [rows, setRows] = useState<OfferRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [range, setRange] = useState('365');
-  const [rep, setRep] = useState('');
+  const [range, setRange] = useState(initial.range);
+  const [rep, setRep] = useState(initial.rep);
+  const [stage, setStage] = useState(initial.stage);
+  const [outcome, setOutcome] = useState(initial.outcome);
+  const [tab, setTab] = useState(initial.tab);
   const [q, setQ] = useState('');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ range, rep, stage, outcome, tab }));
+    } catch { /* ignore */ }
+  }, [range, rep, stage, outcome, tab]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,13 +83,20 @@ export default function Angebotsanalyse() {
     const term = q.trim().toLowerCase();
     return rows.filter((o) => {
       if (rep && (o.created_by_name || 'Unbekannt') !== rep) return false;
+      if (stage && stageOf(o) !== stage) return false;
+      if (outcome === 'open' && !isOpen(o)) return false;
+      if (outcome === 'won' && !isWon(o)) return false;
+      if (outcome === 'lost' && !isLost(o)) return false;
       if (!term) return true;
       return [o.offer_number, o.customer_name, o.competitor, o.lead_source, productOf(o)]
         .some((v) => String(v ?? '').toLowerCase().includes(term));
     });
-  }, [rows, rep, q]);
+  }, [rows, rep, stage, outcome, q]);
 
   const reps = useMemo(() => computeReps(rows).map((r) => r.name), [rows]);
+  const filtersActive = Boolean(rep || stage || outcome || q);
+  const resetFilters = () => { setRep(''); setStage(''); setOutcome(''); setQ(''); };
+
 
   const exportCsv = () => {
     const head = ['Angebot', 'Datum', 'Kunde', 'Verkäufer', 'Phase', 'Produkt', 'Wert', 'Status', 'Lead', 'Finanzierung', 'Wettbewerber', 'Verlustgrund'];
