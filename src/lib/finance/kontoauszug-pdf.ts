@@ -178,7 +178,7 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
   doc.setFont('Inter', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(15);
-  doc.text('Kontoauszug', m, y);
+  doc.text(data.showAll ? 'Kontoauszug – alle Buchungen' : 'Kontoauszug', m, y);
   doc.setFont('Inter', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(110);
