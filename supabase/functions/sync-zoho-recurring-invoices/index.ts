@@ -475,10 +475,14 @@ Deno.serve(async (req) => {
 
     return json({
       success: true,
+      dry_run: dryRun,
       imported,
       updated,
+      unchanged,
       failed,
       duplicates,
+      changes: dryRun ? changes.slice(0, 500) : undefined,
+      changes_truncated: dryRun ? changes.length > 500 : undefined,
       region_filter: regionFilter,
       skipped_region: skippedRegion,
       ch_count: importedCh,
@@ -489,7 +493,6 @@ Deno.serve(async (req) => {
       hint: profilesHaveMore ? "Mehr Profile vorhanden — erneut mit page=" + pPage + " starten." : undefined,
     });
 
-    return json({ success: true, imported, updated, failed, last_page: page - 1, has_more: hasMore });
   } catch (e: any) {
     if (e instanceof Response) return e;
     console.error(e);
