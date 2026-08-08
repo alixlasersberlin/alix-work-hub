@@ -34,6 +34,7 @@ const cfgKey = (region: 'EU' | 'CH') => region === 'CH' ? 'finance.reminder.conf
 
 export default function FinanceMahnwesenSettings() {
   const { roles } = useAuth();
+  const navigate = useNavigate();
   const { region } = useAccountingRegion();
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [cfg, setCfg] = useState<Cfg>(DEFAULT_CFG);
