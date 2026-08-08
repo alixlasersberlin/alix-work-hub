@@ -133,10 +133,16 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
   doc.text(COMPANY.mail, right, y + 18, { align: 'right' });
 
   // Anschriftenfeld (Empfänger) oben links
+  const hasShipping = !!(data.shippingAddress && String(data.shippingAddress).trim());
   doc.setFont('Inter', 'normal');
   doc.setFontSize(6.5);
   doc.setTextColor(150);
   doc.text(`${COMPANY.name} · ${COMPANY.street} · ${COMPANY.city}`, m, 42);
+  if (hasShipping) {
+    doc.setFontSize(7);
+    doc.setTextColor(150);
+    doc.text('Rechnungsanschrift', m, 46.5);
+  }
   doc.setFont('Inter', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(20);
@@ -146,6 +152,24 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
   doc.setTextColor(70);
   const addrLines = doc.splitTextToSize(data.customerAddress || '', 80) as string[];
   if (addrLines.length) doc.text(addrLines, m, 55.5);
+
+  // Lieferanschrift (nur wenn abweichend vorhanden)
+  if (hasShipping) {
+    const sx = 110;
+    doc.setFont('Inter', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(150);
+    doc.text('Lieferanschrift', sx, 46.5);
+    doc.setFont('Inter', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(20);
+    doc.text(data.customerName, sx, 50);
+    doc.setFont('Inter', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(70);
+    const shipLines = doc.splitTextToSize(String(data.shippingAddress || ''), 75) as string[];
+    if (shipLines.length) doc.text(shipLines, sx, 55.5);
+  }
 
   // Titel
   y = 92;
