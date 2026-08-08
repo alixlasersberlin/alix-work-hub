@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       .select('id, booking_date, amount, currency, sender_receiver_name, purpose, invoice_number_hint, end_to_end_reference, customer_reference, is_return_debit')
       .gte('booking_date', since)
       .gt('amount', 0)
-      .neq('is_return_debit', true)
+      .or('is_return_debit.is.null,is_return_debit.eq.false')
       .order('booking_date', { ascending: false })
       .limit(2000);
     if (txErr) throw new Error(txErr.message);
