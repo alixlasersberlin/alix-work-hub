@@ -38,25 +38,36 @@ Deno.serve(async (req) => {
       .limit(2000);
 
     const today = new Date().toISOString().slice(0, 10);
-    let proposals = 0;
-    let blocksSet = 0;
+    const caseIds = (cases ?? []).map((c: any) => c.id);
+
+    // Bestehende Protokolleinträge & Sperren gebündelt laden (statt pro Fall)
+    const done = new Set<string>();
+    const activeBlocks = new Set<string>();
+    for (let i = 0; i < caseIds.length; i += 500) {
+      const chunk = caseIds.slice(i, i + 500);
+      const [{ data: evs }, { data: bls }] = await Promise.all([
+        admin.from('collect_events').select('case_id, stage_code')
+          .in('case_id', chunk)
+          .in('event_type', ['proposal', 'email_sent', 'sms_sent', 'call', 'letter_sent']),
+        admin.from('collect_blocks').select('case_id, block_type').in('case_id', chunk).eq('active', true),
+      ]);
+      (evs ?? []).forEach((e: any) => done.add(`${e.case_id}|${e.stage_code ?? ''}`));
+      (bls ?? []).forEach((b: any) => activeBlocks.add(`${b.case_id}|${b.block_type}`));
+    }
+
+    const newEvents: any[] = [];
+    const newBlocks: any[] = [];
+    const nextActions: { id: string; label: string }[] = [];
+    const now = new Date().toISOString();
 
     for (const c of cases ?? []) {
       if (c.paused_until && c.paused_until >= today) continue;
       const stage = stageMap.get(c.stage_code ?? '');
       if (!stage) continue;
-
-      // Wurde für diese Stufe schon etwas protokolliert?
-      const { count } = await admin
-        .from('collect_events')
-        .select('id', { count: 'exact', head: true })
-        .eq('case_id', c.id)
-        .eq('stage_code', stage.code)
-        .in('event_type', ['proposal', 'email_sent', 'sms_sent', 'call', 'letter_sent']);
-      if ((count ?? 0) > 0) continue;
+      if (done.has(`${c.id}|${stage.code}`)) continue;
 
       const channels: string[] = Array.isArray(stage.channels) ? stage.channels : ['email'];
-      await admin.from('collect_events').insert({
+      newEvents.push({
         case_id: c.id,
         event_type: 'proposal',
         channel: channels[0] ?? 'email',
@@ -66,29 +77,38 @@ Deno.serve(async (req) => {
         automated: true,
         meta: { day_offset: stage.day_offset, attach_pdf: stage.attach_pdf, pay_now_link: stage.pay_now_link },
       });
-      proposals++;
+      nextActions.push({ id: c.id, label: stage.label });
 
-      await admin.from('collect_cases').update({
-        next_action: stage.label,
-        next_action_at: new Date().toISOString(),
-      }).eq('id', c.id);
-
-      // Automatische Sperren gemäß Stufe
       const blocks: string[] = Array.isArray(stage.set_blocks) ? stage.set_blocks : [];
       for (const b of blocks) {
-        const { count: has } = await admin
-          .from('collect_blocks')
-          .select('id', { count: 'exact', head: true })
-          .eq('case_id', c.id).eq('block_type', b).eq('active', true);
-        if ((has ?? 0) === 0) {
-          await admin.from('collect_blocks').insert({
-            case_id: c.id, block_type: b, active: true,
-            reason: `Automatisch gesetzt bei Stufe ${stage.label}`, set_automatically: true,
-          });
-          blocksSet++;
-        }
+        if (activeBlocks.has(`${c.id}|${b}`)) continue;
+        activeBlocks.add(`${c.id}|${b}`);
+        newBlocks.push({
+          case_id: c.id, block_type: b, active: true,
+          reason: `Automatisch gesetzt bei Stufe ${stage.label}`, set_automatically: true,
+        });
       }
     }
+
+    for (let i = 0; i < newEvents.length; i += 500) {
+      await admin.from('collect_events').insert(newEvents.slice(i, i + 500));
+    }
+    for (let i = 0; i < newBlocks.length; i += 500) {
+      await admin.from('collect_blocks').insert(newBlocks.slice(i, i + 500));
+    }
+    // next_action gruppiert je Stufenbezeichnung aktualisieren
+    const byLabel = new Map<string, string[]>();
+    nextActions.forEach((n) => byLabel.set(n.label, [...(byLabel.get(n.label) ?? []), n.id]));
+    for (const [label, ids] of byLabel) {
+      for (let i = 0; i < ids.length; i += 500) {
+        await admin.from('collect_cases')
+          .update({ next_action: label, next_action_at: now })
+          .in('id', ids.slice(i, i + 500));
+      }
+    }
+
+    const proposals = newEvents.length;
+    const blocksSet = newBlocks.length;
 
     return json({ ok: true, sync: syncRes, cases: cases?.length ?? 0, proposals, blocks_set: blocksSet, ms: Date.now() - started });
   } catch (e: any) {
