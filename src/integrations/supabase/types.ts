@@ -12594,6 +12594,53 @@ export type Database = {
           },
         ]
       }
+      collect_calls: {
+        Row: {
+          called_by: string | null
+          case_id: string | null
+          created_at: string
+          customer_id: string | null
+          duration_seconds: number | null
+          followup_date: string | null
+          id: string
+          note: string | null
+          outcome: string
+          phone: string | null
+        }
+        Insert: {
+          called_by?: string | null
+          case_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          duration_seconds?: number | null
+          followup_date?: string | null
+          id?: string
+          note?: string | null
+          outcome?: string
+          phone?: string | null
+        }
+        Update: {
+          called_by?: string | null
+          case_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          duration_seconds?: number | null
+          followup_date?: string | null
+          id?: string
+          note?: string | null
+          outcome?: string
+          phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_calls_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collect_case_items: {
         Row: {
           balance: number
@@ -12764,6 +12811,149 @@ export type Database = {
         }
         Relationships: []
       }
+      collect_credit_checks: {
+        Row: {
+          checked_at: string
+          checked_by: string | null
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          provider: string
+          rating_class: string | null
+          raw_response: Json | null
+          recommended_limit: number | null
+          result: string | null
+          score: number | null
+          trigger_reason: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          checked_at?: string
+          checked_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          provider?: string
+          rating_class?: string | null
+          raw_response?: Json | null
+          recommended_limit?: number | null
+          result?: string | null
+          score?: number | null
+          trigger_reason?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          checked_at?: string
+          checked_by?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          provider?: string
+          rating_class?: string | null
+          raw_response?: Json | null
+          recommended_limit?: number | null
+          result?: string | null
+          score?: number | null
+          trigger_reason?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      collect_credit_limits: {
+        Row: {
+          block_reason: string | null
+          blocked: boolean
+          created_at: string
+          credit_limit: number | null
+          customer_id: string
+          customer_name: string | null
+          id: string
+          note: string | null
+          rating_class: string | null
+          traffic_light: string
+          unlimited: boolean
+          updated_at: string
+          updated_by: string | null
+          used_amount: number
+        }
+        Insert: {
+          block_reason?: string | null
+          blocked?: boolean
+          created_at?: string
+          credit_limit?: number | null
+          customer_id: string
+          customer_name?: string | null
+          id?: string
+          note?: string | null
+          rating_class?: string | null
+          traffic_light?: string
+          unlimited?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          used_amount?: number
+        }
+        Update: {
+          block_reason?: string | null
+          blocked?: boolean
+          created_at?: string
+          credit_limit?: number | null
+          customer_id?: string
+          customer_name?: string | null
+          id?: string
+          note?: string | null
+          rating_class?: string | null
+          traffic_light?: string
+          unlimited?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          used_amount?: number
+        }
+        Relationships: []
+      }
+      collect_dossiers: {
+        Row: {
+          case_id: string | null
+          content: Json
+          created_at: string
+          customer_id: string | null
+          file_url: string | null
+          generated_by: string | null
+          id: string
+          purpose: string
+        }
+        Insert: {
+          case_id?: string | null
+          content?: Json
+          created_at?: string
+          customer_id?: string | null
+          file_url?: string | null
+          generated_by?: string | null
+          id?: string
+          purpose?: string
+        }
+        Update: {
+          case_id?: string | null
+          content?: Json
+          created_at?: string
+          customer_id?: string | null
+          file_url?: string | null
+          generated_by?: string | null
+          id?: string
+          purpose?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_dossiers_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collect_events: {
         Row: {
           actor: string | null
@@ -12819,6 +13009,142 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "collect_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collect_insolvencies: {
+        Row: {
+          administrator_contact: string | null
+          administrator_name: string | null
+          case_id: string | null
+          claim_amount: number
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          deadline_at: string | null
+          documents: Json
+          file_number: string | null
+          id: string
+          note: string | null
+          quota_pct: number | null
+          registered_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          administrator_contact?: string | null
+          administrator_name?: string | null
+          case_id?: string | null
+          claim_amount?: number
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          deadline_at?: string | null
+          documents?: Json
+          file_number?: string | null
+          id?: string
+          note?: string | null
+          quota_pct?: number | null
+          registered_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          administrator_contact?: string | null
+          administrator_name?: string | null
+          case_id?: string | null
+          claim_amount?: number
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          deadline_at?: string | null
+          documents?: Json
+          file_number?: string | null
+          id?: string
+          note?: string | null
+          quota_pct?: number | null
+          registered_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_insolvencies_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collect_legal_cases: {
+        Row: {
+          case_id: string | null
+          claim_amount: number
+          closed_at: string | null
+          cost_amount: number
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          file_number: string | null
+          handed_over_at: string | null
+          id: string
+          kind: string
+          note: string | null
+          partner_name: string | null
+          recovered_amount: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          case_id?: string | null
+          claim_amount?: number
+          closed_at?: string | null
+          cost_amount?: number
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          file_number?: string | null
+          handed_over_at?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          partner_name?: string | null
+          recovered_amount?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string | null
+          claim_amount?: number
+          closed_at?: string | null
+          cost_amount?: number
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          file_number?: string | null
+          handed_over_at?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          partner_name?: string | null
+          recovered_amount?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_legal_cases_case_id_fkey"
             columns: ["case_id"]
             isOneToOne: false
             referencedRelation: "collect_cases"
@@ -12944,6 +13270,62 @@ export type Database = {
           },
         ]
       }
+      collect_promises: {
+        Row: {
+          amount: number
+          case_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          id: string
+          kept_amount: number | null
+          note: string | null
+          promised_date: string
+          resolved_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          case_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          kept_amount?: number | null
+          note?: string | null
+          promised_date: string
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          case_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          id?: string
+          kept_amount?: number | null
+          note?: string | null
+          promised_date?: string
+          resolved_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_promises_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collect_stage_config: {
         Row: {
           active: boolean
@@ -13015,6 +13397,80 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      collect_tasks: {
+        Row: {
+          amount: number | null
+          assigned_to: string | null
+          case_id: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          customer_name: string | null
+          description: string | null
+          due_date: string
+          id: string
+          priority: number
+          result_note: string | null
+          source: string
+          status: string
+          task_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          assigned_to?: string | null
+          case_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          priority?: number
+          result_note?: string | null
+          source?: string
+          status?: string
+          task_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          assigned_to?: string | null
+          case_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          priority?: number
+          result_note?: string | null
+          source?: string
+          status?: string
+          task_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_tasks_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       commission_adjustments: {
         Row: {
