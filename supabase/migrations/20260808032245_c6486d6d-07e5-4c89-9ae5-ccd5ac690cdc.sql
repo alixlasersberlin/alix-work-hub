@@ -1,0 +1,1 @@
+update public.workspace_nav_items set label = 'Mietkauf Geräte' where path = '/finance/vermietung';
