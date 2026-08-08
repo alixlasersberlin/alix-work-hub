@@ -74,6 +74,11 @@ async function getAccessToken(cfg: ReturnType<typeof getZohoConfig>) {
   throw new Error("Zoho token: exceeded retries");
 }
 
+function nullDate(v: unknown): string | null {
+  const s = (v ?? "").toString().trim();
+  return s === "" ? null : s;
+}
+
 function statusMap(s: string): "draft" | "signed" | "order" {
   const v = (s ?? "").toLowerCase();
   if (v === "accepted" || v === "invoiced") return "order";
