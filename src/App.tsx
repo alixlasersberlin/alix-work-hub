@@ -1556,6 +1556,8 @@ function AppRoutes() {
           <Route path="/finance/collect/freigaben" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectGovernance /></ProtectedRoute>} />
           <Route path="/finance/collect/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCockpit /></ProtectedRoute>} />
           <Route path="/finance/collect/copilot" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCopilot /></ProtectedRoute>} />
+          <Route path="/finance/collect/geraete" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectDevices /></ProtectedRoute>} />
+          <Route path="/finance/collect/akte" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectDossier /></ProtectedRoute>} />
           <Route path="/finance/collect/:caseId" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCase /></ProtectedRoute>} />
           <Route path="/operation/anzahlung-mahnung-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin']}><OperationMahnungKonfiguration /></ProtectedRoute>} />
           <Route path="/finance/datev" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatev /></ProtectedRoute>} />
