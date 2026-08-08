@@ -301,6 +301,7 @@ const SalesLeadsDashboard = lazy(() => import("./pages/SalesLeads/Dashboard"));
 const SalesLeadsImport = lazy(() => import("./pages/SalesLeads/Import"));
 const PublicBeratung = lazy(() => import("./pages/PublicBeratung"));
 const Angebote = lazy(() => import("./pages/Angebote"));
+const Angebotsanalyse = lazy(() => import("./pages/Verkauf/Angebotsanalyse"));
 const AngebotsKalender = lazy(() => import("./pages/Sales/AngebotsKalender"));
 const Anzahlungsrechnung = lazy(() => import("./pages/Anzahlungsrechnung"));
 const Gutschriften = lazy(() => import("./pages/Gutschriften"));
@@ -1372,6 +1373,7 @@ function AppRoutes() {
           <Route path="/verkauf/anfragen/import" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><SalesLeadsImport /></ProtectedRoute>} />
 
           <Route path="/verkauf/angebote" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebote /></ProtectedRoute>} />
+          <Route path="/verkauf/angebotsanalyse" element={<ProtectedRoute requiredRoles={ORDER_ROLES}><Angebotsanalyse /></ProtectedRoute>} />
           <Route path="/verkauf/angebotskalender" element={<ProtectedRoute requiredRoles={['Admin','Super Admin','Vertrieb','Vertriebsleitung','Order','SACHBEARBEITUNG']}><AngebotsKalender /></ProtectedRoute>} />
 
 
