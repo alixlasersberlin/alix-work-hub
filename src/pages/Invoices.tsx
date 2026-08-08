@@ -1776,7 +1776,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 {paginate(flatRows, pageSize).map((r, idx) => (
                   <tbody
                     key={`${r.source}-${r.id}`}
-                    className={`border-t-2 border-border ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}
+                    className={`border border-border/60 ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}
                   >
                     <tr className="[&>td]:pb-0">
 
@@ -1903,7 +1903,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       {a.rows.map((r, idx) => (
                         <tbody
                           key={`${r.source}-${r.id}`}
-                          className={`border-t-2 border-border ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}
+                          className={`border border-border/60 ${idx % 2 === 1 ? 'bg-muted/30' : 'bg-transparent'}`}
                         >
                           <tr className="[&>td]:pb-0">
 
