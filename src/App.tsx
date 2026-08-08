@@ -175,6 +175,7 @@ const FinanceCollectPlaybooks = lazy(() => import("./pages/Finance/CollectPlaybo
 const FinanceCollectHealth = lazy(() => import("./pages/Finance/CollectHealth"));
 const FinanceCollectSellers = lazy(() => import("./pages/Finance/CollectSellers"));
 const FinanceCollectFees = lazy(() => import("./pages/Finance/CollectFees"));
+const FinanceCollectSettings = lazy(() => import("./pages/Finance/CollectSettings"));
 const FinanceCollectGovernance = lazy(() => import("./pages/Finance/CollectGovernance"));
 const FinanceCollectCockpit = lazy(() => import("./pages/Finance/CollectCockpit"));
 const FinanceCollectCopilot = lazy(() => import("./pages/Finance/CollectCopilot"));
