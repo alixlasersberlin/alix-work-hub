@@ -254,7 +254,7 @@ Deno.serve(async (req) => {
             status: statusMap(est.status),
             payload,
             created_by_name:
-              (full.salesperson_name ?? est.salesperson_name ?? '').trim() ||
+              normalizeSalesperson(full.salesperson_name ?? est.salesperson_name ?? '') ||
               `Zoho ${isAT ? "AT" : "DE"}`,
           };
 
