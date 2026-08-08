@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
       // Stage-5 inactive marking
       const stage5Due = new Date(base);
       stage5Due.setDate(stage5Due.getDate() + (stageDays[4] || 21));
-      if (Date.now() > stage5Due.getTime() && (!oc || oc === 'offen')) {
+      if (!dryRun && Date.now() > stage5Due.getTime() && (!oc || oc === 'offen')) {
         await admin.from('offer_outcomes').upsert({
           offer_number: o.offer_number,
           outcome: 'inaktiv',
