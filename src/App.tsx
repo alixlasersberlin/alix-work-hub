@@ -1556,6 +1556,7 @@ function AppRoutes() {
           <Route path="/finance/collect/health" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectHealth /></ProtectedRoute>} />
           <Route path="/finance/collect/verkaeufer" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectSellers /></ProtectedRoute>} />
           <Route path="/finance/collect/gebuehren" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectFees /></ProtectedRoute>} />
+          <Route path="/finance/collect/einstellungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectSettings /></ProtectedRoute>} />
           <Route path="/finance/collect/freigaben" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectGovernance /></ProtectedRoute>} />
           <Route path="/finance/collect/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCockpit /></ProtectedRoute>} />
           <Route path="/finance/collect/copilot" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCopilot /></ProtectedRoute>} />
