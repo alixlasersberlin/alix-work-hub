@@ -52,6 +52,26 @@ export default function CollectCaseActions({ c, items, onChange }: { c: any; ite
 
   const [limitOpen, setLimitOpen] = useState(false);
   const [limitValue, setLimitValue] = useState('20000');
+  const [busyPlan, setBusyPlan] = useState<string | null>(null);
+
+  const planDoc = async (planId: string, send: boolean) => {
+    setBusyPlan(planId);
+    try {
+      const { data, error } = await supabase.functions.invoke('collect-document-generate', {
+        body: { case_id: caseId, doc_type: 'ratenvereinbarung', plan_id: planId, send },
+      });
+      if (error) throw error;
+      const res = data as any;
+      if (res?.error) throw new Error(res.error);
+      if (res?.url) window.open(res.url, '_blank');
+      toast({ title: send ? 'Ratenvereinbarung versendet' : 'Ratenvereinbarung erstellt' });
+      onChange(); load();
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setBusyPlan(null);
+    }
+  };
 
   const load = async () => {
     const [ca, pr, pl, li, lg] = await Promise.all([
