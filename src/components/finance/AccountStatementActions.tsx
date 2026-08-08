@@ -320,8 +320,18 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
                 <Label className="text-xs">Text</Label>
                 <Textarea rows={12} value={text} onChange={(e) => setText(e.target.value)} />
               </div>
+              <div className="flex items-center gap-2 rounded-md border border-border p-2">
+                <Switch
+                  id="ka-all"
+                  checked={mailAll}
+                  onCheckedChange={(v) => { setMailAll(v); void refreshPreview(v); }}
+                />
+                <Label htmlFor="ka-all" className="text-xs cursor-pointer">Alle Buchungen anzeigen (inkl. bezahlter)</Label>
+              </div>
               <div className="text-xs text-muted-foreground">
-                {items.length} offene Posten · Gesamtsaldo {money(openSum, currency)}
+                {mailAll
+                  ? `${allItems.length} Buchungen · Gesamtsaldo ${money(openSum, currency)}`
+                  : `${items.length} offene Posten · Gesamtsaldo ${money(openSum, currency)}`}
               </div>
             </div>
           </div>
