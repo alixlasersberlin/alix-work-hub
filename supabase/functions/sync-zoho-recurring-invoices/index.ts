@@ -408,6 +408,47 @@ Deno.serve(async (req) => {
                 }
               }
 
+              if (dryRun) {
+                // Vorschau: bestehenden Datensatz laden und Feld-Änderungen ermitteln
+                const { data: existing } = await admin
+                  .from("zoho_recurring_invoices")
+                  .select(DIFF_FIELDS.join(", "))
+                  .eq("source_system", sourceSystem)
+                  .eq("zoho_invoice_id", invId)
+                  .maybeSingle();
+                if (!existing) {
+                  imported++;
+                  changes.push({
+                    kind: "new",
+                    invoice_number: invNumber,
+                    customer_name: payload.customer_name,
+                    invoice_date: payload.invoice_date,
+                    total: payload.total,
+                    currency: payload.currency,
+                    diffs: [],
+                  });
+                } else {
+                  const diffs = DIFF_FIELDS
+                    .filter((f) => !sameValue((existing as any)[f], (payload as any)[f]))
+                    .map((f) => ({ field: f, old: (existing as any)[f], new: (payload as any)[f] }));
+                  if (diffs.length === 0) {
+                    unchanged++;
+                  } else {
+                    updated++;
+                    changes.push({
+                      kind: "update",
+                      invoice_number: invNumber,
+                      customer_name: payload.customer_name,
+                      invoice_date: payload.invoice_date,
+                      total: payload.total,
+                      currency: payload.currency,
+                      diffs,
+                    });
+                  }
+                }
+                continue;
+              }
+
               const { data: upserted, error } = await admin
                 .from("zoho_recurring_invoices")
                 .upsert(payload, { onConflict: "source_system,zoho_invoice_id" })
