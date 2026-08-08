@@ -1791,7 +1791,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     key={`${r.source}-${r.id}`}
                     className={`group border border-border/60 hover:border-emerald-500 transition-colors [&>tr]:bg-transparent [&>tr>td]:bg-transparent ${idx % 2 === 1 ? 'bg-muted/30 hover:bg-primary/10' : 'bg-transparent hover:bg-primary/10'}`}
                   >
-                    <tr className="[&>td]:pb-0">
+                    <tr
+                      className={`cursor-pointer ${openActions[`${r.source}-${r.id}`] ? '[&>td]:pb-0' : ''}`}
+                      onClick={() => toggleActions(`${r.source}-${r.id}`)}
+                    >
 
 
 
