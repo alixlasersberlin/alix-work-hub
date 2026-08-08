@@ -309,6 +309,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [pdfLoadingId, setPdfLoadingId] = useState<string | null>(null);
   const [editRow, setEditRow] = useState<Row | null>(null);
   const [previewRow, setPreviewRow] = useState<Row | null>(null);
+  const [openActions, setOpenActions] = useState<Record<string, boolean>>({});
+  const toggleActions = (key: string) => setOpenActions((s) => ({ ...s, [key]: !s[key] }));
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ reference_number: '', due_date: '', payment_status: '', invoice_number: '', customer_name: '', invoice_date: '', total: '', balance: '', status: '' });
   const [editSaving, setEditSaving] = useState(false);
@@ -1789,7 +1791,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     key={`${r.source}-${r.id}`}
                     className={`group border border-border/60 hover:border-emerald-500 transition-colors [&>tr]:bg-transparent [&>tr>td]:bg-transparent ${idx % 2 === 1 ? 'bg-muted/30 hover:bg-primary/10' : 'bg-transparent hover:bg-primary/10'}`}
                   >
-                    <tr className="[&>td]:pb-0">
+                    <tr
+                      className={`cursor-pointer ${openActions[`${r.source}-${r.id}`] ? '[&>td]:pb-0' : ''}`}
+                      onClick={() => toggleActions(`${r.source}-${r.id}`)}
+                    >
 
 
 
@@ -1850,11 +1855,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         </Badge>
                       </td>
                     </tr>
-                    <tr>
-                      <td colSpan={isAdmin ? 11 : 10} className="pb-3 pt-1">
-                        {renderRowActions(r)}
-                      </td>
-                    </tr>
+                    {openActions[`${r.source}-${r.id}`] && (
+                      <tr>
+                        <td colSpan={isAdmin ? 11 : 10} className="pb-3 pt-1">
+                          {renderRowActions(r)}
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 ))}
 
@@ -1923,7 +1930,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           key={`${r.source}-${r.id}`}
                           className={`group border border-border/60 hover:border-emerald-500 transition-colors [&>tr]:bg-transparent [&>tr>td]:bg-transparent ${idx % 2 === 1 ? 'bg-muted/30 hover:bg-primary/10' : 'bg-transparent hover:bg-primary/10'}`}
                         >
-                          <tr className="[&>td]:pb-0">
+                          <tr
+                            className={`cursor-pointer ${openActions[`acc-${r.source}-${r.id}`] ? '[&>td]:pb-0' : ''}`}
+                            onClick={() => toggleActions(`acc-${r.source}-${r.id}`)}
+                          >
 
 
 
@@ -1969,11 +1979,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                               </Badge>
                             </td>
                             </tr>
-                          <tr>
-                            <td colSpan={10} className="pb-3 pt-1">
-                              {renderRowActions(r)}
-                            </td>
-                          </tr>
+                          {openActions[`acc-${r.source}-${r.id}`] && (
+                            <tr>
+                              <td colSpan={10} className="pb-3 pt-1">
+                                {renderRowActions(r)}
+                              </td>
+                            </tr>
+                          )}
                         </tbody>
                       ))}
 
