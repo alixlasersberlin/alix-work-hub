@@ -230,9 +230,14 @@ Deno.serve(async (req) => {
     const recipient = toEmail || c.customer_email;
     if (send && recipient && RESEND_API_KEY) {
       const b64 = btoa(String.fromCharCode(...bytes));
-      const res = await fetch('https://api.resend.com/emails', {
+      const res = await fetch('https://connector-gateway.lovable.dev/resend/emails', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        headers: {
+          Authorization: `Bearer ${Deno.env.get('LOVABLE_API_KEY') ?? ''}`,
+          'X-Connection-Api-Key': RESEND_API_KEY,
+          'Content-Type': 'application/json',
+        },
+
         body: JSON.stringify({
           from: FROM,
           to: [recipient],
