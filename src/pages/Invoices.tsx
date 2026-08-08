@@ -1581,28 +1581,29 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-        <DataCard className="p-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground"><Users className="w-4 h-4" />Kundenkonten</div>
-          <div className="text-2xl font-semibold mt-1">{kpi.accounts}</div>
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 mb-3">
+        <DataCard className="p-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Users className="w-3.5 h-3.5" />Kundenkonten</div>
+          <div className="text-base font-semibold mt-0.5">{kpi.accounts}</div>
         </DataCard>
-        <DataCard className="p-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground"><FileText className="w-4 h-4" />Rechnungen gesamt</div>
-          <div className="text-2xl font-semibold mt-1">{kpi.invoices}</div>
+        <DataCard className="p-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><FileText className="w-3.5 h-3.5" />Rechnungen gesamt</div>
+          <div className="text-base font-semibold mt-0.5">{kpi.invoices}</div>
         </DataCard>
-        <DataCard className="p-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground"><Wallet className="w-4 h-4" />Volumen</div>
-          <div className="text-2xl font-semibold mt-1 tabular-nums">{fmtMoney(kpi.totalAmount)}</div>
+        <DataCard className="p-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Wallet className="w-3.5 h-3.5" />Volumen</div>
+          <div className="text-base font-semibold mt-0.5 tabular-nums">{fmtMoney(kpi.totalAmount)}</div>
         </DataCard>
-        <DataCard className="p-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground"><AlertTriangle className="w-4 h-4" />Offene Beträge</div>
-          <div className="text-2xl font-semibold mt-1 tabular-nums text-amber-500">{fmtMoney(kpi.totalOpen)}</div>
+        <DataCard className="p-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><AlertTriangle className="w-3.5 h-3.5" />Offene Beträge</div>
+          <div className="text-base font-semibold mt-0.5 tabular-nums text-amber-500">{fmtMoney(kpi.totalOpen)}</div>
         </DataCard>
-        <DataCard className="p-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground"><Wallet className="w-4 h-4" />OP Total (alle Konten)</div>
-          <div className={`text-2xl font-semibold mt-1 tabular-nums ${kpi.opTotal > 0 ? 'text-destructive' : 'text-emerald-400'}`}>{fmtMoney(kpi.opTotal)}</div>
+        <DataCard className="p-2.5">
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Wallet className="w-3.5 h-3.5" />OP Total (alle Konten)</div>
+          <div className={`text-base font-semibold mt-0.5 tabular-nums ${kpi.opTotal > 0 ? 'text-destructive' : 'text-emerald-400'}`}>{fmtMoney(kpi.opTotal)}</div>
         </DataCard>
       </div>
+
 
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
