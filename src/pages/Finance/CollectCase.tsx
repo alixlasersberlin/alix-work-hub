@@ -27,6 +27,21 @@ const AMPEL: Record<string, string> = {
   schwarz: 'bg-foreground/15 text-foreground border-foreground/30',
 };
 
+function formatAddress(a: any): string {
+  if (!a) return '–';
+  if (typeof a === 'string') return a;
+  const parts = [
+    a.attention,
+    a.address,
+    a.street2,
+    [a.zip, a.city].filter(Boolean).join(' '),
+    a.state,
+    a.country,
+  ].filter((x) => typeof x === 'string' && x.trim());
+  return parts.length ? parts.join('\n') : '–';
+}
+
+
 export default function FinanceCollectCase() {
   const { caseId } = useParams();
   const [c, setC] = useState<any>(null);
