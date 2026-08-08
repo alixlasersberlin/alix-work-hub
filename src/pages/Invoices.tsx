@@ -624,6 +624,28 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     };
   }, []);
 
+  // Mietkauf-Geräte-Summen je Kundenkonto (unabhängig von der aktuellen Ansicht laden)
+  const [mietkaufTotals, setMietkaufTotals] = useState<Record<string, number>>({});
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const sel = 'customer_id, customer_name, total';
+      const [a, b] = await Promise.all([
+        (supabase.from('zoho_invoices') as any).select(sel).eq('is_mietkauf', true).limit(5000),
+        (supabase.from('zoho_recurring_invoices') as any).select(sel).eq('is_mietkauf', true).limit(5000),
+      ]);
+      if (cancelled) return;
+      const map: Record<string, number> = {};
+      for (const r of [...(a.data ?? []), ...(b.data ?? [])]) {
+        const key = r.customer_id || `name:${String(r.customer_name ?? 'Unbekannt').toLowerCase()}`;
+        map[key] = (map[key] ?? 0) + Number(r.total ?? 0);
+      }
+      setMietkaufTotals(map);
+    })();
+    return () => { cancelled = true; };
+  }, [region]);
+
+
 
   const accounts = useMemo<Account[]>(() => {
     let res = rows;
