@@ -73,8 +73,14 @@ Deno.serve(async (req) => {
         + `Bitte begleichen Sie den Betrag oder kontaktieren Sie uns unter finance@alixwork.de.`,
     ).slice(0, 600);
 
-    const from = channel === 'whatsapp' ? (TWILIO_WA_FROM || `whatsapp:${TWILIO_FROM}`) : TWILIO_FROM;
-    if (!from) return json({ error: 'Twilio-Absender fehlt' }, 400);
+    if (channel === 'whatsapp' && !TWILIO_WA_FROM) {
+      return json({ error: 'WhatsApp ist nicht konfiguriert: Bitte TWILIO_WHATSAPP_FROM_NUMBER (z.B. whatsapp:+4915112345678) als Secret hinterlegen. Eine normale SMS-Nummer funktioniert nicht als WhatsApp-Absender.' }, 400);
+    }
+    if (channel === 'sms' && !TWILIO_FROM) {
+      return json({ error: 'SMS-Absender fehlt: Bitte TWILIO_SMS_FROM_NUMBER als Secret hinterlegen.' }, 400);
+    }
+    const from = channel === 'whatsapp' ? TWILIO_WA_FROM : TWILIO_FROM;
+
 
     const params = new URLSearchParams({
       To: channel === 'whatsapp' ? `whatsapp:${phone}` : phone,
