@@ -71,6 +71,10 @@ export default function AngebotErstellen() {
   const [itemSearch, setItemSearch] = useState('');
   const [offerNumber, setOfferNumber] = useState(`${sofortMode ? 'AUF' : 'ANG'}-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`);
   const [caseNumber, setCaseNumber] = useState<string | null>(null);
+  // Synchroner Spiegel der Vorgangs-Stammnummer: State-Updates sind innerhalb
+  // desselben Ticks noch nicht sichtbar (Sofortauftrag zog sonst eine eigene AB-Nummer).
+  const caseNumberRef = useRef<string | null>(null);
+  useEffect(() => { caseNumberRef.current = caseNumber; }, [caseNumber]);
   const [offerDate, setOfferDate] = useState(new Date().toISOString().slice(0, 10));
   const [validUntil, setValidUntil] = useState('');
   const [salesAdvisor, setSalesAdvisor] = useState('');
