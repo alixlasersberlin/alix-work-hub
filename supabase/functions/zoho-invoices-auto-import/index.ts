@@ -203,10 +203,15 @@ function buildEmailHtml(opts: {
 
 async function sendMail(subject: string, html: string, to: string, cc: string) {
   const key = Deno.env.get("RESEND_API_KEY");
-  if (!key) throw new Error("RESEND_API_KEY fehlt");
-  const res = await fetch("https://api.resend.com/emails", {
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!key || !lovableKey) throw new Error("Mail-Konfiguration fehlt (RESEND_API_KEY / LOVABLE_API_KEY)");
+  const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
     method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${lovableKey}`,
+      "X-Connection-Api-Key": key,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ from: MAIL_FROM, to: [to], cc: [cc], bcc: [MAIL_BCC], subject, html }),
   });
   if (!res.ok) {
@@ -215,6 +220,7 @@ async function sendMail(subject: string, html: string, to: string, cc: string) {
   }
   return await res.json();
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
