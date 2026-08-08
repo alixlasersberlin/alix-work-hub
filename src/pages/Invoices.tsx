@@ -1941,8 +1941,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                               </Badge>
                             </td>
                             </tr>
-                            <tr className={`hover:bg-muted/20 ${idx % 2 === 1 ? 'bg-muted/10' : 'bg-transparent'}`}>
-                              <td colSpan={10} className="pb-2 pt-0">
+                            <tr className={`${idx % 2 === 1 ? 'bg-muted/10' : 'bg-transparent'}`}>
+                              <td colSpan={10} className="pb-3 pt-1">
+
                                 {renderRowActions(r)}
                               </td>
                             </tr>
