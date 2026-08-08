@@ -100,6 +100,8 @@ type Account = {
   totalOpen: number;
   overdueCount: number;
   lastInvoiceDate: string | null;
+  /** Neuestes Datum einer gestellten/festgeschriebenen Rechnung (kein Entwurf/Storno) */
+  lastFinalizedDate?: string | null;
 };
 
 function statusVariant(s: string | null) {
@@ -477,14 +479,24 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       if (!acc.lastInvoiceDate || (r.invoice_date && r.invoice_date > acc.lastInvoiceDate)) {
         acc.lastInvoiceDate = r.invoice_date;
       }
+      // Nur gestellte/festgeschriebene Rechnungen (kein Entwurf, kein Storno)
+      if (matchesDocStatus(r, 'sent')) {
+        const d = String(r.invoice_date ?? r.created_at ?? '');
+        if (d && (!acc.lastFinalizedDate || d > acc.lastFinalizedDate)) acc.lastFinalizedDate = d;
+      }
     }
     const accs = Array.from(map.values());
+    const rowKey = (r: Row) =>
+      `${String(matchesDocStatus(r, 'sent') ? 1 : 0)}|${String(r.invoice_date ?? r.created_at ?? '')}`;
     for (const a of accs) {
-      a.rows.sort((x, y) => String(y.invoice_date ?? '').localeCompare(String(x.invoice_date ?? '')));
+      // Innerhalb des Kontos: gestellte/festgeschriebene Rechnungen zuerst, neueste oben
+      a.rows.sort((x, y) => rowKey(y).localeCompare(rowKey(x)));
     }
-    // Sortierung: neueste Rechnung zuerst (absteigend nach Datum)
+    // Konten-Sortierung: neueste gestellte/festgeschriebene Rechnung zuerst (absteigend)
     return accs.sort((a, b) =>
-      String(b.lastInvoiceDate ?? '').localeCompare(String(a.lastInvoiceDate ?? '')),
+      String(b.lastFinalizedDate ?? b.lastInvoiceDate ?? '').localeCompare(
+        String(a.lastFinalizedDate ?? a.lastInvoiceDate ?? ''),
+      ),
     );
   }, [rows, search, statusFilter, docStatusFilter]);
 
