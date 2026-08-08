@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { FileDown, Mail, Loader2, FileSpreadsheet, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -120,6 +121,21 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
   const [subject, setSubject] = useState('');
   const [text, setText] = useState('');
 
+  const [mailAll, setMailAll] = useState(false);
+
+  const toItem = (r: AnyRow): KontoauszugItem => ({
+    invoice_number: r.invoice_number || '—',
+    invoice_date: r.invoice_date,
+    due_date: r.due_date,
+    total: r.total,
+    balance: r.balance != null ? Number(r.balance) : Number(r.total ?? 0),
+    status: r.payment_status || r.status,
+    currency: r.currency,
+  });
+
+  const sortByDate = (list: KontoauszugItem[]) =>
+    [...list].sort((a, b) => new Date(a.invoice_date || 0).getTime() - new Date(b.invoice_date || 0).getTime());
+
   const items: KontoauszugItem[] = useMemo(() => {
     const map = new Map<string, KontoauszugItem>();
     rows.forEach((r) => {
@@ -129,27 +145,29 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
       if (!(balance > 0)) return;
       const key = r.invoice_number || `${r.invoice_date}-${balance}`;
       if (map.has(key)) return;
-      map.set(key, {
-        invoice_number: r.invoice_number || '—',
-        invoice_date: r.invoice_date,
-        due_date: r.due_date,
-        total: r.total,
-        balance,
-        status: r.payment_status || r.status,
-        currency: r.currency,
-      });
+      map.set(key, toItem(r));
     });
-    return [...map.values()].sort(
-      (a, b) => new Date(a.invoice_date || 0).getTime() - new Date(b.invoice_date || 0).getTime(),
-    );
+    return sortByDate([...map.values()]);
   }, [rows]);
 
-  const currency = items[0]?.currency || 'EUR';
+  /** Alle Buchungen – auch bereits bezahlte/stornierte Rechnungen. */
+  const allItems: KontoauszugItem[] = useMemo(() => {
+    const map = new Map<string, KontoauszugItem>();
+    rows.forEach((r) => {
+      const balance = r.balance != null ? Number(r.balance) : Number(r.total ?? 0);
+      const key = r.invoice_number || `${r.invoice_date}-${balance}`;
+      if (map.has(key)) return;
+      map.set(key, toItem(r));
+    });
+    return sortByDate([...map.values()]);
+  }, [rows]);
+
+  const currency = items[0]?.currency || allItems[0]?.currency || 'EUR';
   const openSum = items.reduce((s, i) => s + Number(i.balance ?? i.total ?? 0), 0);
   const addresses = useMemo(() => addressesFromRows(rows), [rows]);
   const fileBase = `Kontoauszug_${(customerName || 'Kunde').replace(/[^\w-]+/g, '_')}`;
 
-  const buildDoc = async () => {
+  const buildDoc = async (showAll = false) => {
     let addr = addresses;
     if (!addr.billing) addr = await addressesFromCustomer(customerName, customerNumber);
     return generateKontoauszugPdf({
@@ -158,27 +176,30 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
       shippingAddress: addr.shipping,
       customerNumber: customerNumber ?? null,
       currency,
-      items,
+      items: showAll ? allItems : items,
+      showAll,
     });
   };
 
-  const guard = () => {
-    if (!items.length) {
-      toast.info('Keine offenen Posten für dieses Kundenkonto');
+  const guard = (showAll = false) => {
+    const list = showAll ? allItems : items;
+    if (!list.length) {
+      toast.info(showAll ? 'Keine Buchungen für dieses Kundenkonto' : 'Keine offenen Posten für dieses Kundenkonto');
       return false;
     }
     return true;
   };
 
-  const downloadPdf = async () => {
-    if (!guard()) return;
-    (await buildDoc()).save(`${fileBase}.pdf`);
+  const downloadPdf = async (showAll = false) => {
+    if (!guard(showAll)) return;
+    (await buildDoc(showAll)).save(`${fileBase}${showAll ? '_alle_Buchungen' : ''}.pdf`);
   };
 
-  const downloadCsv = () => {
-    if (!guard()) return;
+  const downloadCsv = (showAll = false) => {
+    if (!guard(showAll)) return;
+    const list = showAll ? allItems : items;
     const head = ['Rechnung', 'Datum', 'Faellig', 'Betrag', 'Offen', 'Waehrung', 'Status'];
-    const lines = items.map((i) =>
+    const lines = list.map((i) =>
       [
         i.invoice_number,
         i.invoice_date ?? '',
@@ -196,15 +217,20 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${fileBase}.csv`;
+    a.download = `${fileBase}${showAll ? '_alle_Buchungen' : ''}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
+  const refreshPreview = async (showAll: boolean) => {
+    const doc = await buildDoc(showAll);
+    setPreviewUrl(String(doc.output('bloburl')));
+  };
+
   const openMail = async () => {
     if (!guard()) return;
-    const doc = await buildDoc();
-    setPreviewUrl(String(doc.output('bloburl')));
+    setMailAll(false);
+    await refreshPreview(false);
     setTo(emailFromRows(rows));
     setSubject(`Kontoauszug ${new Date().toLocaleDateString('de-DE')}`);
     setText(
@@ -223,7 +249,7 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
     }
     setSending(true);
     try {
-      const base64 = ((await buildDoc()).output('datauristring') as string).split(',')[1];
+      const base64 = ((await buildDoc(mailAll)).output('datauristring') as string).split(',')[1];
       const { error } = await supabase.functions.invoke('send-invoice-mail', {
         body: {
           to_email: to,
@@ -253,11 +279,18 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={downloadPdf}>
-            <FileText className="w-4 h-4 mr-2" /> Als PDF
+          <DropdownMenuItem onClick={() => downloadPdf(false)}>
+            <FileText className="w-4 h-4 mr-2" /> Offene Posten – PDF
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={downloadCsv}>
-            <FileSpreadsheet className="w-4 h-4 mr-2" /> Als CSV
+          <DropdownMenuItem onClick={() => downloadCsv(false)}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> Offene Posten – CSV
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => downloadPdf(true)}>
+            <FileText className="w-4 h-4 mr-2" /> Alle Buchungen – PDF
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => downloadCsv(true)}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> Alle Buchungen – CSV
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -288,8 +321,18 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
                 <Label className="text-xs">Text</Label>
                 <Textarea rows={12} value={text} onChange={(e) => setText(e.target.value)} />
               </div>
+              <div className="flex items-center gap-2 rounded-md border border-border p-2">
+                <Switch
+                  id="ka-all"
+                  checked={mailAll}
+                  onCheckedChange={(v) => { setMailAll(v); void refreshPreview(v); }}
+                />
+                <Label htmlFor="ka-all" className="text-xs cursor-pointer">Alle Buchungen anzeigen (inkl. bezahlter)</Label>
+              </div>
               <div className="text-xs text-muted-foreground">
-                {items.length} offene Posten · Gesamtsaldo {money(openSum, currency)}
+                {mailAll
+                  ? `${allItems.length} Buchungen · Gesamtsaldo ${money(openSum, currency)}`
+                  : `${items.length} offene Posten · Gesamtsaldo ${money(openSum, currency)}`}
               </div>
             </div>
           </div>

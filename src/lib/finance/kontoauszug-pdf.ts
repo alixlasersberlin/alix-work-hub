@@ -18,6 +18,8 @@ export type KontoauszugData = {
   customerNumber?: string | null;
   currency?: string | null;
   items: KontoauszugItem[];
+  /** true = alle Buchungen (inkl. bezahlter Rechnungen), false = nur offene Posten */
+  showAll?: boolean;
 };
 
 const money = (v?: number | null, c?: string | null) => {
@@ -176,7 +178,7 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
   doc.setFont('Inter', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(15);
-  doc.text('Kontoauszug', m, y);
+  doc.text(data.showAll ? 'Kontoauszug – alle Buchungen' : 'Kontoauszug', m, y);
   doc.setFont('Inter', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(110);
@@ -193,9 +195,13 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
   doc.text(`Sehr geehrte Damen und Herren${data.customerName ? ` von ${data.customerName}` : ''},`, m, y);
   y += 6;
   const intro = doc.splitTextToSize(
-    'anbei erhalten Sie den aktuellen Kontoauszug Ihres Kundenkontos mit einer Aufstellung aller offenen Posten. ' +
-      'Bitte prüfen Sie die aufgeführten Positionen und gleichen Sie offene Beträge zeitnah aus. ' +
-      'Sollten sich Zahlungen mit diesem Schreiben überschnitten haben, betrachten Sie es bitte als gegenstandslos.',
+    data.showAll
+      ? 'anbei erhalten Sie den aktuellen Kontoauszug Ihres Kundenkontos mit einer vollständigen Aufstellung aller Buchungen ' +
+        '(bezahlte und offene Rechnungen). Bitte prüfen Sie die aufgeführten Positionen und gleichen Sie offene Beträge zeitnah aus. ' +
+        'Sollten sich Zahlungen mit diesem Schreiben überschnitten haben, betrachten Sie es bitte als gegenstandslos.'
+      : 'anbei erhalten Sie den aktuellen Kontoauszug Ihres Kundenkontos mit einer Aufstellung aller offenen Posten. ' +
+        'Bitte prüfen Sie die aufgeführten Positionen und gleichen Sie offene Beträge zeitnah aus. ' +
+        'Sollten sich Zahlungen mit diesem Schreiben überschnitten haben, betrachten Sie es bitte als gegenstandslos.',
     right - m,
   ) as string[];
   doc.text(intro, m, y);
@@ -220,7 +226,7 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
     doc.text('Rechnung', cols.nr + 2, y);
     doc.text('Datum', cols.datum, y);
     doc.text('Fällig', cols.faellig, y);
-    doc.text('Verzug', cols.tage, y);
+    doc.text(data.showAll ? 'Status' : 'Verzug', cols.tage, y);
     doc.text('Betrag', cols.total, y, { align: 'right' });
     doc.text('Offen', cols.offen - 2, y, { align: 'right' });
     y += 8;
@@ -245,29 +251,32 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
       doc.setFillColor(250, 250, 248);
       doc.rect(m, y - 4.5, right - m, 7, 'F');
     }
-    const od = daysOverdue(it.due_date);
+    const open = Number(it.balance ?? it.total ?? 0);
+    const paid = data.showAll && !(open > 0);
+    const od = paid ? 0 : daysOverdue(it.due_date);
     sumTotal += Number(it.total ?? 0);
-    sumOpen += Number(it.balance ?? it.total ?? 0);
+    sumOpen += open;
 
     doc.setTextColor(30);
     doc.text(String(it.invoice_number || '—').slice(0, 22), cols.nr + 2, y);
     doc.setTextColor(90);
     doc.text(date(it.invoice_date), cols.datum, y);
     doc.text(date(it.due_date), cols.faellig, y);
-    if (od > 0) doc.setTextColor(190, 60, 40);
-    doc.text(od > 0 ? `${od} Tage` : '—', cols.tage, y);
+    if (paid) doc.setTextColor(40, 140, 80);
+    else if (od > 0) doc.setTextColor(190, 60, 40);
+    doc.text(paid ? 'bezahlt' : od > 0 ? `${od} Tage` : data.showAll ? 'offen' : '—', cols.tage, y);
     doc.setTextColor(90);
     doc.text(money(it.total, it.currency || cur), cols.total, y, { align: 'right' });
     doc.setFont('Inter', 'bold');
     doc.setTextColor(30);
-    doc.text(money(it.balance ?? it.total, it.currency || cur), cols.offen - 2, y, { align: 'right' });
+    doc.text(money(open, it.currency || cur), cols.offen - 2, y, { align: 'right' });
     doc.setFont('Inter', 'normal');
     y += 7;
   });
 
   if (!data.items.length) {
     doc.setTextColor(120);
-    doc.text('Keine offenen Posten vorhanden.', m + 2, y);
+    doc.text(data.showAll ? 'Keine Buchungen vorhanden.' : 'Keine offenen Posten vorhanden.', m + 2, y);
     y += 7;
   }
 
