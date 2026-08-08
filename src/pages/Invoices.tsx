@@ -1796,10 +1796,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       className={`cursor-pointer ${openActions[`${r.source}-${r.id}`] ? '[&>td]:pb-0' : ''}`}
                       onClick={() => toggleActions(`${r.source}-${r.id}`)}
                     >
-
-
-
-
+                      <td className="px-2 py-2 w-8">
+                        <button
+                          type="button"
+                          aria-label="Aktionen ein-/ausklappen"
+                          onClick={(e) => { e.stopPropagation(); toggleActions(`${r.source}-${r.id}`); }}
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          {openActions[`${r.source}-${r.id}`]
+                            ? <ChevronDown className="w-4 h-4" />
+                            : <ChevronRight className="w-4 h-4" />}
+                        </button>
+                      </td>
                       {isAdmin && (
                         <td className="px-3 py-2">
                           <input
