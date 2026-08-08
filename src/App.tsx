@@ -166,6 +166,10 @@ const FinanceMahnwesenDetail = lazy(() => import("./pages/Finance/MahnwesenDetai
 const FinanceMahnwesenSettings = lazy(() => import("./pages/Finance/MahnwesenSettings"));
 const FinanceCollect = lazy(() => import("./pages/Finance/Collect"));
 const FinanceCollectCase = lazy(() => import("./pages/Finance/CollectCase"));
+const FinanceCollectCommand = lazy(() => import("./pages/Finance/CollectCommand"));
+const FinanceCollectTasks = lazy(() => import("./pages/Finance/CollectTasks"));
+const FinanceCollectBi = lazy(() => import("./pages/Finance/CollectBi"));
+const FinanceCollectCopilot = lazy(() => import("./pages/Finance/CollectCopilot"));
 const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
 const FinanceBank = lazy(() => import("./pages/Finance/Bank"));
 const KontoauszuegeLayout = lazy(() => import("./pages/Finance/Kontoauszuege/Layout"));
