@@ -226,7 +226,7 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
     doc.text('Rechnung', cols.nr + 2, y);
     doc.text('Datum', cols.datum, y);
     doc.text('Fällig', cols.faellig, y);
-    doc.text('Verzug', cols.tage, y);
+    doc.text(data.showAll ? 'Status' : 'Verzug', cols.tage, y);
     doc.text('Betrag', cols.total, y, { align: 'right' });
     doc.text('Offen', cols.offen - 2, y, { align: 'right' });
     y += 8;
