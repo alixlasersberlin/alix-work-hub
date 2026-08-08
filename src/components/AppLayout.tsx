@@ -555,6 +555,7 @@ export const navItems: NavItem[] = [
       {
         path: '/finance/mahnwesen', label: 'MAHNUNGEN', icon: AlertTriangle, roles: ['Admin', 'Super Admin'],
         children: [
+          { path: '/finance/collect', label: 'ALIX COLLECT', icon: AlertTriangle, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/mahnwesen', label: 'Mahnwesen', icon: FileText, roles: ['Admin', 'Super Admin'] },
         ],
       },
