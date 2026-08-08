@@ -2085,7 +2085,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
               <Textarea id="mbody" rows={8} value={emailForm.body_text} onChange={(e) => setEmailForm((f) => ({ ...f, body_text: e.target.value }))} />
             </div>
             <p className="text-xs text-muted-foreground">
-              Absender: <span className="font-mono">finance@alixwork.de</span> · Die Rechnung wird automatisch als PDF im Anhang beigefügt.
+              Absender: <span className="font-mono">noreply@alixlasers.ai</span> (Alix Lasers ®) · Die Rechnung wird automatisch als PDF im Anhang beigefügt.
             </p>
           </div>
           <DialogFooter>
