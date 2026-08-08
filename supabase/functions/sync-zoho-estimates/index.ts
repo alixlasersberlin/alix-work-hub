@@ -190,8 +190,8 @@ Deno.serve(async (req) => {
 
           const payload = {
             offerNumber,
-            offerDate: full.date ?? est.date ?? null,
-            validUntil: full.expiry_date ?? est.expiry_date ?? null,
+            offerDate: nullDate(full.date ?? est.date),
+            validUntil: nullDate(full.expiry_date ?? est.expiry_date),
             customer: {
               id: customerId,
               company_name: est.customer_name ?? null,
