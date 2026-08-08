@@ -188,6 +188,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const isAdmin = roles.includes('Admin') || isSuperAdmin;
+  /** Löschen ist ausschließlich Super Admin erlaubt */
+  const canDelete = roles.includes('Super Admin');
+
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
