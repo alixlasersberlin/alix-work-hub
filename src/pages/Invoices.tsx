@@ -1898,7 +1898,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       </thead>
                       <tbody>
                         {a.rows.map((r) => (
-                          <tr key={`${r.source}-${r.id}`} className="border-t border-border hover:bg-muted/10">
+                          <Fragment key={`${r.source}-${r.id}`}>
+                          <tr className="border-t border-border hover:bg-muted/10">
+
                             <td className="px-4 py-2">
                               {r.source === 'recurring' ? (
                                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
