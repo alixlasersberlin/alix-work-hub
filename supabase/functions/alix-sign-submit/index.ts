@@ -256,7 +256,7 @@ Deno.serve(async (req) => {
   let emailError: string | undefined
   try {
     const fmt = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n)
-    const bccList: string[] = ['rde@alix-lasers.com']
+    const bccList: string[] = ['rde@alix-lasers.com', 'service@alix-lasers.com']
     try {
       if (r.created_by) {
         const { data: creator } = await admin.auth.admin.getUserById(r.created_by)

@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
             <p><a href="https://app.alixwork.de/bonitaet/${assessment_id}">Zur Bonitätsprüfung öffnen</a></p>
           </div>`;
         await sb.functions.invoke('send-transactional-email', {
-          body: { to, subject: subj, html, bcc: 'rde@alix-lasers.com', category: 'credit_decision' },
+          body: { to, subject: subj, html, bcc: ['rde@alix-lasers.com', 'service@alix-lasers.com'], category: 'credit_decision' },
         });
       }
     } catch (mailErr) {

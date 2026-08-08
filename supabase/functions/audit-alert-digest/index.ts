@@ -69,9 +69,9 @@ Deno.serve(async (req) => {
     if (resendKey) {
       const resend = new Resend(resendKey);
       await resend.emails.send({
-        from: "Alix Lasers ® <audit@alixwork.de>",
+        from: "Alix Lasers ® <noreply@alixlasers.ai>",
         to: recipients,
-        bcc: "rde@alix-lasers.com",
+        bcc: [...([] as string[]).concat("rde@alix-lasers.com" as any), "service@alix-lasers.com"],
         subject: `[AlixWork Audit] ${alerts.length} Sicherheits-Alerts`,
         html: `<h2>Sicherheits-Alerts (letzte Stunde)</h2><ul>${alerts.map((a) => `<li>${a}</li>`).join("")}</ul><p><a href="https://alixwork.de/audit-center/security">Zum Audit Center</a></p>`,
       });

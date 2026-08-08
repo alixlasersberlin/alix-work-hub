@@ -54,9 +54,9 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: "Alix Lasers ® <notify@notify.alixlasers.ai>",
+        from: "Alix Lasers ® <noreply@alixlasers.ai>",
         to: recipients,
-        bcc: ["rde@alix-lasers.com"],
+        bcc: [...([] as string[]).concat(["rde@alix-lasers.com"] as any), "service@alix-lasers.com"],
         subject: `Freigabe erforderlich: Auftrag ${cr.order_number ?? ""}`,
         html,
       }),
