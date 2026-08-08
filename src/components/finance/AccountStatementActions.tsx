@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { FileDown, Mail, Loader2, FileSpreadsheet, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -248,7 +249,7 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
     }
     setSending(true);
     try {
-      const base64 = ((await buildDoc()).output('datauristring') as string).split(',')[1];
+      const base64 = ((await buildDoc(mailAll)).output('datauristring') as string).split(',')[1];
       const { error } = await supabase.functions.invoke('send-invoice-mail', {
         body: {
           to_email: to,
