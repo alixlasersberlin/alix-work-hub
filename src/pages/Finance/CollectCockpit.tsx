@@ -60,7 +60,7 @@ export default function FinanceCollectCockpit() {
             <DataCard title="Cashflow 30 Tage"><div className="text-3xl font-semibold text-emerald-500">{eur(k.cashflow_30 ?? 0)}</div><div className="text-xs text-muted-foreground">erwartet heute {eur(k.expected_today ?? 0)}</div></DataCard>
           </div>
 
-          <DataCard title={<span className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" />KI-Morgenreport {report?.report_date ? `· ${new Date(report.report_date).toLocaleDateString('de-DE')}` : ''}</span> as any}>
+          <DataCard title={`KI-Morgenreport${report?.report_date ? ` · ${new Date(report.report_date).toLocaleDateString('de-DE')}` : ''}`} icon={<Sparkles className="h-4 w-4 text-primary" />}>
             <p className="whitespace-pre-wrap text-sm leading-relaxed">{report?.summary ?? 'Noch kein Report vorhanden – erzeuge den ersten Morgenreport.'}</p>
             {Array.isArray(report?.recommendations) && report.recommendations.length > 0 && (
               <div className="mt-4 space-y-2">
