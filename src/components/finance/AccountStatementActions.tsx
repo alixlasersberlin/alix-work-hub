@@ -149,15 +149,18 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
   const addresses = useMemo(() => addressesFromRows(rows), [rows]);
   const fileBase = `Kontoauszug_${(customerName || 'Kunde').replace(/[^\w-]+/g, '_')}`;
 
-  const buildDoc = () =>
-    generateKontoauszugPdf({
+  const buildDoc = async () => {
+    let addr = addresses;
+    if (!addr.billing) addr = await addressesFromCustomer(customerName, customerNumber);
+    return generateKontoauszugPdf({
       customerName: customerName || 'Kunde',
-      customerAddress: addresses.billing,
-      shippingAddress: addresses.shipping,
+      customerAddress: addr.billing,
+      shippingAddress: addr.shipping,
       customerNumber: customerNumber ?? null,
       currency,
       items,
     });
+  };
 
   const guard = () => {
     if (!items.length) {
