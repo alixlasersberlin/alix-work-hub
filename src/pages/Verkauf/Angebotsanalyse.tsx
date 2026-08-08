@@ -176,8 +176,14 @@ export default function Angebotsanalyse() {
 
           <TabsContent value="uebersicht" className="space-y-4">
             <KpiSection offers={offers} />
+            <TrendSection offers={offers} />
             <FunnelSection offers={offers} />
           </TabsContent>
+          <TabsContent value="verlauf" className="space-y-4">
+            <TrendSection offers={offers} />
+            <AgeSection offers={offers} />
+          </TabsContent>
+
           <TabsContent value="funnel" className="space-y-4">
             <FunnelSection offers={offers} />
             <AgeSection offers={offers} />
