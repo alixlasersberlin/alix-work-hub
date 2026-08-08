@@ -180,6 +180,8 @@ const FinanceCollectCockpit = lazy(() => import("./pages/Finance/CollectCockpit"
 const FinanceCollectCopilot = lazy(() => import("./pages/Finance/CollectCopilot"));
 const FinanceCollectDevices = lazy(() => import("./pages/Finance/CollectDevices"));
 const FinanceCollectDossier = lazy(() => import("./pages/Finance/CollectDossier"));
+const FinanceCollectDocuments = lazy(() => import("./pages/Finance/CollectDocuments"));
+const PortalZahlung = lazy(() => import("./pages/PortalZahlung"));
 const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
 const FinanceBank = lazy(() => import("./pages/Finance/Bank"));
 const KontoauszuegeLayout = lazy(() => import("./pages/Finance/Kontoauszuege/Layout"));
@@ -1558,6 +1560,7 @@ function AppRoutes() {
           <Route path="/finance/collect/copilot" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCopilot /></ProtectedRoute>} />
           <Route path="/finance/collect/geraete" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectDevices /></ProtectedRoute>} />
           <Route path="/finance/collect/akte" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectDossier /></ProtectedRoute>} />
+          <Route path="/finance/collect/schriftverkehr" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectDocuments /></ProtectedRoute>} />
           <Route path="/finance/collect/:caseId" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCase /></ProtectedRoute>} />
           <Route path="/operation/anzahlung-mahnung-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin']}><OperationMahnungKonfiguration /></ProtectedRoute>} />
           <Route path="/finance/datev" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatev /></ProtectedRoute>} />
@@ -2124,6 +2127,7 @@ function AppRoutes() {
         <Route path="/csat/:token" element={<TicketCsat />} />
         <Route path="/help" element={<SelfServicePortal />} />
         <Route path="/portal" element={<PortalLookup />} />
+        <Route path="/zahlung/:token" element={<PortalZahlung />} />
         <Route path="/cmr-portal" element={<CmrPortal />} />
         <Route path="/cmr-portal/:token" element={<CmrPortal />} />
         <Route path="/portal/status" element={<PortalStatus />} />
