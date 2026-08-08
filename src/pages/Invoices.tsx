@@ -1757,7 +1757,6 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                   <tr>
-                    <th className="px-2 py-2 w-8"></th>
                     {isAdmin && (
                       <th className="px-3 py-2 w-8">
                         <input
@@ -1863,7 +1862,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     </tr>
                     {openActions[`${r.source}-${r.id}`] && (
                       <tr>
-                        <td colSpan={isAdmin ? 12 : 11} className="pb-3 pt-1">
+                        <td colSpan={isAdmin ? 10 : 9} className="pb-3 pt-1">
                           {renderRowActions(r)}
                         </td>
                       </tr>
