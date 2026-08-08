@@ -85,6 +85,8 @@ type Row = {
   raw_data?: any;
   raw_is_draft?: boolean | null;
   is_mietkauf?: boolean | null;
+  is_deposit?: boolean | null;
+  deposit_id?: string | null;
   created_at?: string | null;
 };
 
