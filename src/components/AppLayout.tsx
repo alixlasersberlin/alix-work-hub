@@ -569,6 +569,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/collect/recht', label: 'Recht & Inkasso', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/geraete', label: 'Geräte & Remote-Sperren', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/akte', label: 'Digitale Akte', icon: FileText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/collect/schriftverkehr', label: 'Schriftverkehr & Zahl-Links', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/copilot', label: 'Finance AI', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/mahnwesen', label: 'Mahnwesen', icon: FileText, roles: ['Admin', 'Super Admin'] },
         ],

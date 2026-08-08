@@ -427,3 +427,6 @@ verify_jwt = false
 
 [functions.collect-morning-report]
 verify_jwt = false
+
+[functions.collect-portal-pay]
+verify_jwt = false

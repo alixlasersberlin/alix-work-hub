@@ -13003,6 +13003,8 @@ export type Database = {
           handpiece: string | null
           id: string
           invoice_reference: string | null
+          push_status: string | null
+          pushed_at: string | null
           serial_number: string | null
           spare_parts_block: boolean
           updated_at: string
@@ -13019,6 +13021,8 @@ export type Database = {
           handpiece?: string | null
           id?: string
           invoice_reference?: string | null
+          push_status?: string | null
+          pushed_at?: string | null
           serial_number?: string | null
           spare_parts_block?: boolean
           updated_at?: string
@@ -13035,6 +13039,8 @@ export type Database = {
           handpiece?: string | null
           id?: string
           invoice_reference?: string | null
+          push_status?: string | null
+          pushed_at?: string | null
           serial_number?: string | null
           spare_parts_block?: boolean
           updated_at?: string
@@ -13049,6 +13055,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      collect_documents: {
+        Row: {
+          amount: number | null
+          case_id: string | null
+          channel: string | null
+          content: Json
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          customer_name: string | null
+          doc_type: string
+          file_path: string | null
+          id: string
+          language: string
+          sent_at: string | null
+          sent_to: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          case_id?: string | null
+          channel?: string | null
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          doc_type?: string
+          file_path?: string | null
+          id?: string
+          language?: string
+          sent_at?: string | null
+          sent_to?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          case_id?: string | null
+          channel?: string | null
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          doc_type?: string
+          file_path?: string | null
+          id?: string
+          language?: string
+          sent_at?: string | null
+          sent_to?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       collect_dossiers: {
         Row: {
@@ -13466,6 +13532,69 @@ export type Database = {
           recommendations?: Json
           report_date?: string
           summary?: string | null
+        }
+        Relationships: []
+      }
+      collect_payment_links: {
+        Row: {
+          allow_installments: boolean
+          amount: number
+          case_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          customer_name: string | null
+          customer_response: Json | null
+          expires_at: string
+          id: string
+          max_installments: number
+          note: string | null
+          opened_at: string | null
+          responded_at: string | null
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          allow_installments?: boolean
+          amount?: number
+          case_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_response?: Json | null
+          expires_at?: string
+          id?: string
+          max_installments?: number
+          note?: string | null
+          opened_at?: string | null
+          responded_at?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          allow_installments?: boolean
+          amount?: number
+          case_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_response?: Json | null
+          expires_at?: string
+          id?: string
+          max_installments?: number
+          note?: string | null
+          opened_at?: string | null
+          responded_at?: string | null
+          status?: string
+          token?: string
+          updated_at?: string
         }
         Relationships: []
       }

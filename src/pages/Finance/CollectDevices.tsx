@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Cpu, Lock, Plus, ShieldOff, Unlock } from 'lucide-react';
+import { Cpu, Lock, Plus, RadioTower, ShieldOff, Unlock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ export default function FinanceCollectDevices() {
   const [cases, setCases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [pushing, setPushing] = useState(false);
 
   const [name, setName] = useState('');
   const [model, setModel] = useState('');
@@ -73,8 +74,23 @@ export default function FinanceCollectDevices() {
 
   const patch = async (id: string, values: Record<string, any>) => {
     const { error } = await supabase.from('collect_device_links' as any)
-      .update({ ...values, updated_at: new Date().toISOString() }).eq('id', id);
+      .update({ ...values, push_status: 'pending', updated_at: new Date().toISOString() }).eq('id', id);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    load();
+  };
+
+  const pushPending = async () => {
+    setPushing(true);
+    const { data, error } = await supabase.functions.invoke('collect-device-push', { body: {} });
+    setPushing(false);
+    if (error) {
+      toast({ title: 'Übertragung fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({
+      title: 'An AlixSmart übertragen',
+      description: `${(data as any)?.pushed ?? 0} Gerät(e) aktualisiert${(data as any)?.failed ? `, ${(data as any).failed} Fehler` : ''}`,
+    });
     load();
   };
 
@@ -95,6 +111,12 @@ export default function FinanceCollectDevices() {
         title="Geräte & Remote-Sperren"
         subtitle="Geräte je Kunde verknüpfen, Ersatzteil- und Komfortfunktionen bei Zahlungsverzug sperren"
         icon={Cpu}
+        actions={(
+          <Button variant="outline" onClick={pushPending} disabled={pushing}>
+            <RadioTower className="mr-2 h-4 w-4" />
+            {pushing ? 'Überträgt…' : 'Sperren an Geräte übertragen'}
+          </Button>
+        )}
       />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -134,6 +156,7 @@ export default function FinanceCollectDevices() {
                   <th className="py-2 pr-3">Ersatzteile</th>
                   <th className="py-2 pr-3">Komfort</th>
                   <th className="py-2 pr-3">Notiz</th>
+                  <th className="py-2 pr-3">Übertragung</th>
                 </tr>
               </thead>
               <tbody>
@@ -186,6 +209,15 @@ export default function FinanceCollectDevices() {
                             patch(r.id, { block_note: v });
                           }}
                         />
+                      </td>
+                      <td className="py-2 pr-3">
+                        {r.push_status === 'pushed' ? (
+                          <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/15 text-emerald-500">übertragen</Badge>
+                        ) : r.push_status === 'failed' ? (
+                          <Badge variant="outline" className="border-destructive/30 bg-destructive/15 text-destructive">Fehler</Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-amber-500/30 bg-amber-500/15 text-amber-500">offen</Badge>
+                        )}
                       </td>
                     </tr>
                   );
