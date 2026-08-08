@@ -1775,7 +1775,6 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                         />
                       </th>
                     )}
-                    <th className="text-left px-4 py-2 font-medium">Typ</th>
                     <th className="text-left px-4 py-2 font-medium">Rechnung</th>
                     <th className="text-left px-4 py-2 font-medium">Kunde</th>
                     <th className="text-left px-4 py-2 font-medium">Referenz</th>
@@ -1783,7 +1782,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     <th className="text-left px-4 py-2 font-medium">Fällig</th>
                     <th className="text-right px-4 py-2 font-medium">Betrag</th>
                     <th className="text-right px-4 py-2 font-medium">Saldo</th>
-                    <th className="text-left px-4 py-2 font-medium">Status</th>
+                    <th className="text-right px-4 py-2 font-medium">Status / Typ</th>
                     <th className="text-right px-4 py-2 font-medium">Aktion</th>
                   </tr>
                 </thead>
