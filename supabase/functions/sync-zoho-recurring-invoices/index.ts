@@ -17,7 +17,25 @@ type Payload = {
   region_filter?: "all" | "EU" | "CH";
   /** Einzelimport: Name (Kunde/Firma) oder Auftrags-/Referenznummer */
   search?: string;
+  /** Vorschau-Modus: nichts schreiben, nur Änderungen gegen Bestand ermitteln */
+  dry_run?: boolean;
 };
+
+/** Felder, die im Vorschau-Modus mit dem Bestand verglichen werden */
+const DIFF_FIELDS = [
+  "invoice_number", "reference_number", "customer_name", "device_name", "city",
+  "invoice_date", "due_date", "currency", "total", "balance", "status",
+  "payment_status", "last_payment_date", "accounting_region",
+] as const;
+
+function sameValue(a: unknown, b: unknown): boolean {
+  if (a == null && b == null) return true;
+  if (typeof a === "number" || typeof b === "number") {
+    const na = Number(a ?? 0), nb = Number(b ?? 0);
+    if (Number.isFinite(na) && Number.isFinite(nb)) return Math.abs(na - nb) < 0.005;
+  }
+  return String(a ?? "") === String(b ?? "");
+}
 
 function norm(v: unknown) {
   return (v ?? "").toString().toLowerCase().trim();
@@ -222,6 +240,7 @@ Deno.serve(async (req) => {
     const maxProfilePages = Math.min(Math.max(body.max_pages ?? 1, 1), 5);
     const regionFilter = body.region_filter ?? "all";
     const search = (body.search ?? "").toString().trim();
+    const dryRun = body.dry_run === true;
 
 
 
@@ -254,6 +273,16 @@ Deno.serve(async (req) => {
     const authH = { Authorization: `Zoho-oauthtoken ${token}` };
 
     let imported = 0, updated = 0, failed = 0, duplicates = 0;
+    let unchanged = 0;
+    const changes: Array<{
+      kind: "new" | "update";
+      invoice_number: string | null;
+      customer_name: string | null;
+      invoice_date: string | null;
+      total: number | null;
+      currency: string | null;
+      diffs: Array<{ field: string; old: unknown; new: unknown }>;
+    }> = [];
     let skippedRegion = 0, importedCh = 0;
 
     let profilesProcessed = 0;
@@ -379,6 +408,47 @@ Deno.serve(async (req) => {
                 }
               }
 
+              if (dryRun) {
+                // Vorschau: bestehenden Datensatz laden und Feld-Änderungen ermitteln
+                const { data: existing } = await admin
+                  .from("zoho_recurring_invoices")
+                  .select(DIFF_FIELDS.join(", "))
+                  .eq("source_system", sourceSystem)
+                  .eq("zoho_invoice_id", invId)
+                  .maybeSingle();
+                if (!existing) {
+                  imported++;
+                  changes.push({
+                    kind: "new",
+                    invoice_number: invNumber,
+                    customer_name: payload.customer_name,
+                    invoice_date: payload.invoice_date,
+                    total: payload.total,
+                    currency: payload.currency,
+                    diffs: [],
+                  });
+                } else {
+                  const diffs = DIFF_FIELDS
+                    .filter((f) => !sameValue((existing as any)[f], (payload as any)[f]))
+                    .map((f) => ({ field: f, old: (existing as any)[f], new: (payload as any)[f] }));
+                  if (diffs.length === 0) {
+                    unchanged++;
+                  } else {
+                    updated++;
+                    changes.push({
+                      kind: "update",
+                      invoice_number: invNumber,
+                      customer_name: payload.customer_name,
+                      invoice_date: payload.invoice_date,
+                      total: payload.total,
+                      currency: payload.currency,
+                      diffs,
+                    });
+                  }
+                }
+                continue;
+              }
+
               const { data: upserted, error } = await admin
                 .from("zoho_recurring_invoices")
                 .upsert(payload, { onConflict: "source_system,zoho_invoice_id" })
@@ -405,10 +475,14 @@ Deno.serve(async (req) => {
 
     return json({
       success: true,
+      dry_run: dryRun,
       imported,
       updated,
+      unchanged,
       failed,
       duplicates,
+      changes: dryRun ? changes.slice(0, 500) : undefined,
+      changes_truncated: dryRun ? changes.length > 500 : undefined,
       region_filter: regionFilter,
       skipped_region: skippedRegion,
       ch_count: importedCh,
@@ -419,7 +493,6 @@ Deno.serve(async (req) => {
       hint: profilesHaveMore ? "Mehr Profile vorhanden — erneut mit page=" + pPage + " starten." : undefined,
     });
 
-    return json({ success: true, imported, updated, failed, last_page: page - 1, has_more: hasMore });
   } catch (e: any) {
     if (e instanceof Response) return e;
     console.error(e);
