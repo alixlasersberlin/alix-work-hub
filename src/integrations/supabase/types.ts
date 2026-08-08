@@ -12538,6 +12538,60 @@ export type Database = {
           },
         ]
       }
+      collect_approvals: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_name: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          level: string
+          note: string | null
+          requested_at: string
+          requested_by: string | null
+          status: string
+          title: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          customer_name?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          level?: string
+          note?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+          title?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_name?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          level?: string
+          note?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
       collect_blocks: {
         Row: {
           active: boolean
@@ -12715,6 +12769,9 @@ export type Database = {
           ai_recommendation: string | null
           ai_updated_at: string | null
           ampel: string
+          complaint_hold: boolean
+          complaint_hold_reason: string | null
+          country_code: string | null
           created_at: string
           currency: string
           customer_email: string | null
@@ -12722,7 +12779,9 @@ export type Database = {
           customer_key: string | null
           customer_name: string
           customer_phone: string | null
+          customer_type: string | null
           fee_amount: number
+          health_score: number | null
           id: string
           interest_amount: number
           last_contact_at: string | null
@@ -12735,9 +12794,12 @@ export type Database = {
           overdue_amount: number
           paused_until: string | null
           pay_probability_pct: number | null
+          payment_term_days: number | null
+          playbook_code: string | null
           priority: number
           risk_class: string | null
           risk_score: number | null
+          seller_name: string | null
           stage_code: string
           stage_day: number
           status: string
@@ -12748,6 +12810,9 @@ export type Database = {
           ai_recommendation?: string | null
           ai_updated_at?: string | null
           ampel?: string
+          complaint_hold?: boolean
+          complaint_hold_reason?: string | null
+          country_code?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
@@ -12755,7 +12820,9 @@ export type Database = {
           customer_key?: string | null
           customer_name: string
           customer_phone?: string | null
+          customer_type?: string | null
           fee_amount?: number
+          health_score?: number | null
           id?: string
           interest_amount?: number
           last_contact_at?: string | null
@@ -12768,9 +12835,12 @@ export type Database = {
           overdue_amount?: number
           paused_until?: string | null
           pay_probability_pct?: number | null
+          payment_term_days?: number | null
+          playbook_code?: string | null
           priority?: number
           risk_class?: string | null
           risk_score?: number | null
+          seller_name?: string | null
           stage_code?: string
           stage_day?: number
           status?: string
@@ -12781,6 +12851,9 @@ export type Database = {
           ai_recommendation?: string | null
           ai_updated_at?: string | null
           ampel?: string
+          complaint_hold?: boolean
+          complaint_hold_reason?: string | null
+          country_code?: string | null
           created_at?: string
           currency?: string
           customer_email?: string | null
@@ -12788,7 +12861,9 @@ export type Database = {
           customer_key?: string | null
           customer_name?: string
           customer_phone?: string | null
+          customer_type?: string | null
           fee_amount?: number
+          health_score?: number | null
           id?: string
           interest_amount?: number
           last_contact_at?: string | null
@@ -12801,9 +12876,12 @@ export type Database = {
           overdue_amount?: number
           paused_until?: string | null
           pay_probability_pct?: number | null
+          payment_term_days?: number | null
+          playbook_code?: string | null
           priority?: number
           risk_class?: string | null
           risk_score?: number | null
+          seller_name?: string | null
           stage_code?: string
           stage_day?: number
           status?: string
@@ -12913,6 +12991,65 @@ export type Database = {
         }
         Relationships: []
       }
+      collect_device_links: {
+        Row: {
+          block_note: string | null
+          case_id: string | null
+          comfort_features_block: boolean
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          device_model: string | null
+          handpiece: string | null
+          id: string
+          invoice_reference: string | null
+          serial_number: string | null
+          spare_parts_block: boolean
+          updated_at: string
+          warranty_until: string | null
+        }
+        Insert: {
+          block_note?: string | null
+          case_id?: string | null
+          comfort_features_block?: boolean
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          device_model?: string | null
+          handpiece?: string | null
+          id?: string
+          invoice_reference?: string | null
+          serial_number?: string | null
+          spare_parts_block?: boolean
+          updated_at?: string
+          warranty_until?: string | null
+        }
+        Update: {
+          block_note?: string | null
+          case_id?: string | null
+          comfort_features_block?: boolean
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          device_model?: string | null
+          handpiece?: string | null
+          id?: string
+          invoice_reference?: string | null
+          serial_number?: string | null
+          spare_parts_block?: boolean
+          updated_at?: string
+          warranty_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_device_links_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collect_dossiers: {
         Row: {
           case_id: string | null
@@ -13015,6 +13152,126 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      collect_fee_rules: {
+        Row: {
+          active: boolean
+          base_rate_pct: number
+          country_code: string
+          created_at: string
+          currency: string
+          customer_group: string | null
+          fee_amount: number
+          id: string
+          interest_rate_pct: number
+          note: string | null
+          stage_code: string | null
+          tenant: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          base_rate_pct?: number
+          country_code?: string
+          created_at?: string
+          currency?: string
+          customer_group?: string | null
+          fee_amount?: number
+          id?: string
+          interest_rate_pct?: number
+          note?: string | null
+          stage_code?: string | null
+          tenant?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          base_rate_pct?: number
+          country_code?: string
+          created_at?: string
+          currency?: string
+          customer_group?: string | null
+          fee_amount?: number
+          id?: string
+          interest_rate_pct?: number
+          note?: string | null
+          stage_code?: string | null
+          tenant?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      collect_health_scores: {
+        Row: {
+          complaint_score: number | null
+          components: Json
+          computed_at: string
+          created_at: string
+          credit_score: number | null
+          customer_id: string | null
+          customer_name: string | null
+          dunning_score: number | null
+          grade: string | null
+          id: string
+          leasing_score: number | null
+          order_frequency_score: number | null
+          response_score: number | null
+          return_debit_score: number | null
+          revenue_score: number | null
+          score: number
+          service_score: number | null
+          tenure_score: number | null
+          ticket_score: number | null
+          trend: string | null
+          warranty_score: number | null
+        }
+        Insert: {
+          complaint_score?: number | null
+          components?: Json
+          computed_at?: string
+          created_at?: string
+          credit_score?: number | null
+          customer_id?: string | null
+          customer_name?: string | null
+          dunning_score?: number | null
+          grade?: string | null
+          id?: string
+          leasing_score?: number | null
+          order_frequency_score?: number | null
+          response_score?: number | null
+          return_debit_score?: number | null
+          revenue_score?: number | null
+          score?: number
+          service_score?: number | null
+          tenure_score?: number | null
+          ticket_score?: number | null
+          trend?: string | null
+          warranty_score?: number | null
+        }
+        Update: {
+          complaint_score?: number | null
+          components?: Json
+          computed_at?: string
+          created_at?: string
+          credit_score?: number | null
+          customer_id?: string | null
+          customer_name?: string | null
+          dunning_score?: number | null
+          grade?: string | null
+          id?: string
+          leasing_score?: number | null
+          order_frequency_score?: number | null
+          response_score?: number | null
+          return_debit_score?: number | null
+          revenue_score?: number | null
+          score?: number
+          service_score?: number | null
+          tenure_score?: number | null
+          ticket_score?: number | null
+          trend?: string | null
+          warranty_score?: number | null
+        }
+        Relationships: []
       }
       collect_insolvencies: {
         Row: {
@@ -13152,6 +13409,66 @@ export type Database = {
           },
         ]
       }
+      collect_liquidity_forecast: {
+        Row: {
+          created_at: string
+          expected_loss: number
+          forecast_date: string
+          horizon_days: number
+          id: string
+          probable_amount: number
+          secure_amount: number
+          uncertain_amount: number
+        }
+        Insert: {
+          created_at?: string
+          expected_loss?: number
+          forecast_date?: string
+          horizon_days: number
+          id?: string
+          probable_amount?: number
+          secure_amount?: number
+          uncertain_amount?: number
+        }
+        Update: {
+          created_at?: string
+          expected_loss?: number
+          forecast_date?: string
+          horizon_days?: number
+          id?: string
+          probable_amount?: number
+          secure_amount?: number
+          uncertain_amount?: number
+        }
+        Relationships: []
+      }
+      collect_morning_reports: {
+        Row: {
+          generated_at: string
+          id: string
+          kpis: Json
+          recommendations: Json
+          report_date: string
+          summary: string | null
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          kpis?: Json
+          recommendations?: Json
+          report_date?: string
+          summary?: string | null
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          kpis?: Json
+          recommendations?: Json
+          report_date?: string
+          summary?: string | null
+        }
+        Relationships: []
+      }
       collect_payment_plan_items: {
         Row: {
           amount: number
@@ -13270,6 +13587,140 @@ export type Database = {
           },
         ]
       }
+      collect_payment_term_changes: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          case_id: string | null
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          id: string
+          invoice_reference: string | null
+          new_term_days: number
+          old_term_days: number | null
+          reason: string | null
+          requested_at: string
+          requested_by: string | null
+          status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          case_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          invoice_reference?: string | null
+          new_term_days: number
+          old_term_days?: number | null
+          reason?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          case_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          id?: string
+          invoice_reference?: string | null
+          new_term_days?: number
+          old_term_days?: number | null
+          reason?: string | null
+          requested_at?: string
+          requested_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collect_payment_term_changes_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "collect_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collect_playbooks: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          escalate_to: string | null
+          first_channel: string
+          grace_days: number
+          id: string
+          label: string
+          language: string
+          match_country: string | null
+          match_customer_type: string | null
+          match_min_amount: number | null
+          match_tags: string[]
+          max_stage: string | null
+          notify_leasing: boolean
+          pause_on_complaint: boolean
+          personal_call: boolean
+          priority: number
+          tone: string
+          updated_at: string
+          watch_installments: boolean
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          escalate_to?: string | null
+          first_channel?: string
+          grace_days?: number
+          id?: string
+          label: string
+          language?: string
+          match_country?: string | null
+          match_customer_type?: string | null
+          match_min_amount?: number | null
+          match_tags?: string[]
+          max_stage?: string | null
+          notify_leasing?: boolean
+          pause_on_complaint?: boolean
+          personal_call?: boolean
+          priority?: number
+          tone?: string
+          updated_at?: string
+          watch_installments?: boolean
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          escalate_to?: string | null
+          first_channel?: string
+          grace_days?: number
+          id?: string
+          label?: string
+          language?: string
+          match_country?: string | null
+          match_customer_type?: string | null
+          match_min_amount?: number | null
+          match_tags?: string[]
+          max_stage?: string | null
+          notify_leasing?: boolean
+          pause_on_complaint?: boolean
+          personal_call?: boolean
+          priority?: number
+          tone?: string
+          updated_at?: string
+          watch_installments?: boolean
+        }
+        Relationships: []
+      }
       collect_promises: {
         Row: {
           amount: number
@@ -13325,6 +13776,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      collect_seller_scores: {
+        Row: {
+          avg_days_overdue: number
+          bad_debt_amount: number
+          computed_at: string
+          created_at: string
+          customers_count: number
+          id: string
+          invoiced_amount: number
+          overdue_amount: number
+          payment_quality_pct: number
+          period: string
+          seller_id: string | null
+          seller_name: string
+        }
+        Insert: {
+          avg_days_overdue?: number
+          bad_debt_amount?: number
+          computed_at?: string
+          created_at?: string
+          customers_count?: number
+          id?: string
+          invoiced_amount?: number
+          overdue_amount?: number
+          payment_quality_pct?: number
+          period?: string
+          seller_id?: string | null
+          seller_name: string
+        }
+        Update: {
+          avg_days_overdue?: number
+          bad_debt_amount?: number
+          computed_at?: string
+          created_at?: string
+          customers_count?: number
+          id?: string
+          invoiced_amount?: number
+          overdue_amount?: number
+          payment_quality_pct?: number
+          period?: string
+          seller_id?: string | null
+          seller_name?: string
+        }
+        Relationships: []
       }
       collect_stage_config: {
         Row: {

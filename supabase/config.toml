@@ -421,3 +421,9 @@ verify_jwt = true
 
 [functions.collect-copilot]
 verify_jwt = true
+
+[functions.collect-analytics]
+verify_jwt = false
+
+[functions.collect-morning-report]
+verify_jwt = false
