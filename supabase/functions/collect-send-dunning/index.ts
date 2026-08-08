@@ -98,8 +98,9 @@ Deno.serve(async (req) => {
     const recipient = to_email ?? c.customer_email;
     if (!recipient) return json({ error: 'Keine E-Mail-Adresse hinterlegt' }, 400);
 
-    const bcc = ['service@alix-lasers.com'];
+    const bcc = ['service@alix-lasers.com', 'k.trinh@alix-operation.de'];
     if (stage?.cc_management) bcc.push('rde@alix-lasers.com');
+
 
     const mailRes = await fetch(`${SUPABASE_URL}/functions/v1/send-invoice-mail`, {
       method: 'POST',
