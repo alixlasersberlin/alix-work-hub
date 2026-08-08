@@ -18,6 +18,8 @@ export type KontoauszugData = {
   customerNumber?: string | null;
   currency?: string | null;
   items: KontoauszugItem[];
+  /** true = alle Buchungen (inkl. bezahlter Rechnungen), false = nur offene Posten */
+  showAll?: boolean;
 };
 
 const money = (v?: number | null, c?: string | null) => {
