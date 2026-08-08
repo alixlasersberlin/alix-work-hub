@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CalendarClock, CheckCircle2, CreditCard, ShieldCheck } from 'lucide-react';
+import { CalendarClock, CheckCircle2, CreditCard, PenLine, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import SignaturePad from '@/components/finance/SignaturePad';
 
 const fmt = (n: any, cur = 'EUR') =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur || 'EUR' }).format(Number(n ?? 0));
@@ -25,6 +26,9 @@ export default function PortalZahlung() {
   const [months, setMonths] = useState('3');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [signedName, setSignedName] = useState('');
+
 
   useEffect(() => {
     document.title = 'Offene Posten – Alix Lasers ®';
@@ -157,6 +161,75 @@ export default function PortalZahlung() {
                 </Button>
               </CardContent>
             </Card>
+
+            {info?.plan && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <PenLine className="h-4 w-4" /> Ratenvereinbarung
+                    {info.plan.signed_at ? ' (unterschrieben)' : ' unterschreiben'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+                    <div><div className="text-xs text-muted-foreground">Gesamt</div>{fmt(info.plan.total_amount, info.plan.currency)}</div>
+                    <div><div className="text-xs text-muted-foreground">Anzahlung</div>{fmt(info.plan.downpayment, info.plan.currency)}</div>
+                    <div><div className="text-xs text-muted-foreground">Monatsrate</div>{fmt(info.plan.monthly_amount, info.plan.currency)}</div>
+                    <div><div className="text-xs text-muted-foreground">Laufzeit</div>{info.plan.term_months ?? 0} Monate</div>
+                  </div>
+
+                  {(info.plan.items ?? []).length > 0 && (
+                    <div className="max-h-56 overflow-y-auto rounded-md border">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-left text-muted-foreground">
+                            <th className="px-3 py-2">Rate</th>
+                            <th className="px-3 py-2">Fällig</th>
+                            <th className="px-3 py-2 text-right">Betrag</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {info.plan.items.map((r: any) => (
+                            <tr key={r.seq} className="border-b border-border/50">
+                              <td className="px-3 py-1.5">{r.seq}</td>
+                              <td className="px-3 py-1.5">{d(r.due_date)}</td>
+                              <td className="px-3 py-1.5 text-right">{fmt(r.amount, info.plan.currency)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {info.plan.signed_at ? (
+                    <p className="text-sm text-muted-foreground">
+                      Unterschrieben am {d(info.plan.signed_at)} von {info.plan.signed_name ?? '—'}.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Mit Ihrer Unterschrift erkennen Sie die offene Forderung an und verpflichten sich zur Zahlung
+                        der oben aufgeführten Raten.
+                      </p>
+                      <Input
+                        placeholder="Vor- und Nachname"
+                        value={signedName}
+                        onChange={(e) => setSignedName(e.target.value)}
+                        className="max-w-sm"
+                      />
+                      <SignaturePad onChange={setSignature} />
+                      <Button
+                        disabled={busy || !signature || signedName.trim().length < 3}
+                        onClick={() => act('plan_sign', { signature, signed_name: signedName })}
+                      >
+                        Rechtsverbindlich unterschreiben
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
 
             {info?.allow_installments && (
               <Card>

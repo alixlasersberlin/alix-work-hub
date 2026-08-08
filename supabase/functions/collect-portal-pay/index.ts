@@ -37,6 +37,24 @@ Deno.serve(async (req) => {
       .gt('balance', 0)
       .order('due_date');
 
+    // Zur Unterschrift offener / bereits signierter Ratenplan
+    const { data: plans } = await admin
+      .from('collect_payment_plans')
+      .select('id, total_amount, downpayment, monthly_amount, term_months, start_date, currency, sepa_iban_masked, sepa_mandate_ref, status, signed_at, signed_name')
+      .eq('case_id', link.case_id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    const plan: any = (plans ?? [])[0] ?? null;
+    let planItems: any[] = [];
+    if (plan) {
+      const { data: pi } = await admin
+        .from('collect_payment_plan_items')
+        .select('seq, due_date, amount, status')
+        .eq('plan_id', plan.id)
+        .order('seq');
+      planItems = pi ?? [];
+    }
+
     if (action === 'view') {
       if (!link.opened_at) {
         await admin.from('collect_payment_links').update({ opened_at: new Date().toISOString() }).eq('id', link.id);
@@ -58,8 +76,51 @@ Deno.serve(async (req) => {
         expires_at: link.expires_at,
         status: link.status,
         items: items ?? [],
+        plan: plan ? { ...plan, items: planItems } : null,
       });
     }
+
+    if (action === 'plan_sign') {
+      if (!plan) return json({ error: 'Keine Ratenvereinbarung vorhanden' }, 404);
+      if (plan.signed_at) return json({ error: 'Diese Ratenvereinbarung wurde bereits unterschrieben' }, 409);
+
+      const signature = String(body?.signature ?? '');
+      const signedName = String(body?.signed_name ?? '').trim().slice(0, 120);
+      if (!signature.startsWith('data:image/png;base64,') || signature.length > 400_000) {
+        return json({ error: 'Bitte unterschreiben Sie im Unterschriftenfeld' }, 400);
+      }
+      if (signedName.length < 3) return json({ error: 'Bitte geben Sie Ihren vollständigen Namen an' }, 400);
+
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+      const now = new Date().toISOString();
+
+      await admin.from('collect_payment_plans').update({
+        signature_data_url: signature,
+        signed_name: signedName,
+        signed_ip: ip,
+        signed_at: now,
+        status: 'active',
+      }).eq('id', plan.id);
+
+      await admin.from('collect_events').insert({
+        case_id: link.case_id,
+        event_type: 'payment_plan_signed',
+        channel: 'portal',
+        direction: 'inbound',
+        subject: `Ratenvereinbarung digital unterschrieben von ${signedName}`,
+        body: `IP ${ip ?? 'unbekannt'} · ${plan.term_months ?? 0} Raten à ${plan.monthly_amount ?? 0}`,
+        automated: true,
+      });
+
+      await admin.from('collect_payment_links').update({
+        status: 'plan_signed',
+        customer_response: `Ratenvereinbarung unterschrieben von ${signedName}`,
+        responded_at: now,
+      }).eq('id', link.id);
+
+      return json({ success: true, message: 'Vielen Dank – Ihre Ratenvereinbarung ist unterschrieben.' });
+    }
+
 
     if (action === 'promise') {
       const date = String(body?.date ?? '').slice(0, 10);
