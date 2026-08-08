@@ -34,6 +34,8 @@ export default function FinanceCollectCase() {
   const [events, setEvents] = useState<any[]>([]);
   const [blocks, setBlocks] = useState<any[]>([]);
   const [stages, setStages] = useState<any[]>([]);
+  const [customer, setCustomer] = useState<any>(null);
+  const [limit, setLimit] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -61,6 +63,21 @@ export default function FinanceCollectCase() {
     setStages((st.data as any) ?? []);
     setMailStage((a.data as any)?.stage_code ?? '');
     setMailTo((a.data as any)?.customer_email ?? '');
+
+    const cid = (a.data as any)?.customer_id;
+    const cname = (a.data as any)?.customer_name;
+    if (cid) {
+      const { data: cu } = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('id', cid).maybeSingle();
+      setCustomer(cu ?? null);
+    } else if (cname) {
+      const { data: cu } = await supabase.from('customers').select('id, company_name, email, phone, billing_address').eq('company_name', cname).limit(1).maybeSingle();
+      setCustomer(cu ?? null);
+    } else setCustomer(null);
+    const limQ = cid
+      ? supabase.from('collect_credit_limits' as any).select('*').eq('customer_id', cid).maybeSingle()
+      : supabase.from('collect_credit_limits' as any).select('*').eq('customer_name', cname ?? '').maybeSingle();
+    const { data: lim } = await limQ;
+    setLimit(lim ?? null);
     setLoading(false);
   };
 
@@ -163,6 +180,50 @@ export default function FinanceCollectCase() {
           <div className="font-display text-xl font-semibold">{fmt(total, cur)}</div>
         </div>
       </div>
+
+      <DataCard title="Kunde 360°" icon={<ShieldCheck className="h-4 w-4" />}>
+        <div className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <div className="text-xs text-muted-foreground">Kunde</div>
+            <div className="font-medium">{customer?.company_name ?? c.customer_name ?? '–'}</div>
+            <div className="text-muted-foreground whitespace-pre-line">{customer?.billing_address ?? '–'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Kontakt</div>
+            <div>{customer?.email ?? c.customer_email ?? '–'}</div>
+            <div>{customer?.phone ?? c.customer_phone ?? '–'}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Kreditlimit</div>
+            <div className="font-medium">
+              {limit?.unlimited ? 'Unbegrenzt' : limit?.credit_limit != null ? fmt(limit.credit_limit, cur) : 'nicht gesetzt'}
+            </div>
+            <div className="text-muted-foreground">Genutzt: {fmt(limit?.used_amount ?? c.open_amount, cur)}</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground">Status</div>
+            <div className="flex flex-wrap gap-1">
+              <Badge variant="outline" className={AMPEL[limit?.traffic_light ?? c.ampel ?? 'gruen']}>
+                {limit?.blocked ? 'Gesperrt' : 'Freigegeben'}
+              </Badge>
+              {c.risk_class && <Badge variant="outline">{c.risk_class}</Badge>}
+              {limit?.rating_class && <Badge variant="outline">{limit.rating_class}</Badge>}
+            </div>
+            <div className="text-muted-foreground mt-1">
+              Ältester OP: {c.oldest_due_date ?? '–'} · Ø Verzug {c.max_days_overdue ?? 0} T
+            </div>
+          </div>
+        </div>
+        {customer?.id && (
+          <div className="mt-3">
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`/kunden/${customer.id}`}>Kundenakte öffnen</Link>
+            </Button>
+          </div>
+        )}
+      </DataCard>
+
+
 
       {(c.ai_recommendation || c.risk_score != null) && (
         <DataCard title="KI-Einschätzung" icon={<Sparkles className="h-4 w-4 text-primary" />}>
