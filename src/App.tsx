@@ -170,6 +170,7 @@ const FinanceCollectCommand = lazy(() => import("./pages/Finance/CollectCommand"
 const FinanceCollectTasks = lazy(() => import("./pages/Finance/CollectTasks"));
 const FinanceCollectBi = lazy(() => import("./pages/Finance/CollectBi"));
 const FinanceCollectLegal = lazy(() => import("./pages/Finance/CollectLegal"));
+const FinanceCollectLimits = lazy(() => import("./pages/Finance/CollectLimits"));
 const FinanceCollectCopilot = lazy(() => import("./pages/Finance/CollectCopilot"));
 const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
 const FinanceBank = lazy(() => import("./pages/Finance/Bank"));
