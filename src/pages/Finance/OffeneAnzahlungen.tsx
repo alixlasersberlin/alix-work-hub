@@ -530,7 +530,13 @@ export default function OffeneAnzahlungen() {
                       <Button size="sm" variant="ghost" onClick={() => openHistory(r)} title="Historie">
                         <HistoryIcon className="w-3.5 h-3.5" />
                       </Button>
+                      <AccountStatementActions
+                        customerName={r.company_name || r.customer_name || 'Unbekannt'}
+                        customerNumber={r.customer_id}
+                        rows={statementByCustomer.get(statementKey(r))?.rows ?? []}
+                      />
                     </div>
+
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">{r.company_name || r.customer_name || '—'}</div>
