@@ -1211,9 +1211,12 @@ export default function AngebotErstellen() {
       const ok = await saveOffer(true);
       if (!ok) { setConfirming(false); return; }
 
-      // 2) Auftragsnummer ziehen (zentraler Nummernkreis 'order', sonst Fallback auf ANG→AUF)
+      // 2) Auftragsnummer ziehen (zentraler Nummernkreis 'order', gekoppelt an die
+      //    Vorgangs-Stammnummer aus Schritt 1 – Ref, da State hier noch veraltet wäre)
+      const effCase = caseNumberRef.current ?? (await ensureCaseNumber(caseNumber));
+      if (effCase && effCase !== caseNumberRef.current) { caseNumberRef.current = effCase; setCaseNumber(effCase); }
       const fallbackOrderNr = offerNumber.replace(/^ANG-/i, 'AUF-');
-      const orderNr = (await nextNumber('order', () => fallbackOrderNr, { caseNumber })) || fallbackOrderNr;
+      const orderNr = (await nextNumber('order', () => fallbackOrderNr, { caseNumber: effCase })) || fallbackOrderNr;
 
       // 3) Auftrag in orders anlegen (nur wenn Auftragsnummer noch nicht existiert)
       const { data: dupe } = await supabase.from('orders').select('id').eq('order_number', orderNr).maybeSingle();
