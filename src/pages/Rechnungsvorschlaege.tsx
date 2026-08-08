@@ -10,6 +10,8 @@ import { Banknote, ExternalLink, CheckCircle2, X } from 'lucide-react';
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import OrdersWithoutInvoice from '@/components/finance/OrdersWithoutInvoice';
 
 const STATUS_LABEL: Record<string, string> = {
   offen: 'Offen',
@@ -64,7 +66,7 @@ export default function Rechnungsvorschlaege() {
       <PageHeader
         icon={Banknote}
         title="Rechnungsvorschläge"
-        subtitle="Offene Reparatur-Rechnungsvorschläge prüfen, übernehmen oder ablehnen."
+        subtitle="Reparatur-Vorschläge prüfen und alle Aufträge ohne Rechnung abrechnen."
         actions={
           <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
             <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
@@ -78,6 +80,17 @@ export default function Rechnungsvorschlaege() {
         }
       />
 
+      <Tabs defaultValue="orders" className="space-y-4">
+        <TabsList className="bg-secondary border border-border">
+          <TabsTrigger value="orders">Aufträge ohne Rechnung</TabsTrigger>
+          <TabsTrigger value="repairs">Reparatur-Vorschläge</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="orders">
+          <OrdersWithoutInvoice />
+        </TabsContent>
+
+        <TabsContent value="repairs" className="space-y-4">
       <ListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -160,6 +173,8 @@ export default function Rechnungsvorschlaege() {
           </div>
         )}
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
