@@ -27,6 +27,21 @@ const AMPEL: Record<string, string> = {
   schwarz: 'bg-foreground/15 text-foreground border-foreground/30',
 };
 
+function formatAddress(a: any): string {
+  if (!a) return '–';
+  if (typeof a === 'string') return a;
+  const parts = [
+    a.attention,
+    a.address,
+    a.street2,
+    [a.zip, a.city].filter(Boolean).join(' '),
+    a.state,
+    a.country,
+  ].filter((x) => typeof x === 'string' && x.trim());
+  return parts.length ? parts.join('\n') : '–';
+}
+
+
 export default function FinanceCollectCase() {
   const { caseId } = useParams();
   const [c, setC] = useState<any>(null);
@@ -214,7 +229,7 @@ export default function FinanceCollectCase() {
           <div>
             <div className="text-xs text-muted-foreground">Kunde</div>
             <div className="font-medium">{customer?.company_name ?? c.customer_name ?? '–'}</div>
-            <div className="text-muted-foreground whitespace-pre-line">{customer?.billing_address ?? '–'}</div>
+            <div className="text-muted-foreground whitespace-pre-line">{formatAddress(customer?.billing_address)}</div>
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Kontakt</div>
