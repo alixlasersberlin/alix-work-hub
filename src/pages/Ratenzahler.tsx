@@ -378,6 +378,100 @@ export default function Ratenzahler() {
           </div>
         </DataCard>
       )}
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Änderungen prüfen &amp; bestätigen</DialogTitle>
+            <DialogDescription>
+              Vorschau aus Zoho – es wurde noch nichts gespeichert. Erst nach Bestätigung werden die Daten übernommen.
+            </DialogDescription>
+          </DialogHeader>
+
+          {preview && (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="rounded-lg border border-border p-3">
+                  <div className="text-xs text-muted-foreground">Neu</div>
+                  <div className="text-xl font-semibold tabular-nums text-emerald-500">{preview.newCount}</div>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <div className="text-xs text-muted-foreground">Geändert</div>
+                  <div className="text-xl font-semibold tabular-nums text-amber-500">{preview.updateCount}</div>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <div className="text-xs text-muted-foreground">Unverändert</div>
+                  <div className="text-xl font-semibold tabular-nums">{preview.unchanged}</div>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <div className="text-xs text-muted-foreground">Duplikate / Fehler</div>
+                  <div className="text-xl font-semibold tabular-nums">{preview.duplicates} / {preview.failed}</div>
+                </div>
+              </div>
+
+              <ScrollArea className="h-[320px] mt-3 rounded-lg border border-border">
+                {preview.changes.length === 0 ? (
+                  <div className="p-8 text-center text-sm text-muted-foreground">
+                    Keine Abweichungen gefunden – der Bestand ist aktuell.
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {preview.changes.map((c, i) => (
+                      <div key={`${c.invoice_number ?? 'x'}-${i}`} className="p-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {c.kind === 'new' ? (
+                            <Badge variant="outline" className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30">
+                              <PlusCircle className="w-3 h-3 mr-1" /> Neu
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-amber-500/15 text-amber-500 border-amber-500/30">
+                              <PencilLine className="w-3 h-3 mr-1" /> Änderung
+                            </Badge>
+                          )}
+                          <span className="font-medium">{c.invoice_number ?? '–'}</span>
+                          <span className="text-muted-foreground">{c.customer_name ?? '–'}</span>
+                          <span className="text-muted-foreground text-xs">{fmtDate(c.invoice_date)}</span>
+                          <span className="ml-auto tabular-nums">{fmtMoney(c.total, c.currency)}</span>
+                        </div>
+                        {c.diffs.length > 0 && (
+                          <ul className="mt-2 space-y-1 text-xs">
+                            {c.diffs.map((d) => (
+                              <li key={d.field} className="flex flex-wrap items-center gap-2">
+                                <span className="text-muted-foreground min-w-[120px]">{FIELD_LABELS[d.field] ?? d.field}</span>
+                                <span className="line-through text-muted-foreground">{String(d.old ?? '–')}</span>
+                                <span>→</span>
+                                <span className="font-medium">{String(d.new ?? '–')}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+
+              {preview.truncated && (
+                <p className="text-xs text-muted-foreground">
+                  Es werden nur die ersten 1.000 Änderungen angezeigt – beim Import werden alle übernommen.
+                </p>
+              )}
+            </>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPreviewOpen(false)}>Abbrechen</Button>
+            <Button
+              onClick={handleImport}
+              disabled={importing || !preview || preview.newCount + preview.updateCount === 0}
+              className="gold-gradient text-primary-foreground"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${importing ? 'animate-spin' : ''}`} />
+              Änderungen übernehmen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
