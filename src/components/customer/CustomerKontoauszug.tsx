@@ -145,15 +145,15 @@ export default function CustomerKontoauszug({
       items,
     });
 
-  const preview = () => {
-    const doc = buildDoc();
+  const preview = async () => {
+    const doc = await buildDoc();
     const url = doc.output('bloburl') as unknown as string;
     setPdfUrl(String(url));
     setOpen(true);
   };
 
-  const download = () => {
-    const doc = buildDoc();
+  const download = async () => {
+    const doc = await buildDoc();
     doc.save(`Kontoauszug_${(customerName || 'Kunde').replace(/[^\w-]+/g, '_')}.pdf`);
   };
 
@@ -176,7 +176,7 @@ export default function CustomerKontoauszug({
     }
     setSending(true);
     try {
-      const doc = buildDoc();
+      const doc = await buildDoc();
       const base64 = (doc.output('datauristring') as string).split(',')[1];
       const filename = `Kontoauszug_${(customerName || 'Kunde').replace(/[^\w-]+/g, '_')}.pdf`;
       const { error } = await supabase.functions.invoke('send-invoice-mail', {

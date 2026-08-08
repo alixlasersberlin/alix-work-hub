@@ -109,9 +109,9 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
     return true;
   };
 
-  const downloadPdf = () => {
+  const downloadPdf = async () => {
     if (!guard()) return;
-    buildDoc().save(`${fileBase}.pdf`);
+    (await buildDoc()).save(`${fileBase}.pdf`);
   };
 
   const downloadCsv = () => {
@@ -140,9 +140,9 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
     URL.revokeObjectURL(url);
   };
 
-  const openMail = () => {
+  const openMail = async () => {
     if (!guard()) return;
-    const doc = buildDoc();
+    const doc = await buildDoc();
     setPreviewUrl(String(doc.output('bloburl')));
     setTo(emailFromRows(rows));
     setSubject(`Kontoauszug ${new Date().toLocaleDateString('de-DE')}`);
@@ -162,7 +162,7 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
     }
     setSending(true);
     try {
-      const base64 = (buildDoc().output('datauristring') as string).split(',')[1];
+      const base64 = ((await buildDoc()).output('datauristring') as string).split(',')[1];
       const { error } = await supabase.functions.invoke('send-invoice-mail', {
         body: {
           to_email: to,
