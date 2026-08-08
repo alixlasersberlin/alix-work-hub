@@ -46040,6 +46040,13 @@ export type Database = {
           webauthn_count: number
         }[]
       }
+      next_backup_window: {
+        Args: never
+        Returns: {
+          next_at: string
+          schedule_name: string
+        }[]
+      }
       next_case_number: { Args: never; Returns: string }
       next_document_number:
         | { Args: { p_code: string }; Returns: string }
