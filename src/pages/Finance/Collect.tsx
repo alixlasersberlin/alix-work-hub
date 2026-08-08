@@ -116,6 +116,7 @@ export default function FinanceCollect() {
       rows = rows.filter((r) => (r.customer_name ?? '').toLowerCase().includes(s));
     }
     const sorted = [...rows];
+    if (sort === 'probability') sorted.sort((a, b) => Number(b.pay_probability_pct ?? 0) - Number(a.pay_probability_pct ?? 0) || Number(b.overdue_amount ?? 0) - Number(a.overdue_amount ?? 0));
     if (sort === 'overdue') sorted.sort((a, b) => Number(b.overdue_amount ?? 0) - Number(a.overdue_amount ?? 0));
     if (sort === 'days') sorted.sort((a, b) => Number(b.max_days_overdue ?? 0) - Number(a.max_days_overdue ?? 0));
     if (sort === 'risk') sorted.sort((a, b) => Number(b.risk_score ?? 0) - Number(a.risk_score ?? 0));
