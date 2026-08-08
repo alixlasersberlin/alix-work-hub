@@ -266,5 +266,17 @@ export async function generateKontoauszugPdf(data: KontoauszugData) {
   doc.text('Offener Gesamtsaldo', right - 86, y + 8, { align: 'left' });
   doc.text(money(sumOpen, cur), right - 4, y + 8, { align: 'right' });
 
+  // Grußformel
+  y += 26;
+  if (y > footerTop - 22) { doc.addPage(); paintPage(); y = 40; }
+  doc.setFont('Inter', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(40);
+  doc.text('Mit freundlichen Grüßen', m, y);
+  doc.setFont('Inter', 'bold');
+  doc.setTextColor(20);
+  doc.text('Alix Lasers Finance', m, y + 7);
+
   return doc;
+
 }
