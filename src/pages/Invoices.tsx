@@ -1775,7 +1775,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 </thead>
                 <tbody>
                   {paginate(flatRows, pageSize).map((r) => (
-                    <tr key={`${r.source}-${r.id}`} className="border-t border-border hover:bg-muted/10">
+                    <Fragment key={`${r.source}-${r.id}`}>
+                    <tr className="border-t border-border hover:bg-muted/10">
+
                       {isAdmin && (
                         <td className="px-3 py-2">
                           <input
