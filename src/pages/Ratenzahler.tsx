@@ -71,6 +71,10 @@ export default function Ratenzahler() {
   const [pageSize, setPageSize] = useState<PageSize>(20);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [importing, setImporting] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [progress, setProgress] = useState<{ page: number; pct: number; label: string } | null>(null);
+  const [preview, setPreview] = useState<PreviewResult | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const fetchRows = async () => {
     setLoading(true);
