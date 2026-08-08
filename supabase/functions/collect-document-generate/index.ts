@@ -107,9 +107,64 @@ Deno.serve(async (req) => {
     const blocks: Block[] = [
       { type: 'p', text: `${c.customer_name ?? ''}\n\n${new Date().toLocaleDateString('de-DE')}` },
       { type: 'h1', text: meta.subject },
-      { type: 'p', text: bodyText(docType, c.customer_name ?? '', eur(total, cur), deadlineStr, extra) },
-      { type: 'h2', text: 'Offene Posten' },
-      {
+    ];
+
+    let planTotal: number | null = null;
+
+    if (docType === 'ratenvereinbarung') {
+      // Ratenplan laden (explizit oder der zuletzt angelegte des Falls)
+      let planQuery = admin.from('collect_payment_plans').select('*').eq('case_id', caseId);
+      if (body?.plan_id) planQuery = planQuery.eq('id', body.plan_id);
+      const { data: plans } = await planQuery.order('created_at', { ascending: false }).limit(1);
+      const plan: any = (plans ?? [])[0] ?? null;
+
+      if (plan) {
+        planTotal = Number(plan.total_amount ?? total);
+        const { data: rates } = await admin
+          .from('collect_payment_plan_items')
+          .select('seq, due_date, amount, status')
+          .eq('plan_id', plan.id)
+          .order('seq');
+
+        blocks.push({ type: 'p', text: bodyText(docType, c.customer_name ?? '', eur(planTotal, cur), deadlineStr, extra) });
+        blocks.push({ type: 'h2', text: 'Konditionen' });
+        blocks.push({
+          type: 'table',
+          head: ['Position', 'Wert'],
+          widths: [200, 295],
+          rows: [
+            ['Gesamtforderung', eur(plan.total_amount, cur)],
+            ['Anzahlung', eur(plan.downpayment, cur)],
+            ['Monatliche Rate', eur(plan.monthly_amount, cur)],
+            ['Laufzeit', `${plan.term_months ?? 0} Monate`],
+            ['Beginn', de(plan.start_date)],
+            ['SEPA-Lastschrift', plan.sepa_iban_masked ?? 'nein'],
+          ],
+        });
+        blocks.push({ type: 'h2', text: 'Ratenplan' });
+        blocks.push({
+          type: 'table',
+          head: ['Rate', 'Faellig am', 'Betrag', 'Status'],
+          widths: [70, 150, 150, 125],
+          rows: (rates ?? []).map((r: any) => [
+            String(r.seq), de(r.due_date), eur(r.amount, cur), san(r.status ?? 'offen'),
+          ]),
+        });
+        blocks.push({ type: 'spacer', size: 30 });
+        blocks.push({
+          type: 'table',
+          head: ['Ort, Datum / Kunde', 'Alix Lasers (R)'],
+          widths: [250, 245],
+          rows: [['____________________________', '____________________________']],
+        });
+      } else {
+        blocks.push({ type: 'p', text: bodyText(docType, c.customer_name ?? '', eur(total, cur), deadlineStr, extra) });
+        blocks.push({ type: 'p', text: 'Hinweis: Zu diesem Fall ist noch kein Ratenplan hinterlegt.' });
+      }
+    } else {
+      blocks.push({ type: 'p', text: bodyText(docType, c.customer_name ?? '', eur(total, cur), deadlineStr, extra) });
+      blocks.push({ type: 'h2', text: 'Offene Posten' });
+      blocks.push({
         type: 'table',
         head: ['Rechnung', 'Datum', 'Faellig', 'Verzug', 'Betrag'],
         widths: [110, 80, 80, 60, 165],
@@ -122,8 +177,9 @@ Deno.serve(async (req) => {
           ...(Number(c.fee_amount ?? 0) > 0 ? [['Mahngebuehren', '', '', '', eur(c.fee_amount, cur)]] : []),
           ['GESAMT', '', '', '', eur(total, cur)],
         ],
-      },
-    ];
+      });
+    }
+
 
     const bytes = await renderPdf({
       title: meta.label,
@@ -137,7 +193,7 @@ Deno.serve(async (req) => {
       customer_name: c.customer_name,
       doc_type: docType,
       title: `${meta.label} ${c.customer_name ?? ''}`.trim(),
-      amount: total,
+      amount: planTotal ?? total,
       currency: cur,
       content: { deadline: deadline.toISOString().slice(0, 10), note: extra, items: items ?? [] },
       created_by: user.id,
@@ -164,7 +220,7 @@ Deno.serve(async (req) => {
           bcc: [BCC],
           subject: `${meta.subject} - ${c.customer_name ?? ''}`,
           html: `<p>Sehr geehrte Damen und Herren,</p><p>anbei erhalten Sie unser Schreiben als PDF.</p>
-                 <p>Offener Betrag: <b>${eur(total, cur)}</b><br/>Zahlungsziel: <b>${deadlineStr}</b></p>
+                 <p>Offener Betrag: <b>${eur(planTotal ?? total, cur)}</b><br/>Zahlungsziel: <b>${deadlineStr}</b></p>
                  <p>Mit freundlichen Grüßen<br/>Alix Lasers ®<br/>Forderungsmanagement</p>`,
           attachments: [{ filename: `${meta.label.toLowerCase().replace(/\s+/g, '-')}.pdf`, content: b64 }],
         }),

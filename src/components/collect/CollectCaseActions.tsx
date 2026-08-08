@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Phone, HandCoins, CalendarClock, CreditCard, Gavel, Scale, Plus, Check } from 'lucide-react';
+import { Phone, HandCoins, CalendarClock, CreditCard, Gavel, Scale, Plus, Check, FileText, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
@@ -52,6 +52,26 @@ export default function CollectCaseActions({ c, items, onChange }: { c: any; ite
 
   const [limitOpen, setLimitOpen] = useState(false);
   const [limitValue, setLimitValue] = useState('20000');
+  const [busyPlan, setBusyPlan] = useState<string | null>(null);
+
+  const planDoc = async (planId: string, send: boolean) => {
+    setBusyPlan(planId);
+    try {
+      const { data, error } = await supabase.functions.invoke('collect-document-generate', {
+        body: { case_id: caseId, doc_type: 'ratenvereinbarung', plan_id: planId, send },
+      });
+      if (error) throw error;
+      const res = data as any;
+      if (res?.error) throw new Error(res.error);
+      if (res?.url) window.open(res.url, '_blank');
+      toast({ title: send ? 'Ratenvereinbarung versendet' : 'Ratenvereinbarung erstellt' });
+      onChange(); load();
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setBusyPlan(null);
+    }
+  };
 
   const load = async () => {
     const [ca, pr, pl, li, lg] = await Promise.all([
@@ -255,7 +275,18 @@ export default function CollectCaseActions({ c, items, onChange }: { c: any; ite
                   Anzahlung {fmt(p.downpayment, p.currency ?? cur)} · Start {p.start_date}
                   {p.sepa_iban_masked ? ` · SEPA ${p.sepa_iban_masked}` : ''}
                 </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" disabled={busyPlan === p.id}
+                    onClick={() => planDoc(p.id, false)}>
+                    <FileText className="h-3.5 w-3.5 mr-1.5" />Vereinbarung als PDF
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={busyPlan === p.id || !c.customer_email}
+                    onClick={() => planDoc(p.id, true)}>
+                    <Send className="h-3.5 w-3.5 mr-1.5" />An Kunden senden
+                  </Button>
+                </div>
               </div>
+
             ))}
           </div>
         </DataCard>
