@@ -1499,7 +1499,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 <span className="text-muted-foreground">{h.invoice_date}</span>
                 <span className="font-medium">{fmtMoney(Number(h.total ?? 0))}</span>
                 <span className="rounded bg-secondary px-1.5 py-0.5">{h.accounting_region ?? 'EU'}</span>
-                {h.is_mietkauf && <span className="rounded bg-secondary px-1.5 py-0.5">Mietkauf</span>}
+                {h.is_mietkauf && <span className="rounded bg-secondary px-1.5 py-0.5">Mietkauf Geräte</span>}
                 {h.accounting_region && h.accounting_region !== region && (
                   <Button size="sm" variant="outline" className="h-6 px-2"
                     onClick={() => setRegion(h.accounting_region)}>
@@ -1535,7 +1535,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                       onClick={bulkMietkauf}
                     >
                       {bulkBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
-                      {mietkaufOnly ? 'Vermietung lösen' : 'MietKauf'}
+                      {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
                     </Button>
                   </div>
                 </div>
@@ -1686,13 +1686,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                               size="sm"
                               variant="outline"
                               type="button"
-                              title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als MietKauf buchen und nach „In Vermietung" verschieben'}
+                              title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als Mietkauf Geräte buchen und nach „In Vermietung" verschieben'}
                               disabled={mietkaufBusyId === r.id}
                               className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMietkauf(r); }}
                             >
                               {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
-                              {mietkaufOnly ? 'Vermietung lösen' : 'MietKauf'}
+                              {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
                             </Button>
                           )}
                           {isSuperAdmin && (
@@ -1881,13 +1881,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                                     size="sm"
                                     variant="outline"
                                     type="button"
-                                    title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als MietKauf buchen und nach „In Vermietung" verschieben'}
+                                    title={mietkaufOnly ? 'Aus Vermietung entfernen' : 'Als Mietkauf Geräte buchen und nach „In Vermietung" verschieben'}
                                     disabled={mietkaufBusyId === r.id}
                                     className="h-8 px-2 gap-1 border-violet-500/40 text-violet-400 hover:bg-violet-500/10"
                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleMietkauf(r); }}
                                   >
                                     {mietkaufBusyId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Repeat className="w-3.5 h-3.5" />}
-                                    {mietkaufOnly ? 'Vermietung lösen' : 'MietKauf'}
+                                    {mietkaufOnly ? 'Vermietung lösen' : 'Mietkauf Geräte'}
                                   </Button>
                                 )}
                                 {isSuperAdmin && (
