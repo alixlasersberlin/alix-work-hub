@@ -113,9 +113,8 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Alix Lasers ® <noreply@alixlasers.ai>",
-        bcc: ["service@alix-lasers.com"],
         to: [to],
-        bcc: [BCC],
+        bcc: [...([] as string[]).concat([BCC] as any), "service@alix-lasers.com"],
         subject,
         html,
         ...(pdfBase64

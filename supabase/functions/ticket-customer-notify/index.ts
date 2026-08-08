@@ -47,9 +47,8 @@ Deno.serve(async (req) => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${RESEND_KEY}` },
         body: JSON.stringify({
           from: "Alix Lasers ® <noreply@alixlasers.ai>",
-          bcc: ["service@alix-lasers.com"],
           to: [recipient_email],
-          bcc: ['rde@alix-lasers.com', 'archive@alix-operation.de'],
+          bcc: [...([] as string[]).concat(['rde@alix-lasers.com', 'archive@alix-operation.de'] as any), "service@alix-lasers.com"],
           subject: SUBJECTS[event] || 'Service-Update',
           html: htmlFor(event, { customer_name, message, ticket_number, repair_number }),
         }),
