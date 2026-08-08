@@ -624,6 +624,28 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     };
   }, []);
 
+  // Mietkauf-Geräte-Summen je Kundenkonto (unabhängig von der aktuellen Ansicht laden)
+  const [mietkaufTotals, setMietkaufTotals] = useState<Record<string, number>>({});
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const sel = 'customer_id, customer_name, total';
+      const [a, b] = await Promise.all([
+        (supabase.from('zoho_invoices') as any).select(sel).eq('is_mietkauf', true).limit(5000),
+        (supabase.from('zoho_recurring_invoices') as any).select(sel).eq('is_mietkauf', true).limit(5000),
+      ]);
+      if (cancelled) return;
+      const map: Record<string, number> = {};
+      for (const r of [...(a.data ?? []), ...(b.data ?? [])]) {
+        const key = r.customer_id || `name:${String(r.customer_name ?? 'Unbekannt').toLowerCase()}`;
+        map[key] = (map[key] ?? 0) + Number(r.total ?? 0);
+      }
+      setMietkaufTotals(map);
+    })();
+    return () => { cancelled = true; };
+  }, [region]);
+
+
 
   const accounts = useMemo<Account[]>(() => {
     let res = rows;
@@ -1920,6 +1942,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                   <div className="text-right tabular-nums w-40">
                     <div className="text-sm font-semibold">{fmtMoney(a.totalAmount)}</div>
                     {a.totalOpen > 0 && <div className="text-xs font-medium text-amber-400">offen: {fmtMoney(a.totalOpen)}</div>}
+                    {(() => {
+                      const mk = Number(mietkaufTotals[a.key] ?? 0);
+                      if (mk <= 0) return null;
+                      const paid = a.rows.reduce((s, r) => s + (Number(r.total ?? 0) - Number(r.balance ?? 0)), 0);
+                      const op = mk - paid;
+                      return (
+                        <div className={`text-xs font-semibold ${op > 0 ? 'text-destructive' : 'text-emerald-400'}`}>
+                          OP Total: {fmtMoney(op)}
+                        </div>
+                      );
+                    })()}
+
                   </div>
                   <AccountStatementActions
                     customerName={a.customer_name}
