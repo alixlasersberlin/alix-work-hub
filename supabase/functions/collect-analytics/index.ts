@@ -140,21 +140,9 @@ Deno.serve(async (req) => {
     let healthSaved = 0;
     for (let i = 0; i < healthRows.length; i += 300) {
       const chunk = healthRows.slice(i, i + 300);
-      const withId = chunk.filter((r) => r.customer_id);
-      const withoutId = chunk.filter((r) => !r.customer_id);
-      if (withId.length) {
-        const { error } = await admin.from('collect_health_scores').upsert(withId, { onConflict: 'customer_id' });
-        if (error) console.warn('health upsert failed', error.message);
-        else healthSaved += withId.length;
-      }
-      for (const r of withoutId) {
-        const { data: ex } = await admin.from('collect_health_scores').select('id').is('customer_id', null).eq('customer_name', r.customer_name).maybeSingle();
-        const res = ex?.id
-          ? await admin.from('collect_health_scores').update(r).eq('id', ex.id)
-          : await admin.from('collect_health_scores').insert(r);
-        if (res.error) console.warn('health save failed', r.customer_name, res.error.message);
-        else healthSaved++;
-      }
+      const { error } = await admin.from('collect_health_scores').upsert(chunk, { onConflict: 'customer_name' });
+      if (error) console.warn('health upsert failed', error.message);
+      else healthSaved += chunk.length;
     }
 
     // Score an die Fälle spiegeln
