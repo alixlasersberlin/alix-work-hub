@@ -564,6 +564,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/collect/health', label: 'Customer Health Score', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/playbooks', label: 'Collections Playbooks', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/gebuehren', label: 'Gebühren & Zinsen', icon: FileText, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/collect/einstellungen', label: 'Mahnstufen-Konfiguration', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/verkaeufer', label: 'Verkäuferbewertung', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/freigaben', label: 'Governance & Freigaben', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/collect/recht', label: 'Recht & Inkasso', icon: FileText, roles: ['Admin', 'Super Admin'] },
