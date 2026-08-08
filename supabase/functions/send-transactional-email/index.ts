@@ -119,6 +119,13 @@ Deno.serve(async (req) => {
     if (!bccEmails.some(e => e.trim().toLowerCase() === norm)) bccEmails.push(archive)
   }
 
+  // Systemweit: alle Mahnungen zusätzlich in BCC an k.trinh
+  if (/mahn|dunning|reminder|collect/i.test(templateName ?? '')) {
+    const dunningBcc = 'k.trinh@alix-operation.de'
+    if (!bccEmails.some(e => e.trim().toLowerCase() === dunningBcc)) bccEmails.push(dunningBcc)
+  }
+
+
 
   if (!templateName) {
     return new Response(JSON.stringify({ error: 'templateName is required' }), {
