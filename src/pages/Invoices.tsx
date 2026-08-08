@@ -1099,6 +1099,15 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
+  const handlePreview = async (r: Row) => {
+    setPreviewRow(r);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+    const blob = await fetchInvoicePdf(r);
+    if (!blob) { setPreviewRow(null); return; }
+    setPreviewUrl(URL.createObjectURL(blob));
+  };
+
   const handleDownload = async (r: Row) => {
     const blob = await fetchInvoicePdf(r);
     if (!blob) return;
