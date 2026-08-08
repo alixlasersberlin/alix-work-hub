@@ -1547,6 +1547,12 @@ function AppRoutes() {
           <Route path="/finance/collect/auswertungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectBi /></ProtectedRoute>} />
           <Route path="/finance/collect/recht" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectLegal /></ProtectedRoute>} />
           <Route path="/finance/collect/limits" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectLimits /></ProtectedRoute>} />
+          <Route path="/finance/collect/playbooks" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectPlaybooks /></ProtectedRoute>} />
+          <Route path="/finance/collect/health" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectHealth /></ProtectedRoute>} />
+          <Route path="/finance/collect/verkaeufer" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectSellers /></ProtectedRoute>} />
+          <Route path="/finance/collect/gebuehren" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectFees /></ProtectedRoute>} />
+          <Route path="/finance/collect/freigaben" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectGovernance /></ProtectedRoute>} />
+          <Route path="/finance/collect/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCockpit /></ProtectedRoute>} />
           <Route path="/finance/collect/copilot" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCopilot /></ProtectedRoute>} />
           <Route path="/finance/collect/:caseId" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCase /></ProtectedRoute>} />
           <Route path="/operation/anzahlung-mahnung-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin']}><OperationMahnungKonfiguration /></ProtectedRoute>} />
