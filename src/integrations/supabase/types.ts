@@ -13658,8 +13658,11 @@ export type Database = {
           notes: string | null
           sepa_iban_masked: string | null
           sepa_mandate_ref: string | null
+          signature_data_url: string | null
           signature_request_id: string | null
           signed_at: string | null
+          signed_ip: string | null
+          signed_name: string | null
           start_date: string
           status: string
           term_months: number
@@ -13678,8 +13681,11 @@ export type Database = {
           notes?: string | null
           sepa_iban_masked?: string | null
           sepa_mandate_ref?: string | null
+          signature_data_url?: string | null
           signature_request_id?: string | null
           signed_at?: string | null
+          signed_ip?: string | null
+          signed_name?: string | null
           start_date?: string
           status?: string
           term_months?: number
@@ -13698,8 +13704,11 @@ export type Database = {
           notes?: string | null
           sepa_iban_masked?: string | null
           sepa_mandate_ref?: string | null
+          signature_data_url?: string | null
           signature_request_id?: string | null
           signed_at?: string | null
+          signed_ip?: string | null
+          signed_name?: string | null
           start_date?: string
           status?: string
           term_months?: number
