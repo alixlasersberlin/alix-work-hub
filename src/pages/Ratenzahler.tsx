@@ -265,13 +265,31 @@ export default function Ratenzahler() {
         meta={<InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${rows.length} Raten`} pulse={loading} />}
         actions={
           isAdmin && (
-            <Button onClick={handleImport} disabled={importing} className="gold-gradient text-primary-foreground">
-              <RefreshCw className={`w-4 h-4 mr-2 ${importing ? 'animate-spin' : ''}`} />
-              {importing ? 'Import läuft…' : 'Aus Zoho importieren'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleCheck} disabled={checking || importing}>
+                <Search className={`w-4 h-4 mr-2 ${checking ? 'animate-pulse' : ''}`} />
+                {checking ? 'Prüfe Bestand…' : 'Bestand prüfen'}
+              </Button>
+              {preview && (
+                <Button onClick={() => setPreviewOpen(true)} disabled={importing} className="gold-gradient text-primary-foreground">
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Änderungen ({preview.newCount + preview.updateCount})
+                </Button>
+              )}
+            </div>
           )
         }
       />
+
+      {progress && (
+        <DataCard className="mb-4 p-4">
+          <div className="flex items-center justify-between mb-2 text-sm">
+            <span className="font-medium">{progress.label}</span>
+            <span className="tabular-nums text-muted-foreground">{progress.pct}%</span>
+          </div>
+          <Progress value={progress.pct} />
+        </DataCard>
+      )}
 
       <ListToolbar
         search={search}
