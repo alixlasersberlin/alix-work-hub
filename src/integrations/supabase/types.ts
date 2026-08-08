@@ -31204,6 +31204,47 @@ export type Database = {
         }
         Relationships: []
       }
+      offer_activities: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          id: string
+          kind: string
+          note: string | null
+          offer_id: string
+          outcome: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          offer_id: string
+          outcome?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          kind?: string
+          note?: string | null
+          offer_id?: string
+          outcome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offer_activities_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_contact_log: {
         Row: {
           body: string | null
@@ -31358,11 +31399,16 @@ export type Database = {
         Row: {
           accepted_at: string | null
           accepted_by_name: string | null
+          ai_actions: Json | null
+          ai_probability: number | null
+          ai_reason: string | null
+          ai_scored_at: string | null
           approval_note: string | null
           approval_status: string
           approved_at: string | null
           approved_by: string | null
           case_number: string | null
+          competitor: string | null
           created_at: string
           created_by: string | null
           created_by_name: string | null
@@ -31372,32 +31418,50 @@ export type Database = {
           customer_visible: boolean
           declined_at: string | null
           declined_reason: string | null
+          discount_percent: number | null
+          expected_close_date: string | null
+          financing_type: string | null
+          followup_note: string | null
           id: string
+          last_contact_at: string | null
+          lead_source: string | null
+          loss_reason: string | null
+          next_followup_at: string | null
           offer_date: string | null
           offer_number: string
+          offer_score: number | null
+          opened_at: string | null
           payload: Json
           portal_pdf_hash: string | null
           portal_published_at: string | null
           portal_version: number
+          product_category: string | null
           signature_document_id: string | null
           signature_signed_at: string | null
           signature_status: string | null
           signed_at: string | null
+          stage: string | null
           status: string
           total_gross: number | null
           total_net: number | null
           total_tax: number | null
           updated_at: string
           valid_until: string | null
+          win_probability: number | null
         }
         Insert: {
           accepted_at?: string | null
           accepted_by_name?: string | null
+          ai_actions?: Json | null
+          ai_probability?: number | null
+          ai_reason?: string | null
+          ai_scored_at?: string | null
           approval_note?: string | null
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
           case_number?: string | null
+          competitor?: string | null
           created_at?: string
           created_by?: string | null
           created_by_name?: string | null
@@ -31407,32 +31471,50 @@ export type Database = {
           customer_visible?: boolean
           declined_at?: string | null
           declined_reason?: string | null
+          discount_percent?: number | null
+          expected_close_date?: string | null
+          financing_type?: string | null
+          followup_note?: string | null
           id?: string
+          last_contact_at?: string | null
+          lead_source?: string | null
+          loss_reason?: string | null
+          next_followup_at?: string | null
           offer_date?: string | null
           offer_number: string
+          offer_score?: number | null
+          opened_at?: string | null
           payload?: Json
           portal_pdf_hash?: string | null
           portal_published_at?: string | null
           portal_version?: number
+          product_category?: string | null
           signature_document_id?: string | null
           signature_signed_at?: string | null
           signature_status?: string | null
           signed_at?: string | null
+          stage?: string | null
           status?: string
           total_gross?: number | null
           total_net?: number | null
           total_tax?: number | null
           updated_at?: string
           valid_until?: string | null
+          win_probability?: number | null
         }
         Update: {
           accepted_at?: string | null
           accepted_by_name?: string | null
+          ai_actions?: Json | null
+          ai_probability?: number | null
+          ai_reason?: string | null
+          ai_scored_at?: string | null
           approval_note?: string | null
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
           case_number?: string | null
+          competitor?: string | null
           created_at?: string
           created_by?: string | null
           created_by_name?: string | null
@@ -31442,23 +31524,36 @@ export type Database = {
           customer_visible?: boolean
           declined_at?: string | null
           declined_reason?: string | null
+          discount_percent?: number | null
+          expected_close_date?: string | null
+          financing_type?: string | null
+          followup_note?: string | null
           id?: string
+          last_contact_at?: string | null
+          lead_source?: string | null
+          loss_reason?: string | null
+          next_followup_at?: string | null
           offer_date?: string | null
           offer_number?: string
+          offer_score?: number | null
+          opened_at?: string | null
           payload?: Json
           portal_pdf_hash?: string | null
           portal_published_at?: string | null
           portal_version?: number
+          product_category?: string | null
           signature_document_id?: string | null
           signature_signed_at?: string | null
           signature_status?: string | null
           signed_at?: string | null
+          stage?: string | null
           status?: string
           total_gross?: number | null
           total_net?: number | null
           total_tax?: number | null
           updated_at?: string
           valid_until?: string | null
+          win_probability?: number | null
         }
         Relationships: []
       }
