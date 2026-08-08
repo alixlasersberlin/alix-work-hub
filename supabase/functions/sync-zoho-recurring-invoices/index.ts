@@ -240,6 +240,7 @@ Deno.serve(async (req) => {
     const maxProfilePages = Math.min(Math.max(body.max_pages ?? 1, 1), 5);
     const regionFilter = body.region_filter ?? "all";
     const search = (body.search ?? "").toString().trim();
+    const dryRun = body.dry_run === true;
 
 
 
