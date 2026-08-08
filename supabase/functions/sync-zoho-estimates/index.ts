@@ -74,6 +74,11 @@ async function getAccessToken(cfg: ReturnType<typeof getZohoConfig>) {
   throw new Error("Zoho token: exceeded retries");
 }
 
+function nullDate(v: unknown): string | null {
+  const s = (v ?? "").toString().trim();
+  return s === "" ? null : s;
+}
+
 function statusMap(s: string): "draft" | "signed" | "order" {
   const v = (s ?? "").toLowerCase();
   if (v === "accepted" || v === "invoiced") return "order";
@@ -190,8 +195,8 @@ Deno.serve(async (req) => {
 
           const payload = {
             offerNumber,
-            offerDate: full.date ?? est.date ?? null,
-            validUntil: full.expiry_date ?? est.expiry_date ?? null,
+            offerDate: nullDate(full.date ?? est.date),
+            validUntil: nullDate(full.expiry_date ?? est.expiry_date),
             customer: {
               id: customerId,
               company_name: est.customer_name ?? null,
