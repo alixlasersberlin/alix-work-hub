@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Settings as SettingsIcon, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
@@ -33,6 +34,7 @@ const cfgKey = (region: 'EU' | 'CH') => region === 'CH' ? 'finance.reminder.conf
 
 export default function FinanceMahnwesenSettings() {
   const { roles } = useAuth();
+  const navigate = useNavigate();
   const { region } = useAccountingRegion();
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const [cfg, setCfg] = useState<Cfg>(DEFAULT_CFG);
@@ -81,6 +83,15 @@ export default function FinanceMahnwesenSettings() {
       />
       {loading ? <DataCard><SkeletonTable rows={5} cols={5} /></DataCard> : (
       <>
+      <DataCard className="p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="text-sm text-muted-foreground">
+          Diese Seite steuert das klassische Mahnwesen. Stufen, Kanäle, Sperren und E-Mail-Vorlagen für ALIX COLLECT werden separat gepflegt.
+        </div>
+        <Button variant="outline" onClick={() => navigate('/finance/collect/einstellungen')}>
+          Zur Mahnstufen-Konfiguration (ALIX COLLECT)
+        </Button>
+      </DataCard>
+
       {!isSuperAdmin && <div className="mb-3 text-sm text-amber-500">Nur Super Admin kann Einstellungen speichern.</div>}
 
       <DataCard className="p-4 mb-4">
