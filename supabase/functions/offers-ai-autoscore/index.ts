@@ -51,6 +51,7 @@ async function scoreBatch(admin: any, offers: any[]) {
     const probability = Math.max(0, Math.min(1, Number(r.probability ?? 0)));
     const { error } = await admin.from('offers').update({
       ai_probability: probability,
+      offer_score: Math.round(probability * 100),
       ai_reason: String(r.reason ?? '').slice(0, 500),
       ai_actions: Array.isArray(r.actions) ? r.actions.slice(0, 5) : [],
       ai_scored_at: new Date().toISOString(),
