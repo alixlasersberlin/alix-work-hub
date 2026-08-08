@@ -164,7 +164,7 @@ serve(async (req) => {
           body: JSON.stringify({
             from: "Alix Lasers ® <noreply@alixlasers.ai>",
             to: [rec.name ? `${rec.name} <${rec.email}>` : rec.email],
-            bcc: [...([] as string[]).concat(['rde@alix-lasers.com', 'archive@alix-operation.de'] as any), "service@alix-lasers.com"],
+            bcc: [...([] as string[]).concat(['rde@alix-lasers.com'] as any), "service@alix-lasers.com"],
             subject: subj,
             html: html || undefined,
             text: text || undefined,

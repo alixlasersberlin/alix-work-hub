@@ -286,7 +286,7 @@ serve(async (req) => {
             body: JSON.stringify({
               from: "Alix Lasers ® <noreply@alixlasers.ai>",
               to: [cust.contact_name ? `${cust.contact_name} <${cust.email}>` : cust.email],
-              bcc: [...([] as string[]).concat(['rde@alix-lasers.com', 'archive@alix-operation.de'] as any), "service@alix-lasers.com"],
+              bcc: [...([] as string[]).concat(['rde@alix-lasers.com'] as any), "service@alix-lasers.com"],
               reply_to: REPLY_TO_MAP[String(a.sender_email || "news@alixwork.de").toLowerCase()] || undefined,
               subject: subj,
               html: html || undefined,
