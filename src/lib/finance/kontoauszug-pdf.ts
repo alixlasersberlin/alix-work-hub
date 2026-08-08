@@ -14,6 +14,7 @@ export type KontoauszugItem = {
 export type KontoauszugData = {
   customerName: string;
   customerAddress?: string | null;
+  shippingAddress?: string | null;
   customerNumber?: string | null;
   currency?: string | null;
   items: KontoauszugItem[];
