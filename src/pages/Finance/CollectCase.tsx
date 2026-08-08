@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { toast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
+import CollectCaseActions from '@/components/collect/CollectCaseActions';
 
 const fmt = (n: any, cur = 'EUR') =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(Number(n ?? 0));
