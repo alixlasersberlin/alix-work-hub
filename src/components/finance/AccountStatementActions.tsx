@@ -65,6 +65,10 @@ function addressesFromRows(rows: AnyRow[]): { billing: string | null; shipping: 
     if (!shipping) shipping = formatAddress(rd.shipping_address, rd.customer_name);
     if (billing && shipping) break;
   }
+  return normalizeAddresses(billing, shipping);
+}
+
+function normalizeAddresses(billing: string | null, shipping: string | null) {
   // Wenn nur eine Anschrift vorhanden ist, nur diese verwenden
   if (billing && shipping && billing === shipping) shipping = null;
   if (!billing && shipping) {
@@ -73,6 +77,37 @@ function addressesFromRows(rows: AnyRow[]): { billing: string | null; shipping: 
   }
   return { billing, shipping };
 }
+
+/** Fallback: Anschrift aus der Kundenstammdaten-Tabelle laden. */
+async function addressesFromCustomer(
+  customerName: string,
+  customerNumber?: string | null,
+): Promise<{ billing: string | null; shipping: string | null }> {
+  try {
+    let query = supabase.from('customers').select('company_name, contact_name, billing_address, shipping_address');
+    query = customerNumber
+      ? query.eq('external_customer_id', String(customerNumber))
+      : query.eq('company_name', customerName);
+    const { data } = await query.limit(1);
+    let row = data?.[0];
+    if (!row && customerName) {
+      const { data: byName } = await supabase
+        .from('customers')
+        .select('company_name, contact_name, billing_address, shipping_address')
+        .eq('company_name', customerName)
+        .limit(1);
+      row = byName?.[0];
+    }
+    if (!row) return { billing: null, shipping: null };
+    return normalizeAddresses(
+      formatAddress(row.billing_address, customerName),
+      formatAddress(row.shipping_address, customerName),
+    );
+  } catch {
+    return { billing: null, shipping: null };
+  }
+}
+
 
 
 
@@ -114,15 +149,18 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
   const addresses = useMemo(() => addressesFromRows(rows), [rows]);
   const fileBase = `Kontoauszug_${(customerName || 'Kunde').replace(/[^\w-]+/g, '_')}`;
 
-  const buildDoc = () =>
-    generateKontoauszugPdf({
+  const buildDoc = async () => {
+    let addr = addresses;
+    if (!addr.billing) addr = await addressesFromCustomer(customerName, customerNumber);
+    return generateKontoauszugPdf({
       customerName: customerName || 'Kunde',
-      customerAddress: addresses.billing,
-      shippingAddress: addresses.shipping,
+      customerAddress: addr.billing,
+      shippingAddress: addr.shipping,
       customerNumber: customerNumber ?? null,
       currency,
       items,
     });
+  };
 
   const guard = () => {
     if (!items.length) {
