@@ -418,3 +418,6 @@ verify_jwt = true
 
 [functions.maps-browser-key]
 verify_jwt = true
+
+[functions.collect-copilot]
+verify_jwt = true

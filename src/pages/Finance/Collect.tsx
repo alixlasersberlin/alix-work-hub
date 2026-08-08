@@ -73,7 +73,7 @@ export default function FinanceCollect() {
   const [busy, setBusy] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState('offen');
-  const [sort, setSort] = useState('overdue');
+  const [sort, setSort] = useState('probability');
 
   const load = async () => {
     setLoading(true);
@@ -116,6 +116,7 @@ export default function FinanceCollect() {
       rows = rows.filter((r) => (r.customer_name ?? '').toLowerCase().includes(s));
     }
     const sorted = [...rows];
+    if (sort === 'probability') sorted.sort((a, b) => Number(b.pay_probability_pct ?? 0) - Number(a.pay_probability_pct ?? 0) || Number(b.overdue_amount ?? 0) - Number(a.overdue_amount ?? 0));
     if (sort === 'overdue') sorted.sort((a, b) => Number(b.overdue_amount ?? 0) - Number(a.overdue_amount ?? 0));
     if (sort === 'days') sorted.sort((a, b) => Number(b.max_days_overdue ?? 0) - Number(a.max_days_overdue ?? 0));
     if (sort === 'risk') sorted.sort((a, b) => Number(b.risk_score ?? 0) - Number(a.risk_score ?? 0));
@@ -197,6 +198,7 @@ export default function FinanceCollect() {
             <Select value={sort} onValueChange={setSort}>
               <SelectTrigger className="h-8 w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="probability">Zahlt heute wahrscheinlich</SelectItem>
                 <SelectItem value="overdue">Höchste Forderung</SelectItem>
                 <SelectItem value="days">Längster Verzug</SelectItem>
                 <SelectItem value="risk">Höchstes Risiko</SelectItem>
@@ -226,13 +228,17 @@ export default function FinanceCollect() {
                   <th className="py-2 text-right font-medium">Überfällig</th>
                   <th className="py-2 text-right font-medium">Offen gesamt</th>
                   <th className="py-2 text-right font-medium">Zahlungs-W.</th>
-                  <th className="py-2 text-left font-medium">Nächste Aktion</th>
+                  <th className="py-2 text-left font-medium">Empfehlung</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r, i) => (
+                {filtered.map((r, i) => {
+                  const p = Number(r.pay_probability_pct ?? 0);
+                  const stars = p >= 90 ? 5 : p >= 75 ? 4 : p >= 50 ? 3 : p >= 25 ? 2 : 1;
+                  const rec = p >= 90 ? 'Anrufen nicht notwendig' : p >= 75 ? 'E-Mail ausreichend' : p >= 25 ? 'Telefon empfohlen' : 'Direkt Anwalt / Inkasso';
+                  return (
                   <tr key={r.id} className={`border-b border-border/50 ${i % 2 ? 'bg-muted/20' : ''}`}>
-                    <td className="py-2 text-muted-foreground">{r.priority ?? '–'}</td>
+                    <td className="py-2 text-amber-400" title={`${p}%`}>{'★'.repeat(stars)}<span className="text-muted-foreground/40">{'★'.repeat(5 - stars)}</span></td>
                     <td className="py-2">
                       <Link to={`/finance/collect/${r.id}`} className="font-medium text-primary hover:underline">
                         {r.customer_name ?? '–'}
@@ -251,9 +257,10 @@ export default function FinanceCollect() {
                     <td className="py-2 text-right text-red-400">{fmt(r.overdue_amount, r.currency ?? 'EUR')}</td>
                     <td className="py-2 text-right">{fmt(r.open_amount, r.currency ?? 'EUR')}</td>
                     <td className="py-2 text-right">{r.pay_probability_pct != null ? `${r.pay_probability_pct}%` : '–'}</td>
-                    <td className="py-2 text-muted-foreground">{r.next_action ?? '–'}</td>
+                    <td className="py-2 text-muted-foreground">{r.next_action ?? rec}</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

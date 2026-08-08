@@ -166,6 +166,10 @@ const FinanceMahnwesenDetail = lazy(() => import("./pages/Finance/MahnwesenDetai
 const FinanceMahnwesenSettings = lazy(() => import("./pages/Finance/MahnwesenSettings"));
 const FinanceCollect = lazy(() => import("./pages/Finance/Collect"));
 const FinanceCollectCase = lazy(() => import("./pages/Finance/CollectCase"));
+const FinanceCollectCommand = lazy(() => import("./pages/Finance/CollectCommand"));
+const FinanceCollectTasks = lazy(() => import("./pages/Finance/CollectTasks"));
+const FinanceCollectBi = lazy(() => import("./pages/Finance/CollectBi"));
+const FinanceCollectCopilot = lazy(() => import("./pages/Finance/CollectCopilot"));
 const FinanceDatev = lazy(() => import("./pages/Finance/Datev"));
 const FinanceBank = lazy(() => import("./pages/Finance/Bank"));
 const KontoauszuegeLayout = lazy(() => import("./pages/Finance/Kontoauszuege/Layout"));
@@ -1529,7 +1533,11 @@ function AppRoutes() {
           <Route path="/finance/mahnwesen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMahnwesen /></ProtectedRoute>} />
           <Route path="/finance/mahnwesen/einstellungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMahnwesenSettings /></ProtectedRoute>} />
           <Route path="/finance/mahnwesen/:customerId" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceMahnwesenDetail /></ProtectedRoute>} />
-          <Route path="/finance/collect" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollect /></ProtectedRoute>} />
+          <Route path="/finance/collect" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCommand /></ProtectedRoute>} />
+          <Route path="/finance/collect/liste" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollect /></ProtectedRoute>} />
+          <Route path="/finance/collect/aufgaben" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectTasks /></ProtectedRoute>} />
+          <Route path="/finance/collect/auswertungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectBi /></ProtectedRoute>} />
+          <Route path="/finance/collect/copilot" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCopilot /></ProtectedRoute>} />
           <Route path="/finance/collect/:caseId" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCollectCase /></ProtectedRoute>} />
           <Route path="/operation/anzahlung-mahnung-konfiguration" element={<ProtectedRoute requiredRoles={['Super Admin']}><OperationMahnungKonfiguration /></ProtectedRoute>} />
           <Route path="/finance/datev" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceDatev /></ProtectedRoute>} />

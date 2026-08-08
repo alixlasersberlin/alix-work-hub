@@ -127,10 +127,54 @@ Deno.serve(async (req) => {
       }
     }
 
+    // 4) Gebrochene Zahlungsversprechen erkennen
+    let brokenPromises = 0;
+    const { data: promises } = await admin
+      .from('collect_promises')
+      .select('id, case_id, amount, promised_date')
+      .eq('status', 'open')
+      .lt('promised_date', today)
+      .limit(1000);
+    for (const p of promises ?? []) {
+      await admin.from('collect_promises').update({ status: 'broken' }).eq('id', p.id);
+      await admin.from('collect_events').insert({
+        case_id: p.case_id, event_type: 'promise_broken', channel: 'system',
+        title: 'Zahlungsversprechen nicht eingehalten',
+        detail: `Zugesagt ${p.amount} EUR zum ${p.promised_date}`,
+        created_automatically: true,
+      });
+      brokenPromises++;
+    }
+
+    // 5) Aufgaben erzeugen (nur wenn noch keine offene Aufgabe gleichen Typs existiert)
+    const { data: openTasks } = await admin
+      .from('collect_tasks').select('case_id, task_type').eq('status', 'open').limit(5000);
+    const taskKeys = new Set((openTasks ?? []).map((t: any) => `${t.case_id}|${t.task_type}`));
+    const newTasks: any[] = [];
+    const pushTask = (case_id: string, task_type: string, title: string, priority: number) => {
+      const k = `${case_id}|${task_type}`;
+      if (taskKeys.has(k)) return;
+      taskKeys.add(k);
+      newTasks.push({ case_id, task_type, title, priority, status: 'open', due_date: today, created_automatically: true });
+    };
+    for (const p of promises ?? []) pushTask(p.case_id, 'promise_check', 'Gebrochenes Zahlungsversprechen prüfen', 1);
+    for (const c of cases ?? []) {
+      if (c.paused_until && c.paused_until > today) continue;
+      const d = Number(c.max_days_overdue ?? 0);
+      const amt = Number(c.overdue_amount ?? 0);
+      if (amt <= 0) continue;
+      if (d >= 60 || amt >= 10000) pushTask(c.id, 'call', `${c.customer_name}: anrufen (${Math.round(amt)} € / ${d} T)`, 1);
+      else if (d >= 30) pushTask(c.id, 'dunning', `${c.customer_name}: Mahnung versenden`, 2);
+      if (d >= 90) pushTask(c.id, 'escalation', `${c.customer_name}: Inkasso/Anwalt prüfen`, 1);
+    }
+    for (let i = 0; i < newTasks.length; i += 500) {
+      await admin.from('collect_tasks').insert(newTasks.slice(i, i + 500));
+    }
+
     const proposals = newEvents.length;
     const blocksSet = newBlocks.length;
 
-    return json({ ok: true, sync: syncRes, cases: cases?.length ?? 0, proposals, blocks_set: blocksSet, ms: Date.now() - started });
+    return json({ ok: true, sync: syncRes, cases: cases?.length ?? 0, proposals, blocks_set: blocksSet, tasks_created: newTasks.length, promises_broken: brokenPromises, ms: Date.now() - started });
   } catch (e: any) {
     console.error('collect-engine failed:', e?.message ?? e);
     return json({ ok: false, error: e?.message ?? 'internal' }, 500);
