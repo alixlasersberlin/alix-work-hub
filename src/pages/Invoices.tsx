@@ -1581,7 +1581,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
         <DataCard className="p-4">
           <div className="flex items-center gap-2 text-xs text-muted-foreground"><Users className="w-4 h-4" />Kundenkonten</div>
           <div className="text-2xl font-semibold mt-1">{kpi.accounts}</div>
@@ -1598,7 +1598,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           <div className="flex items-center gap-2 text-xs text-muted-foreground"><AlertTriangle className="w-4 h-4" />Offene Beträge</div>
           <div className="text-2xl font-semibold mt-1 tabular-nums text-amber-500">{fmtMoney(kpi.totalOpen)}</div>
         </DataCard>
+        <DataCard className="p-4">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground"><Wallet className="w-4 h-4" />OP Total (alle Konten)</div>
+          <div className={`text-2xl font-semibold mt-1 tabular-nums ${kpi.opTotal > 0 ? 'text-destructive' : 'text-emerald-400'}`}>{fmtMoney(kpi.opTotal)}</div>
+        </DataCard>
       </div>
+
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <div className="inline-flex items-center rounded-lg border border-border bg-secondary p-0.5">
