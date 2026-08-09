@@ -35,6 +35,8 @@ export default function MobileTourStopp() {
   const [reason, setReason] = useState('nicht_angetroffen');
   const [photos, setPhotos] = useState<File[]>([]);
 
+  const [release, setRelease] = useState<{ released: boolean; missing: string[] } | null>(null);
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -44,6 +46,15 @@ export default function MobileTourStopp() {
         .maybeSingle();
       setStop(data);
       setSerial((data as any)?.delivery_appointments?.serial_number ?? '');
+      const orderId = (data as any)?.delivery_appointments?.order_id;
+      if (orderId) {
+        try {
+          const approval = await fetchApproval(orderId);
+          setRelease({ released: isReleased(approval), missing: missingStages(approval) });
+        } catch { setRelease(null); }
+      } else {
+        setRelease({ released: true, missing: [] });
+      }
     })();
   }, [stopId]);
 
