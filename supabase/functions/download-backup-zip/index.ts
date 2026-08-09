@@ -109,10 +109,11 @@ Deno.serve(async (req) => {
       password: accountPassword,
     });
     if (reauthErr) {
-      await admin.from("audit_access_log").insert({
+      await admin.from("audit_logs").insert({
         user_id: user.id,
         action: "backup_download_denied",
-        resource: `backup:${backupId}`,
+        module: "backups",
+        record_id: backupId,
         details: { reason: "reauth_failed" },
       }).then(() => {}, () => {});
       return json({ error: "Kontopasswort ist falsch" }, 401);
@@ -173,10 +174,11 @@ Deno.serve(async (req) => {
     // 5) AES-256-GCM Verschlüsselung
     const encrypted = await encryptPayload(zipBuf, encryptionPassword);
 
-    await admin.from("audit_access_log").insert({
+    await admin.from("audit_logs").insert({
       user_id: user.id,
       action: "backup_download",
-      resource: `backup:${backupId}`,
+      module: "backups",
+      record_id: backupId,
       details: { encrypted: true, bytes: encrypted.byteLength },
     }).then(() => {}, () => {});
 
