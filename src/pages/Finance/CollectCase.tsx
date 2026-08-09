@@ -440,7 +440,11 @@ export default function FinanceCollectCase() {
             <div className="max-h-72 overflow-auto rounded-lg border border-border mail-paper p-4">
               <div dangerouslySetInnerHTML={{ __html: mailHtml }} />
             </div>
+            <p className="text-xs text-muted-foreground">
+              Anhang: <span className="text-foreground">Mahnung als PDF</span> auf der Alix-Briefvorlage – inhaltsgleich mit dieser E-Mail.
+            </p>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={preview} disabled={busy}>Neu generieren</Button>
             <Button variant="outline" onClick={previewPdf} disabled={busy}>PDF-Vorschau</Button>
