@@ -20,6 +20,7 @@ import lieferscheinBg from '@/assets/lieferschein-vorlage.png.asset.json';
 import alixLogoGold from '@/assets/alix-logo-gold.png.asset.json';
 import { createRestbestellungMarker } from '@/lib/restbestellung';
 import { DeliveryReleaseGuard, useDeliveryRelease } from '@/components/delivery/DeliveryReleaseGuard';
+import { guardDeliveryExport } from '@/lib/delivery-approval/exportGuard';
 
 interface Props {
   order: any;
@@ -117,6 +118,17 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
   }
 
   async function generateAndSave(leftoverWithDecisions: Array<any>) {
+    // Harte Freigabe-Sperre direkt vor der PDF-Erzeugung
+    const allowed = await guardDeliveryExport({
+      orderId: order?.id,
+      orderNumbers: order?.order_number ? [order.order_number] : [],
+      isSuperAdmin,
+      userId: user?.id ?? null,
+      userName: (user as any)?.user_metadata?.full_name || user?.email || null,
+      context: 'Lieferschein-PDF',
+    });
+    if (!allowed) return;
+
     setGenerating(true);
     try {
       // Build PDF
