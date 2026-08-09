@@ -274,6 +274,8 @@ const ProductionPortal = lazy(() => import("./pages/ProductionPortal"));
 const ProductionFertig = lazy(() => import("./pages/ProductionFertig"));
 const ProductionOrderIn = lazy(() => import("./pages/ProductionOrderIn"));
 const OrderApprovalQueue = lazy(() => import("./pages/OrderApprovalQueue"));
+const Auslieferungsfreigabe = lazy(() => import("./pages/Operations/Auslieferungsfreigabe"));
+
 const FactoryInvoice = lazy(() => import("./pages/FactoryInvoice"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
 const Lager = lazy(() => import("./pages/Lager"));
@@ -1887,6 +1889,8 @@ function AppRoutes() {
           <Route path="/auftragsverwaltung/bestellungen" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><BestellwesenOverview /></ProtectedRoute>} />
           <Route path="/order" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionOrders /></ProtectedRoute>} />
           <Route path="/order/freigabe" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrderApprovalQueue /></ProtectedRoute>} />
+          <Route path="/operation/auslieferungsfreigabe" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Order','Auftragsverwaltung','Bereitstellung','Tourenplanung','Buchhaltung Admin','Buchhaltung EU','Buchhaltung CH','Finance']}><Auslieferungsfreigabe /></ProtectedRoute>} />
+
           <Route path="/order/frei-bestellung" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><OrdersFreiBestellung /></ProtectedRoute>} />
           <Route path="/order/timeline" element={<ProtectedRoute requiredRoles={ORDER_MGMT_ROLES}><ProductionTimeline /></ProtectedRoute>} />
           <Route path="/order/zulieferer" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Suppliers /></ProtectedRoute>} />

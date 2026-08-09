@@ -240,9 +240,11 @@ export const navItems: NavItem[] = [
         ],
       },
       {
-        path: '/auftraege', label: 'AUFTRÄGE', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG'],
+        path: '/auftraege', label: 'AUFTRÄGE', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Bereitstellung', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG'],
         children: [
+          { path: '/operation/auslieferungsfreigabe', label: 'Auslieferungsfreigabe', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Order', 'Auftragsverwaltung', 'Bereitstellung', 'Tourenplanung', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Finance'] },
           { path: '/auftraege/gesucht', label: 'Aufträge gesucht', icon: AlertTriangle, roles: ['Admin', 'Super Admin', 'Order'] },
+
           { path: '/auftraege', label: 'Aufträge', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
           { path: '/auftraege-at', label: 'Aufträge AT', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG'] },
           { path: '/auftraege-ch', label: 'Aufträge CH', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Read Only Audit', 'SACHBEARBEITUNG', 'Österreich'] },
@@ -708,7 +710,9 @@ export const navItems: NavItem[] = [
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin', 'Admin'],
     children: [
+      { path: '/operation/auslieferungsfreigabe', label: 'Auslieferungsfreigabe', icon: ShieldCheck, roles: ['Super Admin', 'Admin'] },
       { path: '/connect/customer-360', label: 'Kunde 360°', icon: Users, roles: ['Super Admin'] },
+
       {
         path: '#mdr-ce', label: 'MDR CE & ISO 13485', icon: ShieldCheck, roles: ['Super Admin'],
         children: [

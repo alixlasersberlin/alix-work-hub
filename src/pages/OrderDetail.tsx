@@ -26,8 +26,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import {
-  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare, ChevronDown, Briefcase, Wrench, AlertCircle, PenLine, Share2
+  ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, ShieldCheck, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare, ChevronDown, Briefcase, Wrench, AlertCircle, PenLine, Share2
 } from 'lucide-react';
+import DeliveryApprovalPanel from '@/components/delivery/DeliveryApprovalPanel';
+import { useDeliveryRelease, DeliveryReleaseGuard } from '@/components/delivery/DeliveryReleaseGuard';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
 import { postPaymentToJournal } from '@/lib/finance/journal';
@@ -91,7 +93,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'mediapaket' | 'social_fragebogen' | 'alixdocs' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'freigaben' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'mediapaket' | 'social_fragebogen' | 'alixdocs' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
   const [serialDevices, setSerialDevices] = useState<Array<{ id: string; serial_number: string; model_name: string; notes: string | null; updated_at: string | null }>>([]);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
@@ -140,7 +142,8 @@ export default function OrderDetail() {
   }, [id]);
 
   // Auto-Tab via ?tab=az_invoice (oder anderer Key) beim Öffnen
-  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','mediapaket','social_fragebogen','alixdocs','notes','emails','sms','history','raw'] as const;
+  const deliveryRelease = useDeliveryRelease(id);
+  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','freigaben','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','mediapaket','social_fragebogen','alixdocs','notes','emails','sms','history','raw'] as const;
   useEffect(() => {
     const t = searchParams.get('tab');
     if (t && (validTabs as readonly string[]).includes(t)) {
@@ -472,6 +475,8 @@ export default function OrderDetail() {
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
         ...(canSeeAtApproval ? [{ key: 'at_approval', label: 'Freigabe AT', icon: CheckCircle2 }] : []),
+        { key: 'freigaben', label: 'Freigaben', icon: ShieldCheck },
+
       ],
     },
     {
@@ -1345,6 +1350,10 @@ export default function OrderDetail() {
         <AtApprovalTab orderId={id} />
       )}
 
+      {activeTab === 'freigaben' && id && (
+        <DeliveryApprovalPanel orderId={id} orderNumber={order?.order_number} />
+      )}
+
       {/* Packages Tab */}
       {activeTab === 'packages' && (
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
@@ -1417,7 +1426,11 @@ export default function OrderDetail() {
       )}
 
       {activeTab === 'lieferschein' && (
-        <DeliveryNoteTab order={order} customer={customer} items={items} onReload={loadAll} />
+        deliveryRelease.loading ? null : deliveryRelease.released ? (
+          <DeliveryNoteTab order={order} customer={customer} items={items} onReload={loadAll} />
+        ) : (
+          <DeliveryReleaseGuard missing={deliveryRelease.missing} onOpenApprovals={() => setActiveTab('freigaben')} />
+        )
       )}
 
       {activeTab === 'auftragsbestaetigung' && id && (
