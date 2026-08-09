@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+
 
 const fmt = (n: number, cur = 'EUR') => (n == null ? '' : Number(n).toLocaleString('de-DE', { style: 'currency', currency: cur }));
 
