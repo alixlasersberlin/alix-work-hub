@@ -9,6 +9,7 @@ export interface OfferRow {
   customer_id: string | null;
   customer_name: string | null;
   customer_email: string | null;
+  customer_phone?: string | null;
   total_net: number | null;
   total_gross: number | null;
   status: string | null;
