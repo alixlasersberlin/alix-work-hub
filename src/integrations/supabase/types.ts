@@ -48333,7 +48333,9 @@ export type Database = {
         Returns: Json
       }
       ticket_sla_check_and_escalate: { Args: never; Returns: Json }
-      tickets_dashboard_counts: { Args: { _user_id: string }; Returns: Json }
+      tickets_dashboard_counts:
+        | { Args: { _user_id: string }; Returns: Json }
+        | { Args: { _source_system?: string; _user_id: string }; Returns: Json }
       user_accounting_regions: {
         Args: never
         Returns: Database["public"]["Enums"]["accounting_region"][]
