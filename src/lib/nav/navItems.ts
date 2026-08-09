@@ -646,189 +646,126 @@ export const navItems: NavItem[] = [
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin', 'Admin'],
     children: [
-      { path: '/operation/auslieferungsfreigabe', label: 'Auslieferungsfreigabe', icon: ShieldCheck, roles: ['Super Admin', 'Admin'] },
-    {
-      path: '/umfragen/dashboard', label: 'FEEDBACK & REWARDS', icon: ClipboardCheck,
-      roles: ['Admin', 'Super Admin', 'Marketing', 'Geschäftsführung', 'Kundenservice', 'Service', 'Vertrieb', 'Vertriebsleitung', 'QM', 'Feedback'],
-      children: [
-        { path: '/umfragen/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-        { path: '/umfragen', label: 'Umfragen', icon: ClipboardCheck, roles: null },
-        { path: '/umfragen/bibliothek', label: 'Vorlagen-Bibliothek', icon: Sparkles, roles: null },
-        { path: '/umfragen/antworten', label: 'Antworten', icon: MessageSquare, roles: null },
-        { path: '/umfragen/auswertung', label: 'Auswertung', icon: Sparkles, roles: null },
-        { path: '/umfragen/statistik', label: 'Statistik', icon: BarChart3, roles: null },
-        { path: '/umfragen/benchmark', label: 'Benchmark & Trends', icon: BarChart3, roles: null },
-        { path: '/umfragen/automatisierung', label: 'Automatisierung', icon: Zap, roles: ['Admin', 'Super Admin', 'Marketing', 'Feedback'] },
-        { path: '/umfragen/testimonials', label: 'Testimonials', icon: Quote, roles: null },
-        { path: '/umfragen/empfaenger', label: 'Empfängerliste', icon: Users, roles: null },
-
-        { path: '/umfragen/geschenke', label: 'Geschenke', icon: Gift, roles: null },
-        { path: '/umfragen/belohnungen', label: 'Belohnungszusagen', icon: Gift, roles: null },
-        { path: '/umfragen/gutscheincodes', label: 'Gutscheincodes', icon: Ticket, roles: null },
-        { path: '/umfragen/import', label: 'Upload & Import', icon: Upload, roles: null },
-        { path: '/umfragen/vorlagen', label: 'E-Mail-Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Marketing'] },
-        { path: '/umfragen/protokoll', label: 'Versand-Protokoll', icon: MailCheck, roles: null },
-        { path: '/umfragen/exporte', label: 'Exporte', icon: Download, roles: null },
-        { path: '/umfragen/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin'] },
-
-      ],
-    },
-    {
-      path: '/produktion', label: 'PRODUKTION & BESCHAFFUNG', icon: Factory,
-      roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'],
-      children: [
-        { path: '/produktion', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-        { path: '/produktion/geraete', label: 'Geräte', icon: Cpu, roles: null },
-        { path: '/produktion/baugruppen', label: 'Baugruppen', icon: Boxes, roles: null },
-        { path: '/produktion/einzelteile', label: 'Einzelteile', icon: Wrench, roles: null },
-        { path: '/produktion/stueckliste', label: 'Stückliste (BOM)', icon: ListTree, roles: null },
-        { path: '/produktion/stuecklistenbaum', label: 'Stücklisten-Explorer', icon: ListTree, roles: null },
-        { path: '/produktion/explosionszeichnungen', label: 'Explosionszeichnungen', icon: Layers, roles: null },
-        { path: '/produktion/lieferanten', label: 'Lieferanten', icon: Factory, roles: null },
-        { path: '/produktion/beschaffung', label: 'Beschaffung (Bezugsquellen)', icon: PackageCheck, roles: null },
-        { path: '/produktion/materialbedarf', label: 'Materialbedarf (MRP)', icon: ClipboardList, roles: null },
-        { path: '/produktion/bestellungen', label: 'Bestellungen', icon: PackageCheck, roles: null },
-        { path: '/produktion/wareneingang', label: 'Wareneingang & Prüfung', icon: PackageCheck, roles: null },
-        { path: '/produktion/pruefplaene', label: 'Prüfpläne', icon: ClipboardCheck, roles: null },
-        { path: '/produktion/pruefmerkmale', label: 'Prüfmerkmale', icon: ClipboardList, roles: null },
-        { path: '/produktion/auftraege', label: 'Produktionsaufträge', icon: Factory, roles: null },
-        { path: '/produktion/fertigungssteuerung', label: 'Fertigungssteuerung', icon: Factory, roles: null },
-        { path: '/produktion/arbeitsanweisungen', label: 'Arbeitsanweisungen', icon: FileText, roles: null },
-        { path: '/produktion/rueckverfolgbarkeit', label: 'Rückverfolgbarkeit', icon: ClipboardCheck, roles: null },
-        { path: '/produktion/geraeteakte', label: 'Geräteakte (Technische Akte)', icon: FileText, roles: null },
-        { path: '/produktion/lieferantenbewertung', label: 'Lieferantenbewertung', icon: Factory, roles: null },
-        { path: '/produktion/qualitaetskennzahlen', label: 'Qualitätskennzahlen', icon: BarChart3, roles: null },
-        { path: '/produktion/ersatzteilkatalog', label: 'Ersatzteilkatalog', icon: Package, roles: null },
-        { path: '/produktion/pruefprotokolle', label: 'Prüfprotokolle', icon: ClipboardCheck, roles: null },
-        { path: '/produktion/aenderungsfreigabe', label: 'Änderungsfreigabe', icon: GitBranch, roles: null },
-        { path: '/produktion/konformitaet', label: 'Konformität (CE/MDR)', icon: ShieldCheck, roles: null },
-        { path: '/produktion/risikomanagement', label: 'Risikomanagement (ISO 14971)', icon: ShieldCheck, roles: null },
-        { path: '/produktion/pruefmittel', label: 'Prüfmittel & Kalibrierung', icon: ClipboardCheck, roles: null },
-        { path: '/produktion/seriennummern', label: 'Serien- & Chargenvergabe', icon: Package, roles: null },
-        { path: '/produktion/stammdatenimport', label: 'Stammdaten-Import', icon: Upload, roles: null },
-
-        { path: '/produktion/aenderungen', label: 'Änderungen (ECR/ECO)', icon: GitBranch, roles: null },
-        { path: '/produktion/dokumente', label: 'Technische Dokumentation', icon: FileCheck2, roles: null },
-      ],
-    },
-      { path: '/connect/customer-360', label: 'Kunde 360°', icon: Users, roles: ['Super Admin'] },
-
+      // 1) Freigaben & Genehmigungen
       {
-        path: '#mdr-ce', label: 'MDR CE & ISO 13485', icon: ShieldCheck, roles: ['Super Admin'],
+        path: '#freigaben', label: 'FREIGABEN', icon: ShieldCheck, roles: ['Super Admin', 'Admin'],
         children: [
-          { path: '/iso', label: 'ISO Audit Center', icon: ShieldCheck, roles: ['Super Admin'] },
-        ],
-      },
-      // Stats
-      {
-        path: '#stats', label: 'STATS', icon: BarChart3, roles: ['Super Admin'],
-        children: [
-          { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
-          { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
-          { path: '/verkauf/anfragen/dashboard', label: 'Anfragen Dashboard', icon: BarChart3, roles: ['Super Admin'] },
-          { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Super Admin'] },
-          { path: '/system', label: 'Monitoring', icon: Server, roles: ['Super Admin'] },
+          { path: '/operation/auslieferungsfreigabe', label: 'Auslieferungsfreigabe', icon: ShieldCheck, roles: ['Super Admin', 'Admin'] },
+          { path: '/freigaben', label: 'Auftrags-Freigaben', icon: CheckCircle2, roles: ['Super Admin'] },
+          { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
         ],
       },
 
-      // CMR – Cloud Marketing Research (eigener Mandant)
+      // 2) Produktion & Beschaffung
       {
-        path: '#cmr', label: 'CMR', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'],
+        path: '/produktion', label: 'PRODUKTION & BESCHAFFUNG', icon: Factory,
+        roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'],
         children: [
-          { path: '/cmr', label: 'CMR Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/dokumente', label: 'Belege & Vorgänge', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/kunden', label: 'Kunden CMR', icon: Users, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/artikel', label: 'Artikelstamm', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/projekte', label: 'Projekte CMR', icon: Briefcase, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/abos', label: 'Abrechnungen', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/sammelrechnungen', label: 'Sammelabrechnung', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/betrieb', label: 'Betrieb & Portale', icon: Activity, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/zeiten', label: 'Zeiterfassung', icon: Clock, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/buchhaltung', label: 'Buchhaltung CMR', icon: Wallet, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/mahnwesen', label: 'Mahnwesen CMR', icon: BellRing, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
-          { path: '/cmr/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin'] },
+          { path: '/produktion', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+          { path: '/produktion/geraete', label: 'Geräte', icon: Cpu, roles: null },
+          { path: '/produktion/baugruppen', label: 'Baugruppen', icon: Boxes, roles: null },
+          { path: '/produktion/einzelteile', label: 'Einzelteile', icon: Wrench, roles: null },
+          { path: '/produktion/stueckliste', label: 'Stückliste (BOM)', icon: ListTree, roles: null },
+          { path: '/produktion/stuecklistenbaum', label: 'Stücklisten-Explorer', icon: ListTree, roles: null },
+          { path: '/produktion/explosionszeichnungen', label: 'Explosionszeichnungen', icon: Layers, roles: null },
+          { path: '/produktion/lieferanten', label: 'Lieferanten', icon: Factory, roles: null },
+          { path: '/produktion/beschaffung', label: 'Beschaffung (Bezugsquellen)', icon: PackageCheck, roles: null },
+          { path: '/produktion/materialbedarf', label: 'Materialbedarf (MRP)', icon: ClipboardList, roles: null },
+          { path: '/produktion/bestellungen', label: 'Bestellungen', icon: PackageCheck, roles: null },
+          { path: '/produktion/wareneingang', label: 'Wareneingang & Prüfung', icon: PackageCheck, roles: null },
+          { path: '/produktion/auftraege', label: 'Produktionsaufträge', icon: Factory, roles: null },
+          { path: '/produktion/fertigungssteuerung', label: 'Fertigungssteuerung', icon: Factory, roles: null },
+          { path: '/produktion/arbeitsanweisungen', label: 'Arbeitsanweisungen', icon: FileText, roles: null },
+          { path: '/produktion/seriennummern', label: 'Serien- & Chargenvergabe', icon: Package, roles: null },
+          { path: '/produktion/rueckverfolgbarkeit', label: 'Rückverfolgbarkeit', icon: ClipboardCheck, roles: null },
+          { path: '/produktion/ersatzteilkatalog', label: 'Ersatzteilkatalog', icon: Package, roles: null },
+          { path: '/produktion/stammdatenimport', label: 'Stammdaten-Import', icon: Upload, roles: null },
         ],
       },
 
-      // Alix License – Lizenzgesellschaft (Systemmandant)
+      // 3) Qualität & Compliance (MDR / CE / ISO 13485)
       {
-        path: '#license', label: 'Lizenzmanagement', icon: BadgeCheck, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'],
+        path: '#qualitaet', label: 'QUALITÄT & COMPLIANCE', icon: ShieldCheck,
+        roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'QM', 'Medical'],
         children: [
-          { path: '/license', label: 'Alix License Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/cockpit', label: 'Lizenz-Cockpit', icon: LineChart, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/marken', label: 'Marken', icon: Star, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/lizenznehmer', label: 'Lizenznehmer', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/vertraege', label: 'Lizenzverträge', icon: FileSignature, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/saetze', label: 'Royalty-Sätze', icon: Hash, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/produkte', label: 'Produktlizenzen', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/royalties', label: 'Lizenzabrechnung', icon: Receipt, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/rechnungen', label: 'Lizenzrechnungen', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/intercompany', label: 'Intercompany-Rechnungen', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/auswertungen', label: 'Auswertungen', icon: LineChart, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/laufzeiten', label: 'Vertragslaufzeiten', icon: CalendarClock, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
-          { path: '/license/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin', 'Admin', 'License Manager'] },
+          { path: '/iso', label: 'ISO Audit Center', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'QM'] },
+          { path: '/produktion/konformitaet', label: 'Konformität (CE/MDR)', icon: ShieldCheck, roles: null },
+          { path: '/produktion/risikomanagement', label: 'Risikomanagement (ISO 14971)', icon: ShieldCheck, roles: null },
+          { path: '/produktion/pruefplaene', label: 'Prüfpläne', icon: ClipboardCheck, roles: null },
+          { path: '/produktion/pruefmerkmale', label: 'Prüfmerkmale', icon: ClipboardList, roles: null },
+          { path: '/produktion/pruefprotokolle', label: 'Prüfprotokolle', icon: ClipboardCheck, roles: null },
+          { path: '/produktion/pruefmittel', label: 'Prüfmittel & Kalibrierung', icon: ClipboardCheck, roles: null },
+          { path: '/produktion/geraeteakte', label: 'Geräteakte (Technische Akte)', icon: FileText, roles: null },
+          { path: '/produktion/dokumente', label: 'Technische Dokumentation', icon: FileCheck2, roles: null },
+          { path: '/produktion/aenderungen', label: 'Änderungen (ECR/ECO)', icon: GitBranch, roles: null },
+          { path: '/produktion/aenderungsfreigabe', label: 'Änderungsfreigabe', icon: GitBranch, roles: null },
+          { path: '/produktion/lieferantenbewertung', label: 'Lieferantenbewertung', icon: Factory, roles: null },
+          { path: '/produktion/qualitaetskennzahlen', label: 'Qualitätskennzahlen', icon: BarChart3, roles: null },
         ],
       },
 
-
-
-      // Alix Medical – eigener Mandant (MDR / CE / ISO 13485)
+      // 4) Dokumente & Signaturen (AlixDocs + ALIX SIGN PRO)
       {
-        path: '#med', label: 'Alix Medical', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'],
+        path: '#dokumente-signaturen', label: 'DOKUMENTE & SIGNATUREN', icon: FolderTree, roles: ['Super Admin', 'Admin'],
         children: [
-          { path: '/med', label: 'Medical Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
-          { path: '/med/belege', label: 'Belege', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
-          { path: '/med/artikel', label: 'Artikelstamm', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
-          { path: '/med/buchhaltung', label: 'Buchhaltung Medical', icon: Wallet, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
-          { path: '/med/compliance', label: 'MDR / CE / ISO', icon: Activity, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
-          { path: '/med/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin'] },
+          { path: '/alixdocs', label: 'AlixDocs Enterprise Hub', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs/aufgaben', label: 'Aufgaben', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/inbox', label: 'Posteingang', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/dokumente', label: 'Dokumenten-Suche', icon: Files, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/ai', label: 'KI-Suche ✨', icon: Sparkles, roles: ['Super Admin', 'Admin'] },
+          { path: '/dokumente/freigaben', label: 'Freigaben-Inbox', icon: CheckCircle2, roles: ['Super Admin', 'Admin'] },
+          { path: '/dokumente/smart-review', label: 'Smart Review', icon: SearchCheck, roles: ['Super Admin'] },
+          { path: '/dokumente/duplikate', label: 'Duplikate', icon: SearchCheck, roles: ['Super Admin'] },
+          { path: '/dokumente/lernregeln', label: 'Lern-Regeln 🧠', icon: Sparkles, roles: ['Super Admin'] },
+          { path: '/m/alixdocs', label: 'Mobile Erfassung 📱', icon: SearchCheck, roles: ['Super Admin'] },
+          { path: '/signaturen', label: 'ALIX SIGN — Übersicht', icon: FileSignature, roles: ['Super Admin'] },
+          { path: '/signaturen/neu', label: 'ALIX SIGN — Neue Anfrage', icon: FilePlus, roles: ['Super Admin'] },
+          { path: '/signaturen/bulk', label: 'ALIX SIGN — Serien-Versand', icon: Send, roles: ['Super Admin'] },
+          { path: '/signaturen/genehmigungen', label: 'ALIX SIGN — Genehmigungen', icon: CheckCircle2, roles: ['Super Admin'] },
+          { path: '/signaturen/cockpit', label: 'ALIX SIGN — Cockpit & Analytics', icon: BarChart3, roles: ['Super Admin'] },
+          { path: '/signaturen/dashboard', label: 'ALIX SIGN — SLA-Dashboard', icon: BarChart3, roles: ['Super Admin'] },
+          { path: '/admin/signaturen', label: 'Setup — Stempel & Templates', icon: Settings, roles: ['Super Admin'] },
+          { path: '/admin/signaturen/facsimile', label: 'Setup — Facsimile-Unterschrift', icon: Settings, roles: ['Super Admin'] },
+          { path: '/admin/sign-marketplace', label: 'Setup — Marketplace & White-Label', icon: Settings, roles: ['Super Admin'] },
+          { path: '/admin/sign-api-docs', label: 'Setup — Partner-API', icon: Settings, roles: ['Super Admin'] },
+          { path: '/admin/alixdocs/chains', label: 'Setup — Freigabeketten', icon: Workflow, roles: ['Super Admin'] },
+          { path: '/alixdocs2/doctypes', label: 'Setup — Dokumententypen', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/workflows', label: 'Setup — Workflows & Warnungen', icon: Workflow, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/nextcloud', label: 'Setup — Nextcloud', icon: Cloud, roles: ['Super Admin'] },
+          { path: '/admin/alixdocs/reindex', label: 'KI-Reindex & Duplikate', icon: Sparkles, roles: ['Super Admin'] },
+          { path: '/admin/alixdocs/reports', label: 'Reporting & Audit-Export', icon: FileDown, roles: ['Super Admin'] },
+          { path: '/alixdocs2/compliance', label: 'Compliance-Export', icon: FileDown, roles: ['Super Admin', 'Admin'] },
+          { path: '/admin/alixdocs/heatmap', label: 'Share Heatmap 🔥', icon: Flame, roles: ['Super Admin', 'Admin'] },
+          { path: '/alixdocs2/papierkorb', label: 'Papierkorb', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
         ],
       },
 
-
-
-      // Stammdaten & Import
-
-      // Benutzer & Rechte
-      // Rollen & Nutzer
+      // 5) Tickets & Portale
       {
-        path: '#rollen-nutzer', label: 'ROLLEN-NUTZER', icon: Users, roles: ['Super Admin'],
+        path: '#tickets-portale', label: 'TICKETS & PORTALE', icon: Ticket, roles: ['Super Admin', 'Admin'],
         children: [
-          { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Super Admin'] },
-          { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Super Admin'] },
-          { path: '/admin/rollen-freigaben', label: 'Rollen & Freigaben', icon: ShieldCheck, roles: ['Super Admin'] },
-          { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
-          { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
-          { path: '/workspaces-admin', label: 'Workspaces', icon: LayoutGrid, roles: ['Admin', 'Super Admin'] },
-          { path: '/security-center', label: 'Security Center', icon: Shield, roles: ['Super Admin'] },
-
+          { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin', 'Admin'] },
+          { path: '/operation/ticket-abteilungen', label: 'Abteilungen (Routing)', icon: FolderTree, roles: ['Super Admin'] },
+          { path: '/tickets/sync', label: 'Sync-Monitor', icon: Activity, roles: ['Super Admin'] },
+          { path: '/tickets/api-sync', label: 'API-Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
+          { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
+          { path: '/operation/kundenportal', label: 'Kundenportal Konfiguration', icon: Globe, roles: ['Super Admin'] },
+          { path: '/mediapaket/admin', label: 'Mediapaket-Konfigurator', icon: PackageIcon, roles: ['Super Admin'] },
         ],
       },
-      {
-        path: '/freigaben', label: 'Auftrags-Freigaben', icon: ShieldCheck, roles: ['Super Admin'],
-      },
 
-      // Kommunikation & Portale
+      // 6) Kommunikation & Vorlagen
       {
-        path: '#sms-email-texte', label: 'SMS & E-MAIL TEXTE', icon: Mail, roles: ['Super Admin'],
+        path: '#kommunikation', label: 'KOMMUNIKATION & VORLAGEN', icon: Mail, roles: ['Super Admin'],
         children: [
           { path: '/operation/email-vorlagen', label: 'E-Mail Vorlagen', icon: Mail, roles: ['Super Admin'] },
           { path: '/operation/sms-konfiguration', label: 'SMS Konfiguration', icon: MessageSquare, roles: ['Super Admin'] },
           { path: '/operation/anzahlung-mahnung-konfiguration', label: 'Anzahlungs-Mahnung Konfiguration', icon: Bell, roles: ['Super Admin'] },
-        ],
-      },
-      // Portal
-      {
-        path: '#portal', label: 'PORTAL', icon: SearchCheck, roles: ['Super Admin'],
-        children: [
-          { path: '/portal-admin', label: 'Kundenportal', icon: Globe, roles: ['Super Admin'] },
-          { path: '/operation/kundenportal', label: 'Kundenportal Konfiguration', icon: Globe, roles: ['Super Admin'] },
-          { path: '/tickets', label: 'Ticketliste', icon: Ticket, roles: ['Super Admin'] },
-          { path: '/order/timeline', label: 'Timeline Bestellungen', icon: Calendar, roles: ['Super Admin'] },
-          { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
+          { path: '/operation/news', label: 'News & Begrüßung', icon: Megaphone, roles: ['Super Admin'] },
         ],
       },
 
+      // 7) ALIX KI
       {
         path: '#alix-ki', label: 'ALIX KI', icon: Sparkles, roles: ['Super Admin'],
         children: [
@@ -837,36 +774,33 @@ export const navItems: NavItem[] = [
         ],
       },
 
+      // 8) Feedback & Rewards
       {
-        path: '#fort-knox', label: 'FORT KNOX', icon: Lock, roles: ['Super Admin'],
+        path: '/umfragen/dashboard', label: 'FEEDBACK & REWARDS', icon: ClipboardCheck,
+        roles: ['Admin', 'Super Admin', 'Marketing', 'Geschäftsführung', 'Kundenservice', 'Service', 'Vertrieb', 'Vertriebsleitung', 'QM', 'Feedback'],
         children: [
-          { path: '/operation/datensicherung', label: 'Security Base', icon: ShieldCheck, roles: ['Super Admin'] },
-          { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
-          { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
-          { path: '/operation/performance', label: 'Performance Center', icon: Activity, roles: ['Super Admin'] },
-          { path: '/operation/system-health', label: 'System Health Center', icon: HeartPulse, roles: ['Super Admin'] },
-          { path: '/tickets/api-sync', label: 'API Sync Einstellungen', icon: Settings, roles: ['Super Admin'] },
-          { path: '/mediapaket/admin', label: 'Mediapaket-Konfigurator', icon: PackageIcon, roles: ['Super Admin'] },
-          { path: '/operation/security-center', label: 'Alix Security Center', icon: Shield, roles: ['Super Admin'] },
-
+          { path: '/umfragen/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+          { path: '/umfragen', label: 'Umfragen', icon: ClipboardCheck, roles: null },
+          { path: '/umfragen/bibliothek', label: 'Vorlagen-Bibliothek', icon: Sparkles, roles: null },
+          { path: '/umfragen/antworten', label: 'Antworten', icon: MessageSquare, roles: null },
+          { path: '/umfragen/auswertung', label: 'Auswertung', icon: Sparkles, roles: null },
+          { path: '/umfragen/statistik', label: 'Statistik', icon: BarChart3, roles: null },
+          { path: '/umfragen/benchmark', label: 'Benchmark & Trends', icon: BarChart3, roles: null },
+          { path: '/umfragen/automatisierung', label: 'Automatisierung', icon: Zap, roles: ['Admin', 'Super Admin', 'Marketing', 'Feedback'] },
+          { path: '/umfragen/testimonials', label: 'Testimonials', icon: Quote, roles: null },
+          { path: '/umfragen/empfaenger', label: 'Empfängerliste', icon: Users, roles: null },
+          { path: '/umfragen/geschenke', label: 'Geschenke', icon: Gift, roles: null },
+          { path: '/umfragen/belohnungen', label: 'Belohnungszusagen', icon: Gift, roles: null },
+          { path: '/umfragen/gutscheincodes', label: 'Gutscheincodes', icon: Ticket, roles: null },
+          { path: '/umfragen/import', label: 'Upload & Import', icon: Upload, roles: null },
+          { path: '/umfragen/vorlagen', label: 'E-Mail-Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Marketing'] },
+          { path: '/umfragen/protokoll', label: 'Versand-Protokoll', icon: MailCheck, roles: null },
+          { path: '/umfragen/exporte', label: 'Exporte', icon: Download, roles: null },
+          { path: '/umfragen/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin'] },
         ],
       },
 
-      {
-        path: '#audit-center', label: 'Audit Center', icon: ShieldCheck, roles: ['Super Admin'],
-        children: [
-          { path: '/audit-center', label: 'Übersicht', icon: LayoutDashboard, roles: ['Super Admin'] },
-          { path: '/audit-center/live', label: 'Live-Monitor', icon: Radio, roles: ['Super Admin'] },
-          { path: '/audit-center/timeline', label: 'Activity Timeline', icon: Activity, roles: ['Super Admin'] },
-          { path: '/audit-center/changes', label: 'Änderungs-Log', icon: FileText, roles: ['Super Admin'] },
-          { path: '/audit-center/security', label: 'Sicherheits-Alerts', icon: ShieldAlert, roles: ['Super Admin'] },
-          { path: '/audit-center/employees', label: 'Mitarbeiter-Profile', icon: Users, roles: ['Super Admin'] },
-          { path: '/audit-center/ups', label: 'Ultimate Productivity Score', icon: Trophy, roles: ['Super Admin'] },
-          { path: '/audit-center/reports', label: 'Compliance Reports', icon: FileDown, roles: ['Super Admin'] },
-        ],
-      },
-
-
+      // 9) Social Media
       {
         path: '#social-media', label: 'SOCIAL MEDIA', icon: Megaphone, roles: ['Super Admin','Admin','Marketing','Grafiker'],
         children: [
@@ -886,93 +820,137 @@ export const navItems: NavItem[] = [
         ],
       },
 
-
+      // 10) Teamkalender Setup
       {
-        path: '#alix-sign-pro', label: 'ALIX SIGN PRO', icon: FileSignature, roles: ['Super Admin'],
+        path: '#teamk-setup', label: 'TEAMKALENDER SETUP', icon: CalendarDays, roles: ['Super Admin'],
         children: [
-          { path: '/signaturen', label: 'Übersicht', icon: LayoutDashboard, roles: ['Super Admin'] },
-          { path: '/signaturen/neu', label: 'Neue Anfrage', icon: FilePlus, roles: ['Super Admin'] },
-          { path: '/signaturen/cockpit', label: 'Cockpit & Analytics', icon: BarChart3, roles: ['Super Admin'] },
-          { path: '/signaturen/dashboard', label: 'SLA-Dashboard', icon: BarChart3, roles: ['Super Admin'] },
-          { path: '/signaturen/bulk', label: 'Serien-Versand', icon: Send, roles: ['Super Admin'] },
-          { path: '/signaturen/genehmigungen', label: 'Genehmigungen', icon: CheckCircle2, roles: ['Super Admin'] },
-          { path: '/admin/sign-marketplace', label: 'Marketplace & White-Label', icon: Settings, roles: ['Super Admin'] },
-          { path: '/admin/sign-api-docs', label: 'Partner-API (Docs & Keys)', icon: Settings, roles: ['Super Admin'] },
-          { path: '/admin/signaturen', label: 'Admin (Stempel & Templates)', icon: Settings, roles: ['Super Admin'] },
-          { path: '/admin/signaturen/facsimile', label: 'Facsimile-Unterschrift', icon: Settings, roles: ['Super Admin'] },
-          { path: '/dokumente', label: 'AlixDocs — Suche', icon: Files, roles: ['Super Admin'] },
-          { path: '/dokumente/freigaben', label: 'AlixDocs — Freigaben', icon: Files, roles: ['Super Admin'] },
-          { path: '/admin/alixdocs/chains', label: 'AlixDocs — Freigabeketten', icon: Settings, roles: ['Super Admin'] },
+          { path: '/esc/ressourcen',    label: 'Ressourcen',    icon: Boxes,     roles: ['Super Admin'] },
+          { path: '/esc/mitarbeiter',   label: 'Mitarbeiter',   icon: Users,     roles: ['Super Admin'] },
+          { path: '/esc/abteilungen',   label: 'Abteilungen',   icon: Building2, roles: ['Super Admin'] },
+          { path: '/esc/einstellungen', label: 'Einstellungen', icon: Settings,  roles: ['Super Admin'] },
         ],
       },
 
-
+      // 11) Mandanten – CMR
       {
-        path: '#alixdocs-setup', label: 'ALIXDOCS SETUP', icon: FolderTree, roles: ['Super Admin'],
+        path: '#cmr', label: 'CMR', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'],
         children: [
-          { path: '/dokumente/freigaben', label: 'Freigaben-Inbox', icon: CheckCircle2, roles: ['Super Admin'] },
-          { path: '/dokumente/smart-review', label: 'Smart Review', icon: SearchCheck, roles: ['Super Admin'] },
-          { path: '/dokumente/lernregeln', label: 'Lern-Regeln 🧠', icon: Sparkles, roles: ['Super Admin'] },
-          { path: '/dokumente/duplikate', label: 'Duplikate', icon: SearchCheck, roles: ['Super Admin'] },
-          { path: '/admin/alixdocs/chains', label: 'Approval-Chains (Admin)', icon: Workflow, roles: ['Super Admin'] },
-          { path: '/admin/alixdocs/reindex', label: 'KI-Reindex & Duplikate', icon: Sparkles, roles: ['Super Admin'] },
-          { path: '/admin/alixdocs/reports', label: 'Reporting & Audit-Export', icon: FileDown, roles: ['Super Admin'] },
-          { path: '/admin/alixdocs/heatmap', label: 'Share Heatmap 🔥', icon: Flame, roles: ['Admin','Super Admin'] },
-          { path: '/m/alixdocs', label: 'Mobile Erfassung 📱', icon: SearchCheck, roles: ['Super Admin'] },
-        ],
-
-      },
-
-      {
-        path: '#alixdocs2', label: 'ALIXDOCS Enterprise 3.0', icon: FolderTree, roles: ['Super Admin', 'Admin'],
-        children: [
-          { path: '/alixdocs', label: '🚀 Enterprise Hub', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
-          { path: '/alixdocs/aufgaben', label: 'Aufgaben', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
-          { path: '/alixdocs2', label: 'Klassisches Dashboard', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
-          { path: '/alixdocs2/inbox', label: 'Posteingang', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
-          { path: '/alixdocs2/suche', label: 'Suche', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
-          { path: '/alixdocs2/ai', label: 'KI-Suche ✨', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
-          { path: '/alixdocs2/nextcloud', label: 'Nextcloud (Server & Ordner)', icon: FolderTree, roles: ['Super Admin'] },
-          { path: '/alixdocs2/workflows', label: 'Workflows (Ablauf-Warnungen)', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
-          { path: '/alixdocs2/compliance', label: 'Compliance-Export', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
-          { path: '/alixdocs2/doctypes', label: 'Dokumententypen', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
-          { path: '/alixdocs2/papierkorb', label: 'Papierkorb', icon: FolderTree, roles: ['Super Admin', 'Admin'] },
+          { path: '/cmr', label: 'CMR Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/dokumente', label: 'Belege & Vorgänge', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/kunden', label: 'Kunden CMR', icon: Users, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/artikel', label: 'Artikelstamm', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/projekte', label: 'Projekte CMR', icon: Briefcase, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/abos', label: 'Abrechnungen', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/sammelrechnungen', label: 'Sammelabrechnung', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/betrieb', label: 'Betrieb & Portale', icon: Activity, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/zeiten', label: 'Zeiterfassung', icon: Clock, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/buchhaltung', label: 'Buchhaltung CMR', icon: Wallet, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/mahnwesen', label: 'Mahnwesen CMR', icon: BellRing, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'CMR', 'CMR Viewer'] },
+          { path: '/cmr/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin'] },
         ],
       },
 
+      // 12) Mandanten – Alix Medical
       {
-        path: '#teamk-setup', label: 'TEAMK SETUP', icon: CalendarDays, roles: ['Super Admin'],
+        path: '#med', label: 'ALIX MEDICAL', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'],
         children: [
-          { path: '/esc/ressourcen',    label: 'Ressourcen',    icon: Boxes,       roles: ['Super Admin'] },
-          { path: '/esc/mitarbeiter',   label: 'Mitarbeiter',   icon: Users,       roles: ['Super Admin'] },
-          { path: '/esc/abteilungen',   label: 'Abteilungen',   icon: Building2,   roles: ['Super Admin'] },
-          { path: '/esc/einstellungen', label: 'Einstellungen', icon: Settings,    roles: ['Super Admin'] },
+          { path: '/med', label: 'Medical Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
+          { path: '/med/belege', label: 'Belege', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
+          { path: '/med/artikel', label: 'Artikelstamm', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
+          { path: '/med/buchhaltung', label: 'Buchhaltung Medical', icon: Wallet, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
+          { path: '/med/compliance', label: 'MDR / CE / ISO', icon: Activity, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical'] },
+          { path: '/med/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin'] },
         ],
       },
 
+      // 13) Lizenzmanagement
       {
-        path: '#tickets-setup', label: 'TICKETS SETUP', icon: Ticket, roles: ['Super Admin'],
+        path: '#license', label: 'LIZENZMANAGEMENT', icon: BadgeCheck, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'],
         children: [
-          { path: '/operation/ticket-abteilungen', label: 'Abteilungen (Routing)', icon: FolderTree, roles: ['Super Admin'] },
-          { path: '/tickets/sync',                 label: 'Sync-Monitor',           icon: Activity,   roles: ['Super Admin'] },
-          { path: '/tickets/api-sync',             label: 'API-Sync Einstellungen', icon: Settings,   roles: ['Super Admin'] },
+          { path: '/license', label: 'Alix License Dashboard', icon: BarChart3, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/cockpit', label: 'Lizenz-Cockpit', icon: LineChart, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/marken', label: 'Marken', icon: Star, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/lizenznehmer', label: 'Lizenznehmer', icon: Building2, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/vertraege', label: 'Lizenzverträge', icon: FileSignature, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/saetze', label: 'Royalty-Sätze', icon: Hash, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/produkte', label: 'Produktlizenzen', icon: Package, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/royalties', label: 'Lizenzabrechnung', icon: Receipt, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/rechnungen', label: 'Lizenzrechnungen', icon: FileText, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/intercompany', label: 'Intercompany-Rechnungen', icon: Repeat, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/auswertungen', label: 'Auswertungen', icon: LineChart, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/laufzeiten', label: 'Vertragslaufzeiten', icon: CalendarClock, roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'License Manager'] },
+          { path: '/license/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin', 'Admin', 'License Manager'] },
         ],
       },
 
-
-
+      // 14) Benutzer & Rechte
       {
-        path: '#system', label: 'SYSTEM', icon: Cog, roles: ['Super Admin', 'Admin'],
+        path: '#benutzer-rechte', label: 'BENUTZER & RECHTE', icon: Users, roles: ['Super Admin', 'Admin'],
+        children: [
+          { path: '/benutzer', label: 'Benutzer', icon: Users, roles: ['Super Admin'] },
+          { path: '/rollen', label: 'Rollen', icon: Shield, roles: ['Super Admin'] },
+          { path: '/admin/rollen-freigaben', label: 'Rollen & Freigaben', icon: ShieldCheck, roles: ['Super Admin'] },
+          { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
+          { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
+          { path: '/workspaces-admin', label: 'Workspaces', icon: LayoutGrid, roles: ['Admin', 'Super Admin'] },
+        ],
+      },
+
+      // 15) Sicherheit & Betrieb (Fort Knox)
+      {
+        path: '#fort-knox', label: 'SICHERHEIT & BETRIEB', icon: Lock, roles: ['Super Admin'],
+        children: [
+          { path: '/operation/security-center', label: 'Alix Security Center', icon: Shield, roles: ['Super Admin'] },
+          { path: '/security-center', label: 'Security Center (Rechte)', icon: Shield, roles: ['Super Admin'] },
+          { path: '/operation/datensicherung', label: 'Security Base', icon: ShieldCheck, roles: ['Super Admin'] },
+          { path: '/datensicherung', label: 'Datensicherung', icon: Shield, roles: ['Super Admin'] },
+          { path: '/operation/systemwartung', label: 'Systemwartung', icon: AlertTriangle, roles: ['Super Admin'] },
+          { path: '/operation/performance', label: 'Performance Center', icon: Activity, roles: ['Super Admin'] },
+          { path: '/operation/system-health', label: 'System Health Center', icon: HeartPulse, roles: ['Super Admin'] },
+          { path: '/system', label: 'Monitoring', icon: Server, roles: ['Super Admin'] },
+          { path: '/lager/doppelte-reservierungen', label: 'Doppelte Reservierungen', icon: AlertTriangle, roles: ['Super Admin'] },
+        ],
+      },
+
+      // 16) Audit Center
+      {
+        path: '#audit-center', label: 'AUDIT CENTER', icon: ShieldCheck, roles: ['Super Admin'],
+        children: [
+          { path: '/audit-center', label: 'Übersicht', icon: LayoutDashboard, roles: ['Super Admin'] },
+          { path: '/audit-center/live', label: 'Live-Monitor', icon: Radio, roles: ['Super Admin'] },
+          { path: '/audit-center/timeline', label: 'Activity Timeline', icon: Activity, roles: ['Super Admin'] },
+          { path: '/audit-center/changes', label: 'Änderungs-Log', icon: FileText, roles: ['Super Admin'] },
+          { path: '/audit-center/security', label: 'Sicherheits-Alerts', icon: ShieldAlert, roles: ['Super Admin'] },
+          { path: '/audit-center/employees', label: 'Mitarbeiter-Profile', icon: Users, roles: ['Super Admin'] },
+          { path: '/audit-center/ups', label: 'Ultimate Productivity Score', icon: Trophy, roles: ['Super Admin'] },
+          { path: '/audit-center/reports', label: 'Compliance Reports', icon: FileDown, roles: ['Super Admin'] },
+          { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
+        ],
+      },
+
+      // 17) Auswertungen
+      {
+        path: '#stats', label: 'AUSWERTUNGEN', icon: BarChart3, roles: ['Super Admin'],
+        children: [
+          { path: '/mailcenter/executive', label: 'Executive Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
+          { path: '/konzern/dashboard', label: 'Konzern-Dashboard', icon: TrendingUp, roles: ['Super Admin'] },
+          { path: '/verkauf/anfragen/dashboard', label: 'Anfragen Dashboard', icon: BarChart3, roles: ['Super Admin'] },
+          { path: '/geraetetypen', label: 'Gerätetypen', icon: BarChart3, roles: ['Super Admin'] },
+          { path: '/connect/customer-360', label: 'Kunde 360°', icon: Users, roles: ['Super Admin'] },
+        ],
+      },
+
+      // 18) System & Import
+      {
+        path: '#system', label: 'SYSTEM & IMPORT', icon: Cog, roles: ['Super Admin', 'Admin'],
         children: [
           { path: '/import', label: 'Import', icon: Cloud, roles: ['Super Admin', 'Admin'] },
           { path: '/operation/nummernkreise', label: 'Nummernkreise', icon: Hash, roles: ['Super Admin'] },
-          { path: '/verkauf/anfragen/import', label: 'Anfragen Import', icon: Upload, roles: ['Super Admin'] },
-          { path: '/verkauf/angebot/import', label: 'Angebote Data Import', icon: Upload, roles: ['Super Admin'] },
           { path: '/operation/auftrags-import', label: 'Auftragsabgleich – Import', icon: Upload, roles: ['Super Admin', 'Admin'] },
           { path: '/operation/auftrags-abgleich', label: 'Auftragsabgleich', icon: ListChecks, roles: ['Super Admin', 'Admin'] },
+          { path: '/verkauf/anfragen/import', label: 'Anfragen Import', icon: Upload, roles: ['Super Admin'] },
+          { path: '/verkauf/angebot/import', label: 'Angebote Data Import', icon: Upload, roles: ['Super Admin'] },
           { path: '/operation/angebotskalender-config', label: 'Angebotskalender Konfiguration', icon: Calendar, roles: ['Super Admin'] },
-          { path: '/operation/logfiles', label: 'Logfiles', icon: ScrollText, roles: ['Super Admin'] },
-          { path: '/operation/news', label: 'News & Begrüßung', icon: Megaphone, roles: ['Super Admin'] },
         ],
       },
     ],
