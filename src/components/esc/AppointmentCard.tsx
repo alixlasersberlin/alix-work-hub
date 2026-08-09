@@ -4,6 +4,7 @@ import { de } from 'date-fns/locale';
 import { EscStatusBadge } from './StatusBadge';
 import { DepartmentBadge } from './DepartmentBadge';
 import { cn } from '@/lib/utils';
+import { ReleaseStatusForOrderText } from '@/components/delivery/ReleaseStatusForOrderText';
 
 interface Props {
   appointment: EscAppointment;
@@ -40,6 +41,12 @@ export function AppointmentCard({ appointment, department, compact, onClick }: P
       {!compact && appointment.customerName && (
         <div className="text-muted-foreground truncate">{appointment.customerName}</div>
       )}
+      <div className="mt-0.5">
+        <ReleaseStatusForOrderText
+          texts={[appointment.title, (appointment as any).description, appointment.customerName]}
+          withLabel={!compact}
+        />
+      </div>
     </button>
   );
 }
