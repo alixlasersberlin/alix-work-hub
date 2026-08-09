@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
   Shield, Database, Download, Loader2, Trash2, RefreshCw, Mail, Clock, HardDrive, CheckCircle2, AlertTriangle,
@@ -46,8 +45,6 @@ export default function Backups() {
   const [backups, setBackups] = useState<BackupRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
-  const [notify, setNotify] = useState(true);
-  const [notifyEmail, setNotifyEmail] = useState('');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [pwTarget, setPwTarget] = useState<BackupRow | null>(null);
   const [accountPw, setAccountPw] = useState('');
@@ -57,10 +54,6 @@ export default function Backups() {
   const [decPw, setDecPw] = useState('');
   const [decrypting, setDecrypting] = useState(false);
 
-
-  useEffect(() => {
-    if (profile?.email && !notifyEmail) setNotifyEmail(profile.email);
-  }, [profile?.email]);
 
   const load = async () => {
     setLoading(true);
@@ -83,11 +76,11 @@ export default function Backups() {
     setRunning(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-full-backup', {
-        body: { source: 'manual', notify, notify_email: notifyEmail || undefined, scope: 'full' },
+        body: { source: 'manual', notify: false, scope: 'full' },
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Unbekannter Fehler');
-      toast.success(data.accepted ? 'Backup gestartet und wird im Hintergrund verarbeitet.' : `Backup erstellt (${fmtSize(data.size_bytes)})${data.email_sent ? ' • E-Mail versendet' : ''}`);
+      toast.success(data.accepted ? 'Backup gestartet und wird im Hintergrund verarbeitet.' : `Backup erstellt (${fmtSize(data.size_bytes)})`);
       await load();
     } catch (e: any) {
       toast.error('Backup fehlgeschlagen: ' + (e?.message ?? String(e)));
@@ -329,6 +322,38 @@ export default function Backups() {
           )}
         </CardContent>
       </Card>
+      <Dialog open={!!pwTarget} onOpenChange={(o) => !o && setPwTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Lock className="w-4 h-4" /> Sicherung verschlüsselt herunterladen</DialogTitle>
+            <DialogDescription>
+              Bestätigen Sie Ihr Kontopasswort und vergeben Sie ein starkes Verschlüsselungs-Passwort
+              (min. 16 Zeichen, Groß-/Kleinbuchstaben, Ziffern, Sonderzeichen). Ohne dieses Passwort
+              ist die Datei nicht wiederherstellbar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Kontopasswort ({profile?.email})</Label>
+              <Input type="password" autoComplete="current-password" value={accountPw} onChange={(e) => setAccountPw(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Verschlüsselungs-Passwort</Label>
+              <Input type="password" autoComplete="new-password" value={encPw} onChange={(e) => setEncPw(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Verschlüsselungs-Passwort wiederholen</Label>
+              <Input type="password" autoComplete="new-password" value={encPw2} onChange={(e) => setEncPw2(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPwTarget(null)}>Abbrechen</Button>
+            <Button onClick={confirmDownload} disabled={!!downloadingId}>
+              {downloadingId ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Verschlüsseln …</> : <><Download className="w-4 h-4 mr-2" /> Verschlüsselt herunterladen</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
