@@ -4,6 +4,16 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
 const SITE = 'https://alixwork.de';
 
+// Ticket-Nummern aus E-Mail-Inbound können ganze Adressen enthalten
+// (z. B. "...@eu-west-1.amazonses.com"). Domains/Adressen niemals im Mail-Text anzeigen.
+function cleanTicketNumber(raw?: string | null): string {
+  const v = (raw ?? '').trim();
+  if (!v) return '';
+  const local = v.split('@')[0].replace(/\s+/g, '');
+  const short = local.length > 12 ? local.slice(-12) : local;
+  return short.toUpperCase();
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
@@ -44,7 +54,7 @@ Deno.serve(async (req) => {
           idempotencyKey: `csat-${t.id}`,
           templateData: {
             customerName: t.customer_name ?? '',
-            ticketNumber: t.ticket_number ?? '',
+            ticketNumber: cleanTicketNumber(t.ticket_number),
             subject: t.subject ?? t.title ?? '',
             csatUrl,
           },
