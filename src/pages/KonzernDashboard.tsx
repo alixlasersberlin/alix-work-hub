@@ -31,18 +31,20 @@ export default function KonzernDashboard() {
           ]);
           orders = oc || 0; lager = lc || 0;
         }
+        const ticketQ = supabase.from('tickets').select('id', { count: 'exact', head: true }).neq('status', 'geschlossen');
+        const repairQ = supabase.from('repair_orders').select('id', { count: 'exact', head: true }).neq('repair_status', 'Abgeschlossen');
         const [{ count: tc }, { count: rc }] = await Promise.all([
-          supabase.from('tickets').select('id', { count: 'exact', head: true }).neq('status', 'geschlossen'),
-          supabase.from('repair_orders').select('id', { count: 'exact', head: true }).neq('repair_status', 'Abgeschlossen'),
+          src ? ticketQ.eq('source_system', src) : ticketQ,
+          repairQ.eq('tenant_id', t.id),
         ]);
-        // Tickets/Repairs ohne source_system-Mandantenmapping → nur Konzernsumme
-        tickets = src ? 0 : (tc || 0);
-        repairs = src ? 0 : (rc || 0);
+        tickets = tc || 0;
+        repairs = rc || 0;
         out.push({
           code: t.code, name: t.name, flag: t.flag_emoji || '🏢',
           orders, openTickets: tickets, openRepairs: repairs, lagerDevices: lager,
         });
       }
+
       setStats(out);
       setLoading(false);
     })();
