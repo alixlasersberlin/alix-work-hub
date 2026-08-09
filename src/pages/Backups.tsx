@@ -232,10 +232,10 @@ export default function Backups() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> Benachrichtigung</CardDescription>
-            <CardTitle className="text-base">E-Mail mit Link</CardTitle>
+            <CardDescription className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Zugriff</CardDescription>
+            <CardTitle className="text-base">Nur Benutzerkonto</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">Optionaler Versand des Download-Links (7 Tage gültig).</CardContent>
+          <CardContent className="text-xs text-muted-foreground">Kein E-Mail-Versand, keine Links. Download nur als Super Admin mit Passwort-Bestätigung, AES-256-verschlüsselt.</CardContent>
         </Card>
       </div>
 
@@ -243,35 +243,39 @@ export default function Backups() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Database className="w-5 h-5" /> Manuelles Backup erstellen</CardTitle>
           <CardDescription>
-            Dumpt alle Tabellen und das Storage-Inventar als JSON, lädt es in den privaten <code>backups</code>-Bucket
-            und liefert einen signierten Download-Link.
+            Dumpt alle Tabellen und das Storage-Inventar als JSON und legt es im privaten <code>backups</code>-Bucket ab.
+            Es werden keine Download-Links erzeugt und keine E-Mails versendet.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="space-y-0.5">
-              <Label className="text-sm">E-Mail-Benachrichtigung mit Download-Link</Label>
-              <p className="text-xs text-muted-foreground">Der Link ist 7 Tage gültig.</p>
-            </div>
-            <Switch checked={notify} onCheckedChange={setNotify} />
-          </div>
-          {notify && (
-            <div className="space-y-2">
-              <Label htmlFor="notify-email">Empfänger-E-Mail</Label>
-              <Input
-                id="notify-email"
-                type="email"
-                value={notifyEmail}
-                onChange={(e) => setNotifyEmail(e.target.value)}
-                placeholder="admin@beispiel.de"
-              />
-            </div>
-          )}
           <Button onClick={runBackup} disabled={running} className="w-full sm:w-auto">
             {running ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sicherung läuft …</> : <><Database className="w-4 h-4 mr-2" /> Jetzt sichern</>}
           </Button>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><FileLock2 className="w-5 h-5" /> Sicherung entschlüsseln</CardTitle>
+          <CardDescription>
+            Heruntergeladene <code>.zip.enc</code>-Datei lokal im Browser mit dem Verschlüsselungs-Passwort entschlüsseln (AES-256-GCM).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Input type="file" accept=".enc" onChange={(e) => setDecFile(e.target.files?.[0] ?? null)} />
+          <Input
+            type="password"
+            autoComplete="off"
+            placeholder="Verschlüsselungs-Passwort"
+            value={decPw}
+            onChange={(e) => setDecPw(e.target.value)}
+          />
+          <Button variant="outline" onClick={decryptFile} disabled={decrypting}>
+            {decrypting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Entschlüsseln …</> : <><KeyRound className="w-4 h-4 mr-2" /> Entschlüsseln & speichern</>}
+          </Button>
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
