@@ -13,11 +13,13 @@ import SignaturePad from '@/components/finance/SignaturePad';
 import { useAuth } from '@/hooks/useAuth';
 import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS, type ApprovalStage } from '@/lib/delivery-approval/config';
 import {
   slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats, fetchEscalationSeries, fetchStageDurations, type StageDuration,
+  fetchStageDurationTrend, type StageDurationMonth,
   bulkStartApprovals,
   type DeliveryApproval, type EscalationStat, type EscalationMonth,
 } from '@/lib/delivery-approval/api';
@@ -51,6 +53,7 @@ export default function Auslieferungsfreigabe() {
   const [escalations, setEscalations] = useState<EscalationStat[]>([]);
   const [series, setSeries] = useState<EscalationMonth[]>([]);
   const [stageDurations, setStageDurations] = useState<StageDuration[]>([]);
+  const [durationTrend, setDurationTrend] = useState<StageDurationMonth[]>([]);
   // Massen-Anforderung
   const [reqOpen, setReqOpen] = useState(false);
   const [reqQ, setReqQ] = useState('');
@@ -88,6 +91,7 @@ export default function Auslieferungsfreigabe() {
     void fetchEscalationStats().then(setEscalations).catch(() => {});
     void fetchEscalationSeries().then(setSeries).catch(() => {});
     void fetchStageDurations().then(setStageDurations).catch(() => {});
+    void fetchStageDurationTrend().then(setDurationTrend).catch(() => {});
   }, []);
 
   /** Aufträge ohne gestarteten Freigabeprozess laden */
@@ -290,6 +294,38 @@ export default function Auslieferungsfreigabe() {
           )}
         </Card>
       </div>
+
+      <Card className="p-3">
+        <div className="text-sm font-medium mb-2">Zeittrend Durchlaufzeiten je Freigabestufe (Ø Stunden)</div>
+        {durationTrend.length === 0 ? (
+          <div className="text-sm text-muted-foreground">Noch keine abgeschlossenen Stufen im Zeitraum.</div>
+        ) : (
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={durationTrend} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} unit=" h" />
+                <Tooltip
+                  contentStyle={{
+                    background: 'hsl(var(--popover))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: 8,
+                    color: 'hsl(var(--popover-foreground))',
+                    fontSize: 12,
+                  }}
+                  formatter={(v: any, n: any) => [v == null ? '–' : `${v} h`, n]}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Line type="monotone" dataKey="warehouse" name="Bereitstellung" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" dataKey="accounting" name="Buchhaltung" stroke="hsl(var(--chart-2, 199 89% 48%))" strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" dataKey="dispatch" name="Tourenplanung" stroke="hsl(var(--chart-3, 142 71% 45%))" strokeWidth={2} dot={false} connectNulls />
+                <Line type="monotone" dataKey="total" name="Gesamt (Anlage → Freigabe)" stroke="hsl(var(--muted-foreground))" strokeWidth={2} strokeDasharray="4 3" dot={false} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </Card>
 
       <Card className="p-3">
         <div className="flex items-center gap-2 text-sm font-medium mb-2">
