@@ -25,7 +25,10 @@ export const EVENT_TYPE_COLORS: Record<string, { bg: string; fg: string; border:
   urlaub:             { bg: 'bg-sky-500/15',     fg: 'text-sky-400',     border: 'border-sky-500/40',     label: 'Urlaub' },
   krankheit:          { bg: 'bg-slate-500/15',   fg: 'text-slate-300',   border: 'border-slate-500/40',   label: 'Krankheit' },
   intern:             { bg: 'bg-slate-500/15',   fg: 'text-slate-300',   border: 'border-slate-500/40',   label: 'Intern' },
+  umzug:              { bg: 'bg-cyan-500/15',    fg: 'text-cyan-400',    border: 'border-cyan-500/40',    label: 'Umzug' },
+  werkstatt:          { bg: 'bg-lime-500/15',    fg: 'text-lime-400',    border: 'border-lime-500/40',    label: 'Werkstatt' },
   sonstiges:          { bg: 'bg-neutral-500/15', fg: 'text-neutral-300', border: 'border-neutral-500/40', label: 'Termin' },
+
 };
 
 export function classifyEventKind(raw?: string | null): string {
