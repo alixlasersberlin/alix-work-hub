@@ -25,3 +25,11 @@ Regeln:
   (`src/lib/at-only-access.ts` entfernt, `useAtRoleOnly()` deprecated/false).
 - `useAtOnly()` = Data Scope ist ausschließlich AT (Mandantenzugriff oder Altrolle).
 - Verwaltung der Zuordnung: `/workspaces-admin` (Mandanten-Zugriffsmatrix, schreibend nur Super Admin).
+
+## Phase 2 (tenant_id)
+- `tenant_scope_id_ok(uuid)` + `tenant_id_for_source(text)`; NULL-tenant_id = für alle sichtbar.
+- Spalte `tenant_id` + restriktive Policies auf: offers, repair_orders, sales_leads, production_orders,
+  delivery_tours, delivery_appointments, alixdocs2_documents, alixdocs_documents.
+- BEFORE-INSERT-Trigger `set_tenant_from_relation()` setzt tenant_id aus order_id/customer_id
+  (offers, repair_orders, production_orders, delivery_appointments).
+- Verwaltung: `/admin/rollen-freigaben/datenbereich` (Mandanten-Matrix je Benutzer, Super Admin).

@@ -5875,6 +5875,7 @@ export type Database = {
           sha256: string | null
           size_bytes: number | null
           status: string
+          tenant_id: string | null
           title: string | null
           updated_at: string
         }
@@ -5903,6 +5904,7 @@ export type Database = {
           sha256?: string | null
           size_bytes?: number | null
           status?: string
+          tenant_id?: string | null
           title?: string | null
           updated_at?: string
         }
@@ -5931,6 +5933,7 @@ export type Database = {
           sha256?: string | null
           size_bytes?: number | null
           status?: string
+          tenant_id?: string | null
           title?: string | null
           updated_at?: string
         }
@@ -5940,6 +5943,13 @@ export type Database = {
             columns: ["nc_server_id"]
             isOneToOne: false
             referencedRelation: "alixdocs2_nc_servers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alixdocs2_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -17448,6 +17458,7 @@ export type Database = {
           scope_of_delivery: string | null
           serial_number: string | null
           status: Database["public"]["Enums"]["delivery_status"]
+          tenant_id: string | null
           time_window_end: string | null
           time_window_start: string | null
           updated_at: string
@@ -17512,6 +17523,7 @@ export type Database = {
           scope_of_delivery?: string | null
           serial_number?: string | null
           status?: Database["public"]["Enums"]["delivery_status"]
+          tenant_id?: string | null
           time_window_end?: string | null
           time_window_start?: string | null
           updated_at?: string
@@ -17576,12 +17588,21 @@ export type Database = {
           scope_of_delivery?: string | null
           serial_number?: string | null
           status?: Database["public"]["Enums"]["delivery_status"]
+          tenant_id?: string | null
           time_window_end?: string | null
           time_window_start?: string | null
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "delivery_appointments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       delivery_approval_events: {
         Row: {
@@ -19109,6 +19130,7 @@ export type Database = {
           released_by: string | null
           start_location_id: string | null
           status: Database["public"]["Enums"]["delivery_tour_status"]
+          tenant_id: string | null
           title: string | null
           tour_date: string
           tour_number: string
@@ -19143,6 +19165,7 @@ export type Database = {
           released_by?: string | null
           start_location_id?: string | null
           status?: Database["public"]["Enums"]["delivery_tour_status"]
+          tenant_id?: string | null
           title?: string | null
           tour_date: string
           tour_number?: string
@@ -19177,6 +19200,7 @@ export type Database = {
           released_by?: string | null
           start_location_id?: string | null
           status?: Database["public"]["Enums"]["delivery_tour_status"]
+          tenant_id?: string | null
           title?: string | null
           tour_date?: string
           tour_number?: string
@@ -19212,6 +19236,13 @@ export type Database = {
             columns: ["start_location_id"]
             isOneToOne: false
             referencedRelation: "delivery_locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_tours_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
           {
@@ -31666,6 +31697,7 @@ export type Database = {
           signed_at: string | null
           stage: string | null
           status: string
+          tenant_id: string | null
           total_gross: number | null
           total_net: number | null
           total_tax: number | null
@@ -31719,6 +31751,7 @@ export type Database = {
           signed_at?: string | null
           stage?: string | null
           status?: string
+          tenant_id?: string | null
           total_gross?: number | null
           total_net?: number | null
           total_tax?: number | null
@@ -31772,6 +31805,7 @@ export type Database = {
           signed_at?: string | null
           stage?: string | null
           status?: string
+          tenant_id?: string | null
           total_gross?: number | null
           total_net?: number | null
           total_tax?: number | null
@@ -31779,7 +31813,15 @@ export type Database = {
           valid_until?: string | null
           win_probability?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "offers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_additional_deposits: {
         Row: {
@@ -34809,6 +34851,7 @@ export type Database = {
           sonderwuensche: string | null
           status: string
           supplier_id: string
+          tenant_id: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -34845,6 +34888,7 @@ export type Database = {
           sonderwuensche?: string | null
           status?: string
           supplier_id: string
+          tenant_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -34881,6 +34925,7 @@ export type Database = {
           sonderwuensche?: string | null
           status?: string
           supplier_id?: string
+          tenant_id?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -34904,6 +34949,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "production_orders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -35739,6 +35791,7 @@ export type Database = {
           signature_document_id: string | null
           signature_signed_at: string | null
           signature_status: string | null
+          tenant_id: string | null
           ticket_id: string | null
           updated_at: string
           updated_by: string | null
@@ -35796,6 +35849,7 @@ export type Database = {
           signature_document_id?: string | null
           signature_signed_at?: string | null
           signature_status?: string | null
+          tenant_id?: string | null
           ticket_id?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -35853,6 +35907,7 @@ export type Database = {
           signature_document_id?: string | null
           signature_signed_at?: string | null
           signature_status?: string | null
+          tenant_id?: string | null
           ticket_id?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -35860,6 +35915,13 @@ export type Database = {
           work_order_pdf_path?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "repair_orders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "repair_orders_ticket_id_fkey"
             columns: ["ticket_id"]
@@ -37659,6 +37721,7 @@ export type Database = {
           source: string
           street: string | null
           suggested_assignee: string | null
+          tenant_id: string | null
           updated_at: string
           zip: string | null
         }
@@ -37703,6 +37766,7 @@ export type Database = {
           source?: string
           street?: string | null
           suggested_assignee?: string | null
+          tenant_id?: string | null
           updated_at?: string
           zip?: string | null
         }
@@ -37747,6 +37811,7 @@ export type Database = {
           source?: string
           street?: string | null
           suggested_assignee?: string | null
+          tenant_id?: string | null
           updated_at?: string
           zip?: string | null
         }
@@ -37764,6 +37829,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_alixsmart_customer_status"
             referencedColumns: ["customer_id"]
+          },
+          {
+            foreignKeyName: "sales_leads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -48211,6 +48283,7 @@ export type Database = {
       sys_health_autofix: { Args: never; Returns: Json }
       sys_health_metrics: { Args: never; Returns: Json }
       tenant_id_for_source: { Args: { _source: string }; Returns: string }
+      tenant_scope_id_ok: { Args: { _tenant_id: string }; Returns: boolean }
       tenant_scope_ok: { Args: { _source: string }; Returns: boolean }
       tenant_scope_restricted: { Args: never; Returns: boolean }
       ticket_auto_close_stale: { Args: never; Returns: Json }
