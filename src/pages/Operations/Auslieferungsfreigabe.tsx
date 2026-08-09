@@ -11,9 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { NativeSelect } from '@/components/ui/native-select';
 import SignaturePad from '@/components/finance/SignaturePad';
 import { useAuth } from '@/hooks/useAuth';
-import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle, PlusCircle } from 'lucide-react';
+import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle, PlusCircle, Settings as SettingsIcon, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine } from 'recharts';
+
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS, type ApprovalStage } from '@/lib/delivery-approval/config';
