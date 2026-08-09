@@ -57,6 +57,17 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
     'TEAMKALENDER',
     'KONTAKT',
   ],
+  alixdocs: [
+    'DASHBOARDS',
+    'ALIXDOCS',
+    'TEAMKALENDER',
+  ],
+  teamkalender: [
+    'DASHBOARDS',
+    'TEAMKALENDER',
+    'TOURENPLANUNG',
+    'ALIXDOCS',
+  ],
 };
 
 const allowed = (roles: string[] | null | undefined, userRoles: string[], isSuper: boolean) => {
