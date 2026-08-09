@@ -270,9 +270,19 @@ export default function Auslieferungsfreigabe() {
             const ov = OVERALL_UI[r.overall_status];
             const sla = slaLevel(r.created_at);
             return (
-              <Link key={r.id} to={`/orders/${r.order_id}?tab=freigaben`} className="flex flex-wrap items-center gap-3 p-3 hover:bg-accent/20">
+              <div key={r.id} className="flex flex-wrap items-center gap-3 p-3 hover:bg-accent/20">
+                <Checkbox
+                  checked={selected.has(r.id)}
+                  onCheckedChange={(v) => setSelected((prev) => {
+                    const next = new Set(prev);
+                    if (v) next.add(r.id); else next.delete(r.id);
+                    return next;
+                  })}
+                />
                 <span className={`h-3 w-3 rounded-full ${ov.dot}`} />
-                <div className="font-medium min-w-[140px]">{r.order_number ?? r.order_id.slice(0, 8)}</div>
+                <Link to={`/orders/${r.order_id}?tab=freigaben`} className="font-medium min-w-[140px] hover:underline">
+                  {r.order_number ?? r.order_id.slice(0, 8)}
+                </Link>
                 <Badge variant="outline" className={ov.text}>{ov.label}</Badge>
                 <div className="flex gap-2">
                   {STAGES.map((s) => {
