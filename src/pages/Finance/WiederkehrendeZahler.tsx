@@ -310,7 +310,15 @@ export default function WiederkehrendeZahler() {
   async function confirmDelete() {
     const p = deleteTarget;
     const reason = deleteReason.trim();
-    if (!p || reason.length < 5) return;
+    if (!p) return;
+    if (reason.length < 5) {
+      toast({
+        title: 'Löschgrund zu kurz',
+        description: `Bitte noch ${5 - reason.length} Zeichen eingeben.`,
+        variant: 'destructive',
+      });
+      return;
+    }
     setDeletingId(p.id);
 
     const { error } = await supabase.rpc('delete_recurring_profile_with_reason' as any, {
@@ -1020,7 +1028,10 @@ export default function WiederkehrendeZahler() {
               placeholder="z. B. Doppelerfassung, Vertrag storniert …"
               onChange={(e) => setDeleteReason(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">{deleteReason.trim().length}/500 Zeichen</p>
+            <p className={deleteReason.trim().length < 5 ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}>
+              {deleteReason.trim().length}/500 Zeichen
+              {deleteReason.trim().length < 5 && ` · Noch ${5 - deleteReason.trim().length} Zeichen erforderlich`}
+            </p>
           </div>
           <DialogFooter>
             <Button variant="ghost" disabled={!!deletingId} onClick={() => { setDeleteTarget(null); setDeleteReason(''); }}>
@@ -1031,7 +1042,11 @@ export default function WiederkehrendeZahler() {
               disabled={deleteReason.trim().length < 5 || !!deletingId}
               onClick={confirmDelete}
             >
-              {deletingId ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Endgültig löschen'}
+              {deletingId
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : deleteReason.trim().length < 5
+                  ? `Noch ${5 - deleteReason.trim().length} Zeichen`
+                  : 'Endgültig löschen'}
             </Button>
           </DialogFooter>
         </DialogContent>
