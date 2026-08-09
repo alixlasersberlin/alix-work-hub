@@ -6,6 +6,8 @@ import { Building2, Calendar, Euro, Hash } from 'lucide-react';
 import { withAt } from '@/lib/atSuffix';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
+import { TenantBadge } from '@/components/TenantBadge';
+
 
 interface OrderCardProps {
   order: any;
