@@ -25872,6 +25872,7 @@ export type Database = {
           remittance_info: string | null
           run_id: string
           status: string
+          tenant_id: string | null
           transaction_id: string | null
         }
         Insert: {
@@ -25886,6 +25887,7 @@ export type Database = {
           remittance_info?: string | null
           run_id: string
           status?: string
+          tenant_id?: string | null
           transaction_id?: string | null
         }
         Update: {
@@ -25900,6 +25902,7 @@ export type Database = {
           remittance_info?: string | null
           run_id?: string
           status?: string
+          tenant_id?: string | null
           transaction_id?: string | null
         }
         Relationships: [
@@ -48313,6 +48316,7 @@ export type Database = {
       tenant_id_for_source: { Args: { _source: string }; Returns: string }
       tenant_scope_id_ok: { Args: { _tenant_id: string }; Returns: boolean }
       tenant_scope_ok: { Args: { _source: string }; Returns: boolean }
+      tenant_scope_ok_id: { Args: { _tenant_id: string }; Returns: boolean }
       tenant_scope_restricted: { Args: never; Returns: boolean }
       ticket_auto_close_stale: { Args: never; Returns: Json }
       ticket_merge: {
