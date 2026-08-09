@@ -109,6 +109,34 @@ async function addressesFromCustomer(
   }
 }
 
+/** Fallback: E-Mail aus den Kundenstammdaten laden. */
+async function emailFromCustomer(customerName: string, customerNumber?: string | null): Promise<string> {
+  try {
+    if (customerNumber) {
+      const { data } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('external_customer_id', String(customerNumber))
+        .limit(1);
+      const mail = data?.[0]?.email;
+      if (mail && String(mail).includes('@')) return String(mail);
+    }
+    if (customerName) {
+      const { data } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('company_name', customerName)
+        .limit(1);
+      const mail = data?.[0]?.email;
+      if (mail && String(mail).includes('@')) return String(mail);
+    }
+  } catch {
+    /* ignore */
+  }
+  return '';
+}
+
+
 
 
 
