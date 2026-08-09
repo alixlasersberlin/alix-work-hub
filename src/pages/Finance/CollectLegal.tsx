@@ -74,6 +74,17 @@ export default function FinanceCollectLegal() {
     load();
   };
 
+  const confirmDelete = async () => {
+    if (!delTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from('collect_legal_cases' as any).delete().eq('id', delTarget.id);
+    setDeleting(false);
+    if (error) { toast({ title: 'Löschen fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
+    toast({ title: 'Rechtsfall gelöscht' });
+    setDelTarget(null);
+    load();
+  };
+
   const openClaims = legal.filter((r) => !['closed', 'recovered', 'lost'].includes(r.status)).reduce((a, r) => a + Number(r.claim_amount ?? 0), 0);
   const recovered = legal.reduce((a, r) => a + Number(r.recovered_amount ?? 0), 0);
   const insolSum = insol.reduce((a, r) => a + Number(r.claim_amount ?? 0), 0);
