@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Phone, HandCoins, CalendarClock, CreditCard, Gavel, Scale, Plus, Check, FileText, Send } from 'lucide-react';
+import { Phone, MessageSquare, HandCoins, CalendarClock, CreditCard, Gavel, Scale, Plus, Check, FileText, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ const OUTCOMES: Record<string, string> = {
 const today = () => new Date().toISOString().slice(0, 10);
 const inDays = (d: number) => { const x = new Date(); x.setDate(x.getDate() + d); return x.toISOString().slice(0, 10); };
 
-export default function CollectCaseActions({ c, items, onChange }: { c: any; items: any[]; onChange: () => void }) {
+export default function CollectCaseActions({ c, items, onChange, customerPhone }: { c: any; items: any[]; onChange: () => void; customerPhone?: string | null }) {
   const caseId = c.id as string;
   const cur = c.currency ?? 'EUR';
 
@@ -49,6 +49,10 @@ export default function CollectCaseActions({ c, items, onChange }: { c: any; ite
   const [months, setMonths] = useState('6');
   const [start, setStart] = useState(inDays(14));
   const [iban, setIban] = useState('');
+
+  const [smsTo, setSmsTo] = useState('');
+  const [smsText, setSmsText] = useState('');
+  const [smsBusy, setSmsBusy] = useState(false);
 
   const [limitOpen, setLimitOpen] = useState(false);
   const [limitValue, setLimitValue] = useState('20000');
@@ -91,6 +95,10 @@ export default function CollectCaseActions({ c, items, onChange }: { c: any; ite
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [caseId]);
+
+  useEffect(() => {
+    setSmsTo(customerPhone ?? c.customer_phone ?? '');
+  }, [customerPhone, c.customer_phone]);
 
   const totalOpen = Number(c.open_amount ?? 0) + Number(c.fee_amount ?? 0) + Number(c.interest_amount ?? 0);
 
@@ -211,6 +219,34 @@ export default function CollectCaseActions({ c, items, onChange }: { c: any; ite
     onChange(); load();
   };
 
+  const phoneFromMaster = customerPhone ?? c.customer_phone ?? null;
+
+  const dunningSmsText = () =>
+    `Alix Lasers: Offener Betrag ${fmt(totalOpen, cur)} (Verzug ${c.max_days_overdue ?? 0} Tage). `
+    + 'Bitte begleichen Sie den Betrag oder kontaktieren Sie uns unter service@alix-lasers.com.';
+
+  const sendSms = async (dunning: boolean) => {
+    const to = smsTo.trim();
+    const message = (dunning ? dunningSmsText() : smsText.trim()).slice(0, 600);
+    if (!to) { toast({ title: 'Keine Telefonnummer', description: 'Bitte Empfänger angeben.', variant: 'destructive' }); return; }
+    if (!message) { toast({ title: 'Nachricht fehlt', description: 'Bitte Text eingeben oder Mahntext einfügen.', variant: 'destructive' }); return; }
+    setSmsBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('collect-send-sms', {
+        body: { case_id: caseId, channel: 'sms', to, message },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast({ title: 'SMS versendet', description: to });
+      if (!dunning) setSmsText('');
+      onChange(); load();
+    } catch (e: any) {
+      toast({ title: 'SMS fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setSmsBusy(false);
+    }
+  };
+
   return (
     <>
       <div className="grid gap-6 lg:grid-cols-2">
@@ -232,6 +268,43 @@ export default function CollectCaseActions({ c, items, onChange }: { c: any; ite
                 {k.followup_date && <span className="text-muted-foreground">WV {k.followup_date}</span>}
               </div>
             ))}
+          </div>
+        </DataCard>
+
+        <DataCard title="SMS Versand" icon={<MessageSquare className="h-4 w-4 text-primary" />}>
+          <div className="space-y-3">
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Empfänger (aus Kundenstammdaten)</div>
+              <Input
+                value={smsTo}
+                onChange={(e) => setSmsTo(e.target.value)}
+                placeholder="+49…"
+              />
+              {!phoneFromMaster && (
+                <p className="mt-1 text-xs text-amber-400">Keine Telefonnummer in den Kundenstammdaten hinterlegt.</p>
+              )}
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Nachricht</div>
+              <Textarea
+                rows={4}
+                value={smsText}
+                onChange={(e) => setSmsText(e.target.value)}
+                placeholder="Freie Nachricht an den Kunden…"
+              />
+              <div className="mt-1 text-right text-xs text-muted-foreground">{smsText.length}/600</div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" onClick={() => setSmsText(dunningSmsText())}>
+                Mahntext einfügen
+              </Button>
+              <Button size="sm" disabled={smsBusy || !smsTo.trim()} onClick={() => sendSms(false)}>
+                <Send className="h-4 w-4 mr-2" />SMS senden
+              </Button>
+              <Button size="sm" variant="secondary" disabled={smsBusy || !smsTo.trim()} onClick={() => sendSms(true)}>
+                <MessageSquare className="h-4 w-4 mr-2" />Mahnung per SMS
+              </Button>
+            </div>
           </div>
         </DataCard>
 
