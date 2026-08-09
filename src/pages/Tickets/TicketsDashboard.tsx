@@ -16,6 +16,7 @@ import {
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { de } from "date-fns/locale";
 import { CsatWidget } from "./CsatWidget";
+import { useTenantFilter } from "@/hooks/useTenantFilter";
 
 type Counts = {
   neu: number; meine: number; heute: number; ueberfaellig: number;
@@ -48,6 +49,7 @@ type HistoryRow = {
 
 export default function TicketsDashboard() {
   const { user } = useAuth();
+  const { sourceSystem } = useTenantFilter();
   const [counts, setCounts] = useState<Counts | null>(null);
   const [prioData, setPrioData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [deptData, setDeptData] = useState<{ name: string; value: number; color: string }[]>([]);
@@ -62,7 +64,7 @@ export default function TicketsDashboard() {
     const end = endOfDay(now).toISOString();
 
     // One-shot RPC statt 10 einzelner count(exact)-Queries.
-    const { data: countsRow } = await supabase.rpc('tickets_dashboard_counts', { _user_id: user?.id ?? '00000000-0000-0000-0000-000000000000' });
+    const { data: countsRow } = await supabase.rpc('tickets_dashboard_counts' as any, { _user_id: user?.id ?? '00000000-0000-0000-0000-000000000000', _source_system: sourceSystem });
     const c0 = (countsRow ?? {}) as any;
     setCounts({
       neu: c0.neu ?? 0,
@@ -137,7 +139,7 @@ export default function TicketsDashboard() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [user?.id]);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [user?.id, sourceSystem]);
 
   const tile = (label: string, value: number, Icon: any, to: string, tone?: string) => (
     <Link to={to}>
