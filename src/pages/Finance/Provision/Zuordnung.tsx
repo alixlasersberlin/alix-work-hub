@@ -221,7 +221,22 @@ export default function ProvisionZuordnung() {
 
 
         <TabsContent value="unassigned" className="mt-4 space-y-3">
-          <Input placeholder="Auftrag oder Verkäufer suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
+          <div className="flex flex-wrap items-center gap-3">
+            <Input placeholder="Auftrag oder Verkäufer suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
+            {perms.canManage && (
+              <>
+                <Button size="sm" variant="outline" onClick={() => setSelected(new Set(visibleUnassigned.map((o) => o.id)))}>
+                  Alle markieren ({visibleUnassigned.length})
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} disabled={selected.size === 0}>
+                  Auswahl aufheben
+                </Button>
+                <Button size="sm" onClick={() => setBulkOpen(true)} disabled={selected.size === 0}>
+                  <UserPlus className="h-4 w-4 mr-2" />Markierte zuordnen ({selected.size})
+                </Button>
+              </>
+            )}
+          </div>
           <DataCard className="p-0">
             <div className="p-5">
               {unassigned.length === 0 ? (
@@ -231,6 +246,15 @@ export default function ProvisionZuordnung() {
                   <table className="w-full text-sm">
                     <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                       <tr>
+                        <th className="p-3 text-left w-10">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-primary"
+                            aria-label="Alle markieren"
+                            checked={allVisibleSelected}
+                            onChange={(e) => setSelected(e.target.checked ? new Set(visibleUnassigned.map((o) => o.id)) : new Set())}
+                          />
+                        </th>
                         <th className="p-3 text-left">Auftrag</th>
                         <th className="p-3 text-left">Datum</th>
                         <th className="p-3 text-left">Status</th>
@@ -240,12 +264,22 @@ export default function ProvisionZuordnung() {
                       </tr>
                     </thead>
                     <tbody>
-                      {unassigned.slice(0, 300).map((o) => (
-                        <tr key={o.id} className="border-t border-border">
+                      {visibleUnassigned.map((o) => (
+                        <tr key={o.id} className={`border-t border-border ${selected.has(o.id) ? 'bg-primary/5' : ''}`}>
+                          <td className="p-3">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 accent-primary"
+                              aria-label={`Auftrag ${o.order_number} markieren`}
+                              checked={selected.has(o.id)}
+                              onChange={() => toggleSelect(o.id)}
+                            />
+                          </td>
                           <td className="p-3">{o.order_number}</td>
                           <td className="p-3">{fmtDate(o.order_date)}</td>
                           <td className="p-3">{o.order_status ?? '–'}</td>
                           <td className="p-3">{o.salesperson_name ?? '–'}</td>
+
                           <td className="p-3 text-right">{Number(o.total_amount ?? 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
                           <td className="p-3 text-right">
                             {perms.canManage && (
