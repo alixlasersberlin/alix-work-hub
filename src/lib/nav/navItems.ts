@@ -642,37 +642,37 @@ export const navItems: NavItem[] = [
     ],
   },
 
-  {
-    path: '/umfragen/dashboard', label: 'FEEDBACK & REWARDS', icon: ClipboardCheck,
-    roles: ['Admin', 'Super Admin', 'Marketing', 'Geschäftsführung', 'Kundenservice', 'Service', 'Vertrieb', 'Vertriebsleitung', 'QM', 'Feedback'],
-    children: [
-      { path: '/umfragen/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-      { path: '/umfragen', label: 'Umfragen', icon: ClipboardCheck, roles: null },
-      { path: '/umfragen/bibliothek', label: 'Vorlagen-Bibliothek', icon: Sparkles, roles: null },
-      { path: '/umfragen/antworten', label: 'Antworten', icon: MessageSquare, roles: null },
-      { path: '/umfragen/auswertung', label: 'Auswertung', icon: Sparkles, roles: null },
-      { path: '/umfragen/statistik', label: 'Statistik', icon: BarChart3, roles: null },
-      { path: '/umfragen/benchmark', label: 'Benchmark & Trends', icon: BarChart3, roles: null },
-      { path: '/umfragen/automatisierung', label: 'Automatisierung', icon: Zap, roles: ['Admin', 'Super Admin', 'Marketing', 'Feedback'] },
-      { path: '/umfragen/testimonials', label: 'Testimonials', icon: Quote, roles: null },
-      { path: '/umfragen/empfaenger', label: 'Empfängerliste', icon: Users, roles: null },
-
-      { path: '/umfragen/geschenke', label: 'Geschenke', icon: Gift, roles: null },
-      { path: '/umfragen/belohnungen', label: 'Belohnungszusagen', icon: Gift, roles: null },
-      { path: '/umfragen/gutscheincodes', label: 'Gutscheincodes', icon: Ticket, roles: null },
-      { path: '/umfragen/import', label: 'Upload & Import', icon: Upload, roles: null },
-      { path: '/umfragen/vorlagen', label: 'E-Mail-Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Marketing'] },
-      { path: '/umfragen/protokoll', label: 'Versand-Protokoll', icon: MailCheck, roles: null },
-      { path: '/umfragen/exporte', label: 'Exporte', icon: Download, roles: null },
-      { path: '/umfragen/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin'] },
-
-    ],
-  },
 
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin', 'Admin'],
     children: [
       { path: '/operation/auslieferungsfreigabe', label: 'Auslieferungsfreigabe', icon: ShieldCheck, roles: ['Super Admin', 'Admin'] },
+    {
+      path: '/umfragen/dashboard', label: 'FEEDBACK & REWARDS', icon: ClipboardCheck,
+      roles: ['Admin', 'Super Admin', 'Marketing', 'Geschäftsführung', 'Kundenservice', 'Service', 'Vertrieb', 'Vertriebsleitung', 'QM', 'Feedback'],
+      children: [
+        { path: '/umfragen/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+        { path: '/umfragen', label: 'Umfragen', icon: ClipboardCheck, roles: null },
+        { path: '/umfragen/bibliothek', label: 'Vorlagen-Bibliothek', icon: Sparkles, roles: null },
+        { path: '/umfragen/antworten', label: 'Antworten', icon: MessageSquare, roles: null },
+        { path: '/umfragen/auswertung', label: 'Auswertung', icon: Sparkles, roles: null },
+        { path: '/umfragen/statistik', label: 'Statistik', icon: BarChart3, roles: null },
+        { path: '/umfragen/benchmark', label: 'Benchmark & Trends', icon: BarChart3, roles: null },
+        { path: '/umfragen/automatisierung', label: 'Automatisierung', icon: Zap, roles: ['Admin', 'Super Admin', 'Marketing', 'Feedback'] },
+        { path: '/umfragen/testimonials', label: 'Testimonials', icon: Quote, roles: null },
+        { path: '/umfragen/empfaenger', label: 'Empfängerliste', icon: Users, roles: null },
+
+        { path: '/umfragen/geschenke', label: 'Geschenke', icon: Gift, roles: null },
+        { path: '/umfragen/belohnungen', label: 'Belohnungszusagen', icon: Gift, roles: null },
+        { path: '/umfragen/gutscheincodes', label: 'Gutscheincodes', icon: Ticket, roles: null },
+        { path: '/umfragen/import', label: 'Upload & Import', icon: Upload, roles: null },
+        { path: '/umfragen/vorlagen', label: 'E-Mail-Vorlagen', icon: Mail, roles: ['Admin', 'Super Admin', 'Marketing'] },
+        { path: '/umfragen/protokoll', label: 'Versand-Protokoll', icon: MailCheck, roles: null },
+        { path: '/umfragen/exporte', label: 'Exporte', icon: Download, roles: null },
+        { path: '/umfragen/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin'] },
+
+      ],
+    },
     {
       path: '/produktion', label: 'PRODUKTION & BESCHAFFUNG', icon: Factory,
       roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'],
