@@ -201,6 +201,8 @@ export default function AppLayout() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ '__favorites': true });
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
   const atOnly = useAtOnly();
+  const atRoleOnly = useAtRoleOnly();
+
   const { favorites, isFavorite, toggle: toggleFavorite } = useFavorites();
   useNotificationFeed();
   // Desktop: flexible Sidebar-Breite (px), per Drag anpassbar, in localStorage gespeichert
