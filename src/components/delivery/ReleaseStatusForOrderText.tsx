@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ReleaseStatusDot } from './ReleaseStatusDot';
+import { useReleaseRealtime } from './useReleaseRealtime';
 import { fetchReleaseStatusByOrderNumbers } from '@/lib/delivery-approval/api';
 import type { OverallStatus } from '@/lib/delivery-approval/config';
 
@@ -24,6 +25,7 @@ export function ReleaseStatusForOrderText({
   const numbers = extractOrderNumbers(...texts);
   const key = numbers.join(',');
   const [map, setMap] = useState<Record<string, OverallStatus>>({});
+  const tick = useReleaseRealtime();
 
   useEffect(() => {
     const nums = key ? key.split(',') : [];
@@ -33,7 +35,7 @@ export function ReleaseStatusForOrderText({
       .then((m) => { if (!cancelled) setMap(m); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [key]);
+  }, [key, tick]);
 
   if (!numbers.length) return null;
 
