@@ -2,6 +2,7 @@
 // Body: { customer_id: string }
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import JSZip from 'https://esm.sh/jszip@3.10.1';
+import { getTenantScope, customerInScope } from '../_shared/tenant-scope.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,6 +33,10 @@ Deno.serve(async (req) => {
   const admin = createClient(url, service);
   const { data: cust } = await admin.from('customers').select('id, name, customer_number').eq('id', customerId).maybeSingle();
   if (!cust) return json(404, { error: 'customer_not_found' });
+
+  // Data Scope: Export nur für Kunden im erlaubten Mandanten
+  const scope = await getTenantScope(req);
+  if (!(await customerInScope(scope, customerId))) return json(403, { error: 'tenant_scope_denied' });
 
   const { data: docs } = await admin.from('alixdocs_documents')
     .select('id, title, original_filename, current_version, mime_type, created_at, category_id, order_id, status')

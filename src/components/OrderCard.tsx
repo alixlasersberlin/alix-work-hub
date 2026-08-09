@@ -6,6 +6,8 @@ import { Building2, Calendar, Euro, Hash } from 'lucide-react';
 import { withAt } from '@/lib/atSuffix';
 import { VipBadge } from '@/components/VipBadge';
 import { isOrderVip } from '@/lib/vip';
+import { TenantBadge } from '@/components/TenantBadge';
+
 
 interface OrderCardProps {
   order: any;
@@ -104,8 +106,9 @@ export function OrderCard({
           </span>
         )}
         {order.source_system && (
-          <span className="opacity-70">{order.source_system}</span>
+          <TenantBadge source={order.source_system} tenantId={order.tenant_id} />
         )}
+
       </div>
 
       {footer && <div className="mt-3 pt-3 border-t border-border">{footer}</div>}

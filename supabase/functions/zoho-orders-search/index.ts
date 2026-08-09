@@ -3,6 +3,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { getTenantScope } from "../_shared/tenant-scope.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -115,13 +116,20 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const query = String(body?.query ?? "").trim();
     const mode = (body?.mode as "number" | "customer" | "auto") ?? "auto";
-    const sources: SourceSystem[] = Array.isArray(body?.sources) && body.sources.length
+    let sources: SourceSystem[] = Array.isArray(body?.sources) && body.sources.length
       ? body.sources.filter((s: any) => s === "zoho_eu_1" || s === "zoho_eu_2")
       : ["zoho_eu_1", "zoho_eu_2"];
+    // Data Scope: nur Mandanten, auf die der Benutzer Zugriff hat
+    const scope = await getTenantScope(req);
+    if (scope.restricted && !scope.serviceRole) {
+      sources = sources.filter((s) => scope.sourceSystems.includes(s));
+      if (sources.length === 0) return json({ error: "Kein Mandanten-Zugriff" }, 403);
+    }
     const entities: Entity[] = Array.isArray(body?.entities) && body.entities.length
       ? body.entities.filter((e: any) => e === "salesorder" || e === "estimate")
       : ["salesorder"];
     if (query.length < 2) return json({ error: "Query too short (min 2 chars)" }, 400);
+
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     const tasks: Promise<any>[] = [];
