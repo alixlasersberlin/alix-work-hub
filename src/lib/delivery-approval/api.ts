@@ -131,7 +131,10 @@ async function logEvent(params: {
 
 async function notifyRoles(roles: string[], payload: { title: string; message: string; url: string }) {
   try {
-    const { data } = await db.from('user_roles').select('user_id').in('role', roles);
+    const { data: roleRows } = await db.from('roles').select('id, name').in('name', roles);
+    const roleIds = ((roleRows ?? []) as any[]).map((r) => r.id);
+    if (!roleIds.length) return;
+    const { data } = await db.from('user_roles').select('user_id').in('role_id', roleIds);
     const ids = [...new Set(((data ?? []) as any[]).map((r) => r.user_id))].filter(Boolean);
     if (!ids.length) return;
     await db.from('app_notifications').insert(
@@ -440,4 +443,49 @@ export async function bulkStartApprovals(orderIds: string[], userName: string): 
     });
   }
   return created.length;
+}
+
+
+export interface StageDuration { stage: ApprovalStage; title: string; avgHours: number; count: number }
+
+/** Durchlaufzeiten je Freigabestufe (Ø Stunden bis zur Genehmigung). */
+export async function fetchStageDurations(): Promise<StageDuration[]> {
+  const { data } = await db
+    .from('delivery_approvals')
+    .select('created_at, warehouse_at, accounting_at, dispatch_at')
+    .limit(5000);
+  const rows = (data ?? []) as any[];
+  const order: ApprovalStage[] = ['warehouse', 'accounting', 'dispatch'];
+  return order.map((stage, idx) => {
+    let sum = 0;
+    let count = 0;
+    for (const r of rows) {
+      const at = r[`${stage}_at`];
+      if (!at) continue;
+      const startRaw = idx === 0 ? r.created_at : r[`${order[idx - 1]}_at`];
+      if (!startRaw) continue;
+      const h = (new Date(at).getTime() - new Date(startRaw).getTime()) / 36e5;
+      if (h < 0) continue;
+      sum += h;
+      count++;
+    }
+    return { stage, title: stageDef(stage).title, avgHours: count ? sum / count : 0, count };
+  });
+}
+
+/** Freigabestatus anhand von Auftragsnummern (z. B. Kalender-/Mobileansichten). */
+export async function fetchReleaseStatusByOrderNumbers(numbers: string[]): Promise<Record<string, OverallStatus>> {
+  const nums = [...new Set(numbers.filter(Boolean))];
+  const out: Record<string, OverallStatus> = {};
+  if (!nums.length) return out;
+  const { data: orders } = await db.from('orders').select('id, order_number').in('order_number', nums);
+  const byId = new Map<string, string>();
+  for (const o of ((orders ?? []) as any[])) byId.set(o.id, o.order_number);
+  if (!byId.size) return out;
+  const map = await fetchReleaseStatusMap([...byId.keys()]);
+  for (const [id, st] of Object.entries(map)) {
+    const num = byId.get(id);
+    if (num) out[num] = st;
+  }
+  return out;
 }

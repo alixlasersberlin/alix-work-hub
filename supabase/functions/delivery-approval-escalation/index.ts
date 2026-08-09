@@ -15,9 +15,9 @@ const STAGE_TITLE: Record<Stage, string> = {
 
 // Level 1 (24h): zuständige Abteilung, Level 2 (48h): Leitung, Level 3 (72h): Operations
 const STAGE_ROLES: Record<Stage, string[]> = {
-  warehouse: ["Bereitstellung", "Order"],
-  accounting: ["Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH", "Finance"],
-  dispatch: ["Tourenplanung"],
+  warehouse: ["Freigeber Bereitstellung", "Bereitstellung", "Order"],
+  accounting: ["Freigeber Buchhaltung", "Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH", "Finance"],
+  dispatch: ["Freigeber Tourenplanung", "Tourenplanung"],
 };
 const LEAD_ROLES: Record<Stage, string[]> = {
   warehouse: ["Order", "Admin"],
@@ -126,7 +126,11 @@ Deno.serve(async (req) => {
       if (existing && existing.length) continue;
 
       const roles = level === 1 ? STAGE_ROLES[stage] : level === 2 ? LEAD_ROLES[stage] : OPS_ROLES;
-      const { data: ur } = await supabase.from("user_roles").select("user_id").in("role", roles);
+      const { data: roleRows } = await supabase.from("roles").select("id").in("name", roles);
+      const roleIds = ((roleRows ?? []) as any[]).map((r) => r.id);
+      const { data: ur } = roleIds.length
+        ? await supabase.from("user_roles").select("user_id").in("role_id", roleIds)
+        : { data: [] as any[] };
       const ids = [...new Set((ur ?? []).map((r: any) => r.user_id))].filter(Boolean);
 
       const { data: ord } = await supabase

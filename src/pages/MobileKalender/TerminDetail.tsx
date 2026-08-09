@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { enqueueAction } from '@/lib/offline/kalender-queue';
+import { ReleaseStatusForOrderText } from '@/components/delivery/ReleaseStatusForOrderText';
 import {
   Phone, Mail, MessageSquare, Navigation, CheckCircle2, Clock,
   MapPin, User, Building2, Ticket as TicketIcon, FileText, StickyNote,
@@ -81,6 +82,7 @@ export default function KalenderDetail() {
           {event.address && <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4" /> {event.address}</div>}
           {event.customer_name && <div className="flex items-center gap-2"><User className="h-4 w-4 text-muted-foreground" /> {event.customer_name}</div>}
           {event.contact_person && <div className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4" /> {event.contact_person}</div>}
+          <ReleaseStatusForOrderText texts={[event.title, (event as any).description, (event as any).notes]} />
         </div>
       </Card>
 

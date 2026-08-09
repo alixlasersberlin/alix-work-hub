@@ -24,6 +24,7 @@ import { getCustomerSummary } from '@/lib/esc/crm/search';
 import { emit } from '@/lib/esc/events/bus';
 import { startWorkflowEngine } from '@/lib/esc/workflows/engine';
 import { useAppointmentKinds } from '@/hooks/esc/useAppointmentKinds';
+import { ReleaseStatusForOrderText } from '@/components/delivery/ReleaseStatusForOrderText';
 
 startWorkflowEngine();
 
@@ -251,6 +252,11 @@ export function AppointmentModalTabs({
                 </button>
               ))}
             </div>
+            {initial?.id && (
+              <div className="mt-2">
+                <ReleaseStatusForOrderText texts={[initial?.title, initial?.description, initial?.customerName]} />
+              </div>
+            )}
             {(mode === 'erinnerung' || mode === 'wiedervorlage') && (
               <p className="mt-2 text-[11px] text-muted-foreground">
                 {mode === 'erinnerung'
