@@ -5,8 +5,9 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Search, Loader2, Plus, Trash2, PackageCheck } from 'lucide-react';
+import { Search, Loader2, Plus, Trash2, PackageCheck, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
+import { fetchApproval, isReleased, missingStages } from '@/lib/delivery-approval/api';
 
 export type PickedItem = {
   key: string;
@@ -51,6 +52,7 @@ export function TourOrderPicker({
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [itemsByOrder, setItemsByOrder] = useState<Record<string, string[]>>({});
+  const [release, setRelease] = useState<{ released: boolean; missing: string[] } | null>(null);
 
   async function search() {
     const q = term.trim();
@@ -131,6 +133,11 @@ export function TourOrderPicker({
     };
     setOrder(picked);
     setResults([]);
+    setRelease(null);
+    try {
+      const a = await fetchApproval(row.id);
+      setRelease({ released: isReleased(a), missing: missingStages(a) });
+    } catch { /* Freigabestatus optional */ }
     const { data: oi } = await supabase
       .from('order_items')
       .select('id, item_name, description, quantity, sku')
@@ -207,13 +214,28 @@ export function TourOrderPicker({
             <div className="flex items-center gap-2 font-medium">
               {order.order_number}
               <Badge variant="secondary">{order.company_name || order.contact_name || '—'}</Badge>
-              <Button type="button" size="sm" variant="ghost" className="ml-auto h-6" onClick={() => { setOrder(null); setItems([]); }}>
+              <Button type="button" size="sm" variant="ghost" className="ml-auto h-6" onClick={() => { setOrder(null); setItems([]); setRelease(null); }}>
                 entfernen
               </Button>
             </div>
             <div className="text-muted-foreground">{[order.street, `${order.zip} ${order.city}`.trim(), order.country].filter(Boolean).join(', ') || 'Keine Lieferadresse hinterlegt'}</div>
             <div className="text-muted-foreground">{order.contact_email || 'Keine E-Mail hinterlegt'}</div>
           </div>
+
+          {release && (
+            release.released ? (
+              <div className="flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1.5 text-xs text-emerald-400">
+                <ShieldCheck className="h-3.5 w-3.5" />Auslieferung vollständig freigegeben
+              </div>
+            ) : (
+              <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-1.5 text-xs text-destructive">
+                <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>
+                  Keine vollständige Auslieferungsfreigabe. Fehlend: {release.missing.join(', ')}.
+                </span>
+              </div>
+            )
+          )}
 
           <div className="flex items-center justify-between rounded-md border border-border px-2 py-1.5">
             <Label className="text-xs">Teillieferung</Label>
