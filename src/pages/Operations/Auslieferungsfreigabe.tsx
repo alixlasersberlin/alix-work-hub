@@ -205,6 +205,34 @@ export default function Auslieferungsfreigabe() {
         </Card>
       </div>
 
+      <Card className="p-3">
+        <div className="flex items-center gap-2 text-sm font-medium mb-2">
+          <AlertTriangle className="h-4 w-4 text-amber-400" />Eskalationen (Stufe 1 = 24 h, 2 = 48 h, 3 = 72 h)
+        </div>
+        {escalations.length === 0 ? (
+          <div className="text-sm text-muted-foreground">Bisher keine Eskalationen ausgelöst.</div>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-3">
+            {STAGES.map((s) => {
+              const stats = escalations.filter((e) => e.stage === s.stage);
+              return (
+                <div key={s.stage} className="rounded-md border border-border p-2">
+                  <div className="text-xs text-muted-foreground">{s.title}</div>
+                  <div className="flex gap-3 text-sm mt-1">
+                    {[1, 2, 3].map((l) => (
+                      <span key={l}>
+                        <span className="text-xs text-muted-foreground">L{l}</span>{' '}
+                        <span className="font-medium">{stats.find((x) => x.level === l)?.count ?? 0}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
       <div className="flex flex-wrap items-center gap-2">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Auftragsnummer suchen…" className="max-w-xs" />
         {(['all', 'blocked', 'waiting', 'released'] as const).map((f) => (
@@ -213,6 +241,23 @@ export default function Auslieferungsfreigabe() {
           </Button>
         ))}
         <span className="text-xs text-muted-foreground ml-auto">{filtered.length} Einträge</span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Checkbox
+          checked={filtered.length > 0 && filtered.every((r) => selected.has(r.id))}
+          onCheckedChange={(v) => setSelected(v ? new Set(filtered.map((r) => r.id)) : new Set())}
+        />
+        <span className="text-xs text-muted-foreground">Alle sichtbaren markieren</span>
+        {selected.size > 0 && (
+          <>
+            <Badge variant="outline">{selected.size} markiert</Badge>
+            <Button size="sm" onClick={() => setBulkOpen(true)}>
+              <ShieldCheck className="h-4 w-4 mr-1" />Sammelfreigabe
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setSelected(new Set())}>Auswahl aufheben</Button>
+          </>
+        )}
       </div>
 
       {loading ? (
