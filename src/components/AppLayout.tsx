@@ -32,6 +32,8 @@ import { AccountingRegionSwitcher } from '@/components/AccountingRegionSwitcher'
 import { RegionChip } from '@/components/finance/RegionChip';
 
 import { TicketNotificationBell } from '@/components/tickets/TicketNotificationBell';
+import NavModeToggle from '@/components/workspace/NavModeToggle';
+
 import AuroraPrioTicker from '@/components/AuroraPrioTicker';
 import AuroraTopNav from '@/components/AuroraTopNav';
 import CommandPalette from '@/components/CommandPalette';
