@@ -1,4 +1,6 @@
 import { TenantBadge } from '@/components/TenantBadge';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
+
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,12 +32,16 @@ export default function DispatchTouren() {
   const [selected, setSelected] = useState<string[]>([]);
   const [recalc, setRecalc] = useState(false);
 
+  const { tenantId } = useTenantFilter();
+
   const { data, isPending } = useQuery({
-    queryKey: ['dispatch', 'tours'],
+    queryKey: ['dispatch', 'tours', tenantId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from('delivery_tours')
-        .select('id, tenant_id, tour_number, tour_date, title, status, planned_distance_km, planned_drive_minutes, planned_start_time, drivers:driver_id(full_name), vehicles:vehicle_id(license_plate)')
+        .select('id, tenant_id, tour_number, tour_date, title, status, planned_distance_km, planned_drive_minutes, planned_start_time, drivers:driver_id(full_name), vehicles:vehicle_id(license_plate)');
+      if (tenantId) q = q.eq('tenant_id', tenantId);
+      const { data, error } = await q
         .order('tour_date', { ascending: false })
         .order('planned_start_time', { ascending: true, nullsFirst: false })
         .order('tour_number', { ascending: true })
@@ -45,6 +51,7 @@ export default function DispatchTouren() {
     },
     staleTime: 30_000,
   });
+
 
   const tourIds = useMemo(() => (data ?? []).map((t: any) => t.id), [data]);
 
