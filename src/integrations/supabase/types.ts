@@ -47702,7 +47702,9 @@ export type Database = {
         Returns: string
       }
       cmr_tenant_id: { Args: never; Returns: string }
-      collect_bi: { Args: never; Returns: Json }
+      collect_bi:
+        | { Args: never; Returns: Json }
+        | { Args: { p_tenant_id?: string }; Returns: Json }
       collect_case_tenant_ok: { Args: { _case_id: string }; Returns: boolean }
       collect_dashboard: { Args: never; Returns: Json }
       collect_dashboard_kpis: { Args: never; Returns: Json }
@@ -48153,6 +48155,7 @@ export type Database = {
         Returns: Json
       }
       order_status_counts: { Args: { p_order_id: string }; Returns: Json }
+      order_tenant_scope_ok: { Args: { _order_id: string }; Returns: boolean }
       page_usage_top: {
         Args: { _limit?: number }
         Returns: {
