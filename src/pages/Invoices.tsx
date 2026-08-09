@@ -2064,7 +2064,41 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                   {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{a.customer_name}</div>
-                    <div className="text-xs text-muted-foreground truncate">
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
+                        title="Mahnung im ALIX COLLECT Command Center öffnen"
+                        onClick={(e) => { e.stopPropagation(); openDunning(a); }}
+                      >
+                        <AlertTriangle className="w-3.5 h-3.5" /> Mahnung
+                      </Button>
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={nachtragBusy === a.key}
+                          className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                          title="Fehlende periodische Rechnungen rückwirkend erzeugen (ohne Versand)"
+                          onClick={(e) => { e.stopPropagation(); nachtragAccount(a); }}
+                        >
+                          {nachtragBusy === a.key
+                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            : <Repeat className="w-3.5 h-3.5" />}
+                          RECHNUNG NACHTRAG
+                        </Button>
+                      )}
+                      <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-2">
+                        <AccountStatementActions
+                          customerName={a.customer_name}
+                          customerNumber={a.customer_id}
+                          city={a.city}
+                          rows={a.rows as any}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate mt-1">
                       {a.city ?? '–'} {a.customer_id ? `• #${a.customer_id}` : ''} • Letzte: {fmtDate(a.lastInvoiceDate)}
                     </div>
                   </div>
@@ -2097,38 +2131,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                     })()}
 
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 px-2 gap-1 border-amber-500/40 text-amber-400 hover:bg-amber-500/10"
-                    title="Mahnung im ALIX COLLECT Command Center öffnen"
-                    onClick={(e) => { e.stopPropagation(); openDunning(a); }}
-                  >
-                    <AlertTriangle className="w-3.5 h-3.5" /> Mahnung
-                  </Button>
-                  {isAdmin && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={nachtragBusy === a.key}
-                      className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
-                      title="Fehlende periodische Rechnungen rückwirkend erzeugen (ohne Versand)"
-                      onClick={(e) => { e.stopPropagation(); nachtragAccount(a); }}
-                    >
-                      {nachtragBusy === a.key
-                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        : <Repeat className="w-3.5 h-3.5" />}
-                      RECHNUNG NACHTRAG
-                    </Button>
-                  )}
-                  <AccountStatementActions
-                    customerName={a.customer_name}
-                    customerNumber={a.customer_id}
-                    city={a.city}
-                    rows={a.rows as any}
-                  />
-
                 </div>
+
                 {open && (
                   <div className="border-t border-border overflow-x-auto">
                     <table className="w-full text-sm">
