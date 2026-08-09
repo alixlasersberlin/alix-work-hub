@@ -34,7 +34,7 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
   ],
   fertigung: [
     'DASHBOARDS',
-    'PRODUKTION & BESCHAFFUNG',
+    'OPERATIONS',
     'LAGER & WERKSTATT',
     'ALIXDOCS',
     'TEAMKALENDER',
