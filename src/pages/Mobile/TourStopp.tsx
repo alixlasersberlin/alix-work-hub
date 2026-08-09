@@ -219,6 +219,20 @@ export default function MobileTourStopp() {
         </div>
       </div>
 
+      {release && (
+        release.released ? (
+          <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-500">
+            Auslieferung freigegeben (alle Stufen)
+          </div>
+        ) : (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            Keine Auslieferungsfreigabe – fehlend: {release.missing.join(', ')}. Übergabe ist gesperrt.
+          </div>
+        )
+      )}
+
+
+
       <Card className="p-4 space-y-2">
         <Label>Status</Label>
         <div className="grid grid-cols-2 gap-2">
