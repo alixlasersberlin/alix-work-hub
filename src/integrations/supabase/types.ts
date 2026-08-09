@@ -28733,6 +28733,7 @@ export type Database = {
           status: string | null
           subject: string
           template_id: string | null
+          tenant_id: string | null
           thread_id: string | null
           ticket_id: string | null
           to_email: string
@@ -28774,6 +28775,7 @@ export type Database = {
           status?: string | null
           subject: string
           template_id?: string | null
+          tenant_id?: string | null
           thread_id?: string | null
           ticket_id?: string | null
           to_email: string
@@ -28815,6 +28817,7 @@ export type Database = {
           status?: string | null
           subject?: string
           template_id?: string | null
+          tenant_id?: string | null
           thread_id?: string | null
           ticket_id?: string | null
           to_email?: string
@@ -28835,6 +28838,13 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "mail_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
