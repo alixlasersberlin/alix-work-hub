@@ -11,6 +11,7 @@
 - Alix Austria (`source_system='zoho_eu_2'`): UI-Suffix "-AT" für Kunden- und Auftragsnummer; bei Artikeln (item_name+sku) wird "-AT" direkt beim Sync in die DB geschrieben.
 - **Rolle Admin = Rolle Super Admin**: `has_role('Super Admin')` (DB & Frontend) liefert für Admin-Nutzer ebenfalls true. Damit haben Admins volle Rechte inkl. Löschen, OPERATIONS-Menü, Wartungsmodus, Order-Approval, Alix Sign Pro, Facsimile-Sign, Finance-Sync.
 - Datensichtbarkeit läuft über **Mandanten-Datenfilter (Data Scope + RLS)**, nicht über Rollen. Details: mem://features/tenant-data-scope
+- **Jede neue Tabelle** braucht `tenant_id` (oder `source_system`) + GRANTs + RLS + die 3 restriktiven `tenant_data_scope_*`-Policies. Checkliste: docs/tenant-scope-checklist.md
 - Neue Rolle **QM** existiert ausschließlich für das Bug & CAPA Modul (`/bug-capa`).
 - Versionierung: `APP_VERSION` in `src/components/AppLayout.tsx` bei jedem Publish um 0.01 erhöhen (Start 5.0 → 5.01 → 5.02 …). Details: [App Versioning](mem://features/app-versioning)
 

@@ -33,3 +33,18 @@ Regeln:
 - BEFORE-INSERT-Trigger `set_tenant_from_relation()` setzt tenant_id aus order_id/customer_id
   (offers, repair_orders, production_orders, delivery_appointments).
 - Verwaltung: `/admin/rollen-freigaben/datenbereich` (Mandanten-Matrix je Benutzer, Super Admin).
+
+## Pflicht-Checkliste für JEDE neue Tabelle (Prozessregel)
+Jede neue Tabelle im Schema `public`, die Geschäftsdaten hält, MUSS im selben Migrationsschritt:
+1. Spalte `tenant_id uuid REFERENCES public.tenants(id)` (nullable = konzernweit sichtbar) ODER `source_system text`.
+2. GRANTs (`authenticated`, `service_role`; `anon` nur bei bewusst öffentlicher Policy).
+3. `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`.
+4. Die drei RESTRICTIVE Policies:
+   - `tenant_data_scope_select` … `FOR SELECT USING (public.tenant_scope_id_ok(tenant_id))`
+   - `tenant_data_scope_write` … `FOR ALL USING/WITH CHECK (public.tenant_scope_id_ok(tenant_id))`
+   - `tenant_data_scope_delete` … `FOR DELETE USING (public.tenant_scope_id_ok(tenant_id))`
+   (bei `source_system`-Tabellen stattdessen `public.tenant_scope_ok(source_system)`).
+5. Falls die Tabelle an `order_id`/`customer_id` hängt: BEFORE-INSERT-Trigger `set_tenant_from_relation()`.
+6. Im Frontend: `useTenantFilter()` verwenden statt ungefilterter Queries; RPCs bekommen `p_tenant_id`.
+
+Audit-Abfrage für Lücken siehe `docs/tenant-scope-checklist.md`.
