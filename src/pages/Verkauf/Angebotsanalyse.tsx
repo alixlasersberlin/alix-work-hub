@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BarChart3, Download, FileText, RefreshCw, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { PageHeader, PageLoading, PageError } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,6 +49,7 @@ function loadPrefs(): Prefs {
 
 export default function Angebotsanalyse() {
   const initial = useMemo(loadPrefs, []);
+  const { tenantId } = useTenantFilter();
   const [rows, setRows] = useState<OfferRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,7 +97,7 @@ export default function Angebotsanalyse() {
       };
     }));
     setLoading(false);
-  }, [range]);
+  }, [range, tenantId]);
 
   useEffect(() => { load(); }, [load]);
 
