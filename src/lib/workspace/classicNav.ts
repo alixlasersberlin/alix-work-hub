@@ -26,6 +26,7 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
   lager: [
     'DASHBOARDS',
     'LAGER & WERKSTATT',
+    'TOURENPLANUNG',
     'EINKAUF',
     'TEAMKALENDER',
   ],
@@ -37,6 +38,7 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
   ],
   tourenplanung: [
     'DASHBOARDS',
+    'TOURENPLANUNG',
     'LAGER & WERKSTATT',
     'TICKETS',
     'TEAMKALENDER',
