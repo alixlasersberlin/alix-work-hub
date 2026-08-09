@@ -176,12 +176,16 @@ export default function TicketsList() {
 
   useEffect(() => {
     let cancelled = false;
-    const TICKET_COLS = 'id, external_ticket_id, case_number, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at';
-    const fetchTickets = (limit: number) => supabase
-      .from('tickets')
-      .select(TICKET_COLS)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    const TICKET_COLS = 'id, external_ticket_id, case_number, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at, tenant_id';
+    const fetchTickets = (limit: number) => {
+      let q = supabase
+        .from('tickets')
+        .select(TICKET_COLS)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (tenantId) q = q.eq('tenant_id', tenantId);
+      return q;
+    };
     (async () => {
       setLoading(true);
       // Schnelle erste Anzeige, danach im Hintergrund vollständig nachladen
@@ -196,7 +200,8 @@ export default function TicketsList() {
       setRows((full as TicketRow[]) || []);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [tenantId]);
+
 
   // Angebote je Vorgangsnummer laden (neuestes Angebot pro Vorgang)
   useEffect(() => {
