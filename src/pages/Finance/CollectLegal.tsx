@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Gavel, Plus, Scale, ShieldAlert } from 'lucide-react';
+import { Gavel, Plus, Scale, ShieldAlert, Trash2 } from 'lucide-react';
+import { useCanDelete } from '@/hooks/useCanDelete';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
