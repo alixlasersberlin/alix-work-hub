@@ -345,6 +345,107 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const isListView = viewMode === 'list' || viewMode === 'newest';
   const isAccountView = !isListView;
 
+  // ---- RECHNUNG NACHTRAG: fehlende Raten rückwirkend erzeugen (ohne Versand) ----
+  const [nachtragBusy, setNachtragBusy] = useState<string | null>(null);
+
+  const addRecurrenceInterval = (d: Date, freq: string | null, every: number | null) => {
+    const e = every && every > 0 ? every : 1;
+    const n = new Date(d);
+    switch ((freq ?? 'months').toLowerCase()) {
+      case 'days': n.setDate(n.getDate() + e); break;
+      case 'weeks': n.setDate(n.getDate() + 7 * e); break;
+      case 'years': n.setFullYear(n.getFullYear() + e); break;
+      default: n.setMonth(n.getMonth() + e); break;
+    }
+    return n;
+  };
+
+  /** Erzeugt alle fehlenden periodischen Rechnungen des Kontos rückwirkend – ohne Versand an den Kunden. */
+  async function nachtragAccount(a: Account) {
+    if (!confirm(`„RECHNUNG NACHTRAG" für ${a.customer_name}?\n\nAlle fehlenden periodischen Rechnungen werden rückwirkend mit dem jeweiligen Monatsdatum erzeugt.\nEs erfolgt KEIN Versand an den Kunden.`)) return;
+    setNachtragBusy(a.key);
+    try {
+      let q = supabase.from('zoho_recurring_profiles').select('*');
+      q = a.customer_id
+        ? q.eq('customer_id', a.customer_id)
+        : q.ilike('customer_name', a.customer_name);
+      const { data: profiles, error: pErr } = await q;
+      if (pErr) throw pErr;
+      if (!profiles || profiles.length === 0) {
+        toast({ title: 'Kein Ratenvertrag gefunden', description: 'Für dieses Kundenkonto ist kein wiederkehrendes Profil hinterlegt.', variant: 'destructive' });
+        return;
+      }
+
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const rows: any[] = [];
+
+      for (const p of profiles as any[]) {
+        const { data: existing } = await supabase
+          .from('zoho_recurring_invoices')
+          .select('invoice_date')
+          .eq('zoho_recurring_invoice_id', p.zoho_recurring_invoice_id ?? '');
+        const existingDates = new Set(
+          [
+            ...((existing ?? []).map((i: any) => String(i.invoice_date ?? '').slice(0, 10))),
+            ...a.rows.filter((r) => r.source === 'recurring').map((r) => String(r.invoice_date ?? '').slice(0, 10)),
+          ].filter(Boolean),
+        );
+
+        const startStr = p.start_date || p.created_at;
+        if (!startStr) continue;
+        let cur = new Date(String(startStr).slice(0, 10));
+        const endLimit = p.end_date ? new Date(p.end_date) : today;
+        const stopAt = endLimit < today ? endLimit : today;
+        let guard = 0;
+        while (cur <= stopAt && guard < 240) {
+          guard++;
+          const iso = cur.toISOString().slice(0, 10);
+          if (!existingDates.has(iso)) {
+            const due = new Date(cur); due.setDate(due.getDate() + 14);
+            rows.push({
+              zoho_invoice_id: `local-${p.zoho_recurring_invoice_id || p.id}-${iso}`,
+              zoho_recurring_invoice_id: p.zoho_recurring_invoice_id || null,
+              invoice_number: `RN-${(p.reference_number || p.recurrence_name || 'VTR')}-${iso.replace(/-/g, '').slice(0, 6)}`,
+              reference_number: p.reference_number || null,
+              customer_id: p.customer_id ?? a.customer_id,
+              customer_name: p.customer_name || p.company_name || a.customer_name,
+              invoice_date: iso,
+              due_date: due.toISOString().slice(0, 10),
+              total: Number(p.total || 0),
+              balance: Number(p.total || 0),
+              currency: p.currency || 'EUR',
+              status: 'open',
+              payment_status: 'Offen',
+              source_system: 'alixwork',
+            });
+          }
+          cur = addRecurrenceInterval(cur, p.recurrence_frequency, p.repeat_every);
+        }
+      }
+
+      if (rows.length === 0) {
+        toast({ title: 'Keine Lücken gefunden', description: 'Alle periodischen Rechnungen sind bereits vorhanden.' });
+        return;
+      }
+
+      const { error: iErr } = await supabase
+        .from('zoho_recurring_invoices')
+        .upsert(rows as any, { onConflict: 'zoho_invoice_id' });
+      if (iErr) throw iErr;
+
+      toast({
+        title: 'Rechnungen nachgetragen',
+        description: `${rows.length} fehlende Rechnung(en) rückwirkend erzeugt – ohne Versand an den Kunden.`,
+      });
+      fetchRows({ silent: true });
+    } catch (e: any) {
+      toast({ title: 'Nachtrag fehlgeschlagen', description: e?.message ?? String(e), variant: 'destructive' });
+    } finally {
+      setNachtragBusy(null);
+    }
+  }
+
+
   const fetchRows = async (opts?: { silent?: boolean }) => {
     const cacheKey = `${region}|${mietkaufOnly}|${includeUnpaid}`;
     const cached = ROWS_CACHE.get(cacheKey);
@@ -2005,6 +2106,21 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                   >
                     <AlertTriangle className="w-3.5 h-3.5" /> Mahnung
                   </Button>
+                  {isAdmin && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={nachtragBusy === a.key}
+                      className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                      title="Fehlende periodische Rechnungen rückwirkend erzeugen (ohne Versand)"
+                      onClick={(e) => { e.stopPropagation(); nachtragAccount(a); }}
+                    >
+                      {nachtragBusy === a.key
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Repeat className="w-3.5 h-3.5" />}
+                      RECHNUNG NACHTRAG
+                    </Button>
+                  )}
                   <AccountStatementActions
                     customerName={a.customer_name}
                     customerNumber={a.customer_id}
