@@ -103,6 +103,7 @@ export default function Auslieferungsfreigabe() {
     void fetchEscalationSeries().then(setSeries).catch(() => {});
     void fetchStageDurations().then(setStageDurations).catch(() => {});
     void fetchStageDurationTrend().then(setDurationTrend).catch(() => {});
+    void fetchApprovalSettings().then(setCfg).catch(() => {});
   }, []);
 
   /** Aufträge ohne gestarteten Freigabeprozess laden */
