@@ -15,6 +15,7 @@ function docTypeToCategory(t: FacsimileDocType): AlixDocsCategory {
     case "order_confirmation": return "auftragsbestaetigung";
     case "service_report": return "servicebericht";
     case "lease_purchase": return "vertrag" as AlixDocsCategory;
+    case "dunning": return "mahnung" as AlixDocsCategory;
   }
 }
 
