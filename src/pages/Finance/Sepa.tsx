@@ -32,6 +32,7 @@ export default function FinanceSepa() {
   const { roles } = useAuth();
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const { region } = useAccountingRegion();
+  const { tenantId } = useTenantFilter();
   const cur = region === 'CH' ? 'CHF' : 'EUR';
   const reauthDel = useReauthGate('finance.sepa.delete', 'Löschen von SEPA-Mandaten/Läufen');
   const reauthExp = useReauthGate('finance.sepa.export', 'SEPA pain.008-Export');
