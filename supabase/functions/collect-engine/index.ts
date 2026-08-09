@@ -4,6 +4,7 @@
 // berechnet Mahnkosten/Verzugszinsen und erzeugt Aufgaben. Versendet NICHTS automatisch.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { getTenantScope } from '../_shared/tenant-scope.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -19,6 +20,9 @@ Deno.serve(async (req) => {
   const started = Date.now();
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const scope = await getTenantScope(req);
+    const scopedIds = scope.restricted ? scope.tenantIds : null;
+    if (scopedIds && scopedIds.length === 0) return json({ ok: false, error: 'kein Mandanten-Zugriff' }, 403);
 
     // 1) Fälle aus zoho_invoices aufbauen
     const { data: syncRes, error: syncErr } = await admin.rpc('collect_sync_cases');
@@ -33,12 +37,14 @@ Deno.serve(async (req) => {
     const stageMap = new Map<string, any>((stages ?? []).map((s: any) => [s.code, s]));
 
     // 3) Aktive Fälle
-    const { data: cases } = await admin
+    let casesQ: any = admin
       .from('collect_cases')
       .select('id, customer_id, customer_name, customer_email, stage_code, status, overdue_amount, open_amount, fee_amount, interest_amount, max_days_overdue, next_action, next_action_at, last_contact_at, paused_until, playbook_code, complaint_hold, country_code, customer_type, seller_name, health_score')
       .neq('status', 'closed')
       .order('overdue_amount', { ascending: false })
       .limit(2000);
+    if (scopedIds) casesQ = casesQ.in('tenant_id', scopedIds);
+    const { data: cases } = await casesQ;
 
     // 3b) Fehlende Kontaktdaten aus Kundenstamm nachtragen
     const missing = (cases ?? []).filter((c: any) => !c.customer_email && c.customer_name);

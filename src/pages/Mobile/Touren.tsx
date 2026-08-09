@@ -9,6 +9,7 @@ import { TOUR_STATUS_LABELS, statusClass } from '@/pages/Dispatch/constants';
 import { ReleaseStatusDot } from '@/components/delivery/ReleaseStatusDot';
 import { fetchReleaseStatusMap } from '@/lib/delivery-approval/api';
 import type { OverallStatus } from '@/lib/delivery-approval/config';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 
 const RELEASE_RANK: Record<OverallStatus, number> = { blocked: 0, waiting: 1, released: 2, delivered: 3, completed: 4 };
 
@@ -16,16 +17,19 @@ export default function MobileTouren() {
   const [tours, setTours] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tourRelease, setTourRelease] = useState<Record<string, OverallStatus>>({});
+  const { tenantId } = useTenantFilter();
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      let tq: any = supabase
         .from('delivery_tours')
         .select('id, tour_number, tour_date, title, status, planned_start_time, planned_distance_km, vehicles:vehicle_id(license_plate), delivery_tour_stops(count)')
         .gte('tour_date', format(new Date(Date.now() - 2 * 86400_000), 'yyyy-MM-dd'))
         .order('tour_date')
         .limit(50);
+      if (tenantId) tq = tq.eq('tenant_id', tenantId);
+      const { data } = await tq;
       if (cancelled) return;
       setTours(data ?? []);
       setLoading(false);
@@ -53,7 +57,7 @@ export default function MobileTouren() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [tenantId]);
 
   return (
     <div className="p-4 space-y-3">

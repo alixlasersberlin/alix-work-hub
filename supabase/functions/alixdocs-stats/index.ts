@@ -22,20 +22,32 @@ Deno.serve(async (req) => {
   const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const admin = createClient(url, service);
 
+  // Mandanten-Scope: optionaler tenant_id-Filter aus Query/Body
+  let tenantId: string | null = null;
+  try {
+    const qp = new URL(req.url).searchParams.get('tenant_id');
+    if (qp) tenantId = qp;
+    if (!tenantId && req.method === 'POST') {
+      const body = await req.json().catch(() => ({} as any));
+      if (body?.tenant_id) tenantId = String(body.tenant_id);
+    }
+  } catch { /* ignore */ }
+  const dq = (q: any) => (tenantId ? q.eq('tenant_id', tenantId) : q);
+
   const nowIso = new Date().toISOString();
   const since30 = new Date(Date.now() - 30 * 86400000).toISOString();
   const since90 = new Date(Date.now() - 90 * 86400000).toISOString();
 
   const [tot, del, m30, expSoon, pending, byStatus, byCat, byMonth, bySource, storage] = await Promise.all([
-    admin.from('alixdocs_documents').select('id', { count: 'exact', head: true }).is('deleted_at', null),
-    admin.from('alixdocs_documents').select('id', { count: 'exact', head: true }).not('deleted_at', 'is', null),
-    admin.from('alixdocs_documents').select('id', { count: 'exact', head: true }).is('deleted_at', null).gte('created_at', since30),
-    admin.from('alixdocs_documents').select('id, title, expiry_date').is('deleted_at', null).not('expiry_date', 'is', null).lte('expiry_date', new Date(Date.now() + 60 * 86400000).toISOString()).order('expiry_date').limit(20),
+    dq(admin.from('alixdocs_documents').select('id', { count: 'exact', head: true }).is('deleted_at', null)),
+    dq(admin.from('alixdocs_documents').select('id', { count: 'exact', head: true }).not('deleted_at', 'is', null)),
+    dq(admin.from('alixdocs_documents').select('id', { count: 'exact', head: true }).is('deleted_at', null).gte('created_at', since30)),
+    dq(admin.from('alixdocs_documents').select('id, title, expiry_date').is('deleted_at', null).not('expiry_date', 'is', null).lte('expiry_date', new Date(Date.now() + 60 * 86400000).toISOString()).order('expiry_date').limit(20)),
     admin.from('alixdocs_approval_states').select('id, document_id, step_index, created_at').eq('status', 'ausstehend').order('created_at').limit(20),
-    admin.from('alixdocs_documents').select('status').is('deleted_at', null).limit(10000),
-    admin.from('alixdocs_documents').select('category_id').is('deleted_at', null).limit(10000),
-    admin.from('alixdocs_documents').select('created_at').is('deleted_at', null).gte('created_at', since90).limit(10000),
-    admin.from('alixdocs_documents').select('source').is('deleted_at', null).limit(10000),
+    dq(admin.from('alixdocs_documents').select('status').is('deleted_at', null).limit(10000)),
+    dq(admin.from('alixdocs_documents').select('category_id').is('deleted_at', null).limit(10000)),
+    dq(admin.from('alixdocs_documents').select('created_at').is('deleted_at', null).gte('created_at', since90).limit(10000)),
+    dq(admin.from('alixdocs_documents').select('source').is('deleted_at', null).limit(10000)),
     admin.from('alixdocs_versions').select('file_size').limit(20000),
   ]);
 

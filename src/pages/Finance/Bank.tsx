@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 
 const fmt = (n: number | null | undefined, cur = 'EUR') => typeof n === 'number'
   ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n) : '–';
@@ -18,6 +19,7 @@ const fmt = (n: number | null | undefined, cur = 'EUR') => typeof n === 'number'
 export default function FinanceBank() {
   const { roles } = useAuth();
   const { region } = useAccountingRegion();
+  const { tenantId } = useTenantFilter();
   const cur = region === 'CH' ? 'CHF' : 'EUR';
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const fileRef = useRef<HTMLInputElement>(null);
@@ -27,17 +29,19 @@ export default function FinanceBank() {
   const [uploading, setUploading] = useState(false);
   const [filter, setFilter] = useState<'alle' | 'offen' | 'zugeordnet' | 'ignoriert'>('offen');
 
+  const tf = (q: any) => (tenantId ? q.eq('tenant_id', tenantId) : q);
+
   const load = async () => {
     setLoading(true);
     const [s, l] = await Promise.all([
-      supabase.from('finance_bank_statements' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100),
-      supabase.from('finance_bank_lines' as any).select('*, customers:matched_customer_id(company_name, contact_name)').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('booking_date', { ascending: false }).limit(500),
+      tf(supabase.from('finance_bank_statements' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100)) as any,
+      tf(supabase.from('finance_bank_lines' as any).select('*, customers:matched_customer_id(company_name, contact_name)').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('booking_date', { ascending: false }).limit(500)) as any,
     ]);
     setStatements((s.data ?? []) as any[]);
     setLines((l.data ?? []) as any[]);
     setLoading(false);
   };
-  useEffect(() => { load(); }, [region]);
+  useEffect(() => { load(); }, [region, tenantId]);
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

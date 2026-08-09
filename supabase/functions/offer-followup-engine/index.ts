@@ -2,6 +2,7 @@
 // Trigger: pg_cron hourly. May also be invoked manually.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { getTenantScope } from '../_shared/tenant-scope.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -29,6 +30,11 @@ Deno.serve(async (req) => {
   const admin = createClient(SUPABASE_URL, SERVICE_KEY);
   const reqBody = req.method === 'POST' ? await req.json().catch(() => ({} as any)) : {};
   const dryRun = reqBody?.dryRun === true;
+  const scope = await getTenantScope(req);
+  const scopedIds = scope.restricted ? scope.tenantIds : null;
+  if (scopedIds && scopedIds.length === 0) {
+    return new Response(JSON.stringify({ ok: false, error: 'kein Mandanten-Zugriff' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
 
   try {
     const { data: settings } = await admin
@@ -36,12 +42,14 @@ Deno.serve(async (req) => {
     const stageDays: number[] = settings?.stage_days || [2, 4, 7, 14, 21];
 
     // Candidate offers: open drafts only
-    const { data: offers, error: oErr } = await admin
+    let offersQ: any = admin
       .from('offers')
       .select('offer_number, offer_date, created_at, customer_id, created_by, status, approval_status, total_gross')
       .in('status', ['draft'])
       .order('created_at', { ascending: false })
       .limit(2000);
+    if (scopedIds) offersQ = offersQ.in('tenant_id', scopedIds);
+    const { data: offers, error: oErr } = await offersQ;
     if (oErr) throw oErr;
 
     // Outcomes lookup

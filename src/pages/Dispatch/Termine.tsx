@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { toast } from 'sonner';
 import { CalendarClock, Search, PackageSearch, History, Send, FlaskConical, CalendarPlus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -20,6 +21,7 @@ import { DELIVERY_STATUS_LABELS, DELIVERY_TYPE_LABELS, READINESS_LABELS, readine
 
 export default function DispatchTermine() {
   const { user, profile } = useAuth();
+  const { tenantId } = useTenantFilter();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('alle');
@@ -44,13 +46,14 @@ export default function DispatchTermine() {
 
 
   const { data, isPending } = useQuery({
-    queryKey: ['dispatch', 'appointments', status, readiness],
+    queryKey: ['dispatch', 'appointments', status, readiness, tenantId],
     queryFn: async () => {
       let q = supabase
         .from('delivery_appointments')
         .select('id, order_number, customer_name, company_name, contact_email, delivery_zip, delivery_city, appointment_type, status, readiness, planned_date, time_window_start, time_window_end, device_name, is_vip')
         .order('planned_date', { ascending: true, nullsFirst: false })
         .limit(300);
+      if (tenantId) q = q.eq('tenant_id', tenantId as never);
       if (status !== 'alle') q = q.eq('status', status as never);
       if (readiness !== 'alle') q = q.eq('readiness', readiness as never);
       const { data, error } = await q;
