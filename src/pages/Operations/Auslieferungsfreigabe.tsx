@@ -328,7 +328,7 @@ export default function Auslieferungsfreigabe() {
               Alle Pflichtprüfpunkte der gewählten Stufe werden bestätigt und revisionssicher protokolliert.
               Aufträge ohne abgeschlossene Vorstufe werden übersprungen.
             </div>
-            <NativeSelect value={bulkStage} onChange={(e) => setBulkStage(e.target.value as ApprovalStage)}>
+            <NativeSelect value={bulkStage} onChange={(v) => setBulkStage(v as ApprovalStage)}>
               {STAGES.map((s) => <option key={s.stage} value={s.stage}>{s.order}. {s.title}</option>)}
             </NativeSelect>
             <Input value={bulkComment} onChange={(e) => setBulkComment(e.target.value)} placeholder="Kommentar (optional)" />
