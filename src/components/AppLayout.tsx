@@ -1368,6 +1368,7 @@ export default function AppLayout() {
 
 
             <KontaktMenu roles={roles} />
+            <ConnectMenu roles={roles} />
             <AiDiensteMenu roles={roles} />
 
 
