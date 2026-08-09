@@ -129,6 +129,9 @@ export default function MobileTourStopp() {
   };
 
   const completeDelivery = async () => {
+    if (release && !release.released) {
+      return toast.error(`Übergabe gesperrt – fehlende Freigaben: ${release.missing.join(', ')}`);
+    }
     if (!padRef.current || padRef.current.isEmpty()) return toast.error('Bitte Unterschrift des Kunden erfassen.');
     if (!signer.trim()) return toast.error('Bitte Name des Unterzeichners angeben.');
     setBusy(true);
