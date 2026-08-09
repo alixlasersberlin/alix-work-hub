@@ -2106,6 +2106,21 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                   >
                     <AlertTriangle className="w-3.5 h-3.5" /> Mahnung
                   </Button>
+                  {isAdmin && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={nachtragBusy === a.key}
+                      className="h-8 px-2 gap-1 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10"
+                      title="Fehlende periodische Rechnungen rückwirkend erzeugen (ohne Versand)"
+                      onClick={(e) => { e.stopPropagation(); nachtragAccount(a); }}
+                    >
+                      {nachtragBusy === a.key
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Repeat className="w-3.5 h-3.5" />}
+                      RECHNUNG NACHTRAG
+                    </Button>
+                  )}
                   <AccountStatementActions
                     customerName={a.customer_name}
                     customerNumber={a.customer_id}
