@@ -17,7 +17,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS, type ApprovalStage } from '@/lib/delivery-approval/config';
 import {
-  slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats, fetchEscalationSeries,
+  slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats, fetchEscalationSeries, fetchStageDurations, type StageDuration,
   bulkStartApprovals,
   type DeliveryApproval, type EscalationStat, type EscalationMonth,
 } from '@/lib/delivery-approval/api';
@@ -50,6 +50,7 @@ export default function Auslieferungsfreigabe() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [escalations, setEscalations] = useState<EscalationStat[]>([]);
   const [series, setSeries] = useState<EscalationMonth[]>([]);
+  const [stageDurations, setStageDurations] = useState<StageDuration[]>([]);
   // Massen-Anforderung
   const [reqOpen, setReqOpen] = useState(false);
   const [reqQ, setReqQ] = useState('');
@@ -86,6 +87,7 @@ export default function Auslieferungsfreigabe() {
     void load();
     void fetchEscalationStats().then(setEscalations).catch(() => {});
     void fetchEscalationSeries().then(setSeries).catch(() => {});
+    void fetchStageDurations().then(setStageDurations).catch(() => {});
   }, []);
 
   /** Aufträge ohne gestarteten Freigabeprozess laden */
@@ -255,12 +257,27 @@ export default function Auslieferungsfreigabe() {
 
       <div className="grid gap-3 lg:grid-cols-2">
         <Card className="p-3">
-          <div className="text-sm font-medium mb-2">Ø Freigabezeit pro Abteilung</div>
-          <div className="grid grid-cols-3 gap-2 text-sm">
-            <div><div className="text-xs text-muted-foreground">Bereitstellung</div>{h(kpi.avgWarehouse)}</div>
-            <div><div className="text-xs text-muted-foreground">Buchhaltung</div>{h(kpi.avgAccounting)}</div>
-            <div><div className="text-xs text-muted-foreground">Tourenplanung</div>{h(kpi.avgDispatch)}</div>
-          </div>
+          <div className="text-sm font-medium mb-2">Durchlaufzeiten je Stufe (Ø Stunden bis Freigabe)</div>
+          {stageDurations.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Noch keine abgeschlossenen Stufen.</div>
+          ) : (
+            <div className="space-y-2">
+              {stageDurations.map((d) => {
+                const max = Math.max(...stageDurations.map((x) => x.avgHours), 1);
+                return (
+                  <div key={d.stage}>
+                    <div className="flex justify-between text-xs">
+                      <span>{d.title}</span>
+                      <span className="text-muted-foreground">{d.avgHours.toFixed(1)} h · {d.count} Freigaben</span>
+                    </div>
+                    <div className="mt-1 h-2 rounded-full bg-muted">
+                      <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.round((d.avgHours / max) * 100)}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </Card>
         <Card className="p-3">
           <div className="text-sm font-medium mb-2">Häufigste Blockade-Stufen</div>
