@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
             !bccList.some((x) => x.toLowerCase() === b.toLowerCase())) bccList.push(b)
       }
     }
+    const finalBcc = bccList.filter((b) => b.toLowerCase() !== String(to_email).toLowerCase())
     const res = await fetch('https://connector-gateway.lovable.dev/resend/emails', {
       method: 'POST',
       headers: {
