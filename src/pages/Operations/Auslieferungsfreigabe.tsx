@@ -297,9 +297,23 @@ export default function Auslieferungsfreigabe() {
           <Button variant="outline" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1" />Aktualisieren</Button>
           <Button variant="outline" size="sm" onClick={exportCsv}><Download className="h-4 w-4 mr-1" />Excel/CSV</Button>
           <Button variant="outline" size="sm" onClick={exportPdf}><FileText className="h-4 w-4 mr-1" />PDF</Button>
+          {hasAnyRole?.(['Super Admin', 'Admin']) && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setRolesOpen(true)}>
+                <Users className="h-4 w-4 mr-1" />Freigeber
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setCfgOpen(true)}>
+                <SettingsIcon className="h-4 w-4 mr-1" />SLA & Ziele
+              </Button>
+            </>
+          )}
         </div>
 
       </div>
+
+      <ApprovalSettingsDialog open={cfgOpen} onOpenChange={setCfgOpen} onSaved={setCfg} />
+      <ApproverRolesDialog open={rolesOpen} onOpenChange={setRolesOpen} />
+
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-3"><div className="text-xs text-muted-foreground">Offene Freigaben</div><div className="text-2xl font-semibold">{kpi.blocked}</div></Card>
