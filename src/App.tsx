@@ -695,6 +695,7 @@ const RfCompare = lazy(() => import("./pages/RollenFreigaben/RoleCompare"));
 const RfRequests = lazy(() => import("./pages/RollenFreigaben/Requests"));
 const RfAudit = lazy(() => import("./pages/RollenFreigaben/SecurityAudit"));
 const RfLog = lazy(() => import("./pages/RollenFreigaben/AuditLog"));
+const RfDataScope = lazy(() => import("./pages/RollenFreigaben/DataScope"));
 const RfViewAs = lazy(() => import("./pages/RollenFreigaben/ViewAs"));
 const RfTempGrants = lazy(() => import("./pages/RollenFreigaben/TempGrants"));
 const RfDataClasses = lazy(() => import("./pages/RollenFreigaben/DataClasses"));
@@ -1884,6 +1885,7 @@ function AppRoutes() {
             <Route path="ketten" element={<RfChains />} />
             <Route path="lifecycle" element={<RfLifecycle />} />
             <Route path="exporte" element={<RfAuditExport />} />
+            <Route path="datenbereich" element={<RfDataScope />} />
             <Route path="protokoll" element={<RfLog />} />
           </Route>
 

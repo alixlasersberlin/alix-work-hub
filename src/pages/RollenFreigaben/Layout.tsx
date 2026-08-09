@@ -14,6 +14,7 @@ const NAV = [
   { to: '/admin/rollen-freigaben/matrix', label: 'Rollenmatrix', icon: Grid3x3 },
   { to: '/admin/rollen-freigaben/rollen', label: 'Rollen', icon: ShieldCheck },
   { to: '/admin/rollen-freigaben/mitarbeiter', label: 'Mitarbeiter', icon: Users2 },
+  { to: '/admin/rollen-freigaben/datenbereich', label: 'Datenbereich (Mandanten)', icon: Globe },
   { to: '/admin/rollen-freigaben/effektiv', label: 'Effektiver Zugriff', icon: Eye },
   { to: '/admin/rollen-freigaben/ansicht-als', label: 'Ansicht als (Simulation)', icon: Eye },
   { to: '/admin/rollen-freigaben/vergleich', label: 'Rollen-Vergleich', icon: GitCompare },
