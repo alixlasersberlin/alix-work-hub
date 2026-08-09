@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { OVERALL_UI } from '@/lib/delivery-approval/config';
 import { fetchReleaseStatusMap } from '@/lib/delivery-approval/api';
+import { useReleaseRealtime } from './useReleaseRealtime';
 
 type Status = keyof typeof OVERALL_UI;
 
@@ -28,6 +29,7 @@ export function ReleaseStatusDot({ status, withLabel = false }: { status?: Statu
 /** Lädt die Freigabestatus für eine Liste von Auftrags-IDs. */
 export function useReleaseStatusMap(orderIds: string[]) {
   const [map, setMap] = useState<Record<string, Status>>({});
+  const tick = useReleaseRealtime();
   const key = orderIds.filter(Boolean).sort().join(',');
   useEffect(() => {
     const ids = key ? key.split(',') : [];
@@ -37,7 +39,7 @@ export function useReleaseStatusMap(orderIds: string[]) {
       .then((m) => { if (!cancelled) setMap(m as Record<string, Status>); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [key]);
+  }, [key, tick]);
   return map;
 }
 
