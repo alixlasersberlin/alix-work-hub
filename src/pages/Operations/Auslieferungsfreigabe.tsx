@@ -248,6 +248,43 @@ export default function Auslieferungsfreigabe() {
 
   const h = (v: number | null) => (v == null ? '—' : `${v.toFixed(1)} h`);
 
+  const trendRows = () => [
+    ['Monat', 'Bereitstellung (h)', 'Buchhaltung (h)', 'Tourenplanung (h)', 'Gesamt (h)'],
+    ...durationTrend.map((d: any) => [
+      d.month,
+      d.warehouse ?? '',
+      d.accounting ?? '',
+      d.dispatch ?? '',
+      d.total ?? '',
+    ]),
+  ];
+
+  const exportTrendCsv = () => {
+    if (!durationTrend.length) { toast.info('Keine Trenddaten vorhanden.'); return; }
+    const csv = trendRows().map((l) => l.map((c) => `"${String(c)}"`).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `durchlaufzeiten-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportTrendPdf = () => {
+    if (!durationTrend.length) { toast.info('Keine Trenddaten vorhanden.'); return; }
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('Durchlaufzeiten je Freigabestufe (Ø Stunden)', 14, 16);
+    doc.setFontSize(9);
+    doc.text(
+      `Zielwerte: Bereitstellung ${cfg.targets.warehouse} h · Buchhaltung ${cfg.targets.accounting} h · `
+      + `Tourenplanung ${cfg.targets.dispatch} h · Gesamt ${cfg.targets.total} h`,
+      14, 22,
+    );
+    const [head, ...body] = trendRows();
+    autoTable(doc, { startY: 28, head: [head as string[]], body: body as any[], styles: { fontSize: 9 } });
+    doc.save(`durchlaufzeiten-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+
   return (
     <div className="space-y-4 p-4">
       <div className="flex flex-wrap items-center gap-2">
