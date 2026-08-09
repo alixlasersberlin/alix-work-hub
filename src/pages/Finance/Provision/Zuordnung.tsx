@@ -29,6 +29,11 @@ export default function ProvisionZuordnung() {
   const [assignForm, setAssignForm] = useState({ employee_id: '', employee_role: 'verkaeufer', share_percent: '100', rule_id: '', note: '' });
   const [empOpen, setEmpOpen] = useState<any | null>(null);
   const [empForm, setEmpForm] = useState<any>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkForm, setBulkForm] = useState({ employee_id: '', employee_role: 'verkaeufer', share_percent: '100', rule_id: '', note: '' });
+
 
   const [aliases, setAliases] = useState<Record<string, string>>({});
 
