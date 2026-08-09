@@ -386,7 +386,7 @@ export default function WiederkehrendeZahler() {
       if (rows.length > 0) {
         const { error: iErr } = await supabase
           .from('zoho_recurring_invoices')
-          .upsert(rows as any, { onConflict: 'zoho_invoice_id' });
+          .upsert(rows as any, { onConflict: 'source_system,zoho_invoice_id' });
         if (iErr) throw iErr;
       }
 
