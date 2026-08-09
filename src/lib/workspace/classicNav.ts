@@ -13,7 +13,7 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
     'FEEDBACK & REWARDS',
     'ALIX CONNECT',
     'TICKETS',
-    'ALIX i-COM',
+    'ALIX iCom',
     'TEAMKALENDER',
   ],
   buchhaltung: [
@@ -48,7 +48,7 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
     'OPERATIONS',
     'ALIXDOCS',
     'ALIX AI DIENSTE',
-    'ALIX i-COM',
+    'ALIX iCom',
     'TICKETS',
     'TEAMKALENDER',
     'KONTAKT',
