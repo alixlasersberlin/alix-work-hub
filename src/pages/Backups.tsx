@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { decryptBackupFile, backupPasswordError } from '@/lib/backup/crypto';
+import { Lock, KeyRound, FileLock2 } from 'lucide-react';
 
 interface BackupRow {
   id: string;
@@ -308,7 +311,7 @@ export default function Backups() {
                   </div>
                   <div className="flex items-center gap-2">
                     {b.storage_path && (b.backup_status === 'success' || b.backup_status === 'completed') && (
-                      <Button size="sm" variant="outline" onClick={() => downloadBackup(b)} disabled={downloadingId === b.id}>
+                      <Button size="sm" variant="outline" onClick={() => startDownload(b)} disabled={downloadingId === b.id}>
                         {downloadingId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                       </Button>
                     )}
