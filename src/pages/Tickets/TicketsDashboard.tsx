@@ -80,13 +80,20 @@ export default function TicketsDashboard() {
 
     // Charts + history parallel laden
     const from14 = subDays(startOfDay(now), 13);
+    const ts = () => {
+      const q: any = supabase.from("tickets");
+      return q;
+    };
+    const scope = <T extends { eq: (c: string, v: any) => T }>(q: T): T =>
+      sourceSystem ? q.eq("source_system", sourceSystem) : q;
     const [prioRes, deptRes, createdRes, closedRes, histRes] = await Promise.all([
-      supabase.from("tickets").select("priority").in("status", OPEN_STATUS).limit(1000),
-      supabase.from("tickets").select("department").in("status", OPEN_STATUS).limit(1000),
-      supabase.from("tickets").select("created_at").gte("created_at", from14.toISOString()).limit(2000),
-      supabase.from("tickets").select("updated_at").gte("updated_at", from14.toISOString()).in("status", CLOSED_STATUS).limit(2000),
+      scope(ts().select("priority").in("status", OPEN_STATUS).limit(1000)),
+      scope(ts().select("department").in("status", OPEN_STATUS).limit(1000)),
+      scope(ts().select("created_at").gte("created_at", from14.toISOString()).limit(2000)),
+      scope(ts().select("updated_at").gte("updated_at", from14.toISOString()).in("status", CLOSED_STATUS).limit(2000)),
       supabase.from("ticket_history").select("id, ticket_id, action, field, new_value, created_at").order("created_at", { ascending: false }).limit(15),
     ]);
+
 
     const prioAgg: Record<string, number> = {};
     (prioRes.data ?? []).forEach((r: any) => {
