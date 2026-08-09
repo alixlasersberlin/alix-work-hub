@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Gavel, Plus, Scale, ShieldAlert } from 'lucide-react';
+import { Gavel, Plus, Scale, ShieldAlert, Trash2 } from 'lucide-react';
+import { useCanDelete } from '@/hooks/useCanDelete';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
@@ -18,9 +23,13 @@ const KIND_LABEL: Record<string, string> = { inkasso: 'Inkasso', anwalt: 'Anwalt
 const STATUS_VARIANT: Record<string, any> = { open: 'default', in_progress: 'secondary', recovered: 'outline', lost: 'destructive', closed: 'outline' };
 
 export default function FinanceCollectLegal() {
+  const canDelete = useCanDelete();
   const [legal, setLegal] = useState<any[]>([]);
   const [insol, setInsol] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [delTarget, setDelTarget] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
+
 
   const [name, setName] = useState('');
   const [kind, setKind] = useState('inkasso');
@@ -62,6 +71,17 @@ export default function FinanceCollectLegal() {
     if (status === 'closed' || status === 'recovered' || status === 'lost') patch.closed_at = new Date().toISOString();
     const { error } = await supabase.from('collect_legal_cases' as any).update(patch).eq('id', id);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
+    load();
+  };
+
+  const confirmDelete = async () => {
+    if (!delTarget) return;
+    setDeleting(true);
+    const { error } = await supabase.from('collect_legal_cases' as any).delete().eq('id', delTarget.id);
+    setDeleting(false);
+    if (error) { toast({ title: 'Löschen fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
+    toast({ title: 'Rechtsfall gelöscht' });
+    setDelTarget(null);
     load();
   };
 
@@ -125,16 +145,29 @@ export default function FinanceCollectLegal() {
                     <td>{date(r.handed_over_at)}</td>
                     <td><Badge variant={STATUS_VARIANT[r.status] ?? 'secondary'}>{r.status}</Badge></td>
                     <td className="text-right">
-                      <Select value={r.status} onValueChange={(v) => setStatus(r.id, v)}>
-                        <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="open">Offen</SelectItem>
-                          <SelectItem value="in_progress">In Bearbeitung</SelectItem>
-                          <SelectItem value="recovered">Realisiert</SelectItem>
-                          <SelectItem value="lost">Ausfall</SelectItem>
-                          <SelectItem value="closed">Abgeschlossen</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center justify-end gap-2">
+                        <Select value={r.status} onValueChange={(v) => setStatus(r.id, v)}>
+                          <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">Offen</SelectItem>
+                            <SelectItem value="in_progress">In Bearbeitung</SelectItem>
+                            <SelectItem value="recovered">Realisiert</SelectItem>
+                            <SelectItem value="lost">Ausfall</SelectItem>
+                            <SelectItem value="closed">Abgeschlossen</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            title="Rechtsfall löschen"
+                            onClick={() => setDelTarget(r)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -178,6 +211,27 @@ export default function FinanceCollectLegal() {
           </div>
         )}
       </DataCard>
+
+      <AlertDialog open={!!delTarget} onOpenChange={(v) => !v && setDelTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rechtsfall löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Der Fall <strong>{delTarget?.customer_name ?? ''}</strong> ({KIND_LABEL[delTarget?.kind] ?? delTarget?.kind}) wird unwiderruflich gelöscht.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmDelete(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Endgültig löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
