@@ -279,7 +279,11 @@ export default function Dashboard() {
             : supabase.from('orders').select('created_at').gte('created_at', since).limit(1000))
         : Promise.resolve({ data: [] as any[] }),
       canSeeFinance
-        ? supabase.from('finance_records').select('created_at').gte('created_at', since).limit(1000)
+        ? (() => {
+            let q = supabase.from('finance_records').select('created_at').gte('created_at', since);
+            if (tenantSelected && tenant?.id) q = q.eq('tenant_id', tenant.id);
+            return q.limit(1000);
+          })()
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
