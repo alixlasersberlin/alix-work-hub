@@ -1364,12 +1364,12 @@ export default function AppLayout() {
 
             <GlobalSearch />
 
-            <TenantSwitcher />
-
-
             <KontaktMenu roles={roles} />
             <ConnectMenu roles={roles} />
             <AiDiensteMenu roles={roles} />
+
+            <TenantSwitcher />
+
 
 
 
