@@ -511,6 +511,10 @@ export default function AlixDocsSearch() {
           {selected.size > 0 && (
             <div className="flex flex-wrap items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-md">
               <span className="text-sm font-medium mr-auto">{selected.size} Dokumente ausgewählt</span>
+              <Button size="sm" disabled={bulkBusy} onClick={bulkRelease}>
+                <CheckCircle2 className="w-4 h-4 mr-1" /> Alle freigeben
+              </Button>
+
               <Button size="sm" variant="outline" disabled={bulkBusy} onClick={bulkZip}>
                 <Archive className="w-4 h-4 mr-1" /> ZIP herunterladen
               </Button>
