@@ -2,6 +2,7 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { renderPdf, eur, de, san, type Block } from '../_shared/collect-pdf.ts';
+import { getTenantScope, tenantInScope, customerInScope } from "../_shared/tenant-scope.ts";
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -41,6 +42,21 @@ Deno.serve(async (req) => {
 
     const { data: dossier } = await admin.from('collect_dossiers').select('*').eq('id', dossier_id).maybeSingle();
     if (!dossier) return json({ error: 'Akte nicht gefunden' }, 404);
+
+    // Data Scope: Akte nur fuer erlaubte Mandanten
+    const scope = await getTenantScope(req);
+    if (scope.restricted && !scope.serviceRole) {
+      const { data: kase } = await admin
+        .from('collect_cases')
+        .select('customer_id, tenant_id')
+        .eq('id', (dossier as any).case_id)
+        .maybeSingle();
+      const okTenant = tenantInScope(scope, (kase as any)?.tenant_id ?? null);
+      const okCustomer = (kase as any)?.customer_id
+        ? await customerInScope(scope, (kase as any).customer_id)
+        : true;
+      if (!okTenant || !okCustomer) return json({ error: 'Kein Zugriff auf diesen Mandanten' }, 403);
+    }
 
     const c: any = dossier.content ?? {};
     const cur = c.case?.currency ?? 'EUR';

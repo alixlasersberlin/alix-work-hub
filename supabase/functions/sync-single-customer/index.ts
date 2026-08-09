@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { getTenantScope, sourceInScope } from "../_shared/tenant-scope.ts";
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -82,6 +83,11 @@ Deno.serve(async (req: Request) => {
     }
     if (!["zoho_eu_1", "zoho_eu_2", "zoho_us_1"].includes(source_system)) {
       return jsonResponse({ error: "Invalid source_system" }, 400);
+    }
+
+    const scope = await getTenantScope(req);
+    if (!sourceInScope(scope, source_system)) {
+      return jsonResponse({ error: "Kein Zugriff auf diesen Mandanten" }, 403);
     }
 
     const zohoConfig = getZohoConfig(source_system);
