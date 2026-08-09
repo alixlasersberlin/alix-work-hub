@@ -16,6 +16,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function MediapaketAnalytics() {
   const { hasRole } = useAuth();
+  const { tenantId } = useTenantFilter();
   const canView = hasRole('Super Admin') || hasRole('Admin');
   const [loading, setLoading] = useState(true);
   const [mps, setMps] = useState<any[]>([]);
@@ -46,7 +47,7 @@ export default function MediapaketAnalytics() {
       setReviews(rRes.data || []);
       setLoading(false);
     })();
-  }, []);
+  }, [tenantId]);
 
   const kpis = useMemo(() => {
     const now = Date.now();

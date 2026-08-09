@@ -21,6 +21,7 @@ import { DELIVERY_STATUS_LABELS, DELIVERY_TYPE_LABELS, READINESS_LABELS, readine
 
 export default function DispatchTermine() {
   const { user, profile } = useAuth();
+  const { tenantId } = useTenantFilter();
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('alle');

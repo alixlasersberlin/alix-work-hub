@@ -57,7 +57,7 @@ export default function MobileTouren() {
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [tenantId]);
 
   return (
     <div className="p-4 space-y-3">
