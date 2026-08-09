@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Ship, Plus, Loader2, Search, FileDown, Mail, Send, ChevronDown } from 'lucide-react';
+import { ReleaseStatusDot, useReleaseStatusMap } from '@/components/delivery/ReleaseStatusDot';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { downloadCarrierOrderPdf } from '@/lib/dispatch/carrier-order-pdf';
@@ -86,7 +87,7 @@ export default function DispatchSpeditionsversand() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('delivery_carrier_assignments')
-        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country), route_plan:route_plan_id(id, order_id, planned_date, planning_status, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, tour_type, order:order_id(order_number, customer:customer_id(company_name, contact_name, email, phone)))')
+        .select('*, carrier:carrier_id(name, contact_name, street, zip, city, country, phone, email), appointment:appointment_id(order_id, order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, contact_email, planned_date, delivery_street, delivery_zip, delivery_city, delivery_country), route_plan:route_plan_id(id, order_id, planned_date, planning_status, contact_name, contact_email, contact_phone, device_model, device_serial_number, location_address, tour_type, order:order_id(order_number, customer:customer_id(company_name, contact_name, email, phone)))')
         .order('created_at', { ascending: false })
         .limit(300);
       if (error) throw error;
@@ -172,6 +173,13 @@ export default function DispatchSpeditionsversand() {
 
   const allSelected = filtered.length > 0 && filtered.every((r: any) => selected.includes(r.id));
   const toggle = (id: string) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const shipOrderIds = useMemo(
+    () => (filtered ?? []).map((r: any) => r.appointment?.order_id ?? r.route_plan?.order_id).filter(Boolean),
+    [filtered],
+  );
+  const releaseStatusMap = useReleaseStatusMap(shipOrderIds);
+
+
   const toggleAll = () => setSelected(allSelected ? [] : filtered.map((r: any) => r.id));
 
   function exportSelectedPdf() {
@@ -373,7 +381,10 @@ export default function DispatchSpeditionsversand() {
                   />
                 </TableCell>
                 <TableCell className="font-medium">
-                  {r.appointment?.order_number ?? planOrderNo(r.route_plan) ?? '—'}
+                  <span className="inline-flex items-center gap-2">
+                    <ReleaseStatusDot status={releaseStatusMap[r.appointment?.order_id ?? r.route_plan?.order_id]} />
+                    {r.appointment?.order_number ?? planOrderNo(r.route_plan) ?? '—'}
+                  </span>
                   {r.route_plan_id && <div className="text-[10px] uppercase tracking-wide text-muted-foreground">aus Tourenplanung</div>}
                 </TableCell>
                 <TableCell>{r.appointment?.company_name || r.appointment?.customer_name || planCustomer(r.route_plan) || '—'}</TableCell>

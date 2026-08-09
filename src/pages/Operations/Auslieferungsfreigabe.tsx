@@ -11,16 +11,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { NativeSelect } from '@/components/ui/native-select';
 import SignaturePad from '@/components/finance/SignaturePad';
 import { useAuth } from '@/hooks/useAuth';
-import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle } from 'lucide-react';
+import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS, type ApprovalStage } from '@/lib/delivery-approval/config';
 import {
-  slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats,
-  type DeliveryApproval, type EscalationStat,
+  slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats, fetchEscalationSeries,
+  bulkStartApprovals,
+  type DeliveryApproval, type EscalationStat, type EscalationMonth,
 } from '@/lib/delivery-approval/api';
+import { autoFinalizeRelease } from '@/lib/delivery-approval/autofinalize';
 import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
+
 
 const db = supabase as any;
 
@@ -46,6 +49,14 @@ export default function Auslieferungsfreigabe() {
   const [bulkSig, setBulkSig] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [escalations, setEscalations] = useState<EscalationStat[]>([]);
+  const [series, setSeries] = useState<EscalationMonth[]>([]);
+  // Massen-Anforderung
+  const [reqOpen, setReqOpen] = useState(false);
+  const [reqQ, setReqQ] = useState('');
+  const [reqRows, setReqRows] = useState<any[]>([]);
+  const [reqSel, setReqSel] = useState<Set<string>>(new Set());
+  const [reqBusy, setReqBusy] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
@@ -71,7 +82,61 @@ export default function Auslieferungsfreigabe() {
     setLoading(false);
   };
 
-  useEffect(() => { void load(); void fetchEscalationStats().then(setEscalations).catch(() => {}); }, []);
+  useEffect(() => {
+    void load();
+    void fetchEscalationStats().then(setEscalations).catch(() => {});
+    void fetchEscalationSeries().then(setSeries).catch(() => {});
+  }, []);
+
+  /** Aufträge ohne gestarteten Freigabeprozess laden */
+  const loadRequestCandidates = async (search: string) => {
+    let query = db
+      .from('orders')
+      .select('id, order_number, customer_name, order_status')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (search.trim()) query = query.ilike('order_number', `%${search.trim()}%`);
+    const { data } = await query;
+    const existing = new Set(rows.map((r) => r.order_id));
+    setReqRows(((data ?? []) as any[]).filter((o) => !existing.has(o.id)));
+  };
+
+  const exportEscalations = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('Eskalations-Reporting Auslieferungsfreigabe', 14, 14);
+    doc.setFontSize(9);
+    doc.text(`Stand ${new Date().toLocaleString('de-DE')}`, 14, 20);
+    autoTable(doc, {
+      startY: 26,
+      head: [['Abteilung', 'L1 (24 h)', 'L2 (48 h)', 'L3 (72 h)']],
+      body: STAGES.map((s) => [
+        s.title,
+        String(escalations.find((e) => e.stage === s.stage && e.level === 1)?.count ?? 0),
+        String(escalations.find((e) => e.stage === s.stage && e.level === 2)?.count ?? 0),
+        String(escalations.find((e) => e.stage === s.stage && e.level === 3)?.count ?? 0),
+      ]),
+      styles: { fontSize: 9 },
+    });
+    autoTable(doc, {
+      startY: ((doc as any).lastAutoTable?.finalY ?? 60) + 8,
+      head: [['Monat', 'L1', 'L2', 'L3', 'Gesamt']],
+      body: series.map((m) => [m.month, String(m.l1), String(m.l2), String(m.l3), String(m.l1 + m.l2 + m.l3)]),
+      styles: { fontSize: 9 },
+    });
+    doc.save(`eskalationen-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const exportEscalationsCsv = () => {
+    const head = ['Monat', 'L1', 'L2', 'L3', 'Gesamt'];
+    const lines = series.map((m) => [m.month, m.l1, m.l2, m.l3, m.l1 + m.l2 + m.l3]);
+    const csv = [head, ...lines].map((l) => l.map((c) => `"${String(c)}"`).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `eskalationen-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
 
   // Realtime: Freigaben live aktualisieren
   useEffect(() => {
@@ -171,10 +236,14 @@ export default function Auslieferungsfreigabe() {
         <ShieldCheck className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-semibold">Auslieferungsfreigabe</h1>
         <div className="ml-auto flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => { setReqOpen(true); void loadRequestCandidates(''); }}>
+            <PlusCircle className="h-4 w-4 mr-1" />Freigabe anfordern
+          </Button>
           <Button variant="outline" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1" />Aktualisieren</Button>
           <Button variant="outline" size="sm" onClick={exportCsv}><Download className="h-4 w-4 mr-1" />Excel/CSV</Button>
           <Button variant="outline" size="sm" onClick={exportPdf}><FileText className="h-4 w-4 mr-1" />PDF</Button>
         </div>
+
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -208,6 +277,10 @@ export default function Auslieferungsfreigabe() {
       <Card className="p-3">
         <div className="flex items-center gap-2 text-sm font-medium mb-2">
           <AlertTriangle className="h-4 w-4 text-amber-400" />Eskalationen (Stufe 1 = 24 h, 2 = 48 h, 3 = 72 h)
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" size="sm" onClick={exportEscalationsCsv}><Download className="h-4 w-4 mr-1" />CSV</Button>
+            <Button variant="outline" size="sm" onClick={exportEscalations}><FileText className="h-4 w-4 mr-1" />PDF</Button>
+          </div>
         </div>
         {escalations.length === 0 ? (
           <div className="text-sm text-muted-foreground">Bisher keine Eskalationen ausgelöst.</div>
@@ -231,7 +304,24 @@ export default function Auslieferungsfreigabe() {
             })}
           </div>
         )}
+        {series.length > 0 && (
+          <div className="mt-3">
+            <div className="text-xs text-muted-foreground mb-1">Zeitreihe pro Monat</div>
+            <div className="space-y-1 text-sm">
+              {series.map((m) => (
+                <div key={m.month} className="flex items-center gap-3">
+                  <span className="w-20 text-xs text-muted-foreground">{m.month}</span>
+                  <span>L1 <b>{m.l1}</b></span>
+                  <span>L2 <b>{m.l2}</b></span>
+                  <span>L3 <b>{m.l3}</b></span>
+                  <span className="ml-auto text-xs text-muted-foreground">Gesamt {m.l1 + m.l2 + m.l3}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
+
 
       <div className="flex flex-wrap items-center gap-2">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Auftragsnummer suchen…" className="max-w-xs" />
@@ -355,7 +445,10 @@ export default function Auslieferungsfreigabe() {
                   });
                   toast.success(`${res.ok} freigegeben${res.skipped.length ? ` · ${res.skipped.length} übersprungen` : ''}`);
                   setBulkOpen(false); setSelected(new Set()); setBulkSig(null); setBulkComment('');
+                  // Vollautomatik: Protokoll archivieren + versenden für nun vollständig freigegebene Aufträge
+                  for (const a of list) void autoFinalizeRelease(a.order_id);
                   void load();
+
                 } catch (e: any) { toast.error(e?.message ?? 'Sammelfreigabe fehlgeschlagen'); }
                 finally { setBulkBusy(false); }
               }}
@@ -363,6 +456,63 @@ export default function Auslieferungsfreigabe() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={reqOpen} onOpenChange={setReqOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Freigabeprozess für mehrere Aufträge starten</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Input
+              value={reqQ}
+              onChange={(e) => { setReqQ(e.target.value); void loadRequestCandidates(e.target.value); }}
+              placeholder="Auftragsnummer suchen…"
+            />
+            <div className="max-h-72 overflow-auto rounded-md border border-border divide-y divide-border">
+              {reqRows.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground">Keine Aufträge ohne Freigabeprozess gefunden.</div>
+              ) : reqRows.map((o) => (
+                <label key={o.id} className="flex items-center gap-3 p-2 text-sm hover:bg-accent/20 cursor-pointer">
+                  <Checkbox
+                    checked={reqSel.has(o.id)}
+                    onCheckedChange={(v) => setReqSel((prev) => {
+                      const next = new Set(prev);
+                      if (v) next.add(o.id); else next.delete(o.id);
+                      return next;
+                    })}
+                  />
+                  <span className="font-medium min-w-[120px]">{o.order_number ?? o.id.slice(0, 8)}</span>
+                  <span className="text-muted-foreground truncate">{o.customer_name ?? '—'}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{o.order_status ?? ''}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Button size="sm" variant="outline" onClick={() => setReqSel(new Set(reqRows.map((o) => o.id)))}>Alle markieren</Button>
+              <Button size="sm" variant="outline" onClick={() => setReqSel(new Set())}>Auswahl aufheben</Button>
+              <span className="ml-auto">{reqSel.size} ausgewählt</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReqOpen(false)}>Abbrechen</Button>
+            <Button
+              disabled={reqBusy || reqSel.size === 0}
+              onClick={async () => {
+                setReqBusy(true);
+                try {
+                  const n = await bulkStartApprovals(
+                    Array.from(reqSel),
+                    profile?.full_name || user?.email || 'Unbekannt',
+                  );
+                  toast.success(`${n} Freigabeprozesse gestartet`);
+                  setReqOpen(false); setReqSel(new Set());
+                  void load();
+                } catch (e: any) { toast.error(e?.message ?? 'Start fehlgeschlagen'); }
+                finally { setReqBusy(false); }
+              }}
+            >Prozess starten</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

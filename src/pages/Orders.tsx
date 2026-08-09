@@ -25,6 +25,8 @@ import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 import { Package } from 'lucide-react';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { VipBadge } from '@/components/VipBadge';
+import { ReleaseStatusDot, useReleaseStatusMap } from '@/components/delivery/ReleaseStatusDot';
+
 import { isOrderVip, vipFirst } from '@/lib/vip';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 import { DrivingTimeCell } from '@/components/DrivingTimeCell';
@@ -775,6 +777,11 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
   const totalPages = pageSize === 'all' ? 1 : Math.ceil(sorted.length / pageSize);
   const paged = pageSize === 'all' ? sorted : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
+  // Ampel: Auslieferungs-Freigabestatus der sichtbaren Aufträge
+  const releaseStatusMap = useReleaseStatusMap(paged.map((o: any) => o.id));
+
+
+
   useEffect(() => { setCurrentPage(1); }, [search, statusFilter, modelFilter, regionFilter, depositFilter, newImportFilter, pageSize]);
 
   // Only fetch driving times for currently visible (paged) orders to avoid edge function timeout
@@ -1218,6 +1225,8 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
                             <td key={colId} className="px-4 py-3 font-medium text-foreground">
                               <span className="inline-flex items-center gap-2 flex-wrap">
                                 {isOrderVip(o) && <VipBadge size="sm" iconOnly />}
+                                <ReleaseStatusDot status={releaseStatusMap[o.id]} />
+
                                 {o._displayNumber || o.order_number}
                                 {o.imported_via_reconcile_at && (
                                   <span

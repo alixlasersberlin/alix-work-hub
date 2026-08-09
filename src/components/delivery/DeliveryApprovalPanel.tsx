@@ -19,6 +19,8 @@ import {
 } from '@/lib/delivery-approval/api';
 import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
 import { archiveApprovalPdf, mailApprovalPdf } from '@/lib/delivery-approval/archive';
+import { autoFinalizeRelease } from '@/lib/delivery-approval/autofinalize';
+
 import { supabase } from '@/integrations/supabase/client';
 
 const fmt = (iso?: string | null) =>
@@ -75,13 +77,18 @@ function StageCard({
   const onApprove = async () => {
     setBusy(true);
     try {
-      await approveStage({ approval, stage, checks, comment, signature, userId: user?.id ?? null, userName, orderNumber });
+      const updated = await approveStage({ approval, stage, checks, comment, signature, userId: user?.id ?? null, userName, orderNumber });
       toast.success(`${def.title} freigegeben`);
       setSignature(null);
+      if (updated && ['released', 'delivered', 'completed'].includes(updated.overall_status)) {
+        toast.info('Protokoll wird archiviert und versendet…');
+        void autoFinalizeRelease(updated);
+      }
       reload();
     } catch (e: any) { toast.error(e.message); }
     finally { setBusy(false); }
   };
+
 
   return (
     <Card className="p-4 space-y-3">

@@ -14,6 +14,7 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle,
   AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from '@/components/ui/alert-dialog';
+import { ReleaseStatusDot, useReleaseStatusMap } from '@/components/delivery/ReleaseStatusDot';
 import { toast } from 'sonner';
 import { useCanDelete } from '@/hooks/useCanDelete';
 import { TOUR_STATUS_LABELS, statusClass } from './constants';
@@ -52,7 +53,7 @@ export default function DispatchTouren() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('delivery_tour_stops')
-        .select('id, tour_id, position, planned_arrival, stop_status, distance_from_prev_km, notes, appointment:appointment_id(order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, delivery_street, delivery_zip, delivery_city, planned_date)')
+        .select('id, tour_id, position, planned_arrival, stop_status, distance_from_prev_km, notes, appointment:appointment_id(order_id, order_number, customer_name, company_name, device_name, serial_number, contact_name, contact_phone, delivery_street, delivery_zip, delivery_city, planned_date)')
         .in('tour_id', tourIds)
         .order('position');
       if (error) throw error;
@@ -66,6 +67,12 @@ export default function DispatchTouren() {
     (stops ?? []).forEach((s: any) => { (map[s.tour_id] ||= []).push(s); });
     return map;
   }, [stops]);
+
+  const stopOrderIds = useMemo(
+    () => (stops ?? []).map((s: any) => s.appointment?.order_id).filter(Boolean),
+    [stops],
+  );
+  const releaseStatusMap = useReleaseStatusMap(stopOrderIds);
 
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase();
@@ -211,6 +218,12 @@ export default function DispatchTouren() {
             {filtered.map((t: any) => {
               const list = stopsByTour[t.id] ?? [];
               const orders = list.map((s: any) => s.appointment?.order_number).filter(Boolean);
+              const stopIds = list.map((s: any) => s.appointment?.order_id).filter(Boolean);
+              const tourRelease: any = stopIds.length
+                ? (stopIds.every((id: string) => ['released', 'delivered', 'completed'].includes(releaseStatusMap[id] ?? ''))
+                    ? 'released'
+                    : (stopIds.some((id: string) => !releaseStatusMap[id]) ? undefined : 'blocked'))
+                : undefined;
               return (
                 <TableRow key={t.id} data-state={selected.includes(t.id) ? 'selected' : undefined}>
                   <TableCell>
@@ -230,6 +243,7 @@ export default function DispatchTouren() {
                       <span className="text-sm">
                         <span className="font-mono">{orders.slice(0, 2).join(', ')}</span>
                         {orders.length > 2 && <span className="text-muted-foreground"> +{orders.length - 2}</span>}
+                        <span className="ml-2 align-middle"><ReleaseStatusDot status={tourRelease} /></span>
                       </span>
                     ) : (
                       <span className="text-muted-foreground text-sm">{list.length ? `${list.length} Stopps` : '—'}</span>
