@@ -17636,6 +17636,45 @@ export type Database = {
           },
         ]
       }
+      delivery_approval_tokens: {
+        Row: {
+          approval_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          order_id: string
+          stage: string
+          token: string
+          used_at: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          approval_id: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id: string
+          stage: string
+          token: string
+          used_at?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          approval_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id?: string
+          stage?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       delivery_approvals: {
         Row: {
           accounting_at: string | null

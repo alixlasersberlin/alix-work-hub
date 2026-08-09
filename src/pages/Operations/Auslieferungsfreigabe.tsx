@@ -11,9 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { NativeSelect } from '@/components/ui/native-select';
 import SignaturePad from '@/components/finance/SignaturePad';
 import { useAuth } from '@/hooks/useAuth';
-import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle, PlusCircle } from 'lucide-react';
+import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle, PlusCircle, Settings as SettingsIcon, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine } from 'recharts';
+
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS, type ApprovalStage } from '@/lib/delivery-approval/config';
@@ -25,6 +26,12 @@ import {
 } from '@/lib/delivery-approval/api';
 import { autoFinalizeRelease } from '@/lib/delivery-approval/autofinalize';
 import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
+import ApprovalSettingsDialog from '@/components/delivery/ApprovalSettingsDialog';
+import ApproverRolesDialog from '@/components/delivery/ApproverRolesDialog';
+import {
+  DEFAULT_APPROVAL_SETTINGS, fetchApprovalSettings, targetTone, TONE_CLASS,
+  type ApprovalSettings,
+} from '@/lib/delivery-approval/settings';
 
 
 const db = supabase as any;
@@ -60,6 +67,10 @@ export default function Auslieferungsfreigabe() {
   const [reqRows, setReqRows] = useState<any[]>([]);
   const [reqSel, setReqSel] = useState<Set<string>>(new Set());
   const [reqBusy, setReqBusy] = useState(false);
+  // Einstellungen & Rollen
+  const [cfg, setCfg] = useState<ApprovalSettings>(DEFAULT_APPROVAL_SETTINGS);
+  const [cfgOpen, setCfgOpen] = useState(false);
+  const [rolesOpen, setRolesOpen] = useState(false);
 
 
   const load = async () => {
@@ -92,6 +103,7 @@ export default function Auslieferungsfreigabe() {
     void fetchEscalationSeries().then(setSeries).catch(() => {});
     void fetchStageDurations().then(setStageDurations).catch(() => {});
     void fetchStageDurationTrend().then(setDurationTrend).catch(() => {});
+    void fetchApprovalSettings().then(setCfg).catch(() => {});
   }, []);
 
   /** Aufträge ohne gestarteten Freigabeprozess laden */
@@ -236,6 +248,43 @@ export default function Auslieferungsfreigabe() {
 
   const h = (v: number | null) => (v == null ? '—' : `${v.toFixed(1)} h`);
 
+  const trendRows = () => [
+    ['Monat', 'Bereitstellung (h)', 'Buchhaltung (h)', 'Tourenplanung (h)', 'Gesamt (h)'],
+    ...durationTrend.map((d: any) => [
+      d.month,
+      d.warehouse ?? '',
+      d.accounting ?? '',
+      d.dispatch ?? '',
+      d.total ?? '',
+    ]),
+  ];
+
+  const exportTrendCsv = () => {
+    if (!durationTrend.length) { toast.info('Keine Trenddaten vorhanden.'); return; }
+    const csv = trendRows().map((l) => l.map((c) => `"${String(c)}"`).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `durchlaufzeiten-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportTrendPdf = () => {
+    if (!durationTrend.length) { toast.info('Keine Trenddaten vorhanden.'); return; }
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('Durchlaufzeiten je Freigabestufe (Ø Stunden)', 14, 16);
+    doc.setFontSize(9);
+    doc.text(
+      `Zielwerte: Bereitstellung ${cfg.targets.warehouse} h · Buchhaltung ${cfg.targets.accounting} h · `
+      + `Tourenplanung ${cfg.targets.dispatch} h · Gesamt ${cfg.targets.total} h`,
+      14, 22,
+    );
+    const [head, ...body] = trendRows();
+    autoTable(doc, { startY: 28, head: [head as string[]], body: body as any[], styles: { fontSize: 9 } });
+    doc.save(`durchlaufzeiten-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+
   return (
     <div className="space-y-4 p-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -248,9 +297,23 @@ export default function Auslieferungsfreigabe() {
           <Button variant="outline" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1" />Aktualisieren</Button>
           <Button variant="outline" size="sm" onClick={exportCsv}><Download className="h-4 w-4 mr-1" />Excel/CSV</Button>
           <Button variant="outline" size="sm" onClick={exportPdf}><FileText className="h-4 w-4 mr-1" />PDF</Button>
+          {hasAnyRole?.(['Super Admin', 'Admin']) && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setRolesOpen(true)}>
+                <Users className="h-4 w-4 mr-1" />Freigeber
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setCfgOpen(true)}>
+                <SettingsIcon className="h-4 w-4 mr-1" />SLA & Ziele
+              </Button>
+            </>
+          )}
         </div>
 
       </div>
+
+      <ApprovalSettingsDialog open={cfgOpen} onOpenChange={setCfgOpen} onSaved={setCfg} />
+      <ApproverRolesDialog open={rolesOpen} onOpenChange={setRolesOpen} />
+
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="p-3"><div className="text-xs text-muted-foreground">Offene Freigaben</div><div className="text-2xl font-semibold">{kpi.blocked}</div></Card>
@@ -268,18 +331,28 @@ export default function Auslieferungsfreigabe() {
             <div className="space-y-2">
               {stageDurations.map((d) => {
                 const max = Math.max(...stageDurations.map((x) => x.avgHours), 1);
+                const target = (cfg.targets as any)[d.stage] ?? 24;
+                const tone = targetTone(d.avgHours, target);
                 return (
                   <div key={d.stage}>
                     <div className="flex justify-between text-xs">
                       <span>{d.title}</span>
-                      <span className="text-muted-foreground">{d.avgHours.toFixed(1)} h · {d.count} Freigaben</span>
+                      <span className={TONE_CLASS[tone]}>
+                        {d.avgHours.toFixed(1)} h · Ziel {target} h · {d.count} Freigaben
+                      </span>
                     </div>
-                    <div className="mt-1 h-2 rounded-full bg-muted">
-                      <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.round((d.avgHours / max) * 100)}%` }} />
+                    <div className="relative mt-1 h-2 rounded-full bg-muted">
+                      <div
+                        className={`h-2 rounded-full ${tone === 'ok' ? 'bg-emerald-500' : tone === 'warn' ? 'bg-yellow-500' : 'bg-red-500'}`}
+                        style={{ width: `${Math.round((d.avgHours / max) * 100)}%` }}
+                      />
+                      <div className="absolute top-0 h-2 w-px bg-foreground/60"
+                        style={{ left: `${Math.min(100, Math.round((target / max) * 100))}%` }} />
                     </div>
                   </div>
                 );
               })}
+
             </div>
           )}
         </Card>
@@ -296,7 +369,13 @@ export default function Auslieferungsfreigabe() {
       </div>
 
       <Card className="p-3">
-        <div className="text-sm font-medium mb-2">Zeittrend Durchlaufzeiten je Freigabestufe (Ø Stunden)</div>
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <div className="text-sm font-medium">Zeittrend Durchlaufzeiten je Freigabestufe (Ø Stunden)</div>
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" size="sm" onClick={exportTrendCsv}><Download className="h-4 w-4 mr-1" />CSV</Button>
+            <Button variant="outline" size="sm" onClick={exportTrendPdf}><FileText className="h-4 w-4 mr-1" />PDF</Button>
+          </div>
+        </div>
         {durationTrend.length === 0 ? (
           <div className="text-sm text-muted-foreground">Noch keine abgeschlossenen Stufen im Zeitraum.</div>
         ) : (
@@ -321,6 +400,8 @@ export default function Auslieferungsfreigabe() {
                 <Line type="monotone" dataKey="accounting" name="Buchhaltung" stroke="hsl(var(--chart-2, 199 89% 48%))" strokeWidth={2} dot={false} connectNulls />
                 <Line type="monotone" dataKey="dispatch" name="Tourenplanung" stroke="hsl(var(--chart-3, 142 71% 45%))" strokeWidth={2} dot={false} connectNulls />
                 <Line type="monotone" dataKey="total" name="Gesamt (Anlage → Freigabe)" stroke="hsl(var(--muted-foreground))" strokeWidth={2} strokeDasharray="4 3" dot={false} connectNulls />
+                <ReferenceLine y={cfg.targets.total} stroke="hsl(var(--destructive))" strokeDasharray="6 4"
+                  label={{ value: `Ziel gesamt ${cfg.targets.total} h`, position: 'insideTopRight', fill: 'hsl(var(--destructive))', fontSize: 11 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -329,7 +410,7 @@ export default function Auslieferungsfreigabe() {
 
       <Card className="p-3">
         <div className="flex items-center gap-2 text-sm font-medium mb-2">
-          <AlertTriangle className="h-4 w-4 text-amber-400" />Eskalationen (Stufe 1 = 24 h, 2 = 48 h, 3 = 72 h)
+          <AlertTriangle className="h-4 w-4 text-amber-400" />Eskalationen (Stufe 1 = {cfg.l1} h, 2 = {cfg.l2} h, 3 = {cfg.l3} h)
           <div className="ml-auto flex gap-2">
             <Button variant="outline" size="sm" onClick={exportEscalationsCsv}><Download className="h-4 w-4 mr-1" />CSV</Button>
             <Button variant="outline" size="sm" onClick={exportEscalations}><FileText className="h-4 w-4 mr-1" />PDF</Button>
