@@ -30873,6 +30873,7 @@ export type Database = {
           status: Database["public"]["Enums"]["media_package_status"]
           studio_name: string | null
           submitted_at: string | null
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -30895,6 +30896,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["media_package_status"]
           studio_name?: string | null
           submitted_at?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -30917,6 +30919,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["media_package_status"]
           studio_name?: string | null
           submitted_at?: string | null
+          tenant_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -38752,6 +38755,7 @@ export type Database = {
           status: Database["public"]["Enums"]["sig_doc_status"]
           storage_path: string
           template_id: string | null
+          tenant_id: string | null
           title: string
           updated_at: string
           version: number
@@ -38772,6 +38776,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["sig_doc_status"]
           storage_path: string
           template_id?: string | null
+          tenant_id?: string | null
           title: string
           updated_at?: string
           version?: number
@@ -38792,6 +38797,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["sig_doc_status"]
           storage_path?: string
           template_id?: string | null
+          tenant_id?: string | null
           title?: string
           updated_at?: string
           version?: number
