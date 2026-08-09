@@ -47378,6 +47378,7 @@ export type Database = {
       collect_dashboard: { Args: never; Returns: Json }
       collect_dashboard_kpis: { Args: never; Returns: Json }
       collect_sync_cases: { Args: never; Returns: Json }
+      collect_sync_customer: { Args: { p_key: string }; Returns: undefined }
       comm_can_manage: { Args: { _uid: string }; Returns: boolean }
       comm_can_read: { Args: { _uid: string }; Returns: boolean }
       complete_password_setup: { Args: never; Returns: undefined }
