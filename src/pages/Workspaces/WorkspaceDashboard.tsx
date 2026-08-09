@@ -167,21 +167,19 @@ export default function WorkspaceDashboard() {
     return <div className="p-6 text-muted-foreground">Kein Workspace verfügbar.</div>;
   }
 
-  // Im Operation-Workspace nur die Hauptgruppen (Sektionen) statt aller Unterpunkte anzeigen
+  // In allen Workspaces nur die Hauptgruppen (Sektionen) statt aller Unterpunkte anzeigen
   const visibleNav = navItems.filter(n => n.path !== `/w/${ws.code}`);
-  const quickItems = ws.code !== 'operation'
-    ? visibleNav
-    : (() => {
-        const seen = new Set<string>();
-        const out: typeof visibleNav = [];
-        for (const n of visibleNav) {
-          const section = (n.section || n.label).split('›').pop()!.trim();
-          if (seen.has(section)) continue;
-          seen.add(section);
-          out.push({ ...n, label: section });
-        }
-        return out;
-      })();
+  const quickItems = (() => {
+    const seen = new Set<string>();
+    const out: typeof visibleNav = [];
+    for (const n of visibleNav) {
+      const section = (n.section || n.label).split('›').pop()!.trim();
+      if (seen.has(section)) continue;
+      seen.add(section);
+      out.push({ ...n, label: section });
+    }
+    return out;
+  })();
 
   
 
