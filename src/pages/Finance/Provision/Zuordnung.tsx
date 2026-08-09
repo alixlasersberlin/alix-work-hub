@@ -417,7 +417,44 @@ export default function ProvisionZuordnung() {
         </DialogContent>
       </Dialog>
 
+      {/* Sammelzuordnung */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Markierte Aufträge zuordnen ({selected.size})</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Mitarbeiter</Label>
+              <NativeSelect value={bulkForm.employee_id} onChange={(v) => setBulkForm({ ...bulkForm, employee_id: v })} placeholder="Mitarbeiter wählen">
+                {profiles.map((p) => <option key={p.id} value={p.id}>{p.full_name || p.email}</option>)}
+              </NativeSelect>
+            </div>
+            <div>
+              <Label>Rolle</Label>
+              <NativeSelect value={bulkForm.employee_role} onChange={(v) => setBulkForm({ ...bulkForm, employee_role: v })}>
+                {EMPLOYEE_ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </NativeSelect>
+            </div>
+            <div>
+              <Label>Anteil in %</Label>
+              <Input type="number" min={0} max={100} step="0.01" value={bulkForm.share_percent} onChange={(e) => setBulkForm({ ...bulkForm, share_percent: e.target.value })} />
+            </div>
+            <div>
+              <Label>Provisionsregel (optional)</Label>
+              <NativeSelect value={bulkForm.rule_id} onChange={(v) => setBulkForm({ ...bulkForm, rule_id: v })} placeholder="Automatisch">
+                {rules.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </NativeSelect>
+            </div>
+            <div><Label>Notiz</Label><Textarea value={bulkForm.note} onChange={(e) => setBulkForm({ ...bulkForm, note: e.target.value })} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>Abbrechen</Button>
+            <Button onClick={saveBulkAssignment} disabled={bulkBusy}>{bulkBusy ? 'Zuordnen…' : `${selected.size} zuordnen`}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Mitarbeiter-Stammdaten */}
+
       <Dialog open={!!empOpen} onOpenChange={(o) => !o && setEmpOpen(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Provisionsstammdaten · {empOpen?.full_name || empOpen?.email}</DialogTitle></DialogHeader>
