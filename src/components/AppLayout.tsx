@@ -125,7 +125,7 @@ function HeaderNavMenu({ roles, itemLabel, triggerLabel, triggerClassName, align
 }
 
 function KontaktMenu({ roles }: { roles: string[] }) {
-  return <HeaderNavMenu roles={roles} itemLabel="KONTAKT" triggerLabel="Kontakt" />;
+  return <HeaderNavMenu roles={roles} itemLabel="KONTAKT" triggerLabel="Alix iCom" />;
 }
 
 function AiDiensteMenu({ roles }: { roles: string[] }) {
