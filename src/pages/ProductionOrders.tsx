@@ -160,7 +160,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
 
     // Fetch related order statuses (and filter to AT if needed) separately,
     // since there is no FK relationship between production_orders and orders.
-    const orderIds = Array.from(new Set(list.map((r: any) => r.order_id).filter(Boolean)));
+    const orderIds = Array.from(new Set(list.map((r: any) => r.order_id).filter(Boolean))) as string[];
     if (orderIds.length > 0) {
       let oq = supabase.from('orders').select('id, order_status, source_system').in('id', orderIds);
       if (atOnly) oq = oq.eq('source_system', 'zoho_eu_2');
@@ -192,7 +192,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
     if (loading || rows.length === 0) return;
     let cancelled = false;
     (async () => {
-      const orderIds = Array.from(new Set(rows.map(r => r.order_id).filter(Boolean)));
+      const orderIds = Array.from(new Set(rows.map((r: any) => r.order_id).filter(Boolean))) as string[];
       const { data: devData } = await supabase
         .from('lager_devices')
         .select('id, serial_number, model_name, notes, reserved_order_id')
