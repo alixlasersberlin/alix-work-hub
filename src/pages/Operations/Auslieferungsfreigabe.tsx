@@ -67,6 +67,10 @@ export default function Auslieferungsfreigabe() {
   const [reqRows, setReqRows] = useState<any[]>([]);
   const [reqSel, setReqSel] = useState<Set<string>>(new Set());
   const [reqBusy, setReqBusy] = useState(false);
+  // Einstellungen & Rollen
+  const [cfg, setCfg] = useState<ApprovalSettings>(DEFAULT_APPROVAL_SETTINGS);
+  const [cfgOpen, setCfgOpen] = useState(false);
+  const [rolesOpen, setRolesOpen] = useState(false);
 
 
   const load = async () => {
