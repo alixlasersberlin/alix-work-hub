@@ -204,9 +204,26 @@ export const navItems: NavItem[] = [
 
   {
     path: '/verkauf', label: 'VERKAUF', icon: TrendingUp,
-    roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Bestellwesen', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'],
+    roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Bestellwesen', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG', 'Katalog', 'Katalog Preise', 'Vertriebsleitung'],
     children: [
-      
+      {
+        path: '/katalog', label: 'KATALOG', icon: BookOpen,
+        roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing', 'Service', 'Geschäftsführung'],
+        children: [
+          { path: '/katalog', label: 'Übersicht', icon: LayoutDashboard, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing', 'Service', 'Geschäftsführung'] },
+          { path: '/katalog/artikel', label: 'Artikel', icon: Package, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing', 'Service', 'Geschäftsführung'] },
+          { path: '/katalog/kategorien', label: 'Kategorien', icon: FolderTree, roles: ['Super Admin', 'Admin', 'Katalog'] },
+          { path: '/katalog/laender', label: 'Länder & Währungen', icon: Globe, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise'] },
+          { path: '/katalog/niederlassungen', label: 'Niederlassungen', icon: Building2, roles: ['Super Admin', 'Admin', 'Katalog'] },
+          { path: '/katalog/preisregeln', label: 'Preisregeln', icon: ListChecks, roles: ['Super Admin', 'Admin', 'Katalog Preise'] },
+          { path: '/katalog/import', label: 'Import', icon: Upload, roles: ['Super Admin', 'Admin', 'Katalog'] },
+          { path: '/katalog/export', label: 'Export', icon: FileDown, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing'] },
+          { path: '/katalog/versand', label: 'Freigabelinks', icon: Send, roles: ['Super Admin', 'Admin', 'Katalog', 'Vertrieb', 'Vertriebsleitung'] },
+          { path: '/katalog/freigabe', label: 'Freigabe-Center', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'Katalog Preise'] },
+          { path: '/katalog/protokolle', label: 'Änderungsprotokoll', icon: ScrollText, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise'] },
+        ],
+      },
+
       {
         path: '/kunden', label: 'KUNDEN', icon: Building2, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
         children: [
@@ -636,23 +653,6 @@ export const navItems: NavItem[] = [
 
 
 
-  {
-    path: '/katalog', label: 'KATALOG', icon: BookOpen,
-    roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing', 'Service', 'Geschäftsführung'],
-    children: [
-      { path: '/katalog', label: 'Übersicht', icon: LayoutDashboard, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing', 'Service', 'Geschäftsführung'] },
-      { path: '/katalog/artikel', label: 'Artikel', icon: Package, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing', 'Service', 'Geschäftsführung'] },
-      { path: '/katalog/kategorien', label: 'Kategorien', icon: FolderTree, roles: ['Super Admin', 'Admin', 'Katalog'] },
-      { path: '/katalog/laender', label: 'Länder & Währungen', icon: Globe, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise'] },
-      { path: '/katalog/niederlassungen', label: 'Niederlassungen', icon: Building2, roles: ['Super Admin', 'Admin', 'Katalog'] },
-      { path: '/katalog/preisregeln', label: 'Preisregeln', icon: ListChecks, roles: ['Super Admin', 'Admin', 'Katalog Preise'] },
-      { path: '/katalog/import', label: 'Import', icon: Upload, roles: ['Super Admin', 'Admin', 'Katalog'] },
-      { path: '/katalog/export', label: 'Export', icon: FileDown, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise', 'Vertrieb', 'Vertriebsleitung', 'Marketing'] },
-      { path: '/katalog/versand', label: 'Freigabelinks', icon: Send, roles: ['Super Admin', 'Admin', 'Katalog', 'Vertrieb', 'Vertriebsleitung'] },
-      { path: '/katalog/freigabe', label: 'Freigabe-Center', icon: ShieldCheck, roles: ['Super Admin', 'Admin', 'Katalog Preise'] },
-      { path: '/katalog/protokolle', label: 'Änderungsprotokoll', icon: ScrollText, roles: ['Super Admin', 'Admin', 'Katalog', 'Katalog Preise'] },
-    ],
-  },
 
 
   {

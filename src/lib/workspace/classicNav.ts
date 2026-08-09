@@ -10,7 +10,6 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
     'DASHBOARDS',
     'VERKAUF',
     'CUSTOMER CARE',
-    'KATALOG',
     'FEEDBACK & REWARDS',
     'ALIX CONNECT',
     'TICKETS',
