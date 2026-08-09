@@ -14,11 +14,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Badge } from '@/components/ui/badge';
 import { DELIVERY_TYPE_LABELS, TOUR_STATUS_LABELS, statusClass, readinessClass, READINESS_LABELS } from './constants';
 import { TourOrderPicker, type PickedItem, type PickedOrder } from '@/components/dispatch/TourOrderPicker';
+import { assertOrderReleased } from '@/lib/delivery-approval/api';
+import { useAuth } from '@/hooks/useAuth';
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd');
 
 export default function DispatchTagesplanung() {
   const qc = useQueryClient();
+  const { user, profile, hasRole } = useAuth();
   const [day, setDay] = useState<string>(todayStr());
   const [selectedTour, setSelectedTour] = useState<string | null>(null);
   const [filterRegion, setFilterRegion] = useState('');
@@ -115,9 +118,35 @@ export default function DispatchTagesplanung() {
     qc.invalidateQueries({ queryKey: ['dispatch', 'tagesplanung'] });
   }
 
+  const userName = profile?.full_name || user?.email || 'Unbekannt';
+  const isSuperAdmin = hasRole('Super Admin');
+
+  /** Harte Sperre: ohne vollständige Freigabe keine Tourenplanung. */
+  async function guardRelease(orderId: string, context: string) {
+    let reason: string | null = null;
+    let res = await assertOrderReleased({ orderId, context });
+    if (!res.allowed && isSuperAdmin) {
+      reason = window.prompt(
+        `Auftrag ist nicht freigegeben (fehlend: ${res.missing.join(', ')}).\nSuper-Admin-Übersteuerung – bitte Begründung (min. 5 Zeichen):`,
+      );
+      if (reason && reason.trim().length >= 5) {
+        res = await assertOrderReleased({
+          orderId, context, isSuperAdmin: true, overrideReason: reason.trim(),
+          userId: user?.id ?? null, userName,
+        });
+      }
+    }
+    if (!res.allowed) {
+      toast.error(`Auslieferung gesperrt – fehlende Freigaben: ${res.missing.join(', ')}`);
+      return false;
+    }
+    return true;
+  }
+
   async function createTour() {
-    setCreating(true);
     const tourDate = newTour.date || day;
+    if (pickedOrder && !(await guardRelease(pickedOrder.id, 'Tourenplanung'))) return;
+    setCreating(true);
     try {
       const { data, error } = await supabase
         .from('delivery_tours')
@@ -214,6 +243,10 @@ export default function DispatchTagesplanung() {
 
 
   async function assignToTour(appointmentId: string, tourId: string) {
+    const { data: appt } = await supabase
+      .from('delivery_appointments').select('order_id').eq('id', appointmentId).maybeSingle();
+    const orderId = (appt as any)?.order_id as string | undefined;
+    if (orderId && !(await guardRelease(orderId, 'Tourenzuordnung'))) return;
     const existing = (stops as any[]).filter((s) => s.tour_id === tourId);
     const { error } = await supabase.from('delivery_tour_stops').insert({
       tour_id: tourId,

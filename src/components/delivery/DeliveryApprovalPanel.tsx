@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import SignaturePad from '@/components/finance/SignaturePad';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Lock, ShieldCheck, History, AlertTriangle, CheckCircle2, Unlock, FileDown } from 'lucide-react';
+import { Lock, ShieldCheck, History, AlertTriangle, CheckCircle2, Unlock, FileDown, Archive, Mail } from 'lucide-react';
 import { STAGES, STATUS_UI, OVERALL_UI, type ApprovalStage } from '@/lib/delivery-approval/config';
 import {
   ensureApproval, fetchEvents, saveChecks, approveStage, unlockApproval,
@@ -18,6 +18,8 @@ import {
   type DeliveryApproval, type ApprovalEvent,
 } from '@/lib/delivery-approval/api';
 import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
+import { archiveApprovalPdf, mailApprovalPdf } from '@/lib/delivery-approval/archive';
+import { supabase } from '@/integrations/supabase/client';
 
 const fmt = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
@@ -191,6 +193,9 @@ export default function DeliveryApprovalPanel({ orderId, orderNumber }: { orderI
   const [loading, setLoading] = useState(true);
   const [unlockOpen, setUnlockOpen] = useState(false);
   const [unlockReason, setUnlockReason] = useState('');
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailTo, setMailTo] = useState('buchhaltung@alix-operation.de');
+  const [busyDoc, setBusyDoc] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -204,6 +209,20 @@ export default function DeliveryApprovalPanel({ orderId, orderNumber }: { orderI
   };
 
   useEffect(() => { void load(); /* eslint-disable-next-line */ }, [orderId]);
+
+  // Realtime: Statuswechsel anderer Abteilungen sofort übernehmen
+  useEffect(() => {
+    if (!orderId) return;
+    const channel = supabase
+      .channel(`delivery-approval-${orderId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'delivery_approvals', filter: `order_id=eq.${orderId}` },
+        () => { void load(); })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'delivery_approval_events', filter: `order_id=eq.${orderId}` },
+        () => { void fetchEvents(orderId).then(setEvents); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    /* eslint-disable-next-line */
+  }, [orderId]);
 
   if (loading || !approval) return <div className="p-6 text-sm text-muted-foreground">Freigaben werden geladen…</div>;
 
@@ -231,6 +250,25 @@ export default function DeliveryApprovalPanel({ orderId, orderNumber }: { orderI
             }}
           >
             <FileDown className="h-4 w-4 mr-1" />Protokoll (PDF)
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busyDoc}
+            onClick={async () => {
+              setBusyDoc(true);
+              try {
+                await archiveApprovalPdf({ approval, events, orderNumber });
+                toast.success('Protokoll in AlixDocs archiviert');
+                void fetchEvents(orderId).then(setEvents);
+              } catch (e: any) { toast.error(e.message ?? 'Archivierung fehlgeschlagen'); }
+              finally { setBusyDoc(false); }
+            }}
+          >
+            <Archive className="h-4 w-4 mr-1" />In AlixDocs archivieren
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setMailOpen(true)}>
+            <Mail className="h-4 w-4 mr-1" />Protokoll per E-Mail
           </Button>
           {hasRole('Super Admin') && missing.length > 0 && (
             <Button size="sm" variant="outline" onClick={() => setUnlockOpen(true)}>
@@ -290,6 +328,42 @@ export default function DeliveryApprovalPanel({ orderId, orderNumber }: { orderI
                 } catch (e: any) { toast.error(e.message); }
               }}
             >Entsperren</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Freigabeprotokoll versenden</DialogTitle></DialogHeader>
+          <Separator />
+          <div className="space-y-2">
+            <div className="text-sm text-muted-foreground">
+              Das PDF wird als Anhang versendet – BCC automatisch an k.trinh@alix-operation.de.
+            </div>
+            <Input
+              value={mailTo}
+              onChange={(e) => setMailTo(e.target.value)}
+              placeholder="Empfänger (mehrere mit Komma trennen)"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMailOpen(false)}>Abbrechen</Button>
+            <Button
+              disabled={busyDoc || !mailTo.trim()}
+              onClick={async () => {
+                setBusyDoc(true);
+                try {
+                  await mailApprovalPdf({
+                    approval, events, orderNumber,
+                    to: mailTo.split(',').map((s) => s.trim()).filter(Boolean),
+                  });
+                  toast.success('Protokoll versendet');
+                  setMailOpen(false);
+                  void fetchEvents(orderId).then(setEvents);
+                } catch (e: any) { toast.error(e.message ?? 'Versand fehlgeschlagen'); }
+                finally { setBusyDoc(false); }
+              }}
+            >Senden</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

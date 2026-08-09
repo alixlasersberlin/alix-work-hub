@@ -273,3 +273,102 @@ export function slaLevel(since: string | null | undefined): 'ok' | 'reminder' | 
   if (hours >= SLA_HOURS.reminder) return 'reminder';
   return 'ok';
 }
+
+/** Sammelgenehmigung einer Stufe für mehrere Aufträge (z. B. Buchhaltung für 20 Aufträge). */
+export async function bulkApproveStage(params: {
+  approvals: DeliveryApproval[];
+  stage: ApprovalStage;
+  comment: string;
+  signature: string;
+  userId: string | null;
+  userName: string;
+}): Promise<{ ok: number; skipped: string[] }> {
+  const { approvals, stage, comment, signature, userId, userName } = params;
+  if (!signature) throw new Error('Digitale Unterschrift ist erforderlich.');
+  const ip = await clientIp();
+  const checks: Record<string, boolean> = {};
+  for (const c of stageDef(stage).checks) checks[c.key] = true;
+
+  let ok = 0;
+  const skipped: string[] = [];
+  for (const a of approvals) {
+    if (stageStatus(a, stage) === 'approved') continue;
+    if (!isStageUnlocked(a, stage)) { skipped.push(a.order_id); continue; }
+    const old = stageStatus(a, stage);
+    const { error } = await db
+      .from('delivery_approvals')
+      .update({
+        [`${stage}_checks`]: checks,
+        [`${stage}_comment`]: comment || 'Sammelfreigabe',
+        [`${stage}_status`]: 'approved',
+        [`${stage}_by`]: userId,
+        [`${stage}_by_name`]: userName,
+        [`${stage}_at`]: new Date().toISOString(),
+        [`${stage}_ip`]: ip,
+        [`${stage}_signature`]: signature,
+      })
+      .eq('id', a.id);
+    if (error) { skipped.push(a.order_id); continue; }
+    await logEvent({
+      approvalId: a.id, orderId: a.order_id, stage,
+      oldStatus: old, newStatus: 'approved',
+      userId, userName, comment: `Sammelfreigabe${comment ? `: ${comment}` : ''}`, ip, signature,
+    });
+    ok++;
+  }
+  return { ok, skipped };
+}
+
+export interface EscalationStat { stage: string; level: number; count: number }
+
+/** Eskalations-Statistik (wie oft Stufe 1/2/3 erreicht wurde – pro Abteilung). */
+export async function fetchEscalationStats(): Promise<EscalationStat[]> {
+  const { data } = await db
+    .from('delivery_approval_events')
+    .select('stage, comment')
+    .like('comment', 'escalation:%')
+    .limit(5000);
+  const map = new Map<string, EscalationStat>();
+  for (const e of (data ?? []) as any[]) {
+    const m = /^escalation:([a-z_]+):L(\d)$/.exec(e.comment ?? '');
+    if (!m) continue;
+    const key = `${m[1]}:${m[2]}`;
+    const cur = map.get(key) ?? { stage: m[1], level: Number(m[2]), count: 0 };
+    cur.count++;
+    map.set(key, cur);
+  }
+  return Array.from(map.values()).sort((a, b) => a.stage.localeCompare(b.stage) || a.level - b.level);
+}
+
+/**
+ * Harte Sperre: prüft, ob ein Auftrag ausgeliefert werden darf.
+ * Super Admin darf mit Begründung übersteuern (revisionssicher protokolliert).
+ */
+export async function assertOrderReleased(params: {
+  orderId: string;
+  isSuperAdmin?: boolean;
+  overrideReason?: string | null;
+  userId?: string | null;
+  userName?: string | null;
+  context?: string;
+}): Promise<{ allowed: boolean; missing: string[] }> {
+  const approval = await fetchApproval(params.orderId);
+  if (isReleased(approval)) return { allowed: true, missing: [] };
+  const missing = missingStages(approval);
+
+  if (params.isSuperAdmin && (params.overrideReason ?? '').trim().length >= 5 && approval) {
+    await logEvent({
+      approvalId: approval.id,
+      orderId: params.orderId,
+      stage: 'override',
+      oldStatus: approval.overall_status,
+      newStatus: approval.overall_status,
+      userId: params.userId ?? null,
+      userName: params.userName ?? 'Super Admin',
+      comment: `Sperre übersteuert (${params.context ?? 'Auslieferung'}): ${params.overrideReason}`,
+      ip: await clientIp(),
+    });
+    return { allowed: true, missing };
+  }
+  return { allowed: false, missing };
+}

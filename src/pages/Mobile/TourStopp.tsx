@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Camera, Eraser, Loader2, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { fetchApproval, isReleased, missingStages } from '@/lib/delivery-approval/api';
 
 const FAIL_REASONS = [
   { v: 'nicht_angetroffen', l: 'Kunde nicht angetroffen' },
@@ -35,6 +36,8 @@ export default function MobileTourStopp() {
   const [reason, setReason] = useState('nicht_angetroffen');
   const [photos, setPhotos] = useState<File[]>([]);
 
+  const [release, setRelease] = useState<{ released: boolean; missing: string[] } | null>(null);
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -44,6 +47,15 @@ export default function MobileTourStopp() {
         .maybeSingle();
       setStop(data);
       setSerial((data as any)?.delivery_appointments?.serial_number ?? '');
+      const orderId = (data as any)?.delivery_appointments?.order_id;
+      if (orderId) {
+        try {
+          const approval = await fetchApproval(orderId);
+          setRelease({ released: isReleased(approval), missing: missingStages(approval) });
+        } catch { setRelease(null); }
+      } else {
+        setRelease({ released: true, missing: [] });
+      }
     })();
   }, [stopId]);
 
@@ -117,6 +129,9 @@ export default function MobileTourStopp() {
   };
 
   const completeDelivery = async () => {
+    if (release && !release.released) {
+      return toast.error(`Übergabe gesperrt – fehlende Freigaben: ${release.missing.join(', ')}`);
+    }
     if (!padRef.current || padRef.current.isEmpty()) return toast.error('Bitte Unterschrift des Kunden erfassen.');
     if (!signer.trim()) return toast.error('Bitte Name des Unterzeichners angeben.');
     setBusy(true);
@@ -204,6 +219,20 @@ export default function MobileTourStopp() {
         </div>
       </div>
 
+      {release && (
+        release.released ? (
+          <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-500">
+            Auslieferung freigegeben (alle Stufen)
+          </div>
+        ) : (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            Keine Auslieferungsfreigabe – fehlend: {release.missing.join(', ')}. Übergabe ist gesperrt.
+          </div>
+        )
+      )}
+
+
+
       <Card className="p-4 space-y-2">
         <Label>Status</Label>
         <div className="grid grid-cols-2 gap-2">
@@ -251,7 +280,7 @@ export default function MobileTourStopp() {
           <Button variant="outline" className="h-11 flex-1" onClick={() => { padRef.current?.clear(); setHasInk(false); }} disabled={!hasInk}>
             <Eraser className="w-4 h-4 mr-1" /> löschen
           </Button>
-          <Button className="h-11 flex-1" onClick={completeDelivery} disabled={busy}>
+          <Button className="h-11 flex-1" onClick={completeDelivery} disabled={busy || (release ? !release.released : false)}>
             {busy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
             Abschließen
           </Button>

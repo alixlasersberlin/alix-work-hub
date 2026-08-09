@@ -5,13 +5,21 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Download, FileText, ShieldCheck, RefreshCw, FileDown } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { NativeSelect } from '@/components/ui/native-select';
+import SignaturePad from '@/components/finance/SignaturePad';
+import { useAuth } from '@/hooks/useAuth';
+import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS } from '@/lib/delivery-approval/config';
-import { slaLevel, fetchEvents, type DeliveryApproval } from '@/lib/delivery-approval/api';
+import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS, type ApprovalStage } from '@/lib/delivery-approval/config';
+import {
+  slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats,
+  type DeliveryApproval, type EscalationStat,
+} from '@/lib/delivery-approval/api';
 import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
 
 const db = supabase as any;
@@ -26,10 +34,18 @@ const hoursBetween = (a?: string | null, b?: string | null) =>
   a && b ? (new Date(b).getTime() - new Date(a).getTime()) / 36e5 : null;
 
 export default function Auslieferungsfreigabe() {
+  const { user, profile, hasAnyRole } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<'all' | 'blocked' | 'waiting' | 'released'>('all');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStage, setBulkStage] = useState<ApprovalStage>('accounting');
+  const [bulkComment, setBulkComment] = useState('');
+  const [bulkSig, setBulkSig] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [escalations, setEscalations] = useState<EscalationStat[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -55,7 +71,16 @@ export default function Auslieferungsfreigabe() {
     setLoading(false);
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); void fetchEscalationStats().then(setEscalations).catch(() => {}); }, []);
+
+  // Realtime: Freigaben live aktualisieren
+  useEffect(() => {
+    const channel = supabase
+      .channel('delivery-approvals-dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'delivery_approvals' }, () => { void load(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== 'all' && r.overall_status !== filter) return false;
@@ -180,6 +205,34 @@ export default function Auslieferungsfreigabe() {
         </Card>
       </div>
 
+      <Card className="p-3">
+        <div className="flex items-center gap-2 text-sm font-medium mb-2">
+          <AlertTriangle className="h-4 w-4 text-amber-400" />Eskalationen (Stufe 1 = 24 h, 2 = 48 h, 3 = 72 h)
+        </div>
+        {escalations.length === 0 ? (
+          <div className="text-sm text-muted-foreground">Bisher keine Eskalationen ausgelöst.</div>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-3">
+            {STAGES.map((s) => {
+              const stats = escalations.filter((e) => e.stage === s.stage);
+              return (
+                <div key={s.stage} className="rounded-md border border-border p-2">
+                  <div className="text-xs text-muted-foreground">{s.title}</div>
+                  <div className="flex gap-3 text-sm mt-1">
+                    {[1, 2, 3].map((l) => (
+                      <span key={l}>
+                        <span className="text-xs text-muted-foreground">L{l}</span>{' '}
+                        <span className="font-medium">{stats.find((x) => x.level === l)?.count ?? 0}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
       <div className="flex flex-wrap items-center gap-2">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Auftragsnummer suchen…" className="max-w-xs" />
         {(['all', 'blocked', 'waiting', 'released'] as const).map((f) => (
@@ -188,6 +241,23 @@ export default function Auslieferungsfreigabe() {
           </Button>
         ))}
         <span className="text-xs text-muted-foreground ml-auto">{filtered.length} Einträge</span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Checkbox
+          checked={filtered.length > 0 && filtered.every((r) => selected.has(r.id))}
+          onCheckedChange={(v) => setSelected(v ? new Set(filtered.map((r) => r.id)) : new Set())}
+        />
+        <span className="text-xs text-muted-foreground">Alle sichtbaren markieren</span>
+        {selected.size > 0 && (
+          <>
+            <Badge variant="outline">{selected.size} markiert</Badge>
+            <Button size="sm" onClick={() => setBulkOpen(true)}>
+              <ShieldCheck className="h-4 w-4 mr-1" />Sammelfreigabe
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setSelected(new Set())}>Auswahl aufheben</Button>
+          </>
+        )}
       </div>
 
       {loading ? (
@@ -200,9 +270,19 @@ export default function Auslieferungsfreigabe() {
             const ov = OVERALL_UI[r.overall_status];
             const sla = slaLevel(r.created_at);
             return (
-              <Link key={r.id} to={`/orders/${r.order_id}?tab=freigaben`} className="flex flex-wrap items-center gap-3 p-3 hover:bg-accent/20">
+              <div key={r.id} className="flex flex-wrap items-center gap-3 p-3 hover:bg-accent/20">
+                <Checkbox
+                  checked={selected.has(r.id)}
+                  onCheckedChange={(v) => setSelected((prev) => {
+                    const next = new Set(prev);
+                    if (v) next.add(r.id); else next.delete(r.id);
+                    return next;
+                  })}
+                />
                 <span className={`h-3 w-3 rounded-full ${ov.dot}`} />
-                <div className="font-medium min-w-[140px]">{r.order_number ?? r.order_id.slice(0, 8)}</div>
+                <Link to={`/orders/${r.order_id}?tab=freigaben`} className="font-medium min-w-[140px] hover:underline">
+                  {r.order_number ?? r.order_id.slice(0, 8)}
+                </Link>
                 <Badge variant="outline" className={ov.text}>{ov.label}</Badge>
                 <div className="flex gap-2">
                   {STAGES.map((s) => {
@@ -234,11 +314,55 @@ export default function Auslieferungsfreigabe() {
                 >
                   <FileDown className="h-4 w-4" />
                 </Button>
-              </Link>
+              </div>
             );
           })}
         </Card>
       )}
+
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Sammelfreigabe ({selected.size} Aufträge)</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground">
+              Alle Pflichtprüfpunkte der gewählten Stufe werden bestätigt und revisionssicher protokolliert.
+              Aufträge ohne abgeschlossene Vorstufe werden übersprungen.
+            </div>
+            <NativeSelect value={bulkStage} onChange={(v) => setBulkStage(v as ApprovalStage)}>
+              {STAGES.map((s) => <option key={s.stage} value={s.stage}>{s.order}. {s.title}</option>)}
+            </NativeSelect>
+            <Input value={bulkComment} onChange={(e) => setBulkComment(e.target.value)} placeholder="Kommentar (optional)" />
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Digitale Unterschrift *</div>
+              <SignaturePad onChange={setBulkSig} height={120} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>Abbrechen</Button>
+            <Button
+              disabled={bulkBusy || !bulkSig || !hasAnyRole(STAGES.find((s) => s.stage === bulkStage)!.roles)}
+              onClick={async () => {
+                setBulkBusy(true);
+                try {
+                  const list = rows.filter((r) => selected.has(r.id));
+                  const res = await bulkApproveStage({
+                    approvals: list,
+                    stage: bulkStage,
+                    comment: bulkComment,
+                    signature: bulkSig!,
+                    userId: user?.id ?? null,
+                    userName: profile?.full_name || user?.email || 'Unbekannt',
+                  });
+                  toast.success(`${res.ok} freigegeben${res.skipped.length ? ` · ${res.skipped.length} übersprungen` : ''}`);
+                  setBulkOpen(false); setSelected(new Set()); setBulkSig(null); setBulkComment('');
+                  void load();
+                } catch (e: any) { toast.error(e?.message ?? 'Sammelfreigabe fehlgeschlagen'); }
+                finally { setBulkBusy(false); }
+              }}
+            >Freigeben</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
