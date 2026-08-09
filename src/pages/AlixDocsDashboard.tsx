@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Files, AlertTriangle, Clock, Database, Trash2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 
 type Stats = {
   generated_at: string;
@@ -26,13 +27,14 @@ function fmtBytes(n: number) {
 export default function AlixDocsDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const { tenantId } = useTenantFilter();
 
   useEffect(() => {
-    supabase.functions.invoke('alixdocs-stats').then(({ data, error }) => {
+    supabase.functions.invoke('alixdocs-stats', { body: { tenant_id: tenantId } }).then(({ data, error }) => {
       if (error || (data as any)?.error) { toast.error((data as any)?.error || error?.message); return; }
       setStats(data as Stats);
     }).finally(() => setLoading(false));
-  }, []);
+  }, [tenantId]);
 
   if (loading) return <div className="flex items-center justify-center py-20 text-muted-foreground"><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Lade …</div>;
   if (!stats) return <div className="p-8 text-muted-foreground">Keine Daten.</div>;
