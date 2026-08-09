@@ -540,17 +540,16 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   )}
 
                   {step === 8 && (() => {
-                    const price = parseFloat(String(data.flex_price ?? '').replace(',', '.')) || 0;
-                    const down = parseFloat(String(data.flex_down ?? '').replace(',', '.')) || 0;
-                    const base = Math.max(0, price - down);
-                    const monthly = data.flex_term > 0 ? base / data.flex_term : 0;
-                    const fmt = (v: number) => v.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
                     const isSmart = data.flex_plan === 'smart_impulse';
-                    const terms = isSmart ? SMART_IMPULSE_TERMS : FLEX_TERMS;
                     const planTitle = isSmart ? 'Alix Smart Impulse' : 'Alix Flex 0%';
                     const planHint = isSmart
-                      ? 'Finanzierungsrechner – Laufzeit bis max. 36 Monate (unverbindlich)'
-                      : 'Finanzierungsrechner – 0% effektiver Jahreszins (unverbindlich)';
+                      ? 'Miete – Mindestlaufzeit 24 Monate (unverbindlich)'
+                      : 'Finanzierung – 0 % effektiver Jahreszins (unverbindlich)';
+                    const exampleLabel = isSmart ? 'Miete ab' : 'Monatliche Rate ab';
+                    const exampleValue = isSmart ? '610,00 €' : '312,00 €';
+                    const exampleNote = isSmart
+                      ? 'pro Monat · Mindestmietdauer 24 Monate'
+                      : 'pro Monat · 0,00 % eff. p. a.';
                     return (
                       <Section title={planTitle} hint={planHint}>
                         <div className="space-y-4">
@@ -565,11 +564,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                                   <button
                                     key={p.id}
                                     type="button"
-                                    onClick={() => {
-                                      const nextTerms = p.id === 'smart_impulse' ? SMART_IMPULSE_TERMS : FLEX_TERMS;
-                                      const nextTerm = nextTerms.includes(data.flex_term as any) ? data.flex_term : nextTerms[nextTerms.length - 1];
-                                      setData({ ...data, flex_plan: p.id, flex_term: nextTerm });
-                                    }}
+                                    onClick={() => setData({ ...data, flex_plan: p.id })}
                                     className={cn(
                                       'rounded-xl border px-3 py-3 text-sm font-medium transition-all',
                                       active
@@ -583,42 +578,6 @@ export default function SalesWizard({ publicMode = false }: Props) {
                               })}
                             </div>
                           </Field>
-                          <Field label="Gesamtbetrag (€)">
-                            <Input
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              inputMode="decimal"
-                              value={data.flex_price}
-                              onChange={(e) => setData({ ...data, flex_price: e.target.value })}
-                              placeholder="z. B. 25000"
-                              className={inputCls}
-                            />
-                          </Field>
-                          <Field label="Anzahlung (€)">
-                            <Input
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              inputMode="decimal"
-                              value={data.flex_down}
-                              onChange={(e) => setData({ ...data, flex_down: e.target.value })}
-                              placeholder="z. B. 5000"
-                              className={inputCls}
-                            />
-                          </Field>
-                          <Field label="Laufzeit">
-                            <select
-                              value={String(data.flex_term)}
-                              onChange={(e) => setData({ ...data, flex_term: Number(e.target.value) })}
-                              className={selectCls}
-                            >
-                              {terms.map((m) => (
-                                <option key={m} value={m}>{m} Monate</option>
-                              ))}
-                            </select>
-                          </Field>
-
 
                           <div
                             className="relative overflow-hidden rounded-2xl p-[1px]"
@@ -632,13 +591,13 @@ export default function SalesWizard({ publicMode = false }: Props) {
                               <div className="relative flex items-end justify-between gap-3">
                                 <div>
                                   <div className="text-[10px] uppercase tracking-[0.28em] font-semibold" style={{ color: '#8a6314' }}>
-                                    Monatliche Rate
+                                    {exampleLabel}
                                   </div>
                                   <div className="mt-2 text-4xl md:text-5xl font-extrabold tabular-nums leading-none" style={{ color: '#1f2937' }}>
-                                    {fmt(monthly)}
+                                    {exampleValue}
                                   </div>
                                   <div className="mt-3 text-[11px]" style={{ color: '#6b5733' }}>
-                                    Finanzierungssumme <span className="font-semibold tabular-nums" style={{ color: '#1f2937' }}>{fmt(base)}</span> · {data.flex_term} Monate · {isSmart ? planTitle : '0,00 % eff. p. a.'}
+                                    {exampleNote}
                                   </div>
                                 </div>
                                 <div className="flex h-12 w-12 items-center justify-center rounded-full shadow-[0_10px_25px_-8px_rgba(184,137,58,0.6)]" style={{ background: 'linear-gradient(135deg,#e6c275,#b8893a)' }}>
@@ -654,6 +613,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       </Section>
                     );
                   })()}
+
 
                   {step === 9 && (
                     <Section title={t.s_email} hint={t.required}>
