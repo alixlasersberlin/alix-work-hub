@@ -239,6 +239,21 @@ export default function AlixDocsSearch() {
     toast.success('Archiviert'); load();
   };
 
+  const bulkRelease = async () => {
+    const ids = docs.filter(d => selected.has(d.id) && d.status !== 'freigegeben').map(d => d.id);
+    if (ids.length === 0) { toast.info('Alle ausgewählten Dokumente sind bereits freigegeben.'); return; }
+    if (!confirm(`${ids.length} Dokument(e) komplett freigeben?`)) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from('alixdocs_documents')
+      .update({ status: 'freigegeben' }).in('id', ids);
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${ids.length} Dokument(e) freigegeben`);
+    setSelected(new Set());
+    load();
+  };
+
+
   const releaseDoc = async (d: Doc) => {
     const { error } = await supabase.from('alixdocs_documents')
       .update({ status: 'freigegeben' }).eq('id', d.id);
@@ -496,6 +511,10 @@ export default function AlixDocsSearch() {
           {selected.size > 0 && (
             <div className="flex flex-wrap items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-md">
               <span className="text-sm font-medium mr-auto">{selected.size} Dokumente ausgewählt</span>
+              <Button size="sm" disabled={bulkBusy} onClick={bulkRelease}>
+                <CheckCircle2 className="w-4 h-4 mr-1" /> Alle freigeben
+              </Button>
+
               <Button size="sm" variant="outline" disabled={bulkBusy} onClick={bulkZip}>
                 <Archive className="w-4 h-4 mr-1" /> ZIP herunterladen
               </Button>
