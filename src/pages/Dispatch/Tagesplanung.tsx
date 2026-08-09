@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Badge } from '@/components/ui/badge';
 import { DELIVERY_TYPE_LABELS, TOUR_STATUS_LABELS, statusClass, readinessClass, READINESS_LABELS } from './constants';
 import { TourOrderPicker, type PickedItem, type PickedOrder } from '@/components/dispatch/TourOrderPicker';
+import { assertOrderReleased } from '@/lib/delivery-approval/api';
+import { useAuth } from '@/hooks/useAuth';
 
 const todayStr = () => format(new Date(), 'yyyy-MM-dd');
 
