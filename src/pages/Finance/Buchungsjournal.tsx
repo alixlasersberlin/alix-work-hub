@@ -82,7 +82,7 @@ export default function Buchungsjournal() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Journal-Nr.</TableHead><TableHead>Datum</TableHead><TableHead>Modul</TableHead>
+                <TableHead>Journal-Nr.</TableHead><TableHead>Datum</TableHead><TableHead>Land</TableHead><TableHead>Modul</TableHead>
                 <TableHead>Vorgang</TableHead><TableHead>Referenz</TableHead>
                 <TableHead className="text-right">Netto</TableHead><TableHead className="text-right">MwSt.</TableHead>
                 <TableHead className="text-right">Brutto</TableHead>
@@ -90,18 +90,20 @@ export default function Buchungsjournal() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? <TableRow><TableCell colSpan={11}>Lädt…</TableCell></TableRow>
-                : rows.length === 0 ? <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground">Keine Einträge</TableCell></TableRow>
+              {loading ? <TableRow><TableCell colSpan={12}>Lädt…</TableCell></TableRow>
+                : rows.length === 0 ? <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground">Keine Einträge</TableCell></TableRow>
                 : rows.map(r => (
                   <TableRow key={r.id}>
                     <TableCell className="font-mono text-xs">{r.journal_number}</TableCell>
                     <TableCell>{r.booking_date}</TableCell>
+                    <TableCell><Badge variant="secondary">{r.accounting_region || 'EU'}</Badge></TableCell>
                     <TableCell><Badge variant="outline">{r.source_module}</Badge></TableCell>
                     <TableCell>{r.vorgang}</TableCell>
                     <TableCell className="font-mono text-xs">{r.reference || r.order_number || r.invoice_number}</TableCell>
-                    <TableCell className="text-right">{fmt(r.amount_net, cur)}</TableCell>
-                    <TableCell className="text-right">{fmt(r.amount_vat, cur)}</TableCell>
-                    <TableCell className="text-right font-semibold">{fmt(r.amount_gross, cur)}</TableCell>
+                    <TableCell className="text-right">{fmt(r.amount_net, rowCur(r))}</TableCell>
+                    <TableCell className="text-right">{fmt(r.amount_vat, rowCur(r))}</TableCell>
+                    <TableCell className="text-right font-semibold">{fmt(r.amount_gross, rowCur(r))}</TableCell>
+
                     <TableCell className="font-mono text-xs">{r.account}</TableCell>
                     <TableCell className="font-mono text-xs">{r.contra_account}</TableCell>
                     <TableCell><Badge variant={r.status === 'aktiv' ? 'outline' : 'destructive'}>{r.status}</Badge></TableCell>
