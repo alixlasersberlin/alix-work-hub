@@ -176,7 +176,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   };
 
   const productionQuery = useQuery({
-    queryKey: qk.productionOrders.list({ isReclamation, atOnly }),
+    queryKey: [...qk.productionOrders.list({ isReclamation, atOnly }), tenantId],
     queryFn: loadProductionOrders,
     staleTime: STALE.short,
   });

@@ -64,7 +64,7 @@ export default function ProvisionUebersicht() {
     });
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tenantId]);
 
   const scan = async () => {
     setBusy(true);

@@ -202,7 +202,7 @@ export default function TicketsList() {
       setRows((full as TicketRow[]) || []);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [sourceSystem]);
 
 
 

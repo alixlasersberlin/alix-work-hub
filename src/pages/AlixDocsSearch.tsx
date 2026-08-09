@@ -186,7 +186,7 @@ export default function AlixDocsSearch() {
   useEffect(() => {
     supabase.from('alixdocs_categories').select('id, code, name').order('sort_order').then(({ data }) => setCats((data ?? []) as Cat[]));
   }, []);
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [catFilter, statusFilter, sourceFilter, dateFrom, dateTo]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [catFilter, statusFilter, sourceFilter, dateFrom, dateTo, tenantId]);
 
   const catMap = useMemo(() => Object.fromEntries(cats.map(c => [c.id, c])), [cats]);
 

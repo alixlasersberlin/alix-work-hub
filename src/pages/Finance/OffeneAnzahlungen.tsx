@@ -137,7 +137,7 @@ export default function OffeneAnzahlungen() {
     if (error) toast.error('Laden fehlgeschlagen: ' + error.message);
     setRows((data ?? []) as any);
     setLoading(false);
-  }, [region]);
+  }, [region, tenantId]);
 
   useEffect(() => { load(); }, [load]);
 
