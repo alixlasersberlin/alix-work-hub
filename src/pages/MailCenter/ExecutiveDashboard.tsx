@@ -120,7 +120,7 @@ export default function ExecutiveDashboard() {
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); /* eslint-disable-line */ }, [tenantId]);
 
   function exportCSV(rows: any[], filename: string) {
     if (!rows.length) return;
