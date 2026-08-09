@@ -993,6 +993,18 @@ export default function WiederkehrendeZahler() {
                                       >
                                         Bearbeiten
                                       </Button>
+                                      {((p.status ?? '').toLowerCase() !== 'active' || isLawyerProfile(p)) && (
+                                        <Button
+                                          size="sm"
+                                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                          disabled={!canWrite || opsBusy === p.id}
+                                          onClick={() => opsRateNeu(p)}
+                                          title="Auftrag reaktivieren, Label „Zahler“ setzen und zurückliegende Raten erzeugen"
+                                        >
+                                          {opsBusy === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1" />}
+                                          RATE NEU
+                                        </Button>
+                                      )}
                                       <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                           <Button size="sm" variant="secondary" disabled={!canWrite || opsBusy === p.id || stoppingId === p.id}>
