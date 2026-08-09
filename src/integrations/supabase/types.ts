@@ -47461,6 +47461,7 @@ export type Database = {
         }[]
       }
       alixdocs_can_manage_status: { Args: never; Returns: boolean }
+      alixdocs_doc_tenant_ok: { Args: { _doc_id: string }; Returns: boolean }
       alixdocs_fts_search: {
         Args: { _limit?: number; _query: string }
         Returns: {
@@ -47484,6 +47485,7 @@ export type Database = {
         }[]
       }
       alixdocs_soft_delete: { Args: { _doc_id: string }; Returns: undefined }
+      alixdocs2_doc_tenant_ok: { Args: { _doc_id: string }; Returns: boolean }
       alixdocs2_fts_search: {
         Args: { _limit?: number; _query: string }
         Returns: {
