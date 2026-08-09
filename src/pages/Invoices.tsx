@@ -2,6 +2,7 @@ import { TenantBadge } from '@/components/TenantBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { maskRevenueString } from '@/lib/revenue-mask';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
@@ -185,6 +186,8 @@ const ROWS_CACHE_TTL = 60_000;
 
 
 export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
+  const { tenantId } = useTenantFilter();
+
   const { roles } = useAuth();
   const { region, setRegion } = useAccountingRegion();
 
@@ -477,9 +480,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       }
       return { data: out, error: null };
     };
+    const withTenant = (q: any) => (tenantId ? q.eq('tenant_id', tenantId) : q);
     const [inv, rec, unp] = await Promise.all([
-      fetchAllPages(() => (supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false })),
-      fetchAllPages(() => (supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).eq('is_mietkauf', mietkaufOnly).order('invoice_date', { ascending: false })),
+      fetchAllPages(() => withTenant((supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly)).order('invoice_date', { ascending: false })),
+      fetchAllPages(() => withTenant((supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).eq('is_mietkauf', mietkaufOnly)).order('invoice_date', { ascending: false })),
       includeUnpaid && !mietkaufOnly
         ? fetchAllPages(() => (supabase.from('zoho_unpaid_invoices') as any)
             .select('id, created_at, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw')
@@ -694,7 +698,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     });
   };
 
-  useEffect(() => { fetchRows(); }, [region, mietkaufOnly, includeUnpaid]);
+  useEffect(() => { fetchRows(); }, [region, mietkaufOnly, includeUnpaid, tenantId]);
 
 
 

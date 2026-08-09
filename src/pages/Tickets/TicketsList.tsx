@@ -198,6 +198,8 @@ export default function TicketsList() {
     return () => { cancelled = true; };
   }, []);
 
+
+
   // Angebote je Vorgangsnummer laden (neuestes Angebot pro Vorgang)
   useEffect(() => {
     const caseNumbers = Array.from(new Set(rows.map(r => (r as any).case_number).filter(Boolean))) as string[];
