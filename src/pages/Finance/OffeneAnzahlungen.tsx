@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
@@ -104,6 +105,7 @@ const fmtMoney = (n: number, c = 'EUR') =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: c || 'EUR' }).format(Number(n) || 0);
 
 export default function OffeneAnzahlungen() {
+  const { tenantId } = useTenantFilter();
   const { canWrite } = useFinancePermissions();
   const { region } = useAccountingRegion();
   const [rows, setRows] = useState<Deposit[]>([]);

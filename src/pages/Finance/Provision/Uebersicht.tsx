@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import { DataCard } from '@/components/PageShell';
@@ -11,6 +12,7 @@ import { CommissionList } from '@/components/commission/CommissionList';
 import { useCommissionPermissions } from '@/hooks/useCommissionPermissions';
 
 export default function ProvisionUebersicht() {
+  const { tenantId } = useTenantFilter();
   const perms = useCommissionPermissions();
   const [busy, setBusy] = useState(false);
   const [kpi, setKpi] = useState({

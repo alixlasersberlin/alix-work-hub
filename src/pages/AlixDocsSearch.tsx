@@ -2,6 +2,7 @@ import { TenantBadge } from '@/components/TenantBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +39,7 @@ type Order = { id: string; order_number: string | null; customer_id: string | nu
 type Customer = { id: string; company_name: string | null; contact_name: string | null; external_customer_id: string | null; raw_data?: any };
 
 export default function AlixDocsSearch() {
+  const { tenantId } = useTenantFilter();
   const { roles } = useAuth();
   const canDelete = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin');
 

@@ -4,6 +4,7 @@ import { qk, STALE } from '@/lib/query-keys';
 
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -118,6 +119,7 @@ function statusClasses(status: string) {
 }
 
 export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {}) {
+  const { tenantId } = useTenantFilter();
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
