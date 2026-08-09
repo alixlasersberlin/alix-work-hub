@@ -68,10 +68,12 @@ export default function Angebotsanalyse() {
     setLoading(true);
     setError(null);
     let query = (supabase.from('offers') as any).select('*').order('offer_date', { ascending: false }).limit(5000);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
     if (range !== 'all') {
       const since = new Date(Date.now() - Number(range) * 86_400_000).toISOString().slice(0, 10);
       query = query.gte('offer_date', since);
     }
+
     const { data, error: err } = await query;
     if (err) setError(err.message);
     const list = (data ?? []) as OfferRow[];
