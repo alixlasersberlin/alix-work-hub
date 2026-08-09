@@ -186,6 +186,8 @@ const ROWS_CACHE_TTL = 60_000;
 
 
 export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
+  const { tenantId } = useTenantFilter();
+
   const { roles } = useAuth();
   const { region, setRegion } = useAccountingRegion();
 
