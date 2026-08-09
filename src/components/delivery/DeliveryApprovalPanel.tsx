@@ -18,6 +18,8 @@ import {
   type DeliveryApproval, type ApprovalEvent,
 } from '@/lib/delivery-approval/api';
 import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
+import { archiveApprovalPdf, mailApprovalPdf } from '@/lib/delivery-approval/archive';
+import { supabase } from '@/integrations/supabase/client';
 
 const fmt = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
