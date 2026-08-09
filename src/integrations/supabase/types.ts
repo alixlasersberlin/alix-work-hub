@@ -12813,6 +12813,7 @@ export type Database = {
           stage_code: string
           stage_day: number
           status: string
+          tenant_id: string | null
           updated_at: string
         }
         Insert: {
@@ -12854,6 +12855,7 @@ export type Database = {
           stage_code?: string
           stage_day?: number
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -12895,9 +12897,18 @@ export type Database = {
           stage_code?: string
           stage_day?: number
           status?: string
+          tenant_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "collect_cases_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       collect_credit_checks: {
         Row: {
@@ -47683,6 +47694,7 @@ export type Database = {
       }
       cmr_tenant_id: { Args: never; Returns: string }
       collect_bi: { Args: never; Returns: Json }
+      collect_case_tenant_ok: { Args: { _case_id: string }; Returns: boolean }
       collect_dashboard: { Args: never; Returns: Json }
       collect_dashboard_kpis: { Args: never; Returns: Json }
       collect_sync_cases: { Args: never; Returns: Json }
@@ -47717,6 +47729,7 @@ export type Database = {
       current_alix_identity_id: { Args: never; Returns: string }
       current_portal_customer_id: { Args: never; Returns: string }
       current_supplier_id: { Args: never; Returns: string }
+      customer_tenant_ok: { Args: { _customer_id: string }; Returns: boolean }
       customers_letters: {
         Args: { _source?: string }
         Returns: {
