@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { useTenantFilter } from "@/hooks/useTenantFilter";
 import { MessageSquare, Users, Send, Eye, Inbox as InboxIcon, Megaphone } from "lucide-react";
 
 type KPI = { label: string; value: number | string; icon: any; hint?: string };
@@ -8,11 +9,12 @@ type KPI = { label: string; value: number | string; icon: any; hint?: string };
 export default function AlixConnectDashboard() {
   const [kpis, setKpis] = useState<KPI[]>([]);
   const [loading, setLoading] = useState(true);
+  const { tenantId } = useTenantFilter();
 
   useEffect(() => {
     (async () => {
       // Eine Server-Abfrage statt sechs parallelen Count-Queries.
-      const { data } = await supabase.rpc("ac_dashboard_kpis" as any);
+      const { data } = await supabase.rpc("ac_dashboard_kpis" as any, { p_tenant_id: tenantId });
       const k = (data ?? {}) as Record<string, number>;
       setKpis([
         { label: "Nachrichten (7T)", value: Number(k.messages || 0), icon: MessageSquare },
@@ -24,7 +26,7 @@ export default function AlixConnectDashboard() {
       ]);
       setLoading(false);
     })();
-  }, []);
+  }, [tenantId]);
 
   return (
     <div className="h-full overflow-auto p-6 space-y-6">

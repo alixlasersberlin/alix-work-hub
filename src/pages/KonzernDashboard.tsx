@@ -31,18 +31,20 @@ export default function KonzernDashboard() {
           ]);
           orders = oc || 0; lager = lc || 0;
         }
+        const ticketQ = supabase.from('tickets').select('id', { count: 'exact', head: true }).neq('status', 'geschlossen');
+        const repairQ = supabase.from('repair_orders').select('id', { count: 'exact', head: true }).neq('repair_status', 'Abgeschlossen');
         const [{ count: tc }, { count: rc }] = await Promise.all([
-          supabase.from('tickets').select('id', { count: 'exact', head: true }).neq('status', 'geschlossen'),
-          supabase.from('repair_orders').select('id', { count: 'exact', head: true }).neq('repair_status', 'Abgeschlossen'),
+          src ? ticketQ.eq('source_system', src) : ticketQ,
+          repairQ.eq('tenant_id', t.id),
         ]);
-        // Tickets/Repairs ohne source_system-Mandantenmapping → nur Konzernsumme
-        tickets = src ? 0 : (tc || 0);
-        repairs = src ? 0 : (rc || 0);
+        tickets = tc || 0;
+        repairs = rc || 0;
         out.push({
           code: t.code, name: t.name, flag: t.flag_emoji || '🏢',
           orders, openTickets: tickets, openRepairs: repairs, lagerDevices: lager,
         });
       }
+
       setStats(out);
       setLoading(false);
     })();
@@ -81,6 +83,8 @@ export default function KonzernDashboard() {
                   <tr className="text-left">
                     <th className="py-2">Mandant</th>
                     <th className="py-2 text-right">Aufträge</th>
+                    <th className="py-2 text-right">Offene Tickets</th>
+                    <th className="py-2 text-right">Offene Reparaturen</th>
                     <th className="py-2 text-right">Lagergeräte</th>
                   </tr>
                 </thead>
@@ -89,9 +93,12 @@ export default function KonzernDashboard() {
                     <tr key={s.code} className="border-t border-border">
                       <td className="py-2"><span className="mr-2">{s.flag}</span>{s.name}</td>
                       <td className="py-2 text-right">{s.orders}</td>
+                      <td className="py-2 text-right">{s.openTickets}</td>
+                      <td className="py-2 text-right">{s.openRepairs}</td>
                       <td className="py-2 text-right">{s.lagerDevices}</td>
                     </tr>
                   ))}
+
                 </tbody>
               </table>
             </div>

@@ -47250,7 +47250,9 @@ export type Database = {
       }
     }
     Functions: {
-      ac_dashboard_kpis: { Args: never; Returns: Json }
+      ac_dashboard_kpis:
+        | { Args: never; Returns: Json }
+        | { Args: { p_tenant_id?: string }; Returns: Json }
       ac_is_channel_member: {
         Args: { _channel: string; _user: string }
         Returns: boolean
@@ -48333,7 +48335,9 @@ export type Database = {
         Returns: Json
       }
       ticket_sla_check_and_escalate: { Args: never; Returns: Json }
-      tickets_dashboard_counts: { Args: { _user_id: string }; Returns: Json }
+      tickets_dashboard_counts:
+        | { Args: { _user_id: string }; Returns: Json }
+        | { Args: { _source_system?: string; _user_id: string }; Returns: Json }
       user_accounting_regions: {
         Args: never
         Returns: Database["public"]["Enums"]["accounting_region"][]
