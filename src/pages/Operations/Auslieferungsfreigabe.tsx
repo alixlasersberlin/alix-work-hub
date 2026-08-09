@@ -236,10 +236,14 @@ export default function Auslieferungsfreigabe() {
         <ShieldCheck className="h-5 w-5 text-primary" />
         <h1 className="text-xl font-semibold">Auslieferungsfreigabe</h1>
         <div className="ml-auto flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => { setReqOpen(true); void loadRequestCandidates(''); }}>
+            <PlusCircle className="h-4 w-4 mr-1" />Freigabe anfordern
+          </Button>
           <Button variant="outline" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1" />Aktualisieren</Button>
           <Button variant="outline" size="sm" onClick={exportCsv}><Download className="h-4 w-4 mr-1" />Excel/CSV</Button>
           <Button variant="outline" size="sm" onClick={exportPdf}><FileText className="h-4 w-4 mr-1" />PDF</Button>
         </div>
+
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
