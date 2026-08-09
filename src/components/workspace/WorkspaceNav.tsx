@@ -52,7 +52,7 @@ export default function WorkspaceNav({ collapsed }: { collapsed?: boolean }) {
   if (!current) return null;
 
   const renderLink = (item: WorkspaceNavEntry, indent: boolean) => {
-    const Icon = iconFor(item.icon);
+    const Icon = item.IconComp || iconFor(item.icon);
     const active = isActive(item.path);
     return (
       <Link
