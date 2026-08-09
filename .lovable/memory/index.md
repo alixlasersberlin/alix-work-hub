@@ -10,6 +10,7 @@
 - Production-Bestellungen (inkl. Reklamationen) müssen von Super Admin/Admin genehmigt werden, bevor PDF gesendet/heruntergeladen werden kann und bevor Lieferanten sie sehen.
 - Alix Austria (`source_system='zoho_eu_2'`): UI-Suffix "-AT" für Kunden- und Auftragsnummer; bei Artikeln (item_name+sku) wird "-AT" direkt beim Sync in die DB geschrieben.
 - **Rolle Admin = Rolle Super Admin**: `has_role('Super Admin')` (DB & Frontend) liefert für Admin-Nutzer ebenfalls true. Damit haben Admins volle Rechte inkl. Löschen, OPERATIONS-Menü, Wartungsmodus, Order-Approval, Alix Sign Pro, Facsimile-Sign, Finance-Sync.
+- Datensichtbarkeit läuft über **Mandanten-Datenfilter (Data Scope + RLS)**, nicht über Rollen. Details: mem://features/tenant-data-scope
 - Neue Rolle **QM** existiert ausschließlich für das Bug & CAPA Modul (`/bug-capa`).
 - Versionierung: `APP_VERSION` in `src/components/AppLayout.tsx` bei jedem Publish um 0.01 erhöhen (Start 5.0 → 5.01 → 5.02 …). Details: [App Versioning](mem://features/app-versioning)
 
@@ -32,6 +33,7 @@
 - [VIP Status](mem://features/vip-status) — Goldene Krone für bevorzugte Kunden/Aufträge, automatisch Position 1 in allen Listen
 - [Einkauf AT](mem://features/at-purchase) — Tab in -AT-Aufträgen für Einkaufspreis, sichtbar nur Super Admin & Rolle Österreich
 - [Quellsystem-Labels](mem://design/source-system-labels) — zoho_eu_1/2 als „Alix Deutschland"🇩🇪 / „Alix Austria"🇦🇹 anzeigen
+- [Mandanten-Datenfilter](mem://features/tenant-data-scope) — user_tenant_access + restriktive RLS-Policies via tenant_scope_ok(source_system); Rolle Österreich = nur noch Mandant AT
 - [Rolle Österreich Sichtbarkeit](mem://auth/oesterreich-visibility) — AT-Only-Lesezugriff auf operative Module via RLS-Policies + useAtOnly() Hook
 - [Bug & CAPA Modul](mem://features/bug-capa) — QM-Modul ISO 13485 unter /bug-capa, Rolle "QM", neue Tabellen bugs/capas/audit_findings/capa_actions
 - [Alix Flex](mem://features/alix-flex) — Periodische Rechnungs-Stammdaten aus Zoho unter /finance/alix-flex, Tabelle zoho_recurring_profiles, Edge Function sync-zoho-recurring-profiles

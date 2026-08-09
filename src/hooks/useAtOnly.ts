@@ -1,23 +1,25 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useTenant } from '@/contexts/TenantContext';
 
 /**
- * Liefert true, sobald der aktuelle Nutzer die Rolle „Österreich" besitzt.
- * In diesem Fall werden alle Listen/Abfragen in der UI strikt auf -AT
- * (source_system='zoho_eu_2') eingeschränkt – unabhängig davon, ob der
- * Nutzer zusätzlich Admin/Super Admin ist.
+ * Data Scope statt Rolle:
+ * Liefert true, wenn der Datenbereich des Nutzers ausschließlich Österreich ist –
+ * entweder über die Mandanten-Zuordnung (user_tenant_access) oder über die
+ * Altrolle „Österreich“. In diesem Fall werden Listen in der UI zusätzlich auf
+ * `source_system='zoho_eu_2'` eingeschränkt (die DB erzwingt es ohnehin via RLS).
  */
 export function useAtOnly(): boolean {
   const { hasRole } = useAuth();
-  return hasRole('Österreich');
+  const { allowedTenants, loading } = useTenant();
+  if (hasRole('Österreich')) return true;
+  if (loading) return false;
+  return allowedTenants.length === 1 && allowedTenants[0]?.code === 'AT';
 }
 
 /**
- * True, wenn „Österreich" die einzige Rolle des Nutzers ist.
- * Dann darf ausschließlich auf AT-Module zugegriffen werden – die Rolle
- * selbst eröffnet keinerlei weitere Zugriffe.
+ * @deprecated Rollenbasierte AT-Sperre wurde durch den Mandanten-Datenfilter
+ * (Data Scope + RLS) ersetzt. Gibt immer false zurück.
  */
 export function useAtRoleOnly(): boolean {
-  const { roles } = useAuth();
-  return roles.length > 0 && roles.every((r) => r === 'Österreich');
+  return false;
 }
-
