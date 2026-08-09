@@ -108,6 +108,48 @@ export default function ProvisionZuordnung() {
     load();
   };
 
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const saveBulkAssignment = async () => {
+    if (!bulkForm.employee_id) return toast.error('Bitte Mitarbeiter wählen');
+    const share = Number(bulkForm.share_percent);
+    if (!(share >= 0 && share <= 100)) return toast.error('Anteil muss zwischen 0 und 100 % liegen');
+    const ids = [...selected];
+    if (ids.length === 0) return toast.error('Keine Aufträge markiert');
+    setBulkBusy(true);
+    const rows = ids.map((order_id) => ({
+      order_id,
+      employee_id: bulkForm.employee_id,
+      employee_role: bulkForm.employee_role as any,
+      share_percent: share,
+      rule_id: bulkForm.rule_id || null,
+      note: bulkForm.note || null,
+      source: 'manual',
+    }));
+    const { error } = await supabase.from('commission_assignments').insert(rows);
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    await supabase.from('commission_audit_logs').insert(
+      ids.map((order_id) => ({
+        action: 'Mitarbeiter zugeordnet (Sammelzuordnung)', object_type: 'assignment', order_id,
+        employee_id: bulkForm.employee_id, new_value: bulkForm as any,
+      })),
+    );
+    toast.success(`${ids.length} Aufträge zugeordnet`);
+    setBulkOpen(false);
+    setSelected(new Set());
+    setBulkForm({ employee_id: '', employee_role: 'verkaeufer', share_percent: '100', rule_id: '', note: '' });
+    load();
+  };
+
+
+
   const saveEmployee = async () => {
     const payload = { ...empForm, employee_id: empOpen.id };
     const existing = empSettings.find((e) => e.employee_id === empOpen.id);
