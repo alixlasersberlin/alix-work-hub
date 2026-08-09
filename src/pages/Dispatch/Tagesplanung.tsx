@@ -243,6 +243,10 @@ export default function DispatchTagesplanung() {
 
 
   async function assignToTour(appointmentId: string, tourId: string) {
+    const { data: appt } = await supabase
+      .from('delivery_appointments').select('order_id').eq('id', appointmentId).maybeSingle();
+    const orderId = (appt as any)?.order_id as string | undefined;
+    if (orderId && !(await guardRelease(orderId, 'Tourenzuordnung'))) return;
     const existing = (stops as any[]).filter((s) => s.tour_id === tourId);
     const { error } = await supabase.from('delivery_tour_stops').insert({
       tour_id: tourId,
