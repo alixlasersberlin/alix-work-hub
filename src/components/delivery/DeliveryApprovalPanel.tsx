@@ -10,13 +10,14 @@ import { Input } from '@/components/ui/input';
 import SignaturePad from '@/components/finance/SignaturePad';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Lock, ShieldCheck, History, AlertTriangle, CheckCircle2, Unlock } from 'lucide-react';
+import { Lock, ShieldCheck, History, AlertTriangle, CheckCircle2, Unlock, FileDown } from 'lucide-react';
 import { STAGES, STATUS_UI, OVERALL_UI, type ApprovalStage } from '@/lib/delivery-approval/config';
 import {
   ensureApproval, fetchEvents, saveChecks, approveStage, unlockApproval,
   stageChecks, stageStatus, isStageUnlocked, missingRequiredChecks, missingStages, slaLevel,
   type DeliveryApproval, type ApprovalEvent,
 } from '@/lib/delivery-approval/api';
+import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
 
 const fmt = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
@@ -218,8 +219,21 @@ export default function DeliveryApprovalPanel({ orderId, orderNumber }: { orderI
           {approval.released_at && (
             <span className="text-xs text-muted-foreground">freigegeben am {fmt(approval.released_at)}</span>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto"
+            onClick={() => {
+              try {
+                downloadDeliveryApprovalPdf({ approval, events, orderNumber });
+                toast.success('Freigabeprotokoll erstellt');
+              } catch (e: any) { toast.error(e.message ?? 'PDF konnte nicht erstellt werden'); }
+            }}
+          >
+            <FileDown className="h-4 w-4 mr-1" />Protokoll (PDF)
+          </Button>
           {hasRole('Super Admin') && missing.length > 0 && (
-            <Button size="sm" variant="outline" className="ml-auto" onClick={() => setUnlockOpen(true)}>
+            <Button size="sm" variant="outline" onClick={() => setUnlockOpen(true)}>
               <Unlock className="h-4 w-4 mr-1" />Entsperren
             </Button>
           )}
