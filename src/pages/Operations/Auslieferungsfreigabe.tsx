@@ -314,11 +314,55 @@ export default function Auslieferungsfreigabe() {
                 >
                   <FileDown className="h-4 w-4" />
                 </Button>
-              </Link>
+              </div>
             );
           })}
         </Card>
       )}
+
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Sammelfreigabe ({selected.size} Aufträge)</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground">
+              Alle Pflichtprüfpunkte der gewählten Stufe werden bestätigt und revisionssicher protokolliert.
+              Aufträge ohne abgeschlossene Vorstufe werden übersprungen.
+            </div>
+            <NativeSelect value={bulkStage} onChange={(e) => setBulkStage(e.target.value as ApprovalStage)}>
+              {STAGES.map((s) => <option key={s.stage} value={s.stage}>{s.order}. {s.title}</option>)}
+            </NativeSelect>
+            <Input value={bulkComment} onChange={(e) => setBulkComment(e.target.value)} placeholder="Kommentar (optional)" />
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">Digitale Unterschrift *</div>
+              <SignaturePad onChange={setBulkSig} height={120} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>Abbrechen</Button>
+            <Button
+              disabled={bulkBusy || !bulkSig || !hasAnyRole(STAGES.find((s) => s.stage === bulkStage)!.roles)}
+              onClick={async () => {
+                setBulkBusy(true);
+                try {
+                  const list = rows.filter((r) => selected.has(r.id));
+                  const res = await bulkApproveStage({
+                    approvals: list,
+                    stage: bulkStage,
+                    comment: bulkComment,
+                    signature: bulkSig!,
+                    userId: user?.id ?? null,
+                    userName: profile?.full_name || user?.email || 'Unbekannt',
+                  });
+                  toast.success(`${res.ok} freigegeben${res.skipped.length ? ` · ${res.skipped.length} übersprungen` : ''}`);
+                  setBulkOpen(false); setSelected(new Set()); setBulkSig(null); setBulkComment('');
+                  void load();
+                } catch (e: any) { toast.error(e?.message ?? 'Sammelfreigabe fehlgeschlagen'); }
+                finally { setBulkBusy(false); }
+              }}
+            >Freigeben</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
