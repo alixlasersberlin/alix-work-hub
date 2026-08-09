@@ -376,6 +376,8 @@ export default function Auslieferungsfreigabe() {
                 <Line type="monotone" dataKey="accounting" name="Buchhaltung" stroke="hsl(var(--chart-2, 199 89% 48%))" strokeWidth={2} dot={false} connectNulls />
                 <Line type="monotone" dataKey="dispatch" name="Tourenplanung" stroke="hsl(var(--chart-3, 142 71% 45%))" strokeWidth={2} dot={false} connectNulls />
                 <Line type="monotone" dataKey="total" name="Gesamt (Anlage → Freigabe)" stroke="hsl(var(--muted-foreground))" strokeWidth={2} strokeDasharray="4 3" dot={false} connectNulls />
+                <ReferenceLine y={cfg.targets.total} stroke="hsl(var(--destructive))" strokeDasharray="6 4"
+                  label={{ value: `Ziel gesamt ${cfg.targets.total} h`, position: 'insideTopRight', fill: 'hsl(var(--destructive))', fontSize: 11 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
