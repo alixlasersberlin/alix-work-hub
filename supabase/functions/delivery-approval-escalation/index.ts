@@ -13,7 +13,6 @@ const STAGE_TITLE: Record<Stage, string> = {
   dispatch: "Tourenplanung",
 };
 
-// Level 1 (24h): zuständige Abteilung, Level 2 (48h): Leitung, Level 3 (72h): Operations
 const STAGE_ROLES: Record<Stage, string[]> = {
   warehouse: ["Freigeber Bereitstellung", "Bereitstellung", "Order"],
   accounting: ["Freigeber Buchhaltung", "Buchhaltung Admin", "Buchhaltung EU", "Buchhaltung CH", "Finance"],
@@ -28,47 +27,143 @@ const OPS_ROLES = ["Admin", "Super Admin"];
 
 const FROM = "Alix Lasers ® <service@alixwork.de>";
 
-/** Erinnerungs-E-Mail an die säumigen Freigeber. */
+interface Settings {
+  overdueHours: number;
+  l1: number; l2: number; l3: number;
+  businessDaysOnly: boolean;
+  holidays: string[];
+  oneClickApproval: boolean;
+}
+
+const DEFAULTS: Settings = {
+  overdueHours: 12, l1: 24, l2: 48, l3: 72,
+  businessDaysOnly: true, holidays: [], oneClickApproval: true,
+};
+
+async function loadSettings(supabase: any): Promise<Settings> {
+  try {
+    const { data } = await supabase.from("app_settings").select("value").eq("key", "delivery_approval_sla").maybeSingle();
+    let raw: any = data?.value ?? null;
+    if (typeof raw === "string") { try { raw = JSON.parse(raw); } catch { raw = null; } }
+    return { ...DEFAULTS, ...(raw ?? {}) };
+  } catch {
+    return DEFAULTS;
+  }
+}
+
+function isoDay(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+
+/** Verstrichene Stunden – optional nur Werktage (Mo–Fr, ohne Feiertage). */
+function elapsedHours(since: number, now: number, s: Settings): number {
+  const total = (now - since) / 3_600_000;
+  if (!s.businessDaysOnly || total <= 0) return Math.max(0, total);
+  const holidays = new Set(s.holidays ?? []);
+  let hours = 0;
+  let cursor = since;
+  while (cursor < now) {
+    const d = new Date(cursor);
+    const dayEnd = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1);
+    const sliceEnd = Math.min(dayEnd, now);
+    const dow = d.getUTCDay();
+    const working = dow !== 0 && dow !== 6 && !holidays.has(isoDay(d));
+    if (working) hours += (sliceEnd - cursor) / 3_600_000;
+    cursor = sliceEnd;
+  }
+  return hours;
+}
+
+async function createToken(
+  supabase: any,
+  p: { approvalId: string; orderId: string; stage: Stage; userId: string | null; userName: string | null },
+): Promise<string | null> {
+  try {
+    const token = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+    const { error } = await supabase.from("delivery_approval_tokens").insert({
+      approval_id: p.approvalId,
+      order_id: p.orderId,
+      stage: p.stage,
+      user_id: p.userId,
+      user_name: p.userName,
+      token,
+    });
+    if (error) { console.error("token insert", error.message); return null; }
+    return token;
+  } catch (e) {
+    console.error("token", e);
+    return null;
+  }
+}
+
+/** Erinnerungs-E-Mail (personalisiert, optional mit Ein-Klick-Freigabe-Link). */
 async function sendReminderMails(
   supabase: any,
   userIds: string[],
-  params: { level: number; stageTitle: string; orderNumber: string; hours: number; orderId: string; reminderOnly?: boolean },
+  params: {
+    level: number; stage: Stage; orderNumber: string; hours: number;
+    orderId: string; approvalId: string; reminderOnly?: boolean; settings: Settings; allowOneClick: boolean;
+  },
 ) {
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key || !userIds.length) return 0;
   const { data: profiles } = await supabase
     .from("user_profiles")
-    .select("email, full_name")
+    .select("id, email, full_name")
     .in("id", userIds)
     .eq("is_active", true);
-  const to = [...new Set(((profiles ?? []) as any[]).map((p) => p.email).filter((e: string | null) => !!e && /@/.test(e)))];
-  if (!to.length) return 0;
 
-  const html = `
-    <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111">
-      <p>Guten Tag,</p>
-      <p>die Freigabe <strong>${params.stageTitle}</strong> für <strong>Auftrag ${params.orderNumber}</strong>
-      ist seit <strong>${Math.floor(params.hours)} Stunden</strong> offen${
-        params.reminderOnly ? " und damit <strong>überfällig</strong>" : ` (Eskalationsstufe ${params.level})`
-      }.</p>
-      <p>Bitte prüfen und erteilen Sie die Freigabe zeitnah, damit die Auslieferung nicht verzögert wird.</p>
-      <p>Mit freundlichen Grüßen<br/>Alix Lasers ®</p>
-    </div>`;
+  const recipients = ((profiles ?? []) as any[]).filter((p) => p.email && /@/.test(p.email));
+  if (!recipients.length) return 0;
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: FROM,
-      to,
-      subject: params.reminderOnly
-        ? `Erinnerung: Freigabe ${params.stageTitle} überfällig – Auftrag ${params.orderNumber}`
-        : `Erinnerung Freigabe ${params.stageTitle} – Auftrag ${params.orderNumber} (Stufe ${params.level})`,
-      html,
-    }),
-  });
-  if (!res.ok) console.error("reminder mail failed", await res.text().catch(() => ""));
-  return to.length;
+  const stageTitle = STAGE_TITLE[params.stage];
+  const base = Deno.env.get("SUPABASE_URL");
+  let count = 0;
+
+  for (const p of recipients) {
+    let linkBlock = "";
+    if (params.allowOneClick && params.settings.oneClickApproval && base) {
+      const token = await createToken(supabase, {
+        approvalId: params.approvalId, orderId: params.orderId, stage: params.stage,
+        userId: p.id, userName: p.full_name ?? p.email,
+      });
+      if (token) {
+        const url = `${base}/functions/v1/delivery-approval-approve?token=${token}`;
+        linkBlock = `<p style="margin:24px 0">
+          <a href="${url}" style="background:#d4af37;color:#111;padding:12px 22px;border-radius:8px;
+          text-decoration:none;font-weight:bold;display:inline-block">Jetzt freigeben (1 Klick)</a></p>
+          <p style="font-size:12px;color:#666">Der Link ist persönlich und 14 Tage gültig.</p>`;
+      }
+    }
+
+    const html = `
+      <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111">
+        <p>Guten Tag${p.full_name ? ` ${p.full_name}` : ""},</p>
+        <p>die Freigabe <strong>${stageTitle}</strong> für <strong>Auftrag ${params.orderNumber}</strong>
+        ist seit <strong>${Math.floor(params.hours)} Arbeitsstunden</strong> offen${
+          params.reminderOnly ? " und damit <strong>überfällig</strong>" : ` (Eskalationsstufe ${params.level})`
+        }.</p>
+        <p>Bitte prüfen und erteilen Sie die Freigabe zeitnah, damit die Auslieferung nicht verzögert wird.</p>
+        ${linkBlock}
+        <p>Mit freundlichen Grüßen<br/>Alix Lasers ®</p>
+      </div>`;
+
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: FROM,
+        to: [p.email],
+        subject: params.reminderOnly
+          ? `Erinnerung: Freigabe ${stageTitle} überfällig – Auftrag ${params.orderNumber}`
+          : `Erinnerung Freigabe ${stageTitle} – Auftrag ${params.orderNumber} (Stufe ${params.level})`,
+        html,
+      }),
+    });
+    if (!res.ok) console.error("reminder mail failed", await res.text().catch(() => ""));
+    else count++;
+  }
+  return count;
 }
 
 /** Nutzer-IDs zu Rollennamen auflösen. */
@@ -80,9 +175,6 @@ async function usersForRoles(supabase: any, roles: string[]): Promise<string[]> 
   return [...new Set(((ur ?? []) as any[]).map((r) => r.user_id))].filter(Boolean) as string[];
 }
 
-/** Fälligkeitsgrenze je Stufe (Stunden), danach gilt die Freigabe als überfällig. */
-const OVERDUE_HOURS = 12;
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -92,6 +184,8 @@ Deno.serve(async (req) => {
   );
 
   try {
+    const settings = await loadSettings(supabase);
+
     const { data: approvals, error } = await supabase
       .from("delivery_approvals")
       .select("id, order_id, warehouse_status, accounting_status, dispatch_status, overall_status, created_at, updated_at")
@@ -107,12 +201,10 @@ Deno.serve(async (req) => {
     let reminders = 0;
 
     for (const a of approvals ?? []) {
-      // Aktive Stufe = erste nicht genehmigte Stufe (sequentiell)
       const order: Stage[] = ["warehouse", "accounting", "dispatch"];
       const stage = order.find((s) => (a as any)[`${s}_status`] !== "approved");
       if (!stage) continue;
 
-      // Wartezeit ab Erstellung bzw. Freigabe der Vorstufe
       const idx = order.indexOf(stage);
       let since = new Date(a.created_at).getTime();
       if (idx > 0) {
@@ -124,7 +216,7 @@ Deno.serve(async (req) => {
         const prevAt = prev ? (prev as any)[`${order[idx - 1]}_at`] : null;
         if (prevAt) since = new Date(prevAt).getTime();
       }
-      const hours = (now - since) / 3_600_000;
+      const hours = elapsedHours(since, now, settings);
 
       const { data: ordEarly } = await supabase
         .from("orders")
@@ -133,9 +225,9 @@ Deno.serve(async (req) => {
         .maybeSingle();
       const orderNum = (ordEarly as any)?.order_number ?? a.order_id.slice(0, 8);
 
-      // --- Erinnerung: sobald die Stufe überfällig ist, danach alle 12 Stunden erneut ---
-      if (hours >= OVERDUE_HOURS) {
-        const bucket = Math.floor(hours / OVERDUE_HOURS);
+      // --- Erinnerung: sobald die Stufe überfällig ist, danach zyklisch erneut ---
+      if (hours >= settings.overdueHours) {
+        const bucket = Math.floor(hours / settings.overdueHours);
         const remMarker = `reminder:${stage}:B${bucket}`;
         const { data: remExisting } = await supabase
           .from("delivery_approval_events")
@@ -158,8 +250,9 @@ Deno.serve(async (req) => {
             );
             try {
               mails += await sendReminderMails(supabase, remIds, {
-                level: 0, stageTitle: STAGE_TITLE[stage], orderNumber: String(orderNum),
-                hours, orderId: a.order_id, reminderOnly: true,
+                level: 0, stage, orderNumber: String(orderNum), hours,
+                orderId: a.order_id, approvalId: a.id, reminderOnly: true,
+                settings, allowOneClick: true,
               });
             } catch (e) { console.error("overdue reminder mail", e); }
           }
@@ -177,12 +270,11 @@ Deno.serve(async (req) => {
       }
 
       let level = 0;
-      if (hours >= 72) level = 3;
-      else if (hours >= 48) level = 2;
-      else if (hours >= 24) level = 1;
+      if (hours >= settings.l3) level = 3;
+      else if (hours >= settings.l2) level = 2;
+      else if (hours >= settings.l1) level = 1;
       if (!level) continue;
 
-      // Doppelte Eskalation pro Stufe/Level vermeiden
       const marker = `escalation:${stage}:L${level}`;
       const { data: existing } = await supabase
         .from("delivery_approval_events")
@@ -195,15 +287,13 @@ Deno.serve(async (req) => {
       const roles = level === 1 ? STAGE_ROLES[stage] : level === 2 ? LEAD_ROLES[stage] : OPS_ROLES;
       const ids = await usersForRoles(supabase, roles);
 
-      const num = orderNum;
-
       if (ids.length) {
         await supabase.from("app_notifications").insert(
           ids.map((id: string) => ({
             user_id: id,
             category: "operations",
             title: `Eskalation Stufe ${level}: ${STAGE_TITLE[stage]}`,
-            message: `Auftrag ${num} wartet seit ${Math.floor(hours)} Stunden auf die Freigabe ${STAGE_TITLE[stage]}.`,
+            message: `Auftrag ${orderNum} wartet seit ${Math.floor(hours)} Stunden auf die Freigabe ${STAGE_TITLE[stage]}.`,
             priority: level >= 2 ? "urgent" : "high",
             action_url: `/auftraege/${a.order_id}?tab=freigaben`,
           })),
@@ -211,7 +301,9 @@ Deno.serve(async (req) => {
         sent += ids.length;
         try {
           mails += await sendReminderMails(supabase, ids as string[], {
-            level, stageTitle: STAGE_TITLE[stage], orderNumber: String(num), hours, orderId: a.order_id,
+            level, stage, orderNumber: String(orderNum), hours,
+            orderId: a.order_id, approvalId: a.id, settings,
+            allowOneClick: level === 1,
           });
         } catch (e) { console.error("reminder mail", e); }
       }
