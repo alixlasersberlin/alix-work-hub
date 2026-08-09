@@ -83,6 +83,8 @@ export default function KonzernDashboard() {
                   <tr className="text-left">
                     <th className="py-2">Mandant</th>
                     <th className="py-2 text-right">Aufträge</th>
+                    <th className="py-2 text-right">Offene Tickets</th>
+                    <th className="py-2 text-right">Offene Reparaturen</th>
                     <th className="py-2 text-right">Lagergeräte</th>
                   </tr>
                 </thead>
@@ -91,9 +93,12 @@ export default function KonzernDashboard() {
                     <tr key={s.code} className="border-t border-border">
                       <td className="py-2"><span className="mr-2">{s.flag}</span>{s.name}</td>
                       <td className="py-2 text-right">{s.orders}</td>
+                      <td className="py-2 text-right">{s.openTickets}</td>
+                      <td className="py-2 text-right">{s.openRepairs}</td>
                       <td className="py-2 text-right">{s.lagerDevices}</td>
                     </tr>
                   ))}
+
                 </tbody>
               </table>
             </div>
