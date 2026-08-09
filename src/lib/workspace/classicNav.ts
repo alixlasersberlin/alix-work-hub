@@ -33,7 +33,7 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
   ],
   fertigung: [
     'DASHBOARDS',
-    'OPERATIONS',
+    'OPERATIONS › PRODUKTION & BESCHAFFUNG',
     'LAGER & WERKSTATT',
     'ALIXDOCS',
     'TEAMKALENDER',
@@ -110,16 +110,26 @@ export function classicNavForWorkspace(
     } as WorkspaceNavEntry);
   };
 
-  for (const groupLabel of groups) {
-    const group = navItems.find(g => g.label === groupLabel);
+  for (const groupRef of groups) {
+    // Unterstützt "GRUPPE" und "GRUPPE › UNTERGRUPPE"
+    const [rootLabel, subLabel] = groupRef.split('›').map(s => s.trim());
+    const root = navItems.find(g => g.label === rootLabel);
+    if (!root) continue;
+    if (!allowed(root.roles, userRoles, isSuper)) continue;
+
+    const group = subLabel
+      ? (root.children || []).find(c => c.label === subLabel)
+      : root;
     if (!group) continue;
     if (!allowed(group.roles, userRoles, isSuper)) continue;
 
+    const groupLabel = subLabel || rootLabel;
     const children = group.children || [];
     if (children.length === 0) {
       push(group, groupLabel);
       continue;
     }
+
 
     for (const child of children) {
       if (!allowed(child.roles, userRoles, isSuper)) continue;
