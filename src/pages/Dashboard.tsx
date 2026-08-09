@@ -226,8 +226,13 @@ export default function Dashboard() {
             : supabase.from('route_plans').select('id, planned_date, planning_status, assigned_employee, priority').or('planning_status.eq.offen,planning_status.eq.geplant,planning_status.eq.in Bearbeitung').order('planned_date', { ascending: true }).limit(7))
         : Promise.resolve({ data: [] as any[] }),
       canSeeFinance
-        ? supabase.from('finance_records').select('id, payment_status, invoice_status, due_date, amount_due, amount_paid, currency').or('payment_status.eq.offen,payment_status.eq.teilweise bezahlt,payment_status.eq.überfällig').order('due_date', { ascending: true }).limit(7)
+        ? (() => {
+            let q = supabase.from('finance_records').select('id, payment_status, invoice_status, due_date, amount_due, amount_paid, currency').or('payment_status.eq.offen,payment_status.eq.teilweise bezahlt,payment_status.eq.überfällig');
+            if (tenantSelected && tenant?.id) q = q.eq('tenant_id', tenant.id);
+            return q.order('due_date', { ascending: true }).limit(7);
+          })()
         : Promise.resolve({ data: [] as any[] }),
+
       isAdmin
         ? supabase
             .from('login_sessions')
@@ -274,7 +279,11 @@ export default function Dashboard() {
             : supabase.from('orders').select('created_at').gte('created_at', since).limit(1000))
         : Promise.resolve({ data: [] as any[] }),
       canSeeFinance
-        ? supabase.from('finance_records').select('created_at').gte('created_at', since).limit(1000)
+        ? (() => {
+            let q = supabase.from('finance_records').select('created_at').gte('created_at', since);
+            if (tenantSelected && tenant?.id) q = q.eq('tenant_id', tenant.id);
+            return q.limit(1000);
+          })()
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
