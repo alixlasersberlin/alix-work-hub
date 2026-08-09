@@ -766,6 +766,10 @@ export default function WiederkehrendeZahler() {
               {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
               Jetzt synchronisieren
             </Button>
+            <Button onClick={runPrenotifications} disabled={prenotifBusy} size="sm" variant="outline" title="Sendet die Vorankündigung an alle Kunden mit Fälligkeit in 5 Tagen">
+              {prenotifBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              Vorankündigung (5 Tage)
+            </Button>
           </div>
         }
 
