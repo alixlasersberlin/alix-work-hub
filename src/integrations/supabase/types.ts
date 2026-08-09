@@ -20918,6 +20918,7 @@ export type Database = {
           source: string
           start_at: string
           status: string
+          tenant_id: string | null
           ticket_id: string | null
           timezone: string
           title: string
@@ -20964,6 +20965,7 @@ export type Database = {
           source?: string
           start_at: string
           status?: string
+          tenant_id?: string | null
           ticket_id?: string | null
           timezone?: string
           title: string
@@ -21010,6 +21012,7 @@ export type Database = {
           source?: string
           start_at?: string
           status?: string
+          tenant_id?: string | null
           ticket_id?: string | null
           timezone?: string
           title?: string
@@ -21079,6 +21082,13 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "esc_resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "esc_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
           {
@@ -47803,6 +47813,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      esc_event_tenant_ok: { Args: { _event_id: string }; Returns: boolean }
       esc_generate_token: { Args: never; Returns: string }
       esc_is_admin: { Args: never; Returns: boolean }
       esc_is_department_lead: {
