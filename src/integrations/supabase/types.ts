@@ -48213,6 +48213,8 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      repair_quote_tenant_ok: { Args: { _quote_id: string }; Returns: boolean }
+      repair_tenant_ok: { Args: { _repair_order_id: string }; Returns: boolean }
       requires_reauth: { Args: never; Returns: boolean }
       resolve_frei_bestellung_assignment: {
         Args: { _order_id: string }
