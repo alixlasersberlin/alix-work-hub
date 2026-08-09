@@ -204,7 +204,7 @@ export const navItems: NavItem[] = [
 
   {
     path: '/verkauf', label: 'VERKAUF', icon: TrendingUp,
-    roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Bestellwesen', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'],
+    roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Finanzierungen', 'FACTORY INVOICE', 'Lieferant', 'Bestellwesen', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG', 'Katalog', 'Katalog Preise', 'Vertriebsleitung'],
     children: [
       {
         path: '/katalog', label: 'KATALOG', icon: BookOpen,
