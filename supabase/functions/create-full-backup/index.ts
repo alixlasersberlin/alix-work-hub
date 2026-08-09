@@ -821,7 +821,7 @@ async function processBackupStep(params: {
       counts: state.counts,
       storage_file_count: state.storageFileCount,
       download_url: null,
-      expires_in_seconds: expiresIn,
+      expires_in_seconds: null,
       email_sent: false,
       notify_email: notifyEmail,
       hetzner_sync: { queued: true },
