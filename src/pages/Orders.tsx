@@ -1225,6 +1225,8 @@ export default function Orders({ deliveredOnly = false }: { deliveredOnly?: bool
                             <td key={colId} className="px-4 py-3 font-medium text-foreground">
                               <span className="inline-flex items-center gap-2 flex-wrap">
                                 {isOrderVip(o) && <VipBadge size="sm" iconOnly />}
+                                <ReleaseStatusDot status={releaseStatusMap[o.id]} />
+
                                 {o._displayNumber || o.order_number}
                                 {o.imported_via_reconcile_at && (
                                   <span
