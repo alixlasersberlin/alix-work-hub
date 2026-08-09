@@ -47482,6 +47482,14 @@ export type Database = {
           title: string
         }[]
       }
+      dispatch_sync_all_appointments_to_calendar: {
+        Args: never
+        Returns: number
+      }
+      dispatch_sync_appointment_to_calendar: {
+        Args: { p_appointment_id: string }
+        Returns: string
+      }
       dl_upsert: {
         Args: {
           _customer_id: string
