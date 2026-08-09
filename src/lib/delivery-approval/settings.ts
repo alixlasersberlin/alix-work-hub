@@ -18,6 +18,20 @@ export interface ApprovalSettings {
   oneClickApproval: boolean;
   /** KPI-Zielwerte je Stufe (Ø Stunden bis Freigabe). */
   targets: Record<ApprovalStage | 'total', number>;
+  /** Vertretungsregelung: Abwesenheiten mit Vertreter. */
+  absences: Absence[];
+  /** Monatsreport per E-Mail an die Leitung (1. des Monats). */
+  monthlyReport: { enabled: boolean; recipients: string[] };
+}
+
+export interface Absence {
+  /** E-Mail des abwesenden Freigebers. */
+  email: string;
+  /** E-Mail des Vertreters, der stattdessen benachrichtigt wird. */
+  deputyEmail: string;
+  /** ISO-Datum YYYY-MM-DD (inklusive). */
+  from: string;
+  to: string;
 }
 
 export const DEFAULT_APPROVAL_SETTINGS: ApprovalSettings = {
@@ -29,7 +43,28 @@ export const DEFAULT_APPROVAL_SETTINGS: ApprovalSettings = {
   holidays: [],
   oneClickApproval: true,
   targets: { warehouse: 24, accounting: 8, dispatch: 24, total: 48 },
+  absences: [],
+  monthlyReport: { enabled: false, recipients: [] },
 };
+
+/** Gesetzliche Feiertage Deutschland (bundesweit) + Österreich für 2026. */
+export const HOLIDAYS_DE_AT_2026: string[] = [
+  '2026-01-01', // Neujahr (DE/AT)
+  '2026-01-06', // Heilige Drei Könige (AT)
+  '2026-04-03', // Karfreitag (DE)
+  '2026-04-06', // Ostermontag (DE/AT)
+  '2026-05-01', // Tag der Arbeit (DE/AT)
+  '2026-05-14', // Christi Himmelfahrt (DE/AT)
+  '2026-05-25', // Pfingstmontag (DE/AT)
+  '2026-06-04', // Fronleichnam (AT)
+  '2026-08-15', // Mariä Himmelfahrt (AT)
+  '2026-10-03', // Tag der Deutschen Einheit (DE)
+  '2026-10-26', // Nationalfeiertag (AT)
+  '2026-11-01', // Allerheiligen (AT)
+  '2026-12-08', // Mariä Empfängnis (AT)
+  '2026-12-25', // 1. Weihnachtstag (DE/AT)
+  '2026-12-26', // 2. Weihnachtstag (DE/AT)
+];
 
 const db = supabase as any;
 
