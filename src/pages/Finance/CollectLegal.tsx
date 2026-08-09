@@ -145,16 +145,29 @@ export default function FinanceCollectLegal() {
                     <td>{date(r.handed_over_at)}</td>
                     <td><Badge variant={STATUS_VARIANT[r.status] ?? 'secondary'}>{r.status}</Badge></td>
                     <td className="text-right">
-                      <Select value={r.status} onValueChange={(v) => setStatus(r.id, v)}>
-                        <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="open">Offen</SelectItem>
-                          <SelectItem value="in_progress">In Bearbeitung</SelectItem>
-                          <SelectItem value="recovered">Realisiert</SelectItem>
-                          <SelectItem value="lost">Ausfall</SelectItem>
-                          <SelectItem value="closed">Abgeschlossen</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center justify-end gap-2">
+                        <Select value={r.status} onValueChange={(v) => setStatus(r.id, v)}>
+                          <SelectTrigger className="h-8 w-[150px]"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">Offen</SelectItem>
+                            <SelectItem value="in_progress">In Bearbeitung</SelectItem>
+                            <SelectItem value="recovered">Realisiert</SelectItem>
+                            <SelectItem value="lost">Ausfall</SelectItem>
+                            <SelectItem value="closed">Abgeschlossen</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            title="Rechtsfall löschen"
+                            onClick={() => setDelTarget(r)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
