@@ -81,7 +81,7 @@ export const STAGES: StageDef[] = [
     order: 1,
     title: 'Bereitstellung',
     responsible: 'Lager / Bereitstellung',
-    roles: ['Bereitstellung', 'Order', 'Super Admin'],
+    roles: ['Freigeber Bereitstellung', 'Bereitstellung', 'Order', 'Super Admin'],
     checks: WAREHOUSE_CHECKS,
   },
   {
@@ -89,7 +89,7 @@ export const STAGES: StageDef[] = [
     order: 2,
     title: 'Buchhaltung',
     responsible: 'Buchhaltung',
-    roles: ['Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Finance', 'Super Admin'],
+    roles: ['Freigeber Buchhaltung', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH', 'Finance', 'Super Admin'],
     checks: ACCOUNTING_CHECKS,
   },
   {
@@ -97,7 +97,7 @@ export const STAGES: StageDef[] = [
     order: 3,
     title: 'Tourenplanung',
     responsible: 'Disposition / Tourenplanung',
-    roles: ['Tourenplanung', 'Super Admin'],
+    roles: ['Freigeber Tourenplanung', 'Tourenplanung', 'Super Admin'],
     checks: DISPATCH_CHECKS,
   },
 ];
