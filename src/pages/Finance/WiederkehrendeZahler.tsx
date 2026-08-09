@@ -307,6 +307,104 @@ export default function WiederkehrendeZahler() {
     load();
   }
 
+  /** Nächstes Fälligkeitsdatum gemäß Intervall */
+  const addInterval = (d: Date, freq: string | null, every: number | null) => {
+    const e = every && every > 0 ? every : 1;
+    const n = new Date(d);
+    switch ((freq ?? 'months').toLowerCase()) {
+      case 'days': n.setDate(n.getDate() + e); break;
+      case 'weeks': n.setDate(n.getDate() + 7 * e); break;
+      case 'years': n.setFullYear(n.getFullYear() + e); break;
+      default: n.setMonth(n.getMonth() + e); break;
+    }
+    return n;
+  };
+
+  /** Vertrag reaktivieren: Auftrag zurück auf AKTIV, Label „Zahler", Rechnungen nachziehen */
+  async function opsRateNeu(p: Profile) {
+    const orderNo = orderNumberOf(p);
+    if (!confirm(`„RATE NEU" für ${p.recurrence_name || orderNo || 'Vertrag'}?\n\nDer Auftrag wird auf AKTIV gesetzt, als „Zahler" gekennzeichnet und alle zurückliegenden Raten werden erzeugt.`)) return;
+    setOpsBusy(p.id);
+    try {
+      // 1) Auftrag zurück auf AKTIV
+      if (orderNo) {
+        const { error: oErr } = await supabase
+          .from('orders')
+          .update({ order_status: 'aktiv', lawyer_reason: null } as any)
+          .eq('order_number', orderNo);
+        if (oErr) throw oErr;
+      }
+
+      // 2) Profil aktivieren + Label „Zahler"
+      const base = (p.recurrence_name ?? '')
+        .replace(/^\s*Zahler\s*[·|-]\s*/i, '')
+        .trim();
+      const nextName = `Zahler · ${base || p.reference_number || orderNo}`.trim();
+      const { error: pErr } = await supabase
+        .from('zoho_recurring_profiles')
+        .update({ status: 'active', recurrence_name: nextName } as any)
+        .eq('id', p.id);
+      if (pErr) throw pErr;
+
+      // 3) Zurückliegende Rechnungen gemäß Intervall nachziehen
+      const existing = invoices.filter(i => i.zoho_recurring_invoice_id === p.zoho_recurring_invoice_id);
+      const existingDates = new Set(existing.map(i => (i.invoice_date ?? '').slice(0, 10)));
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const startStr = p.start_date || p.next_invoice_date || p.created_at;
+      const rows: any[] = [];
+      if (startStr) {
+        let cur = new Date(String(startStr).slice(0, 10));
+        const endLimit = p.end_date ? new Date(p.end_date) : today;
+        const stopAt = endLimit < today ? endLimit : today;
+        let guard = 0;
+        while (cur <= stopAt && guard < 240) {
+          guard++;
+          const iso = cur.toISOString().slice(0, 10);
+          if (!existingDates.has(iso)) {
+            const due = new Date(cur); due.setDate(due.getDate() + 14);
+            rows.push({
+              zoho_invoice_id: `local-${p.zoho_recurring_invoice_id || p.id}-${iso}`,
+              zoho_recurring_invoice_id: p.zoho_recurring_invoice_id || null,
+              invoice_number: `RN-${(p.reference_number || orderNo || 'VTR')}-${iso.replace(/-/g, '').slice(0, 6)}`,
+              reference_number: p.reference_number || orderNo || null,
+              customer_id: p.customer_id,
+              customer_name: p.customer_name || p.company_name || null,
+              invoice_date: iso,
+              due_date: due.toISOString().slice(0, 10),
+              total: Number(p.total || 0),
+              balance: Number(p.total || 0),
+              currency: p.currency || 'EUR',
+              status: 'open',
+              payment_status: 'unpaid',
+              source_system: 'alixwork',
+            });
+          }
+          cur = addInterval(cur, p.recurrence_frequency, p.repeat_every);
+        }
+      }
+
+      if (rows.length > 0) {
+        const { error: iErr } = await supabase
+          .from('zoho_recurring_invoices')
+          .upsert(rows as any, { onConflict: 'zoho_invoice_id' });
+        if (iErr) throw iErr;
+      }
+
+      if (orderNo) setLawyerRefs(prev => { const n = new Set(prev); n.delete(orderNo.toLowerCase()); return n; });
+      toast({
+        title: 'RATE NEU ausgeführt',
+        description: `${orderNo || 'Vertrag'} ist wieder AKTIV (Label „Zahler"), ${rows.length} zurückliegende Rate(n) erzeugt.`,
+      });
+      load();
+    } catch (e: any) {
+      toast({ title: 'RATE NEU fehlgeschlagen', description: e?.message ?? String(e), variant: 'destructive' });
+    } finally {
+      setOpsBusy(null);
+    }
+  }
+
+
+
   async function confirmDelete() {
     const p = deleteTarget;
     const reason = deleteReason.trim();
@@ -895,6 +993,18 @@ export default function WiederkehrendeZahler() {
                                       >
                                         Bearbeiten
                                       </Button>
+                                      {((p.status ?? '').toLowerCase() !== 'active' || isLawyerProfile(p)) && (
+                                        <Button
+                                          size="sm"
+                                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                          disabled={!canWrite || opsBusy === p.id}
+                                          onClick={() => opsRateNeu(p)}
+                                          title="Auftrag reaktivieren, Label „Zahler“ setzen und zurückliegende Raten erzeugen"
+                                        >
+                                          {opsBusy === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5 mr-1" />}
+                                          RATE NEU
+                                        </Button>
+                                      )}
                                       <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                           <Button size="sm" variant="secondary" disabled={!canWrite || opsBusy === p.id || stoppingId === p.id}>
