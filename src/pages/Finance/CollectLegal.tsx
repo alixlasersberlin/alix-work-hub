@@ -23,9 +23,13 @@ const KIND_LABEL: Record<string, string> = { inkasso: 'Inkasso', anwalt: 'Anwalt
 const STATUS_VARIANT: Record<string, any> = { open: 'default', in_progress: 'secondary', recovered: 'outline', lost: 'destructive', closed: 'outline' };
 
 export default function FinanceCollectLegal() {
+  const canDelete = useCanDelete();
   const [legal, setLegal] = useState<any[]>([]);
   const [insol, setInsol] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [delTarget, setDelTarget] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
+
 
   const [name, setName] = useState('');
   const [kind, setKind] = useState('inkasso');
