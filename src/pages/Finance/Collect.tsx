@@ -1,4 +1,6 @@
 import { TenantBadge } from '@/components/TenantBadge';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
+
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -69,7 +71,9 @@ function Kpi({ label, value, icon: Icon, tone }: { label: string; value: string;
 }
 
 export default function FinanceCollect() {
+  const { tenantId } = useTenantFilter();
   const [kpis, setKpis] = useState<Kpis | null>(null);
+
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
