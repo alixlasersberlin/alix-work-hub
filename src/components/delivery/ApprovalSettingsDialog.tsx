@@ -26,6 +26,12 @@ export default function ApprovalSettingsDialog({
 
   const num = (v: string, fallback: number) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Number(v) : fallback);
 
+  const setAbsence = (i: number, patch: Partial<Absence>) =>
+    setCfg((prev) => ({
+      ...prev,
+      absences: (prev.absences ?? []).map((a, x) => (x === i ? { ...a, ...patch } : a)),
+    }));
+
   const save = async () => {
     setBusy(true);
     try {
