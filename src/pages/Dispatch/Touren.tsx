@@ -1,3 +1,4 @@
+import { TenantBadge } from '@/components/TenantBadge';
 import { useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,7 +35,7 @@ export default function DispatchTouren() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('delivery_tours')
-        .select('id, tour_number, tour_date, title, status, planned_distance_km, planned_drive_minutes, planned_start_time, drivers:driver_id(full_name), vehicles:vehicle_id(license_plate)')
+        .select('id, tenant_id, tour_number, tour_date, title, status, planned_distance_km, planned_drive_minutes, planned_start_time, drivers:driver_id(full_name), vehicles:vehicle_id(license_plate)')
         .order('tour_date', { ascending: false })
         .order('planned_start_time', { ascending: true, nullsFirst: false })
         .order('tour_number', { ascending: true })
@@ -235,6 +236,7 @@ export default function DispatchTouren() {
                   </TableCell>
                   <TableCell className="font-medium">
                     <Link to={`/dispatch/touren/${t.id}`} className="text-primary hover:underline">{t.tour_number}</Link>
+                    <TenantBadge tenantId={(t as any).tenant_id} className="ml-2 align-middle" />
                   </TableCell>
                   <TableCell>{t.tour_date ? format(new Date(t.tour_date), 'dd.MM.yyyy') : '—'}</TableCell>
                   <TableCell>{t.title ?? '—'}</TableCell>
