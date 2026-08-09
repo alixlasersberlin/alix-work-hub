@@ -17583,6 +17583,191 @@ export type Database = {
         }
         Relationships: []
       }
+      delivery_approval_events: {
+        Row: {
+          approval_id: string | null
+          comment: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_status: string | null
+          old_status: string | null
+          order_id: string
+          signature: string | null
+          stage: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          approval_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_status?: string | null
+          old_status?: string | null
+          order_id: string
+          signature?: string | null
+          stage: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          approval_id?: string | null
+          comment?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_status?: string | null
+          old_status?: string | null
+          order_id?: string
+          signature?: string | null
+          stage?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_approval_events_approval_id_fkey"
+            columns: ["approval_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_approvals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_approvals: {
+        Row: {
+          accounting_at: string | null
+          accounting_by: string | null
+          accounting_by_name: string | null
+          accounting_checks: Json
+          accounting_comment: string | null
+          accounting_escalated_at: string | null
+          accounting_ip: string | null
+          accounting_reminded_at: string | null
+          accounting_signature: string | null
+          accounting_status: string
+          completed_at: string | null
+          created_at: string
+          delivered_at: string | null
+          dispatch_at: string | null
+          dispatch_by: string | null
+          dispatch_by_name: string | null
+          dispatch_checks: Json
+          dispatch_comment: string | null
+          dispatch_escalated_at: string | null
+          dispatch_ip: string | null
+          dispatch_reminded_at: string | null
+          dispatch_signature: string | null
+          dispatch_status: string
+          id: string
+          order_id: string
+          overall_status: string
+          released_at: string | null
+          unlock_reason: string | null
+          unlocked_at: string | null
+          unlocked_by: string | null
+          updated_at: string
+          warehouse_at: string | null
+          warehouse_by: string | null
+          warehouse_by_name: string | null
+          warehouse_checks: Json
+          warehouse_comment: string | null
+          warehouse_escalated_at: string | null
+          warehouse_ip: string | null
+          warehouse_reminded_at: string | null
+          warehouse_signature: string | null
+          warehouse_status: string
+        }
+        Insert: {
+          accounting_at?: string | null
+          accounting_by?: string | null
+          accounting_by_name?: string | null
+          accounting_checks?: Json
+          accounting_comment?: string | null
+          accounting_escalated_at?: string | null
+          accounting_ip?: string | null
+          accounting_reminded_at?: string | null
+          accounting_signature?: string | null
+          accounting_status?: string
+          completed_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          dispatch_at?: string | null
+          dispatch_by?: string | null
+          dispatch_by_name?: string | null
+          dispatch_checks?: Json
+          dispatch_comment?: string | null
+          dispatch_escalated_at?: string | null
+          dispatch_ip?: string | null
+          dispatch_reminded_at?: string | null
+          dispatch_signature?: string | null
+          dispatch_status?: string
+          id?: string
+          order_id: string
+          overall_status?: string
+          released_at?: string | null
+          unlock_reason?: string | null
+          unlocked_at?: string | null
+          unlocked_by?: string | null
+          updated_at?: string
+          warehouse_at?: string | null
+          warehouse_by?: string | null
+          warehouse_by_name?: string | null
+          warehouse_checks?: Json
+          warehouse_comment?: string | null
+          warehouse_escalated_at?: string | null
+          warehouse_ip?: string | null
+          warehouse_reminded_at?: string | null
+          warehouse_signature?: string | null
+          warehouse_status?: string
+        }
+        Update: {
+          accounting_at?: string | null
+          accounting_by?: string | null
+          accounting_by_name?: string | null
+          accounting_checks?: Json
+          accounting_comment?: string | null
+          accounting_escalated_at?: string | null
+          accounting_ip?: string | null
+          accounting_reminded_at?: string | null
+          accounting_signature?: string | null
+          accounting_status?: string
+          completed_at?: string | null
+          created_at?: string
+          delivered_at?: string | null
+          dispatch_at?: string | null
+          dispatch_by?: string | null
+          dispatch_by_name?: string | null
+          dispatch_checks?: Json
+          dispatch_comment?: string | null
+          dispatch_escalated_at?: string | null
+          dispatch_ip?: string | null
+          dispatch_reminded_at?: string | null
+          dispatch_signature?: string | null
+          dispatch_status?: string
+          id?: string
+          order_id?: string
+          overall_status?: string
+          released_at?: string | null
+          unlock_reason?: string | null
+          unlocked_at?: string | null
+          unlocked_by?: string | null
+          updated_at?: string
+          warehouse_at?: string | null
+          warehouse_by?: string | null
+          warehouse_by_name?: string | null
+          warehouse_checks?: Json
+          warehouse_comment?: string | null
+          warehouse_escalated_at?: string | null
+          warehouse_ip?: string | null
+          warehouse_reminded_at?: string | null
+          warehouse_signature?: string | null
+          warehouse_status?: string
+        }
+        Relationships: []
+      }
       delivery_carrier_assignments: {
         Row: {
           agreed_price: number | null
