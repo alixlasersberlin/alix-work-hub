@@ -47250,7 +47250,9 @@ export type Database = {
       }
     }
     Functions: {
-      ac_dashboard_kpis: { Args: never; Returns: Json }
+      ac_dashboard_kpis:
+        | { Args: never; Returns: Json }
+        | { Args: { p_tenant_id?: string }; Returns: Json }
       ac_is_channel_member: {
         Args: { _channel: string; _user: string }
         Returns: boolean
