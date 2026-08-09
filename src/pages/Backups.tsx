@@ -85,33 +85,55 @@ export default function Backups() {
     }
   };
 
-  const downloadBackup = async (b: BackupRow) => {
+  const startDownload = (b: BackupRow) => {
     if (!b.storage_path) {
       toast.error('Kein Pfad hinterlegt – diese Sicherung enthält keine Datei zum Download.');
       return;
     }
+    setPwTarget(b);
+    setAccountPw('');
+    setEncPw('');
+    setEncPw2('');
+  };
+
+  const confirmDownload = async () => {
+    const b = pwTarget;
+    if (!b) return;
+    if (!accountPw) return toast.error('Bitte Kontopasswort eingeben');
+    const pwErr = backupPasswordError(encPw);
+    if (pwErr) return toast.error('Verschlüsselungs-Passwort: ' + pwErr);
+    if (encPw !== encPw2) return toast.error('Verschlüsselungs-Passwörter stimmen nicht überein');
+
     setDownloadingId(b.id);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       if (!token) throw new Error('Keine aktive Session');
 
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/download-backup-zip?backup_id=${encodeURIComponent(b.id)}`;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/download-backup-zip`;
       const res = await fetch(url, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          backup_id: b.id,
+          account_password: accountPw,
+          encryption_password: encPw,
+        }),
       });
       if (!res.ok) {
         const txt = await res.text();
-        throw new Error(`HTTP ${res.status}: ${txt.slice(0, 200)}`);
+        let msg = txt.slice(0, 300);
+        try { msg = JSON.parse(txt).error ?? msg; } catch { /* ignore */ }
+        throw new Error(msg);
       }
       const blob = await res.blob();
       const cd = res.headers.get('Content-Disposition') || '';
       const match = cd.match(/filename="?([^"]+)"?/);
-      const fileName = match?.[1] || `backup-${b.id.slice(0, 8)}.zip`;
+      const fileName = match?.[1] || `backup-${b.id.slice(0, 8)}.zip.enc`;
 
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -120,13 +142,37 @@ export default function Backups() {
       link.click();
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(link.href), 5000);
-      toast.success('Download gestartet');
+      toast.success('Verschlüsselte Sicherung heruntergeladen (.zip.enc)');
+      setPwTarget(null);
+      setAccountPw(''); setEncPw(''); setEncPw2('');
     } catch (e: any) {
       toast.error('Download fehlgeschlagen: ' + (e?.message ?? String(e)));
     } finally {
       setDownloadingId(null);
     }
   };
+
+  const decryptFile = async () => {
+    if (!decFile) return toast.error('Bitte .zip.enc-Datei wählen');
+    if (!decPw) return toast.error('Bitte Verschlüsselungs-Passwort eingeben');
+    setDecrypting(true);
+    try {
+      const blob = await decryptBackupFile(decFile, decPw);
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = decFile.name.replace(/\.enc$/, '') || 'backup.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+      toast.success('Sicherung entschlüsselt');
+    } catch (e: any) {
+      toast.error(e?.message ?? String(e));
+    } finally {
+      setDecrypting(false);
+    }
+  };
+
 
   const deleteBackup = async (b: BackupRow) => {
     if (!confirm('Sicherung unwiderruflich löschen?')) return;
