@@ -49,6 +49,14 @@ export default function Auslieferungsfreigabe() {
   const [bulkSig, setBulkSig] = useState<string | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
   const [escalations, setEscalations] = useState<EscalationStat[]>([]);
+  const [series, setSeries] = useState<EscalationMonth[]>([]);
+  // Massen-Anforderung
+  const [reqOpen, setReqOpen] = useState(false);
+  const [reqQ, setReqQ] = useState('');
+  const [reqRows, setReqRows] = useState<any[]>([]);
+  const [reqSel, setReqSel] = useState<Set<string>>(new Set());
+  const [reqBusy, setReqBusy] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
