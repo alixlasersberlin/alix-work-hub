@@ -339,3 +339,36 @@ export async function fetchEscalationStats(): Promise<EscalationStat[]> {
   }
   return Array.from(map.values()).sort((a, b) => a.stage.localeCompare(b.stage) || a.level - b.level);
 }
+
+/**
+ * Harte Sperre: prüft, ob ein Auftrag ausgeliefert werden darf.
+ * Super Admin darf mit Begründung übersteuern (revisionssicher protokolliert).
+ */
+export async function assertOrderReleased(params: {
+  orderId: string;
+  isSuperAdmin?: boolean;
+  overrideReason?: string | null;
+  userId?: string | null;
+  userName?: string | null;
+  context?: string;
+}): Promise<{ allowed: boolean; missing: string[] }> {
+  const approval = await fetchApproval(params.orderId);
+  if (isReleased(approval)) return { allowed: true, missing: [] };
+  const missing = missingStages(approval);
+
+  if (params.isSuperAdmin && (params.overrideReason ?? '').trim().length >= 5 && approval) {
+    await logEvent({
+      approvalId: approval.id,
+      orderId: params.orderId,
+      stage: 'override',
+      oldStatus: approval.overall_status,
+      newStatus: approval.overall_status,
+      userId: params.userId ?? null,
+      userName: params.userName ?? 'Super Admin',
+      comment: `Sperre übersteuert (${params.context ?? 'Auslieferung'}): ${params.overrideReason}`,
+      ip: await clientIp(),
+    });
+    return { allowed: true, missing };
+  }
+  return { allowed: false, missing };
+}
