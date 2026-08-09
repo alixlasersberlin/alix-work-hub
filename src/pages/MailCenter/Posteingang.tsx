@@ -47,6 +47,7 @@ const FILTERS = [
 
 export default function MailCenterPosteingang() {
   const { isAdmin, hasRole } = useAuth();
+  const { tenantId, apply } = useTenantFilter();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [params] = useSearchParams();
