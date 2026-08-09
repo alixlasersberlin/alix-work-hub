@@ -776,11 +776,10 @@ async function processBackupStep(params: {
     };
 
     const manifestSize = await uploadJson(adminClient, manifestPath, manifest);
-    const expiresIn = 60 * 60 * 24 * 7;
-    const { data: signed } = await adminClient.storage
-      .from("backups")
-      .createSignedUrl(manifestPath, expiresIn);
+    // Keine signierten Download-Links mehr – Zugriff ausschließlich über
+    // authentifizierten Super-Admin-Download (verschlüsselt).
     const sizeBytes = state.totalSize + manifestSize;
+
     const completedAt = new Date().toISOString();
 
     await adminClient
