@@ -29,6 +29,7 @@ import {
   ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, ShieldCheck, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare, ChevronDown, Briefcase, Wrench, AlertCircle, PenLine, Share2
 } from 'lucide-react';
 import DeliveryApprovalPanel from '@/components/delivery/DeliveryApprovalPanel';
+import { useDeliveryRelease, DeliveryReleaseGuard } from '@/components/delivery/DeliveryReleaseGuard';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
 import { postPaymentToJournal } from '@/lib/finance/journal';
@@ -141,6 +142,7 @@ export default function OrderDetail() {
   }, [id]);
 
   // Auto-Tab via ?tab=az_invoice (oder anderer Key) beim Öffnen
+  const deliveryRelease = useDeliveryRelease(id);
   const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','freigaben','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','mediapaket','social_fragebogen','alixdocs','notes','emails','sms','history','raw'] as const;
   useEffect(() => {
     const t = searchParams.get('tab');
@@ -1424,7 +1426,11 @@ export default function OrderDetail() {
       )}
 
       {activeTab === 'lieferschein' && (
-        <DeliveryNoteTab order={order} customer={customer} items={items} onReload={loadAll} />
+        deliveryRelease.loading ? null : deliveryRelease.released ? (
+          <DeliveryNoteTab order={order} customer={customer} items={items} onReload={loadAll} />
+        ) : (
+          <DeliveryReleaseGuard missing={deliveryRelease.missing} onOpenApprovals={() => setActiveTab('freigaben')} />
+        )
       )}
 
       {activeTab === 'auftragsbestaetigung' && id && (
