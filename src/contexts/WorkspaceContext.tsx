@@ -24,7 +24,10 @@ export interface WorkspaceNavEntry {
   tenant_codes: string[] | null;
   sort_order: number;
   is_active: boolean;
+  /** Direkt gesetzte Lucide-Komponente (bei Übernahme aus dem klassischen Menü) */
+  IconComp?: React.ComponentType<{ className?: string }>;
 }
+
 
 interface WorkspaceContextType {
   workspaces: Workspace[];        // erlaubte, aktive Workspaces
