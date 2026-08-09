@@ -574,7 +574,7 @@ export default function AppLayout() {
   const { workspaceMode: wsMode } = useWorkspace();
 
   const visibleItems = navItems
-    .filter(i => i.label !== 'KONTAKT' && i.label !== 'ALIX AI DIENSTE')
+    .filter(i => i.label !== 'KONTAKT' && i.label !== 'ALIX AI DIENSTE' && i.label !== 'ALIX CONNECT')
     .filter(filterByRoles)
 
     .map(item => ({
