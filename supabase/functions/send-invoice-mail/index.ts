@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'Alix Lasers ® <noreply@alixlasers.ai>',
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
-        bcc: bccList,
+        bcc: finalBcc,
         subject,
         html,
         text: body_text ?? '',
