@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useAtOnly } from '@/hooks/useAtOnly';
+import { useAtOnly, useAtRoleOnly } from '@/hooks/useAtOnly';
+import { isAtOnlyPathAllowed } from '@/lib/at-only-access';
+
 import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutDashboard, LayoutGrid, ClipboardList, MapPin, Banknote, Users, LogOut, Shield, ShieldCheck, Menu, X, ChevronLeft, Building2, Cloud, Server, ListOrdered, Sun, Moon, Gavel, Truck, PackageCheck, BarChart3, Factory, ShoppingCart, ChevronDown, TrendingUp, Workflow, AlertTriangle, Calendar, CalendarDays, FileText, FileSignature, Warehouse, Settings, Package, FilePlus, BookOpen, Receipt, Undo2, CreditCard, CheckCircle2, FolderTree, ScrollText, Inbox, Mail, Landmark, SearchCheck, Pause, Clock, HelpCircle, Star, Lock, Globe, Wrench, Ticket, User, Flame,
@@ -199,6 +201,8 @@ export default function AppLayout() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ '__favorites': true });
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
   const atOnly = useAtOnly();
+  const atRoleOnly = useAtRoleOnly();
+
   const { favorites, isFavorite, toggle: toggleFavorite } = useFavorites();
   useNotificationFeed();
   // Desktop: flexible Sidebar-Breite (px), per Drag anpassbar, in localStorage gespeichert
@@ -584,15 +588,18 @@ export default function AppLayout() {
       children: item.children
         ?.filter(filterByRoles)
         .filter(c => !atOnly || !atHiddenPaths.has(c.path))
+        .filter(c => !atRoleOnly || c.path.startsWith('#') || (c.children?.length ?? 0) > 0 || isAtOnlyPathAllowed(c.path))
         .map(c => ({
           ...c,
-          children: c.children?.filter(filterByRoles).filter(filterByGrant),
+          children: c.children?.filter(filterByRoles).filter(filterByGrant)
+            .filter(g => !atRoleOnly || isAtOnlyPathAllowed(g.path)),
         }))
         .filter(filterByGrant)
         .filter(c => !c.children || c.children.length > 0),
     }))
     // Hide groups whose children are all hidden by role
     .filter(item => !item.children || item.children.length > 0);
+
 
   // Sammle alle erlaubten Leaf-Pfade (für "Mein Arbeitsplatz")
   const allowedLeafMap = useMemo(() => {

@@ -4,6 +4,8 @@ import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { postLoginTarget, hasPendingWelcome, clearPendingWelcome } from "@/lib/postLogin";
+import { isAtOnlyPathAllowed } from "@/lib/at-only-access";
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -1117,6 +1119,7 @@ function FullscreenLoader() {
 
 function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: React.ReactNode; requiredRoles?: string[]; allowEmails?: string[] }) {
   const { user, profile, roles, loading, blockReason, mfaState } = useAuth();
+  const location = useLocation();
 
   if (loading) return <FullscreenLoader />;
   if (!user) return <Navigate to="/alix-control" replace />;
@@ -1138,10 +1141,15 @@ function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: Re
     }
   }
 
+  // Rolle „Österreich" allein erlaubt ausschließlich AT-Module
+  const atRoleOnly = roles.length > 0 && roles.every(r => r === 'Österreich');
+  if (atRoleOnly && !isAtOnlyPathAllowed(location.pathname)) return <AccessDenied />;
+
   if (requiredRoles && !requiredRoles.some(r => roles.includes(r)) && !emailAllowed) return <AccessDenied />;
 
   return <>{children}</>;
 }
+
 
 function MfaGate({ children, expect }: { children: React.ReactNode; expect: 'not_enrolled' | 'challenge_required' | 'any' }) {
   const { user, loading, mfaState, blockReason } = useAuth();
