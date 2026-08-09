@@ -1,3 +1,4 @@
+import { TenantBadge } from '@/components/TenantBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { maskRevenueString } from '@/lib/revenue-mask';
 import { supabase } from '@/integrations/supabase/client';
@@ -2000,11 +2001,13 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           >
                             {r.invoice_number ?? '–'}
                           </button>
+                          <TenantBadge source={r.source_system} />
                           {isDraftInvoice(r) && (
                             <Badge variant="outline" className="bg-amber-500/15 text-amber-400 border-amber-500/40 text-[10px] uppercase tracking-wide">
                               Entwurf
                             </Badge>
                           )}
+
                         </div>
                       </td>
                       <td className="px-4 py-2">
