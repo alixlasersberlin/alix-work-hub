@@ -175,22 +175,31 @@ export default function FinanceCollectCase() {
       const doc = await buildMahnungPdf();
       const base64 = String(doc.output('datauristring')).split(',')[1];
       const name = `Mahnung_${(c?.customer_name || 'Kunde').replace(/[^\w-]+/g, '_')}.pdf`;
+      if (!base64) throw new Error('PDF konnte nicht erzeugt werden');
       attachments = [{ filename: name, content: base64, contentType: 'application/pdf' }];
-    } catch {
-      attachments = [];
+    } catch (e: any) {
+      setBusy(false);
+      toast({
+        title: 'PDF-Anhang fehlgeschlagen',
+        description: `${e?.message ?? 'Unbekannter Fehler'} – Versand abgebrochen, damit die Mahnung nicht ohne PDF rausgeht.`,
+        variant: 'destructive',
+      });
+      return;
     }
-    const { error } = await supabase.functions.invoke('collect-send-dunning', {
+    const { data, error } = await supabase.functions.invoke('collect-send-dunning', {
       body: {
         case_id: caseId, stage_code: mailStage, to_email: mailTo,
         subject: mailSubject, body_html: mailHtml, attachments,
       },
     });
     setBusy(false);
-    if (error) { toast({ title: 'Versand fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
-    toast({ title: 'Mahnung versendet', description: mailTo });
+    const errMsg = error?.message ?? ((data as any)?.ok === false ? (data as any)?.error : null);
+    if (errMsg) { toast({ title: 'Versand fehlgeschlagen', description: errMsg, variant: 'destructive' }); return; }
+    toast({ title: 'Mahnung versendet', description: `${mailTo} · PDF im Anhang` });
     setMailOpen(false);
     load();
   };
+
 
   const score = async () => {
     setBusy(true);
@@ -431,7 +440,11 @@ export default function FinanceCollectCase() {
             <div className="max-h-72 overflow-auto rounded-lg border border-border mail-paper p-4">
               <div dangerouslySetInnerHTML={{ __html: mailHtml }} />
             </div>
+            <p className="text-xs text-muted-foreground">
+              Anhang: <span className="text-foreground">Mahnung als PDF</span> auf der Alix-Briefvorlage – inhaltsgleich mit dieser E-Mail.
+            </p>
           </div>
+
           <DialogFooter>
             <Button variant="outline" onClick={preview} disabled={busy}>Neu generieren</Button>
             <Button variant="outline" onClick={previewPdf} disabled={busy}>PDF-Vorschau</Button>
