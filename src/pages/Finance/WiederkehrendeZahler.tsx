@@ -495,6 +495,23 @@ export default function WiederkehrendeZahler() {
     }
   }
 
+  const [prenotifBusy, setPrenotifBusy] = useState(false);
+  async function runPrenotifications() {
+    setPrenotifBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('recurring-prenotification', { body: {} });
+      if (error) throw error;
+      toast({
+        title: 'Vorankündigungen verarbeitet',
+        description: `Fällig am ${data?.due_date ?? ''}: ${data?.sent ?? 0} gesendet, ${data?.skipped ?? 0} übersprungen, ${data?.failed ?? 0} fehlgeschlagen.`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Vorankündigung fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setPrenotifBusy(false);
+    }
+  }
+
   const groups = useMemo<Group[]>(() => {
     const map = new Map<string, Group>();
     const keyOf = (cid: string | null, name: string | null) => cid || `name:${(name || 'Unbekannt').toLowerCase()}`;
