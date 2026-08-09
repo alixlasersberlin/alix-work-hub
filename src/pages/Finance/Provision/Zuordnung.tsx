@@ -301,17 +301,15 @@ export default function ProvisionZuordnung() {
           <div className="space-y-3">
             <div>
               <Label>Mitarbeiter</Label>
-              <Select value={assignForm.employee_id} onValueChange={(v) => setAssignForm({ ...assignForm, employee_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Mitarbeiter wählen" /></SelectTrigger>
-                <SelectContent>{profiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || p.email}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={assignForm.employee_id} onChange={(v) => setAssignForm({ ...assignForm, employee_id: v })} placeholder="Mitarbeiter wählen">
+                {profiles.map((p) => <option key={p.id} value={p.id}>{p.full_name || p.email}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Rolle</Label>
-              <Select value={assignForm.employee_role} onValueChange={(v) => setAssignForm({ ...assignForm, employee_role: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{EMPLOYEE_ROLES.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={assignForm.employee_role} onChange={(v) => setAssignForm({ ...assignForm, employee_role: v })}>
+                {EMPLOYEE_ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Anteil in %</Label>
@@ -319,11 +317,11 @@ export default function ProvisionZuordnung() {
             </div>
             <div>
               <Label>Provisionsregel (optional)</Label>
-              <Select value={assignForm.rule_id} onValueChange={(v) => setAssignForm({ ...assignForm, rule_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Automatisch" /></SelectTrigger>
-                <SelectContent>{rules.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={assignForm.rule_id} onChange={(v) => setAssignForm({ ...assignForm, rule_id: v })} placeholder="Automatisch">
+                {rules.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </NativeSelect>
             </div>
+
             <div><Label>Notiz</Label><Textarea value={assignForm.note} onChange={(e) => setAssignForm({ ...assignForm, note: e.target.value })} /></div>
           </div>
           <DialogFooter>
