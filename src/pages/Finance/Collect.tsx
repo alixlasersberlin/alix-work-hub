@@ -1,4 +1,6 @@
 import { TenantBadge } from '@/components/TenantBadge';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
+
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -69,7 +71,9 @@ function Kpi({ label, value, icon: Icon, tone }: { label: string; value: string;
 }
 
 export default function FinanceCollect() {
+  const { tenantId } = useTenantFilter();
   const [kpis, setKpis] = useState<Kpis | null>(null);
+
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
@@ -79,20 +83,21 @@ export default function FinanceCollect() {
 
   const load = async () => {
     setLoading(true);
+    let caseQuery = supabase.from('collect_cases' as any)
+      .select('id, tenant_id, customer_name, customer_email, currency, open_amount, overdue_amount, fee_amount, interest_amount, max_days_overdue, stage_code, ampel, status, risk_score, pay_probability_pct, risk_class, next_action, priority')
+      .neq('status', 'closed');
+    if (tenantId) caseQuery = caseQuery.eq('tenant_id', tenantId);
     const [k, c] = await Promise.all([
       supabase.rpc('collect_dashboard_kpis' as any),
-      supabase.from('collect_cases' as any)
-        .select('id, tenant_id, customer_name, customer_email, currency, open_amount, overdue_amount, fee_amount, interest_amount, max_days_overdue, stage_code, ampel, status, risk_score, pay_probability_pct, risk_class, next_action, priority')
-        .neq('status', 'closed')
-        .order('overdue_amount', { ascending: false })
-        .limit(1000),
+      caseQuery.order('overdue_amount', { ascending: false }).limit(1000),
     ]);
     setKpis((k.data as any) ?? null);
     setCases(((c.data as any) ?? []) as CaseRow[]);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [tenantId]);
+
 
   const run = async (fn: 'collect-engine' | 'collect-ai-score', label: string) => {
     setBusy(fn);
