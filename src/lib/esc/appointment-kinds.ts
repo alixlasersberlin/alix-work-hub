@@ -18,4 +18,8 @@ export const MOCK_APPOINTMENT_KINDS: EscAppointmentKind[] = [
   { id: 'k-produktschulung',name: 'Produktschulung',  color: '#ec4899', icon: 'GraduationCap', defaultDurationMinutes: 60, active: true, publicBookable: true,  departmentIds: [] },
   { id: 'k-service',        name: 'Service',          color: '#64748b', icon: 'Wrench',        defaultDurationMinutes: 60, active: true, publicBookable: false, departmentIds: [] },
   { id: 'k-reparatur',      name: 'Reparatur',        color: '#ef4444', icon: 'Hammer',        defaultDurationMinutes: 60, active: true, publicBookable: false, departmentIds: [] },
+  { id: 'k-auslieferung',   name: 'Auslieferung',     color: '#f97316', icon: 'Truck',         defaultDurationMinutes: 120, active: true, publicBookable: false, departmentIds: [] },
+  { id: 'k-umzug',          name: 'Umzug',            color: '#0ea5e9', icon: 'Package',       defaultDurationMinutes: 240, active: true, publicBookable: false, departmentIds: [] },
+  { id: 'k-werkstatt',      name: 'Werkstatt',        color: '#84cc16', icon: 'Wrench',        defaultDurationMinutes: 90, active: true, publicBookable: false, departmentIds: [] },
 ];
+
