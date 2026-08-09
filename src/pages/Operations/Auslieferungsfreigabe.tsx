@@ -5,13 +5,21 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Download, FileText, ShieldCheck, RefreshCw, FileDown } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { NativeSelect } from '@/components/ui/native-select';
+import SignaturePad from '@/components/finance/SignaturePad';
+import { useAuth } from '@/hooks/useAuth';
+import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS } from '@/lib/delivery-approval/config';
-import { slaLevel, fetchEvents, type DeliveryApproval } from '@/lib/delivery-approval/api';
+import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS, type ApprovalStage } from '@/lib/delivery-approval/config';
+import {
+  slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats,
+  type DeliveryApproval, type EscalationStat,
+} from '@/lib/delivery-approval/api';
 import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
 
 const db = supabase as any;
