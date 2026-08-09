@@ -15,8 +15,7 @@ import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 const fmt = (n: number, cur = 'EUR') => (n == null ? '' : Number(n).toLocaleString('de-DE', { style: 'currency', currency: cur }));
 
 export default function Buchungsjournal() {
-  const { region } = useAccountingRegion();
-  const cur = region === 'CH' ? 'CHF' : 'EUR';
+  const rowCur = (r: any) => r?.currency || (r?.accounting_region === 'CH' ? 'CHF' : 'EUR');
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10));
@@ -26,29 +25,31 @@ export default function Buchungsjournal() {
 
   async function load() {
     setLoading(true);
-    let q: any = (supabase as any).from('finance_journal').select('*').gte('booking_date', from).lte('booking_date', to).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('booking_date', { ascending: false }).order('created_at', { ascending: false }).limit(1000);
+    // Länderübergreifend: keine Trennung nach EU/CH/AT
+    let q: any = (supabase as any).from('finance_journal').select('*').gte('booking_date', from).lte('booking_date', to).order('booking_date', { ascending: false }).order('created_at', { ascending: false }).limit(1000);
     if (src !== 'alle') q = q.eq('source_module', src);
     if (status !== 'alle') q = q.eq('status', status);
     const { data, error } = await q;
     if (error) toast.error(error.message); else setRows(data || []);
     setLoading(false);
   }
-  useEffect(() => { load(); /* eslint-disable-line */ }, [from, to, src, status, region]);
+  useEffect(() => { load(); /* eslint-disable-line */ }, [from, to, src, status]);
 
   function exportCsv() {
-    const cols = ['journal_number','booking_date','source_module','vorgang','reference','order_number','invoice_number','amount_net','amount_vat','amount_gross','account','contra_account','description','status'];
+    const cols = ['journal_number','booking_date','accounting_region','source_module','vorgang','reference','order_number','invoice_number','amount_net','amount_vat','amount_gross','account','contra_account','description','status'];
     const head = cols.join(';');
     const body = rows.map(r => cols.map(c => String(r[c] ?? '').replace(/[;\n\r"]/g, ' ')).join(';')).join('\n');
     const blob = new Blob([head + '\n' + body], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `journal_${region}_${from}_${to}.csv`; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = `journal_alle_${from}_${to}.csv`; a.click();
     URL.revokeObjectURL(url);
   }
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
-      <PageHeader icon={ScrollText} title={`Buchungsjournal · ${region === 'CH' ? '🇨🇭 CH' : '🇪🇺 EU'}`} subtitle="Lückenlose Dokumentation aller Finanzbewegungen (GoBD)"
+      <PageHeader icon={ScrollText} title="Buchungsjournal · 🌐 Alle Länder" subtitle="Lückenlose Dokumentation aller Finanzbewegungen (GoBD) – länderübergreifend"
         actions={<Button variant="outline" onClick={exportCsv}><Download className="mr-2 h-4 w-4" />CSV</Button>} />
+
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><Filter className="h-4 w-4" />Filter</CardTitle></CardHeader>
