@@ -15,7 +15,17 @@ interface Props {
 
 const stars = ['1', '2', '3', '4', '5']
 
-const TicketCsatEmail = ({ customerName, ticketNumber, subject, csatUrl }: Props) => (
+// Nie eine fremde Domain / E-Mail-Adresse in der Mail anzeigen – nur alixwork.
+const clean = (raw?: string) => {
+  const v = (raw ?? '').trim()
+  if (!v) return ''
+  const local = v.split('@')[0].replace(/\s+/g, '')
+  return (local.length > 12 ? local.slice(-12) : local).toUpperCase()
+}
+
+const TicketCsatEmail = ({ customerName, ticketNumber: rawTicketNumber, subject, csatUrl }: Props) => {
+  const ticketNumber = clean(rawTicketNumber)
+  return (
   <Html lang="de" dir="ltr">
     <Head />
     <Preview>Wie zufrieden waren Sie mit der Bearbeitung?</Preview>
@@ -46,15 +56,16 @@ const TicketCsatEmail = ({ customerName, ticketNumber, subject, csatUrl }: Props
             <Button href={csatUrl} style={button}>Bewertung öffnen</Button>
           </Section>
         )}
-        <Text style={footer}>Vielen Dank — Ihr {SITE_NAME} Team</Text>
+        <Text style={footer}>Vielen Dank — Ihr {SITE_NAME} Team · alixwork.de</Text>
       </Container>
     </Body>
   </Html>
-)
+  )
+}
 
 export const template = {
   component: TicketCsatEmail,
-  subject: (d: Record<string, any>) => `Ihre Bewertung zu Ticket ${d.ticketNumber ?? ''}`.trim(),
+  subject: (d: Record<string, any>) => `Ihre Bewertung zu Ticket ${clean(d.ticketNumber)}`.trim(),
   displayName: 'Ticket-Zufriedenheit (CSAT)',
   previewData: {
     customerName: 'Max Mustermann',
