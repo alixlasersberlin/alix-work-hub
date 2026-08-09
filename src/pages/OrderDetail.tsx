@@ -472,6 +472,8 @@ export default function OrderDetail() {
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
         ...(canSeeAtApproval ? [{ key: 'at_approval', label: 'Freigabe AT', icon: CheckCircle2 }] : []),
+        { key: 'freigaben', label: 'Freigaben', icon: ShieldCheck },
+
       ],
     },
     {
