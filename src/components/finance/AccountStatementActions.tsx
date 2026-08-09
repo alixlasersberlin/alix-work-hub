@@ -259,7 +259,9 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
     if (!guard()) return;
     setMailAll(false);
     await refreshPreview(false);
-    setTo(emailFromRows(rows));
+    const fromRows = emailFromRows(rows);
+    setTo(fromRows && fromRows.includes('@') ? fromRows : await emailFromCustomer(customerName, customerNumber));
+
     setSubject(`Kontoauszug ${new Date().toLocaleDateString('de-DE')}`);
     setText(
       `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie Ihren aktuellen Kontoauszug mit einem offenen Gesamtsaldo von ${money(
