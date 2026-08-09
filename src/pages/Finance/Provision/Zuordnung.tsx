@@ -29,6 +29,11 @@ export default function ProvisionZuordnung() {
   const [assignForm, setAssignForm] = useState({ employee_id: '', employee_role: 'verkaeufer', share_percent: '100', rule_id: '', note: '' });
   const [empOpen, setEmpOpen] = useState<any | null>(null);
   const [empForm, setEmpForm] = useState<any>({});
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkForm, setBulkForm] = useState({ employee_id: '', employee_role: 'verkaeufer', share_percent: '100', rule_id: '', note: '' });
+
 
   const [aliases, setAliases] = useState<Record<string, string>>({});
 
@@ -76,6 +81,10 @@ export default function ProvisionZuordnung() {
       .filter((o) => !s || [o.order_number, o.salesperson_name].filter(Boolean).some((v) => String(v).toLowerCase().includes(s)));
   }, [orders, assignedOrderIds, search]);
 
+  const visibleUnassigned = useMemo(() => unassigned.slice(0, 300), [unassigned]);
+  const allVisibleSelected = visibleUnassigned.length > 0 && visibleUnassigned.every((o) => selected.has(o.id));
+
+
   const saveAssignment = async () => {
     if (!assignForm.employee_id) return toast.error('Bitte Mitarbeiter wählen');
     const share = Number(assignForm.share_percent);
@@ -102,6 +111,48 @@ export default function ProvisionZuordnung() {
     setAssignForm({ employee_id: '', employee_role: 'verkaeufer', share_percent: '100', rule_id: '', note: '' });
     load();
   };
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const saveBulkAssignment = async () => {
+    if (!bulkForm.employee_id) return toast.error('Bitte Mitarbeiter wählen');
+    const share = Number(bulkForm.share_percent);
+    if (!(share >= 0 && share <= 100)) return toast.error('Anteil muss zwischen 0 und 100 % liegen');
+    const ids = [...selected];
+    if (ids.length === 0) return toast.error('Keine Aufträge markiert');
+    setBulkBusy(true);
+    const rows = ids.map((order_id) => ({
+      order_id,
+      employee_id: bulkForm.employee_id,
+      employee_role: bulkForm.employee_role as any,
+      share_percent: share,
+      rule_id: bulkForm.rule_id || null,
+      note: bulkForm.note || null,
+      source: 'manual',
+    }));
+    const { error } = await supabase.from('commission_assignments').insert(rows);
+    setBulkBusy(false);
+    if (error) return toast.error(error.message);
+    await supabase.from('commission_audit_logs').insert(
+      ids.map((order_id) => ({
+        action: 'Mitarbeiter zugeordnet (Sammelzuordnung)', object_type: 'assignment', order_id,
+        employee_id: bulkForm.employee_id, new_value: bulkForm as any,
+      })),
+    );
+    toast.success(`${ids.length} Aufträge zugeordnet`);
+    setBulkOpen(false);
+    setSelected(new Set());
+    setBulkForm({ employee_id: '', employee_role: 'verkaeufer', share_percent: '100', rule_id: '', note: '' });
+    load();
+  };
+
+
 
   const saveEmployee = async () => {
     const payload = { ...empForm, employee_id: empOpen.id };
@@ -174,7 +225,22 @@ export default function ProvisionZuordnung() {
 
 
         <TabsContent value="unassigned" className="mt-4 space-y-3">
-          <Input placeholder="Auftrag oder Verkäufer suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
+          <div className="flex flex-wrap items-center gap-3">
+            <Input placeholder="Auftrag oder Verkäufer suchen…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-sm" />
+            {perms.canManage && (
+              <>
+                <Button size="sm" variant="outline" onClick={() => setSelected(new Set(visibleUnassigned.map((o) => o.id)))}>
+                  Alle markieren ({visibleUnassigned.length})
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())} disabled={selected.size === 0}>
+                  Auswahl aufheben
+                </Button>
+                <Button size="sm" onClick={() => setBulkOpen(true)} disabled={selected.size === 0}>
+                  <UserPlus className="h-4 w-4 mr-2" />Markierte zuordnen ({selected.size})
+                </Button>
+              </>
+            )}
+          </div>
           <DataCard className="p-0">
             <div className="p-5">
               {unassigned.length === 0 ? (
@@ -184,6 +250,15 @@ export default function ProvisionZuordnung() {
                   <table className="w-full text-sm">
                     <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
                       <tr>
+                        <th className="p-3 text-left w-10">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-primary"
+                            aria-label="Alle markieren"
+                            checked={allVisibleSelected}
+                            onChange={(e) => setSelected(e.target.checked ? new Set(visibleUnassigned.map((o) => o.id)) : new Set())}
+                          />
+                        </th>
                         <th className="p-3 text-left">Auftrag</th>
                         <th className="p-3 text-left">Datum</th>
                         <th className="p-3 text-left">Status</th>
@@ -193,12 +268,22 @@ export default function ProvisionZuordnung() {
                       </tr>
                     </thead>
                     <tbody>
-                      {unassigned.slice(0, 300).map((o) => (
-                        <tr key={o.id} className="border-t border-border">
+                      {visibleUnassigned.map((o) => (
+                        <tr key={o.id} className={`border-t border-border ${selected.has(o.id) ? 'bg-primary/5' : ''}`}>
+                          <td className="p-3">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 accent-primary"
+                              aria-label={`Auftrag ${o.order_number} markieren`}
+                              checked={selected.has(o.id)}
+                              onChange={() => toggleSelect(o.id)}
+                            />
+                          </td>
                           <td className="p-3">{o.order_number}</td>
                           <td className="p-3">{fmtDate(o.order_date)}</td>
                           <td className="p-3">{o.order_status ?? '–'}</td>
                           <td className="p-3">{o.salesperson_name ?? '–'}</td>
+
                           <td className="p-3 text-right">{Number(o.total_amount ?? 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</td>
                           <td className="p-3 text-right">
                             {perms.canManage && (
@@ -332,7 +417,44 @@ export default function ProvisionZuordnung() {
         </DialogContent>
       </Dialog>
 
+      {/* Sammelzuordnung */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Markierte Aufträge zuordnen ({selected.size})</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Mitarbeiter</Label>
+              <NativeSelect value={bulkForm.employee_id} onChange={(v) => setBulkForm({ ...bulkForm, employee_id: v })} placeholder="Mitarbeiter wählen">
+                {profiles.map((p) => <option key={p.id} value={p.id}>{p.full_name || p.email}</option>)}
+              </NativeSelect>
+            </div>
+            <div>
+              <Label>Rolle</Label>
+              <NativeSelect value={bulkForm.employee_role} onChange={(v) => setBulkForm({ ...bulkForm, employee_role: v })}>
+                {EMPLOYEE_ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </NativeSelect>
+            </div>
+            <div>
+              <Label>Anteil in %</Label>
+              <Input type="number" min={0} max={100} step="0.01" value={bulkForm.share_percent} onChange={(e) => setBulkForm({ ...bulkForm, share_percent: e.target.value })} />
+            </div>
+            <div>
+              <Label>Provisionsregel (optional)</Label>
+              <NativeSelect value={bulkForm.rule_id} onChange={(v) => setBulkForm({ ...bulkForm, rule_id: v })} placeholder="Automatisch">
+                {rules.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </NativeSelect>
+            </div>
+            <div><Label>Notiz</Label><Textarea value={bulkForm.note} onChange={(e) => setBulkForm({ ...bulkForm, note: e.target.value })} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(false)}>Abbrechen</Button>
+            <Button onClick={saveBulkAssignment} disabled={bulkBusy}>{bulkBusy ? 'Zuordnen…' : `${selected.size} zuordnen`}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Mitarbeiter-Stammdaten */}
+
       <Dialog open={!!empOpen} onOpenChange={(o) => !o && setEmpOpen(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Provisionsstammdaten · {empOpen?.full_name || empOpen?.email}</DialogTitle></DialogHeader>
