@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { CalendarClock, Search, PackageSearch, History, Send, FlaskConical } from 'lucide-react';
+import { CalendarClock, Search, PackageSearch, History, Send, FlaskConical, CalendarPlus, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,16 @@ export default function DispatchTermine() {
   const [testEmail, setTestEmail] = useState('');
   const [testSending, setTestSending] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; from: string | null; message: string } | null>(null);
+  const [calSyncing, setCalSyncing] = useState(false);
+
+  async function syncCalendar() {
+    setCalSyncing(true);
+    const { data, error } = await (supabase as any).rpc('dispatch_sync_all_appointments_to_calendar');
+    setCalSyncing(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${data ?? 0} Termine in den Teamkalender übernommen`);
+    qc.invalidateQueries({ queryKey: ['dispatch'] });
+  }
 
 
   const { data, isPending } = useQuery({
@@ -130,9 +140,15 @@ export default function DispatchTermine() {
         subtitle="Alle geplanten und offenen Liefer- und Servicetermine"
         icon={CalendarClock}
         actions={
-          <Button asChild variant="outline">
-            <Link to="/dispatch/ungeplant"><PackageSearch className="h-4 w-4 mr-2" /> Ungeplante Auslieferungen</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={syncCalendar} disabled={calSyncing}>
+              {calSyncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CalendarPlus className="h-4 w-4 mr-2" />}
+              In Teamkalender übernehmen
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/dispatch/ungeplant"><PackageSearch className="h-4 w-4 mr-2" /> Ungeplante Auslieferungen</Link>
+            </Button>
+          </div>
         }
       />
 
