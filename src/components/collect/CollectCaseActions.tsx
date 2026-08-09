@@ -96,6 +96,10 @@ export default function CollectCaseActions({ c, items, onChange, customerPhone }
 
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [caseId]);
 
+  useEffect(() => {
+    setSmsTo(customerPhone ?? c.customer_phone ?? '');
+  }, [customerPhone, c.customer_phone]);
+
   const totalOpen = Number(c.open_amount ?? 0) + Number(c.fee_amount ?? 0) + Number(c.interest_amount ?? 0);
 
   const saveCall = async () => {
