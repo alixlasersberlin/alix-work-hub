@@ -1,3 +1,4 @@
+import { TenantBadge } from '@/components/TenantBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -19,6 +20,7 @@ type Kpis = Record<string, number>;
 type CaseRow = {
   id: string;
   customer_name: string | null;
+  tenant_id?: string | null;
   customer_email: string | null;
   currency: string | null;
   open_amount: number | null;
@@ -80,7 +82,7 @@ export default function FinanceCollect() {
     const [k, c] = await Promise.all([
       supabase.rpc('collect_dashboard_kpis' as any),
       supabase.from('collect_cases' as any)
-        .select('id, customer_name, customer_email, currency, open_amount, overdue_amount, fee_amount, interest_amount, max_days_overdue, stage_code, ampel, status, risk_score, pay_probability_pct, risk_class, next_action, priority')
+        .select('id, tenant_id, customer_name, customer_email, currency, open_amount, overdue_amount, fee_amount, interest_amount, max_days_overdue, stage_code, ampel, status, risk_score, pay_probability_pct, risk_class, next_action, priority')
         .neq('status', 'closed')
         .order('overdue_amount', { ascending: false })
         .limit(1000),
@@ -243,6 +245,7 @@ export default function FinanceCollect() {
                       <Link to={`/finance/collect/${r.id}`} className="font-medium text-primary hover:underline">
                         {r.customer_name ?? '–'}
                       </Link>
+                      <TenantBadge tenantId={r.tenant_id} className="ml-2 align-middle" />
                       {r.risk_class && (
                         <span className={`ml-2 text-xs ${RISK[r.risk_class] ?? ''}`}>{r.risk_class}</span>
                       )}
