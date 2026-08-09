@@ -473,6 +473,70 @@ export async function fetchStageDurations(): Promise<StageDuration[]> {
   });
 }
 
+export interface StageDurationMonth {
+  month: string;
+  warehouse: number | null;
+  accounting: number | null;
+  dispatch: number | null;
+  total: number | null;
+  count: number;
+}
+
+/** Zeittrend: Ø Stunden bis Freigabe je Stufe, gruppiert nach Monat der Genehmigung. */
+export async function fetchStageDurationTrend(months = 12): Promise<StageDurationMonth[]> {
+  const since = new Date();
+  since.setMonth(since.getMonth() - (months - 1), 1);
+  since.setHours(0, 0, 0, 0);
+  const { data } = await db
+    .from('delivery_approvals')
+    .select('created_at, warehouse_at, accounting_at, dispatch_at')
+    .gte('created_at', new Date(since.getTime() - 1000 * 60 * 60 * 24 * 120).toISOString())
+    .limit(5000);
+  const rows = (data ?? []) as any[];
+  const order: ApprovalStage[] = ['warehouse', 'accounting', 'dispatch'];
+  const acc = new Map<string, { sum: Record<string, number>; n: Record<string, number>; totalSum: number; totalN: number }>();
+
+  for (const r of rows) {
+    order.forEach((stage, idx) => {
+      const at = r[`${stage}_at`];
+      if (!at) return;
+      const startRaw = idx === 0 ? r.created_at : r[`${order[idx - 1]}_at`];
+      if (!startRaw) return;
+      const h = (new Date(at).getTime() - new Date(startRaw).getTime()) / 36e5;
+      if (h < 0) return;
+      const month = String(at).slice(0, 7);
+      if (new Date(`${month}-01T00:00:00Z`).getTime() < since.getTime()) return;
+      const cur = acc.get(month) ?? { sum: {}, n: {}, totalSum: 0, totalN: 0 };
+      cur.sum[stage] = (cur.sum[stage] ?? 0) + h;
+      cur.n[stage] = (cur.n[stage] ?? 0) + 1;
+      acc.set(month, cur);
+    });
+    // Gesamtdurchlauf: Anlage bis letzte Freigabe
+    if (r.dispatch_at && r.created_at) {
+      const h = (new Date(r.dispatch_at).getTime() - new Date(r.created_at).getTime()) / 36e5;
+      const month = String(r.dispatch_at).slice(0, 7);
+      if (h >= 0 && new Date(`${month}-01T00:00:00Z`).getTime() >= since.getTime()) {
+        const cur = acc.get(month) ?? { sum: {}, n: {}, totalSum: 0, totalN: 0 };
+        cur.totalSum += h;
+        cur.totalN += 1;
+        acc.set(month, cur);
+      }
+    }
+  }
+
+  const avg = (sum?: number, n?: number) => (n ? Number(((sum ?? 0) / n).toFixed(1)) : null);
+  return Array.from(acc.entries())
+    .map(([month, v]) => ({
+      month,
+      warehouse: avg(v.sum.warehouse, v.n.warehouse),
+      accounting: avg(v.sum.accounting, v.n.accounting),
+      dispatch: avg(v.sum.dispatch, v.n.dispatch),
+      total: avg(v.totalSum, v.totalN),
+      count: (v.n.warehouse ?? 0) + (v.n.accounting ?? 0) + (v.n.dispatch ?? 0),
+    }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+}
+
 /** Freigabestatus anhand von Auftragsnummern (z. B. Kalender-/Mobileansichten). */
 export async function fetchReleaseStatusByOrderNumbers(numbers: string[]): Promise<Record<string, OverallStatus>> {
   const nums = [...new Set(numbers.filter(Boolean))];
