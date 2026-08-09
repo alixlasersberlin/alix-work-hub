@@ -456,6 +456,63 @@ export default function Auslieferungsfreigabe() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={reqOpen} onOpenChange={setReqOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader><DialogTitle>Freigabeprozess für mehrere Aufträge starten</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <Input
+              value={reqQ}
+              onChange={(e) => { setReqQ(e.target.value); void loadRequestCandidates(e.target.value); }}
+              placeholder="Auftragsnummer suchen…"
+            />
+            <div className="max-h-72 overflow-auto rounded-md border border-border divide-y divide-border">
+              {reqRows.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground">Keine Aufträge ohne Freigabeprozess gefunden.</div>
+              ) : reqRows.map((o) => (
+                <label key={o.id} className="flex items-center gap-3 p-2 text-sm hover:bg-accent/20 cursor-pointer">
+                  <Checkbox
+                    checked={reqSel.has(o.id)}
+                    onCheckedChange={(v) => setReqSel((prev) => {
+                      const next = new Set(prev);
+                      if (v) next.add(o.id); else next.delete(o.id);
+                      return next;
+                    })}
+                  />
+                  <span className="font-medium min-w-[120px]">{o.order_number ?? o.id.slice(0, 8)}</span>
+                  <span className="text-muted-foreground truncate">{o.customer_name ?? '—'}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{o.order_status ?? ''}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Button size="sm" variant="outline" onClick={() => setReqSel(new Set(reqRows.map((o) => o.id)))}>Alle markieren</Button>
+              <Button size="sm" variant="outline" onClick={() => setReqSel(new Set())}>Auswahl aufheben</Button>
+              <span className="ml-auto">{reqSel.size} ausgewählt</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReqOpen(false)}>Abbrechen</Button>
+            <Button
+              disabled={reqBusy || reqSel.size === 0}
+              onClick={async () => {
+                setReqBusy(true);
+                try {
+                  const n = await bulkStartApprovals(
+                    Array.from(reqSel),
+                    profile?.full_name || user?.email || 'Unbekannt',
+                  );
+                  toast.success(`${n} Freigabeprozesse gestartet`);
+                  setReqOpen(false); setReqSel(new Set());
+                  void load();
+                } catch (e: any) { toast.error(e?.message ?? 'Start fehlgeschlagen'); }
+                finally { setReqBusy(false); }
+              }}
+            >Prozess starten</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
