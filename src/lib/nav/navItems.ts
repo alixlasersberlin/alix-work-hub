@@ -321,47 +321,6 @@ export const navItems: NavItem[] = [
           { path: '/production/factory-invoice', label: 'Factory Invoice', icon: Receipt, roles: ['Super Admin', 'FACTORY INVOICE'] },
         ],
       },
-      {
-
-        path: '/tourenplanung', label: 'TOURENPLANUNG', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'],
-        children: [
-          { path: '/tourenplanung', label: 'Übersicht', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-          { path: '/tourenplanung/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
-          { path: '/tourenplanung/kalender', label: 'Kalender', icon: Calendar, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
-          { path: '/tourenplanung/karte', label: 'Karte', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
-          { path: '/tourenplanung/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'SACHBEARBEITUNG'] },
-          { path: '/dispatch/speditionsversand', label: 'Speditionsversand', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-          { path: '/m', label: 'Mobile Techniker-App', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Technik', 'Service', 'Reparaturannahme', 'SACHBEARBEITUNG'] },
-          {
-            path: '/dispatch', label: 'ALIX DISPATCH CENTER', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'],
-            children: [
-              { path: '/dispatch', label: 'Dispatch-Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-              { path: '/dispatch/termine', label: 'Liefertermine', icon: Calendar, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-              { path: '/dispatch/ungeplant', label: 'Ungeplante Auslieferungen', icon: PackageSearch, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-
-              { path: '/dispatch/touren', label: 'Touren', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-              { path: '/dispatch/speditionsversand', label: 'Speditionsversand', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
-              { path: '/dispatch/spediteure', label: 'Spediteure', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
-              { path: '/dispatch/fahrzeuge', label: 'Fahrzeuge', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
-              { path: '/dispatch/fahrer', label: 'Fahrer', icon: Users, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
-              { path: '/dispatch/performance', label: 'Performance & CO₂', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
-              { path: '/dispatch/wartung', label: 'Wartung & Prüfungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
-              { path: '/dispatch/telematik', label: 'Telematik', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
-              { path: '/dispatch/einstellungen', label: 'Dispatch-Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
-            ],
-          },
-          {
-            path: '/papiere', label: 'VERSAND', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
-            children: [
-              { path: '/papiere', label: 'Übersicht', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-              { path: '/versand/lieferscheine', label: 'Lieferscheine', icon: Truck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-              { path: '/versand/ratenplan', label: 'Ratenplan', icon: Banknote, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-              { path: '/versand/mietkauf', label: 'Mietkauf', icon: FileSignature, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-              { path: '/versand/sepa-mandat', label: 'SEPA Mandat', icon: CreditCard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
-            ],
-          },
-        ],
-      },
     ],
   },
 
@@ -409,6 +368,47 @@ export const navItems: NavItem[] = [
     path: '/warehouse-logistics', label: 'LAGER & WERKSTATT', icon: Warehouse,
     roles: null,
     children: [
+      {
+
+        path: '/tourenplanung', label: 'TOURENPLANUNG', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'],
+        children: [
+          { path: '/tourenplanung', label: 'Übersicht', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/tourenplanung/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/tourenplanung/kalender', label: 'Kalender', icon: Calendar, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
+          { path: '/tourenplanung/karte', label: 'Karte', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Technik', 'SACHBEARBEITUNG'] },
+          { path: '/tourenplanung/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'SACHBEARBEITUNG'] },
+          { path: '/dispatch/speditionsversand', label: 'Speditionsversand', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/m', label: 'Mobile Techniker-App', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Technik', 'Service', 'Reparaturannahme', 'SACHBEARBEITUNG'] },
+          {
+            path: '/dispatch', label: 'ALIX DISPATCH CENTER', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'],
+            children: [
+              { path: '/dispatch', label: 'Dispatch-Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+              { path: '/dispatch/termine', label: 'Liefertermine', icon: Calendar, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+              { path: '/dispatch/ungeplant', label: 'Ungeplante Auslieferungen', icon: PackageSearch, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+
+              { path: '/dispatch/touren', label: 'Touren', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+              { path: '/dispatch/speditionsversand', label: 'Speditionsversand', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+              { path: '/dispatch/spediteure', label: 'Spediteure', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
+              { path: '/dispatch/fahrzeuge', label: 'Fahrzeuge', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
+              { path: '/dispatch/fahrer', label: 'Fahrer', icon: Users, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
+              { path: '/dispatch/performance', label: 'Performance & CO₂', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'SACHBEARBEITUNG'] },
+              { path: '/dispatch/wartung', label: 'Wartung & Prüfungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
+              { path: '/dispatch/telematik', label: 'Telematik', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
+              { path: '/dispatch/einstellungen', label: 'Dispatch-Einstellungen', icon: Settings, roles: ['Admin', 'Super Admin', 'Tourenplanung'] },
+            ],
+          },
+          {
+            path: '/papiere', label: 'VERSAND', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
+            children: [
+              { path: '/papiere', label: 'Übersicht', icon: FileText, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+              { path: '/versand/lieferscheine', label: 'Lieferscheine', icon: Truck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+              { path: '/versand/ratenplan', label: 'Ratenplan', icon: Banknote, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+              { path: '/versand/mietkauf', label: 'Mietkauf', icon: FileSignature, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+              { path: '/versand/sepa-mandat', label: 'SEPA Mandat', icon: CreditCard, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
+            ],
+          },
+        ],
+      },
       {
         path: '/lagerverwaltung', label: 'LAGERVERWALTUNG', icon: Warehouse, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'],
         children: [
