@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Scale, Plus, Copy } from 'lucide-react';
@@ -129,17 +129,15 @@ export default function ProvisionRegeln() {
 
             <div>
               <Label>Provisionsart</Label>
-              <Select value={form.commission_type} onValueChange={(v) => setForm({ ...form, commission_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{COMMISSION_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={form.commission_type} onChange={(v) => setForm({ ...form, commission_type: v })}>
+                {COMMISSION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Bemessungsgrundlage</Label>
-              <Select value={form.basis} onValueChange={(v) => setForm({ ...form, basis: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{BASIS_OPTIONS.map((b) => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={form.basis} onChange={(v) => setForm({ ...form, basis: v })}>
+                {BASIS_OPTIONS.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+              </NativeSelect>
             </div>
             <div><Label>Prozentwert</Label><Input type="number" step="0.01" value={form.percent_value ?? ''} onChange={(e) => setForm({ ...form, percent_value: Number(e.target.value) })} /></div>
             <div><Label>Festbetrag</Label><Input type="number" step="0.01" value={form.fixed_amount ?? ''} onChange={(e) => setForm({ ...form, fixed_amount: e.target.value === '' ? null : Number(e.target.value) })} /></div>
@@ -163,31 +161,27 @@ export default function ProvisionRegeln() {
 
             <div>
               <Label>Wirksam ab Ereignis</Label>
-              <Select value={form.effective_event} onValueChange={(v) => setForm({ ...form, effective_event: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{EFFECTIVE_EVENTS.map((e) => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={form.effective_event} onChange={(v) => setForm({ ...form, effective_event: v })}>
+                {EFFECTIVE_EVENTS.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Auszahlungszeitpunkt</Label>
-              <Select value={form.payout_timing} onValueChange={(v) => setForm({ ...form, payout_timing: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{PAYOUT_TIMINGS.map((p) => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={form.payout_timing} onChange={(v) => setForm({ ...form, payout_timing: v })}>
+                {PAYOUT_TIMINGS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Ratenzahlungs-Logik</Label>
-              <Select value={form.installment_mode} onValueChange={(v) => setForm({ ...form, installment_mode: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{INSTALLMENT_MODES.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={form.installment_mode} onChange={(v) => setForm({ ...form, installment_mode: v })}>
+                {INSTALLMENT_MODES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Rückforderungsregel</Label>
-              <Select value={form.reclaim_rule} onValueChange={(v) => setForm({ ...form, reclaim_rule: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{RECLAIM_RULES.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={form.reclaim_rule} onChange={(v) => setForm({ ...form, reclaim_rule: v })}>
+                {RECLAIM_RULES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </NativeSelect>
             </div>
 
             <div><Label>Wartezeit (Tage)</Label><Input type="number" value={form.payout_min_wait_days ?? 0} onChange={(e) => setForm({ ...form, payout_min_wait_days: Number(e.target.value) })} /></div>
@@ -200,18 +194,16 @@ export default function ProvisionRegeln() {
             <div><Label>Mindestmarge</Label><Input type="number" step="0.01" value={form.min_margin ?? ''} onChange={(e) => setForm({ ...form, min_margin: e.target.value === '' ? null : Number(e.target.value) })} /></div>
             <div>
               <Label>Steuerliche Behandlung</Label>
-              <Select value={form.tax_treatment ?? ''} onValueChange={(v) => setForm({ ...form, tax_treatment: v })}>
-                <SelectTrigger><SelectValue placeholder="wählen" /></SelectTrigger>
-                <SelectContent>{TAX_TREATMENTS.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={form.tax_treatment ?? ''} onChange={(v) => setForm({ ...form, tax_treatment: v })} placeholder="wählen">
+                {TAX_TREATMENTS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </NativeSelect>
             </div>
 
             <div>
               <Label>Mandant</Label>
-              <Select value={form.tenant_id ?? ''} onValueChange={(v) => setForm({ ...form, tenant_id: v })}>
-                <SelectTrigger><SelectValue placeholder="alle Mandanten" /></SelectTrigger>
-                <SelectContent>{tenants.map((t) => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={form.tenant_id ?? ''} onChange={(v) => setForm({ ...form, tenant_id: v })} placeholder="alle Mandanten">
+                {tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </NativeSelect>
             </div>
             <div><Label>Standort</Label><Input value={form.location ?? ''} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
             <div><Label>Gültig ab</Label><Input type="date" value={form.valid_from ?? ''} onChange={(e) => setForm({ ...form, valid_from: e.target.value || null })} /></div>
