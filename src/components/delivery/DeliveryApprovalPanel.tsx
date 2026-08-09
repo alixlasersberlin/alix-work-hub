@@ -331,6 +331,42 @@ export default function DeliveryApprovalPanel({ orderId, orderNumber }: { orderI
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Freigabeprotokoll versenden</DialogTitle></DialogHeader>
+          <Separator />
+          <div className="space-y-2">
+            <div className="text-sm text-muted-foreground">
+              Das PDF wird als Anhang versendet – BCC automatisch an k.trinh@alix-operation.de.
+            </div>
+            <Input
+              value={mailTo}
+              onChange={(e) => setMailTo(e.target.value)}
+              placeholder="Empfänger (mehrere mit Komma trennen)"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMailOpen(false)}>Abbrechen</Button>
+            <Button
+              disabled={busyDoc || !mailTo.trim()}
+              onClick={async () => {
+                setBusyDoc(true);
+                try {
+                  await mailApprovalPdf({
+                    approval, events, orderNumber,
+                    to: mailTo.split(',').map((s) => s.trim()).filter(Boolean),
+                  });
+                  toast.success('Protokoll versendet');
+                  setMailOpen(false);
+                  void fetchEvents(orderId).then(setEvents);
+                } catch (e: any) { toast.error(e.message ?? 'Versand fehlgeschlagen'); }
+                finally { setBusyDoc(false); }
+              }}
+            >Senden</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
