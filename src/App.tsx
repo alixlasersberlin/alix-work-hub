@@ -274,6 +274,8 @@ const ProductionPortal = lazy(() => import("./pages/ProductionPortal"));
 const ProductionFertig = lazy(() => import("./pages/ProductionFertig"));
 const ProductionOrderIn = lazy(() => import("./pages/ProductionOrderIn"));
 const OrderApprovalQueue = lazy(() => import("./pages/OrderApprovalQueue"));
+const Auslieferungsfreigabe = lazy(() => import("./pages/Operations/Auslieferungsfreigabe"));
+
 const FactoryInvoice = lazy(() => import("./pages/FactoryInvoice"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
 const Lager = lazy(() => import("./pages/Lager"));
