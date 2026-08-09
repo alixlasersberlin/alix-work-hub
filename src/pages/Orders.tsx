@@ -25,6 +25,8 @@ import OrderItemsEditDialog from '@/components/OrderItemsEditDialog';
 import { Package } from 'lucide-react';
 import OrderStatsBar from '@/components/OrderStatsBar';
 import { VipBadge } from '@/components/VipBadge';
+import { ReleaseStatusDot, useReleaseStatusMap } from '@/components/delivery/ReleaseStatusDot';
+
 import { isOrderVip, vipFirst } from '@/lib/vip';
 import { useDrivingTimes } from '@/hooks/useDrivingTimes';
 import { DrivingTimeCell } from '@/components/DrivingTimeCell';
