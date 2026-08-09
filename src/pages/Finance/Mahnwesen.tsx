@@ -14,6 +14,7 @@ import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { EmptyState } from '@/components/infinity/EmptyState';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { RegionChip } from '@/components/finance/RegionChip';
 import { regionCurrency } from '@/lib/finance/region';
 
@@ -34,6 +35,7 @@ const LEVEL_LABEL = ['—', 'Zahlungserinnerung', '1. Mahnung', '2. Mahnung', 'L
 export default function FinanceMahnwesen() {
   const { roles } = useAuth();
   const { region } = useAccountingRegion();
+  const { tenantId } = useTenantFilter();
   const fmt = (n: number | null) => typeof n === 'number'
     ? new Intl.NumberFormat(region === 'CH' ? 'de-CH' : 'de-DE', { style: 'currency', currency: regionCurrency((region as any)) }).format(n) : '–';
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
@@ -52,6 +54,7 @@ export default function FinanceMahnwesen() {
       .in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region])
       .order('created_at', { ascending: false });
     if (statusFilter !== 'alle') remQ = remQ.eq('status', statusFilter);
+    if (tenantId) remQ = remQ.eq('tenant_id', tenantId);
     const [accRes, draftRes] = await Promise.all([
       supabase.from('finance_accounts' as any)
         .select('id, customer_id, reminder_level, overdue_balance, last_reminder_at, customers(company_name, contact_name, email)')
@@ -65,7 +68,7 @@ export default function FinanceMahnwesen() {
     setDrafts(((draftRes.data ?? []) as any) as DraftRow[]);
     setLoading(false);
   };
-  useEffect(() => { load(); }, [region, statusFilter]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [region, statusFilter, tenantId]);
 
 
   const runEngine = async () => {
