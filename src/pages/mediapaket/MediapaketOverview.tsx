@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { exportMediaPackagePdf } from '@/lib/mediapaket/exportPdf';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 
 const STATUS_LABEL: Record<string, string> = {
   not_started: 'Nicht begonnen',
@@ -58,6 +59,7 @@ interface MpRow {
 }
 
 export default function MediapaketOverview() {
+  const { tenantId } = useTenantFilter();
   const [rows, setRows] = useState<MpRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'list' | 'kanban'>('list');
@@ -177,7 +179,7 @@ export default function MediapaketOverview() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [tenantId]);
 
   const assigneeOptions = useMemo(() => {
     const map = new Map<string, string>();
