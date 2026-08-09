@@ -3,6 +3,7 @@ import { sanitizeHtml } from '@/lib/sanitize-html';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,7 @@ const FILTERS = [
 
 export default function MailCenterPosteingang() {
   const { isAdmin, hasRole } = useAuth();
+  const { tenantId, apply } = useTenantFilter();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -83,6 +85,7 @@ export default function MailCenterPosteingang() {
       .limit(300);
     if (mailbox !== 'all') q = q.eq('mailbox', mailbox);
     else q = q.in('mailbox', allowedMailboxes);
+    q = apply(q as any) as any;
     const { data } = await q;
     setRows(data ?? []);
     setLoading(false);
@@ -95,7 +98,7 @@ export default function MailCenterPosteingang() {
   };
 
   useEffect(() => { loadUsers(); }, []);
-  useEffect(() => { load(); /* eslint-disable-line */ }, [mailbox, allowedMailboxes.join(',')]);
+  useEffect(() => { load(); /* eslint-disable-line */ }, [mailbox, allowedMailboxes.join(','), tenantId]);
 
   useEffect(() => {
     if (!initialId || rows.length === 0) return;
