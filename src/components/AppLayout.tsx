@@ -128,6 +128,10 @@ function KontaktMenu({ roles }: { roles: string[] }) {
   return <HeaderNavMenu roles={roles} itemLabel="KONTAKT" triggerLabel="Alix iCom" />;
 }
 
+function ConnectMenu({ roles }: { roles: string[] }) {
+  return <HeaderNavMenu roles={roles} itemLabel="ALIX CONNECT" triggerLabel="Connect" />;
+}
+
 function AiDiensteMenu({ roles }: { roles: string[] }) {
   return <HeaderNavMenu roles={roles} itemLabel="ALIX AI DIENSTE" triggerLabel="Alix AI" />;
 }
