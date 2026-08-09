@@ -539,6 +539,7 @@ const SignApiDocs = lazy(() => import("./pages/Admin/SignApiDocs"));
 const AlixDocsReports = lazy(() => import("./pages/Admin/AlixDocsReports"));
 const AlixDocsHeatmap = lazy(() => import("./pages/Admin/AlixDocsHeatmap"));
 const AlixDocsMobile = lazy(() => import("./pages/mobile/AlixDocsMobile"));
+const FreigabenMobile = lazy(() => import("./pages/mobile/FreigabenMobile"));
 const AlixDocsDashboardPage = lazy(() => import("./pages/AlixDocsDashboard"));
 const AlixDocsSharePublic = lazy(() => import("./pages/AlixDocsSharePublic"));
 const CustomerPortalAlixDocs = lazy(() => import("./pages/CustomerPortal/AlixDocs"));
@@ -1828,6 +1829,7 @@ function AppRoutes() {
           <Route path="/admin/alixdocs/reports" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixDocsReports /></ProtectedRoute>} />
           <Route path="/admin/alixdocs/heatmap" element={<ProtectedRoute requiredRoles={['Admin', 'Super Admin']}><AlixDocsHeatmap /></ProtectedRoute>} />
           <Route path="/m/alixdocs" element={<ProtectedRoute><AlixDocsMobile /></ProtectedRoute>} />
+          <Route path="/m/freigaben" element={<ProtectedRoute><FreigabenMobile /></ProtectedRoute>} />
 
 
 
