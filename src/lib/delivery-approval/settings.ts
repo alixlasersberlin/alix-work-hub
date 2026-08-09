@@ -76,6 +76,12 @@ export async function fetchApprovalSettings(): Promise<ApprovalSettings> {
     ...DEFAULT_APPROVAL_SETTINGS,
     ...(raw ?? {}),
     targets: { ...DEFAULT_APPROVAL_SETTINGS.targets, ...((raw?.targets as any) ?? {}) },
+    absences: Array.isArray(raw?.absences) ? (raw.absences as Absence[]) : [],
+    monthlyReport: {
+      ...DEFAULT_APPROVAL_SETTINGS.monthlyReport,
+      ...((raw?.monthlyReport as any) ?? {}),
+      recipients: Array.isArray(raw?.monthlyReport?.recipients) ? raw.monthlyReport.recipients : [],
+    },
   };
 }
 
