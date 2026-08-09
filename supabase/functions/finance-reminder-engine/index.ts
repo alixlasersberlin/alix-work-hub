@@ -4,6 +4,7 @@
 // CH -> 'finance.reminder.config.CH'. Versendet NICHTS automatisch.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { getTenantScope } from '../_shared/tenant-scope.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -25,6 +26,11 @@ Deno.serve(async (req) => {
   const started = Date.now();
   try {
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+    const scope = await getTenantScope(req);
+    const scopedIds = scope.restricted ? scope.tenantIds : null;
+    if (scopedIds && scopedIds.length === 0) {
+      return new Response(JSON.stringify({ ok: false, error: 'kein Mandanten-Zugriff' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
     let body: any = {};
     try { body = await req.json(); } catch { /* no body */ }
     const requested = String(body?.region ?? '').toUpperCase();
@@ -44,11 +50,13 @@ Deno.serve(async (req) => {
       try { if (cfgRow?.value) cfg = { ...DEFAULT_CFG, ...JSON.parse(cfgRow.value) }; } catch { /* ignore */ }
       const levels = (cfg.levels ?? DEFAULT_CFG.levels).sort((a: any, b: any) => a.level - b.level);
 
-      const { data: accounts } = await admin
+      let accQ: any = admin
         .from('finance_accounts')
         .select('id, customer_id, reminder_level, overdue_balance')
         .eq('accounting_region', region)
         .gt('overdue_balance', 0);
+      if (scopedIds) accQ = accQ.in('tenant_id', scopedIds);
+      const { data: accounts } = await accQ;
       rSeen = accounts?.length ?? 0;
 
       for (const acc of accounts ?? []) {
