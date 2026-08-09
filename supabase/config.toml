@@ -430,3 +430,6 @@ verify_jwt = false
 
 [functions.collect-portal-pay]
 verify_jwt = false
+
+[functions.tmp-create-sobitsch]
+verify_jwt = false
