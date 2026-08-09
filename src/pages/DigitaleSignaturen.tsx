@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, FileSignature, Search, Plus, ShieldCheck, Activity, Users, FileCheck2 } from 'lucide-react';
 import { generateSignatureCertificate } from '@/lib/signaturen/certificate';
 import { toast } from 'sonner';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 
 
 type Row = {
@@ -30,6 +31,7 @@ const statusBadge: Record<string, string> = {
 
 export default function DigitaleSignaturen() {
   const navigate = useNavigate();
+  const { tenantId } = useTenantFilter();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
@@ -37,9 +39,11 @@ export default function DigitaleSignaturen() {
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.from('sig_documents')
+      let q = supabase.from('sig_documents')
         .select('id,title,document_type,status,created_at,completed_at,version')
         .order('created_at', { ascending: false }).limit(200);
+      if (tenantId) q = q.eq('tenant_id', tenantId) as any;
+      const { data } = await q;
       const list = (data || []) as Row[];
       setRows(list);
       const today = new Date().toISOString().slice(0, 10);
@@ -51,7 +55,7 @@ export default function DigitaleSignaturen() {
       });
       setLoading(false);
     })();
-  }, []);
+  }, [tenantId]);
 
   const filtered = rows.filter((r) => !q || r.title.toLowerCase().includes(q.toLowerCase()) || r.document_type.toLowerCase().includes(q.toLowerCase()));
 

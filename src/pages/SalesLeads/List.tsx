@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -56,6 +57,7 @@ function statusVariant(s: string): 'default' | 'secondary' | 'destructive' | 'ou
 }
 
 export default function SalesLeadsList() {
+  const { tenantId } = useTenantFilter();
   const { hasRole } = useAuth();
   const canDelete = hasRole('Super Admin');
   const canAssign = hasRole('Super Admin');
@@ -91,11 +93,13 @@ export default function SalesLeadsList() {
   }
 
   async function loadLeads() {
-    const { data } = await supabase
+    let q = supabase
       .from('sales_leads')
       .select('id, created_at, external_id, source, form_name, lead_number, device_category, additional_services, customer_goal, implementation_period, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference, service_rating')
       .order('created_at', { ascending: false })
       .limit(500);
+    if (tenantId) q = q.eq('tenant_id', tenantId) as any;
+    const { data } = await q;
     setRows((data ?? []) as Lead[]);
   }
 
@@ -111,7 +115,7 @@ export default function SalesLeadsList() {
       setUsers((u ?? []) as any);
       setLoading(false);
     })();
-  }, []);
+  }, [tenantId]);
 
   // Match leads against existing orders (via customers)
   useEffect(() => {

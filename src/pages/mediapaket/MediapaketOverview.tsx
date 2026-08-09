@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { exportMediaPackagePdf } from '@/lib/mediapaket/exportPdf';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 
 const STATUS_LABEL: Record<string, string> = {
   not_started: 'Nicht begonnen',
@@ -58,6 +59,7 @@ interface MpRow {
 }
 
 export default function MediapaketOverview() {
+  const { tenantId } = useTenantFilter();
   const [rows, setRows] = useState<MpRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'list' | 'kanban'>('list');
@@ -128,11 +130,13 @@ export default function MediapaketOverview() {
 
   const load = async () => {
     setLoading(true);
-    const { data: mps } = await supabase
+    let mpQuery = supabase
       .from('media_packages')
       .select('id, order_id, customer_id, status, progress_percent, assigned_user_id, due_date, studio_name, updated_at, submitted_at')
       .order('updated_at', { ascending: false })
       .limit(500);
+    if (tenantId) mpQuery = mpQuery.eq('tenant_id', tenantId) as any;
+    const { data: mps } = await mpQuery;
     const list = (mps || []) as MpRow[];
 
     const cids = Array.from(new Set(list.map(r => r.customer_id).filter(Boolean))) as string[];
@@ -175,7 +179,7 @@ export default function MediapaketOverview() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [tenantId]);
 
   const assigneeOptions = useMemo(() => {
     const map = new Map<string, string>();
