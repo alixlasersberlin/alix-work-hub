@@ -34,10 +34,18 @@ const hoursBetween = (a?: string | null, b?: string | null) =>
   a && b ? (new Date(b).getTime() - new Date(a).getTime()) / 36e5 : null;
 
 export default function Auslieferungsfreigabe() {
+  const { user, profile, hasAnyRole } = useAuth();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<'all' | 'blocked' | 'waiting' | 'released'>('all');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkStage, setBulkStage] = useState<ApprovalStage>('accounting');
+  const [bulkComment, setBulkComment] = useState('');
+  const [bulkSig, setBulkSig] = useState<string | null>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [escalations, setEscalations] = useState<EscalationStat[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -63,7 +71,16 @@ export default function Auslieferungsfreigabe() {
     setLoading(false);
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); void fetchEscalationStats().then(setEscalations).catch(() => {}); }, []);
+
+  // Realtime: Freigaben live aktualisieren
+  useEffect(() => {
+    const channel = supabase
+      .channel('delivery-approvals-dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'delivery_approvals' }, () => { void load(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== 'all' && r.overall_status !== filter) return false;
