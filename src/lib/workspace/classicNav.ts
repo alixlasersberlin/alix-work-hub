@@ -14,6 +14,7 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
     'ALIX CONNECT',
     'TICKETS',
     'ALIX i-COM',
+    'ALIXDOCS',
     'TEAMKALENDER',
   ],
   buchhaltung: [
@@ -28,12 +29,14 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
     'LAGER & WERKSTATT',
     'TOURENPLANUNG',
     'EINKAUF',
+    'ALIXDOCS',
     'TEAMKALENDER',
   ],
   fertigung: [
     'DASHBOARDS',
     'PRODUKTION & BESCHAFFUNG',
     'LAGER & WERKSTATT',
+    'ALIXDOCS',
     'TEAMKALENDER',
   ],
   tourenplanung: [
@@ -41,6 +44,7 @@ export const WORKSPACE_CLASSIC_GROUPS: Record<string, string[]> = {
     'TOURENPLANUNG',
     'LAGER & WERKSTATT',
     'TICKETS',
+    'ALIXDOCS',
     'TEAMKALENDER',
   ],
   operation: [
