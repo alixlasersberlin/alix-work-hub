@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw, Download, FileSpreadsheet, FileText, FileJson, Plus, Trash2 } from 'lucide-react';
+import { Repeat, Search, Loader2, ChevronDown, ChevronRight, RefreshCw, Download, FileSpreadsheet, FileText, FileJson, Plus, Trash2, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
@@ -495,6 +495,23 @@ export default function WiederkehrendeZahler() {
     }
   }
 
+  const [prenotifBusy, setPrenotifBusy] = useState(false);
+  async function runPrenotifications() {
+    setPrenotifBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('recurring-prenotification', { body: {} });
+      if (error) throw error;
+      toast({
+        title: 'Vorankündigungen verarbeitet',
+        description: `Fällig am ${data?.due_date ?? ''}: ${data?.sent ?? 0} gesendet, ${data?.skipped ?? 0} übersprungen, ${data?.failed ?? 0} fehlgeschlagen.`,
+      });
+    } catch (e: any) {
+      toast({ title: 'Vorankündigung fehlgeschlagen', description: e?.message ?? 'Unbekannter Fehler', variant: 'destructive' });
+    } finally {
+      setPrenotifBusy(false);
+    }
+  }
+
   const groups = useMemo<Group[]>(() => {
     const map = new Map<string, Group>();
     const keyOf = (cid: string | null, name: string | null) => cid || `name:${(name || 'Unbekannt').toLowerCase()}`;
@@ -748,6 +765,10 @@ export default function WiederkehrendeZahler() {
             <Button onClick={runSync} disabled={syncing} size="sm" variant="outline">
               {syncing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
               Jetzt synchronisieren
+            </Button>
+            <Button onClick={runPrenotifications} disabled={prenotifBusy} size="sm" variant="outline" title="Sendet die Vorankündigung an alle Kunden mit Fälligkeit in 5 Tagen">
+              {prenotifBusy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
+              Vorankündigung (5 Tage)
             </Button>
           </div>
         }

@@ -35087,6 +35087,54 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_prenotifications: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string | null
+          customer_name: string | null
+          due_date: string
+          email: string
+          error: string | null
+          id: string
+          profile_id: string | null
+          sent_at: string
+          source_system: string | null
+          status: string
+          zoho_recurring_invoice_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          customer_name?: string | null
+          due_date: string
+          email: string
+          error?: string | null
+          id?: string
+          profile_id?: string | null
+          sent_at?: string
+          source_system?: string | null
+          status?: string
+          zoho_recurring_invoice_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          customer_name?: string | null
+          due_date?: string
+          email?: string
+          error?: string | null
+          id?: string
+          profile_id?: string | null
+          sent_at?: string
+          source_system?: string | null
+          status?: string
+          zoho_recurring_invoice_id?: string | null
+        }
+        Relationships: []
+      }
       repair_attachments: {
         Row: {
           category: string | null
