@@ -577,42 +577,16 @@ async function runPostBackupTasks(params: {
     console.error("Hetzner sync exception:", error);
   }
 
-  if (notify && notifyEmail && downloadUrl) {
-    try {
-      const emailRes = await fetch(
-        `${supabaseUrl}/functions/v1/send-transactional-email`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${serviceRoleKey}`,
-          },
-          body: JSON.stringify({
-            templateName: "backup-ready",
-            recipientEmail: notifyEmail,
-            idempotencyKey: `backup-${backupId}`,
-            templateData: {
-              backup_id: backupId,
-              download_url: downloadUrl,
-              expires_in_hours: 168,
-              size_mb: (sizeBytes / 1024 / 1024).toFixed(2),
-              table_count: BACKUP_TABLES.length,
-              storage_file_count: storageFileCount,
-              source,
-              created_at: startedAt,
-            },
-          }),
-        },
-      );
-      if (!emailRes.ok) {
-        console.error("Email send failed:", await emailRes.text());
-      } else {
-        await emailRes.text();
-      }
-    } catch (error) {
-      console.error("Email send exception:", error);
-    }
+  // SICHERHEIT: Der Versand von Backup-Benachrichtigungen mit Download-Link
+  // ist dauerhaft deaktiviert. Sicherungen dürfen ausschließlich über einen
+  // angemeldeten Super-Admin-Account (Passwort-Bestätigung) und nur
+  // AES-256-verschlüsselt heruntergeladen werden.
+  if (notify || notifyEmail || downloadUrl) {
+    console.log(
+      `Backup ${backupId}: E-Mail-Versand deaktiviert (Download nur über Benutzerkonto).`,
+    );
   }
+
 }
 
 async function processBackupStep(params: {
