@@ -8,6 +8,7 @@ import {
   Users, Flame, Sparkles, Download, RefreshCw, Trophy, AlertTriangle, Inbox,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
@@ -18,6 +19,7 @@ import { useRevenueMask } from '@/lib/revenue-mask';
 interface KPI { label: string; value: string | number; icon: any; hint?: string; accent?: 'gold' | 'sky' | 'emerald' | 'rose' | 'violet' }
 
 export default function ExecutiveDashboard() {
+  const { tenantId, apply } = useTenantFilter();
   const { fmtEUR } = useRevenueMask();
   const [loading, setLoading] = useState(true);
   const [kpis, setKpis] = useState<KPI[]>([]);
@@ -31,7 +33,7 @@ export default function ExecutiveDashboard() {
     setLoading(true);
 
     const [msgs, evts, campaignsData, ordersData] = await Promise.all([
-      supabase.from('mail_messages').select('id,status,opened_at,clicked_at,created_by,to_email,subject,customer_id,created_at').order('created_at', { ascending: false }).limit(1000),
+      apply(supabase.from('mail_messages').select('id,status,opened_at,clicked_at,created_by,to_email,subject,customer_id,created_at').order('created_at', { ascending: false }).limit(1000) as any),
       supabase.from('mail_events').select('id,event_type,message_id,created_at').limit(2000),
       supabase.from('mail_campaigns').select('id,name,status,created_at').limit(100),
       supabase.from('orders').select('id,customer_id,total_amount,order_status,salesperson_name,created_at,order_date').order('created_at', { ascending: false }).limit(2000),
