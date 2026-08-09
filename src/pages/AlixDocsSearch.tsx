@@ -1,3 +1,4 @@
+import { TenantBadge } from '@/components/TenantBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -562,7 +563,10 @@ export default function AlixDocsSearch() {
                       <TableRow key={d.id} className={selected.has(d.id) ? 'bg-primary/5' : ''}>
                         <TableCell><Checkbox checked={selected.has(d.id)} onCheckedChange={() => toggle(d.id)} /></TableCell>
                         <TableCell>
-                          <div className="font-medium">{d.title}</div>
+                          <div className="font-medium flex items-center gap-2">
+                            <span>{d.title}</span>
+                            <TenantBadge tenantId={(d as any).tenant_id} />
+                          </div>
                           <div className="flex items-center gap-1 mt-0.5">
                             {d.original_filename && <span className="text-[11px] text-muted-foreground font-mono">{d.original_filename}</span>}
                             {confBadge(d.confidentiality_level)}
