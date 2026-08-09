@@ -584,15 +584,18 @@ export default function AppLayout() {
       children: item.children
         ?.filter(filterByRoles)
         .filter(c => !atOnly || !atHiddenPaths.has(c.path))
+        .filter(c => !atRoleOnly || c.path.startsWith('#') || (c.children?.length ?? 0) > 0 || isAtOnlyPathAllowed(c.path))
         .map(c => ({
           ...c,
-          children: c.children?.filter(filterByRoles).filter(filterByGrant),
+          children: c.children?.filter(filterByRoles).filter(filterByGrant)
+            .filter(g => !atRoleOnly || isAtOnlyPathAllowed(g.path)),
         }))
         .filter(filterByGrant)
         .filter(c => !c.children || c.children.length > 0),
     }))
     // Hide groups whose children are all hidden by role
     .filter(item => !item.children || item.children.length > 0);
+
 
   // Sammle alle erlaubten Leaf-Pfade (für "Mein Arbeitsplatz")
   const allowedLeafMap = useMemo(() => {
