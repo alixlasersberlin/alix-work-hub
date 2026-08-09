@@ -81,6 +81,10 @@ export default function ProvisionZuordnung() {
       .filter((o) => !s || [o.order_number, o.salesperson_name].filter(Boolean).some((v) => String(v).toLowerCase().includes(s)));
   }, [orders, assignedOrderIds, search]);
 
+  const visibleUnassigned = useMemo(() => unassigned.slice(0, 300), [unassigned]);
+  const allVisibleSelected = visibleUnassigned.length > 0 && visibleUnassigned.every((o) => selected.has(o.id));
+
+
   const saveAssignment = async () => {
     if (!assignForm.employee_id) return toast.error('Bitte Mitarbeiter wählen');
     const share = Number(assignForm.share_percent);
