@@ -2063,7 +2063,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                 >
                   {open ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{a.customer_name}</div>
+                    <div className="text-lg font-bold truncate">{a.customer_name}</div>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       <Button
                         size="sm"
