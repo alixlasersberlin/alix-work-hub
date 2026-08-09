@@ -128,6 +128,10 @@ function KontaktMenu({ roles }: { roles: string[] }) {
   return <HeaderNavMenu roles={roles} itemLabel="KONTAKT" triggerLabel="Alix iCom" />;
 }
 
+function ConnectMenu({ roles }: { roles: string[] }) {
+  return <HeaderNavMenu roles={roles} itemLabel="ALIX CONNECT" triggerLabel="Connect" />;
+}
+
 function AiDiensteMenu({ roles }: { roles: string[] }) {
   return <HeaderNavMenu roles={roles} itemLabel="ALIX AI DIENSTE" triggerLabel="Alix AI" />;
 }
@@ -570,7 +574,7 @@ export default function AppLayout() {
   const { workspaceMode: wsMode } = useWorkspace();
 
   const visibleItems = navItems
-    .filter(i => i.label !== 'KONTAKT' && i.label !== 'ALIX AI DIENSTE')
+    .filter(i => i.label !== 'KONTAKT' && i.label !== 'ALIX AI DIENSTE' && i.label !== 'ALIX CONNECT')
     .filter(filterByRoles)
 
     .map(item => ({
@@ -1364,6 +1368,7 @@ export default function AppLayout() {
 
 
             <KontaktMenu roles={roles} />
+            <ConnectMenu roles={roles} />
             <AiDiensteMenu roles={roles} />
 
 
