@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, BarChart3, TrendingUp, Clock, RefreshCw, Star, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 
 const STATUS_LABEL: Record<string, string> = {
   not_started: 'Nicht begonnen', in_progress: 'In Bearbeitung',
@@ -26,7 +27,9 @@ export default function MediapaketAnalytics() {
   useEffect(() => {
     (async () => {
       const [mpRes, hRes, pRes, cRes, rRes] = await Promise.all([
-        supabase.from('media_packages').select('id, status, customer_id, assigned_user_id, created_at, updated_at, submitted_at, due_date, studio_name'),
+        (tenantId
+          ? supabase.from('media_packages').select('id, status, customer_id, assigned_user_id, created_at, updated_at, submitted_at, due_date, studio_name').eq('tenant_id', tenantId)
+          : supabase.from('media_packages').select('id, status, customer_id, assigned_user_id, created_at, updated_at, submitted_at, due_date, studio_name')),
         supabase.from('media_package_history').select('media_package_id, action, created_at, new_value').in('action', ['status_changed', 'submitted', 'customer_answered', 'refresh_reminder_sent']).order('created_at', { ascending: true }).limit(5000),
         supabase.from('user_profiles').select('id, first_name, last_name, email'),
         supabase.from('customers').select('id, name'),
