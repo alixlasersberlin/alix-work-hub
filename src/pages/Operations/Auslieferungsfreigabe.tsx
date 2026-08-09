@@ -277,6 +277,10 @@ export default function Auslieferungsfreigabe() {
       <Card className="p-3">
         <div className="flex items-center gap-2 text-sm font-medium mb-2">
           <AlertTriangle className="h-4 w-4 text-amber-400" />Eskalationen (Stufe 1 = 24 h, 2 = 48 h, 3 = 72 h)
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" size="sm" onClick={exportEscalationsCsv}><Download className="h-4 w-4 mr-1" />CSV</Button>
+            <Button variant="outline" size="sm" onClick={exportEscalations}><FileText className="h-4 w-4 mr-1" />PDF</Button>
+          </div>
         </div>
         {escalations.length === 0 ? (
           <div className="text-sm text-muted-foreground">Bisher keine Eskalationen ausgelöst.</div>
@@ -300,7 +304,24 @@ export default function Auslieferungsfreigabe() {
             })}
           </div>
         )}
+        {series.length > 0 && (
+          <div className="mt-3">
+            <div className="text-xs text-muted-foreground mb-1">Zeitreihe pro Monat</div>
+            <div className="space-y-1 text-sm">
+              {series.map((m) => (
+                <div key={m.month} className="flex items-center gap-3">
+                  <span className="w-20 text-xs text-muted-foreground">{m.month}</span>
+                  <span>L1 <b>{m.l1}</b></span>
+                  <span>L2 <b>{m.l2}</b></span>
+                  <span>L3 <b>{m.l3}</b></span>
+                  <span className="ml-auto text-xs text-muted-foreground">Gesamt {m.l1 + m.l2 + m.l3}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
+
 
       <div className="flex flex-wrap items-center gap-2">
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Auftragsnummer suchen…" className="max-w-xs" />
