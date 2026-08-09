@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
   Shield, Database, Download, Loader2, Trash2, RefreshCw, Mail, Clock, HardDrive, CheckCircle2, AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/infinity/PageHeader';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { decryptBackupFile, backupPasswordError } from '@/lib/backup/crypto';
+import { Lock, KeyRound, FileLock2 } from 'lucide-react';
 
 interface BackupRow {
   id: string;
@@ -43,13 +45,15 @@ export default function Backups() {
   const [backups, setBackups] = useState<BackupRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
-  const [notify, setNotify] = useState(true);
-  const [notifyEmail, setNotifyEmail] = useState('');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [pwTarget, setPwTarget] = useState<BackupRow | null>(null);
+  const [accountPw, setAccountPw] = useState('');
+  const [encPw, setEncPw] = useState('');
+  const [encPw2, setEncPw2] = useState('');
+  const [decFile, setDecFile] = useState<File | null>(null);
+  const [decPw, setDecPw] = useState('');
+  const [decrypting, setDecrypting] = useState(false);
 
-  useEffect(() => {
-    if (profile?.email && !notifyEmail) setNotifyEmail(profile.email);
-  }, [profile?.email]);
 
   const load = async () => {
     setLoading(true);
@@ -72,11 +76,11 @@ export default function Backups() {
     setRunning(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-full-backup', {
-        body: { source: 'manual', notify, notify_email: notifyEmail || undefined, scope: 'full' },
+        body: { source: 'manual', notify: false, scope: 'full' },
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Unbekannter Fehler');
-      toast.success(data.accepted ? 'Backup gestartet und wird im Hintergrund verarbeitet.' : `Backup erstellt (${fmtSize(data.size_bytes)})${data.email_sent ? ' • E-Mail versendet' : ''}`);
+      toast.success(data.accepted ? 'Backup gestartet und wird im Hintergrund verarbeitet.' : `Backup erstellt (${fmtSize(data.size_bytes)})`);
       await load();
     } catch (e: any) {
       toast.error('Backup fehlgeschlagen: ' + (e?.message ?? String(e)));
@@ -85,33 +89,55 @@ export default function Backups() {
     }
   };
 
-  const downloadBackup = async (b: BackupRow) => {
+  const startDownload = (b: BackupRow) => {
     if (!b.storage_path) {
       toast.error('Kein Pfad hinterlegt – diese Sicherung enthält keine Datei zum Download.');
       return;
     }
+    setPwTarget(b);
+    setAccountPw('');
+    setEncPw('');
+    setEncPw2('');
+  };
+
+  const confirmDownload = async () => {
+    const b = pwTarget;
+    if (!b) return;
+    if (!accountPw) return toast.error('Bitte Kontopasswort eingeben');
+    const pwErr = backupPasswordError(encPw);
+    if (pwErr) return toast.error('Verschlüsselungs-Passwort: ' + pwErr);
+    if (encPw !== encPw2) return toast.error('Verschlüsselungs-Passwörter stimmen nicht überein');
+
     setDownloadingId(b.id);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       if (!token) throw new Error('Keine aktive Session');
 
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/download-backup-zip?backup_id=${encodeURIComponent(b.id)}`;
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/download-backup-zip`;
       const res = await fetch(url, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          backup_id: b.id,
+          account_password: accountPw,
+          encryption_password: encPw,
+        }),
       });
       if (!res.ok) {
         const txt = await res.text();
-        throw new Error(`HTTP ${res.status}: ${txt.slice(0, 200)}`);
+        let msg = txt.slice(0, 300);
+        try { msg = JSON.parse(txt).error ?? msg; } catch { /* ignore */ }
+        throw new Error(msg);
       }
       const blob = await res.blob();
       const cd = res.headers.get('Content-Disposition') || '';
       const match = cd.match(/filename="?([^"]+)"?/);
-      const fileName = match?.[1] || `backup-${b.id.slice(0, 8)}.zip`;
+      const fileName = match?.[1] || `backup-${b.id.slice(0, 8)}.zip.enc`;
 
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -120,13 +146,37 @@ export default function Backups() {
       link.click();
       document.body.removeChild(link);
       setTimeout(() => URL.revokeObjectURL(link.href), 5000);
-      toast.success('Download gestartet');
+      toast.success('Verschlüsselte Sicherung heruntergeladen (.zip.enc)');
+      setPwTarget(null);
+      setAccountPw(''); setEncPw(''); setEncPw2('');
     } catch (e: any) {
       toast.error('Download fehlgeschlagen: ' + (e?.message ?? String(e)));
     } finally {
       setDownloadingId(null);
     }
   };
+
+  const decryptFile = async () => {
+    if (!decFile) return toast.error('Bitte .zip.enc-Datei wählen');
+    if (!decPw) return toast.error('Bitte Verschlüsselungs-Passwort eingeben');
+    setDecrypting(true);
+    try {
+      const blob = await decryptBackupFile(decFile, decPw);
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = decFile.name.replace(/\.enc$/, '') || 'backup.zip';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+      toast.success('Sicherung entschlüsselt');
+    } catch (e: any) {
+      toast.error(e?.message ?? String(e));
+    } finally {
+      setDecrypting(false);
+    }
+  };
+
 
   const deleteBackup = async (b: BackupRow) => {
     if (!confirm('Sicherung unwiderruflich löschen?')) return;
@@ -175,10 +225,10 @@ export default function Backups() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> Benachrichtigung</CardDescription>
-            <CardTitle className="text-base">E-Mail mit Link</CardTitle>
+            <CardDescription className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5" /> Zugriff</CardDescription>
+            <CardTitle className="text-base">Nur Benutzerkonto</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-muted-foreground">Optionaler Versand des Download-Links (7 Tage gültig).</CardContent>
+          <CardContent className="text-xs text-muted-foreground">Kein E-Mail-Versand, keine Links. Download nur als Super Admin mit Passwort-Bestätigung, AES-256-verschlüsselt.</CardContent>
         </Card>
       </div>
 
@@ -186,35 +236,39 @@ export default function Backups() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Database className="w-5 h-5" /> Manuelles Backup erstellen</CardTitle>
           <CardDescription>
-            Dumpt alle Tabellen und das Storage-Inventar als JSON, lädt es in den privaten <code>backups</code>-Bucket
-            und liefert einen signierten Download-Link.
+            Dumpt alle Tabellen und das Storage-Inventar als JSON und legt es im privaten <code>backups</code>-Bucket ab.
+            Es werden keine Download-Links erzeugt und keine E-Mails versendet.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="space-y-0.5">
-              <Label className="text-sm">E-Mail-Benachrichtigung mit Download-Link</Label>
-              <p className="text-xs text-muted-foreground">Der Link ist 7 Tage gültig.</p>
-            </div>
-            <Switch checked={notify} onCheckedChange={setNotify} />
-          </div>
-          {notify && (
-            <div className="space-y-2">
-              <Label htmlFor="notify-email">Empfänger-E-Mail</Label>
-              <Input
-                id="notify-email"
-                type="email"
-                value={notifyEmail}
-                onChange={(e) => setNotifyEmail(e.target.value)}
-                placeholder="admin@beispiel.de"
-              />
-            </div>
-          )}
           <Button onClick={runBackup} disabled={running} className="w-full sm:w-auto">
             {running ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sicherung läuft …</> : <><Database className="w-4 h-4 mr-2" /> Jetzt sichern</>}
           </Button>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><FileLock2 className="w-5 h-5" /> Sicherung entschlüsseln</CardTitle>
+          <CardDescription>
+            Heruntergeladene <code>.zip.enc</code>-Datei lokal im Browser mit dem Verschlüsselungs-Passwort entschlüsseln (AES-256-GCM).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Input type="file" accept=".enc" onChange={(e) => setDecFile(e.target.files?.[0] ?? null)} />
+          <Input
+            type="password"
+            autoComplete="off"
+            placeholder="Verschlüsselungs-Passwort"
+            value={decPw}
+            onChange={(e) => setDecPw(e.target.value)}
+          />
+          <Button variant="outline" onClick={decryptFile} disabled={decrypting}>
+            {decrypting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Entschlüsseln …</> : <><KeyRound className="w-4 h-4 mr-2" /> Entschlüsseln & speichern</>}
+          </Button>
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
@@ -254,7 +308,7 @@ export default function Backups() {
                   </div>
                   <div className="flex items-center gap-2">
                     {b.storage_path && (b.backup_status === 'success' || b.backup_status === 'completed') && (
-                      <Button size="sm" variant="outline" onClick={() => downloadBackup(b)} disabled={downloadingId === b.id}>
+                      <Button size="sm" variant="outline" onClick={() => startDownload(b)} disabled={downloadingId === b.id}>
                         {downloadingId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                       </Button>
                     )}
@@ -268,6 +322,38 @@ export default function Backups() {
           )}
         </CardContent>
       </Card>
+      <Dialog open={!!pwTarget} onOpenChange={(o) => !o && setPwTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Lock className="w-4 h-4" /> Sicherung verschlüsselt herunterladen</DialogTitle>
+            <DialogDescription>
+              Bestätigen Sie Ihr Kontopasswort und vergeben Sie ein starkes Verschlüsselungs-Passwort
+              (min. 16 Zeichen, Groß-/Kleinbuchstaben, Ziffern, Sonderzeichen). Ohne dieses Passwort
+              ist die Datei nicht wiederherstellbar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Kontopasswort ({profile?.email})</Label>
+              <Input type="password" autoComplete="current-password" value={accountPw} onChange={(e) => setAccountPw(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Verschlüsselungs-Passwort</Label>
+              <Input type="password" autoComplete="new-password" value={encPw} onChange={(e) => setEncPw(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Verschlüsselungs-Passwort wiederholen</Label>
+              <Input type="password" autoComplete="new-password" value={encPw2} onChange={(e) => setEncPw2(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPwTarget(null)}>Abbrechen</Button>
+            <Button onClick={confirmDownload} disabled={!!downloadingId}>
+              {downloadingId ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Verschlüsseln …</> : <><Download className="w-4 h-4 mr-2" /> Verschlüsselt herunterladen</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
