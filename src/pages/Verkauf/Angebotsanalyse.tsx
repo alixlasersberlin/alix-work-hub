@@ -74,7 +74,24 @@ export default function Angebotsanalyse() {
     }
     const { data, error: err } = await query;
     if (err) setError(err.message);
-    setRows((data ?? []) as OfferRow[]);
+    const list = (data ?? []) as OfferRow[];
+    // Kontaktdaten (Telefon/E-Mail) aus dem Kundenstamm nachladen
+    const ids = Array.from(new Set(list.map((o) => o.customer_id).filter(Boolean))) as string[];
+    const contacts = new Map<string, { phone: string | null; email: string | null }>();
+    for (let i = 0; i < ids.length; i += 500) {
+      const { data: cs } = await (supabase.from('customers') as any)
+        .select('id, phone, email').in('id', ids.slice(i, i + 500));
+      (cs ?? []).forEach((c: any) => contacts.set(c.id, { phone: c.phone ?? null, email: c.email ?? null }));
+    }
+    setRows(list.map((o) => {
+      const c = o.customer_id ? contacts.get(o.customer_id) : undefined;
+      const pc = (o as any).payload?.customer ?? {};
+      return {
+        ...o,
+        customer_phone: c?.phone ?? pc.phone ?? null,
+        customer_email: o.customer_email ?? c?.email ?? pc.email ?? null,
+      };
+    }));
     setLoading(false);
   }, [range]);
 
@@ -100,9 +117,9 @@ export default function Angebotsanalyse() {
 
 
   const exportCsv = () => {
-    const head = ['Angebot', 'Datum', 'Kunde', 'Verkäufer', 'Phase', 'Produkt', 'Wert', 'Status', 'Lead', 'Finanzierung', 'Wettbewerber', 'Verlustgrund'];
+    const head = ['Angebot', 'Datum', 'Kunde', 'Verkäufer', 'Telefon', 'E-Mail', 'Wert', 'Status', 'Lead', 'Finanzierung', 'Wettbewerber', 'Verlustgrund'];
     const lines = offers.map((o) => [
-      o.offer_number, o.offer_date, o.customer_name, o.created_by_name, stageOf(o), productOf(o),
+      o.offer_number, o.offer_date, o.customer_name, o.created_by_name, o.customer_phone, o.customer_email,
       offerValue(o).toFixed(2), o.status, o.lead_source, o.financing_type, o.competitor, o.loss_reason,
     ].map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(';'));
     const blob = new Blob(['\ufeff' + [head.join(';'), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
@@ -133,10 +150,10 @@ export default function Angebotsanalyse() {
 
     autoTable(doc, {
       startY: 28,
-      head: [['Angebot', 'Datum', 'Kunde', 'Verkäufer', 'Phase', 'Produkt', 'Wert', 'Status', 'Lead', 'Wettbewerber']],
+      head: [['Angebot', 'Datum', 'Kunde', 'Verkäufer', 'Telefon', 'E-Mail', 'Wert', 'Status', 'Lead', 'Wettbewerber']],
       body: offers.slice(0, 800).map((o) => [
         o.offer_number ?? '', o.offer_date ?? '', o.customer_name ?? '', o.created_by_name ?? '',
-        stageOf(o) ?? '', productOf(o) ?? '', eur(offerValue(o)),
+        o.customer_phone ?? '', o.customer_email ?? '', eur(offerValue(o)),
         isWon(o) ? 'Gewonnen' : isLost(o) ? 'Verloren' : 'Offen',
         o.lead_source ?? '', o.competitor ?? '',
       ]),

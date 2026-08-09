@@ -73,8 +73,8 @@ export function OfferTableSection({ offers, onRefresh }: { offers: OfferRow[]; o
               <Th label="Datum" k="date" />
               <Th label="Kunde" k="customer" />
               <Th label="Verkäufer" />
-              <Th label="Phase" />
-              <Th label="Produkt" />
+              <Th label="Telefon" />
+              <Th label="E-Mail" />
               <Th label="Wert" k="value" align="right" />
               <Th label="Alter" k="age" align="right" />
               <Th label="Score" k="score" align="right" />
@@ -95,14 +95,18 @@ export function OfferTableSection({ offers, onRefresh }: { offers: OfferRow[]; o
                   <td className="px-3 py-2 tabular-nums text-muted-foreground">
                     {o.offer_date ? new Date(o.offer_date).toLocaleDateString('de-DE') : '—'}
                   </td>
-                  <td className="px-3 py-2 max-w-[220px] truncate">{o.customer_name ?? '—'}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{o.created_by_name ?? 'Unbekannt'}</td>
-                  <td className="px-3 py-2">
-                    <span className="text-muted-foreground">{stageLabel(stageOf(o))}</span>
+                  <td className="px-3 py-2 max-w-[220px] truncate">
+                    {o.customer_name ?? '—'}
                     {isWon(o) && <Badge variant="outline" className="ml-1 text-[10px] border-emerald-500/40 text-emerald-500">gewonnen</Badge>}
                     {isLost(o) && <Badge variant="outline" className="ml-1 text-[10px] border-destructive/40 text-destructive">verloren</Badge>}
                   </td>
-                  <td className="px-3 py-2 text-muted-foreground">{productOf(o)}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{o.created_by_name ?? 'Unbekannt'}</td>
+                  <td className="px-3 py-2 tabular-nums text-muted-foreground whitespace-nowrap">
+                    {o.customer_phone ? <a href={`tel:${o.customer_phone}`} className="hover:underline">{o.customer_phone}</a> : '—'}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground max-w-[220px] truncate">
+                    {o.customer_email ? <a href={`mailto:${o.customer_email}`} className="hover:underline">{o.customer_email}</a> : '—'}
+                  </td>
                   <td className="px-3 py-2 text-right tabular-nums font-medium">{eur(offerValue(o))}</td>
                   <td className={cn('px-3 py-2 text-right tabular-nums', age > 30 && 'text-destructive')}>{age} T.</td>
                   <td className="px-3 py-2 text-right">
