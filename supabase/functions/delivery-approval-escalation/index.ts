@@ -32,7 +32,7 @@ const FROM = "Alix Lasers ® <service@alixwork.de>";
 async function sendReminderMails(
   supabase: any,
   userIds: string[],
-  params: { level: number; stageTitle: string; orderNumber: string; hours: number; orderId: string },
+  params: { level: number; stageTitle: string; orderNumber: string; hours: number; orderId: string; reminderOnly?: boolean },
 ) {
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key || !userIds.length) return 0;
@@ -48,7 +48,9 @@ async function sendReminderMails(
     <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#111">
       <p>Guten Tag,</p>
       <p>die Freigabe <strong>${params.stageTitle}</strong> für <strong>Auftrag ${params.orderNumber}</strong>
-      ist seit <strong>${Math.floor(params.hours)} Stunden</strong> offen (Eskalationsstufe ${params.level}).</p>
+      ist seit <strong>${Math.floor(params.hours)} Stunden</strong> offen${
+        params.reminderOnly ? " und damit <strong>überfällig</strong>" : ` (Eskalationsstufe ${params.level})`
+      }.</p>
       <p>Bitte prüfen und erteilen Sie die Freigabe zeitnah, damit die Auslieferung nicht verzögert wird.</p>
       <p>Mit freundlichen Grüßen<br/>Alix Lasers ®</p>
     </div>`;
@@ -59,13 +61,27 @@ async function sendReminderMails(
     body: JSON.stringify({
       from: FROM,
       to,
-      subject: `Erinnerung Freigabe ${params.stageTitle} – Auftrag ${params.orderNumber} (Stufe ${params.level})`,
+      subject: params.reminderOnly
+        ? `Erinnerung: Freigabe ${params.stageTitle} überfällig – Auftrag ${params.orderNumber}`
+        : `Erinnerung Freigabe ${params.stageTitle} – Auftrag ${params.orderNumber} (Stufe ${params.level})`,
       html,
     }),
   });
   if (!res.ok) console.error("reminder mail failed", await res.text().catch(() => ""));
   return to.length;
 }
+
+/** Nutzer-IDs zu Rollennamen auflösen. */
+async function usersForRoles(supabase: any, roles: string[]): Promise<string[]> {
+  const { data: roleRows } = await supabase.from("roles").select("id").in("name", roles);
+  const roleIds = ((roleRows ?? []) as any[]).map((r) => r.id);
+  if (!roleIds.length) return [];
+  const { data: ur } = await supabase.from("user_roles").select("user_id").in("role_id", roleIds);
+  return [...new Set(((ur ?? []) as any[]).map((r) => r.user_id))].filter(Boolean) as string[];
+}
+
+/** Fälligkeitsgrenze je Stufe (Stunden), danach gilt die Freigabe als überfällig. */
+const OVERDUE_HOURS = 12;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -88,6 +104,7 @@ Deno.serve(async (req) => {
     const now = Date.now();
     let sent = 0;
     let mails = 0;
+    let reminders = 0;
 
     for (const a of approvals ?? []) {
       // Aktive Stufe = erste nicht genehmigte Stufe (sequentiell)
@@ -109,6 +126,56 @@ Deno.serve(async (req) => {
       }
       const hours = (now - since) / 3_600_000;
 
+      const { data: ordEarly } = await supabase
+        .from("orders")
+        .select("order_number")
+        .eq("id", a.order_id)
+        .maybeSingle();
+      const orderNum = (ordEarly as any)?.order_number ?? a.order_id.slice(0, 8);
+
+      // --- Erinnerung: sobald die Stufe überfällig ist, danach alle 12 Stunden erneut ---
+      if (hours >= OVERDUE_HOURS) {
+        const bucket = Math.floor(hours / OVERDUE_HOURS);
+        const remMarker = `reminder:${stage}:B${bucket}`;
+        const { data: remExisting } = await supabase
+          .from("delivery_approval_events")
+          .select("id")
+          .eq("approval_id", a.id)
+          .eq("comment", remMarker)
+          .limit(1);
+        if (!remExisting?.length) {
+          const remIds = await usersForRoles(supabase, STAGE_ROLES[stage]);
+          if (remIds.length) {
+            await supabase.from("app_notifications").insert(
+              remIds.map((id: string) => ({
+                user_id: id,
+                category: "operations",
+                title: `Freigabe überfällig: ${STAGE_TITLE[stage]}`,
+                message: `Auftrag ${orderNum} wartet seit ${Math.floor(hours)} Stunden auf Ihre Freigabe.`,
+                priority: "high",
+                action_url: `/auftraege/${a.order_id}?tab=freigaben`,
+              })),
+            );
+            try {
+              mails += await sendReminderMails(supabase, remIds, {
+                level: 0, stageTitle: STAGE_TITLE[stage], orderNumber: String(orderNum),
+                hours, orderId: a.order_id, reminderOnly: true,
+              });
+            } catch (e) { console.error("overdue reminder mail", e); }
+          }
+          await supabase.from("delivery_approval_events").insert({
+            approval_id: a.id,
+            order_id: a.order_id,
+            stage,
+            old_status: (a as any)[`${stage}_status`],
+            new_status: (a as any)[`${stage}_status`],
+            user_name: "System (Erinnerung)",
+            comment: remMarker,
+          });
+          reminders += 1;
+        }
+      }
+
       let level = 0;
       if (hours >= 72) level = 3;
       else if (hours >= 48) level = 2;
@@ -126,19 +193,9 @@ Deno.serve(async (req) => {
       if (existing && existing.length) continue;
 
       const roles = level === 1 ? STAGE_ROLES[stage] : level === 2 ? LEAD_ROLES[stage] : OPS_ROLES;
-      const { data: roleRows } = await supabase.from("roles").select("id").in("name", roles);
-      const roleIds = ((roleRows ?? []) as any[]).map((r) => r.id);
-      const { data: ur } = roleIds.length
-        ? await supabase.from("user_roles").select("user_id").in("role_id", roleIds)
-        : { data: [] as any[] };
-      const ids = [...new Set((ur ?? []).map((r: any) => r.user_id))].filter(Boolean);
+      const ids = await usersForRoles(supabase, roles);
 
-      const { data: ord } = await supabase
-        .from("orders")
-        .select("order_number")
-        .eq("id", a.order_id)
-        .maybeSingle();
-      const num = (ord as any)?.order_number ?? a.order_id.slice(0, 8);
+      const num = orderNum;
 
       if (ids.length) {
         await supabase.from("app_notifications").insert(
@@ -170,7 +227,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ ok: true, checked: approvals?.length ?? 0, notifications: sent, mails }), {
+    return new Response(JSON.stringify({ ok: true, checked: approvals?.length ?? 0, notifications: sent, reminders, mails }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
