@@ -46,6 +46,14 @@ export default function Backups() {
   const [notify, setNotify] = useState(true);
   const [notifyEmail, setNotifyEmail] = useState('');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [pwTarget, setPwTarget] = useState<BackupRow | null>(null);
+  const [accountPw, setAccountPw] = useState('');
+  const [encPw, setEncPw] = useState('');
+  const [encPw2, setEncPw2] = useState('');
+  const [decFile, setDecFile] = useState<File | null>(null);
+  const [decPw, setDecPw] = useState('');
+  const [decrypting, setDecrypting] = useState(false);
+
 
   useEffect(() => {
     if (profile?.email && !notifyEmail) setNotifyEmail(profile.email);
