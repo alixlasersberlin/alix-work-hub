@@ -19,6 +19,8 @@ import {
 } from '@/lib/delivery-approval/api';
 import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
 import { archiveApprovalPdf, mailApprovalPdf } from '@/lib/delivery-approval/archive';
+import { autoFinalizeRelease } from '@/lib/delivery-approval/autofinalize';
+
 import { supabase } from '@/integrations/supabase/client';
 
 const fmt = (iso?: string | null) =>
