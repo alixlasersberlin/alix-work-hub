@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { STAGES } from '@/lib/delivery-approval/config';
 import {
-  DEFAULT_APPROVAL_SETTINGS, fetchApprovalSettings, saveApprovalSettings, type ApprovalSettings,
+  DEFAULT_APPROVAL_SETTINGS, fetchApprovalSettings, saveApprovalSettings, HOLIDAYS_DE_AT_2026,
+  type ApprovalSettings, type Absence,
 } from '@/lib/delivery-approval/settings';
 
 export default function ApprovalSettingsDialog({
