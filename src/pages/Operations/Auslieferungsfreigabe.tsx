@@ -317,18 +317,28 @@ export default function Auslieferungsfreigabe() {
             <div className="space-y-2">
               {stageDurations.map((d) => {
                 const max = Math.max(...stageDurations.map((x) => x.avgHours), 1);
+                const target = (cfg.targets as any)[d.stage] ?? 24;
+                const tone = targetTone(d.avgHours, target);
                 return (
                   <div key={d.stage}>
                     <div className="flex justify-between text-xs">
                       <span>{d.title}</span>
-                      <span className="text-muted-foreground">{d.avgHours.toFixed(1)} h · {d.count} Freigaben</span>
+                      <span className={TONE_CLASS[tone]}>
+                        {d.avgHours.toFixed(1)} h · Ziel {target} h · {d.count} Freigaben
+                      </span>
                     </div>
-                    <div className="mt-1 h-2 rounded-full bg-muted">
-                      <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.round((d.avgHours / max) * 100)}%` }} />
+                    <div className="relative mt-1 h-2 rounded-full bg-muted">
+                      <div
+                        className={`h-2 rounded-full ${tone === 'ok' ? 'bg-emerald-500' : tone === 'warn' ? 'bg-yellow-500' : 'bg-red-500'}`}
+                        style={{ width: `${Math.round((d.avgHours / max) * 100)}%` }}
+                      />
+                      <div className="absolute top-0 h-2 w-px bg-foreground/60"
+                        style={{ left: `${Math.min(100, Math.round((target / max) * 100))}%` }} />
                     </div>
                   </div>
                 );
               })}
+
             </div>
           )}
         </Card>
