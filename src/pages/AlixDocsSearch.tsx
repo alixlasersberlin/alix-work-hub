@@ -239,6 +239,21 @@ export default function AlixDocsSearch() {
     toast.success('Archiviert'); load();
   };
 
+  const bulkRelease = async () => {
+    const ids = docs.filter(d => selected.has(d.id) && d.status !== 'freigegeben').map(d => d.id);
+    if (ids.length === 0) { toast.info('Alle ausgewählten Dokumente sind bereits freigegeben.'); return; }
+    if (!confirm(`${ids.length} Dokument(e) komplett freigeben?`)) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from('alixdocs_documents')
+      .update({ status: 'freigegeben' }).in('id', ids);
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${ids.length} Dokument(e) freigegeben`);
+    setSelected(new Set());
+    load();
+  };
+
+
   const releaseDoc = async (d: Doc) => {
     const { error } = await supabase.from('alixdocs_documents')
       .update({ status: 'freigegeben' }).eq('id', d.id);
