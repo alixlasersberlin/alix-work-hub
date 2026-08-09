@@ -175,22 +175,31 @@ export default function FinanceCollectCase() {
       const doc = await buildMahnungPdf();
       const base64 = String(doc.output('datauristring')).split(',')[1];
       const name = `Mahnung_${(c?.customer_name || 'Kunde').replace(/[^\w-]+/g, '_')}.pdf`;
+      if (!base64) throw new Error('PDF konnte nicht erzeugt werden');
       attachments = [{ filename: name, content: base64, contentType: 'application/pdf' }];
-    } catch {
-      attachments = [];
+    } catch (e: any) {
+      setBusy(false);
+      toast({
+        title: 'PDF-Anhang fehlgeschlagen',
+        description: `${e?.message ?? 'Unbekannter Fehler'} – Versand abgebrochen, damit die Mahnung nicht ohne PDF rausgeht.`,
+        variant: 'destructive',
+      });
+      return;
     }
-    const { error } = await supabase.functions.invoke('collect-send-dunning', {
+    const { data, error } = await supabase.functions.invoke('collect-send-dunning', {
       body: {
         case_id: caseId, stage_code: mailStage, to_email: mailTo,
         subject: mailSubject, body_html: mailHtml, attachments,
       },
     });
     setBusy(false);
-    if (error) { toast({ title: 'Versand fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
-    toast({ title: 'Mahnung versendet', description: mailTo });
+    const errMsg = error?.message ?? ((data as any)?.ok === false ? (data as any)?.error : null);
+    if (errMsg) { toast({ title: 'Versand fehlgeschlagen', description: errMsg, variant: 'destructive' }); return; }
+    toast({ title: 'Mahnung versendet', description: `${mailTo} · PDF im Anhang` });
     setMailOpen(false);
     load();
   };
+
 
   const score = async () => {
     setBusy(true);
