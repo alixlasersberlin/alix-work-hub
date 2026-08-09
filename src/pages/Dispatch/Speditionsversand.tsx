@@ -179,11 +179,6 @@ export default function DispatchSpeditionsversand() {
   );
   const releaseStatusMap = useReleaseStatusMap(shipOrderIds);
 
-  const shipOrderIds = useMemo(
-    () => (filtered ?? []).map((r: any) => r.appointment?.order_id ?? r.route_plan?.order_id).filter(Boolean),
-    [filtered],
-  );
-  const releaseStatusMap = useReleaseStatusMap(shipOrderIds);
 
   const toggleAll = () => setSelected(allSelected ? [] : filtered.map((r: any) => r.id));
 
