@@ -109,6 +109,34 @@ async function addressesFromCustomer(
   }
 }
 
+/** Fallback: E-Mail aus den Kundenstammdaten laden. */
+async function emailFromCustomer(customerName: string, customerNumber?: string | null): Promise<string> {
+  try {
+    if (customerNumber) {
+      const { data } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('external_customer_id', String(customerNumber))
+        .limit(1);
+      const mail = data?.[0]?.email;
+      if (mail && String(mail).includes('@')) return String(mail);
+    }
+    if (customerName) {
+      const { data } = await supabase
+        .from('customers')
+        .select('email')
+        .eq('company_name', customerName)
+        .limit(1);
+      const mail = data?.[0]?.email;
+      if (mail && String(mail).includes('@')) return String(mail);
+    }
+  } catch {
+    /* ignore */
+  }
+  return '';
+}
+
+
 
 
 
@@ -231,7 +259,9 @@ export function AccountStatementActions({ customerName, customerNumber, city, ro
     if (!guard()) return;
     setMailAll(false);
     await refreshPreview(false);
-    setTo(emailFromRows(rows));
+    const fromRows = emailFromRows(rows);
+    setTo(fromRows && fromRows.includes('@') ? fromRows : await emailFromCustomer(customerName, customerNumber));
+
     setSubject(`Kontoauszug ${new Date().toLocaleDateString('de-DE')}`);
     setText(
       `Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie Ihren aktuellen Kontoauszug mit einem offenen Gesamtsaldo von ${money(
