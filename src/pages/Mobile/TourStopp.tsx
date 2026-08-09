@@ -280,7 +280,7 @@ export default function MobileTourStopp() {
           <Button variant="outline" className="h-11 flex-1" onClick={() => { padRef.current?.clear(); setHasInk(false); }} disabled={!hasInk}>
             <Eraser className="w-4 h-4 mr-1" /> löschen
           </Button>
-          <Button className="h-11 flex-1" onClick={completeDelivery} disabled={busy}>
+          <Button className="h-11 flex-1" onClick={completeDelivery} disabled={busy || (release ? !release.released : false)}>
             {busy ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
             Abschließen
           </Button>
