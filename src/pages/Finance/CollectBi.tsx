@@ -8,21 +8,23 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 
 const fmt = (n: any) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(Number(n ?? 0));
 
 export default function FinanceCollectBi() {
   const [d, setD] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const { tenantId } = useTenantFilter();
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase.rpc('collect_bi' as any);
+      const { data, error } = await supabase.rpc('collect_bi' as any, { p_tenant_id: tenantId });
       if (error) toast({ title: 'Laden fehlgeschlagen', description: error.message, variant: 'destructive' });
       setD(data ?? null);
       setLoading(false);
     })();
-  }, []);
+  }, [tenantId]);
 
   if (loading) return <div className="space-y-4"><SkeletonTable /></div>;
 
