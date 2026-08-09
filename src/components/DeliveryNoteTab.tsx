@@ -19,6 +19,7 @@ import alixLogo from '@/assets/alix-lasers-logo.png';
 import lieferscheinBg from '@/assets/lieferschein-vorlage.png.asset.json';
 import alixLogoGold from '@/assets/alix-logo-gold.png.asset.json';
 import { createRestbestellungMarker } from '@/lib/restbestellung';
+import { DeliveryReleaseGuard, useDeliveryRelease } from '@/components/delivery/DeliveryReleaseGuard';
 
 interface Props {
   order: any;
@@ -54,7 +55,9 @@ function fmtAddress(a: any): string[] {
 }
 
 export default function DeliveryNoteTab({ order, customer, items, onReload }: Props) {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
+  const isSuperAdmin = hasRole('Super Admin');
+  const { loading: releaseLoading, released, missing } = useDeliveryRelease(order?.id);
   const [allowPartial, setAllowPartial] = useState(true);
   const [deliveryDate, setDeliveryDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [selection, setSelection] = useState<Record<string, { checked: boolean; qty: number }>>(
@@ -290,8 +293,17 @@ export default function DeliveryNoteTab({ order, customer, items, onReload }: Pr
     }
   }
 
+  if (!releaseLoading && !released && !isSuperAdmin) {
+    return <DeliveryReleaseGuard missing={missing} />;
+  }
+
   return (
     <div className="rounded-xl border border-border bg-card p-6 card-glow">
+      {!releaseLoading && !released && isSuperAdmin && (
+        <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          Keine vollständige Auslieferungsfreigabe ({missing.join(', ')}) – Ausgabe nur als Super Admin möglich.
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-base font-display font-bold text-foreground flex items-center gap-2">
           <Truck className="w-4 h-4 text-primary" /> Lieferschein
