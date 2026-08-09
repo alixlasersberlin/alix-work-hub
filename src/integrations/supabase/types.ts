@@ -48192,6 +48192,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      source_to_tenant_code: { Args: { _source: string }; Returns: string }
       start_recertification_campaign: {
         Args: { _description: string; _name: string; _period_end: string }
         Returns: string
@@ -48210,6 +48211,8 @@ export type Database = {
       sys_health_autofix: { Args: never; Returns: Json }
       sys_health_metrics: { Args: never; Returns: Json }
       tenant_id_for_source: { Args: { _source: string }; Returns: string }
+      tenant_scope_ok: { Args: { _source: string }; Returns: boolean }
+      tenant_scope_restricted: { Args: never; Returns: boolean }
       ticket_auto_close_stale: { Args: never; Returns: Json }
       ticket_merge: {
         Args: { _source_id: string; _target_id: string }
@@ -48223,6 +48226,7 @@ export type Database = {
       }
       user_has_tenant: { Args: { _tenant_id: string }; Returns: boolean }
       user_mailboxes: { Args: never; Returns: string[] }
+      user_tenant_codes: { Args: never; Returns: string[] }
     }
     Enums: {
       ac_channel_type:
