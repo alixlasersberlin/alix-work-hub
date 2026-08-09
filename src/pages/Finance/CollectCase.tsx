@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import CollectCaseActions from '@/components/collect/CollectCaseActions';
 import { generateMahnungPdf } from '@/lib/finance/mahnung-pdf';
+import { stampedPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 
 const fmt = (n: any, cur = 'EUR') =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(Number(n ?? 0));
@@ -163,17 +164,25 @@ export default function FinanceCollectCase() {
     });
   };
 
-  const previewPdf = async () => {
+  /** Mahnung inkl. hinterlegter Facsimile-Unterschrift (ALIX SIGN PRO, doc_type "dunning"). */
+  const buildSignedMahnungBlob = async () => {
     const doc = await buildMahnungPdf();
-    window.open(String(doc.output('bloburl')), '_blank');
+    return stampedPdfBlob(doc, 'dunning', `Mahnung ${c?.customer_name ?? ''}`.trim());
+  };
+
+  const previewPdf = async () => {
+    const blob = await buildSignedMahnungBlob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
   const send = async () => {
     setBusy(true);
     let attachments: { filename: string; content: string; contentType: string }[] = [];
     try {
-      const doc = await buildMahnungPdf();
-      const base64 = String(doc.output('datauristring')).split(',')[1];
+      const blob = await buildSignedMahnungBlob();
+      const base64 = await blobToBase64(blob);
       const name = `Mahnung_${(c?.customer_name || 'Kunde').replace(/[^\w-]+/g, '_')}.pdf`;
       if (!base64) throw new Error('PDF konnte nicht erzeugt werden');
       attachments = [{ filename: name, content: base64, contentType: 'application/pdf' }];
