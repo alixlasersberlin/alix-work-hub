@@ -28,6 +28,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import {
   ArrowLeft, ClipboardList, Building2, FileText, History, Loader2, Inbox, Send, Pencil, X, Check, Shield, ShieldCheck, Package, CalendarIcon, CalendarClock, Truck, Euro, Mail, Landmark, Plus, Trash2, ShoppingCart, ShoppingBag, CheckCircle2, Hash, MessageSquare, ChevronDown, Briefcase, Wrench, AlertCircle, PenLine, Share2
 } from 'lucide-react';
+import DeliveryApprovalPanel from '@/components/delivery/DeliveryApprovalPanel';
 import { createRestbestellungMarker, hasPendingRestbestellung } from '@/lib/restbestellung';
 import { sendDepositReceivedNotice } from '@/lib/send-deposit-received-notice';
 import { postPaymentToJournal } from '@/lib/finance/journal';
@@ -91,7 +92,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'mediapaket' | 'social_fragebogen' | 'alixdocs' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'freigaben' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'mediapaket' | 'social_fragebogen' | 'alixdocs' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
   const [serialDevices, setSerialDevices] = useState<Array<{ id: string; serial_number: string; model_name: string; notes: string | null; updated_at: string | null }>>([]);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
@@ -140,7 +141,7 @@ export default function OrderDetail() {
   }, [id]);
 
   // Auto-Tab via ?tab=az_invoice (oder anderer Key) beim Öffnen
-  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','mediapaket','social_fragebogen','alixdocs','notes','emails','sms','history','raw'] as const;
+  const validTabs = ['overview','items','serials','deposit','financing','at_purchase','at_approval','freigaben','packages','confirmation','lieferschein','auftragsbestaetigung','az_invoice','mediapaket','social_fragebogen','alixdocs','notes','emails','sms','history','raw'] as const;
   useEffect(() => {
     const t = searchParams.get('tab');
     if (t && (validTabs as readonly string[]).includes(t)) {
@@ -1345,6 +1346,10 @@ export default function OrderDetail() {
       {/* Freigabe AT Tab */}
       {activeTab === 'at_approval' && id && canSeeAtApproval && (
         <AtApprovalTab orderId={id} />
+      )}
+
+      {activeTab === 'freigaben' && id && (
+        <DeliveryApprovalPanel orderId={id} orderNumber={order?.order_number} />
       )}
 
       {/* Packages Tab */}
