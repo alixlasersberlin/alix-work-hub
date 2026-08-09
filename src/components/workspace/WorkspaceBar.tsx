@@ -2,10 +2,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { cn } from '@/lib/utils';
 import { iconFor } from '@/lib/workspace/icons';
-import { Layers } from 'lucide-react';
 
 export default function WorkspaceBar() {
-  const { workspaces, current, setCurrent, workspaceMode, setWorkspaceMode, loading } = useWorkspace();
+  const { workspaces, current, setCurrent, setWorkspaceMode, loading } = useWorkspace();
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,21 +42,6 @@ export default function WorkspaceBar() {
             </button>
           );
         })}
-
-        <button
-          type="button"
-          onClick={() => setWorkspaceMode(!workspaceMode)}
-          title={workspaceMode ? 'Zur klassischen Navigation wechseln' : 'Nur Workspace-Navigation anzeigen'}
-          className={cn(
-            'ml-auto inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] whitespace-nowrap border transition-colors',
-            workspaceMode
-              ? 'text-primary border-primary/40 bg-primary/5'
-              : 'text-muted-foreground border-border hover:text-foreground',
-          )}
-        >
-          <Layers className="w-3.5 h-3.5" />
-          {workspaceMode ? 'Workspace-Navigation' : 'Klassische Navigation'}
-        </button>
       </div>
     </div>
   );
