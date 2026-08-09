@@ -1361,6 +1361,8 @@ export default function AppLayout() {
               <Files className="w-5 h-5" />
             </Link>
             <TicketNotificationBell />
+            <NavModeToggle />
+
 
             <GlobalSearch />
 
