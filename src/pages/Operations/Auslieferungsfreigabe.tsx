@@ -445,7 +445,10 @@ export default function Auslieferungsfreigabe() {
                   });
                   toast.success(`${res.ok} freigegeben${res.skipped.length ? ` · ${res.skipped.length} übersprungen` : ''}`);
                   setBulkOpen(false); setSelected(new Set()); setBulkSig(null); setBulkComment('');
+                  // Vollautomatik: Protokoll archivieren + versenden für nun vollständig freigegebene Aufträge
+                  for (const a of list) void autoFinalizeRelease(a.order_id);
                   void load();
+
                 } catch (e: any) { toast.error(e?.message ?? 'Sammelfreigabe fehlgeschlagen'); }
                 finally { setBulkBusy(false); }
               }}
