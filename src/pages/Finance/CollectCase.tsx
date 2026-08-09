@@ -164,6 +164,14 @@ export default function FinanceCollectCase() {
     });
   };
 
+  const blobToBase64 = (blob: Blob) =>
+    new Promise<string>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onerror = () => reject(new Error('PDF konnte nicht gelesen werden'));
+      fr.onload = () => resolve(String(fr.result).split(',')[1] ?? '');
+      fr.readAsDataURL(blob);
+    });
+
   /** Mahnung inkl. hinterlegter Facsimile-Unterschrift (ALIX SIGN PRO, doc_type "dunning"). */
   const buildSignedMahnungBlob = async () => {
     const doc = await buildMahnungPdf();
