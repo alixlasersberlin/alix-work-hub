@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useReauthGate } from '@/hooks/useReauthGate';
 import ReauthDialog from '@/components/ReauthDialog';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 
 const fmt = (n: number | null | undefined, cur = 'EUR') => typeof n === 'number'
   ? new Intl.NumberFormat('de-DE', { style: 'currency', currency: cur }).format(n) : '–';
@@ -31,6 +32,7 @@ export default function FinanceSepa() {
   const { roles } = useAuth();
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const { region } = useAccountingRegion();
+  const { tenantId } = useTenantFilter();
   const cur = region === 'CH' ? 'CHF' : 'EUR';
   const reauthDel = useReauthGate('finance.sepa.delete', 'Löschen von SEPA-Mandaten/Läufen');
   const reauthExp = useReauthGate('finance.sepa.export', 'SEPA pain.008-Export');
@@ -51,9 +53,10 @@ export default function FinanceSepa() {
 
   const load = async () => {
     setLoading(true);
+    const tf = (q: any) => (tenantId ? q.eq('tenant_id', tenantId) : q);
     const [m, r, c, t] = await Promise.all([
       supabase.from('finance_sepa_mandates' as any).select('*, customer:customer_id(company_name, contact_name)').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }),
-      supabase.from('finance_sepa_runs' as any).select('*').in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100),
+      tf(supabase.from('finance_sepa_runs' as any).select('*')).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).order('created_at', { ascending: false }).limit(100),
       supabase.from('customers').select('id, company_name, contact_name').order('company_name').limit(1000),
       supabase.from('tenants').select('id, name, flag_emoji').eq('is_active', true).order('sort_order'),
     ]);
@@ -63,7 +66,7 @@ export default function FinanceSepa() {
     setTenants(t.data ?? []);
     setLoading(false);
   };
-  useEffect(() => { load(); }, [region]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [region, tenantId]);
 
   const loadRunDetail = async (run: any) => {
     setActiveRun(run);
