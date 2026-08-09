@@ -82,7 +82,61 @@ export default function Auslieferungsfreigabe() {
     setLoading(false);
   };
 
-  useEffect(() => { void load(); void fetchEscalationStats().then(setEscalations).catch(() => {}); }, []);
+  useEffect(() => {
+    void load();
+    void fetchEscalationStats().then(setEscalations).catch(() => {});
+    void fetchEscalationSeries().then(setSeries).catch(() => {});
+  }, []);
+
+  /** Aufträge ohne gestarteten Freigabeprozess laden */
+  const loadRequestCandidates = async (search: string) => {
+    let query = db
+      .from('orders')
+      .select('id, order_number, customer_name, order_status')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (search.trim()) query = query.ilike('order_number', `%${search.trim()}%`);
+    const { data } = await query;
+    const existing = new Set(rows.map((r) => r.order_id));
+    setReqRows(((data ?? []) as any[]).filter((o) => !existing.has(o.id)));
+  };
+
+  const exportEscalations = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text('Eskalations-Reporting Auslieferungsfreigabe', 14, 14);
+    doc.setFontSize(9);
+    doc.text(`Stand ${new Date().toLocaleString('de-DE')}`, 14, 20);
+    autoTable(doc, {
+      startY: 26,
+      head: [['Abteilung', 'L1 (24 h)', 'L2 (48 h)', 'L3 (72 h)']],
+      body: STAGES.map((s) => [
+        s.title,
+        String(escalations.find((e) => e.stage === s.stage && e.level === 1)?.count ?? 0),
+        String(escalations.find((e) => e.stage === s.stage && e.level === 2)?.count ?? 0),
+        String(escalations.find((e) => e.stage === s.stage && e.level === 3)?.count ?? 0),
+      ]),
+      styles: { fontSize: 9 },
+    });
+    autoTable(doc, {
+      startY: ((doc as any).lastAutoTable?.finalY ?? 60) + 8,
+      head: [['Monat', 'L1', 'L2', 'L3', 'Gesamt']],
+      body: series.map((m) => [m.month, String(m.l1), String(m.l2), String(m.l3), String(m.l1 + m.l2 + m.l3)]),
+      styles: { fontSize: 9 },
+    });
+    doc.save(`eskalationen-${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
+  const exportEscalationsCsv = () => {
+    const head = ['Monat', 'L1', 'L2', 'L3', 'Gesamt'];
+    const lines = series.map((m) => [m.month, m.l1, m.l2, m.l3, m.l1 + m.l2 + m.l3]);
+    const csv = [head, ...lines].map((l) => l.map((c) => `"${String(c)}"`).join(';')).join('\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `eskalationen-${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
 
   // Realtime: Freigaben live aktualisieren
   useEffect(() => {
