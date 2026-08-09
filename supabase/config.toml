@@ -436,3 +436,10 @@ verify_jwt = false
 
 [functions.delivery-approval-escalation]
 verify_jwt = false
+
+[functions.delivery-approval-approve]
+verify_jwt = false
+
+[functions.delivery-approval-roles]
+verify_jwt = true
+
