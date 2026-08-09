@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    const bccList: string[] = ['service@alix-lasers.com']
+    const bccList: string[] = ['service@alix-lasers.com', 'k.trinh@alix-operation.de']
     if (Array.isArray(bcc)) {
       for (const b of bcc) {
         if (typeof b === 'string' && b.includes('@') &&
@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
             !bccList.some((x) => x.toLowerCase() === b.toLowerCase())) bccList.push(b)
       }
     }
+    const finalBcc = bccList.filter((b) => b.toLowerCase() !== String(to_email).toLowerCase())
     const res = await fetch('https://connector-gateway.lovable.dev/resend/emails', {
       method: 'POST',
       headers: {
@@ -86,7 +87,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: 'Alix Lasers ® <noreply@alixlasers.ai>',
         to: [to_name ? `${to_name} <${to_email}>` : to_email],
-        bcc: bccList,
+        bcc: finalBcc,
         subject,
         html,
         text: body_text ?? '',
@@ -118,7 +119,9 @@ Deno.serve(async (req) => {
       await sendLovableEmail({
         to: rec.email,
         from: "Alix Lasers ® <noreply@alixlasers.ai>",
-        bcc: ["service@alix-lasers.com"],
+        bcc: ["service@alix-lasers.com", "k.trinh@alix-operation.de"].filter(
+          (b) => b.toLowerCase() !== String(rec.email).toLowerCase(),
+        ),
         sender_domain: SENDER_DOMAIN,
         subject: `${rec.subjectPrefix ?? ''}${subject}`,
         html,
