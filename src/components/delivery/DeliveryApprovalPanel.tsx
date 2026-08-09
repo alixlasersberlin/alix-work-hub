@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import SignaturePad from '@/components/finance/SignaturePad';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Lock, ShieldCheck, History, AlertTriangle, CheckCircle2, Unlock, FileDown } from 'lucide-react';
+import { Lock, ShieldCheck, History, AlertTriangle, CheckCircle2, Unlock, FileDown, Archive, Mail } from 'lucide-react';
 import { STAGES, STATUS_UI, OVERALL_UI, type ApprovalStage } from '@/lib/delivery-approval/config';
 import {
   ensureApproval, fetchEvents, saveChecks, approveStage, unlockApproval,
