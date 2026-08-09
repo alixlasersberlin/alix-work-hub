@@ -11,16 +11,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { NativeSelect } from '@/components/ui/native-select';
 import SignaturePad from '@/components/finance/SignaturePad';
 import { useAuth } from '@/hooks/useAuth';
-import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle } from 'lucide-react';
+import { Download, FileText, ShieldCheck, RefreshCw, FileDown, AlertTriangle, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS, type ApprovalStage } from '@/lib/delivery-approval/config';
 import {
-  slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats,
-  type DeliveryApproval, type EscalationStat,
+  slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats, fetchEscalationSeries,
+  bulkStartApprovals,
+  type DeliveryApproval, type EscalationStat, type EscalationMonth,
 } from '@/lib/delivery-approval/api';
+import { autoFinalizeRelease } from '@/lib/delivery-approval/autofinalize';
 import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
+
 
 const db = supabase as any;
 
