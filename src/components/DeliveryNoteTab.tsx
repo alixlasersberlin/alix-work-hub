@@ -20,7 +20,6 @@ import lieferscheinBg from '@/assets/lieferschein-vorlage.png.asset.json';
 import alixLogoGold from '@/assets/alix-logo-gold.png.asset.json';
 import { createRestbestellungMarker } from '@/lib/restbestellung';
 import { DeliveryReleaseGuard, useDeliveryRelease } from '@/components/delivery/DeliveryReleaseGuard';
-import { useUserRoles } from '@/hooks/useUserRoles';
 
 interface Props {
   order: any;
@@ -56,8 +55,7 @@ function fmtAddress(a: any): string[] {
 }
 
 export default function DeliveryNoteTab({ order, customer, items, onReload }: Props) {
-  const { user } = useAuth();
-  const { hasRole } = useUserRoles();
+  const { user, hasRole } = useAuth();
   const isSuperAdmin = hasRole('Super Admin');
   const { loading: releaseLoading, released, missing } = useDeliveryRelease(order?.id);
   const [allowPartial, setAllowPartial] = useState(true);
