@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { classicNavForWorkspace, WORKSPACE_CLASSIC_GROUPS } from '@/lib/workspace/classicNav';
 
 export interface Workspace {
   id: string;
@@ -116,13 +117,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const navItems = useMemo(() => {
     if (!current) return [];
-    return nav
+    // 1) Menü aus der klassischen Ansicht (rollen-gefiltert)
+    const classic = WORKSPACE_CLASSIC_GROUPS[current.code]
+      ? classicNavForWorkspace(current.code, current.id, roles || [], isSuper)
+      : [];
+    // 2) Zusätzlich in der DB gepflegte Einträge (ohne Dubletten)
+    const known = new Set(classic.map(c => c.path));
+    const custom = nav
       .filter(n => n.workspace_id === current.id)
+      .filter(n => !known.has(n.path))
       .filter(n => {
         if (!n.roles || n.roles.length === 0) return true;
         if (isSuper) return true;
         return (roles || []).some((r: string) => n.roles!.includes(r));
       });
+    return [...classic, ...custom];
   }, [nav, current, roles, isSuper]);
 
   return (
