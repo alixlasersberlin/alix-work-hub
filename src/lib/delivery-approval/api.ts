@@ -372,3 +372,72 @@ export async function assertOrderReleased(params: {
   }
   return { allowed: false, missing };
 }
+
+/** Freigabestatus mehrerer Aufträge (für Ampeln in Übersichtslisten). */
+export async function fetchReleaseStatusMap(orderIds: string[]): Promise<Record<string, OverallStatus>> {
+  const ids = [...new Set(orderIds.filter(Boolean))];
+  const out: Record<string, OverallStatus> = {};
+  for (let i = 0; i < ids.length; i += 200) {
+    const { data } = await db
+      .from('delivery_approvals')
+      .select('order_id, overall_status')
+      .in('order_id', ids.slice(i, i + 200));
+    for (const r of (data ?? []) as any[]) out[r.order_id] = r.overall_status;
+  }
+  return out;
+}
+
+export interface EscalationMonth { month: string; l1: number; l2: number; l3: number }
+
+/** Eskalationen als Zeitreihe pro Monat. */
+export async function fetchEscalationSeries(): Promise<EscalationMonth[]> {
+  const { data } = await db
+    .from('delivery_approval_events')
+    .select('comment, created_at')
+    .like('comment', 'escalation:%')
+    .order('created_at', { ascending: true })
+    .limit(5000);
+  const map = new Map<string, EscalationMonth>();
+  for (const e of (data ?? []) as any[]) {
+    const m = /^escalation:([a-z_]+):L(\d)$/.exec(e.comment ?? '');
+    if (!m) continue;
+    const month = String(e.created_at).slice(0, 7);
+    const cur = map.get(month) ?? { month, l1: 0, l2: 0, l3: 0 };
+    (cur as any)[`l${m[2]}`]++;
+    map.set(month, cur);
+  }
+  return Array.from(map.values()).sort((a, b) => a.month.localeCompare(b.month));
+}
+
+/** Massen-Anforderung: Freigabeprozess für mehrere Aufträge gleichzeitig starten. */
+export async function bulkStartApprovals(orderIds: string[], userName: string): Promise<number> {
+  const ids = [...new Set(orderIds.filter(Boolean))];
+  if (!ids.length) return 0;
+  const { data: existing } = await db.from('delivery_approvals').select('order_id').in('order_id', ids);
+  const have = new Set(((existing ?? []) as any[]).map((r) => r.order_id));
+  const missing = ids.filter((id) => !have.has(id));
+  if (!missing.length) return 0;
+  const { data, error } = await db
+    .from('delivery_approvals')
+    .insert(missing.map((order_id) => ({ order_id })))
+    .select('id, order_id');
+  if (error) throw error;
+  const created = (data ?? []) as any[];
+  if (created.length) {
+    await db.from('delivery_approval_events').insert(created.map((a) => ({
+      approval_id: a.id,
+      order_id: a.order_id,
+      stage: 'request',
+      new_status: 'open',
+      user_name: userName,
+      comment: 'Freigabeprozess per Massen-Anforderung gestartet',
+    })));
+    const first = STAGES[0];
+    await notifyRoles(first.roles, {
+      title: `Freigabe ${first.title} erforderlich`,
+      message: `${created.length} Aufträge warten auf Ihre Freigabe (${first.title}).`,
+      url: '/operations/auslieferungsfreigabe',
+    });
+  }
+  return created.length;
+}
