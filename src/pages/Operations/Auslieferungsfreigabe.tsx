@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Download, FileText, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Download, FileText, ShieldCheck, RefreshCw, FileDown } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS } from '@/lib/delivery-approval/config';
-import { slaLevel, type DeliveryApproval } from '@/lib/delivery-approval/api';
+import { slaLevel, fetchEvents, type DeliveryApproval } from '@/lib/delivery-approval/api';
+import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
 
 const db = supabase as any;
 
@@ -219,6 +220,20 @@ export default function Auslieferungsfreigabe() {
                 <span className="ml-auto text-xs text-muted-foreground">
                   {new Date(r.created_at).toLocaleDateString('de-DE')}
                 </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  title="Freigabeprotokoll als PDF"
+                  onClick={async (e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    try {
+                      const events = await fetchEvents(r.order_id);
+                      downloadDeliveryApprovalPdf({ approval: r, events, orderNumber: r.order_number });
+                    } catch (err: any) { toast.error(err?.message ?? 'PDF konnte nicht erstellt werden'); }
+                  }}
+                >
+                  <FileDown className="h-4 w-4" />
+                </Button>
               </Link>
             );
           })}
