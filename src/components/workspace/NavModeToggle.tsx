@@ -14,14 +14,16 @@ export default function NavModeToggle() {
       title={workspaceMode ? 'Zur klassischen Navigation wechseln' : 'Nur Workspace-Navigation anzeigen'}
       aria-label={workspaceMode ? 'Zur klassischen Navigation wechseln' : 'Nur Workspace-Navigation anzeigen'}
       className={cn(
-        'inline-flex h-9 w-9 items-center justify-center rounded-md border transition-colors',
+        'inline-flex items-center gap-1.5 h-9 rounded-md px-2.5 text-[12px] font-medium whitespace-nowrap border transition-colors',
         workspaceMode
-          ? 'text-primary border-primary/40 bg-primary/5'
-          : 'text-muted-foreground border-transparent hover:text-foreground hover:bg-accent',
+          ? 'text-primary border-primary/50 bg-primary/10'
+          : 'text-muted-foreground border-border hover:text-foreground hover:bg-accent',
       )}
     >
-      <Layers className="w-5 h-5" />
+      <Layers className="w-4 h-4" />
+      <span className="hidden lg:inline">{workspaceMode ? 'Workspace' : 'Klassisch'}</span>
     </button>
+
 
   );
 }
