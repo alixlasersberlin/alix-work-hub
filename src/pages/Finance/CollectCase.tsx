@@ -374,7 +374,7 @@ export default function FinanceCollectCase() {
         </div>
       </DataCard>
 
-      <CollectCaseActions c={c} items={items} onChange={load} />
+      <CollectCaseActions c={c} items={items} onChange={load} customerPhone={customer?.phone ?? c.customer_phone ?? null} />
 
 
 
