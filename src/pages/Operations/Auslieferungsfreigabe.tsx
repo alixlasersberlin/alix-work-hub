@@ -345,7 +345,13 @@ export default function Auslieferungsfreigabe() {
       </div>
 
       <Card className="p-3">
-        <div className="text-sm font-medium mb-2">Zeittrend Durchlaufzeiten je Freigabestufe (Ø Stunden)</div>
+        <div className="flex flex-wrap items-center gap-2 mb-2">
+          <div className="text-sm font-medium">Zeittrend Durchlaufzeiten je Freigabestufe (Ø Stunden)</div>
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" size="sm" onClick={exportTrendCsv}><Download className="h-4 w-4 mr-1" />CSV</Button>
+            <Button variant="outline" size="sm" onClick={exportTrendPdf}><FileText className="h-4 w-4 mr-1" />PDF</Button>
+          </div>
+        </div>
         {durationTrend.length === 0 ? (
           <div className="text-sm text-muted-foreground">Noch keine abgeschlossenen Stufen im Zeitraum.</div>
         ) : (
