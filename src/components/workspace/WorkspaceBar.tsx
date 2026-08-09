@@ -2,10 +2,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { cn } from '@/lib/utils';
 import { iconFor } from '@/lib/workspace/icons';
-import { Layers } from 'lucide-react';
 
 export default function WorkspaceBar() {
-  const { workspaces, current, setCurrent, workspaceMode, setWorkspaceMode, loading } = useWorkspace();
+  const { workspaces, current, setCurrent, setWorkspaceMode, loading } = useWorkspace();
+
   const navigate = useNavigate();
   const location = useLocation();
 
