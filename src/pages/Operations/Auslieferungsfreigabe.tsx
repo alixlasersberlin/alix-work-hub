@@ -26,6 +26,12 @@ import {
 } from '@/lib/delivery-approval/api';
 import { autoFinalizeRelease } from '@/lib/delivery-approval/autofinalize';
 import { downloadDeliveryApprovalPdf } from '@/lib/delivery-approval/protokoll-pdf';
+import ApprovalSettingsDialog from '@/components/delivery/ApprovalSettingsDialog';
+import ApproverRolesDialog from '@/components/delivery/ApproverRolesDialog';
+import {
+  DEFAULT_APPROVAL_SETTINGS, fetchApprovalSettings, targetTone, TONE_CLASS,
+  type ApprovalSettings,
+} from '@/lib/delivery-approval/settings';
 
 
 const db = supabase as any;
