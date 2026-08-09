@@ -33,12 +33,51 @@ interface Settings {
   businessDaysOnly: boolean;
   holidays: string[];
   oneClickApproval: boolean;
+  absences?: { email: string; deputyEmail: string; from: string; to: string }[];
 }
 
 const DEFAULTS: Settings = {
   overdueHours: 12, l1: 24, l2: 48, l3: 72,
-  businessDaysOnly: true, holidays: [], oneClickApproval: true,
+  businessDaysOnly: true, holidays: [], oneClickApproval: true, absences: [],
 };
+
+/** Vertretungsregelung: abwesende Empfänger durch ihren Vertreter ersetzen. */
+async function applyDeputies(supabase: any, settings: Settings, recipients: any[]): Promise<any[]> {
+  const list = (settings.absences ?? []).filter((a) => a?.email && a?.deputyEmail);
+  if (!list.length) return recipients;
+  const today = new Date().toISOString().slice(0, 10);
+  const active = new Map<string, string>();
+  for (const a of list) {
+    const from = a.from || "0000-01-01";
+    const to = a.to || "9999-12-31";
+    if (today >= from && today <= to) active.set(a.email.toLowerCase().trim(), a.deputyEmail.toLowerCase().trim());
+  }
+  if (!active.size) return recipients;
+
+  const needed = recipients
+    .filter((r) => active.has(String(r.email ?? "").toLowerCase()))
+    .map((r) => active.get(String(r.email).toLowerCase()) as string);
+  if (!needed.length) return recipients;
+
+  const { data: deputies } = await supabase
+    .from("user_profiles")
+    .select("id, email, full_name")
+    .in("email", [...new Set(needed)]);
+  const byMail = new Map(((deputies ?? []) as any[]).map((d) => [String(d.email).toLowerCase(), d]));
+
+  const out: any[] = [];
+  const seen = new Set<string>();
+  for (const r of recipients) {
+    const mail = String(r.email ?? "").toLowerCase();
+    const target = active.has(mail) ? (byMail.get(active.get(mail) as string) ?? null) : r;
+    if (!target?.email) continue;
+    const key = String(target.email).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(target);
+  }
+  return out;
+}
 
 async function loadSettings(supabase: any): Promise<Settings> {
   try {
@@ -113,7 +152,8 @@ async function sendReminderMails(
     .in("id", userIds)
     .eq("is_active", true);
 
-  const recipients = ((profiles ?? []) as any[]).filter((p) => p.email && /@/.test(p.email));
+  let recipients = ((profiles ?? []) as any[]).filter((p) => p.email && /@/.test(p.email));
+  recipients = await applyDeputies(supabase, params.settings, recipients);
   if (!recipients.length) return 0;
 
   const stageTitle = STAGE_TITLE[params.stage];
