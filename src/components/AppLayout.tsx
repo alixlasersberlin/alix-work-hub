@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useAtOnly, useAtRoleOnly } from '@/hooks/useAtOnly';
-import { isAtOnlyPathAllowed } from '@/lib/at-only-access';
+import { useAtOnly } from '@/hooks/useAtOnly';
 
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -201,7 +200,6 @@ export default function AppLayout() {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ '__favorites': true });
   const [lagerCounts, setLagerCounts] = useState<Record<string, number>>({});
   const atOnly = useAtOnly();
-  const atRoleOnly = useAtRoleOnly();
 
   const { favorites, isFavorite, toggle: toggleFavorite } = useFavorites();
   useNotificationFeed();
@@ -588,11 +586,9 @@ export default function AppLayout() {
       children: item.children
         ?.filter(filterByRoles)
         .filter(c => !atOnly || !atHiddenPaths.has(c.path))
-        .filter(c => !atRoleOnly || c.path.startsWith('#') || (c.children?.length ?? 0) > 0 || isAtOnlyPathAllowed(c.path))
         .map(c => ({
           ...c,
-          children: c.children?.filter(filterByRoles).filter(filterByGrant)
-            .filter(g => !atRoleOnly || isAtOnlyPathAllowed(g.path)),
+          children: c.children?.filter(filterByRoles).filter(filterByGrant),
         }))
         .filter(filterByGrant)
         .filter(c => !c.children || c.children.length > 0),

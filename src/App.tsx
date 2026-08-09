@@ -4,7 +4,6 @@ import { lazyWithRetry as lazy } from "@/lib/lazy-with-retry";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { postLoginTarget, hasPendingWelcome, clearPendingWelcome } from "@/lib/postLogin";
-import { isAtOnlyPathAllowed } from "@/lib/at-only-access";
 
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -1140,10 +1139,6 @@ function ProtectedRoute({ children, requiredRoles, allowEmails }: { children: Re
       return <Navigate to="/production" replace />;
     }
   }
-
-  // Rolle „Österreich" allein erlaubt ausschließlich AT-Module
-  const atRoleOnly = roles.length > 0 && roles.every(r => r === 'Österreich');
-  if (atRoleOnly && !isAtOnlyPathAllowed(location.pathname)) return <AccessDenied />;
 
   if (requiredRoles && !requiredRoles.some(r => roles.includes(r)) && !emailAllowed) return <AccessDenied />;
 

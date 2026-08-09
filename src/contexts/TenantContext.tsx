@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useAtOnly } from '@/hooks/useAtOnly';
 
 export interface Tenant {
   id: string;
@@ -46,7 +45,6 @@ const Ctx = createContext<TenantContextType>({
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const { user, isAdmin, roles } = useAuth() as any;
-  const atOnly = useAtOnly();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [accessIds, setAccessIds] = useState<string[] | null>(null);
   const [current, setCurrentState] = useState<Tenant | null>(null);
@@ -67,12 +65,11 @@ export function TenantProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   const allowedTenants = useMemo(() => {
-    if (atOnly) return tenants.filter(t => t.code === 'AT');
     if (isAdmin) return tenants;
     // Mandanten-Rollen ("Mandant DE", "Mandant AT", ...) gewähren Zugriff
     const roleCodes = (roles || [])
-      .filter((r: string) => r.startsWith('Mandant '))
-      .map((r: string) => r.replace('Mandant ', '').trim());
+      .filter((r: string) => r.startsWith('Mandant ') || r === 'Österreich')
+      .map((r: string) => (r === 'Österreich' ? 'AT' : r.replace('Mandant ', '').trim()));
     if (roleCodes.length > 0) {
       const byRole = tenants.filter(t => roleCodes.includes(t.code));
       const byAccess = accessIds ? tenants.filter(t => accessIds.includes(t.id)) : [];
@@ -81,18 +78,19 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     }
     if (!accessIds || accessIds.length === 0) return tenants; // fallback: keine Beschränkung
     return tenants.filter(t => accessIds.includes(t.id));
-  }, [tenants, accessIds, isAdmin, atOnly, roles]);
+  }, [tenants, accessIds, isAdmin, roles]);
 
   useEffect(() => {
     if (loading) return;
-    if (atOnly) { setCurrentState(allowedTenants[0] || null); return; }
+    // Nur ein erlaubter Mandant -> fest darauf gesetzt (keine Konzernsicht)
+    if (allowedTenants.length === 1 && tenants.length > 1) { setCurrentState(allowedTenants[0]); return; }
     const code = localStorage.getItem(STORAGE_KEY);
     if (code) {
       const found = allowedTenants.find(t => t.code === code);
       if (found) { setCurrentState(found); return; }
     }
     setCurrentState(null); // Konzern-Sicht default
-  }, [loading, allowedTenants, atOnly]);
+  }, [loading, allowedTenants, tenants.length]);
 
   const setCurrent = (t: Tenant | null) => {
     setCurrentState(t);
