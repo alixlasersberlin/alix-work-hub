@@ -6,10 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { Truck, MapPin, ChevronRight, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { TOUR_STATUS_LABELS, statusClass } from '@/pages/Dispatch/constants';
+import { ReleaseStatusDot } from '@/components/delivery/ReleaseStatusDot';
+import { fetchReleaseStatusMap } from '@/lib/delivery-approval/api';
+import type { OverallStatus } from '@/lib/delivery-approval/config';
+
+const RELEASE_RANK: Record<OverallStatus, number> = { blocked: 0, waiting: 1, released: 2, delivered: 3, completed: 4 };
 
 export default function MobileTouren() {
   const [tours, setTours] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tourRelease, setTourRelease] = useState<Record<string, OverallStatus>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -23,6 +29,28 @@ export default function MobileTouren() {
       if (cancelled) return;
       setTours(data ?? []);
       setLoading(false);
+
+      // Freigabe-Ampel je Tour = schlechtester Status aller Stopps
+      const tourIds = (data ?? []).map((t: any) => t.id);
+      if (tourIds.length) {
+        const { data: stops } = await supabase
+          .from('delivery_tour_stops')
+          .select('tour_id, appointment:appointment_id(order_id)')
+          .in('tour_id', tourIds);
+        const orderIds = [...new Set(((stops ?? []) as any[]).map((s) => s.appointment?.order_id).filter(Boolean))];
+        if (!orderIds.length || cancelled) return;
+        const map = await fetchReleaseStatusMap(orderIds as string[]);
+        if (cancelled) return;
+        const worst: Record<string, OverallStatus> = {};
+        for (const st of ((stops ?? []) as any[])) {
+          const oid = st.appointment?.order_id;
+          const status = oid ? map[oid] : undefined;
+          if (!status) continue;
+          const cur = worst[st.tour_id];
+          if (!cur || RELEASE_RANK[status] < RELEASE_RANK[cur]) worst[st.tour_id] = status;
+        }
+        setTourRelease(worst);
+      }
     })();
     return () => { cancelled = true; };
   }, []);
@@ -51,6 +79,7 @@ export default function MobileTouren() {
                   <MapPin className="w-3 h-3 mr-1" />{t.delivery_tour_stops?.[0]?.count ?? 0} Stopps
                 </Badge>
                 {t.vehicles?.license_plate && <Badge variant="outline" className="text-[10px]">{t.vehicles.license_plate}</Badge>}
+                <ReleaseStatusDot status={tourRelease[t.id]} withLabel />
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
