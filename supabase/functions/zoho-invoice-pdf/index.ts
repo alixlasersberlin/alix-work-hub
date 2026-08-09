@@ -2,6 +2,7 @@
 // Automatically routes the PDF through sig-apply-facsimile so the H. Tran
 // signature is stamped on Zoho-generated documents as well.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { getTenantScope, sourceInScope } from "../_shared/tenant-scope.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -99,6 +100,12 @@ Deno.serve(async (req) => {
 
     const cfg = getZohoConfig(source_system);
     if (!cfg) return json({ error: "Invalid source_system" }, 400);
+
+    // Data Scope: Nutzer darf nur Dokumente seiner Mandanten laden
+    const scope = await getTenantScope(req);
+    if (!sourceInScope(scope, source_system)) {
+      return json({ error: "Kein Zugriff auf diesen Mandanten" }, 403);
+    }
 
     const { resource: res, docType: defaultDocType } = resolveResource({ resource, recurring });
     const finalDocType = doc_type || defaultDocType;
