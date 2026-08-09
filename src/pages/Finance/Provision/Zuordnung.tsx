@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { NativeSelect } from '@/components/ui/native-select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
@@ -301,17 +302,15 @@ export default function ProvisionZuordnung() {
           <div className="space-y-3">
             <div>
               <Label>Mitarbeiter</Label>
-              <Select value={assignForm.employee_id} onValueChange={(v) => setAssignForm({ ...assignForm, employee_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Mitarbeiter wählen" /></SelectTrigger>
-                <SelectContent>{profiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || p.email}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={assignForm.employee_id} onChange={(v) => setAssignForm({ ...assignForm, employee_id: v })} placeholder="Mitarbeiter wählen">
+                {profiles.map((p) => <option key={p.id} value={p.id}>{p.full_name || p.email}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Rolle</Label>
-              <Select value={assignForm.employee_role} onValueChange={(v) => setAssignForm({ ...assignForm, employee_role: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{EMPLOYEE_ROLES.map((r) => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={assignForm.employee_role} onChange={(v) => setAssignForm({ ...assignForm, employee_role: v })}>
+                {EMPLOYEE_ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Anteil in %</Label>
@@ -319,11 +318,11 @@ export default function ProvisionZuordnung() {
             </div>
             <div>
               <Label>Provisionsregel (optional)</Label>
-              <Select value={assignForm.rule_id} onValueChange={(v) => setAssignForm({ ...assignForm, rule_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Automatisch" /></SelectTrigger>
-                <SelectContent>{rules.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={assignForm.rule_id} onChange={(v) => setAssignForm({ ...assignForm, rule_id: v })} placeholder="Automatisch">
+                {rules.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </NativeSelect>
             </div>
+
             <div><Label>Notiz</Label><Textarea value={assignForm.note} onChange={(e) => setAssignForm({ ...assignForm, note: e.target.value })} /></div>
           </div>
           <DialogFooter>
@@ -354,32 +353,29 @@ export default function ProvisionZuordnung() {
             <div><Label>Individueller Festbetrag</Label><Input type="number" step="0.01" value={empForm.individual_fixed ?? ''} onChange={(e) => setEmpForm({ ...empForm, individual_fixed: e.target.value === '' ? null : Number(e.target.value) })} /></div>
             <div>
               <Label>Auszahlungsart</Label>
-              <Select value={empForm.payout_method ?? ''} onValueChange={(v) => setEmpForm({ ...empForm, payout_method: v })}>
-                <SelectTrigger><SelectValue placeholder="wählen" /></SelectTrigger>
-                <SelectContent>{PAYMENT_METHODS.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={empForm.payout_method ?? ''} onChange={(v) => setEmpForm({ ...empForm, payout_method: v })} placeholder="wählen">
+                {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Steuerliche Behandlung</Label>
-              <Select value={empForm.tax_treatment ?? ''} onValueChange={(v) => setEmpForm({ ...empForm, tax_treatment: v })}>
-                <SelectTrigger><SelectValue placeholder="wählen" /></SelectTrigger>
-                <SelectContent>{TAX_TREATMENTS.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={empForm.tax_treatment ?? ''} onChange={(v) => setEmpForm({ ...empForm, tax_treatment: v })} placeholder="wählen">
+                {TAX_TREATMENTS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Standard-Provisionsregel</Label>
-              <Select value={empForm.default_rule_id ?? ''} onValueChange={(v) => setEmpForm({ ...empForm, default_rule_id: v })}>
-                <SelectTrigger><SelectValue placeholder="keine" /></SelectTrigger>
-                <SelectContent>{rules.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={empForm.default_rule_id ?? ''} onChange={(v) => setEmpForm({ ...empForm, default_rule_id: v || null })} placeholder="keine">
+                {rules.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+              </NativeSelect>
             </div>
             <div>
               <Label>Vorgesetzter</Label>
-              <Select value={empForm.supervisor_id ?? ''} onValueChange={(v) => setEmpForm({ ...empForm, supervisor_id: v })}>
-                <SelectTrigger><SelectValue placeholder="keiner" /></SelectTrigger>
-                <SelectContent>{profiles.map((p) => <SelectItem key={p.id} value={p.id}>{p.full_name || p.email}</SelectItem>)}</SelectContent>
-              </Select>
+              <NativeSelect value={empForm.supervisor_id ?? ''} onChange={(v) => setEmpForm({ ...empForm, supervisor_id: v || null })} placeholder="keiner">
+                {profiles.map((p) => <option key={p.id} value={p.id}>{p.full_name || p.email}</option>)}
+              </NativeSelect>
             </div>
+
             <div className="col-span-2 flex items-center gap-3">
               <Switch checked={empForm.commission_active ?? true} onCheckedChange={(v) => setEmpForm({ ...empForm, commission_active: v })} />
               <Label>Provisionsberechtigung aktiv</Label>
