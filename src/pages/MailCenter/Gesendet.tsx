@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,7 @@ const MAILBOX_LABEL: Record<string, string> = {
 
 export default function MailCenterGesendet() {
   const { isAdmin, hasRole } = useAuth();
+  const { tenantId, apply } = useTenantFilter();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<any[]>([]);
   const [mailbox, setMailbox] = useState('all');
@@ -47,12 +49,13 @@ export default function MailCenterGesendet() {
       .limit(300);
     if (mailbox !== 'all') q = q.eq('mailbox', mailbox);
     else q = q.in('mailbox', allowedMailboxes);
+    q = apply(q as any) as any;
     const { data } = await q;
     setRows(data ?? []);
     setLoading(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-line */ }, [mailbox, allowedMailboxes.join(',')]);
+  useEffect(() => { load(); /* eslint-disable-line */ }, [mailbox, allowedMailboxes.join(','), tenantId]);
 
   const filtered = rows.filter(r => {
     if (!search) return true;
