@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { sbRepair } from '@/lib/repair/api';
 import { STATUS_BADGE_CLASS } from '@/lib/repair/constants';
 import { Card } from '@/components/ui/card';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 
 type Props = {
   title: string;
@@ -11,20 +12,23 @@ type Props = {
 };
 
 export function RepairFilteredList({ title, emptyText, statusFilter }: Props) {
+  const { tenantId } = useTenantFilter();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     (async () => {
-      const { data } = await sbRepair
+      let rq: any = sbRepair
         .from('repair_orders')
         .select('id,repair_number,repair_status,customer_name,device_category,device_brand,device_model,device_serial_number,created_at')
         .in('repair_status', statusFilter)
         .order('created_at', { ascending: false })
         .limit(500);
+      if (tenantId) rq = rq.eq('tenant_id', tenantId);
+      const { data } = await rq;
       setRows(data || []);
       setLoading(false);
     })();
-  }, [statusFilter.join('|')]);
+  }, [statusFilter.join('|'), tenantId]);
 
   return (
     <Card className="overflow-hidden">

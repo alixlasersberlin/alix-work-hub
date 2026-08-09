@@ -2,6 +2,7 @@ import { TenantBadge } from '@/components/TenantBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -97,6 +98,7 @@ function priorityColor(p: string) {
 }
 
 export default function TicketsList() {
+  const { sourceSystem } = useTenantFilter();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rows, setRows] = useState<TicketRow[]>([]);
@@ -177,11 +179,15 @@ export default function TicketsList() {
   useEffect(() => {
     let cancelled = false;
     const TICKET_COLS = 'id, external_ticket_id, case_number, source_system, customer_name, company_name, order_number, device_name, serial_number, category, auto_category, title, status, priority, department, last_synced_at, created_at, sla_status, escalation_count, assigned_to, due_at';
-    const fetchTickets = (limit: number) => supabase
-      .from('tickets')
-      .select(TICKET_COLS)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    const fetchTickets = (limit: number) => {
+      let q: any = supabase
+        .from('tickets')
+        .select(TICKET_COLS)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (sourceSystem) q = q.eq('source_system', sourceSystem);
+      return q;
+    };
     (async () => {
       setLoading(true);
       // Schnelle erste Anzeige, danach im Hintergrund vollständig nachladen
@@ -196,7 +202,7 @@ export default function TicketsList() {
       setRows((full as TicketRow[]) || []);
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [sourceSystem]);
 
 
 

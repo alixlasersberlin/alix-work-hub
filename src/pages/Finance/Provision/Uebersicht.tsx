@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import { DataCard } from '@/components/PageShell';
@@ -11,6 +12,7 @@ import { CommissionList } from '@/components/commission/CommissionList';
 import { useCommissionPermissions } from '@/hooks/useCommissionPermissions';
 
 export default function ProvisionUebersicht() {
+  const { tenantId } = useTenantFilter();
   const perms = useCommissionPermissions();
   const [busy, setBusy] = useState(false);
   const [kpi, setKpi] = useState({
@@ -20,7 +22,9 @@ export default function ProvisionUebersicht() {
   const [byStatus, setByStatus] = useState<Record<string, number>>({});
 
   const load = async () => {
-    const { data } = await supabase.from('commission_entries').select('*').limit(2000);
+    let cq: any = supabase.from('commission_entries').select('*').limit(2000);
+    if (tenantId) cq = cq.eq('tenant_id', tenantId);
+    const { data } = await cq;
     const rows = data ?? [];
     const now = new Date();
     const sum = (f: (r: any) => boolean) => rows.filter(f).reduce((s, r) => s + Number(r.commission_amount), 0);
@@ -60,7 +64,7 @@ export default function ProvisionUebersicht() {
     });
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tenantId]);
 
   const scan = async () => {
     setBusy(true);

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
@@ -104,6 +105,7 @@ const fmtMoney = (n: number, c = 'EUR') =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: c || 'EUR' }).format(Number(n) || 0);
 
 export default function OffeneAnzahlungen() {
+  const { tenantId } = useTenantFilter();
   const { canWrite } = useFinancePermissions();
   const { region } = useAccountingRegion();
   const [rows, setRows] = useState<Deposit[]>([]);
@@ -123,17 +125,19 @@ export default function OffeneAnzahlungen() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let dq: any = supabase
       .from('finance_deposits')
       .select('*')
       .in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any)
       .not('status', 'in', '("gebucht","bezahlt")')
       .order('created_at', { ascending: false, nullsFirst: false })
       .limit(2000);
+    if (tenantId) dq = dq.eq('tenant_id', tenantId);
+    const { data, error } = await dq;
     if (error) toast.error('Laden fehlgeschlagen: ' + error.message);
     setRows((data ?? []) as any);
     setLoading(false);
-  }, [region]);
+  }, [region, tenantId]);
 
   useEffect(() => { load(); }, [load]);
 

@@ -4,6 +4,7 @@ import { qk, STALE } from '@/lib/query-keys';
 
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -118,6 +119,7 @@ function statusClasses(status: string) {
 }
 
 export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {}) {
+  const { tenantId } = useTenantFilter();
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('production_lang') as Lang) || 'de');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -141,12 +143,14 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   const tPayment = (p: string) => t[`p_${p}`] ?? p;
 
   const loadProductionOrders = async () => {
-    const { data, error } = await supabase
+    let poq: any = supabase
       .from('production_orders')
       .select('*, supplier:suppliers(name, email)')
       .eq('is_reclamation', isReclamation)
       .neq('status', 'fertig')
       .order('created_at', { ascending: false });
+    if (tenantId) poq = poq.eq('tenant_id', tenantId);
+    const { data, error } = await poq;
     if (error) throw error;
     let list = (data || []).map((r: any) => ({
       ...r,
@@ -172,7 +176,7 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   };
 
   const productionQuery = useQuery({
-    queryKey: qk.productionOrders.list({ isReclamation, atOnly }),
+    queryKey: [...qk.productionOrders.list({ isReclamation, atOnly }), tenantId],
     queryFn: loadProductionOrders,
     staleTime: STALE.short,
   });

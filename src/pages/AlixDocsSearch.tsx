@@ -2,6 +2,7 @@ import { TenantBadge } from '@/components/TenantBadge';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +39,7 @@ type Order = { id: string; order_number: string | null; customer_id: string | nu
 type Customer = { id: string; company_name: string | null; contact_name: string | null; external_customer_id: string | null; raw_data?: any };
 
 export default function AlixDocsSearch() {
+  const { tenantId } = useTenantFilter();
   const { roles } = useAuth();
   const canDelete = (roles.includes('Super Admin') || roles.includes('Admin')) || roles.includes('Admin');
 
@@ -89,6 +91,8 @@ export default function AlixDocsSearch() {
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .limit(500);
+
+    if (tenantId) query = query.eq('tenant_id', tenantId);
 
     if (catFilter !== 'all') {
       const cat = cats.find(c => c.code === catFilter);
@@ -182,7 +186,7 @@ export default function AlixDocsSearch() {
   useEffect(() => {
     supabase.from('alixdocs_categories').select('id, code, name').order('sort_order').then(({ data }) => setCats((data ?? []) as Cat[]));
   }, []);
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [catFilter, statusFilter, sourceFilter, dateFrom, dateTo]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [catFilter, statusFilter, sourceFilter, dateFrom, dateTo, tenantId]);
 
   const catMap = useMemo(() => Object.fromEntries(cats.map(c => [c.id, c])), [cats]);
 
