@@ -58,6 +58,59 @@ Deno.serve(async (req) => {
   const stamp = Date.now()
   const idBase = invoice_number || 'invoice'
   const results: any[] = []
+
+  const hasAttachments = Array.isArray(attachments) && attachments.length > 0
+  // Das Lovable-Email-SDK unterstützt keine Anhänge -> bei Anhängen über den Resend-Gateway senden.
+  if (hasAttachments) {
+    const resendKey = Deno.env.get('RESEND_API_KEY')
+    if (!resendKey) {
+      return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured (für Anhänge erforderlich)' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const bccList: string[] = ['service@alix-lasers.com']
+    if (Array.isArray(bcc)) {
+      for (const b of bcc) {
+        if (typeof b === 'string' && b.includes('@') &&
+            b.toLowerCase() !== String(to_email).toLowerCase() &&
+            !bccList.some((x) => x.toLowerCase() === b.toLowerCase())) bccList.push(b)
+      }
+    }
+    const res = await fetch('https://connector-gateway.lovable.dev/resend/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'X-Connection-Api-Key': resendKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Alix Lasers ® <noreply@alixlasers.ai>',
+        to: [to_name ? `${to_name} <${to_email}>` : to_email],
+        bcc: bccList,
+        subject,
+        html,
+        text: body_text ?? '',
+        attachments: attachments.map((a: any) => ({
+          filename: a.filename,
+          content: a.content,
+          content_type: a.contentType || a.content_type || 'application/pdf',
+        })),
+      }),
+    })
+    const txt = await res.text()
+    if (!res.ok) {
+      console.error(`Resend send failed [${res.status}]: ${txt}`)
+      return new Response(JSON.stringify({ success: false, error: `Mailversand fehlgeschlagen (${res.status}): ${txt.slice(0, 300)}` }), {
+        status: res.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    console.log('send-invoice-mail via resend ok', txt.slice(0, 200))
+    return new Response(JSON.stringify({ success: true, provider: 'resend', results: [{ to: to_email, status: 'sent', attachments: attachments.map((a: any) => a.filename) }] }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+
+
   for (const rec of recipients) {
     try {
       const tb = new Uint8Array(32); crypto.getRandomValues(tb)
