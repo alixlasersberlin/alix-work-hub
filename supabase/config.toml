@@ -433,3 +433,6 @@ verify_jwt = false
 
 [functions.tmp-create-sobitsch]
 verify_jwt = false
+
+[functions.delivery-approval-escalation]
+verify_jwt = false
