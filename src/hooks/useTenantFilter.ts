@@ -11,6 +11,7 @@ export function useTenantFilter(column = 'tenant_id') {
   const { current, allowedTenants, loading } = useTenant();
   const tenantId = current?.id ?? null;
   const tenantCode = current?.code ?? null;
+  const sourceSystem = current?.zoho_source_system ?? null;
 
   const allowedIds = useMemo(() => allowedTenants.map((t) => t.id), [allowedTenants]);
 
@@ -25,5 +26,5 @@ export function useTenantFilter(column = 'tenant_id') {
     [tenantId],
   );
 
-  return { tenantId, tenantCode, allowedIds, apply, matches, loading };
+  return { tenantId, tenantCode, sourceSystem, allowedIds, apply, matches, loading };
 }

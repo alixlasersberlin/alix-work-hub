@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ScrollText, RefreshCw, Filter, Download } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,7 @@ const fmt = (n: number, cur = 'EUR') => (n == null ? '' : Number(n).toLocaleStri
 export default function Buchungsjournal() {
   const rowCur = (r: any) => r?.currency || (r?.accounting_region === 'CH' ? 'CHF' : 'EUR');
   const [rows, setRows] = useState<any[]>([]);
+  const { tenantId } = useTenantFilter();
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10));
   const [to, setTo] = useState(new Date().toISOString().slice(0, 10));
@@ -29,11 +31,12 @@ export default function Buchungsjournal() {
     let q: any = (supabase as any).from('finance_journal').select('*').gte('booking_date', from).lte('booking_date', to).order('booking_date', { ascending: false }).order('created_at', { ascending: false }).limit(1000);
     if (src !== 'alle') q = q.eq('source_module', src);
     if (status !== 'alle') q = q.eq('status', status);
+    if (tenantId) q = q.eq('tenant_id', tenantId);
     const { data, error } = await q;
     if (error) toast.error(error.message); else setRows(data || []);
     setLoading(false);
   }
-  useEffect(() => { load(); /* eslint-disable-line */ }, [from, to, src, status]);
+  useEffect(() => { load(); /* eslint-disable-line */ }, [from, to, src, status, tenantId]);
 
   function exportCsv() {
     const cols = ['journal_number','booking_date','accounting_region','source_module','vorgang','reference','order_number','invoice_number','amount_net','amount_vat','amount_gross','account','contra_account','description','status'];

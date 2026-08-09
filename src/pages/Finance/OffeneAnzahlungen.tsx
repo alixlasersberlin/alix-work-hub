@@ -123,13 +123,15 @@ export default function OffeneAnzahlungen() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let dq: any = supabase
       .from('finance_deposits')
       .select('*')
       .in('accounting_region', (String(region) === 'ALL' ? ['EU','CH'] : [region]) as any)
       .not('status', 'in', '("gebucht","bezahlt")')
       .order('created_at', { ascending: false, nullsFirst: false })
       .limit(2000);
+    if (tenantId) dq = dq.eq('tenant_id', tenantId);
+    const { data, error } = await dq;
     if (error) toast.error('Laden fehlgeschlagen: ' + error.message);
     setRows((data ?? []) as any);
     setLoading(false);

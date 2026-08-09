@@ -20,7 +20,9 @@ export default function ProvisionUebersicht() {
   const [byStatus, setByStatus] = useState<Record<string, number>>({});
 
   const load = async () => {
-    const { data } = await supabase.from('commission_entries').select('*').limit(2000);
+    let cq: any = supabase.from('commission_entries').select('*').limit(2000);
+    if (tenantId) cq = cq.eq('tenant_id', tenantId);
+    const { data } = await cq;
     const rows = data ?? [];
     const now = new Date();
     const sum = (f: (r: any) => boolean) => rows.filter(f).reduce((s, r) => s + Number(r.commission_amount), 0);

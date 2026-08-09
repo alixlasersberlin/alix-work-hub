@@ -141,12 +141,14 @@ export default function ProductionOrders({ mode = 'order' }: { mode?: Mode } = {
   const tPayment = (p: string) => t[`p_${p}`] ?? p;
 
   const loadProductionOrders = async () => {
-    const { data, error } = await supabase
+    let poq: any = supabase
       .from('production_orders')
       .select('*, supplier:suppliers(name, email)')
       .eq('is_reclamation', isReclamation)
       .neq('status', 'fertig')
       .order('created_at', { ascending: false });
+    if (tenantId) poq = poq.eq('tenant_id', tenantId);
+    const { data, error } = await poq;
     if (error) throw error;
     let list = (data || []).map((r: any) => ({
       ...r,

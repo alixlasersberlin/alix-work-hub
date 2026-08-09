@@ -90,6 +90,8 @@ export default function AlixDocsSearch() {
       .order('created_at', { ascending: false })
       .limit(500);
 
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+
     if (catFilter !== 'all') {
       const cat = cats.find(c => c.code === catFilter);
       if (cat) query = query.eq('category_id', cat.id);
