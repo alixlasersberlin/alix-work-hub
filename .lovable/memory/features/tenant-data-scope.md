@@ -48,3 +48,14 @@ Jede neue Tabelle im Schema `public`, die Geschäftsdaten hält, MUSS im selben 
 6. Im Frontend: `useTenantFilter()` verwenden statt ungefilterter Queries; RPCs bekommen `p_tenant_id`.
 
 Audit-Abfrage für Lücken siehe `docs/tenant-scope-checklist.md`.
+
+## Phase 3 (flächendeckender Rollout, Aug 2026)
+Restriktive `tenant_data_scope_*`-Policies zusätzlich auf: ac_* (Connect inkl. Web-Analytics),
+alixsmart_*, as_cases, media_packages, sig_documents, surveys/_design_templates, brand_registry,
+mdr_vigilance_reports, license_*, zoho_unpaid_invoices, bank_* (5), alle finance_* (42),
+alle cmr_*, alle med_*, commission_* sowie quellsystem-basierte Logs
+(deleted_customers, email_send_log, suppressed_emails, order_import_logs,
+recurring_prenotifications, royalty_transactions, zoho_estimate_import_logs).
+
+**Bewusst NICHT gescoped** (Identity-/Zugriffs-Infrastruktur, sonst sperrt sich der User selbst aus):
+`user_tenant_access`, `security_user_roles`, `alix_identity_app_access`, `alix_organizations`.
