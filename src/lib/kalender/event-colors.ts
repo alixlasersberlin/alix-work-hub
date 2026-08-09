@@ -40,6 +40,9 @@ export function classifyEventKind(raw?: string | null): string {
   if (s.includes('nisv')) return 'nisv_praesenz';
   if (s.includes('media')) return 'mediapaket';
   if (s.includes('lief')) return 'lieferung';
+  if (s.includes('umzug')) return 'umzug';
+  if (s.includes('werkstatt')) return 'werkstatt';
+
   if (s.includes('service')) return 'service';
   if (s.includes('wartung')) return 'wartung';
   if (s.includes('reparatur')) return 'reparatur';
