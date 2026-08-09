@@ -378,7 +378,7 @@ export default function Auslieferungsfreigabe() {
 
       <Card className="p-3">
         <div className="flex items-center gap-2 text-sm font-medium mb-2">
-          <AlertTriangle className="h-4 w-4 text-amber-400" />Eskalationen (Stufe 1 = 24 h, 2 = 48 h, 3 = 72 h)
+          <AlertTriangle className="h-4 w-4 text-amber-400" />Eskalationen (Stufe 1 = {cfg.l1} h, 2 = {cfg.l2} h, 3 = {cfg.l3} h)
           <div className="ml-auto flex gap-2">
             <Button variant="outline" size="sm" onClick={exportEscalationsCsv}><Download className="h-4 w-4 mr-1" />CSV</Button>
             <Button variant="outline" size="sm" onClick={exportEscalations}><FileText className="h-4 w-4 mr-1" />PDF</Button>
