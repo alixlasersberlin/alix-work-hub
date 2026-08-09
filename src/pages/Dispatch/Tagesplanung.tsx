@@ -21,6 +21,7 @@ const todayStr = () => format(new Date(), 'yyyy-MM-dd');
 
 export default function DispatchTagesplanung() {
   const qc = useQueryClient();
+  const { user, profile, hasRole } = useAuth();
   const [day, setDay] = useState<string>(todayStr());
   const [selectedTour, setSelectedTour] = useState<string | null>(null);
   const [filterRegion, setFilterRegion] = useState('');
