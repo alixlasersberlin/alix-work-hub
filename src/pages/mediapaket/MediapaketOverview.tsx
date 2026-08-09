@@ -128,11 +128,13 @@ export default function MediapaketOverview() {
 
   const load = async () => {
     setLoading(true);
-    const { data: mps } = await supabase
+    let mpQuery = supabase
       .from('media_packages')
       .select('id, order_id, customer_id, status, progress_percent, assigned_user_id, due_date, studio_name, updated_at, submitted_at')
       .order('updated_at', { ascending: false })
       .limit(500);
+    if (tenantId) mpQuery = mpQuery.eq('tenant_id', tenantId) as any;
+    const { data: mps } = await mpQuery;
     const list = (mps || []) as MpRow[];
 
     const cids = Array.from(new Set(list.map(r => r.customer_id).filter(Boolean))) as string[];
