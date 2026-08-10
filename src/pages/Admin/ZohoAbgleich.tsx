@@ -54,27 +54,49 @@ export default function ZohoAbgleich() {
     setLoading(doImport ? "import" : "check");
     setResults(null);
     setDurationMs(null);
+    const started = Date.now();
     try {
-      const responses = await Promise.all(entities.map(async (ent) => {
-        const { data, error } = await supabase.functions.invoke(ent.fn, { body: { sources, import: doImport } });
-        if (error) throw error;
-        return { ent, data };
-      }));
+      // One request per Mandant + Typ: kürzere Laufzeit pro Aufruf, damit das
+      // Gateway nicht mit "Internal Server Error" abbricht.
+      const jobs = entities.flatMap((ent) => sources.map((src) => ({ ent, src })));
       const merged: Array<SourceResult & { entity: EntityKey }> = [];
-      let totalMs = 0;
-      for (const { ent, data } of responses) {
-        totalMs = Math.max(totalMs, data?.duration_ms ?? 0);
-        for (const r of (data?.results ?? []) as SourceResult[]) {
-          merged.push({ ...r, entity: ent.key });
+
+      const responses = await Promise.all(jobs.map(async ({ ent, src }) => {
+        try {
+          const { data, error } = await supabase.functions.invoke(ent.fn, {
+            body: { sources: [src], import: doImport },
+          });
+          if (error) throw error;
+          return { ent, src, data };
+        } catch (e: any) {
+          return { ent, src, data: null, err: e?.message ?? String(e) };
         }
+      }));
+
+      for (const { ent, src, data, err } of responses as any[]) {
+        if (err) {
+          merged.push({ source: src, entity: ent.key, error: err });
+          continue;
+        }
+        const rows = (data?.results ?? []) as SourceResult[];
+        if (!rows.length && data?.background) {
+          merged.push({ source: src, entity: ent.key, error: data?.message ?? "Läuft im Hintergrund" });
+          continue;
+        }
+        for (const r of rows) merged.push({ ...r, entity: ent.key });
       }
+
       setResults(merged);
-      setDurationMs(totalMs);
+      setDurationMs(Date.now() - started);
       const totalMissing = merged.reduce((s, r) => s + (r.missing_count ?? 0), 0);
       const totalImported = merged.reduce((s, r) => s + (r.imported ?? 0), 0);
+      const failedCalls = merged.filter((r) => r.error).length;
       toast({
         title: doImport ? `${totalImported} Datensätze importiert` : `${totalMissing} fehlende Datensätze`,
-        description: doImport ? "Import abgeschlossen." : "Prüfung abgeschlossen.",
+        description: failedCalls
+          ? `${failedCalls} Abfrage(n) fehlgeschlagen – Details in der Liste.`
+          : (doImport ? "Import abgeschlossen." : "Prüfung abgeschlossen."),
+        variant: failedCalls ? "destructive" : undefined,
       });
     } catch (e: any) {
       toast({ title: "Fehler", description: e?.message ?? String(e), variant: "destructive" });
