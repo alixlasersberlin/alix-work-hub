@@ -38,6 +38,25 @@ export default function DoppelteKunden() {
   const [dupsByGroup, setDupsByGroup] = useState<Record<string, Set<string>>>({});
   const [mergePending, setMergePending] = useState<{ groupKey: string; primary: any; dups: any[] } | null>(null);
   const [merging, setMerging] = useState(false);
+  const [autoBusy, setAutoBusy] = useState(false);
+  const [autoConfirm, setAutoConfirm] = useState(false);
+  const [autoPreview, setAutoPreview] = useState<{ groups: number; merged_customers: number } | null>(null);
+
+  async function runAuto(dryRun: boolean) {
+    setAutoBusy(true);
+    const { data, error } = await supabase.rpc('auto_merge_safe_customer_duplicates', { _dry_run: dryRun });
+    setAutoBusy(false);
+    if (error) { toast.error('Fehler: ' + error.message); return; }
+    const res = data as any;
+    if (dryRun) {
+      setAutoPreview({ groups: res?.groups ?? 0, merged_customers: res?.merged_customers ?? 0 });
+      toast.success(`${res?.merged_customers ?? 0} sichere Dubletten in ${res?.groups ?? 0} Gruppen gefunden.`);
+    } else {
+      setAutoPreview(null);
+      toast.success(`${res?.merged_customers ?? 0} Konten zusammengeführt.`);
+      loadAll();
+    }
+  }
 
   async function loadAll() {
     setLoading(true);
