@@ -26,20 +26,21 @@ export default function WorkspaceBar() {
 
         <button
           type="button"
-          onClick={() => navigate('/detailsuche')}
-          className={quickCls(location.pathname === '/detailsuche')}
-        >
-          <Search className="w-4 h-4" />
-          <span>Detailsuche</span>
-        </button>
-        <button
-          type="button"
           onClick={() => navigate('/')}
           className={quickCls(location.pathname === '/')}
         >
           <Home className="w-4 h-4" />
           <span>Startseite</span>
         </button>
+        <button
+          type="button"
+          onClick={() => navigate('/detailsuche')}
+          className={quickCls(location.pathname === '/detailsuche')}
+        >
+          <Search className="w-4 h-4" />
+          <span>Detailsuche</span>
+        </button>
+
         <div className="w-px h-5 bg-border mx-1 flex-shrink-0" />
 
         {workspaces.map((w) => {
