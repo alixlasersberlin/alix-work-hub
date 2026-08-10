@@ -282,16 +282,17 @@ export default function OrdersFreiBestellung() {
     };
 
 
-    // Mehrere Bestellungen je Auftrag sind möglich: erst wenn die Anzahl der
-    // Bestellungen (+ reservierte Geräte) die benötigte Stückzahl erreicht,
-    // verschwindet der Auftrag aus „Bestellung möglich".
+    // Sobald für einen Auftrag mindestens eine Bestellung existiert, verschwindet
+    // er aus „Bestellung möglich" (Restbestellungen bleiben davon unberührt).
     const isFullyOrdered = (orderId: string) => {
       const req = requiredByOrder.get(orderId) ?? 0;
       const po = poCountByOrder.get(orderId) ?? 0;
       const res = reservedCountByOrder.get(orderId) ?? 0;
-      if (req <= 0) return po > 0;
-      return po + res >= req;
+      if (po > 0) return true;
+      if (req <= 0) return false;
+      return res >= req;
     };
+
 
     const baseFiltered = (data ?? []).filter((o: any) =>
       !pendingRestIds.has(o.id) && !hiddenOrderIds.has(o.id) && !isFullyOrdered(o.id) && !isFullyReserved(o.id) && !deliveredOrderIds.has(o.id)
