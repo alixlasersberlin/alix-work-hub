@@ -347,27 +347,33 @@ export const navItems: NavItem[] = [
 
         path: '/reparatur', label: 'SERVICE & REPARATUR', icon: Wrench, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'Finance', 'QM', 'Österreich', 'Reparaturannahme', 'Technik', 'Service', 'Serviceleitung', 'Kundenservice', 'SACHBEARBEITUNG'],
         children: [
-          { path: '/reparatur/neu', label: 'Neue Reparatur anlegen', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
+          // — Überblick —
           { path: '/reparatur', label: 'Dashboard', icon: LayoutDashboard, roles: null },
           { path: '/service-cockpit', label: 'Service Cockpit', icon: BarChart3, roles: ['Admin', 'Super Admin', 'Serviceleitung'] },
-          { path: '/geraeteakte', label: 'Geräteakte', icon: FileText, roles: ['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
-          { path: '/geraete-lebenslauf', label: 'Geräte-Lebenslauf', icon: Activity, roles: ['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance', 'SACHBEARBEITUNG'] },
+          // — Reparatur-Prozess (Ablauf) —
+          { path: '/reparatur/neu', label: '1 · Annahme (neue Reparatur)', icon: FilePlus, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Order', 'Finance', 'QM', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/reparatur/werkstattannahme', label: '2 · Werkstattannahme', icon: PackageCheck, roles: null },
+          { path: '/reparatur/kostenvoranschlaege', label: '3 · Kostenvoranschläge', icon: Receipt, roles: ['Admin', 'Super Admin', 'Finance', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
+          { path: '/reparatur/technik', label: '4 · Technik-Arbeitsaufträge', icon: Wrench, roles: null },
+          { path: '/reparatur/ersatzteile', label: '5 · Ersatzteilbedarf', icon: Package, roles: null },
+          { path: '/reparatur/rueckversand', label: '6 · Rückversand', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'Tourenplanung', 'SACHBEARBEITUNG'] },
+          { path: '/reparatur/auftraege', label: 'Alle Reparaturaufträge', icon: ClipboardList, roles: null },
+          { path: '/reparatur/archiv', label: 'Reparaturarchiv', icon: FileText, roles: null },
+          // — Wartung & Garantie —
           { path: '/wartungscenter', label: 'Wartungscenter', icon: Wrench, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung', 'SACHBEARBEITUNG'] },
           { path: '/wartungsmanagement', label: 'Wartungsmanagement', icon: Cog, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung', 'SACHBEARBEITUNG'] },
           { path: '/garantiecenter', label: 'Garantiecenter', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Vertrieb', 'Österreich', 'SACHBEARBEITUNG'] },
           { path: '/garantie-kulanz', label: 'Garantie & Kulanz', icon: ShieldCheck, roles: ['Admin', 'Super Admin', 'Service', 'Serviceleitung', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'Tourenplanung', 'SACHBEARBEITUNG'] },
+          // — Geräte-Historie —
+          { path: '/geraeteakte', label: 'Geräteakte', icon: FileText, roles: ['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Tourenplanung', 'Finance', 'SACHBEARBEITUNG'] },
+          { path: '/geraete-lebenslauf', label: 'Geräte-Lebenslauf', icon: Activity, roles: ['Admin', 'Super Admin', 'Technik', 'Kundenservice', 'Serviceleitung', 'Service', 'Reparaturannahme', 'Finance', 'SACHBEARBEITUNG'] },
+          // — Kommunikation & Übergaben —
           { path: '/whatsapp', label: 'WhatsApp Service Center', icon: MessageSquare, roles: ['Admin', 'Super Admin', 'Kundenservice', 'Technik', 'Finance', 'Tourenplanung', 'SACHBEARBEITUNG'] },
           { path: '/ai-service-center', label: 'AI Service Center', icon: Sparkles, roles: ['Admin', 'Super Admin', 'Service', 'Technik', 'Kundenservice', 'Reparaturannahme', 'Finance', 'SACHBEARBEITUNG'] },
-          { path: '/reparatur/auftraege', label: 'Reparaturaufträge', icon: ClipboardList, roles: null },
-          { path: '/reparatur/werkstattannahme', label: 'Werkstattannahme', icon: PackageCheck, roles: null },
-          { path: '/reparatur/technik', label: 'Technik-Arbeitsaufträge', icon: Wrench, roles: null },
-          { path: '/reparatur/ersatzteile', label: 'Ersatzteilbedarf', icon: Package, roles: null },
-          { path: '/reparatur/kostenvoranschlaege', label: 'Kostenvoranschläge', icon: Receipt, roles: ['Admin', 'Super Admin', 'Finance', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'SACHBEARBEITUNG'] },
-          { path: '/reparatur/rueckversand', label: 'Rückversand', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Reparaturannahme', 'Technik', 'Service', 'Österreich', 'Tourenplanung', 'SACHBEARBEITUNG'] },
           { path: '/reparatur/finance', label: 'Übergabe Finance', icon: Receipt, roles: null },
           { path: '/reparatur/tourenplanung', label: 'Übergabe Tourenplanung', icon: MapPin, roles: null },
-          { path: '/reparatur/archiv', label: 'Reparaturarchiv', icon: FileText, roles: null },
         ],
+
       },
 
 
