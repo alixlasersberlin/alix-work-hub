@@ -86,6 +86,33 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const FARB_OPTIONEN = ['Blau - Gold', 'Weiss - Gold', 'Schwarz - Gold', 'Pink - Gold', 'Rot - Gold', 'Weiss', 'Schwarz', 'Blau'];
   const POWER_OPTIONEN = ['800W', '1200W', '1600W', '2000W', '2400W', '3000W', '5000W'];
 
+
+  /** Farbe aus einem Artikelnamen ableiten (z. B. "Alix Impulse Blau - Gold"). */
+  const detectFarbe = (text: string): string => {
+    const t = (text || '').toLowerCase().replace(/\s*-\s*/g, ' - ');
+    const combo = FARB_OPTIONEN.filter((f) => f.includes(' - '))
+      .find((f) => t.includes(f.toLowerCase()));
+    if (combo) return combo;
+    const single = FARB_OPTIONEN.filter((f) => !f.includes(' - '))
+      .find((f) => new RegExp(`\\b${f.toLowerCase()}\\b`).test(t));
+    return single ?? '';
+  };
+
+  /** Automatik für "Bestellung möglich": Artikeldaten aus dem Auftrag übernehmen. */
+  const autoFillFromOrderItems = (items: any[]) => {
+    if (isEdit || !items?.length) return;
+    const main = items.find((i: any) => !/ersatzteil|spare/i.test(i.item_name || '')) ?? items[0];
+    const name: string = main?.item_name || '';
+    setForm((f) => ({
+      ...f,
+      modellname: f.modellname || name,
+      farbe: f.farbe || detectFarbe(`${name} ${main?.description ?? ''}`),
+      power_handstueck: f.power_handstueck || '2400W',
+      seriennummer: f.seriennummer || (main?.serial_number ?? ''),
+      liefertermin: f.liefertermin || defaultLiefertermin(),
+    }));
+  };
+
   /** Übernimmt alle verfügbaren Artikeldaten in das Formular + Liefertermin heute + 4 Wochen. */
   const applyItemToForm = (item: any, fallbackName?: string) => {
     const name: string = item?.item_name || item?.name || fallbackName || '';
@@ -277,6 +304,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
     const items = data || [];
     setOrderItems(items);
     setSelectedItemIds(new Set());
+    autoFillFromOrderItems(items);
     await loadReservedForOrder(o.id, items);
   };
 
