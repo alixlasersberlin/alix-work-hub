@@ -191,7 +191,7 @@ const MK_CACHE_TTL = 5 * 60_000;
 export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const { tenantId } = useTenantFilter();
 
-  const { roles } = useAuth();
+  const { roles, user, profile } = useAuth();
   const { region, setRegion } = useAccountingRegion();
 
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
