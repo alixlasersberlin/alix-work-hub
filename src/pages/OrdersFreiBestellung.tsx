@@ -641,7 +641,7 @@ export default function OrdersFreiBestellung() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
+                      <td className="px-4 py-3 text-base font-bold text-foreground">{o.customers?.company_name || o.customers?.contact_name || '—'}</td>
                       <td className="px-4 py-3 text-foreground">
                         {(() => {
                           const items = itemsByOrder[o.id] || [];
