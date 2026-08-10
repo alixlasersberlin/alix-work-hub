@@ -21,7 +21,7 @@ import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS, type ApprovalStage } from '@/
 import {
   slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats, fetchEscalationSeries, fetchStageDurations, type StageDuration,
   fetchStageDurationTrend, type StageDurationMonth,
-  bulkStartApprovals,
+  bulkStartApprovals, opsRelease,
   type DeliveryApproval, type EscalationStat, type EscalationMonth,
 } from '@/lib/delivery-approval/api';
 import { autoFinalizeRelease } from '@/lib/delivery-approval/autofinalize';
