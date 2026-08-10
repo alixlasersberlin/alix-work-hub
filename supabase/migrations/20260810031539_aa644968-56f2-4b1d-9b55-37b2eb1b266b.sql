@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.production_orders_unique_regular_per_order;
