@@ -685,6 +685,28 @@ export const navItems: NavItem[] = [
         ],
       },
 
+      // 2b) ALIX Software Compliance (IEC 62304)
+      {
+        path: '/produktion/software', label: 'SOFTWARE COMPLIANCE', icon: Cpu,
+        roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'],
+        children: [
+          { path: '/produktion/software', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+          { path: '/produktion/software/traceability', label: 'Traceability Matrix', icon: ListTree, roles: null },
+          { path: '/produktion/software/requirements', label: 'Requirements', icon: ListChecks, roles: null },
+          { path: '/produktion/software/units', label: 'Software Architecture', icon: Boxes, roles: null },
+          { path: '/produktion/software/risiken', label: 'Software Risks', icon: ShieldAlert, roles: null },
+          { path: '/produktion/software/verifikation', label: 'Unit Verification', icon: CheckCircle2, roles: null },
+          { path: '/produktion/software/integration', label: 'Integration Tests', icon: GitBranch, roles: null },
+          { path: '/produktion/software/systemtests', label: 'System Tests', icon: ClipboardCheck, roles: null },
+          { path: '/produktion/software/bugs', label: 'Bugs & Issues', icon: AlertOctagon, roles: null },
+          { path: '/produktion/software/releases', label: 'Version Management', icon: Hash, roles: null },
+          { path: '/produktion/software/team', label: 'Development Team', icon: Users, roles: null },
+          { path: '/produktion/hardware-dokumentation', label: 'Hardware Documentation', icon: Cpu, roles: null },
+          { path: '/produktion/software/anwenderbefragung', label: 'User Survey', icon: ClipboardList, roles: null },
+        ],
+      },
+
+
       // 3) Qualität & Compliance (MDR / CE / ISO 13485)
       {
         path: '#qualitaet', label: 'QUALITÄT & COMPLIANCE', icon: ShieldCheck,
