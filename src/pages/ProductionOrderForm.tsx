@@ -1360,7 +1360,20 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         )}
       </Card>
 
-      <div className="flex flex-wrap justify-end gap-2 sticky bottom-0 bg-background py-3 border-t border-border">
+      <div className="flex flex-wrap items-center justify-end gap-2 sticky bottom-0 bg-background py-3 border-t border-border">
+        <button
+          type="button"
+          onClick={() => setRemoveFromBestellwesen(v => !v)}
+          disabled={saving || !selectedOrder?.id}
+          className={`mr-auto flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+            removeFromBestellwesen
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border text-muted-foreground hover:text-foreground'
+          } disabled:opacity-50`}
+        >
+          <Checkbox checked={removeFromBestellwesen} className="pointer-events-none" />
+          Auftrag nach Bestellung aus Bestellwesen entfernen
+        </button>
         <Button variant="outline" onClick={() => navigate(basePath)} disabled={saving}>Abbrechen</Button>
         <Button variant="outline" onClick={onSave} disabled={saving}><Save className="w-4 h-4 mr-2" /> Speichern</Button>
         <Button variant="outline" onClick={onSaveAndDownload} disabled={saving}><Download className="w-4 h-4 mr-2" /> Speichern + PDF</Button>
