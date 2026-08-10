@@ -49304,6 +49304,10 @@ export type Database = {
         Returns: undefined
       }
       audit_retention_purge: { Args: never; Returns: Json }
+      auto_merge_safe_customer_duplicates: {
+        Args: { _dry_run?: boolean }
+        Returns: Json
+      }
       backup_watchdog_mark_stuck: { Args: never; Returns: undefined }
       calc_media_package_progress: { Args: { _mp_id: string }; Returns: number }
       can_access_ai_service: { Args: never; Returns: boolean }
