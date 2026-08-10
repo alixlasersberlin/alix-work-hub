@@ -165,7 +165,7 @@ function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docSt
   }
 
   res = res.filter((r) => matchesDocStatus(r, docStatus));
-  res = res.filter((r) => matchesQuery(r, search));
+  res = search.trim() ? res.filter((r) => matchesQuery(r, search)) : res;
   return res.reduce((s, r) => s + Number(r.balance ?? 0), 0);
 }
 
@@ -298,6 +298,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  // Filterung erst nach dem Tippen (hält die Eingabe flüssig bei tausenden Zeilen)
+  const dSearch = useDeferredValue(search);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [docStatusFilter, setDocStatusFilter] = useState<string>('all');
   const [includeUnpaid, setIncludeUnpaid] = useState<boolean>(() => {
@@ -782,7 +784,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       res = res.filter((r) => matchesPayStatus(r, statusFilter));
     }
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
-    res = res.filter((r) => matchesQuery(r, search));
+    res = dSearch.trim() ? res.filter((r) => matchesQuery(r, dSearch)) : res;
 
     const map = new Map<string, Account>();
     const today = new Date().toISOString().slice(0, 10);
@@ -830,14 +832,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         String(a.lastFinalizedDate ?? a.lastInvoiceDate ?? ''),
       ),
     );
-  }, [rows, search, statusFilter, docStatusFilter]);
+  }, [rows, dSearch, statusFilter, docStatusFilter]);
 
   const kpi = useMemo(() => ({
     accounts: accounts.length,
     invoices: accounts.reduce((s, a) => s + a.totalInvoices + a.totalRecurring, 0),
     totalAmount: accounts.reduce((s, a) => s + a.totalAmount, 0),
     // Offene Beträge = Live-Summe der Salden aller aktuell sichtbaren Rechnungen
-    totalOpen: flatRowsForKpi(rows, search, statusFilter, docStatusFilter),
+    totalOpen: flatRowsForKpi(rows, dSearch, statusFilter, docStatusFilter),
     // OP Total = Summe aller Konten (Mietkauf-Geräte-Volumen minus geleistete Zahlungen)
     opTotal: accounts.reduce((s, a) => {
       const mk = Number(mietkaufTotals[a.key] ?? 0);
@@ -845,7 +847,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       const paid = a.rows.reduce((p, r) => p + (Number(r.total ?? 0) - Number(r.balance ?? 0)), 0);
       return s + (mk - paid);
     }, 0),
-  }), [accounts, rows, search, statusFilter, docStatusFilter, mietkaufTotals]);
+  }), [accounts, rows, dSearch, statusFilter, docStatusFilter, mietkaufTotals]);
 
   const flatRows = useMemo<Row[]>(() => {
     let res = rows;
@@ -853,7 +855,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       res = res.filter((r) => matchesPayStatus(r, statusFilter));
     }
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
-    res = res.filter((r) => matchesQuery(r, search));
+    res = dSearch.trim() ? res.filter((r) => matchesQuery(r, dSearch)) : res;
     const sorted = [...res].sort((a, b) => {
       if (viewMode === 'newest') {
         // Neueste zuerst nach Erfassungsdatum (created_at), Fallback Rechnungsdatum
@@ -871,7 +873,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [rows, search, statusFilter, docStatusFilter, listSort, viewMode]);
+  }, [rows, dSearch, statusFilter, docStatusFilter, listSort, viewMode]);
 
   // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst,
   // "Älteste OP" = nur offene Posten, Konten nach ältester offener Rechnung
