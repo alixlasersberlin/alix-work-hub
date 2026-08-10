@@ -504,8 +504,6 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         : Promise.resolve({ data: [], error: null } as any),
     ]);
 
-    ]);
-
     if (inv.error || rec.error) {
       if (showError) {
         setError(inv.error?.message || rec.error?.message || 'Fehler beim Laden');
