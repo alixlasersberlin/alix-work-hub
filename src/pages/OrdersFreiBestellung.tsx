@@ -753,13 +753,14 @@ export default function OrdersFreiBestellung() {
                           {isSuperAdmin && (
                             <Button
                               size="sm"
-                              variant="ghost"
-                              className="h-7 px-2 text-[11px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              variant="outline"
+                              className="h-7 px-2 text-[11px] !bg-transparent border-destructive/40 !text-destructive hover:!bg-destructive/10"
                               onClick={() => setUnassignOrder(o)}
                               title="Lager-Reservierung entfernen und Auftrag aus dieser Liste ausblenden"
                             >
                               <Trash2 className="w-3 h-3 mr-1" /> Zuordnung löschen
                             </Button>
+
                           )}
                         </div>
 
