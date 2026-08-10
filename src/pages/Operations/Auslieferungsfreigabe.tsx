@@ -40,6 +40,10 @@ interface Row extends DeliveryApproval {
   order_number?: string | null;
   order_status?: string | null;
   total_amount?: number | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  customer_phone?: string | null;
+  invoice_numbers?: string[];
 }
 
 const hoursBetween = (a?: string | null, b?: string | null) =>
