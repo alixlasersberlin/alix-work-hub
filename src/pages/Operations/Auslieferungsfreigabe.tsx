@@ -519,7 +519,7 @@ export default function Auslieferungsfreigabe() {
 
 
       <div className="flex flex-wrap items-center gap-2">
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Auftragsnummer suchen…" className="max-w-xs" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Auftrags-/Rechnungsnummer, Name, Kontakt…" className="max-w-sm" />
         {(['all', 'blocked', 'waiting', 'released'] as const).map((f) => (
           <Button key={f} size="sm" variant={filter === f ? 'default' : 'outline'} onClick={() => setFilter(f)}>
             {f === 'all' ? 'Alle' : OVERALL_UI[f].label}
@@ -659,7 +659,7 @@ export default function Auslieferungsfreigabe() {
             <Input
               value={reqQ}
               onChange={(e) => { setReqQ(e.target.value); void loadRequestCandidates(e.target.value); }}
-              placeholder="Auftragsnummer suchen…"
+              placeholder="Auftrags-/Rechnungsnummer, Name, E-Mail, Telefon…"
             />
             <div className="max-h-72 overflow-auto rounded-md border border-border divide-y divide-border">
               {reqRows.length === 0 ? (
@@ -675,7 +675,7 @@ export default function Auslieferungsfreigabe() {
                     })}
                   />
                   <span className="font-medium min-w-[120px]">{o.order_number ?? o.id.slice(0, 8)}</span>
-                  <span className="text-muted-foreground truncate">{o.customer_name ?? '—'}</span>
+                  <span className="text-muted-foreground truncate">{o.customers?.company_name || o.customers?.contact_name || '—'}</span>
                   <span className="ml-auto text-xs text-muted-foreground">{o.order_status ?? ''}</span>
                 </label>
               ))}
