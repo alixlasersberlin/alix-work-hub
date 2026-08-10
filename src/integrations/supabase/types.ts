@@ -33872,6 +33872,65 @@ export type Database = {
           },
         ]
       }
+      plm_hw_docs: {
+        Row: {
+          approval_status: string
+          board: string | null
+          created_at: string
+          device_id: string | null
+          doc_kind: string
+          file_path: string | null
+          id: string
+          notes: string | null
+          released_at: string | null
+          released_by: string | null
+          revision: string | null
+          title: string
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          approval_status?: string
+          board?: string | null
+          created_at?: string
+          device_id?: string | null
+          doc_kind?: string
+          file_path?: string | null
+          id?: string
+          notes?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          revision?: string | null
+          title: string
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          approval_status?: string
+          board?: string | null
+          created_at?: string
+          device_id?: string | null
+          doc_kind?: string
+          file_path?: string | null
+          id?: string
+          notes?: string | null
+          released_at?: string | null
+          released_by?: string | null
+          revision?: string | null
+          title?: string
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_hw_docs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plm_inspection_items: {
         Row: {
           characteristic: string
@@ -35044,6 +35103,650 @@ export type Database = {
           zip?: string | null
         }
         Relationships: []
+      }
+      plm_sw_bugs: {
+        Row: {
+          bug_code: string | null
+          capa: string | null
+          correction: string | null
+          created_at: string
+          description: string | null
+          device_id: string | null
+          id: string
+          released_version: string | null
+          reported_at: string | null
+          reporter: string | null
+          requirement_id: string | null
+          risk_id: string | null
+          root_cause: string | null
+          severity: string
+          status: string
+          sw_version: string | null
+          title: string
+          unit_id: string | null
+          updated_at: string
+          verification: string | null
+        }
+        Insert: {
+          bug_code?: string | null
+          capa?: string | null
+          correction?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          released_version?: string | null
+          reported_at?: string | null
+          reporter?: string | null
+          requirement_id?: string | null
+          risk_id?: string | null
+          root_cause?: string | null
+          severity?: string
+          status?: string
+          sw_version?: string | null
+          title: string
+          unit_id?: string | null
+          updated_at?: string
+          verification?: string | null
+        }
+        Update: {
+          bug_code?: string | null
+          capa?: string | null
+          correction?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          released_version?: string | null
+          reported_at?: string | null
+          reporter?: string | null
+          requirement_id?: string | null
+          risk_id?: string | null
+          root_cause?: string | null
+          severity?: string
+          status?: string
+          sw_version?: string | null
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+          verification?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_bugs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_bugs_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_bugs_risk_id_fkey"
+            columns: ["risk_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_risks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_bugs_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_releases: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          changed_requirements: string | null
+          changed_units: string | null
+          created_at: string
+          developer: string | null
+          device_compatibility: string | null
+          device_id: string | null
+          firmware_hash: string | null
+          fixed_bugs: string | null
+          git_commit: string | null
+          id: string
+          new_risks: string | null
+          notes: string | null
+          release_date: string | null
+          status: string
+          tests_passed: number | null
+          tests_required: number | null
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          changed_requirements?: string | null
+          changed_units?: string | null
+          created_at?: string
+          developer?: string | null
+          device_compatibility?: string | null
+          device_id?: string | null
+          firmware_hash?: string | null
+          fixed_bugs?: string | null
+          git_commit?: string | null
+          id?: string
+          new_risks?: string | null
+          notes?: string | null
+          release_date?: string | null
+          status?: string
+          tests_passed?: number | null
+          tests_required?: number | null
+          updated_at?: string
+          version: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          changed_requirements?: string | null
+          changed_units?: string | null
+          created_at?: string
+          developer?: string | null
+          device_compatibility?: string | null
+          device_id?: string | null
+          firmware_hash?: string | null
+          fixed_bugs?: string | null
+          git_commit?: string | null
+          id?: string
+          new_risks?: string | null
+          notes?: string | null
+          release_date?: string | null
+          status?: string
+          tests_passed?: number | null
+          tests_required?: number | null
+          updated_at?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_releases_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_requirements: {
+        Row: {
+          acceptance_criteria: string | null
+          created_at: string
+          description: string | null
+          device_id: string | null
+          id: string
+          priority: string | null
+          req_code: string | null
+          responsible: string | null
+          safety_related: boolean
+          source: string | null
+          status: string
+          title: string
+          unit_id: string | null
+          updated_at: string
+          verification_method: string | null
+          version: string | null
+        }
+        Insert: {
+          acceptance_criteria?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          priority?: string | null
+          req_code?: string | null
+          responsible?: string | null
+          safety_related?: boolean
+          source?: string | null
+          status?: string
+          title: string
+          unit_id?: string | null
+          updated_at?: string
+          verification_method?: string | null
+          version?: string | null
+        }
+        Update: {
+          acceptance_criteria?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          priority?: string | null
+          req_code?: string | null
+          responsible?: string | null
+          safety_related?: boolean
+          source?: string | null
+          status?: string
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+          verification_method?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_requirements_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_requirements_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_risks: {
+        Row: {
+          acceptable: boolean
+          created_at: string
+          device_id: string | null
+          hazard: string
+          hazardous_situation: string | null
+          id: string
+          plm_risk_id: string | null
+          potential_harm: string | null
+          probability: number
+          requirement_id: string | null
+          residual_probability: number | null
+          residual_severity: number | null
+          responsible: string | null
+          review_date: string | null
+          risk_code: string | null
+          risk_control: string | null
+          sequence_of_events: string | null
+          severity: number
+          status: string
+          unit_id: string | null
+          updated_at: string
+          verification: string | null
+        }
+        Insert: {
+          acceptable?: boolean
+          created_at?: string
+          device_id?: string | null
+          hazard: string
+          hazardous_situation?: string | null
+          id?: string
+          plm_risk_id?: string | null
+          potential_harm?: string | null
+          probability?: number
+          requirement_id?: string | null
+          residual_probability?: number | null
+          residual_severity?: number | null
+          responsible?: string | null
+          review_date?: string | null
+          risk_code?: string | null
+          risk_control?: string | null
+          sequence_of_events?: string | null
+          severity?: number
+          status?: string
+          unit_id?: string | null
+          updated_at?: string
+          verification?: string | null
+        }
+        Update: {
+          acceptable?: boolean
+          created_at?: string
+          device_id?: string | null
+          hazard?: string
+          hazardous_situation?: string | null
+          id?: string
+          plm_risk_id?: string | null
+          potential_harm?: string | null
+          probability?: number
+          requirement_id?: string | null
+          residual_probability?: number | null
+          residual_severity?: number | null
+          responsible?: string | null
+          review_date?: string | null
+          risk_code?: string | null
+          risk_control?: string | null
+          sequence_of_events?: string | null
+          severity?: number
+          status?: string
+          unit_id?: string | null
+          updated_at?: string
+          verification?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_risks_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_risks_plm_risk_id_fkey"
+            columns: ["plm_risk_id"]
+            isOneToOne: false
+            referencedRelation: "plm_risks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_risks_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_risks_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_surveys: {
+        Row: {
+          capa_required: boolean
+          created_at: string
+          device_id: string | null
+          evaluation: string | null
+          id: string
+          original_answers: string | null
+          original_file_path: string | null
+          respondent_id: string | null
+          risk_signal: boolean
+          serial_number: string | null
+          software_issue: boolean
+          survey_date: string | null
+          sw_version: string | null
+          updated_at: string
+          usability_issue: boolean
+        }
+        Insert: {
+          capa_required?: boolean
+          created_at?: string
+          device_id?: string | null
+          evaluation?: string | null
+          id?: string
+          original_answers?: string | null
+          original_file_path?: string | null
+          respondent_id?: string | null
+          risk_signal?: boolean
+          serial_number?: string | null
+          software_issue?: boolean
+          survey_date?: string | null
+          sw_version?: string | null
+          updated_at?: string
+          usability_issue?: boolean
+        }
+        Update: {
+          capa_required?: boolean
+          created_at?: string
+          device_id?: string | null
+          evaluation?: string | null
+          id?: string
+          original_answers?: string | null
+          original_file_path?: string | null
+          respondent_id?: string | null
+          risk_signal?: boolean
+          serial_number?: string | null
+          software_issue?: boolean
+          survey_date?: string | null
+          sw_version?: string | null
+          updated_at?: string
+          usability_issue?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_surveys_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_team: {
+        Row: {
+          company: string | null
+          created_at: string
+          device_id: string | null
+          email: string | null
+          id: string
+          ide: string | null
+          is_lead: boolean
+          name: string
+          notes: string | null
+          position: string | null
+          team: string
+          updated_at: string
+          version_control: string | null
+          versioning_scheme: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          device_id?: string | null
+          email?: string | null
+          id?: string
+          ide?: string | null
+          is_lead?: boolean
+          name: string
+          notes?: string | null
+          position?: string | null
+          team?: string
+          updated_at?: string
+          version_control?: string | null
+          versioning_scheme?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          device_id?: string | null
+          email?: string | null
+          id?: string
+          ide?: string | null
+          is_lead?: boolean
+          name?: string
+          notes?: string | null
+          position?: string | null
+          team?: string
+          updated_at?: string
+          version_control?: string | null
+          versioning_scheme?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_team_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_tests: {
+        Row: {
+          actual_result: string | null
+          created_at: string
+          device_id: string | null
+          evidence_path: string | null
+          executed_confirmed: boolean
+          expected_result: string | null
+          hw_version: string | null
+          id: string
+          kind: string
+          notes: string | null
+          preconditions: string | null
+          requirement_id: string | null
+          result: string
+          risk_id: string | null
+          steps: string | null
+          sw_version: string | null
+          test_code: string | null
+          test_date: string | null
+          test_group: string | null
+          tester: string | null
+          title: string
+          unit_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_result?: string | null
+          created_at?: string
+          device_id?: string | null
+          evidence_path?: string | null
+          executed_confirmed?: boolean
+          expected_result?: string | null
+          hw_version?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          preconditions?: string | null
+          requirement_id?: string | null
+          result?: string
+          risk_id?: string | null
+          steps?: string | null
+          sw_version?: string | null
+          test_code?: string | null
+          test_date?: string | null
+          test_group?: string | null
+          tester?: string | null
+          title: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_result?: string | null
+          created_at?: string
+          device_id?: string | null
+          evidence_path?: string | null
+          executed_confirmed?: boolean
+          expected_result?: string | null
+          hw_version?: string | null
+          id?: string
+          kind?: string
+          notes?: string | null
+          preconditions?: string | null
+          requirement_id?: string | null
+          result?: string
+          risk_id?: string | null
+          steps?: string | null
+          sw_version?: string | null
+          test_code?: string | null
+          test_date?: string | null
+          test_group?: string | null
+          tester?: string | null
+          title?: string
+          unit_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_tests_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_tests_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_tests_risk_id_fkey"
+            columns: ["risk_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_risks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_tests_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_units: {
+        Row: {
+          created_at: string
+          dependencies: string | null
+          description: string | null
+          device_id: string | null
+          id: string
+          inputs: string | null
+          name: string
+          notes: string | null
+          outputs: string | null
+          owner: string | null
+          safety_class: string | null
+          source_location: string | null
+          unit_code: string | null
+          updated_at: string
+          verification_status: string
+          version: string | null
+        }
+        Insert: {
+          created_at?: string
+          dependencies?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          inputs?: string | null
+          name: string
+          notes?: string | null
+          outputs?: string | null
+          owner?: string | null
+          safety_class?: string | null
+          source_location?: string | null
+          unit_code?: string | null
+          updated_at?: string
+          verification_status?: string
+          version?: string | null
+        }
+        Update: {
+          created_at?: string
+          dependencies?: string | null
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          inputs?: string | null
+          name?: string
+          notes?: string | null
+          outputs?: string | null
+          owner?: string | null
+          safety_class?: string | null
+          source_location?: string | null
+          unit_code?: string | null
+          updated_at?: string
+          verification_status?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_units_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plm_work_instructions: {
         Row: {
