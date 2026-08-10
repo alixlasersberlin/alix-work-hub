@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Layers, Plus, Trash2, Loader2, Crosshair } from 'lucide-react';
 import { DRAWING_VIEWS, DRAWING_STATUS, plmLabel } from '@/lib/plm/config';
+import { PlmFileInput } from '@/components/plm/PlmFileInput';
+import { resolvePlmUrl } from '@/lib/plm/media';
 import { useAuth } from '@/hooks/useAuth';
 
 const WRITE_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'];
@@ -30,6 +32,14 @@ export default function PlmExplosionszeichnungen() {
   const [form, setForm] = useState<any>({});
   const [pending, setPending] = useState<{ x: number; y: number } | null>(null);
   const [posForm, setPosForm] = useState<any>({ part_id: '', label: '', quantity: 1 });
+  const [selectedUrl, setSelectedUrl] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+    resolvePlmUrl(selected?.image_url).then(u => { if (alive) setSelectedUrl(u); });
+    return () => { alive = false; };
+  }, [selected?.image_url]);
+
 
   async function loadAll() {
     setLoading(true);
@@ -151,8 +161,9 @@ export default function PlmExplosionszeichnungen() {
                     className="relative w-full rounded-md border bg-muted/20 overflow-hidden cursor-crosshair"
                     onClick={handleImageClick}
                   >
-                    {selected.image_url ? (
-                      <img src={selected.image_url} alt={selected.title} className="w-full object-contain max-h-[620px]" />
+                    {selectedUrl ? (
+                      <img src={selectedUrl} alt={selected.title} className="w-full object-contain max-h-[620px]" />
+
                     ) : (
                       <div className="h-64 flex items-center justify-center text-sm text-muted-foreground">Kein Bild hinterlegt</div>
                     )}
@@ -276,8 +287,9 @@ export default function PlmExplosionszeichnungen() {
               </select></div>
             <div className="space-y-1"><Label className="text-xs">Version</Label>
               <Input value={form.version ?? ''} onChange={e => setForm((s: any) => ({ ...s, version: e.target.value }))} /></div>
-            <div className="md:col-span-2 space-y-1"><Label className="text-xs">Bild-URL (Explosionszeichnung)</Label>
-              <Input value={form.image_url ?? ''} onChange={e => setForm((s: any) => ({ ...s, image_url: e.target.value }))} /></div>
+            <div className="md:col-span-2 space-y-1"><Label className="text-xs">Explosionszeichnung (Upload)</Label>
+              <PlmFileInput value={form.image_url ?? ''} folder="plm_drawings" onChange={p => setForm((s: any) => ({ ...s, image_url: p ?? '' }))} /></div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDlgOpen(false)}>Abbrechen</Button>

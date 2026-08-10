@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Plus, Search, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { PlmField, plmLabel, statusTone } from '@/lib/plm/config';
+import { PlmFileInput, PlmThumb } from '@/components/plm/PlmFileInput';
 import { useAuth } from '@/hooks/useAuth';
 
 const WRITE_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'];
@@ -160,12 +161,15 @@ export function PlmCrudPage({
   function cellValue(f: PlmField, row: any) {
     const v = row[f.key];
     if (f.type === 'ref') return refText(f, v);
+    if (f.type === 'image') return <PlmThumb value={v} />;
+    if (f.type === 'file') return v ? 'Datei' : '—';
     if (f.type === 'boolean') return v ? 'Ja' : 'Nein';
     if (f.type === 'tags') return Array.isArray(v) ? v.join(', ') : '—';
     if (f.type === 'select') return statusBadge(v);
     if (v === null || v === undefined || v === '') return '—';
     return String(v);
   }
+
 
   return (
     <div className="container max-w-[1600px] py-6 space-y-6">
@@ -278,7 +282,15 @@ export function PlmCrudPage({
                           <input type="checkbox" checked={!!form[f.key]} onChange={e => setForm(s => ({ ...s, [f.key]: e.target.checked }))} />
                           <span className="text-muted-foreground">{f.label}</span>
                         </label>
+                      ) : f.type === 'image' || f.type === 'file' ? (
+                        <PlmFileInput
+                          value={form[f.key] ?? ''}
+                          image={f.type === 'image'}
+                          folder={table}
+                          onChange={p => setForm(s => ({ ...s, [f.key]: p ?? '' }))}
+                        />
                       ) : (
+
                         <Input
                           type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
                           value={form[f.key] ?? ''}

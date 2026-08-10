@@ -12,7 +12,7 @@ const fields: PlmField[] = [
   { key: 'revision', label: 'Revision', group: 'Versionen' },
   { key: 'release_status', label: 'Freigabestatus', type: 'select', options: RELEASE_STATUS, group: 'Freigabe', list: true },
   { key: 'valid_until', label: 'Gültig bis', type: 'date', group: 'Freigabe', list: true },
-  { key: 'file_url', label: 'Datei (URL)', group: 'Datei' },
+  { key: 'file_url', label: 'Datei (Upload)', type: 'file', group: 'Datei' },
   { key: 'file_path', label: 'Speicherpfad', group: 'Datei' },
   { key: 'mime_type', label: 'MIME-Typ', group: 'Datei' },
   { key: 'notes', label: 'Notizen', type: 'textarea', group: 'Sonstiges' },

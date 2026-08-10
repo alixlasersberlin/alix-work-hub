@@ -10,7 +10,7 @@ const fields: PlmField[] = [
   { key: 'version', label: 'Version', group: 'Freigabe', list: true },
   { key: 'revision', label: 'Revision', group: 'Freigabe' },
   { key: 'status', label: 'Status', type: 'select', options: RELEASE_STATUS, group: 'Freigabe', list: true },
-  { key: 'file_url', label: 'Datei (URL)', group: 'Inhalt' },
+  { key: 'file_url', label: 'Datei (Upload)', type: 'file', group: 'Inhalt' },
   { key: 'content', label: 'Arbeitsschritte', type: 'textarea', group: 'Inhalt' },
 ];
 

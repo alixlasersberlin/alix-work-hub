@@ -41,12 +41,12 @@ export const partFields: PlmField[] = [
   { key: 'optical_power', label: 'Optische Leistung', group: 'Technik' },
   { key: 'tolerances', label: 'Toleranzen', group: 'Technik' },
 
-  { key: 'photo_url', label: 'Foto (URL)', group: 'Dateien' },
-  { key: 'cutout_image_url', label: 'Freisteller (URL)', group: 'Dateien' },
-  { key: 'datasheet_url', label: 'Datenblatt (URL)', group: 'Dateien' },
-  { key: 'cad_url', label: 'CAD (URL)', group: 'Dateien' },
-  { key: 'step_url', label: 'STEP (URL)', group: 'Dateien' },
-  { key: 'drawing_pdf_url', label: 'Zeichnung PDF (URL)', group: 'Dateien' },
+  { key: 'photo_url', label: 'Foto (Upload)', type: 'image', group: 'Dateien' },
+  { key: 'cutout_image_url', label: 'Freisteller (Upload)', type: 'image', group: 'Dateien' },
+  { key: 'datasheet_url', label: 'Datenblatt (Upload)', type: 'file', group: 'Dateien' },
+  { key: 'cad_url', label: 'CAD (Upload)', type: 'file', group: 'Dateien' },
+  { key: 'step_url', label: 'STEP (Upload)', type: 'file', group: 'Dateien' },
+  { key: 'drawing_pdf_url', label: 'Zeichnung PDF (Upload)', type: 'file', group: 'Dateien' },
 
   { key: 'version', label: 'Version', group: 'Freigabe & QM' },
   { key: 'revision', label: 'Revision', group: 'Freigabe & QM' },

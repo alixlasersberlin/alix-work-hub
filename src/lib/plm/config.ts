@@ -1,6 +1,6 @@
 // ALIXWORK — Produktion & Beschaffung (PLM) — Feldkonfiguration
 export type PlmFieldType =
-  | 'text' | 'textarea' | 'number' | 'date' | 'select' | 'boolean' | 'ref' | 'tags';
+  | 'text' | 'textarea' | 'number' | 'date' | 'select' | 'boolean' | 'ref' | 'tags' | 'image' | 'file';
 
 export interface PlmField {
   key: string;
