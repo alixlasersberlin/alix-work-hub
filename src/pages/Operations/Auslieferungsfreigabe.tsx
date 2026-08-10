@@ -607,6 +607,31 @@ export default function Auslieferungsfreigabe() {
         <span className="text-xs text-muted-foreground ml-auto">{filtered.length} Einträge</span>
       </div>
 
+      {/* Reiter nach Auftragsstatus */}
+      <div className="flex flex-wrap items-center gap-2 border-b pb-2">
+        {(['all', 'Anwalt', 'invoiced', 'geliefert'] as const).map((s) => {
+          const count = s === 'all'
+            ? rows.length
+            : rows.filter((r) => (r.order_status ?? '').toLowerCase() === s.toLowerCase()).length;
+          return (
+            <Button key={s} size="sm" variant={statusTab === s ? 'default' : 'ghost'} onClick={() => setStatusTab(s)}>
+              {s === 'all' ? 'Alle Status' : s} <span className="ml-1 text-xs opacity-70">({count})</span>
+            </Button>
+          );
+        })}
+        {statusTab !== 'all' && (
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={statusBusy === statusTab}
+            onClick={() => addOrdersByStatus(statusTab)}
+          >
+            <PlusCircle className="h-4 w-4 mr-1" />
+            {statusBusy === statusTab ? 'Wird gefüllt…' : `„${statusTab}" befüllen`}
+          </Button>
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <Checkbox
           checked={filtered.length > 0 && filtered.every((r) => selected.has(r.id))}
