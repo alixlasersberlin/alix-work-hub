@@ -759,56 +759,6 @@ export default function AppLayout() {
               </button>
             );
           })()}
-          {/* Detailsuche – globale Suche */}
-          {(() => {
-            const isCollapsedView = collapsed && !mobileOpen;
-            const dActive = isActive('/detailsuche');
-            return (
-              <Link
-                to="/detailsuche"
-                title={isCollapsedView ? 'Detailsuche' : undefined}
-                className={cn(
-                  "mb-2 flex items-center gap-2.5 rounded-lg border transition-all duration-150",
-                  isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-2.5" : "px-3 py-2.5",
-                  dActive
-                    ? "bg-primary/10 text-primary border-primary/40"
-                    : "bg-muted/40 text-muted-foreground border-border hover:text-primary hover:border-primary/40 hover:bg-primary/5"
-                )}
-              >
-                <SearchCheck className={cn("w-4 h-4 flex-shrink-0", dActive && "text-primary")} />
-                {!isCollapsedView && (
-                  <span className="text-[13px] font-medium truncate flex-1 text-left">
-                    Detailsuche…
-                  </span>
-                )}
-              </Link>
-            );
-          })()}
-          {/* Startseite – persönliche Willkommens-/Ticket-Übersicht */}
-          {(() => {
-            const isCollapsedView = collapsed && !mobileOpen;
-            const sActive = isActive('/start');
-            return (
-              <Link
-                to="/start"
-                title={isCollapsedView ? 'Startseite' : undefined}
-                className={cn(
-                  "mb-2 flex items-center gap-2.5 rounded-lg border transition-all duration-150",
-                  isCollapsedView ? "md:px-0 md:py-2.5 md:justify-center px-3.5 py-2.5" : "px-3 py-2.5",
-                  sActive
-                    ? "bg-primary/10 text-primary border-primary/40"
-                    : "bg-muted/40 text-muted-foreground border-border hover:text-primary hover:border-primary/40 hover:bg-primary/5"
-                )}
-              >
-                <Home className={cn("w-4 h-4 flex-shrink-0", sActive && "text-primary")} />
-                {!isCollapsedView && (
-                  <span className="text-[13px] font-medium truncate flex-1 text-left">
-                    Startseite
-                  </span>
-                )}
-              </Link>
-            );
-          })()}
           {/* Mein Arbeitsplatz – persönliche Favoriten */}
           {(() => {
             const isCollapsedView = collapsed && !mobileOpen;
