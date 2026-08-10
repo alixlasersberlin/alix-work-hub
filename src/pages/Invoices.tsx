@@ -469,14 +469,25 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const refetchRows = async (cacheKey: string, showError: boolean) => {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
     const cols = 'id, created_at, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
-    // PostgREST liefert max. 1000 Zeilen je Request -> seitenweise laden
-    const fetchAllPages = async (build: () => any, page = 1000, max = 20000) => {
+    // PostgREST liefert max. 1000 Zeilen je Request -> Seiten parallel laden
+    // (vorher strikt sequenziell: bei ~10k Zeilen 10 Roundtrips hintereinander).
+    const fetchAllPages = async (build: () => any, page = 1000, max = 20000, concurrency = 6) => {
       const out: any[] = [];
-      for (let from = 0; from < max; from += page) {
-        const { data, error } = await build().range(from, from + page - 1);
-        if (error) return { data: out, error };
-        out.push(...(data ?? []));
-        if (!data || data.length < page) break;
+      let from = 0;
+      let done = false;
+      while (!done && from < max) {
+        const batch: Promise<any>[] = [];
+        for (let i = 0; i < concurrency && from + i * page < max; i++) {
+          const start = from + i * page;
+          batch.push(build().range(start, start + page - 1));
+        }
+        const res = await Promise.all(batch);
+        for (const { data, error } of res) {
+          if (error) return { data: out, error };
+          out.push(...(data ?? []));
+          if (!data || data.length < page) done = true;
+        }
+        from += concurrency * page;
       }
       return { data: out, error: null };
     };
