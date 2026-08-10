@@ -45,6 +45,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [orderResults, setOrderResults] = useState<any[]>([]);
   const [searchingOrder, setSearchingOrder] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [removeFromBestellwesen, setRemoveFromBestellwesen] = useState(false);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [reservedByItemId, setReservedByItemId] = useState<Record<string, { serial: string; model: string; department: string }>>({});
