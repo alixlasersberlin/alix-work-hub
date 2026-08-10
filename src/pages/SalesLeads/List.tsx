@@ -98,7 +98,8 @@ export default function SalesLeadsList() {
       .select('id, created_at, external_id, source, form_name, lead_number, device_category, additional_services, customer_goal, implementation_period, first_name, last_name, company, email, phone, requested_products, lead_status, assigned_user, lead_score, score_category, consultation_type, delivery_preference, service_rating')
       .order('created_at', { ascending: false })
       .limit(500);
-    if (tenantId) q = q.eq('tenant_id', tenantId) as any;
+    // Leads ohne Mandanten-Zuordnung (Altbestand/Importe) immer mit anzeigen
+    if (tenantId) q = q.or(`tenant_id.eq.${tenantId},tenant_id.is.null`) as any;
     const { data } = await q;
     setRows((data ?? []) as Lead[]);
   }
