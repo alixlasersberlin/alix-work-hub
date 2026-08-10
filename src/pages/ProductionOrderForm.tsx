@@ -20,6 +20,9 @@ import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalo
 import { useCreditOrderBlock } from '@/hooks/useCreditOrderBlock';
 import { ShieldCheck, ShieldAlert } from 'lucide-react';
 
+// Marker, mit dem ein Auftrag aus „Bestellung möglich" ausgeblendet wird
+const FREI_HIDDEN_NOTE = 'frei_bestellung_hidden';
+
 type Mode = 'order' | 'reclamation';
 
 export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } = {}) {
