@@ -720,6 +720,19 @@ export default function Auslieferungsfreigabe() {
                 <span className="ml-auto text-xs text-muted-foreground">
                   {new Date(r.created_at).toLocaleDateString('de-DE')}
                 </span>
+                {isSuperAdmin && r.overall_status !== 'released' && r.overall_status !== 'delivered' && r.overall_status !== 'completed' && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="h-8"
+                    disabled={opsBusy === r.id}
+                    title="OPS FREI – Komplettfreigabe durch Super Admin"
+                    onClick={() => opsFrei(r)}
+                  >
+                    <ShieldCheck className="h-4 w-4 mr-1" />
+                    {opsBusy === r.id ? 'Freigabe…' : 'OPS FREI'}
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
@@ -734,6 +747,7 @@ export default function Auslieferungsfreigabe() {
                 >
                   <FileDown className="h-4 w-4" />
                 </Button>
+
               </div>
             );
           })}
