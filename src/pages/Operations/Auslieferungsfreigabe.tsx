@@ -568,7 +568,14 @@ export default function Auslieferungsfreigabe() {
                 <Link to={`/orders/${r.order_id}?tab=freigaben`} className="font-medium min-w-[140px] hover:underline">
                   {r.order_number ?? r.order_id.slice(0, 8)}
                 </Link>
+                <span className="min-w-[180px] text-sm font-semibold truncate" title={r.customer_name ?? ''}>
+                  {r.customer_name ?? '—'}
+                </span>
+                {r.order_status && (
+                  <Badge variant="secondary" className="text-xs">{r.order_status}</Badge>
+                )}
                 <Badge variant="outline" className={ov.text}>{ov.label}</Badge>
+
                 <div className="flex gap-2">
                   {STAGES.map((s) => {
                     const st = (r as any)[`${s.stage}_status`] as keyof typeof STATUS_UI;
