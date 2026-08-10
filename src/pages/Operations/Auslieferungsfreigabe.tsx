@@ -609,7 +609,7 @@ export default function Auslieferungsfreigabe() {
                   })}
                 />
                 <span className={`h-3 w-3 rounded-full ${ov.dot}`} />
-                <Link to={`/orders/${r.order_id}?tab=freigaben`} className="font-medium min-w-[140px] hover:underline">
+                <Link to={`/auftraege/${r.order_id}`} className="font-medium min-w-[140px] hover:underline">
                   {r.order_number ?? r.order_id.slice(0, 8)}
                 </Link>
                 <span className="min-w-[180px] text-sm font-semibold truncate" title={r.customer_name ?? ''}>
