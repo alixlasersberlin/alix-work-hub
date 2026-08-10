@@ -741,26 +741,35 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     };
   }, []);
 
-  // Mietkauf-Geräte-Summen je Kundenkonto (unabhängig von der aktuellen Ansicht laden)
-  const [mietkaufTotals, setMietkaufTotals] = useState<Record<string, number>>({});
+  // Mietkauf-Geräte-Summen je Kundenkonto – nur in der Kontenansicht nötig,
+  // Ergebnis wird modulweit zwischengespeichert (spart 2 Großabfragen pro Wechsel).
+  const [mietkaufTotals, setMietkaufTotals] = useState<Record<string, number>>(
+    () => MK_CACHE.get(tenantId ?? 'all')?.map ?? {},
+  );
   useEffect(() => {
+    if (!isAccountView) return;
+    const key = tenantId ?? 'all';
+    const cached = MK_CACHE.get(key);
+    if (cached && Date.now() - cached.ts < MK_CACHE_TTL) { setMietkaufTotals(cached.map); return; }
     let cancelled = false;
     (async () => {
       const sel = 'customer_id, customer_name, total';
+      const withTenant = (q: any) => (tenantId ? q.eq('tenant_id', tenantId) : q);
       const [a, b] = await Promise.all([
-        (supabase.from('zoho_invoices') as any).select(sel).eq('is_mietkauf', true).limit(5000),
-        (supabase.from('zoho_recurring_invoices') as any).select(sel).eq('is_mietkauf', true).limit(5000),
+        withTenant((supabase.from('zoho_invoices') as any).select(sel).eq('is_mietkauf', true)).limit(5000),
+        withTenant((supabase.from('zoho_recurring_invoices') as any).select(sel).eq('is_mietkauf', true)).limit(5000),
       ]);
       if (cancelled) return;
       const map: Record<string, number> = {};
       for (const r of [...(a.data ?? []), ...(b.data ?? [])]) {
-        const key = r.customer_id || `name:${String(r.customer_name ?? 'Unbekannt').toLowerCase()}`;
-        map[key] = (map[key] ?? 0) + Number(r.total ?? 0);
+        const k = r.customer_id || `name:${String(r.customer_name ?? 'Unbekannt').toLowerCase()}`;
+        map[k] = (map[k] ?? 0) + Number(r.total ?? 0);
       }
+      MK_CACHE.set(key, { ts: Date.now(), map });
       setMietkaufTotals(map);
     })();
     return () => { cancelled = true; };
-  }, [region]);
+  }, [tenantId, isAccountView]);
 
 
 
