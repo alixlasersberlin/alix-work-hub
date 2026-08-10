@@ -193,3 +193,156 @@ export const swSurveyFields: PlmField[] = [
   { key: 'software_issue', label: 'Software Issue', type: 'boolean', list: true, group: 'Auswertung' },
   { key: 'usability_issue', label: 'Usability Issue', type: 'boolean', list: true, group: 'Auswertung' },
 ];
+
+// ===== Ergänzungen IEC 62304: SOUP, Pläne, Anomalien, Problem Reports, Risiko-Maßnahmen, Klassifizierung, E-Signatur =====
+export const SOUP_STATUS = ['in_pruefung', 'freigegeben', 'gesperrt', 'ersetzt', 'archiviert'];
+export const PLAN_KINDS = ['development_plan', 'configuration_management_plan', 'maintenance_plan', 'problem_resolution_plan', 'verification_plan', 'risk_management_plan'];
+export const PLAN_STATUS = ['entwurf', 'in_pruefung', 'freigegeben', 'ueberarbeitung', 'archiviert'];
+export const ANOMALY_STATUS = ['offen', 'akzeptiert', 'geplant_behoben', 'behoben', 'geschlossen'];
+export const PROBLEM_SOURCES = ['post_market', 'kunde', 'service', 'anwenderbefragung', 'intern', 'audit', 'vigilanz'];
+export const PROBLEM_STATUS = ['offen', 'in_untersuchung', 'korrektur_umgesetzt', 'wirksamkeit_geprueft', 'geschlossen', 'abgelehnt'];
+export const MEASURE_TYPES = ['software_control', 'hardware_control', 'information_for_safety', 'design_change', 'prozess'];
+export const MEASURE_STATUS = ['offen', 'in_umsetzung', 'umgesetzt', 'wirksam', 'nicht_wirksam'];
+export const SIGN_MEANINGS = ['freigabe', 'pruefung', 'genehmigung', 'kenntnisnahme', 'testabnahme'];
+
+const dev = deviceField;
+
+export const swSoupFields: PlmField[] = [
+  { key: 'soup_code', label: 'SOUP-ID', list: true, mono: true },
+  dev,
+  { key: 'name', label: 'Bibliothek / Komponente', list: true, required: true },
+  { key: 'vendor', label: 'Hersteller / Quelle', list: true },
+  { key: 'version', label: 'Version', list: true, mono: true },
+  { key: 'license', label: 'Lizenz', list: true },
+  { key: 'source_url', label: 'Bezugsquelle (URL)' },
+  { key: 'purpose', label: 'Zweck / Verwendung', type: 'textarea', group: 'Anforderungen' },
+  { key: 'functional_requirements', label: 'Funktionale Anforderungen (62304 §5.3.3)', type: 'textarea', group: 'Anforderungen' },
+  { key: 'hardware_requirements', label: 'Hardware-/Systemanforderungen', type: 'textarea', group: 'Anforderungen' },
+  { key: 'safety_class', label: 'Safety Class', type: 'select', options: SAFETY_CLASSES, list: true, group: 'Bewertung' },
+  { key: 'known_anomalies', label: 'Bekannte Anomalien (Anomalienliste)', type: 'textarea', group: 'Bewertung' },
+  { key: 'anomaly_evaluation', label: 'Bewertung der Anomalien', type: 'textarea', group: 'Bewertung' },
+  { key: 'risk_assessment', label: 'Risikobewertung', type: 'textarea', group: 'Bewertung' },
+  { key: 'verification', label: 'Verifikation der Eignung', type: 'textarea', group: 'Bewertung' },
+  { key: 'update_strategy', label: 'Update-/Monitoring-Strategie', type: 'textarea', group: 'Steuerung' },
+  { key: 'eol_date', label: 'End of Life', type: 'date', group: 'Steuerung' },
+  { key: 'responsible', label: 'Verantwortlich', group: 'Steuerung' },
+  { key: 'status', label: 'Status', type: 'select', options: SOUP_STATUS, list: true, group: 'Steuerung' },
+  { key: 'notes', label: 'Notizen', type: 'textarea', group: 'Steuerung' },
+];
+
+export const swPlanFields: PlmField[] = [
+  { key: 'plan_code', label: 'Plan-ID', list: true, mono: true },
+  dev,
+  { key: 'title', label: 'Titel', list: true, required: true },
+  { key: 'plan_kind', label: 'Planart', type: 'select', options: PLAN_KINDS, list: true },
+  { key: 'version', label: 'Version', list: true, mono: true },
+  { key: 'scope', label: 'Geltungsbereich', type: 'textarea', group: 'Inhalt' },
+  { key: 'lifecycle_model', label: 'Lebenszyklusmodell', type: 'textarea', group: 'Inhalt' },
+  { key: 'deliverables', label: 'Deliverables / Dokumente', type: 'textarea', group: 'Inhalt' },
+  { key: 'activities', label: 'Aktivitäten & Meilensteine', type: 'textarea', group: 'Inhalt' },
+  { key: 'roles_responsibilities', label: 'Rollen & Verantwortlichkeiten', type: 'textarea', group: 'Inhalt' },
+  { key: 'tools_environment', label: 'Werkzeuge & Umgebung', type: 'textarea', group: 'Inhalt' },
+  { key: 'configuration_items', label: 'Konfigurationseinheiten (SCMP)', type: 'textarea', group: 'Konfigurationsmanagement' },
+  { key: 'change_control', label: 'Änderungslenkung', type: 'textarea', group: 'Konfigurationsmanagement' },
+  { key: 'problem_resolution', label: 'Problem-Resolution-Prozess', type: 'textarea', group: 'Konfigurationsmanagement' },
+  { key: 'maintenance_strategy', label: 'Wartungsstrategie (62304 §6)', type: 'textarea', group: 'Konfigurationsmanagement' },
+  { key: 'file_path', label: 'Dokument', type: 'file', group: 'Freigabe' },
+  { key: 'status', label: 'Status', type: 'select', options: PLAN_STATUS, list: true, group: 'Freigabe' },
+  { key: 'approved_by', label: 'Freigegeben von', group: 'Freigabe' },
+  { key: 'approved_at', label: 'Freigegeben am', type: 'date', group: 'Freigabe' },
+  { key: 'notes', label: 'Notizen', type: 'textarea', group: 'Freigabe' },
+];
+
+export const swAnomalyFields: PlmField[] = [
+  { key: 'anomaly_code', label: 'ANO-ID', list: true, mono: true },
+  dev,
+  { key: 'release_id', label: 'Release', type: 'ref', refTable: 'plm_sw_releases', refLabel: 'version', refExtra: 'status', list: true },
+  { key: 'title', label: 'Anomalie', list: true, required: true },
+  { key: 'description', label: 'Beschreibung', type: 'textarea' },
+  { key: 'bug_id', label: 'Zugehöriger Bug', type: 'ref', refTable: 'plm_sw_bugs', refLabel: 'title', refExtra: 'bug_code', group: 'Bewertung' },
+  { key: 'severity', label: 'Severity', type: 'select', options: BUG_SEVERITY, list: true, group: 'Bewertung' },
+  { key: 'safety_relevant', label: 'Sicherheitsrelevant', type: 'boolean', list: true, group: 'Bewertung' },
+  { key: 'risk_evaluation', label: 'Risikobewertung zum Freigabezeitpunkt', type: 'textarea', group: 'Bewertung' },
+  { key: 'workaround', label: 'Workaround', type: 'textarea', group: 'Bewertung' },
+  { key: 'planned_fix_version', label: 'Behebung geplant in Version', mono: true, group: 'Freigabe' },
+  { key: 'accepted_by', label: 'Akzeptiert von', group: 'Freigabe' },
+  { key: 'accepted_at', label: 'Akzeptiert am', type: 'date', group: 'Freigabe' },
+  { key: 'status', label: 'Status', type: 'select', options: ANOMALY_STATUS, list: true, group: 'Freigabe' },
+  { key: 'notes', label: 'Notizen', type: 'textarea', group: 'Freigabe' },
+];
+
+export const swProblemFields: PlmField[] = [
+  { key: 'problem_code', label: 'PR-ID', list: true, mono: true },
+  dev,
+  { key: 'title', label: 'Problem', list: true, required: true },
+  { key: 'description', label: 'Beschreibung', type: 'textarea' },
+  { key: 'source', label: 'Quelle', type: 'select', options: PROBLEM_SOURCES, list: true, group: 'Meldung' },
+  { key: 'reported_by', label: 'Gemeldet von', group: 'Meldung' },
+  { key: 'reported_at', label: 'Gemeldet am', type: 'date', list: true, group: 'Meldung' },
+  { key: 'serial_number', label: 'Seriennummer', mono: true, group: 'Meldung' },
+  { key: 'sw_version', label: 'Softwareversion', mono: true, list: true, group: 'Meldung' },
+  { key: 'severity', label: 'Severity', type: 'select', options: BUG_SEVERITY, list: true, group: 'Bewertung' },
+  { key: 'safety_relevant', label: 'Sicherheitsrelevant', type: 'boolean', list: true, group: 'Bewertung' },
+  { key: 'vigilance_relevant', label: 'Meldepflichtig (MDR-Vigilanz)', type: 'boolean', list: true, group: 'Bewertung' },
+  { key: 'investigation', label: 'Untersuchung', type: 'textarea', group: 'Bearbeitung' },
+  { key: 'root_cause', label: 'Root Cause', type: 'textarea', group: 'Bearbeitung' },
+  { key: 'correction', label: 'Korrektur', type: 'textarea', group: 'Bearbeitung' },
+  { key: 'capa_id', label: 'CAPA', type: 'ref', refTable: 'capas', refLabel: 'title', refExtra: 'capa_number', list: true, group: 'Bearbeitung' },
+  { key: 'bug_id', label: 'Bug', type: 'ref', refTable: 'plm_sw_bugs', refLabel: 'title', refExtra: 'bug_code', group: 'Bearbeitung' },
+  { key: 'risk_id', label: 'Risiko', type: 'ref', refTable: 'plm_sw_risks', refLabel: 'hazard', refExtra: 'risk_code', group: 'Bearbeitung' },
+  { key: 'effectiveness_check', label: 'Wirksamkeitsprüfung', type: 'textarea', group: 'Abschluss' },
+  { key: 'closed_at', label: 'Geschlossen am', type: 'date', group: 'Abschluss' },
+  { key: 'status', label: 'Status', type: 'select', options: PROBLEM_STATUS, list: true, group: 'Abschluss' },
+];
+
+export const swMeasureFields: PlmField[] = [
+  { key: 'measure_code', label: 'MASS-ID', list: true, mono: true },
+  dev,
+  { key: 'risk_id', label: 'Risiko', type: 'ref', refTable: 'plm_sw_risks', refLabel: 'hazard', refExtra: 'risk_code', list: true },
+  { key: 'title', label: 'Maßnahme', list: true, required: true },
+  { key: 'measure_type', label: 'Maßnahmenart', type: 'select', options: MEASURE_TYPES, list: true },
+  { key: 'description', label: 'Beschreibung', type: 'textarea' },
+  { key: 'requirement_id', label: 'Umgesetzt als Requirement', type: 'ref', refTable: 'plm_sw_requirements', refLabel: 'title', refExtra: 'req_code', group: 'Umsetzung' },
+  { key: 'test_id', label: 'Verifizierender Test', type: 'ref', refTable: 'plm_sw_tests', refLabel: 'title', refExtra: 'test_code', group: 'Umsetzung' },
+  { key: 'implemented_in_version', label: 'Umgesetzt in Version', mono: true, group: 'Umsetzung' },
+  { key: 'implemented_by', label: 'Umgesetzt von', group: 'Umsetzung' },
+  { key: 'implemented_at', label: 'Umgesetzt am', type: 'date', group: 'Umsetzung' },
+  { key: 'effectiveness_method', label: 'Methode der Wirksamkeitsprüfung', type: 'textarea', group: 'Wirksamkeit' },
+  { key: 'effectiveness_result', label: 'Ergebnis (nur nach Durchführung)', type: 'textarea', group: 'Wirksamkeit' },
+  { key: 'effectiveness_confirmed', label: 'Wirksamkeit bestätigt', type: 'boolean', list: true, group: 'Wirksamkeit' },
+  { key: 'effectiveness_by', label: 'Geprüft von', group: 'Wirksamkeit' },
+  { key: 'effectiveness_at', label: 'Geprüft am', type: 'date', group: 'Wirksamkeit' },
+  { key: 'new_risk_introduced', label: 'Neues Risiko eingeführt', type: 'boolean', group: 'Wirksamkeit' },
+  { key: 'status', label: 'Status', type: 'select', options: MEASURE_STATUS, list: true, group: 'Wirksamkeit' },
+  { key: 'notes', label: 'Notizen', type: 'textarea', group: 'Wirksamkeit' },
+];
+
+export const swClassificationFields: PlmField[] = [
+  { key: 'title', label: 'Titel', list: true, required: true },
+  dev,
+  { key: 'product_safety_class', label: 'Software Safety Class (Produkt)', type: 'select', options: SAFETY_CLASSES, list: true },
+  { key: 'mdr_class', label: 'MDR-Klasse', type: 'select', options: ['I', 'IIa', 'IIb', 'III'], list: true },
+  { key: 'rationale', label: 'Begründung der Klassifizierung', type: 'textarea', group: 'Begründung' },
+  { key: 'hazard_analysis_ref', label: 'Referenz Gefährdungsanalyse', group: 'Begründung' },
+  { key: 'external_risk_control', label: 'Externe Risikobeherrschung (Hardware/Prozess)', type: 'textarea', group: 'Begründung' },
+  { key: 'segregation_description', label: 'Segregation der Software-Einheiten', type: 'textarea', group: 'Begründung' },
+  { key: 'standards', label: 'Angewandte Normen', type: 'textarea', group: 'Freigabe' },
+  { key: 'valid_from', label: 'Gültig ab', type: 'date', group: 'Freigabe' },
+  { key: 'status', label: 'Status', type: 'select', options: PLAN_STATUS, list: true, group: 'Freigabe' },
+  { key: 'approved_by', label: 'Freigegeben von', group: 'Freigabe' },
+  { key: 'approved_at', label: 'Freigegeben am', type: 'date', group: 'Freigabe' },
+  { key: 'notes', label: 'Notizen', type: 'textarea', group: 'Freigabe' },
+];
+
+export const swSignatureFields: PlmField[] = [
+  { key: 'entity_table', label: 'Dokument / Datensatzart', list: true, required: true },
+  dev,
+  { key: 'entity_label', label: 'Bezeichnung (z. B. SRS v1.2)', list: true },
+  { key: 'meaning', label: 'Bedeutung der Unterschrift', type: 'select', options: SIGN_MEANINGS, list: true },
+  { key: 'signer_name', label: 'Unterzeichner', list: true, required: true },
+  { key: 'signer_role', label: 'Rolle / Funktion', list: true },
+  { key: 'statement', label: 'Erklärung', type: 'textarea', group: 'Nachweis' },
+  { key: 'document_hash', label: 'Dokument-Hash', mono: true, group: 'Nachweis' },
+  { key: 'status', label: 'Status', type: 'select', options: ['gueltig', 'widerrufen'], list: true, group: 'Nachweis' },
+  { key: 'notes', label: 'Notizen', type: 'textarea', group: 'Nachweis' },
+];
