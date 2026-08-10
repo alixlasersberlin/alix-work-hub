@@ -329,7 +329,9 @@ Deno.serve(async (req) => {
   const startedAt = Date.now();
   const HARD_CAP_MS = background
     ? Math.min(Math.max(Number(body.timeout_ms) || 780_000, 60_000), 840_000)
-    : Math.min(Math.max(Number(body.timeout_ms) || 130_000, 30_000), 140_000);
+    // Synchronous responses must finish below the gateway's ~150s limit,
+    // otherwise the caller only sees "Internal Server Error".
+    : Math.min(Math.max(Number(body.timeout_ms) || 95_000, 20_000), 110_000);
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
