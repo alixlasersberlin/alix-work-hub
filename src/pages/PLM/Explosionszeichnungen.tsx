@@ -287,8 +287,9 @@ export default function PlmExplosionszeichnungen() {
               </select></div>
             <div className="space-y-1"><Label className="text-xs">Version</Label>
               <Input value={form.version ?? ''} onChange={e => setForm((s: any) => ({ ...s, version: e.target.value }))} /></div>
-            <div className="md:col-span-2 space-y-1"><Label className="text-xs">Bild-URL (Explosionszeichnung)</Label>
-              <Input value={form.image_url ?? ''} onChange={e => setForm((s: any) => ({ ...s, image_url: e.target.value }))} /></div>
+            <div className="md:col-span-2 space-y-1"><Label className="text-xs">Explosionszeichnung (Upload)</Label>
+              <PlmFileInput value={form.image_url ?? ''} folder="plm_drawings" onChange={p => setForm((s: any) => ({ ...s, image_url: p ?? '' }))} /></div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDlgOpen(false)}>Abbrechen</Button>
