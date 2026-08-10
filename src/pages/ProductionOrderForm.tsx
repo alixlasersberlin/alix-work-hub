@@ -733,6 +733,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
       URL.revokeObjectURL(url);
       toast.success('PDF heruntergeladen');
     }
+    navigate(basePath);
   };
   const onSaveAndDownload = () => downloadPdfWith('bilingual');
   const onSaveAndDownloadEn = () => downloadPdfWith('en');
