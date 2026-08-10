@@ -680,6 +680,13 @@ const PlmSwReleases = lazy(() => import("./pages/PLM/SwReleases"));
 const PlmSwTeam = lazy(() => import("./pages/PLM/SwTeam"));
 const PlmHwDokumentation = lazy(() => import("./pages/PLM/HwDokumentation"));
 const PlmSwSurveys = lazy(() => import("./pages/PLM/SwSurveys"));
+const PlmSwSoup = lazy(() => import("./pages/PLM/SwSoup"));
+const PlmSwPlans = lazy(() => import("./pages/PLM/SwPlans"));
+const PlmSwAnomalies = lazy(() => import("./pages/PLM/SwAnomalies"));
+const PlmSwProblems = lazy(() => import("./pages/PLM/SwProblems"));
+const PlmSwRiskMeasures = lazy(() => import("./pages/PLM/SwRiskMeasures"));
+const PlmSwClassification = lazy(() => import("./pages/PLM/SwClassification"));
+const PlmSwSignatures = lazy(() => import("./pages/PLM/SwSignatures"));
 
 const PlmStuecklistenbaum = lazy(() => import("./pages/PLM/Stuecklistenbaum"));
 const Iso13485 = lazy(() => import("./pages/Iso13485"));
