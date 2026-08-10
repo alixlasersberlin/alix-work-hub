@@ -23,6 +23,7 @@ import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { stampExistingPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 import { createPDF } from '@/lib/pdf-utils';
