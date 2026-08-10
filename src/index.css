@@ -2255,3 +2255,26 @@ html [role="dialog"].news-announcement-dialog .news-announcement-checkbox {
 .mail-paper table { width: 100%; border-collapse: collapse; }
 .mail-paper th,
 .mail-paper td { border-bottom: 1px solid hsl(0 0% 85%); padding: 6px 8px; text-align: left; }
+
+/* ============================================================
+   Globale Lesbarkeit: weiße Schrift auf allen roten Flächen
+   ============================================================ */
+[class~="bg-destructive"],
+[class*="bg-red-5"], [class*="bg-red-6"], [class*="bg-red-7"],
+[class*="bg-red-8"], [class*="bg-red-9"],
+[class*="bg-rose-5"], [class*="bg-rose-6"], [class*="bg-rose-7"],
+[class*="bg-rose-8"], [class*="bg-rose-9"],
+[data-variant="destructive"],
+[data-slot="badge"][class~="bg-destructive"] {
+  color: hsl(var(--destructive-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--destructive-foreground)) !important;
+}
+[class~="bg-destructive"] *,
+[class*="bg-red-5"] *, [class*="bg-red-6"] *, [class*="bg-red-7"] *,
+[class*="bg-red-8"] *, [class*="bg-red-9"] *,
+[class*="bg-rose-5"] *, [class*="bg-rose-6"] *, [class*="bg-rose-7"] *,
+[class*="bg-rose-8"] *, [class*="bg-rose-9"] *,
+[data-variant="destructive"] * {
+  color: hsl(var(--destructive-foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--destructive-foreground)) !important;
+}
