@@ -269,6 +269,14 @@ export default function SoftwareCompliance() {
             <Kpi label="System Tests" value={`${m.sysPassed}/${m.sys.length}`} />
             <Kpi label="Open Issues" value={m.openBugs} />
             <Kpi label="Traceability" value={`${m.traceability} %`} />
+            <Kpi label="SOUP / OTS" value={soup.length} />
+            <Kpi label="Pläne" value={plans.length} />
+            <Kpi label="Risikomaßnahmen" value={`${measures.length - m.measuresOpen.length}/${measures.length}`} />
+            <Kpi label="Anomalien offen" value={m.anomaliesOpen.length} />
+            <Kpi label="Problem Reports offen" value={m.problemsOpen.length} />
+            <Kpi label="E-Freigaben" value={signatures.length} />
+            <Kpi label="Safety Class" value={classification.find(c => c.status === 'freigegeben')?.product_safety_class ?? '—'} />
+            <Kpi label="Vollständigkeit" value={`${complete} %`} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -277,9 +285,15 @@ export default function SoftwareCompliance() {
             <Lamp label="Unit Verification" tone={!m.ver.length ? 'bad' : m.reqNoVer.length ? 'warn' : 'ok'} hint={`${m.verPassed}/${m.ver.length} bestanden`} />
             <Lamp label="Integration Testing" tone={!m.int.length ? 'bad' : m.intPassed < m.int.length ? 'warn' : 'ok'} hint={`${m.intPassed}/${m.int.length} bestanden`} />
             <Lamp label="System Testing" tone={!m.sys.length ? 'bad' : m.sysPassed < m.sys.length ? 'warn' : 'ok'} hint={`${m.sysPassed}/${m.sys.length} bestanden`} />
-            <Lamp label="Risk Management" tone={!risks.length ? 'bad' : m.risksNoVerification.length ? 'warn' : 'ok'} hint={`${risks.length} Risiken`} />
+            <Lamp label="Risk Management" tone={!risks.length ? 'bad' : (m.risksNoVerification.length || m.risksNoMeasure.length) ? 'warn' : 'ok'} hint={`${risks.length} Risiken · ${measures.length} Maßnahmen`} />
             <Lamp label="Hardware Documentation" tone={!hwDocs.length ? 'bad' : m.hwIsolation ? 'ok' : 'warn'} hint={`${hwDocs.length} Dokumente`} />
             <Lamp label="Development Team" tone={!team.length ? 'bad' : m.teamOk && !m.vcsMissing ? 'ok' : 'warn'} hint={`${team.length} Personen`} />
+            <Lamp label="Safety Classification" tone={m.classOk ? 'ok' : classification.length ? 'warn' : 'bad'} hint="Produktebene A/B/C" />
+            <Lamp label="Pläne (SDP · SCMP)" tone={m.sdpOk && m.scmpOk && m.maintOk && m.problemPlanOk ? 'ok' : (plans.length ? 'warn' : 'bad')} hint={`${plans.length} Pläne`} />
+            <Lamp label="SOUP / OTS" tone={!soup.length ? 'bad' : m.soupOpen.length ? 'warn' : 'ok'} hint={`${soup.length} Komponenten`} />
+            <Lamp label="Anomalien" tone={m.anomaliesSafety.length ? 'bad' : m.anomaliesOpen.length ? 'warn' : 'ok'} hint={`${m.anomaliesOpen.length} offen`} />
+            <Lamp label="Problem Resolution" tone={m.problemsNoCapa.length ? 'bad' : m.problemsOpen.length ? 'warn' : 'ok'} hint={`${problems.length} Meldungen`} />
+            <Lamp label="Elektronische Freigaben" tone={!signatures.length ? 'bad' : m.releasesNoSignature.length ? 'warn' : 'ok'} hint={`${signatures.length} Signaturen`} />
           </div>
 
           <Card>
