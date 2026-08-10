@@ -355,6 +355,9 @@ export default function Auslieferungsfreigabe() {
           <Button size="sm" onClick={() => { setReqOpen(true); void loadRequestCandidates(''); }}>
             <PlusCircle className="h-4 w-4 mr-1" />Freigabe anfordern
           </Button>
+          <Button size="sm" variant="secondary" disabled={addAllBusy} onClick={addAllOrders}>
+            <PlusCircle className="h-4 w-4 mr-1" />{addAllBusy ? 'Wird hinzugefügt…' : 'Alle Aufträge hinzufügen'}
+          </Button>
           <Button variant="outline" size="sm" onClick={load}><RefreshCw className="h-4 w-4 mr-1" />Aktualisieren</Button>
           <Button variant="outline" size="sm" onClick={exportCsv}><Download className="h-4 w-4 mr-1" />Excel/CSV</Button>
           <Button variant="outline" size="sm" onClick={exportPdf}><FileText className="h-4 w-4 mr-1" />PDF</Button>
