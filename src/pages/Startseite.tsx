@@ -343,7 +343,7 @@ export default function Startseite() {
               </p>
             </div>
             <Button asChild variant="ghost" size="sm" className="gap-1 shrink-0">
-              <Link to="/collect/aufgaben">Alle <ArrowRight className="w-3.5 h-3.5" /></Link>
+              <Link to="/finance/collect/aufgaben">Alle <ArrowRight className="w-3.5 h-3.5" /></Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -356,7 +356,7 @@ export default function Startseite() {
               return (
                 <Link
                   key={t.id}
-                  to="/collect/aufgaben"
+                  to="/finance/collect/aufgaben"
                   className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 hover:border-primary/40 hover:bg-primary/5 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
