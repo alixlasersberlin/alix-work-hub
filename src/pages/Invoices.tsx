@@ -1,5 +1,5 @@
 import { TenantBadge } from '@/components/TenantBadge';
-import { useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { maskRevenueString } from '@/lib/revenue-mask';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenantFilter } from '@/hooks/useTenantFilter';
@@ -165,7 +165,7 @@ function flatRowsForKpi(rows: Row[], search: string, statusFilter: string, docSt
   }
 
   res = res.filter((r) => matchesDocStatus(r, docStatus));
-  res = res.filter((r) => matchesQuery(r, search));
+  res = search.trim() ? res.filter((r) => matchesQuery(r, search)) : res;
   return res.reduce((s, r) => s + Number(r.balance ?? 0), 0);
 }
 
@@ -182,6 +182,9 @@ function tableFor(source: Row['source']) {
 // Modul-Cache: Rechnungsliste bleibt beim Zurücknavigieren sofort sichtbar
 const ROWS_CACHE = new Map<string, { ts: number; rows: Row[] }>();
 const ROWS_CACHE_TTL = 60_000;
+// Cache der Mietkauf-Summen je Mandant (Kontenansicht)
+const MK_CACHE = new Map<string, { ts: number; map: Record<string, number> }>();
+const MK_CACHE_TTL = 5 * 60_000;
 
 
 
@@ -295,6 +298,8 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  // Filterung erst nach dem Tippen (hält die Eingabe flüssig bei tausenden Zeilen)
+  const dSearch = useDeferredValue(search);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [docStatusFilter, setDocStatusFilter] = useState<string>('all');
   const [includeUnpaid, setIncludeUnpaid] = useState<boolean>(() => {
@@ -469,25 +474,36 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const refetchRows = async (cacheKey: string, showError: boolean) => {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
     const cols = 'id, created_at, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
-    // PostgREST liefert max. 1000 Zeilen je Request -> seitenweise laden
-    const fetchAllPages = async (build: () => any, page = 1000, max = 20000) => {
+    // PostgREST liefert max. 1000 Zeilen je Request -> Seiten parallel laden
+    // (vorher strikt sequenziell: bei ~10k Zeilen 10 Roundtrips hintereinander).
+    const fetchAllPages = async (build: () => any, page = 1000, max = 20000, concurrency = 6) => {
       const out: any[] = [];
-      for (let from = 0; from < max; from += page) {
-        const { data, error } = await build().range(from, from + page - 1);
-        if (error) return { data: out, error };
-        out.push(...(data ?? []));
-        if (!data || data.length < page) break;
+      let from = 0;
+      let done = false;
+      while (!done && from < max) {
+        const batch: Promise<any>[] = [];
+        for (let i = 0; i < concurrency && from + i * page < max; i++) {
+          const start = from + i * page;
+          batch.push(build().range(start, start + page - 1));
+        }
+        const res = await Promise.all(batch);
+        for (const { data, error } of res) {
+          if (error) return { data: out, error };
+          out.push(...(data ?? []));
+          if (!data || data.length < page) done = true;
+        }
+        from += concurrency * page;
       }
       return { data: out, error: null };
     };
     const withTenant = (q: any) => (tenantId ? q.eq('tenant_id', tenantId) : q);
     const [inv, rec, unp] = await Promise.all([
-      fetchAllPages(() => withTenant((supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly)).order('invoice_date', { ascending: false })),
-      fetchAllPages(() => withTenant((supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).eq('is_mietkauf', mietkaufOnly)).order('invoice_date', { ascending: false })),
+      fetchAllPages(() => withTenant((supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly)).order('invoice_date', { ascending: false }).order('id', { ascending: false })),
+      fetchAllPages(() => withTenant((supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).eq('is_mietkauf', mietkaufOnly)).order('invoice_date', { ascending: false }).order('id', { ascending: false })),
       includeUnpaid && !mietkaufOnly
         ? fetchAllPages(() => (supabase.from('zoho_unpaid_invoices') as any)
             .select('id, created_at, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw')
-            .order('invoice_date', { ascending: false }))
+            .order('invoice_date', { ascending: false }).order('id', { ascending: false }))
         : Promise.resolve({ data: [], error: null } as any),
     ]);
 
@@ -730,26 +746,35 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     };
   }, []);
 
-  // Mietkauf-Geräte-Summen je Kundenkonto (unabhängig von der aktuellen Ansicht laden)
-  const [mietkaufTotals, setMietkaufTotals] = useState<Record<string, number>>({});
+  // Mietkauf-Geräte-Summen je Kundenkonto – nur in der Kontenansicht nötig,
+  // Ergebnis wird modulweit zwischengespeichert (spart 2 Großabfragen pro Wechsel).
+  const [mietkaufTotals, setMietkaufTotals] = useState<Record<string, number>>(
+    () => MK_CACHE.get(tenantId ?? 'all')?.map ?? {},
+  );
   useEffect(() => {
+    if (!isAccountView) return;
+    const key = tenantId ?? 'all';
+    const cached = MK_CACHE.get(key);
+    if (cached && Date.now() - cached.ts < MK_CACHE_TTL) { setMietkaufTotals(cached.map); return; }
     let cancelled = false;
     (async () => {
       const sel = 'customer_id, customer_name, total';
+      const withTenant = (q: any) => (tenantId ? q.eq('tenant_id', tenantId) : q);
       const [a, b] = await Promise.all([
-        (supabase.from('zoho_invoices') as any).select(sel).eq('is_mietkauf', true).limit(5000),
-        (supabase.from('zoho_recurring_invoices') as any).select(sel).eq('is_mietkauf', true).limit(5000),
+        withTenant((supabase.from('zoho_invoices') as any).select(sel).eq('is_mietkauf', true)).limit(5000),
+        withTenant((supabase.from('zoho_recurring_invoices') as any).select(sel).eq('is_mietkauf', true)).limit(5000),
       ]);
       if (cancelled) return;
       const map: Record<string, number> = {};
       for (const r of [...(a.data ?? []), ...(b.data ?? [])]) {
-        const key = r.customer_id || `name:${String(r.customer_name ?? 'Unbekannt').toLowerCase()}`;
-        map[key] = (map[key] ?? 0) + Number(r.total ?? 0);
+        const k = r.customer_id || `name:${String(r.customer_name ?? 'Unbekannt').toLowerCase()}`;
+        map[k] = (map[k] ?? 0) + Number(r.total ?? 0);
       }
+      MK_CACHE.set(key, { ts: Date.now(), map });
       setMietkaufTotals(map);
     })();
     return () => { cancelled = true; };
-  }, [region]);
+  }, [tenantId, isAccountView]);
 
 
 
@@ -759,7 +784,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       res = res.filter((r) => matchesPayStatus(r, statusFilter));
     }
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
-    res = res.filter((r) => matchesQuery(r, search));
+    res = dSearch.trim() ? res.filter((r) => matchesQuery(r, dSearch)) : res;
 
     const map = new Map<string, Account>();
     const today = new Date().toISOString().slice(0, 10);
@@ -807,14 +832,14 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         String(a.lastFinalizedDate ?? a.lastInvoiceDate ?? ''),
       ),
     );
-  }, [rows, search, statusFilter, docStatusFilter]);
+  }, [rows, dSearch, statusFilter, docStatusFilter]);
 
   const kpi = useMemo(() => ({
     accounts: accounts.length,
     invoices: accounts.reduce((s, a) => s + a.totalInvoices + a.totalRecurring, 0),
     totalAmount: accounts.reduce((s, a) => s + a.totalAmount, 0),
     // Offene Beträge = Live-Summe der Salden aller aktuell sichtbaren Rechnungen
-    totalOpen: flatRowsForKpi(rows, search, statusFilter, docStatusFilter),
+    totalOpen: flatRowsForKpi(rows, dSearch, statusFilter, docStatusFilter),
     // OP Total = Summe aller Konten (Mietkauf-Geräte-Volumen minus geleistete Zahlungen)
     opTotal: accounts.reduce((s, a) => {
       const mk = Number(mietkaufTotals[a.key] ?? 0);
@@ -822,7 +847,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       const paid = a.rows.reduce((p, r) => p + (Number(r.total ?? 0) - Number(r.balance ?? 0)), 0);
       return s + (mk - paid);
     }, 0),
-  }), [accounts, rows, search, statusFilter, docStatusFilter, mietkaufTotals]);
+  }), [accounts, rows, dSearch, statusFilter, docStatusFilter, mietkaufTotals]);
 
   const flatRows = useMemo<Row[]>(() => {
     let res = rows;
@@ -830,7 +855,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       res = res.filter((r) => matchesPayStatus(r, statusFilter));
     }
     res = res.filter((r) => matchesDocStatus(r, docStatusFilter));
-    res = res.filter((r) => matchesQuery(r, search));
+    res = dSearch.trim() ? res.filter((r) => matchesQuery(r, dSearch)) : res;
     const sorted = [...res].sort((a, b) => {
       if (viewMode === 'newest') {
         // Neueste zuerst nach Erfassungsdatum (created_at), Fallback Rechnungsdatum
@@ -848,7 +873,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       return String(b.invoice_date ?? '').localeCompare(String(a.invoice_date ?? ''));
     });
     return sorted;
-  }, [rows, search, statusFilter, docStatusFilter, listSort, viewMode]);
+  }, [rows, dSearch, statusFilter, docStatusFilter, listSort, viewMode]);
 
   // Kundenkonten für die Anzeige: "Höchste" = höchstes Rechnungsvolumen zuerst,
   // "Älteste OP" = nur offene Posten, Konten nach ältester offener Rechnung
