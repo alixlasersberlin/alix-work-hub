@@ -10,3 +10,6 @@ Regel: Testergebnisse dürfen nie automatisch erzeugt werden — `executed_confi
 
 Frontend: `src/lib/plm/software.ts` (Feldkonfiguration), Seiten `src/pages/PLM/SoftwareCompliance.tsx` (Ampel-Dashboard + Markdown-Dokumentgenerierung), `SoftwareTraceability.tsx` (Matrix + CSV), `SwUnits/SwRequirements/SwRisks/SwVerification/SwIntegration/SwSystemTests/SwBugs/SwReleases/SwTeam/SwSurveys/HwDokumentation`.
 Routen `/produktion/software/*` und `/produktion/hardware-dokumentation`; Sidebar-Gruppe „SOFTWARE COMPLIANCE“.
+
+Erweiterung (Vollausbau IEC 62304 / MDR): zusätzliche Tabellen `plm_sw_soup` (SOUP/OTS §8.1.2), `plm_sw_plans` (SDP, SCMP, Wartung, Problem Resolution), `plm_sw_anomalies` (Anomalienliste je Release), `plm_sw_problems` (Post-Market → CAPA-Verknüpfung), `plm_sw_risk_measures` (Risk Control + Wirksamkeitsnachweis), `plm_sw_classification` (Safety Class auf Produktebene), `plm_sw_signatures` (elektronische Freigabe, 21 CFR Part 11).
+Seiten `src/pages/PLM/Sw{Soup,Plans,Anomalies,Problems,RiskMeasures,Classification,Signatures}.tsx`, Routen `/produktion/software/{soup,plaene,anomalien,problem-reports,risikomassnahmen,klassifizierung,freigaben}`. Dashboard + Dokumentgenerierung decken diese Blöcke mit ab.
