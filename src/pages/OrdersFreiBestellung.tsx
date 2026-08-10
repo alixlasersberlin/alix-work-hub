@@ -936,6 +936,33 @@ export default function OrdersFreiBestellung() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!orderedOrder} onOpenChange={(v) => { if (!v) setOrderedOrder(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-amber-500" />
+              Bereits bestellt
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Auftrag <span className="font-medium text-foreground">{orderedOrder?.order_number}</span> wird als bereits
+              bestellt markiert und aus „Bestellung möglich" entfernt. Der Auftrag selbst bleibt unverändert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={markingOrdered}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmMarkOrdered(); }}
+              disabled={markingOrdered}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {markingOrdered ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+              Bestätigen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
