@@ -799,7 +799,7 @@ export default function OrdersFreiBestellung() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 px-2 text-[11px] ml-auto border-amber-600/40 text-amber-500 hover:bg-amber-600/10 hover:text-amber-400"
+                            className="h-7 px-2 text-[11px] border-amber-600/40 text-amber-500 hover:bg-amber-600/10 hover:text-amber-400"
                             onClick={() => setOrderedOrder(o)}
                             title="Auftrag wurde bereits bestellt — aus dieser Liste entfernen"
                           >
