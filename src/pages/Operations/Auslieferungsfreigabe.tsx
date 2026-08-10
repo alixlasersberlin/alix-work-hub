@@ -597,40 +597,64 @@ export default function Auslieferungsfreigabe() {
       </Card>
 
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Auftrags-/Rechnungsnummer, Name, Kontakt…" className="max-w-sm" />
-        {(['all', 'blocked', 'waiting', 'released'] as const).map((f) => (
-          <Button key={f} size="sm" variant={filter === f ? 'default' : 'outline'} onClick={() => setFilter(f)}>
-            {f === 'all' ? 'Alle' : OVERALL_UI[f].label}
-          </Button>
-        ))}
-        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} Einträge</span>
-      </div>
+      <Card className="p-3 space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Auftrags-/Rechnungsnummer, Name, Kontakt…"
+            className="w-full sm:w-80 h-9"
+          />
+          <div className="inline-flex items-center rounded-md border border-border bg-secondary/40 p-0.5">
+            {(['all', 'blocked', 'waiting', 'released'] as const).map((f) => (
+              <Button
+                key={f}
+                size="sm"
+                variant={filter === f ? 'default' : 'ghost'}
+                className="h-8 rounded-[5px]"
+                onClick={() => setFilter(f)}
+              >
+                {f === 'all' ? 'Alle' : OVERALL_UI[f].label}
+              </Button>
+            ))}
+          </div>
+          <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">{filtered.length} Einträge</span>
+        </div>
 
-      {/* Reiter nach Auftragsstatus */}
-      <div className="flex flex-wrap items-center gap-2 border-b pb-2">
-        {(['all', 'Anwalt', 'invoiced', 'geliefert'] as const).map((s) => {
-          const count = s === 'all'
-            ? rows.length
-            : rows.filter((r) => (r.order_status ?? '').toLowerCase() === s.toLowerCase()).length;
-          return (
-            <Button key={s} size="sm" variant={statusTab === s ? 'default' : 'ghost'} onClick={() => setStatusTab(s)}>
-              {s === 'all' ? 'Alle Status' : s} <span className="ml-1 text-xs opacity-70">({count})</span>
+        {/* Reiter nach Auftragsstatus */}
+        <div className="flex flex-wrap items-center gap-1 border-t border-border pt-2">
+          {(['all', 'Anwalt', 'invoiced', 'geliefert'] as const).map((s) => {
+            const count = s === 'all'
+              ? rows.length
+              : rows.filter((r) => (r.order_status ?? '').toLowerCase() === s.toLowerCase()).length;
+            return (
+              <Button
+                key={s}
+                size="sm"
+                variant={statusTab === s ? 'secondary' : 'ghost'}
+                className="h-8"
+                onClick={() => setStatusTab(s)}
+              >
+                {s === 'all' ? 'Alle Status' : s}
+                <span className="ml-1.5 text-xs opacity-70">({count})</span>
+              </Button>
+            );
+          })}
+          {statusTab !== 'all' && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 ml-auto"
+              disabled={statusBusy === statusTab}
+              onClick={() => addOrdersByStatus(statusTab)}
+            >
+              <PlusCircle className="h-4 w-4 mr-1" />
+              {statusBusy === statusTab ? 'Wird gefüllt…' : `„${statusTab}" befüllen`}
             </Button>
-          );
-        })}
-        {statusTab !== 'all' && (
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={statusBusy === statusTab}
-            onClick={() => addOrdersByStatus(statusTab)}
-          >
-            <PlusCircle className="h-4 w-4 mr-1" />
-            {statusBusy === statusTab ? 'Wird gefüllt…' : `„${statusTab}" befüllen`}
-          </Button>
-        )}
-      </div>
+          )}
+        </div>
+      </Card>
+
 
       <div className="flex flex-wrap items-center gap-2">
         <Checkbox
