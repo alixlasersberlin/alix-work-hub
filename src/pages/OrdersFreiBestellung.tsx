@@ -732,8 +732,11 @@ export default function OrdersFreiBestellung() {
                       </td>
 
                       <td className="px-4 py-3"><StatusBadge status={o.order_status} /></td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                      <td className="px-4 py-3" />
+                    </tr>
+                    <tr key={o.id + '_actions'} className="border-b border-border/60">
+                      <td colSpan={10} className="px-4 pb-3 pt-0">
+                        <div className="flex items-center justify-start gap-2 flex-wrap pl-8">
                           {(reservedByOrder[o.id]?.length ?? 0) > 0 && (
                             <span className="inline-flex items-center gap-1 text-xs text-amber-500 font-medium">
                               <CheckCircle2 className="w-4 h-4" /> {reservedByOrder[o.id].length}× reserviert
@@ -761,6 +764,7 @@ export default function OrdersFreiBestellung() {
                         </div>
                       </td>
                     </tr>
+
                     {expanded.has(o.id) && (() => {
                       const items = itemsByOrder[o.id] || [];
                       return (
