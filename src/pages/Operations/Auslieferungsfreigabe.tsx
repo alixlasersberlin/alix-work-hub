@@ -55,6 +55,8 @@ export default function Auslieferungsfreigabe() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<'all' | 'blocked' | 'waiting' | 'released'>('all');
+  const [statusTab, setStatusTab] = useState<string>('all');
+  const [statusBusy, setStatusBusy] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkStage, setBulkStage] = useState<ApprovalStage>('accounting');
