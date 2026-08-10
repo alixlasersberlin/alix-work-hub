@@ -121,24 +121,32 @@ export default function Auslieferungsfreigabe() {
     const list = (data ?? []) as Row[];
     const ids = list.map((r) => r.order_id);
     if (ids.length) {
-      const { data: orders } = await db
-        .from('orders')
-        .select('id, order_number, order_status, total_amount, customers:customer_id(company_name, contact_name, email, phone)')
-        .in('id', ids);
-      const map = new Map((orders ?? []).map((o: any) => [o.id, o]));
-      const numbers = (orders ?? []).map((o: any) => o.order_number).filter(Boolean);
+      const chunk = <T,>(arr: T[], size: number) =>
+        Array.from({ length: Math.ceil(arr.length / size) }, (_, i) => arr.slice(i * size, i * size + size));
+
+      const orders: any[] = [];
+      for (const part of chunk(ids, 150)) {
+        const { data: o, error: oErr } = await db
+          .from('orders')
+          .select('id, order_number, order_status, total_amount, customers:customer_id(company_name, contact_name, email, phone)')
+          .in('id', part);
+        if (oErr) { console.error('orders load', oErr); continue; }
+        orders.push(...((o ?? []) as any[]));
+      }
+      const map = new Map(orders.map((o: any) => [o.id, o]));
+      const numbers = orders.map((o: any) => o.order_number).filter(Boolean);
       const invMap = new Map<string, string[]>();
-      if (numbers.length) {
+      for (const part of chunk(numbers, 150)) {
         const { data: inv } = await db
           .from('zoho_invoices')
           .select('invoice_number, reference_number')
-          .in('reference_number', numbers)
-          .limit(2000);
+          .in('reference_number', part);
         for (const i of (inv ?? []) as any[]) {
           if (!i.reference_number || !i.invoice_number) continue;
           invMap.set(i.reference_number, [...(invMap.get(i.reference_number) ?? []), i.invoice_number]);
         }
       }
+
       for (const r of list) {
         const o: any = map.get(r.order_id);
         const c: any = o?.customers ?? {};
