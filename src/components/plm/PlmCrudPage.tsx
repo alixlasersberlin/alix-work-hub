@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Plus, Search, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { PlmField, plmLabel, statusTone } from '@/lib/plm/config';
+import { PlmFileInput, PlmThumb } from '@/components/plm/PlmFileInput';
 import { useAuth } from '@/hooks/useAuth';
 
 const WRITE_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'];
