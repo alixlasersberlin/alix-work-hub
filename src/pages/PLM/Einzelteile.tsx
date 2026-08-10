@@ -10,8 +10,12 @@ export const partFields: PlmField[] = [
   { key: 'assembly_id', label: 'Baugruppe', type: 'ref', refTable: 'plm_assemblies', refLabel: 'name', refExtra: 'code' },
   { key: 'description', label: 'Beschreibung', type: 'textarea' },
 
-  { key: 'manufacturer', label: 'Hersteller', group: 'Beschaffung', list: true },
+  { key: 'manufacturer_id', label: 'Hersteller (MFR)', type: 'ref', refTable: 'plm_manufacturers', refLabel: 'name', refExtra: 'manufacturer_code', group: 'Beschaffung', list: true },
+  { key: 'manufacturer', label: 'Hersteller (Freitext)', group: 'Beschaffung' },
   { key: 'manufacturer_part_number', label: 'Herstellernummer', group: 'Beschaffung' },
+  { key: 'original_part_number', label: 'Original-Teilenummer', group: 'Beschaffung' },
+  { key: 'predecessor_part_id', label: 'Vorgänger', type: 'ref', refTable: 'plm_parts', refLabel: 'name', refExtra: 'part_number', group: 'Beschaffung' },
+  { key: 'successor_part_id', label: 'Nachfolger', type: 'ref', refTable: 'plm_parts', refLabel: 'name', refExtra: 'part_number', group: 'Beschaffung' },
   { key: 'primary_supplier_id', label: 'Hauptlieferant', type: 'ref', refTable: 'plm_suppliers', refLabel: 'name', refExtra: 'supplier_number', group: 'Beschaffung', list: true },
   { key: 'supplier_part_number', label: 'Lieferantennummer', group: 'Beschaffung' },
   { key: 'price', label: 'Preis', type: 'number', group: 'Beschaffung' },
