@@ -185,6 +185,8 @@ export default function OrdersFreiBestellung() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [unassignOrder, setUnassignOrder] = useState<any | null>(null);
   const [unassigning, setUnassigning] = useState(false);
+  const [orderedOrder, setOrderedOrder] = useState<any | null>(null);
+  const [markingOrdered, setMarkingOrdered] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggleExpand = (id: string) => setExpanded(prev => {
     const next = new Set(prev);
@@ -462,6 +464,37 @@ export default function OrdersFreiBestellung() {
       setUnassigning(false);
     }
   };
+
+  const confirmMarkOrdered = async () => {
+    if (!orderedOrder) return;
+    const orderId = orderedOrder.id;
+    const orderNumber = orderedOrder.order_number;
+    setMarkingOrdered(true);
+    try {
+      const { data: userRes } = await supabase.auth.getUser();
+      const { error: insErr } = await supabase.from('order_notes').insert({
+        order_id: orderId,
+        note_type: FREI_HIDDEN_NOTE,
+        note_text: 'Bereits bestellt — manuell aus „Bestellung möglich" entfernt',
+        is_internal: true,
+        created_by: userRes?.user?.id ?? null,
+      });
+      if (insErr) {
+        toast.error('Konnte nicht markiert werden: ' + insErr.message);
+        return;
+      }
+      setOrders(prev => prev.filter((o: any) => o.id !== orderId));
+      setSelected(prev => { const next = new Set(prev); next.delete(orderId); return next; });
+      setOrderedOrder(null);
+      toast.success(`${orderNumber} als bereits bestellt markiert`);
+      reload();
+    } catch (e: any) {
+      toast.error('Unerwarteter Fehler: ' + (e?.message ?? String(e)));
+    } finally {
+      setMarkingOrdered(false);
+    }
+  };
+
 
   const allVisibleSelected = paged.length > 0 && paged.every((o: any) => selected.has(o.id));
   const toggleAll = () => {
@@ -763,7 +796,17 @@ export default function OrdersFreiBestellung() {
                             </Button>
 
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-[11px] ml-auto border-amber-600/40 text-amber-500 hover:bg-amber-600/10 hover:text-amber-400"
+                            onClick={() => setOrderedOrder(o)}
+                            title="Auftrag wurde bereits bestellt — aus dieser Liste entfernen"
+                          >
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Bereits bestellt
+                          </Button>
                         </div>
+
 
                       </td>
                     </tr>
@@ -893,6 +936,33 @@ export default function OrdersFreiBestellung() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!orderedOrder} onOpenChange={(v) => { if (!v) setOrderedOrder(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-amber-500" />
+              Bereits bestellt
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Auftrag <span className="font-medium text-foreground">{orderedOrder?.order_number}</span> wird als bereits
+              bestellt markiert und aus „Bestellung möglich" entfernt. Der Auftrag selbst bleibt unverändert.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={markingOrdered}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmMarkOrdered(); }}
+              disabled={markingOrdered}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {markingOrdered ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+              Bestätigen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
