@@ -20,7 +20,7 @@ const fields: PlmField[] = [
   { key: 'production_start', label: 'Produktionsbeginn', type: 'date', group: 'Produktion' },
   { key: 'production_end', label: 'Produktionsende', type: 'date', group: 'Produktion' },
   { key: 'release_status', label: 'Freigabestatus', type: 'select', options: RELEASE_STATUS, group: 'Freigabe', list: true },
-  { key: 'image_url', label: 'Produktbild (URL)', group: 'Dokumente' },
+  { key: 'image_url', label: 'Produktbild (Upload)', type: 'image', group: 'Dokumente' },
   { key: 'notes', label: 'Notizen', type: 'textarea', group: 'Sonstiges' },
   { key: 'is_active', label: 'Aktiv', type: 'boolean', group: 'Sonstiges' },
 ];

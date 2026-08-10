@@ -16,7 +16,7 @@ const fields: PlmField[] = [
   { key: 'country', label: 'Land', group: 'Adresse' },
   { key: 'iso_certificates', label: 'ISO-Zertifikate (Komma-getrennt)', type: 'tags', group: 'Qualifizierung' },
   { key: 'cert_valid_until', label: 'Zertifikat gültig bis', type: 'date', group: 'Qualifizierung', list: true },
-  { key: 'audit_report_url', label: 'Auditbericht (URL)', group: 'Qualifizierung' },
+  { key: 'audit_report_url', label: 'Auditbericht (Upload)', type: 'file', group: 'Qualifizierung' },
   { key: 'quality_agreement', label: 'Qualitätssicherungsvereinbarung', type: 'boolean', group: 'Qualifizierung' },
   { key: 'nda_signed', label: 'NDA unterzeichnet', type: 'boolean', group: 'Qualifizierung' },
   { key: 'rating', label: 'Bewertung (1-5)', type: 'number', group: 'Qualifizierung', list: true },

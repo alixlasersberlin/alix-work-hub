@@ -11,7 +11,7 @@ const fields: PlmField[] = [
   { key: 'revision', label: 'Revision', group: 'Versionen' },
   { key: 'release_status', label: 'Freigabestatus', type: 'select', options: RELEASE_STATUS, group: 'Freigabe', list: true },
   { key: 'sort_order', label: 'Sortierung', type: 'number', group: 'Sonstiges' },
-  { key: 'image_url', label: 'Bild (URL)', group: 'Sonstiges' },
+  { key: 'image_url', label: 'Bild (Upload)', type: 'image', group: 'Sonstiges' },
   { key: 'description', label: 'Beschreibung', type: 'textarea', group: 'Sonstiges' },
 ];
 
