@@ -17,8 +17,15 @@ import {
   UserCheck,
   Users,
   History as HistoryIcon,
+  CalendarDays,
+  ListTodo,
+  Bell,
+  FileSearch,
+  FolderOpen,
+  Truck,
+  Receipt,
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 interface TicketRow {
@@ -36,6 +43,38 @@ interface TicketRow {
   created_at: string;
   updated_at: string | null;
   due_at: string | null;
+}
+
+interface EventRow {
+  id: string;
+  title: string | null;
+  start_at: string;
+  end_at: string;
+  all_day: boolean;
+  location: string | null;
+  customer_name: string | null;
+  appointment_status: string;
+}
+
+interface TaskRow {
+  id: string;
+  title: string;
+  due_date: string;
+  status: string;
+  priority: number;
+  customer_name: string | null;
+  case_id: string | null;
+}
+
+interface NotificationRow {
+  id: string;
+  title: string;
+  message: string | null;
+  category: string;
+  priority: string;
+  action_url: string | null;
+  created_at: string;
+  read_at: string | null;
 }
 
 const OPEN_STATUSES = ['open', 'offen', 'in-progress', 'in_bearbeitung', 'wartet_Kunde', 'wartet_kunde'];
@@ -84,11 +123,16 @@ function greeting() {
   return 'Guten Abend';
 }
 
-function motivator(open: number, mine: number, critical: number) {
-  if (open === 0) return 'Alles im grünen Bereich – keine offenen Tickets. Perfekter Moment für Follow-ups! 🌿';
-  if (critical > 0) return `${critical} kritische${critical === 1 ? 's' : ''} Ticket${critical === 1 ? '' : 's'} braucht sofortige Aufmerksamkeit ⚡`;
-  if (mine > 0) return `${mine} Ticket${mine === 1 ? '' : 's'} warten auf dich – Ärmel hoch und los! 💪`;
-  return `${open} offene Tickets im Team – schnapp dir eins und mach den Unterschied 🚀`;
+function personalSummary(tickets: number, tasks: number, events: number, notifications: number) {
+  if (tickets + tasks + events + notifications === 0) {
+    return 'Dein Tag ist frei – nichts liegt aktuell bei dir. Perfekt für Follow-ups. 🌿';
+  }
+  const parts: string[] = [];
+  if (events) parts.push(`${events} Termin${events === 1 ? '' : 'e'} heute`);
+  if (tasks) parts.push(`${tasks} Aufgabe${tasks === 1 ? '' : 'n'}`);
+  if (tickets) parts.push(`${tickets} Ticket${tickets === 1 ? '' : 's'}`);
+  if (notifications) parts.push(`${notifications} neue Meldung${notifications === 1 ? '' : 'en'}`);
+  return `Heute für dich: ${parts.join(' · ')}.`;
 }
 
 export default function Startseite() {
@@ -96,36 +140,74 @@ export default function Startseite() {
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [recent, setRecent] = useState<TicketRow[]>([]);
+  const [events, setEvents] = useState<EventRow[]>([]);
+  const [tasks, setTasks] = useState<TaskRow[]>([]);
+  const [notifications, setNotifications] = useState<NotificationRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
-      // Alle offenen Tickets (limit sinnvoll)
-      const { data: openData } = await supabase
-        .from('tickets')
-        .select('id, title, status, priority, customer_name, company_name, order_number, category, department, sla_status, assigned_to, created_at, updated_at, due_at')
-        .in('status', OPEN_STATUSES)
-        .order('priority', { ascending: true })
-        .order('created_at', { ascending: false })
-        .limit(200);
+      const uid = user?.id;
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const weekEnd = new Date(todayStart); weekEnd.setDate(weekEnd.getDate() + 7);
 
-      // Zuletzt bearbeitete Tickets (Verlauf)
-      const { data: recentData } = await supabase
-        .from('tickets')
-        .select('id, title, status, priority, customer_name, company_name, order_number, category, department, sla_status, assigned_to, created_at, updated_at, due_at')
-        .order('updated_at', { ascending: false, nullsFirst: false })
-        .limit(10);
+      const ticketCols = 'id, title, status, priority, customer_name, company_name, order_number, category, department, sla_status, assigned_to, created_at, updated_at, due_at';
+
+      const [openRes, recentRes, eventRes, taskRes, notifRes] = await Promise.all([
+        supabase.from('tickets').select(ticketCols)
+          .in('status', OPEN_STATUSES)
+          .order('priority', { ascending: true })
+          .order('created_at', { ascending: false })
+          .limit(200),
+        uid
+          ? supabase.from('tickets').select(ticketCols)
+              .eq('assigned_to', uid)
+              .order('updated_at', { ascending: false, nullsFirst: false })
+              .limit(10)
+          : supabase.from('tickets').select(ticketCols)
+              .order('updated_at', { ascending: false, nullsFirst: false })
+              .limit(10),
+        uid
+          ? supabase.from('esc_events')
+              .select('id, title, start_at, end_at, all_day, location, customer_name, appointment_status')
+              .eq('assigned_user_id', uid)
+              .is('deleted_at', null)
+              .gte('start_at', todayStart.toISOString())
+              .lt('start_at', weekEnd.toISOString())
+              .order('start_at', { ascending: true })
+              .limit(12)
+          : Promise.resolve({ data: [] as any }),
+        uid
+          ? supabase.from('collect_tasks')
+              .select('id, title, due_date, status, priority, customer_name, case_id')
+              .eq('assigned_to', uid)
+              .neq('status', 'done')
+              .order('due_date', { ascending: true })
+              .limit(10)
+          : Promise.resolve({ data: [] as any }),
+        uid
+          ? supabase.from('app_notifications')
+              .select('id, title, message, category, priority, action_url, created_at, read_at')
+              .eq('user_id', uid)
+              .is('read_at', null)
+              .order('created_at', { ascending: false })
+              .limit(8)
+          : Promise.resolve({ data: [] as any }),
+      ]);
 
       if (!cancelled) {
-        setTickets((openData as TicketRow[]) || []);
-        setRecent((recentData as TicketRow[]) || []);
+        setTickets((openRes.data as TicketRow[]) || []);
+        setRecent((recentRes.data as TicketRow[]) || []);
+        setEvents(((eventRes as any).data as EventRow[]) || []);
+        setTasks(((taskRes as any).data as TaskRow[]) || []);
+        setNotifications(((notifRes as any).data as NotificationRow[]) || []);
         setLoading(false);
       }
     }
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [user?.id]);
 
   const myTickets = useMemo(
     () => tickets
@@ -139,20 +221,20 @@ export default function Startseite() {
       .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority)),
     [tickets],
   );
-  const otherOpen = useMemo(
-    () => tickets
-      .filter(t => t.assigned_to && (!user || t.assigned_to !== user.id))
-      .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority)),
-    [tickets, user],
-  );
 
-  const critical = tickets.filter(t => t.priority === 'kritisch').length;
-  const slaBreach = tickets.filter(t => t.sla_status === 'breach').length;
+  const todayEvents = useMemo(() => {
+    const end = new Date(); end.setHours(23, 59, 59, 999);
+    return events.filter(e => new Date(e.start_at) <= end);
+  }, [events]);
+  const overdueTasks = tasks.filter(t => new Date(t.due_date) < new Date()).length;
+  const myCritical = myTickets.filter(t => t.priority === 'kritisch').length;
+
   const displayName = userProfile?.first_name || userProfile?.display_name || user?.email?.split('@')[0] || 'Team';
+  const roleLabel = userProfile?.role || userProfile?.department || null;
 
   return (
     <div className="p-4 lg:p-8 space-y-6 animate-fade-in">
-      {/* Hero */}
+      {/* Hero – persönlich */}
       <section className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 lg:p-8">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
@@ -162,32 +244,166 @@ export default function Startseite() {
             <h1 className="text-2xl lg:text-4xl font-semibold tracking-tight mt-1">
               {displayName} 👋
             </h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              {format(new Date(), "EEEE, d. MMMM yyyy", { locale: de })}
+              {roleLabel && <> · <span className="text-primary/90">{roleLabel}</span></>}
+            </p>
             <p className="mt-3 text-base lg:text-lg text-foreground/85 max-w-3xl">
-              {motivator(tickets.length, myTickets.length, critical)}
+              {personalSummary(myTickets.length, tasks.length, todayEvents.length, notifications.length)}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button asChild size="lg" className="gap-2">
-              <Link to="/tickets">
-                <TicketIcon className="w-4 h-4" /> Zur Ticket-Liste
+              <Link to="/tickets?assigned=me">
+                <UserCheck className="w-4 h-4" /> Mein Arbeitsvorrat
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="gap-2">
-              <Link to="/tickets/dashboard">
-                <ArrowRight className="w-4 h-4" /> Dashboard
+              <Link to="/esc/kalender">
+                <CalendarDays className="w-4 h-4" /> Mein Kalender
               </Link>
             </Button>
           </div>
         </div>
 
-        {/* KPI Chips */}
+        {/* Persönliche KPI Chips */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-          <KpiChip icon={Inbox} label="Offene Tickets" value={tickets.length} tone="primary" />
-          <KpiChip icon={UserCheck} label="Meine Tickets" value={myTickets.length} tone="amber" />
-          <KpiChip icon={Flame} label="Kritisch" value={critical} tone={critical ? 'red' : 'muted'} />
-          <KpiChip icon={Clock} label="SLA-Verletzt" value={slaBreach} tone={slaBreach ? 'red' : 'muted'} />
+          <KpiChip icon={UserCheck} label="Meine Tickets" value={myTickets.length} tone={myCritical ? 'red' : 'primary'} />
+          <KpiChip icon={ListTodo} label="Meine Aufgaben" value={tasks.length} tone={overdueTasks ? 'red' : 'amber'} />
+          <KpiChip icon={CalendarDays} label="Termine heute" value={todayEvents.length} tone="primary" />
+          <KpiChip icon={Bell} label="Neue Meldungen" value={notifications.length} tone={notifications.length ? 'amber' : 'muted'} />
         </div>
       </section>
+
+      {/* Schnellzugriff */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        <QuickLink to="/tickets?assigned=me" icon={TicketIcon} label="Meine Tickets" />
+        <QuickLink to="/esc/kalender" icon={CalendarDays} label="Teamkalender" />
+        <QuickLink to="/alixdocs" icon={FolderOpen} label="AlixDocs" />
+        <QuickLink to="/detailsuche" icon={FileSearch} label="Detailsuche" />
+        <QuickLink to="/tourenplanung" icon={Truck} label="Tourenplanung" />
+        <QuickLink to="/finance/rechnungen" icon={Receipt} label="Rechnungen" />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Meine Termine */}
+        <Card className="border-border">
+          <CardHeader className="flex flex-row items-start justify-between gap-3">
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CalendarDays className="w-5 h-5 text-primary" /> Meine Termine
+                <Badge variant="outline" className="ml-1">{events.length}</Badge>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">Heute und die nächsten 7 Tage.</p>
+            </div>
+            <Button asChild variant="ghost" size="sm" className="gap-1 shrink-0">
+              <Link to="/esc/kalender">Kalender <ArrowRight className="w-3.5 h-3.5" /></Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {loading ? (
+              [...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)
+            ) : events.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Keine Termine für dich geplant. 🗓️</p>
+            ) : events.map(e => (
+              <Link
+                key={e.id}
+                to="/esc/kalender"
+                className="flex items-center gap-3 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+              >
+                <div className="text-center shrink-0 w-14">
+                  <p className="text-[10px] uppercase text-muted-foreground">
+                    {format(new Date(e.start_at), 'EEE d.MM', { locale: de })}
+                  </p>
+                  <p className="text-sm font-semibold">
+                    {e.all_day ? 'ganztg.' : format(new Date(e.start_at), 'HH:mm')}
+                  </p>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{e.title || 'Termin'}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {e.customer_name || '—'}{e.location && ` · ${e.location}`}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Meine Aufgaben */}
+        <Card className="border-border">
+          <CardHeader className="flex flex-row items-start justify-between gap-3">
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <ListTodo className="w-5 h-5 text-primary" /> Meine Aufgaben
+                <Badge variant="outline" className="ml-1">{tasks.length}</Badge>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                {overdueTasks ? `${overdueTasks} überfällig – bitte zuerst erledigen.` : 'Offene Aufgaben, fälligste zuerst.'}
+              </p>
+            </div>
+            <Button asChild variant="ghost" size="sm" className="gap-1 shrink-0">
+              <Link to="/finance/collect/aufgaben">Alle <ArrowRight className="w-3.5 h-3.5" /></Link>
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {loading ? (
+              [...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)
+            ) : tasks.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Keine offenen Aufgaben – stark! ✅</p>
+            ) : tasks.map(t => {
+              const overdue = new Date(t.due_date) < new Date();
+              return (
+                <Link
+                  key={t.id}
+                  to="/finance/collect/aufgaben"
+                  className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{t.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{t.customer_name || '—'}</p>
+                  </div>
+                  <span className={`text-[11px] shrink-0 ${overdue ? 'text-red-400' : 'text-muted-foreground'}`}>
+                    {format(new Date(t.due_date), 'dd.MM.yyyy')}
+                  </span>
+                </Link>
+              );
+            })}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Benachrichtigungen */}
+      {notifications.length > 0 && (
+        <Card className="border-primary/30 bg-primary/[0.03]">
+          <CardHeader className="flex flex-row items-start justify-between gap-3">
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Bell className="w-5 h-5 text-primary" /> Für dich
+                <Badge variant="outline" className="ml-1">{notifications.length}</Badge>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">Ungelesene Benachrichtigungen.</p>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {notifications.map(n => (
+              <Link
+                key={n.id}
+                to={n.action_url || '#'}
+                className="flex items-start justify-between gap-3 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 hover:border-primary/40 hover:bg-primary/5 transition-colors"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{n.title}</p>
+                  {n.message && <p className="text-xs text-muted-foreground truncate">{n.message}</p>}
+                </div>
+                <span className="text-[11px] text-muted-foreground shrink-0">
+                  {formatDistanceToNow(new Date(n.created_at), { locale: de, addSuffix: true })}
+                </span>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Meine Tickets */}
       <TicketSection
@@ -206,7 +422,7 @@ export default function Startseite() {
         title="Warten auf einen Bearbeiter"
         icon={Inbox}
         subtitle="Diese Tickets haben noch niemanden – übernimm eines und starte."
-        tickets={unassigned.slice(0, 8)}
+        tickets={unassigned.slice(0, 6)}
         totalCount={unassigned.length}
         loading={loading}
         emptyText="Alles zugewiesen – starke Team-Leistung! 🎯"
@@ -215,30 +431,17 @@ export default function Startseite() {
         accent
       />
 
-      {/* Team */}
-      <TicketSection
-        title="Im Team in Bearbeitung"
-        icon={Users}
-        subtitle="Was Kolleg:innen gerade bearbeiten – transparente Übersicht."
-        tickets={otherOpen.slice(0, 6)}
-        totalCount={otherOpen.length}
-        loading={loading}
-        emptyText="Aktuell keine anderen Tickets in Team-Bearbeitung."
-        cta="Zur Ticket-Liste"
-        ctaHref="/tickets"
-      />
-
-      {/* Verlauf */}
+      {/* Mein Verlauf */}
       <Card className="border-border">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <HistoryIcon className="w-5 h-5 text-primary" /> Zuletzt bearbeitet
+              <HistoryIcon className="w-5 h-5 text-primary" /> Zuletzt von dir bearbeitet
             </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">Deine letzten Ticket-Aktivitäten im Team.</p>
+            <p className="text-sm text-muted-foreground mt-1">Deine letzten Ticket-Aktivitäten.</p>
           </div>
           <Button asChild variant="ghost" size="sm" className="gap-1">
-            <Link to="/tickets">Alle anzeigen <ArrowRight className="w-3.5 h-3.5" /></Link>
+            <Link to="/tickets?assigned=me">Alle anzeigen <ArrowRight className="w-3.5 h-3.5" /></Link>
           </Button>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -274,7 +477,30 @@ export default function Startseite() {
           ))}
         </CardContent>
       </Card>
+
+      {/* Team-Kontext (klein) */}
+      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+        <Users className="w-4 h-4" />
+        <span>Team gesamt: {tickets.length} offene Tickets</span>
+        <span className="flex items-center gap-1"><Flame className="w-3.5 h-3.5 text-red-400" /> {tickets.filter(t => t.priority === 'kritisch').length} kritisch</span>
+        <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {tickets.filter(t => t.sla_status === 'breach').length} SLA-verletzt</span>
+        <Button asChild variant="link" size="sm" className="h-auto p-0">
+          <Link to="/tickets/dashboard">Team-Dashboard</Link>
+        </Button>
+      </div>
     </div>
+  );
+}
+
+function QuickLink({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-2 rounded-xl border border-border bg-card/40 px-3 py-3 hover:border-primary/50 hover:bg-primary/5 transition-colors"
+    >
+      <Icon className="w-4 h-4 text-primary shrink-0" />
+      <span className="text-sm font-medium truncate">{label}</span>
+    </Link>
   );
 }
 
