@@ -78,6 +78,37 @@ export default function Auslieferungsfreigabe() {
   const [cfgOpen, setCfgOpen] = useState(false);
   const [rolesOpen, setRolesOpen] = useState(false);
   const [addAllBusy, setAddAllBusy] = useState(false);
+  const [opsBusy, setOpsBusy] = useState<string | null>(null);
+  const isSuperAdmin = !!hasAnyRole?.(['Super Admin']);
+
+  /** OPS FREI – Komplettfreigabe eines Auftrags nur durch den Super Admin */
+  const opsFrei = async (r: Row) => {
+    if (!isSuperAdmin) return;
+    const reason = window.prompt(
+      `OPS FREI – Komplettfreigabe für ${r.order_number ?? r.order_id.slice(0, 8)}.\nBitte Begründung eingeben (min. 5 Zeichen):`,
+      '',
+    );
+    if (!reason || reason.trim().length < 5) {
+      if (reason !== null) toast.error('Begründung zu kurz – Freigabe abgebrochen.');
+      return;
+    }
+    setOpsBusy(r.id);
+    try {
+      await opsRelease({
+        approval: r,
+        reason: reason.trim(),
+        userId: user?.id ?? null,
+        userName: profile?.full_name || user?.email || 'Super Admin',
+      });
+      toast.success('OPS FREI erteilt – Auftrag vollständig freigegeben.');
+      void load();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'OPS FREI fehlgeschlagen');
+    } finally {
+      setOpsBusy(null);
+    }
+  };
+
 
   /** Alle Aufträge ohne Freigabeprozess in die Auslieferungsfreigabe übernehmen */
   const addAllOrders = async () => {
