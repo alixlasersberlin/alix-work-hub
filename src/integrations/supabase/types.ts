@@ -34001,6 +34001,298 @@ export type Database = {
           },
         ]
       }
+      plm_manufacturer_documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          doc_type: string | null
+          document_number: string | null
+          file_url: string | null
+          id: string
+          manufacturer_id: string
+          notes: string | null
+          release_status: string | null
+          responsible: string | null
+          revision: string | null
+          title: string
+          updated_at: string
+          valid_until: string | null
+          version: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          doc_type?: string | null
+          document_number?: string | null
+          file_url?: string | null
+          id?: string
+          manufacturer_id: string
+          notes?: string | null
+          release_status?: string | null
+          responsible?: string | null
+          revision?: string | null
+          title: string
+          updated_at?: string
+          valid_until?: string | null
+          version?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          doc_type?: string | null
+          document_number?: string | null
+          file_url?: string | null
+          id?: string
+          manufacturer_id?: string
+          notes?: string | null
+          release_status?: string | null
+          responsible?: string | null
+          revision?: string | null
+          title?: string
+          updated_at?: string
+          valid_until?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_manufacturer_documents_manufacturer_id_fkey"
+            columns: ["manufacturer_id"]
+            isOneToOne: false
+            referencedRelation: "plm_manufacturers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_manufacturer_merges: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          parts_moved: number | null
+          performed_by: string | null
+          source_id: string | null
+          source_name: string | null
+          target_id: string | null
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          parts_moved?: number | null
+          performed_by?: string | null
+          source_id?: string | null
+          source_name?: string | null
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          parts_moved?: number | null
+          performed_by?: string | null
+          source_id?: string | null
+          source_name?: string | null
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_manufacturer_merges_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "plm_manufacturers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_manufacturer_suppliers: {
+        Row: {
+          created_at: string
+          currency: string | null
+          id: string
+          incoterms: string | null
+          is_preferred: boolean
+          lead_time_days: number | null
+          manufacturer_id: string
+          moq: number | null
+          notes: string | null
+          price: number | null
+          rating: number | null
+          response_time_hours: number | null
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          incoterms?: string | null
+          is_preferred?: boolean
+          lead_time_days?: number | null
+          manufacturer_id: string
+          moq?: number | null
+          notes?: string | null
+          price?: number | null
+          rating?: number | null
+          response_time_hours?: number | null
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          id?: string
+          incoterms?: string | null
+          is_preferred?: boolean
+          lead_time_days?: number | null
+          manufacturer_id?: string
+          moq?: number | null
+          notes?: string | null
+          price?: number | null
+          rating?: number | null
+          response_time_hours?: number | null
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_manufacturer_suppliers_manufacturer_id_fkey"
+            columns: ["manufacturer_id"]
+            isOneToOne: false
+            referencedRelation: "plm_manufacturers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_manufacturer_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "plm_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_manufacturers: {
+        Row: {
+          approval_status: string
+          audit_date: string | null
+          audit_status: string | null
+          cb_report: boolean
+          ce: boolean
+          cert_valid_until: string | null
+          city: string | null
+          contact_name: string | null
+          contact_position: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          fda: boolean
+          id: string
+          iec: boolean
+          is_active: boolean
+          is_critical: boolean
+          iso_13485: boolean
+          iso_14001: boolean
+          iso_22716: boolean
+          iso_45001: boolean
+          iso_9001: boolean
+          logo_url: string | null
+          manufacturer_code: string | null
+          name: string
+          name_normalized: string | null
+          next_audit_date: string | null
+          notes: string | null
+          phone: string | null
+          reach: boolean
+          rohs: boolean
+          short_name: string | null
+          street: string | null
+          ul: boolean
+          updated_at: string
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          approval_status?: string
+          audit_date?: string | null
+          audit_status?: string | null
+          cb_report?: boolean
+          ce?: boolean
+          cert_valid_until?: string | null
+          city?: string | null
+          contact_name?: string | null
+          contact_position?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          fda?: boolean
+          id?: string
+          iec?: boolean
+          is_active?: boolean
+          is_critical?: boolean
+          iso_13485?: boolean
+          iso_14001?: boolean
+          iso_22716?: boolean
+          iso_45001?: boolean
+          iso_9001?: boolean
+          logo_url?: string | null
+          manufacturer_code?: string | null
+          name: string
+          name_normalized?: string | null
+          next_audit_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          reach?: boolean
+          rohs?: boolean
+          short_name?: string | null
+          street?: string | null
+          ul?: boolean
+          updated_at?: string
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          approval_status?: string
+          audit_date?: string | null
+          audit_status?: string | null
+          cb_report?: boolean
+          ce?: boolean
+          cert_valid_until?: string | null
+          city?: string | null
+          contact_name?: string | null
+          contact_position?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          fda?: boolean
+          id?: string
+          iec?: boolean
+          is_active?: boolean
+          is_critical?: boolean
+          iso_13485?: boolean
+          iso_14001?: boolean
+          iso_22716?: boolean
+          iso_45001?: boolean
+          iso_9001?: boolean
+          logo_url?: string | null
+          manufacturer_code?: string | null
+          name?: string
+          name_normalized?: string | null
+          next_audit_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          reach?: boolean
+          rohs?: boolean
+          short_name?: string | null
+          street?: string | null
+          ul?: boolean
+          updated_at?: string
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       plm_part_suppliers: {
         Row: {
           approved: boolean
@@ -34091,16 +34383,19 @@ export type Database = {
           is_spare_part: boolean
           lead_time_days: number | null
           manufacturer: string | null
+          manufacturer_id: string | null
           manufacturer_part_number: string | null
           material: string | null
           moq: number | null
           name: string
           notes: string | null
           optical_power: string | null
+          original_part_number: string | null
           part_number: string
           photo_url: string | null
           power_w: number | null
           predecessor_id: string | null
+          predecessor_part_id: string | null
           price: number | null
           primary_supplier_id: string | null
           protection_class: string | null
@@ -34116,6 +34411,7 @@ export type Database = {
           stock_reorder: number | null
           stock_target: number | null
           successor_id: string | null
+          successor_part_id: string | null
           supplier_part_number: string | null
           surface: string | null
           temperature_range: string | null
@@ -34153,16 +34449,19 @@ export type Database = {
           is_spare_part?: boolean
           lead_time_days?: number | null
           manufacturer?: string | null
+          manufacturer_id?: string | null
           manufacturer_part_number?: string | null
           material?: string | null
           moq?: number | null
           name: string
           notes?: string | null
           optical_power?: string | null
+          original_part_number?: string | null
           part_number: string
           photo_url?: string | null
           power_w?: number | null
           predecessor_id?: string | null
+          predecessor_part_id?: string | null
           price?: number | null
           primary_supplier_id?: string | null
           protection_class?: string | null
@@ -34178,6 +34477,7 @@ export type Database = {
           stock_reorder?: number | null
           stock_target?: number | null
           successor_id?: string | null
+          successor_part_id?: string | null
           supplier_part_number?: string | null
           surface?: string | null
           temperature_range?: string | null
@@ -34215,16 +34515,19 @@ export type Database = {
           is_spare_part?: boolean
           lead_time_days?: number | null
           manufacturer?: string | null
+          manufacturer_id?: string | null
           manufacturer_part_number?: string | null
           material?: string | null
           moq?: number | null
           name?: string
           notes?: string | null
           optical_power?: string | null
+          original_part_number?: string | null
           part_number?: string
           photo_url?: string | null
           power_w?: number | null
           predecessor_id?: string | null
+          predecessor_part_id?: string | null
           price?: number | null
           primary_supplier_id?: string | null
           protection_class?: string | null
@@ -34240,6 +34543,7 @@ export type Database = {
           stock_reorder?: number | null
           stock_target?: number | null
           successor_id?: string | null
+          successor_part_id?: string | null
           supplier_part_number?: string | null
           surface?: string | null
           temperature_range?: string | null
@@ -34267,8 +34571,22 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "plm_parts_manufacturer_id_fkey"
+            columns: ["manufacturer_id"]
+            isOneToOne: false
+            referencedRelation: "plm_manufacturers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "plm_parts_predecessor_id_fkey"
             columns: ["predecessor_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_parts_predecessor_part_id_fkey"
+            columns: ["predecessor_part_id"]
             isOneToOne: false
             referencedRelation: "plm_parts"
             referencedColumns: ["id"]
@@ -34283,6 +34601,13 @@ export type Database = {
           {
             foreignKeyName: "plm_parts_successor_id_fkey"
             columns: ["successor_id"]
+            isOneToOne: false
+            referencedRelation: "plm_parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_parts_successor_part_id_fkey"
+            columns: ["successor_part_id"]
             isOneToOne: false
             referencedRelation: "plm_parts"
             referencedColumns: ["id"]
@@ -48255,6 +48580,11 @@ export type Database = {
         }[]
       }
       plm_can_write: { Args: never; Returns: boolean }
+      plm_merge_manufacturers: {
+        Args: { p_source: string; p_target: string }
+        Returns: number
+      }
+      plm_normalize_manufacturer: { Args: { p: string }; Returns: string }
       process_scheduled_grants: { Args: never; Returns: Json }
       qr_reference_check_digit: { Args: { _body: string }; Returns: string }
       recompute_device_health: { Args: { _serial: string }; Returns: undefined }
