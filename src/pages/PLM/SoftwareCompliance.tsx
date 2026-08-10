@@ -45,6 +45,13 @@ export default function SoftwareCompliance() {
   const [releases, setReleases] = useState<any[]>([]);
   const [team, setTeam] = useState<any[]>([]);
   const [hwDocs, setHwDocs] = useState<any[]>([]);
+  const [soup, setSoup] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [anomalies, setAnomalies] = useState<any[]>([]);
+  const [problems, setProblems] = useState<any[]>([]);
+  const [measures, setMeasures] = useState<any[]>([]);
+  const [classification, setClassification] = useState<any[]>([]);
+  const [signatures, setSignatures] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
