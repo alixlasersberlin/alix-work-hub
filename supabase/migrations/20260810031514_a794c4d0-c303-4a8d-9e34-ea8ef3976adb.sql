@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS public.uq_production_orders_one_regular_per_order;
+ALTER TABLE public.production_orders DROP CONSTRAINT IF EXISTS uq_production_orders_one_regular_per_order;
