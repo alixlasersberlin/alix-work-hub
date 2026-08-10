@@ -290,12 +290,6 @@ export const navItems: NavItem[] = [
           { path: '/bonitaet/richtlinien', label: 'Richtlinien', icon: ShieldCheck, roles: ['Super Admin'] },
         ],
       },
-    ],
-  },
-  {
-    path: '/auftragsverwaltung', label: 'EINKAUF', icon: ClipboardList,
-    roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'],
-    children: [
       {
         path: '/auftraege-gruppe', label: 'AUFTRAGS STATUS', icon: ClipboardList, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'],
         children: [
@@ -306,6 +300,12 @@ export const navItems: NavItem[] = [
           { path: '/teilgeliefert', label: 'Teilgeliefert', icon: PackageCheck, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'SACHBEARBEITUNG'] },
         ],
       },
+    ],
+  },
+  {
+    path: '/auftragsverwaltung', label: 'EINKAUF', icon: ClipboardList,
+    roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen', 'Read Only Audit', 'Read Only', 'Geschäftsführung', 'Marketing', 'Technik', 'Kundenservice', 'Vertrieb', 'Reparaturannahme', 'Serviceleitung', 'Service', 'QM', 'SACHBEARBEITUNG'],
+    children: [
       {
         path: '/auftragsverwaltung/bestellungen', label: 'BESTELLWESEN', icon: ShoppingCart, roles: ['Admin', 'Super Admin', 'Auftragsverwaltung', 'Order', 'Tourenplanung', 'Finance', 'Österreich', 'Lieferant', 'FACTORY INVOICE', 'Bestellwesen', 'SACHBEARBEITUNG'],
         children: [
