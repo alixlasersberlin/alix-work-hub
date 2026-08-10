@@ -88,13 +88,34 @@ export default function Auslieferungsfreigabe() {
     const list = (data ?? []) as Row[];
     const ids = list.map((r) => r.order_id);
     if (ids.length) {
-      const { data: orders } = await db.from('orders').select('id, order_number, order_status, total_amount').in('id', ids);
+      const { data: orders } = await db
+        .from('orders')
+        .select('id, order_number, order_status, total_amount, customers:customer_id(company_name, contact_name, email, phone)')
+        .in('id', ids);
       const map = new Map((orders ?? []).map((o: any) => [o.id, o]));
+      const numbers = (orders ?? []).map((o: any) => o.order_number).filter(Boolean);
+      const invMap = new Map<string, string[]>();
+      if (numbers.length) {
+        const { data: inv } = await db
+          .from('zoho_invoices')
+          .select('invoice_number, reference_number')
+          .in('reference_number', numbers)
+          .limit(2000);
+        for (const i of (inv ?? []) as any[]) {
+          if (!i.reference_number || !i.invoice_number) continue;
+          invMap.set(i.reference_number, [...(invMap.get(i.reference_number) ?? []), i.invoice_number]);
+        }
+      }
       for (const r of list) {
         const o: any = map.get(r.order_id);
+        const c: any = o?.customers ?? {};
         r.order_number = o?.order_number ?? null;
         r.order_status = o?.order_status ?? null;
         r.total_amount = o?.total_amount ?? null;
+        r.customer_name = c.company_name || c.contact_name || null;
+        r.customer_email = c.email ?? null;
+        r.customer_phone = c.phone ?? null;
+        r.invoice_numbers = invMap.get(o?.order_number) ?? [];
       }
     }
     setRows(list);
@@ -110,17 +131,51 @@ export default function Auslieferungsfreigabe() {
     void fetchApprovalSettings().then(setCfg).catch(() => {});
   }, []);
 
-  /** Aufträge ohne gestarteten Freigabeprozess laden */
+  /** Aufträge ohne gestarteten Freigabeprozess laden – Suche über Auftrags-/Rechnungsnummer, Name & Kontakt */
   const loadRequestCandidates = async (search: string) => {
-    let query = db
-      .from('orders')
-      .select('id, order_number, customer_name, order_status')
-      .order('created_at', { ascending: false })
-      .limit(200);
-    if (search.trim()) query = query.ilike('order_number', `%${search.trim()}%`);
-    const { data } = await query;
+    const term = search.trim();
+    const sel = 'id, order_number, order_status, customer_id, customers:customer_id(company_name, contact_name, email, phone)';
+    let rowsOut: any[] = [];
+
+    if (!term) {
+      const { data } = await db.from('orders').select(sel).order('created_at', { ascending: false }).limit(200);
+      rowsOut = (data ?? []) as any[];
+    } else {
+      const like = `%${term}%`;
+      const [custRes, invRes] = await Promise.all([
+        db.from('customers')
+          .select('id')
+          .or(`company_name.ilike.${like},contact_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`)
+          .limit(200),
+        db.from('zoho_invoices')
+          .select('reference_number')
+          .or(`invoice_number.ilike.${like},reference_number.ilike.${like}`)
+          .limit(200),
+      ]);
+      const custIds = ((custRes.data ?? []) as any[]).map((c) => c.id);
+      const refs = Array.from(
+        new Set(((invRes.data ?? []) as any[]).map((i) => i.reference_number).filter(Boolean)),
+      );
+
+      const queries = [
+        db.from('orders').select(sel).ilike('order_number', like).limit(100),
+        custIds.length ? db.from('orders').select(sel).in('customer_id', custIds).limit(200) : null,
+        refs.length ? db.from('orders').select(sel).in('order_number', refs).limit(200) : null,
+      ].filter(Boolean) as any[];
+
+      const results = await Promise.all(queries);
+      const seen = new Set<string>();
+      for (const res of results) {
+        for (const o of ((res?.data ?? []) as any[])) {
+          if (seen.has(o.id)) continue;
+          seen.add(o.id);
+          rowsOut.push(o);
+        }
+      }
+    }
+
     const existing = new Set(rows.map((r) => r.order_id));
-    setReqRows(((data ?? []) as any[]).filter((o) => !existing.has(o.id)));
+    setReqRows(rowsOut.filter((o) => !existing.has(o.id)));
   };
 
   const exportEscalations = () => {
