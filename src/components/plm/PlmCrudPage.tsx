@@ -160,12 +160,15 @@ export function PlmCrudPage({
   function cellValue(f: PlmField, row: any) {
     const v = row[f.key];
     if (f.type === 'ref') return refText(f, v);
+    if (f.type === 'image') return <PlmThumb value={v} />;
+    if (f.type === 'file') return v ? 'Datei' : '—';
     if (f.type === 'boolean') return v ? 'Ja' : 'Nein';
     if (f.type === 'tags') return Array.isArray(v) ? v.join(', ') : '—';
     if (f.type === 'select') return statusBadge(v);
     if (v === null || v === undefined || v === '') return '—';
     return String(v);
   }
+
 
   return (
     <div className="container max-w-[1600px] py-6 space-y-6">
