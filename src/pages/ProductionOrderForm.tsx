@@ -593,23 +593,21 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           toast.info(`${Object.keys(reservedByItemId).length} Position(en) bereits im Lager reserviert – aus Bestellung ausgenommen: ${skipped}`);
         }
 
-        // Sperre: pro Auftrag nur EINE reguläre Produktionsbestellung (Reklamationen ausgenommen)
+        // Mehrfachbestellungen pro Auftrag sind erlaubt – es wird nur darauf hingewiesen.
         if (!isReclamation) {
           const { data: existing } = await supabase
             .from('production_orders')
             .select('id, production_order_number')
             .eq('order_id', selectedOrder.id)
-            .eq('is_reclamation', false)
-            .limit(1);
+            .eq('is_reclamation', false);
           if (existing && existing.length > 0) {
-            savingRef.current = false;
-            setSaving(false);
-            toast.error(
-              `Für Auftrag ${selectedOrder.order_number} existiert bereits eine Produktionsbestellung (${existing[0].production_order_number ?? ''}). Pro Auftrag ist nur eine Bestellung erlaubt.`,
+            const nums = existing.map(e => e.production_order_number).filter(Boolean).join(', ');
+            toast.info(
+              `Hinweis: Für Auftrag ${selectedOrder.order_number} existiert bereits ${existing.length} Bestellung(en)${nums ? ` (${nums})` : ''}. Diese wird als ${existing.length + 1}. Bestellung angelegt.`,
             );
-            return null;
           }
         }
+
 
         // Idempotenz: kein doppeltes Erfassen derselben Bestellung innerhalb von 30 s
         const since = new Date(Date.now() - 30_000).toISOString();
