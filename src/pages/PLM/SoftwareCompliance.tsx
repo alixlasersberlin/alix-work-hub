@@ -68,9 +68,11 @@ export default function SoftwareCompliance() {
     if (!deviceId) return;
     setLoading(true);
     const f = (t: string) => (supabase.from(t as any) as any).select('*').eq('device_id', deviceId).limit(2000);
-    const [u, r, rk, t, b, rel, tm, hw] = await Promise.all([
+    const [u, r, rk, t, b, rel, tm, hw, sp, pl, an, pr, ms, cl, sg] = await Promise.all([
       f('plm_sw_units'), f('plm_sw_requirements'), f('plm_sw_risks'), f('plm_sw_tests'),
       f('plm_sw_bugs'), f('plm_sw_releases'), f('plm_sw_team'), f('plm_hw_docs'),
+      f('plm_sw_soup'), f('plm_sw_plans'), f('plm_sw_anomalies'), f('plm_sw_problems'),
+      f('plm_sw_risk_measures'), f('plm_sw_classification'), f('plm_sw_signatures'),
     ]);
     setUnits((u.data as any[]) || []);
     setReqs((r.data as any[]) || []);
@@ -80,6 +82,13 @@ export default function SoftwareCompliance() {
     setReleases((rel.data as any[]) || []);
     setTeam((tm.data as any[]) || []);
     setHwDocs((hw.data as any[]) || []);
+    setSoup((sp.data as any[]) || []);
+    setPlans((pl.data as any[]) || []);
+    setAnomalies((an.data as any[]) || []);
+    setProblems((pr.data as any[]) || []);
+    setMeasures((ms.data as any[]) || []);
+    setClassification((cl.data as any[]) || []);
+    setSignatures((sg.data as any[]) || []);
     setLoading(false);
   }, [deviceId]);
   useEffect(() => { load(); }, [load]);
