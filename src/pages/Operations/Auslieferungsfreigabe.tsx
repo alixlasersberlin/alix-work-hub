@@ -21,7 +21,7 @@ import { STAGES, STATUS_UI, OVERALL_UI, SLA_HOURS, type ApprovalStage } from '@/
 import {
   slaLevel, fetchEvents, bulkApproveStage, fetchEscalationStats, fetchEscalationSeries, fetchStageDurations, type StageDuration,
   fetchStageDurationTrend, type StageDurationMonth,
-  bulkStartApprovals,
+  bulkStartApprovals, opsRelease,
   type DeliveryApproval, type EscalationStat, type EscalationMonth,
 } from '@/lib/delivery-approval/api';
 import { autoFinalizeRelease } from '@/lib/delivery-approval/autofinalize';
@@ -78,6 +78,37 @@ export default function Auslieferungsfreigabe() {
   const [cfgOpen, setCfgOpen] = useState(false);
   const [rolesOpen, setRolesOpen] = useState(false);
   const [addAllBusy, setAddAllBusy] = useState(false);
+  const [opsBusy, setOpsBusy] = useState<string | null>(null);
+  const isSuperAdmin = !!hasAnyRole?.(['Super Admin']);
+
+  /** OPS FREI – Komplettfreigabe eines Auftrags nur durch den Super Admin */
+  const opsFrei = async (r: Row) => {
+    if (!isSuperAdmin) return;
+    const reason = window.prompt(
+      `OPS FREI – Komplettfreigabe für ${r.order_number ?? r.order_id.slice(0, 8)}.\nBitte Begründung eingeben (min. 5 Zeichen):`,
+      '',
+    );
+    if (!reason || reason.trim().length < 5) {
+      if (reason !== null) toast.error('Begründung zu kurz – Freigabe abgebrochen.');
+      return;
+    }
+    setOpsBusy(r.id);
+    try {
+      await opsRelease({
+        approval: r,
+        reason: reason.trim(),
+        userId: user?.id ?? null,
+        userName: profile?.full_name || user?.email || 'Super Admin',
+      });
+      toast.success('OPS FREI erteilt – Auftrag vollständig freigegeben.');
+      void load();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'OPS FREI fehlgeschlagen');
+    } finally {
+      setOpsBusy(null);
+    }
+  };
+
 
   /** Alle Aufträge ohne Freigabeprozess in die Auslieferungsfreigabe übernehmen */
   const addAllOrders = async () => {
@@ -720,6 +751,19 @@ export default function Auslieferungsfreigabe() {
                 <span className="ml-auto text-xs text-muted-foreground">
                   {new Date(r.created_at).toLocaleDateString('de-DE')}
                 </span>
+                {isSuperAdmin && r.overall_status !== 'released' && r.overall_status !== 'delivered' && r.overall_status !== 'completed' && (
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="h-8"
+                    disabled={opsBusy === r.id}
+                    title="OPS FREI – Komplettfreigabe durch Super Admin"
+                    onClick={() => opsFrei(r)}
+                  >
+                    <ShieldCheck className="h-4 w-4 mr-1" />
+                    {opsBusy === r.id ? 'Freigabe…' : 'OPS FREI'}
+                  </Button>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
@@ -734,6 +778,7 @@ export default function Auslieferungsfreigabe() {
                 >
                   <FileDown className="h-4 w-4" />
                 </Button>
+
               </div>
             );
           })}
