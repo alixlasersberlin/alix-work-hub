@@ -1215,7 +1215,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           <div>
             <Label>Farbe {!isReclamation && '*'}</Label>
             {(() => {
-              const FARBEN = ['Blau - Gold','Weiss - Gold','Schwarz - Gold','Pink - Gold','Rot - Gold','Weiss','Schwarz','Blau'];
+              const FARBEN = ['Blau - Gold','Weiss - Gold','Schwarz - Gold','Pink - Gold','Rot - Gold','Weiss','Schwarz','Blau','White / Silver','White / Black','White / Gold'];
               const isPreset = FARBEN.includes(form.farbe);
               const selectValue = form.farbe === '' ? '' : (isPreset ? form.farbe : '__free__');
               return (
