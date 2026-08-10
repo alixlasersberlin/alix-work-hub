@@ -442,6 +442,3 @@ verify_jwt = false
 
 [functions.delivery-approval-roles]
 verify_jwt = true
-
-[functions.plm-seed-upload]
-verify_jwt = false
