@@ -301,11 +301,12 @@ export default function Auslieferungsfreigabe() {
 
   const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== 'all' && r.overall_status !== filter) return false;
+    if (statusTab !== 'all' && (r.order_status ?? '').toLowerCase() !== statusTab.toLowerCase()) return false;
     if (!q.trim()) return true;
     const s = q.trim().toLowerCase();
     return [r.order_number, r.customer_name, r.customer_email, r.customer_phone, ...(r.invoice_numbers ?? [])]
       .some((v) => (v ?? '').toString().toLowerCase().includes(s));
-  }), [rows, q, filter]);
+  }), [rows, q, filter, statusTab]);
 
   const kpi = useMemo(() => {
     const avg = (vals: (number | null)[]) => {
