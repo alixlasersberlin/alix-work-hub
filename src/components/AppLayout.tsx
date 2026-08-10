@@ -442,18 +442,14 @@ export default function AppLayout() {
     const initialId = isOrdersRoute
       ? window.setTimeout(() => { if (!cancelled) load(); }, 5000)
       : ric(() => { if (!cancelled) load(); });
-    const intervalId = window.setInterval(load, 15 * 60 * 1000);
+    const intervalId = window.setInterval(load, 60 * 1000);
     let debounceId: number | undefined;
-    let lastRun = 0;
     const scheduleReload = () => {
       if (debounceId) window.clearTimeout(debounceId);
-      // Debounce 5s + max. 1 Aktualisierung pro 60s (Bursts bei Import/Batch-Updates abfangen)
-      debounceId = window.setTimeout(() => {
-        if (Date.now() - lastRun < 60 * 1000) return;
-        lastRun = Date.now();
-        void load();
-      }, 5000);
+      // Echtzeit: nur kurzes Debounce, um Bursts zu bündeln
+      debounceId = window.setTimeout(() => { void load(); }, 500);
     };
+
     const onRefresh = () => scheduleReload();
     window.addEventListener('einkauf-counts-refresh', onRefresh);
 
@@ -471,17 +467,26 @@ export default function AppLayout() {
       .channel('menu_counts_lager_devices')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lager_devices' }, scheduleReload)
       .subscribe();
+    const chNotes = supabase
+      .channel('menu_counts_order_notes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_notes' }, scheduleReload)
+      .subscribe();
+    const onVisible = () => { if (document.visibilityState === 'visible') scheduleReload(); };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
       if (isOrdersRoute) window.clearTimeout(initialId);
       else cic(initialId);
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
+      document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('einkauf-counts-refresh', onRefresh);
       supabase.removeChannel(chProd);
       supabase.removeChannel(chOrders);
       supabase.removeChannel(chLager);
+      supabase.removeChannel(chNotes);
     };
+
 
   }, [atOnly, isOrdersRoute]);
 
