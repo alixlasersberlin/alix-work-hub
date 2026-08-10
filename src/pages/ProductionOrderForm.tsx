@@ -76,6 +76,40 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   // Ersatzteil-Modus: Farbe und Power sind bei reinen Ersatzteilbestellungen nicht sinnvoll.
   const [isSpareParts, setIsSpareParts] = useState(false);
 
+  /** Liefertermin-Vorgabe: heute + 4 Wochen (ISO yyyy-mm-dd). */
+  const defaultLiefertermin = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 28);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const FARB_OPTIONEN = ['Blau - Gold', 'Weiss - Gold', 'Schwarz - Gold', 'Pink - Gold', 'Rot - Gold', 'Weiss', 'Schwarz', 'Blau'];
+  const POWER_OPTIONEN = ['800W', '1200W', '1600W', '2000W', '2400W', '3000W', '5000W'];
+
+  /** Übernimmt alle verfügbaren Artikeldaten in das Formular + Liefertermin heute + 4 Wochen. */
+  const applyItemToForm = (item: any, fallbackName?: string) => {
+    const name: string = item?.item_name || item?.name || fallbackName || '';
+    const haystack = `${name} ${item?.description ?? ''}`.toLowerCase();
+    const farbe = FARB_OPTIONEN.find((f) => haystack.includes(f.toLowerCase()))
+      ?? FARB_OPTIONEN.find((f) => !f.includes('-') && haystack.includes(f.toLowerCase()))
+      ?? '';
+    const power = POWER_OPTIONEN.find((p) => haystack.replace(/\s+/g, '').includes(p.toLowerCase())) ?? '';
+
+    setForm((f) => ({
+      ...f,
+      modellname: name,
+      farbe: farbe || f.farbe,
+      power_handstueck: power || f.power_handstueck,
+      supplier_id: (item?.primary_supplier_id && suppliers.some((s: any) => s.id === item.primary_supplier_id))
+        ? item.primary_supplier_id
+        : f.supplier_id,
+      anmerkungen: f.anmerkungen || (item?.description ?? ''),
+      liefertermin: defaultLiefertermin(),
+    }));
+    if (item?.is_spare_part) setIsSpareParts(true);
+  };
+
+
   // Load suppliers
   useEffect(() => {
     supabase.from('suppliers').select('*').eq('is_active', true).order('name')
@@ -83,18 +117,18 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   }, []);
 
   // Load all items (zoho_items) for Modellname picker
-  const [zohoItems, setZohoItems] = useState<Array<{ item_name: string; sku: string | null }>>([]);
+  const [zohoItems, setZohoItems] = useState<Array<any>>([]);
   const [modelOpen, setModelOpen] = useState(false);
   const [modelSearch, setModelSearch] = useState('');
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from('zoho_items')
-        .select('name, sku')
+        .select('name, sku, description, is_spare_part, primary_supplier_id, lead_time_days, serial_required, category_name, product_type, brand')
         .not('name', 'is', null)
         .order('name')
         .limit(5000);
-      setZohoItems(((data || []) as any[]).map((r) => ({ item_name: r.name, sku: r.sku })));
+      setZohoItems(((data || []) as any[]).map((r) => ({ ...r, item_name: r.name })));
     })();
   }, []);
 
@@ -1047,7 +1081,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
                         <button
                           type="button"
                           onClick={() => {
-                            setForm({ ...form, modellname: modelSearch.trim() });
+                            applyItemToForm(null, modelSearch.trim());
                             setModelOpen(false);
                             setModelSearch('');
                           }}
@@ -1065,7 +1099,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
                         <CommandItem
                           value={`__new__ ${modelSearch.trim()}`}
                           onSelect={() => {
-                            setForm({ ...form, modellname: modelSearch.trim() });
+                            applyItemToForm(null, modelSearch.trim());
                             setModelOpen(false);
                             setModelSearch('');
                           }}
@@ -1082,7 +1116,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
                             key={m}
                             value={m}
                             onSelect={() => {
-                              setForm({ ...form, modellname: m });
+                              applyItemToForm(zohoItems.find((z) => (z.item_name || '').toLowerCase() === m.toLowerCase()) ?? null, m);
                               setModelOpen(false);
                               setModelSearch('');
                             }}
@@ -1100,7 +1134,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
                             key={`${it.item_name}-${idx}`}
                             value={`${it.item_name} ${it.sku || ''}`}
                             onSelect={() => {
-                              setForm({ ...form, modellname: it.item_name });
+                              applyItemToForm(it);
                               setModelOpen(false);
                               setModelSearch('');
                             }}
