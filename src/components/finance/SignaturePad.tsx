@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 interface Props {
   onChange: (dataUrl: string | null) => void;
   height?: number;
+  strokeColor?: string;
 }
 
 /** Einfaches Unterschriftenfeld (Maus + Touch), liefert PNG-DataURL. */
-export default function SignaturePad({ onChange, height = 160 }: Props) {
+export default function SignaturePad({ onChange, height = 160, strokeColor = '#22c55e' }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const [empty, setEmpty] = useState(true);
@@ -22,10 +23,10 @@ export default function SignaturePad({ onChange, height = 160 }: Props) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.scale(ratio, ratio);
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#111827';
-  }, [height]);
+    ctx.strokeStyle = strokeColor;
+  }, [height, strokeColor]);
 
   const pos = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
