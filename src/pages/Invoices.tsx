@@ -562,27 +562,23 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
     const cols = 'id, created_at, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
     // PostgREST liefert max. 1000 Zeilen je Request.
-    // Erste Seite mit exaktem Count holen, danach alle weiteren Seiten PARALLEL
-    // (Index auf id DESC vorhanden -> flache Offsets, kein Full-Sort).
+    // Seiten werden spekulativ PARALLEL (6 gleichzeitig) geladen, statt nacheinander.
     const fetchAllPages = async (build: () => any, page = 1000, max = 40000) => {
-      const first = await build().order('id', { ascending: false }).range(0, page - 1);
-      if (first.error) return { data: [], error: first.error };
-      const total = Math.min(first.count ?? (first.data?.length ?? 0), max);
-      const out: any[] = [...(first.data ?? [])];
-      if (total <= out.length) return { data: out, error: null };
-
-      const starts: number[] = [];
-      for (let s = page; s < total; s += page) starts.push(s);
-
-      for (let i = 0; i < starts.length; i += 6) {
-        const batch = starts.slice(i, i + 6);
+      const out: any[] = [];
+      let start = 0;
+      let done = false;
+      while (!done && out.length < max) {
+        const starts = [0, 1, 2, 3, 4, 5].map((k) => start + k * page);
         const res = await Promise.all(
-          batch.map((s) => build().order('id', { ascending: false }).range(s, Math.min(s + page - 1, total - 1))),
+          starts.map((s) => build().order('id', { ascending: false }).range(s, s + page - 1)),
         );
         for (const r of res) {
           if (r.error) return { data: out, error: r.error };
-          out.push(...(r.data ?? []));
+          const rows = r.data ?? [];
+          out.push(...rows);
+          if (rows.length < page) { done = true; break; }
         }
+        start += starts.length * page;
       }
       return { data: out, error: null };
     };
@@ -593,9 +589,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       fetchAllPages(() => withTenant((supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).eq('is_mietkauf', mietkaufOnly))),
       includeUnpaid && !mietkaufOnly
         ? fetchAllPages(() => (supabase.from('zoho_unpaid_invoices') as any)
-            .select('id, created_at, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw'))
+            .select('id, created_at, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw_customer_id:raw->customer_id'))
         : Promise.resolve({ data: [], error: null } as any),
     ]);
+
 
     if (inv.error || rec.error) {
       if (showError) {
