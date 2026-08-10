@@ -679,6 +679,25 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         setPendingSnapshotIds([]);
       } catch { /* nicht blockierend */ }
     }
+    // Optional: Auftrag nach der Bestellung aus dem Bestellwesen („Bestellung möglich") entfernen
+    if (poId && removeFromBestellwesen && selectedOrder?.id) {
+      try {
+        const { data: existingNote } = await supabase
+          .from('order_notes')
+          .select('id')
+          .eq('order_id', selectedOrder.id)
+          .eq('note_type', FREI_HIDDEN_NOTE)
+          .limit(1);
+        if (!existingNote || existingNote.length === 0) {
+          await supabase.from('order_notes').insert({
+            order_id: selectedOrder.id,
+            note_type: FREI_HIDDEN_NOTE,
+            note_text: 'Nach Bestellung aus „Bestellung möglich" entfernt.',
+            is_internal: true,
+          });
+        }
+      } catch { /* nicht blockierend */ }
+    }
     savingRef.current = false;
     setSaving(false);
     return poId || null;
