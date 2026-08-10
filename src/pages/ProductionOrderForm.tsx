@@ -745,7 +745,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const downloadPdfWith = async (lang: 'bilingual' | 'en') => {
     const poId = await persist();
     if (!poId) return;
-    if (!(await ensureApproved(poId))) return;
+    if (!(await ensureApproved(poId))) { navigate(basePath); return; }
     const pdf = await buildPdf(lang, poId);
     if (pdf) {
       const url = URL.createObjectURL(pdf.blob);
@@ -762,10 +762,11 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const onSaveAndSend = async () => {
     const poId = await persist();
     if (!poId) return;
-    if (!(await ensureApproved(poId))) return;
+    if (!(await ensureApproved(poId))) { navigate(basePath); return; }
     const pdf = await buildPdf('bilingual', poId);
     const supplier = suppliers.find(s => s.id === form.supplier_id);
-    if (!pdf || !supplier || !selectedOrder) return;
+    if (!pdf || !supplier || !selectedOrder) { navigate(basePath); return; }
+
 
     const recipients = [supplier.email, supplier.email_secondary]
       .map((e: string | null | undefined) => (e || '').trim())
