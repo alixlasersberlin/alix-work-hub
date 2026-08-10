@@ -205,20 +205,31 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const [revisions, setRevisions] = useState<Record<string, RevisionEntry>>({});
   const [revisionBusyId, setRevisionBusyId] = useState<string | null>(null);
 
-  const loadRevisions = async (ids: string[]) => {
-    if (!ids.length) return;
-    const map: Record<string, RevisionEntry> = {};
-    for (let i = 0; i < ids.length; i += 150) {
-      const chunk = ids.slice(i, i + 150);
-      const { data } = await (supabase.from('finance_invoice_revisions') as any)
-        .select('invoice_id, revised_at, revised_by_name, is_revision')
-        .in('invoice_id', chunk);
-      for (const row of (data ?? [])) {
-        if (row.is_revision) map[row.invoice_id] = { revised_at: row.revised_at, revised_by_name: row.revised_by_name };
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const map: Record<string, RevisionEntry> = {};
+      let cursor: string | null = null;
+      for (let i = 0; i < 20; i++) {
+        let q: any = (supabase.from('finance_invoice_revisions') as any)
+          .select('id, invoice_id, revised_at, revised_by_name')
+          .eq('is_revision', true)
+          .order('id', { ascending: false })
+          .limit(1000);
+        if (cursor) q = q.lt('id', cursor);
+        const { data, error } = await q;
+        if (error) break;
+        const list = data ?? [];
+        for (const row of list) map[row.invoice_id] = { revised_at: row.revised_at, revised_by_name: row.revised_by_name };
+        if (list.length < 1000) break;
+        cursor = list[list.length - 1]?.id ?? null;
+        if (!cursor) break;
       }
-    }
-    setRevisions(map);
-  };
+      if (!cancelled) setRevisions(map);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
 
   const toggleRevision = async (r: Row, next: boolean) => {
     setRevisionBusyId(r.id);
