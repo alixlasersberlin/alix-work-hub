@@ -32,6 +32,14 @@ export default function PlmExplosionszeichnungen() {
   const [form, setForm] = useState<any>({});
   const [pending, setPending] = useState<{ x: number; y: number } | null>(null);
   const [posForm, setPosForm] = useState<any>({ part_id: '', label: '', quantity: 1 });
+  const [selectedUrl, setSelectedUrl] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+    resolvePlmUrl(selected?.image_url).then(u => { if (alive) setSelectedUrl(u); });
+    return () => { alive = false; };
+  }, [selected?.image_url]);
+
 
   async function loadAll() {
     setLoading(true);
