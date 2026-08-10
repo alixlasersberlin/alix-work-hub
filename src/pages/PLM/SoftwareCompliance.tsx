@@ -45,6 +45,13 @@ export default function SoftwareCompliance() {
   const [releases, setReleases] = useState<any[]>([]);
   const [team, setTeam] = useState<any[]>([]);
   const [hwDocs, setHwDocs] = useState<any[]>([]);
+  const [soup, setSoup] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [anomalies, setAnomalies] = useState<any[]>([]);
+  const [problems, setProblems] = useState<any[]>([]);
+  const [measures, setMeasures] = useState<any[]>([]);
+  const [classification, setClassification] = useState<any[]>([]);
+  const [signatures, setSignatures] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -61,9 +68,11 @@ export default function SoftwareCompliance() {
     if (!deviceId) return;
     setLoading(true);
     const f = (t: string) => (supabase.from(t as any) as any).select('*').eq('device_id', deviceId).limit(2000);
-    const [u, r, rk, t, b, rel, tm, hw] = await Promise.all([
+    const [u, r, rk, t, b, rel, tm, hw, sp, pl, an, pr, ms, cl, sg] = await Promise.all([
       f('plm_sw_units'), f('plm_sw_requirements'), f('plm_sw_risks'), f('plm_sw_tests'),
       f('plm_sw_bugs'), f('plm_sw_releases'), f('plm_sw_team'), f('plm_hw_docs'),
+      f('plm_sw_soup'), f('plm_sw_plans'), f('plm_sw_anomalies'), f('plm_sw_problems'),
+      f('plm_sw_risk_measures'), f('plm_sw_classification'), f('plm_sw_signatures'),
     ]);
     setUnits((u.data as any[]) || []);
     setReqs((r.data as any[]) || []);
@@ -73,6 +82,13 @@ export default function SoftwareCompliance() {
     setReleases((rel.data as any[]) || []);
     setTeam((tm.data as any[]) || []);
     setHwDocs((hw.data as any[]) || []);
+    setSoup((sp.data as any[]) || []);
+    setPlans((pl.data as any[]) || []);
+    setAnomalies((an.data as any[]) || []);
+    setProblems((pr.data as any[]) || []);
+    setMeasures((ms.data as any[]) || []);
+    setClassification((cl.data as any[]) || []);
+    setSignatures((sg.data as any[]) || []);
     setLoading(false);
   }, [deviceId]);
   useEffect(() => { load(); }, [load]);
@@ -88,6 +104,18 @@ export default function SoftwareCompliance() {
     const openBugs = bugs.filter(b => !['geschlossen', 'abgelehnt', 'verifiziert'].includes(b.status)).length;
     const latest = [...releases].sort((a, b) =>
       String(b.release_date || '').localeCompare(String(a.release_date || '')))[0];
+    const planOk = (k: string) => plans.some(p => p.plan_kind === k && p.status === 'freigegeben');
+    const soupOpen = soup.filter(s => !s.risk_assessment || !s.anomaly_evaluation || s.status === 'in_pruefung');
+    const measuresOpen = measures.filter(x => !x.effectiveness_confirmed);
+    const risksNoMeasure = risks.filter(r => !measures.some(x => x.risk_id === r.id));
+    const problemsOpen = problems.filter(p => !['geschlossen', 'abgelehnt'].includes(p.status));
+    const problemsNoCapa = problems.filter(p => (p.safety_relevant || p.vigilance_relevant) && !p.capa_id);
+    const anomaliesOpen = anomalies.filter(a => !['geschlossen', 'behoben'].includes(a.status));
+    const anomaliesSafety = anomalies.filter(a => a.safety_relevant && a.status !== 'geschlossen');
+    const bugsNoRetest = bugs.filter(b => b.status === 'behoben' && !b.released_version);
+    const releasesNoAnomalyList = releases.filter(r => !anomalies.some(a => a.release_id === r.id));
+    const releasesNoSignature = releases.filter(r => !signatures.some(s => s.entity_table === 'plm_sw_releases' && s.entity_id === r.id && s.status === 'gueltig'));
+    const classOk = classification.some(c => c.status === 'freigegeben' && c.product_safety_class);
     return {
       ver, int, sys, verPassed: passed(ver), intPassed: passed(int), sysPassed: passed(sys),
       traceability, openBugs, latest,
@@ -101,14 +129,32 @@ export default function SoftwareCompliance() {
       vcsMissing: !team.some(p => p.version_control && p.version_control !== 'None'),
       teamOk: team.some(p => p.team === 'software' && p.is_lead),
       hwIsolation: hwDocs.some(d => d.doc_kind === 'isolationsdiagramm'),
+      sdpOk: planOk('development_plan'), scmpOk: planOk('configuration_management_plan'),
+      maintOk: planOk('maintenance_plan'), problemPlanOk: planOk('problem_resolution_plan'),
+      classOk, soupOpen, measuresOpen, risksNoMeasure, problemsOpen, problemsNoCapa,
+      anomaliesOpen, anomaliesSafety, bugsNoRetest, releasesNoAnomalyList, releasesNoSignature,
     };
-  }, [units, reqs, risks, tests, bugs, releases, team, hwDocs]);
+  }, [units, reqs, risks, tests, bugs, releases, team, hwDocs, soup, plans, anomalies, problems, measures, classification, signatures]);
 
   const gaps = useMemo(() => {
     const g: { tone: Tone; text: string }[] = [];
     if (m.reqNoSys.length) g.push({ tone: 'bad', text: `${m.reqNoSys.length} Requirements ohne Systemtest` });
     if (m.reqNoVer.length) g.push({ tone: 'bad', text: `${m.reqNoVer.length} Requirements ohne Unit-Verifikation` });
     if (m.risksNoVerification.length) g.push({ tone: 'bad', text: `${m.risksNoVerification.length} Risiken ohne Risk-Control-Verifikation` });
+    if (m.risksNoMeasure.length) g.push({ tone: 'bad', text: `${m.risksNoMeasure.length} Risiken ohne dokumentierte Maßnahme` });
+    if (!m.classOk) g.push({ tone: 'bad', text: 'Software-Sicherheitsklassifizierung (Produktebene) nicht freigegeben' });
+    if (!m.sdpOk) g.push({ tone: 'bad', text: 'Software Development Plan (SDP) fehlt oder nicht freigegeben' });
+    if (!m.scmpOk) g.push({ tone: 'warn', text: 'Konfigurationsmanagement-Plan (SCMP) fehlt oder nicht freigegeben' });
+    if (!m.maintOk) g.push({ tone: 'warn', text: 'Wartungsplan (IEC 62304 §6) fehlt oder nicht freigegeben' });
+    if (!m.problemPlanOk) g.push({ tone: 'warn', text: 'Problem-Resolution-Plan fehlt oder nicht freigegeben' });
+    if (!soup.length) g.push({ tone: 'bad', text: 'SOUP-/OTS-Liste ist leer (§8.1.2)' });
+    else if (m.soupOpen.length) g.push({ tone: 'warn', text: `${m.soupOpen.length} SOUP-Komponenten ohne vollständige Bewertung` });
+    if (m.measuresOpen.length) g.push({ tone: 'warn', text: `${m.measuresOpen.length} Risikomaßnahmen ohne bestätigte Wirksamkeit` });
+    if (m.anomaliesSafety.length) g.push({ tone: 'bad', text: `${m.anomaliesSafety.length} sicherheitsrelevante Anomalien offen` });
+    if (m.releasesNoAnomalyList.length) g.push({ tone: 'warn', text: `${m.releasesNoAnomalyList.length} Releases ohne Anomalienliste` });
+    if (m.releasesNoSignature.length) g.push({ tone: 'warn', text: `${m.releasesNoSignature.length} Releases ohne elektronische Freigabe` });
+    if (m.problemsNoCapa.length) g.push({ tone: 'bad', text: `${m.problemsNoCapa.length} sicherheits-/meldepflichtige Probleme ohne CAPA` });
+    if (m.bugsNoRetest.length) g.push({ tone: 'warn', text: `${m.bugsNoRetest.length} behobene Bugs ohne Release-/Regressionsnachweis` });
     if (m.reqNoUnit.length) g.push({ tone: 'warn', text: `${m.reqNoUnit.length} Requirements ohne Software Unit` });
     if (m.unitsNoOwner.length) g.push({ tone: 'warn', text: `${m.unitsNoOwner.length} Software Units ohne Owner` });
     if (m.unitsNoSource.length) g.push({ tone: 'warn', text: `${m.unitsNoSource.length} Software Units ohne Source-Code-Ort` });
@@ -117,16 +163,23 @@ export default function SoftwareCompliance() {
     if (!m.teamOk) g.push({ tone: 'warn', text: 'Software Development Team Lead fehlt' });
     if (!g.length) g.push({ tone: 'ok', text: 'Keine offenen Lücken erkannt' });
     return g;
-  }, [m]);
+  }, [m, soup]);
 
   const complete = useMemo(() => {
     const checks = [
       reqs.length > 0, units.length > 0, m.reqNoVer.length === 0, m.reqNoInt.length === 0,
       m.reqNoSys.length === 0, m.risksNoVerification.length === 0 && risks.length > 0,
       m.hwIsolation, m.teamOk, !m.vcsMissing, m.unitsNoOwner.length === 0,
+      m.classOk, m.sdpOk, m.scmpOk, m.maintOk, m.problemPlanOk,
+      soup.length > 0 && m.soupOpen.length === 0,
+      m.risksNoMeasure.length === 0 && risks.length > 0,
+      m.measuresOpen.length === 0 && measures.length > 0,
+      m.anomaliesSafety.length === 0,
+      m.releasesNoSignature.length === 0 && releases.length > 0,
+      m.problemsNoCapa.length === 0,
     ];
     return Math.round((checks.filter(Boolean).length / checks.length) * 100);
-  }, [reqs, units, risks, m]);
+  }, [reqs, units, risks, soup, measures, releases, m]);
 
   const exportMarkdown = () => {
     const dev = devices.find(d => d.id === deviceId);
@@ -148,6 +201,20 @@ export default function SoftwareCompliance() {
     releases.forEach(r => lines.push(`- **${r.version}** ${r.release_date ?? ''} — Commit ${r.git_commit ?? '—'}, Hash ${r.firmware_hash ?? '—'}, freigegeben von ${r.approved_by ?? '—'}`));
     lines.push('', '## Bug Report');
     bugs.forEach(b => lines.push(`- **${b.bug_code ?? ''}** ${b.title} — ${b.severity}, Status ${b.status}, behoben in ${b.released_version ?? '—'}`));
+    lines.push('', '## Software Safety Classification');
+    classification.forEach(c => lines.push(`- ${c.title} — Klasse ${c.product_safety_class ?? '—'}, MDR ${c.mdr_class ?? '—'}, Status ${c.status}, Begründung: ${c.rationale ?? '—'}`));
+    lines.push('', '## Pläne (SDP · SCMP · Wartung · Problem Resolution)');
+    plans.forEach(p => lines.push(`- **${p.plan_code ?? ''}** ${p.title} (${p.plan_kind}) — v${p.version ?? '—'}, Status ${p.status}, freigegeben von ${p.approved_by ?? '—'} am ${p.approved_at ?? '—'}`));
+    lines.push('', '## SOUP / OTS Liste (§8.1.2)');
+    soup.forEach(s => lines.push(`- **${s.soup_code ?? ''}** ${s.name} ${s.version ?? ''} (${s.vendor ?? '—'}) — Klasse ${s.safety_class ?? '—'}, Lizenz ${s.license ?? '—'}, Anomalien: ${s.known_anomalies ?? '—'}, Bewertung: ${s.anomaly_evaluation ?? '—'}, Risiko: ${s.risk_assessment ?? '—'}, Status ${s.status}`));
+    lines.push('', '## Risk Control Measures & Wirksamkeit');
+    measures.forEach(x => lines.push(`- **${x.measure_code ?? ''}** ${x.title} (${x.measure_type}) — umgesetzt in ${x.implemented_in_version ?? '—'}, Wirksamkeit: ${x.effectiveness_confirmed ? (x.effectiveness_result ?? 'bestätigt') : 'nicht bestätigt'}, Status ${x.status}`));
+    lines.push('', '## Anomalienliste je Release');
+    anomalies.forEach(a => lines.push(`- **${a.anomaly_code ?? ''}** ${a.title} — ${a.severity}, sicherheitsrelevant: ${a.safety_relevant ? 'Ja' : 'Nein'}, Workaround: ${a.workaround ?? '—'}, geplante Behebung: ${a.planned_fix_version ?? '—'}, Status ${a.status}`));
+    lines.push('', '## Problem Resolution & CAPA');
+    problems.forEach(p => lines.push(`- **${p.problem_code ?? ''}** ${p.title} — Quelle ${p.source}, SW ${p.sw_version ?? '—'}, meldepflichtig: ${p.vigilance_relevant ? 'Ja' : 'Nein'}, Root Cause: ${p.root_cause ?? '—'}, Wirksamkeit: ${p.effectiveness_check ?? '—'}, Status ${p.status}`));
+    lines.push('', '## Elektronische Freigaben (21 CFR Part 11)');
+    signatures.forEach(s => lines.push(`- ${s.entity_label ?? s.entity_table} — ${s.meaning} durch ${s.signer_name} (${s.signer_role ?? '—'}) am ${s.signed_at ? new Date(s.signed_at).toLocaleString('de-DE') : '—'}, Hash ${s.document_hash ?? '—'}, Status ${s.status}`));
     const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -202,6 +269,14 @@ export default function SoftwareCompliance() {
             <Kpi label="System Tests" value={`${m.sysPassed}/${m.sys.length}`} />
             <Kpi label="Open Issues" value={m.openBugs} />
             <Kpi label="Traceability" value={`${m.traceability} %`} />
+            <Kpi label="SOUP / OTS" value={soup.length} />
+            <Kpi label="Pläne" value={plans.length} />
+            <Kpi label="Risikomaßnahmen" value={`${measures.length - m.measuresOpen.length}/${measures.length}`} />
+            <Kpi label="Anomalien offen" value={m.anomaliesOpen.length} />
+            <Kpi label="Problem Reports offen" value={m.problemsOpen.length} />
+            <Kpi label="E-Freigaben" value={signatures.length} />
+            <Kpi label="Safety Class" value={classification.find(c => c.status === 'freigegeben')?.product_safety_class ?? '—'} />
+            <Kpi label="Vollständigkeit" value={`${complete} %`} />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -210,9 +285,15 @@ export default function SoftwareCompliance() {
             <Lamp label="Unit Verification" tone={!m.ver.length ? 'bad' : m.reqNoVer.length ? 'warn' : 'ok'} hint={`${m.verPassed}/${m.ver.length} bestanden`} />
             <Lamp label="Integration Testing" tone={!m.int.length ? 'bad' : m.intPassed < m.int.length ? 'warn' : 'ok'} hint={`${m.intPassed}/${m.int.length} bestanden`} />
             <Lamp label="System Testing" tone={!m.sys.length ? 'bad' : m.sysPassed < m.sys.length ? 'warn' : 'ok'} hint={`${m.sysPassed}/${m.sys.length} bestanden`} />
-            <Lamp label="Risk Management" tone={!risks.length ? 'bad' : m.risksNoVerification.length ? 'warn' : 'ok'} hint={`${risks.length} Risiken`} />
+            <Lamp label="Risk Management" tone={!risks.length ? 'bad' : (m.risksNoVerification.length || m.risksNoMeasure.length) ? 'warn' : 'ok'} hint={`${risks.length} Risiken · ${measures.length} Maßnahmen`} />
             <Lamp label="Hardware Documentation" tone={!hwDocs.length ? 'bad' : m.hwIsolation ? 'ok' : 'warn'} hint={`${hwDocs.length} Dokumente`} />
             <Lamp label="Development Team" tone={!team.length ? 'bad' : m.teamOk && !m.vcsMissing ? 'ok' : 'warn'} hint={`${team.length} Personen`} />
+            <Lamp label="Safety Classification" tone={m.classOk ? 'ok' : classification.length ? 'warn' : 'bad'} hint="Produktebene A/B/C" />
+            <Lamp label="Pläne (SDP · SCMP)" tone={m.sdpOk && m.scmpOk && m.maintOk && m.problemPlanOk ? 'ok' : (plans.length ? 'warn' : 'bad')} hint={`${plans.length} Pläne`} />
+            <Lamp label="SOUP / OTS" tone={!soup.length ? 'bad' : m.soupOpen.length ? 'warn' : 'ok'} hint={`${soup.length} Komponenten`} />
+            <Lamp label="Anomalien" tone={m.anomaliesSafety.length ? 'bad' : m.anomaliesOpen.length ? 'warn' : 'ok'} hint={`${m.anomaliesOpen.length} offen`} />
+            <Lamp label="Problem Resolution" tone={m.problemsNoCapa.length ? 'bad' : m.problemsOpen.length ? 'warn' : 'ok'} hint={`${problems.length} Meldungen`} />
+            <Lamp label="Elektronische Freigaben" tone={!signatures.length ? 'bad' : m.releasesNoSignature.length ? 'warn' : 'ok'} hint={`${signatures.length} Signaturen`} />
           </div>
 
           <Card>

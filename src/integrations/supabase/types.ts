@@ -35104,6 +35104,91 @@ export type Database = {
         }
         Relationships: []
       }
+      plm_sw_anomalies: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          anomaly_code: string | null
+          bug_id: string | null
+          created_at: string
+          description: string | null
+          device_id: string | null
+          id: string
+          notes: string | null
+          planned_fix_version: string | null
+          release_id: string | null
+          risk_evaluation: string | null
+          safety_relevant: boolean | null
+          severity: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          workaround: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          anomaly_code?: string | null
+          bug_id?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          notes?: string | null
+          planned_fix_version?: string | null
+          release_id?: string | null
+          risk_evaluation?: string | null
+          safety_relevant?: boolean | null
+          severity?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          workaround?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          anomaly_code?: string | null
+          bug_id?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          id?: string
+          notes?: string | null
+          planned_fix_version?: string | null
+          release_id?: string | null
+          risk_evaluation?: string | null
+          safety_relevant?: boolean | null
+          severity?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          workaround?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_anomalies_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_bugs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_anomalies_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_anomalies_release_id_fkey"
+            columns: ["release_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_releases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plm_sw_bugs: {
         Row: {
           bug_code: string | null
@@ -35198,6 +35283,277 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "plm_sw_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_classification: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          device_id: string | null
+          external_risk_control: string | null
+          hazard_analysis_ref: string | null
+          id: string
+          mdr_class: string | null
+          notes: string | null
+          product_safety_class: string | null
+          rationale: string | null
+          segregation_description: string | null
+          standards: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          valid_from: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          device_id?: string | null
+          external_risk_control?: string | null
+          hazard_analysis_ref?: string | null
+          id?: string
+          mdr_class?: string | null
+          notes?: string | null
+          product_safety_class?: string | null
+          rationale?: string | null
+          segregation_description?: string | null
+          standards?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          valid_from?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          device_id?: string | null
+          external_risk_control?: string | null
+          hazard_analysis_ref?: string | null
+          id?: string
+          mdr_class?: string | null
+          notes?: string | null
+          product_safety_class?: string | null
+          rationale?: string | null
+          segregation_description?: string | null
+          standards?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          valid_from?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_classification_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_plans: {
+        Row: {
+          activities: string | null
+          approved_at: string | null
+          approved_by: string | null
+          change_control: string | null
+          configuration_items: string | null
+          created_at: string
+          deliverables: string | null
+          device_id: string | null
+          file_path: string | null
+          id: string
+          lifecycle_model: string | null
+          maintenance_strategy: string | null
+          notes: string | null
+          plan_code: string | null
+          plan_kind: string | null
+          problem_resolution: string | null
+          roles_responsibilities: string | null
+          scope: string | null
+          status: string | null
+          title: string
+          tools_environment: string | null
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          activities?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          change_control?: string | null
+          configuration_items?: string | null
+          created_at?: string
+          deliverables?: string | null
+          device_id?: string | null
+          file_path?: string | null
+          id?: string
+          lifecycle_model?: string | null
+          maintenance_strategy?: string | null
+          notes?: string | null
+          plan_code?: string | null
+          plan_kind?: string | null
+          problem_resolution?: string | null
+          roles_responsibilities?: string | null
+          scope?: string | null
+          status?: string | null
+          title: string
+          tools_environment?: string | null
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          activities?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          change_control?: string | null
+          configuration_items?: string | null
+          created_at?: string
+          deliverables?: string | null
+          device_id?: string | null
+          file_path?: string | null
+          id?: string
+          lifecycle_model?: string | null
+          maintenance_strategy?: string | null
+          notes?: string | null
+          plan_code?: string | null
+          plan_kind?: string | null
+          problem_resolution?: string | null
+          roles_responsibilities?: string | null
+          scope?: string | null
+          status?: string | null
+          title?: string
+          tools_environment?: string | null
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_plans_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_problems: {
+        Row: {
+          bug_id: string | null
+          capa_id: string | null
+          closed_at: string | null
+          correction: string | null
+          created_at: string
+          description: string | null
+          device_id: string | null
+          effectiveness_check: string | null
+          id: string
+          investigation: string | null
+          problem_code: string | null
+          reported_at: string | null
+          reported_by: string | null
+          risk_id: string | null
+          root_cause: string | null
+          safety_relevant: boolean | null
+          serial_number: string | null
+          severity: string | null
+          source: string | null
+          status: string | null
+          sw_version: string | null
+          title: string
+          updated_at: string
+          vigilance_relevant: boolean | null
+        }
+        Insert: {
+          bug_id?: string | null
+          capa_id?: string | null
+          closed_at?: string | null
+          correction?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          effectiveness_check?: string | null
+          id?: string
+          investigation?: string | null
+          problem_code?: string | null
+          reported_at?: string | null
+          reported_by?: string | null
+          risk_id?: string | null
+          root_cause?: string | null
+          safety_relevant?: boolean | null
+          serial_number?: string | null
+          severity?: string | null
+          source?: string | null
+          status?: string | null
+          sw_version?: string | null
+          title: string
+          updated_at?: string
+          vigilance_relevant?: boolean | null
+        }
+        Update: {
+          bug_id?: string | null
+          capa_id?: string | null
+          closed_at?: string | null
+          correction?: string | null
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          effectiveness_check?: string | null
+          id?: string
+          investigation?: string | null
+          problem_code?: string | null
+          reported_at?: string | null
+          reported_by?: string | null
+          risk_id?: string | null
+          root_cause?: string | null
+          safety_relevant?: boolean | null
+          serial_number?: string | null
+          severity?: string | null
+          source?: string | null
+          status?: string | null
+          sw_version?: string | null
+          title?: string
+          updated_at?: string
+          vigilance_relevant?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_problems_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_bugs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_problems_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capa_overdue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_problems_capa_id_fkey"
+            columns: ["capa_id"]
+            isOneToOne: false
+            referencedRelation: "capas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_problems_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_problems_risk_id_fkey"
+            columns: ["risk_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_risks"
             referencedColumns: ["id"]
           },
         ]
@@ -35351,6 +35707,110 @@ export type Database = {
           },
         ]
       }
+      plm_sw_risk_measures: {
+        Row: {
+          created_at: string
+          description: string | null
+          device_id: string | null
+          effectiveness_at: string | null
+          effectiveness_by: string | null
+          effectiveness_confirmed: boolean | null
+          effectiveness_method: string | null
+          effectiveness_result: string | null
+          id: string
+          implemented_at: string | null
+          implemented_by: string | null
+          implemented_in_version: string | null
+          measure_code: string | null
+          measure_type: string | null
+          new_risk_introduced: boolean | null
+          notes: string | null
+          requirement_id: string | null
+          risk_id: string | null
+          status: string | null
+          test_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          effectiveness_at?: string | null
+          effectiveness_by?: string | null
+          effectiveness_confirmed?: boolean | null
+          effectiveness_method?: string | null
+          effectiveness_result?: string | null
+          id?: string
+          implemented_at?: string | null
+          implemented_by?: string | null
+          implemented_in_version?: string | null
+          measure_code?: string | null
+          measure_type?: string | null
+          new_risk_introduced?: boolean | null
+          notes?: string | null
+          requirement_id?: string | null
+          risk_id?: string | null
+          status?: string | null
+          test_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          device_id?: string | null
+          effectiveness_at?: string | null
+          effectiveness_by?: string | null
+          effectiveness_confirmed?: boolean | null
+          effectiveness_method?: string | null
+          effectiveness_result?: string | null
+          id?: string
+          implemented_at?: string | null
+          implemented_by?: string | null
+          implemented_in_version?: string | null
+          measure_code?: string | null
+          measure_type?: string | null
+          new_risk_introduced?: boolean | null
+          notes?: string | null
+          requirement_id?: string | null
+          risk_id?: string | null
+          status?: string | null
+          test_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_risk_measures_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_risk_measures_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_risk_measures_risk_id_fkey"
+            columns: ["risk_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_risks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plm_sw_risk_measures_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "plm_sw_tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plm_sw_risks: {
         Row: {
           acceptable: boolean
@@ -35451,6 +35911,157 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "plm_sw_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_signatures: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          document_hash: string | null
+          entity_id: string | null
+          entity_label: string | null
+          entity_table: string
+          id: string
+          ip_address: string | null
+          meaning: string
+          notes: string | null
+          signed_at: string
+          signer_name: string
+          signer_role: string | null
+          signer_user_id: string | null
+          statement: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          document_hash?: string | null
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_table: string
+          id?: string
+          ip_address?: string | null
+          meaning?: string
+          notes?: string | null
+          signed_at?: string
+          signer_name: string
+          signer_role?: string | null
+          signer_user_id?: string | null
+          statement?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          document_hash?: string | null
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_table?: string
+          id?: string
+          ip_address?: string | null
+          meaning?: string
+          notes?: string | null
+          signed_at?: string
+          signer_name?: string
+          signer_role?: string | null
+          signer_user_id?: string | null
+          statement?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_signatures_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plm_sw_soup: {
+        Row: {
+          anomaly_evaluation: string | null
+          created_at: string
+          device_id: string | null
+          eol_date: string | null
+          functional_requirements: string | null
+          hardware_requirements: string | null
+          id: string
+          known_anomalies: string | null
+          license: string | null
+          name: string
+          notes: string | null
+          purpose: string | null
+          responsible: string | null
+          risk_assessment: string | null
+          safety_class: string | null
+          soup_code: string | null
+          source_url: string | null
+          status: string | null
+          update_strategy: string | null
+          updated_at: string
+          vendor: string | null
+          verification: string | null
+          version: string | null
+        }
+        Insert: {
+          anomaly_evaluation?: string | null
+          created_at?: string
+          device_id?: string | null
+          eol_date?: string | null
+          functional_requirements?: string | null
+          hardware_requirements?: string | null
+          id?: string
+          known_anomalies?: string | null
+          license?: string | null
+          name: string
+          notes?: string | null
+          purpose?: string | null
+          responsible?: string | null
+          risk_assessment?: string | null
+          safety_class?: string | null
+          soup_code?: string | null
+          source_url?: string | null
+          status?: string | null
+          update_strategy?: string | null
+          updated_at?: string
+          vendor?: string | null
+          verification?: string | null
+          version?: string | null
+        }
+        Update: {
+          anomaly_evaluation?: string | null
+          created_at?: string
+          device_id?: string | null
+          eol_date?: string | null
+          functional_requirements?: string | null
+          hardware_requirements?: string | null
+          id?: string
+          known_anomalies?: string | null
+          license?: string | null
+          name?: string
+          notes?: string | null
+          purpose?: string | null
+          responsible?: string | null
+          risk_assessment?: string | null
+          safety_class?: string | null
+          soup_code?: string | null
+          source_url?: string | null
+          status?: string | null
+          update_strategy?: string | null
+          updated_at?: string
+          vendor?: string | null
+          verification?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plm_sw_soup_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
             referencedColumns: ["id"]
           },
         ]

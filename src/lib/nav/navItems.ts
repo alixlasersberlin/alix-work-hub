@@ -703,6 +703,13 @@ export const navItems: NavItem[] = [
           { path: '/produktion/software/team', label: 'Development Team', icon: Users, roles: null },
           { path: '/produktion/hardware-dokumentation', label: 'Hardware Documentation', icon: Cpu, roles: null },
           { path: '/produktion/software/anwenderbefragung', label: 'User Survey', icon: ClipboardList, roles: null },
+          { path: '/produktion/software/klassifizierung', label: 'Safety Classification', icon: Layers, roles: null },
+          { path: '/produktion/software/plaene', label: 'Pläne (SDP · SCMP)', icon: FileText, roles: null },
+          { path: '/produktion/software/soup', label: 'SOUP / OTS Liste', icon: Package, roles: null },
+          { path: '/produktion/software/risikomassnahmen', label: 'Risikomaßnahmen', icon: ShieldCheck, roles: null },
+          { path: '/produktion/software/anomalien', label: 'Anomalienliste', icon: AlertTriangle, roles: null },
+          { path: '/produktion/software/problem-reports', label: 'Problem Resolution', icon: HelpCircle, roles: null },
+          { path: '/produktion/software/freigaben', label: 'Elektronische Freigaben', icon: FileSignature, roles: null },
         ],
       },
 
