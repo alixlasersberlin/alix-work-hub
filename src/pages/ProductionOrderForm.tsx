@@ -20,6 +20,9 @@ import { KatalogPickerDialog, type KatalogPickResult } from '@/components/catalo
 import { useCreditOrderBlock } from '@/hooks/useCreditOrderBlock';
 import { ShieldCheck, ShieldAlert } from 'lucide-react';
 
+// Marker, mit dem ein Auftrag aus „Bestellung möglich" ausgeblendet wird
+const FREI_HIDDEN_NOTE = 'frei_bestellung_hidden';
+
 type Mode = 'order' | 'reclamation';
 
 export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } = {}) {
@@ -45,6 +48,7 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const [orderResults, setOrderResults] = useState<any[]>([]);
   const [searchingOrder, setSearchingOrder] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [removeFromBestellwesen, setRemoveFromBestellwesen] = useState(false);
   const [orderItems, setOrderItems] = useState<any[]>([]);
   const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
   const [reservedByItemId, setReservedByItemId] = useState<Record<string, { serial: string; model: string; department: string }>>({});
@@ -677,6 +681,25 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
           .update({ used_in_type: 'production_order', used_in_id: poId })
           .in('id', pendingSnapshotIds);
         setPendingSnapshotIds([]);
+      } catch { /* nicht blockierend */ }
+    }
+    // Optional: Auftrag nach der Bestellung aus dem Bestellwesen („Bestellung möglich") entfernen
+    if (poId && removeFromBestellwesen && selectedOrder?.id) {
+      try {
+        const { data: existingNote } = await supabase
+          .from('order_notes')
+          .select('id')
+          .eq('order_id', selectedOrder.id)
+          .eq('note_type', FREI_HIDDEN_NOTE)
+          .limit(1);
+        if (!existingNote || existingNote.length === 0) {
+          await supabase.from('order_notes').insert({
+            order_id: selectedOrder.id,
+            note_type: FREI_HIDDEN_NOTE,
+            note_text: 'Nach Bestellung aus „Bestellung möglich" entfernt.',
+            is_internal: true,
+          });
+        }
       } catch { /* nicht blockierend */ }
     }
     savingRef.current = false;
@@ -1337,7 +1360,20 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
         )}
       </Card>
 
-      <div className="flex flex-wrap justify-end gap-2 sticky bottom-0 bg-background py-3 border-t border-border">
+      <div className="flex flex-wrap items-center justify-end gap-2 sticky bottom-0 bg-background py-3 border-t border-border">
+        <button
+          type="button"
+          onClick={() => setRemoveFromBestellwesen(v => !v)}
+          disabled={saving || !selectedOrder?.id}
+          className={`mr-auto flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+            removeFromBestellwesen
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-border text-muted-foreground hover:text-foreground'
+          } disabled:opacity-50`}
+        >
+          <Checkbox checked={removeFromBestellwesen} className="pointer-events-none" />
+          Auftrag nach Bestellung aus Bestellwesen entfernen
+        </button>
         <Button variant="outline" onClick={() => navigate(basePath)} disabled={saving}>Abbrechen</Button>
         <Button variant="outline" onClick={onSave} disabled={saving}><Save className="w-4 h-4 mr-2" /> Speichern</Button>
         <Button variant="outline" onClick={onSaveAndDownload} disabled={saving}><Download className="w-4 h-4 mr-2" /> Speichern + PDF</Button>
