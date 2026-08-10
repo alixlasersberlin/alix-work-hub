@@ -227,7 +227,9 @@ export default function Auslieferungsfreigabe() {
   const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== 'all' && r.overall_status !== filter) return false;
     if (!q.trim()) return true;
-    return (r.order_number ?? '').toLowerCase().includes(q.trim().toLowerCase());
+    const s = q.trim().toLowerCase();
+    return [r.order_number, r.customer_name, r.customer_email, r.customer_phone, ...(r.invoice_numbers ?? [])]
+      .some((v) => (v ?? '').toString().toLowerCase().includes(s));
   }), [rows, q, filter]);
 
   const kpi = useMemo(() => {
