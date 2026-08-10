@@ -465,6 +465,37 @@ export default function OrdersFreiBestellung() {
     }
   };
 
+  const confirmMarkOrdered = async () => {
+    if (!orderedOrder) return;
+    const orderId = orderedOrder.id;
+    const orderNumber = orderedOrder.order_number;
+    setMarkingOrdered(true);
+    try {
+      const { data: userRes } = await supabase.auth.getUser();
+      const { error: insErr } = await supabase.from('order_notes').insert({
+        order_id: orderId,
+        note_type: FREI_HIDDEN_NOTE,
+        note_text: 'Bereits bestellt — manuell aus „Bestellung möglich" entfernt',
+        is_internal: true,
+        created_by: userRes?.user?.id ?? null,
+      });
+      if (insErr) {
+        toast.error('Konnte nicht markiert werden: ' + insErr.message);
+        return;
+      }
+      setOrders(prev => prev.filter((o: any) => o.id !== orderId));
+      setSelected(prev => { const next = new Set(prev); next.delete(orderId); return next; });
+      setOrderedOrder(null);
+      toast.success(`${orderNumber} als bereits bestellt markiert`);
+      reload();
+    } catch (e: any) {
+      toast.error('Unerwarteter Fehler: ' + (e?.message ?? String(e)));
+    } finally {
+      setMarkingOrdered(false);
+    }
+  };
+
+
   const allVisibleSelected = paged.length > 0 && paged.every((o: any) => selected.has(o.id));
   const toggleAll = () => {
     setSelected(prev => {
