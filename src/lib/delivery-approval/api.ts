@@ -267,6 +267,51 @@ export async function unlockApproval(approval: DeliveryApproval, reason: string,
   });
 }
 
+/**
+ * OPS FREI – Komplettfreigabe ausschließlich durch den Super Admin.
+ * Setzt alle drei Stufen inkl. Prüfpunkte auf „genehmigt" und protokolliert dies revisionssicher.
+ */
+export async function opsRelease(params: {
+  approval: DeliveryApproval;
+  reason: string;
+  userId: string | null;
+  userName: string;
+}): Promise<void> {
+  const { approval, reason, userId, userName } = params;
+  if (!reason || reason.trim().length < 5) {
+    throw new Error('Begründung erforderlich (min. 5 Zeichen).');
+  }
+  const ip = await clientIp();
+  const now = new Date().toISOString();
+  const signature = `OPS FREI (${userName})`;
+  const update: Record<string, unknown> = {
+    unlocked_by: userId,
+    unlocked_at: now,
+    unlock_reason: `OPS FREI: ${reason}`,
+  };
+  for (const s of STAGES) {
+    const checks: Record<string, boolean> = {};
+    for (const c of s.checks) checks[c.key] = true;
+    update[`${s.stage}_checks`] = checks;
+    update[`${s.stage}_status`] = 'approved';
+    update[`${s.stage}_by`] = userId;
+    update[`${s.stage}_by_name`] = userName;
+    update[`${s.stage}_at`] = now;
+    update[`${s.stage}_ip`] = ip;
+    update[`${s.stage}_comment`] = `OPS FREI: ${reason}`;
+    update[`${s.stage}_signature`] = signature;
+  }
+  const { error } = await db.from('delivery_approvals').update(update).eq('id', approval.id);
+  if (error) throw error;
+
+  await logEvent({
+    approvalId: approval.id, orderId: approval.order_id, stage: 'override',
+    oldStatus: approval.overall_status, newStatus: 'released',
+    userId, userName, comment: `OPS FREI – Komplettfreigabe durch Super Admin: ${reason}`, ip, signature,
+  });
+}
+
+
 /** SLA-Bewertung einer offenen Stufe */
 export function slaLevel(since: string | null | undefined): 'ok' | 'reminder' | 'lead' | 'operations' {
   if (!since) return 'ok';
