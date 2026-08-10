@@ -75,6 +75,39 @@ export default function Auslieferungsfreigabe() {
   const [cfg, setCfg] = useState<ApprovalSettings>(DEFAULT_APPROVAL_SETTINGS);
   const [cfgOpen, setCfgOpen] = useState(false);
   const [rolesOpen, setRolesOpen] = useState(false);
+  const [addAllBusy, setAddAllBusy] = useState(false);
+
+  /** Alle Aufträge ohne Freigabeprozess in die Auslieferungsfreigabe übernehmen */
+  const addAllOrders = async () => {
+    setAddAllBusy(true);
+    try {
+      const ids: string[] = [];
+      const page = 1000;
+      for (let from = 0; ; from += page) {
+        const { data, error } = await db
+          .from('orders')
+          .select('id')
+          .order('created_at', { ascending: false })
+          .range(from, from + page - 1);
+        if (error) throw error;
+        const batch = (data ?? []) as any[];
+        ids.push(...batch.map((o) => o.id));
+        if (batch.length < page) break;
+      }
+      const userName = profile?.full_name || user?.email || 'Unbekannt';
+      let created = 0;
+      for (let i = 0; i < ids.length; i += 300) {
+        created += await bulkStartApprovals(ids.slice(i, i + 300), userName);
+      }
+      toast.success(created ? `${created} Aufträge zur Freigabe hinzugefügt` : 'Alle Aufträge sind bereits enthalten');
+      void load();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Hinzufügen fehlgeschlagen');
+    } finally {
+      setAddAllBusy(false);
+    }
+  };
+
 
 
   const load = async () => {
