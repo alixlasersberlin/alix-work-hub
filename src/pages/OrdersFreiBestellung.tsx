@@ -796,7 +796,17 @@ export default function OrdersFreiBestellung() {
                             </Button>
 
                           )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-[11px] ml-auto border-amber-600/40 text-amber-500 hover:bg-amber-600/10 hover:text-amber-400"
+                            onClick={() => setOrderedOrder(o)}
+                            title="Auftrag wurde bereits bestellt — aus dieser Liste entfernen"
+                          >
+                            <CheckCircle2 className="w-3 h-3 mr-1" /> Bereits bestellt
+                          </Button>
                         </div>
+
 
                       </td>
                     </tr>
