@@ -161,8 +161,9 @@ export default function PlmExplosionszeichnungen() {
                     className="relative w-full rounded-md border bg-muted/20 overflow-hidden cursor-crosshair"
                     onClick={handleImageClick}
                   >
-                    {selected.image_url ? (
-                      <img src={selected.image_url} alt={selected.title} className="w-full object-contain max-h-[620px]" />
+                    {selectedUrl ? (
+                      <img src={selectedUrl} alt={selected.title} className="w-full object-contain max-h-[620px]" />
+
                     ) : (
                       <div className="h-64 flex items-center justify-center text-sm text-muted-foreground">Kein Bild hinterlegt</div>
                     )}
