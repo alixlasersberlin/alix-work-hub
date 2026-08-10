@@ -31,7 +31,13 @@ export default function ProductionOrderForm({ mode = 'order' }: { mode?: Mode } 
   const navigate = useNavigate();
   const { profile, user } = useAuth();
   const isReclamation = mode === 'reclamation';
-  const basePath = isReclamation ? '/order/reklamation' : '/order';
+  const [initialParams] = useSearchParams();
+  const cameFromFreiBestellung = Boolean(initialParams.get('order_id'));
+  const basePath = isReclamation
+    ? '/order/reklamation'
+    : cameFromFreiBestellung
+      ? '/order/frei-bestellung'
+      : '/order';
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
