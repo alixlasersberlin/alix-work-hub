@@ -104,6 +104,18 @@ export default function SoftwareCompliance() {
     const openBugs = bugs.filter(b => !['geschlossen', 'abgelehnt', 'verifiziert'].includes(b.status)).length;
     const latest = [...releases].sort((a, b) =>
       String(b.release_date || '').localeCompare(String(a.release_date || '')))[0];
+    const planOk = (k: string) => plans.some(p => p.plan_kind === k && p.status === 'freigegeben');
+    const soupOpen = soup.filter(s => !s.risk_assessment || !s.anomaly_evaluation || s.status === 'in_pruefung');
+    const measuresOpen = measures.filter(x => !x.effectiveness_confirmed);
+    const risksNoMeasure = risks.filter(r => !measures.some(x => x.risk_id === r.id));
+    const problemsOpen = problems.filter(p => !['geschlossen', 'abgelehnt'].includes(p.status));
+    const problemsNoCapa = problems.filter(p => (p.safety_relevant || p.vigilance_relevant) && !p.capa_id);
+    const anomaliesOpen = anomalies.filter(a => !['geschlossen', 'behoben'].includes(a.status));
+    const anomaliesSafety = anomalies.filter(a => a.safety_relevant && a.status !== 'geschlossen');
+    const bugsNoRetest = bugs.filter(b => b.status === 'behoben' && !b.released_version);
+    const releasesNoAnomalyList = releases.filter(r => !anomalies.some(a => a.release_id === r.id));
+    const releasesNoSignature = releases.filter(r => !signatures.some(s => s.entity_table === 'plm_sw_releases' && s.entity_id === r.id && s.status === 'gueltig'));
+    const classOk = classification.some(c => c.status === 'freigegeben' && c.product_safety_class);
     return {
       ver, int, sys, verPassed: passed(ver), intPassed: passed(int), sysPassed: passed(sys),
       traceability, openBugs, latest,
@@ -117,14 +129,32 @@ export default function SoftwareCompliance() {
       vcsMissing: !team.some(p => p.version_control && p.version_control !== 'None'),
       teamOk: team.some(p => p.team === 'software' && p.is_lead),
       hwIsolation: hwDocs.some(d => d.doc_kind === 'isolationsdiagramm'),
+      sdpOk: planOk('development_plan'), scmpOk: planOk('configuration_management_plan'),
+      maintOk: planOk('maintenance_plan'), problemPlanOk: planOk('problem_resolution_plan'),
+      classOk, soupOpen, measuresOpen, risksNoMeasure, problemsOpen, problemsNoCapa,
+      anomaliesOpen, anomaliesSafety, bugsNoRetest, releasesNoAnomalyList, releasesNoSignature,
     };
-  }, [units, reqs, risks, tests, bugs, releases, team, hwDocs]);
+  }, [units, reqs, risks, tests, bugs, releases, team, hwDocs, soup, plans, anomalies, problems, measures, classification, signatures]);
 
   const gaps = useMemo(() => {
     const g: { tone: Tone; text: string }[] = [];
     if (m.reqNoSys.length) g.push({ tone: 'bad', text: `${m.reqNoSys.length} Requirements ohne Systemtest` });
     if (m.reqNoVer.length) g.push({ tone: 'bad', text: `${m.reqNoVer.length} Requirements ohne Unit-Verifikation` });
     if (m.risksNoVerification.length) g.push({ tone: 'bad', text: `${m.risksNoVerification.length} Risiken ohne Risk-Control-Verifikation` });
+    if (m.risksNoMeasure.length) g.push({ tone: 'bad', text: `${m.risksNoMeasure.length} Risiken ohne dokumentierte Maßnahme` });
+    if (!m.classOk) g.push({ tone: 'bad', text: 'Software-Sicherheitsklassifizierung (Produktebene) nicht freigegeben' });
+    if (!m.sdpOk) g.push({ tone: 'bad', text: 'Software Development Plan (SDP) fehlt oder nicht freigegeben' });
+    if (!m.scmpOk) g.push({ tone: 'warn', text: 'Konfigurationsmanagement-Plan (SCMP) fehlt oder nicht freigegeben' });
+    if (!m.maintOk) g.push({ tone: 'warn', text: 'Wartungsplan (IEC 62304 §6) fehlt oder nicht freigegeben' });
+    if (!m.problemPlanOk) g.push({ tone: 'warn', text: 'Problem-Resolution-Plan fehlt oder nicht freigegeben' });
+    if (!soup.length) g.push({ tone: 'bad', text: 'SOUP-/OTS-Liste ist leer (§8.1.2)' });
+    else if (m.soupOpen.length) g.push({ tone: 'warn', text: `${m.soupOpen.length} SOUP-Komponenten ohne vollständige Bewertung` });
+    if (m.measuresOpen.length) g.push({ tone: 'warn', text: `${m.measuresOpen.length} Risikomaßnahmen ohne bestätigte Wirksamkeit` });
+    if (m.anomaliesSafety.length) g.push({ tone: 'bad', text: `${m.anomaliesSafety.length} sicherheitsrelevante Anomalien offen` });
+    if (m.releasesNoAnomalyList.length) g.push({ tone: 'warn', text: `${m.releasesNoAnomalyList.length} Releases ohne Anomalienliste` });
+    if (m.releasesNoSignature.length) g.push({ tone: 'warn', text: `${m.releasesNoSignature.length} Releases ohne elektronische Freigabe` });
+    if (m.problemsNoCapa.length) g.push({ tone: 'bad', text: `${m.problemsNoCapa.length} sicherheits-/meldepflichtige Probleme ohne CAPA` });
+    if (m.bugsNoRetest.length) g.push({ tone: 'warn', text: `${m.bugsNoRetest.length} behobene Bugs ohne Release-/Regressionsnachweis` });
     if (m.reqNoUnit.length) g.push({ tone: 'warn', text: `${m.reqNoUnit.length} Requirements ohne Software Unit` });
     if (m.unitsNoOwner.length) g.push({ tone: 'warn', text: `${m.unitsNoOwner.length} Software Units ohne Owner` });
     if (m.unitsNoSource.length) g.push({ tone: 'warn', text: `${m.unitsNoSource.length} Software Units ohne Source-Code-Ort` });
@@ -133,16 +163,23 @@ export default function SoftwareCompliance() {
     if (!m.teamOk) g.push({ tone: 'warn', text: 'Software Development Team Lead fehlt' });
     if (!g.length) g.push({ tone: 'ok', text: 'Keine offenen Lücken erkannt' });
     return g;
-  }, [m]);
+  }, [m, soup]);
 
   const complete = useMemo(() => {
     const checks = [
       reqs.length > 0, units.length > 0, m.reqNoVer.length === 0, m.reqNoInt.length === 0,
       m.reqNoSys.length === 0, m.risksNoVerification.length === 0 && risks.length > 0,
       m.hwIsolation, m.teamOk, !m.vcsMissing, m.unitsNoOwner.length === 0,
+      m.classOk, m.sdpOk, m.scmpOk, m.maintOk, m.problemPlanOk,
+      soup.length > 0 && m.soupOpen.length === 0,
+      m.risksNoMeasure.length === 0 && risks.length > 0,
+      m.measuresOpen.length === 0 && measures.length > 0,
+      m.anomaliesSafety.length === 0,
+      m.releasesNoSignature.length === 0 && releases.length > 0,
+      m.problemsNoCapa.length === 0,
     ];
     return Math.round((checks.filter(Boolean).length / checks.length) * 100);
-  }, [reqs, units, risks, m]);
+  }, [reqs, units, risks, soup, measures, releases, m]);
 
   const exportMarkdown = () => {
     const dev = devices.find(d => d.id === deviceId);
