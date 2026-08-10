@@ -200,6 +200,59 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   /** Löschen ist ausschließlich Super Admin erlaubt */
   const canDelete = roles.includes('Super Admin');
 
+  /** REVISION-Markierungen je Rechnung (finance_invoice_revisions) */
+  type RevisionEntry = { revised_at: string; revised_by_name: string | null };
+  const [revisions, setRevisions] = useState<Record<string, RevisionEntry>>({});
+  const [revisionBusyId, setRevisionBusyId] = useState<string | null>(null);
+
+  const loadRevisions = async (ids: string[]) => {
+    if (!ids.length) return;
+    const map: Record<string, RevisionEntry> = {};
+    for (let i = 0; i < ids.length; i += 150) {
+      const chunk = ids.slice(i, i + 150);
+      const { data } = await (supabase.from('finance_invoice_revisions') as any)
+        .select('invoice_id, revised_at, revised_by_name, is_revision')
+        .in('invoice_id', chunk);
+      for (const row of (data ?? [])) {
+        if (row.is_revision) map[row.invoice_id] = { revised_at: row.revised_at, revised_by_name: row.revised_by_name };
+      }
+    }
+    setRevisions(map);
+  };
+
+  const toggleRevision = async (r: Row, next: boolean) => {
+    setRevisionBusyId(r.id);
+    try {
+      const userName = (profile as any)?.full_name || (profile as any)?.email || user?.email || 'Unbekannt';
+      if (next) {
+        const revised_at = new Date().toISOString();
+        const { error } = await (supabase.from('finance_invoice_revisions') as any).upsert({
+          invoice_id: r.id,
+          invoice_source: r.source ?? 'invoice',
+          invoice_number: r.invoice_number ?? null,
+          is_revision: true,
+          revised_at,
+          revised_by: user?.id ?? null,
+          revised_by_name: userName,
+        }, { onConflict: 'invoice_id' });
+        if (error) throw error;
+        setRevisions((s) => ({ ...s, [r.id]: { revised_at, revised_by_name: userName } }));
+        toast({ title: 'Revision gesetzt', description: `${r.invoice_number ?? ''} – ${userName}` });
+      } else {
+        const { error } = await (supabase.from('finance_invoice_revisions') as any)
+          .update({ is_revision: false }).eq('invoice_id', r.id);
+        if (error) throw error;
+        setRevisions((s) => { const n = { ...s }; delete n[r.id]; return n; });
+        toast({ title: 'Revision entfernt' });
+      }
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? 'Revision konnte nicht gespeichert werden', variant: 'destructive' });
+    } finally {
+      setRevisionBusyId(null);
+    }
+  };
+
+
   /** Aktionsleiste – wird als eigene Zeile unter der Rechnungszeile gerendert */
   const renderRowActions = (r: Row) => (
     <div className="flex flex-wrap items-center gap-1.5 px-4 py-2">
