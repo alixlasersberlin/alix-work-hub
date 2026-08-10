@@ -49,6 +49,7 @@ export function TourOrderPicker({
   setPartial: (v: boolean) => void;
 }) {
   const [term, setTerm] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<any[]>([]);
   const [itemsByOrder, setItemsByOrder] = useState<Record<string, string[]>>({});
@@ -56,22 +57,46 @@ export function TourOrderPicker({
 
   async function search() {
     const q = term.trim();
-    if (q.length < 2) { toast.error('Bitte mindestens 2 Zeichen eingeben'); return; }
+    if (q.length < 2 && !dateFrom) { toast.error('Bitte mindestens 2 Zeichen oder ein Datum angeben'); return; }
     setSearching(true);
     try {
       const sel = 'id, order_number, customer_id, total_amount, currency, order_date, shipping_address, billing_address, customers:customer_id(company_name, contact_name, email, phone, shipping_address, billing_address)';
-      const [byNumber, byCustomer] = await Promise.all([
-        supabase.from('orders').select(sel).ilike('order_number', `%${q}%`).limit(25),
-        supabase.from('customers').select('id').or(`company_name.ilike.%${q}%,contact_name.ilike.%${q}%`).limit(25),
-      ]);
-      if (byNumber.error) throw byNumber.error;
-      let rows = byNumber.data ?? [];
-      const custIds = (byCustomer.data ?? []).map((c: any) => c.id);
-      if (custIds.length) {
-        const { data: byName } = await supabase.from('orders').select(sel).in('customer_id', custIds).limit(50);
-        const seen = new Set(rows.map((r: any) => r.id));
-        rows = [...rows, ...(byName ?? []).filter((r: any) => !seen.has(r.id))];
+      const withDate = (qb: any) => (dateFrom ? qb.eq('order_date', dateFrom) : qb);
+      const like = `%${q}%`;
+
+      let rows: any[] = [];
+      if (!q) {
+        const { data, error } = await withDate(supabase.from('orders').select(sel)).order('order_date', { ascending: false }).limit(100);
+        if (error) throw error;
+        rows = data ?? [];
+      } else {
+        const [byCustomer, byInvoice] = await Promise.all([
+          supabase.from('customers').select('id')
+            .or(`company_name.ilike.${like},contact_name.ilike.${like},email.ilike.${like},phone.ilike.${like}`)
+            .limit(50),
+          supabase.from('zoho_invoices').select('reference_number')
+            .or(`invoice_number.ilike.${like},reference_number.ilike.${like}`)
+            .limit(50),
+        ]);
+        const custIds = (byCustomer.data ?? []).map((c: any) => c.id);
+        const refs = Array.from(new Set(((byInvoice.data ?? []) as any[]).map((i) => i.reference_number).filter(Boolean)));
+
+        const queries: any[] = [withDate(supabase.from('orders').select(sel).ilike('order_number', like)).limit(25)];
+        if (custIds.length) queries.push(withDate(supabase.from('orders').select(sel).in('customer_id', custIds)).limit(50));
+        if (refs.length) queries.push(withDate(supabase.from('orders').select(sel).in('order_number', refs)).limit(50));
+
+        const res = await Promise.all(queries);
+        const seen = new Set<string>();
+        for (const r of res) {
+          if (r.error) throw r.error;
+          for (const o of (r.data ?? [])) {
+            if (seen.has(o.id)) continue;
+            seen.add(o.id);
+            rows.push(o);
+          }
+        }
       }
+
       setResults(rows);
       const ids = rows.map((r: any) => r.id);
       if (ids.length) {
@@ -163,12 +188,21 @@ export function TourOrderPicker({
       <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
         <PackageCheck className="h-4 w-4 text-primary" />Auftrag suchen &amp; übernehmen
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Input
           value={term}
           onChange={(e) => setTerm(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); search(); } }}
-          placeholder="Auftragsnummer oder Name…"
+          placeholder="Auftrags-/Rechnungsnummer, Name, E-Mail, Telefon…"
+          className="min-w-[220px] flex-1"
+        />
+        <Input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); search(); } }}
+          className="w-[150px]"
+          title="Auftragsdatum"
         />
         <Button type="button" variant="outline" onClick={search} disabled={searching}>
           {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
