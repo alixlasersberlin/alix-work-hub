@@ -181,10 +181,47 @@ export default function DoppelteKunden() {
       </div>
 
       {canMerge && (
-        <p className="text-xs text-muted-foreground">
-          Wähle pro Gruppe den <span className="text-primary font-medium">Master-Kunden</span> (Radio) und die zu integrierenden Duplikate (Häkchen). Beim Zusammenführen werden alle Aufträge, Rechnungen, Notizen usw. auf den Master umgeschrieben und die Duplikate gelöscht.
-        </p>
+        <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="outline" size="sm" disabled={autoBusy} onClick={() => runAuto(true)}>
+              {autoBusy ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Search className="w-3.5 h-3.5 mr-1" />}
+              Sichere Dubletten prüfen (Vorschau)
+            </Button>
+            <Button size="sm" disabled={autoBusy || !autoPreview} onClick={() => setAutoConfirm(true)}>
+              <GitMerge className="w-3.5 h-3.5 mr-1" />
+              Sicher zusammenführen{autoPreview ? ` (${autoPreview.merged_customers})` : ''}
+            </Button>
+            {autoPreview && (
+              <span className="text-xs text-muted-foreground">
+                {autoPreview.groups} Gruppen · {autoPreview.merged_customers} überzählige Konten (gleicher Firmenname im selben Quellsystem)
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Wähle pro Gruppe den <span className="text-primary font-medium">Master-Kunden</span> (Radio) und die zu integrierenden Duplikate (Häkchen). Beim Zusammenführen werden alle Aufträge, Rechnungen (auch Zoho), Mahnfälle, Notizen usw. auf den Master umgeschrieben und die Duplikate gelöscht.
+          </p>
+        </div>
       )}
+
+      <AlertDialog open={autoConfirm} onOpenChange={setAutoConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sichere Dubletten zusammenführen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {autoPreview
+                ? `${autoPreview.merged_customers} Konten aus ${autoPreview.groups} Gruppen werden auf das jeweils älteste Konto zusammengeführt. Dieser Vorgang kann nicht rückgängig gemacht werden.`
+                : 'Bitte zuerst die Vorschau ausführen.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { setAutoConfirm(false); runAuto(false); }}>
+              Zusammenführen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
