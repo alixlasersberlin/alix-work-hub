@@ -11,6 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Layers, Plus, Trash2, Loader2, Crosshair } from 'lucide-react';
 import { DRAWING_VIEWS, DRAWING_STATUS, plmLabel } from '@/lib/plm/config';
+import { PlmFileInput } from '@/components/plm/PlmFileInput';
+import { resolvePlmUrl } from '@/lib/plm/media';
 import { useAuth } from '@/hooks/useAuth';
 
 const WRITE_ROLES = ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM'];
