@@ -79,3 +79,4 @@
 - [Produktion & Beschaffung](mem://features/plm-produktion-beschaffung) — PLM/MDR/ISO-13485-Modul unter /produktion, Tabellen plm_*, generische PlmCrudPage, Explosionszeichnungen mit Positionsnummern
 - [ALIX COLLECT](mem://features/alix-collect) — Intelligentes Forderungsmanagement /finance/collect: collect_* Tabellen, collect-engine/-send-dunning/-ai-score, KI-Risikoscore, Aging-KPIs, tägliche Crons
 - [Manufacturer Management (MFR)](mem://features/plm-manufacturer-management) — Herstellerdatenbank im PLM: Zertifikate, Audits, Dokumente, Lieferantenlinks, Dubletten-Merge, BOM-Excel-Import
+- [ALIX Software Compliance](mem://features/software-compliance) — IEC 62304 Traceability Center unter /produktion/software (Requirements, Units, Risks, Tests, Bugs, Releases, HW-Doku)

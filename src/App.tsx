@@ -667,6 +667,19 @@ const PlmHerstellerKarte = lazy(() => import("./pages/PLM/HerstellerKarte"));
 const PlmHerstellerDubletten = lazy(() => import("./pages/PLM/HerstellerDubletten"));
 const PlmHerstellerDashboard = lazy(() => import("./pages/PLM/HerstellerDashboard"));
 const PlmBomImport = lazy(() => import("./pages/PLM/BomImport"));
+const PlmSoftwareCompliance = lazy(() => import("./pages/PLM/SoftwareCompliance"));
+const PlmSoftwareTraceability = lazy(() => import("./pages/PLM/SoftwareTraceability"));
+const PlmSwUnits = lazy(() => import("./pages/PLM/SwUnits"));
+const PlmSwRequirements = lazy(() => import("./pages/PLM/SwRequirements"));
+const PlmSwRisks = lazy(() => import("./pages/PLM/SwRisks"));
+const PlmSwVerification = lazy(() => import("./pages/PLM/SwVerification"));
+const PlmSwIntegration = lazy(() => import("./pages/PLM/SwIntegration"));
+const PlmSwSystemTests = lazy(() => import("./pages/PLM/SwSystemTests"));
+const PlmSwBugs = lazy(() => import("./pages/PLM/SwBugs"));
+const PlmSwReleases = lazy(() => import("./pages/PLM/SwReleases"));
+const PlmSwTeam = lazy(() => import("./pages/PLM/SwTeam"));
+const PlmHwDokumentation = lazy(() => import("./pages/PLM/HwDokumentation"));
+const PlmSwSurveys = lazy(() => import("./pages/PLM/SwSurveys"));
 
 const PlmStuecklistenbaum = lazy(() => import("./pages/PLM/Stuecklistenbaum"));
 const Iso13485 = lazy(() => import("./pages/Iso13485"));
@@ -2110,6 +2123,19 @@ function AppRoutes() {
           <Route path="/produktion/hersteller-dashboard" element={<ProtectedRoute><PlmHerstellerDashboard /></ProtectedRoute>} />
           <Route path="/produktion/hersteller-dubletten" element={<ProtectedRoute><PlmHerstellerDubletten /></ProtectedRoute>} />
           <Route path="/produktion/bom-import" element={<ProtectedRoute><PlmBomImport /></ProtectedRoute>} />
+          <Route path="/produktion/software" element={<ProtectedRoute><PlmSoftwareCompliance /></ProtectedRoute>} />
+          <Route path="/produktion/software/traceability" element={<ProtectedRoute><PlmSoftwareTraceability /></ProtectedRoute>} />
+          <Route path="/produktion/software/units" element={<ProtectedRoute><PlmSwUnits /></ProtectedRoute>} />
+          <Route path="/produktion/software/requirements" element={<ProtectedRoute><PlmSwRequirements /></ProtectedRoute>} />
+          <Route path="/produktion/software/risiken" element={<ProtectedRoute><PlmSwRisks /></ProtectedRoute>} />
+          <Route path="/produktion/software/verifikation" element={<ProtectedRoute><PlmSwVerification /></ProtectedRoute>} />
+          <Route path="/produktion/software/integration" element={<ProtectedRoute><PlmSwIntegration /></ProtectedRoute>} />
+          <Route path="/produktion/software/systemtests" element={<ProtectedRoute><PlmSwSystemTests /></ProtectedRoute>} />
+          <Route path="/produktion/software/bugs" element={<ProtectedRoute><PlmSwBugs /></ProtectedRoute>} />
+          <Route path="/produktion/software/releases" element={<ProtectedRoute><PlmSwReleases /></ProtectedRoute>} />
+          <Route path="/produktion/software/team" element={<ProtectedRoute><PlmSwTeam /></ProtectedRoute>} />
+          <Route path="/produktion/hardware-dokumentation" element={<ProtectedRoute><PlmHwDokumentation /></ProtectedRoute>} />
+          <Route path="/produktion/software/anwenderbefragung" element={<ProtectedRoute><PlmSwSurveys /></ProtectedRoute>} />
           <Route path="/produktion/hersteller/:id" element={<ProtectedRoute><PlmHerstellerKarte /></ProtectedRoute>} />
 
 
