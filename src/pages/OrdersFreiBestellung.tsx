@@ -185,6 +185,8 @@ export default function OrdersFreiBestellung() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [unassignOrder, setUnassignOrder] = useState<any | null>(null);
   const [unassigning, setUnassigning] = useState(false);
+  const [orderedOrder, setOrderedOrder] = useState<any | null>(null);
+  const [markingOrdered, setMarkingOrdered] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const toggleExpand = (id: string) => setExpanded(prev => {
     const next = new Set(prev);
