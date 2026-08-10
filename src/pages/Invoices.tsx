@@ -257,6 +257,28 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       >
         <Mail className="w-3.5 h-3.5" /> Rechnung/Email
       </Button>
+      <label
+        className="flex items-center gap-1.5 h-8 px-2 rounded-md border border-orange-500/40 text-orange-400 text-xs font-medium cursor-pointer hover:bg-orange-500/10"
+        title={
+          revisions[r.id]
+            ? `Revision am ${new Date(revisions[r.id]!.revised_at).toLocaleString('de-DE')} von ${revisions[r.id]!.revised_by_name ?? 'unbekannt'}`
+            : 'Rechnung als Revision markieren'
+        }
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Checkbox
+          checked={!!revisions[r.id]}
+          disabled={revisionBusyId === r.id}
+          onCheckedChange={(v) => toggleRevision(r, v === true)}
+        />
+        REVISION
+        {revisions[r.id] && (
+          <span className="text-[10px] opacity-80">
+            {new Date(revisions[r.id]!.revised_at).toLocaleDateString('de-DE')} · {revisions[r.id]!.revised_by_name ?? '—'}
+          </span>
+        )}
+      </label>
+
       {isAdmin && (
         <Button
           size="sm"
