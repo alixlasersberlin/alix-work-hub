@@ -467,17 +467,26 @@ export default function AppLayout() {
       .channel('menu_counts_lager_devices')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lager_devices' }, scheduleReload)
       .subscribe();
+    const chNotes = supabase
+      .channel('menu_counts_order_notes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_notes' }, scheduleReload)
+      .subscribe();
+    const onVisible = () => { if (document.visibilityState === 'visible') scheduleReload(); };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
       if (isOrdersRoute) window.clearTimeout(initialId);
       else cic(initialId);
       window.clearInterval(intervalId);
       if (debounceId) window.clearTimeout(debounceId);
+      document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('einkauf-counts-refresh', onRefresh);
       supabase.removeChannel(chProd);
       supabase.removeChannel(chOrders);
       supabase.removeChannel(chLager);
+      supabase.removeChannel(chNotes);
     };
+
 
   }, [atOnly, isOrdersRoute]);
 
