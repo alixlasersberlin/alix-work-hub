@@ -257,7 +257,9 @@ Deno.serve(async (req) => {
   const doImport = body.import === true;
 
   const startedAt = Date.now();
-  const HARD_CAP_MS = Math.min(Math.max(Number(body.timeout_ms) || 240_000, 30_000), 280_000);
+  // Synchronous responses must finish well below the gateway's ~150s limit,
+  // otherwise the caller only sees "Internal Server Error".
+  const HARD_CAP_MS = Math.min(Math.max(Number(body.timeout_ms) || 95_000, 20_000), 110_000);
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
   // Targeted import: { source, estimate_ids: [...] } – skips the full listing.
