@@ -282,7 +282,15 @@ export function PlmCrudPage({
                           <input type="checkbox" checked={!!form[f.key]} onChange={e => setForm(s => ({ ...s, [f.key]: e.target.checked }))} />
                           <span className="text-muted-foreground">{f.label}</span>
                         </label>
+                      ) : f.type === 'image' || f.type === 'file' ? (
+                        <PlmFileInput
+                          value={form[f.key] ?? ''}
+                          image={f.type === 'image'}
+                          folder={table}
+                          onChange={p => setForm(s => ({ ...s, [f.key]: p ?? '' }))}
+                        />
                       ) : (
+
                         <Input
                           type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
                           value={form[f.key] ?? ''}
