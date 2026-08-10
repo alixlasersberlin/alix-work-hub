@@ -55,6 +55,8 @@ export default function Auslieferungsfreigabe() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<'all' | 'blocked' | 'waiting' | 'released'>('all');
+  const [statusTab, setStatusTab] = useState<string>('all');
+  const [statusBusy, setStatusBusy] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkStage, setBulkStage] = useState<ApprovalStage>('accounting');
@@ -107,6 +109,38 @@ export default function Auslieferungsfreigabe() {
       setAddAllBusy(false);
     }
   };
+  /** Alle Aufträge eines bestimmten Status in die Freigabe aufnehmen */
+  const addOrdersByStatus = async (status: string) => {
+    setStatusBusy(status);
+    try {
+      const ids: string[] = [];
+      const page = 1000;
+      for (let from = 0; ; from += page) {
+        const { data, error } = await db
+          .from('orders')
+          .select('id')
+          .eq('order_status', status)
+          .order('created_at', { ascending: false })
+          .range(from, from + page - 1);
+        if (error) throw error;
+        const batch = (data ?? []) as any[];
+        ids.push(...batch.map((o) => o.id));
+        if (batch.length < page) break;
+      }
+      const userName = profile?.full_name || user?.email || 'Unbekannt';
+      let created = 0;
+      for (let i = 0; i < ids.length; i += 300) {
+        created += await bulkStartApprovals(ids.slice(i, i + 300), userName);
+      }
+      toast.success(created ? `${created} Aufträge (${status}) hinzugefügt` : `Alle Aufträge mit Status „${status}" sind bereits enthalten`);
+      void load();
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Hinzufügen fehlgeschlagen');
+    } finally {
+      setStatusBusy(null);
+    }
+  };
+
 
 
 
@@ -267,11 +301,12 @@ export default function Auslieferungsfreigabe() {
 
   const filtered = useMemo(() => rows.filter((r) => {
     if (filter !== 'all' && r.overall_status !== filter) return false;
+    if (statusTab !== 'all' && (r.order_status ?? '').toLowerCase() !== statusTab.toLowerCase()) return false;
     if (!q.trim()) return true;
     const s = q.trim().toLowerCase();
     return [r.order_number, r.customer_name, r.customer_email, r.customer_phone, ...(r.invoice_numbers ?? [])]
       .some((v) => (v ?? '').toString().toLowerCase().includes(s));
-  }), [rows, q, filter]);
+  }), [rows, q, filter, statusTab]);
 
   const kpi = useMemo(() => {
     const avg = (vals: (number | null)[]) => {
@@ -570,6 +605,31 @@ export default function Auslieferungsfreigabe() {
           </Button>
         ))}
         <span className="text-xs text-muted-foreground ml-auto">{filtered.length} Einträge</span>
+      </div>
+
+      {/* Reiter nach Auftragsstatus */}
+      <div className="flex flex-wrap items-center gap-2 border-b pb-2">
+        {(['all', 'Anwalt', 'invoiced', 'geliefert'] as const).map((s) => {
+          const count = s === 'all'
+            ? rows.length
+            : rows.filter((r) => (r.order_status ?? '').toLowerCase() === s.toLowerCase()).length;
+          return (
+            <Button key={s} size="sm" variant={statusTab === s ? 'default' : 'ghost'} onClick={() => setStatusTab(s)}>
+              {s === 'all' ? 'Alle Status' : s} <span className="ml-1 text-xs opacity-70">({count})</span>
+            </Button>
+          );
+        })}
+        {statusTab !== 'all' && (
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={statusBusy === statusTab}
+            onClick={() => addOrdersByStatus(statusTab)}
+          >
+            <PlusCircle className="h-4 w-4 mr-1" />
+            {statusBusy === statusTab ? 'Wird gefüllt…' : `„${statusTab}" befüllen`}
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
