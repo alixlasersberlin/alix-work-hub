@@ -2123,6 +2123,19 @@ function AppRoutes() {
           <Route path="/produktion/hersteller-dashboard" element={<ProtectedRoute><PlmHerstellerDashboard /></ProtectedRoute>} />
           <Route path="/produktion/hersteller-dubletten" element={<ProtectedRoute><PlmHerstellerDubletten /></ProtectedRoute>} />
           <Route path="/produktion/bom-import" element={<ProtectedRoute><PlmBomImport /></ProtectedRoute>} />
+          <Route path="/produktion/software" element={<ProtectedRoute><PlmSoftwareCompliance /></ProtectedRoute>} />
+          <Route path="/produktion/software/traceability" element={<ProtectedRoute><PlmSoftwareTraceability /></ProtectedRoute>} />
+          <Route path="/produktion/software/units" element={<ProtectedRoute><PlmSwUnits /></ProtectedRoute>} />
+          <Route path="/produktion/software/requirements" element={<ProtectedRoute><PlmSwRequirements /></ProtectedRoute>} />
+          <Route path="/produktion/software/risiken" element={<ProtectedRoute><PlmSwRisks /></ProtectedRoute>} />
+          <Route path="/produktion/software/verifikation" element={<ProtectedRoute><PlmSwVerification /></ProtectedRoute>} />
+          <Route path="/produktion/software/integration" element={<ProtectedRoute><PlmSwIntegration /></ProtectedRoute>} />
+          <Route path="/produktion/software/systemtests" element={<ProtectedRoute><PlmSwSystemTests /></ProtectedRoute>} />
+          <Route path="/produktion/software/bugs" element={<ProtectedRoute><PlmSwBugs /></ProtectedRoute>} />
+          <Route path="/produktion/software/releases" element={<ProtectedRoute><PlmSwReleases /></ProtectedRoute>} />
+          <Route path="/produktion/software/team" element={<ProtectedRoute><PlmSwTeam /></ProtectedRoute>} />
+          <Route path="/produktion/hardware-dokumentation" element={<ProtectedRoute><PlmHwDokumentation /></ProtectedRoute>} />
+          <Route path="/produktion/software/anwenderbefragung" element={<ProtectedRoute><PlmSwSurveys /></ProtectedRoute>} />
           <Route path="/produktion/hersteller/:id" element={<ProtectedRoute><PlmHerstellerKarte /></ProtectedRoute>} />
 
 
