@@ -474,36 +474,33 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const refetchRows = async (cacheKey: string, showError: boolean) => {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
     const cols = 'id, created_at, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
-    // PostgREST liefert max. 1000 Zeilen je Request -> Seiten parallel laden
-    // (vorher strikt sequenziell: bei ~10k Zeilen 10 Roundtrips hintereinander).
-    const fetchAllPages = async (build: () => any, page = 1000, max = 20000, concurrency = 6) => {
+    // PostgREST liefert max. 1000 Zeilen je Request.
+    // Keyset-Pagination über die Primärschlüssel-Spalte (id, absteigend):
+    // kein tiefes OFFSET -> kein Full-Sort -> keine Statement-Timeouts.
+    // Die Anzeige-Sortierung passiert ohnehin clientseitig.
+    const fetchAllPages = async (build: () => any, page = 1000, max = 40000) => {
       const out: any[] = [];
-      let from = 0;
-      let done = false;
-      while (!done && from < max) {
-        const batch: Promise<any>[] = [];
-        for (let i = 0; i < concurrency && from + i * page < max; i++) {
-          const start = from + i * page;
-          batch.push(build().range(start, start + page - 1));
-        }
-        const res = await Promise.all(batch);
-        for (const { data, error } of res) {
-          if (error) return { data: out, error };
-          out.push(...(data ?? []));
-          if (!data || data.length < page) done = true;
-        }
-        from += concurrency * page;
+      let cursor: string | null = null;
+      while (out.length < max) {
+        let q = build().order('id', { ascending: false }).limit(page);
+        if (cursor) q = q.lt('id', cursor);
+        const { data, error } = await q;
+        if (error) return { data: out, error };
+        const rows = data ?? [];
+        out.push(...rows);
+        if (rows.length < page) break;
+        cursor = rows[rows.length - 1]?.id ?? null;
+        if (!cursor) break;
       }
       return { data: out, error: null };
     };
     const withTenant = (q: any) => (tenantId ? q.eq('tenant_id', tenantId) : q);
     const [inv, rec, unp] = await Promise.all([
-      fetchAllPages(() => withTenant((supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly)).order('invoice_date', { ascending: false }).order('id', { ascending: false })),
-      fetchAllPages(() => withTenant((supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).eq('is_mietkauf', mietkaufOnly)).order('invoice_date', { ascending: false }).order('id', { ascending: false })),
+      fetchAllPages(() => withTenant((supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly))),
+      fetchAllPages(() => withTenant((supabase.from('zoho_recurring_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).eq('is_mietkauf', mietkaufOnly))),
       includeUnpaid && !mietkaufOnly
         ? fetchAllPages(() => (supabase.from('zoho_unpaid_invoices') as any)
-            .select('id, created_at, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw')
-            .order('invoice_date', { ascending: false }).order('id', { ascending: false }))
+            .select('id, created_at, invoice_id, invoice_number, customer_name, invoice_date, due_date, total, balance, currency_code, status, raw'))
         : Promise.resolve({ data: [], error: null } as any),
     ]);
 
