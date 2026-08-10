@@ -182,6 +182,9 @@ function tableFor(source: Row['source']) {
 // Modul-Cache: Rechnungsliste bleibt beim Zurücknavigieren sofort sichtbar
 const ROWS_CACHE = new Map<string, { ts: number; rows: Row[] }>();
 const ROWS_CACHE_TTL = 60_000;
+// Cache der Mietkauf-Summen je Mandant (Kontenansicht)
+const MK_CACHE = new Map<string, { ts: number; map: Record<string, number> }>();
+const MK_CACHE_TTL = 5 * 60_000;
 
 
 
