@@ -562,25 +562,31 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     // Performance: raw_data (großes JSONB) NICHT in die Liste laden – nur das benötigte Flag.
     const cols = 'id, created_at, zoho_invoice_id, source_system, invoice_number, reference_number, customer_id, customer_name, city, invoice_date, due_date, total, balance, currency, status, payment_status, last_payment_date, raw_is_draft:raw_data->is_draft';
     // PostgREST liefert max. 1000 Zeilen je Request.
-    // Keyset-Pagination über die Primärschlüssel-Spalte (id, absteigend):
-    // kein tiefes OFFSET -> kein Full-Sort -> keine Statement-Timeouts.
-    // Die Anzeige-Sortierung passiert ohnehin clientseitig.
+    // Erste Seite mit exaktem Count holen, danach alle weiteren Seiten PARALLEL
+    // (Index auf id DESC vorhanden -> flache Offsets, kein Full-Sort).
     const fetchAllPages = async (build: () => any, page = 1000, max = 40000) => {
-      const out: any[] = [];
-      let cursor: string | null = null;
-      while (out.length < max) {
-        let q = build().order('id', { ascending: false }).limit(page);
-        if (cursor) q = q.lt('id', cursor);
-        const { data, error } = await q;
-        if (error) return { data: out, error };
-        const rows = data ?? [];
-        out.push(...rows);
-        if (rows.length < page) break;
-        cursor = rows[rows.length - 1]?.id ?? null;
-        if (!cursor) break;
+      const first = await build().order('id', { ascending: false }).range(0, page - 1);
+      if (first.error) return { data: [], error: first.error };
+      const total = Math.min(first.count ?? (first.data?.length ?? 0), max);
+      const out: any[] = [...(first.data ?? [])];
+      if (total <= out.length) return { data: out, error: null };
+
+      const starts: number[] = [];
+      for (let s = page; s < total; s += page) starts.push(s);
+
+      for (let i = 0; i < starts.length; i += 6) {
+        const batch = starts.slice(i, i + 6);
+        const res = await Promise.all(
+          batch.map((s) => build().order('id', { ascending: false }).range(s, Math.min(s + page - 1, total - 1))),
+        );
+        for (const r of res) {
+          if (r.error) return { data: out, error: r.error };
+          out.push(...(r.data ?? []));
+        }
       }
       return { data: out, error: null };
     };
+
     const withTenant = (q: any) => (tenantId ? q.eq('tenant_id', tenantId) : q);
     const [inv, rec, unp] = await Promise.all([
       fetchAllPages(() => withTenant((supabase.from('zoho_invoices') as any).select(`${cols}, is_mietkauf, is_deposit, deposit_id`).in('accounting_region', String(region) === 'ALL' ? ['EU','CH'] : [region]).eq('is_mietkauf', mietkaufOnly))),
