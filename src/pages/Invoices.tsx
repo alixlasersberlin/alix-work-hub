@@ -23,6 +23,7 @@ import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { stampExistingPdfBlob } from '@/lib/facsimile/jsPdfHelpers';
 import { createPDF } from '@/lib/pdf-utils';
@@ -191,13 +192,77 @@ const MK_CACHE_TTL = 5 * 60_000;
 export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   const { tenantId } = useTenantFilter();
 
-  const { roles } = useAuth();
+  const { roles, user, profile } = useAuth();
   const { region, setRegion } = useAccountingRegion();
 
   const isSuperAdmin = (roles.includes('Super Admin') || roles.includes('Admin'));
   const isAdmin = roles.includes('Admin') || isSuperAdmin;
   /** Löschen ist ausschließlich Super Admin erlaubt */
   const canDelete = roles.includes('Super Admin');
+
+  /** REVISION-Markierungen je Rechnung (finance_invoice_revisions) */
+  type RevisionEntry = { revised_at: string; revised_by_name: string | null };
+  const [revisions, setRevisions] = useState<Record<string, RevisionEntry>>({});
+  const [revisionBusyId, setRevisionBusyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const map: Record<string, RevisionEntry> = {};
+      let cursor: string | null = null;
+      for (let i = 0; i < 20; i++) {
+        let q: any = (supabase.from('finance_invoice_revisions') as any)
+          .select('id, invoice_id, revised_at, revised_by_name')
+          .eq('is_revision', true)
+          .order('id', { ascending: false })
+          .limit(1000);
+        if (cursor) q = q.lt('id', cursor);
+        const { data, error } = await q;
+        if (error) break;
+        const list = data ?? [];
+        for (const row of list) map[row.invoice_id] = { revised_at: row.revised_at, revised_by_name: row.revised_by_name };
+        if (list.length < 1000) break;
+        cursor = list[list.length - 1]?.id ?? null;
+        if (!cursor) break;
+      }
+      if (!cancelled) setRevisions(map);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+
+  const toggleRevision = async (r: Row, next: boolean) => {
+    setRevisionBusyId(r.id);
+    try {
+      const userName = (profile as any)?.full_name || (profile as any)?.email || user?.email || 'Unbekannt';
+      if (next) {
+        const revised_at = new Date().toISOString();
+        const { error } = await (supabase.from('finance_invoice_revisions') as any).upsert({
+          invoice_id: r.id,
+          invoice_source: r.source ?? 'invoice',
+          invoice_number: r.invoice_number ?? null,
+          is_revision: true,
+          revised_at,
+          revised_by: user?.id ?? null,
+          revised_by_name: userName,
+        }, { onConflict: 'invoice_id' });
+        if (error) throw error;
+        setRevisions((s) => ({ ...s, [r.id]: { revised_at, revised_by_name: userName } }));
+        toast({ title: 'Revision gesetzt', description: `${r.invoice_number ?? ''} – ${userName}` });
+      } else {
+        const { error } = await (supabase.from('finance_invoice_revisions') as any)
+          .update({ is_revision: false }).eq('invoice_id', r.id);
+        if (error) throw error;
+        setRevisions((s) => { const n = { ...s }; delete n[r.id]; return n; });
+        toast({ title: 'Revision entfernt' });
+      }
+    } catch (e: any) {
+      toast({ title: 'Fehler', description: e?.message ?? 'Revision konnte nicht gespeichert werden', variant: 'destructive' });
+    } finally {
+      setRevisionBusyId(null);
+    }
+  };
+
 
   /** Aktionsleiste – wird als eigene Zeile unter der Rechnungszeile gerendert */
   const renderRowActions = (r: Row) => (
@@ -257,6 +322,28 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       >
         <Mail className="w-3.5 h-3.5" /> Rechnung/Email
       </Button>
+      <label
+        className="flex items-center gap-1.5 h-8 px-2 rounded-md border border-orange-500/40 text-orange-400 text-xs font-medium cursor-pointer hover:bg-orange-500/10"
+        title={
+          revisions[r.id]
+            ? `Revision am ${new Date(revisions[r.id]!.revised_at).toLocaleString('de-DE')} von ${revisions[r.id]!.revised_by_name ?? 'unbekannt'}`
+            : 'Rechnung als Revision markieren'
+        }
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Checkbox
+          checked={!!revisions[r.id]}
+          disabled={revisionBusyId === r.id}
+          onCheckedChange={(v) => toggleRevision(r, v === true)}
+        />
+        REVISION
+        {revisions[r.id] && (
+          <span className="text-[10px] opacity-80">
+            {new Date(revisions[r.id]!.revised_at).toLocaleDateString('de-DE')} · {revisions[r.id]!.revised_by_name ?? '—'}
+          </span>
+        )}
+      </label>
+
       {isAdmin && (
         <Button
           size="sm"

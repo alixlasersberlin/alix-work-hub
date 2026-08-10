@@ -24526,6 +24526,45 @@ export type Database = {
           },
         ]
       }
+      finance_invoice_revisions: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_id: string
+          invoice_number: string | null
+          invoice_source: string
+          is_revision: boolean
+          revised_at: string
+          revised_by: string | null
+          revised_by_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invoice_id: string
+          invoice_number?: string | null
+          invoice_source?: string
+          is_revision?: boolean
+          revised_at?: string
+          revised_by?: string | null
+          revised_by_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          invoice_number?: string | null
+          invoice_source?: string
+          is_revision?: boolean
+          revised_at?: string
+          revised_by?: string | null
+          revised_by_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       finance_journal: {
         Row: {
           account: string | null
