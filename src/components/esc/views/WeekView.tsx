@@ -4,6 +4,7 @@ import type { EscAppointment, EscDepartment } from '@/lib/esc/types';
 import { AppointmentCard } from '../AppointmentCard';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { isVipTraining, VIP_TRAINING_COLOR } from '@/lib/esc/vip-kind';
 
 function hueFromId(id: string) {
   let h = 0;
@@ -89,6 +90,7 @@ export function WeekView({
             <div key={ri} className="grid grid-cols-7 gap-1">
               {row.map((sp) => {
                 const dept = deptOf(sp.a.departmentId);
+                const vip = isVipTraining(sp.a);
                 const tint = subtleTint(sp.a.id);
                 return (
                   <button
@@ -105,9 +107,9 @@ export function WeekView({
                     style={{
                       gridColumnStart: sp.colStart + 1,
                       gridColumnEnd: sp.colEnd + 2,
-                      backgroundColor: tint.bg,
-                      borderColor: tint.border,
-                      borderLeftColor: dept?.color || tint.border,
+                      backgroundColor: vip ? 'hsl(142 71% 45% / 0.22)' : tint.bg,
+                      borderColor: vip ? 'hsl(142 71% 45% / 0.6)' : tint.border,
+                      borderLeftColor: vip ? VIP_TRAINING_COLOR : dept?.color || tint.border,
                     }}
                     title={`${sp.a.title} · ${format(new Date(sp.a.startAt), 'dd.MM. HH:mm', { locale: de })} – ${format(new Date(sp.a.endAt), 'dd.MM. HH:mm', { locale: de })}`}
                   >

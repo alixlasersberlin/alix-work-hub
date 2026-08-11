@@ -2,6 +2,7 @@ import { addDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, startOf
 import { de } from 'date-fns/locale';
 import type { EscAppointment, EscDepartment } from '@/lib/esc/types';
 import { cn } from '@/lib/utils';
+import { isVipTraining, VIP_TRAINING_COLOR } from '@/lib/esc/vip-kind';
 
 export function MonthView({
   date, appointments, departments, onDayClick, onAppointmentClick,
@@ -44,12 +45,16 @@ export function MonthView({
               <div className="flex flex-col gap-0.5">
                 {items.slice(0, 3).map((a) => {
                   const dept = deptOf(a.departmentId);
+                  const vip = isVipTraining(a);
                   return (
                     <button
                       key={a.id}
                       onClick={(e) => { e.stopPropagation(); onAppointmentClick?.(a); }}
-                      className="text-left truncate rounded px-1 py-0.5 border-l-2 bg-card hover:bg-accent/30"
-                      style={{ borderLeftColor: dept?.color || 'hsl(var(--primary))' }}
+                      className={cn(
+                        'text-left truncate rounded px-1 py-0.5 border-l-2',
+                        vip ? 'bg-emerald-500/20 hover:bg-emerald-500/30' : 'bg-card hover:bg-accent/30',
+                      )}
+                      style={{ borderLeftColor: vip ? VIP_TRAINING_COLOR : dept?.color || 'hsl(var(--primary))' }}
                     >
                       {format(new Date(a.startAt), 'HH:mm')} {a.title}
                     </button>

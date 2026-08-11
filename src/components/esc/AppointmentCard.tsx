@@ -5,6 +5,7 @@ import { EscStatusBadge } from './StatusBadge';
 import { DepartmentBadge } from './DepartmentBadge';
 import { cn } from '@/lib/utils';
 import { ReleaseStatusForOrderText } from '@/components/delivery/ReleaseStatusForOrderText';
+import { isVipTraining, VIP_TRAINING_COLOR } from '@/lib/esc/vip-kind';
 
 interface Props {
   appointment: EscAppointment;
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function AppointmentCard({ appointment, department, compact, onClick }: Props) {
+  const vip = isVipTraining(appointment);
   return (
     <button
       type="button"
@@ -23,11 +25,14 @@ export function AppointmentCard({ appointment, department, compact, onClick }: P
         onClick();
       }}
       className={cn(
-        'w-full text-left rounded-md border bg-card hover:bg-accent/40 transition-colors px-2 py-1.5',
+        'w-full text-left rounded-md border transition-colors px-2 py-1.5',
         'border-l-4',
+        vip
+          ? 'bg-emerald-500/20 border-emerald-500/60 hover:bg-emerald-500/30'
+          : 'bg-card hover:bg-accent/40',
         compact ? 'text-[11px]' : 'text-[12.5px]',
       )}
-      style={{ borderLeftColor: department?.color || 'hsl(var(--primary))' }}
+      style={{ borderLeftColor: vip ? VIP_TRAINING_COLOR : department?.color || 'hsl(var(--primary))' }}
       title={appointment.title}
     >
       <div className="flex items-center justify-between gap-2">
