@@ -79,7 +79,7 @@ export default function EscCalendar() {
     setEditing(a); setDefaultStart(undefined); setPresetKind(undefined); setPresetMode(undefined); setModalOpen(true);
   };
 
-  const handleSubmit = async (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const persistSubmit = async (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editing) {
       await updateAppointment(editing.id, payload);
       toast.success('Termin aktualisiert');
@@ -88,6 +88,23 @@ export default function EscCalendar() {
       toast.success('Termin angelegt');
     }
   };
+
+  const handleSubmit = async (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const conflicts = findConflicts(
+      { ...payload, id: editing?.id ?? '__new' },
+      appointments,
+      {
+        employees: employees.map((e) => ({ id: e.id, name: e.name })),
+        resources: resources.map((r) => ({ id: r.id, name: r.name })),
+      },
+    );
+    if (conflicts.length) {
+      setPendingSave({ payload, conflicts });
+      return;
+    }
+    await persistSubmit(payload);
+  };
+
 
   const performMove = async (id: string, newStart: Date) => {
     const a = appointments.find((x) => x.id === id);
