@@ -202,6 +202,14 @@ export default function QuoteDetail() {
           <Button variant="secondary" onClick={sendToCustomer} disabled={saving || !repair?.customer_email}>
             <Mail className="w-4 h-4 mr-1" />Email versenden
           </Button>
+          <Button onClick={handoverToAccounting} disabled={saving || !repair} title="Kostenvoranschlag zur Rechnungserstellung an die Buchhaltung übergeben">
+            <Receipt className="w-4 h-4 mr-1" />An Buchhaltung übergeben
+          </Button>
+          {repair?.sent_to_finance && (
+            <Badge className="self-center" variant="outline">
+              Übergeben{repair.sent_to_finance_at ? ` · ${new Date(repair.sent_to_finance_at).toLocaleDateString('de-DE')}` : ''}
+            </Badge>
+          )}
         </div>
       </div>
 
