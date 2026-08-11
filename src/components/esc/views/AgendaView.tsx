@@ -5,6 +5,7 @@ import { EscStatusBadge } from '../StatusBadge';
 import { DepartmentBadge } from '../DepartmentBadge';
 import { AddToCalendarMenu } from '../AddToCalendarMenu';
 import { isVipTraining } from '@/lib/esc/vip-kind';
+import { ConfirmBanner } from '../ConfirmBanner';
 import { cn } from '@/lib/utils';
 
 

@@ -40,6 +40,9 @@ export function AppointmentCard({ appointment, department, compact, onClick }: P
         <span className="font-medium truncate">{appointment.title}</span>
         {!compact && <EscStatusBadge status={appointment.status} />}
       </div>
+      <div className="mt-1">
+        <ConfirmBanner appointment={appointment} compact={compact} />
+      </div>
       <div className="flex items-center justify-between text-muted-foreground mt-0.5">
         <span>{format(new Date(appointment.startAt), 'HH:mm', { locale: de })}–{format(new Date(appointment.endAt), 'HH:mm', { locale: de })}</span>
         {!compact && <DepartmentBadge dept={department} />}
