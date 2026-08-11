@@ -1459,24 +1459,71 @@ Deno.serve(async (req) => {
         const email = String(src.email || meta.email || "").toLowerCase().trim();
         const full_name = src.full_name || src.name || meta.full_name || null;
 
-        // Skip if a customer with this email already exists
+        // Merge instead of creating a duplicate when a customer with the same e-mail exists
         if (email) {
-          const { data: dup } = await ctx.admin
-            .from("customers").select("id").ilike("email", email).maybeSingle();
+          const { data: dupRows } = await ctx.admin
+            .from("customers")
+            .select("id, email, contact_name, company_name, phone, billing_address, external_customer_id, raw_data")
+            .ilike("email", email)
+            .order("created_at", { ascending: true })
+            .limit(1);
+          const dup = dupRows?.[0];
           if (dup) {
+            // Fill only empty fields on the existing record – never overwrite AlixWork data
+            const patch: Record<string, unknown> = {};
+            const srcName = full_name;
+            const srcCompany = src.company || src.company_name || src.organization || null;
+            const srcPhone = src.phone || src.phone_number || src.mobile || null;
+            const srcBilling = (src.address && typeof src.address === "object")
+              ? src.address
+              : (src.zip || src.city || src.street)
+                ? { zip: src.zip ?? src.postal_code ?? null, city: src.city ?? src.ort ?? null, street: src.street ?? null }
+                : null;
+            if (!dup.contact_name && srcName) patch.contact_name = srcName;
+            if (!dup.company_name && srcCompany) patch.company_name = srcCompany;
+            if (!dup.phone && srcPhone) patch.phone = srcPhone;
+            if (!dup.billing_address && srcBilling) patch.billing_address = srcBilling;
+            patch.raw_data = {
+              ...(dup.raw_data && typeof dup.raw_data === "object" ? dup.raw_data : {}),
+              alixsmart_merge: {
+                source: src,
+                source_id: sourceId,
+                matched_by: "email",
+                at: new Date().toISOString(),
+              },
+            };
+            const { error: mergeErr } = await ctx.admin
+              .from("customers").update(patch).eq("id", dup.id);
+
+            // Keep the cross-system link so future syncs resolve to the same customer
+            await ctx.admin.from("alixsmart_customer_links").upsert({
+              alixwork_customer_id: dup.id,
+              alixsmart_user_id: sourceId,
+              email: email,
+              match_method: "email",
+              match_confidence: 100,
+              status: "linked",
+            }, { onConflict: "alixsmart_user_id" });
+
             await ctx.admin.from("alixsmart_migration_map").update({
               migration_status: "merged",
               target_table: "customers",
               target_id: dup.id,
               conflict_status: "resolved",
-              error_message: null,
-              metadata: { ...meta, materialized_to: "customers", reason: "email_already_in_customers" },
+              error_message: mergeErr?.message ?? null,
+              metadata: {
+                ...meta,
+                materialized_to: "customers",
+                reason: "merged_by_email",
+                merged_fields: Object.keys(patch).filter((k) => k !== "raw_data"),
+              },
               updated_at: new Date().toISOString(),
             }).eq("source_table", "profiles").eq("source_id", sourceId);
             skipped++;
             continue;
           }
         }
+
 
         const billing = (src.address && typeof src.address === "object")
           ? src.address
