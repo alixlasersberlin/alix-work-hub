@@ -1,10 +1,11 @@
 ---
-name: Zoho Kunden-Sync nur manuell
-description: Automatischer Kundenimport aus Zoho (Cron daily-customer-sync-de/at) ist deaktiviert – Abgleich nur manuell
+name: Zoho Sync nur manuell (Kunden + Aufträge)
+description: Automatischer Kunden- und Auftragsimport aus Zoho ist deaktiviert – jeder Abgleich erfolgt nur manuell
 type: constraint
 ---
-Der automatische Kundenimport aus Zoho ist abgeschaltet (Cron-Jobs `daily-customer-sync-de` und `daily-customer-sync-at` wurden entfernt, 11.08.2026).
+Automatische Zoho-Syncs sind abgeschaltet (11.08.2026):
 
-- Kundenabgleich erfolgt ausschließlich manuell über die Import-/Abgleich-Oberflächen.
-- Keine neuen Cron-Jobs für `scheduled-customer-sync` anlegen, ohne dass der Nutzer es ausdrücklich verlangt.
-- Auftrags-Sync (`daily-order-sync-de/at`) läuft weiter, aber ohne `auto_sync_customers`.
+- Entfernte Cron-Jobs: `daily-customer-sync-de`, `daily-customer-sync-at`, `daily-order-sync-de`, `daily-order-sync-at`, `zoho-orders-reconcile-hourly`.
+- Kunden- und Auftragsabgleich erfolgt ausschließlich manuell über die Import-/Abgleich-Oberflächen (z. B. „Aufträge gesucht“ / Zoho-Abgleich).
+- Keine neuen Cron-Jobs für Kunden- oder Auftrags-Sync anlegen, ohne dass der Nutzer es ausdrücklich verlangt.
+- Rechnungs-Importe (`zoho-invoices-auto-import`) bleiben davon unberührt.
