@@ -163,8 +163,29 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
 
   const set = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 
-  async function handleSave() {
+  async function handleSave(force = false) {
+    const isNewCustomer = !customer?.id;
+    if (isNewCustomer && !force) {
+      setChecking(true);
+      try {
+        const hits = await findPotentialDuplicates({
+          company_name: form.company_name,
+          contact_name: form.contact_name,
+          email: form.email,
+          phone: form.phone,
+          street: form.billing_street,
+          zip: form.billing_zip,
+          city: form.billing_city,
+        });
+        setChecking(false);
+        if (hits.length) { setDupes(hits); return; }
+      } catch {
+        setChecking(false);
+      }
+    }
+    setDupes([]);
     setSaving(true);
+
     const payload: any = {
       company_name: form.company_name || null,
       contact_name: form.contact_name || null,
