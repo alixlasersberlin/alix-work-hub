@@ -201,7 +201,9 @@ async function handleOrderUpdated(supabase: any, d: any) {
   if (d.local_order_id) {
     await supabase.from("orders").update(patch).eq("id", d.local_order_id);
   } else if (d.external_order_id) {
-    await supabase.from("orders").update(patch).eq("order_number", d.external_order_id);
+    const raw = String(d.external_order_id);
+    const withPrefix = /^AB-/i.test(raw) ? raw : `AB-${raw}`;
+    await supabase.from("orders").update(patch).in("order_number", [raw, withPrefix]);
   }
 }
 
