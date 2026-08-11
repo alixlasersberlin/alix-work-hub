@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
 import { sbRepair } from '@/lib/repair/api';
 import { useRepairPermissions } from '@/lib/repair/permissions';
