@@ -169,11 +169,19 @@ export function useEscStore<T>(opts: {
     return item;
   };
 
-  const remove = async (id: string) => {
+  const remove = async (id: string): Promise<{ error?: string }> => {
+    const prev = s.state.items.get(id);
     s.state.items.delete(id);
     notify(s);
     const { error } = await (supabase as any).from(s.table).delete().eq('id', id);
-    if (error) console.error('[esc-store] delete', s.table, error);
+    if (error) {
+      console.error('[esc-store] delete', s.table, error);
+      // Rollback: Eintrag wieder anzeigen, damit die UI nicht luegt.
+      if (prev !== undefined) s.state.items.set(id, prev);
+      notify(s);
+      return { error: error.message };
+    }
+    return {};
   };
 
   return { items, loaded: s.state.loaded, upsert, remove };

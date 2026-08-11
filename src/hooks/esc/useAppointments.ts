@@ -102,6 +102,9 @@ export function useAppointments() {
     };
     await upsert(item);
     await logEscAudit({ entity: 'appointment', entityId: item.id, action: 'create', after: item, source: 'internal' });
+    if (item.confirmationRequired && !item.customerEmail) {
+      toast.warning('Bestätigung erforderlich, aber keine Kunden-E-Mail hinterlegt – es wurde keine E-Mail versendet.');
+    }
     if (item.confirmationRequired && item.customerEmail) {
       const res = await sendAppointmentConfirmationMail(item);
       if (res.ok) toast.success(`Terminbestätigung an ${item.customerEmail} versendet · Kopie an ${ESC_CONFIRMATION_COPY}`);
@@ -124,31 +127,53 @@ export function useAppointments() {
       const { error } = await (supabase as any).from('esc_events').update(dbPatch).eq('id', id);
       if (error) { toast.error('Aktualisierung fehlgeschlagen: ' + error.message); return null; }
       await loadEvents();
-      return { ...fromEvents, ...patch, updatedAt: dbPatch.updated_at as string };
+      const merged = { ...fromEvents, ...patch, updatedAt: dbPatch.updated_at as string };
+      if (merged.confirmationRequired && merged.customerEmail && merged.status !== 'bestaetigt' && merged.status !== 'storniert') {
+        const mail = await sendAppointmentConfirmationMail(merged);
+        if (mail.ok) toast.success(`Terminbestätigung an ${merged.customerEmail} versendet · Kopie an ${ESC_CONFIRMATION_COPY}`);
+        else toast.error(`E-Mail nicht versendet: ${mail.error}`);
+      }
+      return merged;
     }
     const before = items.find((a) => a.id === id);
     if (!before) return null;
     const after = { ...before, ...patch, updatedAt: new Date().toISOString() };
     await upsert(after);
     await logEscAudit({ entity: 'appointment', entityId: id, action: 'update', before, after, source: 'internal' });
+    // Bestätigungsmail auch beim Speichern eines bestehenden Termins auslösen,
+    // sobald "Bestätigung erforderlich" aktiv ist und der Termin noch offen ist.
+    if (after.confirmationRequired && after.status !== 'bestaetigt' && after.status !== 'storniert' && after.status !== 'abgelehnt') {
+      if (!after.customerEmail) {
+        toast.warning('Bestätigung erforderlich, aber keine Kunden-E-Mail hinterlegt – es wurde keine E-Mail versendet.');
+      } else {
+        const res = await sendAppointmentConfirmationMail(after);
+        if (res.ok) toast.success(`Terminbestätigung an ${after.customerEmail} versendet · Kopie an ${ESC_CONFIRMATION_COPY}`);
+        else toast.error(`E-Mail nicht versendet: ${res.error}`);
+      }
+    }
     return after;
   }, [items, upsert, eventAppointments, loadEvents]);
 
   const deleteAppointment = useCallback(async (id: string) => {
     const before = items.find((a) => a.id === id);
     // Frontend-Guard: nur Super Admin darf löschen (RLS erzwingt es zusätzlich serverseitig).
-    const { data: isSuper } = await (supabase as any).rpc('has_role', { check_role: 'Super Admin' });
+    const { data: isSuper, error: roleErr } = await (supabase as any).rpc('has_role', { check_role: 'Super Admin' });
+    if (roleErr) { toast.error('Rechteprüfung fehlgeschlagen: ' + roleErr.message); return; }
     if (!isSuper) {
       toast.error('Löschen nicht erlaubt – Termine dürfen ausschließlich von Super Admin gelöscht werden. Nutze stattdessen "Stornieren".');
       return;
     }
     if (eventAppointments.some((a) => a.id === id)) {
-      await (supabase as any).from('esc_events').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+      const { error } = await (supabase as any).from('esc_events').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+      if (error) { toast.error('Löschen fehlgeschlagen: ' + error.message); return; }
       await loadEvents();
+      toast.success('Termin gelöscht');
       return;
     }
-    await remove(id);
+    const res = await remove(id);
+    if (res?.error) { toast.error('Löschen fehlgeschlagen: ' + res.error); return; }
     await logEscAudit({ entity: 'appointment', entityId: id, action: 'delete', before, source: 'internal' });
+    toast.success('Termin gelöscht');
   }, [items, remove, eventAppointments, loadEvents]);
 
   // Merge: KV-Store-Termine + esc_events-Termine (dedupe per id)
