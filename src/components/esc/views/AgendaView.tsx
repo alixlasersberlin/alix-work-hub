@@ -4,6 +4,8 @@ import type { EscAppointment, EscDepartment } from '@/lib/esc/types';
 import { EscStatusBadge } from '../StatusBadge';
 import { DepartmentBadge } from '../DepartmentBadge';
 import { AddToCalendarMenu } from '../AddToCalendarMenu';
+import { isVipTraining } from '@/lib/esc/vip-kind';
+import { cn } from '@/lib/utils';
 
 
 export function AgendaView({
@@ -22,7 +24,7 @@ export function AgendaView({
         <div className="p-6 text-center text-sm text-muted-foreground">Keine Termine im Zeitraum.</div>
       )}
       {sorted.map((a) => (
-        <div key={a.id} className="flex items-center gap-3 p-3 hover:bg-accent/20 cursor-pointer" onClick={() => onAppointmentClick?.(a)}>
+        <div key={a.id} className={cn('flex items-center gap-3 p-3 cursor-pointer', isVipTraining(a) ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border-l-4 border-emerald-500' : 'hover:bg-accent/20')} onClick={() => onAppointmentClick?.(a)}>
           <div className="text-[12px] font-medium min-w-[130px]">
             {format(new Date(a.startAt), 'EEE dd.MM. HH:mm', { locale: de })}
           </div>
