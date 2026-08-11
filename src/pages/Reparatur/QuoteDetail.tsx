@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, Trash2, Printer, Send, Save, FileText } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Printer, Send, Save, FileText, Mail } from 'lucide-react';
 import { printRepairQuote, repairQuoteHtmlBlob } from '@/lib/repair/quote-pdf';
 
 const KIND_LABEL: Record<string, string> = { part: 'Ersatzteil', labor: 'Arbeitszeit', shipping: 'Versand', other: 'Sonstiges' };
@@ -135,9 +135,15 @@ export default function QuoteDetail() {
 
     const { data, error } = await supabase.functions.invoke('send-repair-quote', { body: { quote_id: id } });
     if (error) { toast({ title: 'Versand fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
+    if (data?.status === 'failed' || data?.error) {
+      toast({ title: 'E-Mail konnte nicht versendet werden', description: String(data.error || 'Mailprovider-Fehler'), variant: 'destructive' });
+      load();
+      return;
+    }
     toast({ title: 'Kostenvoranschlag versendet', description: `An ${repair.customer_email}` });
     load();
   };
+
 
   if (loading) return <Card className="p-8 text-center text-muted-foreground">Lädt…</Card>;
   if (!quote) return <Card className="p-8 text-center text-muted-foreground">Kostenvoranschlag nicht gefunden.</Card>;
@@ -162,8 +168,12 @@ export default function QuoteDetail() {
           {!readOnly && quote.status !== 'Versendet' && (
             <Button onClick={sendToCustomer}><Send className="w-4 h-4 mr-1" />An Kunde senden</Button>
           )}
+          <Button variant="secondary" onClick={sendToCustomer} disabled={saving || !repair?.customer_email}>
+            <Mail className="w-4 h-4 mr-1" />Email versenden
+          </Button>
         </div>
       </div>
+
 
       <Card className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div><Label className="text-xs">Arbeitsstunden</Label><Input type="number" step="0.25" value={quote.labor_hours || ''} disabled={readOnly} onChange={(e) => updateField('labor_hours', e.target.value)} /></div>
