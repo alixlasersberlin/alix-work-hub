@@ -116,13 +116,21 @@ export default function QuoteDetail() {
     if (!quote || !repair) return;
     if (!repair.customer_email) { toast({ title: 'Keine Kundenmail hinterlegt', variant: 'destructive' }); return; }
     await save();
-    // PDF/HTML in Storage ablegen
-    const totals = recalc(quote, items);
-    const blob = repairQuoteHtmlBlob({ repair, quote: { ...quote, ...totals }, items });
-    const path = `quotes/${id}.html`;
-    const { error: upErr } = await supabase.storage.from('repair-files').upload(path, blob, { upsert: true, contentType: 'text/html' });
-    if (upErr) { toast({ title: 'Upload-Fehler', description: upErr.message, variant: 'destructive' }); return; }
-    await sbRepair.from('repair_quotes').update({ pdf_path: path }).eq('id', id);
+    // Beleg als PDF im Storage ablegen (Bucket erlaubt nur PDF/Bilder) – Fehler blockieren den Versand nicht
+    try {
+      const totals = recalc(quote, items);
+      const blob = repairQuoteHtmlBlob({ repair, quote: { ...quote, ...totals }, items });
+      const html = await blob.text();
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+      await doc.html(html, { x: 8, y: 8, width: 194, windowWidth: 900, autoPaging: 'text' });
+      const path = `quotes/${id}.pdf`;
+      const { error: upErr } = await supabase.storage
+        .from('repair-files')
+        .upload(path, doc.output('blob'), { upsert: true, contentType: 'application/pdf' });
+      if (!upErr) await sbRepair.from('repair_quotes').update({ pdf_path: path }).eq('id', id);
+    } catch {
+      /* Archivierung optional */
+    }
 
     const { data, error } = await supabase.functions.invoke('send-repair-quote', { body: { quote_id: id } });
     if (error) { toast({ title: 'Versand fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
