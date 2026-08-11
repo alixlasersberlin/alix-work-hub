@@ -101,8 +101,14 @@ export function useAppointments() {
     };
     await upsert(item);
     await logEscAudit({ entity: 'appointment', entityId: item.id, action: 'create', after: item, source: 'internal' });
+    if (item.confirmationRequired && item.customerEmail) {
+      const res = await sendAppointmentConfirmationMail(item);
+      if (res.ok) toast.success(`Terminbestätigung an ${item.customerEmail} versendet · Kopie an ${ESC_CONFIRMATION_COPY}`);
+      else toast.error(`E-Mail nicht versendet: ${res.error}`);
+    }
     return item;
   }, [upsert]);
+
 
   const updateAppointment = useCallback(async (id: string, patch: Partial<EscAppointment>) => {
     // esc_events-Einträge: direkt in DB updaten
