@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import type { EscAppointment } from '@/lib/esc/types';
 
 /** Kopie aller Terminbestätigungen geht immer an support@alix-lasers.com. */
@@ -19,7 +20,18 @@ export async function sendAppointmentConfirmationMail(a: Partial<EscAppointment>
       address: a.address || '',
     },
   });
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    let details = error.message;
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const body = await error.context.json();
+        details = String(body?.error || body?.details || error.message);
+      } catch {
+        try { details = await error.context.text(); } catch { /* keep SDK message */ }
+      }
+    }
+    return { ok: false, error: details };
+  }
   if ((data as any)?.error) return { ok: false, error: String((data as any).error) };
   return { ok: true };
 }

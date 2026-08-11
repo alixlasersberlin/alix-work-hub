@@ -1,12 +1,7 @@
 // Sendet die Terminbestätigungs-E-Mail an den Kunden.
 // Kopie (CC) immer an support@alix-lasers.com.
 import { createClient } from "npm:@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const COPY_TO = "support@alix-lasers.com";
 
@@ -43,10 +38,14 @@ Deno.serve(async (req) => {
     const auth = req.headers.get("Authorization") ?? "";
     if (!auth.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
 
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const ANON = Deno.env.get("SUPABASE_ANON_KEY");
+    const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+    if (!SUPABASE_URL || !ANON || !SERVICE_ROLE) return json({ error: "Supabase-Konfiguration fehlt" }, 500);
+    if (!RESEND_API_KEY || !LOVABLE_API_KEY) return json({ error: "E-Mail-Konfiguration fehlt" }, 500);
 
     const userClient = createClient(SUPABASE_URL, ANON, {
       global: { headers: { Authorization: auth } },
@@ -69,7 +68,10 @@ Deno.serve(async (req) => {
     } = body ?? {};
 
     if (!recipient_email) return json({ error: "recipient_email fehlt" }, 400);
-    if (!RESEND_API_KEY) return json({ error: "RESEND_API_KEY ist nicht konfiguriert" }, 500);
+    const normalizedRecipient = String(recipient_email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedRecipient)) {
+      return json({ error: "Ungültige Empfänger-E-Mail" }, 400);
+    }
 
     const subject = `Terminbestätigung: ${title} am ${fmt(start_at).split(" um ")[0]}`;
     const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111;padding:24px">
@@ -88,7 +90,6 @@ Deno.serve(async (req) => {
       <p style="color:#64748b;font-size:12px;margin-top:24px">Alix Lasers ® · alixwork.de</p>
     </body></html>`;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
     const res = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
       method: "POST",
       headers: {
@@ -98,7 +99,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: "Alix Lasers ® <noreply@alixlasers.ai>",
-        to: [recipient_email],
+        to: [normalizedRecipient],
         cc: [COPY_TO],
         reply_to: COPY_TO,
         subject,
@@ -115,13 +116,14 @@ Deno.serve(async (req) => {
     await admin.from("esc_message_log").insert({
       event_id: appointment_id,
       channel: "email",
-      recipient: recipient_email,
+       recipient: normalizedRecipient,
       subject,
       body: html,
       template_key: "appointment-confirmation",
       status: "sent",
     }).then(() => {}, () => {});
 
+    console.log(`Appointment confirmation sent: ${appointment_id ?? "new"} -> ${normalizedRecipient}; cc=${COPY_TO}`);
     return json({ ok: true, cc: COPY_TO });
   } catch (e) {
     return json({ error: String((e as Error).message ?? e) }, 500);
