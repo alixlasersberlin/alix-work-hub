@@ -50,8 +50,10 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
     supplier_tenant_id: c.supplier_tenant_id ?? '',
   });
 
+  const [saving, setSaving] = useState(false);
   const [checking, setChecking] = useState(false);
   const [dupes, setDupes] = useState<DuplicateHit[]>([]);
+
 
   const [sameAddress, setSameAddress] = useState(() => {
     const b = [ba.address ?? ba.street ?? '', ba.zip ?? '', ba.city ?? '', ba.country ?? ''].join('|').trim();
