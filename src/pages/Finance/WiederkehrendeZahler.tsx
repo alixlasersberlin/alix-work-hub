@@ -173,8 +173,10 @@ export default function WiederkehrendeZahler() {
 
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [pageSize, setPageSize] = useState<20 | 50 | 100 | 'all'>(20);
-  type SortKey = 'recent_added' | 'date_new' | 'date_old' | 'amount_desc' | 'amount_asc' | 'name_asc' | 'name_desc';
+  type SortKey = 'recent_added' | 'date_new' | 'date_old' | 'amount_desc' | 'amount_asc' | 'name_asc' | 'name_desc' | 'day_asc' | 'day_desc';
   const [sortBy, setSortBy] = useState<SortKey>('recent_added');
+  type DayFilter = 'all' | '1' | '15' | 'other';
+  const [dayFilter, setDayFilter] = useState<DayFilter>('all');
 
   const [editProfile, setEditProfile] = useState<EditableProfile | null>(null);
   const [bookInvoice, setBookInvoice] = useState<BookableInvoice | null>(null);
