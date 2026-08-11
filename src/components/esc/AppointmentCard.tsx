@@ -6,6 +6,7 @@ import { DepartmentBadge } from './DepartmentBadge';
 import { cn } from '@/lib/utils';
 import { ReleaseStatusForOrderText } from '@/components/delivery/ReleaseStatusForOrderText';
 import { isVipTraining, VIP_TRAINING_COLOR } from '@/lib/esc/vip-kind';
+import { ConfirmBanner } from './ConfirmBanner';
 
 interface Props {
   appointment: EscAppointment;
@@ -38,6 +39,9 @@ export function AppointmentCard({ appointment, department, compact, onClick }: P
       <div className="flex items-center justify-between gap-2">
         <span className="font-medium truncate">{appointment.title}</span>
         {!compact && <EscStatusBadge status={appointment.status} />}
+      </div>
+      <div className="mt-1">
+        <ConfirmBanner appointment={appointment} compact={compact} />
       </div>
       <div className="flex items-center justify-between text-muted-foreground mt-0.5">
         <span>{format(new Date(appointment.startAt), 'HH:mm', { locale: de })}–{format(new Date(appointment.endAt), 'HH:mm', { locale: de })}</span>
