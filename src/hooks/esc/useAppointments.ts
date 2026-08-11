@@ -127,7 +127,13 @@ export function useAppointments() {
       const { error } = await (supabase as any).from('esc_events').update(dbPatch).eq('id', id);
       if (error) { toast.error('Aktualisierung fehlgeschlagen: ' + error.message); return null; }
       await loadEvents();
-      return { ...fromEvents, ...patch, updatedAt: dbPatch.updated_at as string };
+      const merged = { ...fromEvents, ...patch, updatedAt: dbPatch.updated_at as string };
+      if (merged.confirmationRequired && merged.customerEmail && merged.status !== 'bestaetigt' && merged.status !== 'storniert') {
+        const mail = await sendAppointmentConfirmationMail(merged);
+        if (mail.ok) toast.success(`Terminbestätigung an ${merged.customerEmail} versendet · Kopie an ${ESC_CONFIRMATION_COPY}`);
+        else toast.error(`E-Mail nicht versendet: ${mail.error}`);
+      }
+      return merged;
     }
     const before = items.find((a) => a.id === id);
     if (!before) return null;
