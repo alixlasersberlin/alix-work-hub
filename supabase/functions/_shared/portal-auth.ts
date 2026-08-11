@@ -1,4 +1,4 @@
-import "global-bcc.ts";
+import "./global-bcc.ts";
 // Shared helpers for customer portal edge functions.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
