@@ -1,11 +1,13 @@
 import type { EscAppointment } from './types';
 
 export interface EscConflict {
-  kind: 'employee' | 'resource' | 'department';
+  kind: 'employee' | 'resource' | 'department' | 'duplicate';
   refId: string;
   refLabel: string;
   otherAppointment: EscAppointment;
 }
+
+const norm = (v?: string) => (v || '').trim().toLowerCase();
 
 function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
   return new Date(aStart) < new Date(bEnd) && new Date(bStart) < new Date(aEnd);
