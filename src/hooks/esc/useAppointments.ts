@@ -5,6 +5,7 @@ import type { EscAppointment, EscStatus, EscPriority } from '@/lib/esc/types';
 import { logEscAudit } from '@/lib/esc/audit';
 import { useEscStore } from '@/lib/esc/store/kvStore';
 import { supabase } from '@/integrations/supabase/client';
+import { sendAppointmentConfirmationMail, ESC_CONFIRMATION_COPY } from '@/lib/esc/confirmation-mail';
 
 /** Map ein esc_events-Row auf das UI-Modell EscAppointment (read-only). */
 function eventRowToAppointment(row: any): EscAppointment {
