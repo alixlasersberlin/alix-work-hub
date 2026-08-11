@@ -1180,6 +1180,12 @@ export default function WiederkehrendeZahler() {
         open={!!pdfInvoice}
         onOpenChange={(v) => { if (!v) setPdfInvoice(null); }}
       />
+      <CustomerInvoicesDialog
+        open={!!invoicesFor}
+        onOpenChange={(v) => { if (!v) setInvoicesFor(null); }}
+        customerId={invoicesFor?.id}
+        customerName={invoicesFor?.name}
+      />
       <RecurringInvoiceBookDialog
         invoice={bookInvoice}
         open={!!bookInvoice}
