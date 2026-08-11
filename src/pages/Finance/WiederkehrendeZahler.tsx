@@ -21,6 +21,7 @@ import { RecurringProfileCreateDialog } from '@/components/finance/RecurringProf
 import { RecurringInvoiceBookDialog, type BookableInvoice } from '@/components/finance/RecurringInvoiceBookDialog';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
+import { CustomerInvoicesDialog } from '@/components/finance/CustomerInvoicesDialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
