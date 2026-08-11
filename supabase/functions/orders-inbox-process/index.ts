@@ -75,16 +75,21 @@ async function processOne(
 ): Promise<{ ok: boolean; order_id?: string; skipped?: boolean; error?: string }> {
   const payload = row.payload ?? {};
   const sourceSystem = row.source_system || payload.source || "alixsmart";
-  const orderNumber =
+  const rawOrderNumber =
     row.external_id || payload.order_number || payload.order_id;
-  if (!orderNumber) return { ok: false, error: "missing_order_number" };
+  if (!rawOrderNumber) return { ok: false, error: "missing_order_number" };
 
-  // Dedup on (source_system, order_number)
+  // Nummernkreis-Regel: Auftragsnummern IMMER mit "AB-"-Präfix speichern
+  const orderNumber = /^AB-/i.test(String(rawOrderNumber))
+    ? String(rawOrderNumber).toUpperCase().replace(/^AB-/i, "AB-")
+    : `AB-${String(rawOrderNumber)}`;
+
+  // Dedup on (source_system, order_number) – beide Schreibweisen prüfen
   const { data: existing } = await supabase
     .from("orders")
     .select("id")
     .eq("source_system", sourceSystem)
-    .eq("order_number", orderNumber)
+    .in("order_number", [orderNumber, String(rawOrderNumber)])
     .maybeSingle();
   if (existing?.id) {
     return { ok: true, order_id: existing.id, skipped: true };
