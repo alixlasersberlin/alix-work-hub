@@ -98,6 +98,7 @@ export function useAppointments() {
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,
+      status: payload.confirmationRequired ? 'bestaetigung_offen' : payload.status,
       confirmationToken: payload.confirmationRequired ? crypto.randomUUID().replace(/-/g, '') : undefined,
     };
     await upsert(item);
@@ -137,7 +138,14 @@ export function useAppointments() {
     }
     const before = items.find((a) => a.id === id);
     if (!before) return null;
-    const after = { ...before, ...patch, updatedAt: new Date().toISOString() };
+    const needsNewConfirmation = patch.confirmationRequired === true && !before.confirmationToken;
+    const after = {
+      ...before,
+      ...patch,
+      status: needsNewConfirmation ? 'bestaetigung_offen' as const : (patch.status ?? before.status),
+      confirmationToken: needsNewConfirmation ? crypto.randomUUID().replace(/-/g, '') : before.confirmationToken,
+      updatedAt: new Date().toISOString(),
+    };
     await upsert(after);
     await logEscAudit({ entity: 'appointment', entityId: id, action: 'update', before, after, source: 'internal' });
     // Bestätigungsmail auch beim Speichern eines bestehenden Termins auslösen,

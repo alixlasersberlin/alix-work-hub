@@ -1,32 +1,38 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useAppointments } from '@/hooks/esc/useAppointments';
-import { useDepartments } from '@/hooks/esc/useDepartments';
-import { DepartmentBadge } from '@/components/esc/DepartmentBadge';
 import { BookingLayout } from '@/components/esc/public/BookingLayout';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { AddToCalendarMenu } from '@/components/esc/AddToCalendarMenu';
-import { logEscAudit } from '@/lib/esc/audit';
 import { cancelUrl, rescheduleUrl } from '@/lib/esc/public-url';
-import { CalendarCheck, CalendarClock, CalendarX, Download, MapPin, QrCode as QrIcon, Clock } from 'lucide-react';
+import { CalendarCheck, CalendarClock, CalendarX, MapPin, QrCode as QrIcon, Clock } from 'lucide-react';
 import QRCode from 'qrcode';
+import { supabase } from '@/integrations/supabase/client';
+import type { EscAppointment } from '@/lib/esc/types';
 
 export default function ConfirmAppointment() {
   const { token } = useParams();
-  const { appointments, updateAppointment } = useAppointments();
-  const { departments } = useDepartments();
-
-  const appointment = useMemo(
-    () => appointments.find((a) => a.confirmationToken === token) || appointments[0],
-    [appointments, token],
-  );
-
+  const [appointment, setAppointment] = useState<EscAppointment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [done, setDone] = useState<null | 'confirmed' | 'cancelled'>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) { setLoading(false); setLoadError('Ungültiger Link.'); return; }
+    let active = true;
+    void supabase.functions.invoke('public-appointment-action', { body: { token, action: 'lookup' } })
+      .then(({ data, error }) => {
+        if (!active) return;
+        if (error || !data?.appointment) setLoadError(data?.error || 'Dieser Link ist ungültig oder abgelaufen.');
+        else setAppointment(data.appointment as EscAppointment);
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [token]);
 
   useEffect(() => {
     if (!token) return;
@@ -36,25 +42,32 @@ export default function ConfirmAppointment() {
       .catch(() => setQrDataUrl(null));
   }, [token]);
 
-  if (!appointment) {
+  if (loading) {
+    return <BookingLayout narrow><Card><CardContent className="p-6 text-sm text-muted-foreground">Termin wird geladen…</CardContent></Card></BookingLayout>;
+  }
+
+  if (!appointment || loadError) {
     return (
       <BookingLayout narrow>
         <Card>
           <CardHeader><CardTitle>Termin nicht gefunden</CardTitle></CardHeader>
           <CardContent className="text-[13px] text-muted-foreground">
-            Dieser Link ist ungültig oder abgelaufen. Bitte kontaktieren Sie uns.
+             {loadError || 'Dieser Link ist ungültig oder abgelaufen. Bitte kontaktieren Sie uns.'}
           </CardContent>
         </Card>
       </BookingLayout>
     );
   }
 
-  const dept = departments.find((d) => d.id === appointment.departmentId);
   const isTicket = /^Ticket-Anfrage/i.test(appointment.externalNote || '') || appointment.title?.toLowerCase().includes('ticket');
 
   const act = async (kind: 'confirmed' | 'cancelled') => {
-    await updateAppointment(appointment.id, { status: kind === 'confirmed' ? 'bestaetigt' : 'storniert' });
-    await logEscAudit({ entity: 'appointment', entityId: appointment.id, action: kind === 'confirmed' ? 'confirm' : 'status_change', source: 'confirmation_link' });
+    const action = kind === 'confirmed' ? 'confirm' : 'cancel';
+    const { data, error } = await supabase.functions.invoke('public-appointment-action', { body: { token, action } });
+    if (error || data?.error) {
+      toast.error(data?.error || 'Rückmeldung konnte nicht gespeichert werden.');
+      return;
+    }
     setDone(kind);
     toast.success('Danke für Ihre Rückmeldung!');
   };
@@ -65,7 +78,7 @@ export default function ConfirmAppointment() {
         <Card className="border-primary/20">
           <CardHeader>
             <div className="flex items-center gap-2 mb-1">
-              <DepartmentBadge dept={dept} size="md" />
+              <CalendarCheck className="h-5 w-5 text-primary" />
             </div>
             <CardTitle className="text-[17px]">Ihre Anfrage ist eingegangen</CardTitle>
           </CardHeader>
@@ -97,7 +110,7 @@ export default function ConfirmAppointment() {
       <Card className="border-primary/20">
         <CardHeader>
           <div className="flex items-center gap-2 mb-1">
-            <DepartmentBadge dept={dept} size="md" />
+            <CalendarCheck className="h-5 w-5 text-primary" />
           </div>
           <CardTitle className="text-[17px]">{appointment.title}</CardTitle>
         </CardHeader>

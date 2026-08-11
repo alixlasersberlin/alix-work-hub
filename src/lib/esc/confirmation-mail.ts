@@ -18,6 +18,7 @@ export async function sendAppointmentConfirmationMail(a: Partial<EscAppointment>
       end_at: a.endAt,
       location: a.location || '',
       address: a.address || '',
+      confirmation_token: a.confirmationToken || '',
     },
   });
   if (error) {
