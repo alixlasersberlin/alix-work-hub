@@ -53,6 +53,7 @@ export default function EscCalendar() {
   const filtered = useMemo(() => applyFilters(appointments, filters, canSeeInternal), [appointments, filters, canSeeInternal]);
 
   const [pendingMove, setPendingMove] = useState<{ id: string; newStart: Date; conflicts: EscConflict[] } | null>(null);
+  const [pendingSave, setPendingSave] = useState<{ payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>; conflicts: EscConflict[] } | null>(null);
 
   const title = useMemo(() => {
     if (view === 'day' || view === 'timeline') return format(cursor, 'EEEE, dd. MMMM yyyy', { locale: de });
@@ -79,7 +80,7 @@ export default function EscCalendar() {
     setEditing(a); setDefaultStart(undefined); setPresetKind(undefined); setPresetMode(undefined); setModalOpen(true);
   };
 
-  const handleSubmit = async (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const persistSubmit = async (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editing) {
       await updateAppointment(editing.id, payload);
       toast.success('Termin aktualisiert');
@@ -88,6 +89,23 @@ export default function EscCalendar() {
       toast.success('Termin angelegt');
     }
   };
+
+  const handleSubmit = async (payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const conflicts = findConflicts(
+      { ...payload, id: editing?.id ?? '__new' },
+      appointments,
+      {
+        employees: employees.map((e) => ({ id: e.id, name: e.name })),
+        resources: resources.map((r) => ({ id: r.id, name: r.name })),
+      },
+    );
+    if (conflicts.length) {
+      setPendingSave({ payload, conflicts });
+      return;
+    }
+    await persistSubmit(payload);
+  };
+
 
   const performMove = async (id: string, newStart: Date) => {
     const a = appointments.find((x) => x.id === id);
@@ -210,6 +228,16 @@ export default function EscCalendar() {
         conflicts={pendingMove?.conflicts || []}
         onCancel={() => setPendingMove(null)}
         onOverride={async () => { if (pendingMove) { await performMove(pendingMove.id, pendingMove.newStart); setPendingMove(null); } }}
+        canOverride={canOverride}
+      />
+
+      <ConflictDialog
+        open={!!pendingSave}
+        conflicts={pendingSave?.conflicts || []}
+        onCancel={() => setPendingSave(null)}
+        onOverride={async () => {
+          if (pendingSave) { const p = pendingSave.payload; setPendingSave(null); await persistSubmit(p); }
+        }}
         canOverride={canOverride}
       />
     </div>

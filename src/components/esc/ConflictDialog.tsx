@@ -30,7 +30,10 @@ export function ConflictDialog({ open, conflicts, onCancel, onOverride, onAltern
           {conflicts.map((c, i) => (
             <li key={i} className="rounded-md border p-2 bg-muted/30">
               <div className="font-medium">
-                {c.kind === 'employee' ? 'Mitarbeiter bereits gebucht' : c.kind === 'resource' ? 'Ressource bereits belegt' : 'Abteilungskonflikt'}
+                {c.kind === 'duplicate'
+                  ? 'Doppeltermin: gleicher Kunde/Titel im selben Zeitraum'
+                  : c.kind === 'employee' ? 'Mitarbeiter bereits gebucht'
+                  : c.kind === 'resource' ? 'Ressource bereits belegt' : 'Abteilungskonflikt'}
                 {': '}<span className="text-primary">{c.refLabel}</span>
               </div>
               <div className="text-muted-foreground">
