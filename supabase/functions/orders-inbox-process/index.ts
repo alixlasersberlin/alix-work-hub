@@ -11,20 +11,63 @@ function json(status: number, body: unknown) {
   });
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const normEmail = (e: unknown) =>
+  typeof e === "string" && e.includes("@") ? e.trim().toLowerCase() : null;
+const normPhone = (p: unknown) => {
+  if (typeof p !== "string") return null;
+  const d = p.replace(/\D/g, "");
+  return d.length >= 7 ? d.slice(-7) : null;
+};
+
+async function linkAlixSmart(
+  supabase: ReturnType<typeof createClient>,
+  customerId: string,
+  c: any,
+  method: string,
+  score: number,
+) {
+  try {
+    await supabase.from("alixsmart_customer_links").upsert({
+      alixwork_customer_id: customerId,
+      alixsmart_user_id: c?.alixsmart_user_id ?? c?.user_id ?? null,
+      alixsmart_email: normEmail(c?.email),
+      match_status: "registered",
+      match_score: score,
+      match_method: method,
+      last_checked_at: new Date().toISOString(),
+    }, { onConflict: "alixwork_customer_id" });
+  } catch (e) {
+    console.error("alixsmart link failed", e);
+  }
+}
+
 async function resolveCustomerId(
   supabase: ReturnType<typeof createClient>,
   payload: any,
   sourceSystem: string,
 ): Promise<string | null> {
   const c = payload?.customer ?? {};
+  const email =
+    normEmail(c.email) ??
+    normEmail(payload?.customer_email) ??
+    normEmail(payload?.email) ??
+    normEmail(payload?.billing_address?.email);
+  const alixworkId = c.alixwork_id ?? payload?.alixwork_id ?? null;
+  const phone = normPhone(c.mobile ?? c.phone ?? payload?.billing_address?.phone);
+  const isAlixSmart = String(sourceSystem).toLowerCase().includes("alixsmart");
+
   // 1) direct alixwork_id -> customers.id
-  if (c.alixwork_id) {
+  if (alixworkId && UUID_RE.test(String(alixworkId))) {
     const { data } = await supabase
       .from("customers")
       .select("id")
-      .eq("id", c.alixwork_id)
+      .eq("id", alixworkId)
       .maybeSingle();
-    if (data?.id) return data.id;
+    if (data?.id) {
+      if (isAlixSmart) await linkAlixSmart(supabase, data.id, { ...c, email }, "alixwork_id", 100);
+      return data.id;
+    }
   }
   // 2) external_customer_id + source_system
   if (c.external_id) {
@@ -34,28 +77,58 @@ async function resolveCustomerId(
       .eq("source_system", sourceSystem)
       .eq("external_customer_id", c.external_id)
       .maybeSingle();
-    if (data?.id) return data.id;
+    if (data?.id) {
+      if (isAlixSmart) await linkAlixSmart(supabase, data.id, { ...c, email }, "external_id", 95);
+      return data.id;
+    }
   }
-  // 3) email match (any source)
-  if (c.email) {
+  // 3) email match (case-insensitive, any source)
+  if (email) {
     const { data } = await supabase
       .from("customers")
-      .select("id")
-      .eq("email", c.email)
+      .select("id, phone, company_name, contact_name, billing_address")
+      .ilike("email", email)
       .limit(1)
       .maybeSingle();
-    if (data?.id) return data.id;
+    if (data?.id) {
+      // fehlende Stammdaten ergänzen, Original nie überschreiben
+      const patch: Record<string, unknown> = {};
+      if (!data.phone && (c.mobile ?? c.phone)) patch.phone = c.mobile ?? c.phone;
+      if (!data.company_name && c.company_name) patch.company_name = c.company_name;
+      if (!data.contact_name && c.contact_name) patch.contact_name = c.contact_name;
+      if (!data.billing_address && payload?.billing_address) patch.billing_address = payload.billing_address;
+      if (Object.keys(patch).length) {
+        await supabase.from("customers").update(patch).eq("id", data.id);
+      }
+      if (isAlixSmart) await linkAlixSmart(supabase, data.id, { ...c, email }, "email", 90);
+      return data.id;
+    }
   }
-  // 4) create minimal customer
+  // 4) Telefon-Match (nur wenn zusätzlich ein Name passt)
+  const nameNeedle = (c.company_name ?? c.contact_name ?? "").trim();
+  if (phone && nameNeedle.length >= 3) {
+    const { data } = await supabase
+      .from("customers")
+      .select("id, phone, company_name, contact_name")
+      .or(`company_name.ilike.%${nameNeedle}%,contact_name.ilike.%${nameNeedle}%`)
+      .limit(20);
+    const hit = (data ?? []).find((r: any) => normPhone(r.phone) === phone);
+    if (hit?.id) {
+      if (isAlixSmart) await linkAlixSmart(supabase, hit.id, { ...c, email }, "phone_name", 70);
+      return hit.id;
+    }
+  }
+
+  // 5) create minimal customer
   const { data: created, error } = await supabase
     .from("customers")
     .insert({
       source_system: sourceSystem,
-      external_customer_id: c.external_id ?? c.alixwork_id ?? null,
+      external_customer_id: c.external_id ?? (alixworkId && !UUID_RE.test(String(alixworkId)) ? alixworkId : null),
       company_name: c.company_name ?? payload?.billing_address?.company ?? null,
       contact_name: c.contact_name ?? payload?.billing_address?.name ?? null,
-      email: c.email ?? null,
-      phone: c.mobile ?? payload?.billing_address?.phone ?? null,
+      email: email,
+      phone: c.mobile ?? c.phone ?? payload?.billing_address?.phone ?? null,
       billing_address: payload?.billing_address ?? null,
       shipping_address: payload?.shipping_address ?? null,
       raw_data: c,
@@ -66,8 +139,10 @@ async function resolveCustomerId(
     console.error("customer create failed", error);
     return null;
   }
+  if (isAlixSmart) await linkAlixSmart(supabase, created.id, { ...c, email }, "created", 100);
   return created.id;
 }
+
 
 async function processOne(
   supabase: ReturnType<typeof createClient>,
