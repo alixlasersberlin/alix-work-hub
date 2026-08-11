@@ -25,12 +25,12 @@ export function useAppointmentKinds() {
   }, [upsert]);
 
   const updateKind = useCallback(async (id: string, patch: Partial<EscAppointmentKind>) => {
-    const cur = items.find((x) => x.id === id);
+    const cur = allItems.find((x) => x.id === id);
     if (!cur) return;
     await upsert({ ...cur, ...patch });
-  }, [items, upsert]);
+  }, [allItems, upsert]);
 
   const deleteKind = useCallback(async (id: string) => { await remove(id); }, [remove]);
 
-  return { kinds: items, createKind, updateKind, deleteKind };
+  return { kinds: allItems, createKind, updateKind, deleteKind };
 }
