@@ -280,7 +280,7 @@ export default function AngebotErstellen() {
             setExistingApproval((snap.approvalStatus as any) || 'pending');
             if (snap.notes) setNotes(snap.notes);
             if (typeof snap.includeAppendix === 'boolean') setIncludeAppendix(snap.includeAppendix);
-            if (snap.customer?.id) setCustomerId(snap.customer.id);
+            if (snap.customer?.id) { setCustomerId(snap.customer.id); ensureCustomer(snap.customer.id).catch(() => {}); }
             if (Array.isArray(snap.lines) && snap.lines.length > 0) {
               setLines(snap.lines.map((l: any) => ({
                 id: l.id || crypto.randomUUID(),
