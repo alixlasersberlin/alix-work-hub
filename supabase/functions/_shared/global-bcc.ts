@@ -1,4 +1,3 @@
-import "global-bcc.ts";
 // Systemweiter BCC-Archiv-Empfänger für ALLE ausgehenden E-Mails.
 // Side-Effect-Import: patcht globalThis.fetch und ergänzt bei jedem
 // Resend-Aufruf (connector-gateway .../resend/emails oder api.resend.com/emails)
