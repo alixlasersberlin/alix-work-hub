@@ -1,7 +1,7 @@
 // Public Termin-Aktionen (Bestätigen / Verschieben / Absagen) über alixwork.de.
 // Aufruf: POST { token, action: 'confirm'|'reschedule'|'cancel', new_start?: iso }
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,13 +12,16 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const { token, action, new_start } = await req.json();
-    if (!token || !action) return j({ error: "token & action required" }, 400);
+    const body = await req.json().catch(() => ({}));
+    const token = typeof body?.token === "string" ? body.token.trim() : "";
+    const action = typeof body?.action === "string" ? body.action : "lookup";
+    const new_start = typeof body?.new_start === "string" ? body.new_start : undefined;
+    if (!token) return j({ error: "token required" }, 400);
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const url = Deno.env.get("SUPABASE_URL");
+    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !serviceRole) return j({ error: "Server configuration missing" }, 500);
+    const supabase = createClient(url, serviceRole);
 
     const { data: ev, error } = await supabase
       .from("esc_events")
@@ -26,9 +29,53 @@ serve(async (req) => {
       .eq("confirmation_token", token)
       .maybeSingle();
     if (error) throw error;
-    if (!ev) return j({ error: "Ungültiger oder abgelaufener Link." }, 404);
+
+    if (!ev) {
+      const { data: storedRows, error: storedError } = await supabase
+        .from("esc_store_appointments")
+        .select("id,data")
+        .contains("data", { confirmationToken: token })
+        .limit(1);
+      if (storedError) throw storedError;
+      const stored = storedRows?.[0];
+      if (!stored?.data) return j({ error: "Ungültiger oder abgelaufener Link." }, 404);
+      const appointment = stored.data as Record<string, unknown>;
+
+      if (action === "lookup") return j({ appointment: publicAppointment(appointment) });
+      if (action !== "confirm" && action !== "cancel") return j({ error: "unknown action" }, 400);
+
+      const nextStatus = action === "confirm" ? "bestaetigt" : "storniert";
+      const updated = { ...appointment, status: nextStatus, updatedAt: new Date().toISOString() };
+      const { error: updateError } = await supabase
+        .from("esc_store_appointments")
+        .update({ data: updated, updated_at: new Date().toISOString() })
+        .eq("id", stored.id);
+      if (updateError) throw updateError;
+      return j({ success: true, appointment_status: nextStatus, appointment: publicAppointment(updated) });
+    }
     if (ev.confirmation_token_expires_at && new Date(ev.confirmation_token_expires_at) < new Date()) {
       return j({ error: "Link ist abgelaufen." }, 410);
+    }
+
+    if (action === "lookup") {
+      const { data: detail, error: detailError } = await supabase
+        .from("esc_events")
+        .select("id,title,description,start_at,end_at,customer_name,address,location,appointment_status,confirmation_token")
+        .eq("id", ev.id)
+        .single();
+      if (detailError) throw detailError;
+      return j({ appointment: {
+        id: detail.id,
+        title: detail.title,
+        description: detail.description,
+        startAt: detail.start_at,
+        endAt: detail.end_at,
+        customerName: detail.customer_name,
+        address: detail.address,
+        location: detail.location,
+        status: detail.appointment_status,
+        confirmationToken: detail.confirmation_token,
+      } });
     }
 
     const patch: Record<string, unknown> = {};
@@ -75,6 +122,21 @@ serve(async (req) => {
     return j({ error: String((err as Error)?.message ?? err) }, 500);
   }
 });
+
+function publicAppointment(appointment: Record<string, unknown>) {
+  return {
+    id: appointment.id,
+    title: appointment.title,
+    description: appointment.description,
+    startAt: appointment.startAt,
+    endAt: appointment.endAt,
+    customerName: appointment.customerName,
+    address: appointment.address,
+    location: appointment.location,
+    status: appointment.status,
+    confirmationToken: appointment.confirmationToken,
+  };
+}
 
 function j(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

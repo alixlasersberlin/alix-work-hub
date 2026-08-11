@@ -5,6 +5,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
 const COPY_TO = "support@alix-lasers.com";
+const PUBLIC_BASE = "https://alixwork.de";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -66,6 +67,7 @@ Deno.serve(async (req) => {
       end_at,
       location = "",
       address = "",
+      confirmation_token = "",
     } = body ?? {};
 
     if (!recipient_email) return json({ error: "recipient_email fehlt" }, 400);
@@ -75,6 +77,9 @@ Deno.serve(async (req) => {
     }
 
     const subject = `Terminbestätigung: ${title} am ${fmt(start_at).split(" um ")[0]}`;
+    const confirmationUrl = confirmation_token
+      ? `${PUBLIC_BASE}/appointment/${encodeURIComponent(String(confirmation_token))}`
+      : "";
     const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111;padding:24px">
       <h2 style="color:#0f172a;margin:0 0 12px">Ihre Terminbestätigung</h2>
       <p>Hallo ${esc(customer_name)},</p>
@@ -87,7 +92,8 @@ Deno.serve(async (req) => {
         ${address ? `<tr><td style="padding:4px 12px 4px 0"><b>Adresse</b></td><td>${esc(address)}</td></tr>` : ""}
       </table>
       ${description ? `<p style="margin-top:16px">${esc(description)}</p>` : ""}
-      <p style="margin-top:20px">Bitte antworten Sie kurz auf diese E-Mail, falls der Termin nicht passt.</p>
+      ${confirmationUrl ? `<div style="margin-top:24px"><a href="${esc(confirmationUrl)}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:6px">Termin bestätigen</a></div><p style="font-size:12px;color:#64748b;margin-top:12px">Oder öffnen Sie diesen Link:<br><a href="${esc(confirmationUrl)}">${esc(confirmationUrl)}</a></p>` : ""}
+      <p style="margin-top:20px">Falls der Termin nicht passt, antworten Sie bitte kurz auf diese E-Mail.</p>
       <p style="color:#64748b;font-size:12px;margin-top:24px">Alix Lasers ® · alixwork.de</p>
     </body></html>`;
 
