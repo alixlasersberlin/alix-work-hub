@@ -19,7 +19,10 @@ const KIND_LABEL: Record<string, string> = { part: 'Ersatzteil', labor: 'Arbeits
 
 function recalc(quote: any, items: any[]) {
   const parts = items.filter((i) => i.kind === 'part').reduce((s, i) => s + Number(i.line_total || 0), 0);
-  const labor = items.filter((i) => i.kind === 'labor').reduce((s, i) => s + Number(i.line_total || 0), 0);
+  const laborItems = items.filter((i) => i.kind === 'labor').reduce((s, i) => s + Number(i.line_total || 0), 0);
+  // Arbeitszeit aus Stunden × Stundensatz zusätzlich zu evtl. erfassten Arbeitszeit-Positionen
+  const laborFromHours = Number(quote.labor_hours || 0) * Number(quote.labor_rate || 0);
+  const labor = laborItems + laborFromHours;
   const shipping = items.filter((i) => i.kind === 'shipping').reduce((s, i) => s + Number(i.line_total || 0), 0);
   const other = items.filter((i) => i.kind === 'other').reduce((s, i) => s + Number(i.line_total || 0), 0);
   const net = parts + labor + shipping + other;
@@ -157,7 +160,7 @@ export default function QuoteDetail() {
         <div><Label className="text-xs">Arbeitsstunden</Label><Input type="number" step="0.25" value={quote.labor_hours || ''} disabled={readOnly} onChange={(e) => updateField('labor_hours', e.target.value)} /></div>
         <div><Label className="text-xs">Stundensatz (€)</Label><Input type="number" step="0.01" value={quote.labor_rate || ''} disabled={readOnly} onChange={(e) => updateField('labor_rate', e.target.value)} /></div>
         <div><Label className="text-xs">MwSt. (%)</Label><Input type="number" step="0.01" value={quote.vat_rate || 19} disabled={readOnly} onChange={(e) => updateField('vat_rate', e.target.value)} /></div>
-        <div className="flex items-end"><div className="text-right w-full"><div className="text-xs text-muted-foreground">Brutto gesamt</div><div className="text-xl font-bold">{totals.total_gross.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</div></div></div>
+        <div className="flex items-end"><div className="text-right w-full"><div className="text-xs text-muted-foreground">Arbeitszeit {Number(quote.labor_hours || 0)} h × {Number(quote.labor_rate || 0).toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € · Netto {totals.total_net.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</div><div className="text-xs text-muted-foreground">Brutto gesamt</div><div className="text-xl font-bold">{totals.total_gross.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</div></div></div>
       </Card>
 
       <Card className="p-4 space-y-3">
