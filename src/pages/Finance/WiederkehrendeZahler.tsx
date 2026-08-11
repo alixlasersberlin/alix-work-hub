@@ -565,17 +565,31 @@ export default function WiederkehrendeZahler() {
 
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return groups;
+    let arr = groups;
+    if (dayFilter !== 'all') {
+      arr = arr.filter(g => g.profiles.some(p => {
+        const d = profileDay(p);
+        if (d == null) return false;
+        if (dayFilter === '1') return d === 1;
+        if (dayFilter === '15') return d === 15;
+        return d !== 1 && d !== 15;
+      }));
+    }
+    if (!search.trim()) return arr;
     const s = search.toLowerCase();
-    return groups.filter(g =>
+    return arr.filter(g =>
       g.customer_name.toLowerCase().includes(s) ||
       g.profiles.some(p => (p.recurrence_name ?? '').toLowerCase().includes(s) || (p.reference_number ?? '').toLowerCase().includes(s)) ||
       g.invoices.some(i => (i.invoice_number ?? '').toLowerCase().includes(s))
     );
-  }, [groups, search]);
+  }, [groups, search, dayFilter]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
+    const gDay = (g: Group) => {
+      const days = g.profiles.map(profileDay).filter((d): d is number => d != null);
+      return days.length ? Math.min(...days) : 99;
+    };
     switch (sortBy) {
       case 'recent_added': return arr.sort((a, b) => {
         const ac = a.newestCreatedAt || '';
@@ -589,9 +603,12 @@ export default function WiederkehrendeZahler() {
       case 'date_old': return arr.sort((a, b) => (a.newestCreatedAt || '').localeCompare(b.newestCreatedAt || ''));
       case 'name_asc': return arr.sort((a, b) => a.customer_name.localeCompare(b.customer_name, 'de'));
       case 'name_desc': return arr.sort((a, b) => b.customer_name.localeCompare(a.customer_name, 'de'));
+      case 'day_asc': return arr.sort((a, b) => gDay(a) - gDay(b) || a.customer_name.localeCompare(b.customer_name, 'de'));
+      case 'day_desc': return arr.sort((a, b) => gDay(b) - gDay(a) || a.customer_name.localeCompare(b.customer_name, 'de'));
       default: return arr;
     }
   }, [filtered, sortBy]);
+
 
   const visible = useMemo(
     () => (pageSize === 'all' ? sorted : sorted.slice(0, pageSize)),
