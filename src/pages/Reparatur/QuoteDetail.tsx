@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, Trash2, Printer, Send, Save, FileText, Mail } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Printer, Send, Save, FileText, Mail, Receipt } from 'lucide-react';
 import { printRepairQuote, repairQuoteHtmlBlob } from '@/lib/repair/quote-pdf';
 
 const KIND_LABEL: Record<string, string> = { part: 'Ersatzteil', labor: 'Arbeitszeit', shipping: 'Versand', other: 'Sonstiges' };
@@ -144,6 +144,37 @@ export default function QuoteDetail() {
     load();
   };
 
+  const handoverToAccounting = async () => {
+    if (!quote || !repair) return;
+    setSaving(true);
+    if (canEdit && !readOnlyState()) await save();
+    const t = recalc(quote, items);
+    const { error } = await sbRepair.from('repair_orders').update({
+      sent_to_finance: true,
+      sent_to_finance_at: new Date().toISOString(),
+      repair_status: 'An Finance übergeben',
+      actual_cost: t.total_gross,
+    }).eq('id', repair.id);
+    if (error) { setSaving(false); toast({ title: 'Übergabe fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    await sbRepair.from('repair_quote_history').insert({
+      quote_id: id,
+      action: 'An Buchhaltung übergeben',
+      actor_user: user?.id ?? null,
+      actor_email: user?.email ?? null,
+      meta: { total_net: t.total_net, total_gross: t.total_gross, quote_number: quote.quote_number },
+    });
+    setSaving(false);
+    toast({ title: 'An Buchhaltung übergeben', description: `${quote.quote_number} · Rechnungserstellung angefordert` });
+    load();
+  };
+
+  function readOnlyState() {
+    return !canEdit || quote.status === 'Freigegeben' || quote.status === 'Abgelehnt';
+  }
+
+
+
 
   if (loading) return <Card className="p-8 text-center text-muted-foreground">Lädt…</Card>;
   if (!quote) return <Card className="p-8 text-center text-muted-foreground">Kostenvoranschlag nicht gefunden.</Card>;
@@ -171,6 +202,14 @@ export default function QuoteDetail() {
           <Button variant="secondary" onClick={sendToCustomer} disabled={saving || !repair?.customer_email}>
             <Mail className="w-4 h-4 mr-1" />Email versenden
           </Button>
+          <Button onClick={handoverToAccounting} disabled={saving || !repair} title="Kostenvoranschlag zur Rechnungserstellung an die Buchhaltung übergeben">
+            <Receipt className="w-4 h-4 mr-1" />An Buchhaltung übergeben
+          </Button>
+          {repair?.sent_to_finance && (
+            <Badge className="self-center" variant="outline">
+              Übergeben{repair.sent_to_finance_at ? ` · ${new Date(repair.sent_to_finance_at).toLocaleDateString('de-DE')}` : ''}
+            </Badge>
+          )}
         </div>
       </div>
 
