@@ -19,7 +19,10 @@ const KIND_LABEL: Record<string, string> = { part: 'Ersatzteil', labor: 'Arbeits
 
 function recalc(quote: any, items: any[]) {
   const parts = items.filter((i) => i.kind === 'part').reduce((s, i) => s + Number(i.line_total || 0), 0);
-  const labor = items.filter((i) => i.kind === 'labor').reduce((s, i) => s + Number(i.line_total || 0), 0);
+  const laborItems = items.filter((i) => i.kind === 'labor').reduce((s, i) => s + Number(i.line_total || 0), 0);
+  // Arbeitszeit aus Stunden × Stundensatz zusätzlich zu evtl. erfassten Arbeitszeit-Positionen
+  const laborFromHours = Number(quote.labor_hours || 0) * Number(quote.labor_rate || 0);
+  const labor = laborItems + laborFromHours;
   const shipping = items.filter((i) => i.kind === 'shipping').reduce((s, i) => s + Number(i.line_total || 0), 0);
   const other = items.filter((i) => i.kind === 'other').reduce((s, i) => s + Number(i.line_total || 0), 0);
   const net = parts + labor + shipping + other;
