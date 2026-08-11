@@ -135,9 +135,15 @@ export default function QuoteDetail() {
 
     const { data, error } = await supabase.functions.invoke('send-repair-quote', { body: { quote_id: id } });
     if (error) { toast({ title: 'Versand fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
+    if (data?.status === 'failed' || data?.error) {
+      toast({ title: 'E-Mail konnte nicht versendet werden', description: String(data.error || 'Mailprovider-Fehler'), variant: 'destructive' });
+      load();
+      return;
+    }
     toast({ title: 'Kostenvoranschlag versendet', description: `An ${repair.customer_email}` });
     load();
   };
+
 
   if (loading) return <Card className="p-8 text-center text-muted-foreground">Lädt…</Card>;
   if (!quote) return <Card className="p-8 text-center text-muted-foreground">Kostenvoranschlag nicht gefunden.</Card>;
