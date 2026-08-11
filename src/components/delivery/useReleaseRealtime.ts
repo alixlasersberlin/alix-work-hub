@@ -8,8 +8,12 @@ import { supabase } from '@/integrations/supabase/client';
 export function useReleaseRealtime(): number {
   const [tick, setTick] = useState(0);
   useEffect(() => {
+    // eindeutiger Channel-Name je Hook-Instanz – sonst wird ein bereits
+    // subscribter Channel wiederverwendet ("cannot add postgres_changes
+    // callbacks after subscribe()")
+    const name = `delivery-approvals-ampel-${Math.random().toString(36).slice(2)}`;
     const channel = supabase
-      .channel('delivery-approvals-ampel')
+      .channel(name)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'delivery_approvals' },
