@@ -168,8 +168,12 @@ export default function QuoteDetail() {
           {!readOnly && quote.status !== 'Versendet' && (
             <Button onClick={sendToCustomer}><Send className="w-4 h-4 mr-1" />An Kunde senden</Button>
           )}
+          <Button variant="secondary" onClick={sendToCustomer} disabled={saving || !repair?.customer_email}>
+            <Mail className="w-4 h-4 mr-1" />Email versenden
+          </Button>
         </div>
       </div>
+
 
       <Card className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div><Label className="text-xs">Arbeitsstunden</Label><Input type="number" step="0.25" value={quote.labor_hours || ''} disabled={readOnly} onChange={(e) => updateField('labor_hours', e.target.value)} /></div>
