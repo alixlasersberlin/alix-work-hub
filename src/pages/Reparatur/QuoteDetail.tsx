@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, Trash2, Printer, Send, Save, FileText, Mail } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Printer, Send, Save, FileText, Mail, Receipt } from 'lucide-react';
 import { printRepairQuote, repairQuoteHtmlBlob } from '@/lib/repair/quote-pdf';
 
 const KIND_LABEL: Record<string, string> = { part: 'Ersatzteil', labor: 'Arbeitszeit', shipping: 'Versand', other: 'Sonstiges' };
