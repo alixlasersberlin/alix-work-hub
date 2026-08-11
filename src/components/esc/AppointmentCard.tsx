@@ -6,6 +6,7 @@ import { DepartmentBadge } from './DepartmentBadge';
 import { cn } from '@/lib/utils';
 import { ReleaseStatusForOrderText } from '@/components/delivery/ReleaseStatusForOrderText';
 import { isVipTraining, VIP_TRAINING_COLOR } from '@/lib/esc/vip-kind';
+import { ConfirmBanner } from './ConfirmBanner';
 
 interface Props {
   appointment: EscAppointment;
