@@ -1499,11 +1499,14 @@ Deno.serve(async (req) => {
             await ctx.admin.from("alixsmart_customer_links").upsert({
               alixwork_customer_id: dup.id,
               alixsmart_user_id: sourceId,
-              email: email,
+              alixsmart_email: email,
+              alixsmart_phone: src.phone || src.phone_number || src.mobile || null,
               match_method: "email",
-              match_confidence: 100,
-              status: "linked",
-            }, { onConflict: "alixsmart_user_id" });
+              match_score: 100,
+              match_status: "matched",
+              last_checked_at: new Date().toISOString(),
+            }, { onConflict: "alixwork_customer_id" });
+
 
             await ctx.admin.from("alixsmart_migration_map").update({
               migration_status: "merged",
