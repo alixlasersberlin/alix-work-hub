@@ -27,8 +27,8 @@ export function ConfirmBanner({
         'inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-semibold border',
         compact ? 'text-[10px]' : 'text-[11px]',
         confirmed
-          ? 'bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/40'
-          : 'bg-destructive/15 text-destructive border-destructive/40',
+          ? 'bg-green-600 text-primary-foreground border-green-500/60'
+          : 'bg-destructive text-destructive-foreground border-destructive/60',
         className,
       )}
     >
