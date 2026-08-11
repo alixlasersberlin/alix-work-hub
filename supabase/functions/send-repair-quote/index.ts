@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Versendet einen Kostenvoranschlag per E-Mail an den Kunden.
 // Erwartet: { quote_id } – verwendet repair_quotes + repair_orders.
 import { createClient } from 'npm:@supabase/supabase-js@2';

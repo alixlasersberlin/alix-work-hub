@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Sendet automatische Erinnerungen an Kunden, die auf eine Antwort warten.
 // Läuft per Cron (z. B. stündlich). Nach 2 Remindern → comm_status='customer_unreachable'.
 import { createClient } from 'npm:@supabase/supabase-js@2';

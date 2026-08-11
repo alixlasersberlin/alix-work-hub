@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // CMR – Mahnlauf: erzeugt Zahlungserinnerungen / Mahnungen als Entwürfe.
 // Ist in den CMR-Einstellungen "dunning_auto_send" aktiv, werden sie zusätzlich per E-Mail versendet.
 // Rein additiv: betrifft ausschließlich den Mandanten CMR.

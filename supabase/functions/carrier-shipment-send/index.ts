@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Speditionsversand – E-Mail an Spedition (Frachtauftrag) oder an den Kunden (Versandavis).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 

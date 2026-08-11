@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Sendet Team-User-E-Mails bei Ticket-Ereignissen (Zuweisung, Erwähnung, neue Kundennachricht, SLA-Breach).
 // Wird von DB-Trigger auf ticket_notifications INSERT via pg_net aufgerufen.
 import { createClient } from 'npm:@supabase/supabase-js@2';

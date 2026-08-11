@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Public Endpoint: zeigt KV-Daten an / nimmt Annahme oder Ablehnung entgegen.
 // Eingabe: { token, action: 'view' | 'accept' | 'reject', email?, note? }
 import { createClient } from 'npm:@supabase/supabase-js@2';

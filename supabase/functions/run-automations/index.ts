@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Alix MailCenter – Automations runner
 // Iterates active automations, finds new trigger records, applies delay,
 // sends via Resend, logs in mail_messages / mail_events / mail_automation_runs.

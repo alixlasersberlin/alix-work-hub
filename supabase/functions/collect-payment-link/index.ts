@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // ALIX COLLECT – Zahl-Link erzeugen und optional per E-Mail an den Kunden senden
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';

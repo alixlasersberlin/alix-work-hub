@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // CMR – Wiederkehrende Abrechnung: erzeugt fällige Rechnungen aus cmr_recurring_plans.
 // Rein additiv: betrifft ausschließlich den Mandanten CMR.
 

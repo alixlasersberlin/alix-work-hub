@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Sendet die Terminbestätigungs-E-Mail an den Kunden.
 // Kopie (CC) immer an support@alix-lasers.com.
 import { createClient } from "npm:@supabase/supabase-js@2";

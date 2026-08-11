@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Sendet Kundenmails für Service-Events. Loggt in service_communication_log.
 // Events: ticket_received, ticket_in_progress, spare_part_ordered, repair_completed, shipment_sent
 import { createClient } from 'npm:@supabase/supabase-js@2';

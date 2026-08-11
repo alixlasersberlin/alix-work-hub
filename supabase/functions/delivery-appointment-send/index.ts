@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Phase 3 – Liefertermin-Bestätigung: Token erzeugen + E-Mails versenden.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 

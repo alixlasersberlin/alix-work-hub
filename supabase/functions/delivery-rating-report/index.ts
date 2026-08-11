@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Monatlicher Bewertungs-Report: Kundenbewertungen der Auslieferungen des Vormonats
 // als Sammel-E-Mail an das Dispositionsteam.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";

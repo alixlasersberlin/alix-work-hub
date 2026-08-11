@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Retouren – Abholavis / Retourenschein per E-Mail an den Kunden senden.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 

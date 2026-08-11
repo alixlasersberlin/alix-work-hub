@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // ALIXWORK System Health Scan
 // Täglicher Health-/Sicherheits-/Performance-Scan.
 // - Sammelt Datenbank-Kennzahlen, langsame Abfragen, Tabellen-/Indexstatistik

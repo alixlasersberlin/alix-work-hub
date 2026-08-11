@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Tägliche Fuhrpark-Wartungs-Erinnerung (Fahrzeuge: HU, Service nach Datum/km, Versicherung)
 // Sendet eine Sammel-E-Mail an das Dispositionsteam.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";

@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Cron: versendet automatische Umfrage-Erinnerungen an noch nicht abgeschlossene Einladungen.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
