@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // PLM – Bestellung per E-Mail an den Lieferanten senden.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 

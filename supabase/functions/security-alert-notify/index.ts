@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Security Alert Notify — informiert Super Admins bei kritischen/hohen Findings
 // Sammelt alle "open" Findings mit severity in (critical, high) seit lookback_minutes
 // und schickt eine kombinierte E-Mail via Resend an alle aktiven Super Admins.

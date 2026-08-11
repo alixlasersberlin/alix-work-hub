@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // CMR – Portal-Zugangslink per E-Mail an den Kunden senden (Resend).
 // Rein additiv: betrifft ausschließlich den Mandanten CMR.
 

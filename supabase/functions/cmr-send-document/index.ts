@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // CMR – Beleg per E-Mail versenden (Resend), inkl. PDF-Anhang.
 // Rein additiv: betrifft ausschließlich den Mandanten CMR.
 

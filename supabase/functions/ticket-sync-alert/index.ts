@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Ticket Sync Alert Watcher
 // Detects sync failures across ticket_sync_logs (inbound) and ticket_outbound_sync_logs (outbound)
 // and sends an email to the configured admin recipient, with per-ticket cooldown (30 minutes).

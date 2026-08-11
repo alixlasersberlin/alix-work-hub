@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Sends an invoice email via Lovable Email (same pipeline as send-order-confirmation)
 // Body: { to_email, to_name?, subject, body_text, body_html?, bcc?: string[], attachments?: [{filename, content(base64), contentType}] }
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.0.4'

@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // ALIX COLLECT – Schriftverkehr-Generator (Mahnschreiben, Anwaltsschreiben, Ratenvereinbarung)
 // Erzeugt ein PDF, archiviert es im Storage und versendet es optional per E-Mail.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';

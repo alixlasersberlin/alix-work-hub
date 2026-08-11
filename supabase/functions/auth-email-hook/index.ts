@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Supabase Send-Email Auth Hook
 // Verifies Supabase standard-webhooks signature, renders the branded template
 // and sends via Resend (connector gateway).

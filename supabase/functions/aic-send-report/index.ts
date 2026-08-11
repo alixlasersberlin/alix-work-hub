@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // AIC – Management-Bericht erzeugen und per Resend versenden.
 // Nutzt zuletzt erzeugte Insights/Forecasts/Tasks.
 

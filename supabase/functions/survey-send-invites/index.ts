@@ -1,3 +1,4 @@
+import "../_shared/global-bcc.ts";
 // Versendet Umfrage-Einladungen und Erinnerungen an alle Empfänger einer Umfrage.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
