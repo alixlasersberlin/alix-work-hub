@@ -10,7 +10,9 @@ import { toast } from 'sonner';
 import { Loader2, X } from 'lucide-react';
 import { VipBadge } from '@/components/VipBadge';
 import { ensureCaseNumber, nextNumber } from '@/lib/number-ranges';
+import { findPotentialDuplicates, type DuplicateHit } from '@/lib/customer-duplicate-check';
 import { useAuth } from '@/hooks/useAuth';
+
 
 
 interface Props {
