@@ -91,5 +91,19 @@ Deno.serve(async (req) => {
     return json(500, { error: "insert_failed", detail: error.message });
   }
 
+  // Sofort verarbeiten (statt bis zu 5 Minuten auf den Cron zu warten)
+  try {
+    await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/orders-inbox-process`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({ id: data.id }),
+    });
+  } catch (e) {
+    console.error("immediate process failed", e);
+  }
+
   return json(202, { ok: true, id: data.id, status: "received" });
 });
