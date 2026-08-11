@@ -832,6 +832,17 @@ export default function WiederkehrendeZahler() {
           <Link to="/finance/rechnungen"><FileText className="w-4 h-4 mr-2" />Rechnungen öffnen</Link>
         </Button>
 
+        <div className="flex gap-1 border border-border rounded-md p-1">
+          {([['all', 'Alle Zahltage'], ['1', '1. des Monats'], ['15', '15. des Monats'], ['other', 'Sonstige']] as const).map(([v, label]) => (
+            <button
+              key={v}
+              onClick={() => setDayFilter(v as DayFilter)}
+              className={`px-3 py-1 text-xs rounded ${dayFilter === v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Sortierung:</span>
@@ -841,11 +852,15 @@ export default function WiederkehrendeZahler() {
             className="h-9 rounded-md border border-border bg-background px-2 text-xs"
           >
             <option value="recent_added">Zuletzt hinzugefügt</option>
+            <option value="day_asc">Zahltag aufsteigend (1. → 31.)</option>
+            <option value="day_desc">Zahltag absteigend (31. → 1.)</option>
             <option value="amount_desc">Betrag absteigend</option>
             <option value="amount_asc">Betrag aufsteigend</option>
             <option value="date_new">Datum neueste</option>
             <option value="date_old">Datum älteste</option>
             <option value="name_asc">Alphabetisch A–Z</option>
+            <option value="name_desc">Alphabetisch Z–A</option>
+
             <option value="name_desc">Alphabetisch Z–A</option>
           </select>
         </div>
