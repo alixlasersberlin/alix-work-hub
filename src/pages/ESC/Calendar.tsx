@@ -53,6 +53,7 @@ export default function EscCalendar() {
   const filtered = useMemo(() => applyFilters(appointments, filters, canSeeInternal), [appointments, filters, canSeeInternal]);
 
   const [pendingMove, setPendingMove] = useState<{ id: string; newStart: Date; conflicts: EscConflict[] } | null>(null);
+  const [pendingSave, setPendingSave] = useState<{ payload: Omit<EscAppointment, 'id' | 'createdAt' | 'updatedAt'>; conflicts: EscConflict[] } | null>(null);
 
   const title = useMemo(() => {
     if (view === 'day' || view === 'timeline') return format(cursor, 'EEEE, dd. MMMM yyyy', { locale: de });
