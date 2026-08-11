@@ -186,7 +186,8 @@ export default function AngebotErstellen() {
     async function load() {
       setLoading(true);
       const CHUNK = 1000;
-      // Kunden + Artikel PARALLEL laden (statt sequenziell) – halbiert die Wartezeit.
+      // Kunden + Artikel werden im HINTERGRUND geladen (nicht blockierend),
+      // damit das Angebot sofort erscheint.
       const loadAllCustomers = async () => {
         const out: any[] = [];
         for (let from = 0; ; from += CHUNK) {
@@ -216,11 +217,34 @@ export default function AngebotErstellen() {
         }
         return out;
       };
-      const [allCustomers, allItems] = await Promise.all([loadAllCustomers(), loadAllItems()]);
-      const c = allCustomers;
-      setCustomers(c);
-      setItems(allItems);
+
+      const customersPromise = loadAllCustomers();
+      customersPromise.then((all) => {
+        setCustomers((prev) => {
+          const map = new Map<string, any>();
+          for (const c of all) map.set(c.id, c);
+          for (const p of prev) if (!map.has(p.id)) map.set(p.id, p);
+          return Array.from(map.values());
+        });
+      }).catch(() => {});
+      loadAllItems().then((all) => setItems(all)).catch(() => {});
+
+      // Einzelnen Kunden sofort nachladen (damit die Maske nicht auf die Volllast wartet)
+      const ensureCustomer = async (id: string) => {
+        const { data } = await supabase
+          .from('customers')
+          .select('id, company_name, contact_name, email, phone, billing_address, shipping_address, external_customer_id, source_system')
+          .eq('id', id)
+          .maybeSingle();
+        if (data) setCustomers((prev) => (prev.some((p) => p.id === data.id) ? prev : [...prev, data]));
+      };
+      const findInAll = async (predicate: (c: any) => boolean) => {
+        const all = await customersPromise;
+        return all.find(predicate) || null;
+      };
+
       setLoading(false);
+
 
 
 
