@@ -126,6 +126,15 @@ const remainingCount = (p: Profile) => {
   return Math.floor(days / periodDays(p.recurrence_frequency, p.repeat_every)) + 1;
 };
 
+/** Zahltag (Tag im Monat) eines Profils – aus nächster Rechnung, sonst Startdatum */
+const profileDay = (p: Profile): number | null => {
+  const src = p.next_invoice_date || p.start_date;
+  if (!src) return null;
+  const d = new Date(String(src) + (String(src).length === 10 ? 'T00:00:00' : ''));
+  return isNaN(d.getTime()) ? null : d.getDate();
+};
+
+
 /** Restsumme = offene Raten × Ratenbetrag */
 const remainingAmount = (p: Profile) => remainingCount(p) * Number(p.total || 0);
 
