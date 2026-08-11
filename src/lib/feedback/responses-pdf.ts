@@ -31,7 +31,7 @@ export function recipientName(r: PdfResponse) {
 }
 
 function fmtDate(v?: string | null) {
-  return v ? new Date(v).toLocaleString('de-DE') : '–';
+  return v ? new Date(v).toLocaleDateString('de-DE') : '–';
 }
 
 /** Erzeugt ein PDF mit Übersichtstabelle und optional allen Einzelantworten. */
@@ -53,7 +53,7 @@ export function buildResponsesPdf(opts: {
 
   autoTable(doc, {
     startY: 32,
-    head: [['Datum', 'Kunde', 'E-Mail', 'Status', 'Score', 'NPS', 'Dauer']],
+    head: [['Datum', 'Kunde', 'E-Mail', 'Status', 'Score', 'NPS']],
     body: responses.map((r) => [
       fmtDate(r.completed_at ?? r.created_at),
       recipientName(r) + (r.is_critical ? ' (kritisch)' : ''),
@@ -61,7 +61,6 @@ export function buildResponsesPdf(opts: {
       r.status ?? '',
       r.score_total ?? '–',
       r.nps_score ?? '–',
-      r.duration_seconds ? `${Math.round(r.duration_seconds / 60)} min` : '–',
     ]),
     styles: { fontSize: 8, cellPadding: 1.6 },
     headStyles: { fillColor: [30, 30, 30], textColor: 255 },
