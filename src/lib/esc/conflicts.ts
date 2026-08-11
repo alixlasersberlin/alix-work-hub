@@ -21,7 +21,8 @@ export interface ConflictOptions {
 
 /** Find all conflicts for the given (possibly draft) appointment. */
 export function findConflicts(
-  candidate: Pick<EscAppointment, 'id' | 'startAt' | 'endAt' | 'employeeIds' | 'resourceId' | 'departmentId'>,
+  candidate: Pick<EscAppointment, 'id' | 'startAt' | 'endAt' | 'employeeIds' | 'resourceId' | 'departmentId'> &
+    Partial<Pick<EscAppointment, 'title' | 'customerName' | 'customerEmail'>>,
   all: EscAppointment[],
   opt: ConflictOptions = {},
 ): EscConflict[] {
@@ -30,6 +31,20 @@ export function findConflicts(
 
   for (const o of others) {
     if (!overlaps(candidate.startAt, candidate.endAt, o.startAt, o.endAt)) continue;
+
+    // Doppeltermin: gleicher Kunde ODER identischer Titel im selben Zeitfenster
+    const sameCustomer =
+      (!!norm(candidate.customerEmail) && norm(candidate.customerEmail) === norm(o.customerEmail)) ||
+      (!!norm(candidate.customerName) && norm(candidate.customerName) === norm(o.customerName));
+    const sameTitle = !!norm(candidate.title) && norm(candidate.title) === norm(o.title);
+    if (sameCustomer || sameTitle) {
+      conflicts.push({
+        kind: 'duplicate',
+        refId: o.id,
+        refLabel: candidate.customerName || candidate.title || 'Termin',
+        otherAppointment: o,
+      });
+    }
 
     // Employee conflicts
     for (const eid of candidate.employeeIds || []) {
