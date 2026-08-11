@@ -1268,7 +1268,9 @@ function AppRoutes() {
         <Route path="/termin/bestaetigen/:token" element={<AppointmentAction action="confirm" />} />
         <Route path="/termin/verschieben/:token" element={<AppointmentAction action="reschedule" />} />
         <Route path="/termin/ablehnen/:token" element={<AppointmentAction action="cancel" />} />
+        <Route path="/m/kalender" element={<ProtectedRoute><EscMobileCalendar /></ProtectedRoute>} />
         <Route path="/simulate/:userId" element={<ProtectedRoute requiredRoles={['Super Admin']}><SimulateEntry /></ProtectedRoute>} />
+
         {/* Öffentliche Kundenportale – KEIN Login, KEIN AppLayout */}
         <Route path="/liefertermin/:token" element={<LieferterminBestaetigung />} />
         <Route path="/lieferstatus/:token" element={<Lieferstatus />} />
