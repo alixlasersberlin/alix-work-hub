@@ -903,6 +903,7 @@ const MediapaketTemplates = lazy(() => import("./pages/mediapaket/MediapaketTemp
 const MediapaketAnalytics = lazy(() => import("./pages/mediapaket/MediapaketAnalytics"));
 const MediapaketShowcase = lazy(() => import("./pages/mediapaket/MediapaketShowcase"));
 const EscConfirmAppointment = lazy(() => import("./pages/ESC/public/ConfirmAppointment"));
+const EscMobileCalendar = lazy(() => import("./pages/ESC/MobileCalendar"));
 const EscRescheduleAppointment = lazy(() => import("./pages/ESC/public/RescheduleAppointment"));
 const EscCancelAppointment = lazy(() => import("./pages/ESC/public/CancelAppointment"));
 const EscCheckin = lazy(() => import("./pages/ESC/public/Checkin"));
