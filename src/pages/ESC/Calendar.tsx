@@ -230,6 +230,16 @@ export default function EscCalendar() {
         onOverride={async () => { if (pendingMove) { await performMove(pendingMove.id, pendingMove.newStart); setPendingMove(null); } }}
         canOverride={canOverride}
       />
+
+      <ConflictDialog
+        open={!!pendingSave}
+        conflicts={pendingSave?.conflicts || []}
+        onCancel={() => setPendingSave(null)}
+        onOverride={async () => {
+          if (pendingSave) { const p = pendingSave.payload; setPendingSave(null); await persistSubmit(p); }
+        }}
+        canOverride={canOverride}
+      />
     </div>
   );
 }
