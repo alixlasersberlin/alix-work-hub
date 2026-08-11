@@ -21,6 +21,7 @@ import { RecurringProfileCreateDialog } from '@/components/finance/RecurringProf
 import { RecurringInvoiceBookDialog, type BookableInvoice } from '@/components/finance/RecurringInvoiceBookDialog';
 import { useFinancePermissions } from '@/hooks/useFinancePermissions';
 import { InvoicePdfDialog, type PdfInvoiceRef } from '@/components/finance/InvoicePdfDialog';
+import { CustomerInvoicesDialog } from '@/components/finance/CustomerInvoicesDialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -149,6 +150,7 @@ export default function WiederkehrendeZahler() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [invoicesFor, setInvoicesFor] = useState<{ id: string; name: string } | null>(null);
   const { canWrite, isAdmin, canDelete } = useFinancePermissions();
   // Admin & Super Admin sehen standardmäßig ALLE Konten (inkl. gestoppt/SEPA) und alle Rechnungen (auch bezahlte)
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa' | 'lawyer'>(isAdmin ? 'all' : 'active');
@@ -951,7 +953,16 @@ export default function WiederkehrendeZahler() {
                       ) : (
                         <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">Zahler</Badge>
                       )}
-                      <span className="truncate">{g.customer_name}</span>
+                      <span
+                        role="link"
+                        tabIndex={0}
+                        className="truncate text-primary hover:underline cursor-pointer"
+                        title="Rechnungen anzeigen"
+                        onClick={(e) => { e.stopPropagation(); setInvoicesFor({ id: g.customer_id, name: g.customer_name }); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setInvoicesFor({ id: g.customer_id, name: g.customer_name }); } }}
+                      >
+                        {g.customer_name}
+                      </span>
                     </div>
                     {g.remaining > 0 && (
                       <div className="text-[11px] mt-0.5">
@@ -1169,6 +1180,12 @@ export default function WiederkehrendeZahler() {
         invoice={pdfInvoice}
         open={!!pdfInvoice}
         onOpenChange={(v) => { if (!v) setPdfInvoice(null); }}
+      />
+      <CustomerInvoicesDialog
+        open={!!invoicesFor}
+        onOpenChange={(v) => { if (!v) setInvoicesFor(null); }}
+        customerId={invoicesFor?.id}
+        customerName={invoicesFor?.name}
       />
       <RecurringInvoiceBookDialog
         invoice={bookInvoice}
