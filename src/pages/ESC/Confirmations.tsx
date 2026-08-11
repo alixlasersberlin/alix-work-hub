@@ -62,7 +62,7 @@ export default function EscConfirmations() {
                 <TableCell><EscStatusBadge status={a.status} /></TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button size="sm" variant="outline" onClick={() => copyLink(a.confirmationToken)}><Copy className="w-3.5 h-3.5 mr-1" />Link</Button>
-                  <Button size="sm" variant="ghost" onClick={() => toast.info('E-Mail-Versand aktiv in Prompt 2')}><Mail className="w-3.5 h-3.5 mr-1" />Senden</Button>
+                  <Button size="sm" variant="ghost" disabled={sending === a.id} onClick={() => sendMail(a)}><Mail className="w-3.5 h-3.5 mr-1" />{sending === a.id ? 'Sende…' : 'Senden'}</Button>
                 </TableCell>
               </TableRow>
             ))}
