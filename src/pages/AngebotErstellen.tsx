@@ -186,7 +186,8 @@ export default function AngebotErstellen() {
     async function load() {
       setLoading(true);
       const CHUNK = 1000;
-      // Kunden + Artikel PARALLEL laden (statt sequenziell) – halbiert die Wartezeit.
+      // Kunden + Artikel werden im HINTERGRUND geladen (nicht blockierend),
+      // damit das Angebot sofort erscheint.
       const loadAllCustomers = async () => {
         const out: any[] = [];
         for (let from = 0; ; from += CHUNK) {
@@ -216,11 +217,34 @@ export default function AngebotErstellen() {
         }
         return out;
       };
-      const [allCustomers, allItems] = await Promise.all([loadAllCustomers(), loadAllItems()]);
-      const c = allCustomers;
-      setCustomers(c);
-      setItems(allItems);
+
+      const customersPromise = loadAllCustomers();
+      customersPromise.then((all) => {
+        setCustomers((prev) => {
+          const map = new Map<string, any>();
+          for (const c of all) map.set(c.id, c);
+          for (const p of prev) if (!map.has(p.id)) map.set(p.id, p);
+          return Array.from(map.values());
+        });
+      }).catch(() => {});
+      loadAllItems().then((all) => setItems(all)).catch(() => {});
+
+      // Einzelnen Kunden sofort nachladen (damit die Maske nicht auf die Volllast wartet)
+      const ensureCustomer = async (id: string) => {
+        const { data } = await supabase
+          .from('customers')
+          .select('id, company_name, contact_name, email, phone, billing_address, shipping_address, external_customer_id, source_system')
+          .eq('id', id)
+          .maybeSingle();
+        if (data) setCustomers((prev) => (prev.some((p) => p.id === data.id) ? prev : [...prev, data]));
+      };
+      const findInAll = async (predicate: (c: any) => boolean) => {
+        const all = await customersPromise;
+        return all.find(predicate) || null;
+      };
+
       setLoading(false);
+
 
 
 
@@ -256,7 +280,7 @@ export default function AngebotErstellen() {
             setExistingApproval((snap.approvalStatus as any) || 'pending');
             if (snap.notes) setNotes(snap.notes);
             if (typeof snap.includeAppendix === 'boolean') setIncludeAppendix(snap.includeAppendix);
-            if (snap.customer?.id) setCustomerId(snap.customer.id);
+            if (snap.customer?.id) { setCustomerId(snap.customer.id); ensureCustomer(snap.customer.id).catch(() => {}); }
             if (Array.isArray(snap.lines) && snap.lines.length > 0) {
               setLines(snap.lines.map((l: any) => ({
                 id: l.id || crypto.randomUUID(),
@@ -288,9 +312,9 @@ export default function AngebotErstellen() {
         if (raw) {
           const h = JSON.parse(raw);
           sessionStorage.removeItem('sales_lead_handoff_v1');
-          if (h.customer_id) setCustomerId(h.customer_id);
+          if (h.customer_id) { setCustomerId(h.customer_id); ensureCustomer(h.customer_id).catch(() => {}); }
           else if (h.customer_email || h.customer_company) {
-            const match = (c ?? []).find((cu: any) =>
+            const match = await findInAll((cu: any) =>
               (h.customer_email && cu.email?.toLowerCase() === String(h.customer_email).toLowerCase()) ||
               (h.customer_company && cu.company_name === h.customer_company)
             );
@@ -307,9 +331,9 @@ export default function AngebotErstellen() {
         if (raw) {
           const h = JSON.parse(raw);
           sessionStorage.removeItem('ticket_offer_handoff_v1');
-          if (h.customer_id) setCustomerId(h.customer_id);
+          if (h.customer_id) { setCustomerId(h.customer_id); ensureCustomer(h.customer_id).catch(() => {}); }
           else if (h.customer_email || h.customer_company) {
-            const match = (c ?? []).find((cu: any) =>
+            const match = await findInAll((cu: any) =>
               (h.customer_email && cu.email?.toLowerCase() === String(h.customer_email).toLowerCase()) ||
               (h.customer_company && cu.company_name === h.customer_company)
             );
@@ -328,7 +352,7 @@ export default function AngebotErstellen() {
         if (raw) {
           const h = JSON.parse(raw);
           sessionStorage.removeItem('portal_inquiry_handoff_v1');
-          if (h.customer_id) setCustomerId(h.customer_id);
+          if (h.customer_id) { setCustomerId(h.customer_id); ensureCustomer(h.customer_id).catch(() => {}); }
           if (h.notes) setNotes((prev) => prev ? `${prev}\n${h.notes}` : h.notes);
           if (Array.isArray(h.lines) && h.lines.length) {
             setLines(h.lines.map((l: any) => ({
