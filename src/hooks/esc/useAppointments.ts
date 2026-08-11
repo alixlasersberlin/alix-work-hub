@@ -5,6 +5,7 @@ import type { EscAppointment, EscStatus, EscPriority } from '@/lib/esc/types';
 import { logEscAudit } from '@/lib/esc/audit';
 import { useEscStore } from '@/lib/esc/store/kvStore';
 import { supabase } from '@/integrations/supabase/client';
+import { sendAppointmentConfirmationMail, ESC_CONFIRMATION_COPY } from '@/lib/esc/confirmation-mail';
 
 /** Map ein esc_events-Row auf das UI-Modell EscAppointment (read-only). */
 function eventRowToAppointment(row: any): EscAppointment {
@@ -101,8 +102,14 @@ export function useAppointments() {
     };
     await upsert(item);
     await logEscAudit({ entity: 'appointment', entityId: item.id, action: 'create', after: item, source: 'internal' });
+    if (item.confirmationRequired && item.customerEmail) {
+      const res = await sendAppointmentConfirmationMail(item);
+      if (res.ok) toast.success(`Terminbestätigung an ${item.customerEmail} versendet · Kopie an ${ESC_CONFIRMATION_COPY}`);
+      else toast.error(`E-Mail nicht versendet: ${res.error}`);
+    }
     return item;
   }, [upsert]);
+
 
   const updateAppointment = useCallback(async (id: string, patch: Partial<EscAppointment>) => {
     // esc_events-Einträge: direkt in DB updaten

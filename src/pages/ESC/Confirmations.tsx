@@ -9,10 +9,13 @@ import { de } from 'date-fns/locale';
 import { confirmUrl } from '@/lib/esc/public-url';
 import { Copy, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { useState } from 'react';
+import { sendAppointmentConfirmationMail, ESC_CONFIRMATION_COPY } from '@/lib/esc/confirmation-mail';
 
 export default function EscConfirmations() {
   const { appointments } = useAppointments();
   const { departments } = useDepartments();
+  const [sending, setSending] = useState<string | null>(null);
   const items = appointments.filter((a) => a.confirmationRequired && a.status !== 'bestaetigt' && a.status !== 'abgelehnt' && a.status !== 'storniert');
 
   const copyLink = (token?: string) => {
@@ -21,13 +24,21 @@ export default function EscConfirmations() {
     toast.success('Bestätigungslink kopiert');
   };
 
+  const sendMail = async (a: (typeof items)[number]) => {
+    setSending(a.id);
+    const res = await sendAppointmentConfirmationMail(a);
+    setSending(null);
+    if (res.ok) toast.success(`E-Mail versendet · Kopie an ${ESC_CONFIRMATION_COPY}`);
+    else toast.error(res.error || 'Versand fehlgeschlagen');
+  };
+
   return (
     <div className="space-y-3">
       <h1 className="text-lg font-semibold">Offene Bestätigungen</h1>
       <div className="text-[12px] text-muted-foreground">
-        Alle Bestätigungslinks laufen über <span className="text-foreground font-medium">https://alixworks.de/termin-bestaetigen/…</span>.
-        Der E-Mail-Versand wird in Prompt 2 mit signierten Tokens aktiviert.
+        Terminbestätigungen gehen an die hinterlegte Kunden-E-Mail, Kopie immer an <span className="text-foreground font-medium">{ESC_CONFIRMATION_COPY}</span>.
       </div>
+
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
@@ -51,7 +62,7 @@ export default function EscConfirmations() {
                 <TableCell><EscStatusBadge status={a.status} /></TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button size="sm" variant="outline" onClick={() => copyLink(a.confirmationToken)}><Copy className="w-3.5 h-3.5 mr-1" />Link</Button>
-                  <Button size="sm" variant="ghost" onClick={() => toast.info('E-Mail-Versand aktiv in Prompt 2')}><Mail className="w-3.5 h-3.5 mr-1" />Senden</Button>
+                  <Button size="sm" variant="ghost" disabled={sending === a.id} onClick={() => sendMail(a)}><Mail className="w-3.5 h-3.5 mr-1" />{sending === a.id ? 'Sende…' : 'Senden'}</Button>
                 </TableCell>
               </TableRow>
             ))}
