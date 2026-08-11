@@ -149,6 +149,7 @@ export default function WiederkehrendeZahler() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [invoicesFor, setInvoicesFor] = useState<{ id: string; name: string } | null>(null);
   const { canWrite, isAdmin, canDelete } = useFinancePermissions();
   // Admin & Super Admin sehen standardmäßig ALLE Konten (inkl. gestoppt/SEPA) und alle Rechnungen (auch bezahlte)
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'stopped' | 'sepa' | 'lawyer'>(isAdmin ? 'all' : 'active');
