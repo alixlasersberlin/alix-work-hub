@@ -951,7 +951,16 @@ export default function WiederkehrendeZahler() {
                       ) : (
                         <Badge className="bg-blue-600 hover:bg-blue-600 text-white text-[10px] px-1.5 py-0 h-4 tracking-wide">Zahler</Badge>
                       )}
-                      <span className="truncate">{g.customer_name}</span>
+                      <span
+                        role="link"
+                        tabIndex={0}
+                        className="truncate text-primary hover:underline cursor-pointer"
+                        title="Rechnungen anzeigen"
+                        onClick={(e) => { e.stopPropagation(); setInvoicesFor({ id: g.customer_id, name: g.customer_name }); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setInvoicesFor({ id: g.customer_id, name: g.customer_name }); } }}
+                      >
+                        {g.customer_name}
+                      </span>
                     </div>
                     {g.remaining > 0 && (
                       <div className="text-[11px] mt-0.5">
