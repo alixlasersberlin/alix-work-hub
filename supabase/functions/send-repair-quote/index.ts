@@ -39,12 +39,18 @@ Deno.serve(async (req) => {
     </body></html>`;
 
     const RESEND_KEY = Deno.env.get('RESEND_API_KEY');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     let sendStatus: 'sent' | 'failed' | 'skipped' = 'skipped';
     let sendError: string | null = null;
-    if (RESEND_KEY) {
-      const resp = await fetch('https://api.resend.com/emails', {
+    if (RESEND_KEY && LOVABLE_API_KEY) {
+      const resp = await fetch('https://connector-gateway.lovable.dev/resend/emails', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${RESEND_KEY}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          'X-Connection-Api-Key': RESEND_KEY,
+        },
+
         body: JSON.stringify({
           from: "Alix Lasers ® <noreply@alixlasers.ai>",
           to: [r.customer_email],
