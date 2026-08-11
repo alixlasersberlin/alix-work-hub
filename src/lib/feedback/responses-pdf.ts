@@ -74,30 +74,59 @@ export function buildResponsesPdf(opts: {
       byResponse.set(i.response_id, list);
     });
 
+    const pageH = doc.internal.pageSize.getHeight();
+    const pageW = doc.internal.pageSize.getWidth();
+    const margin = 14;
+
+    doc.addPage();
+    doc.setFontSize(13);
+    doc.text('Einzelantworten', margin, 18);
+    let y = 26;
+
     responses.forEach((r) => {
       const list = byResponse.get(r.id);
       if (!list?.length) return;
-      doc.addPage();
-      doc.setFontSize(13);
-      doc.text(recipientName(r), 14, 18);
-      doc.setFontSize(9);
+
+      if (y > pageH - 40) {
+        doc.addPage();
+        y = 20;
+      }
+
+      // Kopfzeile des Kunden
+      doc.setFillColor(240, 240, 240);
+      doc.rect(margin, y - 4.5, pageW - margin * 2, 7, 'F');
+      doc.setFontSize(9.5);
+      doc.setFont(undefined, 'bold');
+      doc.text(recipientName(r), margin + 2, y);
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(8);
       doc.setTextColor(110);
       doc.text(
         [fmtDate(r.completed_at ?? r.created_at), r.recipient?.email, r.status].filter(Boolean).join(' · '),
-        14,
-        24,
+        pageW - margin - 2,
+        y,
+        { align: 'right' },
       );
       doc.setTextColor(0);
+      y += 5;
+
       autoTable(doc, {
-        startY: 30,
-        head: [['Frage', 'Antwort']],
+        startY: y,
+        margin: { left: margin, right: margin },
         body: list.map((i) => [i.question_label ?? '–', i.value]),
-        styles: { fontSize: 9, cellPadding: 2, valign: 'top' },
-        columnStyles: { 0: { cellWidth: 70 } },
-        headStyles: { fillColor: [30, 30, 30], textColor: 255 },
+        styles: { fontSize: 7.5, cellPadding: 1.2, valign: 'top', overflow: 'linebreak' },
+        columnStyles: {
+          0: { cellWidth: 62, textColor: 90 },
+          1: { cellWidth: 'auto' },
+        },
+        theme: 'grid',
+        tableLineColor: [225, 225, 225],
       });
+
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 7;
     });
   }
+
 
   return doc;
 }
