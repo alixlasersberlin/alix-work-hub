@@ -144,7 +144,7 @@ export default function DoppelteKunden() {
   async function confirmMerge() {
     if (!mergePending) return;
     setMerging(true);
-    const { error } = await supabase.rpc('merge_customers', {
+    const { data, error } = await supabase.rpc('merge_customers', {
       _primary_id: mergePending.primary.id,
       _duplicate_ids: mergePending.dups.map(d => d.id),
     });
@@ -153,7 +153,12 @@ export default function DoppelteKunden() {
       toast.error('Zusammenführen fehlgeschlagen: ' + error.message);
       return;
     }
+    const warn = (data as any)?.warnings as any[] | undefined;
+    if (warn?.length) {
+      toast.warning(`${warn.length} Tabelle(n) konnten nicht übernommen werden: ${warn.map(w => w.table).join(', ')}`);
+    }
     toast.success(`${mergePending.dups.length} Kunde(n) in „${mergePending.primary.company_name || mergePending.primary.contact_name || '—'}" zusammengeführt.`);
+
     setMergePending(null);
     loadAll();
   }
