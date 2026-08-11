@@ -427,13 +427,51 @@ export default function CustomerEditDialog({ customer, open, onClose, onSaved }:
           </fieldset>
 
 
+          {dupes.length > 0 && (
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2">
+              <div className="text-sm font-semibold text-amber-500">
+                Mögliche Dublette – {dupes.length} ähnliche{dupes.length === 1 ? 'r' : ''} Kunde{dupes.length === 1 ? '' : 'n'} gefunden
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Bitte prüfen und entscheiden: bestehenden Kunden verwenden oder trotzdem neu anlegen.
+              </p>
+              <div className="max-h-52 overflow-y-auto divide-y divide-border rounded border border-border bg-background/60">
+                {dupes.map(d => (
+                  <div key={d.id} className="p-2 text-xs">
+                    <div className="font-medium text-foreground">
+                      {d.company_name || d.contact_name || '—'}
+                      {d.external_customer_id ? <span className="text-muted-foreground"> · #{d.external_customer_id}</span> : null}
+                    </div>
+                    <div className="text-muted-foreground">
+                      {[d.contact_name, d.email, d.phone, d.address].filter(Boolean).join(' · ')}
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {d.matches.map(m => (
+                        <span key={m} className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-amber-500">
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <Button size="sm" variant="ghost" onClick={() => setDupes([])}>Zurück zur Eingabe</Button>
+                <Button size="sm" variant="outline" onClick={() => handleSave(true)} disabled={saving}>
+                  Trotzdem neu anlegen
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
-            <Button onClick={handleSave} disabled={saving} className="gold-gradient text-primary-foreground">
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Speichern
+            <Button onClick={() => handleSave()} disabled={saving || checking} className="gold-gradient text-primary-foreground">
+              {(saving || checking) && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {checking ? 'Prüfe Dubletten…' : 'Speichern'}
             </Button>
           </div>
+
         </div>
       </div>
     </>,
