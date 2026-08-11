@@ -352,7 +352,7 @@ export default function AngebotErstellen() {
         if (raw) {
           const h = JSON.parse(raw);
           sessionStorage.removeItem('portal_inquiry_handoff_v1');
-          if (h.customer_id) setCustomerId(h.customer_id);
+          if (h.customer_id) { setCustomerId(h.customer_id); ensureCustomer(h.customer_id).catch(() => {}); }
           if (h.notes) setNotes((prev) => prev ? `${prev}\n${h.notes}` : h.notes);
           if (Array.isArray(h.lines) && h.lines.length) {
             setLines(h.lines.map((l: any) => ({
