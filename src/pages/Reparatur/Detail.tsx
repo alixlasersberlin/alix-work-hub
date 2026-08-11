@@ -673,7 +673,7 @@ function KostenvoranschlagTab({ repair, canEdit }: any) {
       .insert({
         repair_order_id: repair.id,
         status: 'Entwurf',
-        currency: repair.currency || 'EUR',
+        
         vat_rate: 19,
         created_by: user?.id,
       })
