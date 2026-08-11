@@ -2,6 +2,7 @@ import { addDays, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, startOf
 import { de } from 'date-fns/locale';
 import type { EscAppointment, EscDepartment } from '@/lib/esc/types';
 import { cn } from '@/lib/utils';
+import { isVipTraining, VIP_TRAINING_COLOR } from '@/lib/esc/vip-kind';
 
 export function MonthView({
   date, appointments, departments, onDayClick, onAppointmentClick,
