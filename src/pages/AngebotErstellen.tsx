@@ -312,9 +312,9 @@ export default function AngebotErstellen() {
         if (raw) {
           const h = JSON.parse(raw);
           sessionStorage.removeItem('sales_lead_handoff_v1');
-          if (h.customer_id) setCustomerId(h.customer_id);
+          if (h.customer_id) { setCustomerId(h.customer_id); ensureCustomer(h.customer_id).catch(() => {}); }
           else if (h.customer_email || h.customer_company) {
-            const match = (c ?? []).find((cu: any) =>
+            const match = await findInAll((cu: any) =>
               (h.customer_email && cu.email?.toLowerCase() === String(h.customer_email).toLowerCase()) ||
               (h.customer_company && cu.company_name === h.customer_company)
             );
