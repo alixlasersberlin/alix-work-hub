@@ -223,6 +223,9 @@ verify_jwt = true
 [functions.esc-send-message]
 verify_jwt = true
 
+[functions.esc-appointment-confirmation-mail]
+verify_jwt = true
+
 [functions.esc-whatsapp-inbound]
 verify_jwt = false
 
