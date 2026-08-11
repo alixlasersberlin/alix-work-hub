@@ -144,6 +144,37 @@ export default function QuoteDetail() {
     load();
   };
 
+  const handoverToAccounting = async () => {
+    if (!quote || !repair) return;
+    setSaving(true);
+    if (canEdit && !readOnlyState()) await save();
+    const t = recalc(quote, items);
+    const { error } = await sbRepair.from('repair_orders').update({
+      sent_to_finance: true,
+      sent_to_finance_at: new Date().toISOString(),
+      repair_status: 'An Finance übergeben',
+      actual_cost: t.total_gross,
+    }).eq('id', repair.id);
+    if (error) { setSaving(false); toast({ title: 'Übergabe fehlgeschlagen', description: error.message, variant: 'destructive' }); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    await sbRepair.from('repair_quote_history').insert({
+      quote_id: id,
+      action: 'An Buchhaltung übergeben',
+      actor_user: user?.id ?? null,
+      actor_email: user?.email ?? null,
+      meta: { total_net: t.total_net, total_gross: t.total_gross, quote_number: quote.quote_number },
+    });
+    setSaving(false);
+    toast({ title: 'An Buchhaltung übergeben', description: `${quote.quote_number} · Rechnungserstellung angefordert` });
+    load();
+  };
+
+  function readOnlyState() {
+    return !canEdit || quote.status === 'Freigegeben' || quote.status === 'Abgelehnt';
+  }
+
+
+
 
   if (loading) return <Card className="p-8 text-center text-muted-foreground">Lädt…</Card>;
   if (!quote) return <Card className="p-8 text-center text-muted-foreground">Kostenvoranschlag nicht gefunden.</Card>;
