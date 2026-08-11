@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { FeedbackHeader } from './_shared';
-import { Download, Eye, AlertTriangle, Trash2 } from 'lucide-react';
+import { Download, Eye, AlertTriangle, Trash2, FileText, Loader2 } from 'lucide-react';
+import { buildResponsesPdf, recipientName } from '@/lib/feedback/responses-pdf';
 import { useCanDelete } from '@/hooks/useCanDelete';
 import { toast } from 'sonner';
 
@@ -20,6 +21,7 @@ export default function FeedbackResponses() {
   const [detail, setDetail] = useState<any | null>(null);
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   const canDelete = useCanDelete();
 
@@ -76,6 +78,45 @@ export default function FeedbackResponses() {
 
 
 
+  async function exportPdf() {
+    if (!filtered.length) { toast.error('Keine Antworten vorhanden'); return; }
+    setPdfBusy(true);
+    try {
+      const ids = filtered.map(r => r.id);
+      const all: any[] = [];
+      for (let i = 0; i < ids.length; i += 200) {
+        const { data } = await sb.from('survey_response_items')
+          .select('response_id, question_label, value_text, value_number, value_bool, value_date, value_json')
+          .in('response_id', ids.slice(i, i + 200));
+        all.push(...(data ?? []));
+      }
+      const surveyName = surveyId === 'all'
+        ? 'Alle Umfragen'
+        : (surveys.find(s => s.id === surveyId)?.name ?? 'Umfrage');
+      const doc = buildResponsesPdf({
+        surveyName,
+        responses: filtered,
+        items: all.map((i: any) => ({ response_id: i.response_id, question_label: i.question_label, value: itemValue(i) })),
+      });
+      doc.save(`umfrage-antworten-${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success('PDF erstellt');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'PDF konnte nicht erstellt werden');
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
+  function exportSinglePdf() {
+    if (!detail) return;
+    const doc = buildResponsesPdf({
+      surveyName: surveys.find(s => s.id === detail.survey_id)?.name ?? 'Umfrage',
+      responses: [detail],
+      items: items.map((i: any) => ({ response_id: detail.id, question_label: i.question_label, value: itemValue(i) })),
+    });
+    doc.save(`antwort-${recipientName(detail).replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.pdf`);
+  }
+
   function exportCsv() {
     const head = ['Datum', 'Kunde', 'E-Mail', 'Status', 'Score', 'NPS', 'Dauer (s)'];
     const lines = filtered.map(r => [
@@ -109,6 +150,10 @@ export default function FeedbackResponses() {
                 <Trash2 className="h-4 w-4 mr-2" />Alle Antworten löschen
               </Button>
             )}
+            <Button variant="outline" onClick={exportPdf} disabled={pdfBusy}>
+              {pdfBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileText className="h-4 w-4 mr-2" />}
+              Alle Antworten als PDF
+            </Button>
             <Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-2" />CSV Export</Button>
           </div>
         } />
@@ -160,7 +205,14 @@ export default function FeedbackResponses() {
 
       <Dialog open={!!detail} onOpenChange={o => !o && setDetail(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
-          <DialogHeader><DialogTitle>Antwortdetails</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <span>Antwortdetails</span>
+              <Button size="sm" variant="outline" className="ml-auto mr-6" onClick={exportSinglePdf}>
+                <FileText className="h-4 w-4 mr-1" />PDF
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
           <div className="space-y-3">
             {items.map(i => (
               <div key={i.id} className="rounded-md border border-border p-3">
