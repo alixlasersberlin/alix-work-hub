@@ -8,7 +8,7 @@ import { de } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { AddToCalendarMenu } from '@/components/esc/AddToCalendarMenu';
 import { cancelUrl, rescheduleUrl } from '@/lib/esc/public-url';
-import { CalendarCheck, CalendarClock, CalendarX, Download, MapPin, QrCode as QrIcon, Clock } from 'lucide-react';
+import { CalendarCheck, CalendarClock, CalendarX, MapPin, QrCode as QrIcon, Clock } from 'lucide-react';
 import QRCode from 'qrcode';
 import { supabase } from '@/integrations/supabase/client';
 import type { EscAppointment } from '@/lib/esc/types';
