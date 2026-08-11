@@ -36,7 +36,9 @@ export function AgendaView({
             </div>
           </div>
           <DepartmentBadge dept={deptOf(a.departmentId)} />
+          <ConfirmBanner appointment={a} />
           <EscStatusBadge status={a.status} />
+
           <AddToCalendarMenu appointment={a} size="sm" variant="ghost" label="" />
 
         </div>
