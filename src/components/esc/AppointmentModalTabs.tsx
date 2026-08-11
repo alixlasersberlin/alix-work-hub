@@ -191,7 +191,18 @@ export function AppointmentModalTabs({
     if (!form.startAt || !form.endAt) { toast.error('Bitte Start und Ende angeben'); return; }
     if (new Date(form.endAt) <= new Date(form.startAt)) { toast.error('Ende muss nach Start liegen'); return; }
 
-    const payload = buildPayload();
+    const shouldSendEmail = form.sendEmail || opts?.sendEmail === true;
+    if (shouldSendEmail && !form.customerEmail.trim()) {
+      toast.error('Für den E-Mail-Versand fehlt die Kunden-E-Mail.');
+      setTab('customer');
+      return;
+    }
+    const payload = {
+      ...buildPayload(),
+      // „Speichern & E-Mail“ ist eine verbindliche Versandanweisung und darf
+      // nicht von einer zweiten, versehentlich deaktivierten Checkbox abhängen.
+      confirmationRequired: form.confirmationRequired || shouldSendEmail,
+    };
     await onSubmit(payload);
     void emit({
       name: initial?.id ? 'event.updated' : 'event.created',
@@ -199,7 +210,6 @@ export function AppointmentModalTabs({
       payload: { kind: payload.kind, departmentId: payload.departmentId, appointmentId: initial?.id },
     });
     if (form.attachIcs) downloadIcs({ ...payload, id: initial?.id || 'preview', createdAt: '', updatedAt: '' } as EscAppointment);
-    if (form.sendEmail || opts?.sendEmail) toast.info('E-Mail-Versand wird über die Bestätigungs-Edge-Function ausgeführt.');
     onClose();
   };
 
