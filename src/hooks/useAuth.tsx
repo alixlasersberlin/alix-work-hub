@@ -280,7 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await fetchProfile(user.id);
       await fetchRoles(user.id);
     }
-  }, [user]);
+  }, [user, isSuperAdminSession]);
 
   // Idle-Auto-Logout nach Inaktivität (Security-Baseline)
   // Super Admin: 4 Stunden, alle anderen: 30 Minuten — der Timer wird bei Aktivität zurückgesetzt.
@@ -323,7 +323,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       events.forEach((ev) => window.removeEventListener(ev, handler));
       document.removeEventListener('visibilitychange', handler);
     };
-  }, [user]);
+  }, [user, isSuperAdminSession]);
 
   // Admin inherits all Super Admin privileges (mirrors DB has_role()).
   const hasRoleRaw = (role: string) => roles.includes(role);
