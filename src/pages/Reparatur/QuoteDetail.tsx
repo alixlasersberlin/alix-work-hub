@@ -181,7 +181,36 @@ export default function QuoteDetail() {
     return !canEdit || quote.status === 'Freigegeben' || quote.status === 'Abgelehnt';
   }
 
+  // Rechnungsdaten aus KV ableiten (für direkte Rechnungserstellung)
+  const invoiceOrder = useMemo(() => {
+    if (!quote || !repair) return null;
+    return {
+      id: repair.id,
+      order_number: quote.quote_number,
+      case_number: quote.quote_number,
+      customer_id: repair.customer_id ?? null,
+      zoho_customer_id: (customer as any)?.zoho_customer_id ?? null,
+      customer_name: repair.customer_company || repair.customer_name || null,
+      customer_email: repair.customer_email || null,
+      currency: repair.currency || 'EUR',
+      source_system: (customer as any)?.source_system || 'zoho_eu_1',
+      billing_address: (customer as any)?.billing_address ?? null,
+      total_amount: Number(quote.total_gross || 0),
+    };
+  }, [quote, repair, customer]);
 
+  const invoiceItems = useMemo(() => {
+    const list = items.map((it) => ({
+      item_name: `${KIND_LABEL[it.kind] || 'Position'}: ${it.description || '–'}`,
+      description: '',
+      quantity: Number(it.quantity || 0),
+      rate: Number(it.unit_price || 0),
+    }));
+    const h = Number(quote?.labor_hours || 0);
+    const r = Number(quote?.labor_rate || 0);
+    if (h > 0 && r > 0) list.push({ item_name: 'Arbeitszeit', description: '', quantity: h, rate: r });
+    return list.filter((l) => l.quantity > 0 && l.rate !== 0);
+  }, [items, quote]);
 
 
   if (loading) return <Card className="p-8 text-center text-muted-foreground">Lädt…</Card>;
