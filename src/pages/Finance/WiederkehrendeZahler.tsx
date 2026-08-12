@@ -1132,6 +1132,16 @@ export default function WiederkehrendeZahler() {
                                           </DropdownMenuItem>
                                         </DropdownMenuContent>
                                       </DropdownMenu>
+                                      <Button
+                                        size="sm"
+                                        className="bg-red-600 hover:bg-red-700 text-white"
+                                        disabled={!canWrite || stoppingId === p.id}
+                                        onClick={() => endLegalProfile(p)}
+                                        title="Vertrag beenden – Kunde wird nach RATEN ENDE LEGAL verschoben, keine weiteren Rechnungen"
+                                      >
+                                        {stoppingId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                                        BEENDEN
+                                      </Button>
                                       {canDelete && (
                                         <Button
                                           size="sm"
