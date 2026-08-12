@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarDays, Truck, Route as RouteIcon, Wand2, Plus, Trash2, Crown, MapPin, Clock, Gauge } from 'lucide-react';
@@ -22,12 +23,14 @@ const todayStr = () => format(new Date(), 'yyyy-MM-dd');
 export default function DispatchTagesplanung() {
   const qc = useQueryClient();
   const { user, profile, hasRole } = useAuth();
-  const [day, setDay] = useState<string>(todayStr());
+  const [searchParams] = useSearchParams();
+  const initialDay = searchParams.get('datum') || todayStr();
+  const [day, setDay] = useState<string>(initialDay);
   const [selectedTour, setSelectedTour] = useState<string | null>(null);
   const [filterRegion, setFilterRegion] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('alle');
   const [calcLoading, setCalcLoading] = useState(false);
-  const [newTourOpen, setNewTourOpen] = useState(false);
+  const [newTourOpen, setNewTourOpen] = useState(searchParams.get('neu') === '1');
   const [newTour, setNewTour] = useState({ title: '', driver_id: '', vehicle_id: '', start: '08:00', date: todayStr() });
   const [pickedOrder, setPickedOrder] = useState<PickedOrder | null>(null);
   const [pickedItems, setPickedItems] = useState<PickedItem[]>([]);

@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { toast } from 'sonner';
-import { CalendarClock, Search, PackageSearch, History, Send, FlaskConical, CalendarPlus, Loader2 } from 'lucide-react';
+import { CalendarClock, Search, PackageSearch, History, Send, FlaskConical, CalendarPlus, Loader2, Route as RouteIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -144,7 +144,10 @@ export default function DispatchTermine() {
         icon={CalendarClock}
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button onClick={syncCalendar} disabled={calSyncing}>
+            <Button asChild>
+              <Link to="/dispatch/tagesplanung?neu=1"><RouteIcon className="h-4 w-4 mr-2" /> Tour planen</Link>
+            </Button>
+            <Button onClick={syncCalendar} disabled={calSyncing} variant="outline">
               {calSyncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CalendarPlus className="h-4 w-4 mr-2" />}
               In Teamkalender übernehmen
             </Button>
