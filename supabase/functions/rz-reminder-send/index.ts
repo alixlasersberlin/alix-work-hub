@@ -245,16 +245,20 @@ Deno.serve(async (req) => {
       sepa: r.payment_method === "sepa",
       shopUrl,
     };
-    const subject = fill(subjectBase, vars);
-    const html = buildHtml(vars, tpl);
-    const text = buildText(vars, tpl);
+    const ovStr = (k: string) =>
+      override && typeof override[k] === "string" && String(override[k]).trim() ? String(override[k]) : null;
+    const subject = ovStr("subject") ? fill(ovStr("subject")!, vars) : fill(subjectBase, vars);
+    const html = ovStr("body_html") ? fill(ovStr("body_html")!, vars) : buildHtml(vars, tpl);
+    const text = ovStr("body_text") ? fill(ovStr("body_text")!, vars) : buildText(vars, tpl);
+    const toEmail = ovStr("to_email") ?? r.email;
+    const effBcc = override && Array.isArray(override.bcc) ? (override.bcc as string[]) : bcc;
 
     if (preview) {
-      results.push({ id: r.id, email: r.email, subject, html, text });
+      results.push({ id: r.id, email: toEmail, subject, html, text });
       continue;
     }
 
-    if (!String(r.email ?? "").includes("@")) {
+    if (!String(toEmail ?? "").includes("@")) {
       failed++;
       await rest(`rz_reminders?id=eq.${r.id}`, {
         method: "PATCH",
@@ -270,12 +274,12 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
         body: JSON.stringify({
-          to_email: r.email,
+          to_email: toEmail,
           to_name: r.customer_name,
           subject,
           body_text: text,
           body_html: html,
-          bcc,
+          bcc: effBcc,
           invoice_number: `rz-${r.id}`,
         }),
       });
