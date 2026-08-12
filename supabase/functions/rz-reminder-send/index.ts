@@ -233,11 +233,12 @@ Deno.serve(async (req) => {
       sepa: r.payment_method === "sepa",
       shopUrl,
     };
+    const subject = fill(subjectBase, vars);
     const html = buildHtml(vars, tpl);
     const text = buildText(vars, tpl);
 
     if (preview) {
-      results.push({ id: r.id, email: r.email, subject: subjectBase, html, text });
+      results.push({ id: r.id, email: r.email, subject, html, text });
       continue;
     }
 
@@ -259,7 +260,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           to_email: r.email,
           to_name: r.customer_name,
-          subject: subjectBase,
+          subject,
           body_text: text,
           body_html: html,
           bcc,
