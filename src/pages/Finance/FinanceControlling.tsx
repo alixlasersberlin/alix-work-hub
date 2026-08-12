@@ -108,6 +108,7 @@ export default function FinanceControlling() {
       partial: cases.filter(c => c.case_type === 'TEILLIEFERUNG' && c.open_to_invoice > 0.01).length,
       repairs: cases.filter(c => c.case_type === 'REPARATUR' && c.open_to_invoice > 0.01).length,
       critical: cases.filter(c => c.traffic === 'kritisch' && c.status !== 'abgeschlossen').length,
+      awaitingApproval: cases.filter(c => c.approval_status !== 'freigegeben' && c.status !== 'abgeschlossen').length,
     };
   }, [cases]);
 
