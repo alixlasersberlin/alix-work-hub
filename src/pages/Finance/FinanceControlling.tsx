@@ -129,6 +129,9 @@ export default function FinanceControlling() {
         case 'rechnung_fehlt': return c.open_to_invoice > 0.01 && c.status !== 'abgeschlossen';
         case 'differenzen': return Math.abs(c.open_to_invoice) > 0.01;
         case 'kritisch': return c.traffic === 'kritisch';
+        case 'freigabe_offen': return c.approval_status !== 'freigegeben' && c.status !== 'abgeschlossen';
+        case 'eskaliert': return !!c.escalated_at && c.status !== 'abgeschlossen';
+        case 'wiedervorlage': return !!c.followup_date && c.followup_date <= today && c.status !== 'abgeschlossen';
         case 'heute': return c.created_at.slice(0, 10) === today;
         case 'woche': return new Date(c.created_at) >= startOfWeek;
         case 'abgeschlossen': return c.status === 'abgeschlossen';
