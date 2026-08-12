@@ -434,6 +434,7 @@ export const navItems: NavItem[] = [
           { path: '/finance/dashboard', label: 'Dashboard', icon: Banknote, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/cockpit', label: 'Finance Cockpit', icon: Banknote, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/controlling', label: 'Controlling-Cockpit', icon: Activity, roles: ['Admin', 'Super Admin'] },
+          { path: '/finance/finance-controlling', label: 'Finance Controlling', icon: Activity, roles: ['Admin', 'Super Admin', 'Buchhaltung Admin', 'Buchhaltung EU', 'Buchhaltung CH'] },
         ],
       },
       {
