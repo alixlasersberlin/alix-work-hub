@@ -1,0 +1,10 @@
+CREATE INDEX IF NOT EXISTS idx_app_notifications_user_created ON public.app_notifications (user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_app_notifications_unread ON public.app_notifications (user_id) WHERE read_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_app_notifications_expires ON public.app_notifications (expires_at);
+CREATE INDEX IF NOT EXISTS idx_dat_token ON public.delivery_approval_tokens (token);
+CREATE INDEX IF NOT EXISTS idx_dat_order ON public.delivery_approval_tokens (order_id);
+CREATE INDEX IF NOT EXISTS idx_dat_approval ON public.delivery_approval_tokens (approval_id);
+CREATE INDEX IF NOT EXISTS idx_esc_audit_entity ON public.esc_audit_log (entity_type, entity_id, changed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_esc_audit_changed_at ON public.esc_audit_log (changed_at DESC);
+DROP INDEX IF EXISTS public.idx_audit_logs_created_at_desc;
+DROP INDEX IF EXISTS public.idx_zoho_invoices_raw_data_gin;
