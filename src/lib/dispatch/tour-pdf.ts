@@ -209,7 +209,8 @@ export async function buildToursPdf(entries: { tour: TourLike; stops: TourStopLi
   paintPage(true);
   let y = TOP;
 
-  const blocks = buildBlocks(entries);
+  const addrMap = await loadAddresses(entries);
+  const blocks = buildBlocks(entries, addrMap);
   blocks.forEach((block) => {
     block.forEach((l) => {
       const wrapped = l.text
