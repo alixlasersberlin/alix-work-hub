@@ -112,6 +112,20 @@ export default function FinanceControlling() {
     };
   }, [cases]);
 
+  const periodBounds = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    switch (period) {
+      case 'dieser_monat': return { from: iso(new Date(y, m, 1)), to: iso(new Date(y, m + 1, 0)) };
+      case 'letzter_monat': return { from: iso(new Date(y, m - 1, 1)), to: iso(new Date(y, m, 0)) };
+      case 'dieses_jahr': return { from: `${y}-01-01`, to: `${y}-12-31` };
+      case 'letztes_jahr': return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31` };
+      default: return null;
+    }
+  }, [period]);
+
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     const startOfWeek = new Date();
@@ -119,6 +133,10 @@ export default function FinanceControlling() {
     const today = new Date().toISOString().slice(0, 10);
 
     return cases.filter(c => {
+      if (periodBounds) {
+        const d = (c.created_at ?? '').slice(0, 10);
+        if (d < periodBounds.from || d > periodBounds.to) return false;
+      }
       if (q) {
         const hay = [c.customer_name, c.customer_number, c.reference_number, c.case_type, c.status]
           .map(v => (v ?? '').toString().toLowerCase()).join(' ');
@@ -140,7 +158,16 @@ export default function FinanceControlling() {
         default: return c.case_type === filter;
       }
     });
-  }, [cases, filter, search, user]);
+  }, [cases, filter, search, user, periodBounds]);
+
+  const perPage = pageSize === 'alle' ? rows.length || 1 : Number(pageSize);
+  const pageCount = Math.max(1, Math.ceil(rows.length / perPage));
+  const currentPage = Math.min(page, pageCount);
+  const visibleRows = useMemo(
+    () => rows.slice((currentPage - 1) * perPage, currentPage * perPage),
+    [rows, currentPage, perPage],
+  );
+
 
   const openCase = (c: FcCase) => { setActive(c); setComment(''); };
 
