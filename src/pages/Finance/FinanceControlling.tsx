@@ -156,6 +156,19 @@ export default function FinanceControlling() {
     }
   };
 
+  const doApproval = async (c: FcCase, approval: 'offen' | 'freigegeben' | 'abgelehnt') => {
+    try {
+      await setFcApproval(c, approval);
+      toast.success(`Freigabe: ${FC_APPROVAL[approval].label}`);
+      setActive({ ...c, approval_status: approval, approved_at: approval === 'offen' ? null : new Date().toISOString() });
+      qc.invalidateQueries({ queryKey: ['fc-cases'] });
+      qc.invalidateQueries({ queryKey: ['fc-events', c.id] });
+    } catch (e: any) {
+      toast.error(e.message ?? 'Fehler');
+    }
+  };
+
+
   const saveComment = async () => {
     if (!active || !comment.trim()) return;
     try {
