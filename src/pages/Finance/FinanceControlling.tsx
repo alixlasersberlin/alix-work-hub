@@ -1,19 +1,20 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Activity, AlertTriangle, FileText, Search, RefreshCw, ExternalLink } from 'lucide-react';
+import { Activity, AlertTriangle, FileText, Search, RefreshCw, ExternalLink, CheckCircle2, XCircle, CalendarCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import {
-  FC_STATUS, FC_TRAFFIC, fmtEur, listFcCases, listFcEvents, loadCaseInvoices,
-  setFcStatus, addFcEvent, updateFcCase, type FcCase,
+  FC_STATUS, FC_TRAFFIC, FC_APPROVAL, fmtEur, listFcCases, listFcEvents, loadCaseInvoices,
+  setFcStatus, addFcEvent, updateFcCase, setFcApproval, loadFcMonthClose, type FcCase,
 } from '@/lib/finance/controlling';
 
 const FILTERS = [
@@ -27,6 +28,9 @@ const FILTERS = [
   { key: 'REPARATUR', label: 'Reparaturen' },
   { key: 'SCHLUSSRECHNUNG', label: 'Schlussrechnungen' },
   { key: 'kritisch', label: 'Kritisch' },
+  { key: 'freigabe_offen', label: 'Freigabe offen' },
+  { key: 'eskaliert', label: 'Eskaliert' },
+  { key: 'wiedervorlage', label: 'Wiedervorlage fällig' },
   { key: 'heute', label: 'Heute' },
   { key: 'woche', label: 'Diese Woche' },
   { key: 'abgeschlossen', label: 'Abgeschlossen' },
@@ -34,6 +38,15 @@ const FILTERS = [
 ];
 
 const PRIORITIES: Record<string, string> = { normal: 'Normal', hoch: 'Hoch', kritisch: 'Kritisch' };
+
+function monthBounds() {
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1);
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  return { from: iso(from), to: iso(to) };
+}
+
 
 function Kpi({ label, value, tone }: { label: string; value: number | string; tone?: string }) {
   return (
