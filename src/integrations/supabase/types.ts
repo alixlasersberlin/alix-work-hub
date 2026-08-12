@@ -21796,6 +21796,146 @@ export type Database = {
         }
         Relationships: []
       }
+      fc_cases: {
+        Row: {
+          accounting_region: string | null
+          assigned_to: string | null
+          billing_flag: string | null
+          case_type: string
+          closed_at: string | null
+          created_at: string
+          customer_id: string | null
+          customer_name: string | null
+          customer_number: string | null
+          delivered_amount: number
+          due_date: string | null
+          id: string
+          invoiced_amount: number
+          notes: string | null
+          open_to_invoice: number
+          open_to_pay: number
+          order_amount: number
+          order_id: string | null
+          paid_amount: number
+          priority: string
+          reference_number: string | null
+          source_id: string
+          source_table: string
+          status: string
+          tenant_id: string | null
+          traffic: string
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          accounting_region?: string | null
+          assigned_to?: string | null
+          billing_flag?: string | null
+          case_type: string
+          closed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_number?: string | null
+          delivered_amount?: number
+          due_date?: string | null
+          id?: string
+          invoiced_amount?: number
+          notes?: string | null
+          open_to_invoice?: number
+          open_to_pay?: number
+          order_amount?: number
+          order_id?: string | null
+          paid_amount?: number
+          priority?: string
+          reference_number?: string | null
+          source_id: string
+          source_table: string
+          status?: string
+          tenant_id?: string | null
+          traffic?: string
+          trigger_event: string
+          updated_at?: string
+        }
+        Update: {
+          accounting_region?: string | null
+          assigned_to?: string | null
+          billing_flag?: string | null
+          case_type?: string
+          closed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_number?: string | null
+          delivered_amount?: number
+          due_date?: string | null
+          id?: string
+          invoiced_amount?: number
+          notes?: string | null
+          open_to_invoice?: number
+          open_to_pay?: number
+          order_amount?: number
+          order_id?: string | null
+          paid_amount?: number
+          priority?: string
+          reference_number?: string | null
+          source_id?: string
+          source_table?: string
+          status?: string
+          tenant_id?: string | null
+          traffic?: string
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fc_events: {
+        Row: {
+          case_id: string
+          comment: string | null
+          created_at: string
+          event_type: string
+          id: string
+          invoice_number: string | null
+          new_status: string | null
+          old_status: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          case_id: string
+          comment?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          invoice_number?: string | null
+          new_status?: string | null
+          old_status?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          case_id?: string
+          comment?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          invoice_number?: string | null
+          new_status?: string | null
+          old_status?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fc_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "fc_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_accounts: {
         Row: {
           accounting_region: Database["public"]["Enums"]["accounting_region"]
@@ -49565,6 +49705,31 @@ export type Database = {
       }
       expire_break_glass_sessions: { Args: never; Returns: number }
       expire_temporary_role_grants: { Args: never; Returns: number }
+      fc_order_financials: {
+        Args: { p_order_id: string }
+        Returns: {
+          invoiced: number
+          order_amount: number
+          paid: number
+        }[]
+      }
+      fc_refresh_order: { Args: { p_order_id: string }; Returns: undefined }
+      fc_upsert_case: {
+        Args: {
+          p_amount: number
+          p_billing_flag?: string
+          p_case_type: string
+          p_critical?: boolean
+          p_customer_id: string
+          p_customer_name: string
+          p_event: string
+          p_order_id: string
+          p_reference: string
+          p_source_id: string
+          p_table: string
+        }
+        Returns: string
+      }
       finance_can_write: { Args: never; Returns: boolean }
       finance_cost_center_report: {
         Args: {

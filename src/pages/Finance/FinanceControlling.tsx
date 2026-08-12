@@ -1,0 +1,357 @@
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Activity, AlertTriangle, FileText, Search, RefreshCw, ExternalLink } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import {
+  FC_STATUS, FC_TRAFFIC, fmtEur, listFcCases, listFcEvents, loadCaseInvoices,
+  setFcStatus, addFcEvent, updateFcCase, type FcCase,
+} from '@/lib/finance/controlling';
+
+const FILTERS = [
+  { key: 'alle', label: 'Alle' },
+  { key: 'neu', label: 'Neu' },
+  { key: 'rechnung_fehlt', label: 'Rechnung fehlt' },
+  { key: 'differenzen', label: 'Differenzen' },
+  { key: 'AUFTRAG', label: 'Aufträge' },
+  { key: 'LIEFERUNG', label: 'Lieferungen' },
+  { key: 'TEILLIEFERUNG', label: 'Teillieferungen' },
+  { key: 'REPARATUR', label: 'Reparaturen' },
+  { key: 'SCHLUSSRECHNUNG', label: 'Schlussrechnungen' },
+  { key: 'kritisch', label: 'Kritisch' },
+  { key: 'heute', label: 'Heute' },
+  { key: 'woche', label: 'Diese Woche' },
+  { key: 'abgeschlossen', label: 'Abgeschlossen' },
+];
+
+function Kpi({ label, value, tone }: { label: string; value: number | string; tone?: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className={cn('text-2xl font-semibold mt-1', tone)}>{value}</div>
+    </div>
+  );
+}
+
+export default function FinanceControlling() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [filter, setFilter] = useState('alle');
+  const [search, setSearch] = useState('');
+  const [active, setActive] = useState<FcCase | null>(null);
+  const [comment, setComment] = useState('');
+
+  const { data: cases = [], isLoading, refetch } = useQuery({
+    queryKey: ['fc-cases'],
+    queryFn: listFcCases,
+  });
+
+  const { data: events = [] } = useQuery({
+    queryKey: ['fc-events', active?.id],
+    queryFn: () => listFcEvents(active!.id),
+    enabled: !!active,
+  });
+
+  const { data: invoices = [] } = useQuery({
+    queryKey: ['fc-invoices', active?.reference_number],
+    queryFn: () => loadCaseInvoices(active!.reference_number),
+    enabled: !!active,
+  });
+
+  const kpis = useMemo(() => {
+    const open = cases.filter(c => !['abgeschlossen', 'freigegeben'].includes(c.status));
+    return {
+      open: open.length,
+      needsInvoice: cases.filter(c => c.open_to_invoice > 0.01 && c.status !== 'abgeschlossen').length,
+      invoiced: cases.filter(c => c.open_to_invoice <= 0.01).length,
+      diff: cases.filter(c => Math.abs(c.open_to_invoice) > 0.01).length,
+      partial: cases.filter(c => c.case_type === 'TEILLIEFERUNG' && c.open_to_invoice > 0.01).length,
+      repairs: cases.filter(c => c.case_type === 'REPARATUR' && c.open_to_invoice > 0.01).length,
+      critical: cases.filter(c => c.traffic === 'kritisch' && c.status !== 'abgeschlossen').length,
+    };
+  }, [cases]);
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const startOfWeek = new Date();
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    const today = new Date().toISOString().slice(0, 10);
+
+    return cases.filter(c => {
+      if (q) {
+        const hay = [c.customer_name, c.customer_number, c.reference_number, c.case_type, c.status]
+          .map(v => (v ?? '').toString().toLowerCase()).join(' ');
+        if (!hay.includes(q)) return false;
+      }
+      switch (filter) {
+        case 'alle': return c.status !== 'abgeschlossen';
+        case 'neu': return c.status === 'neu';
+        case 'rechnung_fehlt': return c.open_to_invoice > 0.01 && c.status !== 'abgeschlossen';
+        case 'differenzen': return Math.abs(c.open_to_invoice) > 0.01;
+        case 'kritisch': return c.traffic === 'kritisch';
+        case 'heute': return c.created_at.slice(0, 10) === today;
+        case 'woche': return new Date(c.created_at) >= startOfWeek;
+        case 'abgeschlossen': return c.status === 'abgeschlossen';
+        default: return c.case_type === filter;
+      }
+    });
+  }, [cases, filter, search]);
+
+  const openCase = (c: FcCase) => { setActive(c); setComment(''); };
+
+  const doStatus = async (c: FcCase, status: string) => {
+    try {
+      await setFcStatus(c, status);
+      toast.success(`Status: ${FC_STATUS[status] ?? status}`);
+      qc.invalidateQueries({ queryKey: ['fc-cases'] });
+      qc.invalidateQueries({ queryKey: ['fc-events', c.id] });
+      setActive({ ...c, status });
+    } catch (e: any) {
+      toast.error(e.message ?? 'Fehler');
+    }
+  };
+
+  const saveComment = async () => {
+    if (!active || !comment.trim()) return;
+    try {
+      await addFcEvent(active.id, { event_type: 'kommentar', comment: comment.trim() });
+      setComment('');
+      qc.invalidateQueries({ queryKey: ['fc-events', active.id] });
+      toast.success('Kommentar gespeichert');
+    } catch (e: any) { toast.error(e.message ?? 'Fehler'); }
+  };
+
+  const goInvoice = (c: FcCase) => {
+    if (c.case_type === 'REPARATUR') navigate('/finance/rechnungsvorschlaege');
+    else if (c.order_id) navigate(`/auftraege/${c.order_id}`);
+    else navigate('/finance/rechnungen');
+  };
+
+  return (
+    <div className="p-4 sm:p-6 space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Activity className="w-5 h-5 text-primary" />
+          <h1 className="text-xl font-semibold">Finance Controlling</h1>
+          <span className="text-xs text-muted-foreground">Zentrale Rechnungs-Kontrollstelle</span>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="w-4 h-4 mr-2" />Aktualisieren
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+        <Kpi label="Offene Prüfungen" value={kpis.open} />
+        <Kpi label="Rechnung erforderlich" value={kpis.needsInvoice} tone="text-destructive" />
+        <Kpi label="Rechnung vorhanden" value={kpis.invoiced} tone="text-emerald-400" />
+        <Kpi label="Differenzen" value={kpis.diff} tone="text-amber-400" />
+        <Kpi label="Teillieferungen" value={kpis.partial} />
+        <Kpi label="Reparaturen" value={kpis.repairs} />
+        <Kpi label="Kritisch" value={kpis.critical} tone="text-red-400" />
+      </div>
+
+      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Suche: Kunde, Kundennummer, Auftragsnummer, Rechnungsnummer, Reparaturnummer, Seriennummer…"
+            className="pl-9"
+          />
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {FILTERS.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={cn(
+                'px-3 py-1.5 text-xs rounded-md transition-colors border',
+                filter === f.key
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
+              )}
+            >{f.label}</button>
+          ))}
+        </div>
+        <div className="text-xs text-muted-foreground">{rows.length} Vorgänge</div>
+      </div>
+
+      <div className="rounded-xl border border-border bg-card overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40 text-xs text-muted-foreground">
+            <tr>
+              <th className="text-left p-2">Ampel</th>
+              <th className="text-left p-2">Status</th>
+              <th className="text-left p-2">Prio</th>
+              <th className="text-left p-2">Vorgang</th>
+              <th className="text-left p-2">Vorgangsnr.</th>
+              <th className="text-left p-2">Kunde</th>
+              <th className="text-right p-2">Auftragswert</th>
+              <th className="text-right p-2">Fakturiert</th>
+              <th className="text-right p-2">Bezahlt</th>
+              <th className="text-right p-2">Noch zu fakturieren</th>
+              <th className="text-right p-2">Noch zu bezahlen</th>
+              <th className="text-left p-2">Auslöser</th>
+              <th className="text-left p-2">Datum</th>
+              <th className="text-left p-2">Aktion</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading && <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Lade…</td></tr>}
+            {!isLoading && rows.length === 0 && (
+              <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Keine Vorgänge</td></tr>
+            )}
+            {rows.map((c, i) => {
+              const t = FC_TRAFFIC[c.traffic] ?? FC_TRAFFIC.gelb;
+              return (
+                <tr key={c.id} className={cn('border-t border-border hover:bg-muted/30 cursor-pointer', i % 2 === 1 && 'bg-muted/10')}
+                    onClick={() => openCase(c)}>
+                  <td className="p-2"><span className={cn('px-2 py-0.5 rounded-full text-xs border', t.cls)}>{t.label}</span></td>
+                  <td className="p-2">{FC_STATUS[c.status] ?? c.status}</td>
+                  <td className="p-2">{c.priority}</td>
+                  <td className="p-2 font-medium">{c.case_type}</td>
+                  <td className="p-2">{c.reference_number || '—'}</td>
+                  <td className="p-2">{c.customer_name || '—'}</td>
+                  <td className="p-2 text-right">{fmtEur(c.order_amount)}</td>
+                  <td className="p-2 text-right">{fmtEur(c.invoiced_amount)}</td>
+                  <td className="p-2 text-right">{fmtEur(c.paid_amount)}</td>
+                  <td className={cn('p-2 text-right', c.open_to_invoice > 0.01 && 'text-destructive font-medium')}>{fmtEur(c.open_to_invoice)}</td>
+                  <td className={cn('p-2 text-right', c.open_to_pay > 0.01 && 'text-amber-400')}>{fmtEur(c.open_to_pay)}</td>
+                  <td className="p-2 text-xs text-muted-foreground">{c.trigger_event}</td>
+                  <td className="p-2 text-xs">{new Date(c.created_at).toLocaleDateString('de-DE')}</td>
+                  <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                    <Button size="sm" variant="outline" onClick={() => goInvoice(c)}>
+                      <FileText className="w-3.5 h-3.5 mr-1" />
+                      {c.invoiced_amount > 0 ? 'Schlussrechnung' : 'Rechnung erstellen'}
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <Sheet open={!!active} onOpenChange={(o) => !o && setActive(null)}>
+        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+          {active && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  {active.case_type} · {active.reference_number || '—'}
+                  {active.traffic === 'kritisch' && <AlertTriangle className="w-4 h-4 text-red-400" />}
+                </SheetTitle>
+              </SheetHeader>
+
+              <div className="mt-4 space-y-4 text-sm">
+                <div className="rounded-lg border border-border p-3">
+                  <div className="text-xs text-muted-foreground mb-2">Kunde</div>
+                  <div className="font-medium">{active.customer_name || '—'}</div>
+                  <div className="text-xs text-muted-foreground">{active.customer_number || ''}</div>
+                </div>
+
+                <div className="rounded-lg border border-border p-3 space-y-1">
+                  <div className="text-xs text-muted-foreground mb-2">Finanzübersicht</div>
+                  <div className="flex justify-between"><span>Auftragswert</span><span>{fmtEur(active.order_amount)}</span></div>
+                  <div className="flex justify-between"><span>Bereits fakturiert</span><span>{fmtEur(active.invoiced_amount)}</span></div>
+                  <div className="flex justify-between font-medium"><span>Noch zu fakturieren</span>
+                    <span className={active.open_to_invoice > 0.01 ? 'text-destructive' : 'text-emerald-400'}>{fmtEur(active.open_to_invoice)}</span></div>
+                  <div className="h-px bg-border my-2" />
+                  <div className="flex justify-between"><span>Bereits bezahlt</span><span>{fmtEur(active.paid_amount)}</span></div>
+                  <div className="flex justify-between font-medium"><span>Noch zu bezahlen</span>
+                    <span className={active.open_to_pay > 0.01 ? 'text-amber-400' : 'text-emerald-400'}>{fmtEur(active.open_to_pay)}</span></div>
+                </div>
+
+                <div className="rounded-lg border border-border p-3">
+                  <div className="text-xs text-muted-foreground mb-2">Rechnungen</div>
+                  {invoices.length === 0 && <div className="text-muted-foreground text-xs">Keine Rechnung vorhanden</div>}
+                  {invoices.map((inv: any) => (
+                    <div key={inv.id} className="flex justify-between py-1 border-b border-border/50 last:border-0">
+                      <div>
+                        <div className="font-medium">{inv.invoice_number}{inv.is_deposit ? ' (Anzahlung)' : ''}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('de-DE') : ''} · {inv.status}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div>{fmtEur(inv.total)}</div>
+                        <div className="text-xs text-muted-foreground">offen {fmtEur(inv.balance)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={() => goInvoice(active)}>
+                    <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                    {active.invoiced_amount > 0 ? 'Schlussrechnung erstellen' : 'Rechnung erstellen'}
+                  </Button>
+                  <Select value={active.status} onValueChange={(v) => doStatus(active, v)}>
+                    <SelectTrigger className="w-[220px] h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(FC_STATUS).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <div className="text-xs text-muted-foreground">Fällig am / Verantwortlich</div>
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      defaultValue={active.due_date ?? ''}
+                      onBlur={async (e) => {
+                        await updateFcCase(active.id, { due_date: e.target.value || null } as any);
+                        qc.invalidateQueries({ queryKey: ['fc-cases'] });
+                      }}
+                    />
+                    <Input
+                      placeholder="Verantwortlich (Notiz)"
+                      defaultValue={active.notes ?? ''}
+                      onBlur={async (e) => {
+                        await updateFcCase(active.id, { notes: e.target.value || null } as any);
+                        qc.invalidateQueries({ queryKey: ['fc-cases'] });
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <div className="text-xs text-muted-foreground">Interner Kommentar</div>
+                  <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} />
+                  <Button size="sm" variant="outline" onClick={saveComment}>Kommentar speichern</Button>
+                </div>
+
+                <div className="rounded-lg border border-border p-3">
+                  <div className="text-xs text-muted-foreground mb-2">Historie</div>
+                  <div className="space-y-2">
+                    {events.map(ev => (
+                      <div key={ev.id} className="text-xs">
+                        <div className="text-muted-foreground">
+                          {new Date(ev.created_at).toLocaleString('de-DE')} · {ev.user_name || 'System'}
+                        </div>
+                        <div>
+                          {ev.event_type}
+                          {ev.new_status ? ` → ${FC_STATUS[ev.new_status] ?? ev.new_status}` : ''}
+                          {ev.comment ? ` · ${ev.comment}` : ''}
+                        </div>
+                      </div>
+                    ))}
+                    {events.length === 0 && <div className="text-xs text-muted-foreground">Keine Einträge</div>}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
