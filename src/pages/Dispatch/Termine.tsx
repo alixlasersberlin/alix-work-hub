@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenantFilter } from '@/hooks/useTenantFilter';
 import { toast } from 'sonner';
-import { CalendarClock, Search, PackageSearch, History, Send, FlaskConical, CalendarPlus, Loader2 } from 'lucide-react';
+import { CalendarClock, Search, PackageSearch, History, Send, FlaskConical, CalendarPlus, Loader2, Route as RouteIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Input } from '@/components/ui/input';
