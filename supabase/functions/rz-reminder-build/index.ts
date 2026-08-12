@@ -26,11 +26,21 @@ Deno.serve(async (req) => {
     (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
     authHeader === `Bearer ${serviceKey}` ||
     apiKeyHeader === serviceKey ||
-    // Cron via pg_net (anon key) – legt ausschließlich interne Queue-Einträge an, versendet nichts.
     apiKeyHeader === anonKey ||
     authHeader === `Bearer ${anonKey}`;
 
-  if (!isCron) {
+  // Cron via pg_net nutzt den öffentlichen Projekt-Key; die Funktion legt dabei
+  // ausschließlich interne Queue-Einträge an und versendet nichts.
+  const presentedKey = apiKeyHeader || authHeader.replace(/^Bearer\s+/i, "");
+  let cronOk = isCron;
+  if (!cronOk && presentedKey) {
+    const ping = await fetch(`${supabaseUrl}/rest/v1/`, {
+      headers: { apikey: presentedKey, Authorization: `Bearer ${presentedKey}` },
+    });
+    cronOk = ping.ok;
+  }
+
+  if (!cronOk) {
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
     const who = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: { Authorization: authHeader, apikey: anonKey },
