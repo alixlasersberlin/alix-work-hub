@@ -112,7 +112,7 @@ export default function RatenPruefung() {
     <div className="space-y-6">
       <PageHeader
         icon={SearchCheck}
-        title="PRÜFUNG"
+        title="RATEN ÜBERPRÜFUNG"
         subtitle="Rechnungen werden weiterhin erzeugt, aber nicht an den Kunden versendet – beim Zurückholen erfolgt der Versand automatisch"
       />
 
