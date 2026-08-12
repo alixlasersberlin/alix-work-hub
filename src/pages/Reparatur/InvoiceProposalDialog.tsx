@@ -85,16 +85,17 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
       customer_phone: repair.customer_phone || null,
       device_label: [repair.device_brand, repair.device_model].filter(Boolean).join(' ') || repair.device_category || null,
       device_serial: repair.device_serial_number || null,
-      labor_hours: Number(hours) || 0,
-      labor_rate: Number(rate) || 0,
+      labor_hours: quote ? Number(quote.labor_hours || 0) : Number(hours) || 0,
+      labor_rate: quote ? Number(quote.labor_rate || 0) : Number(rate) || 0,
       labor_cost: laborCost,
-      parts: partsSnapshot,
+      parts: quote && quoteItems.length ? quoteItems.map((it) => ({ item_name: it.description, quantity: it.quantity, unit_price: it.unit_price, line_total: it.line_total, kind: it.kind })) : partsSnapshot,
       parts_total: partsTotal,
-      shipping_cost: Number(shipping) || 0,
+      shipping_cost: quote ? Number(quote.shipping_total || 0) : Number(shipping) || 0,
       total_amount: total,
       currency: repair.currency || 'EUR',
       status: 'offen',
-      notes: notes || null,
+      notes: [quote ? `Basis: bestätigter Kostenvoranschlag ${quote.quote_number || ''}`.trim() : null, notes || null].filter(Boolean).join(' · ') || null,
+
       created_by: u?.user?.id || null,
     };
     const { error } = await sbRepair.from('repair_invoice_proposals').insert(payload);
