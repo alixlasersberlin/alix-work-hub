@@ -120,6 +120,9 @@ export async function addFcEvent(caseId: string, e: Partial<FcEvent>) {
 }
 
 export async function setFcStatus(c: FcCase, newStatus: string, comment?: string) {
+  if (newStatus === 'abgeschlossen' && c.approval_status !== 'freigegeben') {
+    throw new Error('Abschluss nicht möglich: Finance-Freigabe fehlt.');
+  }
   await updateFcCase(c.id, {
     status: newStatus,
     closed_at: newStatus === 'abgeschlossen' ? new Date().toISOString() : null,
