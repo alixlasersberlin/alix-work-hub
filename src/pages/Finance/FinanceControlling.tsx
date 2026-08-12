@@ -270,7 +270,46 @@ export default function FinanceControlling() {
             >{f.label}</button>
           ))}
         </div>
-        <div className="text-xs text-muted-foreground">{rows.length} Vorgänge</div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground mr-1">Datum:</span>
+            {[
+              { k: 'dieser_monat', l: 'Dieser Monat' },
+              { k: 'letzter_monat', l: 'Letzter Monat' },
+              { k: 'dieses_jahr', l: 'Dieses Jahr' },
+              { k: 'letztes_jahr', l: 'Letztes Jahr' },
+              { k: 'alle', l: 'Alle' },
+            ].map(o => (
+              <button
+                key={o.k}
+                onClick={() => { setPeriod(o.k); setPage(1); }}
+                className={cn(
+                  'px-2.5 py-1 text-xs rounded-md border transition-colors',
+                  period === o.k
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
+                )}
+              >{o.l}</button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground mr-1">Anzeige:</span>
+            {['20', '50', '100', 'alle'].map(o => (
+              <button
+                key={o}
+                onClick={() => { setPageSize(o); setPage(1); }}
+                className={cn(
+                  'px-2.5 py-1 text-xs rounded-md border transition-colors',
+                  pageSize === o
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
+                )}
+              >{o === 'alle' ? 'Alle' : o}</button>
+            ))}
+          </div>
+          <div className="text-xs text-muted-foreground">{rows.length} Vorgänge</div>
+        </div>
+
       </div>
 
       <div className="rounded-xl border border-border bg-card w-full max-w-full overflow-x-auto overflow-y-auto max-h-[70vh]">
