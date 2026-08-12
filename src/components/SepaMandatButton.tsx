@@ -215,6 +215,7 @@ const SepaMandatButton = forwardRef<SepaMandatHandle, Props>(function SepaMandat
     const footerLines = doc.splitTextToSize(footerText, cw);
     doc.text(footerLines, ml, y + 5);
 
+    capturePdf('sepa', () => doc.output('blob'), `SEPA-Mandat_${order.order_number}.pdf`);
     doc.save(`SEPA-Mandat_${order.order_number}.pdf`);
   }
 
