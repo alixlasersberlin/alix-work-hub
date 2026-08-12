@@ -940,7 +940,8 @@ export default function UserManagement() {
                 );
               })()}
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-2 shrink-0">
+
               <Button variant="outline" onClick={() => setShowEditRoles(false)}>Abbrechen</Button>
               <Button onClick={() => reauthRole.gate(handleSaveRoles)} disabled={savingRoles}>
                 {savingRoles && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
