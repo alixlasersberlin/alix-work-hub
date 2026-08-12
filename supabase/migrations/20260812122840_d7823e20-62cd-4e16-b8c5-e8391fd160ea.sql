@@ -1,0 +1,1 @@
+UPDATE public.orders SET order_number = 'AB-2026-04279', updated_at = now() WHERE id = '79e6d3ac-b3d2-43a4-837f-03041f481022' AND order_number = '2026-04279';
