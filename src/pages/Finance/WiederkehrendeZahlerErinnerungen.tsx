@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
-  Repeat, Send, Eye, Trash2, Printer, Download, RefreshCw, Loader2, Save, Mail, History, Settings as SettingsIcon,
+  Repeat, Send, Eye, Trash2, Printer, Download, RefreshCw, Loader2, Save, Mail, History, Settings as SettingsIcon, Pencil,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
