@@ -189,9 +189,19 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
             <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
 
-          <div className="flex justify-between items-center bg-muted/40 rounded p-3">
-            <span className="text-xs text-muted-foreground">{quote ? 'Gesamt lt. bestätigtem KV (netto)' : 'Gesamt (Arbeit + Versand)'}</span>
-            <span className="text-lg font-semibold">{total.toFixed(2)} {repair.currency || 'EUR'}</span>
+          <div className="bg-muted/40 rounded p-3 space-y-1">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-muted-foreground">{quote ? 'Netto lt. bestätigtem KV' : 'Netto (Arbeit + Versand)'}</span>
+              <span className="font-mono">{total.toFixed(2)} {repair.currency || 'EUR'}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs text-muted-foreground">
+              <span>zzgl. {Number(quote?.vat_rate ?? 19).toFixed(0)} % MwSt.</span>
+              <span className="font-mono">{(quote ? Number(quote.total_gross || 0) - Number(quote.total_net || 0) : total * 0.19).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between items-center border-t border-border/60 pt-1">
+              <span className="text-xs text-muted-foreground">Gesamt (brutto) – Rechnungsbetrag</span>
+              <span className="text-lg font-semibold">{(quote ? Number(quote.total_gross || 0) : total * 1.19).toFixed(2)} {repair.currency || 'EUR'}</span>
+            </div>
           </div>
 
         </div>
