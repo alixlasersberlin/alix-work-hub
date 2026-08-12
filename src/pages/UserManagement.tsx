@@ -884,13 +884,14 @@ export default function UserManagement() {
 
       {/* Edit Roles Dialog */}
       {showEditRoles && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => !savingRoles && setShowEditRoles(false)}>
-          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 my-8" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => !savingRoles && setShowEditRoles(false)}>
+          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 my-8 max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div>
               <h2 className="text-lg font-semibold">Rollen & Abteilung bearbeiten</h2>
               <p className="text-sm text-muted-foreground">{selectedUser?.full_name} ({selectedUser?.email})</p>
             </div>
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-2 flex-1 overflow-y-auto pr-1">
+
               <div>
                 <Label className="mb-2 block">Abteilung</Label>
                 <Select value={editDeptId} onValueChange={setEditDeptId}>
