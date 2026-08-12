@@ -264,7 +264,16 @@ export default function FinanceControlling() {
                     </div>
                   </td>
                   <td className="p-2">
-                    <div className="font-medium">{c.customer_name || '—'}</div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium">{c.customer_name || '—'}</span>
+                      <span className={cn('inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] border',
+                        (FC_APPROVAL[c.approval_status] ?? FC_APPROVAL.offen).cls)}>
+                        {(FC_APPROVAL[c.approval_status] ?? FC_APPROVAL.offen).label}
+                      </span>
+                      {c.escalated_at && (
+                        <span className="text-[10px] text-red-400 whitespace-nowrap">eskaliert</span>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground mt-0.5">
                       {FC_STATUS[c.status] ?? c.status} · {c.trigger_event}
                     </div>
