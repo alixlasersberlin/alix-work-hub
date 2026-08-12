@@ -85,3 +85,5 @@
 - [Finance Controlling – keine Verrechnungen](mem://features/finance-controlling-no-netting) — Vorgänge eigenständig, Reparatur nutzt nur KV-Betrag, keine negativen offenen Beträge
 - [Finance Controlling – Abschluss-Sperre](mem://features/finance-controlling-close-guard) — Kein Auftragsabschluss ohne Rechnung (DB-Trigger), Auto-Rechnungsentwürfe fc_invoice_drafts, Audit Trail
 - [Raten Ende Legal](mem://features/raten-ende-legal) — Button „BEENDEN" bei Wiederkehrende Zahler setzt status='legal_ended'; Bereich /finance/raten-ende-legal, keine weiteren Raten/Rechnungen, Zoho-Sync überschreibt Status nicht
+
+- [RATEN PRÜFUNG](mem://features/raten-pruefung) — Versandstopp-Bereich /finance/raten-pruefung, Status pruefung_hold, Nachversand via pruefung-release

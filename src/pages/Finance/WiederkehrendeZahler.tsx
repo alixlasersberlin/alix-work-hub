@@ -227,6 +227,23 @@ export default function WiederkehrendeZahler() {
     setProfiles(prev => prev.filter(x => x.id !== p.id));
   }
 
+  /** Vertrag in PRUEFUNG verschieben: Rechnungen werden weiter erzeugt, aber nicht versendet */
+  async function holdForReview(p: Profile) {
+    if (!confirm(`Vertrag „${p.recurrence_name || p.reference_number || ''}“ zur PRÜFUNG verschieben?\n\nRechnungen werden weiterhin erzeugt, aber NICHT an den Kunden versendet.`)) return;
+    setStoppingId(p.id);
+    const { error } = await supabase
+      .from('zoho_recurring_profiles')
+      .update({ status: 'pruefung_hold' } as any)
+      .eq('id', p.id);
+    setStoppingId(null);
+    if (error) {
+      toast({ title: 'Verschieben fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'In Prüfung', description: 'Der Kunde liegt jetzt unter BUCHHALTUNG → PRÜFUNG. Rechnungen werden zurückgehalten.' });
+    setProfiles(prev => prev.filter(x => x.id !== p.id));
+  }
+
   async function stopProfile(p: Profile) {
     if (!confirm(`Vertrag "${p.recurrence_name || p.reference_number || ''}" stoppen und zur Prüfung verschieben?`)) return;
     setStoppingId(p.id);
@@ -490,6 +507,7 @@ export default function WiederkehrendeZahler() {
           .eq('accounting_region', reg)
           // Beendete Verträge liegen unter RATEN ENDE LEGAL
           .neq('status', 'legal_ended')
+          .neq('status', 'pruefung_hold')
           .order('created_at', { ascending: false, nullsFirst: false })
           .limit(5000)
       );
@@ -1132,6 +1150,16 @@ export default function WiederkehrendeZahler() {
                                           </DropdownMenuItem>
                                         </DropdownMenuContent>
                                       </DropdownMenu>
+                                      <Button
+                                        size="sm"
+                                        className="bg-amber-500 hover:bg-amber-600 text-black"
+                                        disabled={!canWrite || stoppingId === p.id}
+                                        onClick={() => holdForReview(p)}
+                                        title="Zur PRÜFUNG verschieben – Rechnungen werden weiter erzeugt, aber nicht versendet"
+                                      >
+                                        {stoppingId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                                        PRÜFUNG
+                                      </Button>
                                       <Button
                                         size="sm"
                                         className="bg-red-600 hover:bg-red-700 text-white"
