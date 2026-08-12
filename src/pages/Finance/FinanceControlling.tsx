@@ -60,11 +60,14 @@ function Kpi({ label, value, tone }: { label: string; value: number | string; to
 export default function FinanceControlling() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, hasAnyRole } = useAuth();
+  const canApprove = hasAnyRole(['Super Admin', 'Admin', 'Buchhaltung']);
   const [filter, setFilter] = useState('alle');
   const [search, setSearch] = useState('');
   const [active, setActive] = useState<FcCase | null>(null);
   const [comment, setComment] = useState('');
+  const [monthOpen, setMonthOpen] = useState(false);
+  const [range, setRange] = useState(monthBounds());
 
   const { data: employees = [] } = useQuery({
     queryKey: ['fc-employees'],
