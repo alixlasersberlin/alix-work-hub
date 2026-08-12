@@ -187,7 +187,9 @@ export default function OrdersWithoutInvoice() {
                     </td>
                     <td className="px-3 py-2">
                       <div>{o.customers?.company_name || o.customers?.contact_name || '–'}</div>
-                      {o.customers?.city && <div className="text-xs text-muted-foreground">{o.customers.city}</div>}
+                      {(o.customers?.billing_address as any)?.city && (
+                        <div className="text-xs text-muted-foreground">{(o.customers.billing_address as any).city}</div>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">{o.salesperson_name || '–'}</td>
                     <td className="px-3 py-2 text-right font-semibold">{fmtMoney(o.total_amount, o.currency)}</td>
