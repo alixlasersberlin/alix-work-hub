@@ -309,59 +309,70 @@ export default function FinanceControlling() {
             className="pl-9"
           />
         </div>
-        <div className="flex flex-wrap gap-1">
-          {FILTERS.map(f => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              className={cn(
-                'px-3 py-1.5 text-xs rounded-md transition-colors border',
-                filter === f.key
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
-              )}
-            >{f.label}</button>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {FILTER_GROUPS.map(g => (
+            <div key={g.title} className="space-y-1.5">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{g.title}</div>
+              <div className="flex flex-wrap gap-1">
+                {g.items.map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => setFilter(f.key)}
+                    className={cn(
+                      'px-3 py-1.5 text-xs rounded-md transition-colors border',
+                      filter === f.key
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
+                    )}
+                  >{f.label}</button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground mr-1">Datum:</span>
-            {[
-              { k: 'dieser_monat', l: 'Dieser Monat' },
-              { k: 'letzter_monat', l: 'Letzter Monat' },
-              { k: 'dieses_jahr', l: 'Dieses Jahr' },
-              { k: 'letztes_jahr', l: 'Letztes Jahr' },
-              { k: 'alle', l: 'Alle' },
-            ].map(o => (
-              <button
-                key={o.k}
-                onClick={() => { setPeriod(o.k); setPage(1); }}
-                className={cn(
-                  'px-2.5 py-1 text-xs rounded-md border transition-colors',
-                  period === o.k
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
-                )}
-              >{o.l}</button>
-            ))}
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground mr-1">Anzeige:</span>
-            {['20', '50', '100', 'alle'].map(o => (
-              <button
-                key={o}
-                onClick={() => { setPageSize(o); setPage(1); }}
-                className={cn(
-                  'px-2.5 py-1 text-xs rounded-md border transition-colors',
-                  pageSize === o
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
-                )}
-              >{o === 'alle' ? 'Alle' : o}</button>
-            ))}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mr-1">Datum</span>
+              {[
+                { k: 'dieser_monat', l: 'Dieser Monat' },
+                { k: 'letzter_monat', l: 'Letzter Monat' },
+                { k: 'dieses_jahr', l: 'Dieses Jahr' },
+                { k: 'letztes_jahr', l: 'Letztes Jahr' },
+                { k: 'alle', l: 'Alle' },
+              ].map(o => (
+                <button
+                  key={o.k}
+                  onClick={() => { setPeriod(o.k); setPage(1); }}
+                  className={cn(
+                    'px-2.5 py-1 text-xs rounded-md border transition-colors',
+                    period === o.k
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
+                  )}
+                >{o.l}</button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mr-1">Anzeige</span>
+              {['20', '50', '100', 'alle'].map(o => (
+                <button
+                  key={o}
+                  onClick={() => { setPageSize(o); setPage(1); }}
+                  className={cn(
+                    'px-2.5 py-1 text-xs rounded-md border transition-colors',
+                    pageSize === o
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
+                  )}
+                >{o === 'alle' ? 'Alle' : o}</button>
+              ))}
+            </div>
           </div>
           <div className="text-xs text-muted-foreground">{rows.length} Vorgänge</div>
         </div>
+
 
       </div>
 
