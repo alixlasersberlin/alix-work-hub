@@ -55,9 +55,13 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
   }, [repair?.id, repair?.ticket_id, open]);
 
 
-  const partsTotal = 0; // keine Preise an Ersatzteilen vorhanden – Finance ergänzt
-  const laborCost = (Number(hours) || 0) * (Number(rate) || 0);
-  const total = laborCost + partsTotal + (Number(shipping) || 0);
+  const quotePartsTotal = quote ? Number(quote.parts_total || 0) : 0;
+  const partsTotal = quote ? quotePartsTotal : 0; // ohne KV: Finance ergänzt Teilepreise
+  const laborCost = quote ? Number(quote.labor_total ?? (Number(quote.labor_hours || 0) * Number(quote.labor_rate || 0))) : (Number(hours) || 0) * (Number(rate) || 0);
+  const total = quote
+    ? Number(quote.total_net ?? (laborCost + partsTotal + Number(quote.shipping_total || 0)))
+    : laborCost + partsTotal + (Number(shipping) || 0);
+
 
   const submit = async () => {
     if (!repair?.id) return;
