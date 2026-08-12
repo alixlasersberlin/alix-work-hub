@@ -786,6 +786,9 @@ export default function WiederkehrendeZahler() {
         meta={<InfinityStatusBadge kind="done" label={`${profiles.length}`} dotOnly />}
         actions={
           <div className="flex items-center gap-2">
+            <Button asChild size="sm" variant="outline">
+              <a href="/finance/wz-erinnerungen"><Mail className="w-4 h-4 mr-2" />Erinnerungen</a>
+            </Button>
             {canWrite && (
               <Button onClick={() => setCreateOpen(true)} size="sm">
                 <Plus className="w-4 h-4 mr-2" />
