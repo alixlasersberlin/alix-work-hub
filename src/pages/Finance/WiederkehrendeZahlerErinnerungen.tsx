@@ -82,6 +82,9 @@ export default function WiederkehrendeZahlerErinnerungen() {
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [q, setQ] = useState('');
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [manual, setManual] = useState<null | {
+    r: Reminder; to: string; subject: string; html: string; bcc: string; loading: boolean;
+  }>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
