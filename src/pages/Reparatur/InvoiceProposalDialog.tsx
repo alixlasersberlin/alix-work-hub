@@ -139,20 +139,49 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
             <div><Label className="text-xs">Ersatzteile</Label><div>{parts.length} Pos.</div></div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <Label className="text-xs">Arbeitszeit (Std.)</Label>
-              <Input type="number" step="0.25" value={hours} onChange={(e) => setHours(e.target.value)} />
+          {quote ? (
+            <div className="space-y-3">
+              <div className="rounded border border-emerald-500/40 bg-emerald-500/10 p-3">
+                <div className="text-emerald-300 font-medium">Kostenvoranschlag bestätigt</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {quote.quote_number || 'KV'} · freigegeben{quote.decided_at ? ` am ${new Date(quote.decided_at).toLocaleDateString('de-DE')}` : ''}
+                  {quote.decided_by_email ? ` von ${quote.decided_by_email}` : ''} – Beträge werden unverändert übernommen.
+                </div>
+              </div>
+
+              {quoteItems.length > 0 && (
+                <div className="rounded border border-border/60 divide-y divide-border/60">
+                  {quoteItems.map((it) => (
+                    <div key={it.id} className="flex justify-between gap-3 px-3 py-2">
+                      <span>{it.description}{it.quantity ? ` × ${it.quantity}` : ''}</span>
+                      <span className="font-mono">{Number(it.line_total || 0).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-3 text-xs">
+                <div><Label className="text-xs">Arbeitszeit</Label><div className="font-mono text-sm">{Number(quote.labor_hours || 0)} Std. × {Number(quote.labor_rate || 0).toFixed(2)}</div></div>
+                <div><Label className="text-xs">Ersatzteile</Label><div className="font-mono text-sm">{quotePartsTotal.toFixed(2)}</div></div>
+                <div><Label className="text-xs">Versand</Label><div className="font-mono text-sm">{Number(quote.shipping_total || 0).toFixed(2)}</div></div>
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Stundensatz</Label>
-              <Input type="number" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)} />
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Arbeitszeit (Std.)</Label>
+                <Input type="number" step="0.25" value={hours} onChange={(e) => setHours(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Stundensatz</Label>
+                <Input type="number" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Versandkosten</Label>
+                <Input type="number" step="0.01" value={shipping} onChange={(e) => setShipping(e.target.value)} />
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Versandkosten</Label>
-              <Input type="number" step="0.01" value={shipping} onChange={(e) => setShipping(e.target.value)} />
-            </div>
-          </div>
+          )}
 
           <div>
             <Label className="text-xs">Notiz für Finance</Label>
@@ -160,9 +189,10 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
           </div>
 
           <div className="flex justify-between items-center bg-muted/40 rounded p-3">
-            <span className="text-xs text-muted-foreground">Gesamt (Arbeit + Versand)</span>
+            <span className="text-xs text-muted-foreground">{quote ? 'Gesamt lt. bestätigtem KV (netto)' : 'Gesamt (Arbeit + Versand)'}</span>
             <span className="text-lg font-semibold">{total.toFixed(2)} {repair.currency || 'EUR'}</span>
           </div>
+
         </div>
 
         <DialogFooter>
