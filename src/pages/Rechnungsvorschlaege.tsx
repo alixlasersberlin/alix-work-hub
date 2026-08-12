@@ -91,6 +91,21 @@ export default function Rechnungsvorschlaege() {
     load();
   };
 
+  const linkInvoice = async (proposalId: string, invoiceId: string, invoiceNumber: string) => {
+    const { data: u } = await supabase.auth.getUser();
+    await supabase
+      .from('repair_invoice_proposals')
+      .update({
+        invoice_id: invoiceId,
+        status: 'übernommen',
+        processed_by: u?.user?.id || null,
+        processed_at: new Date().toISOString(),
+      })
+      .eq('id', proposalId);
+    toast({ title: 'Rechnung verknüpft', description: invoiceNumber });
+    load();
+  };
+
   return (
     <div className="space-y-4">
       <PageHeader
