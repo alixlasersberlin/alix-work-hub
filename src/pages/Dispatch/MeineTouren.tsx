@@ -353,7 +353,7 @@ function StopCard({ row, highlight, onDone, busy }: { row: any; highlight?: bool
           </a>
         </Button>
         <Button asChild variant="outline" className="h-12 text-sm font-semibold">
-          <Link to={row.order_id ? `/orders/${row.order_id}` : '/dispatch/termine'}>
+          <Link to={row.order_id ? `/auftraege/${row.order_id}` : '/dispatch/termine'}>
             <FileText className="mr-1 h-4 w-4" /> Details
           </Link>
         </Button>

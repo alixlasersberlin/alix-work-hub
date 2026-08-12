@@ -399,6 +399,7 @@ export const navItems: NavItem[] = [
         path: '/dispatch', label: 'ALIX DISPATCH CENTER', icon: Truck, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'],
         children: [
           { path: '/dispatch', label: 'Dispatch-Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
+          { path: '/dispatch/meine-touren', label: 'Meine Touren (Mobil)', icon: MapPin, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG', 'Technik', 'Service'] },
           { path: '/dispatch/termine', label: 'Liefertermine', icon: Calendar, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
           { path: '/dispatch/ungeplant', label: 'Ungeplante Auslieferungen', icon: PackageSearch, roles: ['Admin', 'Super Admin', 'Tourenplanung', 'Auftragsverwaltung', 'Order', 'SACHBEARBEITUNG'] },
 
