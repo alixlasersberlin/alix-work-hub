@@ -115,5 +115,5 @@ export async function mergePdfs(parts: Uint8Array[]): Promise<Blob> {
     pages.forEach((p) => out.addPage(p));
   }
   const bytes = await out.save();
-  return new Blob([bytes], { type: 'application/pdf' });
+  return new Blob([bytes.slice().buffer as ArrayBuffer], { type: 'application/pdf' });
 }
