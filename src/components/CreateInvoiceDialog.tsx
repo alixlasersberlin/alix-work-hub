@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { FileText, Loader2, ExternalLink, X, Plus, Trash2 } from 'lucide-react';
 import { nextNumber } from '@/lib/number-ranges';
+import { generateInvoicePdfBase64 } from '@/lib/finance/invoice-pdf';
 
 type Props = {
   order: any;
@@ -268,7 +269,34 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
       <p>Zahlbar bis zum ${new Date(dueDate).toLocaleDateString('de-DE')}.</p>
       ${notes ? `<p>${notes}</p>` : ''}
       <p>Mit freundlichen Grüßen<br>Alix Lasers</p>
+      <p style="color:#666;font-size:12px">Die Rechnung finden Sie zusätzlich als PDF im Anhang dieser E-Mail.</p>
     </div>`;
+
+    let attachments: { filename: string; content: string; contentType: string }[] = [];
+    try {
+      const base64 = await generateInvoicePdfBase64({
+        invoiceNumber,
+        invoiceDate,
+        dueDate,
+        customerName,
+        customerAddress: billingAddress,
+        customerNumber: (customer as any)?.customer_number ?? null,
+        reference: orderNumber || null,
+        currency,
+        taxRate,
+        items: lineItems,
+        notes,
+      });
+      if (base64) {
+        attachments = [{
+          filename: `${invoiceNumber}.pdf`,
+          content: base64,
+          contentType: 'application/pdf',
+        }];
+      }
+    } catch (e) {
+      console.error('Rechnungs-PDF konnte nicht erzeugt werden', e);
+    }
 
     try {
       const { error: mailErr } = await supabase.functions.invoke('send-invoice-mail', {
@@ -276,14 +304,19 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
           to_email: to,
           to_name: customerName || undefined,
           subject: `Rechnung ${invoiceNumber}`,
-          body_text: `Ihre Rechnung ${invoiceNumber} über ${fmt(total)} ${currency}, zahlbar bis ${new Date(dueDate).toLocaleDateString('de-DE')}.`,
+          body_text: `Ihre Rechnung ${invoiceNumber} über ${fmt(total)} ${currency}, zahlbar bis ${new Date(dueDate).toLocaleDateString('de-DE')}. Die Rechnung finden Sie als PDF im Anhang.`,
           body_html: html,
           bcc: ['k.trinh@alix-operation.de'],
           invoice_number: invoiceNumber,
+          attachments,
         },
       });
       if (mailErr) throw mailErr;
-      toast.success(`Rechnung per E-Mail an ${to} versendet (BCC k.trinh@alix-operation.de)`);
+      toast.success(
+        attachments.length
+          ? `Rechnung inkl. PDF an ${to} versendet (BCC k.trinh@alix-operation.de)`
+          : `Rechnung per E-Mail an ${to} versendet – PDF konnte nicht erzeugt werden`
+      );
 
     } catch (e: any) {
       toast.error('E-Mail-Versand fehlgeschlagen: ' + (e?.message ?? 'unbekannter Fehler'));
