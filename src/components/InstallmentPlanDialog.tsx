@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { de } from 'date-fns/locale';
 import { createPDF } from '@/lib/pdf-utils';
+import { capturePdf } from '@/lib/order-docs/capture';
 import alixLogo from '@/assets/alix-lasers-logo.png';
 import ratenplanTemplate from '@/assets/ratenplan-template.jpg.asset.json';
 
@@ -228,6 +229,7 @@ const InstallmentPlanDialog = forwardRef<InstallmentPlanDialogHandle, Props>(fun
     doc.text('Gesamtbetrag:', LX, y + 2);
     doc.text(fmtCurrency(baseAmount), pw - 18, y + 2, { align: 'right' });
 
+    capturePdf('ratenplan', () => doc.output('blob'), `Ratenplan_${order.order_number}.pdf`);
     doc.save(`Ratenplan_${order.order_number}.pdf`);
   }
 

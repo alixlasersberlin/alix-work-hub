@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
 import { createPDF } from '@/lib/pdf-utils';
 import { toast } from 'sonner';
+import { capturePdf } from '@/lib/order-docs/capture';
 
 export type SepaMandatHandle = { trigger: () => void };
 
@@ -215,6 +216,7 @@ const SepaMandatButton = forwardRef<SepaMandatHandle, Props>(function SepaMandat
     const footerLines = doc.splitTextToSize(footerText, cw);
     doc.text(footerLines, ml, y + 5);
 
+    capturePdf('sepa', () => doc.output('blob'), `SEPA-Mandat_${order.order_number}.pdf`);
     doc.save(`SEPA-Mandat_${order.order_number}.pdf`);
   }
 
