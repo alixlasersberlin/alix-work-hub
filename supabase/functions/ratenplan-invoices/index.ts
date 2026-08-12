@@ -85,6 +85,8 @@ Deno.serve(async (req) => {
       .from('zoho_recurring_profiles')
       .select('id, reference_number, recurrence_name, customer_name, company_name, status, start_date, end_date, next_invoice_date, last_sent_date, total, currency, recurrence_frequency, repeat_every, delivery_date, accounting_region, tenant_id')
       .not('delivery_date', 'is', null)
+      // Beendete Verträge (RATEN ENDE LEGAL) erzeugen keine Raten mehr
+      .neq('status', 'legal_ended')
       .limit(limit);
     if (profileIds.length) pq = pq.in('id', profileIds);
     else pq = pq.eq('accounting_region', region);
