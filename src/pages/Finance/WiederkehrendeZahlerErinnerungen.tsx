@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
-  Repeat, Send, Eye, Trash2, Printer, Download, RefreshCw, Loader2, Save, Mail, History, Settings as SettingsIcon,
+  Repeat, Send, Eye, Trash2, Printer, Download, RefreshCw, Loader2, Save, Mail, History, Settings as SettingsIcon, Pencil,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
@@ -82,6 +82,9 @@ export default function WiederkehrendeZahlerErinnerungen() {
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [q, setQ] = useState('');
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const [manual, setManual] = useState<null | {
+    r: Reminder; to: string; subject: string; html: string; bcc: string; loading: boolean;
+  }>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -188,6 +191,51 @@ export default function WiederkehrendeZahlerErinnerungen() {
     load();
   };
 
+  // Manueller Versand (nur Super Admin): Empfänger, Betreff, HTML und BCC frei übersteuerbar.
+  const openManual = async (r: Reminder) => {
+    setManual({ r, to: r.email ?? '', subject: settings?.subject ?? 'Ihre monatliche Rechnung', html: '', bcc: (settings?.bcc ?? []).join(', '), loading: true });
+    const { data, error } = await supabase.functions.invoke('rz-reminder-send', {
+      body: { reminder_ids: [r.id], preview: true, mode: 'manual' },
+    });
+    const res = (data as any)?.results?.[0];
+    setManual(m => m && {
+      ...m,
+      subject: error ? m.subject : (res?.subject ?? m.subject),
+      html: error ? '' : (res?.html ?? ''),
+      loading: false,
+    });
+    if (error) toast({ title: 'Vorschau fehlgeschlagen', description: error.message, variant: 'destructive' });
+  };
+
+  const sendManual = async () => {
+    if (!manual) return;
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke('rz-reminder-send', {
+      body: {
+        reminder_ids: [manual.r.id],
+        mode: 'manual',
+        override: {
+          to_email: manual.to.trim(),
+          subject: manual.subject,
+          body_html: manual.html,
+          bcc: manual.bcc.split(',').map(s => s.trim()).filter(Boolean),
+        },
+      },
+    });
+    setBusy(false);
+    if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    const failed = (data as any)?.failed ?? 0;
+    toast({
+      title: failed ? 'Versand fehlerhaft' : 'Versendet',
+      description: failed ? String((data as any)?.results?.[0]?.error ?? '') : `An ${manual.to} gesendet.`,
+      variant: failed ? 'destructive' : undefined,
+    });
+    setManual(null);
+    load();
+  };
+
+
+
   const Table = ({ list, selectable }: { list: Reminder[]; selectable?: boolean }) => (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -232,6 +280,11 @@ export default function WiederkehrendeZahlerErinnerungen() {
                 <Button size="sm" variant="ghost" disabled={!canWrite || busy} onClick={() => send([r.id])}>
                   <Send className="h-4 w-4" />
                 </Button>
+                {isSuperAdmin && (
+                  <Button size="sm" variant="ghost" title="Manueller Versand (Super Admin)" onClick={() => openManual(r)}>
+                    <Pencil className="h-4 w-4 text-amber-400" />
+                  </Button>
+                )}
               </td>
             </tr>
           ))}
@@ -541,6 +594,50 @@ export default function WiederkehrendeZahlerErinnerungen() {
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{T.subject} – Vorschau</DialogTitle></DialogHeader>
           <iframe title="preview" className="w-full h-[60vh] bg-white rounded" srcDoc={previewHtml ?? ''} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!manual} onOpenChange={o => !o && setManual(null)}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manueller Versand (Super Admin) – {manual?.r.customer_name ?? ''}</DialogTitle>
+          </DialogHeader>
+          {manual?.loading ? (
+            <div className="flex items-center gap-2 p-6 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Vorlage wird geladen …
+            </div>
+          ) : manual ? (
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Empfänger</Label>
+                  <Input value={manual.to} onChange={e => setManual({ ...manual, to: e.target.value })} placeholder="kunde@example.com" />
+                </div>
+                <div>
+                  <Label>BCC (Komma-getrennt)</Label>
+                  <Input value={manual.bcc} onChange={e => setManual({ ...manual, bcc: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <Label>Betreff</Label>
+                <Input value={manual.subject} onChange={e => setManual({ ...manual, subject: e.target.value })} />
+              </div>
+              <div>
+                <Label>Inhalt (HTML, Platzhalter erlaubt: {PLACEHOLDERS.join(' ')})</Label>
+                <Textarea rows={12} className="font-mono text-xs" value={manual.html} onChange={e => setManual({ ...manual, html: e.target.value })} />
+              </div>
+              <div className="rounded border border-border overflow-hidden">
+                <iframe title="manual-preview" className="w-full h-[300px] bg-white" srcDoc={manual.html} />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setManual(null)}>Abbrechen</Button>
+                <Button disabled={busy || !manual.to.includes('@')} onClick={sendManual}>
+                  {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                  Jetzt senden
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>
