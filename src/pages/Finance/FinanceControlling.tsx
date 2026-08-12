@@ -233,7 +233,12 @@ export default function FinanceControlling() {
               return (
                 <tr key={c.id} className={cn('border-t border-border hover:bg-muted/30 cursor-pointer', i % 2 === 1 && 'bg-muted/10')}
                     onClick={() => openCase(c)}>
-                  <td className="p-2"><span className={cn('px-2 py-0.5 rounded-full text-xs border', t.cls)}>{t.label}</span></td>
+                  <td className="p-2">
+                    <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap px-2 py-0.5 rounded-full text-xs border', t.cls)}>
+                      <span className={cn('w-2 h-2 rounded-full shrink-0', t.dot)} />
+                      {t.label}
+                    </span>
+                  </td>
                   <td className="p-2">{FC_STATUS[c.status] ?? c.status}</td>
                   <td className="p-2">{c.priority}</td>
                   <td className="p-2 font-medium">{c.case_type}</td>
