@@ -210,13 +210,16 @@ Deno.serve(async (req) => {
 
         const { data: existing } = await admin
           .from("zoho_recurring_profiles")
-          .select("id")
+          .select("id, status")
           .eq("source_system", sourceSystem)
           .eq("zoho_recurring_invoice_id", recurringId)
           .maybeSingle();
 
         if (existing) {
-          const { error } = await admin.from("zoho_recurring_profiles").update(payload).eq("id", existing.id);
+          // Beendete Verträge (RATEN ENDE LEGAL) niemals durch Zoho reaktivieren
+          const upd: Record<string, unknown> = { ...payload };
+          if (String((existing as any).status ?? "").toLowerCase() === "legal_ended") delete upd.status;
+          const { error } = await admin.from("zoho_recurring_profiles").update(upd).eq("id", existing.id);
           if (error) failed++; else updated++;
         } else {
           const { error } = await admin.from("zoho_recurring_profiles").insert(payload);
