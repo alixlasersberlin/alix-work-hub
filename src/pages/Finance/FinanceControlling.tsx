@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import {
   FC_STATUS, FC_TRAFFIC, fmtEur, listFcCases, listFcEvents, loadCaseInvoices,
@@ -28,7 +30,10 @@ const FILTERS = [
   { key: 'heute', label: 'Heute' },
   { key: 'woche', label: 'Diese Woche' },
   { key: 'abgeschlossen', label: 'Abgeschlossen' },
+  { key: 'meine', label: 'Meine Vorgänge' },
 ];
+
+const PRIORITIES: Record<string, string> = { normal: 'Normal', hoch: 'Hoch', kritisch: 'Kritisch' };
 
 function Kpi({ label, value, tone }: { label: string; value: number | string; tone?: string }) {
   return (
@@ -42,10 +47,23 @@ function Kpi({ label, value, tone }: { label: string; value: number | string; to
 export default function FinanceControlling() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [filter, setFilter] = useState('alle');
   const [search, setSearch] = useState('');
   const [active, setActive] = useState<FcCase | null>(null);
   const [comment, setComment] = useState('');
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['fc-employees'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('id, full_name, email')
+        .eq('is_active', true)
+        .order('full_name');
+      return (data ?? []) as { id: string; full_name: string | null; email: string | null }[];
+    },
+  });
 
   const { data: cases = [], isLoading, refetch } = useQuery({
     queryKey: ['fc-cases'],
@@ -98,10 +116,11 @@ export default function FinanceControlling() {
         case 'heute': return c.created_at.slice(0, 10) === today;
         case 'woche': return new Date(c.created_at) >= startOfWeek;
         case 'abgeschlossen': return c.status === 'abgeschlossen';
+        case 'meine': return !!user && c.assigned_to === user.id && c.status !== 'abgeschlossen';
         default: return c.case_type === filter;
       }
     });
-  }, [cases, filter, search]);
+  }, [cases, filter, search, user]);
 
   const openCase = (c: FcCase) => { setActive(c); setComment(''); };
 
@@ -302,25 +321,62 @@ export default function FinanceControlling() {
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-2">
-                  <div className="text-xs text-muted-foreground">Fällig am / Verantwortlich</div>
-                  <div className="flex gap-2">
+                  <div className="text-xs text-muted-foreground">Verantwortlich / Fällig am / Priorität</div>
+                  <div className="flex flex-wrap gap-2">
+                    <Select
+                      value={active.assigned_to ?? 'none'}
+                      onValueChange={async (v) => {
+                        const val = v === 'none' ? null : v;
+                        await updateFcCase(active.id, { assigned_to: val } as any);
+                        const emp = employees.find(e => e.id === val);
+                        await addFcEvent(active.id, {
+                          event_type: 'zuordnung',
+                          comment: val ? `Verantwortlich: ${emp?.full_name || emp?.email || val}` : 'Zuordnung entfernt',
+                        });
+                        setActive({ ...active, assigned_to: val });
+                        qc.invalidateQueries({ queryKey: ['fc-cases'] });
+                        qc.invalidateQueries({ queryKey: ['fc-events', active.id] });
+                      }}
+                    >
+                      <SelectTrigger className="w-[220px] h-9"><SelectValue placeholder="Verantwortlich" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— nicht zugewiesen —</SelectItem>
+                        {employees.map(e => (
+                          <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Input
                       type="date"
+                      className="w-[170px]"
                       defaultValue={active.due_date ?? ''}
                       onBlur={async (e) => {
                         await updateFcCase(active.id, { due_date: e.target.value || null } as any);
                         qc.invalidateQueries({ queryKey: ['fc-cases'] });
                       }}
                     />
-                    <Input
-                      placeholder="Verantwortlich (Notiz)"
-                      defaultValue={active.notes ?? ''}
-                      onBlur={async (e) => {
-                        await updateFcCase(active.id, { notes: e.target.value || null } as any);
+                    <Select
+                      value={active.priority}
+                      onValueChange={async (v) => {
+                        await updateFcCase(active.id, { priority: v } as any);
+                        setActive({ ...active, priority: v });
                         qc.invalidateQueries({ queryKey: ['fc-cases'] });
                       }}
-                    />
+                    >
+                      <SelectTrigger className="w-[150px] h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PRIORITIES).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
+                  <Input
+                    placeholder="Notiz"
+                    defaultValue={active.notes ?? ''}
+                    onBlur={async (e) => {
+                      await updateFcCase(active.id, { notes: e.target.value || null } as any);
+                      qc.invalidateQueries({ queryKey: ['fc-cases'] });
+                    }}
+                  />
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-2">
