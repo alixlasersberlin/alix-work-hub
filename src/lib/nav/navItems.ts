@@ -468,7 +468,17 @@ export const navItems: NavItem[] = [
       {
         path: '/finance/raten', label: 'RATENZAHLER', icon: ScrollText, roles: ['Admin', 'Super Admin'],
         children: [
-          { path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+          {
+            path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin'],
+            children: [
+              { path: '/finance/wiederkehrende-zahler', label: 'Übersicht', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+              { path: '/finance/wz-erinnerungen?tab=faelligkeiten', label: 'Fälligkeiten', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+              { path: '/finance/wz-erinnerungen?tab=sammelversand', label: 'Sammelversand', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+              { path: '/finance/wz-erinnerungen?tab=einzelversand', label: 'Einzelversand', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+              { path: '/finance/wz-erinnerungen?tab=historie', label: 'Versandhistorie', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+              { path: '/finance/wz-erinnerungen?tab=einstellungen', label: 'Einstellungen', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+            ],
+          },
           { path: '/finance/bestandsuebersicht', label: 'Bestandsübersicht', icon: Repeat, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/vertraege', label: 'PRÜFUNG', icon: FileText, roles: ['Admin', 'Super Admin'] },
           { path: '/finance/raten', label: 'Laufende Raten', icon: ScrollText, roles: ['Admin', 'Super Admin'] },

@@ -1,0 +1,263 @@
+// ALIX – Wiederkehrende Zahler: versendet Zahlungserinnerungen (Sammel- & Einzelversand).
+// Nutzt die bestehende Mail-Infrastruktur (send-invoice-mail) und protokolliert in rz_reminder_log.
+import "../_shared/global-bcc.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const json = (v: unknown, status = 200) =>
+  new Response(JSON.stringify(v), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+const esc = (s: unknown) =>
+  String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+
+const fmtDate = (d: string | null) => {
+  if (!d) return "—";
+  const [y, m, day] = String(d).slice(0, 10).split("-");
+  return `${day}.${m}.${y}`;
+};
+const fmtAmount = (v: number | null, cur: string) =>
+  v == null ? "" : new Intl.NumberFormat("de-DE", { style: "currency", currency: cur || "EUR" }).format(Number(v));
+
+type Vars = {
+  salutation: string; firstName: string; lastName: string; customerName: string;
+  customerNumber: string; invoiceNumber: string; amount: string; due: string;
+  sepa: boolean; shopUrl: string;
+};
+
+// Mehrsprachig vorbereitet – Deutsch ist Standard.
+const L = {
+  de: {
+    subject: "Ihre monatliche Rechnung",
+    greeting: (v: Vars) => `Sehr geehrte/r ${[v.salutation, v.lastName].filter(Boolean).join(" ") || v.customerName},`,
+    intro: (v: Vars) =>
+      `bitte beachten Sie, dass die Fälligkeit Ihrer monatlichen Rechnung am ${v.due} bevorsteht.`,
+    sepaTitle: "SEPA-Lastschriftverfahren",
+    sepaText:
+      "Da Sie bereits an unserem SEPA-Lastschriftverfahren teilnehmen, müssen Sie nichts weiter unternehmen. Der Rechnungsbetrag wird zum Fälligkeitstermin automatisch von Ihrem Konto eingezogen.",
+    selfTitle: "Selbstzahler",
+    selfText:
+      "Als Selbstzahler bitten wir Sie, den offenen Rechnungsbetrag pünktlich bis zum Fälligkeitstermin zu überweisen.",
+    thanks: "Vielen Dank. Wir wünschen Ihnen einen angenehmen Tag.",
+    didYouKnow: "Schon gewusst?",
+    shopText: "Viele Dinge können Sie ganz bequem online erledigen. Besuchen Sie einfach:",
+    shopItems: ["Ultraschallgel", "Zubehör", "Ersatzteile", "Verbrauchsmaterial", "Dienstleistungen", "viele weitere Produkte"],
+    closing: "Vielen Dank für Ihr Vertrauen.",
+    team: "Ihr Team von Alix.",
+    lblCustomerNo: "Kundennummer",
+    lblInvoiceNo: "Rechnungsnummer",
+    lblAmount: "Rechnungsbetrag",
+    lblDue: "Fälligkeitsdatum",
+  },
+} as const;
+
+function buildHtml(v: Vars, lang: keyof typeof L = "de") {
+  const t = L[lang] ?? L.de;
+  const block = v.sepa
+    ? `<p style="margin:0 0 6px;font-size:15px;font-weight:bold">${t.sepaTitle}</p><p style="margin:0 0 18px;font-size:15px;line-height:1.6">${t.sepaText}</p>`
+    : `<p style="margin:0 0 6px;font-size:15px;font-weight:bold">${t.selfTitle}</p><p style="margin:0 0 18px;font-size:15px;line-height:1.6">${t.selfText}</p>`;
+  const row = (label: string, value: string) =>
+    value
+      ? `<tr><td style="padding:10px 16px;font-size:14px;color:#57534e;border-top:1px solid #e7e5e4">${label}</td><td style="padding:10px 16px;font-size:14px;font-weight:bold;text-align:right;border-top:1px solid #e7e5e4">${esc(value)}</td></tr>`
+      : "";
+  return `<!doctype html><html><body style="margin:0;padding:24px;background:#f5f5f4;font-family:Arial,Helvetica,sans-serif;color:#1c1917">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #e7e5e4;border-radius:10px;overflow:hidden">
+    <tr><td style="background:#0c0a09;padding:20px 28px">
+      <div style="color:#d4af37;font-size:18px;font-weight:bold;letter-spacing:.5px">Alix Lasers &reg;</div>
+      <div style="color:#a8a29e;font-size:12px;margin-top:2px">${esc(t.subject)}</div>
+    </td></tr>
+    <tr><td style="padding:28px">
+      <p style="margin:0 0 16px;font-size:15px">${esc(t.greeting(v))}</p>
+      <p style="margin:0 0 18px;font-size:15px;line-height:1.6">${esc(t.intro(v))}</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafaf9;border:1px solid #e7e5e4;border-radius:8px;margin:0 0 20px">
+        ${row(t.lblDue, v.due)}${row(t.lblAmount, v.amount)}${row(t.lblInvoiceNo, v.invoiceNumber)}${row(t.lblCustomerNo, v.customerNumber)}
+      </table>
+      ${block}
+      <p style="margin:0 0 18px;font-size:15px;line-height:1.6">${esc(t.thanks)}</p>
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:14px 16px;margin:0 0 20px;font-size:14px;line-height:1.6">
+        <strong>${esc(t.didYouKnow)}</strong><br/>${esc(t.shopText)}
+        <a href="${esc(v.shopUrl)}" style="color:#a16207;font-weight:bold">${esc(v.shopUrl)}</a>
+        <ul style="margin:10px 0 0;padding-left:20px">${t.shopItems.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
+      </div>
+      <p style="margin:0 0 4px;font-size:15px">${esc(t.closing)}</p>
+      <p style="margin:0;font-size:15px;font-weight:bold">${esc(t.team)}</p>
+    </td></tr>
+  </table></body></html>`;
+}
+
+function buildText(v: Vars, lang: keyof typeof L = "de") {
+  const t = L[lang] ?? L.de;
+  return `${t.greeting(v)}
+
+${t.intro(v)}
+
+${t.lblDue}: ${v.due}${v.amount ? `\n${t.lblAmount}: ${v.amount}` : ""}${v.invoiceNumber ? `\n${t.lblInvoiceNo}: ${v.invoiceNumber}` : ""}${v.customerNumber ? `\n${t.lblCustomerNo}: ${v.customerNumber}` : ""}
+
+${v.sepa ? `${t.sepaTitle}\n${t.sepaText}` : `${t.selfTitle}\n${t.selfText}`}
+
+${t.thanks}
+
+${t.didYouKnow}
+${t.shopText} ${v.shopUrl}
+${t.shopItems.join(", ")}
+
+${t.closing}
+${t.team}`;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const apiKeyHeader = req.headers.get("apikey") ?? "";
+
+  const isCron =
+    (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
+    authHeader === `Bearer ${serviceKey}` ||
+    apiKeyHeader === serviceKey;
+
+  let userId: string | null = null;
+  let userEmail: string | null = null;
+  if (!isCron) {
+    if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
+    const who = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: { Authorization: authHeader, apikey: anonKey },
+    });
+    if (!who.ok) return json({ error: "Unauthorized" }, 401);
+    const u = await who.json().catch(() => null);
+    userId = u?.id ?? null;
+    userEmail = u?.email ?? null;
+  }
+
+  const rest = async (path: string, init?: RequestInit) =>
+    fetch(`${supabaseUrl}/rest/v1/${path}`, {
+      ...init,
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+    });
+
+  const body = await req.json().catch(() => ({} as Record<string, unknown>));
+  const ids: string[] = Array.isArray(body.reminder_ids) ? (body.reminder_ids as string[]) : [];
+  const preview = body.preview === true;
+  const mode = body.mode === "auto" ? "auto" : "manual";
+  if (ids.length === 0) return json({ error: "reminder_ids required" }, 400);
+
+  const setRes = await rest("rz_reminder_settings?select=*&id=eq.true");
+  const settings = setRes.ok ? ((await setRes.json())[0] ?? {}) : {};
+  const bcc: string[] = Array.isArray(settings.bcc) ? settings.bcc : [];
+  const lang = (settings.language ?? "de") as "de";
+  const shopUrl = settings.shop_url ?? "https://alixsmart.de";
+  const subjectBase = settings.subject ?? "Ihre monatliche Rechnung";
+
+  const remRes = await rest(`rz_reminders?select=*&id=in.(${ids.join(",")})`);
+  if (!remRes.ok) return json({ error: await remRes.text() }, 502);
+  const reminders = (await remRes.json()) as any[];
+
+  const results: any[] = [];
+  let sent = 0, failed = 0;
+
+  for (const r of reminders) {
+    const vars: Vars = {
+      salutation: r.salutation ?? "",
+      firstName: r.first_name ?? "",
+      lastName: r.last_name ?? "",
+      customerName: r.customer_name ?? "",
+      customerNumber: r.customer_number ?? "",
+      invoiceNumber: r.invoice_number ?? "",
+      amount: fmtAmount(r.amount, r.currency),
+      due: fmtDate(r.due_date),
+      sepa: r.payment_method === "sepa",
+      shopUrl,
+    };
+    const html = buildHtml(vars, lang);
+    const text = buildText(vars, lang);
+
+    if (preview) {
+      results.push({ id: r.id, email: r.email, subject: subjectBase, html, text });
+      continue;
+    }
+
+    if (!String(r.email ?? "").includes("@")) {
+      failed++;
+      await rest(`rz_reminders?id=eq.${r.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "failed", error: "Keine E-Mail-Adresse hinterlegt" }),
+      });
+      results.push({ id: r.id, ok: false, error: "Keine E-Mail-Adresse" });
+      continue;
+    }
+
+    let ok = false, error: string | null = null;
+    try {
+      const mail = await fetch(`${supabaseUrl}/functions/v1/send-invoice-mail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}`, apikey: serviceKey },
+        body: JSON.stringify({
+          to_email: r.email,
+          to_name: r.customer_name,
+          subject: subjectBase,
+          body_text: text,
+          body_html: html,
+          bcc,
+          invoice_number: `rz-${r.id}`,
+        }),
+      });
+      const txt = await mail.text();
+      ok = mail.ok;
+      if (!ok) error = `${mail.status}: ${txt.slice(0, 300)}`;
+    } catch (e) {
+      error = (e as Error).message;
+    }
+
+    const now = new Date().toISOString();
+    await rest(`rz_reminders?id=eq.${r.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        status: ok ? "sent" : "failed",
+        sent_at: ok ? now : null,
+        sent_by: userId,
+        send_mode: mode,
+        error,
+      }),
+    }).catch(() => {});
+
+    await rest("rz_reminder_log", {
+      method: "POST",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({
+        reminder_id: r.id,
+        customer_id: r.customer_id,
+        customer_name: r.customer_name,
+        invoice_number: r.invoice_number,
+        email: r.email,
+        due_date: r.due_date,
+        amount: r.amount,
+        currency: r.currency,
+        payment_method: r.payment_method,
+        channel: "email",
+        mode,
+        success: ok,
+        error,
+        user_id: userId,
+        user_email: userEmail,
+        sent_at: now,
+      }),
+    }).catch(() => {});
+
+    if (ok) sent++; else failed++;
+    results.push({ id: r.id, ok, error });
+  }
+
+  return json({ success: true, preview, sent, failed, results });
+});
