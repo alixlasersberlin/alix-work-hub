@@ -264,7 +264,10 @@ export default function FinanceControlling() {
   };
 
   const goInvoice = (c: FcCase) => {
-    if (c.case_type === 'REPARATUR') navigate('/finance/rechnungsvorschlaege');
+    if (c.case_type === 'REPARATUR') {
+      if (c.source_table === 'repair_orders' && c.source_id) navigate(`/reparatur/${c.source_id}`);
+      else navigate('/finance/rechnungsvorschlaege');
+    }
     else if (c.order_id) navigate(`/auftraege/${c.order_id}`);
     else navigate('/finance/rechnungen');
   };
