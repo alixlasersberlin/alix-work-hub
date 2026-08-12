@@ -210,6 +210,23 @@ export default function WiederkehrendeZahler() {
 
 
 
+  /** Vertrag endgültig beenden → Bereich „RATEN ENDE LEGAL“ */
+  async function endLegalProfile(p: Profile) {
+    if (!confirm(`Vertrag „${p.recurrence_name || p.reference_number || ''}“ BEENDEN?\n\nDer Kunde wird nach „RATEN ENDE LEGAL“ verschoben. Es werden keine wiederkehrenden Rechnungen mehr erstellt.`)) return;
+    setStoppingId(p.id);
+    const { error } = await supabase
+      .from('zoho_recurring_profiles')
+      .update({ status: 'legal_ended' } as any)
+      .eq('id', p.id);
+    setStoppingId(null);
+    if (error) {
+      toast({ title: 'Beenden fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Vertrag beendet', description: 'Der Kunde liegt jetzt unter BUCHHALTUNG → RATEN ENDE LEGAL.' });
+    setProfiles(prev => prev.filter(x => x.id !== p.id));
+  }
+
   async function stopProfile(p: Profile) {
     if (!confirm(`Vertrag "${p.recurrence_name || p.reference_number || ''}" stoppen und zur Prüfung verschieben?`)) return;
     setStoppingId(p.id);
@@ -471,6 +488,8 @@ export default function WiederkehrendeZahler() {
           // Nur benötigte Spalten — spart u. a. das große raw_data-JSON
           .select('id, zoho_recurring_invoice_id, recurrence_name, reference_number, status, customer_id, customer_name, company_name, recurrence_frequency, repeat_every, start_date, end_date, next_invoice_date, last_sent_date, delivery_date, delivery_source, total, currency, created_at')
           .eq('accounting_region', reg)
+          // Beendete Verträge liegen unter RATEN ENDE LEGAL
+          .neq('status', 'legal_ended')
           .order('created_at', { ascending: false, nullsFirst: false })
           .limit(5000)
       );
@@ -1113,6 +1132,16 @@ export default function WiederkehrendeZahler() {
                                           </DropdownMenuItem>
                                         </DropdownMenuContent>
                                       </DropdownMenu>
+                                      <Button
+                                        size="sm"
+                                        className="bg-red-600 hover:bg-red-700 text-white"
+                                        disabled={!canWrite || stoppingId === p.id}
+                                        onClick={() => endLegalProfile(p)}
+                                        title="Vertrag beenden – Kunde wird nach RATEN ENDE LEGAL verschoben, keine weiteren Rechnungen"
+                                      >
+                                        {stoppingId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                                        BEENDEN
+                                      </Button>
                                       {canDelete && (
                                         <Button
                                           size="sm"
