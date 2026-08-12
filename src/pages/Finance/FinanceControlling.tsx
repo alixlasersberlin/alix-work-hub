@@ -399,8 +399,11 @@ export default function FinanceControlling() {
       )}
 
 
-      <Sheet open={!!active} onOpenChange={(o) => !o && setActive(null)} modal={false}>
-        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+      <Sheet open={!!active} onOpenChange={(o) => !o && setActive(null)}>
+        <SheetContent
+          className="w-full sm:max-w-xl overflow-y-auto"
+          onOpenAutoFocus={(e) => e.preventDefault()}
+        >
           {active && (
             <>
               <SheetHeader>
