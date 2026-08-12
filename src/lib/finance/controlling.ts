@@ -182,3 +182,56 @@ export async function loadFcMonthClose(from: string, to: string): Promise<FcMont
 
 export const fmtEur = (n: number | null | undefined) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(Number(n ?? 0));
+
+// ===== Rechnungsentwürfe (Auto-Faktura) =====
+export type FcInvoiceDraft = {
+  id: string;
+  case_id: string | null;
+  order_id: string | null;
+  reference_number: string | null;
+  draft_type: string;
+  amount: number;
+  status: string;
+  invoice_number: string | null;
+  note: string | null;
+  created_at: string;
+};
+
+export const FC_DRAFT_TYPE: Record<string, string> = {
+  voll: 'Vollrechnung',
+  anteilig: 'Anteilig (Teillieferung)',
+  reparatur: 'Reparatur',
+};
+
+export const FC_DRAFT_STATUS: Record<string, string> = {
+  entwurf: 'Entwurf',
+  erstellt: 'Rechnung erstellt',
+  verworfen: 'Verworfen',
+};
+
+export async function listFcDrafts(caseId: string): Promise<FcInvoiceDraft[]> {
+  const { data, error } = await sb
+    .from('fc_invoice_drafts')
+    .select('*')
+    .eq('case_id', caseId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as FcInvoiceDraft[];
+}
+
+export async function setFcDraftStatus(d: FcInvoiceDraft, status: 'entwurf' | 'erstellt' | 'verworfen') {
+  const { error } = await sb.from('fc_invoice_drafts').update({ status }).eq('id', d.id);
+  if (error) throw error;
+  if (d.case_id) {
+    await addFcEvent(d.case_id, {
+      event_type: 'rechnungsentwurf',
+      comment: `Rechnungsentwurf ${fmtEur(d.amount)} → ${FC_DRAFT_STATUS[status] ?? status}`,
+    });
+  }
+}
+
+/** Erzeugt (falls fehlend) einen Rechnungsentwurf für den Vorgang. */
+export async function createFcDraft(caseId: string) {
+  const { error } = await sb.rpc('fc_create_invoice_draft', { p_case_id: caseId });
+  if (error) throw error;
+}
