@@ -140,5 +140,39 @@ export async function loadCaseInvoices(reference: string | null) {
   return data ?? [];
 }
 
+export const FC_APPROVAL: Record<string, { label: string; cls: string }> = {
+  offen: { label: 'Freigabe offen', cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  freigegeben: { label: 'Freigegeben', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  abgelehnt: { label: 'Abgelehnt', cls: 'bg-destructive text-destructive-foreground border-destructive' },
+};
+
+/** Finance-Freigabe setzen (Voraussetzung für endgültigen Abschluss). */
+export async function setFcApproval(c: FcCase, approval: 'offen' | 'freigegeben' | 'abgelehnt', comment?: string) {
+  const { data: auth } = await supabase.auth.getUser();
+  await updateFcCase(c.id, {
+    approval_status: approval,
+    approved_by: approval === 'offen' ? null : (auth?.user?.id ?? null),
+    approved_at: approval === 'offen' ? null : new Date().toISOString(),
+  } as Partial<FcCase>);
+  await addFcEvent(c.id, {
+    event_type: 'freigabe',
+    comment: comment || `Finance-Freigabe: ${FC_APPROVAL[approval]?.label ?? approval}`,
+  });
+}
+
+export type FcMonthClose = {
+  from: string; to: string;
+  orders_closed: number; invoices_created: number; invoices_missing: number;
+  revenue_not_invoiced: number; open_final_invoices: number; open_repair_invoices: number;
+  open_partial_deliveries: number; open_to_pay_total: number;
+  approved: number; awaiting_approval: number;
+};
+
+export async function loadFcMonthClose(from: string, to: string): Promise<FcMonthClose> {
+  const { data, error } = await sb.rpc('fc_month_close', { p_from: from, p_to: to });
+  if (error) throw error;
+  return data as FcMonthClose;
+}
+
 export const fmtEur = (n: number | null | undefined) =>
   new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(Number(n ?? 0));
