@@ -325,6 +325,42 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     doc.line(ml + cw * 0.33, y, ml + cw * 0.33, y + 8);
     y += 14;
 
+    // ── Ausgewählte Positionen ──
+    if (selectedRows.length > 0) {
+      doc.setFont('Inter', 'bold');
+      doc.setFontSize(10);
+      doc.text('Vertragspositionen', ml, y);
+      y += 4;
+      doc.setFontSize(8.5);
+      drawRow(y, 7);
+      doc.text('Pos.', ml + 3, y + 4.8);
+      doc.text('Bezeichnung', ml + 15, y + 4.8);
+      doc.text('Menge', ml + cw * 0.68, y + 4.8, { align: 'right' });
+      doc.text('Betrag', pw - mr - 3, y + 4.8, { align: 'right' });
+      y += 7;
+      doc.setFont('Inter', 'normal');
+      selectedRows.forEach((it: any, i: number) => {
+        if (y > ph - 45) { doc.addPage(); y = 20; }
+        const name = String(it.item_name || it.name || '—');
+        const label = doc.splitTextToSize(it.sku ? `${name} (${it.sku})` : name, cw * 0.5)[0];
+        drawRow(y, 6.5);
+        doc.text(String(i + 1), ml + 3, y + 4.5);
+        doc.text(label, ml + 15, y + 4.5);
+        doc.text(String(it.quantity ?? 1), ml + cw * 0.68, y + 4.5, { align: 'right' });
+        doc.text(fmtCurrency(itemTotal(it)), pw - mr - 3, y + 4.5, { align: 'right' });
+        y += 6.5;
+      });
+      drawRow(y, 7);
+      doc.setFont('Inter', 'bold');
+      doc.text('Summe Positionen', ml + 15, y + 4.8);
+      doc.text(fmtCurrency(selectedSum), pw - mr - 3, y + 4.8, { align: 'right' });
+      doc.setFont('Inter', 'normal');
+      doc.setFontSize(9);
+      y += 14;
+    }
+
+
+
     // ── Laufzeit checkboxes ──
     doc.setFont('Inter', 'bold');
     doc.setFontSize(10);
