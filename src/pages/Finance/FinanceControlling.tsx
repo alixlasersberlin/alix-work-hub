@@ -368,7 +368,39 @@ export default function FinanceControlling() {
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-2">
-                  <div className="text-xs text-muted-foreground">Verantwortlich / Fällig am / Priorität</div>
+                  <div className="text-xs text-muted-foreground">Finance-Freigabe</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs border',
+                      (FC_APPROVAL[active.approval_status] ?? FC_APPROVAL.offen).cls)}>
+                      {(FC_APPROVAL[active.approval_status] ?? FC_APPROVAL.offen).label}
+                    </span>
+                    {active.approved_at && (
+                      <span className="text-xs text-muted-foreground">
+                        am {new Date(active.approved_at).toLocaleString('de-DE')}
+                      </span>
+                    )}
+                  </div>
+                  {canApprove ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => doApproval(active, 'freigegeben')}>
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Freigeben
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => doApproval(active, 'abgelehnt')}>
+                        <XCircle className="w-3.5 h-3.5 mr-1" />Ablehnen
+                      </Button>
+                      {active.approval_status !== 'offen' && (
+                        <Button size="sm" variant="ghost" onClick={() => doApproval(active, 'offen')}>Zurücksetzen</Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">
+                      Nur Buchhaltung / Admin kann freigeben. Ohne Freigabe ist kein Abschluss möglich.
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <div className="text-xs text-muted-foreground">Verantwortlich / Fällig am / Wiedervorlage / Priorität</div>
                   <div className="flex flex-wrap gap-2">
                     <Select
                       value={active.assigned_to ?? 'none'}
