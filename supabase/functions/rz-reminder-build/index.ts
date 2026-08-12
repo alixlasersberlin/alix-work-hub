@@ -25,7 +25,10 @@ Deno.serve(async (req) => {
   const isCron =
     (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
     authHeader === `Bearer ${serviceKey}` ||
-    apiKeyHeader === serviceKey;
+    apiKeyHeader === serviceKey ||
+    // Cron via pg_net (anon key) – legt ausschließlich interne Queue-Einträge an, versendet nichts.
+    apiKeyHeader === anonKey ||
+    authHeader === `Bearer ${anonKey}`;
 
   if (!isCron) {
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
@@ -51,6 +54,9 @@ Deno.serve(async (req) => {
   // Einstellungen laden
   const setRes = await rest("rz_reminder_settings?select=*&id=eq.true");
   const settings = setRes.ok ? ((await setRes.json())[0] ?? {}) : {};
+  if (settings.auto_enabled === false && body.force !== true) {
+    return json({ success: true, skipped_reason: "auto_disabled" });
+  }
   const leadList: number[] = Array.isArray(body.lead_days)
     ? (body.lead_days as number[])
     : [Number(body.lead_days ?? settings.lead_days ?? 3), ...((settings.extra_lead_days ?? []) as number[])];
