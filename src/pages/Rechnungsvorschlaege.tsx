@@ -200,16 +200,31 @@ export default function Rechnungsvorschlaege() {
                     </td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString('de-DE')}</td>
                     <td className="px-3 py-2">
-                      {r.status === 'offen' && (
-                        <div className="flex gap-1 justify-end">
-                          <Button size="sm" variant="outline" className="border-emerald-500/40 text-emerald-300" onClick={() => setStatus(r.id, 'übernommen')}>
-                            <CheckCircle2 className="w-3 h-3 mr-1" /> Übernehmen
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-red-500/40 text-red-300" onClick={() => setStatus(r.id, 'abgelehnt')}>
-                            <X className="w-3 h-3 mr-1" /> Ablehnen
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex flex-wrap gap-1 justify-end">
+                        {r.status === 'offen' && (
+                          <>
+                            <Button size="sm" variant="outline" className="border-emerald-500/40 text-emerald-300" onClick={() => setStatus(r.id, 'übernommen')}>
+                              <CheckCircle2 className="w-3 h-3 mr-1" /> Übernehmen
+                            </Button>
+                            <Button size="sm" variant="outline" className="border-red-500/40 text-red-300" onClick={() => setStatus(r.id, 'abgelehnt')}>
+                              <X className="w-3 h-3 mr-1" /> Ablehnen
+                            </Button>
+                          </>
+                        )}
+                        {r.status !== 'abgelehnt' && !r.invoice_id && (
+                          <CreateInvoiceDialog
+                            order={proposalToOrder(r)}
+                            items={proposalToItems(r)}
+                            disabled={proposalToItems(r).length === 0}
+                            onCreated={(invId, invNo) => linkInvoice(r.id, invId, invNo)}
+                          />
+                        )}
+                        {r.invoice_id && (
+                          <Link to={`/finance/rechnungen/${r.invoice_id}`} className="text-xs text-primary hover:underline self-center">
+                            Rechnung öffnen
+                          </Link>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
