@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/infinity/PageHeader';
 import { KpiTile } from '@/components/infinity/KpiTile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -39,7 +40,17 @@ type LogRow = {
 type Settings = {
   auto_enabled: boolean; lead_days: number; extra_lead_days: number[]; bcc: string[];
   subject: string; language: string; shop_url: string;
+  tpl_greeting: string; tpl_intro: string;
+  tpl_sepa_title: string; tpl_sepa_text: string;
+  tpl_self_title: string; tpl_self_text: string;
+  tpl_thanks: string; tpl_shop_title: string; tpl_shop_text: string; tpl_shop_items: string[];
+  tpl_closing: string; tpl_team: string; tpl_show_shop_box: boolean;
 };
+
+const PLACEHOLDERS = [
+  '{anrede}', '{vorname}', '{nachname}', '{kunde}', '{kundennummer}',
+  '{rechnungsnummer}', '{betrag}', '{faelligkeit}', '{shop}',
+];
 
 const PayBadge = ({ m }: { m: string }) =>
   m === 'sepa'
@@ -267,6 +278,7 @@ export default function WiederkehrendeZahlerErinnerungen() {
           <TabsTrigger value="sammelversand">Sammelversand</TabsTrigger>
           <TabsTrigger value="einzelversand">Einzelversand</TabsTrigger>
           <TabsTrigger value="historie">Versandhistorie</TabsTrigger>
+          <TabsTrigger value="emailtext">E-Mail-Text</TabsTrigger>
           <TabsTrigger value="einstellungen">Einstellungen</TabsTrigger>
         </TabsList>
 
@@ -358,6 +370,116 @@ export default function WiederkehrendeZahlerErinnerungen() {
                 </tbody>
               </table>
             </div>
+          </DataCard>
+        </TabsContent>
+
+        <TabsContent value="emailtext" className="mt-4">
+          <DataCard title="E-Mail-Inhalt bearbeiten">
+            {!settings ? <p className="text-muted-foreground">Lade …</p> : (
+              <div className="space-y-4 max-w-3xl">
+                <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
+                  <p className="font-medium mb-1">Verfügbare Platzhalter</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PLACEHOLDERS.map(ph => (
+                      <Badge key={ph} variant="outline" className="font-mono text-xs">{ph}</Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Betreff</Label>
+                  <Input value={settings.subject} disabled={!canWrite}
+                    onChange={e => setSettings({ ...settings, subject: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Anrede</Label>
+                  <Input value={settings.tpl_greeting ?? ''} disabled={!canWrite}
+                    onChange={e => setSettings({ ...settings, tpl_greeting: e.target.value })} />
+                </div>
+                <div>
+                  <Label>Einleitung</Label>
+                  <Textarea rows={3} value={settings.tpl_intro ?? ''} disabled={!canWrite}
+                    onChange={e => setSettings({ ...settings, tpl_intro: e.target.value })} />
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <Label>SEPA – Überschrift</Label>
+                    <Input value={settings.tpl_sepa_title ?? ''} disabled={!canWrite}
+                      onChange={e => setSettings({ ...settings, tpl_sepa_title: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Selbstzahler – Überschrift</Label>
+                    <Input value={settings.tpl_self_title ?? ''} disabled={!canWrite}
+                      onChange={e => setSettings({ ...settings, tpl_self_title: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>SEPA – Text</Label>
+                    <Textarea rows={4} value={settings.tpl_sepa_text ?? ''} disabled={!canWrite}
+                      onChange={e => setSettings({ ...settings, tpl_sepa_text: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Selbstzahler – Text</Label>
+                    <Textarea rows={4} value={settings.tpl_self_text ?? ''} disabled={!canWrite}
+                      onChange={e => setSettings({ ...settings, tpl_self_text: e.target.value })} />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Dankestext</Label>
+                  <Textarea rows={2} value={settings.tpl_thanks ?? ''} disabled={!canWrite}
+                    onChange={e => setSettings({ ...settings, tpl_thanks: e.target.value })} />
+                </div>
+
+                <div className="flex items-center justify-between rounded-md border border-border p-3">
+                  <Label>Shop-Hinweis („Schon gewusst?“) anzeigen</Label>
+                  <Switch checked={settings.tpl_show_shop_box !== false} disabled={!canWrite}
+                    onCheckedChange={v => setSettings({ ...settings, tpl_show_shop_box: v })} />
+                </div>
+                {settings.tpl_show_shop_box !== false && (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div>
+                      <Label>Shop – Überschrift</Label>
+                      <Input value={settings.tpl_shop_title ?? ''} disabled={!canWrite}
+                        onChange={e => setSettings({ ...settings, tpl_shop_title: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Shop-Link</Label>
+                      <Input value={settings.shop_url} disabled={!canWrite}
+                        onChange={e => setSettings({ ...settings, shop_url: e.target.value })} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>Shop – Text</Label>
+                      <Textarea rows={2} value={settings.tpl_shop_text ?? ''} disabled={!canWrite}
+                        onChange={e => setSettings({ ...settings, tpl_shop_text: e.target.value })} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <Label>Shop – Aufzählung (kommagetrennt)</Label>
+                      <Input value={(settings.tpl_shop_items ?? []).join(', ')} disabled={!canWrite}
+                        onChange={e => setSettings({ ...settings, tpl_shop_items: e.target.value.split(',').map(x => x.trim()).filter(Boolean) })} />
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <Label>Schlusssatz</Label>
+                    <Input value={settings.tpl_closing ?? ''} disabled={!canWrite}
+                      onChange={e => setSettings({ ...settings, tpl_closing: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label>Signatur</Label>
+                    <Input value={settings.tpl_team ?? ''} disabled={!canWrite}
+                      onChange={e => setSettings({ ...settings, tpl_team: e.target.value })} />
+                  </div>
+                </div>
+
+                <Button onClick={saveSettings} disabled={!canWrite}><Save className="h-4 w-4 mr-2" />Speichern</Button>
+                <p className="text-xs text-muted-foreground">
+                  Vorschau: Tab „Fälligkeiten“ → Auge-Symbol bei einer Erinnerung zeigt die fertige E-Mail.
+                </p>
+              </div>
+            )}
           </DataCard>
         </TabsContent>
 
