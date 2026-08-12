@@ -120,33 +120,48 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled, 
     setInvoiceNumber(await generateInvoiceNumber(order?.source_system, caseNo));
     setInvoiceDate(todayISO());
     setDueDate(addDays(todayISO(), 14));
+    // Kundenstammdaten nachladen, falls Adresse/E-Mail nicht mitgeliefert wurden
+    let cust: any = customer ?? null;
+    const custId = customer?.id ?? order?.customer_id ?? null;
+    const hasAddr = !!(order?.billing_address || customer?.billing_address);
+    if (!hasAddr && custId) {
+      const { data: c } = await supabase
+        .from('customers')
+        .select('id, company_name, contact_name, email, billing_address, shipping_address')
+        .eq('id', custId)
+        .maybeSingle();
+      if (c) cust = { ...(customer ?? {}), ...c };
+    }
     const rawAddr =
       order?.billing_address ??
-      customer?.billing_address ??
+      cust?.billing_address ??
+      cust?.shipping_address ??
       order?.raw_data?.billing_address ??
-      customer?.raw_data?.billing_address ??
+      cust?.raw_data?.billing_address ??
       null;
     setCustomerName(
-      customer?.company_name ||
-      customer?.customer_name ||
+      cust?.company_name ||
+      cust?.contact_name ||
+      cust?.customer_name ||
       order?.customer_name ||
       (rawAddr && typeof rawAddr === 'object' ? rawAddr.attention || rawAddr.company_name : '') ||
       ''
     );
     setBillingAddress(formatAddress(rawAddr));
-    setCity(pickCity(rawAddr, customer?.city || order?.city));
+    setCity(pickCity(rawAddr, cust?.city || order?.city));
     setCurrency(order?.currency || 'EUR');
     setStatus('sent');
     setPaymentStatus('Offen');
     setNotes('');
     setTaxRate(order?.source_system === 'zoho_eu_2' ? 20 : 19);
     setRecipientEmail(
-      customer?.email ||
+      cust?.email ||
       order?.customer_email ||
       order?.raw_data?.email ||
-      customer?.raw_data?.email ||
+      cust?.raw_data?.email ||
       ''
     );
+
     
 
 
