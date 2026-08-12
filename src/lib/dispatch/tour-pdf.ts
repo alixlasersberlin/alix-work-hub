@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import tourBg from '@/assets/tour-vorlage.png.asset.json';
+import { supabase } from '@/integrations/supabase/client';
 
 /** Lädt die Alix-Vorlage einmalig als DataURL (für den PDF-Hintergrund). */
 let bgPromise: Promise<string | null> | null = null;
@@ -72,6 +73,44 @@ function stopAddress(a: TourStopLike['appointment']) {
     .filter(Boolean).join(', ') || '—';
 }
 
+/** Formatiert eine Zoho-Adresse (jsonb) zu einer Zeile. */
+function fmtAddr(v: any): string | null {
+  if (!v || typeof v !== 'object') return null;
+  const line = [
+    v.attention || v.company_name || null,
+    v.address || null,
+    v.street2 || null,
+    [v.zip, v.city].filter(Boolean).join(' ') || null,
+    v.country || null,
+  ].filter((x) => x && String(x).trim()).join(', ');
+  return line || null;
+}
+
+export type OrderAddresses = { billing?: string | null; delivery?: string | null };
+
+/** Lädt Rechnungs-/Lieferanschrift zu den Auftragsnummern der Stopps. */
+async function loadAddresses(entries: { tour: TourLike; stops: TourStopLike[] }[]) {
+  const numbers = Array.from(new Set(
+    entries.flatMap((e) => e.stops.map((s) => s.appointment?.order_number)).filter(Boolean) as string[],
+  ));
+  const map = new Map<string, OrderAddresses>();
+  if (!numbers.length) return map;
+  try {
+    const { data } = await supabase
+      .from('orders')
+      .select('order_number, billing_address, shipping_address')
+      .in('order_number', numbers);
+    (data ?? []).forEach((o: any) => {
+      map.set(o.order_number, {
+        billing: fmtAddr(o.billing_address),
+        delivery: fmtAddr(o.shipping_address),
+      });
+    });
+  } catch { /* ignore */ }
+  return map;
+}
+
+
 function header(doc: jsPDF, title: string, subtitle: string) {
   doc.setFontSize(18);
   doc.setTextColor(20);
@@ -92,7 +131,10 @@ const CONTENT_W = PAGE_W - LEFT - RIGHT;
 
 type Line = { text: string; size: number; muted?: boolean; indent?: number; h: number; bold?: boolean };
 
-function buildBlocks(entries: { tour: TourLike; stops: TourStopLike[] }[]): Line[][] {
+function buildBlocks(
+  entries: { tour: TourLike; stops: TourStopLike[] }[],
+  addrMap: Map<string, OrderAddresses>,
+): Line[][] {
   return entries.map(({ tour, stops }) => {
     const lines: Line[] = [];
     lines.push({
@@ -121,7 +163,10 @@ function buildBlocks(entries: { tour: TourLike; stops: TourStopLike[] }[]): Line
         text: `${s.position ?? i + 1}. ${a.order_number ?? 'Ohne Auftrag'} · ${a.company_name || a.customer_name || 'Ohne Kunde'}`,
         size: 9.5, h: 5,
       });
-      lines.push({ text: stopAddress(a), size: 8.5, muted: true, indent: 4, h: 4.4 });
+      const addr = a.order_number ? addrMap.get(a.order_number) : undefined;
+      const delivery = addr?.delivery || stopAddress(a);
+      lines.push({ text: `Lieferanschrift: ${delivery || '—'}`, size: 8.5, muted: true, indent: 4, h: 4.4 });
+      lines.push({ text: `Rechnungsanschrift: ${addr?.billing || '—'}`, size: 8.5, muted: true, indent: 4, h: 4.4 });
       const meta = [
         [a.device_name, a.serial_number].filter(Boolean).join(' · '),
         [a.contact_name, a.contact_phone].filter(Boolean).join(' · '),
@@ -131,6 +176,7 @@ function buildBlocks(entries: { tour: TourLike; stops: TourStopLike[] }[]): Line
       if (meta) lines.push({ text: meta, size: 8.5, muted: true, indent: 4, h: 4.4 });
       if (s.notes) lines.push({ text: String(s.notes), size: 8.5, muted: true, indent: 4, h: 4.4 });
     });
+
     lines.push({ text: '', size: 8, h: 5 });
     return lines;
   });
@@ -163,7 +209,8 @@ export async function buildToursPdf(entries: { tour: TourLike; stops: TourStopLi
   paintPage(true);
   let y = TOP;
 
-  const blocks = buildBlocks(entries);
+  const addrMap = await loadAddresses(entries);
+  const blocks = buildBlocks(entries, addrMap);
   blocks.forEach((block) => {
     block.forEach((l) => {
       const wrapped = l.text
