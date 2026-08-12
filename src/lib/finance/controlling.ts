@@ -61,8 +61,8 @@ export const FC_STATUS: Record<string, string> = {
 export const FC_TRAFFIC: Record<string, { label: string; cls: string; dot: string }> = {
   gruen: { label: 'Grün', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-400' },
   gelb: { label: 'Gelb', cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20', dot: 'bg-amber-400' },
-  rot: { label: 'Rot', cls: 'bg-destructive/10 text-destructive border-destructive/20', dot: 'bg-destructive' },
-  kritisch: { label: 'Kritisch', cls: 'bg-red-900/40 text-red-300 border-red-800', dot: 'bg-red-400' },
+  rot: { label: 'Rot', cls: 'bg-destructive text-destructive-foreground border-destructive', dot: 'bg-destructive-foreground' },
+  kritisch: { label: 'Kritisch', cls: 'bg-red-700 text-white border-red-800', dot: 'bg-white' },
 };
 
 export const FC_TYPE_LABEL: Record<string, string> = {
