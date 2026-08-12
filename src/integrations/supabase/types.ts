@@ -39608,6 +39608,19 @@ export type Database = {
           lead_days: number
           shop_url: string
           subject: string
+          tpl_closing: string
+          tpl_greeting: string
+          tpl_intro: string
+          tpl_self_text: string
+          tpl_self_title: string
+          tpl_sepa_text: string
+          tpl_sepa_title: string
+          tpl_shop_items: string[]
+          tpl_shop_text: string
+          tpl_shop_title: string
+          tpl_show_shop_box: boolean
+          tpl_team: string
+          tpl_thanks: string
           updated_at: string
         }
         Insert: {
@@ -39620,6 +39633,19 @@ export type Database = {
           lead_days?: number
           shop_url?: string
           subject?: string
+          tpl_closing?: string
+          tpl_greeting?: string
+          tpl_intro?: string
+          tpl_self_text?: string
+          tpl_self_title?: string
+          tpl_sepa_text?: string
+          tpl_sepa_title?: string
+          tpl_shop_items?: string[]
+          tpl_shop_text?: string
+          tpl_shop_title?: string
+          tpl_show_shop_box?: boolean
+          tpl_team?: string
+          tpl_thanks?: string
           updated_at?: string
         }
         Update: {
@@ -39632,6 +39658,19 @@ export type Database = {
           lead_days?: number
           shop_url?: string
           subject?: string
+          tpl_closing?: string
+          tpl_greeting?: string
+          tpl_intro?: string
+          tpl_self_text?: string
+          tpl_self_title?: string
+          tpl_sepa_text?: string
+          tpl_sepa_title?: string
+          tpl_shop_items?: string[]
+          tpl_shop_text?: string
+          tpl_shop_title?: string
+          tpl_show_shop_box?: boolean
+          tpl_team?: string
+          tpl_thanks?: string
           updated_at?: string
         }
         Relationships: []
