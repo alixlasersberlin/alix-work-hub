@@ -229,7 +229,7 @@ export default function WiederkehrendeZahler() {
 
   /** Vertrag in PRUEFUNG verschieben: Rechnungen werden weiter erzeugt, aber nicht versendet */
   async function holdForReview(p: Profile) {
-    if (!confirm(`Vertrag „${p.recurrence_name || p.reference_number || ''}“ zur PRÜFUNG verschieben?\n\nRechnungen werden weiterhin erzeugt, aber NICHT an den Kunden versendet.`)) return;
+    if (!confirm(`Vertrag „${p.recurrence_name || p.reference_number || ''}“ zur RATEN ÜBERPRÜFUNG verschieben?\n\nRechnungen werden weiterhin erzeugt, aber NICHT an den Kunden versendet.`)) return;
     setStoppingId(p.id);
     const { error } = await supabase
       .from('zoho_recurring_profiles')
@@ -240,7 +240,7 @@ export default function WiederkehrendeZahler() {
       toast({ title: 'Verschieben fehlgeschlagen', description: error.message, variant: 'destructive' });
       return;
     }
-    toast({ title: 'In Prüfung', description: 'Der Kunde liegt jetzt unter BUCHHALTUNG → PRÜFUNG. Rechnungen werden zurückgehalten.' });
+    toast({ title: 'In Prüfung', description: 'Der Kunde liegt jetzt unter BUCHHALTUNG → RATEN ÜBERPRÜFUNG. Rechnungen werden zurückgehalten.' });
     setProfiles(prev => prev.filter(x => x.id !== p.id));
   }
 
@@ -1155,10 +1155,10 @@ export default function WiederkehrendeZahler() {
                                         className="bg-amber-500 hover:bg-amber-600 text-black"
                                         disabled={!canWrite || stoppingId === p.id}
                                         onClick={() => holdForReview(p)}
-                                        title="Zur PRÜFUNG verschieben – Rechnungen werden weiter erzeugt, aber nicht versendet"
+                                        title="Zur RATEN ÜBERPRÜFUNG verschieben – Rechnungen werden weiter erzeugt, aber nicht versendet"
                                       >
                                         {stoppingId === p.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                                        PRÜFUNG
+                                        RATEN ÜBERPRÜFUNG
                                       </Button>
                                       <Button
                                         size="sm"

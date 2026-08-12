@@ -478,7 +478,7 @@ export const navItems: NavItem[] = [
               { path: '/finance/wz-erinnerungen?tab=einzelversand', label: 'Einzelversand', icon: Repeat, roles: ['Admin', 'Super Admin'] },
               { path: '/finance/wz-erinnerungen?tab=historie', label: 'Versandhistorie', icon: Repeat, roles: ['Admin', 'Super Admin'] },
               { path: '/finance/wz-erinnerungen?tab=einstellungen', label: 'Einstellungen', icon: Repeat, roles: ['Admin', 'Super Admin'] },
-              { path: '/finance/raten-pruefung', label: 'PRÜFUNG (Versandstopp)', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },
+              { path: '/finance/raten-pruefung', label: 'RATEN ÜBERPRÜFUNG (Versandstopp)', icon: SearchCheck, roles: ['Admin', 'Super Admin'] },
               { path: '/finance/raten-ende-legal', label: 'RATEN ENDE LEGAL', icon: Gavel, roles: ['Admin', 'Super Admin'] },
             ],
           },
