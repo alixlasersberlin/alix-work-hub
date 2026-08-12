@@ -596,6 +596,50 @@ export default function WiederkehrendeZahlerErinnerungen() {
           <iframe title="preview" className="w-full h-[60vh] bg-white rounded" srcDoc={previewHtml ?? ''} />
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!manual} onOpenChange={o => !o && setManual(null)}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manueller Versand (Super Admin) – {manual?.r.customer_name ?? ''}</DialogTitle>
+          </DialogHeader>
+          {manual?.loading ? (
+            <div className="flex items-center gap-2 p-6 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" /> Vorlage wird geladen …
+            </div>
+          ) : manual ? (
+            <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <Label>Empfänger</Label>
+                  <Input value={manual.to} onChange={e => setManual({ ...manual, to: e.target.value })} placeholder="kunde@example.com" />
+                </div>
+                <div>
+                  <Label>BCC (Komma-getrennt)</Label>
+                  <Input value={manual.bcc} onChange={e => setManual({ ...manual, bcc: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <Label>Betreff</Label>
+                <Input value={manual.subject} onChange={e => setManual({ ...manual, subject: e.target.value })} />
+              </div>
+              <div>
+                <Label>Inhalt (HTML, Platzhalter erlaubt: {PLACEHOLDERS.join(' ')})</Label>
+                <Textarea rows={12} className="font-mono text-xs" value={manual.html} onChange={e => setManual({ ...manual, html: e.target.value })} />
+              </div>
+              <div className="rounded border border-border overflow-hidden">
+                <iframe title="manual-preview" className="w-full h-[300px] bg-white" srcDoc={manual.html} />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setManual(null)}>Abbrechen</Button>
+                <Button disabled={busy || !manual.to.includes('@')} onClick={sendManual}>
+                  {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                  Jetzt senden
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
