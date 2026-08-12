@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Plus, Trash2, Printer, Send, Save, FileText, Mail, Receipt } from 'lucide-react';
 import { printRepairQuote, repairQuoteHtmlBlob } from '@/lib/repair/quote-pdf';
+import CreateInvoiceDialog from '@/components/CreateInvoiceDialog';
+
 
 const KIND_LABEL: Record<string, string> = { part: 'Ersatzteil', labor: 'Arbeitszeit', shipping: 'Versand', other: 'Sonstiges' };
 
