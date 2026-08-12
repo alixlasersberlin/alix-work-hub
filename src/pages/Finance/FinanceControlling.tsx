@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import {
   FC_STATUS, FC_TRAFFIC, FC_APPROVAL, fmtEur, listFcCases, listFcEvents, loadCaseInvoices,
   setFcStatus, addFcEvent, updateFcCase, setFcApproval, loadFcMonthClose, type FcCase,
+  FC_DRAFT_TYPE, FC_DRAFT_STATUS, listFcDrafts, setFcDraftStatus, createFcDraft, type FcInvoiceDraft,
 } from '@/lib/finance/controlling';
 
 const FILTERS = [
@@ -101,6 +102,35 @@ export default function FinanceControlling() {
     queryFn: () => loadCaseInvoices(active!.reference_number),
     enabled: !!active,
   });
+
+  const { data: drafts = [] } = useQuery({
+    queryKey: ['fc-drafts', active?.id],
+    queryFn: () => listFcDrafts(active!.id),
+    enabled: !!active,
+  });
+
+  const doCreateDraft = async (c: FcCase) => {
+    try {
+      await createFcDraft(c.id);
+      await qc.invalidateQueries({ queryKey: ['fc-drafts', c.id] });
+      await qc.invalidateQueries({ queryKey: ['fc-events', c.id] });
+      toast.success('Rechnungsentwurf aktualisiert');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Entwurf konnte nicht erzeugt werden');
+    }
+  };
+
+  const doDraftStatus = async (d: FcInvoiceDraft, status: 'entwurf' | 'erstellt' | 'verworfen') => {
+    try {
+      await setFcDraftStatus(d, status);
+      await qc.invalidateQueries({ queryKey: ['fc-drafts', d.case_id] });
+      await qc.invalidateQueries({ queryKey: ['fc-events', d.case_id] });
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Aktualisierung fehlgeschlagen');
+    }
+  };
+
+
 
   const kpis = useMemo(() => {
     const open = cases.filter(c => !['abgeschlossen', 'freigegeben'].includes(c.status));
@@ -447,6 +477,30 @@ export default function FinanceControlling() {
                         <div>{fmtEur(inv.total)}</div>
                         <div className="text-xs text-muted-foreground">offen {fmtEur(inv.balance)}</div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="rounded-lg border border-border p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs text-muted-foreground">Rechnungsentwürfe (automatisch)</div>
+                    <Button size="sm" variant="outline" onClick={() => void doCreateDraft(active)}>Entwurf erzeugen</Button>
+                  </div>
+                  {drafts.length === 0 && <div className="text-muted-foreground text-xs">Kein Entwurf vorhanden</div>}
+                  {drafts.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between py-1 border-b border-border/50 last:border-0">
+                      <div>
+                        <div className="font-medium">{fmtEur(d.amount)} · {FC_DRAFT_TYPE[d.draft_type] ?? d.draft_type}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(d.created_at).toLocaleDateString('de-DE')} · {FC_DRAFT_STATUS[d.status] ?? d.status}
+                        </div>
+                      </div>
+                      {d.status === 'entwurf' && (
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => void doDraftStatus(d, 'erstellt')}>Erledigt</Button>
+                          <Button size="sm" variant="ghost" onClick={() => void doDraftStatus(d, 'verworfen')}>Verwerfen</Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
