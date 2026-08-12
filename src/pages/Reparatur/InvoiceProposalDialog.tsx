@@ -18,6 +18,8 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
   const [existing, setExisting] = useState<any | null>(null);
   const [parts, setParts] = useState<any[]>([]);
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
+  const [quote, setQuote] = useState<any | null>(null);
+  const [quoteItems, setQuoteItems] = useState<any[]>([]);
   const [hours, setHours] = useState<string>('');
   const [rate, setRate] = useState<string>('95');
   const [shipping, setShipping] = useState<string>('0');
@@ -29,12 +31,22 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
   useEffect(() => {
     if (!repair?.id) return;
     (async () => {
-      const [{ data: ex }, { data: pl }] = await Promise.all([
+      const [{ data: ex }, { data: pl }, { data: qs }] = await Promise.all([
         sbRepair.from('repair_invoice_proposals').select('id,status,created_at,total_amount,currency').eq('repair_order_id', repair.id).order('created_at', { ascending: false }).limit(1),
         sbRepair.from('repair_parts').select('item_name,sku,quantity,supplier_name').eq('repair_order_id', repair.id),
+        sbRepair.from('repair_quotes').select('*').eq('repair_order_id', repair.id).eq('status', 'Freigegeben').order('decided_at', { ascending: false }).limit(1),
       ]);
       setExisting(ex?.[0] || null);
       setParts(pl || []);
+      const q = qs?.[0] || null;
+      setQuote(q);
+      if (q) {
+        const { data: qi } = await sbRepair.from('repair_quote_items').select('*').eq('quote_id', q.id).order('sort_order');
+        setQuoteItems(qi || []);
+        setHours(String(q.labor_hours ?? 0));
+        setRate(String(q.labor_rate ?? 0));
+        setShipping(String(q.shipping_total ?? 0));
+      }
       if (repair.ticket_id) {
         const { data: t } = await supabase.from('tickets').select('external_ticket_id').eq('id', repair.ticket_id).maybeSingle();
         setTicketNumber(t?.external_ticket_id || null);
@@ -42,9 +54,14 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
     })();
   }, [repair?.id, repair?.ticket_id, open]);
 
-  const partsTotal = 0; // keine Preise an Ersatzteilen vorhanden – Finance ergänzt
-  const laborCost = (Number(hours) || 0) * (Number(rate) || 0);
-  const total = laborCost + partsTotal + (Number(shipping) || 0);
+
+  const quotePartsTotal = quote ? Number(quote.parts_total || 0) : 0;
+  const partsTotal = quote ? quotePartsTotal : 0; // ohne KV: Finance ergänzt Teilepreise
+  const laborCost = quote ? Number(quote.labor_total ?? (Number(quote.labor_hours || 0) * Number(quote.labor_rate || 0))) : (Number(hours) || 0) * (Number(rate) || 0);
+  const total = quote
+    ? Number(quote.total_net ?? (laborCost + partsTotal + Number(quote.shipping_total || 0)))
+    : laborCost + partsTotal + (Number(shipping) || 0);
+
 
   const submit = async () => {
     if (!repair?.id) return;
@@ -68,16 +85,17 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
       customer_phone: repair.customer_phone || null,
       device_label: [repair.device_brand, repair.device_model].filter(Boolean).join(' ') || repair.device_category || null,
       device_serial: repair.device_serial_number || null,
-      labor_hours: Number(hours) || 0,
-      labor_rate: Number(rate) || 0,
+      labor_hours: quote ? Number(quote.labor_hours || 0) : Number(hours) || 0,
+      labor_rate: quote ? Number(quote.labor_rate || 0) : Number(rate) || 0,
       labor_cost: laborCost,
-      parts: partsSnapshot,
+      parts: quote && quoteItems.length ? quoteItems.map((it) => ({ item_name: it.description, quantity: it.quantity, unit_price: it.unit_price, line_total: it.line_total, kind: it.kind })) : partsSnapshot,
       parts_total: partsTotal,
-      shipping_cost: Number(shipping) || 0,
+      shipping_cost: quote ? Number(quote.shipping_total || 0) : Number(shipping) || 0,
       total_amount: total,
       currency: repair.currency || 'EUR',
       status: 'offen',
-      notes: notes || null,
+      notes: [quote ? `Basis: bestätigter Kostenvoranschlag ${quote.quote_number || ''}`.trim() : null, notes || null].filter(Boolean).join(' · ') || null,
+
       created_by: u?.user?.id || null,
     };
     const { error } = await sbRepair.from('repair_invoice_proposals').insert(payload);
@@ -122,20 +140,49 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
             <div><Label className="text-xs">Ersatzteile</Label><div>{parts.length} Pos.</div></div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <Label className="text-xs">Arbeitszeit (Std.)</Label>
-              <Input type="number" step="0.25" value={hours} onChange={(e) => setHours(e.target.value)} />
+          {quote ? (
+            <div className="space-y-3">
+              <div className="rounded border border-emerald-500/40 bg-emerald-500/10 p-3">
+                <div className="text-emerald-300 font-medium">Kostenvoranschlag bestätigt</div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  {quote.quote_number || 'KV'} · freigegeben{quote.decided_at ? ` am ${new Date(quote.decided_at).toLocaleDateString('de-DE')}` : ''}
+                  {quote.decided_by_email ? ` von ${quote.decided_by_email}` : ''} – Beträge werden unverändert übernommen.
+                </div>
+              </div>
+
+              {quoteItems.length > 0 && (
+                <div className="rounded border border-border/60 divide-y divide-border/60">
+                  {quoteItems.map((it) => (
+                    <div key={it.id} className="flex justify-between gap-3 px-3 py-2">
+                      <span>{it.description}{it.quantity ? ` × ${it.quantity}` : ''}</span>
+                      <span className="font-mono">{Number(it.line_total || 0).toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-3 text-xs">
+                <div><Label className="text-xs">Arbeitszeit</Label><div className="font-mono text-sm">{Number(quote.labor_hours || 0)} Std. × {Number(quote.labor_rate || 0).toFixed(2)}</div></div>
+                <div><Label className="text-xs">Ersatzteile</Label><div className="font-mono text-sm">{quotePartsTotal.toFixed(2)}</div></div>
+                <div><Label className="text-xs">Versand</Label><div className="font-mono text-sm">{Number(quote.shipping_total || 0).toFixed(2)}</div></div>
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Stundensatz</Label>
-              <Input type="number" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)} />
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Arbeitszeit (Std.)</Label>
+                <Input type="number" step="0.25" value={hours} onChange={(e) => setHours(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Stundensatz</Label>
+                <Input type="number" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Versandkosten</Label>
+                <Input type="number" step="0.01" value={shipping} onChange={(e) => setShipping(e.target.value)} />
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Versandkosten</Label>
-              <Input type="number" step="0.01" value={shipping} onChange={(e) => setShipping(e.target.value)} />
-            </div>
-          </div>
+          )}
 
           <div>
             <Label className="text-xs">Notiz für Finance</Label>
@@ -143,9 +190,10 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
           </div>
 
           <div className="flex justify-between items-center bg-muted/40 rounded p-3">
-            <span className="text-xs text-muted-foreground">Gesamt (Arbeit + Versand)</span>
+            <span className="text-xs text-muted-foreground">{quote ? 'Gesamt lt. bestätigtem KV (netto)' : 'Gesamt (Arbeit + Versand)'}</span>
             <span className="text-lg font-semibold">{total.toFixed(2)} {repair.currency || 'EUR'}</span>
           </div>
+
         </div>
 
         <DialogFooter>
