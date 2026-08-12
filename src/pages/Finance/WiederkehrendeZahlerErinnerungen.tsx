@@ -204,6 +204,7 @@ export default function WiederkehrendeZahlerErinnerungen() {
             <th className="p-2 text-left">Rechnung</th>
             <th className="p-2 text-left">Zahlungsart</th>
             <th className="p-2 text-left">Rhythmus</th>
+            <th className="p-2 text-left">Letzte Zahlung</th>
             <th className="p-2 text-left">Fälligkeit</th>
             <th className="p-2 text-right">Betrag</th>
             <th className="p-2 text-left">E-Mail</th>
