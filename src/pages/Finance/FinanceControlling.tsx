@@ -219,13 +219,14 @@ export default function FinanceControlling() {
               <th className="text-right p-2">Noch zu bezahlen</th>
               <th className="text-left p-2">Auslöser</th>
               <th className="text-left p-2">Datum</th>
+              <th className="text-left p-2">Verantwortlich</th>
               <th className="text-left p-2">Aktion</th>
             </tr>
           </thead>
           <tbody>
-            {isLoading && <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Lade…</td></tr>}
+            {isLoading && <tr><td colSpan={15} className="p-6 text-center text-muted-foreground">Lade…</td></tr>}
             {!isLoading && rows.length === 0 && (
-              <tr><td colSpan={14} className="p-6 text-center text-muted-foreground">Keine Vorgänge</td></tr>
+              <tr><td colSpan={15} className="p-6 text-center text-muted-foreground">Keine Vorgänge</td></tr>
             )}
             {rows.map((c, i) => {
               const t = FC_TRAFFIC[c.traffic] ?? FC_TRAFFIC.gelb;
@@ -245,6 +246,7 @@ export default function FinanceControlling() {
                   <td className={cn('p-2 text-right', c.open_to_pay > 0.01 && 'text-amber-400')}>{fmtEur(c.open_to_pay)}</td>
                   <td className="p-2 text-xs text-muted-foreground">{c.trigger_event}</td>
                   <td className="p-2 text-xs">{new Date(c.created_at).toLocaleDateString('de-DE')}</td>
+                  <td className="p-2 text-xs">{employees.find(e => e.id === c.assigned_to)?.full_name || (c.assigned_to ? '—' : '—')}</td>
                   <td className="p-2" onClick={(e) => e.stopPropagation()}>
                     <Button size="sm" variant="outline" onClick={() => goInvoice(c)}>
                       <FileText className="w-3.5 h-3.5 mr-1" />
