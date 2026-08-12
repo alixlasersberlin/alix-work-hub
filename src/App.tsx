@@ -1637,6 +1637,7 @@ function AppRoutes() {
           <Route path="/finance/cockpit" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpit /></ProtectedRoute>} />
           <Route path="/finance/cockpit/mandant/:code" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceCockpitMandant /></ProtectedRoute>} />
           <Route path="/finance/wiederkehrende-zahler" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><WiederkehrendeZahler /></ProtectedRoute>} />
+          <Route path="/finance/wz-erinnerungen" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><WzErinnerungen /></ProtectedRoute>} />
           <Route path="/finance/anwaltsfaelle" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceAnwaltsfaelle /></ProtectedRoute>} />
           <Route path="/finance/bestandsuebersicht" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><Bestandsuebersicht /></ProtectedRoute>} />
           <Route path="/finance/einstellungen/systemstatus" element={<ProtectedRoute requiredRoles={FINANCE_ROLES}><FinanceSystemstatus /></ProtectedRoute>} />
