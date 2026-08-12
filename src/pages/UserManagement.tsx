@@ -870,7 +870,8 @@ export default function UserManagement() {
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-2 shrink-0">
+
               <Button variant="outline" onClick={() => setShowCreate(false)}>Abbrechen</Button>
               <Button onClick={handleCreate} disabled={creating} className="gold-gradient text-primary-foreground">
                 {creating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
