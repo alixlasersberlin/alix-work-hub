@@ -73,14 +73,17 @@ Deno.serve(async (req) => {
 
     const cacheHit = Number(metrics.cache_hit_ratio ?? 1);
     if (cacheHit < 0.95) {
+      // Hinweis: Wert ist kumulativ seit dem letzten Statistik-Reset und hängt vom
+      // Arbeitsspeicher des Tarifs ab – daher bewusst nur als Hinweis gewertet.
       findings.push({
-        category: 'database', severity: cacheHit < 0.9 ? 'high' : 'medium',
+        category: 'database', severity: cacheHit < 0.8 ? 'medium' : 'low',
         title: `Cache-Trefferquote nur ${(cacheHit * 100).toFixed(1)} %`,
-        detail: 'Häufige Lesezugriffe gehen auf die Festplatte statt in den Arbeitsspeicher.',
+        detail: 'Häufige Lesezugriffe gehen auf die Festplatte statt in den Arbeitsspeicher (kumulativer Wert, abhängig vom Instanz-Arbeitsspeicher).',
         recommendation: 'Größe der Instanz bzw. Indizes und Abfragen prüfen (Freigabe erforderlich).',
         metric: cacheHit,
       });
     }
+
 
     const conn = Number(metrics.connections ?? 0);
     const connMax = Number(metrics.connections_max ?? 100);
