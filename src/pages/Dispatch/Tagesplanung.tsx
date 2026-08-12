@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarDays, Truck, Route as RouteIcon, Wand2, Plus, Trash2, Crown, MapPin, Clock, Gauge } from 'lucide-react';
