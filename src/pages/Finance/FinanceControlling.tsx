@@ -329,7 +329,7 @@ export default function FinanceControlling() {
             {!isLoading && rows.length === 0 && (
               <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Keine Vorgänge</td></tr>
             )}
-            {rows.map((c, i) => {
+            {visibleRows.map((c, i) => {
               const t = FC_TRAFFIC[c.traffic] ?? FC_TRAFFIC.gelb;
               return (
                 <tr key={c.id} className={cn('border-t border-border hover:bg-muted/30 cursor-pointer align-top', i % 2 === 1 && 'bg-muted/10')}
