@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
 
     // Already converted?
     const { data: existing } = await supabase
-      .from('orders').select('id, order_number').eq('order_number', order_number).maybeSingle();
+      .from('orders').select('id, order_number').in('order_number', [order_number, legacy_order_number]).maybeSingle();
     if (existing) {
       return new Response(JSON.stringify({ ok: true, already: true, order_id: existing.id }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
