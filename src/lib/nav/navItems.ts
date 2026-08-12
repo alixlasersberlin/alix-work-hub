@@ -472,6 +472,7 @@ export const navItems: NavItem[] = [
             path: '/finance/wiederkehrende-zahler', label: 'Wiederkehrende Zahler', icon: Repeat, roles: ['Admin', 'Super Admin'],
             children: [
               { path: '/finance/wiederkehrende-zahler', label: 'Übersicht', icon: Repeat, roles: ['Admin', 'Super Admin'] },
+              { path: '/finance/wz-erinnerungen', label: 'Zahlungserinnerungen', icon: Bell, roles: ['Admin', 'Super Admin'] },
               { path: '/finance/wz-erinnerungen?tab=faelligkeiten', label: 'Fälligkeiten', icon: Repeat, roles: ['Admin', 'Super Admin'] },
               { path: '/finance/wz-erinnerungen?tab=sammelversand', label: 'Sammelversand', icon: Repeat, roles: ['Admin', 'Super Admin'] },
               { path: '/finance/wz-erinnerungen?tab=einzelversand', label: 'Einzelversand', icon: Repeat, roles: ['Admin', 'Super Admin'] },
