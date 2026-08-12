@@ -114,7 +114,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
       toast({ variant: 'destructive', title: 'Keine Position ausgewählt' });
       return;
     }
-    setGeraetModell(selectedRows.map(it => it.item_name || it.name).filter(Boolean).join(', '));
+    setGeraetModell(selectedRows.map(it => it.item_name || it.name).filter(Boolean).join('\n'));
     setKaufpreis(selectedSum.toFixed(2));
     toast({ title: 'Positionen übernommen', description: `${selectedRows.length} Position(en) in den Vertrag übernommen.` });
   }
