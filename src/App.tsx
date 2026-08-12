@@ -124,6 +124,7 @@ const Lieferstatus = lazy(() => import("./pages/Dispatch/public/Lieferstatus"));
 const Finance = lazy(() => import("./pages/Finance"));
 const Ratenzahler = lazy(() => import("./pages/Ratenzahler"));
 const WiederkehrendeZahler = lazy(() => import("./pages/Finance/WiederkehrendeZahler"));
+const WzErinnerungen = lazy(() => import("./pages/Finance/WiederkehrendeZahlerErinnerungen"));
 const Bestandsuebersicht = lazy(() => import("./pages/Finance/Bestandsuebersicht"));
 const AlixFlex = lazy(() => import("./pages/AlixFlex"));
 const ProvisionUebersicht = lazy(() => import("./pages/Finance/Provision/Uebersicht"));
