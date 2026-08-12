@@ -1,0 +1,1 @@
+UPDATE public.sig_facsimile_settings SET pos_y = GREATEST(0, COALESCE(pos_y,90) - 50) WHERE doc_type = 'lease_purchase';
