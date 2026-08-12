@@ -39526,6 +39526,212 @@ export type Database = {
           },
         ]
       }
+      rz_reminder_log: {
+        Row: {
+          amount: number | null
+          channel: string
+          created_at: string
+          currency: string | null
+          customer_id: string | null
+          customer_name: string | null
+          due_date: string | null
+          email: string | null
+          error: string | null
+          id: string
+          invoice_number: string | null
+          mode: string
+          payment_method: string | null
+          reminder_id: string | null
+          sent_at: string
+          success: boolean
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          channel?: string
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          due_date?: string | null
+          email?: string | null
+          error?: string | null
+          id?: string
+          invoice_number?: string | null
+          mode?: string
+          payment_method?: string | null
+          reminder_id?: string | null
+          sent_at?: string
+          success?: boolean
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          channel?: string
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          due_date?: string | null
+          email?: string | null
+          error?: string | null
+          id?: string
+          invoice_number?: string | null
+          mode?: string
+          payment_method?: string | null
+          reminder_id?: string | null
+          sent_at?: string
+          success?: boolean
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rz_reminder_log_reminder_id_fkey"
+            columns: ["reminder_id"]
+            isOneToOne: false
+            referencedRelation: "rz_reminders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rz_reminder_settings: {
+        Row: {
+          auto_enabled: boolean
+          bcc: string[]
+          created_at: string
+          extra_lead_days: number[]
+          id: boolean
+          language: string
+          lead_days: number
+          shop_url: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          auto_enabled?: boolean
+          bcc?: string[]
+          created_at?: string
+          extra_lead_days?: number[]
+          id?: boolean
+          language?: string
+          lead_days?: number
+          shop_url?: string
+          subject?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_enabled?: boolean
+          bcc?: string[]
+          created_at?: string
+          extra_lead_days?: number[]
+          id?: boolean
+          language?: string
+          lead_days?: number
+          shop_url?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rz_reminders: {
+        Row: {
+          amount: number | null
+          contract_number: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          customer_name: string | null
+          customer_number: string | null
+          dedupe_key: string
+          due_date: string
+          email: string | null
+          error: string | null
+          first_name: string | null
+          frequency: string | null
+          id: string
+          invoice_id: string | null
+          invoice_number: string | null
+          last_name: string | null
+          last_payment_date: string | null
+          payment_method: string
+          profile_id: string | null
+          salutation: string | null
+          send_date: string
+          send_mode: string | null
+          sent_at: string | null
+          sent_by: string | null
+          source_system: string | null
+          status: string
+          updated_at: string
+          zoho_recurring_invoice_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          contract_number?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_number?: string | null
+          dedupe_key: string
+          due_date: string
+          email?: string | null
+          error?: string | null
+          first_name?: string | null
+          frequency?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          last_name?: string | null
+          last_payment_date?: string | null
+          payment_method?: string
+          profile_id?: string | null
+          salutation?: string | null
+          send_date: string
+          send_mode?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          source_system?: string | null
+          status?: string
+          updated_at?: string
+          zoho_recurring_invoice_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          contract_number?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_number?: string | null
+          dedupe_key?: string
+          due_date?: string
+          email?: string | null
+          error?: string | null
+          first_name?: string | null
+          frequency?: string | null
+          id?: string
+          invoice_id?: string | null
+          invoice_number?: string | null
+          last_name?: string | null
+          last_payment_date?: string | null
+          payment_method?: string
+          profile_id?: string | null
+          salutation?: string | null
+          send_date?: string
+          send_mode?: string | null
+          sent_at?: string | null
+          sent_by?: string | null
+          source_system?: string | null
+          status?: string
+          updated_at?: string
+          zoho_recurring_invoice_id?: string | null
+        }
+        Relationships: []
+      }
       sales_followups: {
         Row: {
           assigned_user: string | null
