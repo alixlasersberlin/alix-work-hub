@@ -451,6 +451,30 @@ export default function FinanceControlling() {
                   ))}
                 </div>
 
+                <div className="rounded-lg border border-border p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs text-muted-foreground">Rechnungsentwürfe (automatisch)</div>
+                    <Button size="sm" variant="outline" onClick={() => void doCreateDraft(active)}>Entwurf erzeugen</Button>
+                  </div>
+                  {drafts.length === 0 && <div className="text-muted-foreground text-xs">Kein Entwurf vorhanden</div>}
+                  {drafts.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between py-1 border-b border-border/50 last:border-0">
+                      <div>
+                        <div className="font-medium">{fmtEur(d.amount)} · {FC_DRAFT_TYPE[d.draft_type] ?? d.draft_type}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(d.created_at).toLocaleDateString('de-DE')} · {FC_DRAFT_STATUS[d.status] ?? d.status}
+                        </div>
+                      </div>
+                      {d.status === 'entwurf' && (
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="secondary" onClick={() => void doDraftStatus(d, 'erstellt')}>Erledigt</Button>
+                          <Button size="sm" variant="ghost" onClick={() => void doDraftStatus(d, 'verworfen')}>Verwerfen</Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" onClick={() => goInvoice(active)}>
                     <ExternalLink className="w-3.5 h-3.5 mr-1" />
