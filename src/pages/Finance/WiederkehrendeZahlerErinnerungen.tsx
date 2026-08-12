@@ -236,7 +236,7 @@ export default function WiederkehrendeZahlerErinnerungen() {
             </tr>
           ))}
           {list.length === 0 && (
-            <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Keine Einträge.</td></tr>
+            <tr><td colSpan={13} className="p-6 text-center text-muted-foreground">Keine Einträge.</td></tr>
           )}
         </tbody>
       </table>
