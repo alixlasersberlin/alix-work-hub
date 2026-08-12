@@ -321,7 +321,7 @@ export default function WiederkehrendeZahlerErinnerungen() {
         <TabsContent value="historie" className="mt-4">
           <DataCard
             title="Versandhistorie"
-            action={isSuperAdmin
+            actions={isSuperAdmin
               ? <Button size="sm" variant="outline" onClick={clearHistory}><Trash2 className="h-4 w-4 mr-2" />Historie löschen</Button>
               : undefined}
           >
