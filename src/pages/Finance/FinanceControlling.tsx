@@ -312,7 +312,7 @@ export default function FinanceControlling() {
 
       </div>
 
-      <div className="rounded-xl border border-border bg-card w-full max-w-full overflow-x-auto overflow-y-auto max-h-[70vh]">
+      <div className="rounded-xl border border-border bg-card w-full max-w-full overflow-x-auto">
         <table className="w-full min-w-[1000px] text-sm">
           <thead className="bg-muted/40 text-xs text-muted-foreground sticky top-0 z-10">
             <tr>
