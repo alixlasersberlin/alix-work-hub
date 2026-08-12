@@ -54,7 +54,7 @@ export default function OrdersWithoutInvoice() {
         fetchAllPages<any>((from, to) =>
           supabase
             .from('orders')
-            .select('id, order_number, internal_number, case_number, order_status, order_date, total_amount, currency, source_system, accounting_region, salesperson_name, lawyer_reason, invoiced_flag, billing_address, customer_id, customers(company_name, contact_name, email, city, billing_address)')
+            .select('id, order_number, internal_number, case_number, order_status, order_date, total_amount, currency, source_system, accounting_region, salesperson_name, lawyer_reason, invoiced_flag, billing_address, customer_id, customers(company_name, contact_name, email, billing_address)')
             .order('order_date', { ascending: false, nullsFirst: false })
             .range(from, to),
         ),
