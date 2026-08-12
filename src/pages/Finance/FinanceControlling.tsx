@@ -18,25 +18,48 @@ import {
   FC_DRAFT_TYPE, FC_DRAFT_STATUS, listFcDrafts, setFcDraftStatus, createFcDraft, type FcInvoiceDraft,
 } from '@/lib/finance/controlling';
 
-const FILTERS = [
-  { key: 'alle', label: 'Alle' },
-  { key: 'neu', label: 'Neu' },
-  { key: 'rechnung_fehlt', label: 'Rechnung fehlt' },
-  { key: 'differenzen', label: 'Differenzen' },
-  { key: 'AUFTRAG', label: 'Aufträge' },
-  { key: 'LIEFERUNG', label: 'Lieferungen' },
-  { key: 'TEILLIEFERUNG', label: 'Teillieferungen' },
-  { key: 'REPARATUR', label: 'Reparaturen' },
-  { key: 'SCHLUSSRECHNUNG', label: 'Schlussrechnungen' },
-  { key: 'kritisch', label: 'Kritisch' },
-  { key: 'freigabe_offen', label: 'Freigabe offen' },
-  { key: 'eskaliert', label: 'Eskaliert' },
-  { key: 'wiedervorlage', label: 'Wiedervorlage fällig' },
-  { key: 'heute', label: 'Heute' },
-  { key: 'woche', label: 'Diese Woche' },
-  { key: 'abgeschlossen', label: 'Abgeschlossen' },
-  { key: 'meine', label: 'Meine Vorgänge' },
+const FILTER_GROUPS: { title: string; items: { key: string; label: string }[] }[] = [
+  {
+    title: 'Status',
+    items: [
+      { key: 'alle', label: 'Alle' },
+      { key: 'neu', label: 'Neu' },
+      { key: 'rechnung_fehlt', label: 'Rechnung fehlt' },
+      { key: 'differenzen', label: 'Differenzen' },
+      { key: 'abgeschlossen', label: 'Abgeschlossen' },
+    ],
+  },
+  {
+    title: 'Vorgangsart',
+    items: [
+      { key: 'AUFTRAG', label: 'Aufträge' },
+      { key: 'LIEFERUNG', label: 'Lieferungen' },
+      { key: 'TEILLIEFERUNG', label: 'Teillieferungen' },
+      { key: 'REPARATUR', label: 'Reparaturen' },
+      { key: 'SCHLUSSRECHNUNG', label: 'Schlussrechnungen' },
+    ],
+  },
+  {
+    title: 'Priorität',
+    items: [
+      { key: 'kritisch', label: 'Kritisch' },
+      { key: 'eskaliert', label: 'Eskaliert' },
+      { key: 'freigabe_offen', label: 'Freigabe offen' },
+      { key: 'wiedervorlage', label: 'Wiedervorlage fällig' },
+    ],
+  },
+  {
+    title: 'Zeitraum & Zuständigkeit',
+    items: [
+      { key: 'heute', label: 'Heute' },
+      { key: 'woche', label: 'Diese Woche' },
+      { key: 'meine', label: 'Meine Vorgänge' },
+    ],
+  },
 ];
+
+const FILTERS = FILTER_GROUPS.flatMap(g => g.items);
+
 
 const PRIORITIES: Record<string, string> = { normal: 'Normal', hoch: 'Hoch', kritisch: 'Kritisch' };
 
