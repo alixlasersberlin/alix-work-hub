@@ -28,85 +28,138 @@ type Vars = {
   sepa: boolean; shopUrl: string;
 };
 
-// Mehrsprachig vorbereitet – Deutsch ist Standard.
-const L = {
-  de: {
-    subject: "Ihre monatliche Rechnung",
-    greeting: (v: Vars) => `Sehr geehrte/r ${[v.salutation, v.lastName].filter(Boolean).join(" ") || v.customerName},`,
-    intro: (v: Vars) =>
-      `bitte beachten Sie, dass die Fälligkeit Ihrer monatlichen Rechnung am ${v.due} bevorsteht.`,
-    sepaTitle: "SEPA-Lastschriftverfahren",
-    sepaText:
-      "Da Sie bereits an unserem SEPA-Lastschriftverfahren teilnehmen, müssen Sie nichts weiter unternehmen. Der Rechnungsbetrag wird zum Fälligkeitstermin automatisch von Ihrem Konto eingezogen.",
-    selfTitle: "Selbstzahler",
-    selfText:
-      "Als Selbstzahler bitten wir Sie, den offenen Rechnungsbetrag pünktlich bis zum Fälligkeitstermin zu überweisen.",
-    thanks: "Vielen Dank. Wir wünschen Ihnen einen angenehmen Tag.",
-    didYouKnow: "Schon gewusst?",
-    shopText: "Viele Dinge können Sie ganz bequem online erledigen. Besuchen Sie einfach:",
-    shopItems: ["Ultraschallgel", "Zubehör", "Ersatzteile", "Verbrauchsmaterial", "Dienstleistungen", "viele weitere Produkte"],
-    closing: "Vielen Dank für Ihr Vertrauen.",
-    team: "Ihr Team von Alix.",
-    lblCustomerNo: "Kundennummer",
-    lblInvoiceNo: "Rechnungsnummer",
-    lblAmount: "Rechnungsbetrag",
-    lblDue: "Fälligkeitsdatum",
-  },
-} as const;
+// Frei konfigurierbare Textbausteine (Tabelle rz_reminder_settings, Spalten tpl_*).
+type Tpl = {
+  greeting: string; intro: string;
+  sepaTitle: string; sepaText: string;
+  selfTitle: string; selfText: string;
+  thanks: string; shopTitle: string; shopText: string; shopItems: string[];
+  closing: string; team: string; showShopBox: boolean;
+  lblCustomerNo: string; lblInvoiceNo: string; lblAmount: string; lblDue: string;
+};
 
-function buildHtml(v: Vars, lang: keyof typeof L = "de") {
-  const t = L[lang] ?? L.de;
+const DEFAULT_TPL: Tpl = {
+  greeting: "Sehr geehrte/r {anrede} {nachname},",
+  intro: "bitte beachten Sie, dass die Fälligkeit Ihrer monatlichen Rechnung am {faelligkeit} bevorsteht.",
+  sepaTitle: "SEPA-Lastschriftverfahren",
+  sepaText:
+    "Da Sie bereits an unserem SEPA-Lastschriftverfahren teilnehmen, müssen Sie nichts weiter unternehmen. Der Rechnungsbetrag wird zum Fälligkeitstermin automatisch von Ihrem Konto eingezogen.",
+  selfTitle: "Selbstzahler",
+  selfText:
+    "Als Selbstzahler bitten wir Sie, den offenen Rechnungsbetrag pünktlich bis zum Fälligkeitstermin zu überweisen.",
+  thanks: "Vielen Dank. Wir wünschen Ihnen einen angenehmen Tag.",
+  shopTitle: "Schon gewusst?",
+  shopText: "Viele Dinge können Sie ganz bequem online erledigen. Besuchen Sie einfach:",
+  shopItems: ["Ultraschallgel", "Zubehör", "Ersatzteile", "Verbrauchsmaterial", "Dienstleistungen", "viele weitere Produkte"],
+  closing: "Vielen Dank für Ihr Vertrauen.",
+  team: "Ihr Team von Alix.",
+  showShopBox: true,
+  lblCustomerNo: "Kundennummer",
+  lblInvoiceNo: "Rechnungsnummer",
+  lblAmount: "Rechnungsbetrag",
+  lblDue: "Fälligkeitsdatum",
+};
+
+function tplFromSettings(s: Record<string, unknown>): Tpl {
+  const str = (k: string, d: string) => (typeof s[k] === "string" && (s[k] as string).trim() ? (s[k] as string) : d);
+  return {
+    greeting: str("tpl_greeting", DEFAULT_TPL.greeting),
+    intro: str("tpl_intro", DEFAULT_TPL.intro),
+    sepaTitle: str("tpl_sepa_title", DEFAULT_TPL.sepaTitle),
+    sepaText: str("tpl_sepa_text", DEFAULT_TPL.sepaText),
+    selfTitle: str("tpl_self_title", DEFAULT_TPL.selfTitle),
+    selfText: str("tpl_self_text", DEFAULT_TPL.selfText),
+    thanks: str("tpl_thanks", DEFAULT_TPL.thanks),
+    shopTitle: str("tpl_shop_title", DEFAULT_TPL.shopTitle),
+    shopText: str("tpl_shop_text", DEFAULT_TPL.shopText),
+    shopItems: Array.isArray(s.tpl_shop_items) ? (s.tpl_shop_items as string[]) : DEFAULT_TPL.shopItems,
+    closing: str("tpl_closing", DEFAULT_TPL.closing),
+    team: str("tpl_team", DEFAULT_TPL.team),
+    showShopBox: s.tpl_show_shop_box === false ? false : true,
+    lblCustomerNo: DEFAULT_TPL.lblCustomerNo,
+    lblInvoiceNo: DEFAULT_TPL.lblInvoiceNo,
+    lblAmount: DEFAULT_TPL.lblAmount,
+    lblDue: DEFAULT_TPL.lblDue,
+  };
+}
+
+// Platzhalter ersetzen: {anrede} {vorname} {nachname} {kunde} {kundennummer}
+// {rechnungsnummer} {betrag} {faelligkeit} {shop}
+export function fill(tplText: string, v: Vars) {
+  const map: Record<string, string> = {
+    anrede: v.salutation,
+    vorname: v.firstName,
+    nachname: v.lastName,
+    kunde: v.customerName,
+    kundennummer: v.customerNumber,
+    rechnungsnummer: v.invoiceNumber,
+    betrag: v.amount,
+    faelligkeit: v.due,
+    shop: v.shopUrl,
+  };
+  return String(tplText ?? "")
+    .replace(/\{(\w+)\}/g, (m, k: string) => (k in map ? map[k] : m))
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/ ,/g, ",")
+    .trim();
+}
+
+const para = (s: string) =>
+  esc(s).split(/\n/).map((l) => l || "&nbsp;").join("<br/>");
+
+function buildHtml(v: Vars, t: Tpl) {
   const block = v.sepa
-    ? `<p style="margin:0 0 6px;font-size:15px;font-weight:bold">${t.sepaTitle}</p><p style="margin:0 0 18px;font-size:15px;line-height:1.6">${t.sepaText}</p>`
-    : `<p style="margin:0 0 6px;font-size:15px;font-weight:bold">${t.selfTitle}</p><p style="margin:0 0 18px;font-size:15px;line-height:1.6">${t.selfText}</p>`;
+    ? `<p style="margin:0 0 6px;font-size:15px;font-weight:bold">${esc(fill(t.sepaTitle, v))}</p><p style="margin:0 0 18px;font-size:15px;line-height:1.6">${para(fill(t.sepaText, v))}</p>`
+    : `<p style="margin:0 0 6px;font-size:15px;font-weight:bold">${esc(fill(t.selfTitle, v))}</p><p style="margin:0 0 18px;font-size:15px;line-height:1.6">${para(fill(t.selfText, v))}</p>`;
   const row = (label: string, value: string) =>
     value
       ? `<tr><td style="padding:10px 16px;font-size:14px;color:#57534e;border-top:1px solid #e7e5e4">${label}</td><td style="padding:10px 16px;font-size:14px;font-weight:bold;text-align:right;border-top:1px solid #e7e5e4">${esc(value)}</td></tr>`
       : "";
+  const shopBox = t.showShopBox
+    ? `<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:14px 16px;margin:0 0 20px;font-size:14px;line-height:1.6">
+        <strong>${esc(fill(t.shopTitle, v))}</strong><br/>${para(fill(t.shopText, v))}
+        <a href="${esc(v.shopUrl)}" style="color:#a16207;font-weight:bold">${esc(v.shopUrl)}</a>
+        <ul style="margin:10px 0 0;padding-left:20px">${t.shopItems.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
+      </div>`
+    : "";
   return `<!doctype html><html><body style="margin:0;padding:24px;background:#f5f5f4;font-family:Arial,Helvetica,sans-serif;color:#1c1917">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #e7e5e4;border-radius:10px;overflow:hidden">
     <tr><td style="background:#0c0a09;padding:20px 28px">
       <div style="color:#d4af37;font-size:18px;font-weight:bold;letter-spacing:.5px">Alix Lasers &reg;</div>
-      <div style="color:#a8a29e;font-size:12px;margin-top:2px">${esc(t.subject)}</div>
     </td></tr>
     <tr><td style="padding:28px">
-      <p style="margin:0 0 16px;font-size:15px">${esc(t.greeting(v))}</p>
-      <p style="margin:0 0 18px;font-size:15px;line-height:1.6">${esc(t.intro(v))}</p>
+      <p style="margin:0 0 16px;font-size:15px">${para(fill(t.greeting, v))}</p>
+      <p style="margin:0 0 18px;font-size:15px;line-height:1.6">${para(fill(t.intro, v))}</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafaf9;border:1px solid #e7e5e4;border-radius:8px;margin:0 0 20px">
         ${row(t.lblDue, v.due)}${row(t.lblAmount, v.amount)}${row(t.lblInvoiceNo, v.invoiceNumber)}${row(t.lblCustomerNo, v.customerNumber)}
       </table>
       ${block}
-      <p style="margin:0 0 18px;font-size:15px;line-height:1.6">${esc(t.thanks)}</p>
-      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:14px 16px;margin:0 0 20px;font-size:14px;line-height:1.6">
-        <strong>${esc(t.didYouKnow)}</strong><br/>${esc(t.shopText)}
-        <a href="${esc(v.shopUrl)}" style="color:#a16207;font-weight:bold">${esc(v.shopUrl)}</a>
-        <ul style="margin:10px 0 0;padding-left:20px">${t.shopItems.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
-      </div>
-      <p style="margin:0 0 4px;font-size:15px">${esc(t.closing)}</p>
-      <p style="margin:0;font-size:15px;font-weight:bold">${esc(t.team)}</p>
+      <p style="margin:0 0 18px;font-size:15px;line-height:1.6">${para(fill(t.thanks, v))}</p>
+      ${shopBox}
+      <p style="margin:0 0 4px;font-size:15px">${para(fill(t.closing, v))}</p>
+      <p style="margin:0;font-size:15px;font-weight:bold">${para(fill(t.team, v))}</p>
     </td></tr>
   </table></body></html>`;
 }
 
-function buildText(v: Vars, lang: keyof typeof L = "de") {
-  const t = L[lang] ?? L.de;
-  return `${t.greeting(v)}
+function buildText(v: Vars, t: Tpl) {
+  const shop = t.showShopBox
+    ? `\n${fill(t.shopTitle, v)}\n${fill(t.shopText, v)} ${v.shopUrl}\n${t.shopItems.join(", ")}\n`
+    : "";
+  return `${fill(t.greeting, v)}
 
-${t.intro(v)}
+${fill(t.intro, v)}
 
 ${t.lblDue}: ${v.due}${v.amount ? `\n${t.lblAmount}: ${v.amount}` : ""}${v.invoiceNumber ? `\n${t.lblInvoiceNo}: ${v.invoiceNumber}` : ""}${v.customerNumber ? `\n${t.lblCustomerNo}: ${v.customerNumber}` : ""}
 
-${v.sepa ? `${t.sepaTitle}\n${t.sepaText}` : `${t.selfTitle}\n${t.selfText}`}
+${v.sepa ? `${fill(t.sepaTitle, v)}\n${fill(t.sepaText, v)}` : `${fill(t.selfTitle, v)}\n${fill(t.selfText, v)}`}
 
-${t.thanks}
-
-${t.didYouKnow}
-${t.shopText} ${v.shopUrl}
-${t.shopItems.join(", ")}
-
-${t.closing}
-${t.team}`;
+${fill(t.thanks, v)}
+${shop}
+${fill(t.closing, v)}
+${fill(t.team, v)}`;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -156,7 +209,7 @@ Deno.serve(async (req) => {
   const setRes = await rest("rz_reminder_settings?select=*&id=eq.true");
   const settings = setRes.ok ? ((await setRes.json())[0] ?? {}) : {};
   const bcc: string[] = Array.isArray(settings.bcc) ? settings.bcc : [];
-  const lang = (settings.language ?? "de") as "de";
+  const tpl = tplFromSettings(settings as Record<string, unknown>);
   const shopUrl = settings.shop_url ?? "https://alixsmart.de";
   const subjectBase = settings.subject ?? "Ihre monatliche Rechnung";
 
@@ -180,11 +233,12 @@ Deno.serve(async (req) => {
       sepa: r.payment_method === "sepa",
       shopUrl,
     };
-    const html = buildHtml(vars, lang);
-    const text = buildText(vars, lang);
+    const subject = fill(subjectBase, vars);
+    const html = buildHtml(vars, tpl);
+    const text = buildText(vars, tpl);
 
     if (preview) {
-      results.push({ id: r.id, email: r.email, subject: subjectBase, html, text });
+      results.push({ id: r.id, email: r.email, subject, html, text });
       continue;
     }
 
@@ -206,7 +260,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           to_email: r.email,
           to_name: r.customer_name,
-          subject: subjectBase,
+          subject,
           body_text: text,
           body_html: html,
           bcc,
