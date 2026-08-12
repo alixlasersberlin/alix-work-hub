@@ -82,3 +82,4 @@
 - [Manufacturer Management (MFR)](mem://features/plm-manufacturer-management) — Herstellerdatenbank im PLM: Zertifikate, Audits, Dokumente, Lieferantenlinks, Dubletten-Merge, BOM-Excel-Import
 - [ALIX Software Compliance](mem://features/software-compliance) — IEC 62304 Traceability Center unter /produktion/software (Requirements, Units, Risks, Tests, Bugs, Releases, HW-Doku)
 - [Finance Controlling](mem://features/finance-controlling) — Zentrale Rechnungs-Kontrollstelle /finance/finance-controlling, fc_cases/fc_events, Trigger auf Aufträge/Lieferungen/Reparaturen/Rechnungen
+- [Finance Controlling – keine Verrechnungen](mem://features/finance-controlling-no-netting) — Vorgänge eigenständig, Reparatur nutzt nur KV-Betrag, keine negativen offenen Beträge
