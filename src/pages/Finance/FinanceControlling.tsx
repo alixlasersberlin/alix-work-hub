@@ -68,6 +68,10 @@ export default function FinanceControlling() {
   const [comment, setComment] = useState('');
   const [monthOpen, setMonthOpen] = useState(false);
   const [range, setRange] = useState(monthBounds());
+  const [period, setPeriod] = useState<string>('alle');
+  const [pageSize, setPageSize] = useState<string>('50');
+  const [page, setPage] = useState(1);
+
 
   const { data: employees = [] } = useQuery({
     queryKey: ['fc-employees'],
@@ -112,6 +116,20 @@ export default function FinanceControlling() {
     };
   }, [cases]);
 
+  const periodBounds = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    switch (period) {
+      case 'dieser_monat': return { from: iso(new Date(y, m, 1)), to: iso(new Date(y, m + 1, 0)) };
+      case 'letzter_monat': return { from: iso(new Date(y, m - 1, 1)), to: iso(new Date(y, m, 0)) };
+      case 'dieses_jahr': return { from: `${y}-01-01`, to: `${y}-12-31` };
+      case 'letztes_jahr': return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31` };
+      default: return null;
+    }
+  }, [period]);
+
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     const startOfWeek = new Date();
@@ -119,6 +137,10 @@ export default function FinanceControlling() {
     const today = new Date().toISOString().slice(0, 10);
 
     return cases.filter(c => {
+      if (periodBounds) {
+        const d = (c.created_at ?? '').slice(0, 10);
+        if (d < periodBounds.from || d > periodBounds.to) return false;
+      }
       if (q) {
         const hay = [c.customer_name, c.customer_number, c.reference_number, c.case_type, c.status]
           .map(v => (v ?? '').toString().toLowerCase()).join(' ');
@@ -140,7 +162,16 @@ export default function FinanceControlling() {
         default: return c.case_type === filter;
       }
     });
-  }, [cases, filter, search, user]);
+  }, [cases, filter, search, user, periodBounds]);
+
+  const perPage = pageSize === 'alle' ? rows.length || 1 : Number(pageSize);
+  const pageCount = Math.max(1, Math.ceil(rows.length / perPage));
+  const currentPage = Math.min(page, pageCount);
+  const visibleRows = useMemo(
+    () => rows.slice((currentPage - 1) * perPage, currentPage * perPage),
+    [rows, currentPage, perPage],
+  );
+
 
   const openCase = (c: FcCase) => { setActive(c); setComment(''); };
 
@@ -239,7 +270,46 @@ export default function FinanceControlling() {
             >{f.label}</button>
           ))}
         </div>
-        <div className="text-xs text-muted-foreground">{rows.length} Vorgänge</div>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground mr-1">Datum:</span>
+            {[
+              { k: 'dieser_monat', l: 'Dieser Monat' },
+              { k: 'letzter_monat', l: 'Letzter Monat' },
+              { k: 'dieses_jahr', l: 'Dieses Jahr' },
+              { k: 'letztes_jahr', l: 'Letztes Jahr' },
+              { k: 'alle', l: 'Alle' },
+            ].map(o => (
+              <button
+                key={o.k}
+                onClick={() => { setPeriod(o.k); setPage(1); }}
+                className={cn(
+                  'px-2.5 py-1 text-xs rounded-md border transition-colors',
+                  period === o.k
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
+                )}
+              >{o.l}</button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground mr-1">Anzeige:</span>
+            {['20', '50', '100', 'alle'].map(o => (
+              <button
+                key={o}
+                onClick={() => { setPageSize(o); setPage(1); }}
+                className={cn(
+                  'px-2.5 py-1 text-xs rounded-md border transition-colors',
+                  pageSize === o
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'text-muted-foreground border-border hover:text-foreground hover:bg-muted/50',
+                )}
+              >{o === 'alle' ? 'Alle' : o}</button>
+            ))}
+          </div>
+          <div className="text-xs text-muted-foreground">{rows.length} Vorgänge</div>
+        </div>
+
       </div>
 
       <div className="rounded-xl border border-border bg-card w-full max-w-full overflow-x-auto overflow-y-auto max-h-[70vh]">
@@ -259,7 +329,7 @@ export default function FinanceControlling() {
             {!isLoading && rows.length === 0 && (
               <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Keine Vorgänge</td></tr>
             )}
-            {rows.map((c, i) => {
+            {visibleRows.map((c, i) => {
               const t = FC_TRAFFIC[c.traffic] ?? FC_TRAFFIC.gelb;
               return (
                 <tr key={c.id} className={cn('border-t border-border hover:bg-muted/30 cursor-pointer align-top', i % 2 === 1 && 'bg-muted/10')}
@@ -317,6 +387,17 @@ export default function FinanceControlling() {
           </tbody>
         </table>
       </div>
+
+      {pageSize !== 'alle' && pageCount > 1 && (
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>Seite {currentPage} von {pageCount}</span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Zurück</Button>
+            <Button size="sm" variant="outline" disabled={currentPage >= pageCount} onClick={() => setPage(currentPage + 1)}>Weiter</Button>
+          </div>
+        </div>
+      )}
+
 
       <Sheet open={!!active} onOpenChange={(o) => !o && setActive(null)}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
