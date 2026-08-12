@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutDashboard, Truck, CalendarCheck, AlertTriangle, MailQuestion, PackageCheck, Users, Route,
@@ -26,6 +26,14 @@ function rangeFor(key: RangeKey) {
 }
 
 export default function DispatchDashboard() {
+  const navigate = useNavigate();
+  // Auf Smartphones automatisch die vereinfachte Ansicht "Meine Touren" laden
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      navigate('/dispatch/meine-touren', { replace: true });
+    }
+  }, [navigate]);
+
   const [range, setRange] = useState<RangeKey>('week');
   const r = useMemo(() => rangeFor(range), [range]);
   const from = format(r.from, 'yyyy-MM-dd');
