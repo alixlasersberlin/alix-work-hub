@@ -22,11 +22,14 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    const order_number = offer_number.replace(/^ANG-/i, '');
+    // Nummernkreis-Regel: Auftragsnummern IMMER mit "AB-"-Präfix speichern
+    const base = offer_number.replace(/^ANG-/i, '').replace(/^AB-/i, '');
+    const order_number = `AB-${base}`;
+    const legacy_order_number = base; // Alt-Datensätze ohne Präfix erkennen
 
     // Already converted?
     const { data: existing } = await supabase
-      .from('orders').select('id, order_number').eq('order_number', order_number).maybeSingle();
+      .from('orders').select('id, order_number').in('order_number', [order_number, legacy_order_number]).maybeSingle();
     if (existing) {
       return new Response(JSON.stringify({ ok: true, already: true, order_id: existing.id }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
