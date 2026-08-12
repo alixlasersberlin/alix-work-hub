@@ -471,6 +471,7 @@ export default function OrderDetail() {
         { key: 'mediapaket', label: 'Mediapaket', icon: Briefcase },
         { key: 'social_fragebogen', label: 'Social-Fragenkatalog', icon: Share2 },
         { key: 'alixdocs', label: 'Dokumente', icon: FileText },
+        { key: 'docwizard', label: 'Dokumente (geführt)', icon: FileText },
         { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: depositTabBadge },
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
@@ -1455,6 +1456,20 @@ export default function OrderDetail() {
 
       {activeTab === 'alixdocs' && id && (
         <AlixDocsPanel orderId={id} customerId={order?.customer_id ?? null} orderNumber={order?.order_number} />
+      )}
+
+      {activeTab === 'docwizard' && id && (
+        <OrderDocumentsWizard
+          orderId={id}
+          orderNumber={order?.order_number || ''}
+          customerId={order?.customer_id ?? null}
+          customerName={(customer as any)?.customer_name ?? (customer as any)?.company_name ?? null}
+          onRunStep={(step) => {
+            if (step === 'sepa') sepaRef.current?.trigger();
+            else if (step === 'mietkauf') mietkaufRef.current?.open();
+            else ratenplanRef.current?.open();
+          }}
+        />
       )}
 
 
