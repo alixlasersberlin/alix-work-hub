@@ -242,6 +242,10 @@ export default function QuoteDetail() {
           <Button onClick={handoverToAccounting} disabled={saving || !repair} title="Kostenvoranschlag zur Rechnungserstellung an die Buchhaltung übergeben">
             <Receipt className="w-4 h-4 mr-1" />An Buchhaltung übergeben
           </Button>
+          {invoiceOrder && perms.canEditFinance && (
+            <CreateInvoiceDialog order={invoiceOrder} customer={customer} items={invoiceItems} disabled={invoiceItems.length === 0} />
+          )}
+
           {repair?.sent_to_finance && (
             <Badge className="self-center" variant="outline">
               Übergeben{repair.sent_to_finance_at ? ` · ${new Date(repair.sent_to_finance_at).toLocaleDateString('de-DE')}` : ''}
