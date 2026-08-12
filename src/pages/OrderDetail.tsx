@@ -68,6 +68,7 @@ import SocialOnboardingOrderTab from '@/components/SocialOnboardingOrderTab';
 import { CatalogSnapshotsPanel } from '@/components/catalog/CatalogSnapshotsPanel';
 import { SignatureRequestButton } from '@/components/signaturen/SignatureRequestButton';
 import AlixDocsPanel from '@/components/alixdocs/AlixDocsPanel';
+import { OrderDocumentsWizard } from '@/components/orders/OrderDocumentsWizard';
 import OrderChangeRequestDialog from '@/components/OrderChangeRequestDialog';
 
 export default function OrderDetail() {
@@ -93,7 +94,7 @@ export default function OrderDetail() {
   const [history, setHistory] = useState<any[]>([]);
   const [poCount, setPoCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'freigaben' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'mediapaket' | 'social_fragebogen' | 'alixdocs' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'items' | 'serials' | 'deposit' | 'financing' | 'at_purchase' | 'at_approval' | 'freigaben' | 'packages' | 'confirmation' | 'lieferschein' | 'auftragsbestaetigung' | 'az_invoice' | 'mediapaket' | 'social_fragebogen' | 'alixdocs' | 'docwizard' | 'notes' | 'emails' | 'sms' | 'history' | 'raw'>('overview');
   const [serialDevices, setSerialDevices] = useState<Array<{ id: string; serial_number: string; model_name: string; notes: string | null; updated_at: string | null }>>([]);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [depositOk, setDepositOk] = useState(false);
