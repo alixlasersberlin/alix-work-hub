@@ -44,6 +44,7 @@ export default function QuoteDetail() {
   const [quote, setQuote] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [repair, setRepair] = useState<any>(null);
+  const [customer, setCustomer] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,6 +57,10 @@ export default function QuoteDetail() {
     if (q?.repair_order_id) {
       const { data: r } = await sbRepair.from('repair_orders').select('*').eq('id', q.repair_order_id).maybeSingle();
       setRepair(r);
+      if (r?.customer_id) {
+        const { data: c } = await supabase.from('customers').select('*').eq('id', r.customer_id).maybeSingle();
+        setCustomer(c);
+      }
     }
     const { data: i } = await sbRepair.from('repair_quote_items').select('*').eq('quote_id', id).order('sort_order').order('created_at');
     setItems(i || []);
@@ -63,6 +68,7 @@ export default function QuoteDetail() {
     setHistory(h || []);
     setLoading(false);
   }, [id]);
+
 
   useEffect(() => { load(); }, [load]);
 
