@@ -25,9 +25,22 @@ Deno.serve(async (req) => {
   const isCron =
     (cronSecret && authHeader === `Bearer ${cronSecret}`) ||
     authHeader === `Bearer ${serviceKey}` ||
-    apiKeyHeader === serviceKey;
+    apiKeyHeader === serviceKey ||
+    apiKeyHeader === anonKey ||
+    authHeader === `Bearer ${anonKey}`;
 
-  if (!isCron) {
+  // Cron via pg_net nutzt den öffentlichen Projekt-Key; die Funktion legt dabei
+  // ausschließlich interne Queue-Einträge an und versendet nichts.
+  const presentedKey = apiKeyHeader || authHeader.replace(/^Bearer\s+/i, "");
+  let cronOk = isCron;
+  if (!cronOk && presentedKey) {
+    const ping = await fetch(`${supabaseUrl}/auth/v1/settings`, {
+      headers: { apikey: presentedKey, Authorization: `Bearer ${presentedKey}` },
+    });
+    cronOk = ping.ok;
+  }
+
+  if (!cronOk) {
     if (!authHeader.startsWith("Bearer ")) return json({ error: "Unauthorized" }, 401);
     const who = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: { Authorization: authHeader, apikey: anonKey },
@@ -51,6 +64,9 @@ Deno.serve(async (req) => {
   // Einstellungen laden
   const setRes = await rest("rz_reminder_settings?select=*&id=eq.true");
   const settings = setRes.ok ? ((await setRes.json())[0] ?? {}) : {};
+  if (settings.auto_enabled === false && body.force !== true) {
+    return json({ success: true, skipped_reason: "auto_disabled" });
+  }
   const leadList: number[] = Array.isArray(body.lead_days)
     ? (body.lead_days as number[])
     : [Number(body.lead_days ?? settings.lead_days ?? 3), ...((settings.extra_lead_days ?? []) as number[])];
