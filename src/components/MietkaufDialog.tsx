@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { FileText, Download } from 'lucide-react';
+import { FileText, Download, Check } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { createPDF } from '@/lib/pdf-utils';
 import alixLogo from '@/assets/alix-logo-gold-mietkauf.png.asset.json';
@@ -87,6 +87,37 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
   const [geraetModell, setGeraetModell] = useState('');
   const [zusatzService, setZusatzService] = useState('');
   const [kaufpreisEnde, setKaufpreisEnde] = useState('');
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+
+  const orderItems: any[] = Array.isArray(order?.items) ? order.items : [];
+  const itemTotal = (it: any) => {
+    const qty = Number(it?.quantity ?? 1) || 1;
+    const rate = Number(it?.rate ?? it?.price ?? 0) || 0;
+    const total = Number(it?.total ?? it?.item_total ?? NaN);
+    return Number.isFinite(total) && total > 0 ? total : qty * rate;
+  };
+  const selectedRows = orderItems.filter((_, i) => selectedItems.includes(i));
+  const selectedSum = selectedRows.reduce((s, it) => s + itemTotal(it), 0);
+
+  // Standardmäßig alle Positionen des Auftrags auswählen
+  useEffect(() => {
+    setSelectedItems(orderItems.map((_, i) => i));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id, orderItems.length]);
+
+  function toggleItem(i: number) {
+    setSelectedItems(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i].sort((a, b) => a - b));
+  }
+
+  function applySelection() {
+    if (selectedRows.length === 0) {
+      toast({ variant: 'destructive', title: 'Keine Position ausgewählt' });
+      return;
+    }
+    setGeraetModell(selectedRows.map(it => it.item_name || it.name).filter(Boolean).join(', '));
+    setKaufpreis(selectedSum.toFixed(2));
+    toast({ title: 'Positionen übernommen', description: `${selectedRows.length} Position(en) in den Vertrag übernommen.` });
+  }
 
   // Region auto-detect from shipping/billing country
   const detectedRegion: 'DE' | 'EU' = useMemo(() => {
@@ -293,6 +324,42 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     doc.text(zusatzService, ml + cw * 0.35, y + 5.5);
     doc.line(ml + cw * 0.33, y, ml + cw * 0.33, y + 8);
     y += 14;
+
+    // ── Ausgewählte Positionen ──
+    if (selectedRows.length > 0) {
+      doc.setFont('Inter', 'bold');
+      doc.setFontSize(10);
+      doc.text('Vertragspositionen', ml, y);
+      y += 4;
+      doc.setFontSize(8.5);
+      drawRow(y, 7);
+      doc.text('Pos.', ml + 3, y + 4.8);
+      doc.text('Bezeichnung', ml + 15, y + 4.8);
+      doc.text('Menge', ml + cw * 0.68, y + 4.8, { align: 'right' });
+      doc.text('Betrag', pw - mr - 3, y + 4.8, { align: 'right' });
+      y += 7;
+      doc.setFont('Inter', 'normal');
+      selectedRows.forEach((it: any, i: number) => {
+        if (y > ph - 45) { doc.addPage(); y = 20; }
+        const name = String(it.item_name || it.name || '—');
+        const label = doc.splitTextToSize(it.sku ? `${name} (${it.sku})` : name, cw * 0.5)[0];
+        drawRow(y, 6.5);
+        doc.text(String(i + 1), ml + 3, y + 4.5);
+        doc.text(label, ml + 15, y + 4.5);
+        doc.text(String(it.quantity ?? 1), ml + cw * 0.68, y + 4.5, { align: 'right' });
+        doc.text(fmtCurrency(itemTotal(it)), pw - mr - 3, y + 4.5, { align: 'right' });
+        y += 6.5;
+      });
+      drawRow(y, 7);
+      doc.setFont('Inter', 'bold');
+      doc.text('Summe Positionen', ml + 15, y + 4.8);
+      doc.text(fmtCurrency(selectedSum), pw - mr - 3, y + 4.8, { align: 'right' });
+      doc.setFont('Inter', 'normal');
+      doc.setFontSize(9);
+      y += 14;
+    }
+
+
 
     // ── Laufzeit checkboxes ──
     doc.setFont('Inter', 'bold');
@@ -550,26 +617,52 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
               </div>
 
               <div className="rounded-lg bg-secondary/50 border border-border p-3 text-sm flex-1 min-h-0 flex flex-col">
-                <p className="font-medium text-foreground mb-2 shrink-0">Artikelliste</p>
+                <div className="flex items-center justify-between gap-2 mb-2 shrink-0">
+                  <p className="font-medium text-foreground">Artikelliste · Positionen auswählen</p>
+                  <div className="flex items-center gap-1">
+                    <button type="button" className="text-xs text-primary hover:underline" onClick={() => setSelectedItems(orderItems.map((_, i) => i))}>Alle</button>
+                    <span className="text-xs text-muted-foreground">/</span>
+                    <button type="button" className="text-xs text-primary hover:underline" onClick={() => setSelectedItems([])}>Keine</button>
+                  </div>
+                </div>
                 <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
-                  {(order?.items && order.items.length > 0) ? order.items.map((it: any, i: number) => (
-                    <div key={i} className="flex items-start justify-between gap-2 border-b border-border/50 pb-2 last:border-0">
-                      <div className="min-w-0">
-                        <p className="text-foreground truncate">{it.item_name || it.name || '—'}</p>
-                        {it.sku && <p className="text-xs text-muted-foreground truncate">SKU: {it.sku}</p>}
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-foreground">{it.quantity ?? 1} ×</p>
-                        {typeof it.rate === 'number' && (
-                          <p className="text-xs text-muted-foreground">{fmtCurrency(it.rate)}</p>
-                        )}
-                      </div>
-                    </div>
-                  )) : (
+                  {orderItems.length > 0 ? orderItems.map((it: any, i: number) => {
+                    const active = selectedItems.includes(i);
+                    return (
+                      <button
+                        type="button"
+                        key={i}
+                        onClick={() => toggleItem(i)}
+                        className={`w-full text-left flex items-start gap-2 rounded-md border p-2 transition-colors ${active ? 'border-primary/60 bg-primary/10' : 'border-border/50 hover:bg-secondary'}`}
+                      >
+                        <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border ${active ? 'bg-primary border-primary text-primary-foreground' : 'border-muted-foreground/40'}`}>
+                          {active && <Check className="h-3 w-3" />}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-foreground truncate">{it.item_name || it.name || '—'}</span>
+                          {it.sku && <span className="block text-xs text-muted-foreground truncate">SKU: {it.sku}</span>}
+                        </span>
+                        <span className="text-right shrink-0">
+                          <span className="block text-foreground">{it.quantity ?? 1} ×</span>
+                          <span className="block text-xs text-muted-foreground">{fmtCurrency(itemTotal(it))}</span>
+                        </span>
+                      </button>
+                    );
+                  }) : (
                     <p className="text-muted-foreground text-xs">Keine Artikel vorhanden.</p>
                   )}
                 </div>
+                <div className="mt-2 shrink-0 space-y-2 border-t border-border/50 pt-2">
+                  <p className="text-xs text-muted-foreground">
+                    {selectedItems.length} von {orderItems.length} ausgewählt · Summe:{' '}
+                    <span className="text-foreground font-medium">{fmtCurrency(selectedSum)}</span>
+                  </p>
+                  <Button type="button" size="sm" variant="outline" className="w-full" onClick={applySelection} disabled={selectedItems.length === 0}>
+                    Auswahl in Vertrag übernehmen
+                  </Button>
+                </div>
               </div>
+
             </div>
           </div>
         </div>
