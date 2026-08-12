@@ -54,7 +54,7 @@ export default function OrdersWithoutInvoice() {
         fetchAllPages<any>((from, to) =>
           supabase
             .from('orders')
-            .select('id, order_number, internal_number, case_number, order_status, order_date, total_amount, currency, source_system, accounting_region, salesperson_name, lawyer_reason, invoiced_flag, billing_address, customer_id, customers(company_name, contact_name, email, city, billing_address)')
+            .select('id, order_number, internal_number, case_number, order_status, order_date, total_amount, currency, source_system, accounting_region, salesperson_name, lawyer_reason, invoiced_flag, billing_address, customer_id, customers(company_name, contact_name, email, billing_address)')
             .order('order_date', { ascending: false, nullsFirst: false })
             .range(from, to),
         ),
@@ -187,7 +187,9 @@ export default function OrdersWithoutInvoice() {
                     </td>
                     <td className="px-3 py-2">
                       <div>{o.customers?.company_name || o.customers?.contact_name || '–'}</div>
-                      {o.customers?.city && <div className="text-xs text-muted-foreground">{o.customers.city}</div>}
+                      {(o.customers?.billing_address as any)?.city && (
+                        <div className="text-xs text-muted-foreground">{(o.customers.billing_address as any).city}</div>
+                      )}
                     </td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">{o.salesperson_name || '–'}</td>
                     <td className="px-3 py-2 text-right font-semibold">{fmtMoney(o.total_amount, o.currency)}</td>
