@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Plus, Trash2, Printer, Send, Save, FileText, Mail, Receipt } from 'lucide-react';
 import { printRepairQuote, repairQuoteHtmlBlob } from '@/lib/repair/quote-pdf';
+import CreateInvoiceDialog from '@/components/CreateInvoiceDialog';
+
 
 const KIND_LABEL: Record<string, string> = { part: 'Ersatzteil', labor: 'Arbeitszeit', shipping: 'Versand', other: 'Sonstiges' };
 
@@ -42,6 +44,7 @@ export default function QuoteDetail() {
   const [quote, setQuote] = useState<any>(null);
   const [items, setItems] = useState<any[]>([]);
   const [repair, setRepair] = useState<any>(null);
+  const [customer, setCustomer] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -54,6 +57,10 @@ export default function QuoteDetail() {
     if (q?.repair_order_id) {
       const { data: r } = await sbRepair.from('repair_orders').select('*').eq('id', q.repair_order_id).maybeSingle();
       setRepair(r);
+      if (r?.customer_id) {
+        const { data: c } = await supabase.from('customers').select('*').eq('id', r.customer_id).maybeSingle();
+        setCustomer(c);
+      }
     }
     const { data: i } = await sbRepair.from('repair_quote_items').select('*').eq('quote_id', id).order('sort_order').order('created_at');
     setItems(i || []);
@@ -61,6 +68,7 @@ export default function QuoteDetail() {
     setHistory(h || []);
     setLoading(false);
   }, [id]);
+
 
   useEffect(() => { load(); }, [load]);
 
@@ -173,7 +181,36 @@ export default function QuoteDetail() {
     return !canEdit || quote.status === 'Freigegeben' || quote.status === 'Abgelehnt';
   }
 
+  // Rechnungsdaten aus KV ableiten (für direkte Rechnungserstellung)
+  const invoiceOrder = useMemo(() => {
+    if (!quote || !repair) return null;
+    return {
+      id: repair.id,
+      order_number: quote.quote_number,
+      case_number: quote.quote_number,
+      customer_id: repair.customer_id ?? null,
+      zoho_customer_id: (customer as any)?.zoho_customer_id ?? null,
+      customer_name: repair.customer_company || repair.customer_name || null,
+      customer_email: repair.customer_email || null,
+      currency: repair.currency || 'EUR',
+      source_system: (customer as any)?.source_system || 'zoho_eu_1',
+      billing_address: (customer as any)?.billing_address ?? null,
+      total_amount: Number(quote.total_gross || 0),
+    };
+  }, [quote, repair, customer]);
 
+  const invoiceItems = useMemo(() => {
+    const list = items.map((it) => ({
+      item_name: `${KIND_LABEL[it.kind] || 'Position'}: ${it.description || '–'}`,
+      description: '',
+      quantity: Number(it.quantity || 0),
+      rate: Number(it.unit_price || 0),
+    }));
+    const h = Number(quote?.labor_hours || 0);
+    const r = Number(quote?.labor_rate || 0);
+    if (h > 0 && r > 0) list.push({ item_name: 'Arbeitszeit', description: '', quantity: h, rate: r });
+    return list.filter((l) => l.quantity > 0 && l.rate !== 0);
+  }, [items, quote]);
 
 
   if (loading) return <Card className="p-8 text-center text-muted-foreground">Lädt…</Card>;
@@ -205,6 +242,10 @@ export default function QuoteDetail() {
           <Button onClick={handoverToAccounting} disabled={saving || !repair} title="Kostenvoranschlag zur Rechnungserstellung an die Buchhaltung übergeben">
             <Receipt className="w-4 h-4 mr-1" />An Buchhaltung übergeben
           </Button>
+          {invoiceOrder && perms.canEditFinance && (
+            <CreateInvoiceDialog order={invoiceOrder} customer={customer} items={invoiceItems} disabled={invoiceItems.length === 0} />
+          )}
+
           {repair?.sent_to_finance && (
             <Badge className="self-center" variant="outline">
               Übergeben{repair.sent_to_finance_at ? ` · ${new Date(repair.sent_to_finance_at).toLocaleDateString('de-DE')}` : ''}
