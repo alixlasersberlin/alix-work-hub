@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
   const presentedKey = apiKeyHeader || authHeader.replace(/^Bearer\s+/i, "");
   let cronOk = isCron;
   if (!cronOk && presentedKey) {
-    const ping = await fetch(`${supabaseUrl}/rest/v1/`, {
+    const ping = await fetch(`${supabaseUrl}/auth/v1/settings`, {
       headers: { apikey: presentedKey, Authorization: `Bearer ${presentedKey}` },
     });
     cronOk = ping.ok;
