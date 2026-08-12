@@ -68,6 +68,10 @@ export default function FinanceControlling() {
   const [comment, setComment] = useState('');
   const [monthOpen, setMonthOpen] = useState(false);
   const [range, setRange] = useState(monthBounds());
+  const [period, setPeriod] = useState<string>('alle');
+  const [pageSize, setPageSize] = useState<string>('50');
+  const [page, setPage] = useState(1);
+
 
   const { data: employees = [] } = useQuery({
     queryKey: ['fc-employees'],
