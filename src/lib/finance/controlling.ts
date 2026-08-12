@@ -23,6 +23,11 @@ export type FcCase = {
   billing_flag: string | null;
   assigned_to: string | null;
   due_date: string | null;
+  followup_date: string | null;
+  approval_status: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  escalated_at: string | null;
   notes: string | null;
   closed_at: string | null;
   created_at: string;
@@ -115,6 +120,9 @@ export async function addFcEvent(caseId: string, e: Partial<FcEvent>) {
 }
 
 export async function setFcStatus(c: FcCase, newStatus: string, comment?: string) {
+  if (newStatus === 'abgeschlossen' && c.approval_status !== 'freigegeben') {
+    throw new Error('Abschluss nicht möglich: Finance-Freigabe fehlt.');
+  }
   await updateFcCase(c.id, {
     status: newStatus,
     closed_at: newStatus === 'abgeschlossen' ? new Date().toISOString() : null,
@@ -133,6 +141,40 @@ export async function loadCaseInvoices(reference: string | null) {
     .order('invoice_date', { ascending: false });
   if (error) throw error;
   return data ?? [];
+}
+
+export const FC_APPROVAL: Record<string, { label: string; cls: string }> = {
+  offen: { label: 'Freigabe offen', cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+  freigegeben: { label: 'Freigegeben', cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  abgelehnt: { label: 'Abgelehnt', cls: 'bg-destructive text-destructive-foreground border-destructive' },
+};
+
+/** Finance-Freigabe setzen (Voraussetzung für endgültigen Abschluss). */
+export async function setFcApproval(c: FcCase, approval: 'offen' | 'freigegeben' | 'abgelehnt', comment?: string) {
+  const { data: auth } = await supabase.auth.getUser();
+  await updateFcCase(c.id, {
+    approval_status: approval,
+    approved_by: approval === 'offen' ? null : (auth?.user?.id ?? null),
+    approved_at: approval === 'offen' ? null : new Date().toISOString(),
+  } as Partial<FcCase>);
+  await addFcEvent(c.id, {
+    event_type: 'freigabe',
+    comment: comment || `Finance-Freigabe: ${FC_APPROVAL[approval]?.label ?? approval}`,
+  });
+}
+
+export type FcMonthClose = {
+  from: string; to: string;
+  orders_closed: number; invoices_created: number; invoices_missing: number;
+  revenue_not_invoiced: number; open_final_invoices: number; open_repair_invoices: number;
+  open_partial_deliveries: number; open_to_pay_total: number;
+  approved: number; awaiting_approval: number;
+};
+
+export async function loadFcMonthClose(from: string, to: string): Promise<FcMonthClose> {
+  const { data, error } = await sb.rpc('fc_month_close', { p_from: from, p_to: to });
+  if (error) throw error;
+  return data as FcMonthClose;
 }
 
 export const fmtEur = (n: number | null | undefined) =>

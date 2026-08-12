@@ -21799,6 +21799,9 @@ export type Database = {
       fc_cases: {
         Row: {
           accounting_region: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           assigned_to: string | null
           billing_flag: string | null
           case_type: string
@@ -21809,6 +21812,8 @@ export type Database = {
           customer_number: string | null
           delivered_amount: number
           due_date: string | null
+          escalated_at: string | null
+          followup_date: string | null
           id: string
           invoiced_amount: number
           notes: string | null
@@ -21829,6 +21834,9 @@ export type Database = {
         }
         Insert: {
           accounting_region?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           assigned_to?: string | null
           billing_flag?: string | null
           case_type: string
@@ -21839,6 +21847,8 @@ export type Database = {
           customer_number?: string | null
           delivered_amount?: number
           due_date?: string | null
+          escalated_at?: string | null
+          followup_date?: string | null
           id?: string
           invoiced_amount?: number
           notes?: string | null
@@ -21859,6 +21869,9 @@ export type Database = {
         }
         Update: {
           accounting_region?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           assigned_to?: string | null
           billing_flag?: string | null
           case_type?: string
@@ -21869,6 +21882,8 @@ export type Database = {
           customer_number?: string | null
           delivered_amount?: number
           due_date?: string | null
+          escalated_at?: string | null
+          followup_date?: string | null
           id?: string
           invoiced_amount?: number
           notes?: string | null
@@ -49705,6 +49720,7 @@ export type Database = {
       }
       expire_break_glass_sessions: { Args: never; Returns: number }
       expire_temporary_role_grants: { Args: never; Returns: number }
+      fc_month_close: { Args: { p_from: string; p_to: string }; Returns: Json }
       fc_order_financials: {
         Args: { p_order_id: string }
         Returns: {
@@ -49714,6 +49730,7 @@ export type Database = {
         }[]
       }
       fc_refresh_order: { Args: { p_order_id: string }; Returns: undefined }
+      fc_run_escalation: { Args: never; Returns: Json }
       fc_upsert_case: {
         Args: {
           p_amount: number

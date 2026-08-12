@@ -1,19 +1,20 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Activity, AlertTriangle, FileText, Search, RefreshCw, ExternalLink } from 'lucide-react';
+import { Activity, AlertTriangle, FileText, Search, RefreshCw, ExternalLink, CheckCircle2, XCircle, CalendarCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import {
-  FC_STATUS, FC_TRAFFIC, fmtEur, listFcCases, listFcEvents, loadCaseInvoices,
-  setFcStatus, addFcEvent, updateFcCase, type FcCase,
+  FC_STATUS, FC_TRAFFIC, FC_APPROVAL, fmtEur, listFcCases, listFcEvents, loadCaseInvoices,
+  setFcStatus, addFcEvent, updateFcCase, setFcApproval, loadFcMonthClose, type FcCase,
 } from '@/lib/finance/controlling';
 
 const FILTERS = [
@@ -27,6 +28,9 @@ const FILTERS = [
   { key: 'REPARATUR', label: 'Reparaturen' },
   { key: 'SCHLUSSRECHNUNG', label: 'Schlussrechnungen' },
   { key: 'kritisch', label: 'Kritisch' },
+  { key: 'freigabe_offen', label: 'Freigabe offen' },
+  { key: 'eskaliert', label: 'Eskaliert' },
+  { key: 'wiedervorlage', label: 'Wiedervorlage fällig' },
   { key: 'heute', label: 'Heute' },
   { key: 'woche', label: 'Diese Woche' },
   { key: 'abgeschlossen', label: 'Abgeschlossen' },
@@ -34,6 +38,15 @@ const FILTERS = [
 ];
 
 const PRIORITIES: Record<string, string> = { normal: 'Normal', hoch: 'Hoch', kritisch: 'Kritisch' };
+
+function monthBounds() {
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1);
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  return { from: iso(from), to: iso(to) };
+}
+
 
 function Kpi({ label, value, tone }: { label: string; value: number | string; tone?: string }) {
   return (
@@ -47,11 +60,14 @@ function Kpi({ label, value, tone }: { label: string; value: number | string; to
 export default function FinanceControlling() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { user } = useAuth();
+  const { user, hasAnyRole } = useAuth();
+  const canApprove = hasAnyRole(['Super Admin', 'Admin', 'Buchhaltung']);
   const [filter, setFilter] = useState('alle');
   const [search, setSearch] = useState('');
   const [active, setActive] = useState<FcCase | null>(null);
   const [comment, setComment] = useState('');
+  const [monthOpen, setMonthOpen] = useState(false);
+  const [range, setRange] = useState(monthBounds());
 
   const { data: employees = [] } = useQuery({
     queryKey: ['fc-employees'],
@@ -92,6 +108,7 @@ export default function FinanceControlling() {
       partial: cases.filter(c => c.case_type === 'TEILLIEFERUNG' && c.open_to_invoice > 0.01).length,
       repairs: cases.filter(c => c.case_type === 'REPARATUR' && c.open_to_invoice > 0.01).length,
       critical: cases.filter(c => c.traffic === 'kritisch' && c.status !== 'abgeschlossen').length,
+      awaitingApproval: cases.filter(c => c.approval_status !== 'freigegeben' && c.status !== 'abgeschlossen').length,
     };
   }, [cases]);
 
@@ -113,6 +130,9 @@ export default function FinanceControlling() {
         case 'rechnung_fehlt': return c.open_to_invoice > 0.01 && c.status !== 'abgeschlossen';
         case 'differenzen': return Math.abs(c.open_to_invoice) > 0.01;
         case 'kritisch': return c.traffic === 'kritisch';
+        case 'freigabe_offen': return c.approval_status !== 'freigegeben' && c.status !== 'abgeschlossen';
+        case 'eskaliert': return !!c.escalated_at && c.status !== 'abgeschlossen';
+        case 'wiedervorlage': return !!c.followup_date && c.followup_date <= today && c.status !== 'abgeschlossen';
         case 'heute': return c.created_at.slice(0, 10) === today;
         case 'woche': return new Date(c.created_at) >= startOfWeek;
         case 'abgeschlossen': return c.status === 'abgeschlossen';
@@ -135,6 +155,19 @@ export default function FinanceControlling() {
       toast.error(e.message ?? 'Fehler');
     }
   };
+
+  const doApproval = async (c: FcCase, approval: 'offen' | 'freigegeben' | 'abgelehnt') => {
+    try {
+      await setFcApproval(c, approval);
+      toast.success(`Freigabe: ${FC_APPROVAL[approval].label}`);
+      setActive({ ...c, approval_status: approval, approved_at: approval === 'offen' ? null : new Date().toISOString() });
+      qc.invalidateQueries({ queryKey: ['fc-cases'] });
+      qc.invalidateQueries({ queryKey: ['fc-events', c.id] });
+    } catch (e: any) {
+      toast.error(e.message ?? 'Fehler');
+    }
+  };
+
 
   const saveComment = async () => {
     if (!active || !comment.trim()) return;
@@ -160,12 +193,17 @@ export default function FinanceControlling() {
           <h1 className="text-xl font-semibold">Finance Controlling</h1>
           <span className="text-xs text-muted-foreground">Zentrale Rechnungs-Kontrollstelle</span>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="w-4 h-4 mr-2" />Aktualisieren
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setMonthOpen(true)}>
+            <CalendarCheck className="w-4 h-4 mr-2" />Monatsabschluss
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="w-4 h-4 mr-2" />Aktualisieren
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
         <Kpi label="Offene Prüfungen" value={kpis.open} />
         <Kpi label="Rechnung erforderlich" value={kpis.needsInvoice} tone="text-destructive" />
         <Kpi label="Rechnung vorhanden" value={kpis.invoiced} tone="text-emerald-400" />
@@ -173,7 +211,9 @@ export default function FinanceControlling() {
         <Kpi label="Teillieferungen" value={kpis.partial} />
         <Kpi label="Reparaturen" value={kpis.repairs} />
         <Kpi label="Kritisch" value={kpis.critical} tone="text-red-400" />
+        <Kpi label="Freigabe offen" value={kpis.awaitingApproval} tone="text-amber-400" />
       </div>
+
 
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <div className="relative">
@@ -237,7 +277,16 @@ export default function FinanceControlling() {
                     </div>
                   </td>
                   <td className="p-2">
-                    <div className="font-medium">{c.customer_name || '—'}</div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium">{c.customer_name || '—'}</span>
+                      <span className={cn('inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-full text-[10px] border',
+                        (FC_APPROVAL[c.approval_status] ?? FC_APPROVAL.offen).cls)}>
+                        {(FC_APPROVAL[c.approval_status] ?? FC_APPROVAL.offen).label}
+                      </span>
+                      {c.escalated_at && (
+                        <span className="text-[10px] text-red-400 whitespace-nowrap">eskaliert</span>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground mt-0.5">
                       {FC_STATUS[c.status] ?? c.status} · {c.trigger_event}
                     </div>
@@ -332,7 +381,39 @@ export default function FinanceControlling() {
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-2">
-                  <div className="text-xs text-muted-foreground">Verantwortlich / Fällig am / Priorität</div>
+                  <div className="text-xs text-muted-foreground">Finance-Freigabe</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs border',
+                      (FC_APPROVAL[active.approval_status] ?? FC_APPROVAL.offen).cls)}>
+                      {(FC_APPROVAL[active.approval_status] ?? FC_APPROVAL.offen).label}
+                    </span>
+                    {active.approved_at && (
+                      <span className="text-xs text-muted-foreground">
+                        am {new Date(active.approved_at).toLocaleString('de-DE')}
+                      </span>
+                    )}
+                  </div>
+                  {canApprove ? (
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => doApproval(active, 'freigegeben')}>
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1" />Freigeben
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => doApproval(active, 'abgelehnt')}>
+                        <XCircle className="w-3.5 h-3.5 mr-1" />Ablehnen
+                      </Button>
+                      {active.approval_status !== 'offen' && (
+                        <Button size="sm" variant="ghost" onClick={() => doApproval(active, 'offen')}>Zurücksetzen</Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-muted-foreground">
+                      Nur Buchhaltung / Admin kann freigeben. Ohne Freigabe ist kein Abschluss möglich.
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <div className="text-xs text-muted-foreground">Verantwortlich / Fällig am / Wiedervorlage / Priorität</div>
                   <div className="flex flex-wrap gap-2">
                     <Select
                       value={active.assigned_to ?? 'none'}
@@ -363,6 +444,16 @@ export default function FinanceControlling() {
                       defaultValue={active.due_date ?? ''}
                       onBlur={async (e) => {
                         await updateFcCase(active.id, { due_date: e.target.value || null } as any);
+                        qc.invalidateQueries({ queryKey: ['fc-cases'] });
+                      }}
+                    />
+                    <Input
+                      type="date"
+                      className="w-[170px]"
+                      title="Wiedervorlage"
+                      defaultValue={active.followup_date ?? ''}
+                      onBlur={async (e) => {
+                        await updateFcCase(active.id, { followup_date: e.target.value || null } as any);
                         qc.invalidateQueries({ queryKey: ['fc-cases'] });
                       }}
                     />
@@ -419,6 +510,59 @@ export default function FinanceControlling() {
           )}
         </SheetContent>
       </Sheet>
+
+      <MonthCloseDialog open={monthOpen} onOpenChange={setMonthOpen} range={range} setRange={setRange} />
     </div>
+  );
+}
+
+function MonthCloseDialog({ open, onOpenChange, range, setRange }: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  range: { from: string; to: string };
+  setRange: (r: { from: string; to: string }) => void;
+}) {
+  const { data, isFetching } = useQuery({
+    queryKey: ['fc-month-close', range.from, range.to],
+    queryFn: () => loadFcMonthClose(range.from, range.to),
+    enabled: open,
+  });
+
+  const items: { label: string; value: string | number; tone?: string }[] = data ? [
+    { label: 'Aufträge abgeschlossen', value: data.orders_closed },
+    { label: 'Rechnungen erstellt', value: data.invoices_created, tone: 'text-emerald-400' },
+    { label: 'Fehlende Rechnungen', value: data.invoices_missing, tone: 'text-destructive' },
+    { label: 'Umsatz noch nicht fakturiert', value: fmtEur(data.revenue_not_invoiced), tone: 'text-destructive' },
+    { label: 'Offene Schlussrechnungen', value: data.open_final_invoices },
+    { label: 'Offene Reparaturrechnungen', value: data.open_repair_invoices },
+    { label: 'Offene Teillieferungen', value: data.open_partial_deliveries },
+    { label: 'Noch offen zu zahlen', value: fmtEur(data.open_to_pay_total), tone: 'text-amber-400' },
+    { label: 'Freigegeben', value: data.approved, tone: 'text-emerald-400' },
+    { label: 'Freigabe ausstehend', value: data.awaiting_approval, tone: 'text-amber-400' },
+  ] : [];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader><DialogTitle>Monatsabschluss</DialogTitle></DialogHeader>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input type="date" className="w-[170px]" value={range.from}
+                 onChange={(e) => setRange({ ...range, from: e.target.value })} />
+          <span className="text-muted-foreground text-sm">bis</span>
+          <Input type="date" className="w-[170px]" value={range.to}
+                 onChange={(e) => setRange({ ...range, to: e.target.value })} />
+          {isFetching && <span className="text-xs text-muted-foreground">Lade…</span>}
+        </div>
+        <div className="grid grid-cols-2 gap-3 mt-2">
+          {items.map(i => (
+            <div key={i.label} className="rounded-lg border border-border p-3">
+              <div className="text-xs text-muted-foreground">{i.label}</div>
+              <div className={cn('text-lg font-semibold mt-1', i.tone)}>{i.value}</div>
+            </div>
+          ))}
+          {!data && !isFetching && <div className="text-sm text-muted-foreground">Keine Daten</div>}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
