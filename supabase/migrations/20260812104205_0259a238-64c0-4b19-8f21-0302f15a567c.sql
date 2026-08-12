@@ -1,0 +1,1 @@
+update public.sig_facsimile_settings set pos_x = 60, updated_at = now() where doc_type = 'lease_purchase';
