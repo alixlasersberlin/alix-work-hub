@@ -510,6 +510,59 @@ export default function FinanceControlling() {
           )}
         </SheetContent>
       </Sheet>
+
+      <MonthCloseDialog open={monthOpen} onOpenChange={setMonthOpen} range={range} setRange={setRange} />
     </div>
+  );
+}
+
+function MonthCloseDialog({ open, onOpenChange, range, setRange }: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  range: { from: string; to: string };
+  setRange: (r: { from: string; to: string }) => void;
+}) {
+  const { data, isFetching } = useQuery({
+    queryKey: ['fc-month-close', range.from, range.to],
+    queryFn: () => loadFcMonthClose(range.from, range.to),
+    enabled: open,
+  });
+
+  const items: { label: string; value: string | number; tone?: string }[] = data ? [
+    { label: 'Aufträge abgeschlossen', value: data.orders_closed },
+    { label: 'Rechnungen erstellt', value: data.invoices_created, tone: 'text-emerald-400' },
+    { label: 'Fehlende Rechnungen', value: data.invoices_missing, tone: 'text-destructive' },
+    { label: 'Umsatz noch nicht fakturiert', value: fmtEur(data.revenue_not_invoiced), tone: 'text-destructive' },
+    { label: 'Offene Schlussrechnungen', value: data.open_final_invoices },
+    { label: 'Offene Reparaturrechnungen', value: data.open_repair_invoices },
+    { label: 'Offene Teillieferungen', value: data.open_partial_deliveries },
+    { label: 'Noch offen zu zahlen', value: fmtEur(data.open_to_pay_total), tone: 'text-amber-400' },
+    { label: 'Freigegeben', value: data.approved, tone: 'text-emerald-400' },
+    { label: 'Freigabe ausstehend', value: data.awaiting_approval, tone: 'text-amber-400' },
+  ] : [];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader><DialogTitle>Monatsabschluss</DialogTitle></DialogHeader>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input type="date" className="w-[170px]" value={range.from}
+                 onChange={(e) => setRange({ ...range, from: e.target.value })} />
+          <span className="text-muted-foreground text-sm">bis</span>
+          <Input type="date" className="w-[170px]" value={range.to}
+                 onChange={(e) => setRange({ ...range, to: e.target.value })} />
+          {isFetching && <span className="text-xs text-muted-foreground">Lade…</span>}
+        </div>
+        <div className="grid grid-cols-2 gap-3 mt-2">
+          {items.map(i => (
+            <div key={i.label} className="rounded-lg border border-border p-3">
+              <div className="text-xs text-muted-foreground">{i.label}</div>
+              <div className={cn('text-lg font-semibold mt-1', i.tone)}>{i.value}</div>
+            </div>
+          ))}
+          {!data && !isFetching && <div className="text-sm text-muted-foreground">Keine Daten</div>}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
