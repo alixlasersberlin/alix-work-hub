@@ -179,12 +179,17 @@ export default function FinanceControlling() {
           <h1 className="text-xl font-semibold">Finance Controlling</h1>
           <span className="text-xs text-muted-foreground">Zentrale Rechnungs-Kontrollstelle</span>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw className="w-4 h-4 mr-2" />Aktualisieren
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setMonthOpen(true)}>
+            <CalendarCheck className="w-4 h-4 mr-2" />Monatsabschluss
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="w-4 h-4 mr-2" />Aktualisieren
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
         <Kpi label="Offene Prüfungen" value={kpis.open} />
         <Kpi label="Rechnung erforderlich" value={kpis.needsInvoice} tone="text-destructive" />
         <Kpi label="Rechnung vorhanden" value={kpis.invoiced} tone="text-emerald-400" />
@@ -192,7 +197,9 @@ export default function FinanceControlling() {
         <Kpi label="Teillieferungen" value={kpis.partial} />
         <Kpi label="Reparaturen" value={kpis.repairs} />
         <Kpi label="Kritisch" value={kpis.critical} tone="text-red-400" />
+        <Kpi label="Freigabe offen" value={kpis.awaitingApproval} tone="text-amber-400" />
       </div>
+
 
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <div className="relative">
