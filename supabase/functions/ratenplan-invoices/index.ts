@@ -137,7 +137,7 @@ Deno.serve(async (req) => {
             due_date: date,
             amount,
             currency: p.currency ?? 'EUR',
-            status: 'offen',
+            status: (p.status ?? '').toLowerCase() === 'pruefung_hold' ? 'zurueckgehalten' : 'offen',
             origin: isCron ? 'cron' : 'manuell',
             delivery_date: p.delivery_date,
             accounting_region: (p.accounting_region ?? 'EU'),
