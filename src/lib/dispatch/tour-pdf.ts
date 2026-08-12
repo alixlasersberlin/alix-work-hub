@@ -131,7 +131,10 @@ const CONTENT_W = PAGE_W - LEFT - RIGHT;
 
 type Line = { text: string; size: number; muted?: boolean; indent?: number; h: number; bold?: boolean };
 
-function buildBlocks(entries: { tour: TourLike; stops: TourStopLike[] }[]): Line[][] {
+function buildBlocks(
+  entries: { tour: TourLike; stops: TourStopLike[] }[],
+  addrMap: Map<string, OrderAddresses>,
+): Line[][] {
   return entries.map(({ tour, stops }) => {
     const lines: Line[] = [];
     lines.push({
@@ -160,7 +163,10 @@ function buildBlocks(entries: { tour: TourLike; stops: TourStopLike[] }[]): Line
         text: `${s.position ?? i + 1}. ${a.order_number ?? 'Ohne Auftrag'} · ${a.company_name || a.customer_name || 'Ohne Kunde'}`,
         size: 9.5, h: 5,
       });
-      lines.push({ text: stopAddress(a), size: 8.5, muted: true, indent: 4, h: 4.4 });
+      const addr = a.order_number ? addrMap.get(a.order_number) : undefined;
+      const delivery = addr?.delivery || stopAddress(a);
+      lines.push({ text: `Lieferanschrift: ${delivery || '—'}`, size: 8.5, muted: true, indent: 4, h: 4.4 });
+      lines.push({ text: `Rechnungsanschrift: ${addr?.billing || '—'}`, size: 8.5, muted: true, indent: 4, h: 4.4 });
       const meta = [
         [a.device_name, a.serial_number].filter(Boolean).join(' · '),
         [a.contact_name, a.contact_phone].filter(Boolean).join(' · '),
@@ -170,6 +176,7 @@ function buildBlocks(entries: { tour: TourLike; stops: TourStopLike[] }[]): Line
       if (meta) lines.push({ text: meta, size: 8.5, muted: true, indent: 4, h: 4.4 });
       if (s.notes) lines.push({ text: String(s.notes), size: 8.5, muted: true, indent: 4, h: 4.4 });
     });
+
     lines.push({ text: '', size: 8, h: 5 });
     return lines;
   });
