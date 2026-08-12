@@ -456,12 +456,14 @@ export default function FinanceControlling() {
                     <ExternalLink className="w-3.5 h-3.5 mr-1" />
                     {active.invoiced_amount > 0 ? 'Schlussrechnung erstellen' : 'Rechnung erstellen'}
                   </Button>
-                  <Select value={active.status} onValueChange={(v) => doStatus(active, v)}>
-                    <SelectTrigger className="w-[220px] h-9"><SelectValue /></SelectTrigger>
-                    <SelectContent className="z-[120]" position="popper">
-                      {Object.entries(FC_STATUS).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <select
+                    aria-label="Rechnungsstatus"
+                    className="h-9 w-[260px] rounded-md border border-input bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+                    value={active.status}
+                    onChange={(e) => void doStatus(active, e.target.value)}
+                  >
+                    {Object.entries(FC_STATUS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                  </select>
                 </div>
 
                 <div className="rounded-lg border border-border p-3 space-y-2">
