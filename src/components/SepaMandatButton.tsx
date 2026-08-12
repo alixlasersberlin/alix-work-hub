@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
 import { createPDF } from '@/lib/pdf-utils';
 import { toast } from 'sonner';
+import { capturePdf } from '@/lib/order-docs/capture';
 
 export type SepaMandatHandle = { trigger: () => void };
 
