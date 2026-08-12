@@ -607,7 +607,7 @@ export default function OrderDetail() {
             else toast.error(res?.message || 'Bewertungseinladung fehlgeschlagen');
           },
         }] : []),
-        { key: 'docwizard', label: 'Dokumente (geführt)', icon: FileText, onClick: () => setSearchParams({ tab: 'docwizard' }) },
+        { key: 'docwizard', label: 'Dokumente (geführt)', icon: FileText, onClick: () => setActiveTab('docwizard') },
         { key: 'defer', label: 'Zurückstellen', icon: CalendarClock, onClick: () => setDeferOpen(true) },
       ] as ActionItem[],
     }] : []),
