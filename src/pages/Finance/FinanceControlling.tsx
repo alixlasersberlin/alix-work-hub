@@ -388,6 +388,17 @@ export default function FinanceControlling() {
         </table>
       </div>
 
+      {pageSize !== 'alle' && pageCount > 1 && (
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>Seite {currentPage} von {pageCount}</span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>Zurück</Button>
+            <Button size="sm" variant="outline" disabled={currentPage >= pageCount} onClick={() => setPage(currentPage + 1)}>Weiter</Button>
+          </div>
+        </div>
+      )}
+
+
       <Sheet open={!!active} onOpenChange={(o) => !o && setActive(null)}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           {active && (
