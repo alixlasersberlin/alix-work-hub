@@ -210,6 +210,23 @@ export default function WiederkehrendeZahler() {
 
 
 
+  /** Vertrag endgültig beenden → Bereich „RATEN ENDE LEGAL“ */
+  async function endLegalProfile(p: Profile) {
+    if (!confirm(`Vertrag „${p.recurrence_name || p.reference_number || ''}“ BEENDEN?\n\nDer Kunde wird nach „RATEN ENDE LEGAL“ verschoben. Es werden keine wiederkehrenden Rechnungen mehr erstellt.`)) return;
+    setStoppingId(p.id);
+    const { error } = await supabase
+      .from('zoho_recurring_profiles')
+      .update({ status: 'legal_ended' } as any)
+      .eq('id', p.id);
+    setStoppingId(null);
+    if (error) {
+      toast({ title: 'Beenden fehlgeschlagen', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: 'Vertrag beendet', description: 'Der Kunde liegt jetzt unter BUCHHALTUNG → RATEN ENDE LEGAL.' });
+    setProfiles(prev => prev.filter(x => x.id !== p.id));
+  }
+
   async function stopProfile(p: Profile) {
     if (!confirm(`Vertrag "${p.recurrence_name || p.reference_number || ''}" stoppen und zur Prüfung verschieben?`)) return;
     setStoppingId(p.id);
