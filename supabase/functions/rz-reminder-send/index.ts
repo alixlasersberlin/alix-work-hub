@@ -310,7 +310,7 @@ Deno.serve(async (req) => {
         customer_id: r.customer_id,
         customer_name: r.customer_name,
         invoice_number: r.invoice_number,
-        email: r.email,
+        email: toEmail,
         due_date: r.due_date,
         amount: r.amount,
         currency: r.currency,
