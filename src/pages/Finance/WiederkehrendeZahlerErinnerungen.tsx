@@ -222,6 +222,7 @@ export default function WiederkehrendeZahlerErinnerungen() {
               <td className="p-2">{r.invoice_number ?? '—'}</td>
               <td className="p-2"><PayBadge m={r.payment_method} /></td>
               <td className="p-2 text-muted-foreground">{r.frequency ?? '—'}</td>
+              <td className="p-2 text-muted-foreground">{fmtDate(r.last_payment_date)}</td>
               <td className="p-2">{fmtDate(r.due_date)}</td>
               <td className="p-2 text-right">{fmt(r.amount, r.currency)}</td>
               <td className="p-2 text-muted-foreground">{r.email ?? <span className="text-red-400">fehlt</span>}</td>
