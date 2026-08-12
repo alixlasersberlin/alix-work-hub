@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { FileText, Loader2, ExternalLink, X, Plus, Trash2 } from 'lucide-react';
 import { nextNumber } from '@/lib/number-ranges';
+import { generateInvoicePdfBase64 } from '@/lib/finance/invoice-pdf';
 
 type Props = {
   order: any;
