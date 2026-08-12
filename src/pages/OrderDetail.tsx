@@ -472,7 +472,7 @@ export default function OrderDetail() {
         { key: 'mediapaket', label: 'Mediapaket', icon: Briefcase },
         { key: 'social_fragebogen', label: 'Social-Fragenkatalog', icon: Share2 },
         { key: 'alixdocs', label: 'Dokumente', icon: FileText },
-        { key: 'docwizard', label: 'Dokumente (geführt)', icon: FileText },
+        
         { key: 'deposit', label: 'Anzahlung', icon: Euro, badge: depositTabBadge },
         { key: 'financing', label: 'Finanzierung', icon: Landmark },
         ...(canSeeAtPurchase ? [{ key: 'at_purchase', label: 'Einkauf AT', icon: ShoppingBag }] : []),
