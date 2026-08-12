@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
   const setRes = await rest("rz_reminder_settings?select=*&id=eq.true");
   const settings = setRes.ok ? ((await setRes.json())[0] ?? {}) : {};
   const bcc: string[] = Array.isArray(settings.bcc) ? settings.bcc : [];
-  const lang = (settings.language ?? "de") as "de";
+  const tpl = tplFromSettings(settings as Record<string, unknown>);
   const shopUrl = settings.shop_url ?? "https://alixsmart.de";
   const subjectBase = settings.subject ?? "Ihre monatliche Rechnung";
 
@@ -233,8 +233,8 @@ Deno.serve(async (req) => {
       sepa: r.payment_method === "sepa",
       shopUrl,
     };
-    const html = buildHtml(vars, lang);
-    const text = buildText(vars, lang);
+    const html = buildHtml(vars, tpl);
+    const text = buildText(vars, tpl);
 
     if (preview) {
       results.push({ id: r.id, email: r.email, subject: subjectBase, html, text });
