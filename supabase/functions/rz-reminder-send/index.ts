@@ -206,6 +206,18 @@ Deno.serve(async (req) => {
   const mode = body.mode === "auto" ? "auto" : "manual";
   if (ids.length === 0) return json({ error: "reminder_ids required" }, 400);
 
+  // Manuelle Super-Admin-Übersteuerung (Empfänger, Betreff, Inhalt, BCC).
+  const ov = (body.override ?? null) as Record<string, unknown> | null;
+  let isSuperAdmin = false;
+  if (ov && userId) {
+    const rolesRes = await rest(`user_roles?select=role&user_id=eq.${userId}`);
+    const roles = rolesRes.ok ? ((await rolesRes.json()) as any[]).map((x) => String(x.role)) : [];
+    isSuperAdmin = roles.includes("Super Admin");
+    if (!isSuperAdmin) return json({ error: "Nur Super Admin darf den Versand übersteuern." }, 403);
+  }
+  const override = isSuperAdmin ? ov : null;
+
+
   const setRes = await rest("rz_reminder_settings?select=*&id=eq.true");
   const settings = setRes.ok ? ((await setRes.json())[0] ?? {}) : {};
   const bcc: string[] = Array.isArray(settings.bcc) ? settings.bcc : [];
