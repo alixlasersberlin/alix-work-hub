@@ -232,6 +232,11 @@ export default function WiederkehrendeZahlerErinnerungen() {
                 <Button size="sm" variant="ghost" disabled={!canWrite || busy} onClick={() => send([r.id])}>
                   <Send className="h-4 w-4" />
                 </Button>
+                {isSuperAdmin && (
+                  <Button size="sm" variant="ghost" title="Manueller Versand (Super Admin)" onClick={() => openManual(r)}>
+                    <Pencil className="h-4 w-4 text-amber-400" />
+                  </Button>
+                )}
               </td>
             </tr>
           ))}
