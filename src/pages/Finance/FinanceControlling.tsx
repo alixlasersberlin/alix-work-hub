@@ -447,6 +447,16 @@ export default function FinanceControlling() {
                         qc.invalidateQueries({ queryKey: ['fc-cases'] });
                       }}
                     />
+                    <Input
+                      type="date"
+                      className="w-[170px]"
+                      title="Wiedervorlage"
+                      defaultValue={active.followup_date ?? ''}
+                      onBlur={async (e) => {
+                        await updateFcCase(active.id, { followup_date: e.target.value || null } as any);
+                        qc.invalidateQueries({ queryKey: ['fc-cases'] });
+                      }}
+                    />
                     <Select
                       value={active.priority}
                       onValueChange={async (v) => {
