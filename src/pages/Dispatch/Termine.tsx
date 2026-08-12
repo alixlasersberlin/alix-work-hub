@@ -144,7 +144,10 @@ export default function DispatchTermine() {
         icon={CalendarClock}
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button onClick={syncCalendar} disabled={calSyncing}>
+            <Button asChild>
+              <Link to="/dispatch/tagesplanung?neu=1"><RouteIcon className="h-4 w-4 mr-2" /> Tour planen</Link>
+            </Button>
+            <Button onClick={syncCalendar} disabled={calSyncing} variant="outline">
               {calSyncing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CalendarPlus className="h-4 w-4 mr-2" />}
               In Teamkalender übernehmen
             </Button>
