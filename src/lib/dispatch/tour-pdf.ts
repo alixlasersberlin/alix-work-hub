@@ -73,6 +73,44 @@ function stopAddress(a: TourStopLike['appointment']) {
     .filter(Boolean).join(', ') || '—';
 }
 
+/** Formatiert eine Zoho-Adresse (jsonb) zu einer Zeile. */
+function fmtAddr(v: any): string | null {
+  if (!v || typeof v !== 'object') return null;
+  const line = [
+    v.attention || v.company_name || null,
+    v.address || null,
+    v.street2 || null,
+    [v.zip, v.city].filter(Boolean).join(' ') || null,
+    v.country || null,
+  ].filter((x) => x && String(x).trim()).join(', ');
+  return line || null;
+}
+
+export type OrderAddresses = { billing?: string | null; delivery?: string | null };
+
+/** Lädt Rechnungs-/Lieferanschrift zu den Auftragsnummern der Stopps. */
+async function loadAddresses(entries: { tour: TourLike; stops: TourStopLike[] }[]) {
+  const numbers = Array.from(new Set(
+    entries.flatMap((e) => e.stops.map((s) => s.appointment?.order_number)).filter(Boolean) as string[],
+  ));
+  const map = new Map<string, OrderAddresses>();
+  if (!numbers.length) return map;
+  try {
+    const { data } = await supabase
+      .from('orders')
+      .select('order_number, billing_address, shipping_address')
+      .in('order_number', numbers);
+    (data ?? []).forEach((o: any) => {
+      map.set(o.order_number, {
+        billing: fmtAddr(o.billing_address),
+        delivery: fmtAddr(o.shipping_address),
+      });
+    });
+  } catch { /* ignore */ }
+  return map;
+}
+
+
 function header(doc: jsPDF, title: string, subtitle: string) {
   doc.setFontSize(18);
   doc.setTextColor(20);
