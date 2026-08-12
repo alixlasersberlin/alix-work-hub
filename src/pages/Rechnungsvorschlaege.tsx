@@ -12,6 +12,36 @@ import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OrdersWithoutInvoice from '@/components/finance/OrdersWithoutInvoice';
+import CreateInvoiceDialog from '@/components/CreateInvoiceDialog';
+
+function proposalToOrder(r: any) {
+  return {
+    id: r.repair_order_id,
+    order_number: r.repair_number,
+    case_number: r.repair_number,
+    customer_id: r.customer_id ?? null,
+    customer_name: r.customer_company || r.customer_name || null,
+    customer_email: r.customer_email || null,
+    currency: r.currency || 'EUR',
+    source_system: 'zoho_eu_1',
+    total_amount: Number(r.total_amount || 0),
+  };
+}
+
+function proposalToItems(r: any) {
+  const list = (Array.isArray(r.parts) ? r.parts : []).map((p: any) => ({
+    item_name: p.item_name || 'Position',
+    description: '',
+    quantity: Number(p.quantity || 1),
+    rate: Number(p.unit_price || 0),
+  }));
+  const h = Number(r.labor_hours || 0);
+  const rate = Number(r.labor_rate || 0);
+  if (h > 0 && rate > 0) list.push({ item_name: 'Arbeitszeit', description: '', quantity: h, rate });
+  const ship = Number(r.shipping_cost || 0);
+  if (ship > 0) list.push({ item_name: 'Versand', description: '', quantity: 1, rate: ship });
+  return list.filter((l: any) => l.quantity > 0 && l.rate !== 0);
+}
 
 const STATUS_LABEL: Record<string, string> = {
   offen: 'Offen',
@@ -58,6 +88,21 @@ export default function Rechnungsvorschlaege() {
       .eq('id', id);
     if (error) { toast({ title: 'Fehler', description: error.message, variant: 'destructive' }); return; }
     toast({ title: 'Status aktualisiert' });
+    load();
+  };
+
+  const linkInvoice = async (proposalId: string, invoiceId: string, invoiceNumber: string) => {
+    const { data: u } = await supabase.auth.getUser();
+    await supabase
+      .from('repair_invoice_proposals')
+      .update({
+        invoice_id: invoiceId,
+        status: 'übernommen',
+        processed_by: u?.user?.id || null,
+        processed_at: new Date().toISOString(),
+      })
+      .eq('id', proposalId);
+    toast({ title: 'Rechnung verknüpft', description: invoiceNumber });
     load();
   };
 
@@ -155,16 +200,31 @@ export default function Rechnungsvorschlaege() {
                     </td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString('de-DE')}</td>
                     <td className="px-3 py-2">
-                      {r.status === 'offen' && (
-                        <div className="flex gap-1 justify-end">
-                          <Button size="sm" variant="outline" className="border-emerald-500/40 text-emerald-300" onClick={() => setStatus(r.id, 'übernommen')}>
-                            <CheckCircle2 className="w-3 h-3 mr-1" /> Übernehmen
-                          </Button>
-                          <Button size="sm" variant="outline" className="border-red-500/40 text-red-300" onClick={() => setStatus(r.id, 'abgelehnt')}>
-                            <X className="w-3 h-3 mr-1" /> Ablehnen
-                          </Button>
-                        </div>
-                      )}
+                      <div className="flex flex-wrap gap-1 justify-end">
+                        {r.status === 'offen' && (
+                          <>
+                            <Button size="sm" variant="outline" className="border-emerald-500/40 text-emerald-300" onClick={() => setStatus(r.id, 'übernommen')}>
+                              <CheckCircle2 className="w-3 h-3 mr-1" /> Übernehmen
+                            </Button>
+                            <Button size="sm" variant="outline" className="border-red-500/40 text-red-300" onClick={() => setStatus(r.id, 'abgelehnt')}>
+                              <X className="w-3 h-3 mr-1" /> Ablehnen
+                            </Button>
+                          </>
+                        )}
+                        {r.status !== 'abgelehnt' && !r.invoice_id && (
+                          <CreateInvoiceDialog
+                            order={proposalToOrder(r)}
+                            items={proposalToItems(r)}
+                            disabled={proposalToItems(r).length === 0}
+                            onCreated={(invId, invNo) => linkInvoice(r.id, invId, invNo)}
+                          />
+                        )}
+                        {r.invoice_id && (
+                          <Link to={`/finance/rechnungen/${r.invoice_id}`} className="text-xs text-primary hover:underline self-center">
+                            Rechnung öffnen
+                          </Link>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

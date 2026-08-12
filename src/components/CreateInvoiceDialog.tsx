@@ -15,6 +15,7 @@ type Props = {
   customer?: any;
   items?: any[];
   disabled?: boolean;
+  onCreated?: (invoiceId: string, invoiceNumber: string) => void;
 };
 
 type LineItem = {
@@ -58,7 +59,7 @@ function pickCity(a: any, fallback?: string): string {
   return fallback || '';
 }
 
-export default function CreateInvoiceDialog({ order, customer, items, disabled }: Props) {
+export default function CreateInvoiceDialog({ order, customer, items, disabled, onCreated }: Props) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
@@ -353,6 +354,7 @@ export default function CreateInvoiceDialog({ order, customer, items, disabled }
       return;
     }
     setCreatedId(data?.id ?? null);
+    if (data?.id) onCreated?.(data.id, invoiceNumber);
     if (status === 'draft') {
       toast.success(`Entwurf ${invoiceNumber} gespeichert (keine Übergabe an Finance)`);
     } else {
