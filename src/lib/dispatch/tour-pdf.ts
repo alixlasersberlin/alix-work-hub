@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import tourBg from '@/assets/tour-vorlage.png.asset.json';
+import { supabase } from '@/integrations/supabase/client';
 
 /** Lädt die Alix-Vorlage einmalig als DataURL (für den PDF-Hintergrund). */
 let bgPromise: Promise<string | null> | null = null;
