@@ -799,13 +799,14 @@ export default function UserManagement() {
 
       {/* Create User Dialog */}
       {showCreate && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => !creating && setShowCreate(false)}>
-          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4 my-8" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => !creating && setShowCreate(false)}>
+          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4 my-8 max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div>
               <h2 className="text-lg font-semibold flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> Benutzer anlegen</h2>
               <p className="text-sm text-muted-foreground">Neuen Benutzer über sichere Server-Funktion erstellen</p>
             </div>
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-2 flex-1 overflow-y-auto pr-1">
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Name *</Label>
@@ -869,7 +870,8 @@ export default function UserManagement() {
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-2 shrink-0">
+
               <Button variant="outline" onClick={() => setShowCreate(false)}>Abbrechen</Button>
               <Button onClick={handleCreate} disabled={creating} className="gold-gradient text-primary-foreground">
                 {creating && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
@@ -882,13 +884,14 @@ export default function UserManagement() {
 
       {/* Edit Roles Dialog */}
       {showEditRoles && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => !savingRoles && setShowEditRoles(false)}>
-          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 my-8" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto" onClick={() => !savingRoles && setShowEditRoles(false)}>
+          <div className="bg-card border border-border rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4 my-8 max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div>
               <h2 className="text-lg font-semibold">Rollen & Abteilung bearbeiten</h2>
               <p className="text-sm text-muted-foreground">{selectedUser?.full_name} ({selectedUser?.email})</p>
             </div>
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-2 flex-1 overflow-y-auto pr-1">
+
               <div>
                 <Label className="mb-2 block">Abteilung</Label>
                 <Select value={editDeptId} onValueChange={setEditDeptId}>
@@ -937,7 +940,8 @@ export default function UserManagement() {
                 );
               })()}
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-2 shrink-0">
+
               <Button variant="outline" onClick={() => setShowEditRoles(false)}>Abbrechen</Button>
               <Button onClick={() => reauthRole.gate(handleSaveRoles)} disabled={savingRoles}>
                 {savingRoles && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
