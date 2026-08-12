@@ -7,6 +7,7 @@ import { SkeletonKpiGrid } from '@/components/infinity/Skeleton';
 import { StatusBadge as InfinityStatusBadge } from '@/components/infinity/StatusBadge';
 import { useRealtimeRefresh } from '@/hooks/useRealtimeRefresh';
 import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
+import { FinanceControllingWidget } from '@/components/finance/FinanceControllingWidget';
 
 interface Kpi { label: string; value: string; icon: any; accent: 'gold' | 'sky' | 'emerald' | 'rose' | 'violet'; }
 
@@ -54,6 +55,7 @@ export default function FinanceDashboard() {
           ))}
         </div>
       )}
+      <FinanceControllingWidget />
     </div>
   );
 }
