@@ -525,7 +525,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
             <div className="space-y-4">
             <div>
               <label className="text-sm text-muted-foreground">Gerät Modell</label>
-              <Input value={geraetModell} onChange={e => setGeraetModell(e.target.value)} placeholder="z.B. Alix Pro 2000" className="bg-secondary border-border" />
+              <textarea value={geraetModell} onChange={e => setGeraetModell(e.target.value)} placeholder="z.B. Alix Pro 2000" rows={Math.min(8, Math.max(2, geraetModell.split('\n').length))} className="w-full rounded-md bg-secondary border border-border px-3 py-2 text-sm resize-y" />
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Gesamtbetrag {priceLabel} (€)</label>
