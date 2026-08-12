@@ -12,6 +12,36 @@ import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import OrdersWithoutInvoice from '@/components/finance/OrdersWithoutInvoice';
+import CreateInvoiceDialog from '@/components/CreateInvoiceDialog';
+
+function proposalToOrder(r: any) {
+  return {
+    id: r.repair_order_id,
+    order_number: r.repair_number,
+    case_number: r.repair_number,
+    customer_id: r.customer_id ?? null,
+    customer_name: r.customer_company || r.customer_name || null,
+    customer_email: r.customer_email || null,
+    currency: r.currency || 'EUR',
+    source_system: 'zoho_eu_1',
+    total_amount: Number(r.total_amount || 0),
+  };
+}
+
+function proposalToItems(r: any) {
+  const list = (Array.isArray(r.parts) ? r.parts : []).map((p: any) => ({
+    item_name: p.item_name || 'Position',
+    description: '',
+    quantity: Number(p.quantity || 1),
+    rate: Number(p.unit_price || 0),
+  }));
+  const h = Number(r.labor_hours || 0);
+  const rate = Number(r.labor_rate || 0);
+  if (h > 0 && rate > 0) list.push({ item_name: 'Arbeitszeit', description: '', quantity: h, rate });
+  const ship = Number(r.shipping_cost || 0);
+  if (ship > 0) list.push({ item_name: 'Versand', description: '', quantity: 1, rate: ship });
+  return list.filter((l: any) => l.quantity > 0 && l.rate !== 0);
+}
 
 const STATUS_LABEL: Record<string, string> = {
   offen: 'Offen',
