@@ -280,7 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await fetchProfile(user.id);
       await fetchRoles(user.id);
     }
-  }, [user, isSuperAdminSession]);
+  }, [user]);
 
   // Idle-Auto-Logout nach Inaktivität (Security-Baseline)
   // Super Admin: 4 Stunden, alle anderen: 30 Minuten — der Timer wird bei Aktivität zurückgesetzt.
