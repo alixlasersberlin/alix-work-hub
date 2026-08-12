@@ -202,9 +202,9 @@ export default function FinanceControlling() {
         <div className="text-xs text-muted-foreground">{rows.length} Vorgänge</div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-xs text-muted-foreground">
+      <div className="rounded-xl border border-border bg-card w-full max-w-full overflow-x-auto overflow-y-auto max-h-[70vh]">
+        <table className="w-full min-w-[1000px] text-sm">
+          <thead className="bg-muted/40 text-xs text-muted-foreground sticky top-0 z-10">
             <tr>
               <th className="text-left p-2">Vorgang</th>
               <th className="text-left p-2">Kunde / Status</th>
