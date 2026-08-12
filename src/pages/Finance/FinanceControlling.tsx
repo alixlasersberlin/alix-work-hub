@@ -206,52 +206,56 @@ export default function FinanceControlling() {
         <table className="w-full text-sm">
           <thead className="bg-muted/40 text-xs text-muted-foreground">
             <tr>
-              <th className="text-left p-2">Ampel</th>
-              <th className="text-left p-2">Status</th>
-              <th className="text-left p-2">Prio</th>
               <th className="text-left p-2">Vorgang</th>
-              <th className="text-left p-2">Vorgangsnr.</th>
-              <th className="text-left p-2">Kunde</th>
-              <th className="text-right p-2">Auftragswert</th>
-              <th className="text-right p-2">Fakturiert</th>
-              <th className="text-right p-2">Bezahlt</th>
-              <th className="text-right p-2">Noch zu fakturieren</th>
-              <th className="text-right p-2">Noch zu bezahlen</th>
-              <th className="text-left p-2">Auslöser</th>
-              <th className="text-left p-2">Datum</th>
-              <th className="text-left p-2">Verantwortlich</th>
+              <th className="text-left p-2">Kunde / Status</th>
+              <th className="text-right p-2">Auftrag / Fakturiert</th>
+              <th className="text-right p-2">Offen</th>
+              <th className="text-left p-2">Verantwortlich / Datum</th>
               <th className="text-left p-2">Aktion</th>
             </tr>
           </thead>
           <tbody>
-            {isLoading && <tr><td colSpan={15} className="p-6 text-center text-muted-foreground">Lade…</td></tr>}
+            {isLoading && <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Lade…</td></tr>}
             {!isLoading && rows.length === 0 && (
-              <tr><td colSpan={15} className="p-6 text-center text-muted-foreground">Keine Vorgänge</td></tr>
+              <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Keine Vorgänge</td></tr>
             )}
             {rows.map((c, i) => {
               const t = FC_TRAFFIC[c.traffic] ?? FC_TRAFFIC.gelb;
               return (
-                <tr key={c.id} className={cn('border-t border-border hover:bg-muted/30 cursor-pointer', i % 2 === 1 && 'bg-muted/10')}
+                <tr key={c.id} className={cn('border-t border-border hover:bg-muted/30 cursor-pointer align-top', i % 2 === 1 && 'bg-muted/10')}
                     onClick={() => openCase(c)}>
                   <td className="p-2">
-                    <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap px-2 py-0.5 rounded-full text-xs border', t.cls)}>
-                      <span className={cn('w-2 h-2 rounded-full shrink-0', t.dot)} />
-                      {t.label}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap px-2 py-0.5 rounded-full text-xs border', t.cls)}>
+                        <span className={cn('w-2 h-2 rounded-full shrink-0', t.dot)} />
+                        {t.label}
+                      </span>
+                      <span className="font-medium">{c.case_type}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {c.reference_number || '—'} · Prio {c.priority}
+                    </div>
                   </td>
-                  <td className="p-2">{FC_STATUS[c.status] ?? c.status}</td>
-                  <td className="p-2">{c.priority}</td>
-                  <td className="p-2 font-medium">{c.case_type}</td>
-                  <td className="p-2">{c.reference_number || '—'}</td>
-                  <td className="p-2">{c.customer_name || '—'}</td>
-                  <td className="p-2 text-right">{fmtEur(c.order_amount)}</td>
-                  <td className="p-2 text-right">{fmtEur(c.invoiced_amount)}</td>
-                  <td className="p-2 text-right">{fmtEur(c.paid_amount)}</td>
-                  <td className={cn('p-2 text-right', c.open_to_invoice > 0.01 && 'text-destructive font-medium')}>{fmtEur(c.open_to_invoice)}</td>
-                  <td className={cn('p-2 text-right', c.open_to_pay > 0.01 && 'text-amber-400')}>{fmtEur(c.open_to_pay)}</td>
-                  <td className="p-2 text-xs text-muted-foreground">{c.trigger_event}</td>
-                  <td className="p-2 text-xs">{new Date(c.created_at).toLocaleDateString('de-DE')}</td>
-                  <td className="p-2 text-xs">{employees.find(e => e.id === c.assigned_to)?.full_name || (c.assigned_to ? '—' : '—')}</td>
+                  <td className="p-2">
+                    <div className="font-medium">{c.customer_name || '—'}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {FC_STATUS[c.status] ?? c.status} · {c.trigger_event}
+                    </div>
+                  </td>
+                  <td className="p-2 text-right">
+                    <div>{fmtEur(c.order_amount)}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">fakt. {fmtEur(c.invoiced_amount)} · bez. {fmtEur(c.paid_amount)}</div>
+                  </td>
+                  <td className="p-2 text-right">
+                    <div className={cn(c.open_to_invoice > 0.01 && 'text-destructive font-medium')}>{fmtEur(c.open_to_invoice)}</div>
+                    <div className={cn('text-xs mt-0.5', c.open_to_pay > 0.01 ? 'text-amber-400' : 'text-muted-foreground')}>
+                      zu zahlen {fmtEur(c.open_to_pay)}
+                    </div>
+                  </td>
+                  <td className="p-2">
+                    <div className="text-xs">{employees.find(e => e.id === c.assigned_to)?.full_name || '—'}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{new Date(c.created_at).toLocaleDateString('de-DE')}</div>
+                  </td>
                   <td className="p-2" onClick={(e) => e.stopPropagation()}>
                     <Button size="sm" variant="outline" onClick={() => goInvoice(c)}>
                       <FileText className="w-3.5 h-3.5 mr-1" />
