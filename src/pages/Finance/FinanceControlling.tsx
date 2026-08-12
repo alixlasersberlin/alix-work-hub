@@ -103,6 +103,35 @@ export default function FinanceControlling() {
     enabled: !!active,
   });
 
+  const { data: drafts = [] } = useQuery({
+    queryKey: ['fc-drafts', active?.id],
+    queryFn: () => listFcDrafts(active!.id),
+    enabled: !!active,
+  });
+
+  const doCreateDraft = async (c: FcCase) => {
+    try {
+      await createFcDraft(c.id);
+      await qc.invalidateQueries({ queryKey: ['fc-drafts', c.id] });
+      await qc.invalidateQueries({ queryKey: ['fc-events', c.id] });
+      toast.success('Rechnungsentwurf aktualisiert');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Entwurf konnte nicht erzeugt werden');
+    }
+  };
+
+  const doDraftStatus = async (d: FcInvoiceDraft, status: 'entwurf' | 'erstellt' | 'verworfen') => {
+    try {
+      await setFcDraftStatus(d, status);
+      await qc.invalidateQueries({ queryKey: ['fc-drafts', d.case_id] });
+      await qc.invalidateQueries({ queryKey: ['fc-events', d.case_id] });
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Aktualisierung fehlgeschlagen');
+    }
+  };
+
+
+
   const kpis = useMemo(() => {
     const open = cases.filter(c => !['abgeschlossen', 'freigegeben'].includes(c.status));
     return {
