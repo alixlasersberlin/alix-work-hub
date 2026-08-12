@@ -18,6 +18,8 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
   const [existing, setExisting] = useState<any | null>(null);
   const [parts, setParts] = useState<any[]>([]);
   const [ticketNumber, setTicketNumber] = useState<string | null>(null);
+  const [quote, setQuote] = useState<any | null>(null);
+  const [quoteItems, setQuoteItems] = useState<any[]>([]);
   const [hours, setHours] = useState<string>('');
   const [rate, setRate] = useState<string>('95');
   const [shipping, setShipping] = useState<string>('0');
@@ -29,18 +31,29 @@ export function InvoiceProposalDialog({ repair, onCreated }: Props) {
   useEffect(() => {
     if (!repair?.id) return;
     (async () => {
-      const [{ data: ex }, { data: pl }] = await Promise.all([
+      const [{ data: ex }, { data: pl }, { data: qs }] = await Promise.all([
         sbRepair.from('repair_invoice_proposals').select('id,status,created_at,total_amount,currency').eq('repair_order_id', repair.id).order('created_at', { ascending: false }).limit(1),
         sbRepair.from('repair_parts').select('item_name,sku,quantity,supplier_name').eq('repair_order_id', repair.id),
+        sbRepair.from('repair_quotes').select('*').eq('repair_order_id', repair.id).eq('status', 'Freigegeben').order('decided_at', { ascending: false }).limit(1),
       ]);
       setExisting(ex?.[0] || null);
       setParts(pl || []);
+      const q = qs?.[0] || null;
+      setQuote(q);
+      if (q) {
+        const { data: qi } = await sbRepair.from('repair_quote_items').select('*').eq('quote_id', q.id).order('sort_order');
+        setQuoteItems(qi || []);
+        setHours(String(q.labor_hours ?? 0));
+        setRate(String(q.labor_rate ?? 0));
+        setShipping(String(q.shipping_total ?? 0));
+      }
       if (repair.ticket_id) {
         const { data: t } = await supabase.from('tickets').select('external_ticket_id').eq('id', repair.ticket_id).maybeSingle();
         setTicketNumber(t?.external_ticket_id || null);
       }
     })();
   }, [repair?.id, repair?.ticket_id, open]);
+
 
   const partsTotal = 0; // keine Preise an Ersatzteilen vorhanden – Finance ergänzt
   const laborCost = (Number(hours) || 0) * (Number(rate) || 0);
