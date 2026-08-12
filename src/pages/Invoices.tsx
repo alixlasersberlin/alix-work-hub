@@ -1116,7 +1116,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
     // Rechnungsadresse
     const ay = TOP_CONTENT + 12;
-    const billing = customer?.billing_address || customer?.shipping_address || null;
+    const billing = customer?.billing_address || customer?.shipping_address || (full as any).billing_address || null;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(20, 60, 110);
@@ -1128,11 +1128,12 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
     const name = customer?.company_name || customer?.contact_name || full.customer_name;
     if (name) { doc.text(String(name), LEFT, y); y += 4.4; }
     const addressLines = addrLinesFromObj(billing);
-    if (addressLines.length === 0 && full.billing_address) {
-      String(full.billing_address).split('\n').forEach((l) => { if (l) { doc.text(l, LEFT, y); y += 4.4; } });
+    if (addressLines.length === 0 && billing && typeof billing === 'string') {
+      String(billing).split('\n').forEach((l) => { if (l && l !== name) { doc.text(l, LEFT, y); y += 4.4; } });
     } else {
       addressLines.forEach((l) => { doc.text(l, LEFT, y); y += 4.4; });
     }
+
     if (customer?.email) { doc.text(String(customer.email), LEFT, y); y += 4.4; }
     let cy = y + 6;
 
