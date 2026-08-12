@@ -191,6 +191,51 @@ export default function WiederkehrendeZahlerErinnerungen() {
     load();
   };
 
+  // Manueller Versand (nur Super Admin): Empfänger, Betreff, HTML und BCC frei übersteuerbar.
+  const openManual = async (r: Reminder) => {
+    setManual({ r, to: r.email ?? '', subject: settings?.subject ?? 'Ihre monatliche Rechnung', html: '', bcc: (settings?.bcc ?? []).join(', '), loading: true });
+    const { data, error } = await supabase.functions.invoke('rz-reminder-send', {
+      body: { reminder_ids: [r.id], preview: true, mode: 'manual' },
+    });
+    const res = (data as any)?.results?.[0];
+    setManual(m => m && {
+      ...m,
+      subject: error ? m.subject : (res?.subject ?? m.subject),
+      html: error ? '' : (res?.html ?? ''),
+      loading: false,
+    });
+    if (error) toast({ title: 'Vorschau fehlgeschlagen', description: error.message, variant: 'destructive' });
+  };
+
+  const sendManual = async () => {
+    if (!manual) return;
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke('rz-reminder-send', {
+      body: {
+        reminder_ids: [manual.r.id],
+        mode: 'manual',
+        override: {
+          to_email: manual.to.trim(),
+          subject: manual.subject,
+          body_html: manual.html,
+          bcc: manual.bcc.split(',').map(s => s.trim()).filter(Boolean),
+        },
+      },
+    });
+    setBusy(false);
+    if (error) return toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+    const failed = (data as any)?.failed ?? 0;
+    toast({
+      title: failed ? 'Versand fehlerhaft' : 'Versendet',
+      description: failed ? String((data as any)?.results?.[0]?.error ?? '') : `An ${manual.to} gesendet.`,
+      variant: failed ? 'destructive' : undefined,
+    });
+    setManual(null);
+    load();
+  };
+
+
+
   const Table = ({ list, selectable }: { list: Reminder[]; selectable?: boolean }) => (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
