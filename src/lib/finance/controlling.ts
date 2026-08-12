@@ -23,6 +23,11 @@ export type FcCase = {
   billing_flag: string | null;
   assigned_to: string | null;
   due_date: string | null;
+  followup_date: string | null;
+  approval_status: string;
+  approved_by: string | null;
+  approved_at: string | null;
+  escalated_at: string | null;
   notes: string | null;
   closed_at: string | null;
   created_at: string;
