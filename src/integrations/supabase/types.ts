@@ -21951,6 +21951,71 @@ export type Database = {
           },
         ]
       }
+      fc_invoice_drafts: {
+        Row: {
+          amount: number
+          case_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          customer_name: string | null
+          draft_type: string
+          id: string
+          invoice_number: string | null
+          note: string | null
+          order_id: string | null
+          reference_number: string | null
+          status: string
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          case_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          draft_type?: string
+          id?: string
+          invoice_number?: string | null
+          note?: string | null
+          order_id?: string | null
+          reference_number?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          case_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          customer_name?: string | null
+          draft_type?: string
+          id?: string
+          invoice_number?: string | null
+          note?: string | null
+          order_id?: string | null
+          reference_number?: string | null
+          status?: string
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fc_invoice_drafts_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "fc_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_accounts: {
         Row: {
           accounting_region: Database["public"]["Enums"]["accounting_region"]
@@ -49720,6 +49785,7 @@ export type Database = {
       }
       expire_break_glass_sessions: { Args: never; Returns: number }
       expire_temporary_role_grants: { Args: never; Returns: number }
+      fc_create_invoice_draft: { Args: { p_case_id: string }; Returns: string }
       fc_month_close: { Args: { p_from: string; p_to: string }; Returns: Json }
       fc_order_financials: {
         Args: { p_order_id: string }
@@ -49729,6 +49795,7 @@ export type Database = {
           paid: number
         }[]
       }
+      fc_order_invoice_gap: { Args: { p_order_id: string }; Returns: number }
       fc_refresh_order: { Args: { p_order_id: string }; Returns: undefined }
       fc_run_escalation: { Args: never; Returns: Json }
       fc_upsert_case: {
