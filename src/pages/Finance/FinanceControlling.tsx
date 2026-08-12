@@ -399,7 +399,7 @@ export default function FinanceControlling() {
       )}
 
 
-      <Sheet open={!!active} onOpenChange={(o) => !o && setActive(null)}>
+      <Sheet open={!!active} onOpenChange={(o) => !o && setActive(null)} modal={false}>
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           {active && (
             <>
@@ -455,7 +455,7 @@ export default function FinanceControlling() {
                   </Button>
                   <Select value={active.status} onValueChange={(v) => doStatus(active, v)}>
                     <SelectTrigger className="w-[220px] h-9"><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[120]" position="popper">
                       {Object.entries(FC_STATUS).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -512,7 +512,7 @@ export default function FinanceControlling() {
                       }}
                     >
                       <SelectTrigger className="w-[220px] h-9"><SelectValue placeholder="Verantwortlich" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[120]" position="popper">
                         <SelectItem value="none">— nicht zugewiesen —</SelectItem>
                         {employees.map(e => (
                           <SelectItem key={e.id} value={e.id}>{e.full_name || e.email}</SelectItem>
@@ -547,7 +547,7 @@ export default function FinanceControlling() {
                       }}
                     >
                       <SelectTrigger className="w-[150px] h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[120]" position="popper">
                         {Object.entries(PRIORITIES).map(([k, l]) => <SelectItem key={k} value={k}>{l}</SelectItem>)}
                       </SelectContent>
                     </Select>
