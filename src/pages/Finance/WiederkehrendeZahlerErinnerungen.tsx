@@ -204,6 +204,7 @@ export default function WiederkehrendeZahlerErinnerungen() {
             <th className="p-2 text-left">Rechnung</th>
             <th className="p-2 text-left">Zahlungsart</th>
             <th className="p-2 text-left">Rhythmus</th>
+            <th className="p-2 text-left">Letzte Zahlung</th>
             <th className="p-2 text-left">Fälligkeit</th>
             <th className="p-2 text-right">Betrag</th>
             <th className="p-2 text-left">E-Mail</th>
@@ -221,6 +222,7 @@ export default function WiederkehrendeZahlerErinnerungen() {
               <td className="p-2">{r.invoice_number ?? '—'}</td>
               <td className="p-2"><PayBadge m={r.payment_method} /></td>
               <td className="p-2 text-muted-foreground">{r.frequency ?? '—'}</td>
+              <td className="p-2 text-muted-foreground">{fmtDate(r.last_payment_date)}</td>
               <td className="p-2">{fmtDate(r.due_date)}</td>
               <td className="p-2 text-right">{fmt(r.amount, r.currency)}</td>
               <td className="p-2 text-muted-foreground">{r.email ?? <span className="text-red-400">fehlt</span>}</td>
@@ -234,7 +236,7 @@ export default function WiederkehrendeZahlerErinnerungen() {
             </tr>
           ))}
           {list.length === 0 && (
-            <tr><td colSpan={12} className="p-6 text-center text-muted-foreground">Keine Einträge.</td></tr>
+            <tr><td colSpan={13} className="p-6 text-center text-muted-foreground">Keine Einträge.</td></tr>
           )}
         </tbody>
       </table>
