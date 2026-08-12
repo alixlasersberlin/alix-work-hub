@@ -87,6 +87,37 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
   const [geraetModell, setGeraetModell] = useState('');
   const [zusatzService, setZusatzService] = useState('');
   const [kaufpreisEnde, setKaufpreisEnde] = useState('');
+  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+
+  const orderItems: any[] = Array.isArray(order?.items) ? order.items : [];
+  const itemTotal = (it: any) => {
+    const qty = Number(it?.quantity ?? 1) || 1;
+    const rate = Number(it?.rate ?? it?.price ?? 0) || 0;
+    const total = Number(it?.total ?? it?.item_total ?? NaN);
+    return Number.isFinite(total) && total > 0 ? total : qty * rate;
+  };
+  const selectedRows = orderItems.filter((_, i) => selectedItems.includes(i));
+  const selectedSum = selectedRows.reduce((s, it) => s + itemTotal(it), 0);
+
+  // Standardmäßig alle Positionen des Auftrags auswählen
+  useEffect(() => {
+    setSelectedItems(orderItems.map((_, i) => i));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id, orderItems.length]);
+
+  function toggleItem(i: number) {
+    setSelectedItems(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i].sort((a, b) => a - b));
+  }
+
+  function applySelection() {
+    if (selectedRows.length === 0) {
+      toast({ variant: 'destructive', title: 'Keine Position ausgewählt' });
+      return;
+    }
+    setGeraetModell(selectedRows.map(it => it.item_name || it.name).filter(Boolean).join(', '));
+    setKaufpreis(selectedSum.toFixed(2));
+    toast({ title: 'Positionen übernommen', description: `${selectedRows.length} Position(en) in den Vertrag übernommen.` });
+  }
 
   // Region auto-detect from shipping/billing country
   const detectedRegion: 'DE' | 'EU' = useMemo(() => {
