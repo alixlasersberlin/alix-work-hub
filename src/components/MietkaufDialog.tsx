@@ -114,7 +114,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
       toast({ variant: 'destructive', title: 'Keine Position ausgewählt' });
       return;
     }
-    setGeraetModell(selectedRows.map(it => it.item_name || it.name).filter(Boolean).join(', '));
+    setGeraetModell(selectedRows.map(it => it.item_name || it.name).filter(Boolean).join('\n'));
     setKaufpreis(selectedSum.toFixed(2));
     toast({ title: 'Positionen übernommen', description: `${selectedRows.length} Position(en) in den Vertrag übernommen.` });
   }
@@ -296,16 +296,24 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
       doc.rect(ml, ry, cw, h);
     };
 
-    // Gerät Modell
-    drawRow(y, 8);
+    // Gerät Modell (mehrzeilig)
+    const modellText = String(geraetModell || getDeviceModel(order) || '');
+    const modellLines: string[] = modellText
+      .split('\n')
+      .flatMap((l) => doc.splitTextToSize(l, cw * 0.6) as string[])
+      .filter((l) => String(l).trim().length > 0);
+    const modellRowH = Math.max(8, modellLines.length * 4.6 + 3.4);
+    drawRow(y, modellRowH);
     doc.setFont('Inter', 'bold');
     doc.setFontSize(9);
     doc.text('Gerät Modell:', ml + 3, y + 5.5);
     doc.setFont('Inter', 'normal');
-    doc.text(geraetModell || getDeviceModel(order), ml + cw * 0.35, y + 5.5);
+    modellLines.forEach((line, i) => {
+      doc.text(line, ml + cw * 0.35, y + 5.5 + i * 4.6);
+    });
     // vertical line
-    doc.line(ml + cw * 0.33, y, ml + cw * 0.33, y + 8);
-    y += 8;
+    doc.line(ml + cw * 0.33, y, ml + cw * 0.33, y + modellRowH);
+    y += modellRowH;
 
     // Auftragsnummer
     drawRow(y, 8);
@@ -325,39 +333,6 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
     doc.line(ml + cw * 0.33, y, ml + cw * 0.33, y + 8);
     y += 14;
 
-    // ── Ausgewählte Positionen ──
-    if (selectedRows.length > 0) {
-      doc.setFont('Inter', 'bold');
-      doc.setFontSize(10);
-      doc.text('Vertragspositionen', ml, y);
-      y += 4;
-      doc.setFontSize(8.5);
-      drawRow(y, 7);
-      doc.text('Pos.', ml + 3, y + 4.8);
-      doc.text('Bezeichnung', ml + 15, y + 4.8);
-      doc.text('Menge', ml + cw * 0.68, y + 4.8, { align: 'right' });
-      doc.text('Betrag', pw - mr - 3, y + 4.8, { align: 'right' });
-      y += 7;
-      doc.setFont('Inter', 'normal');
-      selectedRows.forEach((it: any, i: number) => {
-        if (y > ph - 45) { doc.addPage(); y = 20; }
-        const name = String(it.item_name || it.name || '—');
-        const label = doc.splitTextToSize(it.sku ? `${name} (${it.sku})` : name, cw * 0.5)[0];
-        drawRow(y, 6.5);
-        doc.text(String(i + 1), ml + 3, y + 4.5);
-        doc.text(label, ml + 15, y + 4.5);
-        doc.text(String(it.quantity ?? 1), ml + cw * 0.68, y + 4.5, { align: 'right' });
-        doc.text(fmtCurrency(itemTotal(it)), pw - mr - 3, y + 4.5, { align: 'right' });
-        y += 6.5;
-      });
-      drawRow(y, 7);
-      doc.setFont('Inter', 'bold');
-      doc.text('Summe Positionen', ml + 15, y + 4.8);
-      doc.text(fmtCurrency(selectedSum), pw - mr - 3, y + 4.8, { align: 'right' });
-      doc.setFont('Inter', 'normal');
-      doc.setFontSize(9);
-      y += 14;
-    }
 
 
 
@@ -550,7 +525,7 @@ const MietkaufDialog = forwardRef<MietkaufDialogHandle, Props>(function Mietkauf
             <div className="space-y-4">
             <div>
               <label className="text-sm text-muted-foreground">Gerät Modell</label>
-              <Input value={geraetModell} onChange={e => setGeraetModell(e.target.value)} placeholder="z.B. Alix Pro 2000" className="bg-secondary border-border" />
+              <textarea value={geraetModell} onChange={e => setGeraetModell(e.target.value)} placeholder="z.B. Alix Pro 2000" rows={Math.min(8, Math.max(2, geraetModell.split('\n').length))} className="w-full rounded-md bg-secondary border border-border px-3 py-2 text-sm resize-y" />
             </div>
             <div>
               <label className="text-sm text-muted-foreground">Gesamtbetrag {priceLabel} (€)</label>
