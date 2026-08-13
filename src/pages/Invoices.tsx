@@ -445,6 +445,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
   // ---- RECHNUNG NACHTRAG: fehlende Raten rückwirkend erzeugen (ohne Versand) ----
   const [nachtragBusy, setNachtragBusy] = useState<string | null>(null);
 
+  // ---- SOFORT RECHNUNG: festgeschriebene Rechnung/Anzahlung direkt aufs Konto ----
+  const [sofortAccount, setSofortAccount] = useState<Account | null>(null);
+
+
   const addRecurrenceInterval = (d: Date, freq: string | null, every: number | null) => {
     const e = every && every > 0 ? every : 1;
     const n = new Date(d);
