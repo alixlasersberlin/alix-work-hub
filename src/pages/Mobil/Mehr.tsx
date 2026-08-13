@@ -1,17 +1,19 @@
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck } from 'lucide-react';
+import { Users, Cpu, Wrench, FileText, CalendarDays, Monitor, LogOut, Truck, Contact } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
 const LINKS = [
   { to: '/mobil/adressen', icon: Users, label: 'Kunden & Adressen' },
+  { to: '/mobil/kontakte', icon: Contact, label: 'Kontakte / iPhone-Sync' },
   { to: '/mobil/suche?q=', icon: Cpu, label: 'Geräte / Seriennummer' },
   { to: '/mobil/suche?q=REP', icon: Wrench, label: 'Service & Reparaturen' },
   { to: '/m/alixdocs', icon: FileText, label: 'Dokumente' },
   { to: '/m/kalender', icon: CalendarDays, label: 'Kalender' },
   { to: '/m/tour', icon: Truck, label: 'Techniker-Einsätze' },
 ];
+
 
 export default function MobilMehr() {
   const { profile, signOut } = useAuth();
