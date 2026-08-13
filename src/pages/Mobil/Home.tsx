@@ -21,7 +21,7 @@ export default function MobilHome() {
       const [tours, orders, appts] = await Promise.all([
         supabase.from('delivery_tours').select('id, delivery_tour_stops(count)').eq('tour_date', today).limit(50),
         supabase.from('orders').select('id', { count: 'exact', head: true }).not('order_status', 'in', '("Abgeschlossen","abgeschlossen","storniert")'),
-        supabase.from('delivery_appointments').select('id', { count: 'exact', head: true }).eq('appointment_date', today),
+        supabase.from('delivery_appointments').select('id', { count: 'exact', head: true }).eq('planned_date', today),
       ]);
       if (cancelled) return;
       const next: Stats = {
