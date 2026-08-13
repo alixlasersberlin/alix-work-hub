@@ -2214,6 +2214,17 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           RECHNUNG NACHTRAG
                         </Button>
                       )}
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
+                          title="Sofort Rechnung erstellen, festschreiben und diesem Kundenkonto zuordnen"
+                          onClick={(e) => { e.stopPropagation(); setSofortAccount(a); }}
+                        >
+                          <Zap className="w-3.5 h-3.5" /> SOFORT RECHNUNG
+                        </Button>
+                      )}
                       <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-2">
                         <AccountStatementActions
                           customerName={a.customer_name}
