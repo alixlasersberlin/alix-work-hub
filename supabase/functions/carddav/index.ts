@@ -26,7 +26,8 @@ const xmlEsc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').rep
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   const idx = url.pathname.indexOf('/carddav');
-  const base = idx >= 0 ? url.pathname.slice(0, idx + '/carddav'.length) : '/functions/v1/carddav';
+  // Supabase strips "/functions/v1" internally – hrefs MUSS die extern erreichbare URL sein.
+  const base = '/functions/v1/carddav';
   const rest = (idx >= 0 ? url.pathname.slice(idx + '/carddav'.length) : '').replace(/\/+$/, '') || '/';
   const method = req.method.toUpperCase();
 
