@@ -4,6 +4,8 @@ import {
 } from 'lucide-react';
 import { Briefcase, Bell, BellRing, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2, Zap, Quote } from 'lucide-react';
 import { PanelLeftClose, PanelLeftOpen, PackageSearch, Cpu, ListTree, Layers, GitBranch } from 'lucide-react';
+import { Smartphone as SmartphoneIcon, Contact as ContactIcon } from 'lucide-react';
+
 
 export type NavChild = { path: string; label: string; icon: typeof LayoutDashboard; roles: string[] | null; children?: NavChild[] };
 export type NavItem = NavChild & { children?: NavChild[] };
@@ -939,6 +941,9 @@ export const navItems: NavItem[] = [
           { path: '/order/zulieferer', label: 'Lieferanten', icon: Users, roles: ['Super Admin'] },
           { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
           { path: '/workspaces-admin', label: 'Workspaces', icon: LayoutGrid, roles: ['Admin', 'Super Admin'] },
+          { path: '/admin/mobile-sync', label: 'Mobile Sync', icon: SmartphoneIcon, roles: ['Admin', 'Super Admin'] },
+          { path: '/einstellungen/mobile-geraete', label: 'Meine mobilen Geräte', icon: ContactIcon, roles: ['Admin', 'Super Admin'] },
+
         ],
       },
 

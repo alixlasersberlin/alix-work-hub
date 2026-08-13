@@ -394,6 +394,10 @@ const MobilTourDetail = lazy(() => import("./pages/Mobil/TourDetail"));
 const MobilSuche = lazy(() => import("./pages/Mobil/Suche"));
 const MobilAuftraege = lazy(() => import("./pages/Mobil/Auftraege"));
 const MobilMehr = lazy(() => import("./pages/Mobil/Mehr"));
+const MobilKontakte = lazy(() => import("./pages/Mobil/Kontakte"));
+const MobileSyncAdmin = lazy(() => import("./pages/Admin/MobileSync"));
+const MobileGeraete = lazy(() => import("./pages/Einstellungen/MobileGeraete"));
+
 
 const KalenderLayout = lazy(() => import("./components/kalender/KalenderLayout"));
 const KalenderHeute = lazy(() => import("./pages/MobileKalender/Heute"));
@@ -1889,6 +1893,9 @@ function AppRoutes() {
           <Route path="/admin/sign-marketplace" element={<ProtectedRoute requiredRoles={['Super Admin']}><SignMarketplace /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute requiredRoles={IMPORT_ROLES}><ImportManagement /></ProtectedRoute>} />
           <Route path="/admin/zoho-abgleich" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><ZohoAbgleich /></ProtectedRoute>} />
+          <Route path="/admin/mobile-sync" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><MobileSyncAdmin /></ProtectedRoute>} />
+          <Route path="/einstellungen/mobile-geraete" element={<ProtectedRoute><MobileGeraete /></ProtectedRoute>} />
+
           <Route path="/auftraege/gesucht" element={<ProtectedRoute requiredRoles={['Super Admin','Admin','Order']}><AuftraegeGesucht /></ProtectedRoute>} />
 
           <Route path="/datensicherung" element={<ProtectedRoute requiredRoles={ADMIN_ROLES}><Backups /></ProtectedRoute>} />
@@ -2328,7 +2335,9 @@ function AppRoutes() {
           <Route path="tour/:tourId" element={<MobilTourDetail />} />
           <Route path="suche" element={<MobilSuche />} />
           <Route path="auftraege" element={<MobilAuftraege />} />
+          <Route path="kontakte" element={<MobilKontakte />} />
           <Route path="mehr" element={<MobilMehr />} />
+
         </Route>
 
         {/* EMP – Enterprise Mobile Platform (rollenbasierte mobile Oberfläche) */}
