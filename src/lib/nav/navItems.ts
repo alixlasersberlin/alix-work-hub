@@ -942,7 +942,7 @@ export const navItems: NavItem[] = [
           { path: '/mandanten', label: 'Mandanten', icon: Building2, roles: ['Super Admin'] },
           { path: '/workspaces-admin', label: 'Workspaces', icon: LayoutGrid, roles: ['Admin', 'Super Admin'] },
           { path: '/admin/mobile-sync', label: 'Mobile Sync', icon: SmartphoneIcon, roles: ['Admin', 'Super Admin'] },
-          { path: '/einstellungen/mobile-geraete', label: 'Meine mobilen Geräte', icon: ContactIcon },
+          { path: '/einstellungen/mobile-geraete', label: 'Meine mobilen Geräte', icon: ContactIcon, roles: ['Admin', 'Super Admin'] },
 
         ],
       },
