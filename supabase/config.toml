@@ -445,3 +445,9 @@ verify_jwt = false
 
 [functions.delivery-approval-roles]
 verify_jwt = true
+
+[functions.carddav]
+verify_jwt = false
+
+[functions.mobile-sync-admin]
+verify_jwt = true

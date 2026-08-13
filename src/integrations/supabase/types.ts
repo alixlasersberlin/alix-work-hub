@@ -31504,6 +31504,128 @@ export type Database = {
         }
         Relationships: []
       }
+      mobile_sync_devices: {
+        Row: {
+          contact_count: number
+          created_at: string
+          device_name: string
+          id: string
+          last_ip: string | null
+          last_sync_at: string | null
+          revoked_at: string | null
+          status: string
+          token_hash: string
+          token_prefix: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_count?: number
+          created_at?: string
+          device_name?: string
+          id?: string
+          last_ip?: string | null
+          last_sync_at?: string | null
+          revoked_at?: string | null
+          status?: string
+          token_hash: string
+          token_prefix?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_count?: number
+          created_at?: string
+          device_name?: string
+          id?: string
+          last_ip?: string | null
+          last_sync_at?: string | null
+          revoked_at?: string | null
+          status?: string
+          token_hash?: string
+          token_prefix?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mobile_sync_log: {
+        Row: {
+          action: string
+          contact_count: number | null
+          created_at: string
+          device_id: string | null
+          id: string
+          ip: string | null
+          message: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          contact_count?: number | null
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          ip?: string | null
+          message?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          contact_count?: number | null
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          ip?: string | null
+          message?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mobile_sync_log_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "mobile_sync_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mobile_sync_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          include_inactive: boolean
+          scope: string
+          scope_value: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          include_inactive?: boolean
+          scope?: string
+          scope_value?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          include_inactive?: boolean
+          scope?: string
+          scope_value?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       model_manuals: {
         Row: {
           created_at: string
