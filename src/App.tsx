@@ -385,6 +385,16 @@ const MobileSprachnotiz = lazy(() => import("./pages/Mobile/Sprachnotiz"));
 const MobileTouren = lazy(() => import("./pages/Mobile/Touren"));
 const MobileTourDetail = lazy(() => import("./pages/Mobile/TourDetail"));
 const MobileTourStopp = lazy(() => import("./pages/Mobile/TourStopp"));
+import MobileAutoRedirect from "@/components/mobil/MobileAutoRedirect";
+const MobilLayout = lazy(() => import("./pages/Mobil/Layout"));
+const MobilHome = lazy(() => import("./pages/Mobil/Home"));
+const MobilAdressen = lazy(() => import("./pages/Mobil/Adressen"));
+const MobilTouren = lazy(() => import("./pages/Mobil/Touren"));
+const MobilTourDetail = lazy(() => import("./pages/Mobil/TourDetail"));
+const MobilSuche = lazy(() => import("./pages/Mobil/Suche"));
+const MobilAuftraege = lazy(() => import("./pages/Mobil/Auftraege"));
+const MobilMehr = lazy(() => import("./pages/Mobil/Mehr"));
+
 const KalenderLayout = lazy(() => import("./components/kalender/KalenderLayout"));
 const KalenderHeute = lazy(() => import("./pages/MobileKalender/Heute"));
 const KalenderAgenda = lazy(() => import("./pages/MobileKalender/Agenda"));
@@ -1235,6 +1245,7 @@ function AppRoutes() {
 
   return (
     <RouteErrorBoundary>
+    <MobileAutoRedirect />
     <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Öffentliche Landing-Page: / und /login zeigen IMMER nur Landing, niemals Redirect */}
@@ -2308,6 +2319,17 @@ function AppRoutes() {
         </Route>
 
 
+
+        {/* Mobile Mitarbeiteransicht – große Buttons, Adressen & Touren */}
+        <Route path="/mobil" element={<ProtectedRoute><MobilLayout /></ProtectedRoute>}>
+          <Route index element={<MobilHome />} />
+          <Route path="adressen" element={<MobilAdressen />} />
+          <Route path="touren" element={<MobilTouren />} />
+          <Route path="tour/:tourId" element={<MobilTourDetail />} />
+          <Route path="suche" element={<MobilSuche />} />
+          <Route path="auftraege" element={<MobilAuftraege />} />
+          <Route path="mehr" element={<MobilMehr />} />
+        </Route>
 
         {/* EMP – Enterprise Mobile Platform (rollenbasierte mobile Oberfläche) */}
         <Route path="/emp" element={<ProtectedRoute><EmpLayout /></ProtectedRoute>}>
