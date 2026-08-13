@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
   </d:response>
 </d:multistatus>`);
 
-    if (rest === '/' || rest === '' || rest === '/p') return propfindRoot(url.pathname);
+    if (rest === '/' || rest === '' || rest === '/p') return propfindRoot(base + (rest === "/" ? "/" : rest + "/"));
 
     const abProps = `<d:resourcetype><d:collection/><card:addressbook/></d:resourcetype>
       <d:displayname>ALIXWORK</d:displayname>
@@ -194,7 +194,7 @@ ${items}
   <d:propstat><d:prop><d:getetag>${etagFor(c)}</d:getetag><d:getcontenttype>text/vcard; charset=utf-8</d:getcontenttype></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>`);
     }
 
-    return propfindRoot(url.pathname);
+    return propfindRoot(base + (rest === "/" ? "/" : rest + "/"));
   }
 
   // ---- REPORT -----------------------------------------------------------
