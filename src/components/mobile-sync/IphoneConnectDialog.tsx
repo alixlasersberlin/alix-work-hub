@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, Smartphone, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { CARDDAV_SERVER_HOST, CARDDAV_PATH, CARDDAV_SERVER_FIELD, createDeviceToken } from '@/lib/mobile-sync';
+import { CARDDAV_SERVER_FIELD, createDeviceToken } from '@/lib/mobile-sync';
 
 type Props = {
   open: boolean;
@@ -91,7 +91,8 @@ export function IphoneConnectDialog({ open, onOpenChange, email, userId, onCreat
               <ol className="list-decimal pl-4 space-y-1 text-muted-foreground">
                 <li>Einstellungen → Apps → Kontakte → Kontakte-Accounts → Account hinzufügen</li>
                 <li>„Andere“ → „CardDAV-Account hinzufügen“</li>
-                <li>Server: <span className="font-mono">{CARDDAV_SERVER_FIELD}</span> — <b>inklusive Pfad</b>, nur der Hostname allein funktioniert nicht</li>
+                <li>Server: <span className="font-mono">{CARDDAV_SERVER_FIELD}</span> — vollständig mit <b>https://</b> und Pfad eintragen</li>
+                <li>SSL verwenden: <b>Ein</b>, Port: <b>443</b></li>
                 <li>Benutzername = AlixWork-E-Mail, Passwort = Token oben, Beschreibung: <b>ALIXWORK</b></li>
                 <li>Kontakte-App → Listen → nur „ALIXWORK“ prüfen; private iCloud-Kontakte bleiben unverändert</li>
               </ol>

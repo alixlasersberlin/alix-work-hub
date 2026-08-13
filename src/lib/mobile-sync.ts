@@ -3,8 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 export const CARDDAV_SERVER_HOST = new URL(import.meta.env.VITE_SUPABASE_URL as string).host;
 export const CARDDAV_PATH = '/functions/v1/carddav';
 export const CARDDAV_URL = `https://${CARDDAV_SERVER_HOST}${CARDDAV_PATH}`;
-// Eingabe im iOS-Feld „Server“: Host inkl. Pfad – sonst schlägt die Prüfung fehl.
-export const CARDDAV_SERVER_FIELD = `${CARDDAV_SERVER_HOST}${CARDDAV_PATH}`;
+// Eingabe im iOS-Feld „Server“: vollständige HTTPS-URL inkl. Pfad.
+// Ohne Schema interpretiert iOS den Pfad teilweise als Teil des Hostnamens
+// und meldet fälschlich, dass SSL auf Port 443 nicht erreichbar sei.
+export const CARDDAV_SERVER_FIELD = CARDDAV_URL;
 
 export type SyncScope = 'none' | 'own' | 'region' | 'branch' | 'tenant' | 'sales' | 'service' | 'all';
 
