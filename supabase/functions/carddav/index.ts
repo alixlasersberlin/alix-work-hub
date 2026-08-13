@@ -26,7 +26,8 @@ const xmlEsc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').rep
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   const idx = url.pathname.indexOf('/carddav');
-  const base = idx >= 0 ? url.pathname.slice(0, idx + '/carddav'.length) : '/functions/v1/carddav';
+  // Supabase strips "/functions/v1" internally – hrefs MUSS die extern erreichbare URL sein.
+  const base = '/functions/v1/carddav';
   const rest = (idx >= 0 ? url.pathname.slice(idx + '/carddav'.length) : '').replace(/\/+$/, '') || '/';
   const method = req.method.toUpperCase();
 
@@ -139,7 +140,7 @@ Deno.serve(async (req) => {
   </d:response>
 </d:multistatus>`);
 
-    if (rest === '/' || rest === '' || rest === '/p') return propfindRoot(url.pathname);
+    if (rest === '/' || rest === '' || rest === '/p') return propfindRoot(base + (rest === "/" ? "/" : rest + "/"));
 
     const abProps = `<d:resourcetype><d:collection/><card:addressbook/></d:resourcetype>
       <d:displayname>ALIXWORK</d:displayname>
@@ -193,7 +194,7 @@ ${items}
   <d:propstat><d:prop><d:getetag>${etagFor(c)}</d:getetag><d:getcontenttype>text/vcard; charset=utf-8</d:getcontenttype></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>`);
     }
 
-    return propfindRoot(url.pathname);
+    return propfindRoot(base + (rest === "/" ? "/" : rest + "/"));
   }
 
   // ---- REPORT -----------------------------------------------------------

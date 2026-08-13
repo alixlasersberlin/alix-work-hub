@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, Smartphone, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { CARDDAV_SERVER_HOST, CARDDAV_PATH, createDeviceToken } from '@/lib/mobile-sync';
+import { CARDDAV_SERVER_HOST, CARDDAV_PATH, CARDDAV_SERVER_FIELD, createDeviceToken } from '@/lib/mobile-sync';
 
 type Props = {
   open: boolean;
@@ -82,8 +82,7 @@ export function IphoneConnectDialog({ open, onOpenChange, email, userId, onCreat
                 Token jetzt notieren – es wird nicht erneut angezeigt.
               </AlertDescription>
             </Alert>
-            <Row label="Server" value={CARDDAV_SERVER_HOST} />
-            <Row label="Serverpfad (Erweiterte Einstellungen)" value={CARDDAV_PATH} />
+            <Row label="Server (genau so eintragen)" value={CARDDAV_SERVER_FIELD} />
             <Row label="Benutzername" value={email} />
             <Row label="Passwort / Token" value={token} />
 
@@ -92,9 +91,8 @@ export function IphoneConnectDialog({ open, onOpenChange, email, userId, onCreat
               <ol className="list-decimal pl-4 space-y-1 text-muted-foreground">
                 <li>Einstellungen → Apps → Kontakte → Kontakte-Accounts → Account hinzufügen</li>
                 <li>„Andere“ → „CardDAV-Account hinzufügen“</li>
-                <li>Server, Benutzername und Token oben eintragen, Beschreibung: <b>ALIXWORK</b></li>
-                <li>Falls die Prüfung fehlschlägt: „Erweiterte Einstellungen“ öffnen, SSL aktiv lassen, Port 443, Account-URL auf
-                  <span className="font-mono"> https://{CARDDAV_SERVER_HOST}{CARDDAV_PATH}</span> setzen</li>
+                <li>Server: <span className="font-mono">{CARDDAV_SERVER_FIELD}</span> — <b>inklusive Pfad</b>, nur der Hostname allein funktioniert nicht</li>
+                <li>Benutzername = AlixWork-E-Mail, Passwort = Token oben, Beschreibung: <b>ALIXWORK</b></li>
                 <li>Kontakte-App → Listen → nur „ALIXWORK“ prüfen; private iCloud-Kontakte bleiben unverändert</li>
               </ol>
             </div>
