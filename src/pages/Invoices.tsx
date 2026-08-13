@@ -7,7 +7,7 @@ import { DataCard, PageError } from '@/components/PageShell';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import { SkeletonTable } from '@/components/infinity/Skeleton';
 import { InfinityStatusBadge } from '@/components/infinity/StatusBadge';
-import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, X as LucideXIcon } from 'lucide-react';
+import { FileText, RefreshCw, ArrowRightLeft, ChevronDown, ChevronRight, Users, Wallet, AlertTriangle, Repeat, Pencil, Printer, Download, Loader2, Trash2, Mail, CheckCircle2, TrendingUp, Clock, Zap, X as LucideXIcon } from 'lucide-react';
 import { postPaymentToJournal } from '@/lib/finance/journal';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -19,6 +19,7 @@ import { useAccountingRegion } from '@/contexts/AccountingRegionContext';
 
 import { ListToolbar } from '@/components/finance/ListToolbar';
 import { AccountStatementActions } from '@/components/finance/AccountStatementActions';
+import { SofortRechnungDialog } from '@/components/finance/SofortRechnungDialog';
 import { matchesQuery, paginate, type PageSize } from '@/lib/finance/list-filter';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -443,6 +444,10 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
 
   // ---- RECHNUNG NACHTRAG: fehlende Raten rückwirkend erzeugen (ohne Versand) ----
   const [nachtragBusy, setNachtragBusy] = useState<string | null>(null);
+
+  // ---- SOFORT RECHNUNG: festgeschriebene Rechnung/Anzahlung direkt aufs Konto ----
+  const [sofortAccount, setSofortAccount] = useState<Account | null>(null);
+
 
   const addRecurrenceInterval = (d: Date, freq: string | null, every: number | null) => {
     const e = every && every > 0 ? every : 1;
@@ -2209,6 +2214,17 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
                           RECHNUNG NACHTRAG
                         </Button>
                       )}
+                      {isAdmin && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2 gap-1 border-primary/40 text-primary hover:bg-primary/10"
+                          title="Sofort Rechnung erstellen, festschreiben und diesem Kundenkonto zuordnen"
+                          onClick={(e) => { e.stopPropagation(); setSofortAccount(a); }}
+                        >
+                          <Zap className="w-3.5 h-3.5" /> SOFORT RECHNUNG
+                        </Button>
+                      )}
                       <div onClick={(e) => e.stopPropagation()} className="flex items-center gap-2">
                         <AccountStatementActions
                           customerName={a.customer_name}
@@ -2664,6 +2680,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {sofortAccount && (
+        <SofortRechnungDialog
+          open={!!sofortAccount}
+          onOpenChange={(v) => { if (!v) setSofortAccount(null); }}
+          customerId={sofortAccount.customer_id}
+          customerName={sofortAccount.customer_name}
+          city={sofortAccount.city}
+          tenantId={tenantId}
+          onCreated={() => { setSofortAccount(null); void fetchRows(); }}
+        />
+      )}
     </div>
 
   );
