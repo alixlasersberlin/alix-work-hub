@@ -1607,6 +1607,9 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
         .split(/[,;\s]+/)
         .map((s) => s.trim())
         .filter((s) => s.includes('@'));
+      // zoho_invoices.customer_id ist eine Zoho-ID (numerisch) – mail_messages.customer_id erwartet UUID.
+      const isUuid = (v: unknown) =>
+        typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
       const { data, error } = await supabase.functions.invoke('send-mail', {
         body: {
           to_email: emailForm.to_email,
@@ -1616,7 +1619,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           subject: emailForm.subject,
           body_text: emailForm.body_text,
           bcc: bccList.length ? bccList : null,
-          customer_id: emailRow.customer_id ?? null,
+          customer_id: isUuid(emailRow.customer_id) ? emailRow.customer_id : null,
           attachments: [{
             filename: `${emailRow.invoice_number ?? 'rechnung'}.pdf`,
             content: b64,
