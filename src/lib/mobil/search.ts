@@ -58,8 +58,8 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
         ].join(','),
       )
       .limit(30),
-    supabase
-      .from('repairs')
+    (supabase as any)
+      .from('repair_orders')
       .select('id, repair_number, customer_name, device_brand, device_model, device_serial_number, status')
       .or(
         [
@@ -69,6 +69,7 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
         ].join(','),
       )
       .limit(15),
+
     supabase
       .from('delivery_tours')
       .select('id, tour_number, title, tour_date, status')
