@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, Smartphone, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { CARDDAV_SERVER_HOST, CARDDAV_PATH, createDeviceToken } from '@/lib/mobile-sync';
+import { CARDDAV_SERVER_HOST, CARDDAV_PATH, CARDDAV_SERVER_FIELD, createDeviceToken } from '@/lib/mobile-sync';
 
 type Props = {
   open: boolean;
