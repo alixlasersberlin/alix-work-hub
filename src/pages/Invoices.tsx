@@ -2680,6 +2680,18 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {sofortAccount && (
+        <SofortRechnungDialog
+          open={!!sofortAccount}
+          onOpenChange={(v) => { if (!v) setSofortAccount(null); }}
+          customerId={sofortAccount.customer_id}
+          customerName={sofortAccount.customer_name}
+          city={sofortAccount.city}
+          tenantId={tenantId}
+          onCreated={() => { setSofortAccount(null); void fetchRows(); }}
+        />
+      )}
     </div>
 
   );
