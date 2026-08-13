@@ -71,13 +71,18 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
+    const uuidOrNull = (v: unknown) =>
+      typeof v === "string" &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
+        ? v
+        : null;
+    const customer_id = uuidOrNull(body?.customer_id);
+    const order_id = uuidOrNull(body?.order_id);
+    const invoice_id = uuidOrNull(body?.invoice_id);
+    const ticket_id = uuidOrNull(body?.ticket_id);
+    const repair_id = uuidOrNull(body?.repair_id);
     const {
       template_id = null,
-      customer_id = null,
-      order_id = null,
-      invoice_id = null,
-      ticket_id = null,
-      repair_id = null,
       to_email,
       to_name = null,
       from_email,
