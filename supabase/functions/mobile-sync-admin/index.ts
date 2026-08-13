@@ -70,6 +70,17 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    if (action === 'delete_device') {
+      const id = String(body?.device_id ?? '');
+      const { data: dev } = await db.from('mobile_sync_devices').select('id, user_id, device_name').eq('id', id).maybeSingle();
+      if (!dev || (dev.user_id !== user.id && !isAdmin)) return json({ error: 'Nicht erlaubt' }, 403);
+      await db.from('mobile_sync_log').update({ device_id: null }).eq('device_id', id);
+      const { error } = await db.from('mobile_sync_devices').delete().eq('id', id);
+      if (error) throw error;
+      await db.from('mobile_sync_log').insert({ user_id: dev.user_id, action: 'device_deleted', status: 'ok', message: dev.device_name });
+      return json({ ok: true });
+    }
+
     if (action === 'set_scope') {
       if (!isAdmin) return json({ error: 'Nur Administratoren dürfen Freigaben ändern.' }, 403);
       const scope = String(body?.scope ?? 'none');

@@ -59,6 +59,9 @@ export const rotateDeviceToken = (device_id: string) =>
 export const setDeviceStatus = (device_id: string, status: 'active' | 'blocked' | 'revoked') =>
   call<{ ok: true }>({ action: 'set_status', device_id, status });
 
+export const deleteDevice = (device_id: string) =>
+  call<{ ok: true }>({ action: 'delete_device', device_id });
+
 export const setUserScope = (user_id: string, scope: SyncScope, scope_value?: string | null) =>
   call<{ ok: true }>({ action: 'set_scope', user_id, scope, scope_value: scope_value ?? null });
 

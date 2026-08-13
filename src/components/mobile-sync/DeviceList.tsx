@@ -4,12 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Ban, KeyRound, Play, Smartphone } from 'lucide-react';
-import { DEVICE_STATUS_LABELS, MobileDevice, rotateDeviceToken, setDeviceStatus } from '@/lib/mobile-sync';
+import { Ban, KeyRound, Play, Smartphone, Trash2 } from 'lucide-react';
+import { DEVICE_STATUS_LABELS, MobileDevice, deleteDevice, rotateDeviceToken, setDeviceStatus } from '@/lib/mobile-sync';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export function DeviceList({ userId, refreshKey, showUser }: { userId?: string; refreshKey?: number; showUser?: boolean }) {
   const [rows, setRows] = useState<(MobileDevice & { email?: string | null })[]>([]);
   const [newToken, setNewToken] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<MobileDevice | null>(null);
 
   const load = async () => {
     let q = supabase.from('mobile_sync_devices')
@@ -69,10 +74,33 @@ export function DeviceList({ userId, refreshKey, showUser }: { userId?: string; 
               <Button size="sm" variant="destructive" onClick={() => act(() => setDeviceStatus(d.id, 'revoked'), 'Zugang widerrufen')}>
                 Widerrufen
               </Button>
+              <Button size="sm" variant="destructive" onClick={() => setToDelete(d)}>
+                <Trash2 className="w-4 h-4 mr-1" /> Löschen
+              </Button>
             </div>
           </div>
         ))}
         {rows.length === 0 && <div className="text-muted-foreground text-[12px]">Noch keine Geräte verbunden.</div>}
+
+        <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Gerät löschen?</AlertDialogTitle>
+              <AlertDialogDescription>
+                „{toDelete?.device_name}“ wird dauerhaft entfernt. Das Token verliert sofort seine Gültigkeit und
+                die Kontaktsynchronisation auf diesem Gerät funktioniert nicht mehr.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => { const id = toDelete!.id; setToDelete(null); act(() => deleteDevice(id), 'Gerät gelöscht'); }}
+              >
+                Endgültig löschen
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );
