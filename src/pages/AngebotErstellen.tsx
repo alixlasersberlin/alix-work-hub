@@ -54,10 +54,13 @@ export default function AngebotErstellen() {
   const [searchParams] = useSearchParams();
   const sofortMode = searchParams.get('mode') === 'sofort';
   const { roles, user } = useAuth();
-  // k.trinh darf Angebote wie der Super Admin selbst bestätigen/signieren
+  // Admin + Super Admin dürfen Angebote selbst bestätigen/signieren und in einen Auftrag wandeln
   const SELF_SIGN_EMAILS = ['k.trinh@alix-operation.de'];
   const isSelfSigner = SELF_SIGN_EMAILS.includes((user?.email ?? '').toLowerCase());
-  const isSuperAdmin = (roles ?? []).some((r: any) => (typeof r === 'string' ? r : r?.name) === 'Super Admin') || isSelfSigner;
+  const isSuperAdmin = (roles ?? []).some((r: any) => {
+    const n = typeof r === 'string' ? r : r?.name;
+    return n === 'Super Admin' || n === 'Admin';
+  }) || isSelfSigner;
 
   const isAdmin = (roles ?? []).some((r: any) => {
     const n = typeof r === 'string' ? r : r?.name;
