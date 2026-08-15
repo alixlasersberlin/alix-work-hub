@@ -2122,7 +2122,7 @@ export default function AngebotErstellen() {
       </div>
 
 
-      <div className="flex flex-wrap justify-end gap-3 pt-2">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:justify-end gap-3 pt-2 [&>button]:w-full sm:[&>button]:w-auto [&>button]:min-h-[48px]">
         {sofortMode ? (
           <>
             <Button
