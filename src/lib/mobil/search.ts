@@ -19,7 +19,7 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
   if (term.length < 2) return [];
   const like = `%${term}%`;
 
-  const [customers, orders, appts, repairs, tours] = await Promise.all([
+  const settled = await Promise.allSettled([
     supabase
       .from('customers')
       .select('id, company_name, contact_name, email, phone, external_customer_id, billing_address, shipping_address')
@@ -60,7 +60,7 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
       .limit(30),
     (supabase as any)
       .from('repair_orders')
-      .select('id, repair_number, customer_name, device_brand, device_model, device_serial_number, status')
+      .select('id, repair_number, customer_name, device_brand, device_model, device_serial_number, repair_status')
       .or(
         [
           `repair_number.ilike.${like}`,
@@ -70,6 +70,7 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
       )
       .limit(15),
 
+
     supabase
       .from('delivery_tours')
       .select('id, tour_number, title, tour_date, status')
@@ -77,7 +78,13 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
       .limit(10),
   ]);
 
+  // Einzelne fehlgeschlagene Teilabfragen dürfen die Suche nicht abbrechen.
+  const [customers, orders, appts, repairs, tours] = settled.map((r) =>
+    r.status === 'fulfilled' ? (r.value as any) : { data: [] as any[] },
+  ) as any[];
+
   const hits: MobilHit[] = [];
+
 
   for (const c of (customers.data ?? []) as any[]) {
     hits.push({
@@ -127,7 +134,7 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
       kind: 'reparatur',
       id: r.id,
       title: r.repair_number,
-      subtitle: [r.customer_name, [r.device_brand, r.device_model].filter(Boolean).join(' '), r.status]
+      subtitle: [r.customer_name, [r.device_brand, r.device_model].filter(Boolean).join(' '), r.repair_status]
         .filter(Boolean)
         .join(' · '),
       serial: r.device_serial_number,
