@@ -134,7 +134,7 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
       kind: 'reparatur',
       id: r.id,
       title: r.repair_number,
-      subtitle: [r.customer_name, [r.device_brand, r.device_model].filter(Boolean).join(' '), r.status]
+      subtitle: [r.customer_name, [r.device_brand, r.device_model].filter(Boolean).join(' '), r.repair_status]
         .filter(Boolean)
         .join(' · '),
       serial: r.device_serial_number,
