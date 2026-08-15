@@ -325,8 +325,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch { /* ignore */ }
         await signOut();
       }, IDLE_MS);
-        await signOut();
-      }, IDLE_MS);
     };
 
     const events: string[] = [
