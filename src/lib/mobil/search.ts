@@ -19,7 +19,7 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
   if (term.length < 2) return [];
   const like = `%${term}%`;
 
-  const [customers, orders, appts, repairs, tours] = await Promise.all([
+  const settled = await Promise.allSettled([
     supabase
       .from('customers')
       .select('id, company_name, contact_name, email, phone, external_customer_id, billing_address, shipping_address')
