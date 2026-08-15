@@ -297,12 +297,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // Privileg-Flag für die MFA-Politik (Admins streng, andere 24h-Fenster)
+  const isPrivilegedSession = roles.includes('Super Admin') || roles.includes('Admin');
+  useEffect(() => {
+    if (!user || roles.length === 0) return;
+    setMfaPrivileged(isPrivilegedSession);
+  }, [user, roles, isPrivilegedSession]);
+
   // Idle-Auto-Logout nach Inaktivität (Security-Baseline)
-  // Super Admin: 4 Stunden, alle anderen: 30 Minuten — der Timer wird bei Aktivität zurückgesetzt.
+  // Super Admin: 4 Std. · Mobil ohne Admin-Rechte: 15 Min. · sonst: 30 Min.
   const isSuperAdminSession = roles.includes('Super Admin');
   useEffect(() => {
     if (!user) return;
-    const IDLE_MINUTES = isSuperAdminSession ? 240 : 30;
+    const isMobileSession = typeof window !== 'undefined'
+      && (window.matchMedia?.('(max-width: 768px)').matches || /iPhone|Android|iPad|Mobile/i.test(navigator.userAgent));
+    const IDLE_MINUTES = isSuperAdminSession ? 240 : (isMobileSession && !isPrivilegedSession ? 15 : 30);
     const IDLE_MS = IDLE_MINUTES * 60 * 1000;
     let timer: number | undefined;
 
@@ -312,12 +321,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           // toast nur best-effort, dynamic import um Zyklen zu vermeiden
           const { toast } = await import('sonner');
-          toast.warning(
-            isSuperAdminSession
-              ? 'Automatisch abgemeldet wegen Inaktivität (4 Std.)'
-              : 'Automatisch abgemeldet wegen Inaktivität (30 Min.)'
-          );
+          toast.warning(`Automatisch abgemeldet wegen Inaktivität (${IDLE_MINUTES} Min.)`);
         } catch { /* ignore */ }
+        await signOut();
+      }, IDLE_MS);
         await signOut();
       }, IDLE_MS);
     };
