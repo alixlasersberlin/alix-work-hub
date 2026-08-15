@@ -343,7 +343,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       events.forEach((ev) => window.removeEventListener(ev, handler));
       document.removeEventListener('visibilitychange', handler);
     };
-  }, [user, isSuperAdminSession]);
+  }, [user, isSuperAdminSession, isPrivilegedSession]);
 
   // Admin inherits all Super Admin privileges (mirrors DB has_role()).
   const hasRoleRaw = (role: string) => roles.includes(role);
