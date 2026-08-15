@@ -70,7 +70,7 @@ export default function MobilAuftraege() {
                 <a href={tel}><Phone className="w-4 h-4" /></a>
               </Button>
               <Button asChild variant="outline" className="h-12" disabled={!r.customer_id}>
-                <Link to={r.customer_id ? `/customers/${r.customer_id}` : '#'}><User className="w-4 h-4" /></Link>
+                <Link to={r.customer_id ? `/kunden/${r.customer_id}` : '#'}><User className="w-4 h-4" /></Link>
               </Button>
             </div>
           </Card>
