@@ -386,6 +386,7 @@ const MobileTouren = lazy(() => import("./pages/Mobile/Touren"));
 const MobileTourDetail = lazy(() => import("./pages/Mobile/TourDetail"));
 const MobileTourStopp = lazy(() => import("./pages/Mobile/TourStopp"));
 import MobileAutoRedirect from "@/components/mobil/MobileAutoRedirect";
+import { isPhone } from "@/lib/mobil/utils";
 const MobilLayout = lazy(() => import("./pages/Mobil/Layout"));
 const MobilHome = lazy(() => import("./pages/Mobil/Home"));
 const MobilAdressen = lazy(() => import("./pages/Mobil/Adressen"));
@@ -1216,6 +1217,10 @@ function ForceWelcomeGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const pending = hasPendingWelcome();
 
+  if (pending && isPhone()) {
+    clearPendingWelcome();
+    return <>{children}</>;
+  }
   if (pending && location.pathname !== '/willkommen') {
     return <Navigate to="/willkommen" replace />;
   }
@@ -2544,8 +2549,12 @@ const App = () => (
                     <CopilotBar />
                     <ShortcutsOverlay />
                     <TopProgressBar />
-                    <LeihgeraetReminder />
-                    <BackupWarningGate />
+                    {!isPhone() && (
+                      <>
+                        <LeihgeraetReminder />
+                        <BackupWarningGate />
+                      </>
+                    )}
                     {/* TemplateSwitcher (Standard / ALIXWORK NEO) deaktiviert */}
                   </MaintenanceGate>
                   </AccountingRegionProvider>

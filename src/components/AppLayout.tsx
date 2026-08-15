@@ -14,6 +14,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { isPhone } from '@/lib/mobil/utils';
 import WelcomeDialog from '@/components/WelcomeDialog';
 import LeoWelcomeDialog from '@/components/LeoWelcomeDialog';
 import NataliaWelcomeOverlay from '@/components/NataliaWelcomeOverlay';
@@ -1344,9 +1345,13 @@ export default function AppLayout() {
           <Outlet key={refreshKey} />
         </main>
       </div>
-      <WelcomeDialog />
-      <NewsAnnouncementDialog />
-      <SalesLeadAssignmentOverlay />
+      {!isPhone() && (
+        <>
+          <WelcomeDialog />
+          <NewsAnnouncementDialog />
+          <SalesLeadAssignmentOverlay />
+        </>
+      )}
       {/* Begrüßungs-Overlays für Natalia & Lars deaktiviert */}
 
 
