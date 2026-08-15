@@ -72,16 +72,26 @@ function getBlockReason(profile: UserProfile | null): AccountBlockReason {
 
 const MFA_TAB_KEY = 'alixwork.mfa_verified_tab';
 const MFA_GRACE_KEY = 'alixwork.mfa_grace_until';
+const MFA_PRIV_KEY = 'alixwork.mfa_privileged';
 const MFA_GRACE_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 
 export function markMfaVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
-  // Beim erfolgreichen TOTP startet ein 5h-Grace-Window auf diesem Gerät
+  // Beim erfolgreichen TOTP startet ein 24h-Grace-Window auf diesem Gerät
   try { localStorage.setItem(MFA_GRACE_KEY, String(Date.now() + MFA_GRACE_MS)); } catch { /* ignore */ }
 }
 
 export function clearMfaTabMarker() {
   try { sessionStorage.removeItem(MFA_TAB_KEY); } catch { /* ignore */ }
+}
+
+/** Super Admin / Admin bleiben streng (OTP je Session), alle anderen nutzen das 24h-Fenster. */
+export function setMfaPrivileged(privileged: boolean) {
+  try { localStorage.setItem(MFA_PRIV_KEY, privileged ? '1' : '0'); } catch { /* ignore */ }
+}
+
+function isMfaPrivileged() {
+  try { return localStorage.getItem(MFA_PRIV_KEY) !== '0'; } catch { return true; }
 }
 
 function isMfaVerifiedThisTab() {
@@ -106,11 +116,16 @@ async function computeMfaState(): Promise<MfaState> {
     const verifiedTotp = (factorsData?.totp ?? []).filter((f: any) => f.status === 'verified');
     if (verifiedTotp.length === 0) return 'not_enrolled';
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    // 5h-Grace nach erfolgreichem TOTP: Tab gilt automatisch als verifiziert.
+    // Grace nach erfolgreichem TOTP: Tab gilt automatisch als verifiziert.
     if (aalData?.currentLevel === 'aal2' && (isMfaVerifiedThisTab() || isMfaWithinGrace())) {
       if (!isMfaVerifiedThisTab()) {
         try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
       }
+      return 'verified';
+    }
+    // Nicht-privilegierte Rollen: OTP nur einmal pro 24 Stunden pro Gerät.
+    if (!isMfaPrivileged() && isMfaWithinGrace()) {
+      try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
       return 'verified';
     }
     return 'challenge_required';
