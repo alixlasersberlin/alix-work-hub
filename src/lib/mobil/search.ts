@@ -78,7 +78,13 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
       .limit(10),
   ]);
 
+  // Einzelne fehlgeschlagene Teilabfragen dürfen die Suche nicht abbrechen.
+  const [customers, orders, appts, repairs, tours] = settled.map((r) =>
+    r.status === 'fulfilled' ? (r.value as any) : { data: [] as any[] },
+  ) as any[];
+
   const hits: MobilHit[] = [];
+
 
   for (const c of (customers.data ?? []) as any[]) {
     hits.push({
