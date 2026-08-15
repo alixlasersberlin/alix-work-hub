@@ -60,7 +60,7 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
       .limit(30),
     (supabase as any)
       .from('repair_orders')
-      .select('id, repair_number, customer_name, device_brand, device_model, device_serial_number, status')
+      .select('id, repair_number, customer_name, device_brand, device_model, device_serial_number, repair_status')
       .or(
         [
           `repair_number.ilike.${like}`,
@@ -69,6 +69,7 @@ export async function mobilSearch(rawTerm: string): Promise<MobilHit[]> {
         ].join(','),
       )
       .limit(15),
+
 
     supabase
       .from('delivery_tours')
