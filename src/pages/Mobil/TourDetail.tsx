@@ -131,7 +131,7 @@ export default function MobilTourDetail() {
                 <a href={tel}><Phone className="w-4 h-4 mr-1" /> Anrufen</a>
               </Button>
               <Button asChild variant="outline" className="h-12" disabled={!a?.customer_id}>
-                <Link to={a?.customer_id ? `/customers/${a.customer_id}` : '#'}><User className="w-4 h-4 mr-1" /> Kunde</Link>
+                <Link to={a?.customer_id ? `/kunden/${a.customer_id}` : '#'}><User className="w-4 h-4 mr-1" /> Kunde</Link>
               </Button>
               <Button asChild variant="outline" className="h-12" disabled={!a?.order_number}>
                 <Link to={`/mobil/suche?q=${encodeURIComponent(a?.order_number ?? '')}`}>

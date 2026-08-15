@@ -83,7 +83,7 @@ export function AddressCard({ hit }: { hit: MobilHit }) {
         </Button>
         {hit.customerId && (
           <Button asChild variant="outline" className="h-12">
-            <Link to={`/customers/${hit.customerId}`}><User className="w-4 h-4 mr-1" /> Kunde</Link>
+            <Link to={`/kunden/${hit.customerId}`}><User className="w-4 h-4 mr-1" /> Kunde</Link>
           </Button>
         )}
         {hit.orderNumber && (
