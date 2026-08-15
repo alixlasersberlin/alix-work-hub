@@ -72,16 +72,26 @@ function getBlockReason(profile: UserProfile | null): AccountBlockReason {
 
 const MFA_TAB_KEY = 'alixwork.mfa_verified_tab';
 const MFA_GRACE_KEY = 'alixwork.mfa_grace_until';
+const MFA_PRIV_KEY = 'alixwork.mfa_privileged';
 const MFA_GRACE_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 
 export function markMfaVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
-  // Beim erfolgreichen TOTP startet ein 5h-Grace-Window auf diesem Gerät
+  // Beim erfolgreichen TOTP startet ein 24h-Grace-Window auf diesem Gerät
   try { localStorage.setItem(MFA_GRACE_KEY, String(Date.now() + MFA_GRACE_MS)); } catch { /* ignore */ }
 }
 
 export function clearMfaTabMarker() {
   try { sessionStorage.removeItem(MFA_TAB_KEY); } catch { /* ignore */ }
+}
+
+/** Super Admin / Admin bleiben streng (OTP je Session), alle anderen nutzen das 24h-Fenster. */
+export function setMfaPrivileged(privileged: boolean) {
+  try { localStorage.setItem(MFA_PRIV_KEY, privileged ? '1' : '0'); } catch { /* ignore */ }
+}
+
+function isMfaPrivileged() {
+  try { return localStorage.getItem(MFA_PRIV_KEY) !== '0'; } catch { return true; }
 }
 
 function isMfaVerifiedThisTab() {
@@ -106,11 +116,16 @@ async function computeMfaState(): Promise<MfaState> {
     const verifiedTotp = (factorsData?.totp ?? []).filter((f: any) => f.status === 'verified');
     if (verifiedTotp.length === 0) return 'not_enrolled';
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    // 5h-Grace nach erfolgreichem TOTP: Tab gilt automatisch als verifiziert.
+    // Grace nach erfolgreichem TOTP: Tab gilt automatisch als verifiziert.
     if (aalData?.currentLevel === 'aal2' && (isMfaVerifiedThisTab() || isMfaWithinGrace())) {
       if (!isMfaVerifiedThisTab()) {
         try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
       }
+      return 'verified';
+    }
+    // Nicht-privilegierte Rollen: OTP nur einmal pro 24 Stunden pro Gerät.
+    if (!isMfaPrivileged() && isMfaWithinGrace()) {
+      try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
       return 'verified';
     }
     return 'challenge_required';
@@ -282,12 +297,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // Privileg-Flag für die MFA-Politik (Admins streng, andere 24h-Fenster)
+  const isPrivilegedSession = roles.includes('Super Admin') || roles.includes('Admin');
+  useEffect(() => {
+    if (!user || roles.length === 0) return;
+    setMfaPrivileged(isPrivilegedSession);
+  }, [user, roles, isPrivilegedSession]);
+
   // Idle-Auto-Logout nach Inaktivität (Security-Baseline)
-  // Super Admin: 4 Stunden, alle anderen: 30 Minuten — der Timer wird bei Aktivität zurückgesetzt.
+  // Super Admin: 4 Std. · Mobil ohne Admin-Rechte: 15 Min. · sonst: 30 Min.
   const isSuperAdminSession = roles.includes('Super Admin');
   useEffect(() => {
     if (!user) return;
-    const IDLE_MINUTES = isSuperAdminSession ? 240 : 30;
+    const isMobileSession = typeof window !== 'undefined'
+      && (window.matchMedia?.('(max-width: 768px)').matches || /iPhone|Android|iPad|Mobile/i.test(navigator.userAgent));
+    const IDLE_MINUTES = isSuperAdminSession ? 240 : (isMobileSession && !isPrivilegedSession ? 15 : 30);
     const IDLE_MS = IDLE_MINUTES * 60 * 1000;
     let timer: number | undefined;
 
@@ -297,11 +321,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           // toast nur best-effort, dynamic import um Zyklen zu vermeiden
           const { toast } = await import('sonner');
-          toast.warning(
-            isSuperAdminSession
-              ? 'Automatisch abgemeldet wegen Inaktivität (4 Std.)'
-              : 'Automatisch abgemeldet wegen Inaktivität (30 Min.)'
-          );
+          toast.warning(`Automatisch abgemeldet wegen Inaktivität (${IDLE_MINUTES} Min.)`);
         } catch { /* ignore */ }
         await signOut();
       }, IDLE_MS);
@@ -323,7 +343,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       events.forEach((ev) => window.removeEventListener(ev, handler));
       document.removeEventListener('visibilitychange', handler);
     };
-  }, [user, isSuperAdminSession]);
+  }, [user, isSuperAdminSession, isPrivilegedSession]);
 
   // Admin inherits all Super Admin privileges (mirrors DB has_role()).
   const hasRoleRaw = (role: string) => roles.includes(role);
