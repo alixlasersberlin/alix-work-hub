@@ -286,12 +286,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           </div>
 
           {/* Fortschrittsbalken */}
-          <div className="mx-auto max-w-4xl mt-3">
-            <div className="flex items-center justify-between text-[10px] md:text-[11px] tracking-[0.2em] uppercase !text-slate-500 mb-1.5">
-              <span>
+          <div className="mx-auto max-w-4xl sm:mt-3">
+            <div className="flex items-center justify-between gap-3 text-[10px] md:text-[11px] tracking-[0.16em] sm:tracking-[0.2em] uppercase !text-slate-500 mb-1.5">
+              <span className="truncate">
                 Schritt {step} von {STEP_LABELS.length} · {STEP_LABELS[step - 1]}
               </span>
-              <span className="tabular-nums">
+              <span className="tabular-nums shrink-0">
                 {Math.round((step / STEP_LABELS.length) * 100)} %
               </span>
             </div>
@@ -308,13 +308,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             </div>
           </div>
 
-          <div className="mx-auto max-w-4xl mt-4 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent" />
+          <div className="mx-auto max-w-4xl mt-3 sm:mt-4 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent" />
         </div>
       )}
 
-
-      <main className="px-5 md:px-10 pb-28 pt-8 md:pt-12">
+      <main className="px-4 sm:px-6 md:px-10 pt-6 sm:pt-8 md:pt-12 pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-4xl">
+
           {/* 0 — Intro */}
           {step === 0 && (
             <section className="text-center py-10 md:py-20 animate-in fade-in duration-700">
