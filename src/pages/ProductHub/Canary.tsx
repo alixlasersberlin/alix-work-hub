@@ -76,17 +76,20 @@ export default function ProductHubCanary() {
       rollback: checks.rollback === 'READY' && snaps.length ? 'READY' : 'NOT READY',
       lock: snaps.length && snaps.every((s: any) => s.current_live_value !== undefined) ? 'READY' : 'NOT READY',
       readback: snaps.length ? 'READY' : 'NOT READY',
-      sync_lock: 'LOCK READY',
+      sync_lock: lock?.active ? 'ACTIVE' : 'LOCK READY',
       dry_run: (checks.dry_run as State) || 'NOT READY',
+      publish: (checks.publish as State) || 'OFFEN',
       audit: 'READY',
       com: 'DISABLED',
       phase: 'B',
     };
-  }, [batch, snaps, deWrite]);
+  }, [batch, snaps, deWrite, lock]);
+
+  const results: any[] = (batch?.checks?.results as any[]) || [];
 
   const allGreen =
     dash.de_write === 'READY' && dash.snapshot === 'FROZEN' && dash.rollback === 'READY' &&
-    dash.lock === 'READY' && dash.readback === 'READY' && dash.dry_run === 'PASSED';
+    dash.lock === 'READY' && dash.readback === 'READY' && dash.dry_run === 'PASSED' && !!lock?.active;
 
   if (loading) return <div className="p-8 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Lade Canary Panel…</div>;
 
