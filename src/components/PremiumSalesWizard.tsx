@@ -66,6 +66,35 @@ function validatePhone(code: string, value: string): string | null {
   return null;
 }
 
+function validateName(value: string, label: string, required: boolean): string | null {
+  const v = value.trim();
+  if (!v) return required ? `${label} ist ein Pflichtfeld.` : null;
+  if (v.length < 2) return `${label} muss mindestens 2 Zeichen haben.`;
+  if (v.length > 100) return `${label} darf max. 100 Zeichen haben.`;
+  if (/\d/.test(v)) return `${label} darf keine Ziffern enthalten.`;
+  return null;
+}
+
+function validateCompany(value: string): string | null {
+  const v = value.trim();
+  if (!v) return null;
+  if (v.length > 150) return 'Unternehmen darf max. 150 Zeichen haben.';
+  return null;
+}
+
+function validateCountryCode(code: string): string | null {
+  const v = code.trim();
+  if (!v || v === '+') return 'Bitte Ländervorwahl angeben.';
+  if (!/^\+\d{1,4}$/.test(v)) return 'Vorwahl im Format +49 angeben.';
+  return null;
+}
+
+function validateNotes(value: string): string | null {
+  if (value.length > 2000) return `Nachricht ist zu lang (${value.length}/2000 Zeichen).`;
+  return null;
+}
+
+
 
 const STEP_LABELS = ['PROFIL', 'ANWENDUNG', 'BEDARF', 'ABSCHLUSS'];
 
