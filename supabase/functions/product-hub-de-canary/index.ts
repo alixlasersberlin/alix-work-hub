@@ -95,13 +95,13 @@ async function fetchDeProduct(alixId: string) {
   return { product: hit, payloadHash: await sha256(JSON.stringify(hit)) };
 }
 
-async function writeCall(body: Record<string, unknown>) {
+async function writeCall(body: Record<string, unknown>, dryRun = true) {
   const key = Deno.env.get("DE_PRODUCT_HUB_WRITE_KEY") || "";
   if (!key) return { status: 0, body: { error: "DE_PRODUCT_HUB_WRITE_KEY fehlt" } as any, ok: false };
   const res = await fetch(DE_WRITE, {
     method: "PATCH",
     headers: { "x-api-key": key, "Content-Type": "application/json", "User-Agent": UA },
-    body: JSON.stringify({ publish_id: `alixwork-${Date.now()}`, ...body, dry_run: true }),
+    body: JSON.stringify({ publish_id: `alixwork-${Date.now()}`, ...body, dry_run: dryRun }),
   });
   const raw = await res.text();
   let parsed: any = raw;
@@ -116,6 +116,21 @@ function deValue(deField: string, v: unknown): unknown {
     if (nums.length) return nums;
   }
   return asText(v);
+}
+
+// Normalisierter Vergleich: Zahlenlisten numerisch, Text ohne Trenner/Case/Unicode-Minus
+function normCompare(field: string, a: unknown, b: unknown): boolean {
+  const ta = asText(a), tb = asText(b);
+  if (ta === null && tb === null) return true;
+  if (ta === null || tb === null) return false;
+  if (field === "wavelengths" || field === "wavelengths_nm") {
+    const na = (ta.match(/\d+/g) || []).map(Number).sort((x, y) => x - y).join(",");
+    const nb = (tb.match(/\d+/g) || []).map(Number).sort((x, y) => x - y).join(",");
+    return na === nb && na !== "";
+  }
+  const clean = (s: string) =>
+    s.toLowerCase().replace(/[−–—]/g, "-").replace(/\s+/g, " ").replace(/[.,;]+$/g, "").trim();
+  return clean(ta) === clean(tb);
 }
 
 const codeOf = (b: any) => String(b?.code || b?.error_code || b?.error || "").toUpperCase();
