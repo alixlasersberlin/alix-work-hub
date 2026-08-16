@@ -28,6 +28,8 @@ export default function ProductHubComCanary() {
   const [loading, setLoading] = useState(true);
   const [trace, setTrace] = useState<any>(null);
   const [mismatch, setMismatch] = useState<any>(null);
+  const [dry, setDry] = useState<any>(null);
+
 
 
   const call = async (action: string, body: Record<string, any> = {}, silent = false) => {
