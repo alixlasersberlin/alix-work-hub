@@ -2153,6 +2153,20 @@ function AppRoutes() {
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
 
+          {/* ALIXWORK PRODUCT HUB (Master für alix-lasers.com / .de) */}
+          <Route path="/product-hub" element={<ProtectedRoute><PhDashboard /></ProtectedRoute>} />
+          <Route path="/product-hub/geraete" element={<ProtectedRoute><PhGeraete /></ProtectedRoute>} />
+          <Route path="/product-hub/geraete/:id" element={<ProtectedRoute><PhEditor /></ProtectedRoute>} />
+          <Route path="/product-hub/freigaben" element={<ProtectedRoute><PhFreigaben /></ProtectedRoute>} />
+          <Route path="/product-hub/konflikte" element={<ProtectedRoute><PhKonflikte /></ProtectedRoute>} />
+          <Route path="/product-hub/medien" element={<ProtectedRoute><PhMedien /></ProtectedRoute>} />
+          <Route path="/product-hub/dokumente" element={<ProtectedRoute><PhDokumente /></ProtectedRoute>} />
+          <Route path="/product-hub/webseiten" element={<ProtectedRoute><PhWebseiten /></ProtectedRoute>} />
+          <Route path="/product-hub/verlauf" element={<ProtectedRoute><PhVerlauf /></ProtectedRoute>} />
+          <Route path="/product-hub/sync-health" element={<ProtectedRoute><PhSyncHealth /></ProtectedRoute>} />
+          <Route path="/product-hub/einstellungen" element={<ProtectedRoute><PhEinstellungen /></ProtectedRoute>} />
+
+
           {/* ALIXWORK Produktion & Beschaffung (PLM / MDR / ISO 13485) */}
           <Route path="/produktion" element={<ProtectedRoute><PlmDashboard /></ProtectedRoute>} />
           <Route path="/produktion/geraete" element={<ProtectedRoute><PlmGeraete /></ProtectedRoute>} />
