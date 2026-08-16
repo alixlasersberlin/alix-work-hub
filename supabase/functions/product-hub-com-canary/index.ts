@@ -302,13 +302,20 @@ Deno.serve(async (req) => {
   };
 
   // Ermittelte COM-Zielfelder (aus der Feld-Probe) ueber die statische Karte legen.
+  // WICHTIG: Fuer die Product-Hub-Felder wird die gelernte Karte NICHT verwendet,
+  // wenn sie auf ein flaches Root-Feld zeigt – diese Felder gehoeren zwingend in
+  // den JSONB-Container product_hub.
   const resolveFieldMap = async (): Promise<Record<string, string | null>> => {
     const { data } = await admin.from("ph_settings").select("value").eq("key", "canary_com_field_map").maybeSingle();
     const learned = ((data?.value as any)?.map || {}) as Record<string, string | null>;
     const out: Record<string, string | null> = { ...FIELD_MAP };
-    for (const f of FIELDS) if (f in learned) out[f] = learned[f];
+    for (const f of FIELDS) {
+      if (PH_FIELDS.has(f)) { out[f] = `${PH}.${f}`; continue; }   // hart erzwungen
+      if (f in learned) out[f] = learned[f];
+    }
     return out;
   };
+
 
   try {
     // ------------------------------------------------------------ Feld-Probe
