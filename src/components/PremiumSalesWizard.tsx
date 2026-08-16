@@ -239,7 +239,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
     'from-[#fdfdfc] via-[#f5f6f7] to-[#eceef1]';
 
   return (
-    <div className={cn('min-h-screen w-full bg-gradient-to-b !text-slate-900', activeWorld)}>
+    <div className={cn('min-h-[100dvh] w-full flex flex-col bg-gradient-to-b !text-slate-900', activeWorld)}>
       {/* Header */}
       <header className="px-5 md:px-10 py-6 flex items-center justify-between">
         <a href="https://www.alix-lasers.de" target="_blank" rel="noopener noreferrer" aria-label="ALIX Lasers Webseite">
@@ -287,7 +287,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
         </div>
       )}
 
-      <main className="px-5 md:px-10 pb-40 pt-10 md:pt-16">
+      <main className="px-5 md:px-10 pb-28 pt-8 md:pt-12">
         <div className="mx-auto max-w-4xl">
           {/* 0 — Intro */}
           {step === 0 && (
