@@ -27,7 +27,7 @@ function Field({ k, form, set, disabled, area }: any) {
     <div className="space-y-1.5">
       <Label className="text-xs flex items-center gap-1.5">
         {phLabel(k)}
-        {critical && <ShieldAlert className="w-3 h-3 text-amber-500" title="Kritisches Feld – Änderung wird protokolliert" />}
+        {critical && <span title="Kritisches Feld – Änderung wird protokolliert"><ShieldAlert className="w-3 h-3 text-amber-500" /></span>}
       </Label>
       {area
         ? <Textarea rows={5} value={form[k] ?? ''} disabled={disabled} onChange={e => set(k, e.target.value)} />
