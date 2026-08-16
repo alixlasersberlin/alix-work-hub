@@ -131,10 +131,20 @@ function valueAtPath(raw: any, path: string): string | null {
   }
   return asText(cur);
 }
+// COM legt Schreibwerte faktisch im JSONB-Container product_hub ab – auch bei
+// flachen Feldnamen (z. B. "cooling"). Der Read-back muss daher zuerst dort
+// lesen; die gleichnamige Legacy-Spalte ist nur Fallback/Diagnose.
+function effectiveReadPath(raw: any, comField: string): string {
+  if (isPhPath(comField)) return comField;
+  const inContainer = `${PH}.${comField}`;
+  if (valueAtPath(raw, inContainer) !== null) return inContainer;
+  return comField;
+}
 function readbackValue(raw: any, field: string, comField?: string | null): { value: string | null; source: string } {
   if (comField) {
-    const v = valueAtPath(raw, comField);
-    if (v !== null) return { value: v, source: comField };
+    const path = effectiveReadPath(raw, comField);
+    const v = valueAtPath(raw, path);
+    if (v !== null) return { value: v, source: path };
     // Fuer product_hub-Zielpfade zaehlt AUSSCHLIESSLICH der tatsaechliche Zielpfad.
     // Alias-Werte sind rein diagnostisch und duerfen kein SUCCESS erzeugen.
     if (isPhPath(comField)) return { value: null, source: comField };
@@ -142,6 +152,7 @@ function readbackValue(raw: any, field: string, comField?: string | null): { val
   const fallback = liveValue(raw, field);
   return { value: fallback, source: fallback === null ? (comField || field) : `alias:${field}` };
 }
+
 
 
 // Alle Blattpfade des COM-Datensatzes (fuer die Trace-/Mismatch-Diagnose).
