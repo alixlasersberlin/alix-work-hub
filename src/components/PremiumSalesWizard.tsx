@@ -34,28 +34,8 @@ const CONSULTATION = [
   'Videoberatung',
 ];
 
-const COUNTRY_CODES = [
-  { code: '+49', flag: '🇩🇪', label: 'Deutschland', min: 9, max: 13 },
-  { code: '+43', flag: '🇦🇹', label: 'Österreich', min: 8, max: 13 },
-  { code: '+41', flag: '🇨🇭', label: 'Schweiz', min: 8, max: 12 },
-  { code: '+39', flag: '🇮🇹', label: 'Italien', min: 8, max: 13 },
-  { code: '+33', flag: '🇫🇷', label: 'Frankreich', min: 9, max: 11 },
-  { code: '+31', flag: '🇳🇱', label: 'Niederlande', min: 9, max: 11 },
-  { code: '+32', flag: '🇧🇪', label: 'Belgien', min: 8, max: 11 },
-  { code: '+34', flag: '🇪🇸', label: 'Spanien', min: 9, max: 11 },
-  { code: '+351', flag: '🇵🇹', label: 'Portugal', min: 9, max: 11 },
-  { code: '+352', flag: '🇱🇺', label: 'Luxemburg', min: 6, max: 11 },
-  { code: '+45', flag: '🇩🇰', label: 'Dänemark', min: 8, max: 10 },
-  { code: '+46', flag: '🇸🇪', label: 'Schweden', min: 7, max: 11 },
-  { code: '+47', flag: '🇳🇴', label: 'Norwegen', min: 8, max: 10 },
-  { code: '+48', flag: '🇵🇱', label: 'Polen', min: 9, max: 11 },
-  { code: '+420', flag: '🇨🇿', label: 'Tschechien', min: 9, max: 10 },
-  { code: '+36', flag: '🇭🇺', label: 'Ungarn', min: 8, max: 10 },
-  { code: '+30', flag: '🇬🇷', label: 'Griechenland', min: 10, max: 11 },
-  { code: '+44', flag: '🇬🇧', label: 'Großbritannien', min: 9, max: 11 },
-  { code: '+353', flag: '🇮🇪', label: 'Irland', min: 8, max: 11 },
-  { code: '+1', flag: '🇺🇸', label: 'USA / Kanada', min: 10, max: 10 },
-];
+// Ländervorwahlen: EU oben, dann weltweit (siehe country-codes.ts)
+
 
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 
