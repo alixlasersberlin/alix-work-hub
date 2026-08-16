@@ -144,7 +144,6 @@ export const WORLD_CODES: CountryCode[] = [
   { code: '+250', flag: '🇷🇼', label: 'Ruanda' },
   { code: '+7', flag: '🇷🇺', label: 'Russland' },
   { code: '+966', flag: '🇸🇦', label: 'Saudi-Arabien' },
-  { code: '+46', flag: '🇸🇪', label: 'Schweden' },
   { code: '+221', flag: '🇸🇳', label: 'Senegal' },
   { code: '+381', flag: '🇷🇸', label: 'Serbien' },
   { code: '+248', flag: '🇸🇨', label: 'Seychellen' },
