@@ -85,11 +85,25 @@ function deepFind(raw: any, keys: string[], depth = 0): string | null {
   return null;
 }
 
+// Prueft, ob der Schluessel im Export ueberhaupt existiert (auch wenn null/leer).
+function deepHas(raw: any, keys: string[], depth = 0): boolean {
+  if (!raw || typeof raw !== "object" || depth > 4) return false;
+  for (const k of keys) if (k in raw) return true;
+  for (const v of Object.values(raw)) {
+    if (v && typeof v === "object" && deepHas(v, keys, depth + 1)) return true;
+  }
+  return false;
+}
+
+function fieldKeys(field: string) {
+  return [...new Set([...(FIELD_ALIASES[field] || [field]), FIELD_MAP[field] || field])];
+}
+
 function liveValue(raw: any, field: string): string | null {
   if (!raw) return null;
-  const keys = [...new Set([...(FIELD_ALIASES[field] || [field]), FIELD_MAP[field] || field])];
-  return deepFind(raw, keys);
+  return deepFind(raw, fieldKeys(field));
 }
+
 
 
 function collectProducts(body: any): any[] {
