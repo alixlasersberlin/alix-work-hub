@@ -657,6 +657,23 @@ export const navItems: NavItem[] = [
     ],
   },
 
+  {
+    path: '/product-hub', label: 'PRODUCT HUB', icon: Boxes,
+    roles: ['Super Admin', 'Admin', 'Geschäftsführung', 'Medical', 'Produktion', 'QM', 'Marketing', 'Vertrieb', 'Vertriebsleitung'],
+    children: [
+      { path: '/product-hub', label: 'Übersicht', icon: LayoutDashboard, roles: null },
+      { path: '/product-hub/geraete', label: 'Geräte', icon: Cpu, roles: null },
+      { path: '/product-hub/freigaben', label: 'Freigaben', icon: ShieldCheck, roles: null },
+      { path: '/product-hub/konflikte', label: 'Konflikte', icon: AlertTriangle, roles: null },
+      { path: '/product-hub/medien', label: 'Medien', icon: ImageIcon, roles: null },
+      { path: '/product-hub/dokumente', label: 'Dokumente', icon: FileText, roles: null },
+      { path: '/product-hub/webseiten', label: 'Webseiten', icon: Globe, roles: null },
+      { path: '/product-hub/verlauf', label: 'Änderungsverlauf', icon: ScrollText, roles: null },
+      { path: '/product-hub/sync-health', label: 'Sync Health', icon: Activity, roles: null },
+      { path: '/product-hub/einstellungen', label: 'Einstellungen', icon: Settings, roles: ['Super Admin', 'Admin'] },
+    ],
+  },
+
 
   {
     path: '/operation', label: 'OPERATIONS', icon: Workflow, roles: ['Super Admin', 'Admin'],
