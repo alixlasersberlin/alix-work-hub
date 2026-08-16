@@ -92,7 +92,9 @@ export default function ProductHubComCanary() {
         <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 text-xs">
           {[
             ['COM Write', dash.com_write], ['Snapshot', dash.snapshot], ['Diffs', dash.diffs],
-            ['Rollback', dash.rollback], ['Dry Run', dash.dry_run], ['Optimistic Lock', dash.optimistic_lock],
+            ['Rollback', dash.rollback], ['Dry Run', dash.dry_run], ['Zielpfad-Check', dash.path_check],
+            ['Optimistic Lock', dash.optimistic_lock],
+
             ['Read-back', dash.readback], ['Audit', dash.audit], ['Website Rendering', dash.render],
             ['Publish', dash.publish], ['COM Product ID', COM_BLUEICE_ID.slice(0, 8) + '…'], ['Phase', dash.phase],
           ].map(([k, v]) => (
