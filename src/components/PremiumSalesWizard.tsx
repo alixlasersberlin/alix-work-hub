@@ -435,24 +435,25 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {step === 3 && (
             <Chapter title="IHR BEDARF" sub={`Schwerpunkt: ${data.category}`}>
               <div className="space-y-10">
-                <Group label="Gewünschter Lieferzeitraum">
+                <Group label="Gewünschter Lieferzeitraum (Mehrfachauswahl)">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {DELIVERY.map((d) => (
-                      <Pill key={d} active={data.delivery_preference === d} onClick={() => setData({ ...data, delivery_preference: d })}>
+                      <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) })}>
                         {d}
                       </Pill>
                     ))}
                   </div>
                 </Group>
-                <Group label="Beratungsart">
+                <Group label="Beratungsart (Mehrfachauswahl)">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {CONSULTATION.map((c) => (
-                      <Pill key={c} active={data.consultation_type === c} onClick={() => setData({ ...data, consultation_type: c })}>
+                      <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) })}>
                         {c}
                       </Pill>
                     ))}
                   </div>
                 </Group>
+
                 <Group label="Weitere Interessen (optional)">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {ADDITIONAL.map((a) => (
