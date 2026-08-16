@@ -213,7 +213,24 @@ let acceptedAuth: AuthVariant | null = null;
 async function writeCall(body: Record<string, unknown>, dryRun = true) {
   const key = Deno.env.get("COM_PRODUCT_HUB_WRITE_KEY") || "";
   if (!key) return { status: 0, body: { error: "COM_PRODUCT_HUB_WRITE_KEY fehlt" } as any, ok: false, auth: "none" };
-  const payload = JSON.stringify({ publish_id: `alixwork-${Date.now()}`, target: "product_hub", ...body, dry_run: dryRun });
+  // Product-Hub-Felder werden als atomarer Shallow-Merge in den bestehenden
+  // JSONB-Container geschrieben: nur der eine Key wird geaendert, alle anderen
+  // bereits vorhandenen product_hub-Keys bleiben unveraendert erhalten.
+  const targetField = String((body as any).field || "");
+  let merge: Record<string, unknown> = {};
+  if (targetField.startsWith(`${PH}.`)) {
+    const key = targetField.slice(PH.length + 1);
+    merge = {
+      container: PH,
+      container_key: key,
+      merge: true,
+      merge_strategy: "shallow",
+      overwrite_container: false,
+      [PH]: { [key]: (body as any).value },
+    };
+  }
+  const payload = JSON.stringify({ publish_id: `alixwork-${Date.now()}`, target: "product_hub", ...body, ...merge, dry_run: dryRun });
+
   const variants = acceptedAuth ? [acceptedAuth] : authVariants(key);
 
   let last: { status: number; body: any; ok: boolean; auth: string } | null = null;
