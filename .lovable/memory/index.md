@@ -87,3 +87,4 @@
 - [Raten Ende Legal](mem://features/raten-ende-legal) — Button „BEENDEN" bei Wiederkehrende Zahler setzt status='legal_ended'; Bereich /finance/raten-ende-legal, keine weiteren Raten/Rechnungen, Zoho-Sync überschreibt Status nicht
 
 - [RATEN PRÜFUNG](mem://features/raten-pruefung) — Versandstopp-Bereich /finance/raten-pruefung, Status pruefung_hold, Nachversand via pruefung-release
+- [ALIX Premium Beratung](mem://features/beratung-premium) — Zweite öffentliche Beratungsstrecke /beratung/premium (Pearl/Chrome), gleiche Lead-Logik wie /beratung
