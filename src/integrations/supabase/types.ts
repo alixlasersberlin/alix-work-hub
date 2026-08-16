@@ -33529,6 +33529,7 @@ export type Database = {
           id: string
           language: string | null
           product_id: string
+          resource_type: string
           storage_path: string | null
           title: string
           updated_at: string
@@ -33546,6 +33547,7 @@ export type Database = {
           id?: string
           language?: string | null
           product_id: string
+          resource_type?: string
           storage_path?: string | null
           title: string
           updated_at?: string
@@ -33563,6 +33565,7 @@ export type Database = {
           id?: string
           language?: string | null
           product_id?: string
+          resource_type?: string
           storage_path?: string | null
           title?: string
           updated_at?: string
@@ -33630,6 +33633,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ph_field_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_master_fields: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          approved_by_email: string | null
+          created_at: string
+          decision_status: string
+          field_name: string
+          id: string
+          master_value: string | null
+          note: string | null
+          previous_value: string | null
+          product_id: string
+          proposed_value: string | null
+          source_of_truth: string | null
+          updated_at: string
+          verification_status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_email?: string | null
+          created_at?: string
+          decision_status?: string
+          field_name: string
+          id?: string
+          master_value?: string | null
+          note?: string | null
+          previous_value?: string | null
+          product_id: string
+          proposed_value?: string | null
+          source_of_truth?: string | null
+          updated_at?: string
+          verification_status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_email?: string | null
+          created_at?: string
+          decision_status?: string
+          field_name?: string
+          id?: string
+          master_value?: string | null
+          note?: string | null
+          previous_value?: string | null
+          product_id?: string
+          proposed_value?: string | null
+          source_of_truth?: string | null
+          updated_at?: string
+          verification_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_master_fields_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "ph_products"
@@ -33780,6 +33845,7 @@ export type Database = {
           active_de: boolean
           active_dubai: boolean
           active_usa: boolean
+          aliases: string[]
           alix_product_id: string | null
           applications: string[]
           catalog_item_id: string | null
@@ -33818,14 +33884,17 @@ export type Database = {
           slug: string | null
           smart_ki: Json
           sort_order: number
+          source_name: string | null
           source_product_id: string | null
           spot_sizes: string | null
           standards: string[]
           status: string
           tech_specs: Json
+          technology_claims: string[]
           updated_at: string
           updated_by: string | null
           wavelengths: string | null
+          wavelengths_nm: number[]
         }
         Insert: {
           active_at?: boolean
@@ -33833,6 +33902,7 @@ export type Database = {
           active_de?: boolean
           active_dubai?: boolean
           active_usa?: boolean
+          aliases?: string[]
           alix_product_id?: string | null
           applications?: string[]
           catalog_item_id?: string | null
@@ -33871,14 +33941,17 @@ export type Database = {
           slug?: string | null
           smart_ki?: Json
           sort_order?: number
+          source_name?: string | null
           source_product_id?: string | null
           spot_sizes?: string | null
           standards?: string[]
           status?: string
           tech_specs?: Json
+          technology_claims?: string[]
           updated_at?: string
           updated_by?: string | null
           wavelengths?: string | null
+          wavelengths_nm?: number[]
         }
         Update: {
           active_at?: boolean
@@ -33886,6 +33959,7 @@ export type Database = {
           active_de?: boolean
           active_dubai?: boolean
           active_usa?: boolean
+          aliases?: string[]
           alix_product_id?: string | null
           applications?: string[]
           catalog_item_id?: string | null
@@ -33924,14 +33998,17 @@ export type Database = {
           slug?: string | null
           smart_ki?: Json
           sort_order?: number
+          source_name?: string | null
           source_product_id?: string | null
           spot_sizes?: string | null
           standards?: string[]
           status?: string
           tech_specs?: Json
+          technology_claims?: string[]
           updated_at?: string
           updated_by?: string | null
           wavelengths?: string | null
+          wavelengths_nm?: number[]
         }
         Relationships: [
           {
