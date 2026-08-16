@@ -22,7 +22,11 @@ export default function ProductHubEinstellungen() {
   const canWrite = isSuper || (roles || []).includes('Admin');
   const [phase, setPhase] = useState<any>({ phase: 'A', com_de_sync_active: true, alixwork_master: false });
   const [json, setJson] = useState('');
-  const [sourceUrl, setSourceUrl] = useState('');
+  const [sourceUrl, setSourceUrl] = useState('https://alix-lasers.de/api/public/product-hub/export');
+  const [checks, setChecks] = useState<any>(null);
+  const [preview, setPreview] = useState<any>(null);
+  const [result, setResult] = useState<any>(null);
+
   const [busy, setBusy] = useState(false);
   const [phRoles, setPhRoles] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
