@@ -192,6 +192,10 @@ const writeDetail = (r: { status: number; body: any }) => {
   const c = codeOf(r.body);
   return c || (typeof r.body === "object" ? JSON.stringify(r.body).slice(0, 200) : String(r.body).slice(0, 200));
 };
+const isHtmlResponse = (r: { body: any }) =>
+  typeof r.body === "string" && /^\s*<!doctype html|^\s*<html/i.test(r.body);
+const writeEndpointReached = (r: { status: number; body: any }) =>
+  r.status > 0 && !isHtmlResponse(r);
 
 
 Deno.serve(async (req) => {
@@ -242,24 +246,27 @@ Deno.serve(async (req) => {
       tests.push({ name: "Export Auth OK", pass: exportOk, status: 200, detail: `${list.length} COM-Datensaetze` });
 
       const t1 = await writeCall({ product_id: COM_BLUEICE_ID, field: "product_name", value: liveName, expected_previous_value: liveName });
-      tests.push({ name: "Write Auth OK", pass: t1.status !== 0 && t1.status !== 401 && t1.status !== 403, status: t1.status, detail: t1.status === 0 ? "Write-Key fehlt" : codeOf(t1.body) });
-      tests.push({ name: "BlueIce-ID akzeptiert (strikt)", pass: t1.ok, status: t1.status, detail: writeDetail(t1) });
+       const endpointReached = writeEndpointReached(t1);
+       const endpointBlocker = endpointReached ? "" : writeDetail(t1);
+       tests.push({ name: "COM-Schreib-Endpunkt erreichbar", pass: endpointReached, status: t1.status, detail: endpointReached ? "JSON-Antwort vom COM-Write-Service" : endpointBlocker });
+       tests.push({ name: "Write Auth OK", pass: endpointReached && t1.status !== 401 && t1.status !== 403, status: t1.status, detail: endpointReached ? (codeOf(t1.body) || `HTTP ${t1.status}`) : endpointBlocker });
+       tests.push({ name: "BlueIce-ID akzeptiert (strikt)", pass: endpointReached && t1.ok, status: t1.status, detail: writeDetail(t1) });
 
       // falsches Geraet: erstes anderes COM-Produkt
       const other = list.map(idOf).find((id) => id && id !== COM_BLUEICE_ID) || "00000000-0000-0000-0000-000000000001";
       const t2 = await writeCall({ product_id: other, field: "product_name", value: "X", expected_previous_value: null });
-      tests.push({ name: "Falsches Geraet abgewiesen (Scope)", pass: !t2.ok && [400, 403, 404, 409].includes(t2.status), status: t2.status, detail: codeOf(t2.body) });
+       tests.push({ name: "Falsches Geraet abgewiesen (Scope)", pass: writeEndpointReached(t2) && !t2.ok && [400, 403, 404, 409].includes(t2.status), status: t2.status, detail: writeDetail(t2) });
 
       const t3 = await writeCall({ product_id: "00000000-0000-0000-0000-000000000000", field: "product_name", value: "X", expected_previous_value: null });
-      tests.push({ name: "Unbekanntes Geraet abgewiesen", pass: !t3.ok && [400, 403, 404].includes(t3.status), status: t3.status, detail: codeOf(t3.body) });
+       tests.push({ name: "Unbekanntes Geraet abgewiesen", pass: writeEndpointReached(t3) && !t3.ok && [400, 403, 404].includes(t3.status), status: t3.status, detail: writeDetail(t3) });
 
       const t4 = await writeCall({ product_id: COM_BLUEICE_ID, field: "price", value: "1", expected_previous_value: null });
-      tests.push({ name: "Verbotenes Feld abgewiesen", pass: !t4.ok, status: t4.status, detail: codeOf(t4.body) });
+       tests.push({ name: "Verbotenes Feld abgewiesen", pass: writeEndpointReached(t4) && !t4.ok && [400, 403, 422].includes(t4.status), status: t4.status, detail: writeDetail(t4) });
 
       const t5 = await writeCall({ product_id: COM_BLUEICE_ID, field: "product_name", value: liveName, expected_previous_value: "__ABSICHTLICH_FALSCH__" });
-      tests.push({ name: "Optimistic Lock (409 CONFLICT)", pass: t5.status === 409 || codeOf(t5.body).includes("CONFLICT"), status: t5.status, detail: codeOf(t5.body) });
+       tests.push({ name: "Optimistic Lock (409 CONFLICT)", pass: writeEndpointReached(t5) && (t5.status === 409 || codeOf(t5.body).includes("CONFLICT")), status: t5.status, detail: writeDetail(t5) });
 
-      tests.push({ name: "Dry Run funktioniert", pass: t1.ok, status: t1.status, detail: String((t1.body as any)?.dry_run ?? (t1.body as any)?.status ?? "") });
+       tests.push({ name: "Dry Run funktioniert", pass: endpointReached && t1.ok, status: t1.status, detail: endpointReached ? String((t1.body as any)?.dry_run ?? (t1.body as any)?.status ?? "") : endpointBlocker });
 
       const after = await fetchComProduct();
       tests.push({ name: "Keine Datenaenderung", pass: after.payloadHash === before.payloadHash, status: 200, detail: after.payloadHash.slice(0, 12) });
@@ -269,7 +276,7 @@ Deno.serve(async (req) => {
         { key: "canary_com_write", value: { state: allPass ? "READY" : "NOT READY", tests, checked_at: new Date().toISOString() }, updated_at: new Date().toISOString(), updated_by: user.id },
         { onConflict: "key" },
       );
-      return json(200, { com_write: allPass ? "COM WRITE READY" : "NOT READY", ready: allPass, tests });
+       return json(200, { com_write: allPass ? "COM WRITE READY" : "NOT READY", ready: allPass, blocker: endpointReached ? null : endpointBlocker, tests });
     }
 
     // -------------------------------------------------------------- Snapshot
