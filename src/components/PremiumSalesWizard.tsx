@@ -681,15 +681,38 @@ function Chapter({ title, sub, children }: { title: string; sub?: string; childr
   );
 }
 
-function Group({ label, children }: { label: string; children: React.ReactNode }) {
+function Group({
+  label,
+  error,
+  valid,
+  children,
+}: {
+  label: string;
+  error?: string | null;
+  valid?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <p className="text-[10px] sm:text-[11px] tracking-[0.22em] sm:tracking-[0.28em] uppercase !text-slate-500 mb-3 sm:mb-4">{label}</p>
+      <p className="flex items-center gap-2 text-[10px] sm:text-[11px] tracking-[0.22em] sm:tracking-[0.28em] uppercase !text-slate-500 mb-3 sm:mb-4">
+        {label}
+        {valid && !error && (
+          <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+            <Check className="h-2.5 w-2.5" />
+          </span>
+        )}
+      </p>
 
       {children}
+      {error && (
+        <p role="alert" aria-live="polite" className="mt-2 text-[12px] !text-red-500 font-light">
+          {error}
+        </p>
+      )}
     </div>
   );
 }
+
 
 function Labeled({
   label,
