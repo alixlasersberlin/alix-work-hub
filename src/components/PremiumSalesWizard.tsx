@@ -381,7 +381,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                           setData({ ...data, country_code: e.target.value });
                         }
                       }}
-                      className={cn(fieldCls, 'w-[132px] shrink-0 px-3')}
+                      className={cn(fieldCls, 'w-[120px] sm:w-[132px] shrink-0 px-3')}
                       aria-label="Ländervorwahl"
                     >
                       <option value={CUSTOM_CODE}>➕ Andere…</option>
