@@ -28,6 +28,7 @@ export default function ProductHubCanary() {
   const [snaps, setSnaps] = useState<any[]>([]);
   const [tests, setTests] = useState<any[]>([]);
   const [deWrite, setDeWrite] = useState<State>('UNKNOWN');
+  const [lock, setLock] = useState<any>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +45,8 @@ export default function ProductHubCanary() {
     const { data: st } = await db.from('ph_settings').select('*').eq('key', 'canary_de_write').maybeSingle();
     setDeWrite((st?.value?.state as State) ?? 'UNKNOWN');
     setTests(st?.value?.tests ?? []);
+    const { data: lk } = await db.from('ph_settings').select('*').eq('key', 'blueice_canary_lock').maybeSingle();
+    setLock(lk?.value ?? null);
   };
 
   useEffect(() => { (async () => { await load(); setLoading(false); })(); }, []);
