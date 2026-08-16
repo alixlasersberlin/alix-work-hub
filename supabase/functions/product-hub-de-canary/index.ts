@@ -333,6 +333,171 @@ Deno.serve(async (req) => {
       return json(200, { dry_run: passed ? "PASSED" : "FAILED", results });
     }
 
+    // ---- BlueIce Sync-Lock aktivieren / verifizieren -------------------------
+    if (action === "lock" || action === "lock_verify") {
+      const { data: cur } = await admin.from("ph_settings").select("*").eq("key", "blueice_canary_lock").maybeSingle();
+      const val: any = { ...(cur?.value || {}) };
+      if (action === "lock") {
+        val.active = true;
+        val.scope = "single_product";
+        val.master_source = "alixwork";
+        val.product_id = BLUEICE_ID;
+        val.excluded_product_ids = [BLUEICE_ID];
+        val.activated_at = new Date().toISOString();
+        val.activated_by = user.id;
+        val.note = "COM→DE Sync fuer BlueIce ausgeschlossen. Alle anderen Produkte laufen weiter.";
+        await admin.from("ph_settings").upsert(
+          { key: "blueice_canary_lock", value: val, updated_at: new Date().toISOString(), updated_by: user.id },
+          { onConflict: "key" },
+        );
+        await admin.from("ph_sync_log").insert({
+          channel_code: "de", direction: "internal", operation: "canary_lock", status: "success",
+          message: `BlueIce Sync-Lock AKTIV (${BLUEICE_ID}) – COM→DE fuer dieses Geraet ausgeschlossen`,
+        });
+      }
+      // Verifikation: genau 1 Produkt gesperrt, uebrige weiterhin im Sync
+      const { count: total } = await admin.from("ph_products").select("id", { count: "exact", head: true });
+      const excluded: string[] = val.excluded_product_ids || [];
+      const { data: phase } = await admin.from("ph_settings").select("value").eq("key", "migration_phase").maybeSingle();
+      return json(200, {
+        lock: val.active ? "ACTIVE" : "INACTIVE",
+        excluded_product_ids: excluded,
+        excluded_count: excluded.length,
+        products_total: total ?? 0,
+        products_still_syncing: Math.max((total ?? 0) - excluded.length, 0),
+        com_de_sync_active: (phase?.value as any)?.com_de_sync_active ?? true,
+        phase: (phase?.value as any)?.phase ?? "B",
+        activated_at: val.activated_at ?? null,
+      });
+    }
+
+    // ---- Live-Publish mit Read-back je Feld ---------------------------------
+    if (action === "publish") {
+      const batchId = payload.batch_id;
+      if (!batchId) return json(400, { error: "batch_id fehlt" });
+
+      // Guard 1: Lock muss aktiv sein
+      const { data: lockRow } = await admin.from("ph_settings").select("value").eq("key", "blueice_canary_lock").maybeSingle();
+      if (!(lockRow?.value as any)?.active) return json(400, { error: "BlueIce Sync-Lock ist nicht aktiv – Abbruch" });
+
+      const { data: batch } = await admin.from("ph_canary_batches").select("*").eq("id", batchId).maybeSingle();
+      if (!batch) return json(404, { error: "Batch nicht gefunden" });
+      if (batch.alix_product_id !== BLUEICE_ID) return json(403, { error: "Nur BlueIce erlaubt" });
+      if ((batch.checks || {}).dry_run !== "PASSED") return json(400, { error: "Dry-Run nicht bestanden – Abbruch" });
+
+      const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
+      const results: any[] = [];
+      let written = 0, skipped = 0, verified = 0, failed = 0;
+      let stopped: string | null = null;
+
+      for (const s of snaps || []) {
+        const deField = FIELD_MAP[s.field] || s.field;
+        const target = s.target_master_value;
+
+        // NO_CHANGE / SKIP – Wert steht bereits korrekt live
+        if (normCompare(s.field, s.current_live_value, target)) {
+          skipped++; verified++;
+          results.push({ field: s.field, action: "SKIP", reason: "NO_CHANGE", live_value: s.current_live_value, readback: s.current_live_value, verified: true });
+          await admin.from("ph_publish_queue").update({
+            status: "SKIPPED", verify_status: "VERIFIED", verified_at: new Date().toISOString(),
+            notes: "NO_CHANGE – Live-Wert entspricht bereits dem Master",
+          }).eq("id", s.publish_id);
+          continue;
+        }
+
+        const w = await writeCall({
+          alix_product_id: batch.alix_product_id,
+          field: deField,
+          value: deValue(deField, target),
+          expected_previous_value: s.current_live_value,
+          publish_id: `${batchId}:${s.field}`,
+          idempotency_key: `${batchId}:${s.field}`,
+        }, false);
+
+        if (!w.ok) {
+          failed++;
+          stopped = `${s.field}: HTTP ${w.status} ${codeOf(w.body)}`;
+          results.push({ field: s.field, action: "WRITE", status: w.status, error: codeOf(w.body) || String(w.body).slice(0, 200), verified: false });
+          await admin.from("ph_publish_queue").update({
+            status: "FAILED", verify_status: "FAILED", notes: `Write-Fehler ${w.status} ${codeOf(w.body)}`,
+          }).eq("id", s.publish_id);
+          break;
+        }
+        written++;
+
+        // Read-back direkt gegen den DE-Export
+        let readback: string | null = null;
+        try {
+          const fresh = await fetchDeProduct(batch.alix_product_id);
+          readback = liveValue(fresh.product, s.field);
+        } catch (e) {
+          readback = null;
+          stopped = `${s.field}: Read-back fehlgeschlagen (${(e as Error).message})`;
+        }
+        const ok = !stopped && normCompare(s.field, readback, target);
+        if (ok) {
+          verified++;
+          await admin.from("ph_publish_queue").update({
+            status: "PUBLISHED", verify_status: "VERIFIED", verified_at: new Date().toISOString(),
+            old_value: s.current_live_value, notes: "Live geschrieben und zurueckgelesen",
+          }).eq("id", s.publish_id);
+          await admin.from("ph_canary_snapshots").update({ readback_value: readback, readback_at: new Date().toISOString() }).eq("id", s.id);
+        } else {
+          failed++;
+          stopped = stopped || `${s.field}: Read-back weicht ab (live="${readback}", soll="${target}")`;
+          results.push({ field: s.field, action: "WRITE", status: w.status, readback, verified: false, error: stopped });
+          await admin.from("ph_publish_queue").update({
+            status: "PUBLISHED", verify_status: "MISMATCH", notes: stopped,
+          }).eq("id", s.publish_id);
+          break;
+        }
+        results.push({ field: s.field, action: "WRITE", status: w.status, previous_value: s.current_live_value, new_value: asText(target), readback, verified: true });
+        if (stopped) break;
+      }
+
+      const attempted = results.length;
+      const allDone = !stopped && failed === 0 && (snaps || []).length === attempted;
+
+      // Finaler Export-Vergleich Master <-> DE
+      let compare: any = null;
+      if (allDone) {
+        const fresh = await fetchDeProduct(batch.alix_product_id);
+        const diffs: any[] = [];
+        for (const s of snaps || []) {
+          const live = liveValue(fresh.product, s.field);
+          if (!normCompare(s.field, live, s.target_master_value)) diffs.push({ field: s.field, live, master: s.target_master_value });
+        }
+        compare = { match: diffs.length === 0, diffs, export_hash: fresh.payloadHash, compared_at: new Date().toISOString() };
+      }
+
+      await admin.from("ph_canary_batches").update({
+        status: allDone ? "PUBLISHED" : "FAILED",
+        published_at: allDone ? new Date().toISOString() : null,
+        checks: {
+          ...(batch.checks || {}),
+          publish: allDone ? "SUCCESS" : "STOPPED",
+          attempted, written, skipped, verified, failed,
+          stopped_at: stopped, results, compare,
+        },
+        updated_at: new Date().toISOString(),
+      }).eq("id", batchId);
+
+      await admin.from("ph_sync_log").insert({
+        channel_code: "de", direction: "outbound", operation: "canary_publish",
+        status: allDone ? "success" : "error",
+        message: allDone
+          ? `BlueIce DE Canary: ${written} geschrieben, ${skipped} uebersprungen, Read-back ${verified}/${attempted}`
+          : `BlueIce DE Canary GESTOPPT: ${stopped}`,
+      });
+
+      return json(200, {
+        publish: allDone ? "SUCCESS" : "STOPPED",
+        attempted, written, skipped, verified, failed,
+        stopped_at: stopped, results, compare,
+        rollback_available: true,
+      });
+    }
+
     if (action === "status") {
       const { data: setting } = await admin.from("ph_settings").select("*").eq("key", "canary_de_write").maybeSingle();
       const { data: batch } = await admin.from("ph_canary_batches").select("*")
