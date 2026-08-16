@@ -111,7 +111,7 @@ export default function ProductHubComCanary() {
       )}
 
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" disabled={!canRun || !!busy} onClick={async () => { const r = await call('com_dump'); if (r) { console.log('COM dump', r); toast.success(`Diagnose: ${r.missing?.length ? 'fehlend -> ' + r.missing.join(', ') : 'alle Felder vorhanden'}${r.empty?.length ? ' · leer -> ' + r.empty.join(', ') : ''}`); } }}>
+        <Button size="sm" variant="outline" disabled={!canRun || !!busy} onClick={async () => { const r = await call('com_dump'); if (r) { console.log('COM dump', r.mapping ?? r); toast[r.missing?.length ? 'error' : 'success'](r.summary || 'Diagnose ausgefuehrt'); } }}>
           {busy === 'com_dump' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ScanSearch className="h-3.5 w-3.5" />} 0 · COM-Export Diagnose
         </Button>
         <Button size="sm" disabled={!canRun || !!busy} onClick={async () => { const r = await call('selftest'); if (r) { await load(); toast[r.ready ? 'success' : 'error'](r.com_write); } }}>
