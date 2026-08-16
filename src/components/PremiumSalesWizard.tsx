@@ -241,19 +241,20 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   return (
     <div className={cn('min-h-[100dvh] w-full flex flex-col bg-gradient-to-b !text-slate-900', activeWorld)}>
       {/* Header */}
-      <header className="px-5 md:px-10 py-6 flex items-center justify-between">
+      <header className="px-4 sm:px-6 md:px-10 py-4 sm:py-5 md:py-6 flex items-center justify-between gap-3">
         <a href="https://www.alix-lasers.de" target="_blank" rel="noopener noreferrer" aria-label="ALIX Lasers Webseite">
-          <img src={logoAsset.url} alt="ALIX Lasers" className="h-8 md:h-9 w-auto transition-opacity hover:opacity-80" />
+          <img src={logoAsset.url} alt="ALIX Lasers" className="h-7 sm:h-8 md:h-9 w-auto transition-opacity hover:opacity-80" />
         </a>
-        <span className="text-[10px] md:text-[11px] tracking-[0.35em] !text-slate-500 uppercase">
+        <span className="text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.3em] md:tracking-[0.35em] !text-slate-500 uppercase text-right whitespace-nowrap">
           Alix Smart Consult
         </span>
       </header>
 
       {/* Progress */}
       {step > 0 && step <= LAST_STEP && (
-        <div className="px-5 md:px-10">
-          <div className="mx-auto max-w-4xl flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-[11px] tracking-[0.24em] uppercase">
+        <div className="px-4 sm:px-6 md:px-10">
+          <div className="mx-auto max-w-4xl hidden sm:flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-[11px] tracking-[0.24em] uppercase">
+
             {STEP_LABELS.map((label, i) => {
               const n = i + 1;
               const state = n < step ? 'done' : n === step ? 'active' : 'todo';
@@ -285,12 +286,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           </div>
 
           {/* Fortschrittsbalken */}
-          <div className="mx-auto max-w-4xl mt-3">
-            <div className="flex items-center justify-between text-[10px] md:text-[11px] tracking-[0.2em] uppercase !text-slate-500 mb-1.5">
-              <span>
+          <div className="mx-auto max-w-4xl sm:mt-3">
+            <div className="flex items-center justify-between gap-3 text-[10px] md:text-[11px] tracking-[0.16em] sm:tracking-[0.2em] uppercase !text-slate-500 mb-1.5">
+              <span className="truncate">
                 Schritt {step} von {STEP_LABELS.length} · {STEP_LABELS[step - 1]}
               </span>
-              <span className="tabular-nums">
+              <span className="tabular-nums shrink-0">
                 {Math.round((step / STEP_LABELS.length) * 100)} %
               </span>
             </div>
@@ -307,27 +308,27 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             </div>
           </div>
 
-          <div className="mx-auto max-w-4xl mt-4 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent" />
+          <div className="mx-auto max-w-4xl mt-3 sm:mt-4 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent" />
         </div>
       )}
 
-
-      <main className="px-5 md:px-10 pb-28 pt-8 md:pt-12">
+      <main className="px-4 sm:px-6 md:px-10 pt-6 sm:pt-8 md:pt-12 pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-4xl">
+
           {/* 0 — Intro */}
           {step === 0 && (
-            <section className="text-center py-10 md:py-20 animate-in fade-in duration-700">
-              <p className="text-[11px] tracking-[0.4em] uppercase !text-slate-500">Premium Consult</p>
-              <h1 className="!text-slate-900 mt-6 text-4xl md:text-6xl font-light tracking-tight leading-[1.05]">
+            <section className="text-center py-8 sm:py-12 md:py-20 animate-in fade-in duration-700">
+              <p className="text-[10px] sm:text-[11px] tracking-[0.3em] sm:tracking-[0.4em] uppercase !text-slate-500">Premium Consult</p>
+              <h1 className="!text-slate-900 mt-4 sm:mt-6 text-3xl sm:text-4xl md:text-6xl font-light tracking-tight leading-[1.1] text-balance">
                 IHRE ALIX BERATUNG
               </h1>
-              <p className="mt-6 max-w-xl mx-auto text-slate-500 text-base md:text-lg font-light">
+              <p className="mt-4 sm:mt-6 max-w-xl mx-auto text-slate-500 text-[15px] sm:text-base md:text-lg font-light text-pretty">
                 In wenigen Schritten zu den passenden ALIX Systemen — persönlich, unverbindlich und
                 direkt von einem ALIX Berater begleitet.
               </p>
               <button
                 onClick={() => setStep(1)}
-                className="mt-10 inline-flex items-center gap-3 h-14 px-10 rounded-full bg-slate-900 text-white text-sm tracking-[0.2em] uppercase shadow-[0_25px_60px_-25px_rgba(15,23,42,0.6)] hover:bg-slate-800 transition"
+                className="mt-8 sm:mt-10 inline-flex w-full sm:w-auto justify-center items-center gap-3 h-14 px-8 sm:px-10 rounded-full bg-slate-900 text-white text-sm tracking-[0.2em] uppercase shadow-[0_25px_60px_-25px_rgba(15,23,42,0.6)] hover:bg-slate-800 transition"
               >
                 Beratung starten <ArrowRight className="h-4 w-4" />
               </button>
@@ -337,7 +338,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 1 — Profil */}
           {step === 1 && (
             <Chapter title="IHRE KONTAKTDATEN" sub="Damit ein ALIX Berater Sie erreichen kann.">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+
                 <Labeled label="Vorname">
                   <input className={fieldCls} value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} />
                 </Labeled>
@@ -367,7 +369,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   />
                 </Labeled>
                 <Labeled label="Telefon *" error={touched.phone ? phoneError : null}>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <select
                       value={customCode ? CUSTOM_CODE : data.country_code}
                       onChange={(e) => {
@@ -379,7 +381,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                           setData({ ...data, country_code: e.target.value });
                         }
                       }}
-                      className={cn(fieldCls, 'w-[132px] shrink-0 px-3')}
+                      className={cn(fieldCls, 'w-[120px] sm:w-[132px] shrink-0 px-3')}
                       aria-label="Ländervorwahl"
                     >
                       <option value={CUSTOM_CODE}>➕ Andere…</option>
@@ -417,7 +419,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       autoComplete="tel"
                       maxLength={20}
                       placeholder="171 1651000"
-                      className={cn(fieldCls, touched.phone && phoneError && '!border-red-300 focus:!ring-red-200')}
+                      className={cn(fieldCls, 'flex-1 min-w-[160px]', touched.phone && phoneError && '!border-red-300 focus:!ring-red-200')}
                       value={data.phone}
                       onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
                       onChange={(e) => setData({ ...data, phone: e.target.value.replace(/[^\d\s+()/-]/g, '') })}
@@ -440,7 +442,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               title="WAS MÖCHTEN SIE BEHANDELN?"
               sub="Wählen Sie Ihren Schwerpunkt – wir führen Sie anschließend zu den passenden ALIX Systemen."
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
                 {PREMIUM_CATEGORIES.map((c) => {
                   const active = data.category === c.key;
                   return (
@@ -455,7 +457,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       )}
                     >
                       <div className="relative overflow-hidden rounded-[25px] !bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.35)]">
-                        <div className="relative h-52 md:h-60 overflow-hidden">
+                        <div className="relative h-44 sm:h-52 md:h-60 overflow-hidden">
                           <img
                             src={c.img}
                             alt={c.key}
@@ -471,9 +473,10 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                             className="pointer-events-none absolute -inset-x-1 top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.7)_50%,transparent_65%)]"
                           />
                         </div>
-                        <div className="px-6 pb-6 pt-4">
-                          <h3 className="!text-slate-900 text-xl md:text-2xl font-light tracking-tight uppercase">{c.key}</h3>
-                          <p className="mt-2 text-sm text-slate-500 font-light">{c.desc}</p>
+                        <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-4">
+                          <h3 className="!text-slate-900 text-lg sm:text-xl md:text-2xl font-light tracking-tight uppercase text-balance">{c.key}</h3>
+                          <p className="mt-2 text-sm text-slate-500 font-light text-pretty">{c.desc}</p>
+
                         </div>
                       </div>
                     </button>
@@ -486,7 +489,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 3 — Bedarf */}
           {step === 3 && (
             <Chapter title="IHR BEDARF" sub={`Schwerpunkt: ${data.category}`}>
-              <div className="space-y-10">
+              <div className="space-y-8 sm:space-y-10">
                 <Group label="Gewünschter Lieferzeitraum (Mehrfachauswahl)">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {DELIVERY.map((d) => (
@@ -589,14 +592,14 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       {/* Sticky Navigation */}
       {step > 0 && step <= LAST_STEP && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/70 bg-white/80 backdrop-blur-xl">
-          <div className="mx-auto max-w-4xl px-5 md:px-10 py-4 flex items-center gap-3">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 md:px-10 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))] flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => setStep((s) => Math.max(0, s - 1))}
               disabled={submitting}
-              className="h-13 min-h-[52px] px-6 rounded-full border border-slate-200 bg-white !text-slate-600 text-[12px] tracking-[0.2em] uppercase hover:text-slate-900 transition disabled:opacity-40"
+              className="h-13 min-h-[52px] px-4 sm:px-6 rounded-full border border-slate-200 bg-white !text-slate-600 text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap hover:text-slate-900 transition disabled:opacity-40"
             >
-              <ArrowLeft className="inline h-4 w-4 mr-2" /> Zurück
+              <ArrowLeft className="inline h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Zurück</span>
             </button>
             <div className="flex-1" />
             {step < LAST_STEP ? (
@@ -604,7 +607,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 type="button"
                 onClick={() => setStep((s) => s + 1)}
                 disabled={!canContinue() || submitting}
-                className="h-13 min-h-[52px] px-8 rounded-full bg-slate-900 text-white text-[12px] tracking-[0.2em] uppercase shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300 disabled:shadow-none"
+                className="h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full bg-slate-900 text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300 disabled:shadow-none"
               >
                 Weiter <ArrowRight className="inline h-4 w-4 ml-2" />
               </button>
@@ -613,8 +616,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 type="button"
                 onClick={submit}
                 disabled={!canContinue() || submitting}
-                className="h-13 min-h-[52px] px-8 rounded-full bg-slate-900 text-white text-[12px] tracking-[0.2em] uppercase shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300"
+                className="h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full bg-slate-900 text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300"
               >
+
                 {submitting ? <Loader2 className="inline h-4 w-4 mr-2 animate-spin" /> : <Send className="inline h-4 w-4 mr-2" />}
                 Beratung absenden
               </button>
@@ -641,9 +645,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 function Chapter({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
     <section className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <h2 className="!text-slate-900 text-2xl md:text-4xl font-light tracking-tight uppercase">{title}</h2>
-      {sub && <p className="mt-3 !text-slate-500 font-light max-w-2xl">{sub}</p>}
-      <div className="mt-10 md:mt-12">{children}</div>
+      <h2 className="!text-slate-900 text-xl sm:text-2xl md:text-4xl font-light tracking-tight uppercase text-balance">{title}</h2>
+      {sub && <p className="mt-2 sm:mt-3 !text-slate-500 font-light max-w-2xl text-sm sm:text-base text-pretty">{sub}</p>}
+      <div className="mt-6 sm:mt-8 md:mt-12">{children}</div>
     </section>
   );
 }
@@ -651,7 +655,8 @@ function Chapter({ title, sub, children }: { title: string; sub?: string; childr
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] tracking-[0.28em] uppercase !text-slate-500 mb-4">{label}</p>
+      <p className="text-[10px] sm:text-[11px] tracking-[0.22em] sm:tracking-[0.28em] uppercase !text-slate-500 mb-3 sm:mb-4">{label}</p>
+
       {children}
     </div>
   );
