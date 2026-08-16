@@ -22,7 +22,9 @@ const COM_SUPABASE_URL = "https://dxbrovbbwrtdsimdnrpy.supabase.co";
 // Publishable COM key used by alix-lasers.com itself. This is intentionally not a
 // private credential; writes still require COM_PRODUCT_HUB_WRITE_KEY server-side.
 const COM_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4YnJvdmJid3J0ZHNpbWRucnB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MTQwMjEsImV4cCI6MjA5MjQ5MDAyMX0.z85uwvZravQhPi7qx9pRdjDY6C0JSKMdaKCNp5Poeo4";
-const COM_WRITE = "https://alix-lasers.com/api/public/product-hub/update";
+// WICHTIG: www-Host direkt ansprechen. alix-lasers.com antwortet mit 307 auf www,
+// dabei geht der x-api-key-Header verloren -> COM meldet faelschlich UNAUTHORIZED.
+const COM_WRITE = "https://www.alix-lasers.com/api/public/product-hub/update";
 // STRIKT: nur diese COM-Produkt-ID. Keine Fuzzy-Zuordnung (Fusion Red / Hybrid Red /
 // BlueIce / BlueIce 2 Max KI sind eigenstaendige Produkte).
 const COM_BLUEICE_ID = "c9f9b7c9-d6b7-4ed6-ac60-913cbdec2dd6";
