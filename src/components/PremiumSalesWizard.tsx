@@ -83,6 +83,14 @@ function validatePhone(code: string, value: string): string | null {
 
 const STEP_LABELS = ['PROFIL', 'ANWENDUNG', 'BEDARF', 'SYSTEM', 'ABSCHLUSS'];
 
+const csvList = (v: string) => v.split(',').map((x) => x.trim()).filter(Boolean);
+const csvHas = (v: string, item: string) => csvList(v).includes(item);
+const csvToggle = (v: string, item: string) => {
+  const list = csvList(v);
+  return (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]).join(', ');
+};
+
+
 type State = {
   first_name: string;
   last_name: string;
