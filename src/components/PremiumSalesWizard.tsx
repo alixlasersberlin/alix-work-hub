@@ -592,14 +592,14 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       {/* Sticky Navigation */}
       {step > 0 && step <= LAST_STEP && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/70 bg-white/80 backdrop-blur-xl">
-          <div className="mx-auto max-w-4xl px-5 md:px-10 py-4 flex items-center gap-3">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6 md:px-10 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))] flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => setStep((s) => Math.max(0, s - 1))}
               disabled={submitting}
-              className="h-13 min-h-[52px] px-6 rounded-full border border-slate-200 bg-white !text-slate-600 text-[12px] tracking-[0.2em] uppercase hover:text-slate-900 transition disabled:opacity-40"
+              className="h-13 min-h-[52px] px-4 sm:px-6 rounded-full border border-slate-200 bg-white !text-slate-600 text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap hover:text-slate-900 transition disabled:opacity-40"
             >
-              <ArrowLeft className="inline h-4 w-4 mr-2" /> Zurück
+              <ArrowLeft className="inline h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Zurück</span>
             </button>
             <div className="flex-1" />
             {step < LAST_STEP ? (
@@ -607,7 +607,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 type="button"
                 onClick={() => setStep((s) => s + 1)}
                 disabled={!canContinue() || submitting}
-                className="h-13 min-h-[52px] px-8 rounded-full bg-slate-900 text-white text-[12px] tracking-[0.2em] uppercase shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300 disabled:shadow-none"
+                className="h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full bg-slate-900 text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300 disabled:shadow-none"
               >
                 Weiter <ArrowRight className="inline h-4 w-4 ml-2" />
               </button>
@@ -616,8 +616,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 type="button"
                 onClick={submit}
                 disabled={!canContinue() || submitting}
-                className="h-13 min-h-[52px] px-8 rounded-full bg-slate-900 text-white text-[12px] tracking-[0.2em] uppercase shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300"
+                className="h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full bg-slate-900 text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300"
               >
+
                 {submitting ? <Loader2 className="inline h-4 w-4 mr-2 animate-spin" /> : <Send className="inline h-4 w-4 mr-2" />}
                 Beratung absenden
               </button>
