@@ -615,10 +615,12 @@ Deno.serve(async (req) => {
         written++;
 
         let readback: string | null = null;
+        let readbackSource = comField;
         for (let attempt = 1; attempt <= 3; attempt++) {
           try {
             const fresh = await fetchComProduct();
-            readback = liveValue(fresh.product, s.field);
+            const rb = readbackValue(fresh.product, s.field, comField);
+            readback = rb.value; readbackSource = rb.source;
             stopped = null;
           } catch (e) {
             readback = null;
@@ -632,12 +634,12 @@ Deno.serve(async (req) => {
         await admin.from("ph_canary_snapshots").update({ readback_value: readback, readback_at: new Date().toISOString() }).eq("id", s.id);
         if (ok) {
           verified++;
-          results.push({ field: s.field, action: "WRITE", status: w.status, previous_value: s.current_live_value, new_value: asText(s.target_master_value), readback, verified: true });
+          results.push({ field: s.field, action: "WRITE", status: w.status, previous_value: s.current_live_value, new_value: asText(s.target_master_value), readback, readback_source: readbackSource, verified: true });
           if (s.publish_id) await admin.from("ph_publish_queue").update({ status: "PUBLISHED", verify_status: "VERIFIED", verified_at: new Date().toISOString(), notes: "Live geschrieben und zurueckgelesen" }).eq("id", s.publish_id);
         } else {
           failed++;
-          stopped = stopped || `${s.field}: Read-back weicht ab (live="${readback}", soll="${s.target_master_value}")`;
-          results.push({ field: s.field, action: "WRITE", status: w.status, readback, verified: false, error: stopped });
+          stopped = stopped || `${s.field}: Read-back weicht ab (Quelle ${readbackSource}, live="${readback}", soll="${s.target_master_value}")`;
+          results.push({ field: s.field, action: "WRITE", status: w.status, readback, readback_source: readbackSource, verified: false, error: stopped });
           if (s.publish_id) await admin.from("ph_publish_queue").update({ status: "PUBLISHED", verify_status: "MISMATCH", notes: stopped }).eq("id", s.publish_id);
           break; // SOFORT STOPP
         }
@@ -650,12 +652,13 @@ Deno.serve(async (req) => {
         const fresh = await fetchComProduct();
         const diffs: any[] = [];
         for (const s of snaps || []) {
-          const live = liveValue(fresh.product, s.field);
           if (s.value_state === "CONFLICT") continue;
+          const live = readbackValue(fresh.product, s.field, fmap[s.field]).value;
           if (!normCompare(s.field, live, s.target_master_value)) diffs.push({ field: s.field, live, master: s.target_master_value });
         }
         compare = { match: diffs.length === 0, diffs, export_hash: fresh.payloadHash, compared_at: new Date().toISOString() };
       }
+
 
       await admin.from("ph_canary_batches").update({
         status: allDone ? "PUBLISHED" : "FAILED",
