@@ -633,8 +633,11 @@ Deno.serve(async (req) => {
       if (!batch) return json(404, { error: "COM-Batch nicht gefunden" });
       if (batch.alix_product_id !== COM_BLUEICE_ID) return json(403, { error: "Nur BlueIce Smart KI (COM) erlaubt" });
       if ((batch.checks || {}).dry_run !== "PASSED") return json(400, { error: "Dry-Run nicht bestanden – Abbruch" });
+      if ((batch.checks || {}).path_check !== "PASSED")
+        return json(400, { error: "BLOCKED: Zielpfad-Pruefung nicht bestanden – Product-Hub-Felder muessen auf product_hub.<feld> zeigen. Bitte Dry Run erneut ausfuehren." });
       const { data: wr } = await admin.from("ph_settings").select("value").eq("key", "canary_com_write").maybeSingle();
       if ((wr?.value as any)?.state !== "READY") return json(400, { error: "COM Write nicht READY – Abbruch" });
+
 
       const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
       const fmap = await resolveFieldMap();
