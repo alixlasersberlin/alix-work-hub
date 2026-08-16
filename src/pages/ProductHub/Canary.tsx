@@ -131,15 +131,26 @@ export default function ProductHubCanary() {
           <Button size="sm" variant="outline" disabled={!canRun || !!busy || dash.rollback !== 'READY'} onClick={() => toast.success(`Rollback-Paket geprüft: ${snaps.length} Felder, Reihenfolge rückwärts`)}>
             <Undo2 className="h-3.5 w-3.5 mr-1.5" /> 3 · Rollback prüfen
           </Button>
-          <Button size="sm" variant="outline" disabled title="BlueIce Sync-Lock: LOCK READY – Aktivierung erst nach Freigabe">
-            4 · BlueIce Sync Lock aktivieren (gesperrt)
+          <Button size="sm" variant="outline" disabled={!canRun || !!busy || !!lock?.active}
+            onClick={async () => { const r = await call('lock'); if (r) toast.success(`BlueIce Sync-Lock ${r.lock} · ${r.products_still_syncing} Geräte weiterhin im COM→DE Sync`); }}>
+            {busy === 'lock' ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
+            4 · BlueIce Sync Lock {lock?.active ? 'AKTIV' : 'aktivieren'}
           </Button>
           <Button size="sm" variant="outline" disabled={!canRun || !!busy || dash.snapshot !== 'FROZEN'} onClick={() => call('dryrun', { batch_id: batch?.id })}>
             {busy === 'dryrun' ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
             5 · Dry Run aller Änderungen
           </Button>
-          <Button size="sm" className="bg-destructive/80" disabled title={allGreen ? 'Freigabe durch Benutzer erforderlich' : 'Checks nicht vollständig grün'}>
-            <ShieldAlert className="h-3.5 w-3.5 mr-1.5" /> BlueIce DE Canary veröffentlichen (gesperrt)
+          <Button size="sm" className="bg-destructive/80" disabled={!canRun || !!busy || !allGreen}
+            title={allGreen ? 'Live-Push mit Read-back je Feld' : 'Checks nicht vollständig grün'}
+            onClick={async () => {
+              if (!confirm('BlueIce DE Canary jetzt LIVE veröffentlichen? Read-back nach jedem Feld, Stopp bei jedem Fehler.')) return;
+              const r = await call('publish', { batch_id: batch?.id });
+              if (r) r.publish === 'SUCCESS'
+                ? toast.success(`Canary ${r.publish}: ${r.written} geschrieben, ${r.skipped} übersprungen, Read-back ${r.verified}/${r.attempted}`)
+                : toast.error(`Canary gestoppt: ${r.stopped_at}`);
+            }}>
+            {busy === 'publish' ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ShieldAlert className="h-3.5 w-3.5 mr-1.5" />}
+            6 · BlueIce DE Canary veröffentlichen
           </Button>
         </CardContent>
       </Card>
