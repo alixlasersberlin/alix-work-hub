@@ -509,22 +509,29 @@ Deno.serve(async (req) => {
       if (!batch) return json(404, { error: "COM-Batch nicht gefunden" });
       const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
 
+      const fmap = await resolveFieldMap();
       const results: any[] = [];
       for (const s of snaps || []) {
         if (s.value_state === "NO_CHANGE" || s.value_state === "CONFLICT") {
           results.push({ field: s.field, result: s.value_state === "CONFLICT" ? "CONFLICT" : "SKIP", pass: s.value_state === "NO_CHANGE" });
           continue;
         }
+        const comField = fmap[s.field];
+        if (!comField) {
+          results.push({ field: s.field, result: "NO_TARGET", pass: false, status: 0, code: "FIELD_NOT_ALLOWED_ON_COM" });
+          continue;
+        }
         const r = await writeCall({
           product_id: COM_BLUEICE_ID,
-          field: FIELD_MAP[s.field] || s.field,
-          value: comValue(FIELD_MAP[s.field] || s.field, s.target_master_value),
+          field: comField,
+          value: comValue(comField, s.target_master_value),
           expected_previous_value: s.current_live_value,
           publish_id: `${batchId}:${s.field}`,
           idempotency_key: `${batchId}:${s.field}`,
         });
         results.push({ field: s.field, result: r.ok ? "WRITE_READY" : "FAILED", status: r.status, pass: r.ok, code: codeOf(r.body) });
       }
+
       const passed = results.length > 0 && results.every((r) => r.pass);
       await admin.from("ph_canary_batches").update({
         checks: { ...(batch.checks || {}), dry_run: passed ? "PASSED" : "FAILED", dry_run_results: results, dry_run_at: new Date().toISOString() },
