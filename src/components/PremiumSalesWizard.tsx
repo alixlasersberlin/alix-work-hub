@@ -9,6 +9,12 @@ import {
   devicesForCategory,
   type PremiumCategory,
 } from '@/lib/beratung-premium/categories';
+import {
+  EU_CODES,
+  WORLD_CODES,
+  CUSTOM_CODE,
+  findCountry,
+} from '@/lib/beratung-premium/country-codes';
 
 /**
  * ALIX Premium Beratung — zweite, eigenständige Beratungsstrecke (/beratung/premium).
@@ -34,28 +40,8 @@ const CONSULTATION = [
   'Videoberatung',
 ];
 
-const COUNTRY_CODES = [
-  { code: '+49', flag: '🇩🇪', label: 'Deutschland', min: 9, max: 13 },
-  { code: '+43', flag: '🇦🇹', label: 'Österreich', min: 8, max: 13 },
-  { code: '+41', flag: '🇨🇭', label: 'Schweiz', min: 8, max: 12 },
-  { code: '+39', flag: '🇮🇹', label: 'Italien', min: 8, max: 13 },
-  { code: '+33', flag: '🇫🇷', label: 'Frankreich', min: 9, max: 11 },
-  { code: '+31', flag: '🇳🇱', label: 'Niederlande', min: 9, max: 11 },
-  { code: '+32', flag: '🇧🇪', label: 'Belgien', min: 8, max: 11 },
-  { code: '+34', flag: '🇪🇸', label: 'Spanien', min: 9, max: 11 },
-  { code: '+351', flag: '🇵🇹', label: 'Portugal', min: 9, max: 11 },
-  { code: '+352', flag: '🇱🇺', label: 'Luxemburg', min: 6, max: 11 },
-  { code: '+45', flag: '🇩🇰', label: 'Dänemark', min: 8, max: 10 },
-  { code: '+46', flag: '🇸🇪', label: 'Schweden', min: 7, max: 11 },
-  { code: '+47', flag: '🇳🇴', label: 'Norwegen', min: 8, max: 10 },
-  { code: '+48', flag: '🇵🇱', label: 'Polen', min: 9, max: 11 },
-  { code: '+420', flag: '🇨🇿', label: 'Tschechien', min: 9, max: 10 },
-  { code: '+36', flag: '🇭🇺', label: 'Ungarn', min: 8, max: 10 },
-  { code: '+30', flag: '🇬🇷', label: 'Griechenland', min: 10, max: 11 },
-  { code: '+44', flag: '🇬🇧', label: 'Großbritannien', min: 9, max: 11 },
-  { code: '+353', flag: '🇮🇪', label: 'Irland', min: 8, max: 11 },
-  { code: '+1', flag: '🇺🇸', label: 'USA / Kanada', min: 10, max: 10 },
-];
+// Ländervorwahlen: EU oben, dann weltweit (siehe country-codes.ts)
+
 
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 
@@ -72,7 +58,7 @@ function validatePhone(code: string, value: string): string | null {
   const digits = value.replace(/\D/g, '').replace(/^0+/, '');
   if (!value.trim()) return 'Telefonnummer ist ein Pflichtfeld.';
   if (!digits) return 'Bitte geben Sie eine gültige Telefonnummer ein.';
-  const c = COUNTRY_CODES.find((x) => x.code === code);
+  const c = findCountry(code);
   const min = c?.min ?? 6;
   const max = c?.max ?? 14;
   if (digits.length < min) return `Die Nummer ist zu kurz (mind. ${min} Ziffern für ${c?.label ?? code}).`;
@@ -141,6 +127,7 @@ interface Props {
 export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<State>(INITIAL);
+  const [customCode, setCustomCode] = useState(false);
   const [touched, setTouched] = useState<{ last_name?: boolean; email?: boolean; phone?: boolean }>({});
 
   const [submitting, setSubmitting] = useState(false);
@@ -360,17 +347,49 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 <Labeled label="Telefon *" error={touched.phone ? phoneError : null}>
                   <div className="flex gap-2">
                     <select
-                      value={data.country_code}
-                      onChange={(e) => setData({ ...data, country_code: e.target.value })}
-                      className={cn(fieldCls, 'w-[122px] shrink-0 px-3')}
+                      value={customCode ? CUSTOM_CODE : data.country_code}
+                      onChange={(e) => {
+                        if (e.target.value === CUSTOM_CODE) {
+                          setCustomCode(true);
+                          setData({ ...data, country_code: '+' });
+                        } else {
+                          setCustomCode(false);
+                          setData({ ...data, country_code: e.target.value });
+                        }
+                      }}
+                      className={cn(fieldCls, 'w-[132px] shrink-0 px-3')}
                       aria-label="Ländervorwahl"
                     >
-                      {COUNTRY_CODES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.flag} {c.code}
-                        </option>
-                      ))}
+                      <option value={CUSTOM_CODE}>➕ Andere…</option>
+                      <optgroup label="Europa">
+                        {EU_CODES.map((c) => (
+                          <option key={`eu-${c.label}`} value={c.code}>
+                            {c.flag} {c.code} · {c.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Weltweit">
+                        {WORLD_CODES.map((c) => (
+                          <option key={`w-${c.label}`} value={c.code}>
+                            {c.flag} {c.code} · {c.label}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
+                    {customCode && (
+                      <input
+                        inputMode="tel"
+                        maxLength={6}
+                        placeholder="+000"
+                        aria-label="Vorwahl frei eingeben"
+                        className={cn(fieldCls, 'w-[96px] shrink-0')}
+                        value={data.country_code}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/[^\d+]/g, '');
+                          setData({ ...data, country_code: v.startsWith('+') ? v : `+${v.replace(/\+/g, '')}` });
+                        }}
+                      />
+                    )}
                     <input
                       inputMode="tel"
                       autoComplete="tel"
@@ -383,7 +402,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     />
                   </div>
                   <p className="text-[11px] !text-slate-400">
-                    {COUNTRY_CODES.find((c) => c.code === data.country_code)?.label} — ohne führende 0
+                    {customCode
+                      ? 'Freie Ländervorwahl — ohne führende 0'
+                      : `${findCountry(data.country_code)?.label ?? ''} — ohne führende 0`}
                   </p>
                 </Labeled>
               </div>
