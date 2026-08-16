@@ -67,7 +67,7 @@ function validatePhone(code: string, value: string): string | null {
 }
 
 
-const STEP_LABELS = ['PROFIL', 'ANWENDUNG', 'BEDARF', 'SYSTEM', 'ABSCHLUSS'];
+const STEP_LABELS = ['PROFIL', 'ANWENDUNG', 'BEDARF', 'ABSCHLUSS'];
 
 const csvList = (v: string) => v.split(',').map((x) => x.trim()).filter(Boolean);
 const csvHas = (v: string, item: string) => csvList(v).includes(item);
@@ -111,8 +111,8 @@ const INITIAL: State = {
   consent_contact: false,
 };
 
-const LAST_STEP = 5; // ABSCHLUSS
-const DONE_STEP = 6;
+const LAST_STEP = 4; // ABSCHLUSS
+const DONE_STEP = 5;
 
 const chrome =
   'bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(203,213,225,0.55)_45%,rgba(255,255,255,0.95)_70%,rgba(186,214,232,0.6))]';
@@ -505,69 +505,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             </Chapter>
           )}
 
-          {/* 4 — System */}
-          {step === 4 && (
-            <Chapter title="IHRE ALIX SYSTEME" sub="Wählen Sie die Systeme, die Sie interessieren.">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {devices.map((d) => {
-                  const active = data.devices.includes(d.name);
-                  return (
-                    <button
-                      key={d.name}
-                      type="button"
-                      onClick={() => toggleDevice(d.name)}
-                      className={cn(
-                        'group relative text-left rounded-[24px] p-[1px] transition-transform duration-500 hover:-translate-y-[2px]',
-                        chrome,
-                        active && 'ring-2 ring-sky-300/70',
-                      )}
-                    >
-                      <div className="rounded-[23px] bg-white/95 p-6 shadow-[0_25px_70px_-45px_rgba(15,23,42,0.4)]">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h3 className="!text-slate-900 text-lg md:text-xl font-light tracking-tight">{d.name}</h3>
-                            <p className="mt-1 text-[11px] uppercase tracking-[0.22em] !text-slate-500">{data.category}</p>
-                          </div>
-                          <span
-                            className={cn(
-                              'h-7 w-7 shrink-0 rounded-full border flex items-center justify-center transition',
-                              active ? 'border-sky-400 bg-sky-400 text-white' : 'border-slate-200 text-transparent',
-                            )}
-                          >
-                            <Check className="h-4 w-4" />
-                          </span>
-                        </div>
-                        <div className="mt-5 flex items-start gap-5">
-                          <ul className="flex-1 space-y-2">
-                            {d.features.map((f) => (
-                              <li key={f} className="flex items-start gap-2 text-sm !text-slate-600 font-light">
-                                <span className="mt-[7px] h-1 w-1 rounded-full bg-slate-400 shrink-0" />
-                                {f}
-                              </li>
-                            ))}
-                          </ul>
-                          {d.photo && (
-                            <img
-                              src={d.photo}
-                              alt={`${d.name} – ALIX Gerät`}
-                              loading="lazy"
-                              className="w-28 md:w-36 aspect-[4/3] shrink-0 rounded-2xl object-contain bg-slate-50 ring-1 ring-slate-200/70"
-                            />
-                          )}
-                        </div>
-
-                        <span className="mt-5 inline-block text-[11px] tracking-[0.24em] uppercase !text-slate-500">
-                          {active ? 'In Angebot aufgenommen' : 'In Angebot aufnehmen'}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </Chapter>
-          )}
-
-          {/* 5 — Abschluss */}
+          {/* 4 — Abschluss */}
           {step === LAST_STEP && (
             <Chapter title="ABSCHLUSS" sub="Bitte bestätigen Sie die Datenschutzhinweise.">
               <div className="space-y-4 max-w-2xl">
