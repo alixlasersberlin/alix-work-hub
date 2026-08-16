@@ -15,6 +15,8 @@ import {
   CUSTOM_CODE,
   findCountry,
 } from '@/lib/beratung-premium/country-codes';
+import { usePremiumLang, tv, type PDict } from '@/i18n/premium-wizard';
+import PremiumLanguageSwitcher from '@/components/PremiumLanguageSwitcher';
 
 /**
  * ALIX Premium Beratung — zweite, eigenständige Beratungsstrecke (/beratung/premium).
@@ -45,58 +47,55 @@ const CONSULTATION = [
 
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
 
-function validateEmail(value: string): string | null {
+function validateEmail(value: string, t: PDict): string | null {
   const v = value.trim();
-  if (!v) return 'E-Mail ist ein Pflichtfeld.';
-  if (v.length > 255) return 'E-Mail ist zu lang.';
-  if (!EMAIL_RE.test(v)) return 'Bitte geben Sie eine gültige E-Mail-Adresse ein.';
-  if (/\.\./.test(v)) return 'Bitte geben Sie eine gültige E-Mail-Adresse ein.';
+  if (!v) return t.v_email_required;
+  if (v.length > 255) return t.v_email_long;
+  if (!EMAIL_RE.test(v)) return t.v_email_invalid;
+  if (/\.\./.test(v)) return t.v_email_invalid;
   return null;
 }
 
-function validatePhone(code: string, value: string): string | null {
+function validatePhone(code: string, value: string, t: PDict): string | null {
   const digits = value.replace(/\D/g, '').replace(/^0+/, '');
-  if (!value.trim()) return 'Telefonnummer ist ein Pflichtfeld.';
-  if (!digits) return 'Bitte geben Sie eine gültige Telefonnummer ein.';
+  if (!value.trim()) return t.v_phone_required;
+  if (!digits) return t.v_phone_invalid;
   const c = findCountry(code);
   const min = c?.min ?? 6;
   const max = c?.max ?? 14;
-  if (digits.length < min) return `Die Nummer ist zu kurz (mind. ${min} Ziffern für ${c?.label ?? code}).`;
-  if (digits.length > max) return `Die Nummer ist zu lang (max. ${max} Ziffern für ${c?.label ?? code}).`;
+  if (digits.length < min) return t.v_phone_short(min, c?.label ?? code);
+  if (digits.length > max) return t.v_phone_long(max, c?.label ?? code);
   return null;
 }
 
-function validateName(value: string, label: string, required: boolean): string | null {
+function validateName(value: string, label: string, required: boolean, t: PDict): string | null {
   const v = value.trim();
-  if (!v) return required ? `${label} ist ein Pflichtfeld.` : null;
-  if (v.length < 2) return `${label} muss mindestens 2 Zeichen haben.`;
-  if (v.length > 100) return `${label} darf max. 100 Zeichen haben.`;
-  if (/\d/.test(v)) return `${label} darf keine Ziffern enthalten.`;
+  if (!v) return required ? t.v_required(label) : null;
+  if (v.length < 2) return t.v_min2(label);
+  if (v.length > 100) return t.v_max100(label);
+  if (/\d/.test(v)) return t.v_no_digits(label);
   return null;
 }
 
-function validateCompany(value: string): string | null {
+function validateCompany(value: string, t: PDict): string | null {
   const v = value.trim();
   if (!v) return null;
-  if (v.length > 150) return 'Unternehmen darf max. 150 Zeichen haben.';
+  if (v.length > 150) return t.v_company_max;
   return null;
 }
 
-function validateCountryCode(code: string): string | null {
+function validateCountryCode(code: string, t: PDict): string | null {
   const v = code.trim();
-  if (!v || v === '+') return 'Bitte Ländervorwahl angeben.';
-  if (!/^\+\d{1,4}$/.test(v)) return 'Vorwahl im Format +49 angeben.';
+  if (!v || v === '+') return t.v_code_required;
+  if (!/^\+\d{1,4}$/.test(v)) return t.v_code_format;
   return null;
 }
 
-function validateNotes(value: string): string | null {
-  if (value.length > 2000) return `Nachricht ist zu lang (${value.length}/2000 Zeichen).`;
+function validateNotes(value: string, t: PDict): string | null {
+  if (value.length > 2000) return t.v_notes_long(value.length);
   return null;
 }
 
-
-
-const STEP_LABELS = ['PROFIL', 'ANWENDUNG', 'BEDARF', 'ABSCHLUSS'];
 
 const csvList = (v: string) => v.split(',').map((x) => x.trim()).filter(Boolean);
 const csvHas = (v: string, item: string) => csvList(v).includes(item);
@@ -156,6 +155,8 @@ interface Props {
 }
 
 export default function PremiumSalesWizard({ publicMode = true }: Props) {
+  const { lang, setLang, t } = usePremiumLang();
+  const STEP_LABELS = t.steps;
   const [step, setStep] = useState(0);
   const [data, setData] = useState<State>(INITIAL);
   const [customCode, setCustomCode] = useState(false);
@@ -186,13 +187,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
     }));
 
   const errors: Record<FieldKey, string | null> = {
-    first_name: validateName(data.first_name, 'Vorname', false),
-    last_name: validateName(data.last_name, 'Nachname', true),
-    company: validateCompany(data.company),
-    email: validateEmail(data.email),
-    country_code: validateCountryCode(data.country_code),
-    phone: validatePhone(data.country_code, data.phone),
-    notes: validateNotes(data.notes),
+    first_name: validateName(data.first_name, t.first_name, false, t),
+    last_name: validateName(data.last_name, t.last_name.replace(' *', ''), true, t),
+    company: validateCompany(data.company, t),
+    email: validateEmail(data.email, t),
+    country_code: validateCountryCode(data.country_code, t),
+    phone: validatePhone(data.country_code, data.phone, t),
+    notes: validateNotes(data.notes, t),
   };
 
   /** Sofort-Validierung: Fehler sobald das Feld angefasst oder „Weiter“ versucht wurde. */
@@ -291,12 +292,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           turnstile_token: captchaToken,
         },
       });
-      if (fnError) throw new Error(fnError.message || 'Fehler beim Absenden');
+      if (fnError) throw new Error(fnError.message || t.err_submit);
       if (json?.error) throw new Error(json.message || json.error);
       setDone(true);
       setStep(DONE_STEP);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unbekannter Fehler');
+      setError(e instanceof Error ? e.message : t.err_unknown);
     } finally {
       setSubmitting(false);
     }
@@ -313,9 +314,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
         <a href="https://www.alix-lasers.de" target="_blank" rel="noopener noreferrer" aria-label="ALIX Lasers Webseite">
           <img src={logoAsset.url} alt="ALIX Lasers" className="h-7 sm:h-8 md:h-9 w-auto transition-opacity hover:opacity-80" />
         </a>
-        <span className="text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.3em] md:tracking-[0.35em] !text-slate-500 uppercase text-right whitespace-nowrap">
-          Alix Smart Consult
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="hidden sm:inline text-[10px] md:text-[11px] tracking-[0.3em] md:tracking-[0.35em] !text-slate-500 uppercase text-right whitespace-nowrap">
+            {t.brand}
+          </span>
+          <PremiumLanguageSwitcher lang={lang} onChange={setLang} />
+        </div>
       </header>
 
       {/* Progress */}
@@ -357,7 +361,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           <div className="mx-auto max-w-4xl sm:mt-3">
             <div className="flex items-center justify-between gap-3 text-[10px] md:text-[11px] tracking-[0.16em] sm:tracking-[0.2em] uppercase !text-slate-500 mb-1.5">
               <span className="truncate">
-                Schritt {step} von {STEP_LABELS.length} · {STEP_LABELS[step - 1]}
+                {t.step_of(step, STEP_LABELS.length)} · {STEP_LABELS[step - 1]}
               </span>
               <span className="tabular-nums shrink-0">
                 {Math.round((step / STEP_LABELS.length) * 100)} %
@@ -371,7 +375,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 aria-valuemin={0}
                 aria-valuemax={STEP_LABELS.length}
                 aria-valuenow={step}
-                aria-label="Fortschritt der Beratung"
+                aria-label={t.progress_aria}
               />
             </div>
           </div>
@@ -386,29 +390,28 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 0 — Intro */}
           {step === 0 && (
             <section className="text-center py-8 sm:py-12 md:py-20 animate-in fade-in duration-700">
-              <p className="text-[10px] sm:text-[11px] tracking-[0.3em] sm:tracking-[0.4em] uppercase !text-slate-500">Premium Consult</p>
+              <p className="text-[10px] sm:text-[11px] tracking-[0.3em] sm:tracking-[0.4em] uppercase !text-slate-500">{t.intro_kicker}</p>
               <h1 className="!text-slate-900 mt-4 sm:mt-6 text-3xl sm:text-4xl md:text-6xl font-light tracking-tight leading-[1.1] text-balance">
-                IHRE ALIX BERATUNG
+                {t.intro_title}
               </h1>
               <p className="mt-4 sm:mt-6 max-w-xl mx-auto text-slate-500 text-[15px] sm:text-base md:text-lg font-light text-pretty">
-                In wenigen Schritten zu den passenden ALIX Systemen — persönlich, unverbindlich und
-                direkt von einem ALIX Berater begleitet.
+                {t.intro_lead}
               </p>
               <button
                 onClick={() => setStep(1)}
                 className="mt-8 sm:mt-10 inline-flex w-full sm:w-auto justify-center items-center gap-3 h-14 px-8 sm:px-10 rounded-full bg-slate-900 text-white text-sm tracking-[0.2em] uppercase shadow-[0_25px_60px_-25px_rgba(15,23,42,0.6)] hover:bg-slate-800 transition"
               >
-                Beratung starten <ArrowRight className="h-4 w-4" />
+                {t.intro_cta} <ArrowRight className="h-4 w-4" />
               </button>
             </section>
           )}
 
           {/* 1 — Profil */}
           {step === 1 && (
-            <Chapter title="IHRE KONTAKTDATEN" sub="Damit ein ALIX Berater Sie erreichen kann.">
+            <Chapter title={t.c1_title} sub={t.c1_sub}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
 
-                <Labeled label="Vorname" error={showError('first_name')} valid={isValid('first_name')}>
+                <Labeled label={t.first_name} error={showError('first_name')} valid={isValid('first_name')}>
                   <input
                     className={cn(fieldCls, showError('first_name') && '!border-red-300 focus:!ring-red-200')}
                     value={data.first_name}
@@ -418,7 +421,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('first_name', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label="Nachname *" error={showError('last_name')} valid={isValid('last_name')}>
+                <Labeled label={t.last_name} error={showError('last_name')} valid={isValid('last_name')}>
                   <input
                     className={cn(fieldCls, showError('last_name') && '!border-red-300 focus:!ring-red-200')}
                     value={data.last_name}
@@ -428,7 +431,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('last_name', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label="Unternehmen (optional)" error={showError('company')} valid={isValid('company')}>
+                <Labeled label={t.company} error={showError('company')} valid={isValid('company')}>
                   <input
                     className={cn(fieldCls, showError('company') && '!border-red-300 focus:!ring-red-200')}
                     value={data.company}
@@ -438,13 +441,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('company', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label="E-Mail *" error={showError('email')} valid={isValid('email')}>
+                <Labeled label={t.email} error={showError('email')} valid={isValid('email')}>
                   <input
                     type="email"
                     inputMode="email"
                     autoComplete="email"
                     maxLength={255}
-                    placeholder="name@praxis.de"
+                    placeholder={t.email_ph}
                     className={cn(fieldCls, showError('email') && '!border-red-300 focus:!ring-red-200')}
                     value={data.email}
                     aria-invalid={!!showError('email')}
@@ -453,7 +456,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   />
                 </Labeled>
                 <Labeled
-                  label="Telefon *"
+                  label={t.phone}
                   error={showError('country_code') ?? showError('phone')}
                   valid={isValid('phone') && !errors.country_code}
                 >
@@ -471,17 +474,17 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                         }
                       }}
                       className={cn(fieldCls, 'w-[120px] sm:w-[132px] shrink-0 px-3')}
-                      aria-label="Ländervorwahl"
+                      aria-label={t.country_code_aria}
                     >
-                      <option value={CUSTOM_CODE}>➕ Andere…</option>
-                      <optgroup label="Europa">
+                      <option value={CUSTOM_CODE}>{t.code_other}</option>
+                      <optgroup label={t.group_europe}>
                         {EU_CODES.map((c) => (
                           <option key={`eu-${c.label}`} value={c.code}>
                             {c.flag} {c.code} · {c.label}
                           </option>
                         ))}
                       </optgroup>
-                      <optgroup label="Weltweit">
+                      <optgroup label={t.group_world}>
                         {WORLD_CODES.map((c) => (
                           <option key={`w-${c.label}`} value={c.code}>
                             {c.flag} {c.code} · {c.label}
@@ -494,7 +497,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                         inputMode="tel"
                         maxLength={6}
                         placeholder="+000"
-                        aria-label="Vorwahl frei eingeben"
+                        aria-label={t.code_custom_aria}
                         aria-invalid={!!showError('country_code')}
                         className={cn(
                           fieldCls,
@@ -513,7 +516,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       inputMode="tel"
                       autoComplete="tel"
                       maxLength={20}
-                      placeholder="171 1651000"
+                      placeholder={t.phone_ph}
                       aria-invalid={!!showError('phone')}
                       className={cn(fieldCls, 'flex-1 min-w-[160px]', showError('phone') && '!border-red-300 focus:!ring-red-200')}
                       value={data.phone}
@@ -524,8 +527,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   </div>
                   <p className="text-[11px] !text-slate-400">
                     {customCode
-                      ? 'Freie Ländervorwahl — ohne führende 0'
-                      : `${findCountry(data.country_code)?.label ?? ''} — ohne führende 0`}
+                      ? t.hint_custom_code
+                      : `${findCountry(data.country_code)?.label ?? ''} — ${t.hint_no_leading_zero}`}
                   </p>
                 </Labeled>
               </div>
@@ -536,8 +539,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 2 — Anwendung */}
           {step === 2 && (
             <Chapter
-              title="WAS MÖCHTEN SIE BEHANDELN?"
-              sub="Wählen Sie Ihren Schwerpunkt – wir führen Sie anschließend zu den passenden ALIX Systemen."
+              title={t.c2_title}
+              sub={t.c2_sub}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
                 {PREMIUM_CATEGORIES.map((c) => {
@@ -571,8 +574,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                           />
                         </div>
                         <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-4">
-                          <h3 className="!text-slate-900 text-lg sm:text-xl md:text-2xl font-light tracking-tight uppercase text-balance">{c.key}</h3>
-                          <p className="mt-2 text-sm text-slate-500 font-light text-pretty">{c.desc}</p>
+                          <h3 className="!text-slate-900 text-lg sm:text-xl md:text-2xl font-light tracking-tight uppercase text-balance">{tv(t.categories, c.key)}</h3>
+                          <p className="mt-2 text-sm text-slate-500 font-light text-pretty">{t.category_desc[c.key] ?? c.desc}</p>
 
                         </div>
                       </div>
@@ -585,45 +588,45 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 
           {/* 3 — Bedarf */}
           {step === 3 && (
-            <Chapter title="IHR BEDARF" sub={`Schwerpunkt: ${data.category}`}>
+            <Chapter title={t.c3_title} sub={t.c3_sub(tv(t.categories, data.category))}>
               <div className="space-y-8 sm:space-y-10">
                 <Group
-                  label="Gewünschter Lieferzeitraum (Mehrfachauswahl) *"
+                  label={t.g_delivery}
                   valid={!!data.delivery_preference}
-                  error={attempted[3] && !data.delivery_preference ? 'Bitte mindestens einen Lieferzeitraum wählen.' : null}
+                  error={attempted[3] && !data.delivery_preference ? t.g_delivery_err : null}
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {DELIVERY.map((d) => (
                       <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) })}>
-                        {d}
+                        {tv(t.delivery, d)}
                       </Pill>
                     ))}
                   </div>
                 </Group>
                 <Group
-                  label="Beratungsart (Mehrfachauswahl) *"
+                  label={t.g_consultation}
                   valid={!!data.consultation_type}
-                  error={attempted[3] && !data.consultation_type ? 'Bitte mindestens eine Beratungsart wählen.' : null}
+                  error={attempted[3] && !data.consultation_type ? t.g_consultation_err : null}
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {CONSULTATION.map((c) => (
                       <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) })}>
-                        {c}
+                        {tv(t.consultation, c)}
                       </Pill>
                     ))}
                   </div>
                 </Group>
 
-                <Group label="Weitere Interessen (optional)">
+                <Group label={t.g_additional}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {ADDITIONAL.map((a) => (
                       <Pill key={a} active={data.additional_interests.includes(a)} onClick={() => toggleAdditional(a)}>
-                        {a}
+                        {tv(t.additional, a)}
                       </Pill>
                     ))}
                   </div>
                 </Group>
-                <Group label="Ihre Nachricht (optional)" error={showError('notes')}>
+                <Group label={t.g_notes} error={showError('notes')}>
                   <textarea
                     rows={5}
                     value={data.notes}
@@ -644,7 +647,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 
           {/* 4 — Abschluss */}
           {step === LAST_STEP && (
-            <Chapter title="ABSCHLUSS" sub="Bitte bestätigen Sie die Datenschutzhinweise.">
+            <Chapter title={t.c4_title} sub={t.c4_sub}>
               <div className="space-y-4 max-w-2xl">
                 <label
                   className={cn(
@@ -660,12 +663,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     className="mt-1 h-4 w-4 accent-sky-500"
                   />
                   <span className="text-sm !text-slate-600 font-light">
-                    Ich stimme der Verarbeitung meiner Daten zur Bearbeitung meiner Anfrage zu.
+                    {t.consent_data}
                   </span>
                 </label>
                 {attempted[LAST_STEP] && !data.consent_data && (
                   <p role="alert" className="-mt-2 text-[12px] !text-red-500 font-light">
-                    Diese Einwilligung ist erforderlich.
+                    {t.consent_required}
                   </p>
                 )}
                 <label
@@ -682,12 +685,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     className="mt-1 h-4 w-4 accent-sky-500"
                   />
                   <span className="text-sm !text-slate-600 font-light">
-                    Ich bin mit einer Kontaktaufnahme per Telefon, E-Mail oder WhatsApp einverstanden.
+                    {t.consent_contact}
                   </span>
                 </label>
                 {attempted[LAST_STEP] && !data.consent_contact && (
                   <p role="alert" className="-mt-2 text-[12px] !text-red-500 font-light">
-                    Diese Einwilligung ist erforderlich.
+                    {t.consent_required}
                   </p>
                 )}
                 {publicMode && !captchaUnavailable && (
@@ -700,7 +703,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 )}
                 {attempted[LAST_STEP] && publicMode && !captchaUnavailable && !captchaToken && (
                   <p role="alert" className="text-[12px] !text-red-500 font-light">
-                    Bitte bestätigen Sie die Sicherheitsprüfung.
+                    {t.captcha_required}
                   </p>
                 )}
 
@@ -717,12 +720,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               <div className="mx-auto h-16 w-16 rounded-full border border-slate-200 bg-white flex items-center justify-center shadow-[0_25px_60px_-35px_rgba(15,23,42,0.5)]">
                 <Check className="h-7 w-7 text-slate-800" />
               </div>
-              <h2 className="!text-slate-900 mt-8 text-3xl md:text-5xl font-light tracking-tight">VIELEN DANK.</h2>
+              <h2 className="!text-slate-900 mt-8 text-3xl md:text-5xl font-light tracking-tight">{t.done_title}</h2>
               <p className="mt-5 text-slate-500 font-light">
-                Ihre ALIX Beratung wurde erfolgreich übermittelt.
+                {t.done_text}
               </p>
               <p className="mt-2 text-sm !text-slate-500 font-light">
-                Ein ALIX Berater kann nun Ihre Auswahl und Anforderungen einsehen.
+                {t.done_hint}
               </p>
             </section>
           )}
@@ -739,7 +742,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               disabled={submitting}
               className="h-13 min-h-[52px] px-4 sm:px-6 rounded-full border border-slate-200 bg-white !text-slate-600 text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap hover:text-slate-900 transition disabled:opacity-40"
             >
-              <ArrowLeft className="inline h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Zurück</span>
+              <ArrowLeft className="inline h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">{t.back}</span>
             </button>
             <div className="flex-1" />
             {step < LAST_STEP ? (
@@ -755,7 +758,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     : 'bg-slate-300',
                 )}
               >
-                Weiter <ArrowRight className="inline h-4 w-4 ml-2" />
+                {t.next} <ArrowRight className="inline h-4 w-4 ml-2" />
               </button>
             ) : (
               <button
@@ -773,7 +776,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 
 
                 {submitting ? <Loader2 className="inline h-4 w-4 mr-2 animate-spin" /> : <Send className="inline h-4 w-4 mr-2" />}
-                Beratung absenden
+                {t.send}
               </button>
             )}
           </div>
@@ -786,8 +789,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           <div className="relative w-64 h-px overflow-hidden bg-slate-200">
             <span className="absolute inset-y-0 -left-1/3 w-1/3 bg-[linear-gradient(90deg,transparent,rgba(56,189,248,0.9),transparent)] animate-[a2scan_1.2s_ease-in-out_infinite]" />
           </div>
-          <p className="mt-8 text-[11px] tracking-[0.4em] uppercase text-slate-800">Alix Smart Consult</p>
-          <p className="mt-2 text-[11px] tracking-[0.3em] uppercase !text-slate-500">Analyzing your selection</p>
+          <p className="mt-8 text-[11px] tracking-[0.4em] uppercase text-slate-800">{t.brand}</p>
+          <p className="mt-2 text-[11px] tracking-[0.3em] uppercase !text-slate-500">{t.analyzing}</p>
           <style>{`@keyframes a2scan{0%{transform:translateX(0)}100%{transform:translateX(300%)}}`}</style>
         </div>
       )}
