@@ -207,6 +207,35 @@ export default function ProductHubComCanary() {
         </CardContent>
       </Card>
 
+      {dry && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Dry Run · geplante Zielpfade (keine Datenänderung)</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <Dot v={dry.dry_run} />
+              <span className="text-muted-foreground">Zielpfad-Check:</span> <Dot v={dry.path_check} />
+              {dry.path_check !== 'PASSED' && <span className="text-destructive">Publish BLOCKED – Product-Hub-Felder müssen auf product_hub.&lt;feld&gt; zeigen.</span>}
+            </div>
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Feld</TableHead><TableHead>Soll</TableHead><TableHead>WRITE target</TableHead><TableHead>Ergebnis</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {(dry.results || []).map((r: any) => (
+                  <TableRow key={r.field}>
+                    <TableCell className="font-medium">{r.field}</TableCell>
+                    <TableCell className="text-muted-foreground">{r.target_master_value ?? '—'}</TableCell>
+                    <TableCell className={`font-mono break-all ${r.target_ok === false ? 'text-destructive' : ''}`}>{r.write_target ?? '—'}</TableCell>
+                    <TableCell><Badge className={r.pass ? 'bg-emerald-600' : 'bg-destructive'}>{r.result}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+
       {trace && (
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Feld-Trace · {trace.field} (kein Live-Write, nur Dry Run + Lesen)</CardTitle></CardHeader>
