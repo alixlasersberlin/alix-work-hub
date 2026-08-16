@@ -2242,6 +2242,8 @@ function AppRoutes() {
         <Route path="/catalog/portal" element={<Navigate to="/kunde/katalog" replace />} />
 
         <Route path="/beratung" element={<PublicBeratung />} />
+        <Route path="/beratung/premium" element={<PublicBeratungPremium />} />
+        <Route path="/beratung-alix" element={<PublicBeratungPremium />} />
         <Route path="/angebot" element={<PublicBeratung />} />
         <Route path="/kunde/login" element={<CustomerPortalLogin />} />
         <Route path="/kunde" element={<CustomerPortalLayout />}>
