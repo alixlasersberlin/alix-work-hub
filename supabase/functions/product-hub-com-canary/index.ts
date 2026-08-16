@@ -554,6 +554,7 @@ Deno.serve(async (req) => {
       if ((wr?.value as any)?.state !== "READY") return json(400, { error: "COM Write nicht READY – Abbruch" });
 
       const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
+      const fmap = await resolveFieldMap();
       const results: any[] = [];
       let written = 0, skipped = 0, verified = 0, failed = 0;
       let stopped: string | null = null;
@@ -565,7 +566,14 @@ Deno.serve(async (req) => {
           if (s.publish_id) await admin.from("ph_publish_queue").update({ status: "SKIPPED", verify_status: "VERIFIED", verified_at: new Date().toISOString(), notes: s.value_state }).eq("id", s.publish_id);
           continue;
         }
-        const comField = FIELD_MAP[s.field] || s.field;
+        const comField = fmap[s.field];
+        if (!comField) {
+          failed++;
+          stopped = `${s.field}: COM erlaubt dieses Zielfeld nicht (FIELD_NOT_ALLOWED)`;
+          results.push({ field: s.field, action: "NO_TARGET", error: stopped, verified: false });
+          break;
+        }
+
         const w = await writeCall({
           product_id: COM_BLUEICE_ID,
           field: comField,
