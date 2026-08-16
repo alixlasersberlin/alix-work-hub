@@ -400,8 +400,6 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       : `${findCountry(data.country_code)?.label ?? ''} — ohne führende 0`}
                   </p>
                 </Labeled>
-
-                </Labeled>
               </div>
 
             </Chapter>
