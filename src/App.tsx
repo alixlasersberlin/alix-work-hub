@@ -308,6 +308,7 @@ const NeueAnfrage = lazy(() => import("./pages/SalesLeads/NeueAnfrage"));
 const SalesLeadsDashboard = lazy(() => import("./pages/SalesLeads/Dashboard"));
 const SalesLeadsImport = lazy(() => import("./pages/SalesLeads/Import"));
 const PublicBeratung = lazy(() => import("./pages/PublicBeratung"));
+const PublicBeratungPremium = lazy(() => import("./pages/PublicBeratungPremium"));
 const Angebote = lazy(() => import("./pages/Angebote"));
 const Angebotsanalyse = lazy(() => import("./pages/Verkauf/Angebotsanalyse"));
 const AngebotsKalender = lazy(() => import("./pages/Sales/AngebotsKalender"));
