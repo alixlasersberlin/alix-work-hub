@@ -645,9 +645,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 function Chapter({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
     <section className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <h2 className="!text-slate-900 text-2xl md:text-4xl font-light tracking-tight uppercase">{title}</h2>
-      {sub && <p className="mt-3 !text-slate-500 font-light max-w-2xl">{sub}</p>}
-      <div className="mt-10 md:mt-12">{children}</div>
+      <h2 className="!text-slate-900 text-xl sm:text-2xl md:text-4xl font-light tracking-tight uppercase text-balance">{title}</h2>
+      {sub && <p className="mt-2 sm:mt-3 !text-slate-500 font-light max-w-2xl text-sm sm:text-base text-pretty">{sub}</p>}
+      <div className="mt-6 sm:mt-8 md:mt-12">{children}</div>
     </section>
   );
 }
@@ -655,7 +655,8 @@ function Chapter({ title, sub, children }: { title: string; sub?: string; childr
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] tracking-[0.28em] uppercase !text-slate-500 mb-4">{label}</p>
+      <p className="text-[10px] sm:text-[11px] tracking-[0.22em] sm:tracking-[0.28em] uppercase !text-slate-500 mb-3 sm:mb-4">{label}</p>
+
       {children}
     </div>
   );
