@@ -650,11 +650,20 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Labeled({ label, children }: { label: string; children: React.ReactNode }) {
+function Labeled({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string | null;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-2">
       <label className="text-[11px] tracking-[0.24em] uppercase !text-slate-500">{label}</label>
       {children}
+      {error && <p className="text-[12px] !text-red-500 font-light">{error}</p>}
     </div>
   );
 }
