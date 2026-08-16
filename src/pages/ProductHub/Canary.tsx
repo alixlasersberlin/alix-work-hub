@@ -120,6 +120,17 @@ export default function ProductHubCanary() {
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-sm">Verpflichtende Reihenfolge</CardTitle></CardHeader>
         <CardContent className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" disabled={!canRun || !!busy} onClick={async () => {
+            const r = await call('de_dump');
+            if (r) {
+              console.log('DE-Export BlueIce · roh:', r.raw, '· aufgelöst:', r.resolved);
+              const miss = Object.entries(r.resolved || {}).filter(([, v]) => !v).map(([k]) => k);
+              toast.success(miss.length ? `Diagnose: nicht lesbar → ${miss.join(', ')} (Details in der Konsole)` : 'Diagnose: alle Felder im DE-Export lesbar');
+            }
+          }}>
+            {busy === 'de_dump' ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <PlugZap className="h-3.5 w-3.5 mr-1.5" />}
+            0 · DE-Export Diagnose
+          </Button>
           <Button size="sm" variant="outline" disabled={!canRun || !!busy} onClick={() => call('selftest')}>
             {busy === 'selftest' ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <PlugZap className="h-3.5 w-3.5 mr-1.5" />}
             1 · DE Write Dry-Run-Tests
