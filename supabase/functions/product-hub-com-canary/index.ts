@@ -159,19 +159,40 @@ async function fetchComProduct(comId = COM_BLUEICE_ID) {
   return { product: hit, payloadHash: await sha256(JSON.stringify(hit)) };
 }
 
+// COM akzeptiert den Schreib-Schluessel je nach Deployment unter
+// verschiedenen Header-Namen. Wir probieren die gaengigen Varianten und
+// merken uns die erste, die kein 401 liefert.
+type AuthVariant = { label: string; headers: Record<string, string> };
+const authVariants = (key: string): AuthVariant[] => [
+  { label: "x-api-key", headers: { "x-api-key": key } },
+  { label: "authorization-bearer", headers: { authorization: `Bearer ${key}` } },
+  { label: "x-write-key", headers: { "x-write-key": key } },
+  { label: "x-api-key+bearer", headers: { "x-api-key": key, authorization: `Bearer ${key}` } },
+];
+let acceptedAuth: AuthVariant | null = null;
+
 async function writeCall(body: Record<string, unknown>, dryRun = true) {
   const key = Deno.env.get("COM_PRODUCT_HUB_WRITE_KEY") || "";
-  if (!key) return { status: 0, body: { error: "COM_PRODUCT_HUB_WRITE_KEY fehlt" } as any, ok: false };
-  const res = await fetch(COM_WRITE, {
-    method: "PATCH",
-    headers: { "x-api-key": key, "Content-Type": "application/json", "User-Agent": UA },
-    body: JSON.stringify({ publish_id: `alixwork-${Date.now()}`, target: "product_hub", ...body, dry_run: dryRun }),
-  });
-  const raw = await res.text();
-  let parsed: any = raw;
-  try { parsed = JSON.parse(raw); } catch { /* text */ }
-  return { status: res.status, body: parsed, ok: res.ok };
+  if (!key) return { status: 0, body: { error: "COM_PRODUCT_HUB_WRITE_KEY fehlt" } as any, ok: false, auth: "none" };
+  const payload = JSON.stringify({ publish_id: `alixwork-${Date.now()}`, target: "product_hub", ...body, dry_run: dryRun });
+  const variants = acceptedAuth ? [acceptedAuth] : authVariants(key);
+
+  let last: { status: number; body: any; ok: boolean; auth: string } | null = null;
+  for (const v of variants) {
+    const res = await fetch(COM_WRITE, {
+      method: "PATCH",
+      headers: { ...v.headers, "Content-Type": "application/json", "User-Agent": UA },
+      body: payload,
+    });
+    const raw = await res.text();
+    let parsed: any = raw;
+    try { parsed = JSON.parse(raw); } catch { /* text */ }
+    last = { status: res.status, body: parsed, ok: res.ok, auth: v.label };
+    if (res.status !== 401 && res.status !== 403) { acceptedAuth = v; break; }
+  }
+  return last!;
 }
+
 
 // COM fuehrt alle Canary-Felder als Text (Spalte `wavelengths` ist Freitext,
 // product_hub-Keys ebenfalls) – daher keine Typumdeutung, 1:1 als Text.
@@ -199,8 +220,9 @@ const writeDetail = (r: { status: number; body: any }) => {
   if (typeof r.body === "string" && r.body.trim().startsWith("<"))
     return `COM-Write-Endpunkt existiert nicht (HTTP ${r.status}, HTML statt JSON) – auf alix-lasers.com muss /api/public/product-hub/update bereitgestellt werden`;
   const c = codeOf(r.body);
-  if (r.status === 401 || c === "UNAUTHORIZED")
-    return "COM lehnt den Schreib-Schluessel ab (401) – COM_PRODUCT_HUB_WRITE_KEY stimmt nicht mit dem auf alix-lasers.com hinterlegten Key ueberein";
+  if (r.status === 401 || r.status === 403 || c === "UNAUTHORIZED")
+    return `COM lehnt den Schreib-Schluessel ab (HTTP ${r.status}) – alle Header-Varianten (x-api-key, Authorization: Bearer, x-write-key) wurden abgelehnt. Der Wert von COM_PRODUCT_HUB_WRITE_KEY stimmt nicht mit dem auf alix-lasers.com hinterlegten Schreib-Schluessel ueberein.`;
+
   return c || (typeof r.body === "object" ? JSON.stringify(r.body).slice(0, 200) : String(r.body).slice(0, 200));
 };
 const isHtmlResponse = (r: { body: any }) =>
