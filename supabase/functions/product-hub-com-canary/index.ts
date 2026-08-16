@@ -134,6 +134,17 @@ function readbackValue(raw: any, field: string, comField?: string | null): { val
   return { value: fallback, source: fallback === null ? (comField || field) : `alias:${field}` };
 }
 
+// Alle Blattpfade des COM-Datensatzes (fuer die Trace-/Mismatch-Diagnose).
+function flattenPaths(raw: any, prefix = "", depth = 0, out: { path: string; value: string | null }[] = []) {
+  if (!raw || typeof raw !== "object" || depth > 5) return out;
+  for (const [k, v] of Object.entries(raw)) {
+    const p = prefix ? `${prefix}.${k}` : k;
+    if (v && typeof v === "object" && !Array.isArray(v)) flattenPaths(v, p, depth + 1, out);
+    else out.push({ path: p, value: asText(v) });
+  }
+  return out;
+}
+
 
 function collectProducts(body: any): any[] {
   if (Array.isArray(body)) return body;
