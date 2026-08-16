@@ -666,6 +666,8 @@ const PhWebseiten = lazy(() => import("./pages/ProductHub/Webseiten"));
 const PhVerlauf = lazy(() => import("./pages/ProductHub/Verlauf"));
 const PhSyncHealth = lazy(() => import("./pages/ProductHub/SyncHealth"));
 const PhEinstellungen = lazy(() => import("./pages/ProductHub/Einstellungen"));
+const PhValidierung = lazy(() => import("./pages/ProductHub/Validierung"));
+const PhVeroeffentlichungen = lazy(() => import("./pages/ProductHub/Veroeffentlichungen"));
 const PlmGeraete = lazy(() => import("./pages/PLM/Geraete"));
 const PlmBaugruppen = lazy(() => import("./pages/PLM/Baugruppen"));
 const PlmEinzelteile = lazy(() => import("./pages/PLM/Einzelteile"));
@@ -2165,6 +2167,8 @@ function AppRoutes() {
           <Route path="/product-hub/verlauf" element={<ProtectedRoute><PhVerlauf /></ProtectedRoute>} />
           <Route path="/product-hub/sync-health" element={<ProtectedRoute><PhSyncHealth /></ProtectedRoute>} />
           <Route path="/product-hub/einstellungen" element={<ProtectedRoute><PhEinstellungen /></ProtectedRoute>} />
+          <Route path="/product-hub/validierung" element={<ProtectedRoute><PhValidierung /></ProtectedRoute>} />
+          <Route path="/product-hub/veroeffentlichungen" element={<ProtectedRoute><PhVeroeffentlichungen /></ProtectedRoute>} />
 
 
           {/* ALIXWORK Produktion & Beschaffung (PLM / MDR / ISO 13485) */}

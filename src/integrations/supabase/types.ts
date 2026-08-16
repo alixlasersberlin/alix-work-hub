@@ -33943,6 +33943,122 @@ export type Database = {
           },
         ]
       }
+      ph_publish_queue: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          channel_code: string
+          created_at: string
+          error_message: string | null
+          field_key: string
+          id: string
+          new_value: Json | null
+          notes: string | null
+          old_value: Json | null
+          product_id: string
+          published_at: string | null
+          requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          channel_code: string
+          created_at?: string
+          error_message?: string | null
+          field_key: string
+          id?: string
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+          product_id: string
+          published_at?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          channel_code?: string
+          created_at?: string
+          error_message?: string | null
+          field_key?: string
+          id?: string
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+          product_id?: string
+          published_at?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_publish_queue_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_publish_rollbacks: {
+        Row: {
+          action: string
+          channel_code: string
+          created_at: string
+          field_key: string
+          id: string
+          performed_by: string | null
+          previous_value: Json | null
+          product_id: string
+          queue_id: string | null
+          restored_value: Json | null
+        }
+        Insert: {
+          action?: string
+          channel_code: string
+          created_at?: string
+          field_key: string
+          id?: string
+          performed_by?: string | null
+          previous_value?: Json | null
+          product_id: string
+          queue_id?: string | null
+          restored_value?: Json | null
+        }
+        Update: {
+          action?: string
+          channel_code?: string
+          created_at?: string
+          field_key?: string
+          id?: string
+          performed_by?: string | null
+          previous_value?: Json | null
+          product_id?: string
+          queue_id?: string | null
+          restored_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_publish_rollbacks_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ph_publish_rollbacks_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "ph_publish_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ph_roles: {
         Row: {
           created_at: string
@@ -34024,6 +34140,51 @@ export type Database = {
           payload?: Json | null
           product_id?: string | null
           status?: string
+        }
+        Relationships: []
+      }
+      ph_validation_runs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          documents: Json
+          id: string
+          media: Json
+          overrides: Json
+          phase: string
+          products: Json
+          reason: string | null
+          recommendation: string | null
+          reference_diff: Json
+          summary: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          documents?: Json
+          id?: string
+          media?: Json
+          overrides?: Json
+          phase?: string
+          products?: Json
+          reason?: string | null
+          recommendation?: string | null
+          reference_diff?: Json
+          summary?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          documents?: Json
+          id?: string
+          media?: Json
+          overrides?: Json
+          phase?: string
+          products?: Json
+          reason?: string | null
+          recommendation?: string | null
+          reference_diff?: Json
+          summary?: Json
         }
         Relationships: []
       }
