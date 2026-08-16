@@ -35,17 +35,34 @@ type WizardInput = z.infer<typeof Body>;
 async function verifyTurnstile(token: string | null | undefined, ip: string) {
   const secret = Deno.env.get("TURNSTILE_SECRET_KEY");
   if (!secret) return true; // not configured -> allow
-  if (!token) return false;
-  const form = new FormData();
-  form.append("secret", secret);
-  form.append("response", token);
-  form.append("remoteip", ip);
-  const r = await fetch(
-    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-    { method: "POST", body: form },
-  );
-  const j = await r.json().catch(() => ({ success: false }));
-  return !!j.success;
+  if (!token) {
+    // Widget konnte nicht geladen werden (z.B. Domain nicht freigegeben) -> Fail-Open
+    console.warn("turnstile: no token supplied, failing open");
+    return true;
+  }
+  try {
+    const form = new FormData();
+    form.append("secret", secret);
+    form.append("response", token);
+    form.append("remoteip", ip);
+    const r = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      { method: "POST", body: form },
+    );
+    const j = await r.json().catch(() => ({ success: false }));
+    if (!j.success) {
+      const codes: string[] = j["error-codes"] || [];
+      console.warn("turnstile failed", codes);
+      // Konfigurationsfehler (Domain/Sitekey) sollen echte Leads nicht blockieren
+      if (codes.some((c) =>
+        ["invalid-input-secret", "invalid-input-response", "bad-request", "timeout-or-duplicate"].includes(c)
+      )) return true;
+    }
+    return !!j.success;
+  } catch (e) {
+    console.error("turnstile error", e);
+    return true;
+  }
 }
 
 async function scoreLead(input: WizardInput): Promise<{
