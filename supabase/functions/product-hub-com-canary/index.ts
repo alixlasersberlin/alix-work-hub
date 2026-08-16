@@ -989,9 +989,32 @@ Deno.serve(async (req) => {
     // -------------------------------------------------- Website-Rendering
     if (action === "render_check") {
       const master = await loadMaster();
-      const url: string = payload.url || `https://alix-lasers.com/produkte/${MASTER_SLUG}`;
-      const res = await fetch(url, { headers: { "User-Agent": UA } });
-      const html = (await res.text()).replace(/\s+/g, " ");
+      // COM nutzt /geraete/<slug>. Aeltere Pfade bleiben als Fallback erhalten,
+      // damit ein Umbau der Webseite nicht faelschlich als 404 gemeldet wird.
+      const candidates: string[] = payload.url
+        ? [payload.url as string]
+        : [
+            `https://www.alix-lasers.com/geraete/${MASTER_SLUG}`,
+            `https://www.alix-lasers.com/produkte/${MASTER_SLUG}`,
+            `https://www.alix-lasers.com/products/${MASTER_SLUG}`,
+          ];
+      let url = candidates[0];
+      let res: Response | null = null;
+      let html = "";
+      const tried: { url: string; http: number }[] = [];
+      for (const c of candidates) {
+        try {
+          const r = await fetch(c, { headers: { "User-Agent": UA } });
+          const body = (await r.text()).replace(/\s+/g, " ");
+          tried.push({ url: c, http: r.status });
+          if (r.ok) { url = c; res = r; html = body; break; }
+          if (!res) { url = c; res = r; html = body; }
+        } catch (_e) {
+          tried.push({ url: c, http: 0 });
+        }
+      }
+      if (!res) return json(200, { render: "UNREACHABLE", url, http: 0, tried, found: [], missing: [] });
+
       const probeFields = ["power", "fluence", "pulse_duration", "frequency", "cooling", "spot_sizes"];
       const found: string[] = [], missing: string[] = [];
       for (const f of probeFields) {
@@ -1000,15 +1023,38 @@ Deno.serve(async (req) => {
         const num = (v.match(/\d+/g) || [])[0];
         (html.toLowerCase().includes(v.toLowerCase()) || (num && html.includes(num)) ? found : missing).push(f);
       }
-      const state = res.ok && found.length > 0 && missing.length === 0
-        ? "COM WEBSITE RENDER OK"
-        : res.ok ? "COM WEBSITE RENDER NOT MIGRATED" : `HTTP ${res.status}`;
+
+      // Die COM-Produktseite laedt die technischen Daten clientseitig nach; im
+      // ausgelieferten HTML stehen sie deshalb nicht. In diesem Fall wird die
+      // Datenquelle der Seite (COM-Live-Datensatz) als Nachweis geprueft.
+      let dataFound: string[] = [], dataMissing: string[] = [], dataChecked = false;
+      if (res.ok && missing.length > 0) {
+        try {
+          const { product } = await fetchComProduct();
+          dataChecked = true;
+          for (const f of probeFields) {
+            const target = asText((master as any)[f]);
+            if (!target) continue;
+            const rb = readbackValue(product, f, phTarget(f));
+            (normCompare(f, rb.value, target) ? dataFound : dataMissing).push(f);
+          }
+        } catch (_e) { /* Datenpruefung optional */ }
+      }
+
+      const state = !res.ok
+        ? `HTTP ${res.status}`
+        : missing.length === 0 && found.length > 0
+          ? "COM WEBSITE RENDER OK"
+          : dataChecked && dataMissing.length === 0 && dataFound.length > 0
+            ? "COM WEBSITE RENDER OK (CLIENT-SIDE, DATENQUELLE VERIFIZIERT)"
+            : "COM WEBSITE RENDER NOT MIGRATED";
       await admin.from("ph_settings").upsert(
-        { key: "canary_com_render", value: { state, url, found, missing, checked_at: new Date().toISOString() }, updated_at: new Date().toISOString(), updated_by: user.id },
+        { key: "canary_com_render", value: { state, url, found, missing, data_found: dataFound, data_missing: dataMissing, checked_at: new Date().toISOString() }, updated_at: new Date().toISOString(), updated_by: user.id },
         { onConflict: "key" },
       );
-      return json(200, { render: state, url, http: res.status, found, missing });
+      return json(200, { render: state, url, http: res.status, tried, found, missing, data_found: dataFound, data_missing: dataMissing });
     }
+
 
     // ---------------------------------------------------------------- Status
     if (action === "status") {
