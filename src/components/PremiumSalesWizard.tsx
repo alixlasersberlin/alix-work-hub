@@ -9,6 +9,12 @@ import {
   devicesForCategory,
   type PremiumCategory,
 } from '@/lib/beratung-premium/categories';
+import {
+  EU_CODES,
+  WORLD_CODES,
+  CUSTOM_CODE,
+  findCountry,
+} from '@/lib/beratung-premium/country-codes';
 
 /**
  * ALIX Premium Beratung — zweite, eigenständige Beratungsstrecke (/beratung/premium).
@@ -52,7 +58,7 @@ function validatePhone(code: string, value: string): string | null {
   const digits = value.replace(/\D/g, '').replace(/^0+/, '');
   if (!value.trim()) return 'Telefonnummer ist ein Pflichtfeld.';
   if (!digits) return 'Bitte geben Sie eine gültige Telefonnummer ein.';
-  const c = COUNTRY_CODES.find((x) => x.code === code);
+  const c = findCountry(code);
   const min = c?.min ?? 6;
   const max = c?.max ?? 14;
   if (digits.length < min) return `Die Nummer ist zu kurz (mind. ${min} Ziffern für ${c?.label ?? code}).`;
@@ -121,6 +127,7 @@ interface Props {
 export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<State>(INITIAL);
+  const [customCode, setCustomCode] = useState(false);
   const [touched, setTouched] = useState<{ last_name?: boolean; email?: boolean; phone?: boolean }>({});
 
   const [submitting, setSubmitting] = useState(false);
