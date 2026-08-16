@@ -241,19 +241,20 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   return (
     <div className={cn('min-h-[100dvh] w-full flex flex-col bg-gradient-to-b !text-slate-900', activeWorld)}>
       {/* Header */}
-      <header className="px-5 md:px-10 py-6 flex items-center justify-between">
+      <header className="px-4 sm:px-6 md:px-10 py-4 sm:py-5 md:py-6 flex items-center justify-between gap-3">
         <a href="https://www.alix-lasers.de" target="_blank" rel="noopener noreferrer" aria-label="ALIX Lasers Webseite">
-          <img src={logoAsset.url} alt="ALIX Lasers" className="h-8 md:h-9 w-auto transition-opacity hover:opacity-80" />
+          <img src={logoAsset.url} alt="ALIX Lasers" className="h-7 sm:h-8 md:h-9 w-auto transition-opacity hover:opacity-80" />
         </a>
-        <span className="text-[10px] md:text-[11px] tracking-[0.35em] !text-slate-500 uppercase">
+        <span className="text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.2em] sm:tracking-[0.3em] md:tracking-[0.35em] !text-slate-500 uppercase text-right whitespace-nowrap">
           Alix Smart Consult
         </span>
       </header>
 
       {/* Progress */}
       {step > 0 && step <= LAST_STEP && (
-        <div className="px-5 md:px-10">
-          <div className="mx-auto max-w-4xl flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-[11px] tracking-[0.24em] uppercase">
+        <div className="px-4 sm:px-6 md:px-10">
+          <div className="mx-auto max-w-4xl hidden sm:flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-[11px] tracking-[0.24em] uppercase">
+
             {STEP_LABELS.map((label, i) => {
               const n = i + 1;
               const state = n < step ? 'done' : n === step ? 'active' : 'todo';
