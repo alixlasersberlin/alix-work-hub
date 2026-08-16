@@ -18,7 +18,10 @@ const cors = {
 const json = (s: number, b: unknown) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 
-const COM_EXPORT = "https://alix-lasers.com/api/public/product-hub/export";
+const COM_SUPABASE_URL = "https://dxbrovbbwrtdsimdnrpy.supabase.co";
+// Publishable COM key used by alix-lasers.com itself. This is intentionally not a
+// private credential; writes still require COM_PRODUCT_HUB_WRITE_KEY server-side.
+const COM_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4YnJvdmJid3J0ZHNpbWRucnB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MTQwMjEsImV4cCI6MjA5MjQ5MDAyMX0.z85uwvZravQhPi7qx9pRdjDY6C0JSKMdaKCNp5Poeo4";
 const COM_WRITE = "https://alix-lasers.com/api/public/product-hub/update";
 // STRIKT: nur diese COM-Produkt-ID. Keine Fuzzy-Zuordnung (Fusion Red / Hybrid Red /
 // BlueIce / BlueIce 2 Max KI sind eigenstaendige Produkte).
@@ -121,13 +124,19 @@ function collectProducts(body: any): any[] {
 const idOf = (p: any) => String(p?.id ?? p?.product_id ?? p?.device_id ?? p?.alix_product_id ?? "");
 
 async function fetchComExport() {
-  const key = Deno.env.get("COM_PRODUCT_HUB_EXPORT_KEY") || "";
-  if (!key) throw new Error("COM_PRODUCT_HUB_EXPORT_KEY fehlt");
-  const res = await fetch(COM_EXPORT, { headers: { "x-api-key": key, "User-Agent": UA } });
+  const url = `${COM_SUPABASE_URL}/rest/v1/devices?select=*&id=eq.${encodeURIComponent(COM_BLUEICE_ID)}`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: COM_PUBLISHABLE_KEY,
+      Authorization: `Bearer ${COM_PUBLISHABLE_KEY}`,
+      Accept: "application/json",
+      "User-Agent": UA,
+    },
+  });
   const text = await res.text();
-  if (!res.ok) throw new Error(`COM Export ${res.status}: ${text.slice(0, 200)}`);
+  if (!res.ok) throw new Error(`COM Datenquelle ${res.status}: ${text.slice(0, 200)}`);
   let body: any;
-  try { body = JSON.parse(text); } catch { throw new Error(`COM Export lieferte kein JSON: ${text.slice(0, 200)}`); }
+  try { body = JSON.parse(text); } catch { throw new Error(`COM Datenquelle lieferte kein JSON: ${text.slice(0, 200)}`); }
   return { body, list: collectProducts(body) };
 }
 
