@@ -2167,6 +2167,8 @@ function AppRoutes() {
           <Route path="/product-hub/verlauf" element={<ProtectedRoute><PhVerlauf /></ProtectedRoute>} />
           <Route path="/product-hub/sync-health" element={<ProtectedRoute><PhSyncHealth /></ProtectedRoute>} />
           <Route path="/product-hub/einstellungen" element={<ProtectedRoute><PhEinstellungen /></ProtectedRoute>} />
+          <Route path="/product-hub/validierung" element={<ProtectedRoute><PhValidierung /></ProtectedRoute>} />
+          <Route path="/product-hub/veroeffentlichungen" element={<ProtectedRoute><PhVeroeffentlichungen /></ProtectedRoute>} />
 
 
           {/* ALIXWORK Produktion & Beschaffung (PLM / MDR / ISO 13485) */}
