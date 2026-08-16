@@ -200,6 +200,74 @@ export default function ProductHubComCanary() {
         </CardContent>
       </Card>
 
+      {trace && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Feld-Trace · {trace.field} (kein Live-Write, nur Dry Run + Lesen)</CardTitle></CardHeader>
+          <CardContent className="space-y-3 text-xs">
+            <div className="grid gap-2 md:grid-cols-3">
+              <div className="rounded border p-2">
+                <div className="text-muted-foreground mb-1">1 · WRITE target/path</div>
+                <div className="font-mono break-all">{trace.write?.target_path}</div>
+                <div className="mt-1 text-muted-foreground">Wert gesendet: <span className="font-mono">{String(trace.write?.sent_value ?? '—')}</span></div>
+                <div className="text-muted-foreground">expected_previous: <span className="font-mono">{String(trace.write?.expected_previous_value ?? '—')}</span></div>
+              </div>
+              <div className="rounded border p-2">
+                <div className="text-muted-foreground mb-1">2 · WRITE response (Dry Run)</div>
+                <div>HTTP {trace.write?.dry_run_status} · {trace.write?.dry_run_auth}</div>
+                <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-all">{JSON.stringify(trace.write?.dry_run_response, null, 2)}</pre>
+              </div>
+              <div className="rounded border p-2">
+                <div className="text-muted-foreground mb-1">3 · READ-BACK raw value/path</div>
+                <div>Pfad benutzt: <span className="font-mono break-all">{trace.readback?.path_used}</span></div>
+                <div>am Zielpfad: <span className="font-mono">{String(trace.readback?.value_at_target_path ?? 'null')}</span></div>
+                <div>via Alias: <span className="font-mono">{String(trace.readback?.value_via_alias ?? 'null')}</span></div>
+                <div className="mt-1">Master soll: <span className="font-mono">{String(trace.master_value ?? 'null')}</span></div>
+                <Badge className={trace.readback?.matches_master ? 'bg-emerald-600 mt-1' : 'bg-destructive mt-1'}>{trace.readback?.matches_master ? 'MATCH' : 'MISMATCH'}</Badge>
+              </div>
+            </div>
+            <div className="rounded border p-2">
+              <div className="text-muted-foreground mb-1">COM-Datensatz · product_hub Container</div>
+              <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all">{JSON.stringify(trace.com_record?.product_hub, null, 2)}</pre>
+            </div>
+            <div className="rounded border p-2">
+              <div className="text-muted-foreground mb-1">Fundstellen im COM-Datensatz</div>
+              {(trace.occurrences || []).length === 0 && <div className="text-muted-foreground">Keine Fundstelle – der Wert ist auf COM nirgends persistiert.</div>}
+              {(trace.occurrences || []).map((o: any, i: number) => (
+                <div key={i} className="font-mono break-all">{o.path} = {String(o.value ?? 'null')}</div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {mismatch && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">MISMATCH-Detail · {mismatch.count} Felder</CardTitle></CardHeader>
+          <CardContent className="space-y-2 p-3 text-xs">
+            <div className="rounded border border-amber-500/40 bg-amber-500/10 p-2">{mismatch.diagnosis}</div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader><TableRow><TableHead>Feld</TableHead><TableHead>WRITE Pfad</TableHead><TableHead>WRITE Response</TableHead><TableHead>READ-BACK Pfad</TableHead><TableHead>Wert am Zielpfad</TableHead><TableHead>Wert via Alias</TableHead><TableHead>Master soll</TableHead></TableRow></TableHeader>
+                <TableBody>
+                  {(mismatch.rows || []).map((r: any) => (
+                    <TableRow key={r.field}>
+                      <TableCell className="text-xs font-medium">{r.field}</TableCell>
+                      <TableCell className="text-xs font-mono break-all">{r.write_target_path}</TableCell>
+                      <TableCell className="text-xs">{r.write_response ? `HTTP ${r.write_response.status ?? '—'} ${r.write_response.error ? '· ' + r.write_response.error : '· OK'}` : '—'}</TableCell>
+                      <TableCell className="text-xs font-mono break-all">{r.readback_path}</TableCell>
+                      <TableCell className="text-xs font-mono">{String(r.readback_value_at_target ?? 'null')}</TableCell>
+                      <TableCell className="text-xs font-mono">{String(r.readback_value_alias ?? 'null')}</TableCell>
+                      <TableCell className="text-xs font-mono">{String(r.master_value ?? 'null')}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
       {!!(checks.results || []).length && (
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Live-Push Protokoll</CardTitle></CardHeader>
