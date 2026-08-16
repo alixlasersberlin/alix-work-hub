@@ -664,6 +664,8 @@ export const navItems: NavItem[] = [
       { path: '/product-hub', label: 'Übersicht', icon: LayoutDashboard, roles: null },
       { path: '/product-hub/geraete', label: 'Geräte', icon: Cpu, roles: null },
       { path: '/product-hub/freigaben', label: 'Freigaben', icon: ShieldCheck, roles: null },
+      { path: '/product-hub/validierung', label: 'Validierung', icon: ShieldCheck, roles: ['Super Admin', 'Admin'] },
+      { path: '/product-hub/veroeffentlichungen', label: 'Veröffentlichungen', icon: Globe, roles: ['Super Admin', 'Admin'] },
       { path: '/product-hub/konflikte', label: 'Konflikte', icon: AlertTriangle, roles: null },
       { path: '/product-hub/medien', label: 'Medien', icon: ImageIcon, roles: null },
       { path: '/product-hub/dokumente', label: 'Dokumente', icon: FileText, roles: null },
