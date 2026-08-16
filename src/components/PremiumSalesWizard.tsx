@@ -489,7 +489,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 3 — Bedarf */}
           {step === 3 && (
             <Chapter title="IHR BEDARF" sub={`Schwerpunkt: ${data.category}`}>
-              <div className="space-y-10">
+              <div className="space-y-8 sm:space-y-10">
                 <Group label="Gewünschter Lieferzeitraum (Mehrfachauswahl)">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {DELIVERY.map((d) => (
