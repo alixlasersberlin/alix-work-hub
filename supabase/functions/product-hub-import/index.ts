@@ -16,7 +16,7 @@ const slugify = (s: string) =>
 
 const DEFAULT_SOURCE = {
   name: "ALIX Lasers DE – Product Hub",
-  endpoint: "https://alix-lasers.de/api/public/product-hub/export",
+  endpoint: "https://alix-legacy-reborn.lovable.app/api/public/product-hub/export",
   auth_header: "x-api-key",
   secret_name: "DE_EXPORT_API_KEY",
   channel: "de",
