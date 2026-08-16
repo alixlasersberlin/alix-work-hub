@@ -442,6 +442,9 @@ export default function ProductHubMasterReview() {
               <Button size="sm" variant="outline" disabled={!readiness.ready || busy} onClick={prepareCanary}>
                 <Rocket className="h-3.5 w-3.5 mr-1.5" /> BlueIce Canary vorbereiten (nur Diff-Vorschau)
               </Button>
+              <Button size="sm" variant="outline" asChild>
+                <a href="/product-hub/canary"><Rocket className="h-3.5 w-3.5 mr-1.5" /> DE Canary Safety Panel</a>
+              </Button>
             </CardContent>
           </Card>
         </div>
