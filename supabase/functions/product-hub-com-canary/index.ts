@@ -113,6 +113,28 @@ function deepHas(raw: any, keys: string[], depth = 0): boolean {
 // Legacy-Freitext wird NICHT interpretiert oder normalisiert – 1:1 uebernommen.
 const liveValue = (raw: any, field: string) => (raw ? deepFind(raw, fieldKeys(field)) : null);
 
+// Read-back MUSS aus der tatsaechlichen Zielquelle lesen: dem COM-Feld, das beim
+// Schreiben verwendet wurde (z. B. "product_hub.power"), nicht aus einem
+// gleichnamigen Legacy-Feld. Nur wenn dort nichts steht, greift die Alias-Suche.
+function valueAtPath(raw: any, path: string): string | null {
+  if (!raw || typeof raw !== "object" || !path) return null;
+  let cur: any = raw;
+  for (const seg of path.split(".")) {
+    if (cur === null || typeof cur !== "object" || !(seg in cur)) return null;
+    cur = cur[seg];
+  }
+  return asText(cur);
+}
+function readbackValue(raw: any, field: string, comField?: string | null): { value: string | null; source: string } {
+  if (comField) {
+    const v = valueAtPath(raw, comField);
+    if (v !== null) return { value: v, source: comField };
+  }
+  const fallback = liveValue(raw, field);
+  return { value: fallback, source: fallback === null ? (comField || field) : `alias:${field}` };
+}
+
+
 function collectProducts(body: any): any[] {
   if (Array.isArray(body)) return body;
   const direct = body?.products || body?.devices || body?.data || body?.items || body?.results || body?.rows;
@@ -593,10 +615,12 @@ Deno.serve(async (req) => {
         written++;
 
         let readback: string | null = null;
+        let readbackSource = comField;
         for (let attempt = 1; attempt <= 3; attempt++) {
           try {
             const fresh = await fetchComProduct();
-            readback = liveValue(fresh.product, s.field);
+            const rb = readbackValue(fresh.product, s.field, comField);
+            readback = rb.value; readbackSource = rb.source;
             stopped = null;
           } catch (e) {
             readback = null;
@@ -610,12 +634,12 @@ Deno.serve(async (req) => {
         await admin.from("ph_canary_snapshots").update({ readback_value: readback, readback_at: new Date().toISOString() }).eq("id", s.id);
         if (ok) {
           verified++;
-          results.push({ field: s.field, action: "WRITE", status: w.status, previous_value: s.current_live_value, new_value: asText(s.target_master_value), readback, verified: true });
+          results.push({ field: s.field, action: "WRITE", status: w.status, previous_value: s.current_live_value, new_value: asText(s.target_master_value), readback, readback_source: readbackSource, verified: true });
           if (s.publish_id) await admin.from("ph_publish_queue").update({ status: "PUBLISHED", verify_status: "VERIFIED", verified_at: new Date().toISOString(), notes: "Live geschrieben und zurueckgelesen" }).eq("id", s.publish_id);
         } else {
           failed++;
-          stopped = stopped || `${s.field}: Read-back weicht ab (live="${readback}", soll="${s.target_master_value}")`;
-          results.push({ field: s.field, action: "WRITE", status: w.status, readback, verified: false, error: stopped });
+          stopped = stopped || `${s.field}: Read-back weicht ab (Quelle ${readbackSource}, live="${readback}", soll="${s.target_master_value}")`;
+          results.push({ field: s.field, action: "WRITE", status: w.status, readback, readback_source: readbackSource, verified: false, error: stopped });
           if (s.publish_id) await admin.from("ph_publish_queue").update({ status: "PUBLISHED", verify_status: "MISMATCH", notes: stopped }).eq("id", s.publish_id);
           break; // SOFORT STOPP
         }
@@ -628,12 +652,13 @@ Deno.serve(async (req) => {
         const fresh = await fetchComProduct();
         const diffs: any[] = [];
         for (const s of snaps || []) {
-          const live = liveValue(fresh.product, s.field);
           if (s.value_state === "CONFLICT") continue;
+          const live = readbackValue(fresh.product, s.field, fmap[s.field]).value;
           if (!normCompare(s.field, live, s.target_master_value)) diffs.push({ field: s.field, live, master: s.target_master_value });
         }
         compare = { match: diffs.length === 0, diffs, export_hash: fresh.payloadHash, compared_at: new Date().toISOString() };
       }
+
 
       await admin.from("ph_canary_batches").update({
         status: allDone ? "PUBLISHED" : "FAILED",
@@ -650,6 +675,69 @@ Deno.serve(async (req) => {
 
       return json(200, { publish: allDone ? "SUCCESS" : "PARTIAL_FAILURE", written, skipped, verified, failed, stopped_at: stopped, results, compare, rollback_available: written > 0 });
     }
+
+    // ---------------------------------------- Re-Verifikation (KEIN Schreiben)
+    // Liest den COM-Live-Datensatz erneut und vergleicht feldweise gegen den
+    // Master – ausschliesslich lesend, kein zweiter Blind-Write.
+    if (action === "verify") {
+      const batchId = payload.batch_id;
+      if (!batchId) return json(400, { error: "batch_id fehlt" });
+      const { data: batch } = await admin.from("ph_canary_batches").select("*").eq("id", batchId).eq("channel_code", "com").maybeSingle();
+      if (!batch) return json(404, { error: "COM-Batch nicht gefunden" });
+
+      const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
+      const fmap = await resolveFieldMap();
+      const fresh = await fetchComProduct();
+
+      const results: any[] = [];
+      let verified = 0, mismatched = 0, skipped = 0;
+      for (const s of snaps || []) {
+        if (s.value_state === "NO_CHANGE" || s.value_state === "CONFLICT") {
+          skipped++;
+          results.push({ field: s.field, action: "SKIP", reason: s.value_state });
+          continue;
+        }
+        const comField = fmap[s.field];
+        const rb = readbackValue(fresh.product, s.field, comField);
+        const ok = normCompare(s.field, rb.value, s.target_master_value);
+        if (ok) verified++; else mismatched++;
+        await admin.from("ph_canary_snapshots").update({ readback_value: rb.value, readback_at: new Date().toISOString() }).eq("id", s.id);
+        if (s.publish_id) {
+          await admin.from("ph_publish_queue").update({
+            status: ok ? "PUBLISHED" : "PUBLISHED",
+            verify_status: ok ? "VERIFIED" : "MISMATCH",
+            verified_at: ok ? new Date().toISOString() : null,
+            notes: ok ? `Read-back verifiziert aus ${rb.source}` : `Read-back weicht ab (Quelle ${rb.source}, live="${rb.value}", soll="${s.target_master_value}")`,
+          }).eq("id", s.publish_id);
+        }
+        results.push({ field: s.field, action: "VERIFY", com_field: comField, readback: rb.value, readback_source: rb.source, master: s.target_master_value, verified: ok });
+      }
+
+      const allOk = mismatched === 0 && results.length > 0;
+      await admin.from("ph_canary_batches").update({
+        status: allOk ? "PUBLISHED" : batch.status,
+        published_at: allOk ? (batch.published_at || new Date().toISOString()) : batch.published_at,
+        checks: {
+          ...(batch.checks || {}),
+          publish: allOk ? "SUCCESS" : "PARTIAL_FAILURE",
+          verify: allOk ? "VERIFIED" : "MISMATCH",
+          verified, mismatched, skipped,
+          verify_results: results,
+          verified_at: new Date().toISOString(),
+          compare: { match: allOk, diffs: results.filter((r) => r.verified === false), export_hash: fresh.payloadHash, compared_at: new Date().toISOString() },
+        },
+        updated_at: new Date().toISOString(),
+      }).eq("id", batchId);
+
+      await admin.from("ph_sync_log").insert({
+        channel_code: "com", direction: "inbound", operation: "canary_verify",
+        status: allOk ? "success" : "error",
+        message: `BlueIce COM Canary Re-Verifikation: ${verified} ok, ${mismatched} abweichend, ${skipped} uebersprungen`,
+      });
+
+      return json(200, { verify: allOk ? "VERIFIED" : "MISMATCH", verified, mismatched, skipped, results });
+    }
+
 
     // --------------------------------------------------------------- Rollback
     if (action === "rollback") {
