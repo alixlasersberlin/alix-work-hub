@@ -157,7 +157,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<State>(INITIAL);
   const [customCode, setCustomCode] = useState(false);
-  const [touched, setTouched] = useState<{ last_name?: boolean; email?: boolean; phone?: boolean }>({});
+  const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
+  const [attempted, setAttempted] = useState<Record<number, boolean>>({});
+
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
