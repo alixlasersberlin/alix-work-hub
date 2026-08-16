@@ -33433,6 +33433,131 @@ export type Database = {
         }
         Relationships: []
       }
+      ph_canary_batches: {
+        Row: {
+          alix_product_id: string | null
+          channel_code: string
+          checks: Json
+          created_at: string
+          created_by: string | null
+          frozen_at: string | null
+          id: string
+          master_hash: string | null
+          notes: string | null
+          product_id: string
+          snapshot_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          alix_product_id?: string | null
+          channel_code?: string
+          checks?: Json
+          created_at?: string
+          created_by?: string | null
+          frozen_at?: string | null
+          id?: string
+          master_hash?: string | null
+          notes?: string | null
+          product_id: string
+          snapshot_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          alix_product_id?: string | null
+          channel_code?: string
+          checks?: Json
+          created_at?: string
+          created_by?: string | null
+          frozen_at?: string | null
+          id?: string
+          master_hash?: string | null
+          notes?: string | null
+          product_id?: string
+          snapshot_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_canary_batches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_canary_snapshots: {
+        Row: {
+          alix_product_id: string | null
+          batch_id: string
+          captured_at: string
+          channel_code: string
+          created_at: string
+          current_live_value: string | null
+          field: string
+          id: string
+          product_id: string
+          publish_id: string | null
+          rollback_order: number
+          source: string
+          source_hash: string | null
+          target_master_value: string | null
+          value_state: string
+        }
+        Insert: {
+          alix_product_id?: string | null
+          batch_id: string
+          captured_at?: string
+          channel_code?: string
+          created_at?: string
+          current_live_value?: string | null
+          field: string
+          id?: string
+          product_id: string
+          publish_id?: string | null
+          rollback_order?: number
+          source?: string
+          source_hash?: string | null
+          target_master_value?: string | null
+          value_state?: string
+        }
+        Update: {
+          alix_product_id?: string | null
+          batch_id?: string
+          captured_at?: string
+          channel_code?: string
+          created_at?: string
+          current_live_value?: string | null
+          field?: string
+          id?: string
+          product_id?: string
+          publish_id?: string | null
+          rollback_order?: number
+          source?: string
+          source_hash?: string | null
+          target_master_value?: string | null
+          value_state?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_canary_snapshots_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "ph_canary_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ph_canary_snapshots_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ph_channels: {
         Row: {
           base_url: string | null
@@ -34024,9 +34149,11 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          batch_id: string | null
           channel_code: string
           created_at: string
           error_message: string | null
+          expected_previous_value: Json | null
           field_key: string
           id: string
           new_value: Json | null
@@ -34035,15 +34162,20 @@ export type Database = {
           product_id: string
           published_at: string | null
           requested_by: string | null
+          rollback_order: number | null
+          rollback_publish_id: string | null
           status: string
           updated_at: string
+          verify_status: string | null
         }
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          batch_id?: string | null
           channel_code: string
           created_at?: string
           error_message?: string | null
+          expected_previous_value?: Json | null
           field_key: string
           id?: string
           new_value?: Json | null
@@ -34052,15 +34184,20 @@ export type Database = {
           product_id: string
           published_at?: string | null
           requested_by?: string | null
+          rollback_order?: number | null
+          rollback_publish_id?: string | null
           status?: string
           updated_at?: string
+          verify_status?: string | null
         }
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          batch_id?: string | null
           channel_code?: string
           created_at?: string
           error_message?: string | null
+          expected_previous_value?: Json | null
           field_key?: string
           id?: string
           new_value?: Json | null
@@ -34069,8 +34206,11 @@ export type Database = {
           product_id?: string
           published_at?: string | null
           requested_by?: string | null
+          rollback_order?: number | null
+          rollback_publish_id?: string | null
           status?: string
           updated_at?: string
+          verify_status?: string | null
         }
         Relationships: [
           {
