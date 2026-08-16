@@ -88,7 +88,7 @@ const chrome =
   'bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(203,213,225,0.55)_45%,rgba(255,255,255,0.95)_70%,rgba(186,214,232,0.6))]';
 
 const fieldCls =
-  'w-full h-12 rounded-xl border border-slate-200/90 bg-white/90 px-4 text-[15px] text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset] focus:outline-none focus:ring-2 focus:ring-sky-200/70 focus:border-sky-200 transition';
+  'w-full h-12 rounded-xl border !border-slate-200 !bg-white px-4 text-[15px] !text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset] focus:outline-none focus:ring-2 focus:ring-sky-200/70 focus:border-sky-200 transition';
 
 interface Props {
   publicMode?: boolean;
@@ -210,7 +210,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
     'from-[#fdfdfc] via-[#f5f6f7] to-[#eceef1]';
 
   return (
-    <div className={cn('min-h-screen w-full bg-gradient-to-b text-slate-900', activeWorld)}>
+    <div className={cn('min-h-screen w-full bg-gradient-to-b !text-slate-900', activeWorld)}>
       {/* Header */}
       <header className="px-5 md:px-10 py-6 flex items-center justify-between">
         <img src={logoAsset.url} alt="ALIX Lasers" className="h-8 md:h-9 w-auto" />
@@ -262,7 +262,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {step === 0 && (
             <section className="text-center py-10 md:py-20 animate-in fade-in duration-700">
               <p className="text-[11px] tracking-[0.4em] uppercase text-slate-400">Premium Consult</p>
-              <h1 className="mt-6 text-4xl md:text-6xl font-light tracking-tight leading-[1.05]">
+              <h1 className="!text-slate-900 mt-6 text-4xl md:text-6xl font-light tracking-tight leading-[1.05]">
                 IHRE ALIX BERATUNG
               </h1>
               <p className="mt-6 max-w-xl mx-auto text-slate-500 text-base md:text-lg font-light">
@@ -332,7 +332,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                         active && 'ring-2 ring-sky-300/70',
                       )}
                     >
-                      <div className="relative overflow-hidden rounded-[25px] bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.35)]">
+                      <div className="relative overflow-hidden rounded-[25px] !bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.35)]">
                         <div className="relative h-52 md:h-60 overflow-hidden">
                           <img
                             src={c.img}
@@ -350,7 +350,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                           />
                         </div>
                         <div className="px-6 pb-6 pt-4">
-                          <h3 className="text-xl md:text-2xl font-light tracking-tight uppercase">{c.key}</h3>
+                          <h3 className="!text-slate-900 text-xl md:text-2xl font-light tracking-tight uppercase">{c.key}</h3>
                           <p className="mt-2 text-sm text-slate-500 font-light">{c.desc}</p>
                         </div>
                       </div>
@@ -424,7 +424,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       <div className="rounded-[23px] bg-white/95 p-6 shadow-[0_25px_70px_-45px_rgba(15,23,42,0.4)]">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <h3 className="text-lg md:text-xl font-light tracking-tight">{d.name}</h3>
+                            <h3 className="!text-slate-900 text-lg md:text-xl font-light tracking-tight">{d.name}</h3>
                             <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-slate-400">{data.category}</p>
                           </div>
                           <span
@@ -459,7 +459,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {step === LAST_STEP && (
             <Chapter title="ABSCHLUSS" sub="Bitte bestätigen Sie die Datenschutzhinweise.">
               <div className="space-y-4 max-w-2xl">
-                <label className="flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white/85 p-4 cursor-pointer">
+                <label className="flex items-start gap-3 rounded-2xl border !border-slate-200 !bg-white p-4 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={data.consent_data}
@@ -470,7 +470,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     Ich stimme der Verarbeitung meiner Daten zur Bearbeitung meiner Anfrage zu.
                   </span>
                 </label>
-                <label className="flex items-start gap-3 rounded-2xl border border-slate-200/80 bg-white/85 p-4 cursor-pointer">
+                <label className="flex items-start gap-3 rounded-2xl border !border-slate-200 !bg-white p-4 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={data.consent_contact}
@@ -497,7 +497,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               <div className="mx-auto h-16 w-16 rounded-full border border-slate-200 bg-white flex items-center justify-center shadow-[0_25px_60px_-35px_rgba(15,23,42,0.5)]">
                 <Check className="h-7 w-7 text-slate-800" />
               </div>
-              <h2 className="mt-8 text-3xl md:text-5xl font-light tracking-tight">VIELEN DANK.</h2>
+              <h2 className="!text-slate-900 mt-8 text-3xl md:text-5xl font-light tracking-tight">VIELEN DANK.</h2>
               <p className="mt-5 text-slate-500 font-light">
                 Ihre ALIX Beratung wurde erfolgreich übermittelt.
               </p>
@@ -564,7 +564,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 function Chapter({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
     <section className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <h2 className="text-2xl md:text-4xl font-light tracking-tight uppercase">{title}</h2>
+      <h2 className="!text-slate-900 text-2xl md:text-4xl font-light tracking-tight uppercase">{title}</h2>
       {sub && <p className="mt-3 text-slate-500 font-light max-w-2xl">{sub}</p>}
       <div className="mt-10 md:mt-12">{children}</div>
     </section>
@@ -597,8 +597,8 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
       className={cn(
         'min-h-[56px] w-full rounded-2xl border px-5 text-left text-sm font-light transition',
         active
-          ? 'border-sky-300 bg-white text-slate-900 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.6)]'
-          : 'border-slate-200/80 bg-white/70 text-slate-600 hover:border-slate-300 hover:bg-white',
+          ? '!border-sky-300 !bg-white !text-slate-900 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.6)]'
+          : '!border-slate-200 !bg-white/80 !text-slate-700 hover:!border-slate-300',
       )}
     >
       {children}
