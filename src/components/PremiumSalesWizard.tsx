@@ -183,25 +183,60 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
         : [...d.additional_interests, v],
     }));
 
-  const emailError = validateEmail(data.email);
-  const phoneError = validatePhone(data.country_code, data.phone);
-  const lastNameError = data.last_name.trim() ? null : 'Nachname ist ein Pflichtfeld.';
+  const errors: Record<FieldKey, string | null> = {
+    first_name: validateName(data.first_name, 'Vorname', false),
+    last_name: validateName(data.last_name, 'Nachname', true),
+    company: validateCompany(data.company),
+    email: validateEmail(data.email),
+    country_code: validateCountryCode(data.country_code),
+    phone: validatePhone(data.country_code, data.phone),
+    notes: validateNotes(data.notes),
+  };
+
+  /** Sofort-Validierung: Fehler sobald das Feld angefasst oder „Weiter“ versucht wurde. */
+  const showError = (k: FieldKey) => (touched[k] || attempted[step] ? errors[k] : null);
+  const isValid = (k: FieldKey) => !!touched[k] && !errors[k] && String(data[k] ?? '').trim().length > 0;
+  const markTouched = (k: FieldKey) => setTouched((t) => (t[k] ? t : { ...t, [k]: true }));
+  const update = (k: FieldKey, v: string) => {
+    markTouched(k);
+    setData((d) => ({ ...d, [k]: v }));
+  };
+
+  const step1Ok = (['first_name', 'last_name', 'company', 'email', 'country_code', 'phone'] as FieldKey[]).every(
+    (k) => !errors[k],
+  );
 
   function canContinue(): boolean {
     switch (step) {
       case 1:
-        return !lastNameError && !emailError && !phoneError;
+        return step1Ok;
 
       case 2:
         return !!data.category;
       case 3:
-        return !!data.delivery_preference && !!data.consultation_type;
+        return !!data.delivery_preference && !!data.consultation_type && !errors.notes;
       case LAST_STEP:
         return data.consent_data && data.consent_contact && (publicMode && !captchaUnavailable ? !!captchaToken : true);
       default:
         return true;
     }
   }
+
+  /** Blockierter „Weiter“-Klick: alle Fehler des Schritts sichtbar machen. */
+  function revealStepErrors() {
+    setAttempted((a) => ({ ...a, [step]: true }));
+    if (step === 1) {
+      setTouched({
+        first_name: true,
+        last_name: true,
+        company: true,
+        email: true,
+        country_code: true,
+        phone: true,
+      });
+    }
+  }
+
 
   function selectCategory(cat: PremiumCategory) {
     setData((d) => ({ ...d, category: cat, devices: [] }));
