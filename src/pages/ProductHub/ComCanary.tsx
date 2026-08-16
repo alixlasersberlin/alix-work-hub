@@ -135,7 +135,7 @@ export default function ProductHubComCanary() {
         <Button size="sm" disabled={!canRun || !!busy || state?.com_write !== 'READY'} onClick={async () => { const r = await call('snapshot'); if (r) { await load(); toast.success(`${r.snapshot} · ${r.changes} Änderungen`); } }}>
           {busy === 'snapshot' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Snowflake className="h-3.5 w-3.5" />} 2 · COM-Snapshot einfrieren
         </Button>
-        <Button size="sm" disabled={!canRun || !!busy || !batch} onClick={async () => { const r = await call('dryrun', { batch_id: batch?.id }); if (r) { await load(); toast[r.dry_run === 'PASSED' ? 'success' : 'error'](`Dry Run ${r.dry_run}`); } }}>
+        <Button size="sm" disabled={!canRun || !!busy || !batch} onClick={async () => { const r = await call('dryrun', { batch_id: batch?.id }); if (r) { setDry(r); await load(); toast[r.dry_run === 'PASSED' ? 'success' : 'error'](`Dry Run ${r.dry_run} · Zielpfade ${r.path_check}`); } }}>
           3 · Dry Run
         </Button>
         <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" disabled={!canRun || !!busy || !readyForCanary}
