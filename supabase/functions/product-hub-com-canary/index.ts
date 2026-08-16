@@ -49,6 +49,12 @@ const FIELD_MAP: Record<string, string> = {
   intended_use: `${PH}.intended_use`,
 };
 const FIELDS = Object.keys(FIELD_MAP);
+// Diese Felder duerfen NIE als flache Root-Felder geschrieben werden, sondern
+// ausschliesslich als Keys im vorhandenen JSONB-Container product_hub.
+const PH_FIELDS = new Set(["power", "fluence", "pulse_duration", "frequency", "spot_sizes", "laser_class", "intended_use"]);
+const phTarget = (field: string) => (PH_FIELDS.has(field) ? `${PH}.${field}` : FIELD_MAP[field] || field);
+const isPhPath = (t?: string | null) => !!t && t.startsWith(`${PH}.`);
+
 
 const FIELD_ALIASES: Record<string, string[]> = {
   name: ["model_name", "product_name", "name", "title"],
