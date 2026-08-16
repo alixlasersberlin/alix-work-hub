@@ -899,15 +899,27 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Klassifizierung je Feld, danach Gesamtdiagnose.
+      for (const r of rows) {
+        r.classification = r.readback_value_at_target === null
+          ? "PERSISTENZ-/PFADPROBLEM"
+          : normCompare(r.field, r.readback_value_at_target, r.master_value)
+            ? "RE-VERIFICATION-PROBLEM"
+            : "WERTE-MISMATCH";
+      }
+      const kinds = [...new Set(rows.map((r) => r.classification))];
       const diagnosis = rows.length === 0
         ? "Keine Abweichung mehr"
-        : rows.every((r) => r.readback_value_at_target === null)
-          ? "PERSISTENZ/PFAD: Am geschriebenen Zielpfad existiert gar kein Wert – COM bestaetigt den PATCH, persistiert ihn aber nicht unter diesem Pfad."
-          : rows.every((r) => r.readback_value_at_target !== null && r.readback_value_alias !== null && r.readback_value_at_target !== r.readback_value_alias)
-            ? "RE-VERIFICATION: Zielpfad und Alias-Pfad liefern unterschiedliche Werte – der Read-back liest die falsche Quelle."
-            : "GEMISCHT: siehe occurrences je Feld.";
+        : kinds.length === 1
+          ? kinds[0] === "PERSISTENZ-/PFADPROBLEM"
+            ? "PERSISTENZ-/PFADPROBLEM: Am geschriebenen Zielpfad existiert kein Wert – COM bestaetigt den PATCH, persistiert ihn aber nicht unter diesem Pfad."
+            : kinds[0] === "RE-VERIFICATION-PROBLEM"
+              ? "RE-VERIFICATION-PROBLEM: Der Zielpfad enthaelt bereits den Sollwert, nur der Alias weicht ab."
+              : "WERTE-MISMATCH: Der Zielpfad enthaelt einen anderen Wert als der Master."
+          : `GEMISCHT: ${kinds.join(" · ")} – siehe Klassifizierung je Feld.`;
 
-      return json(200, { mismatch_detail: rows.length ? "MISMATCH" : "CLEAN", count: rows.length, export_hash: payloadHash, diagnosis, rows });
+      return json(200, { mismatch_detail: rows.length ? "MISMATCH" : "CLEAN", count: rows.length, export_hash: payloadHash, diagnosis, kinds, rows });
+
     }
 
 
