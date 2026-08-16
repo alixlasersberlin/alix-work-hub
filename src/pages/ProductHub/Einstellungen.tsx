@@ -22,7 +22,11 @@ export default function ProductHubEinstellungen() {
   const canWrite = isSuper || (roles || []).includes('Admin');
   const [phase, setPhase] = useState<any>({ phase: 'A', com_de_sync_active: true, alixwork_master: false });
   const [json, setJson] = useState('');
-  const [sourceUrl, setSourceUrl] = useState('');
+  const [sourceUrl, setSourceUrl] = useState('https://alix-lasers.de/api/public/product-hub/export');
+  const [checks, setChecks] = useState<any>(null);
+  const [preview, setPreview] = useState<any>(null);
+  const [result, setResult] = useState<any>(null);
+
   const [busy, setBusy] = useState(false);
   const [phRoles, setPhRoles] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
@@ -53,9 +57,31 @@ export default function ProductHubEinstellungen() {
     try {
       const { data, error } = await supabase.functions.invoke('product-hub-import', { body: payload });
       if (error) throw error;
-      toast.success(`Import: ${data.created} neu · ${data.updated} aktualisiert · ${data.duplicates} Dubletten vermieden`);
+      if (data?.result) setResult(data.result);
+      toast.success(`Import abgeschlossen: ${data?.result?.created ?? 0} neu · ${data?.result?.merged ?? 0} zusammengeführt`);
     } catch (e: any) { toast.error(e.message || 'Import fehlgeschlagen'); }
     setBusy(false);
+  };
+
+  const run = async (mode: 'test' | 'preview' | 'import') => {
+    setBusy(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await supabase.functions.invoke('product-hub-import', {
+        body: { mode, channel: 'de', endpoint: sourceUrl, user_id: user?.id ?? null },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setChecks({ ok: data.ok, checks: data.checks });
+      if (mode === 'preview') { setPreview(data.preview); setResult(null); }
+      if (mode === 'import') {
+        setResult(data.result);
+        toast.success(`Import: ${data.result.created} neu · ${data.result.merged} zusammengeführt · ${data.result.conflicts} Konflikte`);
+      }
+      if (mode === 'test') toast[data.ok ? 'success' : 'error'](data.ok ? 'Verbindung und Schema geprüft' : 'Abweichung – kein Import');
+    } catch (e: any) { toast.error(e.message || 'Fehlgeschlagen'); }
+    setBusy(false);
+
   };
 
   const addRole = async () => {
@@ -86,30 +112,81 @@ export default function ProductHubEinstellungen() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Upload className="w-4 h-4" /> Import bestehender Geräte (z. B. 31 Geräte aus alix-lasers.de)</CardTitle></CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Upload className="w-4 h-4" /> Quelle: ALIX Lasers DE – Product Hub</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label className="text-xs">Quelle per URL (JSON-Endpoint des bestehenden Product Hub)</Label>
-            <div className="flex gap-2">
-              <Input value={sourceUrl} onChange={e => setSourceUrl(e.target.value)} placeholder="https://alix-lasers.de/api/product-hub/products" />
-              <Button disabled={!canWrite || busy || !sourceUrl} onClick={() => runImport({ source_url: sourceUrl, channel: 'de' })}>
-                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Importieren'}
-              </Button>
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Endpoint (GET, nur serverseitig genutzt)</Label>
+              <Input value={sourceUrl} onChange={e => setSourceUrl(e.target.value)}
+                placeholder="https://alix-lasers.de/api/public/product-hub/export" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Authentifizierung</Label>
+              <div className="h-10 flex items-center gap-2 text-xs text-muted-foreground">
+                <Badge variant="outline">x-api-key</Badge>
+                <Badge variant="outline">Secret: DE_EXPORT_API_KEY</Badge>
+                <span>Wert wird nie im Frontend geladen oder angezeigt.</span>
+              </div>
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs">Oder JSON einfügen (Array der Produkte)</Label>
-            <Textarea rows={6} value={json} onChange={e => setJson(e.target.value)} placeholder='[{"alix_product_id":"…","name":"…","model":"…"}]' />
-            <Button size="sm" disabled={!canWrite || busy || !json.trim()} onClick={() => {
-              try { runImport({ products: JSON.parse(json), channel: 'de' }); }
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" disabled={!canWrite || busy}
+              onClick={() => run('test')}>Verbindung testen</Button>
+            <Button size="sm" variant="outline" disabled={!canWrite || busy || !checks?.ok}
+              onClick={() => run('preview')}>Import-Vorschau</Button>
+            <Button size="sm" disabled={!canWrite || busy || !preview}
+              onClick={() => run('import')}>
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Import starten'}
+            </Button>
+            <Button size="sm" variant="ghost" disabled={!canWrite || busy}
+              onClick={() => phSaveSetting('de_source', { name: 'ALIX Lasers DE – Product Hub', endpoint: sourceUrl, auth_header: 'x-api-key', secret_name: 'DE_EXPORT_API_KEY', channel: 'de' }).then(() => toast.success('Quelle gespeichert'))}>
+              Quelle speichern
+            </Button>
+          </div>
+
+          {checks && (
+            <div className="rounded-md border p-3 text-xs space-y-1">
+              <div className="font-medium mb-1">Verbindungstest {checks.ok ? '✓ erfolgreich' : '✗ Abweichung – kein Import'}</div>
+              {Object.entries(checks.checks || {}).map(([k, v]: any) => (
+                <div key={k} className={v.ok ? 'text-emerald-500' : 'text-destructive'}>
+                  {k}: erwartet {String(v.expected)} · erhalten {String(v.actual ?? '—')}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {preview && (
+            <div className="rounded-md border p-3 text-xs grid gap-1 sm:grid-cols-2 md:grid-cols-3">
+              {Object.entries(preview).map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-2"><span className="text-muted-foreground">{k}</span><b>{String(v)}</b></div>
+              ))}
+            </div>
+          )}
+
+          {result && (
+            <div className="rounded-md border border-emerald-600/40 bg-emerald-500/5 p-3 text-xs space-y-1">
+              <div className="font-medium">ALIX PRODUCT HUB – INITIAL MIGRATION</div>
+              {Object.entries(result).filter(([k]) => k !== 'error_list').map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-2"><span className="text-muted-foreground">{k}</span><b>{String(v)}</b></div>
+              ))}
+            </div>
+          )}
+
+          <div className="space-y-1.5 pt-2 border-t">
+            <Label className="text-xs">Alternativ: JSON einfügen (Array der Produkte)</Label>
+            <Textarea rows={4} value={json} onChange={e => setJson(e.target.value)} placeholder='[{"alix_product_id":"…","product_name":"…","model":"…"}]' />
+            <Button size="sm" variant="outline" disabled={!canWrite || busy || !json.trim()} onClick={() => {
+              try { runImport({ mode: 'import', products: JSON.parse(json), channel: 'de', force: true }); }
               catch { toast.error('Ungültiges JSON'); }
             }}>JSON importieren</Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Mapping/Dublettenprüfung erfolgt über alix_product_id, source_product_id, SKU, Slug, Modell und normalisierten Produktnamen. Es werden keine Datensätze gelöscht.
+            Mapping/Dublettenprüfung: alix_product_id → source_product_id → SKU → Slug → Modell → normalisierter Produktname.
+            Unsichere Treffer werden nicht zusammengeführt, sondern als Konflikt erfasst. Es wird nie gelöscht, technische Werte werden nicht normalisiert.
           </p>
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-sm">Product-Hub-Rollen (zusätzlich zu bestehenden AlixWork-Rollen)</CardTitle></CardHeader>
