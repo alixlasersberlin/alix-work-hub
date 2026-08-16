@@ -29,27 +29,30 @@ const COM_BLUEICE_ID = "c9f9b7c9-d6b7-4ed6-ac60-913cbdec2dd6";
 const MASTER_SLUG = "alix-blueice-smart-ki";
 const UA = "Mozilla/5.0 (compatible; AlixWorkProductHub/1.0)";
 
-// Master-Spalte -> COM-Feldname
+// Master-Spalte -> COM-Zielfeld (Spalte der COM-Tabelle `devices` bzw. Key im
+// JSONB-Container `product_hub`). Es wird nichts geraten: was auf COM keine
+// eigene Spalte hat, wird im dafuer vorgesehenen product_hub-Container gefuehrt.
+const PH = "product_hub";
 const FIELD_MAP: Record<string, string> = {
-  name: "product_name",
-  model: "model",
-  wavelengths: "wavelengths_nm",
-  power: "power",
+  name: "model_name",
+  model: `${PH}.model`,
+  wavelengths: "wavelengths",
+  power: `${PH}.power`,
   cooling: "cooling",
-  fluence: "fluence",
-  pulse_duration: "pulse_duration",
-  frequency: "frequency",
-  spot_sizes: "spot_sizes",
-  laser_class: "laser_class",
-  intended_use: "intended_use",
+  fluence: `${PH}.fluence`,
+  pulse_duration: `${PH}.pulse_duration`,
+  frequency: `${PH}.frequency`,
+  spot_sizes: `${PH}.spot_sizes`,
+  laser_class: `${PH}.laser_class`,
+  intended_use: `${PH}.intended_use`,
 };
 const FIELDS = Object.keys(FIELD_MAP);
 
 const FIELD_ALIASES: Record<string, string[]> = {
-  name: ["product_name", "name", "title"],
+  name: ["model_name", "product_name", "name", "title"],
   model: ["model", "modell"],
-  wavelengths: ["wavelengths_nm", "wavelengths", "wellenlaengen", "wellenlängen"],
-  power: ["power", "power_w", "leistung"],
+  wavelengths: ["wavelengths", "wavelengths_nm", "wellenlaengen", "wellenlängen"],
+  power: ["power", "power_watt", "power_w", "impulse_power", "leistung"],
   cooling: ["cooling", "kuehlung", "kühlung"],
   fluence: ["fluence", "fluenz"],
   pulse_duration: ["pulse_duration", "pulsdauer"],
@@ -57,6 +60,12 @@ const FIELD_ALIASES: Record<string, string[]> = {
   spot_sizes: ["spot_sizes", "spot_size", "spotgroesse", "spotgröße"],
   laser_class: ["laser_class", "laserklasse"],
   intended_use: ["intended_use", "zweckbestimmung"],
+};
+// Zielfeld existiert immer: entweder als COM-Spalte oder im product_hub-Container.
+const targetExists = (raw: any, field: string) => {
+  const t = FIELD_MAP[field];
+  if (t.startsWith(`${PH}.`)) return !!raw && typeof raw === "object" && PH in raw;
+  return !!raw && typeof raw === "object" && Object.keys(raw).some((k) => fieldKeys(field).includes(k));
 };
 
 async function sha256(s: string) {
@@ -162,11 +171,9 @@ async function writeCall(body: Record<string, unknown>, dryRun = true) {
   return { status: res.status, body: parsed, ok: res.ok };
 }
 
-function comValue(comField: string, v: unknown): unknown {
-  if (comField === "wavelengths_nm") {
-    const nums = String(asText(v) ?? "").match(/\d+/g)?.map(Number) ?? [];
-    if (nums.length) return nums;
-  }
+// COM fuehrt alle Canary-Felder als Text (Spalte `wavelengths` ist Freitext,
+// product_hub-Keys ebenfalls) – daher keine Typumdeutung, 1:1 als Text.
+function comValue(_comField: string, v: unknown): unknown {
   return asText(v);
 }
 
@@ -225,14 +232,36 @@ Deno.serve(async (req) => {
     // ---------------------------------------------------------------- Diagnose
     if (action === "com_dump") {
       const { product } = await fetchComProduct();
+      const master = await loadMaster().catch(() => null);
       const resolved: Record<string, string | null> = {};
+      const mapping: any[] = [];
       const empty: string[] = [], missing: string[] = [];
       for (const f of FIELDS) {
         const v = liveValue(product, f);
         resolved[f] = v;
-        if (!v) (deepHas(product, fieldKeys(f)) ? empty : missing).push(f);
+        const hasTarget = targetExists(product, f);
+        if (!hasTarget) missing.push(f);
+        else if (!v) empty.push(f);
+        mapping.push({
+          field: f,
+          com_target: FIELD_MAP[f],
+          target_exists: hasTarget,
+          live_value: v,
+          master_value: master ? asText((master as any)[f]) : null,
+          plan: !hasTarget ? "NO_TARGET" : v ? "UPDATE_OR_NO_CHANGE" : "CREATE",
+        });
       }
-      return json(200, { com_product_id: COM_BLUEICE_ID, raw: product, resolved, empty, missing });
+      return json(200, {
+        com_product_id: COM_BLUEICE_ID,
+        raw: product,
+        resolved,
+        mapping,
+        empty,
+        missing,
+        summary: missing.length
+          ? `Mapping unvollstaendig: ${missing.join(", ")}`
+          : `Mapping vollstaendig · ${empty.length} Felder werden auf COM neu angelegt (CREATE): ${empty.join(", ") || "keine"}`,
+      });
     }
 
     // -------------------------------------------------------------- Selftest
