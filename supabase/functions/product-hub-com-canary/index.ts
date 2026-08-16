@@ -738,6 +738,116 @@ Deno.serve(async (req) => {
       return json(200, { verify: allOk ? "VERIFIED" : "MISMATCH", verified, mismatched, skipped, results });
     }
 
+    // ------------------------------------------------ Feld-Trace (KEIN Write)
+    // Zeigt fuer ein einzelnes Feld (Default: power) nebeneinander:
+    //   WRITE target/path  ->  WRITE response  ->  READ-BACK raw value/path
+    // Der Write wird ausschliesslich als Dry-Run gesendet (keine Datenaenderung),
+    // damit die tatsaechliche Antwortstruktur von COM sichtbar wird.
+    if (action === "trace") {
+      const field = String(payload.field || "power");
+      const batchId = payload.batch_id || null;
+      const fmap = await resolveFieldMap();
+      const comField = fmap[field] || FIELD_MAP[field] || field;
+
+      const { data: probeRow } = await admin.from("ph_settings").select("value").eq("key", "canary_com_field_map").maybeSingle();
+      const probeEntry = ((probeRow?.value as any)?.probe || []).find((p: any) => p.field === field) || null;
+
+      let snap: any = null;
+      let publishResult: any = null;
+      if (batchId) {
+        const { data: s } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).eq("field", field).maybeSingle();
+        snap = s;
+        const { data: b } = await admin.from("ph_canary_batches").select("checks").eq("id", batchId).maybeSingle();
+        publishResult = ((b?.checks as any)?.results || []).find((r: any) => r.field === field) || null;
+      }
+      const target = snap ? asText(snap.target_master_value) : asText((await loadMaster().catch(() => ({})) as any)[field]);
+
+      // 1) WRITE (Dry-Run) – zeigt genau, was COM bestaetigt
+      const w = await writeCall({
+        product_id: COM_BLUEICE_ID,
+        field: comField,
+        value: comValue(comField, target),
+        expected_previous_value: snap ? snap.current_live_value : undefined,
+      }, true);
+
+      // 2) READ-BACK – roher Datensatz und alle Fundstellen
+      const { product: raw, payloadHash } = await fetchComProduct();
+      const occurrences = flattenPaths(raw).filter(
+        (p) => fieldKeys(field).some((k) => p.path.split(".").pop() === k) ||
+               (target !== null && p.value !== null && normCompare(field, p.value, target)),
+      );
+      const rb = readbackValue(raw, field, comField);
+
+      return json(200, {
+        trace: "OK",
+        field,
+        write: {
+          target_path: comField,
+          probe_accepted: probeEntry ? probeEntry.accepted : null,
+          probe_tried: probeEntry ? probeEntry.tried : null,
+          sent_value: comValue(comField, target),
+          expected_previous_value: snap ? snap.current_live_value : null,
+          dry_run_status: w.status,
+          dry_run_auth: w.auth,
+          dry_run_response: w.body,
+          last_live_publish_result: publishResult,
+        },
+        readback: {
+          path_used: rb.source,
+          value_at_target_path: valueAtPath(raw, comField),
+          value_via_alias: liveValue(raw, field),
+          effective_value: rb.value,
+          matches_master: normCompare(field, rb.value, target),
+        },
+        master_value: target,
+        com_record: { id: idOf(raw), export_hash: payloadHash, top_level_keys: Object.keys(raw || {}), product_hub: (raw as any)?.[PH] ?? null },
+        occurrences,
+      });
+    }
+
+    // -------------------------------- Detailanzeige aller MISMATCH-Felder
+    if (action === "mismatch_detail") {
+      const batchId = payload.batch_id;
+      if (!batchId) return json(400, { error: "batch_id fehlt" });
+      const { data: batch } = await admin.from("ph_canary_batches").select("checks").eq("id", batchId).maybeSingle();
+      const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
+      const fmap = await resolveFieldMap();
+      const { product: raw, payloadHash } = await fetchComProduct();
+      const publishResults = ((batch?.checks as any)?.results || []) as any[];
+
+      const rows: any[] = [];
+      for (const s of snaps || []) {
+        if (s.value_state === "NO_CHANGE" || s.value_state === "CONFLICT") continue;
+        const comField = fmap[s.field] || FIELD_MAP[s.field] || s.field;
+        const rb = readbackValue(raw, s.field, comField);
+        const ok = normCompare(s.field, rb.value, s.target_master_value);
+        if (ok) continue;
+        rows.push({
+          field: s.field,
+          write_target_path: comField,
+          write_response: publishResults.find((r) => r.field === s.field) || null,
+          readback_path: rb.source,
+          readback_value_at_target: valueAtPath(raw, comField),
+          readback_value_alias: liveValue(raw, s.field),
+          master_value: asText(s.target_master_value),
+          snapshot_previous_value: s.current_live_value,
+          occurrences: flattenPaths(raw).filter((p) => fieldKeys(s.field).some((k) => p.path.split(".").pop() === k)),
+        });
+      }
+
+      const diagnosis = rows.length === 0
+        ? "Keine Abweichung mehr"
+        : rows.every((r) => r.readback_value_at_target === null)
+          ? "PERSISTENZ/PFAD: Am geschriebenen Zielpfad existiert gar kein Wert – COM bestaetigt den PATCH, persistiert ihn aber nicht unter diesem Pfad."
+          : rows.every((r) => r.readback_value_at_target !== null && r.readback_value_alias !== null && r.readback_value_at_target !== r.readback_value_alias)
+            ? "RE-VERIFICATION: Zielpfad und Alias-Pfad liefern unterschiedliche Werte – der Read-back liest die falsche Quelle."
+            : "GEMISCHT: siehe occurrences je Feld.";
+
+      return json(200, { mismatch_detail: rows.length ? "MISMATCH" : "CLEAN", count: rows.length, export_hash: payloadHash, diagnosis, rows });
+    }
+
+
+
 
     // --------------------------------------------------------------- Rollback
     if (action === "rollback") {
