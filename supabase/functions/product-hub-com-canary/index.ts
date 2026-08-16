@@ -268,8 +268,58 @@ Deno.serve(async (req) => {
     return data as any;
   };
 
+  // Ermittelte COM-Zielfelder (aus der Feld-Probe) ueber die statische Karte legen.
+  const resolveFieldMap = async (): Promise<Record<string, string | null>> => {
+    const { data } = await admin.from("ph_settings").select("value").eq("key", "canary_com_field_map").maybeSingle();
+    const learned = ((data?.value as any)?.map || {}) as Record<string, string | null>;
+    const out: Record<string, string | null> = { ...FIELD_MAP };
+    for (const f of FIELDS) if (f in learned) out[f] = learned[f];
+    return out;
+  };
+
   try {
+    // ------------------------------------------------------------ Feld-Probe
+    if (action === "field_probe") {
+      const probe: any[] = [];
+      const map: Record<string, string | null> = {};
+      const { product } = await fetchComProduct();
+      for (const f of FIELDS) {
+        const live = liveValue(product, f);
+        let hit: string | null = null;
+        const tried: any[] = [];
+        for (const cand of fieldCandidates(f)) {
+          const r = await writeCall({
+            product_id: COM_BLUEICE_ID,
+            field: cand,
+            value: live ?? "PROBE",
+            expected_previous_value: live,
+          });
+          tried.push({ field: cand, status: r.status, code: codeOf(r.body) });
+          if (r.status === 401 || r.status === 403) {
+            return json(200, { field_probe: "BLOCKED", detail: writeDetail(r) });
+          }
+          if (!FIELD_NOT_ALLOWED(r) && (r.ok || r.status === 409)) { hit = cand; break; }
+        }
+        map[f] = hit;
+        probe.push({ field: f, com_field: hit, accepted: !!hit, tried });
+      }
+      const accepted = FIELDS.filter((f) => map[f]);
+      const rejected = FIELDS.filter((f) => !map[f]);
+      await admin.from("ph_settings").upsert(
+        { key: "canary_com_field_map", value: { map, probe, accepted, rejected, checked_at: new Date().toISOString() }, updated_at: new Date().toISOString(), updated_by: user.id },
+        { onConflict: "key" },
+      );
+      return json(200, {
+        field_probe: rejected.length ? "PARTIAL" : "COMPLETE",
+        accepted, rejected, map, probe,
+        summary: rejected.length
+          ? `${accepted.length}/${FIELDS.length} Felder von COM akzeptiert · COM erlaubt (noch) nicht: ${rejected.join(", ")}`
+          : `Alle ${FIELDS.length} Felder von COM akzeptiert`,
+      });
+    }
+
     // ---------------------------------------------------------------- Diagnose
+
     if (action === "com_dump") {
       const { product } = await fetchComProduct();
       const master = await loadMaster().catch(() => null);
