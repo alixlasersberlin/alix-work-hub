@@ -321,30 +321,62 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 <Labeled label="Vorname">
                   <input className={fieldCls} value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} />
                 </Labeled>
-                <Labeled label="Nachname">
-                  <input className={fieldCls} value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} />
+                <Labeled label="Nachname *" error={touched.last_name ? lastNameError : null}>
+                  <input
+                    className={cn(fieldCls, touched.last_name && lastNameError && '!border-red-300 focus:!ring-red-200')}
+                    value={data.last_name}
+                    maxLength={100}
+                    onBlur={() => setTouched((t) => ({ ...t, last_name: true }))}
+                    onChange={(e) => setData({ ...data, last_name: e.target.value })}
+                  />
                 </Labeled>
                 <Labeled label="Unternehmen (optional)">
                   <input className={fieldCls} value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} />
                 </Labeled>
-                <Labeled label="E-Mail">
-                  <input type="email" inputMode="email" className={fieldCls} value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} />
+                <Labeled label="E-Mail *" error={touched.email ? emailError : null}>
+                  <input
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    maxLength={255}
+                    placeholder="name@praxis.de"
+                    className={cn(fieldCls, touched.email && emailError && '!border-red-300 focus:!ring-red-200')}
+                    value={data.email}
+                    onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+                    onChange={(e) => setData({ ...data, email: e.target.value })}
+                  />
                 </Labeled>
-                <Labeled label="Telefon">
+                <Labeled label="Telefon *" error={touched.phone ? phoneError : null}>
                   <div className="flex gap-2">
                     <select
                       value={data.country_code}
                       onChange={(e) => setData({ ...data, country_code: e.target.value })}
-                      className={cn(fieldCls, 'w-32')}
+                      className={cn(fieldCls, 'w-[122px] shrink-0 px-3')}
+                      aria-label="Ländervorwahl"
                     >
                       {COUNTRY_CODES.map((c) => (
-                        <option key={c.code} value={c.code}>{c.label}</option>
+                        <option key={c.code} value={c.code}>
+                          {c.flag} {c.code}
+                        </option>
                       ))}
                     </select>
-                    <input inputMode="tel" className={fieldCls} value={data.phone} onChange={(e) => setData({ ...data, phone: e.target.value })} />
+                    <input
+                      inputMode="tel"
+                      autoComplete="tel"
+                      maxLength={20}
+                      placeholder="171 1651000"
+                      className={cn(fieldCls, touched.phone && phoneError && '!border-red-300 focus:!ring-red-200')}
+                      value={data.phone}
+                      onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
+                      onChange={(e) => setData({ ...data, phone: e.target.value.replace(/[^\d\s+()/-]/g, '') })}
+                    />
                   </div>
+                  <p className="text-[11px] !text-slate-400">
+                    {COUNTRY_CODES.find((c) => c.code === data.country_code)?.label} — ohne führende 0
+                  </p>
                 </Labeled>
               </div>
+
             </Chapter>
           )}
 
