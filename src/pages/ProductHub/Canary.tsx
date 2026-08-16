@@ -106,8 +106,8 @@ export default function ProductHubCanary() {
           {[
             ['DE Write', dash.de_write], ['Snapshot', dash.snapshot], ['Snapshot-Zeit', dash.snapshot_time],
             ['Rollback', dash.rollback], ['Optimistic Lock', dash.lock], ['Read-back', dash.readback],
-            ['BlueIce Sync Lock', dash.sync_lock], ['Dry Run', dash.dry_run], ['Audit', dash.audit],
-            ['COM', dash.com], ['Phase', dash.phase],
+            ['BlueIce Sync Lock', dash.sync_lock], ['Dry Run', dash.dry_run], ['Publish', dash.publish],
+            ['Audit', dash.audit], ['COM', dash.com], ['Phase', dash.phase],
           ].map(([k, v]) => (
             <div key={k as string} className="flex items-center justify-between gap-2 rounded border px-2 py-1.5">
               <span className="text-muted-foreground">{k}</span>
