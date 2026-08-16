@@ -220,8 +220,9 @@ const writeDetail = (r: { status: number; body: any }) => {
   if (typeof r.body === "string" && r.body.trim().startsWith("<"))
     return `COM-Write-Endpunkt existiert nicht (HTTP ${r.status}, HTML statt JSON) – auf alix-lasers.com muss /api/public/product-hub/update bereitgestellt werden`;
   const c = codeOf(r.body);
-  if (r.status === 401 || c === "UNAUTHORIZED")
-    return "COM lehnt den Schreib-Schluessel ab (401) – COM_PRODUCT_HUB_WRITE_KEY stimmt nicht mit dem auf alix-lasers.com hinterlegten Key ueberein";
+  if (r.status === 401 || r.status === 403 || c === "UNAUTHORIZED")
+    return `COM lehnt den Schreib-Schluessel ab (HTTP ${r.status}) – alle Header-Varianten (x-api-key, Authorization: Bearer, x-write-key) wurden abgelehnt. Der Wert von COM_PRODUCT_HUB_WRITE_KEY stimmt nicht mit dem auf alix-lasers.com hinterlegten Schreib-Schluessel ueberein.`;
+
   return c || (typeof r.body === "object" ? JSON.stringify(r.body).slice(0, 200) : String(r.body).slice(0, 200));
 };
 const isHtmlResponse = (r: { body: any }) =>
