@@ -667,6 +667,7 @@ const PhVerlauf = lazy(() => import("./pages/ProductHub/Verlauf"));
 const PhSyncHealth = lazy(() => import("./pages/ProductHub/SyncHealth"));
 const PhEinstellungen = lazy(() => import("./pages/ProductHub/Einstellungen"));
 const PhValidierung = lazy(() => import("./pages/ProductHub/Validierung"));
+const PhMasterReview = lazy(() => import("./pages/ProductHub/MasterReview"));
 const PhVeroeffentlichungen = lazy(() => import("./pages/ProductHub/Veroeffentlichungen"));
 const PlmGeraete = lazy(() => import("./pages/PLM/Geraete"));
 const PlmBaugruppen = lazy(() => import("./pages/PLM/Baugruppen"));
