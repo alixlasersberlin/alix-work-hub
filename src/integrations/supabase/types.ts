@@ -33445,6 +33445,7 @@ export type Database = {
           master_hash: string | null
           notes: string | null
           product_id: string
+          published_at: string | null
           snapshot_at: string | null
           status: string
           updated_at: string
@@ -33460,6 +33461,7 @@ export type Database = {
           master_hash?: string | null
           notes?: string | null
           product_id: string
+          published_at?: string | null
           snapshot_at?: string | null
           status?: string
           updated_at?: string
@@ -33475,6 +33477,7 @@ export type Database = {
           master_hash?: string | null
           notes?: string | null
           product_id?: string
+          published_at?: string | null
           snapshot_at?: string | null
           status?: string
           updated_at?: string
@@ -33501,6 +33504,8 @@ export type Database = {
           id: string
           product_id: string
           publish_id: string | null
+          readback_at: string | null
+          readback_value: string | null
           rollback_order: number
           source: string
           source_hash: string | null
@@ -33518,6 +33523,8 @@ export type Database = {
           id?: string
           product_id: string
           publish_id?: string | null
+          readback_at?: string | null
+          readback_value?: string | null
           rollback_order?: number
           source?: string
           source_hash?: string | null
@@ -33535,6 +33542,8 @@ export type Database = {
           id?: string
           product_id?: string
           publish_id?: string | null
+          readback_at?: string | null
+          readback_value?: string | null
           rollback_order?: number
           source?: string
           source_hash?: string | null
@@ -34166,6 +34175,7 @@ export type Database = {
           rollback_publish_id: string | null
           status: string
           updated_at: string
+          verified_at: string | null
           verify_status: string | null
         }
         Insert: {
@@ -34188,6 +34198,7 @@ export type Database = {
           rollback_publish_id?: string | null
           status?: string
           updated_at?: string
+          verified_at?: string | null
           verify_status?: string | null
         }
         Update: {
@@ -34210,6 +34221,7 @@ export type Database = {
           rollback_publish_id?: string | null
           status?: string
           updated_at?: string
+          verified_at?: string | null
           verify_status?: string | null
         }
         Relationships: [

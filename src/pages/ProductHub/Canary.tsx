@@ -28,6 +28,7 @@ export default function ProductHubCanary() {
   const [snaps, setSnaps] = useState<any[]>([]);
   const [tests, setTests] = useState<any[]>([]);
   const [deWrite, setDeWrite] = useState<State>('UNKNOWN');
+  const [lock, setLock] = useState<any>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +45,8 @@ export default function ProductHubCanary() {
     const { data: st } = await db.from('ph_settings').select('*').eq('key', 'canary_de_write').maybeSingle();
     setDeWrite((st?.value?.state as State) ?? 'UNKNOWN');
     setTests(st?.value?.tests ?? []);
+    const { data: lk } = await db.from('ph_settings').select('*').eq('key', 'blueice_canary_lock').maybeSingle();
+    setLock(lk?.value ?? null);
   };
 
   useEffect(() => { (async () => { await load(); setLoading(false); })(); }, []);
@@ -73,17 +76,20 @@ export default function ProductHubCanary() {
       rollback: checks.rollback === 'READY' && snaps.length ? 'READY' : 'NOT READY',
       lock: snaps.length && snaps.every((s: any) => s.current_live_value !== undefined) ? 'READY' : 'NOT READY',
       readback: snaps.length ? 'READY' : 'NOT READY',
-      sync_lock: 'LOCK READY',
+      sync_lock: lock?.active ? 'ACTIVE' : 'LOCK READY',
       dry_run: (checks.dry_run as State) || 'NOT READY',
+      publish: (checks.publish as State) || 'OFFEN',
       audit: 'READY',
       com: 'DISABLED',
       phase: 'B',
     };
-  }, [batch, snaps, deWrite]);
+  }, [batch, snaps, deWrite, lock]);
+
+  const results: any[] = (batch?.checks?.results as any[]) || [];
 
   const allGreen =
     dash.de_write === 'READY' && dash.snapshot === 'FROZEN' && dash.rollback === 'READY' &&
-    dash.lock === 'READY' && dash.readback === 'READY' && dash.dry_run === 'PASSED';
+    dash.lock === 'READY' && dash.readback === 'READY' && dash.dry_run === 'PASSED' && !!lock?.active;
 
   if (loading) return <div className="p-8 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Lade Canary Panel…</div>;
 
@@ -100,8 +106,8 @@ export default function ProductHubCanary() {
           {[
             ['DE Write', dash.de_write], ['Snapshot', dash.snapshot], ['Snapshot-Zeit', dash.snapshot_time],
             ['Rollback', dash.rollback], ['Optimistic Lock', dash.lock], ['Read-back', dash.readback],
-            ['BlueIce Sync Lock', dash.sync_lock], ['Dry Run', dash.dry_run], ['Audit', dash.audit],
-            ['COM', dash.com], ['Phase', dash.phase],
+            ['BlueIce Sync Lock', dash.sync_lock], ['Dry Run', dash.dry_run], ['Publish', dash.publish],
+            ['Audit', dash.audit], ['COM', dash.com], ['Phase', dash.phase],
           ].map(([k, v]) => (
             <div key={k as string} className="flex items-center justify-between gap-2 rounded border px-2 py-1.5">
               <span className="text-muted-foreground">{k}</span>
@@ -125,18 +131,56 @@ export default function ProductHubCanary() {
           <Button size="sm" variant="outline" disabled={!canRun || !!busy || dash.rollback !== 'READY'} onClick={() => toast.success(`Rollback-Paket geprüft: ${snaps.length} Felder, Reihenfolge rückwärts`)}>
             <Undo2 className="h-3.5 w-3.5 mr-1.5" /> 3 · Rollback prüfen
           </Button>
-          <Button size="sm" variant="outline" disabled title="BlueIce Sync-Lock: LOCK READY – Aktivierung erst nach Freigabe">
-            4 · BlueIce Sync Lock aktivieren (gesperrt)
+          <Button size="sm" variant="outline" disabled={!canRun || !!busy || !!lock?.active}
+            onClick={async () => { const r = await call('lock'); if (r) toast.success(`BlueIce Sync-Lock ${r.lock} · ${r.products_still_syncing} Geräte weiterhin im COM→DE Sync`); }}>
+            {busy === 'lock' ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
+            4 · BlueIce Sync Lock {lock?.active ? 'AKTIV' : 'aktivieren'}
           </Button>
           <Button size="sm" variant="outline" disabled={!canRun || !!busy || dash.snapshot !== 'FROZEN'} onClick={() => call('dryrun', { batch_id: batch?.id })}>
             {busy === 'dryrun' ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
             5 · Dry Run aller Änderungen
           </Button>
-          <Button size="sm" className="bg-destructive/80" disabled title={allGreen ? 'Freigabe durch Benutzer erforderlich' : 'Checks nicht vollständig grün'}>
-            <ShieldAlert className="h-3.5 w-3.5 mr-1.5" /> BlueIce DE Canary veröffentlichen (gesperrt)
+          <Button size="sm" className="bg-destructive/80" disabled={!canRun || !!busy || !allGreen}
+            title={allGreen ? 'Live-Push mit Read-back je Feld' : 'Checks nicht vollständig grün'}
+            onClick={async () => {
+              if (!confirm('BlueIce DE Canary jetzt LIVE veröffentlichen? Read-back nach jedem Feld, Stopp bei jedem Fehler.')) return;
+              const r = await call('publish', { batch_id: batch?.id });
+              if (r) r.publish === 'SUCCESS'
+                ? toast.success(`Canary ${r.publish}: ${r.written} geschrieben, ${r.skipped} übersprungen, Read-back ${r.verified}/${r.attempted}`)
+                : toast.error(`Canary gestoppt: ${r.stopped_at}`);
+            }}>
+            {busy === 'publish' ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <ShieldAlert className="h-3.5 w-3.5 mr-1.5" />}
+            6 · BlueIce DE Canary veröffentlichen
           </Button>
         </CardContent>
       </Card>
+
+      {!!results.length && (
+        <Card>
+          <CardHeader className="pb-2 flex-row items-center justify-between">
+            <CardTitle className="text-sm">Live-Push · Read-back je Feld</CardTitle>
+            <Badge className={batch?.checks?.publish === 'SUCCESS' ? 'bg-emerald-600' : 'bg-destructive'}>{batch?.checks?.publish}</Badge>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow><TableHead>Feld</TableHead><TableHead>Aktion</TableHead><TableHead>Vorher</TableHead><TableHead>Neu</TableHead><TableHead>Read-back</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {results.map((r: any, i: number) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-xs font-medium">{r.field}</TableCell>
+                    <TableCell className="text-xs">{r.action}{r.reason ? ` · ${r.reason}` : ''}</TableCell>
+                    <TableCell className="text-xs">{r.previous_value ?? r.live_value ?? '—'}</TableCell>
+                    <TableCell className="text-xs">{r.new_value ?? '—'}</TableCell>
+                    <TableCell className="text-xs">{r.readback ?? '—'}</TableCell>
+                    <TableCell><Badge className={r.verified ? 'bg-emerald-600' : 'bg-destructive'}>{r.verified ? 'VERIFIED' : (r.error || 'FAILED')}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
 
       {!!tests.length && (
         <Card>
