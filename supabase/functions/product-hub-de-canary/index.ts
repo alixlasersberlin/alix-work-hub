@@ -109,6 +109,15 @@ async function writeCall(body: Record<string, unknown>) {
   return { status: res.status, body: parsed, ok: res.ok };
 }
 
+// wavelengths_nm erwartet am DE-Endpoint eine numerische Liste
+function deValue(deField: string, v: unknown): unknown {
+  if (deField === "wavelengths_nm") {
+    const nums = String(asText(v) ?? "").match(/\d+/g)?.map(Number) ?? [];
+    if (nums.length) return nums;
+  }
+  return asText(v);
+}
+
 const codeOf = (b: any) => String(b?.code || b?.error_code || b?.error || "").toUpperCase();
 
 Deno.serve(async (req) => {
@@ -212,9 +221,10 @@ Deno.serve(async (req) => {
           publish_id: `snapshot-${batch.id}-${field}`,
           alix_product_id: alixId,
           field: deField,
-          value: asText(q.new_value),
+          value: deValue(deField, q.new_value),
         });
-        const probed = probe.ok ? asText((probe.body as any)?.current_value) : null;
+        // current_value kommt auch bei 409 CONFLICT zurueck – immer auswerten
+        const probed = asText((probe.body as any)?.current_value);
         const current = probed ?? liveValue(live, deField);
         const target = asText(typeof q.new_value === "string" ? q.new_value : (q.new_value as any));
         snapshots.push({
@@ -293,7 +303,7 @@ Deno.serve(async (req) => {
         const r = await writeCall({
           alix_product_id: batch.alix_product_id,
           field: FIELD_MAP[s.field] || s.field,
-          value: s.target_master_value,
+          value: deValue(FIELD_MAP[s.field] || s.field, s.target_master_value),
           expected_previous_value: s.current_live_value,
           publish_id: `${batchId}:${s.field}`,
           idempotency_key: `${batchId}:${s.field}`,
