@@ -282,6 +282,7 @@ Deno.serve(async (req) => {
       for (const s of snapshots) {
         await admin.from("ph_publish_queue").update({
           batch_id: batch.id,
+          status: "DRAFT",
           old_value: s.current_live_value,
           expected_previous_value: s.current_live_value,
           rollback_order: s.rollback_order,
