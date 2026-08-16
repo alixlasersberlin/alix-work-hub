@@ -35,15 +35,51 @@ const CONSULTATION = [
 ];
 
 const COUNTRY_CODES = [
-  { code: '+49', label: 'DE +49' },
-  { code: '+43', label: 'AT +43' },
-  { code: '+41', label: 'CH +41' },
-  { code: '+39', label: 'IT +39' },
-  { code: '+33', label: 'FR +33' },
-  { code: '+31', label: 'NL +31' },
-  { code: '+34', label: 'ES +34' },
-  { code: '+44', label: 'UK +44' },
+  { code: '+49', flag: '🇩🇪', label: 'Deutschland', min: 9, max: 13 },
+  { code: '+43', flag: '🇦🇹', label: 'Österreich', min: 8, max: 13 },
+  { code: '+41', flag: '🇨🇭', label: 'Schweiz', min: 8, max: 12 },
+  { code: '+39', flag: '🇮🇹', label: 'Italien', min: 8, max: 13 },
+  { code: '+33', flag: '🇫🇷', label: 'Frankreich', min: 9, max: 11 },
+  { code: '+31', flag: '🇳🇱', label: 'Niederlande', min: 9, max: 11 },
+  { code: '+32', flag: '🇧🇪', label: 'Belgien', min: 8, max: 11 },
+  { code: '+34', flag: '🇪🇸', label: 'Spanien', min: 9, max: 11 },
+  { code: '+351', flag: '🇵🇹', label: 'Portugal', min: 9, max: 11 },
+  { code: '+352', flag: '🇱🇺', label: 'Luxemburg', min: 6, max: 11 },
+  { code: '+45', flag: '🇩🇰', label: 'Dänemark', min: 8, max: 10 },
+  { code: '+46', flag: '🇸🇪', label: 'Schweden', min: 7, max: 11 },
+  { code: '+47', flag: '🇳🇴', label: 'Norwegen', min: 8, max: 10 },
+  { code: '+48', flag: '🇵🇱', label: 'Polen', min: 9, max: 11 },
+  { code: '+420', flag: '🇨🇿', label: 'Tschechien', min: 9, max: 10 },
+  { code: '+36', flag: '🇭🇺', label: 'Ungarn', min: 8, max: 10 },
+  { code: '+30', flag: '🇬🇷', label: 'Griechenland', min: 10, max: 11 },
+  { code: '+44', flag: '🇬🇧', label: 'Großbritannien', min: 9, max: 11 },
+  { code: '+353', flag: '🇮🇪', label: 'Irland', min: 8, max: 11 },
+  { code: '+1', flag: '🇺🇸', label: 'USA / Kanada', min: 10, max: 10 },
 ];
+
+const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
+
+function validateEmail(value: string): string | null {
+  const v = value.trim();
+  if (!v) return 'E-Mail ist ein Pflichtfeld.';
+  if (v.length > 255) return 'E-Mail ist zu lang.';
+  if (!EMAIL_RE.test(v)) return 'Bitte geben Sie eine gültige E-Mail-Adresse ein.';
+  if (/\.\./.test(v)) return 'Bitte geben Sie eine gültige E-Mail-Adresse ein.';
+  return null;
+}
+
+function validatePhone(code: string, value: string): string | null {
+  const digits = value.replace(/\D/g, '').replace(/^0+/, '');
+  if (!value.trim()) return 'Telefonnummer ist ein Pflichtfeld.';
+  if (!digits) return 'Bitte geben Sie eine gültige Telefonnummer ein.';
+  const c = COUNTRY_CODES.find((x) => x.code === code);
+  const min = c?.min ?? 6;
+  const max = c?.max ?? 14;
+  if (digits.length < min) return `Die Nummer ist zu kurz (mind. ${min} Ziffern für ${c?.label ?? code}).`;
+  if (digits.length > max) return `Die Nummer ist zu lang (max. ${max} Ziffern für ${c?.label ?? code}).`;
+  return null;
+}
+
 
 const STEP_LABELS = ['PROFIL', 'ANWENDUNG', 'BEDARF', 'SYSTEM', 'ABSCHLUSS'];
 
