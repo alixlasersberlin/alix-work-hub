@@ -516,14 +516,26 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                             <Check className="h-4 w-4" />
                           </span>
                         </div>
-                        <ul className="mt-5 space-y-2">
-                          {d.features.map((f) => (
-                            <li key={f} className="flex items-start gap-2 text-sm !text-slate-600 font-light">
-                              <span className="mt-[7px] h-1 w-1 rounded-full bg-slate-400 shrink-0" />
-                              {f}
-                            </li>
-                          ))}
-                        </ul>
+                        <div className="mt-5 flex items-start gap-5">
+                          <ul className="flex-1 space-y-2">
+                            {d.features.map((f) => (
+                              <li key={f} className="flex items-start gap-2 text-sm !text-slate-600 font-light">
+                                <span className="mt-[7px] h-1 w-1 rounded-full bg-slate-400 shrink-0" />
+                                {f}
+                              </li>
+                            ))}
+                          </ul>
+                          {deviceImg && (
+                            <img
+                              src={deviceImg}
+                              alt={`${d.name} – ALIX Gerät`}
+                              loading="lazy"
+                              width={800}
+                              height={600}
+                              className="w-28 md:w-36 aspect-[4/3] shrink-0 rounded-2xl object-cover bg-slate-50 ring-1 ring-slate-200/70"
+                            />
+                          )}
+                        </div>
                         <span className="mt-5 inline-block text-[11px] tracking-[0.24em] uppercase !text-slate-500">
                           {active ? 'In Angebot aufgenommen' : 'In Angebot aufnehmen'}
                         </span>
