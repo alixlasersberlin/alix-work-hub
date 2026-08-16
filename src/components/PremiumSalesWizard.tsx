@@ -694,20 +694,38 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 function Labeled({
   label,
   error,
+  valid,
+  hint,
   children,
 }: {
   label: string;
   error?: string | null;
+  valid?: boolean;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-[11px] tracking-[0.24em] uppercase !text-slate-500">{label}</label>
+      <label className="flex items-center gap-2 text-[11px] tracking-[0.24em] uppercase !text-slate-500">
+        {label}
+        {valid && !error && (
+          <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+            <Check className="h-2.5 w-2.5" />
+          </span>
+        )}
+      </label>
       {children}
-      {error && <p className="text-[12px] !text-red-500 font-light">{error}</p>}
+      {error ? (
+        <p role="alert" aria-live="polite" className="text-[12px] !text-red-500 font-light">
+          {error}
+        </p>
+      ) : hint ? (
+        <p className="text-[11px] !text-slate-400 font-light">{hint}</p>
+      ) : null}
     </div>
   );
 }
+
 
 function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
