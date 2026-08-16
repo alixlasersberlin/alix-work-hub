@@ -396,34 +396,64 @@ Deno.serve(async (req) => {
     console.warn("confirmation email failed", e);
   }
 
-  // SMS-Benachrichtigung an Vertrieb (Twilio) über neue Angebotsanfrage
+  // SMS-Benachrichtigung an alle Super Admins (Twilio) über neue Anfrage
   try {
     const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
     const token = Deno.env.get("TWILIO_AUTH_TOKEN");
     const from = Deno.env.get("TWILIO_SMS_FROM_NUMBER") ?? Deno.env.get("TWILIO_FROM_NUMBER");
     if (sid && token && from) {
-      const res = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Basic " + btoa(`${sid}:${token}`),
-            "Content-Type": "application/x-www-form-urlencoded",
+      // Empfänger: Telefonnummern aller aktiven Super Admins + Fallback-Nummer
+      const recipients = new Set<string>(["+491711651000"]);
+      try {
+        const { data: sa } = await supabase
+          .from("user_roles").select("user_id").eq("role", "Super Admin");
+        const ids = Array.from(new Set((sa || []).map((r) => r.user_id)));
+        if (ids.length) {
+          const { data: profs } = await supabase
+            .from("user_profiles")
+            .select("phone_number, is_active")
+            .in("id", ids);
+          for (const p of profs || []) {
+            const n = (p as { phone_number?: string | null; is_active?: boolean });
+            if (n.is_active === false) continue;
+            const num = (n.phone_number || "").trim().replace(/[\s/()-]/g, "");
+            if (/^\+\d{8,15}$/.test(num)) recipients.add(num);
+          }
+        }
+      } catch (e) {
+        console.warn("super admin phone lookup failed", e);
+      }
+
+      const name = `${input.first_name ?? ""} ${input.last_name}`.trim();
+      const body = [
+        "Neue Angebot Anfrage",
+        name + (input.company ? ` (${input.company})` : ""),
+        input.phone,
+        `Score ${ai.score} · ${ai.category}`,
+        `https://alixwork.de/verkauf/anfragen/${lead.id}`,
+      ].join("\n");
+
+      for (const to of recipients) {
+        const res = await fetch(
+          `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: "Basic " + btoa(`${sid}:${token}`),
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({ To: to, From: from, Body: body }).toString(),
           },
-          body: new URLSearchParams({
-            To: "+491711651000",
-            From: from,
-            Body: "Angebot Anfrage",
-          }).toString(),
-        },
-      );
-      if (!res.ok) console.warn("twilio sms failed", res.status, await res.text());
+        );
+        if (!res.ok) console.warn("twilio sms failed", to, res.status, await res.text());
+      }
     } else {
       console.warn("twilio sms skipped: secrets missing");
     }
   } catch (e) {
     console.warn("twilio sms error", e);
   }
+
 
 
   return Response.json(
