@@ -105,6 +105,8 @@ const csvToggle = (v: string, item: string) => {
   return (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]).join(', ');
 };
 
+type FieldKey = 'first_name' | 'last_name' | 'company' | 'email' | 'country_code' | 'phone' | 'notes';
+
 
 type State = {
   first_name: string;
