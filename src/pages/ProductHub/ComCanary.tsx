@@ -63,6 +63,7 @@ export default function ProductHubComCanary() {
     diffs: String((checks.changes ?? 0)),
     rollback: checks.rollback || 'NOT READY',
     dry_run: checks.dry_run || 'NOT READY',
+    path_check: checks.path_check || 'NOT READY',
     optimistic_lock: state?.com_write === 'READY' ? 'READY' : 'NOT READY',
     readback: snaps.some((s) => s.readback_at) ? 'READY' : (batch ? 'READY' : 'NOT READY'),
     audit: batch ? 'READY' : 'NOT READY',
@@ -73,7 +74,9 @@ export default function ProductHubComCanary() {
 
   const readyForCanary =
     dash.com_write === 'READY' && dash.snapshot === 'FROZEN' &&
-    ['READY', 'NOT_REQUIRED'].includes(dash.rollback) && dash.dry_run === 'PASSED';
+    ['READY', 'NOT_REQUIRED'].includes(dash.rollback) && dash.dry_run === 'PASSED' &&
+    dash.path_check === 'PASSED';
+
 
   if (loading) return <div className="p-8 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Lade COM Canary Panel…</div>;
 
