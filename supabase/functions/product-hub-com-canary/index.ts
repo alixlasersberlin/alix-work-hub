@@ -49,6 +49,12 @@ const FIELD_MAP: Record<string, string> = {
   intended_use: `${PH}.intended_use`,
 };
 const FIELDS = Object.keys(FIELD_MAP);
+// Diese Felder duerfen NIE als flache Root-Felder geschrieben werden, sondern
+// ausschliesslich als Keys im vorhandenen JSONB-Container product_hub.
+const PH_FIELDS = new Set(["power", "fluence", "pulse_duration", "frequency", "spot_sizes", "laser_class", "intended_use"]);
+const phTarget = (field: string) => (PH_FIELDS.has(field) ? `${PH}.${field}` : FIELD_MAP[field] || field);
+const isPhPath = (t?: string | null) => !!t && t.startsWith(`${PH}.`);
+
 
 const FIELD_ALIASES: Record<string, string[]> = {
   name: ["model_name", "product_name", "name", "title"],
@@ -129,10 +135,14 @@ function readbackValue(raw: any, field: string, comField?: string | null): { val
   if (comField) {
     const v = valueAtPath(raw, comField);
     if (v !== null) return { value: v, source: comField };
+    // Fuer product_hub-Zielpfade zaehlt AUSSCHLIESSLICH der tatsaechliche Zielpfad.
+    // Alias-Werte sind rein diagnostisch und duerfen kein SUCCESS erzeugen.
+    if (isPhPath(comField)) return { value: null, source: comField };
   }
   const fallback = liveValue(raw, field);
   return { value: fallback, source: fallback === null ? (comField || field) : `alias:${field}` };
 }
+
 
 // Alle Blattpfade des COM-Datensatzes (fuer die Trace-/Mismatch-Diagnose).
 function flattenPaths(raw: any, prefix = "", depth = 0, out: { path: string; value: string | null }[] = []) {
@@ -207,7 +217,24 @@ let acceptedAuth: AuthVariant | null = null;
 async function writeCall(body: Record<string, unknown>, dryRun = true) {
   const key = Deno.env.get("COM_PRODUCT_HUB_WRITE_KEY") || "";
   if (!key) return { status: 0, body: { error: "COM_PRODUCT_HUB_WRITE_KEY fehlt" } as any, ok: false, auth: "none" };
-  const payload = JSON.stringify({ publish_id: `alixwork-${Date.now()}`, target: "product_hub", ...body, dry_run: dryRun });
+  // Product-Hub-Felder werden als atomarer Shallow-Merge in den bestehenden
+  // JSONB-Container geschrieben: nur der eine Key wird geaendert, alle anderen
+  // bereits vorhandenen product_hub-Keys bleiben unveraendert erhalten.
+  const targetField = String((body as any).field || "");
+  let merge: Record<string, unknown> = {};
+  if (targetField.startsWith(`${PH}.`)) {
+    const key = targetField.slice(PH.length + 1);
+    merge = {
+      container: PH,
+      container_key: key,
+      merge: true,
+      merge_strategy: "shallow",
+      overwrite_container: false,
+      [PH]: { [key]: (body as any).value },
+    };
+  }
+  const payload = JSON.stringify({ publish_id: `alixwork-${Date.now()}`, target: "product_hub", ...body, ...merge, dry_run: dryRun });
+
   const variants = acceptedAuth ? [acceptedAuth] : authVariants(key);
 
   let last: { status: number; body: any; ok: boolean; auth: string } | null = null;
@@ -302,13 +329,20 @@ Deno.serve(async (req) => {
   };
 
   // Ermittelte COM-Zielfelder (aus der Feld-Probe) ueber die statische Karte legen.
+  // WICHTIG: Fuer die Product-Hub-Felder wird die gelernte Karte NICHT verwendet,
+  // wenn sie auf ein flaches Root-Feld zeigt – diese Felder gehoeren zwingend in
+  // den JSONB-Container product_hub.
   const resolveFieldMap = async (): Promise<Record<string, string | null>> => {
     const { data } = await admin.from("ph_settings").select("value").eq("key", "canary_com_field_map").maybeSingle();
     const learned = ((data?.value as any)?.map || {}) as Record<string, string | null>;
     const out: Record<string, string | null> = { ...FIELD_MAP };
-    for (const f of FIELDS) if (f in learned) out[f] = learned[f];
+    for (const f of FIELDS) {
+      if (PH_FIELDS.has(f)) { out[f] = `${PH}.${f}`; continue; }   // hart erzwungen
+      if (f in learned) out[f] = learned[f];
+    }
     return out;
   };
+
 
   try {
     // ------------------------------------------------------------ Feld-Probe
@@ -562,15 +596,31 @@ Deno.serve(async (req) => {
           publish_id: `${batchId}:${s.field}`,
           idempotency_key: `${batchId}:${s.field}`,
         });
-        results.push({ field: s.field, result: r.ok ? "WRITE_READY" : "FAILED", status: r.status, pass: r.ok, code: codeOf(r.body) });
+        results.push({
+          field: s.field, result: r.ok ? "WRITE_READY" : "FAILED", status: r.status, pass: r.ok, code: codeOf(r.body),
+          write_target: comField, target_ok: PH_FIELDS.has(s.field) ? isPhPath(comField) : true,
+          target_master_value: asText(s.target_master_value), dry_run: true, no_data_change: true,
+        });
       }
 
-      const passed = results.length > 0 && results.every((r) => r.pass);
+      // Safety Gate: jedes Product-Hub-Feld MUSS auf product_hub.<feld> zeigen.
+      const pathIssues = FIELDS.filter((f) => PH_FIELDS.has(f) && !isPhPath(fmap[f]))
+        .map((f) => ({ field: f, target: fmap[f], expected: `${PH}.${f}` }));
+      const pathCheck = pathIssues.length === 0;
+      const passed = pathCheck && results.length > 0 && results.every((r) => r.pass);
       await admin.from("ph_canary_batches").update({
-        checks: { ...(batch.checks || {}), dry_run: passed ? "PASSED" : "FAILED", dry_run_results: results, dry_run_at: new Date().toISOString() },
+        checks: {
+          ...(batch.checks || {}), dry_run: passed ? "PASSED" : "FAILED", dry_run_results: results,
+          path_check: pathCheck ? "PASSED" : "FAILED", path_issues: pathIssues, dry_run_at: new Date().toISOString(),
+        },
         updated_at: new Date().toISOString(),
       }).eq("id", batchId);
-      return json(200, { dry_run: passed ? "PASSED" : "FAILED", results });
+      return json(200, {
+        dry_run: passed ? "PASSED" : "FAILED", results,
+        path_check: pathCheck ? "PASSED" : "FAILED", path_issues: pathIssues,
+        targets: Object.fromEntries(FIELDS.map((f) => [f, fmap[f]])),
+      });
+
     }
 
     // ---------------------------------------------------------- Live-Publish
@@ -583,8 +633,11 @@ Deno.serve(async (req) => {
       if (!batch) return json(404, { error: "COM-Batch nicht gefunden" });
       if (batch.alix_product_id !== COM_BLUEICE_ID) return json(403, { error: "Nur BlueIce Smart KI (COM) erlaubt" });
       if ((batch.checks || {}).dry_run !== "PASSED") return json(400, { error: "Dry-Run nicht bestanden – Abbruch" });
+      if ((batch.checks || {}).path_check !== "PASSED")
+        return json(400, { error: "BLOCKED: Zielpfad-Pruefung nicht bestanden – Product-Hub-Felder muessen auf product_hub.<feld> zeigen. Bitte Dry Run erneut ausfuehren." });
       const { data: wr } = await admin.from("ph_settings").select("value").eq("key", "canary_com_write").maybeSingle();
       if ((wr?.value as any)?.state !== "READY") return json(400, { error: "COM Write nicht READY – Abbruch" });
+
 
       const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
       const fmap = await resolveFieldMap();
@@ -846,15 +899,27 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Klassifizierung je Feld, danach Gesamtdiagnose.
+      for (const r of rows) {
+        r.classification = r.readback_value_at_target === null
+          ? "PERSISTENZ-/PFADPROBLEM"
+          : normCompare(r.field, r.readback_value_at_target, r.master_value)
+            ? "RE-VERIFICATION-PROBLEM"
+            : "WERTE-MISMATCH";
+      }
+      const kinds = [...new Set(rows.map((r) => r.classification))];
       const diagnosis = rows.length === 0
         ? "Keine Abweichung mehr"
-        : rows.every((r) => r.readback_value_at_target === null)
-          ? "PERSISTENZ/PFAD: Am geschriebenen Zielpfad existiert gar kein Wert – COM bestaetigt den PATCH, persistiert ihn aber nicht unter diesem Pfad."
-          : rows.every((r) => r.readback_value_at_target !== null && r.readback_value_alias !== null && r.readback_value_at_target !== r.readback_value_alias)
-            ? "RE-VERIFICATION: Zielpfad und Alias-Pfad liefern unterschiedliche Werte – der Read-back liest die falsche Quelle."
-            : "GEMISCHT: siehe occurrences je Feld.";
+        : kinds.length === 1
+          ? kinds[0] === "PERSISTENZ-/PFADPROBLEM"
+            ? "PERSISTENZ-/PFADPROBLEM: Am geschriebenen Zielpfad existiert kein Wert – COM bestaetigt den PATCH, persistiert ihn aber nicht unter diesem Pfad."
+            : kinds[0] === "RE-VERIFICATION-PROBLEM"
+              ? "RE-VERIFICATION-PROBLEM: Der Zielpfad enthaelt bereits den Sollwert, nur der Alias weicht ab."
+              : "WERTE-MISMATCH: Der Zielpfad enthaelt einen anderen Wert als der Master."
+          : `GEMISCHT: ${kinds.join(" · ")} – siehe Klassifizierung je Feld.`;
 
-      return json(200, { mismatch_detail: rows.length ? "MISMATCH" : "CLEAN", count: rows.length, export_hash: payloadHash, diagnosis, rows });
+      return json(200, { mismatch_detail: rows.length ? "MISMATCH" : "CLEAN", count: rows.length, export_hash: payloadHash, diagnosis, kinds, rows });
+
     }
 
 

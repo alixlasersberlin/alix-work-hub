@@ -28,6 +28,8 @@ export default function ProductHubComCanary() {
   const [loading, setLoading] = useState(true);
   const [trace, setTrace] = useState<any>(null);
   const [mismatch, setMismatch] = useState<any>(null);
+  const [dry, setDry] = useState<any>(null);
+
 
 
   const call = async (action: string, body: Record<string, any> = {}, silent = false) => {
@@ -61,6 +63,7 @@ export default function ProductHubComCanary() {
     diffs: String((checks.changes ?? 0)),
     rollback: checks.rollback || 'NOT READY',
     dry_run: checks.dry_run || 'NOT READY',
+    path_check: checks.path_check || 'NOT READY',
     optimistic_lock: state?.com_write === 'READY' ? 'READY' : 'NOT READY',
     readback: snaps.some((s) => s.readback_at) ? 'READY' : (batch ? 'READY' : 'NOT READY'),
     audit: batch ? 'READY' : 'NOT READY',
@@ -71,7 +74,9 @@ export default function ProductHubComCanary() {
 
   const readyForCanary =
     dash.com_write === 'READY' && dash.snapshot === 'FROZEN' &&
-    ['READY', 'NOT_REQUIRED'].includes(dash.rollback) && dash.dry_run === 'PASSED';
+    ['READY', 'NOT_REQUIRED'].includes(dash.rollback) && dash.dry_run === 'PASSED' &&
+    dash.path_check === 'PASSED';
+
 
   if (loading) return <div className="p-8 flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Lade COM Canary Panel…</div>;
 
@@ -87,7 +92,9 @@ export default function ProductHubComCanary() {
         <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 text-xs">
           {[
             ['COM Write', dash.com_write], ['Snapshot', dash.snapshot], ['Diffs', dash.diffs],
-            ['Rollback', dash.rollback], ['Dry Run', dash.dry_run], ['Optimistic Lock', dash.optimistic_lock],
+            ['Rollback', dash.rollback], ['Dry Run', dash.dry_run], ['Zielpfad-Check', dash.path_check],
+            ['Optimistic Lock', dash.optimistic_lock],
+
             ['Read-back', dash.readback], ['Audit', dash.audit], ['Website Rendering', dash.render],
             ['Publish', dash.publish], ['COM Product ID', COM_BLUEICE_ID.slice(0, 8) + '…'], ['Phase', dash.phase],
           ].map(([k, v]) => (
@@ -128,7 +135,7 @@ export default function ProductHubComCanary() {
         <Button size="sm" disabled={!canRun || !!busy || state?.com_write !== 'READY'} onClick={async () => { const r = await call('snapshot'); if (r) { await load(); toast.success(`${r.snapshot} · ${r.changes} Änderungen`); } }}>
           {busy === 'snapshot' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Snowflake className="h-3.5 w-3.5" />} 2 · COM-Snapshot einfrieren
         </Button>
-        <Button size="sm" disabled={!canRun || !!busy || !batch} onClick={async () => { const r = await call('dryrun', { batch_id: batch?.id }); if (r) { await load(); toast[r.dry_run === 'PASSED' ? 'success' : 'error'](`Dry Run ${r.dry_run}`); } }}>
+        <Button size="sm" disabled={!canRun || !!busy || !batch} onClick={async () => { const r = await call('dryrun', { batch_id: batch?.id }); if (r) { setDry(r); await load(); toast[r.dry_run === 'PASSED' ? 'success' : 'error'](`Dry Run ${r.dry_run} · Zielpfade ${r.path_check}`); } }}>
           3 · Dry Run
         </Button>
         <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" disabled={!canRun || !!busy || !readyForCanary}
@@ -199,6 +206,35 @@ export default function ProductHubComCanary() {
           </Table>
         </CardContent>
       </Card>
+
+      {dry && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Dry Run · geplante Zielpfade (keine Datenänderung)</CardTitle></CardHeader>
+          <CardContent className="space-y-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <Dot v={dry.dry_run} />
+              <span className="text-muted-foreground">Zielpfad-Check:</span> <Dot v={dry.path_check} />
+              {dry.path_check !== 'PASSED' && <span className="text-destructive">Publish BLOCKED – Product-Hub-Felder müssen auf product_hub.&lt;feld&gt; zeigen.</span>}
+            </div>
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Feld</TableHead><TableHead>Soll</TableHead><TableHead>WRITE target</TableHead><TableHead>Ergebnis</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {(dry.results || []).map((r: any) => (
+                  <TableRow key={r.field}>
+                    <TableCell className="font-medium">{r.field}</TableCell>
+                    <TableCell className="text-muted-foreground">{r.target_master_value ?? '—'}</TableCell>
+                    <TableCell className={`font-mono break-all ${r.target_ok === false ? 'text-destructive' : ''}`}>{r.write_target ?? '—'}</TableCell>
+                    <TableCell><Badge className={r.pass ? 'bg-emerald-600' : 'bg-destructive'}>{r.result}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
 
       {trace && (
         <Card>
