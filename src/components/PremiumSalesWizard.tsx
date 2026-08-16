@@ -317,18 +317,18 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 
           {/* 0 — Intro */}
           {step === 0 && (
-            <section className="text-center py-10 md:py-20 animate-in fade-in duration-700">
-              <p className="text-[11px] tracking-[0.4em] uppercase !text-slate-500">Premium Consult</p>
-              <h1 className="!text-slate-900 mt-6 text-4xl md:text-6xl font-light tracking-tight leading-[1.05]">
+            <section className="text-center py-8 sm:py-12 md:py-20 animate-in fade-in duration-700">
+              <p className="text-[10px] sm:text-[11px] tracking-[0.3em] sm:tracking-[0.4em] uppercase !text-slate-500">Premium Consult</p>
+              <h1 className="!text-slate-900 mt-4 sm:mt-6 text-3xl sm:text-4xl md:text-6xl font-light tracking-tight leading-[1.1] text-balance">
                 IHRE ALIX BERATUNG
               </h1>
-              <p className="mt-6 max-w-xl mx-auto text-slate-500 text-base md:text-lg font-light">
+              <p className="mt-4 sm:mt-6 max-w-xl mx-auto text-slate-500 text-[15px] sm:text-base md:text-lg font-light text-pretty">
                 In wenigen Schritten zu den passenden ALIX Systemen — persönlich, unverbindlich und
                 direkt von einem ALIX Berater begleitet.
               </p>
               <button
                 onClick={() => setStep(1)}
-                className="mt-10 inline-flex items-center gap-3 h-14 px-10 rounded-full bg-slate-900 text-white text-sm tracking-[0.2em] uppercase shadow-[0_25px_60px_-25px_rgba(15,23,42,0.6)] hover:bg-slate-800 transition"
+                className="mt-8 sm:mt-10 inline-flex w-full sm:w-auto justify-center items-center gap-3 h-14 px-8 sm:px-10 rounded-full bg-slate-900 text-white text-sm tracking-[0.2em] uppercase shadow-[0_25px_60px_-25px_rgba(15,23,42,0.6)] hover:bg-slate-800 transition"
               >
                 Beratung starten <ArrowRight className="h-4 w-4" />
               </button>
@@ -338,7 +338,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 1 — Profil */}
           {step === 1 && (
             <Chapter title="IHRE KONTAKTDATEN" sub="Damit ein ALIX Berater Sie erreichen kann.">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+
                 <Labeled label="Vorname">
                   <input className={fieldCls} value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} />
                 </Labeled>
