@@ -659,7 +659,7 @@ Deno.serve(async (req) => {
       const results: any[] = [];
       for (const s of snaps || []) {
         if (!s.publish_id || !s.readback_at) continue;
-        const comField = FIELD_MAP[s.field] || s.field;
+        const comField = (await resolveFieldMap())[s.field] || FIELD_MAP[s.field] || s.field;
         const w = await writeCall({
           product_id: COM_BLUEICE_ID, field: comField,
           value: comValue(comField, s.current_live_value),   // exakter vorheriger Wert, auch Freitext
