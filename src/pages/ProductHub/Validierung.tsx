@@ -94,7 +94,8 @@ export default function ProductHubValidierung() {
                 <div>DE-ready: <b>{s.de_ready}</b></div>
                 <div>COM-ready: <b>{s.com_ready}</b></div>
                 <div>Medienfehler: <b className={s.media_errors ? 'text-destructive' : ''}>{s.media_errors}</b></div>
-                <div>Dokumentenfehler: <b className={s.document_errors ? 'text-destructive' : ''}>{s.document_errors}</b></div>
+                <div>Dokumentenfehler (echte Dokumente): <b className={s.document_errors ? 'text-destructive' : ''}>{s.document_errors}</b></div>
+                <div>Landingpage-Warnungen: <b className={s.landing_page_warnings ? 'text-amber-600' : ''}>{s.landing_page_warnings ?? 0}</b> / {s.landing_pages_total ?? 0}</div>
                 <div>Technische Reviews: <b>{s.tech_reviews}</b></div>
                 <div>Manual Overrides: <b>{s.manual_overrides}</b></div>
                 <div>Konflikte: <b>{s.conflicts}</b></div>
