@@ -35,15 +35,51 @@ const CONSULTATION = [
 ];
 
 const COUNTRY_CODES = [
-  { code: '+49', label: 'DE +49' },
-  { code: '+43', label: 'AT +43' },
-  { code: '+41', label: 'CH +41' },
-  { code: '+39', label: 'IT +39' },
-  { code: '+33', label: 'FR +33' },
-  { code: '+31', label: 'NL +31' },
-  { code: '+34', label: 'ES +34' },
-  { code: '+44', label: 'UK +44' },
+  { code: '+49', flag: '🇩🇪', label: 'Deutschland', min: 9, max: 13 },
+  { code: '+43', flag: '🇦🇹', label: 'Österreich', min: 8, max: 13 },
+  { code: '+41', flag: '🇨🇭', label: 'Schweiz', min: 8, max: 12 },
+  { code: '+39', flag: '🇮🇹', label: 'Italien', min: 8, max: 13 },
+  { code: '+33', flag: '🇫🇷', label: 'Frankreich', min: 9, max: 11 },
+  { code: '+31', flag: '🇳🇱', label: 'Niederlande', min: 9, max: 11 },
+  { code: '+32', flag: '🇧🇪', label: 'Belgien', min: 8, max: 11 },
+  { code: '+34', flag: '🇪🇸', label: 'Spanien', min: 9, max: 11 },
+  { code: '+351', flag: '🇵🇹', label: 'Portugal', min: 9, max: 11 },
+  { code: '+352', flag: '🇱🇺', label: 'Luxemburg', min: 6, max: 11 },
+  { code: '+45', flag: '🇩🇰', label: 'Dänemark', min: 8, max: 10 },
+  { code: '+46', flag: '🇸🇪', label: 'Schweden', min: 7, max: 11 },
+  { code: '+47', flag: '🇳🇴', label: 'Norwegen', min: 8, max: 10 },
+  { code: '+48', flag: '🇵🇱', label: 'Polen', min: 9, max: 11 },
+  { code: '+420', flag: '🇨🇿', label: 'Tschechien', min: 9, max: 10 },
+  { code: '+36', flag: '🇭🇺', label: 'Ungarn', min: 8, max: 10 },
+  { code: '+30', flag: '🇬🇷', label: 'Griechenland', min: 10, max: 11 },
+  { code: '+44', flag: '🇬🇧', label: 'Großbritannien', min: 9, max: 11 },
+  { code: '+353', flag: '🇮🇪', label: 'Irland', min: 8, max: 11 },
+  { code: '+1', flag: '🇺🇸', label: 'USA / Kanada', min: 10, max: 10 },
 ];
+
+const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
+
+function validateEmail(value: string): string | null {
+  const v = value.trim();
+  if (!v) return 'E-Mail ist ein Pflichtfeld.';
+  if (v.length > 255) return 'E-Mail ist zu lang.';
+  if (!EMAIL_RE.test(v)) return 'Bitte geben Sie eine gültige E-Mail-Adresse ein.';
+  if (/\.\./.test(v)) return 'Bitte geben Sie eine gültige E-Mail-Adresse ein.';
+  return null;
+}
+
+function validatePhone(code: string, value: string): string | null {
+  const digits = value.replace(/\D/g, '').replace(/^0+/, '');
+  if (!value.trim()) return 'Telefonnummer ist ein Pflichtfeld.';
+  if (!digits) return 'Bitte geben Sie eine gültige Telefonnummer ein.';
+  const c = COUNTRY_CODES.find((x) => x.code === code);
+  const min = c?.min ?? 6;
+  const max = c?.max ?? 14;
+  if (digits.length < min) return `Die Nummer ist zu kurz (mind. ${min} Ziffern für ${c?.label ?? code}).`;
+  if (digits.length > max) return `Die Nummer ist zu lang (max. ${max} Ziffern für ${c?.label ?? code}).`;
+  return null;
+}
+
 
 const STEP_LABELS = ['PROFIL', 'ANWENDUNG', 'BEDARF', 'SYSTEM', 'ABSCHLUSS'];
 
@@ -97,6 +133,8 @@ interface Props {
 export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<State>(INITIAL);
+  const [touched, setTouched] = useState<{ last_name?: boolean; email?: boolean; phone?: boolean }>({});
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -123,15 +161,15 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
         : [...d.additional_interests, v],
     }));
 
+  const emailError = validateEmail(data.email);
+  const phoneError = validatePhone(data.country_code, data.phone);
+  const lastNameError = data.last_name.trim() ? null : 'Nachname ist ein Pflichtfeld.';
+
   function canContinue(): boolean {
     switch (step) {
       case 1:
-        return (
-          !!data.first_name.trim() &&
-          !!data.last_name.trim() &&
-          data.phone.trim().length >= 3 &&
-          /.+@.+\..+/.test(data.email.trim())
-        );
+        return !lastNameError && !emailError && !phoneError;
+
       case 2:
         return !!data.category;
       case 3:
@@ -183,7 +221,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           last_name: data.last_name,
           company: data.company || null,
           country_code: data.country_code,
-          phone: data.phone,
+          phone: `${data.country_code} ${data.phone.replace(/\D/g, '').replace(/^0+/, '')}`.trim(),
           email: data.email,
           consultation_type: data.consultation_type || null,
           notes: mergedNotes,
@@ -285,30 +323,62 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 <Labeled label="Vorname">
                   <input className={fieldCls} value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} />
                 </Labeled>
-                <Labeled label="Nachname">
-                  <input className={fieldCls} value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} />
+                <Labeled label="Nachname *" error={touched.last_name ? lastNameError : null}>
+                  <input
+                    className={cn(fieldCls, touched.last_name && lastNameError && '!border-red-300 focus:!ring-red-200')}
+                    value={data.last_name}
+                    maxLength={100}
+                    onBlur={() => setTouched((t) => ({ ...t, last_name: true }))}
+                    onChange={(e) => setData({ ...data, last_name: e.target.value })}
+                  />
                 </Labeled>
                 <Labeled label="Unternehmen (optional)">
                   <input className={fieldCls} value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} />
                 </Labeled>
-                <Labeled label="E-Mail">
-                  <input type="email" inputMode="email" className={fieldCls} value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} />
+                <Labeled label="E-Mail *" error={touched.email ? emailError : null}>
+                  <input
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    maxLength={255}
+                    placeholder="name@praxis.de"
+                    className={cn(fieldCls, touched.email && emailError && '!border-red-300 focus:!ring-red-200')}
+                    value={data.email}
+                    onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+                    onChange={(e) => setData({ ...data, email: e.target.value })}
+                  />
                 </Labeled>
-                <Labeled label="Telefon">
+                <Labeled label="Telefon *" error={touched.phone ? phoneError : null}>
                   <div className="flex gap-2">
                     <select
                       value={data.country_code}
                       onChange={(e) => setData({ ...data, country_code: e.target.value })}
-                      className={cn(fieldCls, 'w-32')}
+                      className={cn(fieldCls, 'w-[122px] shrink-0 px-3')}
+                      aria-label="Ländervorwahl"
                     >
                       {COUNTRY_CODES.map((c) => (
-                        <option key={c.code} value={c.code}>{c.label}</option>
+                        <option key={c.code} value={c.code}>
+                          {c.flag} {c.code}
+                        </option>
                       ))}
                     </select>
-                    <input inputMode="tel" className={fieldCls} value={data.phone} onChange={(e) => setData({ ...data, phone: e.target.value })} />
+                    <input
+                      inputMode="tel"
+                      autoComplete="tel"
+                      maxLength={20}
+                      placeholder="171 1651000"
+                      className={cn(fieldCls, touched.phone && phoneError && '!border-red-300 focus:!ring-red-200')}
+                      value={data.phone}
+                      onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
+                      onChange={(e) => setData({ ...data, phone: e.target.value.replace(/[^\d\s+()/-]/g, '') })}
+                    />
                   </div>
+                  <p className="text-[11px] !text-slate-400">
+                    {COUNTRY_CODES.find((c) => c.code === data.country_code)?.label} — ohne führende 0
+                  </p>
                 </Labeled>
               </div>
+
             </Chapter>
           )}
 
@@ -580,11 +650,20 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Labeled({ label, children }: { label: string; children: React.ReactNode }) {
+function Labeled({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string | null;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-2">
       <label className="text-[11px] tracking-[0.24em] uppercase !text-slate-500">{label}</label>
       {children}
+      {error && <p className="text-[12px] !text-red-500 font-light">{error}</p>}
     </div>
   );
 }
