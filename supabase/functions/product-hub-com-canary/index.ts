@@ -596,15 +596,31 @@ Deno.serve(async (req) => {
           publish_id: `${batchId}:${s.field}`,
           idempotency_key: `${batchId}:${s.field}`,
         });
-        results.push({ field: s.field, result: r.ok ? "WRITE_READY" : "FAILED", status: r.status, pass: r.ok, code: codeOf(r.body) });
+        results.push({
+          field: s.field, result: r.ok ? "WRITE_READY" : "FAILED", status: r.status, pass: r.ok, code: codeOf(r.body),
+          write_target: comField, target_ok: PH_FIELDS.has(s.field) ? isPhPath(comField) : true,
+          target_master_value: asText(s.target_master_value), dry_run: true, no_data_change: true,
+        });
       }
 
-      const passed = results.length > 0 && results.every((r) => r.pass);
+      // Safety Gate: jedes Product-Hub-Feld MUSS auf product_hub.<feld> zeigen.
+      const pathIssues = FIELDS.filter((f) => PH_FIELDS.has(f) && !isPhPath(fmap[f]))
+        .map((f) => ({ field: f, target: fmap[f], expected: `${PH}.${f}` }));
+      const pathCheck = pathIssues.length === 0;
+      const passed = pathCheck && results.length > 0 && results.every((r) => r.pass);
       await admin.from("ph_canary_batches").update({
-        checks: { ...(batch.checks || {}), dry_run: passed ? "PASSED" : "FAILED", dry_run_results: results, dry_run_at: new Date().toISOString() },
+        checks: {
+          ...(batch.checks || {}), dry_run: passed ? "PASSED" : "FAILED", dry_run_results: results,
+          path_check: pathCheck ? "PASSED" : "FAILED", path_issues: pathIssues, dry_run_at: new Date().toISOString(),
+        },
         updated_at: new Date().toISOString(),
       }).eq("id", batchId);
-      return json(200, { dry_run: passed ? "PASSED" : "FAILED", results });
+      return json(200, {
+        dry_run: passed ? "PASSED" : "FAILED", results,
+        path_check: pathCheck ? "PASSED" : "FAILED", path_issues: pathIssues,
+        targets: Object.fromEntries(FIELDS.map((f) => [f, fmap[f]])),
+      });
+
     }
 
     // ---------------------------------------------------------- Live-Publish
