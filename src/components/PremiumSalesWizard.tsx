@@ -83,6 +83,14 @@ function validatePhone(code: string, value: string): string | null {
 
 const STEP_LABELS = ['PROFIL', 'ANWENDUNG', 'BEDARF', 'SYSTEM', 'ABSCHLUSS'];
 
+const csvList = (v: string) => v.split(',').map((x) => x.trim()).filter(Boolean);
+const csvHas = (v: string, item: string) => csvList(v).includes(item);
+const csvToggle = (v: string, item: string) => {
+  const list = csvList(v);
+  return (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]).join(', ');
+};
+
+
 type State = {
   first_name: string;
   last_name: string;
@@ -435,24 +443,25 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {step === 3 && (
             <Chapter title="IHR BEDARF" sub={`Schwerpunkt: ${data.category}`}>
               <div className="space-y-10">
-                <Group label="Gewünschter Lieferzeitraum">
+                <Group label="Gewünschter Lieferzeitraum (Mehrfachauswahl)">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {DELIVERY.map((d) => (
-                      <Pill key={d} active={data.delivery_preference === d} onClick={() => setData({ ...data, delivery_preference: d })}>
+                      <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) })}>
                         {d}
                       </Pill>
                     ))}
                   </div>
                 </Group>
-                <Group label="Beratungsart">
+                <Group label="Beratungsart (Mehrfachauswahl)">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {CONSULTATION.map((c) => (
-                      <Pill key={c} active={data.consultation_type === c} onClick={() => setData({ ...data, consultation_type: c })}>
+                      <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) })}>
                         {c}
                       </Pill>
                     ))}
                   </div>
                 </Group>
+
                 <Group label="Weitere Interessen (optional)">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {ADDITIONAL.map((a) => (
@@ -672,15 +681,22 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
   return (
     <button
       type="button"
+      aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'min-h-[56px] w-full rounded-2xl border px-5 text-left text-sm font-light transition',
+        'relative min-h-[56px] w-full rounded-2xl border pl-12 pr-5 text-left text-sm font-light transition',
         active
-          ? '!border-sky-300 !bg-white !text-slate-900 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.6)]'
+          ? '!border-emerald-400 !bg-white !text-slate-900 shadow-[0_18px_45px_-30px_rgba(15,23,42,0.6)]'
           : '!border-slate-200 !bg-white/80 !text-slate-700 hover:!border-slate-300',
       )}
     >
+      {active && (
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-[0_6px_16px_-6px_rgba(16,185,129,0.9)] animate-in zoom-in duration-200">
+          <ArrowRight className="h-3.5 w-3.5" />
+        </span>
+      )}
       {children}
     </button>
+
   );
 }
