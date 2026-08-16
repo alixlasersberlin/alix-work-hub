@@ -119,8 +119,8 @@ Deno.serve(async (req) => {
   const { data: userRes } = await admin.auth.getUser(jwt);
   const user = userRes?.user;
   if (!user) return json(401, { error: "unauthorized" });
-  const { data: roleRows } = await admin.from("user_roles").select("role").eq("user_id", user.id);
-  const roles = (roleRows || []).map((r: any) => String(r.role));
+  const { data: roleRows } = await admin.from("user_roles").select("roles(name)").eq("user_id", user.id);
+  const roles = (roleRows || []).map((r: any) => String(r.roles?.name || ""));
   if (!roles.some((r) => ["Super Admin", "Admin"].includes(r))) {
     return json(403, { error: "forbidden", detail: "Nur Admin / Super Admin" });
   }

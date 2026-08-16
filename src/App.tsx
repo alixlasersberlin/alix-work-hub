@@ -668,6 +668,7 @@ const PhSyncHealth = lazy(() => import("./pages/ProductHub/SyncHealth"));
 const PhEinstellungen = lazy(() => import("./pages/ProductHub/Einstellungen"));
 const PhValidierung = lazy(() => import("./pages/ProductHub/Validierung"));
 const PhMasterReview = lazy(() => import("./pages/ProductHub/MasterReview"));
+const PhCanary = lazy(() => import("./pages/ProductHub/Canary"));
 const PhVeroeffentlichungen = lazy(() => import("./pages/ProductHub/Veroeffentlichungen"));
 const PlmGeraete = lazy(() => import("./pages/PLM/Geraete"));
 const PlmBaugruppen = lazy(() => import("./pages/PLM/Baugruppen"));
@@ -2169,6 +2170,7 @@ function AppRoutes() {
           <Route path="/product-hub/sync-health" element={<ProtectedRoute><PhSyncHealth /></ProtectedRoute>} />
           <Route path="/product-hub/einstellungen" element={<ProtectedRoute><PhEinstellungen /></ProtectedRoute>} />
           <Route path="/product-hub/validierung" element={<ProtectedRoute><PhValidierung /></ProtectedRoute>} />
+          <Route path="/product-hub/canary" element={<ProtectedRoute><PhCanary /></ProtectedRoute>} />
           <Route path="/product-hub/master-review" element={<ProtectedRoute><PhMasterReview /></ProtectedRoute>} />
           <Route path="/product-hub/master-review/:id" element={<ProtectedRoute><PhMasterReview /></ProtectedRoute>} />
           <Route path="/product-hub/veroeffentlichungen" element={<ProtectedRoute><PhVeroeffentlichungen /></ProtectedRoute>} />
