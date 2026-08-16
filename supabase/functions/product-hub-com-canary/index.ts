@@ -113,6 +113,28 @@ function deepHas(raw: any, keys: string[], depth = 0): boolean {
 // Legacy-Freitext wird NICHT interpretiert oder normalisiert – 1:1 uebernommen.
 const liveValue = (raw: any, field: string) => (raw ? deepFind(raw, fieldKeys(field)) : null);
 
+// Read-back MUSS aus der tatsaechlichen Zielquelle lesen: dem COM-Feld, das beim
+// Schreiben verwendet wurde (z. B. "product_hub.power"), nicht aus einem
+// gleichnamigen Legacy-Feld. Nur wenn dort nichts steht, greift die Alias-Suche.
+function valueAtPath(raw: any, path: string): string | null {
+  if (!raw || typeof raw !== "object" || !path) return null;
+  let cur: any = raw;
+  for (const seg of path.split(".")) {
+    if (cur === null || typeof cur !== "object" || !(seg in cur)) return null;
+    cur = cur[seg];
+  }
+  return asText(cur);
+}
+function readbackValue(raw: any, field: string, comField?: string | null): { value: string | null; source: string } {
+  if (comField) {
+    const v = valueAtPath(raw, comField);
+    if (v !== null) return { value: v, source: comField };
+  }
+  const fallback = liveValue(raw, field);
+  return { value: fallback, source: fallback === null ? (comField || field) : `alias:${field}` };
+}
+
+
 function collectProducts(body: any): any[] {
   if (Array.isArray(body)) return body;
   const direct = body?.products || body?.devices || body?.data || body?.items || body?.results || body?.rows;
