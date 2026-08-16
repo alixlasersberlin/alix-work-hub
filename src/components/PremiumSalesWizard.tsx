@@ -565,7 +565,7 @@ function Chapter({ title, sub, children }: { title: string; sub?: string; childr
   return (
     <section className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <h2 className="!text-slate-900 text-2xl md:text-4xl font-light tracking-tight uppercase">{title}</h2>
-      {sub && <p className="mt-3 text-slate-500 font-light max-w-2xl">{sub}</p>}
+      {sub && <p className="mt-3 !text-slate-500 font-light max-w-2xl">{sub}</p>}
       <div className="mt-10 md:mt-12">{children}</div>
     </section>
   );
