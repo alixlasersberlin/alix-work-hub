@@ -654,6 +654,18 @@ const AicTasks = lazy(() => import("./pages/AIC/Tasks"));
 const AicBerichte = lazy(() => import("./pages/AIC/Berichte"));
 const MdrCe = lazy(() => import("./pages/MdrCe"));
 const PlmDashboard = lazy(() => import("./pages/PLM/Dashboard"));
+// PRODUCT HUB (additiv)
+const PhDashboard = lazy(() => import("./pages/ProductHub/Dashboard"));
+const PhGeraete = lazy(() => import("./pages/ProductHub/Geraete"));
+const PhEditor = lazy(() => import("./pages/ProductHub/ProductEditor"));
+const PhFreigaben = lazy(() => import("./pages/ProductHub/Freigaben"));
+const PhKonflikte = lazy(() => import("./pages/ProductHub/Konflikte"));
+const PhMedien = lazy(() => import("./pages/ProductHub/Medien"));
+const PhDokumente = lazy(() => import("./pages/ProductHub/Dokumente"));
+const PhWebseiten = lazy(() => import("./pages/ProductHub/Webseiten"));
+const PhVerlauf = lazy(() => import("./pages/ProductHub/Verlauf"));
+const PhSyncHealth = lazy(() => import("./pages/ProductHub/SyncHealth"));
+const PhEinstellungen = lazy(() => import("./pages/ProductHub/Einstellungen"));
 const PlmGeraete = lazy(() => import("./pages/PLM/Geraete"));
 const PlmBaugruppen = lazy(() => import("./pages/PLM/Baugruppen"));
 const PlmEinzelteile = lazy(() => import("./pages/PLM/Einzelteile"));
