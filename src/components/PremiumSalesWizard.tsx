@@ -66,6 +66,35 @@ function validatePhone(code: string, value: string): string | null {
   return null;
 }
 
+function validateName(value: string, label: string, required: boolean): string | null {
+  const v = value.trim();
+  if (!v) return required ? `${label} ist ein Pflichtfeld.` : null;
+  if (v.length < 2) return `${label} muss mindestens 2 Zeichen haben.`;
+  if (v.length > 100) return `${label} darf max. 100 Zeichen haben.`;
+  if (/\d/.test(v)) return `${label} darf keine Ziffern enthalten.`;
+  return null;
+}
+
+function validateCompany(value: string): string | null {
+  const v = value.trim();
+  if (!v) return null;
+  if (v.length > 150) return 'Unternehmen darf max. 150 Zeichen haben.';
+  return null;
+}
+
+function validateCountryCode(code: string): string | null {
+  const v = code.trim();
+  if (!v || v === '+') return 'Bitte Ländervorwahl angeben.';
+  if (!/^\+\d{1,4}$/.test(v)) return 'Vorwahl im Format +49 angeben.';
+  return null;
+}
+
+function validateNotes(value: string): string | null {
+  if (value.length > 2000) return `Nachricht ist zu lang (${value.length}/2000 Zeichen).`;
+  return null;
+}
+
+
 
 const STEP_LABELS = ['PROFIL', 'ANWENDUNG', 'BEDARF', 'ABSCHLUSS'];
 
@@ -75,6 +104,8 @@ const csvToggle = (v: string, item: string) => {
   const list = csvList(v);
   return (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]).join(', ');
 };
+
+type FieldKey = 'first_name' | 'last_name' | 'company' | 'email' | 'country_code' | 'phone' | 'notes';
 
 
 type State = {
@@ -128,7 +159,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<State>(INITIAL);
   const [customCode, setCustomCode] = useState(false);
-  const [touched, setTouched] = useState<{ last_name?: boolean; email?: boolean; phone?: boolean }>({});
+  const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
+  const [attempted, setAttempted] = useState<Record<number, boolean>>({});
+
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -152,25 +185,60 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
         : [...d.additional_interests, v],
     }));
 
-  const emailError = validateEmail(data.email);
-  const phoneError = validatePhone(data.country_code, data.phone);
-  const lastNameError = data.last_name.trim() ? null : 'Nachname ist ein Pflichtfeld.';
+  const errors: Record<FieldKey, string | null> = {
+    first_name: validateName(data.first_name, 'Vorname', false),
+    last_name: validateName(data.last_name, 'Nachname', true),
+    company: validateCompany(data.company),
+    email: validateEmail(data.email),
+    country_code: validateCountryCode(data.country_code),
+    phone: validatePhone(data.country_code, data.phone),
+    notes: validateNotes(data.notes),
+  };
+
+  /** Sofort-Validierung: Fehler sobald das Feld angefasst oder „Weiter“ versucht wurde. */
+  const showError = (k: FieldKey) => (touched[k] || attempted[step] ? errors[k] : null);
+  const isValid = (k: FieldKey) => !!touched[k] && !errors[k] && String(data[k] ?? '').trim().length > 0;
+  const markTouched = (k: FieldKey) => setTouched((t) => (t[k] ? t : { ...t, [k]: true }));
+  const update = (k: FieldKey, v: string) => {
+    markTouched(k);
+    setData((d) => ({ ...d, [k]: v }));
+  };
+
+  const step1Ok = (['first_name', 'last_name', 'company', 'email', 'country_code', 'phone'] as FieldKey[]).every(
+    (k) => !errors[k],
+  );
 
   function canContinue(): boolean {
     switch (step) {
       case 1:
-        return !lastNameError && !emailError && !phoneError;
+        return step1Ok;
 
       case 2:
         return !!data.category;
       case 3:
-        return !!data.delivery_preference && !!data.consultation_type;
+        return !!data.delivery_preference && !!data.consultation_type && !errors.notes;
       case LAST_STEP:
         return data.consent_data && data.consent_contact && (publicMode && !captchaUnavailable ? !!captchaToken : true);
       default:
         return true;
     }
   }
+
+  /** Blockierter „Weiter“-Klick: alle Fehler des Schritts sichtbar machen. */
+  function revealStepErrors() {
+    setAttempted((a) => ({ ...a, [step]: true }));
+    if (step === 1) {
+      setTouched({
+        first_name: true,
+        last_name: true,
+        company: true,
+        email: true,
+        country_code: true,
+        phone: true,
+      });
+    }
+  }
+
 
   function selectCategory(cat: PremiumCategory) {
     setData((d) => ({ ...d, category: cat, devices: [] }));
@@ -340,36 +408,57 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             <Chapter title="IHRE KONTAKTDATEN" sub="Damit ein ALIX Berater Sie erreichen kann.">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
 
-                <Labeled label="Vorname">
-                  <input className={fieldCls} value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} />
-                </Labeled>
-                <Labeled label="Nachname *" error={touched.last_name ? lastNameError : null}>
+                <Labeled label="Vorname" error={showError('first_name')} valid={isValid('first_name')}>
                   <input
-                    className={cn(fieldCls, touched.last_name && lastNameError && '!border-red-300 focus:!ring-red-200')}
-                    value={data.last_name}
+                    className={cn(fieldCls, showError('first_name') && '!border-red-300 focus:!ring-red-200')}
+                    value={data.first_name}
                     maxLength={100}
-                    onBlur={() => setTouched((t) => ({ ...t, last_name: true }))}
-                    onChange={(e) => setData({ ...data, last_name: e.target.value })}
+                    aria-invalid={!!showError('first_name')}
+                    onBlur={() => markTouched('first_name')}
+                    onChange={(e) => update('first_name', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label="Unternehmen (optional)">
-                  <input className={fieldCls} value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} />
+                <Labeled label="Nachname *" error={showError('last_name')} valid={isValid('last_name')}>
+                  <input
+                    className={cn(fieldCls, showError('last_name') && '!border-red-300 focus:!ring-red-200')}
+                    value={data.last_name}
+                    maxLength={100}
+                    aria-invalid={!!showError('last_name')}
+                    onBlur={() => markTouched('last_name')}
+                    onChange={(e) => update('last_name', e.target.value)}
+                  />
                 </Labeled>
-                <Labeled label="E-Mail *" error={touched.email ? emailError : null}>
+                <Labeled label="Unternehmen (optional)" error={showError('company')} valid={isValid('company')}>
+                  <input
+                    className={cn(fieldCls, showError('company') && '!border-red-300 focus:!ring-red-200')}
+                    value={data.company}
+                    maxLength={150}
+                    aria-invalid={!!showError('company')}
+                    onBlur={() => markTouched('company')}
+                    onChange={(e) => update('company', e.target.value)}
+                  />
+                </Labeled>
+                <Labeled label="E-Mail *" error={showError('email')} valid={isValid('email')}>
                   <input
                     type="email"
                     inputMode="email"
                     autoComplete="email"
                     maxLength={255}
                     placeholder="name@praxis.de"
-                    className={cn(fieldCls, touched.email && emailError && '!border-red-300 focus:!ring-red-200')}
+                    className={cn(fieldCls, showError('email') && '!border-red-300 focus:!ring-red-200')}
                     value={data.email}
-                    onBlur={() => setTouched((t) => ({ ...t, email: true }))}
-                    onChange={(e) => setData({ ...data, email: e.target.value })}
+                    aria-invalid={!!showError('email')}
+                    onBlur={() => markTouched('email')}
+                    onChange={(e) => update('email', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label="Telefon *" error={touched.phone ? phoneError : null}>
+                <Labeled
+                  label="Telefon *"
+                  error={showError('country_code') ?? showError('phone')}
+                  valid={isValid('phone') && !errors.country_code}
+                >
                   <div className="flex flex-wrap gap-2">
+
                     <select
                       value={customCode ? CUSTOM_CODE : data.country_code}
                       onChange={(e) => {
@@ -406,11 +495,17 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                         maxLength={6}
                         placeholder="+000"
                         aria-label="Vorwahl frei eingeben"
-                        className={cn(fieldCls, 'w-[96px] shrink-0')}
+                        aria-invalid={!!showError('country_code')}
+                        className={cn(
+                          fieldCls,
+                          'w-[96px] shrink-0',
+                          showError('country_code') && '!border-red-300 focus:!ring-red-200',
+                        )}
                         value={data.country_code}
+                        onBlur={() => markTouched('country_code')}
                         onChange={(e) => {
                           const v = e.target.value.replace(/[^\d+]/g, '');
-                          setData({ ...data, country_code: v.startsWith('+') ? v : `+${v.replace(/\+/g, '')}` });
+                          update('country_code', v.startsWith('+') ? v : `+${v.replace(/\+/g, '')}`);
                         }}
                       />
                     )}
@@ -419,11 +514,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       autoComplete="tel"
                       maxLength={20}
                       placeholder="171 1651000"
-                      className={cn(fieldCls, 'flex-1 min-w-[160px]', touched.phone && phoneError && '!border-red-300 focus:!ring-red-200')}
+                      aria-invalid={!!showError('phone')}
+                      className={cn(fieldCls, 'flex-1 min-w-[160px]', showError('phone') && '!border-red-300 focus:!ring-red-200')}
                       value={data.phone}
-                      onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
-                      onChange={(e) => setData({ ...data, phone: e.target.value.replace(/[^\d\s+()/-]/g, '') })}
+                      onBlur={() => markTouched('phone')}
+                      onChange={(e) => update('phone', e.target.value.replace(/[^\d\s+()/-]/g, ''))}
                     />
+
                   </div>
                   <p className="text-[11px] !text-slate-400">
                     {customCode
@@ -490,7 +587,11 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {step === 3 && (
             <Chapter title="IHR BEDARF" sub={`Schwerpunkt: ${data.category}`}>
               <div className="space-y-8 sm:space-y-10">
-                <Group label="Gewünschter Lieferzeitraum (Mehrfachauswahl)">
+                <Group
+                  label="Gewünschter Lieferzeitraum (Mehrfachauswahl) *"
+                  valid={!!data.delivery_preference}
+                  error={attempted[3] && !data.delivery_preference ? 'Bitte mindestens einen Lieferzeitraum wählen.' : null}
+                >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {DELIVERY.map((d) => (
                       <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) })}>
@@ -499,7 +600,11 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     ))}
                   </div>
                 </Group>
-                <Group label="Beratungsart (Mehrfachauswahl)">
+                <Group
+                  label="Beratungsart (Mehrfachauswahl) *"
+                  valid={!!data.consultation_type}
+                  error={attempted[3] && !data.consultation_type ? 'Bitte mindestens eine Beratungsart wählen.' : null}
+                >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {CONSULTATION.map((c) => (
                       <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) })}>
@@ -518,14 +623,21 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     ))}
                   </div>
                 </Group>
-                <Group label="Ihre Nachricht (optional)">
+                <Group label="Ihre Nachricht (optional)" error={showError('notes')}>
                   <textarea
                     rows={5}
                     value={data.notes}
-                    onChange={(e) => setData({ ...data, notes: e.target.value })}
-                    className={cn(fieldCls, 'h-auto py-3 resize-none')}
+                    maxLength={2100}
+                    aria-invalid={!!showError('notes')}
+                    onBlur={() => markTouched('notes')}
+                    onChange={(e) => update('notes', e.target.value)}
+                    className={cn(fieldCls, 'h-auto py-3 resize-none', showError('notes') && '!border-red-300 focus:!ring-red-200')}
                   />
+                  <p className={cn('mt-1 text-[11px] text-right', data.notes.length > 2000 ? '!text-red-500' : '!text-slate-400')}>
+                    {data.notes.length}/2000
+                  </p>
                 </Group>
+
               </div>
             </Chapter>
           )}
@@ -534,10 +646,16 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {step === LAST_STEP && (
             <Chapter title="ABSCHLUSS" sub="Bitte bestätigen Sie die Datenschutzhinweise.">
               <div className="space-y-4 max-w-2xl">
-                <label className="flex items-start gap-3 rounded-2xl border !border-slate-200 !bg-white p-4 cursor-pointer">
+                <label
+                  className={cn(
+                    'flex items-start gap-3 rounded-2xl border !bg-white p-4 cursor-pointer transition',
+                    attempted[LAST_STEP] && !data.consent_data ? '!border-red-300' : '!border-slate-200',
+                  )}
+                >
                   <input
                     type="checkbox"
                     checked={data.consent_data}
+                    aria-invalid={attempted[LAST_STEP] && !data.consent_data}
                     onChange={(e) => setData({ ...data, consent_data: e.target.checked })}
                     className="mt-1 h-4 w-4 accent-sky-500"
                   />
@@ -545,10 +663,21 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     Ich stimme der Verarbeitung meiner Daten zur Bearbeitung meiner Anfrage zu.
                   </span>
                 </label>
-                <label className="flex items-start gap-3 rounded-2xl border !border-slate-200 !bg-white p-4 cursor-pointer">
+                {attempted[LAST_STEP] && !data.consent_data && (
+                  <p role="alert" className="-mt-2 text-[12px] !text-red-500 font-light">
+                    Diese Einwilligung ist erforderlich.
+                  </p>
+                )}
+                <label
+                  className={cn(
+                    'flex items-start gap-3 rounded-2xl border !bg-white p-4 cursor-pointer transition',
+                    attempted[LAST_STEP] && !data.consent_contact ? '!border-red-300' : '!border-slate-200',
+                  )}
+                >
                   <input
                     type="checkbox"
                     checked={data.consent_contact}
+                    aria-invalid={attempted[LAST_STEP] && !data.consent_contact}
                     onChange={(e) => setData({ ...data, consent_contact: e.target.checked })}
                     className="mt-1 h-4 w-4 accent-sky-500"
                   />
@@ -556,6 +685,11 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     Ich bin mit einer Kontaktaufnahme per Telefon, E-Mail oder WhatsApp einverstanden.
                   </span>
                 </label>
+                {attempted[LAST_STEP] && !data.consent_contact && (
+                  <p role="alert" className="-mt-2 text-[12px] !text-red-500 font-light">
+                    Diese Einwilligung ist erforderlich.
+                  </p>
+                )}
                 {publicMode && !captchaUnavailable && (
                   <Turnstile
                     theme="light"
@@ -564,6 +698,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onUnavailable={() => setCaptchaUnavailable(true)}
                   />
                 )}
+                {attempted[LAST_STEP] && publicMode && !captchaUnavailable && !captchaToken && (
+                  <p role="alert" className="text-[12px] !text-red-500 font-light">
+                    Bitte bestätigen Sie die Sicherheitsprüfung.
+                  </p>
+                )}
+
                 {error && (
                   <div className="rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-sm text-rose-700">{error}</div>
                 )}
@@ -605,19 +745,32 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             {step < LAST_STEP ? (
               <button
                 type="button"
-                onClick={() => setStep((s) => s + 1)}
-                disabled={!canContinue() || submitting}
-                className="h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full bg-slate-900 text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300 disabled:shadow-none"
+                onClick={() => (canContinue() ? setStep((s) => s + 1) : revealStepErrors())}
+                aria-disabled={!canContinue()}
+                disabled={submitting}
+                className={cn(
+                  'h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap transition',
+                  canContinue()
+                    ? 'bg-slate-900 shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800'
+                    : 'bg-slate-300',
+                )}
               >
                 Weiter <ArrowRight className="inline h-4 w-4 ml-2" />
               </button>
             ) : (
               <button
                 type="button"
-                onClick={submit}
-                disabled={!canContinue() || submitting}
-                className="h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full bg-slate-900 text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300"
+                onClick={() => (canContinue() ? submit() : revealStepErrors())}
+                aria-disabled={!canContinue()}
+                disabled={submitting}
+                className={cn(
+                  'h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap transition',
+                  canContinue()
+                    ? 'bg-slate-900 shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800'
+                    : 'bg-slate-300',
+                )}
               >
+
 
                 {submitting ? <Loader2 className="inline h-4 w-4 mr-2 animate-spin" /> : <Send className="inline h-4 w-4 mr-2" />}
                 Beratung absenden
@@ -652,33 +805,74 @@ function Chapter({ title, sub, children }: { title: string; sub?: string; childr
   );
 }
 
-function Group({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <p className="text-[10px] sm:text-[11px] tracking-[0.22em] sm:tracking-[0.28em] uppercase !text-slate-500 mb-3 sm:mb-4">{label}</p>
-
-      {children}
-    </div>
-  );
-}
-
-function Labeled({
+function Group({
   label,
   error,
+  valid,
   children,
 }: {
   label: string;
   error?: string | null;
+  valid?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="flex items-center gap-2 text-[10px] sm:text-[11px] tracking-[0.22em] sm:tracking-[0.28em] uppercase !text-slate-500 mb-3 sm:mb-4">
+        {label}
+        {valid && !error && (
+          <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+            <Check className="h-2.5 w-2.5" />
+          </span>
+        )}
+      </p>
+
+      {children}
+      {error && (
+        <p role="alert" aria-live="polite" className="mt-2 text-[12px] !text-red-500 font-light">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+
+function Labeled({
+  label,
+  error,
+  valid,
+  hint,
+  children,
+}: {
+  label: string;
+  error?: string | null;
+  valid?: boolean;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-[11px] tracking-[0.24em] uppercase !text-slate-500">{label}</label>
+      <label className="flex items-center gap-2 text-[11px] tracking-[0.24em] uppercase !text-slate-500">
+        {label}
+        {valid && !error && (
+          <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+            <Check className="h-2.5 w-2.5" />
+          </span>
+        )}
+      </label>
       {children}
-      {error && <p className="text-[12px] !text-red-500 font-light">{error}</p>}
+      {error ? (
+        <p role="alert" aria-live="polite" className="text-[12px] !text-red-500 font-light">
+          {error}
+        </p>
+      ) : hint ? (
+        <p className="text-[11px] !text-slate-400 font-light">{hint}</p>
+      ) : null}
     </div>
   );
 }
+
 
 function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
