@@ -2169,6 +2169,8 @@ function AppRoutes() {
           <Route path="/product-hub/sync-health" element={<ProtectedRoute><PhSyncHealth /></ProtectedRoute>} />
           <Route path="/product-hub/einstellungen" element={<ProtectedRoute><PhEinstellungen /></ProtectedRoute>} />
           <Route path="/product-hub/validierung" element={<ProtectedRoute><PhValidierung /></ProtectedRoute>} />
+          <Route path="/product-hub/master-review" element={<ProtectedRoute><PhMasterReview /></ProtectedRoute>} />
+          <Route path="/product-hub/master-review/:id" element={<ProtectedRoute><PhMasterReview /></ProtectedRoute>} />
           <Route path="/product-hub/veroeffentlichungen" element={<ProtectedRoute><PhVeroeffentlichungen /></ProtectedRoute>} />
 
 
