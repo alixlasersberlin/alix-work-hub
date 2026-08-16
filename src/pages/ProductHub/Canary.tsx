@@ -57,7 +57,12 @@ export default function ProductHubCanary() {
       const { data, error } = await supabase.functions.invoke('product-hub-de-canary', {
         body: { action, product_id: product?.id, ...body },
       });
-      if (error) throw error;
+      if (error) {
+        // Klartext-Fehler aus der Function-Antwort holen statt "non-2xx status code"
+        let detail = '';
+        try { detail = (await (error as any)?.context?.json())?.error || ''; } catch { /* ignore */ }
+        throw new Error(detail || error.message || 'Aktion fehlgeschlagen');
+      }
       if ((data as any)?.error) throw new Error((data as any).error);
       await load();
       return data as any;
@@ -66,6 +71,7 @@ export default function ProductHubCanary() {
       return null;
     } finally { setBusy(null); }
   };
+
 
   const dash = useMemo(() => {
     const checks = batch?.checks || {};
