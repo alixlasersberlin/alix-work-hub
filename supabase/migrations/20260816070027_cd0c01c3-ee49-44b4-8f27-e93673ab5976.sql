@@ -1,0 +1,1 @@
+UPDATE public.ph_settings SET value = jsonb_build_object('phase','B','com_de_sync_active',true,'alixwork_master',false), updated_at = now() WHERE key = 'migration_phase';
