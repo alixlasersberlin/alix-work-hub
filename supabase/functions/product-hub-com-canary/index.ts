@@ -234,14 +234,36 @@ Deno.serve(async (req) => {
     // ---------------------------------------------------------------- Diagnose
     if (action === "com_dump") {
       const { product } = await fetchComProduct();
+      const master = await loadMaster().catch(() => null);
       const resolved: Record<string, string | null> = {};
+      const mapping: any[] = [];
       const empty: string[] = [], missing: string[] = [];
       for (const f of FIELDS) {
         const v = liveValue(product, f);
         resolved[f] = v;
-        if (!v) (deepHas(product, fieldKeys(f)) ? empty : missing).push(f);
+        const hasTarget = targetExists(product, f);
+        if (!hasTarget) missing.push(f);
+        else if (!v) empty.push(f);
+        mapping.push({
+          field: f,
+          com_target: FIELD_MAP[f],
+          target_exists: hasTarget,
+          live_value: v,
+          master_value: master ? asText((master as any)[f]) : null,
+          plan: !hasTarget ? "NO_TARGET" : v ? "UPDATE_OR_NO_CHANGE" : "CREATE",
+        });
       }
-      return json(200, { com_product_id: COM_BLUEICE_ID, raw: product, resolved, empty, missing });
+      return json(200, {
+        com_product_id: COM_BLUEICE_ID,
+        raw: product,
+        resolved,
+        mapping,
+        empty,
+        missing,
+        summary: missing.length
+          ? `Mapping unvollstaendig: ${missing.join(", ")}`
+          : `Mapping vollstaendig · ${empty.length} Felder werden auf COM neu angelegt (CREATE): ${empty.join(", ") || "keine"}`,
+      });
     }
 
     // -------------------------------------------------------------- Selftest
