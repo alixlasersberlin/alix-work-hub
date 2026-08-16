@@ -211,16 +211,22 @@ Deno.serve(async (req) => {
       // Live unmittelbar lesen – niemals alte Importwerte verwenden
       const { product: live, payloadHash } = await fetchDeProduct(alixId);
 
-      // Offene DE-DRAFT-Diffs dieses Geraets
+      // Offene DE-Diffs dieses Geraets – auch erneut snapshotbar (Re-Snapshot nach
+      // gestopptem Lauf). Bereits VERIFIED/SKIPPED Felder bleiben unberuehrt.
       const { data: queue } = await admin
         .from("ph_publish_queue")
         .select("*")
         .eq("product_id", productId)
         .eq("channel_code", "de")
-        .eq("status", "DRAFT")
-        .is("batch_id", null)
+        .neq("verify_status", "VERIFIED")
+        .in("status", ["DRAFT", "PUBLISHED", "FAILED"])
         .order("created_at", { ascending: true });
-      if (!queue?.length) return json(400, { error: "Keine offenen DE-DRAFT-Diffs vorhanden" });
+      if (!queue?.length) {
+        return json(400, {
+          error: "Keine offenen DE-Diffs vorhanden – alle Felder sind bereits verifiziert (SKIPPED/PUBLISHED).",
+        });
+      }
+
 
       const masterHash = await sha256(JSON.stringify(queue.map((q: any) => [q.field_key, q.new_value])));
 
