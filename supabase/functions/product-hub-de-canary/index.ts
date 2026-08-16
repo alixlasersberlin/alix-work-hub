@@ -21,10 +21,14 @@ const DE_WRITE = "https://alix-legacy-reborn.lovable.app/api/public/product-hub/
 const BLUEICE_ID = "ba67ae10-0100-899a-bb67-278abb6837aa";
 
 // Master-Spalte -> Feldname am DE-Endpoint
+const UA = "Mozilla/5.0 (compatible; AlixWorkProductHub/1.0)";
+
 const FIELD_MAP: Record<string, string> = {
-  name: "name",
+  name: "product_name",
+  product_name: "product_name",
   model: "model",
-  wavelengths: "wavelengths",
+  wavelengths: "wavelengths_nm",
+  wavelengths_nm: "wavelengths_nm",
   power: "power",
   cooling: "cooling",
   fluence: "fluence",
@@ -79,7 +83,7 @@ function liveValue(raw: any, field: string): string | null {
 
 async function fetchDeProduct(alixId: string) {
   const key = Deno.env.get("DE_EXPORT_API_KEY") || "";
-  const res = await fetch(DE_EXPORT, { headers: { "x-api-key": key } });
+  const res = await fetch(DE_EXPORT, { headers: { "x-api-key": key, "User-Agent": UA } });
   const text = await res.text();
   if (!res.ok) throw new Error(`DE Export ${res.status}: ${text.slice(0, 200)}`);
   const body = JSON.parse(text);
@@ -96,8 +100,8 @@ async function writeCall(body: Record<string, unknown>) {
   if (!key) return { status: 0, body: { error: "DE_PRODUCT_HUB_WRITE_KEY fehlt" } as any, ok: false };
   const res = await fetch(DE_WRITE, {
     method: "PATCH",
-    headers: { "x-api-key": key, "Content-Type": "application/json" },
-    body: JSON.stringify({ ...body, dry_run: true }),
+    headers: { "x-api-key": key, "Content-Type": "application/json", "User-Agent": UA },
+    body: JSON.stringify({ publish_id: `alixwork-${Date.now()}`, ...body, dry_run: true }),
   });
   const raw = await res.text();
   let parsed: any = raw;
@@ -136,25 +140,25 @@ Deno.serve(async (req) => {
       const before = await fetchDeProduct(BLUEICE_ID);
       const liveName = liveValue(before.product, "name");
 
-      const t1 = await writeCall({ alix_product_id: BLUEICE_ID, field: "name", value: liveName, expected_previous_value: liveName });
+      const t1 = await writeCall({ alix_product_id: BLUEICE_ID, field: "product_name", value: liveName, expected_previous_value: liveName });
       tests.push({ name: "Auth funktioniert", pass: t1.status !== 401 && t1.status !== 403 && t1.status !== 0, status: t1.status, detail: t1.status === 0 ? "Write-Key fehlt" : "" });
-      tests.push({ name: "BlueIce-ID wird akzeptiert", pass: t1.ok || codeOf(t1.body) !== "CANARY_SCOPE", status: t1.status, detail: codeOf(t1.body) });
+      tests.push({ name: "BlueIce-ID wird akzeptiert", pass: t1.ok, status: t1.status, detail: String((t1.body as any)?.status || codeOf(t1.body)) });
       tests.push({ name: "Erlaubtes Feld akzeptiert", pass: t1.ok, status: t1.status, detail: typeof t1.body === "object" ? JSON.stringify(t1.body).slice(0, 200) : String(t1.body).slice(0, 200) });
 
-      const t2 = await writeCall({ alix_product_id: "00000000-0000-0000-0000-000000000000", field: "name", value: "X", expected_previous_value: null });
-      tests.push({ name: "Fremdes Geraet -> CANARY_SCOPE", pass: !t2.ok && (codeOf(t2.body).includes("CANARY_SCOPE") || t2.status === 403), status: t2.status, detail: codeOf(t2.body) });
+      const t2 = await writeCall({ alix_product_id: "00000000-0000-0000-0000-000000000000", field: "product_name", value: "X", expected_previous_value: null });
+      tests.push({ name: "Fremdes Geraet abgewiesen (Scope)", pass: !t2.ok && [403, 404].includes(t2.status), status: t2.status, detail: codeOf(t2.body) });
 
       const t3 = await writeCall({ alix_product_id: BLUEICE_ID, field: "price", value: "1", expected_previous_value: null });
-      tests.push({ name: "Verbotenes Feld abgelehnt", pass: !t3.ok, status: t3.status, detail: codeOf(t3.body) });
+      tests.push({ name: "Verbotenes Feld abgelehnt (FIELD_NOT_ALLOWED)", pass: !t3.ok && codeOf(t3.body).includes("FIELD_NOT_ALLOWED"), status: t3.status, detail: codeOf(t3.body) });
 
-      const t4 = await writeCall({ alix_product_id: BLUEICE_ID, field: "name", value: liveName, expected_previous_value: "__ABSICHTLICH_FALSCH__" });
+      const t4 = await writeCall({ alix_product_id: BLUEICE_ID, field: "product_name", value: liveName, expected_previous_value: "__ABSICHTLICH_FALSCH__" });
       tests.push({ name: "Optimistic Lock (409 CONFLICT)", pass: t4.status === 409 || codeOf(t4.body).includes("CONFLICT"), status: t4.status, detail: codeOf(t4.body) });
 
       const after = await fetchDeProduct(BLUEICE_ID);
       tests.push({ name: "dry_run veraendert keine Daten", pass: after.payloadHash === before.payloadHash, status: 200, detail: after.payloadHash.slice(0, 12) });
 
       const allPass = tests.every((t) => t.pass);
-      if (productId) {
+      {
         await admin.from("ph_settings").upsert(
           { key: "canary_de_write", value: { state: allPass ? "READY" : "NOT READY", tests, checked_at: new Date().toISOString() }, updated_at: new Date().toISOString() },
           { onConflict: "key" },
@@ -204,7 +208,14 @@ Deno.serve(async (req) => {
       for (const q of queue) {
         const field = String(q.field_key);
         const deField = FIELD_MAP[field] || field;
-        const current = liveValue(live, deField);
+        const probe = await writeCall({
+          publish_id: `snapshot-${batch.id}-${field}`,
+          alix_product_id: alixId,
+          field: deField,
+          value: asText(q.new_value),
+        });
+        const probed = probe.ok ? asText((probe.body as any)?.current_value) : null;
+        const current = probed ?? liveValue(live, deField);
         const target = asText(typeof q.new_value === "string" ? q.new_value : (q.new_value as any));
         snapshots.push({
           batch_id: batch.id,
@@ -284,6 +295,7 @@ Deno.serve(async (req) => {
           field: FIELD_MAP[s.field] || s.field,
           value: s.target_master_value,
           expected_previous_value: s.current_live_value,
+          publish_id: `${batchId}:${s.field}`,
           idempotency_key: `${batchId}:${s.field}`,
         });
         results.push({ field: s.field, status: r.status, pass: r.ok, code: codeOf(r.body) });
