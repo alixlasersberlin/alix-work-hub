@@ -92,19 +92,50 @@ function liveValue(raw: any, field: string): string | null {
 }
 
 
+function collectProducts(body: any): any[] {
+  if (Array.isArray(body)) return body;
+  const direct = body?.products || body?.data || body?.items || body?.results || body?.rows;
+  if (Array.isArray(direct)) return direct;
+  // tief suchen: erstes Array mit Objekten, die produktartige Keys haben
+  const out: any[] = [];
+  const walk = (v: any, d = 0) => {
+    if (!v || typeof v !== "object" || d > 4 || out.length) return;
+    if (Array.isArray(v)) {
+      if (v.some((x) => x && typeof x === "object" && ("alix_product_id" in x || "slug" in x || "name" in x || "product_name" in x))) {
+        out.push(...v);
+      }
+      return;
+    }
+    for (const val of Object.values(v)) walk(val, d + 1);
+  };
+  walk(body);
+  if (out.length) return out;
+  if (direct && typeof direct === "object") return [direct];
+  if (body?.product) return [body.product];
+  return [];
+}
+
 async function fetchDeProduct(alixId: string) {
   const key = Deno.env.get("DE_EXPORT_API_KEY") || "";
   const res = await fetch(DE_EXPORT, { headers: { "x-api-key": key, "User-Agent": UA } });
   const text = await res.text();
   if (!res.ok) throw new Error(`DE Export ${res.status}: ${text.slice(0, 200)}`);
-  const body = JSON.parse(text);
-  const list: any[] = body.products || body.data || body.items || [];
-  const hit = list.find(
-    (p) => String(p.alix_product_id || p.alixProductId || p.id || "") === alixId,
-  );
-  if (!hit) throw new Error("BlueIce im DE-Export nicht gefunden");
+  let body: any;
+  try { body = JSON.parse(text); } catch { throw new Error(`DE Export lieferte kein JSON: ${text.slice(0, 200)}`); }
+  const list = collectProducts(body);
+  const idOf = (p: any) => String(p?.alix_product_id ?? p?.alixProductId ?? p?.product_id ?? p?.id ?? "");
+  const nameOf = (p: any) => String(p?.name ?? p?.product_name ?? p?.model ?? p?.slug ?? "").toLowerCase().replace(/[\s_-]/g, "");
+  let hit = list.find((p) => idOf(p) === alixId);
+  if (!hit) hit = list.find((p) => nameOf(p).includes("blueice"));
+  if (!hit) {
+    const sample = list.slice(0, 10).map((p) => `${idOf(p)}|${p?.name ?? p?.product_name ?? "?"}`).join(", ");
+    throw new Error(
+      `BlueIce im DE-Export nicht gefunden (${list.length} Produkte, Top-Keys: ${Object.keys(body || {}).slice(0, 8).join(",")}${sample ? `, Beispiele: ${sample}` : ""})`,
+    );
+  }
   return { product: hit, payloadHash: await sha256(JSON.stringify(hit)) };
 }
+
 
 async function writeCall(body: Record<string, unknown>, dryRun = true) {
   const key = Deno.env.get("DE_PRODUCT_HUB_WRITE_KEY") || "";
