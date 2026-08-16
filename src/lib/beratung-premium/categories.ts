@@ -5,10 +5,6 @@ import imgHair from '@/assets/wizard-premium/haarentfernung.jpg';
 import imgSkin from '@/assets/wizard-premium/haut.jpg';
 import imgBody from '@/assets/wizard-premium/koerper.jpg';
 import imgTattoo from '@/assets/wizard-premium/tattoo.jpg';
-import devHair from '@/assets/wizard-premium/device-haarentfernung.jpg';
-import devSkin from '@/assets/wizard-premium/device-haut.jpg';
-import devBody from '@/assets/wizard-premium/device-koerper.jpg';
-import devTattoo from '@/assets/wizard-premium/device-tattoo.jpg';
 
 export type PremiumCategory =
   | 'Haarentfernung'
@@ -19,6 +15,8 @@ export type PremiumCategory =
 export type PremiumDevice = {
   name: string;
   features: [string, string, string];
+  /** Nur Originalfotos: URL/Import eines echten ALIX Produktfotos. Leer = keine Abbildung. */
+  photo?: string;
 };
 
 export type PremiumCategoryDef = {
@@ -26,8 +24,6 @@ export type PremiumCategoryDef = {
   no: string;
   desc: string;
   img: string;
-  /** Produktfoto für die Gerätekarten dieser Kategorie. */
-  deviceImg: string;
   /** Tailwind gradient tokens für die visuelle Welt der Kategorie. */
   world: string;
   devices: PremiumDevice[];
@@ -39,7 +35,6 @@ export const PREMIUM_CATEGORIES: PremiumCategoryDef[] = [
     no: '01',
     desc: 'Dauerhafte Haarreduktion mit Dioden- und SHR-Technologie.',
     img: imgHair,
-    deviceImg: devHair,
     world: 'from-[#f7f9fb] via-[#eef4f8] to-[#e2edf5]',
     devices: [
       { name: 'Alix BlueIce Smart KI', features: ['KI-gestützte Parametrik', 'Kontaktkühlung', 'Hohe Behandlungsgeschwindigkeit'] },
@@ -55,7 +50,6 @@ export const PREMIUM_CATEGORIES: PremiumCategoryDef[] = [
     no: '02',
     desc: 'Hautbild, Straffung und Regeneration auf medizinischem Niveau.',
     img: imgSkin,
-    deviceImg: devSkin,
     world: 'from-[#fdfbf7] via-[#f7f1e6] to-[#efe6d6]',
     devices: [
       { name: 'Alix Secret Twin', features: ['Fraktionierte RF-Microneedling', 'Zwei Handstücke', 'Präzise Tiefensteuerung'] },
@@ -71,7 +65,6 @@ export const PREMIUM_CATEGORIES: PremiumCategoryDef[] = [
     no: '03',
     desc: 'Body Contouring, Cellulite und Fettreduktion.',
     img: imgBody,
-    deviceImg: devBody,
     world: 'from-[#fafafa] via-[#eceef0] to-[#dfe3e6]',
     devices: [
       { name: 'ALIX Sculpt IQ', features: ['Muskelstimulation', 'Intelligente Programme', 'Mehrere Applikatoren'] },
@@ -87,7 +80,6 @@ export const PREMIUM_CATEGORIES: PremiumCategoryDef[] = [
     no: '04',
     desc: 'Tattooentfernung und Pigmentkorrektur mit Q-Switch-Technologie.',
     img: imgTattoo,
-    deviceImg: devTattoo,
     world: 'from-[#f4f5f6] via-[#e6e8ea] to-[#d3d7db]',
     devices: [
       { name: 'Alix Shark', features: ['Q-Switch-Technologie', 'Mehrere Wellenlängen', 'Hohe Spitzenleistung'] },
@@ -103,6 +95,3 @@ export function devicesForCategory(cat: PremiumCategory | ''): PremiumDevice[] {
   return PREMIUM_CATEGORIES.find((c) => c.key === cat)?.devices ?? [];
 }
 
-export function deviceImageForCategory(cat: PremiumCategory | ''): string | null {
-  return PREMIUM_CATEGORIES.find((c) => c.key === cat)?.deviceImg ?? null;
-}
