@@ -587,7 +587,11 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {step === 3 && (
             <Chapter title="IHR BEDARF" sub={`Schwerpunkt: ${data.category}`}>
               <div className="space-y-8 sm:space-y-10">
-                <Group label="Gewünschter Lieferzeitraum (Mehrfachauswahl)">
+                <Group
+                  label="Gewünschter Lieferzeitraum (Mehrfachauswahl) *"
+                  valid={!!data.delivery_preference}
+                  error={attempted[3] && !data.delivery_preference ? 'Bitte mindestens einen Lieferzeitraum wählen.' : null}
+                >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {DELIVERY.map((d) => (
                       <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) })}>
@@ -596,7 +600,11 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     ))}
                   </div>
                 </Group>
-                <Group label="Beratungsart (Mehrfachauswahl)">
+                <Group
+                  label="Beratungsart (Mehrfachauswahl) *"
+                  valid={!!data.consultation_type}
+                  error={attempted[3] && !data.consultation_type ? 'Bitte mindestens eine Beratungsart wählen.' : null}
+                >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {CONSULTATION.map((c) => (
                       <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) })}>
@@ -615,14 +623,21 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     ))}
                   </div>
                 </Group>
-                <Group label="Ihre Nachricht (optional)">
+                <Group label="Ihre Nachricht (optional)" error={showError('notes')}>
                   <textarea
                     rows={5}
                     value={data.notes}
-                    onChange={(e) => setData({ ...data, notes: e.target.value })}
-                    className={cn(fieldCls, 'h-auto py-3 resize-none')}
+                    maxLength={2100}
+                    aria-invalid={!!showError('notes')}
+                    onBlur={() => markTouched('notes')}
+                    onChange={(e) => update('notes', e.target.value)}
+                    className={cn(fieldCls, 'h-auto py-3 resize-none', showError('notes') && '!border-red-300 focus:!ring-red-200')}
                   />
+                  <p className={cn('mt-1 text-[11px] text-right', data.notes.length > 2000 ? '!text-red-500' : '!text-slate-400')}>
+                    {data.notes.length}/2000
+                  </p>
                 </Group>
+
               </div>
             </Chapter>
           )}
