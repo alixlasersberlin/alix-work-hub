@@ -50,6 +50,7 @@ export default function ProductHubComCanary() {
   const batch = state?.batch;
   const snaps: any[] = state?.snapshots || [];
   const checks = batch?.checks || {};
+  const writeBlocker = (state?.tests || []).find((t: any) => t.name === 'COM-Schreib-Endpunkt erreichbar' && !t.pass)?.detail;
 
   const dash = useMemo(() => ({
     com_write: state?.com_write ?? 'UNKNOWN',
@@ -100,6 +101,14 @@ export default function ProductHubComCanary() {
           </div>
         </CardContent>
       </Card>
+
+      {writeBlocker && (
+        <div className="rounded border border-destructive bg-destructive/10 px-4 py-3 text-sm">
+          <p className="font-semibold text-destructive">COM Live-Push blockiert</p>
+          <p className="mt-1 text-muted-foreground">{writeBlocker}</p>
+          <p className="mt-1 text-xs text-muted-foreground">Phase B bleibt aktiv. Snapshot, Dry Run und Veröffentlichung bleiben gesperrt.</p>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" disabled={!canRun || !!busy} onClick={async () => { const r = await call('com_dump'); if (r) { console.log('COM dump', r); toast.success(`Diagnose: ${r.missing?.length ? 'fehlend -> ' + r.missing.join(', ') : 'alle Felder vorhanden'}${r.empty?.length ? ' · leer -> ' + r.empty.join(', ') : ''}`); } }}>
