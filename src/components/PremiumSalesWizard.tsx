@@ -745,19 +745,32 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             {step < LAST_STEP ? (
               <button
                 type="button"
-                onClick={() => setStep((s) => s + 1)}
-                disabled={!canContinue() || submitting}
-                className="h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full bg-slate-900 text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300 disabled:shadow-none"
+                onClick={() => (canContinue() ? setStep((s) => s + 1) : revealStepErrors())}
+                aria-disabled={!canContinue()}
+                disabled={submitting}
+                className={cn(
+                  'h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap transition',
+                  canContinue()
+                    ? 'bg-slate-900 shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800'
+                    : 'bg-slate-300',
+                )}
               >
                 Weiter <ArrowRight className="inline h-4 w-4 ml-2" />
               </button>
             ) : (
               <button
                 type="button"
-                onClick={submit}
-                disabled={!canContinue() || submitting}
-                className="h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full bg-slate-900 text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800 transition disabled:bg-slate-300"
+                onClick={() => (canContinue() ? submit() : revealStepErrors())}
+                aria-disabled={!canContinue()}
+                disabled={submitting}
+                className={cn(
+                  'h-13 min-h-[52px] flex-1 sm:flex-none px-6 sm:px-8 rounded-full text-white text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap transition',
+                  canContinue()
+                    ? 'bg-slate-900 shadow-[0_20px_45px_-25px_rgba(15,23,42,0.8)] hover:bg-slate-800'
+                    : 'bg-slate-300',
+                )}
               >
+
 
                 {submitting ? <Loader2 className="inline h-4 w-4 mr-2 animate-spin" /> : <Send className="inline h-4 w-4 mr-2" />}
                 Beratung absenden
