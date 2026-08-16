@@ -676,6 +676,69 @@ Deno.serve(async (req) => {
       return json(200, { publish: allDone ? "SUCCESS" : "PARTIAL_FAILURE", written, skipped, verified, failed, stopped_at: stopped, results, compare, rollback_available: written > 0 });
     }
 
+    // ---------------------------------------- Re-Verifikation (KEIN Schreiben)
+    // Liest den COM-Live-Datensatz erneut und vergleicht feldweise gegen den
+    // Master – ausschliesslich lesend, kein zweiter Blind-Write.
+    if (action === "verify") {
+      const batchId = payload.batch_id;
+      if (!batchId) return json(400, { error: "batch_id fehlt" });
+      const { data: batch } = await admin.from("ph_canary_batches").select("*").eq("id", batchId).eq("channel_code", "com").maybeSingle();
+      if (!batch) return json(404, { error: "COM-Batch nicht gefunden" });
+
+      const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
+      const fmap = await resolveFieldMap();
+      const fresh = await fetchComProduct();
+
+      const results: any[] = [];
+      let verified = 0, mismatched = 0, skipped = 0;
+      for (const s of snaps || []) {
+        if (s.value_state === "NO_CHANGE" || s.value_state === "CONFLICT") {
+          skipped++;
+          results.push({ field: s.field, action: "SKIP", reason: s.value_state });
+          continue;
+        }
+        const comField = fmap[s.field];
+        const rb = readbackValue(fresh.product, s.field, comField);
+        const ok = normCompare(s.field, rb.value, s.target_master_value);
+        if (ok) verified++; else mismatched++;
+        await admin.from("ph_canary_snapshots").update({ readback_value: rb.value, readback_at: new Date().toISOString() }).eq("id", s.id);
+        if (s.publish_id) {
+          await admin.from("ph_publish_queue").update({
+            status: ok ? "PUBLISHED" : "PUBLISHED",
+            verify_status: ok ? "VERIFIED" : "MISMATCH",
+            verified_at: ok ? new Date().toISOString() : null,
+            notes: ok ? `Read-back verifiziert aus ${rb.source}` : `Read-back weicht ab (Quelle ${rb.source}, live="${rb.value}", soll="${s.target_master_value}")`,
+          }).eq("id", s.publish_id);
+        }
+        results.push({ field: s.field, action: "VERIFY", com_field: comField, readback: rb.value, readback_source: rb.source, master: s.target_master_value, verified: ok });
+      }
+
+      const allOk = mismatched === 0 && results.length > 0;
+      await admin.from("ph_canary_batches").update({
+        status: allOk ? "PUBLISHED" : batch.status,
+        published_at: allOk ? (batch.published_at || new Date().toISOString()) : batch.published_at,
+        checks: {
+          ...(batch.checks || {}),
+          publish: allOk ? "SUCCESS" : "PARTIAL_FAILURE",
+          verify: allOk ? "VERIFIED" : "MISMATCH",
+          verified, mismatched, skipped,
+          verify_results: results,
+          verified_at: new Date().toISOString(),
+          compare: { match: allOk, diffs: results.filter((r) => r.verified === false), export_hash: fresh.payloadHash, compared_at: new Date().toISOString() },
+        },
+        updated_at: new Date().toISOString(),
+      }).eq("id", batchId);
+
+      await admin.from("ph_sync_log").insert({
+        channel_code: "com", direction: "inbound", operation: "canary_verify",
+        status: allOk ? "success" : "error",
+        message: `BlueIce COM Canary Re-Verifikation: ${verified} ok, ${mismatched} abweichend, ${skipped} uebersprungen`,
+      });
+
+      return json(200, { verify: allOk ? "VERIFIED" : "MISMATCH", verified, mismatched, skipped, results });
+    }
+
+
     // --------------------------------------------------------------- Rollback
     if (action === "rollback") {
       const batchId = payload.batch_id;
