@@ -646,10 +646,16 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {step === LAST_STEP && (
             <Chapter title="ABSCHLUSS" sub="Bitte bestätigen Sie die Datenschutzhinweise.">
               <div className="space-y-4 max-w-2xl">
-                <label className="flex items-start gap-3 rounded-2xl border !border-slate-200 !bg-white p-4 cursor-pointer">
+                <label
+                  className={cn(
+                    'flex items-start gap-3 rounded-2xl border !bg-white p-4 cursor-pointer transition',
+                    attempted[LAST_STEP] && !data.consent_data ? '!border-red-300' : '!border-slate-200',
+                  )}
+                >
                   <input
                     type="checkbox"
                     checked={data.consent_data}
+                    aria-invalid={attempted[LAST_STEP] && !data.consent_data}
                     onChange={(e) => setData({ ...data, consent_data: e.target.checked })}
                     className="mt-1 h-4 w-4 accent-sky-500"
                   />
@@ -657,10 +663,21 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     Ich stimme der Verarbeitung meiner Daten zur Bearbeitung meiner Anfrage zu.
                   </span>
                 </label>
-                <label className="flex items-start gap-3 rounded-2xl border !border-slate-200 !bg-white p-4 cursor-pointer">
+                {attempted[LAST_STEP] && !data.consent_data && (
+                  <p role="alert" className="-mt-2 text-[12px] !text-red-500 font-light">
+                    Diese Einwilligung ist erforderlich.
+                  </p>
+                )}
+                <label
+                  className={cn(
+                    'flex items-start gap-3 rounded-2xl border !bg-white p-4 cursor-pointer transition',
+                    attempted[LAST_STEP] && !data.consent_contact ? '!border-red-300' : '!border-slate-200',
+                  )}
+                >
                   <input
                     type="checkbox"
                     checked={data.consent_contact}
+                    aria-invalid={attempted[LAST_STEP] && !data.consent_contact}
                     onChange={(e) => setData({ ...data, consent_contact: e.target.checked })}
                     className="mt-1 h-4 w-4 accent-sky-500"
                   />
@@ -668,6 +685,11 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     Ich bin mit einer Kontaktaufnahme per Telefon, E-Mail oder WhatsApp einverstanden.
                   </span>
                 </label>
+                {attempted[LAST_STEP] && !data.consent_contact && (
+                  <p role="alert" className="-mt-2 text-[12px] !text-red-500 font-light">
+                    Diese Einwilligung ist erforderlich.
+                  </p>
+                )}
                 {publicMode && !captchaUnavailable && (
                   <Turnstile
                     theme="light"
@@ -676,6 +698,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onUnavailable={() => setCaptchaUnavailable(true)}
                   />
                 )}
+                {attempted[LAST_STEP] && publicMode && !captchaUnavailable && !captchaToken && (
+                  <p role="alert" className="text-[12px] !text-red-500 font-light">
+                    Bitte bestätigen Sie die Sicherheitsprüfung.
+                  </p>
+                )}
+
                 {error && (
                   <div className="rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-sm text-rose-700">{error}</div>
                 )}
