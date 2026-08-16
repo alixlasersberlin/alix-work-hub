@@ -88,7 +88,7 @@ const chrome =
   'bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(203,213,225,0.55)_45%,rgba(255,255,255,0.95)_70%,rgba(186,214,232,0.6))]';
 
 const fieldCls =
-  'w-full h-12 rounded-xl border !border-slate-200 !bg-white px-4 text-[15px] !text-slate-900 placeholder:text-slate-400 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset] focus:outline-none focus:ring-2 focus:ring-sky-200/70 focus:border-sky-200 transition';
+  'w-full h-12 rounded-xl border !border-slate-200 !bg-white px-4 text-[15px] !text-slate-900 placeholder:!text-slate-500 shadow-[0_1px_0_rgba(255,255,255,0.9)_inset] focus:outline-none focus:ring-2 focus:ring-sky-200/70 focus:border-sky-200 transition';
 
 interface Props {
   publicMode?: boolean;
@@ -214,7 +214,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       {/* Header */}
       <header className="px-5 md:px-10 py-6 flex items-center justify-between">
         <img src={logoAsset.url} alt="ALIX Lasers" className="h-8 md:h-9 w-auto" />
-        <span className="text-[10px] md:text-[11px] tracking-[0.35em] text-slate-400 uppercase">
+        <span className="text-[10px] md:text-[11px] tracking-[0.35em] !text-slate-500 uppercase">
           Alix Smart Consult
         </span>
       </header>
@@ -232,7 +232,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     className={cn(
                       'tabular-nums',
                       state === 'active' && 'text-sky-600 font-semibold',
-                      state === 'done' && 'text-slate-400',
+                      state === 'done' && '!text-slate-500',
                       state === 'todo' && 'text-slate-300',
                     )}
                   >
@@ -241,7 +241,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   <span
                     className={cn(
                       state === 'active' && 'text-slate-900',
-                      state === 'done' && 'text-slate-400',
+                      state === 'done' && '!text-slate-500',
                       state === 'todo' && 'text-slate-300',
                     )}
                   >
@@ -261,7 +261,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 0 — Intro */}
           {step === 0 && (
             <section className="text-center py-10 md:py-20 animate-in fade-in duration-700">
-              <p className="text-[11px] tracking-[0.4em] uppercase text-slate-400">Premium Consult</p>
+              <p className="text-[11px] tracking-[0.4em] uppercase !text-slate-500">Premium Consult</p>
               <h1 className="!text-slate-900 mt-6 text-4xl md:text-6xl font-light tracking-tight leading-[1.05]">
                 IHRE ALIX BERATUNG
               </h1>
@@ -425,7 +425,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <h3 className="!text-slate-900 text-lg md:text-xl font-light tracking-tight">{d.name}</h3>
-                            <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-slate-400">{data.category}</p>
+                            <p className="mt-1 text-[11px] uppercase tracking-[0.22em] !text-slate-500">{data.category}</p>
                           </div>
                           <span
                             className={cn(
@@ -438,13 +438,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                         </div>
                         <ul className="mt-5 space-y-2">
                           {d.features.map((f) => (
-                            <li key={f} className="flex items-start gap-2 text-sm text-slate-600 font-light">
+                            <li key={f} className="flex items-start gap-2 text-sm !text-slate-600 font-light">
                               <span className="mt-[7px] h-1 w-1 rounded-full bg-slate-400 shrink-0" />
                               {f}
                             </li>
                           ))}
                         </ul>
-                        <span className="mt-5 inline-block text-[11px] tracking-[0.24em] uppercase text-slate-400">
+                        <span className="mt-5 inline-block text-[11px] tracking-[0.24em] uppercase !text-slate-500">
                           {active ? 'In Angebot aufgenommen' : 'In Angebot aufnehmen'}
                         </span>
                       </div>
@@ -466,7 +466,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => setData({ ...data, consent_data: e.target.checked })}
                     className="mt-1 h-4 w-4 accent-sky-500"
                   />
-                  <span className="text-sm text-slate-600 font-light">
+                  <span className="text-sm !text-slate-600 font-light">
                     Ich stimme der Verarbeitung meiner Daten zur Bearbeitung meiner Anfrage zu.
                   </span>
                 </label>
@@ -477,7 +477,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => setData({ ...data, consent_contact: e.target.checked })}
                     className="mt-1 h-4 w-4 accent-sky-500"
                   />
-                  <span className="text-sm text-slate-600 font-light">
+                  <span className="text-sm !text-slate-600 font-light">
                     Ich bin mit einer Kontaktaufnahme per Telefon, E-Mail oder WhatsApp einverstanden.
                   </span>
                 </label>
@@ -501,7 +501,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               <p className="mt-5 text-slate-500 font-light">
                 Ihre ALIX Beratung wurde erfolgreich übermittelt.
               </p>
-              <p className="mt-2 text-sm text-slate-400 font-light">
+              <p className="mt-2 text-sm !text-slate-500 font-light">
                 Ein ALIX Berater kann nun Ihre Auswahl und Anforderungen einsehen.
               </p>
             </section>
@@ -517,7 +517,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               type="button"
               onClick={() => setStep((s) => Math.max(0, s - 1))}
               disabled={submitting}
-              className="h-13 min-h-[52px] px-6 rounded-full border border-slate-200 bg-white text-slate-600 text-[12px] tracking-[0.2em] uppercase hover:text-slate-900 transition disabled:opacity-40"
+              className="h-13 min-h-[52px] px-6 rounded-full border border-slate-200 bg-white !text-slate-600 text-[12px] tracking-[0.2em] uppercase hover:text-slate-900 transition disabled:opacity-40"
             >
               <ArrowLeft className="inline h-4 w-4 mr-2" /> Zurück
             </button>
@@ -553,7 +553,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             <span className="absolute inset-y-0 -left-1/3 w-1/3 bg-[linear-gradient(90deg,transparent,rgba(56,189,248,0.9),transparent)] animate-[a2scan_1.2s_ease-in-out_infinite]" />
           </div>
           <p className="mt-8 text-[11px] tracking-[0.4em] uppercase text-slate-800">Alix Smart Consult</p>
-          <p className="mt-2 text-[11px] tracking-[0.3em] uppercase text-slate-400">Analyzing your selection</p>
+          <p className="mt-2 text-[11px] tracking-[0.3em] uppercase !text-slate-500">Analyzing your selection</p>
           <style>{`@keyframes a2scan{0%{transform:translateX(0)}100%{transform:translateX(300%)}}`}</style>
         </div>
       )}
@@ -565,7 +565,7 @@ function Chapter({ title, sub, children }: { title: string; sub?: string; childr
   return (
     <section className="animate-in fade-in slide-in-from-bottom-2 duration-500">
       <h2 className="!text-slate-900 text-2xl md:text-4xl font-light tracking-tight uppercase">{title}</h2>
-      {sub && <p className="mt-3 text-slate-500 font-light max-w-2xl">{sub}</p>}
+      {sub && <p className="mt-3 !text-slate-500 font-light max-w-2xl">{sub}</p>}
       <div className="mt-10 md:mt-12">{children}</div>
     </section>
   );
@@ -574,7 +574,7 @@ function Chapter({ title, sub, children }: { title: string; sub?: string; childr
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-[11px] tracking-[0.28em] uppercase text-slate-400 mb-4">{label}</p>
+      <p className="text-[11px] tracking-[0.28em] uppercase !text-slate-500 mb-4">{label}</p>
       {children}
     </div>
   );
@@ -583,7 +583,7 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 function Labeled({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <label className="text-[11px] tracking-[0.24em] uppercase text-slate-400">{label}</label>
+      <label className="text-[11px] tracking-[0.24em] uppercase !text-slate-500">{label}</label>
       {children}
     </div>
   );
