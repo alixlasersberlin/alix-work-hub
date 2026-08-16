@@ -135,10 +135,14 @@ function readbackValue(raw: any, field: string, comField?: string | null): { val
   if (comField) {
     const v = valueAtPath(raw, comField);
     if (v !== null) return { value: v, source: comField };
+    // Fuer product_hub-Zielpfade zaehlt AUSSCHLIESSLICH der tatsaechliche Zielpfad.
+    // Alias-Werte sind rein diagnostisch und duerfen kein SUCCESS erzeugen.
+    if (isPhPath(comField)) return { value: null, source: comField };
   }
   const fallback = liveValue(raw, field);
   return { value: fallback, source: fallback === null ? (comField || field) : `alias:${field}` };
 }
+
 
 // Alle Blattpfade des COM-Datensatzes (fuer die Trace-/Mismatch-Diagnose).
 function flattenPaths(raw: any, prefix = "", depth = 0, out: { path: string; value: string | null }[] = []) {
