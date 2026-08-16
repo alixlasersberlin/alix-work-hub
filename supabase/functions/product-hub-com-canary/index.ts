@@ -230,6 +230,20 @@ const isHtmlResponse = (r: { body: any }) =>
 const writeEndpointReached = (r: { status: number; body: any }) =>
   r.status > 0 && !isHtmlResponse(r);
 
+// COM akzeptiert nur eine feste Allowlist von Zielfeldern. Welche Namen das sind,
+// wird nicht geraten, sondern per Dry-Run-Probe ermittelt und persistiert.
+const fieldCandidates = (field: string): string[] => {
+  const aliases = [...new Set([...(FIELD_ALIASES[field] || [field]), field])];
+  const out: string[] = [];
+  for (const a of aliases) out.push(a);
+  for (const a of aliases) out.push(`${PH}.${a}`, `specs.${a}`, `tech_specs.${a}`);
+  const mapped = FIELD_MAP[field];
+  return [...new Set([mapped, ...out].filter(Boolean))];
+};
+const FIELD_NOT_ALLOWED = (r: { status: number; body: any }) =>
+  r.status === 400 && codeOf(r.body).includes("FIELD_NOT_ALLOWED");
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -254,8 +268,58 @@ Deno.serve(async (req) => {
     return data as any;
   };
 
+  // Ermittelte COM-Zielfelder (aus der Feld-Probe) ueber die statische Karte legen.
+  const resolveFieldMap = async (): Promise<Record<string, string | null>> => {
+    const { data } = await admin.from("ph_settings").select("value").eq("key", "canary_com_field_map").maybeSingle();
+    const learned = ((data?.value as any)?.map || {}) as Record<string, string | null>;
+    const out: Record<string, string | null> = { ...FIELD_MAP };
+    for (const f of FIELDS) if (f in learned) out[f] = learned[f];
+    return out;
+  };
+
   try {
+    // ------------------------------------------------------------ Feld-Probe
+    if (action === "field_probe") {
+      const probe: any[] = [];
+      const map: Record<string, string | null> = {};
+      const { product } = await fetchComProduct();
+      for (const f of FIELDS) {
+        const live = liveValue(product, f);
+        let hit: string | null = null;
+        const tried: any[] = [];
+        for (const cand of fieldCandidates(f)) {
+          const r = await writeCall({
+            product_id: COM_BLUEICE_ID,
+            field: cand,
+            value: live ?? "PROBE",
+            expected_previous_value: live,
+          });
+          tried.push({ field: cand, status: r.status, code: codeOf(r.body) });
+          if (r.status === 401 || r.status === 403) {
+            return json(200, { field_probe: "BLOCKED", detail: writeDetail(r) });
+          }
+          if (!FIELD_NOT_ALLOWED(r) && (r.ok || r.status === 409)) { hit = cand; break; }
+        }
+        map[f] = hit;
+        probe.push({ field: f, com_field: hit, accepted: !!hit, tried });
+      }
+      const accepted = FIELDS.filter((f) => map[f]);
+      const rejected = FIELDS.filter((f) => !map[f]);
+      await admin.from("ph_settings").upsert(
+        { key: "canary_com_field_map", value: { map, probe, accepted, rejected, checked_at: new Date().toISOString() }, updated_at: new Date().toISOString(), updated_by: user.id },
+        { onConflict: "key" },
+      );
+      return json(200, {
+        field_probe: rejected.length ? "PARTIAL" : "COMPLETE",
+        accepted, rejected, map, probe,
+        summary: rejected.length
+          ? `${accepted.length}/${FIELDS.length} Felder von COM akzeptiert · COM erlaubt (noch) nicht: ${rejected.join(", ")}`
+          : `Alle ${FIELDS.length} Felder von COM akzeptiert`,
+      });
+    }
+
     // ---------------------------------------------------------------- Diagnose
+
     if (action === "com_dump") {
       const { product } = await fetchComProduct();
       const master = await loadMaster().catch(() => null);
@@ -445,22 +509,29 @@ Deno.serve(async (req) => {
       if (!batch) return json(404, { error: "COM-Batch nicht gefunden" });
       const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
 
+      const fmap = await resolveFieldMap();
       const results: any[] = [];
       for (const s of snaps || []) {
         if (s.value_state === "NO_CHANGE" || s.value_state === "CONFLICT") {
           results.push({ field: s.field, result: s.value_state === "CONFLICT" ? "CONFLICT" : "SKIP", pass: s.value_state === "NO_CHANGE" });
           continue;
         }
+        const comField = fmap[s.field];
+        if (!comField) {
+          results.push({ field: s.field, result: "NO_TARGET", pass: false, status: 0, code: "FIELD_NOT_ALLOWED_ON_COM" });
+          continue;
+        }
         const r = await writeCall({
           product_id: COM_BLUEICE_ID,
-          field: FIELD_MAP[s.field] || s.field,
-          value: comValue(FIELD_MAP[s.field] || s.field, s.target_master_value),
+          field: comField,
+          value: comValue(comField, s.target_master_value),
           expected_previous_value: s.current_live_value,
           publish_id: `${batchId}:${s.field}`,
           idempotency_key: `${batchId}:${s.field}`,
         });
         results.push({ field: s.field, result: r.ok ? "WRITE_READY" : "FAILED", status: r.status, pass: r.ok, code: codeOf(r.body) });
       }
+
       const passed = results.length > 0 && results.every((r) => r.pass);
       await admin.from("ph_canary_batches").update({
         checks: { ...(batch.checks || {}), dry_run: passed ? "PASSED" : "FAILED", dry_run_results: results, dry_run_at: new Date().toISOString() },
@@ -483,6 +554,7 @@ Deno.serve(async (req) => {
       if ((wr?.value as any)?.state !== "READY") return json(400, { error: "COM Write nicht READY – Abbruch" });
 
       const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
+      const fmap = await resolveFieldMap();
       const results: any[] = [];
       let written = 0, skipped = 0, verified = 0, failed = 0;
       let stopped: string | null = null;
@@ -494,7 +566,14 @@ Deno.serve(async (req) => {
           if (s.publish_id) await admin.from("ph_publish_queue").update({ status: "SKIPPED", verify_status: "VERIFIED", verified_at: new Date().toISOString(), notes: s.value_state }).eq("id", s.publish_id);
           continue;
         }
-        const comField = FIELD_MAP[s.field] || s.field;
+        const comField = fmap[s.field];
+        if (!comField) {
+          failed++;
+          stopped = `${s.field}: COM erlaubt dieses Zielfeld nicht (FIELD_NOT_ALLOWED)`;
+          results.push({ field: s.field, action: "NO_TARGET", error: stopped, verified: false });
+          break;
+        }
+
         const w = await writeCall({
           product_id: COM_BLUEICE_ID,
           field: comField,
@@ -580,7 +659,7 @@ Deno.serve(async (req) => {
       const results: any[] = [];
       for (const s of snaps || []) {
         if (!s.publish_id || !s.readback_at) continue;
-        const comField = FIELD_MAP[s.field] || s.field;
+        const comField = (await resolveFieldMap())[s.field] || FIELD_MAP[s.field] || s.field;
         const w = await writeCall({
           product_id: COM_BLUEICE_ID, field: comField,
           value: comValue(comField, s.current_live_value),   // exakter vorheriger Wert, auch Freitext

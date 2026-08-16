@@ -117,6 +117,11 @@ export default function ProductHubComCanary() {
         <Button size="sm" disabled={!canRun || !!busy} onClick={async () => { const r = await call('selftest'); if (r) { await load(); toast[r.ready ? 'success' : 'error'](r.com_write); } }}>
           {busy === 'selftest' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PlugZap className="h-3.5 w-3.5" />} 1 · Vertragstest
         </Button>
+        <Button size="sm" variant="outline" disabled={!canRun || !!busy} onClick={async () => { const r = await call('field_probe'); if (r) { console.log('COM Feld-Probe', r.probe ?? r); toast[r.field_probe === 'COMPLETE' ? 'success' : 'error'](r.summary || r.detail || `Feld-Probe ${r.field_probe}`); } }}>
+          {busy === 'field_probe' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ScanSearch className="h-3.5 w-3.5" />} 1b · COM-Feld-Probe
+        </Button>
+
+
         <Button size="sm" disabled={!canRun || !!busy || state?.com_write !== 'READY'} onClick={async () => { const r = await call('snapshot'); if (r) { await load(); toast.success(`${r.snapshot} · ${r.changes} Änderungen`); } }}>
           {busy === 'snapshot' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Snowflake className="h-3.5 w-3.5" />} 2 · COM-Snapshot einfrieren
         </Button>
