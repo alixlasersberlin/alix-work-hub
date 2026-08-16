@@ -495,11 +495,17 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                         maxLength={6}
                         placeholder="+000"
                         aria-label="Vorwahl frei eingeben"
-                        className={cn(fieldCls, 'w-[96px] shrink-0')}
+                        aria-invalid={!!showError('country_code')}
+                        className={cn(
+                          fieldCls,
+                          'w-[96px] shrink-0',
+                          showError('country_code') && '!border-red-300 focus:!ring-red-200',
+                        )}
                         value={data.country_code}
+                        onBlur={() => markTouched('country_code')}
                         onChange={(e) => {
                           const v = e.target.value.replace(/[^\d+]/g, '');
-                          setData({ ...data, country_code: v.startsWith('+') ? v : `+${v.replace(/\+/g, '')}` });
+                          update('country_code', v.startsWith('+') ? v : `+${v.replace(/\+/g, '')}`);
                         }}
                       />
                     )}
@@ -508,11 +514,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       autoComplete="tel"
                       maxLength={20}
                       placeholder="171 1651000"
-                      className={cn(fieldCls, 'flex-1 min-w-[160px]', touched.phone && phoneError && '!border-red-300 focus:!ring-red-200')}
+                      aria-invalid={!!showError('phone')}
+                      className={cn(fieldCls, 'flex-1 min-w-[160px]', showError('phone') && '!border-red-300 focus:!ring-red-200')}
                       value={data.phone}
-                      onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
-                      onChange={(e) => setData({ ...data, phone: e.target.value.replace(/[^\d\s+()/-]/g, '') })}
+                      onBlur={() => markTouched('phone')}
+                      onChange={(e) => update('phone', e.target.value.replace(/[^\d\s+()/-]/g, ''))}
                     />
+
                   </div>
                   <p className="text-[11px] !text-slate-400">
                     {customCode
