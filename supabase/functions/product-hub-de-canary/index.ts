@@ -442,15 +442,22 @@ Deno.serve(async (req) => {
         }
         written++;
 
-        // Read-back direkt gegen den DE-Export
+        // Read-back direkt gegen den DE-Export – mit kurzen Retries, weil der
+        // Export nach dem Schreiben leicht verzoegert/gecached ausliefern kann.
         let readback: string | null = null;
-        try {
-          const fresh = await fetchDeProduct(batch.alix_product_id);
-          readback = liveValue(fresh.product, s.field);
-        } catch (e) {
-          readback = null;
-          stopped = `${s.field}: Read-back fehlgeschlagen (${(e as Error).message})`;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            const fresh = await fetchDeProduct(batch.alix_product_id);
+            readback = liveValue(fresh.product, s.field);
+            stopped = null;
+          } catch (e) {
+            readback = null;
+            stopped = `${s.field}: Read-back fehlgeschlagen (${(e as Error).message})`;
+          }
+          if (!stopped && normCompare(s.field, readback, target)) break;
+          if (attempt < 3) await new Promise((r) => setTimeout(r, 2000));
         }
+
         const ok = !stopped && normCompare(s.field, readback, target);
         if (ok) {
           verified++;
