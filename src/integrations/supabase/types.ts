@@ -33433,6 +33433,600 @@ export type Database = {
         }
         Relationships: []
       }
+      ph_channels: {
+        Row: {
+          base_url: string | null
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          base_url?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          base_url?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ph_conflicts: {
+        Row: {
+          channel_code: string
+          channel_value: string | null
+          created_at: string
+          field_name: string
+          id: string
+          master_value: string | null
+          product_id: string
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          updated_at: string
+        }
+        Insert: {
+          channel_code: string
+          channel_value?: string | null
+          created_at?: string
+          field_name: string
+          id?: string
+          master_value?: string | null
+          product_id: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          updated_at?: string
+        }
+        Update: {
+          channel_code?: string
+          channel_value?: string | null
+          created_at?: string
+          field_name?: string
+          id?: string
+          master_value?: string | null
+          product_id?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_conflicts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_documents: {
+        Row: {
+          channels: string[]
+          created_at: string
+          created_by: string | null
+          doc_type: string
+          file_size: number | null
+          id: string
+          language: string | null
+          product_id: string
+          storage_path: string | null
+          title: string
+          updated_at: string
+          url: string | null
+          valid_until: string | null
+          version: string | null
+          visibility: string
+        }
+        Insert: {
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          doc_type?: string
+          file_size?: number | null
+          id?: string
+          language?: string | null
+          product_id: string
+          storage_path?: string | null
+          title: string
+          updated_at?: string
+          url?: string | null
+          valid_until?: string | null
+          version?: string | null
+          visibility?: string
+        }
+        Update: {
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          doc_type?: string
+          file_size?: number | null
+          id?: string
+          language?: string | null
+          product_id?: string
+          storage_path?: string | null
+          title?: string
+          updated_at?: string
+          url?: string | null
+          valid_until?: string | null
+          version?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_documents_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_field_history: {
+        Row: {
+          alix_product_id: string | null
+          approval_status: string
+          changed_by: string | null
+          changed_by_email: string | null
+          channel_code: string | null
+          created_at: string
+          field_name: string
+          id: string
+          is_critical: boolean
+          new_value: string | null
+          old_value: string | null
+          product_id: string | null
+          source: string
+        }
+        Insert: {
+          alix_product_id?: string | null
+          approval_status?: string
+          changed_by?: string | null
+          changed_by_email?: string | null
+          channel_code?: string | null
+          created_at?: string
+          field_name: string
+          id?: string
+          is_critical?: boolean
+          new_value?: string | null
+          old_value?: string | null
+          product_id?: string | null
+          source?: string
+        }
+        Update: {
+          alix_product_id?: string | null
+          approval_status?: string
+          changed_by?: string | null
+          changed_by_email?: string | null
+          channel_code?: string | null
+          created_at?: string
+          field_name?: string
+          id?: string
+          is_critical?: boolean
+          new_value?: string | null
+          old_value?: string | null
+          product_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_field_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_media: {
+        Row: {
+          alt_text: string | null
+          channels: string[]
+          created_at: string
+          created_by: string | null
+          id: string
+          is_primary: boolean
+          kind: string
+          media_type: string
+          product_id: string
+          sort_order: number
+          source_ref: string | null
+          storage_path: string | null
+          title: string | null
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          alt_text?: string | null
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_primary?: boolean
+          kind?: string
+          media_type?: string
+          product_id: string
+          sort_order?: number
+          source_ref?: string | null
+          storage_path?: string | null
+          title?: string | null
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          alt_text?: string | null
+          channels?: string[]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_primary?: boolean
+          kind?: string
+          media_type?: string
+          product_id?: string
+          sort_order?: number
+          source_ref?: string | null
+          storage_path?: string | null
+          title?: string | null
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_media_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_product_channels: {
+        Row: {
+          channel_code: string
+          content: Json
+          created_at: string
+          has_pending_changes: boolean
+          hold: boolean
+          id: string
+          last_sync_at: string | null
+          last_sync_status: string | null
+          live_url: string | null
+          live_version: string | null
+          product_id: string
+          publish_state: string
+          remote_id: string | null
+          remote_snapshot: Json
+          seo_description: string | null
+          seo_title: string | null
+          slug: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel_code: string
+          content?: Json
+          created_at?: string
+          has_pending_changes?: boolean
+          hold?: boolean
+          id?: string
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          live_url?: string | null
+          live_version?: string | null
+          product_id: string
+          publish_state?: string
+          remote_id?: string | null
+          remote_snapshot?: Json
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel_code?: string
+          content?: Json
+          created_at?: string
+          has_pending_changes?: boolean
+          hold?: boolean
+          id?: string
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          live_url?: string | null
+          live_version?: string | null
+          product_id?: string
+          publish_state?: string
+          remote_id?: string | null
+          remote_snapshot?: Json
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_product_channels_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "ph_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_products: {
+        Row: {
+          active_at: boolean
+          active_com: boolean
+          active_de: boolean
+          active_dubai: boolean
+          active_usa: boolean
+          alix_product_id: string | null
+          applications: string[]
+          catalog_item_id: string | null
+          categories: string[]
+          ce_status: string | null
+          cooling: string | null
+          created_at: string
+          created_by: string | null
+          featured: boolean
+          features: Json
+          fluence: string | null
+          frequency: string | null
+          hero_image_url: string | null
+          id: string
+          intended_use: string | null
+          internal_name: string | null
+          iso_status: string | null
+          laser_class: string | null
+          long_description: string | null
+          manual_override: boolean
+          manufacturer: string | null
+          mdr_status: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          plm_device_id: string | null
+          power: string | null
+          product_group: string | null
+          production_site: string | null
+          protected: boolean
+          pulse_duration: string | null
+          seo_description: string | null
+          seo_title: string | null
+          short_description: string | null
+          sku: string | null
+          slug: string | null
+          smart_ki: Json
+          sort_order: number
+          source_product_id: string | null
+          spot_sizes: string | null
+          standards: string[]
+          status: string
+          tech_specs: Json
+          updated_at: string
+          updated_by: string | null
+          wavelengths: string | null
+        }
+        Insert: {
+          active_at?: boolean
+          active_com?: boolean
+          active_de?: boolean
+          active_dubai?: boolean
+          active_usa?: boolean
+          alix_product_id?: string | null
+          applications?: string[]
+          catalog_item_id?: string | null
+          categories?: string[]
+          ce_status?: string | null
+          cooling?: string | null
+          created_at?: string
+          created_by?: string | null
+          featured?: boolean
+          features?: Json
+          fluence?: string | null
+          frequency?: string | null
+          hero_image_url?: string | null
+          id?: string
+          intended_use?: string | null
+          internal_name?: string | null
+          iso_status?: string | null
+          laser_class?: string | null
+          long_description?: string | null
+          manual_override?: boolean
+          manufacturer?: string | null
+          mdr_status?: string | null
+          model?: string | null
+          name: string
+          notes?: string | null
+          plm_device_id?: string | null
+          power?: string | null
+          product_group?: string | null
+          production_site?: string | null
+          protected?: boolean
+          pulse_duration?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          short_description?: string | null
+          sku?: string | null
+          slug?: string | null
+          smart_ki?: Json
+          sort_order?: number
+          source_product_id?: string | null
+          spot_sizes?: string | null
+          standards?: string[]
+          status?: string
+          tech_specs?: Json
+          updated_at?: string
+          updated_by?: string | null
+          wavelengths?: string | null
+        }
+        Update: {
+          active_at?: boolean
+          active_com?: boolean
+          active_de?: boolean
+          active_dubai?: boolean
+          active_usa?: boolean
+          alix_product_id?: string | null
+          applications?: string[]
+          catalog_item_id?: string | null
+          categories?: string[]
+          ce_status?: string | null
+          cooling?: string | null
+          created_at?: string
+          created_by?: string | null
+          featured?: boolean
+          features?: Json
+          fluence?: string | null
+          frequency?: string | null
+          hero_image_url?: string | null
+          id?: string
+          intended_use?: string | null
+          internal_name?: string | null
+          iso_status?: string | null
+          laser_class?: string | null
+          long_description?: string | null
+          manual_override?: boolean
+          manufacturer?: string | null
+          mdr_status?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          plm_device_id?: string | null
+          power?: string | null
+          product_group?: string | null
+          production_site?: string | null
+          protected?: boolean
+          pulse_duration?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          short_description?: string | null
+          sku?: string | null
+          slug?: string | null
+          smart_ki?: Json
+          sort_order?: number
+          source_product_id?: string | null
+          spot_sizes?: string | null
+          standards?: string[]
+          status?: string
+          tech_specs?: Json
+          updated_at?: string
+          updated_by?: string | null
+          wavelengths?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ph_products_plm_device_id_fkey"
+            columns: ["plm_device_id"]
+            isOneToOne: false
+            referencedRelation: "plm_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ph_roles: {
+        Row: {
+          created_at: string
+          id: string
+          ph_role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ph_role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ph_role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ph_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      ph_sync_log: {
+        Row: {
+          channel_code: string | null
+          created_at: string
+          direction: string
+          duration_ms: number | null
+          id: string
+          message: string | null
+          operation: string | null
+          payload: Json | null
+          product_id: string | null
+          status: string
+        }
+        Insert: {
+          channel_code?: string | null
+          created_at?: string
+          direction?: string
+          duration_ms?: number | null
+          id?: string
+          message?: string | null
+          operation?: string | null
+          payload?: Json | null
+          product_id?: string | null
+          status?: string
+        }
+        Update: {
+          channel_code?: string | null
+          created_at?: string
+          direction?: string
+          duration_ms?: number | null
+          id?: string
+          message?: string | null
+          operation?: string | null
+          payload?: Json | null
+          product_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       plm_assemblies: {
         Row: {
           code: string | null
@@ -50513,6 +51107,7 @@ export type Database = {
           table_name: string
         }[]
       }
+      ph_can_edit: { Args: never; Returns: boolean }
       plm_can_write: { Args: never; Returns: boolean }
       plm_merge_manufacturers: {
         Args: { p_source: string; p_target: string }

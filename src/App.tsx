@@ -654,6 +654,18 @@ const AicTasks = lazy(() => import("./pages/AIC/Tasks"));
 const AicBerichte = lazy(() => import("./pages/AIC/Berichte"));
 const MdrCe = lazy(() => import("./pages/MdrCe"));
 const PlmDashboard = lazy(() => import("./pages/PLM/Dashboard"));
+// PRODUCT HUB (additiv)
+const PhDashboard = lazy(() => import("./pages/ProductHub/Dashboard"));
+const PhGeraete = lazy(() => import("./pages/ProductHub/Geraete"));
+const PhEditor = lazy(() => import("./pages/ProductHub/ProductEditor"));
+const PhFreigaben = lazy(() => import("./pages/ProductHub/Freigaben"));
+const PhKonflikte = lazy(() => import("./pages/ProductHub/Konflikte"));
+const PhMedien = lazy(() => import("./pages/ProductHub/Medien"));
+const PhDokumente = lazy(() => import("./pages/ProductHub/Dokumente"));
+const PhWebseiten = lazy(() => import("./pages/ProductHub/Webseiten"));
+const PhVerlauf = lazy(() => import("./pages/ProductHub/Verlauf"));
+const PhSyncHealth = lazy(() => import("./pages/ProductHub/SyncHealth"));
+const PhEinstellungen = lazy(() => import("./pages/ProductHub/Einstellungen"));
 const PlmGeraete = lazy(() => import("./pages/PLM/Geraete"));
 const PlmBaugruppen = lazy(() => import("./pages/PLM/Baugruppen"));
 const PlmEinzelteile = lazy(() => import("./pages/PLM/Einzelteile"));
@@ -2140,6 +2152,20 @@ function AppRoutes() {
           </Route>
 
           <Route path="/mdr-ce" element={<ProtectedRoute requiredRoles={['Super Admin']}><MdrCe /></ProtectedRoute>} />
+
+          {/* ALIXWORK PRODUCT HUB (Master für alix-lasers.com / .de) */}
+          <Route path="/product-hub" element={<ProtectedRoute><PhDashboard /></ProtectedRoute>} />
+          <Route path="/product-hub/geraete" element={<ProtectedRoute><PhGeraete /></ProtectedRoute>} />
+          <Route path="/product-hub/geraete/:id" element={<ProtectedRoute><PhEditor /></ProtectedRoute>} />
+          <Route path="/product-hub/freigaben" element={<ProtectedRoute><PhFreigaben /></ProtectedRoute>} />
+          <Route path="/product-hub/konflikte" element={<ProtectedRoute><PhKonflikte /></ProtectedRoute>} />
+          <Route path="/product-hub/medien" element={<ProtectedRoute><PhMedien /></ProtectedRoute>} />
+          <Route path="/product-hub/dokumente" element={<ProtectedRoute><PhDokumente /></ProtectedRoute>} />
+          <Route path="/product-hub/webseiten" element={<ProtectedRoute><PhWebseiten /></ProtectedRoute>} />
+          <Route path="/product-hub/verlauf" element={<ProtectedRoute><PhVerlauf /></ProtectedRoute>} />
+          <Route path="/product-hub/sync-health" element={<ProtectedRoute><PhSyncHealth /></ProtectedRoute>} />
+          <Route path="/product-hub/einstellungen" element={<ProtectedRoute><PhEinstellungen /></ProtectedRoute>} />
+
 
           {/* ALIXWORK Produktion & Beschaffung (PLM / MDR / ISO 13485) */}
           <Route path="/produktion" element={<ProtectedRoute><PlmDashboard /></ProtectedRoute>} />

@@ -88,3 +88,4 @@
 
 - [RATEN PRÜFUNG](mem://features/raten-pruefung) — Versandstopp-Bereich /finance/raten-pruefung, Status pruefung_hold, Nachversand via pruefung-release
 - [ALIX Premium Beratung](mem://features/beratung-premium) — Zweite öffentliche Beratungsstrecke /beratung/premium (Pearl/Chrome), gleiche Lead-Logik wie /beratung
+- [Product Hub](mem://features/product-hub) — Zentraler Gerätestamm /product-hub (ph_* Tabellen), Master für alix-lasers.com/.de, Migrationsphase A/B/C, COM→DE Sync bleibt vorerst aktiv

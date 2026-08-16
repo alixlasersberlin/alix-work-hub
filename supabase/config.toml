@@ -451,3 +451,6 @@ verify_jwt = false
 
 [functions.mobile-sync-admin]
 verify_jwt = true
+
+[functions.product-hub-api]
+verify_jwt = false
