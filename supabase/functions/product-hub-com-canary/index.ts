@@ -171,11 +171,9 @@ async function writeCall(body: Record<string, unknown>, dryRun = true) {
   return { status: res.status, body: parsed, ok: res.ok };
 }
 
-function comValue(comField: string, v: unknown): unknown {
-  if (comField === "wavelengths_nm") {
-    const nums = String(asText(v) ?? "").match(/\d+/g)?.map(Number) ?? [];
-    if (nums.length) return nums;
-  }
+// COM fuehrt alle Canary-Felder als Text (Spalte `wavelengths` ist Freitext,
+// product_hub-Keys ebenfalls) – daher keine Typumdeutung, 1:1 als Text.
+function comValue(_comField: string, v: unknown): unknown {
   return asText(v);
 }
 
