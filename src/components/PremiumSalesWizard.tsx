@@ -457,7 +457,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       )}
                     >
                       <div className="relative overflow-hidden rounded-[25px] !bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.35)]">
-                        <div className="relative h-52 md:h-60 overflow-hidden">
+                        <div className="relative h-44 sm:h-52 md:h-60 overflow-hidden">
                           <img
                             src={c.img}
                             alt={c.key}
@@ -473,9 +473,10 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                             className="pointer-events-none absolute -inset-x-1 top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.7)_50%,transparent_65%)]"
                           />
                         </div>
-                        <div className="px-6 pb-6 pt-4">
-                          <h3 className="!text-slate-900 text-xl md:text-2xl font-light tracking-tight uppercase">{c.key}</h3>
-                          <p className="mt-2 text-sm text-slate-500 font-light">{c.desc}</p>
+                        <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-4">
+                          <h3 className="!text-slate-900 text-lg sm:text-xl md:text-2xl font-light tracking-tight uppercase text-balance">{c.key}</h3>
+                          <p className="mt-2 text-sm text-slate-500 font-light text-pretty">{c.desc}</p>
+
                         </div>
                       </div>
                     </button>
