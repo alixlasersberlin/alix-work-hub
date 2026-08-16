@@ -442,7 +442,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               title="WAS MÖCHTEN SIE BEHANDELN?"
               sub="Wählen Sie Ihren Schwerpunkt – wir führen Sie anschließend zu den passenden ALIX Systemen."
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
                 {PREMIUM_CATEGORIES.map((c) => {
                   const active = data.category === c.key;
                   return (
