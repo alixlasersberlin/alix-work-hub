@@ -611,7 +611,7 @@ Deno.serve(async (req) => {
           results.push({ field: s.field, result: "NO_TARGET", pass: false, status: 0, code: "FIELD_NOT_ALLOWED_ON_COM" });
           continue;
         }
-        const liveAtTarget = freshRaw ? valueAtPath(freshRaw, comField) : null;
+        const liveAtTarget = freshRaw ? valueAtPath(freshRaw, effectiveReadPath(freshRaw, comField)) : null;
         const expectedPrev = liveAtTarget !== null ? liveAtTarget : s.current_live_value;
         if (liveAtTarget !== null && normCompare(s.field, liveAtTarget, s.target_master_value)) {
           results.push({
@@ -697,7 +697,7 @@ Deno.serve(async (req) => {
           break;
         }
 
-        const liveAtTargetPub = freshPubRaw ? valueAtPath(freshPubRaw, comField) : null;
+        const liveAtTargetPub = freshPubRaw ? valueAtPath(freshPubRaw, effectiveReadPath(freshPubRaw, comField)) : null;
         const w = await writeCall({
           product_id: COM_BLUEICE_ID,
           field: comField,
