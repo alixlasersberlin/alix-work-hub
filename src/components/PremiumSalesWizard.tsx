@@ -184,7 +184,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       case 3:
         return !!data.delivery_preference && !!data.consultation_type;
       case LAST_STEP:
-        return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
+        return data.consent_data && data.consent_contact && (publicMode && !captchaUnavailable ? !!captchaToken : true);
       default:
         return true;
     }
