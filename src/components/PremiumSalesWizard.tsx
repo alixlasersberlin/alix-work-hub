@@ -283,9 +283,34 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               );
             })}
           </div>
+
+          {/* Fortschrittsbalken */}
+          <div className="mx-auto max-w-4xl mt-3">
+            <div className="flex items-center justify-between text-[10px] md:text-[11px] tracking-[0.2em] uppercase !text-slate-500 mb-1.5">
+              <span>
+                Schritt {step} von {STEP_LABELS.length} · {STEP_LABELS[step - 1]}
+              </span>
+              <span className="tabular-nums">
+                {Math.round((step / STEP_LABELS.length) * 100)} %
+              </span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-slate-200/70 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-sky-500 to-sky-400 transition-[width] duration-500 ease-out"
+                style={{ width: `${(step / STEP_LABELS.length) * 100}%` }}
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={STEP_LABELS.length}
+                aria-valuenow={step}
+                aria-label="Fortschritt der Beratung"
+              />
+            </div>
+          </div>
+
           <div className="mx-auto max-w-4xl mt-4 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent" />
         </div>
       )}
+
 
       <main className="px-5 md:px-10 pb-28 pt-8 md:pt-12">
         <div className="mx-auto max-w-4xl">
