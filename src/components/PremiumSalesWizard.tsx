@@ -369,7 +369,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   />
                 </Labeled>
                 <Labeled label="Telefon *" error={touched.phone ? phoneError : null}>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <select
                       value={customCode ? CUSTOM_CODE : data.country_code}
                       onChange={(e) => {
