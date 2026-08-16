@@ -585,6 +585,10 @@ Deno.serve(async (req) => {
       const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
 
       const fmap = await resolveFieldMap();
+      // Optimistic Lock: der Vergleichswert muss der LIVE-Wert am tatsaechlichen
+      // Zielpfad sein (nicht der Legacy-Alias aus dem Snapshot), sonst 409.
+      const freshDry = await fetchComProduct().catch(() => null);
+      const freshRaw = (freshDry as any)?.product ?? null;
       const results: any[] = [];
       for (const s of snaps || []) {
         if (s.value_state === "NO_CHANGE" || s.value_state === "CONFLICT") {
@@ -596,20 +600,32 @@ Deno.serve(async (req) => {
           results.push({ field: s.field, result: "NO_TARGET", pass: false, status: 0, code: "FIELD_NOT_ALLOWED_ON_COM" });
           continue;
         }
+        const liveAtTarget = freshRaw ? valueAtPath(freshRaw, comField) : null;
+        const expectedPrev = liveAtTarget !== null ? liveAtTarget : s.current_live_value;
+        if (liveAtTarget !== null && normCompare(s.field, liveAtTarget, s.target_master_value)) {
+          results.push({
+            field: s.field, result: "ALREADY_CURRENT", pass: true, status: 200, code: "",
+            write_target: comField, target_ok: PH_FIELDS.has(s.field) ? isPhPath(comField) : true,
+            target_master_value: asText(s.target_master_value), dry_run: true, no_data_change: true,
+          });
+          continue;
+        }
         const r = await writeCall({
           product_id: COM_BLUEICE_ID,
           field: comField,
           value: comValue(comField, s.target_master_value),
-          expected_previous_value: s.current_live_value,
+          expected_previous_value: expectedPrev,
           publish_id: `${batchId}:${s.field}`,
           idempotency_key: `${batchId}:${s.field}`,
         });
         results.push({
           field: s.field, result: r.ok ? "WRITE_READY" : "FAILED", status: r.status, pass: r.ok, code: codeOf(r.body),
           write_target: comField, target_ok: PH_FIELDS.has(s.field) ? isPhPath(comField) : true,
+          expected_previous_value: asText(expectedPrev),
           target_master_value: asText(s.target_master_value), dry_run: true, no_data_change: true,
         });
       }
+
 
       // Safety Gate: jedes Product-Hub-Feld MUSS auf product_hub.<feld> zeigen.
       const pathIssues = FIELDS.filter((f) => PH_FIELDS.has(f) && !isPhPath(fmap[f]))
@@ -649,6 +665,8 @@ Deno.serve(async (req) => {
 
       const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
       const fmap = await resolveFieldMap();
+      const freshPub = await fetchComProduct().catch(() => null);
+      const freshPubRaw = (freshPub as any)?.product ?? null;
       const results: any[] = [];
       let written = 0, skipped = 0, verified = 0, failed = 0;
       let stopped: string | null = null;
@@ -668,14 +686,16 @@ Deno.serve(async (req) => {
           break;
         }
 
+        const liveAtTargetPub = freshPubRaw ? valueAtPath(freshPubRaw, comField) : null;
         const w = await writeCall({
           product_id: COM_BLUEICE_ID,
           field: comField,
           value: comValue(comField, s.target_master_value),
-          expected_previous_value: s.current_live_value,
+          expected_previous_value: liveAtTargetPub !== null ? liveAtTargetPub : s.current_live_value,
           publish_id: `${batchId}:${s.field}`,
           idempotency_key: `${batchId}:${s.field}`,
         }, false);
+
 
         if (!w.ok) {
           failed++;
