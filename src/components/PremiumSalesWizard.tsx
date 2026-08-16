@@ -159,15 +159,15 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
         : [...d.additional_interests, v],
     }));
 
+  const emailError = validateEmail(data.email);
+  const phoneError = validatePhone(data.country_code, data.phone);
+  const lastNameError = data.last_name.trim() ? null : 'Nachname ist ein Pflichtfeld.';
+
   function canContinue(): boolean {
     switch (step) {
       case 1:
-        return (
-          !!data.first_name.trim() &&
-          !!data.last_name.trim() &&
-          data.phone.trim().length >= 3 &&
-          /.+@.+\..+/.test(data.email.trim())
-        );
+        return !lastNameError && !emailError && !phoneError;
+
       case 2:
         return !!data.category;
       case 3:
