@@ -408,36 +408,57 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             <Chapter title="IHRE KONTAKTDATEN" sub="Damit ein ALIX Berater Sie erreichen kann.">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
 
-                <Labeled label="Vorname">
-                  <input className={fieldCls} value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} />
-                </Labeled>
-                <Labeled label="Nachname *" error={touched.last_name ? lastNameError : null}>
+                <Labeled label="Vorname" error={showError('first_name')} valid={isValid('first_name')}>
                   <input
-                    className={cn(fieldCls, touched.last_name && lastNameError && '!border-red-300 focus:!ring-red-200')}
-                    value={data.last_name}
+                    className={cn(fieldCls, showError('first_name') && '!border-red-300 focus:!ring-red-200')}
+                    value={data.first_name}
                     maxLength={100}
-                    onBlur={() => setTouched((t) => ({ ...t, last_name: true }))}
-                    onChange={(e) => setData({ ...data, last_name: e.target.value })}
+                    aria-invalid={!!showError('first_name')}
+                    onBlur={() => markTouched('first_name')}
+                    onChange={(e) => update('first_name', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label="Unternehmen (optional)">
-                  <input className={fieldCls} value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} />
+                <Labeled label="Nachname *" error={showError('last_name')} valid={isValid('last_name')}>
+                  <input
+                    className={cn(fieldCls, showError('last_name') && '!border-red-300 focus:!ring-red-200')}
+                    value={data.last_name}
+                    maxLength={100}
+                    aria-invalid={!!showError('last_name')}
+                    onBlur={() => markTouched('last_name')}
+                    onChange={(e) => update('last_name', e.target.value)}
+                  />
                 </Labeled>
-                <Labeled label="E-Mail *" error={touched.email ? emailError : null}>
+                <Labeled label="Unternehmen (optional)" error={showError('company')} valid={isValid('company')}>
+                  <input
+                    className={cn(fieldCls, showError('company') && '!border-red-300 focus:!ring-red-200')}
+                    value={data.company}
+                    maxLength={150}
+                    aria-invalid={!!showError('company')}
+                    onBlur={() => markTouched('company')}
+                    onChange={(e) => update('company', e.target.value)}
+                  />
+                </Labeled>
+                <Labeled label="E-Mail *" error={showError('email')} valid={isValid('email')}>
                   <input
                     type="email"
                     inputMode="email"
                     autoComplete="email"
                     maxLength={255}
                     placeholder="name@praxis.de"
-                    className={cn(fieldCls, touched.email && emailError && '!border-red-300 focus:!ring-red-200')}
+                    className={cn(fieldCls, showError('email') && '!border-red-300 focus:!ring-red-200')}
                     value={data.email}
-                    onBlur={() => setTouched((t) => ({ ...t, email: true }))}
-                    onChange={(e) => setData({ ...data, email: e.target.value })}
+                    aria-invalid={!!showError('email')}
+                    onBlur={() => markTouched('email')}
+                    onChange={(e) => update('email', e.target.value)}
                   />
                 </Labeled>
-                <Labeled label="Telefon *" error={touched.phone ? phoneError : null}>
+                <Labeled
+                  label="Telefon *"
+                  error={showError('country_code') ?? showError('phone')}
+                  valid={isValid('phone') && !errors.country_code}
+                >
                   <div className="flex flex-wrap gap-2">
+
                     <select
                       value={customCode ? CUSTOM_CODE : data.country_code}
                       onChange={(e) => {
