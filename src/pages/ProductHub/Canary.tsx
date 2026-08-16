@@ -155,6 +155,33 @@ export default function ProductHubCanary() {
         </CardContent>
       </Card>
 
+      {!!results.length && (
+        <Card>
+          <CardHeader className="pb-2 flex-row items-center justify-between">
+            <CardTitle className="text-sm">Live-Push · Read-back je Feld</CardTitle>
+            <Badge className={batch?.checks?.publish === 'SUCCESS' ? 'bg-emerald-600' : 'bg-destructive'}>{batch?.checks?.publish}</Badge>
+          </CardHeader>
+          <CardContent className="p-0 overflow-x-auto">
+            <Table>
+              <TableHeader><TableRow><TableHead>Feld</TableHead><TableHead>Aktion</TableHead><TableHead>Vorher</TableHead><TableHead>Neu</TableHead><TableHead>Read-back</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {results.map((r: any, i: number) => (
+                  <TableRow key={i}>
+                    <TableCell className="text-xs font-medium">{r.field}</TableCell>
+                    <TableCell className="text-xs">{r.action}{r.reason ? ` · ${r.reason}` : ''}</TableCell>
+                    <TableCell className="text-xs">{r.previous_value ?? r.live_value ?? '—'}</TableCell>
+                    <TableCell className="text-xs">{r.new_value ?? '—'}</TableCell>
+                    <TableCell className="text-xs">{r.readback ?? '—'}</TableCell>
+                    <TableCell><Badge className={r.verified ? 'bg-emerald-600' : 'bg-destructive'}>{r.verified ? 'VERIFIED' : (r.error || 'FAILED')}</Badge></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+
       {!!tests.length && (
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">DE Write Dry-Run-Tests</CardTitle></CardHeader>
