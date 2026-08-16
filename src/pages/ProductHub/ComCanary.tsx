@@ -136,7 +136,11 @@ export default function ProductHubComCanary() {
           }}>
           {busy === 'publish' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Rocket className="h-3.5 w-3.5" />} 4 · Live veröffentlichen
         </Button>
+        <Button size="sm" variant="outline" disabled={!canRun || !!busy || !batch} onClick={async () => { const r = await call('verify', { batch_id: batch?.id }); if (r) { await load(); console.log('COM Re-Verifikation', r.results ?? r); toast[r.verify === 'VERIFIED' ? 'success' : 'error'](`Re-Verifikation ${r.verify} · ${r.verified} ok, ${r.mismatched} abweichend`); } }}>
+          {busy === 'verify' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null} 4b · Erneut verifizieren (kein Schreiben)
+        </Button>
         <Button size="sm" variant="outline" disabled={!canRun || !!busy} onClick={async () => { const r = await call('render_check'); if (r) { await load(); toast(r.render); } }}>
+
           5 · Website-Rendering prüfen
         </Button>
         <Button size="sm" variant="destructive" disabled={!canRun || !!busy || !batch} onClick={async () => { if (!confirm('Rollback auf COM-Snapshot-Werte?')) return; const r = await call('rollback', { batch_id: batch?.id }); if (r) { await load(); toast.success('Rollback ausgeführt'); } }}>
