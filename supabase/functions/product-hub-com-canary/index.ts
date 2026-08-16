@@ -184,6 +184,15 @@ function normCompare(field: string, a: unknown, b: unknown): boolean {
 }
 
 const codeOf = (b: any) => String(b?.code || b?.error_code || b?.error || "").toUpperCase();
+// Klarer Hinweis statt HTML-Dump, wenn die COM-Seite gar keinen Write-Endpunkt hat.
+const writeDetail = (r: { status: number; body: any }) => {
+  if (r.status === 0) return "COM_PRODUCT_HUB_WRITE_KEY fehlt";
+  if (typeof r.body === "string" && r.body.trim().startsWith("<"))
+    return `COM-Write-Endpunkt existiert nicht (HTTP ${r.status}, HTML statt JSON) – auf alix-lasers.com muss /api/public/product-hub/update bereitgestellt werden`;
+  const c = codeOf(r.body);
+  return c || (typeof r.body === "object" ? JSON.stringify(r.body).slice(0, 200) : String(r.body).slice(0, 200));
+};
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -234,7 +243,7 @@ Deno.serve(async (req) => {
 
       const t1 = await writeCall({ product_id: COM_BLUEICE_ID, field: "product_name", value: liveName, expected_previous_value: liveName });
       tests.push({ name: "Write Auth OK", pass: t1.status !== 0 && t1.status !== 401 && t1.status !== 403, status: t1.status, detail: t1.status === 0 ? "Write-Key fehlt" : codeOf(t1.body) });
-      tests.push({ name: "BlueIce-ID akzeptiert (strikt)", pass: t1.ok, status: t1.status, detail: typeof t1.body === "object" ? JSON.stringify(t1.body).slice(0, 200) : String(t1.body).slice(0, 200) });
+      tests.push({ name: "BlueIce-ID akzeptiert (strikt)", pass: t1.ok, status: t1.status, detail: writeDetail(t1) });
 
       // falsches Geraet: erstes anderes COM-Produkt
       const other = list.map(idOf).find((id) => id && id !== COM_BLUEICE_ID) || "00000000-0000-0000-0000-000000000001";
