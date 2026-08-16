@@ -560,8 +560,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     Ich bin mit einer Kontaktaufnahme per Telefon, E-Mail oder WhatsApp einverstanden.
                   </span>
                 </label>
-                {publicMode && (
-                  <Turnstile theme="light" onToken={(tok) => setCaptchaToken(tok)} onExpire={() => setCaptchaToken(null)} />
+                {publicMode && !captchaUnavailable && (
+                  <Turnstile
+                    theme="light"
+                    onToken={(tok) => setCaptchaToken(tok)}
+                    onExpire={() => setCaptchaToken(null)}
+                    onUnavailable={() => setCaptchaUnavailable(true)}
+                  />
                 )}
                 {error && (
                   <div className="rounded-2xl border border-rose-200 bg-rose-50/80 px-4 py-3 text-sm text-rose-700">{error}</div>
