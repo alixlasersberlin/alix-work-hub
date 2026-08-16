@@ -26,6 +26,9 @@ export default function ProductHubComCanary() {
   const [state, setState] = useState<any>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [trace, setTrace] = useState<any>(null);
+  const [mismatch, setMismatch] = useState<any>(null);
+
 
   const call = async (action: string, body: Record<string, any> = {}, silent = false) => {
     if (!silent) setBusy(action);
