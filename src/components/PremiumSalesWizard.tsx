@@ -221,7 +221,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           last_name: data.last_name,
           company: data.company || null,
           country_code: data.country_code,
-          phone: data.phone,
+          phone: `${data.country_code} ${data.phone.replace(/\D/g, '').replace(/^0+/, '')}`.trim(),
           email: data.email,
           consultation_type: data.consultation_type || null,
           notes: mergedNotes,
