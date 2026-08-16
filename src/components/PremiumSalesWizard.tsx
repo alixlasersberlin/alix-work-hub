@@ -133,6 +133,8 @@ interface Props {
 export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const [step, setStep] = useState(0);
   const [data, setData] = useState<State>(INITIAL);
+  const [touched, setTouched] = useState<{ last_name?: boolean; email?: boolean; phone?: boolean }>({});
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
