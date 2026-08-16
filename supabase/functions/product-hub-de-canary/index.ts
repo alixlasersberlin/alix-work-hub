@@ -219,9 +219,16 @@ Deno.serve(async (req) => {
       const cur = await fetchDeProduct(productId || BLUEICE_ID);
       const fields = ["name", "wavelengths", "power", "cooling", "fluence", "pulse_duration", "frequency", "spot_sizes", "laser_class", "intended_use"];
       const resolved: Record<string, string | null> = {};
-      for (const f of fields) resolved[f] = liveValue(cur.product, f);
-      return json(200, { raw: cur.product, resolved });
+      const empty: string[] = [];
+      const missing: string[] = [];
+      for (const f of fields) {
+        const v = liveValue(cur.product, f);
+        resolved[f] = v;
+        if (!v) (deepHas(cur.product, fieldKeys(f)) ? empty : missing).push(f);
+      }
+      return json(200, { raw: cur.product, resolved, empty, missing });
     }
+
 
     if (action === "selftest") {
       const tests: any[] = [];
