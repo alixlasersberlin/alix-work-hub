@@ -118,9 +118,9 @@ Deno.serve(async (req) => {
     const docChecks = checkUrls
       ? await pool(docRows, 12, async (d: any) => {
           const r = await head(d.url || "");
-          return { id: d.id, product_id: d.product_id, title: d.title, doc_type: d.doc_type, visibility: d.visibility, url: d.url, ...r };
+          return { id: d.id, product_id: d.product_id, title: d.title, doc_type: d.doc_type, resource_type: d.resource_type || "pdf", visibility: d.visibility, url: d.url, ...r };
         })
-      : docRows.map((d: any) => ({ id: d.id, product_id: d.product_id, title: d.title, doc_type: d.doc_type, visibility: d.visibility, url: d.url, ok: true, status: "skipped" }));
+      : docRows.map((d: any) => ({ id: d.id, product_id: d.product_id, title: d.title, doc_type: d.doc_type, resource_type: d.resource_type || "pdf", visibility: d.visibility, url: d.url, ok: true, status: "skipped" }));
     const docReport = docChecks.map((d: any) => ({
       ...d,
       filename: (() => { try { return decodeURIComponent(new URL(d.url).pathname.split("/").pop() || ""); } catch { return ""; } })(),
@@ -280,7 +280,9 @@ Deno.serve(async (req) => {
       media_duplicates: mediaReport.filter((m: any) => m.duplicate).length,
       media_orphans: mediaReport.filter((m: any) => m.orphan).length,
       documents_total: docRows.length,
-      document_errors: docReport.filter((d: any) => !d.ok).length,
+      landing_pages_total: docReport.filter((d: any) => d.resource_type === "landing_page").length,
+      landing_page_warnings: docReport.filter((d: any) => d.resource_type === "landing_page" && !d.ok).length,
+      document_errors: docReport.filter((d: any) => d.resource_type !== "landing_page" && !d.ok).length,
       document_orphans: docReport.filter((d: any) => d.orphan).length,
       tech_reviews: productReport.filter((p) => p.tech.review).length,
       manual_overrides: overrideProducts.length,
@@ -293,7 +295,7 @@ Deno.serve(async (req) => {
     const blockers: string[] = [];
     if (summary.master_ready < summary.total) blockers.push(`${summary.total - summary.master_ready} Geräte sind noch nicht Master-ready`);
     if (summary.media_errors > 0) blockers.push(`${summary.media_errors} Medien nicht erreichbar`);
-    if (summary.document_errors > 0) blockers.push(`${summary.document_errors} Dokumente nicht erreichbar`);
+    if (summary.document_errors > 0) blockers.push(`${summary.document_errors} echte Dokumente nicht erreichbar`);
     if (summary.tech_reviews > 0) blockers.push(`${summary.tech_reviews} Geräte mit unvollständigen technischen Daten (kein Auffüllen erlaubt)`);
     if (summary.conflicts > 0) blockers.push(`${summary.conflicts} offene Konflikte`);
     if (liveError) blockers.push(`DE-Live-Vergleich nicht möglich: ${liveError}`);
