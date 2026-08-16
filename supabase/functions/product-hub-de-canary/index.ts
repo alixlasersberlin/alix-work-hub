@@ -52,34 +52,45 @@ const asText = (v: unknown): string | null => {
   return s.trim() === "" ? null : s;
 };
 
-function liveValue(raw: any, field: string): string | null {
-  if (!raw) return null;
-  const direct: Record<string, string[]> = {
-    name: ["name", "product_name", "title"],
-    model: ["model", "modell"],
-    wavelengths: ["wavelengths", "wavelengths_nm"],
-    power: ["power", "leistung"],
-    cooling: ["cooling", "kuehlung"],
-    fluence: ["fluence"],
-    pulse_duration: ["pulse_duration", "pulsdauer"],
-    frequency: ["frequency", "frequenz"],
-    spot_sizes: ["spot_sizes", "spot_size"],
-    laser_class: ["laser_class", "laserklasse"],
-    intended_use: ["intended_use", "zweckbestimmung"],
-  };
-  for (const k of direct[field] || [field]) {
-    const v = asText(raw[k]);
-    if (v) return v;
-  }
-  const specs = raw.specs || raw.tech_specs || {};
-  if (specs && typeof specs === "object") {
-    for (const k of direct[field] || [field]) {
-      const v = asText((specs as any)[k]);
+const FIELD_ALIASES: Record<string, string[]> = {
+  name: ["name", "product_name", "title"],
+  model: ["model", "modell"],
+  wavelengths: ["wavelengths", "wavelengths_nm", "wellenlaengen"],
+  power: ["power", "power_w", "leistung"],
+  cooling: ["cooling", "kuehlung", "kühlung"],
+  fluence: ["fluence", "fluenz"],
+  pulse_duration: ["pulse_duration", "pulsdauer"],
+  frequency: ["frequency", "frequenz"],
+  spot_sizes: ["spot_sizes", "spot_size", "spotgroesse", "spotgröße"],
+  laser_class: ["laser_class", "laserklasse"],
+  intended_use: ["intended_use", "zweckbestimmung"],
+};
+
+// Tiefensuche: der DE-Export legt technische Felder je nach Geraet flach
+// oder verschachtelt (specs/tech_specs/attributes/...) ab.
+function deepFind(raw: any, keys: string[], depth = 0): string | null {
+  if (!raw || typeof raw !== "object" || depth > 4) return null;
+  for (const k of keys) {
+    if (k in raw) {
+      const v = asText((raw as any)[k]);
       if (v) return v;
+    }
+  }
+  for (const v of Object.values(raw)) {
+    if (v && typeof v === "object") {
+      const hit = deepFind(v, keys, depth + 1);
+      if (hit) return hit;
     }
   }
   return null;
 }
+
+function liveValue(raw: any, field: string): string | null {
+  if (!raw) return null;
+  const keys = [...new Set([...(FIELD_ALIASES[field] || [field]), FIELD_MAP[field] || field])];
+  return deepFind(raw, keys);
+}
+
 
 async function fetchDeProduct(alixId: string) {
   const key = Deno.env.get("DE_EXPORT_API_KEY") || "";
