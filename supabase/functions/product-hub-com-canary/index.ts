@@ -230,6 +230,20 @@ const isHtmlResponse = (r: { body: any }) =>
 const writeEndpointReached = (r: { status: number; body: any }) =>
   r.status > 0 && !isHtmlResponse(r);
 
+// COM akzeptiert nur eine feste Allowlist von Zielfeldern. Welche Namen das sind,
+// wird nicht geraten, sondern per Dry-Run-Probe ermittelt und persistiert.
+const fieldCandidates = (field: string): string[] => {
+  const aliases = [...new Set([...(FIELD_ALIASES[field] || [field]), field])];
+  const out: string[] = [];
+  for (const a of aliases) out.push(a);
+  for (const a of aliases) out.push(`${PH}.${a}`, `specs.${a}`, `tech_specs.${a}`);
+  const mapped = FIELD_MAP[field];
+  return [...new Set([mapped, ...out].filter(Boolean))];
+};
+const FIELD_NOT_ALLOWED = (r: { status: number; body: any }) =>
+  r.status === 400 && codeOf(r.body).includes("FIELD_NOT_ALLOWED");
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
