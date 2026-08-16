@@ -665,6 +665,8 @@ Deno.serve(async (req) => {
 
       const { data: snaps } = await admin.from("ph_canary_snapshots").select("*").eq("batch_id", batchId).order("rollback_order");
       const fmap = await resolveFieldMap();
+      const freshPub = await fetchComProduct().catch(() => null);
+      const freshPubRaw = (freshPub as any)?.product ?? null;
       const results: any[] = [];
       let written = 0, skipped = 0, verified = 0, failed = 0;
       let stopped: string | null = null;
@@ -684,14 +686,16 @@ Deno.serve(async (req) => {
           break;
         }
 
+        const liveAtTargetPub = freshPubRaw ? valueAtPath(freshPubRaw, comField) : null;
         const w = await writeCall({
           product_id: COM_BLUEICE_ID,
           field: comField,
           value: comValue(comField, s.target_master_value),
-          expected_previous_value: s.current_live_value,
+          expected_previous_value: liveAtTargetPub !== null ? liveAtTargetPub : s.current_live_value,
           publish_id: `${batchId}:${s.field}`,
           idempotency_key: `${batchId}:${s.field}`,
         }, false);
+
 
         if (!w.ok) {
           failed++;
