@@ -242,7 +242,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
     <div className={cn('min-h-screen w-full bg-gradient-to-b !text-slate-900', activeWorld)}>
       {/* Header */}
       <header className="px-5 md:px-10 py-6 flex items-center justify-between">
-        <img src={logoAsset.url} alt="ALIX Lasers" className="h-8 md:h-9 w-auto" />
+        <a href="https://www.alix-lasers.de" target="_blank" rel="noopener noreferrer" aria-label="ALIX Lasers Webseite">
+          <img src={logoAsset.url} alt="ALIX Lasers" className="h-8 md:h-9 w-auto transition-opacity hover:opacity-80" />
+        </a>
         <span className="text-[10px] md:text-[11px] tracking-[0.35em] !text-slate-500 uppercase">
           Alix Smart Consult
         </span>
