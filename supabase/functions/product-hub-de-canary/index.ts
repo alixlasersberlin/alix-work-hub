@@ -170,6 +170,14 @@ Deno.serve(async (req) => {
   const productId: string | undefined = payload.product_id;
 
   try {
+    if (action === "de_dump") {
+      const cur = await fetchDeProduct(productId || BLUEICE_ID);
+      const fields = ["name", "wavelengths", "power", "cooling", "fluence", "pulse_duration", "frequency", "spot_sizes", "laser_class", "intended_use"];
+      const resolved: Record<string, string | null> = {};
+      for (const f of fields) resolved[f] = liveValue(cur.product, f);
+      return json(200, { raw: cur.product, resolved });
+    }
+
     if (action === "selftest") {
       const tests: any[] = [];
       const before = await fetchDeProduct(BLUEICE_ID);
