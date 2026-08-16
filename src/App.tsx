@@ -308,6 +308,7 @@ const NeueAnfrage = lazy(() => import("./pages/SalesLeads/NeueAnfrage"));
 const SalesLeadsDashboard = lazy(() => import("./pages/SalesLeads/Dashboard"));
 const SalesLeadsImport = lazy(() => import("./pages/SalesLeads/Import"));
 const PublicBeratung = lazy(() => import("./pages/PublicBeratung"));
+const PublicBeratungPremium = lazy(() => import("./pages/PublicBeratungPremium"));
 const Angebote = lazy(() => import("./pages/Angebote"));
 const Angebotsanalyse = lazy(() => import("./pages/Verkauf/Angebotsanalyse"));
 const AngebotsKalender = lazy(() => import("./pages/Sales/AngebotsKalender"));
@@ -2241,6 +2242,8 @@ function AppRoutes() {
         <Route path="/catalog/portal" element={<Navigate to="/kunde/katalog" replace />} />
 
         <Route path="/beratung" element={<PublicBeratung />} />
+        <Route path="/beratung/premium" element={<PublicBeratungPremium />} />
+        <Route path="/beratung-alix" element={<PublicBeratungPremium />} />
         <Route path="/angebot" element={<PublicBeratung />} />
         <Route path="/kunde/login" element={<CustomerPortalLogin />} />
         <Route path="/kunde" element={<CustomerPortalLayout />}>
