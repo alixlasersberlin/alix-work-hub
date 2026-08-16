@@ -7,7 +7,6 @@ import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 import {
   PREMIUM_CATEGORIES,
   devicesForCategory,
-  deviceImageForCategory,
   type PremiumCategory,
 } from '@/lib/beratung-premium/categories';
 
@@ -156,7 +155,6 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   }, [step]);
 
   const devices = useMemo(() => devicesForCategory(data.category), [data.category]);
-  const deviceImg = useMemo(() => deviceImageForCategory(data.category), [data.category]);
 
   const toggleDevice = (name: string) =>
     setData((d) => ({
