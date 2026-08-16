@@ -123,10 +123,13 @@ export default function ProductHubCanary() {
           <Button size="sm" variant="outline" disabled={!canRun || !!busy} onClick={async () => {
             const r = await call('de_dump');
             if (r) {
-              console.log('DE-Export BlueIce · roh:', r.raw, '· aufgelöst:', r.resolved);
-              const miss = Object.entries(r.resolved || {}).filter(([, v]) => !v).map(([k]) => k);
-              toast.success(miss.length ? `Diagnose: nicht lesbar → ${miss.join(', ')} (Details in der Konsole)` : 'Diagnose: alle Felder im DE-Export lesbar');
+              console.log('DE-Export BlueIce · roh:', r.raw, '· aufgelöst:', r.resolved, '· leer:', r.empty, '· fehlend:', r.missing);
+              const parts: string[] = [];
+              if (r.missing?.length) parts.push(`Feld fehlt im Export → ${r.missing.join(', ')}`);
+              if (r.empty?.length) parts.push(`vorhanden, aber leer → ${r.empty.join(', ')}`);
+              toast.success(parts.length ? `Diagnose: ${parts.join(' · ')} (Details in der Konsole)` : 'Diagnose: alle Felder im DE-Export gefüllt');
             }
+
           }}>
             {busy === 'de_dump' ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <PlugZap className="h-3.5 w-3.5 mr-1.5" />}
             0 · DE-Export Diagnose

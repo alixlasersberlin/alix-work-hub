@@ -85,11 +85,25 @@ function deepFind(raw: any, keys: string[], depth = 0): string | null {
   return null;
 }
 
+// Prueft, ob der Schluessel im Export ueberhaupt existiert (auch wenn null/leer).
+function deepHas(raw: any, keys: string[], depth = 0): boolean {
+  if (!raw || typeof raw !== "object" || depth > 4) return false;
+  for (const k of keys) if (k in raw) return true;
+  for (const v of Object.values(raw)) {
+    if (v && typeof v === "object" && deepHas(v, keys, depth + 1)) return true;
+  }
+  return false;
+}
+
+function fieldKeys(field: string) {
+  return [...new Set([...(FIELD_ALIASES[field] || [field]), FIELD_MAP[field] || field])];
+}
+
 function liveValue(raw: any, field: string): string | null {
   if (!raw) return null;
-  const keys = [...new Set([...(FIELD_ALIASES[field] || [field]), FIELD_MAP[field] || field])];
-  return deepFind(raw, keys);
+  return deepFind(raw, fieldKeys(field));
 }
+
 
 
 function collectProducts(body: any): any[] {
@@ -205,9 +219,16 @@ Deno.serve(async (req) => {
       const cur = await fetchDeProduct(productId || BLUEICE_ID);
       const fields = ["name", "wavelengths", "power", "cooling", "fluence", "pulse_duration", "frequency", "spot_sizes", "laser_class", "intended_use"];
       const resolved: Record<string, string | null> = {};
-      for (const f of fields) resolved[f] = liveValue(cur.product, f);
-      return json(200, { raw: cur.product, resolved });
+      const empty: string[] = [];
+      const missing: string[] = [];
+      for (const f of fields) {
+        const v = liveValue(cur.product, f);
+        resolved[f] = v;
+        if (!v) (deepHas(cur.product, fieldKeys(f)) ? empty : missing).push(f);
+      }
+      return json(200, { raw: cur.product, resolved, empty, missing });
     }
+
 
     if (action === "selftest") {
       const tests: any[] = [];
