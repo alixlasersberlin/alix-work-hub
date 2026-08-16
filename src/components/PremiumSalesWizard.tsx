@@ -419,7 +419,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       autoComplete="tel"
                       maxLength={20}
                       placeholder="171 1651000"
-                      className={cn(fieldCls, touched.phone && phoneError && '!border-red-300 focus:!ring-red-200')}
+                      className={cn(fieldCls, 'flex-1 min-w-[160px]', touched.phone && phoneError && '!border-red-300 focus:!ring-red-200')}
                       value={data.phone}
                       onBlur={() => setTouched((t) => ({ ...t, phone: true }))}
                       onChange={(e) => setData({ ...data, phone: e.target.value.replace(/[^\d\s+()/-]/g, '') })}
