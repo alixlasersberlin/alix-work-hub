@@ -221,19 +221,27 @@ async function writeCall(body: Record<string, unknown>, dryRun = true) {
   // JSONB-Container geschrieben: nur der eine Key wird geaendert, alle anderen
   // bereits vorhandenen product_hub-Keys bleiben unveraendert erhalten.
   const targetField = String((body as any).field || "");
+  // COM akzeptiert ausschliesslich flache Feldnamen (allowed_fields) und legt
+  // diese selbst im JSONB-Container product_hub ab. Deshalb wird der Zielpfad
+  // product_hub.<key> auf der Leitung zu <key> normalisiert; die Container-
+  // Metadaten (atomarer Shallow-Merge) bleiben zusaetzlich erhalten.
+  const COM_WIRE: Record<string, string> = { model_name: "product_name", name: "product_name", wavelengths: "wavelengths_nm" };
   let merge: Record<string, unknown> = {};
+  let wireField = COM_WIRE[targetField] || targetField;
   if (targetField.startsWith(`${PH}.`)) {
     const key = targetField.slice(PH.length + 1);
+    wireField = COM_WIRE[key] || key;
     merge = {
       container: PH,
       container_key: key,
+      target_path: targetField,
       merge: true,
       merge_strategy: "shallow",
       overwrite_container: false,
       [PH]: { [key]: (body as any).value },
     };
   }
-  const payload = JSON.stringify({ publish_id: `alixwork-${Date.now()}`, target: "product_hub", ...body, ...merge, dry_run: dryRun });
+  const payload = JSON.stringify({ publish_id: `alixwork-${Date.now()}`, target: "product_hub", ...body, field: wireField, ...merge, dry_run: dryRun });
 
   const variants = acceptedAuth ? [acceptedAuth] : authVariants(key);
 
