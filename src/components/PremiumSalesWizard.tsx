@@ -340,17 +340,49 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 <Labeled label="Telefon *" error={touched.phone ? phoneError : null}>
                   <div className="flex gap-2">
                     <select
-                      value={data.country_code}
-                      onChange={(e) => setData({ ...data, country_code: e.target.value })}
-                      className={cn(fieldCls, 'w-[122px] shrink-0 px-3')}
+                      value={customCode ? CUSTOM_CODE : data.country_code}
+                      onChange={(e) => {
+                        if (e.target.value === CUSTOM_CODE) {
+                          setCustomCode(true);
+                          setData({ ...data, country_code: '+' });
+                        } else {
+                          setCustomCode(false);
+                          setData({ ...data, country_code: e.target.value });
+                        }
+                      }}
+                      className={cn(fieldCls, 'w-[132px] shrink-0 px-3')}
                       aria-label="Ländervorwahl"
                     >
-                      {COUNTRY_CODES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.flag} {c.code}
-                        </option>
-                      ))}
+                      <option value={CUSTOM_CODE}>➕ Andere…</option>
+                      <optgroup label="Europa">
+                        {EU_CODES.map((c) => (
+                          <option key={`eu-${c.label}`} value={c.code}>
+                            {c.flag} {c.code} · {c.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Weltweit">
+                        {WORLD_CODES.map((c) => (
+                          <option key={`w-${c.label}`} value={c.code}>
+                            {c.flag} {c.code} · {c.label}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
+                    {customCode && (
+                      <input
+                        inputMode="tel"
+                        maxLength={6}
+                        placeholder="+000"
+                        aria-label="Vorwahl frei eingeben"
+                        className={cn(fieldCls, 'w-[96px] shrink-0')}
+                        value={data.country_code}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/[^\d+]/g, '');
+                          setData({ ...data, country_code: v.startsWith('+') ? v : `+${v.replace(/\+/g, '')}` });
+                        }}
+                      />
+                    )}
                     <input
                       inputMode="tel"
                       autoComplete="tel"
@@ -363,8 +395,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     />
                   </div>
                   <p className="text-[11px] !text-slate-400">
-                    {COUNTRY_CODES.find((c) => c.code === data.country_code)?.label} — ohne führende 0
+                    {customCode
+                      ? 'Freie Ländervorwahl — ohne führende 0'
+                      : `${findCountry(data.country_code)?.label ?? ''} — ohne führende 0`}
                   </p>
+                </Labeled>
+
                 </Labeled>
               </div>
 
