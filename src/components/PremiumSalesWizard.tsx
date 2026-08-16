@@ -143,11 +143,6 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 
   const devices = useMemo(() => devicesForCategory(data.category), [data.category]);
 
-  const toggleDevice = (name: string) =>
-    setData((d) => ({
-      ...d,
-      devices: d.devices.includes(name) ? d.devices.filter((x) => x !== name) : [...d.devices, name],
-    }));
 
   const toggleAdditional = (v: string) =>
     setData((d) => ({
