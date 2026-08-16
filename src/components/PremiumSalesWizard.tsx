@@ -527,17 +527,16 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                               </li>
                             ))}
                           </ul>
-                          {deviceImg && (
+                          {d.photo && (
                             <img
-                              src={deviceImg}
+                              src={d.photo}
                               alt={`${d.name} – ALIX Gerät`}
                               loading="lazy"
-                              width={800}
-                              height={600}
-                              className="w-28 md:w-36 aspect-[4/3] shrink-0 rounded-2xl object-cover bg-slate-50 ring-1 ring-slate-200/70"
+                              className="w-28 md:w-36 aspect-[4/3] shrink-0 rounded-2xl object-contain bg-slate-50 ring-1 ring-slate-200/70"
                             />
                           )}
                         </div>
+
                         <span className="mt-5 inline-block text-[11px] tracking-[0.24em] uppercase !text-slate-500">
                           {active ? 'In Angebot aufgenommen' : 'In Angebot aufnehmen'}
                         </span>
