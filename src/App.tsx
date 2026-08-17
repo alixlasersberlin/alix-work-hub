@@ -1293,6 +1293,10 @@ function AppRoutes() {
         {/* ESC – öffentliche Routen (kein Login) */}
         {/* /book → öffentliches Buchungsportal (ticket.alix-operation.de leitet hier her um) */}
         <Route path="/book" element={<EscBookingPortal />} />
+        {/* Creme-Variante für die Einbindung auf alix-lasers.de (Original /book bleibt blau) */}
+        <Route path="/book-creme" element={<EscBookingPortalCreme />} />
+        <Route path="/book-creme/:department" element={<EscBookingPortalCreme />} />
+        <Route path="/book-creme/:department/:service" element={<EscBookingPortalCreme />} />
         <Route path="/book/mediapaket" element={<MediapaketWizard />} />
         <Route path="/preview/mediapaket" element={<MediapaketPreview />} />
         <Route path="/mediapaket/showcase/:token" element={<MediapaketShowcase />} />
