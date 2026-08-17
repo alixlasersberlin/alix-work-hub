@@ -2278,3 +2278,14 @@ html [role="dialog"].news-announcement-dialog .news-announcement-checkbox {
   color: hsl(var(--destructive-foreground)) !important;
   -webkit-text-fill-color: hsl(var(--destructive-foreground)) !important;
 }
+
+/* ---------- Öffentliche Beratungsstrecken: neutraler Hintergrund ---------- */
+html[data-public-wizard] body {
+  background: #ffffff !important;
+}
+html[data-public-wizard] body::before,
+html[data-public-wizard] body::after {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+}
