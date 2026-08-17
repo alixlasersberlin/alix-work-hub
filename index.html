@@ -60,7 +60,7 @@
             document.documentElement.removeAttribute('data-aurora');
           }
           // Öffentliche Beratungsstrecken: heller, neutraler Hintergrund ohne Aurora/Weltkarte.
-          if (/^\/(beratung|angebot|beratung-alix)(\/|$)/.test(location.pathname)) {
+          if (/^\/(beratung|angebot|beratung-alix|book-creme)(\/|$)/.test(location.pathname)) {
             document.documentElement.setAttribute('data-public-wizard', '1');
             document.documentElement.removeAttribute('data-aurora');
             document.documentElement.classList.remove('dark');
