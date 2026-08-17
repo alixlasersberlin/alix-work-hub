@@ -2289,3 +2289,36 @@ html[data-public-wizard] body::after {
   content: none !important;
   background: none !important;
 }
+
+/* ============================================================
+   BOOKING CREME — helle Creme-Variante des Buchungsportals
+   Scope: .theme-creme (Route /book-creme). Beeinflusst /book nicht.
+   ============================================================ */
+html[data-booking-creme] body {
+  background: hsl(38 40% 96%) !important;
+}
+
+.theme-creme {
+  --background: 38 40% 96%;          /* Creme */
+  --foreground: 30 20% 14%;
+  --card: 40 50% 98.5%;
+  --card-foreground: 30 20% 14%;
+  --popover: 40 50% 98.5%;
+  --popover-foreground: 30 20% 14%;
+  --primary: 34 42% 40%;             /* warmes Bronze/Gold */
+  --primary-foreground: 40 60% 98%;
+  --secondary: 38 30% 92%;
+  --secondary-foreground: 30 20% 18%;
+  --muted: 38 28% 92.5%;
+  --muted-foreground: 30 12% 40%;
+  --accent: 38 45% 90%;
+  --accent-foreground: 30 20% 18%;
+  --destructive: 0 65% 46%;
+  --destructive-foreground: 40 60% 98%;
+  --border: 36 24% 86%;
+  --input: 36 24% 86%;
+  --ring: 34 42% 45%;
+  --radius: 0.75rem;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
