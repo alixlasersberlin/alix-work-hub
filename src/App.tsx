@@ -931,6 +931,7 @@ const EchTemplates = lazy(() => import("./pages/ESC/ech/Templates"));
 const EchHistory = lazy(() => import("./pages/ESC/ech/History"));
 const EchSettingsPage = lazy(() => import("./pages/ESC/ech/Settings"));
 const EscBookingPortal = lazy(() => import("./pages/ESC/public/BookingPortal"));
+const EscBookingPortalCreme = lazy(() => import("./pages/ESC/public/BookingPortalCreme"));
 const BookRedirect = lazy(() => import("./pages/BookRedirect"));
 const MediapaketWizard = lazy(() => import("./pages/mediapaket/MediapaketWizard"));
 const MediapaketOverview = lazy(() => import("./pages/mediapaket/MediapaketOverview"));
