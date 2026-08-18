@@ -528,28 +528,36 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 7 && (
-                    <Section title={t.s_phone} hint={t.required}>
-                      <div className="flex gap-2">
-                        <select
-                          value={data.country_code}
-                          onChange={(e) => setData({ ...data, country_code: e.target.value })}
-                          className={cn(selectCls, 'w-auto')}
-                        >
-                          {COUNTRY_CODES.map((c) => (
-                            <option key={c.code} value={c.code}>{c.label}</option>
-                          ))}
-                        </select>
-                        <Input
-                          value={data.phone}
-                          onChange={(e) => setData({ ...data, phone: e.target.value })}
-                          placeholder={t.phone_placeholder}
-                          inputMode="tel"
-                          className={inputCls}
-                        />
-                      </div>
-                    </Section>
-                  )}
+                  {step === 7 && (() => {
+                    const phoneErr = data.phone.trim() ? phoneError(data.country_code, data.phone) : null;
+                    return (
+                      <Section title={t.s_phone} hint={t.required}>
+                        <div className="flex gap-2">
+                          <select
+                            value={data.country_code}
+                            onChange={(e) => setData({ ...data, country_code: e.target.value })}
+                            className={cn(selectCls, 'w-auto')}
+                          >
+                            {COUNTRY_CODES.map((c) => (
+                              <option key={c.code} value={c.code}>{`${c.flag} ${c.label} ${c.code}`}</option>
+                            ))}
+                          </select>
+                          <Input
+                            value={data.phone}
+                            onChange={(e) => setData({ ...data, phone: e.target.value.replace(/[^\d\s+()/-]/g, '') })}
+                            placeholder={t.phone_placeholder}
+                            inputMode="tel"
+                            autoComplete="tel"
+                            aria-invalid={!!phoneErr}
+                            className={cn(inputCls, phoneErr && '!border-red-300')}
+                          />
+                        </div>
+                        <p className={cn('mt-2 text-xs', phoneErr ? 'text-red-600' : 'text-slate-500')}>
+                          {phoneErr ?? `${findCountry(data.country_code)?.label ?? ''} — bitte ohne führende 0 eingeben`}
+                        </p>
+                      </Section>
+                    );
+                  })()}
 
                   {step === 8 && (() => {
                     const isSmart = data.flex_plan === 'smart_impulse';
