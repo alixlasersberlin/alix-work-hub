@@ -139,6 +139,7 @@ Deno.serve(async (req) => {
           recipientEmail: "support@alix-lasers.com",
           idempotencyKey: `sales-lead-internal-${inserted?.id}`,
           extraCc: ["rde@alix-lasers.com"],
+          bcc: ["homebln@icloud.com"],
           skipDefaultCopies: true,
           templateData: {
             lead_id: inserted?.id,
