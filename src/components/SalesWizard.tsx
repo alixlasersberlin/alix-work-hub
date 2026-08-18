@@ -15,6 +15,7 @@ import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
 import { useWizardLang } from '@/i18n/wizard';
 import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 import { ALIX_LASERS_MODELS, ALIX_BEAUTY_MODELS } from '@/lib/alix-models';
+import { EU_CODES, WORLD_CODES, findCountry } from '@/lib/beratung-premium/country-codes';
 
 import imgHair from '@/assets/wizard/haarentfernung.jpg';
 import imgFace from '@/assets/wizard/gesicht.jpg';
