@@ -51,16 +51,27 @@ const CONSULTATION = [
   'Videoberatung',
 ];
 
-const COUNTRY_CODES = [
-  { code: '+49', label: 'DE +49' },
-  { code: '+43', label: 'AT +43' },
-  { code: '+41', label: 'CH +41' },
-  { code: '+39', label: 'IT +39' },
-  { code: '+33', label: 'FR +33' },
-  { code: '+31', label: 'NL +31' },
-  { code: '+34', label: 'ES +34' },
-  { code: '+44', label: 'UK +44' },
-];
+// Gleiche Datenbasis wie die Premium-Beratung (Min/Max je Land)
+const COUNTRY_CODES = [...EU_CODES, ...WORLD_CODES];
+
+/** Nur Ziffern, führende Nullen (nationale Verkehrsausscheidungsziffer) entfernt */
+function phoneDigits(value: string): string {
+  return value.replace(/\D/g, '').replace(/^0+/, '');
+}
+
+/** Validierung analog Premium-Wizard: Länge gegen Länderprofil prüfen */
+function phoneError(code: string, value: string): string | null {
+  if (!value.trim()) return 'Bitte Telefonnummer angeben.';
+  const digits = phoneDigits(value);
+  if (!digits) return 'Bitte eine gültige Telefonnummer angeben.';
+  const c = findCountry(code);
+  const min = c?.min ?? 6;
+  const max = c?.max ?? 14;
+  const label = c?.label ?? code;
+  if (digits.length < min) return `Für ${label} sind mindestens ${min} Ziffern nötig (ohne führende 0).`;
+  if (digits.length > max) return `Für ${label} sind maximal ${max} Ziffern erlaubt.`;
+  return null;
+}
 
 type State = {
   interests: string[];
