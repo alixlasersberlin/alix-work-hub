@@ -15,6 +15,7 @@ import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
 import { useWizardLang } from '@/i18n/wizard';
 import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 import { ALIX_LASERS_MODELS, ALIX_BEAUTY_MODELS } from '@/lib/alix-models';
+import { EU_CODES, WORLD_CODES, findCountry } from '@/lib/beratung-premium/country-codes';
 
 import imgHair from '@/assets/wizard/haarentfernung.jpg';
 import imgFace from '@/assets/wizard/gesicht.jpg';
@@ -50,16 +51,27 @@ const CONSULTATION = [
   'Videoberatung',
 ];
 
-const COUNTRY_CODES = [
-  { code: '+49', label: 'DE +49' },
-  { code: '+43', label: 'AT +43' },
-  { code: '+41', label: 'CH +41' },
-  { code: '+39', label: 'IT +39' },
-  { code: '+33', label: 'FR +33' },
-  { code: '+31', label: 'NL +31' },
-  { code: '+34', label: 'ES +34' },
-  { code: '+44', label: 'UK +44' },
-];
+// Gleiche Datenbasis wie die Premium-Beratung (Min/Max je Land)
+const COUNTRY_CODES = [...EU_CODES, ...WORLD_CODES];
+
+/** Nur Ziffern, führende Nullen (nationale Verkehrsausscheidungsziffer) entfernt */
+function phoneDigits(value: string): string {
+  return value.replace(/\D/g, '').replace(/^0+/, '');
+}
+
+/** Validierung analog Premium-Wizard: Länge gegen Länderprofil prüfen */
+function phoneError(code: string, value: string): string | null {
+  if (!value.trim()) return 'Bitte Telefonnummer angeben.';
+  const digits = phoneDigits(value);
+  if (!digits) return 'Bitte eine gültige Telefonnummer angeben.';
+  const c = findCountry(code);
+  const min = c?.min ?? 6;
+  const max = c?.max ?? 14;
+  const label = c?.label ?? code;
+  if (digits.length < min) return `Für ${label} sind mindestens ${min} Ziffern nötig (ohne führende 0).`;
+  if (digits.length > max) return `Für ${label} sind maximal ${max} Ziffern erlaubt.`;
+  return null;
+}
 
 type State = {
   interests: string[];
@@ -161,7 +173,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
       case 1: return data.interests.length > 0;
       case 4: return !!data.delivery_preference;
       case 5: return !!data.first_name.trim() && !!data.last_name.trim();
-      case 7: return data.phone.trim().length >= 3;
+      case 7: return phoneError(data.country_code, data.phone) === null;
       case 9: return /.+@.+\..+/.test(data.email.trim());
       case 10: return !!data.consultation_type;
       case 12: return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
@@ -187,6 +199,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
       const { data: json, error: fnError } = await supabase.functions.invoke('sales-wizard-submit', {
         body: {
           ...rest,
+          // E.164-nahe Normalisierung wie im Premium-Wizard
+          phone: `${data.country_code} ${phoneDigits(data.phone)}`.trim(),
           notes: mergedNotes,
           additional_interests: [
             ...data.additional_interests,
@@ -516,28 +530,36 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 7 && (
-                    <Section title={t.s_phone} hint={t.required}>
-                      <div className="flex gap-2">
-                        <select
-                          value={data.country_code}
-                          onChange={(e) => setData({ ...data, country_code: e.target.value })}
-                          className={cn(selectCls, 'w-auto')}
-                        >
-                          {COUNTRY_CODES.map((c) => (
-                            <option key={c.code} value={c.code}>{c.label}</option>
-                          ))}
-                        </select>
-                        <Input
-                          value={data.phone}
-                          onChange={(e) => setData({ ...data, phone: e.target.value })}
-                          placeholder={t.phone_placeholder}
-                          inputMode="tel"
-                          className={inputCls}
-                        />
-                      </div>
-                    </Section>
-                  )}
+                  {step === 7 && (() => {
+                    const phoneErr = data.phone.trim() ? phoneError(data.country_code, data.phone) : null;
+                    return (
+                      <Section title={t.s_phone} hint={t.required}>
+                        <div className="flex gap-2">
+                          <select
+                            value={data.country_code}
+                            onChange={(e) => setData({ ...data, country_code: e.target.value })}
+                            className={cn(selectCls, 'w-auto')}
+                          >
+                            {COUNTRY_CODES.map((c) => (
+                              <option key={c.code} value={c.code}>{`${c.flag} ${c.label} ${c.code}`}</option>
+                            ))}
+                          </select>
+                          <Input
+                            value={data.phone}
+                            onChange={(e) => setData({ ...data, phone: e.target.value.replace(/[^\d\s+()/-]/g, '') })}
+                            placeholder={t.phone_placeholder}
+                            inputMode="tel"
+                            autoComplete="tel"
+                            aria-invalid={!!phoneErr}
+                            className={cn(inputCls, phoneErr && '!border-red-300')}
+                          />
+                        </div>
+                        <p className={cn('mt-2 text-xs', phoneErr ? 'text-red-600' : 'text-slate-500')}>
+                          {phoneErr ?? `${findCountry(data.country_code)?.label ?? ''} — bitte ohne führende 0 eingeben`}
+                        </p>
+                      </Section>
+                    );
+                  })()}
 
                   {step === 8 && (() => {
                     const isSmart = data.flex_plan === 'smart_impulse';
