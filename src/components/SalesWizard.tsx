@@ -199,6 +199,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
       const { data: json, error: fnError } = await supabase.functions.invoke('sales-wizard-submit', {
         body: {
           ...rest,
+          // E.164-nahe Normalisierung wie im Premium-Wizard
+          phone: `${data.country_code} ${phoneDigits(data.phone)}`.trim(),
           notes: mergedNotes,
           additional_interests: [
             ...data.additional_interests,
