@@ -173,7 +173,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
       case 1: return data.interests.length > 0;
       case 4: return !!data.delivery_preference;
       case 5: return !!data.first_name.trim() && !!data.last_name.trim();
-      case 7: return data.phone.trim().length >= 3;
+      case 7: return phoneError(data.country_code, data.phone) === null;
       case 9: return /.+@.+\..+/.test(data.email.trim());
       case 10: return !!data.consultation_type;
       case 12: return data.consent_data && data.consent_contact && (publicMode ? !!captchaToken : true);
