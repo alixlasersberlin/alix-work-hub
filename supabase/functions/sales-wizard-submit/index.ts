@@ -187,6 +187,23 @@ Deno.serve(async (req) => {
   const srv = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(url, srv, { auth: { persistSession: false } });
 
+  // Telefonnummer serverseitig normalisieren: "+<CC> <digits>" ohne führende 0
+  {
+    const cc = (input.country_code || "").trim();
+    const raw = (input.phone || "").trim();
+    let digits = raw.replace(/\D/g, "");
+    if (raw.startsWith("+")) {
+      const ccDigits = cc.replace(/\D/g, "");
+      if (ccDigits && digits.startsWith(ccDigits)) digits = digits.slice(ccDigits.length);
+    } else if (digits.startsWith("00")) {
+      const ccDigits = cc.replace(/\D/g, "");
+      digits = digits.slice(2);
+      if (ccDigits && digits.startsWith(ccDigits)) digits = digits.slice(ccDigits.length);
+    }
+    digits = digits.replace(/^0+/, "");
+    if (digits) input.phone = cc ? `${cc} ${digits}` : digits;
+  }
+
   // Duplicate check (email → phone → company)
   let matched_customer_id: string | null = null;
   try {
