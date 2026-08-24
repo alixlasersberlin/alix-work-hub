@@ -233,8 +233,9 @@ export default function TicketsList() {
         const chunk = ids.slice(i, i + 300);
         const { data, error } = await supabase
           .from('ticket_messages')
-          .select('ticket_id, sender_type, created_at')
+          .select('ticket_id, sender_type, created_at, is_internal')
           .in('ticket_id', chunk)
+          .or('is_internal.is.null,is_internal.eq.false')
           .order('created_at', { ascending: false });
         if (cancelled || error || !data) continue;
         for (const m of data as any[]) {
