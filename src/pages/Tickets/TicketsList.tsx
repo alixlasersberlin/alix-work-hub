@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2 } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2, Layers } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import EscBookings from '@/pages/ESC/Bookings';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -69,7 +69,7 @@ function slaBadge(s: string | null) {
   return <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded border ${map[s] || ''}`}>{label}</span>;
 }
 
-const STATUS_OPTIONS = ['open', 'in-progress', 'wartet_Kunde', 'offen', 'in_bearbeitung', 'wartet_kunde', 'gelöst', 'geschlossen'];
+const STATUS_OPTIONS = ['open', 'in-progress', 'wartet_Kunde', 'offen', 'in_bearbeitung', 'wartet_kunde', 'queue', 'gelöst', 'geschlossen'];
 const PRIORITY_OPTIONS = ['niedrig', 'normal', 'hoch', 'kritisch'];
 const DEPARTMENT_OPTIONS = ['service', 'technik', 'finance', 'tourenplanung', 'lieferung', 'abholung', 'austausch'];
 const CATEGORY_OPTIONS = ['Reklamation', 'Reparatur', 'Wartung', 'Installation', 'Schulung', 'Beratung', 'Ersatzteil', 'Rückgabe', 'Finance', 'Sonstiges'];
@@ -83,6 +83,7 @@ function statusColor(s: string) {
     case 'wartet_Kunde':
     case 'wartet_kunde': return 'bg-purple-500/15 text-purple-400 border-purple-500/30';
     case 'gelöst': return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+    case 'queue': return 'bg-sky-500/15 text-sky-300 border-sky-500/30';
     case 'geschlossen': return 'bg-muted text-muted-foreground border-border';
     default: return 'bg-muted text-muted-foreground border-border';
   }
@@ -158,6 +159,20 @@ export default function TicketsList() {
     if (error) { toast.error(error.message); return; }
     setRows(prev => prev.map(r => selected.includes(r.id) ? { ...r, status: 'geschlossen' } : r));
     toast.success(`${selected.length} Ticket(s) geschlossen`);
+    setSelected([]);
+  }
+
+  async function bulkQueue(toQueue: boolean) {
+    if (!isSuperAdmin || selected.length === 0) return;
+    const next = toQueue ? 'queue' : 'offen';
+    setBulkBusy(true);
+    const { error } = await supabase.from('tickets').update({ status: next }).in('id', selected);
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.map(r => selected.includes(r.id) ? { ...r, status: next } : r));
+    toast.success(toQueue
+      ? `${selected.length} Ticket(s) in die Queue verschoben`
+      : `${selected.length} Ticket(s) aus der Queue geholt`);
     setSelected([]);
   }
 
@@ -313,7 +328,9 @@ export default function TicketsList() {
   }, [rows, search, statusF, prioF, deptF, sourceF, catF, urlSla, urlEscalated, urlMine, urlDue, currentUserId]);
 
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
-  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status)), [filtered]);
+  const isQueued = (s: string) => s === 'queue';
+  const queueRows = useMemo(() => filtered.filter(r => isQueued(r.status)), [filtered]);
+  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isQueued(r.status)), [filtered]);
   const closedRows = useMemo(() => filtered.filter(r => isClosed(r.status)), [filtered]);
   const wartungRows = useMemo(
     () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'wartung'),
@@ -329,10 +346,10 @@ export default function TicketsList() {
   );
   const overdueRows = useMemo(() => {
     const now = Date.now();
-    return filtered.filter(r => !isClosed(r.status) && r.due_at && new Date(r.due_at).getTime() < now);
+    return filtered.filter(r => !isClosed(r.status) && !isQueued(r.status) && r.due_at && new Date(r.due_at).getTime() < now);
   }, [filtered]);
   const escalatedRows = useMemo(
-    () => filtered.filter(r => !isClosed(r.status) && (r.escalation_count || 0) > 0),
+    () => filtered.filter(r => !isClosed(r.status) && !isQueued(r.status) && (r.escalation_count || 0) > 0),
     [filtered],
   );
   const wartetKundeRows = useMemo(
@@ -340,7 +357,7 @@ export default function TicketsList() {
     [filtered],
   );
 
-  type TabKey = 'all' | 'open' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
+  type TabKey = 'all' | 'open' | 'queue' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
   const initialTab: TabKey = (() => {
     const s = searchParams.get('status');
     const d = searchParams.get('due');
@@ -540,6 +557,7 @@ export default function TicketsList() {
         <TabsList className="mb-3 flex-wrap h-auto">
           <TabsTrigger value="all">Alle ({filtered.length})</TabsTrigger>
           <TabsTrigger value="open">Offene ({openRows.length})</TabsTrigger>
+          <TabsTrigger value="queue"><Layers className="w-3.5 h-3.5 mr-1 text-sky-400" />Queue ({queueRows.length})</TabsTrigger>
           <TabsTrigger value="neu"><Inbox className="w-3.5 h-3.5 mr-1" />Neue / Eingang ({neueRows.length})</TabsTrigger>
           <TabsTrigger value="overdue"><AlertTriangle className="w-3.5 h-3.5 mr-1 text-red-400" />Überfällig ({overdueRows.length})</TabsTrigger>
           <TabsTrigger value="escalated"><Flame className="w-3.5 h-3.5 mr-1 text-orange-400" />Eskaliert ({escalatedRows.length})</TabsTrigger>
@@ -554,10 +572,11 @@ export default function TicketsList() {
           <EscBookings />
         </TabsContent>
 
-        {(['all', 'open', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
+        {(['all', 'open', 'queue', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
           const list =
             key === 'all' ? filtered
               : key === 'open' ? openRows
+              : key === 'queue' ? queueRows
               : key === 'closed' ? closedRows
               : key === 'wartung' ? wartungRows
               : key === 'reklamation' ? reklamationRows
@@ -568,6 +587,7 @@ export default function TicketsList() {
           const emptyTitle =
             key === 'all' ? 'Keine Tickets'
               : key === 'open' ? 'Keine offenen Tickets'
+              : key === 'queue' ? 'Keine Tickets in der Queue'
               : key === 'closed' ? 'Keine geschlossenen Tickets'
               : key === 'wartung' ? 'Keine Wartungs-Tickets'
               : key === 'reklamation' ? 'Keine Reklamations-Tickets'
@@ -600,6 +620,21 @@ export default function TicketsList() {
                         {bulkBusy ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
                         Schließen
                       </Button>
+                      {key === 'queue' ? (
+                        <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkQueue(false)}>
+                          <ArrowRight className="w-3.5 h-3.5 mr-1" /> Aus Queue holen
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={bulkBusy}
+                          className="text-sky-300 border-sky-500/40 hover:bg-sky-500/10"
+                          onClick={() => bulkQueue(true)}
+                        >
+                          <Layers className="w-3.5 h-3.5 mr-1" /> In Queue verschieben
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
