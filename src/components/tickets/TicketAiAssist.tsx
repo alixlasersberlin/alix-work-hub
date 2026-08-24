@@ -18,6 +18,8 @@ const TONES = [
 interface SimilarCase {
   id: string;
   ticket_number?: string | null;
+  customer_name?: string | null;
+  company_name?: string | null;
   title?: string | null;
   status?: string | null;
   category?: string | null;
