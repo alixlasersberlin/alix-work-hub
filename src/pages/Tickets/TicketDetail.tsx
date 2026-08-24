@@ -339,6 +339,11 @@ export default function TicketDetail() {
     }).select('id').single();
     if (error) { toast.error(error.message); return; }
     setNewMsg('');
+    // Antwortender Mitarbeiter wird Bearbeiter, falls noch keiner gesetzt ist
+    if (!ticket.assigned_to && user?.id) {
+      const { error: aErr } = await supabase.from('tickets').update({ assigned_to: user.id }).eq('id', ticket.id);
+      if (!aErr) setTicket(t => (t ? { ...t, assigned_to: user.id } : t));
+    }
     toast.success(msgInternal ? 'Interne Notiz gespeichert' : 'Antwort an Kunde gesendet');
     // Only sync public messages to AlixSmart (source_system === 'alixsmart')
     if (!msgInternal && ticket.external_ticket_id && ticket.source_system === 'alixsmart' && data?.id) {
