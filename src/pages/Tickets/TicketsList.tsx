@@ -660,10 +660,10 @@ export default function TicketsList() {
                           </TableHead>
                         )}
                         <TableHead>Letzte Antwort</TableHead>
-                        <TableHead>Vorgang</TableHead>
+                        <TableHead>Kunde</TableHead>
                         <TableHead>Kategorie</TableHead>
                         <TableHead>Ticket</TableHead>
-                        <TableHead>Kunde</TableHead>
+                        <TableHead>Vorgang</TableHead>
                         <TableHead>Angebot</TableHead>
                         <TableHead>Gerät</TableHead>
                         <TableHead>Seriennr.</TableHead>
@@ -712,10 +712,9 @@ export default function TicketsList() {
                               );
                             })()}
                           </TableCell>
-                          <TableCell className="text-xs font-mono whitespace-nowrap">
-                            {(r as any).case_number
-                              ? <Badge variant="outline" className="border-primary/40 text-primary">{(r as any).case_number}</Badge>
-                              : <span className="text-muted-foreground">—</span>}
+                          <TableCell>
+                            <div className="text-sm">{r.customer_name || '—'}</div>
+                            <div className="text-xs text-muted-foreground">{r.company_name || ''}</div>
                           </TableCell>
                           <TableCell className="text-sm" onClick={(e) => e.stopPropagation()}>
 
@@ -748,9 +747,10 @@ export default function TicketsList() {
                               {(r as any).case_number && <span className="ml-2 text-primary">Vorgang {(r as any).case_number}</span>}
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <div className="text-sm">{r.customer_name || '—'}</div>
-                            <div className="text-xs text-muted-foreground">{r.company_name || ''}</div>
+                          <TableCell className="text-xs font-mono whitespace-nowrap">
+                            {(r as any).case_number
+                              ? <Badge variant="outline" className="border-primary/40 text-primary">{(r as any).case_number}</Badge>
+                              : <span className="text-muted-foreground">—</span>}
                           </TableCell>
                           <TableCell className="text-sm whitespace-nowrap">
                             {(() => {
