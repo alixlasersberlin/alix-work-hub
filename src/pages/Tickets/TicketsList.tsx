@@ -207,6 +207,30 @@ export default function TicketsList() {
 
 
 
+  // Letzte Antwort je Ticket laden
+  useEffect(() => {
+    const ids = rows.map(r => r.id);
+    if (!ids.length) { setLastReply({}); return; }
+    let cancelled = false;
+    (async () => {
+      const map: Record<string, { sender: string | null; at: string }> = {};
+      for (let i = 0; i < ids.length; i += 300) {
+        const chunk = ids.slice(i, i + 300);
+        const { data, error } = await supabase
+          .from('ticket_messages')
+          .select('ticket_id, sender_type, created_at')
+          .in('ticket_id', chunk)
+          .order('created_at', { ascending: false });
+        if (cancelled || error || !data) continue;
+        for (const m of data as any[]) {
+          if (!map[m.ticket_id]) map[m.ticket_id] = { sender: m.sender_type, at: m.created_at };
+        }
+      }
+      if (!cancelled) setLastReply(map);
+    })();
+    return () => { cancelled = true; };
+  }, [rows]);
+
   // Angebote je Vorgangsnummer laden (neuestes Angebot pro Vorgang)
   useEffect(() => {
     const caseNumbers = Array.from(new Set(rows.map(r => (r as any).case_number).filter(Boolean))) as string[];
