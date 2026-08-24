@@ -182,7 +182,23 @@ export default function TicketDetail() {
       supabase.from('ticket_attachments').select('*').eq('ticket_id', id).order('created_at', { ascending: false }),
     ]);
     if (t.error) { console.error(t.error); toast.error('Ticket nicht gefunden'); }
-    const tk = (t.data as Ticket) || null;
+    let tk = (t.data as Ticket) || null;
+
+    // Beim Öffnen automatisch: Status "in Bearbeitung", Priorität "normal",
+    // Abteilung "service" und Bearbeiter = aktueller Benutzer
+    if (tk && canEdit && user?.id) {
+      const auto: Partial<Ticket> = {};
+      const closed = tk.status === 'geschlossen' || tk.status === 'gelöst';
+      if (!closed && tk.status !== 'in_bearbeitung' && tk.status !== 'queue') auto.status = 'in_bearbeitung';
+      if (!tk.priority) auto.priority = 'normal';
+      if (!tk.department) auto.department = 'service';
+      if (!tk.assigned_to) auto.assigned_to = user.id;
+      if (Object.keys(auto).length > 0) {
+        const { error: autoErr } = await supabase.from('tickets').update(auto).eq('id', tk.id);
+        if (!autoErr) tk = { ...tk, ...auto } as Ticket;
+      }
+    }
+
     setTicket(tk);
     setInternalNoteDraft(tk?.internal_note || '');
     setMessages((m.data as Msg[]) || []);
