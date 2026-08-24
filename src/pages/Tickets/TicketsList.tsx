@@ -83,6 +83,7 @@ function statusColor(s: string) {
     case 'wartet_Kunde':
     case 'wartet_kunde': return 'bg-purple-500/15 text-purple-400 border-purple-500/30';
     case 'gelöst': return 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30';
+    case 'queue': return 'bg-sky-500/15 text-sky-300 border-sky-500/30';
     case 'geschlossen': return 'bg-muted text-muted-foreground border-border';
     default: return 'bg-muted text-muted-foreground border-border';
   }
@@ -158,6 +159,20 @@ export default function TicketsList() {
     if (error) { toast.error(error.message); return; }
     setRows(prev => prev.map(r => selected.includes(r.id) ? { ...r, status: 'geschlossen' } : r));
     toast.success(`${selected.length} Ticket(s) geschlossen`);
+    setSelected([]);
+  }
+
+  async function bulkQueue(toQueue: boolean) {
+    if (!isSuperAdmin || selected.length === 0) return;
+    const next = toQueue ? 'queue' : 'offen';
+    setBulkBusy(true);
+    const { error } = await supabase.from('tickets').update({ status: next }).in('id', selected);
+    setBulkBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setRows(prev => prev.map(r => selected.includes(r.id) ? { ...r, status: next } : r));
+    toast.success(toQueue
+      ? `${selected.length} Ticket(s) in die Queue verschoben`
+      : `${selected.length} Ticket(s) aus der Queue geholt`);
     setSelected([]);
   }
 
