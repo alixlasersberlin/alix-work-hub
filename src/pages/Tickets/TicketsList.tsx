@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2 } from 'lucide-react';
+import { Ticket, Search, ArrowRight, Loader2, Plus, RefreshCw, Inbox, X, Trash2, AlertTriangle, Flame, Pause, CalendarCheck, CheckCircle2, Layers } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import EscBookings from '@/pages/ESC/Bookings';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -620,6 +620,21 @@ export default function TicketsList() {
                         {bulkBusy ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5 mr-1" />}
                         Schließen
                       </Button>
+                      {key === 'queue' ? (
+                        <Button size="sm" variant="outline" disabled={bulkBusy} onClick={() => bulkQueue(false)}>
+                          <ArrowRight className="w-3.5 h-3.5 mr-1" /> Aus Queue holen
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={bulkBusy}
+                          className="text-sky-300 border-sky-500/40 hover:bg-sky-500/10"
+                          onClick={() => bulkQueue(true)}
+                        >
+                          <Layers className="w-3.5 h-3.5 mr-1" /> In Queue verschieben
+                        </Button>
+                      )}
                       <Button
                         size="sm"
                         variant="outline"
