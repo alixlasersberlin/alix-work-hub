@@ -120,6 +120,7 @@ export default function TicketsList() {
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [offersByCase, setOffersByCase] = useState<Record<string, OfferInfo>>({});
+  const [lastReply, setLastReply] = useState<Record<string, { sender: string | null; at: string }>>({});
   const { isSuperAdmin } = useFinancePermissions();
 
   async function updateCategory(id: string, category: string | null) {
@@ -205,6 +206,30 @@ export default function TicketsList() {
   }, [sourceSystem]);
 
 
+
+  // Letzte Antwort je Ticket laden
+  useEffect(() => {
+    const ids = rows.map(r => r.id);
+    if (!ids.length) { setLastReply({}); return; }
+    let cancelled = false;
+    (async () => {
+      const map: Record<string, { sender: string | null; at: string }> = {};
+      for (let i = 0; i < ids.length; i += 300) {
+        const chunk = ids.slice(i, i + 300);
+        const { data, error } = await supabase
+          .from('ticket_messages')
+          .select('ticket_id, sender_type, created_at')
+          .in('ticket_id', chunk)
+          .order('created_at', { ascending: false });
+        if (cancelled || error || !data) continue;
+        for (const m of data as any[]) {
+          if (!map[m.ticket_id]) map[m.ticket_id] = { sender: m.sender_type, at: m.created_at };
+        }
+      }
+      if (!cancelled) setLastReply(map);
+    })();
+    return () => { cancelled = true; };
+  }, [rows]);
 
   // Angebote je Vorgangsnummer laden (neuestes Angebot pro Vorgang)
   useEffect(() => {
@@ -609,6 +634,7 @@ export default function TicketsList() {
                         <TableHead>Abteilung</TableHead>
                         <TableHead>Priorität</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Letzte Antwort</TableHead>
                         <TableHead>Letzter Sync</TableHead>
                         <TableHead className="text-right">Aktion</TableHead>
                       </TableRow>
@@ -690,6 +716,27 @@ export default function TicketsList() {
                           <TableCell><Badge variant="outline">{r.department}</Badge></TableCell>
                           <TableCell><Badge variant="outline" className={priorityColor(r.priority)}>{r.priority}</Badge></TableCell>
                           <TableCell><Badge variant="outline" className={statusColor(r.status)}>{r.status}</Badge></TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            {(() => {
+                              const lr = lastReply[r.id];
+                              const answered = !!lr && (lr.sender === 'agent' || lr.sender === 'department');
+                              return (
+                                <div className="flex flex-col gap-0.5">
+                                  <Badge
+                                    variant="outline"
+                                    className={answered
+                                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                      : 'bg-red-500/15 text-red-400 border-red-500/30'}
+                                  >
+                                    {answered ? 'Warte auf Kunden' : 'Warte auf Agent'}
+                                  </Badge>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {lr ? new Date(lr.at).toLocaleString('de-DE') : 'Keine Antwort'}
+                                  </span>
+                                </div>
+                              );
+                            })()}
+                          </TableCell>
                           <TableCell className="text-xs text-muted-foreground">
                             {r.last_synced_at ? new Date(r.last_synced_at).toLocaleString('de-DE') : '—'}
                           </TableCell>
