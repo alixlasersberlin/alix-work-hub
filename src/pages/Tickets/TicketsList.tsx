@@ -656,6 +656,27 @@ export default function TicketsList() {
                               />
                             </TableCell>
                           )}
+                          <TableCell className="whitespace-nowrap">
+                            {(() => {
+                              const lr = lastReply[r.id];
+                              const answered = !!lr && (lr.sender === 'agent' || lr.sender === 'department');
+                              return (
+                                <div className="flex flex-col gap-0.5">
+                                  <Badge
+                                    variant="outline"
+                                    className={answered
+                                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                      : 'bg-red-500/15 text-red-400 border-red-500/30'}
+                                  >
+                                    {answered ? 'Warte auf Kunden' : 'Warte auf Agent'}
+                                  </Badge>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {lr ? new Date(lr.at).toLocaleString('de-DE') : 'Keine Antwort'}
+                                  </span>
+                                </div>
+                              );
+                            })()}
+                          </TableCell>
                           <TableCell className="text-xs font-mono whitespace-nowrap">
                             {(r as any).case_number
                               ? <Badge variant="outline" className="border-primary/40 text-primary">{(r as any).case_number}</Badge>
