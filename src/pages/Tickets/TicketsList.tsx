@@ -659,6 +659,7 @@ export default function TicketsList() {
                             />
                           </TableHead>
                         )}
+                        <TableHead>Datum</TableHead>
                         <TableHead>Letzte Antwort</TableHead>
                         <TableHead>Kunde</TableHead>
                         <TableHead>Kategorie</TableHead>
@@ -691,6 +692,9 @@ export default function TicketsList() {
                               />
                             </TableCell>
                           )}
+                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                            {r.created_at ? new Date(r.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+                          </TableCell>
                           <TableCell className="whitespace-nowrap">
                             {(() => {
                               const lr = lastReply[r.id];
