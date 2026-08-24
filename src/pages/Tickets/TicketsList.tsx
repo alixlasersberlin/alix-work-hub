@@ -557,6 +557,7 @@ export default function TicketsList() {
         <TabsList className="mb-3 flex-wrap h-auto">
           <TabsTrigger value="all">Alle ({filtered.length})</TabsTrigger>
           <TabsTrigger value="open">Offene ({openRows.length})</TabsTrigger>
+          <TabsTrigger value="queue"><Layers className="w-3.5 h-3.5 mr-1 text-sky-400" />Queue ({queueRows.length})</TabsTrigger>
           <TabsTrigger value="neu"><Inbox className="w-3.5 h-3.5 mr-1" />Neue / Eingang ({neueRows.length})</TabsTrigger>
           <TabsTrigger value="overdue"><AlertTriangle className="w-3.5 h-3.5 mr-1 text-red-400" />Überfällig ({overdueRows.length})</TabsTrigger>
           <TabsTrigger value="escalated"><Flame className="w-3.5 h-3.5 mr-1 text-orange-400" />Eskaliert ({escalatedRows.length})</TabsTrigger>
@@ -571,10 +572,11 @@ export default function TicketsList() {
           <EscBookings />
         </TabsContent>
 
-        {(['all', 'open', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
+        {(['all', 'open', 'queue', 'closed', 'wartung', 'reklamation', 'neu', 'overdue', 'escalated', 'wartet'] as const).map((key) => {
           const list =
             key === 'all' ? filtered
               : key === 'open' ? openRows
+              : key === 'queue' ? queueRows
               : key === 'closed' ? closedRows
               : key === 'wartung' ? wartungRows
               : key === 'reklamation' ? reklamationRows
@@ -585,6 +587,7 @@ export default function TicketsList() {
           const emptyTitle =
             key === 'all' ? 'Keine Tickets'
               : key === 'open' ? 'Keine offenen Tickets'
+              : key === 'queue' ? 'Keine Tickets in der Queue'
               : key === 'closed' ? 'Keine geschlossenen Tickets'
               : key === 'wartung' ? 'Keine Wartungs-Tickets'
               : key === 'reklamation' ? 'Keine Reklamations-Tickets'
