@@ -18,6 +18,8 @@ const TONES = [
 interface SimilarCase {
   id: string;
   ticket_number?: string | null;
+  customer_name?: string | null;
+  company_name?: string | null;
   title?: string | null;
   status?: string | null;
   category?: string | null;
@@ -150,7 +152,7 @@ export function TicketAiAssist({ ticketId, onUseDraft }: { ticketId: string; onU
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Ähnliche abgeschlossene Tickets</div>
               {similar.map(s => (
                 <Link key={s.id} to={`/tickets/${s.id}`} className="flex items-center gap-2 text-sm hover:underline">
-                  <Badge variant="outline" className="text-[10px]">{s.ticket_number || s.id.slice(0, 8)}</Badge>
+                  <Badge variant="outline" className="text-[10px] max-w-[180px] truncate">{s.company_name || s.customer_name || s.ticket_number || 'Ticket'}</Badge>
                   <span className="truncate">{s.title || '—'}</span>
                   {s.category && <span className="text-xs text-muted-foreground ml-auto shrink-0">{s.category}</span>}
                 </Link>
