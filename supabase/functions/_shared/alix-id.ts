@@ -45,16 +45,22 @@ export async function authIdentity(req: Request) {
     .maybeSingle();
 
   if (!identity) {
+    const email = u.user.email ?? null;
+    if (!email) return { error: json({ error: 'identity_bootstrap_failed', detail: 'missing_email' }, 500) };
     const { data: created, error } = await a
       .from('alix_identities')
-      .insert({
+      .upsert({
         auth_user_id: u.user.id,
-        display_name: u.user.email ?? null,
+        primary_email: email,
+        display_name: email,
         email_verified_at: u.user.email_confirmed_at ?? null,
-      })
+      }, { onConflict: 'auth_user_id' })
       .select('*')
       .single();
-    if (error) return { error: json({ error: 'identity_bootstrap_failed' }, 500) };
+    if (error) {
+      console.error('identity bootstrap failed', error);
+      return { error: json({ error: 'identity_bootstrap_failed', detail: error.message }, 500) };
+    }
     identity = created;
   }
 
