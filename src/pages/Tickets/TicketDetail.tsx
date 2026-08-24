@@ -21,6 +21,7 @@ import { TicketParticipants } from '@/components/tickets/TicketParticipants';
 import { TicketHandoverDialog } from '@/components/tickets/TicketHandoverDialog';
 import { PhoneNoteDialog } from '@/components/tickets/PhoneNoteDialog';
 import { TicketDuplicateAlert } from './TicketDuplicateAlert';
+import { TicketAiAssist } from '@/components/tickets/TicketAiAssist';
 import { ArrowRightLeft } from 'lucide-react';
 
 interface Ticket {
