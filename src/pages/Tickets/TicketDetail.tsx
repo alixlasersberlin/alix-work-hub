@@ -816,6 +816,7 @@ export default function TicketDetail() {
               ))}
               {canEdit && ticket && (
                 <div className={`rounded-lg border p-3 space-y-2 ${msgInternal ? 'border-amber-500/40 bg-amber-500/5' : 'border-emerald-500/40 bg-emerald-500/5'}`}>
+                  <TicketAiAssist ticketId={ticket.id} onUseDraft={(t) => { setMsgInternal(false); setNewMsg(t); }} />
                   <div className="flex gap-1">
                     <button
                       type="button"
