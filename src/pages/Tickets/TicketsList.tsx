@@ -328,7 +328,9 @@ export default function TicketsList() {
   }, [rows, search, statusF, prioF, deptF, sourceF, catF, urlSla, urlEscalated, urlMine, urlDue, currentUserId]);
 
   const isClosed = (s: string) => s === 'geschlossen' || s === 'gelöst';
-  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status)), [filtered]);
+  const isQueued = (s: string) => s === 'queue';
+  const queueRows = useMemo(() => filtered.filter(r => isQueued(r.status)), [filtered]);
+  const openRows = useMemo(() => filtered.filter(r => !isClosed(r.status) && !isQueued(r.status)), [filtered]);
   const closedRows = useMemo(() => filtered.filter(r => isClosed(r.status)), [filtered]);
   const wartungRows = useMemo(
     () => filtered.filter(r => (r.category || r.auto_category || '').toLowerCase() === 'wartung'),
@@ -344,10 +346,10 @@ export default function TicketsList() {
   );
   const overdueRows = useMemo(() => {
     const now = Date.now();
-    return filtered.filter(r => !isClosed(r.status) && r.due_at && new Date(r.due_at).getTime() < now);
+    return filtered.filter(r => !isClosed(r.status) && !isQueued(r.status) && r.due_at && new Date(r.due_at).getTime() < now);
   }, [filtered]);
   const escalatedRows = useMemo(
-    () => filtered.filter(r => !isClosed(r.status) && (r.escalation_count || 0) > 0),
+    () => filtered.filter(r => !isClosed(r.status) && !isQueued(r.status) && (r.escalation_count || 0) > 0),
     [filtered],
   );
   const wartetKundeRows = useMemo(
@@ -355,7 +357,7 @@ export default function TicketsList() {
     [filtered],
   );
 
-  type TabKey = 'all' | 'open' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
+  type TabKey = 'all' | 'open' | 'queue' | 'closed' | 'wartung' | 'reklamation' | 'neu' | 'overdue' | 'escalated' | 'wartet' | 'bookings';
   const initialTab: TabKey = (() => {
     const s = searchParams.get('status');
     const d = searchParams.get('due');
