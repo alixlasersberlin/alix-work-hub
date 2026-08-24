@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       const or = keywords.map((k) => `title.ilike.%${k}%,description.ilike.%${k}%`).join(',');
       const { data: sim } = await supa
         .from('tickets')
-        .select('id, ticket_number, title, description, status, department, auto_category, created_at')
+        .select('id, ticket_number, title, description, status, department, auto_category, created_at, customer_name, company_name')
         .neq('id', ticket_id)
         .in('status', ['gelöst', 'geschlossen'])
         .or(or)
@@ -78,6 +78,8 @@ Deno.serve(async (req) => {
         similar.push({
           id: s.id,
           ticket_number: s.ticket_number,
+          customer_name: s.customer_name,
+          company_name: s.company_name,
           title: s.title,
           status: s.status,
           category: s.auto_category ?? s.department,
@@ -146,7 +148,7 @@ ${similarBlock}${hint ? `\n\nHinweis des Bearbeiters: ${hint}` : ''}`;
       ok: true,
       mode,
       ...parsed,
-      similar: similar.map((s) => ({ id: s.id, ticket_number: s.ticket_number, title: s.title, status: s.status, category: s.category, created_at: s.created_at })),
+      similar: similar.map((s) => ({ id: s.id, ticket_number: s.ticket_number, customer_name: s.customer_name, company_name: s.company_name, title: s.title, status: s.status, category: s.category, created_at: s.created_at })),
       model: MODEL,
     });
   } catch (e) {
