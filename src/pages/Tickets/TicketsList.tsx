@@ -634,6 +634,7 @@ export default function TicketsList() {
                         <TableHead>Abteilung</TableHead>
                         <TableHead>Priorität</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Letzte Antwort</TableHead>
                         <TableHead>Letzter Sync</TableHead>
                         <TableHead className="text-right">Aktion</TableHead>
                       </TableRow>
