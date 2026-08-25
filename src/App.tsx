@@ -360,6 +360,7 @@ const FeedbackSettings = lazy(() => import("./pages/Feedback/Settings"));
 const Systemwartung = lazy(() => import("./pages/Systemwartung"));
 const NewsAdmin = lazy(() => import("./pages/Operation/NewsAdmin"));
 const HealthCheck = lazy(() => import("./pages/HealthCheck"));
+const BeratungForms = lazy(() => import("./pages/Operation/BeratungForms"));
 const Nummernkreise = lazy(() => import("./pages/operation/Nummernkreise"));
 const AngebotsKalenderConfig = lazy(() => import("./pages/Operation/AngebotsKalenderConfig"));
 const SmsKonfiguration = lazy(() => import("./pages/operation/SmsKonfiguration"));
@@ -1471,6 +1472,7 @@ function AppRoutes() {
           <Route path="/operation/system-health" element={<ProtectedRoute requiredRoles={['Super Admin']}><SystemHealthCenter /></ProtectedRoute>} />
 
           <Route path="/operation/news" element={<ProtectedRoute requiredRoles={['Super Admin']}><NewsAdmin /></ProtectedRoute>} />
+          <Route path="/operation/beratung" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><BeratungForms /></ProtectedRoute>} />
           <Route path="/operation/health-check" element={<ProtectedRoute requiredRoles={['Super Admin','Admin']}><HealthCheck /></ProtectedRoute>} />
           <Route path="/operation/nummernkreise" element={<ProtectedRoute requiredRoles={['Super Admin']}><Nummernkreise /></ProtectedRoute>} />
           <Route path="/operation/ticket-abteilungen" element={<ProtectedRoute requiredRoles={['Super Admin']}><TicketDepartments /></ProtectedRoute>} />

@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Check, Loader2, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
+import { loadBeratungFormOverride, type BeratungFormOverride } from '@/lib/beratung/formSettings';
 import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 import {
   PREMIUM_CATEGORIES,
@@ -161,6 +162,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const [data, setData] = useState<State>(INITIAL);
   const [customCode, setCustomCode] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
+  const [override, setOverride] = useState<BeratungFormOverride>({});
+  useEffect(() => { loadBeratungFormOverride('premium').then(setOverride); }, []);
   const [attempted, setAttempted] = useState<Record<number, boolean>>({});
 
 
@@ -720,12 +723,12 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               <div className="mx-auto h-16 w-16 rounded-full border border-slate-200 bg-white flex items-center justify-center shadow-[0_25px_60px_-35px_rgba(15,23,42,0.5)]">
                 <Check className="h-7 w-7 text-slate-800" />
               </div>
-              <h2 className="!text-slate-900 mt-8 text-3xl md:text-5xl font-light tracking-tight">{t.done_title}</h2>
+              <h2 className="!text-slate-900 mt-8 text-3xl md:text-5xl font-light tracking-tight">{override.thanks_title || t.done_title}</h2>
               <p className="mt-5 text-slate-500 font-light">
-                {t.done_text}
+                {override.thanks_text || t.done_text}
               </p>
               <p className="mt-2 text-sm !text-slate-500 font-light">
-                {t.done_hint}
+                {override.thanks_hint || t.done_hint}
               </p>
             </section>
           )}

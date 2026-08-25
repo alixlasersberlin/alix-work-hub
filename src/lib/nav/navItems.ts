@@ -3,7 +3,7 @@ import {
   PenSquare, Send, FileEdit, MessageSquare, MessageCircle, Sparkles, FileCheck2, Files, Phone, PhoneCall, CheckSquare, CalendarClock, Megaphone, Activity, MailX, MailCheck, HeartPulse, TestTube2, Rocket, Database, Upload, FileUp, FileDown, BadgeCheck, GraduationCap, Brain, AlertOctagon, LineChart, ListChecks, Cog, Boxes, Repeat, Wallet, Hash, ClipboardCheck, Gift, Download
 } from 'lucide-react';
 import { Briefcase, Bell, BellRing, Package as PackageIcon, Eye, Home, UserCheck, Radio, ShieldAlert, Trophy, Plus, Image as ImageIcon, Target, Globe2, Zap, Quote } from 'lucide-react';
-import { PanelLeftClose, PanelLeftOpen, PackageSearch, Cpu, ListTree, Layers, GitBranch } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, PackageSearch, Cpu, ListTree, Layers, GitBranch, MessagesSquare, ExternalLink } from 'lucide-react';
 import { Smartphone as SmartphoneIcon, Contact as ContactIcon } from 'lucide-react';
 
 
@@ -769,6 +769,16 @@ export const navItems: NavItem[] = [
           { path: '/produktion/aenderungsfreigabe', label: 'Änderungsfreigabe', icon: GitBranch, roles: null },
           { path: '/produktion/lieferantenbewertung', label: 'Lieferantenbewertung', icon: Factory, roles: null },
           { path: '/produktion/qualitaetskennzahlen', label: 'Qualitätskennzahlen', icon: BarChart3, roles: null },
+        ],
+      },
+
+      // 3b) Beratung (öffentliche Beratungsformulare)
+      {
+        path: '/operation/beratung', label: 'BERATUNG', icon: MessagesSquare, roles: ['Super Admin', 'Admin'],
+        children: [
+          { path: '/operation/beratung', label: 'Beratungsformulare', icon: MessagesSquare, roles: ['Super Admin', 'Admin'] },
+          { path: '/beratung', label: 'Standard-Beratung öffnen', icon: ExternalLink, roles: ['Super Admin', 'Admin'] },
+          { path: '/beratung/premium', label: 'Premium-Beratung öffnen', icon: ExternalLink, roles: ['Super Admin', 'Admin'] },
         ],
       },
 

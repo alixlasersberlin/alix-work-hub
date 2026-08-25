@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { ArrowLeft, ArrowRight, Check, Loader2, Send, Star, Sparkles } from 'luc
 import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
+import { loadBeratungFormOverride, type BeratungFormOverride } from '@/lib/beratung/formSettings';
 import bgAsset from '@/assets/wizard/alix-lasers-bg.jpg.asset.json';
 import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
 import { useWizardLang } from '@/i18n/wizard';
@@ -151,6 +152,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ score: number; category: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [override, setOverride] = useState<BeratungFormOverride>({});
+  useEffect(() => { loadBeratungFormOverride('standard').then(setOverride); }, []);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
 
@@ -719,8 +722,9 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center shadow-[0_10px_30px_-10px_rgba(16,185,129,0.45)]">
                         <Check className="h-8 w-8 text-emerald-600" />
                       </div>
-                      <h2 className="text-2xl font-bold text-slate-900">{t.thanks_title}</h2>
-                      <p className="text-slate-600">{t.thanks_text}</p>
+                      <h2 className="text-2xl font-bold text-slate-900">{override.thanks_title || t.thanks_title}</h2>
+                      <p className="text-slate-600">{override.thanks_text || t.thanks_text}</p>
+                      {override.thanks_hint && <p className="text-sm text-slate-500">{override.thanks_hint}</p>}
                       <div className="inline-block rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-slate-800">
                         {t.priority}: <strong>{result.category}</strong>
                       </div>
