@@ -61,12 +61,14 @@ Deno.serve(async (req) => {
     const user = userData?.user;
     if (!user) return json({ error: "Unauthorized" }, 401);
 
+    // SMS-Zweitfaktor steht allen internen Nutzern mit mindestens einer Rolle
+    // zur Verfügung (immer nur für das eigene Konto).
     const { data: roleRows } = await admin
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id);
-    const isSuperAdmin = (roleRows ?? []).some((r: { role: string }) => r.role === "Super Admin");
-    if (!isSuperAdmin) return json({ error: "forbidden" }, 403);
+    if (!roleRows || roleRows.length === 0) return json({ error: "forbidden" }, 403);
+
 
     const body = await req.json().catch(() => ({}));
     const purpose = body?.purpose === "enroll" ? "enroll" : "login";
