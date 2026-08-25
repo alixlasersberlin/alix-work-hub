@@ -13,7 +13,7 @@ import { toast } from 'sonner';
  * SMS-Zweitfaktor (nur Super Admin): Mobilnummer hinterlegen, per Code
  * bestätigen und danach wahlweise statt der Authenticator-App nutzen.
  */
-export default function SmsMfaCard() {
+export default function SmsMfaCard({ onStatusChange }: { onStatusChange?: (enabled: boolean) => void } = {}) {
   const { user, roles, refreshMfaState } = useAuth();
   const isSuperAdmin = roles.includes('Super Admin');
 
@@ -34,7 +34,9 @@ export default function SmsMfaCard() {
       .eq('user_id', user.id)
       .maybeSingle();
     setSavedPhone(data?.enabled ? data.phone : null);
-    setEnabled(!!data?.enabled && !!data?.verified_at);
+    const on = !!data?.enabled && !!data?.verified_at;
+    setEnabled(on);
+    onStatusChange?.(on);
     setPhone(data?.phone ?? '');
     setLoading(false);
   };

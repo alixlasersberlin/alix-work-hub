@@ -37,6 +37,7 @@ export default function Sicherheit() {
   const [aal, setAal] = useState<string | null>(null);
   const [resetting, setResetting] = useState(false);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [smsMfaEnabled, setSmsMfaEnabled] = useState(false);
 
   const mandatory = isMfaMandatory(roles);
   const lastSignIn = user?.last_sign_in_at ? new Date(user.last_sign_in_at) : null;
@@ -158,8 +159,8 @@ export default function Sicherheit() {
             <Button
               variant="outline"
               onClick={handleReset}
-              disabled={resetting || mandatory}
-              title={mandatory ? 'Pflichtrolle: bitte über Admin zurücksetzen lassen' : undefined}
+              disabled={resetting || (mandatory && !smsMfaEnabled)}
+              title={mandatory && !smsMfaEnabled ? 'Pflichtrolle: bitte über Admin zurücksetzen lassen' : undefined}
             >
               {resetting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldAlert className="w-4 h-4 mr-2" />}
               Authenticator zurücksetzen
@@ -173,7 +174,7 @@ export default function Sicherheit() {
       </Card>
 
       {/* SMS-Zweitfaktor (Super Admin) */}
-      <SmsMfaCard />
+      <SmsMfaCard onStatusChange={setSmsMfaEnabled} />
 
       {/* Letzte Anmeldung */}
 
