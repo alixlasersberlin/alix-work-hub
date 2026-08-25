@@ -5,7 +5,7 @@ import { useAuth, markMfaVerifiedThisTab } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, ShieldCheck } from 'lucide-react';
+import { Loader2, ShieldCheck, MessageSquare } from 'lucide-react';
 import alixLogo from '@/assets/alix-logo-gold.png';
 
 export default function MfaChallenge() {
