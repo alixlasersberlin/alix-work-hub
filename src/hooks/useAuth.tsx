@@ -73,6 +73,7 @@ function getBlockReason(profile: UserProfile | null): AccountBlockReason {
 const MFA_TAB_KEY = 'alixwork.mfa_verified_tab';
 const MFA_GRACE_KEY = 'alixwork.mfa_grace_until';
 const MFA_PRIV_KEY = 'alixwork.mfa_privileged';
+const MFA_SMS_TAB_KEY = 'alixwork.mfa_sms_verified_tab';
 const MFA_GRACE_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 
 export function markMfaVerifiedThisTab() {
@@ -81,8 +82,19 @@ export function markMfaVerifiedThisTab() {
   try { localStorage.setItem(MFA_GRACE_KEY, String(Date.now() + MFA_GRACE_MS)); } catch { /* ignore */ }
 }
 
+/** Nach erfolgreicher SMS-Verifikation (eigener Faktor, kein Supabase-AAL2). */
+export function markMfaSmsVerifiedThisTab() {
+  try { sessionStorage.setItem(MFA_SMS_TAB_KEY, '1'); } catch { /* ignore */ }
+  markMfaVerifiedThisTab();
+}
+
+function isMfaSmsVerifiedThisTab() {
+  try { return sessionStorage.getItem(MFA_SMS_TAB_KEY) === '1'; } catch { return false; }
+}
+
 export function clearMfaTabMarker() {
   try { sessionStorage.removeItem(MFA_TAB_KEY); } catch { /* ignore */ }
+  try { sessionStorage.removeItem(MFA_SMS_TAB_KEY); } catch { /* ignore */ }
 }
 
 /** Super Admin / Admin bleiben streng (OTP je Session), alle anderen nutzen das 24h-Fenster. */
@@ -125,6 +137,10 @@ async function hasEnabledSmsFactor(): Promise<boolean> {
 
 async function computeMfaState(): Promise<MfaState> {
   try {
+    // SMS-Zweitfaktor wurde in diesem Tab erfolgreich verifiziert (serverseitig geprüft).
+    // Das hebt kein Supabase-AAL an, gilt aber als vollwertige Zweitfaktor-Verifikation.
+    if (isMfaSmsVerifiedThisTab()) return 'verified';
+
     const { data: factorsData } = await supabase.auth.mfa.listFactors();
     const verifiedTotp = (factorsData?.totp ?? []).filter((f: any) => f.status === 'verified');
     if (verifiedTotp.length === 0) {
