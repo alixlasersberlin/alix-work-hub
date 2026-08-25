@@ -114,46 +114,79 @@ export default function MfaChallenge() {
             <ShieldCheck className="w-5 h-5 text-primary" /> Authentifizierung
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein.
+            {mode === 'sms'
+              ? 'Geben Sie den 6-stelligen Code aus der SMS ein.'
+              : 'Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein.'}
           </p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-6 card-glow">
-          <form onSubmit={submit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="code">Authenticator-Code</Label>
-              <Input
-                id="code"
-                name="alix-mfa-code"
-                inputMode="numeric"
-                autoComplete="off"
-                data-1p-ignore
-                data-lpignore="true"
-                data-form-type="other"
-                maxLength={6}
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                placeholder="123456"
-                className="text-center text-lg tracking-widest font-mono"
-                autoFocus
-                required
-              />
+          {mode === 'sms' && !smsSent ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Wir senden Ihnen einen Bestätigungscode an Ihre hinterlegte Mobilnummer.
+              </p>
+              {err && <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">{err}</p>}
+              <Button onClick={sendSms} disabled={busy} className="w-full gold-gradient font-semibold">
+                {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <MessageSquare className="w-4 h-4 mr-2" />}
+                Code per SMS senden
+              </Button>
             </div>
+          ) : (
+            <form onSubmit={submit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="code">{mode === 'sms' ? 'SMS-Code' : 'Authenticator-Code'}</Label>
+                <Input
+                  id="code"
+                  name="alix-mfa-code"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-form-type="other"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="123456"
+                  className="text-center text-lg tracking-widest font-mono"
+                  autoFocus
+                  required
+                />
+              </div>
 
-            {err && <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">{err}</p>}
+              {err && <p className="text-sm text-destructive bg-destructive/10 rounded-lg p-3">{err}</p>}
 
-            <Button type="submit" disabled={busy || code.length !== 6} className="w-full gold-gradient font-semibold">
-              {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Bestätigen
-            </Button>
-          </form>
+              <Button type="submit" disabled={busy || code.length !== 6} className="w-full gold-gradient font-semibold">
+                {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Bestätigen
+              </Button>
+              {mode === 'sms' && (
+                <button type="button" onClick={sendSms} disabled={busy}
+                  className="w-full text-center text-xs text-muted-foreground hover:text-foreground">
+                  Code erneut senden
+                </button>
+              )}
+            </form>
+          )}
 
-          <div className="mt-4 text-center text-sm">
-            <Link to="/mfa-recovery" className="text-primary hover:underline">
-              Recovery-Code verwenden
-            </Link>
+          <div className="mt-4 text-center text-sm space-y-2">
+            {smsAvailable && factorId && (
+              <button
+                type="button"
+                onClick={() => { setMode(mode === 'sms' ? 'totp' : 'sms'); setCode(''); setErr(''); setSmsSent(false); }}
+                className="text-primary hover:underline"
+              >
+                {mode === 'sms' ? 'Stattdessen Authenticator-App verwenden' : 'Stattdessen Code per SMS erhalten'}
+              </button>
+            )}
+            <div>
+              <Link to="/mfa-recovery" className="text-primary hover:underline">
+                Recovery-Code verwenden
+              </Link>
+            </div>
           </div>
         </div>
+
 
         <button
           onClick={() => signOut()}
