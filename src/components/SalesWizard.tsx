@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
 import { loadBeratungFormOverride, type BeratungFormOverride } from '@/lib/beratung/formSettings';
+import { loadBeratungLayoutFor, visibleSequence, defaultLayout, type BeratungFormLayout } from '@/lib/beratung/formLayout';
 import bgAsset from '@/assets/wizard/alix-lasers-bg.jpg.asset.json';
 import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
 import { useWizardLang } from '@/i18n/wizard';
@@ -153,11 +154,18 @@ export default function SalesWizard({ publicMode = false }: Props) {
   const [result, setResult] = useState<{ score: number; category: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [override, setOverride] = useState<BeratungFormOverride>({});
+  const [layout, setLayout] = useState<BeratungFormLayout>(() => defaultLayout('standard'));
   useEffect(() => { loadBeratungFormOverride('standard').then(setOverride); }, []);
+  useEffect(() => { loadBeratungLayoutFor('standard').then(setLayout); }, []);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
 
-  const progress = useMemo(() => Math.round(((step + 1) / (TOTAL_STEPS + 1)) * 100), [step]);
+  const seq = useMemo(() => visibleSequence('standard', layout), [layout]);
+  const lastSlot = seq.length;
+  const totalSlots = lastSlot + 1;
+  const cur = step > 0 && step <= lastSlot ? seq[step - 1] : step === 0 ? 0 : 99;
+  const so = (id: number) => layout.steps?.[String(id)] || {};
+  const progress = useMemo(() => Math.round(((step + 1) / (totalSlots + 1)) * 100), [step, totalSlots]);
 
   const goNext = () => { setDirection('forward'); setStep((s) => s + 1); };
   const goBack = () => { setDirection('backward'); setStep((s) => Math.max(0, s - 1)); };
@@ -172,7 +180,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
   };
 
   function canContinue(): boolean {
-    switch (step) {
+    switch (cur) {
       case 1: return data.interests.length > 0;
       case 4: return !!data.delivery_preference;
       case 5: return !!data.first_name.trim() && !!data.last_name.trim();
@@ -222,7 +230,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
       if (json?.error) throw new Error(json.message || json.error);
       setResult({ score: json.score, category: json.category });
       setDirection('forward');
-      setStep(TOTAL_STEPS);
+      setStep(lastSlot + 1);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unbekannter Fehler';
       setError(msg);
@@ -276,7 +284,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
         <div className="mb-5">
           <div className="flex items-center justify-between text-[11px] font-medium tracking-wide mb-2">
             <span className="text-slate-500">
-              {t.step_of(Math.min(step + 1, TOTAL_STEPS), TOTAL_STEPS)}
+              {t.step_of(Math.min(step + 1, totalSlots), totalSlots)}
             </span>
             <span className="text-slate-700">{progress}%</span>
           </div>
@@ -327,8 +335,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </div>
                   )}
 
-                  {step === 1 && (
-                    <Section title={t.s_interests} hint={t.multi_select}>
+                  {cur === 1 && (
+                    <Section title={so(1).title || t.s_interests} hint={so(1).sub ?? t.multi_select}>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {INTERESTS.map((it) => {
                           const active = data.interests.includes(it.key);
@@ -362,8 +370,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 2 && (
-                    <Section title={t.s_wish_device} hint={t.s_wish_device_hint}>
+                  {cur === 2 && (
+                    <Section title={so(2).title || t.s_wish_device} hint={so(2).sub ?? t.s_wish_device_hint}>
                       <div className="space-y-4">
                         <div className="space-y-1.5">
                           <Label style={{ color: '#000' }} className="text-[11px] font-semibold uppercase tracking-wide">{t.alix_lasers_label}</Label>
@@ -395,8 +403,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 3 && (
-                    <Section title={t.s_additional} hint={t.optional_multi}>
+                  {cur === 3 && (
+                    <Section title={so(3).title || t.s_additional} hint={so(3).sub ?? t.optional_multi}>
                       <div className="space-y-2.5">
                         {ADDITIONAL.map((a) => {
                           const active = data.additional_interests.includes(a);
@@ -427,8 +435,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 4 && (
-                    <Section title={t.s_delivery}>
+                  {cur === 4 && (
+                    <Section title={so(4).title || t.s_delivery} hint={so(4).sub}>
                       <RadioGroup value={data.delivery_preference} onValueChange={(v) => setData({ ...data, delivery_preference: v })} className="gap-2.5">
                         {DELIVERY.map((d) => (
                           <label key={d} className={cn(
@@ -445,8 +453,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 5 && (
-                    <Section title={t.s_name} hint={t.required}>
+                  {cur === 5 && (
+                    <Section title={so(5).title || t.s_name} hint={so(5).sub ?? t.required}>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <Field label={t.first_name}>
                           <Input value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} className={inputCls} />
@@ -495,8 +503,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 6 && (
-                    <Section title={t.s_company} hint={t.optional}>
+                  {cur === 6 && (
+                    <Section title={so(6).title || t.s_company} hint={so(6).sub ?? t.optional}>
                       <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder={t.company_name} className={inputCls} />
 
                       <div className="mt-5 space-y-3">
@@ -533,10 +541,10 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 7 && (() => {
+                  {cur === 7 && (() => {
                     const phoneErr = data.phone.trim() ? phoneError(data.country_code, data.phone) : null;
                     return (
-                      <Section title={t.s_phone} hint={t.required}>
+                      <Section title={so(7).title || t.s_phone} hint={so(7).sub ?? t.required}>
                         <div className="flex gap-2">
                           <select
                             value={data.country_code}
@@ -564,7 +572,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     );
                   })()}
 
-                  {step === 8 && (() => {
+                  {cur === 8 && (() => {
                     const isSmart = data.flex_plan === 'smart_impulse';
                     const planTitle = isSmart ? 'Alix Smart Impulse' : 'Alix Flex 0%';
                     const planHint = isSmart
@@ -576,7 +584,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                       ? 'pro Monat · Mindestmietdauer 24 Monate'
                       : 'pro Monat · 0,00 % eff. p. a.';
                     return (
-                      <Section title={planTitle} hint={planHint}>
+                      <Section title={so(8).title || planTitle} hint={so(8).sub ?? planHint}>
                         <div className="space-y-4">
                           <Field label="Finanzierungsmodell">
                             <div className="grid grid-cols-2 gap-2">
@@ -640,14 +648,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   })()}
 
 
-                  {step === 9 && (
-                    <Section title={t.s_email} hint={t.required}>
+                  {cur === 9 && (
+                    <Section title={so(9).title || t.s_email} hint={so(9).sub ?? t.required}>
                       <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder={t.email_placeholder} className={inputCls} />
                     </Section>
                   )}
 
-                  {step === 10 && (
-                    <Section title={t.s_consultation}>
+                  {cur === 10 && (
+                    <Section title={so(10).title || t.s_consultation} hint={so(10).sub}>
                       <RadioGroup value={data.consultation_type} onValueChange={(v) => setData({ ...data, consultation_type: v })} className="gap-2.5">
                         {CONSULTATION.map((c) => (
                           <label key={c} className={cn(
@@ -664,14 +672,14 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 11 && (
-                    <Section title={t.s_notes} hint={t.s_notes_hint}>
+                  {cur === 11 && (
+                    <Section title={so(11).title || t.s_notes} hint={so(11).sub ?? t.s_notes_hint}>
                       <Textarea rows={5} value={data.notes} onChange={(e) => setData({ ...data, notes: e.target.value })} className={inputCls} />
                     </Section>
                   )}
 
-                  {step === 12 && (
-                    <Section title={t.s_privacy}>
+                  {cur === 12 && (
+                    <Section title={so(12).title || t.s_privacy} hint={so(12).sub}>
                       <div className="space-y-3">
                         <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate-200/80 bg-white/70 p-3.5">
                           <Checkbox checked={data.consent_data} onCheckedChange={(v) => setData({ ...data, consent_data: v === true })} />
@@ -690,8 +698,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === 13 && (
-                    <Section title={t.s_rating} hint={t.s_rating_hint}>
+                  {cur === 13 && (
+                    <Section title={so(13).title || t.s_rating} hint={so(13).sub ?? t.s_rating_hint}>
                       <div className="flex justify-center gap-2 py-3">
                         {[1, 2, 3, 4, 5].map((n) => (
                           <button
@@ -717,7 +725,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     </Section>
                   )}
 
-                  {step === TOTAL_STEPS && result && (
+                  {step > lastSlot && result && (
                     <div className="text-center space-y-4 py-6">
                       <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center shadow-[0_10px_30px_-10px_rgba(16,185,129,0.45)]">
                         <Check className="h-8 w-8 text-emerald-600" />
@@ -733,7 +741,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                 </Slide>
 
                 {/* Navigation */}
-                {step > 0 && step < TOTAL_STEPS && (
+                {step > 0 && step <= lastSlot && (
                   <div className="mt-7 flex items-center justify-between gap-3">
                     <Button
                       type="button"
@@ -744,7 +752,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                     >
                       <ArrowLeft className="h-4 w-4" /> {t.back}
                     </Button>
-                    {step < 13 ? (
+                    {step < lastSlot ? (
                       <Button
                         type="button"
                         onClick={goNext}
