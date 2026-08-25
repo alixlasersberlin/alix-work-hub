@@ -158,7 +158,6 @@ interface Props {
 
 export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const { lang, setLang, t } = usePremiumLang();
-  const STEP_LABELS = useMemo(() => seqLabels, [seqLabels]);
   const [step, setStep] = useState(0);
   const [data, setData] = useState<State>(INITIAL);
   const [customCode, setCustomCode] = useState(false);
@@ -171,6 +170,10 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const lastSlot = seq.length;
   const cur = step > 0 && step <= lastSlot ? seq[step - 1] : step === 0 ? 0 : 99;
   const so = (id: number) => layout.steps?.[String(id)] || {};
+  const STEP_LABELS = useMemo(
+    () => seq.map((id) => layout.steps?.[String(id)]?.title || t.steps[id - 1] || `0${id}`),
+    [seq, layout, t],
+  );
   const [attempted, setAttempted] = useState<Record<number, boolean>>({});
 
 
