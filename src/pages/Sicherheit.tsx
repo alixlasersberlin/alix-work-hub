@@ -16,6 +16,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import SmsMfaCard from '@/components/security/SmsMfaCard';
+
 
 interface SessionRow {
   id: string;
@@ -170,7 +172,11 @@ export default function Sicherheit() {
         </p>
       </Card>
 
+      {/* SMS-Zweitfaktor (Super Admin) */}
+      <SmsMfaCard />
+
       {/* Letzte Anmeldung */}
+
       <Card className="p-6 space-y-3">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Clock className="w-5 h-5 text-primary" /> Letzte Anmeldung
