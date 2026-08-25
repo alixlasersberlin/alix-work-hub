@@ -16,6 +16,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import SmsMfaCard from '@/components/security/SmsMfaCard';
+
 
 interface SessionRow {
   id: string;
@@ -35,6 +37,7 @@ export default function Sicherheit() {
   const [aal, setAal] = useState<string | null>(null);
   const [resetting, setResetting] = useState(false);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
+  const [smsMfaEnabled, setSmsMfaEnabled] = useState(false);
 
   const mandatory = isMfaMandatory(roles);
   const lastSignIn = user?.last_sign_in_at ? new Date(user.last_sign_in_at) : null;
@@ -156,8 +159,8 @@ export default function Sicherheit() {
             <Button
               variant="outline"
               onClick={handleReset}
-              disabled={resetting || mandatory}
-              title={mandatory ? 'Pflichtrolle: bitte über Admin zurücksetzen lassen' : undefined}
+              disabled={resetting || (mandatory && !smsMfaEnabled)}
+              title={mandatory && !smsMfaEnabled ? 'Pflichtrolle: bitte über Admin zurücksetzen lassen' : undefined}
             >
               {resetting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ShieldAlert className="w-4 h-4 mr-2" />}
               Authenticator zurücksetzen
@@ -170,7 +173,11 @@ export default function Sicherheit() {
         </p>
       </Card>
 
+      {/* SMS-Zweitfaktor (Super Admin) */}
+      <SmsMfaCard onStatusChange={setSmsMfaEnabled} />
+
       {/* Letzte Anmeldung */}
+
       <Card className="p-6 space-y-3">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <Clock className="w-5 h-5 text-primary" /> Letzte Anmeldung

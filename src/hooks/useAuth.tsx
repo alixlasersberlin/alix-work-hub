@@ -110,11 +110,33 @@ function isMfaWithinGrace() {
   } catch { return false; }
 }
 
+async function hasEnabledSmsFactor(): Promise<boolean> {
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u?.user?.id) return false;
+    const { data } = await supabase
+      .from('mfa_sms_factors')
+      .select('enabled, verified_at')
+      .eq('user_id', u.user.id)
+      .maybeSingle();
+    return !!data?.enabled && !!data?.verified_at;
+  } catch { return false; }
+}
+
 async function computeMfaState(): Promise<MfaState> {
   try {
     const { data: factorsData } = await supabase.auth.mfa.listFactors();
     const verifiedTotp = (factorsData?.totp ?? []).filter((f: any) => f.status === 'verified');
-    if (verifiedTotp.length === 0) return 'not_enrolled';
+    if (verifiedTotp.length === 0) {
+      // Alternative: SMS-Zweitfaktor (Super Admin)
+      if (await hasEnabledSmsFactor()) {
+        if (isMfaVerifiedThisTab()) return 'verified';
+        if (!isMfaPrivileged() && isMfaWithinGrace()) return 'verified';
+        return 'challenge_required';
+      }
+      return 'not_enrolled';
+    }
+
     const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     // Grace nach erfolgreichem TOTP: Tab gilt automatisch als verifiziert.
     if (aalData?.currentLevel === 'aal2' && (isMfaVerifiedThisTab() || isMfaWithinGrace())) {
