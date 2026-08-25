@@ -772,6 +772,16 @@ export const navItems: NavItem[] = [
         ],
       },
 
+      // 3b) Beratung (öffentliche Beratungsformulare)
+      {
+        path: '/operation/beratung', label: 'BERATUNG', icon: MessagesSquare, roles: ['Super Admin', 'Admin'],
+        children: [
+          { path: '/operation/beratung', label: 'Beratungsformulare', icon: MessagesSquare, roles: ['Super Admin', 'Admin'] },
+          { path: '/beratung', label: 'Standard-Beratung öffnen', icon: ExternalLink, roles: ['Super Admin', 'Admin'] },
+          { path: '/beratung/premium', label: 'Premium-Beratung öffnen', icon: ExternalLink, roles: ['Super Admin', 'Admin'] },
+        ],
+      },
+
       // 4) Dokumente & Signaturen (AlixDocs + ALIX SIGN PRO)
       {
         path: '#dokumente-signaturen', label: 'DOKUMENTE & SIGNATUREN', icon: FolderTree, roles: ['Super Admin', 'Admin'],
