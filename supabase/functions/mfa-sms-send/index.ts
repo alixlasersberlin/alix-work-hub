@@ -61,13 +61,9 @@ Deno.serve(async (req) => {
     const user = userData?.user;
     if (!user) return json({ error: "Unauthorized" }, 401);
 
-    // SMS-Zweitfaktor steht allen internen Nutzern mit mindestens einer Rolle
-    // zur Verfügung (immer nur für das eigene Konto).
-    const { data: roleRows } = await admin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
-    if (!roleRows || roleRows.length === 0) return json({ error: "forbidden" }, 403);
+    // SMS-Zweitfaktor steht jedem authentifizierten Nutzer für das
+    // eigene Konto zur Verfügung – keine zusätzliche Rollenprüfung.
+
 
 
     const body = await req.json().catch(() => ({}));
