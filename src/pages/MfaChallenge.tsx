@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth, markMfaVerifiedThisTab } from '@/hooks/useAuth';
+import { useAuth, markMfaVerifiedThisTab, markMfaSmsVerifiedThisTab } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,8 +20,8 @@ export default function MfaChallenge() {
   const [busy, setBusy] = useState(true);
   const [err, setErr] = useState('');
 
-  const finish = () => {
-    markMfaVerifiedThisTab();
+  const finish = (viaSms = false) => {
+    if (viaSms) markMfaSmsVerifiedThisTab(); else markMfaVerifiedThisTab();
     const postMfaTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
       ? '/esc/kalender'
       : '/dashboard';
@@ -86,7 +86,7 @@ export default function MfaChallenge() {
       if (mode === 'sms') {
         const { data, error } = await supabase.functions.invoke('mfa-sms-verify', { body: { code: code.trim() } });
         if (error || data?.error) throw new Error('Code ungültig oder abgelaufen');
-        finish();
+        finish(true);
         return;
       }
       const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId });
