@@ -9,3 +9,4 @@ type: feature
 - Kennzeichnung: `source = 'ALIX Premium Beratung'`; Kategorie & alle Antworten (Empfohlene/Ausgewählte Systeme, Lieferzeitraum, Beratungsart, Interessen, Zeitpunkt) werden im `notes`-Block sowie in `additional_interests` (`Kategorie: …`, `Gerät: …`) gespeichert.
 - Kapitel 2 hat exakt 4 Kategorien: Haarentfernung, Haut & Anti Aging, Körper & Abnehmen, Tattoo & Pigment.
 - Steps: 01 PROFIL · 02 ANWENDUNG · 03 BEDARF · 04 SYSTEM · 05 ABSCHLUSS, mobile-first mit Sticky Zurück/Weiter.
+- Schritt-Editor: `app_settings.key='beratung_layout'` (`src/lib/beratung/formLayout.ts`) steuert Reihenfolge, Sichtbarkeit und Überschriften/Hinweise beider Wizards; Pflichtschritte sind nicht ausblendbar. Bearbeitung unter OPERATIONS › Beratung (`src/pages/Operation/BeratungForms.tsx`).

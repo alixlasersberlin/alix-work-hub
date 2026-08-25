@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
 import { loadBeratungFormOverride, type BeratungFormOverride } from '@/lib/beratung/formSettings';
+import { loadBeratungLayoutFor, visibleSequence, defaultLayout, type BeratungFormLayout } from '@/lib/beratung/formLayout';
 import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 import {
   PREMIUM_CATEGORIES,
@@ -157,13 +158,22 @@ interface Props {
 
 export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const { lang, setLang, t } = usePremiumLang();
-  const STEP_LABELS = t.steps;
   const [step, setStep] = useState(0);
   const [data, setData] = useState<State>(INITIAL);
   const [customCode, setCustomCode] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
   const [override, setOverride] = useState<BeratungFormOverride>({});
+  const [layout, setLayout] = useState<BeratungFormLayout>(() => defaultLayout('premium'));
   useEffect(() => { loadBeratungFormOverride('premium').then(setOverride); }, []);
+  useEffect(() => { loadBeratungLayoutFor('premium').then(setLayout); }, []);
+  const seq = useMemo(() => visibleSequence('premium', layout), [layout]);
+  const lastSlot = seq.length;
+  const cur = step > 0 && step <= lastSlot ? seq[step - 1] : step === 0 ? 0 : 99;
+  const so = (id: number) => layout.steps?.[String(id)] || {};
+  const STEP_LABELS = useMemo(
+    () => seq.map((id) => layout.steps?.[String(id)]?.title || t.steps[id - 1] || `0${id}`),
+    [seq, layout, t],
+  );
   const [attempted, setAttempted] = useState<Record<number, boolean>>({});
 
 
@@ -200,7 +210,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   };
 
   /** Sofort-Validierung: Fehler sobald das Feld angefasst oder „Weiter“ versucht wurde. */
-  const showError = (k: FieldKey) => (touched[k] || attempted[step] ? errors[k] : null);
+  const showError = (k: FieldKey) => (touched[k] || attempted[cur] ? errors[k] : null);
   const isValid = (k: FieldKey) => !!touched[k] && !errors[k] && String(data[k] ?? '').trim().length > 0;
   const markTouched = (k: FieldKey) => setTouched((t) => (t[k] ? t : { ...t, [k]: true }));
   const update = (k: FieldKey, v: string) => {
@@ -213,7 +223,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   );
 
   function canContinue(): boolean {
-    switch (step) {
+    switch (cur) {
       case 1:
         return step1Ok;
 
@@ -230,8 +240,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 
   /** Blockierter „Weiter“-Klick: alle Fehler des Schritts sichtbar machen. */
   function revealStepErrors() {
-    setAttempted((a) => ({ ...a, [step]: true }));
-    if (step === 1) {
+    setAttempted((a) => ({ ...a, [cur]: true }));
+    if (cur === 1) {
       setTouched({
         first_name: true,
         last_name: true,
@@ -249,7 +259,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
     setAnalyzing(true);
     window.setTimeout(() => {
       setAnalyzing(false);
-      setStep(3);
+      setStep((s) => s + 1);
     }, 1500);
   }
 
@@ -298,7 +308,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       if (fnError) throw new Error(fnError.message || t.err_submit);
       if (json?.error) throw new Error(json.message || json.error);
       setDone(true);
-      setStep(DONE_STEP);
+      setStep(lastSlot + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : t.err_unknown);
     } finally {
@@ -326,7 +336,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       </header>
 
       {/* Progress */}
-      {step > 0 && step <= LAST_STEP && (
+      {step > 0 && step <= lastSlot && (
         <div className="px-4 sm:px-6 md:px-10">
           <div className="mx-auto max-w-4xl hidden sm:flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-[11px] tracking-[0.24em] uppercase">
 
@@ -410,8 +420,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           )}
 
           {/* 1 — Profil */}
-          {step === 1 && (
-            <Chapter title={t.c1_title} sub={t.c1_sub}>
+          {cur === 1 && (
+            <Chapter title={so(1).title || t.c1_title} sub={so(1).sub ?? t.c1_sub}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
 
                 <Labeled label={t.first_name} error={showError('first_name')} valid={isValid('first_name')}>
@@ -540,10 +550,10 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           )}
 
           {/* 2 — Anwendung */}
-          {step === 2 && (
+          {cur === 2 && (
             <Chapter
-              title={t.c2_title}
-              sub={t.c2_sub}
+              title={so(2).title || t.c2_title}
+              sub={so(2).sub ?? t.c2_sub}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
                 {PREMIUM_CATEGORIES.map((c) => {
@@ -590,8 +600,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           )}
 
           {/* 3 — Bedarf */}
-          {step === 3 && (
-            <Chapter title={t.c3_title} sub={t.c3_sub(tv(t.categories, data.category))}>
+          {cur === 3 && (
+            <Chapter title={so(3).title || t.c3_title} sub={so(3).sub ?? t.c3_sub(tv(t.categories, data.category))}>
               <div className="space-y-8 sm:space-y-10">
                 <Group
                   label={t.g_delivery}
@@ -649,19 +659,19 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           )}
 
           {/* 4 — Abschluss */}
-          {step === LAST_STEP && (
-            <Chapter title={t.c4_title} sub={t.c4_sub}>
+          {cur === LAST_STEP && (
+            <Chapter title={so(4).title || t.c4_title} sub={so(4).sub ?? t.c4_sub}>
               <div className="space-y-4 max-w-2xl">
                 <label
                   className={cn(
                     'flex items-start gap-3 rounded-2xl border !bg-white p-4 cursor-pointer transition',
-                    attempted[LAST_STEP] && !data.consent_data ? '!border-red-300' : '!border-slate-200',
+                    attempted[cur] && !data.consent_data ? '!border-red-300' : '!border-slate-200',
                   )}
                 >
                   <input
                     type="checkbox"
                     checked={data.consent_data}
-                    aria-invalid={attempted[LAST_STEP] && !data.consent_data}
+                    aria-invalid={attempted[cur] && !data.consent_data}
                     onChange={(e) => setData({ ...data, consent_data: e.target.checked })}
                     className="mt-1 h-4 w-4 accent-sky-500"
                   />
@@ -669,7 +679,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     {t.consent_data}
                   </span>
                 </label>
-                {attempted[LAST_STEP] && !data.consent_data && (
+                {attempted[cur] && !data.consent_data && (
                   <p role="alert" className="-mt-2 text-[12px] !text-red-500 font-light">
                     {t.consent_required}
                   </p>
@@ -677,13 +687,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 <label
                   className={cn(
                     'flex items-start gap-3 rounded-2xl border !bg-white p-4 cursor-pointer transition',
-                    attempted[LAST_STEP] && !data.consent_contact ? '!border-red-300' : '!border-slate-200',
+                    attempted[cur] && !data.consent_contact ? '!border-red-300' : '!border-slate-200',
                   )}
                 >
                   <input
                     type="checkbox"
                     checked={data.consent_contact}
-                    aria-invalid={attempted[LAST_STEP] && !data.consent_contact}
+                    aria-invalid={attempted[cur] && !data.consent_contact}
                     onChange={(e) => setData({ ...data, consent_contact: e.target.checked })}
                     className="mt-1 h-4 w-4 accent-sky-500"
                   />
@@ -691,7 +701,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     {t.consent_contact}
                   </span>
                 </label>
-                {attempted[LAST_STEP] && !data.consent_contact && (
+                {attempted[cur] && !data.consent_contact && (
                   <p role="alert" className="-mt-2 text-[12px] !text-red-500 font-light">
                     {t.consent_required}
                   </p>
@@ -704,7 +714,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onUnavailable={() => setCaptchaUnavailable(true)}
                   />
                 )}
-                {attempted[LAST_STEP] && publicMode && !captchaUnavailable && !captchaToken && (
+                {attempted[cur] && publicMode && !captchaUnavailable && !captchaToken && (
                   <p role="alert" className="text-[12px] !text-red-500 font-light">
                     {t.captcha_required}
                   </p>
@@ -718,7 +728,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           )}
 
           {/* 6 — Danke */}
-          {step === DONE_STEP && done && (
+          {step > lastSlot && done && (
             <section className="text-center py-16 md:py-24 animate-in fade-in duration-700">
               <div className="mx-auto h-16 w-16 rounded-full border border-slate-200 bg-white flex items-center justify-center shadow-[0_25px_60px_-35px_rgba(15,23,42,0.5)]">
                 <Check className="h-7 w-7 text-slate-800" />
@@ -736,7 +746,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       </main>
 
       {/* Sticky Navigation */}
-      {step > 0 && step <= LAST_STEP && (
+      {step > 0 && step <= lastSlot && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/70 bg-white/80 backdrop-blur-xl">
           <div className="mx-auto max-w-4xl px-4 sm:px-6 md:px-10 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))] flex items-center gap-2 sm:gap-3">
             <button
@@ -748,7 +758,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
               <ArrowLeft className="inline h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">{t.back}</span>
             </button>
             <div className="flex-1" />
-            {step < LAST_STEP ? (
+            {step < lastSlot ? (
               <button
                 type="button"
                 onClick={() => (canContinue() ? setStep((s) => s + 1) : revealStepErrors())}
