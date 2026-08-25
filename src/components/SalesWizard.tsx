@@ -132,7 +132,6 @@ const INITIAL: State = {
 const FLEX_TERMS = [12, 24, 36, 48, 60] as const;
 const SMART_IMPULSE_TERMS = [12, 24, 36] as const;
 
-const TOTAL_STEPS = 14;
 
 interface Props {
   /** When true the wizard renders the full public landing chrome (logo, watermark). */

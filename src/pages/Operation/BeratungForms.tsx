@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { ExternalLink, Copy, Eye, EyeOff, Loader2, Save, MessagesSquare, Code2 } from 'lucide-react';
+import { ExternalLink, Copy, Eye, EyeOff, Loader2, Save, MessagesSquare, Code2, ArrowUp, ArrowDown, RotateCcw, GripVertical } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import {
   BERATUNG_FORMS_META,
@@ -19,19 +19,51 @@ import {
   type BeratungFormsConfig,
   type BeratungFormKey,
 } from '@/lib/beratung/formSettings';
+import {
+  BERATUNG_LAYOUT_DEFAULTS,
+  loadBeratungLayout,
+  saveBeratungLayout,
+  stepDefs,
+  defaultLayout,
+  type BeratungLayoutConfig,
+} from '@/lib/beratung/formLayout';
 
 export default function BeratungForms() {
   const [cfg, setCfg] = useState<BeratungFormsConfig>(BERATUNG_FORMS_DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState<BeratungFormKey | null>(null);
+  const [layout, setLayout] = useState<BeratungLayoutConfig>(BERATUNG_LAYOUT_DEFAULTS);
 
   useEffect(() => {
-    loadBeratungForms().then((c) => {
+    Promise.all([loadBeratungForms(), loadBeratungLayout()]).then(([c, l]) => {
       setCfg(c);
+      setLayout(l);
       setLoading(false);
     });
   }, []);
+
+  const moveStep = (form: BeratungFormKey, id: number, dir: -1 | 1) =>
+    setLayout((prev) => {
+      const order = [...prev[form].order];
+      const i = order.indexOf(id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= order.length) return prev;
+      [order[i], order[j]] = [order[j], order[i]];
+      return { ...prev, [form]: { ...prev[form], order } };
+    });
+
+  const setStepCfg = (form: BeratungFormKey, id: number, patch: Record<string, unknown>) =>
+    setLayout((prev) => ({
+      ...prev,
+      [form]: {
+        ...prev[form],
+        steps: { ...prev[form].steps, [String(id)]: { ...(prev[form].steps?.[String(id)] || {}), ...patch } },
+      },
+    }));
+
+  const resetLayout = (form: BeratungFormKey) =>
+    setLayout((prev) => ({ ...prev, [form]: defaultLayout(form) }));
 
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
 
@@ -49,9 +81,10 @@ export default function BeratungForms() {
 
   const save = async () => {
     setSaving(true);
-    const { error } = await saveBeratungForms(cfg);
+    const [{ error }, { error: e2 }] = await Promise.all([saveBeratungForms(cfg), saveBeratungLayout(layout)]);
     setSaving(false);
-    if (error) toast.error(error.message);
+    const err = error || e2;
+    if (err) toast.error(err.message);
     else toast.success('Beratungsformulare gespeichert');
   };
 
@@ -163,6 +196,91 @@ export default function BeratungForms() {
                       placeholder="Nur intern sichtbar"
                       onChange={(e) => set(meta.key, { note: e.target.value })}
                     />
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <Label className="text-sm">Schritte & Reihenfolge</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Reihenfolge per Pfeil ändern, Schritte ausblenden und Überschriften überschreiben.
+                      </p>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => resetLayout(meta.key)}>
+                      <RotateCcw className="h-3 w-3 mr-1" /> Zurücksetzen
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {layout[meta.key].order.map((id, idx) => {
+                      const def = stepDefs(meta.key).find((d) => d.id === id);
+                      if (!def) return null;
+                      const st = layout[meta.key].steps?.[String(id)] || {};
+                      const hidden = !def.required && st.hidden === true;
+                      return (
+                        <div
+                          key={id}
+                          className={`rounded-lg border p-3 space-y-2 ${hidden ? 'opacity-60 bg-muted/40' : 'bg-card'}`}
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                            <Badge variant="outline" className="text-[10px]">
+                              {String(idx + 1).padStart(2, '0')}
+                            </Badge>
+                            <span className="text-sm font-medium">{def.name}</span>
+                            <span className="text-xs text-muted-foreground">{def.note}</span>
+                            <div className="ml-auto flex items-center gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                disabled={idx === 0}
+                                onClick={() => moveStep(meta.key, id, -1)}
+                                aria-label="Nach oben"
+                              >
+                                <ArrowUp className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                disabled={idx === layout[meta.key].order.length - 1}
+                                onClick={() => moveStep(meta.key, id, 1)}
+                                aria-label="Nach unten"
+                              >
+                                <ArrowDown className="h-3.5 w-3.5" />
+                              </Button>
+                              {def.required ? (
+                                <Badge variant="secondary" className="text-[10px] ml-1">Pflicht</Badge>
+                              ) : (
+                                <div className="flex items-center gap-1 ml-1">
+                                  <Label className="text-[11px] text-muted-foreground">Sichtbar</Label>
+                                  <Switch
+                                    checked={!hidden}
+                                    onCheckedChange={(v) => setStepCfg(meta.key, id, { hidden: !v })}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="grid gap-2 md:grid-cols-2">
+                            <Input
+                              value={st.title ?? ''}
+                              placeholder="Überschrift (Standard beibehalten)"
+                              onChange={(e) => setStepCfg(meta.key, id, { title: e.target.value || undefined })}
+                            />
+                            <Input
+                              value={st.sub ?? ''}
+                              placeholder="Hinweistext (Standard beibehalten)"
+                              onChange={(e) => setStepCfg(meta.key, id, { sub: e.target.value || undefined })}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
