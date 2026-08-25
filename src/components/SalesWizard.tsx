@@ -152,6 +152,8 @@ export default function SalesWizard({ publicMode = false }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ score: number; category: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [override, setOverride] = useState<BeratungFormOverride>({});
+  useEffect(() => { loadBeratungFormOverride('standard').then(setOverride); }, []);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
 

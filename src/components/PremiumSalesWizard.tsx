@@ -162,6 +162,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const [data, setData] = useState<State>(INITIAL);
   const [customCode, setCustomCode] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
+  const [override, setOverride] = useState<BeratungFormOverride>({});
+  useEffect(() => { loadBeratungFormOverride('premium').then(setOverride); }, []);
   const [attempted, setAttempted] = useState<Record<number, boolean>>({});
 
 
