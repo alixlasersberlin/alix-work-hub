@@ -13,33 +13,82 @@ export default function MfaChallenge() {
   // markMfaVerifiedThisTab wird nach erfolgreicher Verifikation gesetzt
   const navigate = useNavigate();
   const [factorId, setFactorId] = useState('');
+  const [smsAvailable, setSmsAvailable] = useState(false);
+  const [mode, setMode] = useState<'totp' | 'sms'>('totp');
+  const [smsSent, setSmsSent] = useState(false);
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(true);
   const [err, setErr] = useState('');
 
+  const finish = () => {
+    markMfaVerifiedThisTab();
+    const postMfaTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
+      ? '/esc/kalender'
+      : '/dashboard';
+    // Harte Navigation wie nach Login: verhindert den gemeldeten
+    // Maus-/Pointer-Freeze durch stale Auth-/Overlay-State nach MFA.
+    window.location.replace(postMfaTarget);
+  };
+
   useEffect(() => {
     (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      let sms = false;
+      if (u?.user?.id) {
+        const { data: f } = await supabase
+          .from('mfa_sms_factors')
+          .select('enabled, verified_at')
+          .eq('user_id', u.user.id)
+          .maybeSingle();
+        sms = !!f?.enabled && !!f?.verified_at;
+      }
+      setSmsAvailable(sms);
+
       const { data, error } = await supabase.auth.mfa.listFactors();
-      if (error) {
+      if (error && !sms) {
         setErr(error.message);
         setBusy(false);
         return;
       }
       const verified = (data?.totp ?? []).find((f) => f.status === 'verified');
       if (!verified) {
-        navigate('/mfa-setup', { replace: true });
-        return;
+        if (!sms) {
+          navigate('/mfa-setup', { replace: true });
+          return;
+        }
+        setMode('sms');
+      } else {
+        setFactorId(verified.id);
       }
-      setFactorId(verified.id);
       setBusy(false);
     })();
   }, [navigate]);
+
+  const sendSms = async () => {
+    setErr('');
+    setBusy(true);
+    const { data, error } = await supabase.functions.invoke('mfa-sms-send', { body: { purpose: 'login' } });
+    setBusy(false);
+    if (error || data?.error) {
+      setErr(data?.error === 'cooldown' || data?.error === 'rate_limited'
+        ? 'Bitte kurz warten, bevor ein neuer Code angefordert wird.'
+        : 'SMS konnte nicht gesendet werden.');
+      return;
+    }
+    setSmsSent(true);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr('');
     setBusy(true);
     try {
+      if (mode === 'sms') {
+        const { data, error } = await supabase.functions.invoke('mfa-sms-verify', { body: { code: code.trim() } });
+        if (error || data?.error) throw new Error('Code ungültig oder abgelaufen');
+        finish();
+        return;
+      }
       const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId });
       if (chErr) throw chErr;
       const { error: vErr } = await supabase.auth.mfa.verify({
@@ -48,18 +97,13 @@ export default function MfaChallenge() {
         code: code.trim(),
       });
       if (vErr) throw vErr;
-      markMfaVerifiedThisTab();
-      const postMfaTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
-        ? '/esc/kalender'
-        : '/dashboard';
-      // Harte Navigation wie nach Login: verhindert den gemeldeten
-      // Maus-/Pointer-Freeze durch stale Auth-/Overlay-State nach MFA.
-      window.location.replace(postMfaTarget);
+      finish();
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Code ungültig');
       setBusy(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
