@@ -830,7 +830,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           <div className="mx-auto max-w-4xl px-4 sm:px-6 md:px-10 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))] flex items-center gap-2 sm:gap-3">
             <button
               type="button"
-              onClick={() => setStep((s) => Math.max(0, s - 1))}
+              onClick={goBack}
               disabled={submitting}
               className="h-13 min-h-[52px] px-4 sm:px-6 rounded-full border border-slate-200 bg-white !text-slate-600 text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap hover:text-slate-900 transition disabled:opacity-40"
             >
