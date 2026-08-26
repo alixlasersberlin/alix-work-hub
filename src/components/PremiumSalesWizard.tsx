@@ -507,6 +507,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 </Labeled>
                 )}
 
+                {s1 === 'email' && (
                 <Labeled label={fl('email', t.email)} error={showError('email')} valid={isValid('email')}>
                   <input
                     type="email"
@@ -521,8 +522,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('email', e.target.value)}
                   />
                 </Labeled>
-                <Labeled
-                  label={fl('phone', t.phone)}
+                )}
+                {s1 === 'phone' && (
 
                   error={showError('country_code') ?? showError('phone')}
                   valid={isValid('phone') && !errors.country_code}
