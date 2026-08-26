@@ -438,7 +438,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       )}
 
       <main className="px-4 sm:px-6 md:px-10 pt-6 sm:pt-8 md:pt-12 pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
-        <div className="mx-auto max-w-4xl">
+        <div key={`step-${step}`} className="mx-auto max-w-4xl animate-in fade-in slide-in-from-right-8 duration-500">
 
           {/* 0 — Intro */}
           {step === 0 && (
