@@ -634,8 +634,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                           active && 'ring-2 ring-sky-300/70',
                         )}
                       >
-                        <div className="relative overflow-hidden rounded-[25px] !bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.35)]">
-                          <div className="relative aspect-[4/3] max-h-44 overflow-hidden">
+                        <div className="relative flex h-full flex-col overflow-hidden rounded-[25px] !bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.35)]">
+                          <div className="relative aspect-[16/10] max-h-32 sm:max-h-36 overflow-hidden">
                             <img
                               src={c.img}
                               alt={c.key}
@@ -645,15 +645,15 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                               className="absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] group-hover:scale-[1.05]"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-white/85 via-white/10 to-transparent" />
-                            <span className="absolute top-4 left-5 text-[11px] tracking-[0.3em] text-slate-500">{c.no}</span>
+                            <span className="absolute top-3 left-4 text-[10px] tracking-[0.3em] text-slate-500">{c.no}</span>
                             <span
                               aria-hidden
                               className="pointer-events-none absolute -inset-x-1 top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.7)_50%,transparent_65%)]"
                             />
                           </div>
-                          <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3">
-                            <h3 className="!text-slate-900 text-base sm:text-lg font-light tracking-tight uppercase text-balance">{tv(t.categories, c.key)}</h3>
-                            <p className="mt-1.5 text-[13px] text-slate-500 font-light text-pretty">{t.category_desc[c.key] ?? c.desc}</p>
+                          <div className="px-4 pb-4 pt-2.5">
+                            <h3 className="!text-slate-900 text-sm sm:text-base font-light tracking-tight uppercase text-balance">{tv(t.categories, c.key)}</h3>
+                            <p className="mt-1 text-[12px] leading-snug text-slate-500 font-light line-clamp-2">{t.category_desc[c.key] ?? c.desc}</p>
                           </div>
                         </div>
                       </button>
@@ -909,9 +909,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 function Chapter({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) {
   return (
     <section className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <h2 className="!text-slate-900 text-xl sm:text-2xl md:text-4xl font-light tracking-tight uppercase text-balance">{title}</h2>
-      {sub && <p className="mt-2 sm:mt-3 !text-slate-500 font-light max-w-2xl text-sm sm:text-base text-pretty">{sub}</p>}
-      <div className="mt-6 sm:mt-8 md:mt-12">{children}</div>
+      <h2 className="!text-slate-900 text-lg sm:text-xl md:text-2xl font-light tracking-tight uppercase text-balance">{title}</h2>
+      {sub && <p className="mt-1.5 sm:mt-2 !text-slate-500 font-light max-w-2xl text-[13px] sm:text-sm text-pretty">{sub}</p>}
+      <div className="mt-4 sm:mt-6 md:mt-8">{children}</div>
     </section>
   );
 }
