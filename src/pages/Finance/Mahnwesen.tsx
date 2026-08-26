@@ -143,6 +143,21 @@ export default function FinanceMahnwesen() {
         meta={<div className="flex items-center gap-2"><RegionChip /><InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${visibleAccounts.length}`} pulse={!loading} /></div>}
         actions={
           <>
+            <div className="relative w-full sm:w-[300px]">
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${searching ? 'animate-pulse text-primary' : 'text-muted-foreground'}`} />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Name, Firma, Auftrag, Seriennr., E-Mail…"
+                className="pl-9 pr-8 h-9"
+              />
+              {search && (
+                <button type="button" onClick={() => setSearch('')} aria-label="Suche leeren"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
