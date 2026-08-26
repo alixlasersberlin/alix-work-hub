@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { notifyNewRepairOrder, sendRepairConfirmationToCustomer } from '@/lib/repair/notify';
 import { renderRepairWorkOrderPdf } from '@/lib/repair/work-order-pdf';
@@ -15,9 +16,10 @@ import { Search, FileDown, Printer } from 'lucide-react';
 
 type OrderSearchRow = {
   id: string;
-  order_number: string;
+  orderId: string | null;
+  order_number: string | null;
   customer_id: string;
-  customers?: { company_name: string | null; contact_name: string | null; email: string | null; phone: string | null };
+  customers?: { company_name: string | null; contact_name: string | null; email: string | null; phone: string | null; external_customer_id?: string | null };
 };
 
 export default function ReparaturNew() {
@@ -88,14 +90,14 @@ export default function ReparaturNew() {
       .join(',');
     const { data: byOrder } = await supabase
       .from('orders')
-      .select('id,order_number,customer_id,customers:customer_id(company_name,contact_name,email,phone)')
+      .select('id,order_number,customer_id,customers:customer_id(company_name,contact_name,email,phone,external_customer_id)')
       .or(orderOr)
-      .limit(20);
+      .limit(50);
 
     const custOr = tokens
       .map((t) => {
         const esct = esc(t);
-        const base = `company_name.ilike.%${esct}%,contact_name.ilike.%${esct}%,email.ilike.%${esct}%,phone.ilike.%${esct}%`;
+        const base = `company_name.ilike.%${esct}%,contact_name.ilike.%${esct}%,email.ilike.%${esct}%,phone.ilike.%${esct}%,external_customer_id.ilike.%${esct}%`;
         const addr = addrCols
           .flatMap((c) => addrKeys.map((k) => `${c}->>${k}.ilike.%${esct}%`))
           .join(',');
@@ -104,21 +106,33 @@ export default function ReparaturNew() {
       .join(',');
     const { data: byCust } = await supabase
       .from('customers')
-      .select('id,company_name,contact_name,email,phone')
+      .select('id,company_name,contact_name,email,phone,external_customer_id')
       .or(custOr)
-      .limit(20);
+      .limit(50);
     let custOrders: any[] = [];
     if (byCust && byCust.length > 0) {
       const ids = byCust.map((c: any) => c.id);
       const { data: ord } = await supabase
         .from('orders')
-        .select('id,order_number,customer_id,customers:customer_id(company_name,contact_name,email,phone)')
+        .select('id,order_number,customer_id,customers:customer_id(company_name,contact_name,email,phone,external_customer_id)')
         .in('customer_id', ids)
-        .limit(50);
+        .limit(100);
       custOrders = ord || [];
     }
     const map = new Map<string, OrderSearchRow>();
-    [...(byOrder || []), ...custOrders].forEach((o: any) => map.set(o.id, o));
+    [...(byOrder || []), ...custOrders].forEach((o: any) => map.set(`order-${o.id}`, { ...o, orderId: o.id }));
+    (byCust || []).forEach((customer: any) => {
+      const hasOrder = Array.from(map.values()).some((result) => result.customer_id === customer.id);
+      if (!hasOrder) {
+        map.set(`customer-${customer.id}`, {
+          id: `customer-${customer.id}`,
+          orderId: null,
+          order_number: null,
+          customer_id: customer.id,
+          customers: customer,
+        });
+      }
+    });
     setSearchResults(Array.from(map.values()));
     setSearching(false);
   };
@@ -136,11 +150,13 @@ export default function ReparaturNew() {
     const c = o.customers as any;
 
     // Adresse aus Order (shipping bevorzugt) oder Kunde holen
-    const { data: ord } = await supabase
-      .from('orders')
-      .select('shipping_address,billing_address,customer_id')
-      .eq('id', o.id)
-      .maybeSingle();
+    const { data: ord } = o.orderId
+      ? await supabase
+          .from('orders')
+          .select('shipping_address,billing_address,customer_id')
+          .eq('id', o.orderId)
+          .maybeSingle()
+      : { data: null };
     const { data: cust } = await supabase
       .from('customers')
       .select('company_name,contact_name,email,phone,shipping_address,billing_address')
@@ -193,7 +209,7 @@ export default function ReparaturNew() {
       ...form,
       purchase_date: form.purchase_date || null,
       repair_status: 'Neu',
-      order_id: selectedOrder?.id || null,
+      order_id: selectedOrder?.orderId || null,
       order_number: selectedOrder?.order_number || null,
       customer_id: selectedOrder?.customer_id || null,
       created_by: user?.id,
@@ -252,12 +268,9 @@ export default function ReparaturNew() {
             <Button onClick={() => runSearch()} disabled={searching}><Search className="w-4 h-4 mr-1" /> Suchen</Button>
           </div>
           {searchResults.length > 0 && (
-            <Card
-              className="h-64 max-h-[40vh] overflow-y-scroll overscroll-contain touch-pan-y [scrollbar-gutter:stable]"
-              tabIndex={0}
-              aria-label="Suchergebnisse – vertikal scrollbar"
-            >
-              <table className="w-full text-sm">
+            <Card className="overflow-hidden">
+              <ScrollArea className="h-[280px] max-h-[42vh]" tabIndex={0} aria-label="Suchergebnisse – vertikal scrollbar">
+                <table className="w-full min-w-[640px] text-sm">
                 <tbody>
                   {searchResults.map((o) => (
                     <tr
@@ -265,13 +278,16 @@ export default function ReparaturNew() {
                       onClick={() => pickOrder(o)}
                       className={`border-b border-border cursor-pointer hover:bg-muted/40 ${selectedOrder?.id === o.id ? 'bg-primary/10' : ''}`}
                     >
-                      <td className="px-3 py-2 font-mono">{o.order_number}</td>
+                      <td className="px-3 py-3 font-mono">{o.order_number || 'Kundenstamm'}</td>
                       <td className="px-3 py-2">{(o.customers as any)?.company_name || (o.customers as any)?.contact_name}</td>
-                      <td className="px-3 py-2 text-xs text-muted-foreground">{(o.customers as any)?.email}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">
+                        {(o.customers as any)?.email || (o.customers as any)?.phone || (o.customers as any)?.external_customer_id}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </ScrollArea>
             </Card>
           )}
         </TabsContent>
