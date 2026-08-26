@@ -77,7 +77,7 @@ export default function MfaSetup() {
   };
 
   const finish = async () => {
-    markMfaVerifiedThisTab();
+    await markMfaVerifiedThisTab();
     await refreshMfaState();
     navigate('/dashboard', { replace: true });
   };

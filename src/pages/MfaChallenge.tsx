@@ -103,7 +103,7 @@ export default function MfaChallenge() {
       if (mode === 'sms') {
         const { data, error } = await supabase.functions.invoke('mfa-sms-verify', { body: { code: code.trim() } });
         if (error || data?.error) throw new Error('Code ungültig oder abgelaufen');
-        finish(true);
+        await finish(true);
         return;
       }
       const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId });
@@ -114,7 +114,7 @@ export default function MfaChallenge() {
         code: code.trim(),
       });
       if (vErr) throw vErr;
-      finish();
+      await finish();
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Code ungültig');
       setBusy(false);
