@@ -93,7 +93,14 @@ export function normalizeLayout(form: BeratungFormKey, raw: unknown): BeratungFo
   const cfg = (raw || {}) as Partial<BeratungFormLayout>;
   const order = Array.isArray(cfg.order) ? cfg.order.filter((n) => valid.includes(n)) : [];
   for (const id of valid) if (!order.includes(id)) order.push(id);
-  return { order, steps: cfg.steps || {}, intro: cfg.intro || {}, options: cfg.options || {} };
+  return {
+    order,
+    steps: cfg.steps || {},
+    intro: cfg.intro || {},
+    options: cfg.options || {},
+    fields: cfg.fields || {},
+  };
+
 }
 
 export async function loadBeratungLayout(): Promise<BeratungLayoutConfig> {
