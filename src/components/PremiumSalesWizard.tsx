@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
 import { loadBeratungFormOverride, type BeratungFormOverride } from '@/lib/beratung/formSettings';
-import { loadBeratungLayoutFor, visibleSequence, defaultLayout, resolveOptions, DEFAULT_ADDITIONAL, DEFAULT_DELIVERY, DEFAULT_CONSULTATION, type BeratungFormLayout } from '@/lib/beratung/formLayout';
+import { loadBeratungLayoutFor, visibleSequence, defaultLayout, resolveOptions, fieldLabel, fieldPlaceholder, isFieldVisible, DEFAULT_ADDITIONAL, DEFAULT_DELIVERY, DEFAULT_CONSULTATION, type BeratungFormLayout } from '@/lib/beratung/formLayout';
 import logoAsset from '@/assets/alix-lasers-logo-gold-new.png.asset.json';
 import {
   PREMIUM_CATEGORIES,
@@ -170,6 +170,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const lastSlot = seq.length;
   const cur = step > 0 && step <= lastSlot ? seq[step - 1] : step === 0 ? 0 : 99;
   const so = (id: number) => layout.steps?.[String(id)] || {};
+  const fl = (key: string, fallback: string) => fieldLabel(layout, key, fallback);
+  const fp = (key: string, fallback?: string) => fieldPlaceholder(layout, key, fallback);
+  const fVisible = (key: string) => isFieldVisible('premium', layout, key);
   const additionalOptions = useMemo(() => resolveOptions(layout, 'additional', DEFAULT_ADDITIONAL), [layout]);
   const deliveryOptions = useMemo(() => resolveOptions(layout, 'delivery', DEFAULT_DELIVERY), [layout]);
   const consultationOptions = useMemo(() => resolveOptions(layout, 'consultation', DEFAULT_CONSULTATION), [layout]);
@@ -537,7 +540,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       inputMode="tel"
                       autoComplete="tel"
                       maxLength={20}
-                      placeholder={t.phone_ph}
+                      placeholder={fp('phone', t.phone_ph)}
                       aria-invalid={!!showError('phone')}
                       className={cn(fieldCls, 'flex-1 min-w-[160px]', showError('phone') && '!border-red-300 focus:!ring-red-200')}
                       value={data.phone}
