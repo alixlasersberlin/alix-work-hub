@@ -252,7 +252,11 @@ export default function ReparaturNew() {
             <Button onClick={() => runSearch()} disabled={searching}><Search className="w-4 h-4 mr-1" /> Suchen</Button>
           </div>
           {searchResults.length > 0 && (
-            <Card className="max-h-64 overflow-auto">
+            <Card
+              className="h-64 max-h-[40vh] overflow-y-scroll overscroll-contain touch-pan-y [scrollbar-gutter:stable]"
+              tabIndex={0}
+              aria-label="Suchergebnisse – vertikal scrollbar"
+            >
               <table className="w-full text-sm">
                 <tbody>
                   {searchResults.map((o) => (
