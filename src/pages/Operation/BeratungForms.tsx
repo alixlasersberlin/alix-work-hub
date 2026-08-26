@@ -25,6 +25,7 @@ import {
   saveBeratungLayout,
   stepDefs,
   optionLists,
+  profileFields,
   defaultLayout,
   type BeratungLayoutConfig,
 } from '@/lib/beratung/formLayout';
@@ -110,6 +111,18 @@ export default function BeratungForms() {
     setOptionCfg(form, key, { extra: [...(oc.extra || []), value], order: [...existing, value] });
     setNewOption((p) => ({ ...p, [k]: '' }));
   };
+
+  const setFieldCfg = (form: BeratungFormKey, key: string, patch: Record<string, unknown>) =>
+    setLayout((prev) => ({
+      ...prev,
+      [form]: {
+        ...prev[form],
+        fields: { ...(prev[form].fields || {}), [key]: { ...((prev[form].fields || {})[key] || {}), ...patch } },
+      },
+    }));
+
+  const setFieldsCfg = (form: BeratungFormKey, fields: Record<string, never>) =>
+    setLayout((prev) => ({ ...prev, [form]: { ...prev[form], fields } }));
 
   const resetLayout = (form: BeratungFormKey) =>
     setLayout((prev) => ({ ...prev, [form]: defaultLayout(form) }));
