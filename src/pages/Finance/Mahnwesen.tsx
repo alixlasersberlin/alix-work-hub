@@ -197,7 +197,17 @@ export default function FinanceMahnwesen() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/finance/mahnwesen/einstellungen"><SettingsIcon className="w-4 h-4 mr-2" />Einstellungen</Link>
             </Button>
-            <Button onClick={runEngine} disabled={running} size="sm" className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
+            <Button
+              onClick={() => runEngine(Array.from(selected))}
+              disabled={running || selected.size === 0}
+              size="sm"
+              variant="outline"
+              className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+            >
+              {running ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <CheckSquare className="w-4 h-4 mr-2" />}
+              Nur Ausgewählte ({selected.size})
+            </Button>
+            <Button onClick={() => runEngine()} disabled={running} size="sm" className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
               {running ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-2" />}
               {running ? 'Lauf läuft…' : `Mahn-Engine ${region} starten`}
             </Button>
