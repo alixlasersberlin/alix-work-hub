@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Loader2, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
