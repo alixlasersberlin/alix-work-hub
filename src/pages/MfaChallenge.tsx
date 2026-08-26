@@ -20,8 +20,8 @@ export default function MfaChallenge() {
   const [busy, setBusy] = useState(true);
   const [err, setErr] = useState('');
 
-  const finish = (viaSms = false) => {
-    if (viaSms) markMfaSmsVerifiedThisTab(); else markMfaVerifiedThisTab();
+  const finish = async (viaSms = false) => {
+    if (viaSms) await markMfaSmsVerifiedThisTab(); else await markMfaVerifiedThisTab();
     const postMfaTarget = typeof window !== 'undefined' && window.location.hostname === 'app.alixwork.de'
       ? '/esc/kalender'
       : '/dashboard';
@@ -29,6 +29,7 @@ export default function MfaChallenge() {
     // Maus-/Pointer-Freeze durch stale Auth-/Overlay-State nach MFA.
     window.location.replace(postMfaTarget);
   };
+
 
   useEffect(() => {
     (async () => {
