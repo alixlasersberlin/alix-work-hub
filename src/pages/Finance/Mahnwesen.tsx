@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, PlayCircle, RefreshCw, Settings as SettingsIcon, Eye, Inbox } from 'lucide-react';
+import { AlertTriangle, PlayCircle, RefreshCw, Settings as SettingsIcon, Eye, Inbox, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
