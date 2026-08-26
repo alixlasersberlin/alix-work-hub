@@ -671,59 +671,69 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 3 — Bedarf */}
           {cur === 3 && (
             <Chapter title={so(3).title || t.c3_title} sub={so(3).sub ?? t.c3_sub(tv(t.categories, data.category))}>
-              <div className="space-y-8 sm:space-y-10">
-                <Group
-                  label={t.g_delivery}
-                  valid={!!data.delivery_preference}
-                  error={attempted[3] && !data.delivery_preference ? t.g_delivery_err : null}
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {deliveryOptions.map((d) => (
-                      <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) })}>
-                        {tv(t.delivery, d)}
-                      </Pill>
-                    ))}
-                  </div>
-                </Group>
-                <Group
-                  label={t.g_consultation}
-                  valid={!!data.consultation_type}
-                  error={attempted[3] && !data.consultation_type ? t.g_consultation_err : null}
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {consultationOptions.map((c) => (
-                      <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) })}>
-                        {tv(t.consultation, c)}
-                      </Pill>
-                    ))}
-                  </div>
-                </Group>
+              <div key={`sub-${sub}`} className="animate-in fade-in slide-in-from-right-8 duration-500">
+                {sub === 0 && (
+                  <Group
+                    label={t.g_delivery}
+                    valid={!!data.delivery_preference}
+                    error={attempted[3] && !data.delivery_preference ? t.g_delivery_err : null}
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {deliveryOptions.map((d) => (
+                        <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => { setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) }); autoAdvance(); }}>
+                          {tv(t.delivery, d)}
+                        </Pill>
+                      ))}
+                    </div>
+                  </Group>
+                )}
 
-                <Group label={t.g_additional}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {additionalOptions.map((a) => (
-                      <Pill key={a} active={data.additional_interests.includes(a)} onClick={() => toggleAdditional(a)}>
-                        {tv(t.additional, a)}
-                      </Pill>
-                    ))}
-                  </div>
-                </Group>
-                <Group label={t.g_notes} error={showError('notes')}>
-                  <textarea
-                    rows={5}
-                    value={data.notes}
-                    maxLength={2100}
-                    aria-invalid={!!showError('notes')}
-                    onBlur={() => markTouched('notes')}
-                    onChange={(e) => update('notes', e.target.value)}
-                    className={cn(fieldCls, 'h-auto py-3 resize-none', showError('notes') && '!border-red-300 focus:!ring-red-200')}
-                  />
-                  <p className={cn('mt-1 text-[11px] text-right', data.notes.length > 2000 ? '!text-red-500' : '!text-slate-400')}>
-                    {data.notes.length}/2000
-                  </p>
-                </Group>
+                {sub === 1 && (
+                  <Group
+                    label={t.g_consultation}
+                    valid={!!data.consultation_type}
+                    error={attempted[3] && !data.consultation_type ? t.g_consultation_err : null}
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {consultationOptions.map((c) => (
+                        <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => { setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) }); autoAdvance(); }}>
+                          {tv(t.consultation, c)}
+                        </Pill>
+                      ))}
+                    </div>
+                  </Group>
+                )}
 
+                {sub === 2 && (
+                  <Group label={t.g_additional}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {additionalOptions.map((a) => (
+                        <Pill key={a} active={data.additional_interests.includes(a)} onClick={() => toggleAdditional(a)}>
+                          {tv(t.additional, a)}
+                        </Pill>
+                      ))}
+                    </div>
+                  </Group>
+                )}
+
+                {sub === 3 && (
+                  <Group label={t.g_notes} error={showError('notes')}>
+                    <textarea
+                      rows={5}
+                      value={data.notes}
+                      maxLength={2100}
+                      aria-invalid={!!showError('notes')}
+                      onBlur={() => markTouched('notes')}
+                      onChange={(e) => update('notes', e.target.value)}
+                      className={cn(fieldCls, 'h-auto py-3 resize-none', showError('notes') && '!border-red-300 focus:!ring-red-200')}
+                    />
+                    <p className={cn('mt-1 text-[11px] text-right', data.notes.length > 2000 ? '!text-red-500' : '!text-slate-400')}>
+                      {data.notes.length}/2000
+                    </p>
+                  </Group>
+                )}
               </div>
+
             </Chapter>
           )}
 
