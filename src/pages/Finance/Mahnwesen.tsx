@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, PlayCircle, RefreshCw, Settings as SettingsIcon, Eye, Inbox } from 'lucide-react';
+import { AlertTriangle, PlayCircle, RefreshCw, Settings as SettingsIcon, Eye, Inbox, Search, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -45,6 +46,44 @@ export default function FinanceMahnwesen() {
   const [running, setRunning] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('Entwurf');
   const [onlyWithReminder, setOnlyWithReminder] = useState(false);
+  const [search, setSearch] = useState('');
+  const [matchIds, setMatchIds] = useState<Set<string> | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  // Erweiterte Suche: Kundennummer, Auftragsnummer, Seriennummer, Telefon → Kunden-IDs
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) { setMatchIds(null); setSearching(false); return; }
+    let cancelled = false;
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const ids = new Set<string>();
+      try {
+        const [custRes, ordRes, devRes] = await Promise.all([
+          supabase.from('customers').select('id')
+            .or([
+              `company_name.ilike.%${q}%`,
+              `contact_name.ilike.%${q}%`,
+              `email.ilike.%${q}%`,
+              `phone.ilike.%${q}%`,
+              `external_customer_id.ilike.%${q}%`,
+            ].join(','))
+            .limit(200),
+          supabase.from('orders').select('customer_id').ilike('order_number', `%${q}%`).limit(200),
+          supabase.from('lager_devices').select('customer_email').ilike('serial_number', `%${q}%`).limit(50),
+        ]);
+        (custRes.data || []).forEach((c: any) => c?.id && ids.add(c.id));
+        (ordRes.data || []).forEach((o: any) => o?.customer_id && ids.add(o.customer_id));
+        const emails = Array.from(new Set(((devRes.data || []) as any[]).map(d => d.customer_email).filter(Boolean)));
+        if (emails.length) {
+          const { data: byMail } = await supabase.from('customers').select('id').in('email', emails as string[]).limit(200);
+          (byMail || []).forEach((c: any) => c?.id && ids.add(c.id));
+        }
+      } catch { /* ignore */ }
+      if (!cancelled) { setMatchIds(ids); setSearching(false); }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [search]);
 
 
   const load = async () => {
@@ -84,7 +123,16 @@ export default function FinanceMahnwesen() {
   };
 
   const draftsByCustomer = new Map(drafts.map(d => [d.customer_id, d]));
-  const visibleAccounts = onlyWithReminder ? accounts.filter(a => draftsByCustomer.has(a.customer_id)) : accounts;
+  const q = search.trim().toLowerCase();
+  const visibleAccounts = accounts
+    .filter(a => (onlyWithReminder ? draftsByCustomer.has(a.customer_id) : true))
+    .filter(a => {
+      if (q.length < 2) return true;
+      const c = a.customers;
+      const local = [c?.company_name, c?.contact_name, c?.email].filter(Boolean).join(' ').toLowerCase();
+      return local.includes(q) || (matchIds?.has(a.customer_id) ?? false);
+    });
+
 
   return (
     <div className="p-4 sm:p-6">
@@ -95,6 +143,21 @@ export default function FinanceMahnwesen() {
         meta={<div className="flex items-center gap-2"><RegionChip /><InfinityStatusBadge kind={loading ? 'progress' : 'done'} label={loading ? 'Lädt' : `${visibleAccounts.length}`} pulse={!loading} /></div>}
         actions={
           <>
+            <div className="relative w-full sm:w-[300px]">
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${searching ? 'animate-pulse text-primary' : 'text-muted-foreground'}`} />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Name, Firma, Auftrag, Seriennr., E-Mail…"
+                className="pl-9 pr-8 h-9"
+              />
+              {search && (
+                <button type="button" onClick={() => setSearch('')} aria-label="Suche leeren"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground whitespace-nowrap">Status:</span>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
