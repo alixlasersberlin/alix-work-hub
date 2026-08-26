@@ -66,7 +66,7 @@ export type BeratungFormLayout = {
 export type BeratungLayoutConfig = Record<BeratungFormKey, BeratungFormLayout>;
 
 export function defaultLayout(form: BeratungFormKey): BeratungFormLayout {
-  return { order: stepDefs(form).map((s) => s.id), steps: {}, intro: {} };
+  return { order: stepDefs(form).map((s) => s.id), steps: {}, intro: {}, options: {} };
 }
 
 export const BERATUNG_LAYOUT_DEFAULTS: BeratungLayoutConfig = {
@@ -81,7 +81,7 @@ export function normalizeLayout(form: BeratungFormKey, raw: unknown): BeratungFo
   const cfg = (raw || {}) as Partial<BeratungFormLayout>;
   const order = Array.isArray(cfg.order) ? cfg.order.filter((n) => valid.includes(n)) : [];
   for (const id of valid) if (!order.includes(id)) order.push(id);
-  return { order, steps: cfg.steps || {}, intro: cfg.intro || {} };
+  return { order, steps: cfg.steps || {}, intro: cfg.intro || {}, options: cfg.options || {} };
 }
 
 export async function loadBeratungLayout(): Promise<BeratungLayoutConfig> {
