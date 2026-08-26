@@ -110,12 +110,15 @@ export default function FinanceMahnwesen() {
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [region, statusFilter, tenantId]);
 
 
-  const runEngine = async () => {
+  const runEngine = async (customerIds?: string[]) => {
     setRunning(true);
     try {
-      const { data, error } = await supabase.functions.invoke('finance-reminder-engine', { body: { region } });
+      const body: any = { region };
+      if (customerIds && customerIds.length) body.customer_ids = customerIds;
+      const { data, error } = await supabase.functions.invoke('finance-reminder-engine', { body });
       if (error) throw error;
-      toast({ title: `Mahn-Engine ausgeführt (${region})`, description: `Konten: ${data?.accounts_seen ?? 0} • Entwürfe erstellt: ${data?.drafts_created ?? 0} • übersprungen: ${data?.skipped ?? 0}` });
+      toast({ title: `Mahn-Engine ausgeführt (${region}${customerIds?.length ? ` • ${customerIds.length} ausgewählt` : ''})`, description: `Konten: ${data?.accounts_seen ?? 0} • Entwürfe erstellt: ${data?.drafts_created ?? 0} • übersprungen: ${data?.skipped ?? 0}` });
+      setSelected(new Set());
       await load();
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message ?? 'Unbekannt', variant: 'destructive' });
@@ -132,6 +135,22 @@ export default function FinanceMahnwesen() {
       const local = [c?.company_name, c?.contact_name, c?.email].filter(Boolean).join(' ').toLowerCase();
       return local.includes(q) || (matchIds?.has(a.customer_id) ?? false);
     });
+
+  const allVisibleSelected = visibleAccounts.length > 0 && visibleAccounts.every(a => selected.has(a.customer_id));
+  const toggleAll = () => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allVisibleSelected) visibleAccounts.forEach(a => next.delete(a.customer_id));
+      else visibleAccounts.forEach(a => next.add(a.customer_id));
+      return next;
+    });
+  };
+  const toggleOne = (id: string) => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
 
 
   return (
