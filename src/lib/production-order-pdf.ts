@@ -6,7 +6,7 @@ import alixLogo from '@/assets/alix-lasers-logo.png';
 const COMPANY_ADDRESS = [
   'Alix Lasers GmbH',
   'Zeppelin Straße 3',
-  '12529 Berlin',
+  '12529 Berlin- Schönefeld',
   'Deutschland',
 ];
 

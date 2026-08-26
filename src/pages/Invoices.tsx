@@ -1276,7 +1276,7 @@ export default function Invoices({ mietkaufOnly = false }: InvoicesProps) {
       doc.setTextColor(120, 120, 120);
       const centerX = PAGE_W / 2;
       doc.text(
-        'Alix Lasers GmbH  ·  Zeppelin Straße 3  ·  12529 Berlin  ·  Deutschland  ·  Telefon: +49 30 577 127 45  ·  Fax: +49 30 577 127 46',
+        'Alix Lasers GmbH  ·  Zeppelin Straße 3  ·  12529 Berlin- Schönefeld  ·  Deutschland  ·  Telefon: +49 30 577 127 45  ·  Fax: +49 30 577 127 46',
         centerX, PAGE_H - 16, { align: 'center' },
       );
       doc.text(
