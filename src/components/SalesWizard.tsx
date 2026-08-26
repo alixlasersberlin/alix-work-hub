@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
 import { loadBeratungFormOverride, type BeratungFormOverride } from '@/lib/beratung/formSettings';
-import { loadBeratungLayoutFor, visibleSequence, defaultLayout, type BeratungFormLayout } from '@/lib/beratung/formLayout';
+import { loadBeratungLayoutFor, visibleSequence, defaultLayout, resolveOptions, DEFAULT_INTERESTS, DEFAULT_ADDITIONAL, DEFAULT_DELIVERY, DEFAULT_CONSULTATION, type BeratungFormLayout } from '@/lib/beratung/formLayout';
 import bgAsset from '@/assets/wizard/alix-lasers-bg.jpg.asset.json';
 import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
 import { useWizardLang } from '@/i18n/wizard';
@@ -164,6 +164,16 @@ export default function SalesWizard({ publicMode = false }: Props) {
   const totalSlots = lastSlot + 1;
   const cur = step > 0 && step <= lastSlot ? seq[step - 1] : step === 0 ? 0 : 99;
   const so = (id: number) => layout.steps?.[String(id)] || {};
+  const interestOptions = useMemo(
+    () => resolveOptions(layout, 'interests', DEFAULT_INTERESTS).map((key) => ({
+      key,
+      img: INTERESTS.find((i) => i.key === key)?.img ?? imgHair,
+    })),
+    [layout],
+  );
+  const additionalOptions = useMemo(() => resolveOptions(layout, 'additional', DEFAULT_ADDITIONAL), [layout]);
+  const deliveryOptions = useMemo(() => resolveOptions(layout, 'delivery', DEFAULT_DELIVERY), [layout]);
+  const consultationOptions = useMemo(() => resolveOptions(layout, 'consultation', DEFAULT_CONSULTATION), [layout]);
   const progress = useMemo(() => Math.round(((step + 1) / (totalSlots + 1)) * 100), [step, totalSlots]);
 
   const goNext = () => { setDirection('forward'); setStep((s) => s + 1); };
@@ -337,7 +347,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   {cur === 1 && (
                     <Section title={so(1).title || t.s_interests} hint={so(1).sub ?? t.multi_select}>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {INTERESTS.map((it) => {
+                        {interestOptions.map((it) => {
                           const active = data.interests.includes(it.key);
                           const label = t.interests[it.key] || it.key;
                           return (
@@ -405,7 +415,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   {cur === 3 && (
                     <Section title={so(3).title || t.s_additional} hint={so(3).sub ?? t.optional_multi}>
                       <div className="space-y-2.5">
-                        {ADDITIONAL.map((a) => {
+                        {additionalOptions.map((a) => {
                           const active = data.additional_interests.includes(a);
                           const label = t.additional[a] || a;
                           return (
@@ -437,7 +447,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   {cur === 4 && (
                     <Section title={so(4).title || t.s_delivery} hint={so(4).sub}>
                       <RadioGroup value={data.delivery_preference} onValueChange={(v) => setData({ ...data, delivery_preference: v })} className="gap-2.5">
-                        {DELIVERY.map((d) => (
+                        {deliveryOptions.map((d) => (
                           <label key={d} className={cn(
                             'flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all',
                             data.delivery_preference === d
@@ -656,7 +666,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   {cur === 10 && (
                     <Section title={so(10).title || t.s_consultation} hint={so(10).sub}>
                       <RadioGroup value={data.consultation_type} onValueChange={(v) => setData({ ...data, consultation_type: v })} className="gap-2.5">
-                        {CONSULTATION.map((c) => (
+                        {consultationOptions.map((c) => (
                           <label key={c} className={cn(
                             'flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all',
                             data.consultation_type === c
