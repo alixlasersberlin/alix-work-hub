@@ -159,6 +159,12 @@ interface Props {
 export default function PremiumSalesWizard({ publicMode = true }: Props) {
   const { lang, setLang, t } = usePremiumLang();
   const [step, setStep] = useState(0);
+  const sliderRef = useRef<HTMLDivElement | null>(null);
+  const slideBy = (dir: number) => {
+    const el = sliderRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.8), behavior: 'smooth' });
+  };
   const [data, setData] = useState<State>(INITIAL);
   const [customCode, setCustomCode] = useState(false);
   const [touched, setTouched] = useState<Partial<Record<FieldKey, boolean>>>({});
