@@ -573,7 +573,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       )}
                     >
                       <div className="relative overflow-hidden rounded-[25px] !bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.35)]">
-                        <div className="relative h-44 sm:h-52 md:h-60 overflow-hidden">
+                        <div className="relative h-32 sm:h-40 md:h-44 overflow-hidden">
                           <img
                             src={c.img}
                             alt={c.key}
