@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import Turnstile from '@/components/Turnstile';
 import { supabase } from '@/integrations/supabase/client';
 import { loadBeratungFormOverride, type BeratungFormOverride } from '@/lib/beratung/formSettings';
-import { loadBeratungLayoutFor, visibleSequence, defaultLayout, resolveOptions, DEFAULT_INTERESTS, DEFAULT_ADDITIONAL, DEFAULT_DELIVERY, DEFAULT_CONSULTATION, type BeratungFormLayout } from '@/lib/beratung/formLayout';
+import { loadBeratungLayoutFor, visibleSequence, defaultLayout, resolveOptions, fieldLabel, fieldPlaceholder, isFieldVisible, DEFAULT_INTERESTS, DEFAULT_ADDITIONAL, DEFAULT_DELIVERY, DEFAULT_CONSULTATION, type BeratungFormLayout } from '@/lib/beratung/formLayout';
 import bgAsset from '@/assets/wizard/alix-lasers-bg.jpg.asset.json';
 import WizardLanguageSwitcher from '@/components/WizardLanguageSwitcher';
 import { useWizardLang } from '@/i18n/wizard';
@@ -164,6 +164,9 @@ export default function SalesWizard({ publicMode = false }: Props) {
   const totalSlots = lastSlot + 1;
   const cur = step > 0 && step <= lastSlot ? seq[step - 1] : step === 0 ? 0 : 99;
   const so = (id: number) => layout.steps?.[String(id)] || {};
+  const fl = (key: string, fallback: string) => fieldLabel(layout, key, fallback);
+  const fp = (key: string, fallback?: string) => fieldPlaceholder(layout, key, fallback);
+  const fVisible = (key: string) => isFieldVisible('standard', layout, key);
   const interestOptions = useMemo(
     () => resolveOptions(layout, 'interests', DEFAULT_INTERESTS).map((key) => ({
       key,
@@ -465,15 +468,15 @@ export default function SalesWizard({ publicMode = false }: Props) {
                   {cur === 5 && (
                     <Section title={so(5).title || t.s_name} hint={so(5).sub ?? t.required}>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <Field label={t.first_name}>
+                        <Field label={fl('first_name', t.first_name)}>
                           <Input value={data.first_name} onChange={(e) => setData({ ...data, first_name: e.target.value })} className={inputCls} />
                         </Field>
-                        <Field label={t.last_name}>
+                        <Field label={fl('last_name', t.last_name)}>
                           <Input value={data.last_name} onChange={(e) => setData({ ...data, last_name: e.target.value })} className={inputCls} />
                         </Field>
                       </div>
 
-                      <div className="mt-5 space-y-4">
+                      <div className={cn('mt-5 space-y-4', !fVisible('studio_in_germany') && 'hidden')}>
                         <label className="flex items-center gap-3 cursor-pointer select-none">
                           <input
                             type="checkbox"
@@ -482,7 +485,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                             className="h-4 w-4 rounded border-slate-300 accent-amber-500"
                           />
                           <span className="text-sm text-slate-700">
-                            {t.studio_in_germany_label} <span className="text-slate-400">({t.optional})</span>
+                            {fl('studio_in_germany', t.studio_in_germany_label)} <span className="text-slate-400">({t.optional})</span>
                           </span>
                         </label>
 
@@ -514,7 +517,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
                   {cur === 6 && (
                     <Section title={so(6).title || t.s_company} hint={so(6).sub ?? t.optional}>
-                      <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder={t.company_name} className={inputCls} />
+                      <Input value={data.company} onChange={(e) => setData({ ...data, company: e.target.value })} placeholder={fp('company', t.company_name)} className={inputCls} />
 
                       <div className="mt-5 space-y-3">
                         <label className="flex items-center gap-3 cursor-pointer select-none">
@@ -567,7 +570,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
                           <Input
                             value={data.phone}
                             onChange={(e) => setData({ ...data, phone: e.target.value.replace(/[^\d\s+()/-]/g, '') })}
-                            placeholder={t.phone_placeholder}
+                            placeholder={fp('phone', t.phone_placeholder)}
                             inputMode="tel"
                             autoComplete="tel"
                             aria-invalid={!!phoneErr}
@@ -659,7 +662,7 @@ export default function SalesWizard({ publicMode = false }: Props) {
 
                   {cur === 9 && (
                     <Section title={so(9).title || t.s_email} hint={so(9).sub ?? t.required}>
-                      <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder={t.email_placeholder} className={inputCls} />
+                      <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })} placeholder={fp('email', t.email_placeholder)} className={inputCls} />
                     </Section>
                   )}
 
