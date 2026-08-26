@@ -123,7 +123,16 @@ export default function FinanceMahnwesen() {
   };
 
   const draftsByCustomer = new Map(drafts.map(d => [d.customer_id, d]));
-  const visibleAccounts = onlyWithReminder ? accounts.filter(a => draftsByCustomer.has(a.customer_id)) : accounts;
+  const q = search.trim().toLowerCase();
+  const visibleAccounts = accounts
+    .filter(a => (onlyWithReminder ? draftsByCustomer.has(a.customer_id) : true))
+    .filter(a => {
+      if (q.length < 2) return true;
+      const c = a.customers;
+      const local = [c?.company_name, c?.contact_name, c?.email].filter(Boolean).join(' ').toLowerCase();
+      return local.includes(q) || (matchIds?.has(a.customer_id) ?? false);
+    });
+
 
   return (
     <div className="p-4 sm:p-6">
