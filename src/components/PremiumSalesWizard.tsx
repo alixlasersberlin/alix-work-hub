@@ -589,9 +589,10 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                             className="pointer-events-none absolute -inset-x-1 top-0 h-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.7)_50%,transparent_65%)]"
                           />
                         </div>
-                        <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-4">
-                          <h3 className="!text-slate-900 text-lg sm:text-xl md:text-2xl font-light tracking-tight uppercase text-balance">{tv(t.categories, c.key)}</h3>
-                          <p className="mt-2 text-sm text-slate-500 font-light text-pretty">{t.category_desc[c.key] ?? c.desc}</p>
+                        <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-3">
+                          <h3 className="!text-slate-900 text-base sm:text-lg md:text-xl font-light tracking-tight uppercase text-balance">{tv(t.categories, c.key)}</h3>
+                          <p className="mt-1.5 text-[13px] text-slate-500 font-light text-pretty">{t.category_desc[c.key] ?? c.desc}</p>
+
 
                         </div>
                       </div>
