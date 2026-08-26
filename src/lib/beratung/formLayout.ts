@@ -51,6 +51,15 @@ export type BeratungStepOverride = {
   hidden?: boolean;
 };
 
+export type BeratungFieldOverride = {
+  /** Ersetzt die Feldbezeichnung. */
+  label?: string;
+  /** Ersetzt den Platzhaltertext. */
+  placeholder?: string;
+  /** Feld ausblenden (nur für optionale Felder). */
+  hidden?: boolean;
+};
+
 export type BeratungFormLayout = {
   /** Reihenfolge der Schritt-IDs. */
   order: number[];
@@ -60,14 +69,17 @@ export type BeratungFormLayout = {
   intro?: { title?: string; sub?: string; cta?: string };
   /** Optionslisten (Reihenfolge, ausgeblendete und zusätzliche Optionen). */
   options?: Record<string, { order?: string[]; hidden?: string[]; extra?: string[] }>;
+  /** Profildaten-Felder (Bezeichnung, Platzhalter, Sichtbarkeit). */
+  fields?: Record<string, BeratungFieldOverride>;
 };
 
 
 export type BeratungLayoutConfig = Record<BeratungFormKey, BeratungFormLayout>;
 
 export function defaultLayout(form: BeratungFormKey): BeratungFormLayout {
-  return { order: stepDefs(form).map((s) => s.id), steps: {}, intro: {}, options: {} };
+  return { order: stepDefs(form).map((s) => s.id), steps: {}, intro: {}, options: {}, fields: {} };
 }
+
 
 export const BERATUNG_LAYOUT_DEFAULTS: BeratungLayoutConfig = {
   standard: defaultLayout('standard'),
