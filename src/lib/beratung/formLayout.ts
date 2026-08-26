@@ -58,7 +58,10 @@ export type BeratungFormLayout = {
   steps: Record<string, BeratungStepOverride>;
   /** Überschreibungen für die Startseite des Wizards. */
   intro?: { title?: string; sub?: string; cta?: string };
+  /** Optionslisten (Reihenfolge, ausgeblendete und zusätzliche Optionen). */
+  options?: Record<string, { order?: string[]; hidden?: string[]; extra?: string[] }>;
 };
+
 
 export type BeratungLayoutConfig = Record<BeratungFormKey, BeratungFormLayout>;
 
