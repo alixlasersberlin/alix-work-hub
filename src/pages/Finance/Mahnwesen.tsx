@@ -46,6 +46,44 @@ export default function FinanceMahnwesen() {
   const [running, setRunning] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('Entwurf');
   const [onlyWithReminder, setOnlyWithReminder] = useState(false);
+  const [search, setSearch] = useState('');
+  const [matchIds, setMatchIds] = useState<Set<string> | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  // Erweiterte Suche: Kundennummer, Auftragsnummer, Seriennummer, Telefon → Kunden-IDs
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) { setMatchIds(null); setSearching(false); return; }
+    let cancelled = false;
+    setSearching(true);
+    const t = setTimeout(async () => {
+      const ids = new Set<string>();
+      try {
+        const [custRes, ordRes, devRes] = await Promise.all([
+          supabase.from('customers').select('id')
+            .or([
+              `company_name.ilike.%${q}%`,
+              `contact_name.ilike.%${q}%`,
+              `email.ilike.%${q}%`,
+              `phone.ilike.%${q}%`,
+              `external_customer_id.ilike.%${q}%`,
+            ].join(','))
+            .limit(200),
+          supabase.from('orders').select('customer_id').ilike('order_number', `%${q}%`).limit(200),
+          supabase.from('lager_devices').select('customer_email').ilike('serial_number', `%${q}%`).limit(50),
+        ]);
+        (custRes.data || []).forEach((c: any) => c?.id && ids.add(c.id));
+        (ordRes.data || []).forEach((o: any) => o?.customer_id && ids.add(o.customer_id));
+        const emails = Array.from(new Set(((devRes.data || []) as any[]).map(d => d.customer_email).filter(Boolean)));
+        if (emails.length) {
+          const { data: byMail } = await supabase.from('customers').select('id').in('email', emails as string[]).limit(200);
+          (byMail || []).forEach((c: any) => c?.id && ids.add(c.id));
+        }
+      } catch { /* ignore */ }
+      if (!cancelled) { setMatchIds(ids); setSearching(false); }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [search]);
 
 
   const load = async () => {
