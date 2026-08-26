@@ -493,7 +493,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('last_name', e.target.value)}
                   />
                 </Labeled>
-                {fVisible('company') && (
+                {s1 === 'company' && (
                 <Labeled label={fl('company', t.company)} error={showError('company')} valid={isValid('company')}>
                   <input
                     className={cn(fieldCls, showError('company') && '!border-red-300 focus:!ring-red-200')}
