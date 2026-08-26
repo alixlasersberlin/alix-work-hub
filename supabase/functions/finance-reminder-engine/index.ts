@@ -35,6 +35,9 @@ Deno.serve(async (req) => {
     try { body = await req.json(); } catch { /* no body */ }
     const requested = String(body?.region ?? '').toUpperCase();
     const regions = requested === 'EU' || requested === 'CH' ? [requested] : ['EU', 'CH'];
+    const onlyCustomerIds: string[] | null = Array.isArray(body?.customer_ids) && body.customer_ids.length > 0
+      ? body.customer_ids.map((x: any) => String(x))
+      : null;
 
     const today = new Date();
     const ymd = (d: Date) => d.toISOString().slice(0, 10);
@@ -56,6 +59,7 @@ Deno.serve(async (req) => {
         .eq('accounting_region', region)
         .gt('overdue_balance', 0);
       if (scopedIds) accQ = accQ.in('tenant_id', scopedIds);
+      if (onlyCustomerIds) accQ = accQ.in('customer_id', onlyCustomerIds);
       const { data: accounts } = await accQ;
       rSeen = accounts?.length ?? 0;
 

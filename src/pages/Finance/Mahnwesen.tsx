@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, PlayCircle, RefreshCw, Settings as SettingsIcon, Eye, Inbox, Search, X } from 'lucide-react';
+import { AlertTriangle, PlayCircle, RefreshCw, Settings as SettingsIcon, Eye, Inbox, Search, X, CheckSquare } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { DataCard } from '@/components/PageShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -49,6 +50,7 @@ export default function FinanceMahnwesen() {
   const [search, setSearch] = useState('');
   const [matchIds, setMatchIds] = useState<Set<string> | null>(null);
   const [searching, setSearching] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Erweiterte Suche: Kundennummer, Auftragsnummer, Seriennummer, Telefon → Kunden-IDs
   useEffect(() => {
@@ -110,12 +112,15 @@ export default function FinanceMahnwesen() {
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [region, statusFilter, tenantId]);
 
 
-  const runEngine = async () => {
+  const runEngine = async (customerIds?: string[]) => {
     setRunning(true);
     try {
-      const { data, error } = await supabase.functions.invoke('finance-reminder-engine', { body: { region } });
+      const body: any = { region };
+      if (customerIds && customerIds.length) body.customer_ids = customerIds;
+      const { data, error } = await supabase.functions.invoke('finance-reminder-engine', { body });
       if (error) throw error;
-      toast({ title: `Mahn-Engine ausgeführt (${region})`, description: `Konten: ${data?.accounts_seen ?? 0} • Entwürfe erstellt: ${data?.drafts_created ?? 0} • übersprungen: ${data?.skipped ?? 0}` });
+      toast({ title: `Mahn-Engine ausgeführt (${region}${customerIds?.length ? ` • ${customerIds.length} ausgewählt` : ''})`, description: `Konten: ${data?.accounts_seen ?? 0} • Entwürfe erstellt: ${data?.drafts_created ?? 0} • übersprungen: ${data?.skipped ?? 0}` });
+      setSelected(new Set());
       await load();
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message ?? 'Unbekannt', variant: 'destructive' });
@@ -132,6 +137,22 @@ export default function FinanceMahnwesen() {
       const local = [c?.company_name, c?.contact_name, c?.email].filter(Boolean).join(' ').toLowerCase();
       return local.includes(q) || (matchIds?.has(a.customer_id) ?? false);
     });
+
+  const allVisibleSelected = visibleAccounts.length > 0 && visibleAccounts.every(a => selected.has(a.customer_id));
+  const toggleAll = () => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allVisibleSelected) visibleAccounts.forEach(a => next.delete(a.customer_id));
+      else visibleAccounts.forEach(a => next.add(a.customer_id));
+      return next;
+    });
+  };
+  const toggleOne = (id: string) => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
 
 
   return (
@@ -177,7 +198,17 @@ export default function FinanceMahnwesen() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/finance/mahnwesen/einstellungen"><SettingsIcon className="w-4 h-4 mr-2" />Einstellungen</Link>
             </Button>
-            <Button onClick={runEngine} disabled={running} size="sm" className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
+            <Button
+              onClick={() => runEngine(Array.from(selected))}
+              disabled={running || selected.size === 0}
+              size="sm"
+              variant="outline"
+              className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+            >
+              {running ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <CheckSquare className="w-4 h-4 mr-2" />}
+              Nur Ausgewählte ({selected.size})
+            </Button>
+            <Button onClick={() => runEngine()} disabled={running} size="sm" className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-semibold border-0">
               {running ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <PlayCircle className="w-4 h-4 mr-2" />}
               {running ? 'Lauf läuft…' : `Mahn-Engine ${region} starten`}
             </Button>
@@ -197,6 +228,9 @@ export default function FinanceMahnwesen() {
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-xs uppercase text-muted-foreground">
                 <tr>
+                  <th className="px-4 py-3 w-10">
+                    <Checkbox checked={allVisibleSelected} onCheckedChange={toggleAll} aria-label="Alle auswählen" />
+                  </th>
                   <th className="text-left px-4 py-3 font-medium">Kunde</th>
                   <th className="text-left px-4 py-3 font-medium">E-Mail</th>
                   <th className="text-left px-4 py-3 font-medium">Aktuelle Stufe</th>
@@ -209,9 +243,13 @@ export default function FinanceMahnwesen() {
               <tbody>
                 {visibleAccounts.map(a => {
                   const d = draftsByCustomer.get(a.customer_id);
+                  const isSel = selected.has(a.customer_id);
 
                   return (
-                    <tr key={a.id} className="border-t border-border hover:bg-muted/20">
+                    <tr key={a.id} className={`border-t border-border hover:bg-muted/20 ${isSel ? 'bg-amber-500/5' : ''}`}>
+                      <td className="px-4 py-3">
+                        <Checkbox checked={isSel} onCheckedChange={() => toggleOne(a.customer_id)} aria-label="Auswählen" />
+                      </td>
                       <td className="px-4 py-3">{a.customers?.company_name || a.customers?.contact_name || a.customer_id.slice(0, 8)}</td>
                       <td className="px-4 py-3 text-muted-foreground">{a.customers?.email ?? '–'}</td>
                       <td className="px-4 py-3"><Badge variant="outline">{LEVEL_LABEL[a.reminder_level ?? 0] ?? `Stufe ${a.reminder_level}`}</Badge></td>
@@ -223,6 +261,7 @@ export default function FinanceMahnwesen() {
                           <Button size="sm" variant="outline"><Eye className="w-3.5 h-3.5 mr-1" />Detail</Button>
                         </Link>
                       </td>
+
                     </tr>
                   );
                 })}
