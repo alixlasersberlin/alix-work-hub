@@ -279,12 +279,19 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
     setStep((s) => Math.max(0, s - 1));
   }
 
-  /** Antwort gegeben → automatisch zur nächsten Frage sliden. */
-  function autoAdvance() {
-    window.setTimeout(() => {
-      setSub((s) => (s < subTotal - 1 ? s + 1 : s));
+  /** Antwort gegeben → automatisch zur nächsten Frage sliden (nur einmal, nur mit Auswahl). */
+  const advanceTimer = useRef<number | null>(null);
+  useEffect(() => () => { if (advanceTimer.current) window.clearTimeout(advanceTimer.current); }, []);
+  function autoAdvance(hasValue: boolean) {
+    if (advanceTimer.current) window.clearTimeout(advanceTimer.current);
+    if (!hasValue) return;
+    const from = sub;
+    advanceTimer.current = window.setTimeout(() => {
+      advanceTimer.current = null;
+      setSub((s) => (s === from && s < subTotal - 1 ? s + 1 : s));
     }, 650);
   }
+
 
   /** Blockierter „Weiter“-Klick: alle Fehler des Schritts sichtbar machen. */
   function revealStepErrors() {
@@ -696,7 +703,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {deliveryOptions.map((d) => (
-                        <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => { setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) }); autoAdvance(); }}>
+                        <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => { const v = csvToggle(data.delivery_preference, d); setData({ ...data, delivery_preference: v }); autoAdvance(!!v); }}>
                           {tv(t.delivery, d)}
                         </Pill>
                       ))}
@@ -712,7 +719,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {consultationOptions.map((c) => (
-                        <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => { setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) }); autoAdvance(); }}>
+                        <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => { const v = csvToggle(data.consultation_type, c); setData({ ...data, consultation_type: v }); autoAdvance(!!v); }}>
                           {tv(t.consultation, c)}
                         </Pill>
                       ))}

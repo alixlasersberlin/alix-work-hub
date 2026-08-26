@@ -136,6 +136,12 @@ export async function saveBeratungLayout(cfg: BeratungLayoutConfig) {
   );
 }
 
+/** Schritte, die immer am Ende stehen müssen (Abschluss/Absenden). */
+export const BERATUNG_TAIL_STEPS: Record<BeratungFormKey, number[]> = {
+  standard: [12, 13],
+  premium: [4],
+};
+
 /** Sichtbare Schrittfolge (IDs) in konfigurierter Reihenfolge. */
 export function visibleSequence(form: BeratungFormKey, layout: BeratungFormLayout | null): number[] {
   const defs = stepDefs(form);
@@ -146,8 +152,15 @@ export function visibleSequence(form: BeratungFormKey, layout: BeratungFormLayou
     if (def.required) return true;
     return !l.steps?.[String(id)]?.hidden;
   });
-  return seq.length ? seq : defs.map((d) => d.id);
+  const base = seq.length ? seq : defs.map((d) => d.id);
+  // Abschluss-Schritte immer ans Ende — sonst landet der „Absenden"-Button
+  // auf einem Frage-Schritt und der Wizard lässt sich nicht mehr beenden.
+  const tail = BERATUNG_TAIL_STEPS[form] ?? [];
+  const head = base.filter((id) => !tail.includes(id));
+  const end = tail.filter((id) => base.includes(id));
+  return [...head, ...end];
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Optionslisten (Auswahlmöglichkeiten innerhalb der Schritte)         */
