@@ -840,7 +840,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             {step < lastSlot ? (
               <button
                 type="button"
-                onClick={() => (canContinue() ? setStep((s) => s + 1) : revealStepErrors())}
+                onClick={goNext}
                 aria-disabled={!canContinue()}
                 disabled={submitting}
                 className={cn(
