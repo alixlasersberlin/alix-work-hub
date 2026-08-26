@@ -49,6 +49,7 @@ export default function FinanceMahnwesen() {
   const [search, setSearch] = useState('');
   const [matchIds, setMatchIds] = useState<Set<string> | null>(null);
   const [searching, setSearching] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Erweiterte Suche: Kundennummer, Auftragsnummer, Seriennummer, Telefon → Kunden-IDs
   useEffect(() => {
