@@ -188,10 +188,15 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   );
   const [attempted, setAttempted] = useState<Record<number, boolean>>({});
   /** Unterschritte: pro Schritt nur eine Frage. */
-  const SUB_COUNT: Record<number, number> = { 3: 4 };
+  const step1Subs = useMemo(
+    () => ['name', ...(isFieldVisible('premium', layout, 'company') ? ['company'] : []), 'email', 'phone'] as const,
+    [layout],
+  );
+  const SUB_COUNT: Record<number, number> = { 1: step1Subs.length, 3: 4 };
   const subTotal = SUB_COUNT[cur] ?? 1;
   const [sub, setSub] = useState(0);
   useEffect(() => { setSub(0); }, [cur]);
+  const s1 = step1Subs[sub];
 
 
   const [submitting, setSubmitting] = useState(false);
@@ -242,6 +247,10 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
   function canContinue(): boolean {
     switch (cur) {
       case 1:
+        if (s1 === 'name') return !errors.first_name && !errors.last_name;
+        if (s1 === 'company') return !errors.company;
+        if (s1 === 'email') return !errors.email;
+        if (s1 === 'phone') return !errors.country_code && !errors.phone;
         return step1Ok;
 
       case 2:
@@ -462,8 +471,9 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 1 — Profil */}
           {cur === 1 && (
             <Chapter title={so(1).title || t.c1_title} sub={so(1).sub ?? t.c1_sub}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+              <div key={`p-sub-${sub}`} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 animate-in fade-in slide-in-from-right-8 duration-500">
 
+                {s1 === 'name' && (<>
                 <Labeled label={fl('first_name', t.first_name)} error={showError('first_name')} valid={isValid('first_name')}>
                   <input
                     className={cn(fieldCls, showError('first_name') && '!border-red-300 focus:!ring-red-200')}
@@ -484,7 +494,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('last_name', e.target.value)}
                   />
                 </Labeled>
-                {fVisible('company') && (
+                </>)}
+                {s1 === 'company' && (
                 <Labeled label={fl('company', t.company)} error={showError('company')} valid={isValid('company')}>
                   <input
                     className={cn(fieldCls, showError('company') && '!border-red-300 focus:!ring-red-200')}
@@ -498,6 +509,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 </Labeled>
                 )}
 
+                {s1 === 'email' && (
                 <Labeled label={fl('email', t.email)} error={showError('email')} valid={isValid('email')}>
                   <input
                     type="email"
@@ -512,6 +524,8 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                     onChange={(e) => update('email', e.target.value)}
                   />
                 </Labeled>
+                )}
+                {s1 === 'phone' && (
                 <Labeled
                   label={fl('phone', t.phone)}
 
@@ -589,6 +603,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                       : `${findCountry(data.country_code)?.label ?? ''} — ${t.hint_no_leading_zero}`}
                   </p>
                 </Labeled>
+                )}
               </div>
 
             </Chapter>
