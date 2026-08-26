@@ -78,27 +78,29 @@ const MFA_GRACE_MS = 24 * 60 * 60 * 1000; // 24 Stunden
 
 const MFA_TAB_USER_KEY = 'alixwork.mfa_verified_user';
 
-function rememberMfaUser() {
-  // Session-User asynchron nachtragen (Storage-Adapter-unabhängig)
-  supabase.auth.getSession().then(({ data }) => {
+async function rememberMfaUser() {
+  // Session-User nachtragen (Storage-Adapter-unabhängig)
+  try {
+    const { data } = await supabase.auth.getSession();
     const uid = data?.session?.user?.id;
-    try { if (uid) sessionStorage.setItem(MFA_TAB_USER_KEY, uid); } catch { /* ignore */ }
-  }).catch(() => { /* ignore */ });
+    if (uid) sessionStorage.setItem(MFA_TAB_USER_KEY, uid);
+  } catch { /* ignore */ }
 }
 
 
-export function markMfaVerifiedThisTab() {
+export async function markMfaVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_TAB_KEY, '1'); } catch { /* ignore */ }
-  rememberMfaUser();
   // Beim erfolgreichen TOTP startet ein 24h-Grace-Window auf diesem Gerät
   try { localStorage.setItem(MFA_GRACE_KEY, String(Date.now() + MFA_GRACE_MS)); } catch { /* ignore */ }
+  await rememberMfaUser();
 }
 
 /** Nach erfolgreicher SMS-Verifikation (eigener Faktor, kein Supabase-AAL2). */
-export function markMfaSmsVerifiedThisTab() {
+export async function markMfaSmsVerifiedThisTab() {
   try { sessionStorage.setItem(MFA_SMS_TAB_KEY, '1'); } catch { /* ignore */ }
-  markMfaVerifiedThisTab();
+  await markMfaVerifiedThisTab();
 }
+
 
 function isMfaSmsVerifiedThisTab() {
   try { return sessionStorage.getItem(MFA_SMS_TAB_KEY) === '1'; } catch { return false; }
