@@ -230,3 +230,80 @@ export function resolveOptions(
   const visible = ordered.filter((o) => !hidden.has(o));
   return visible.length ? visible : defaults;
 }
+
+/* ------------------------------------------------------------------ */
+/* Profildaten-Felder (Name, Firma, E-Mail, Telefon …)                 */
+/* ------------------------------------------------------------------ */
+
+export type BeratungFieldDef = {
+  /** Interner Feldschlüssel. */
+  key: string;
+  /** Anzeigename in der Verwaltung. */
+  name: string;
+  /** Zugehöriger Schritt. */
+  stepId: number;
+  /** Pflichtfeld – kann nicht ausgeblendet werden. */
+  required?: boolean;
+  /** Feld hat einen Platzhaltertext. */
+  hasPlaceholder?: boolean;
+};
+
+export const STANDARD_PROFILE_FIELDS: BeratungFieldDef[] = [
+  { key: 'first_name', name: 'Vorname', stepId: 5, required: true },
+  { key: 'last_name', name: 'Nachname', stepId: 5, required: true },
+  { key: 'studio_in_germany', name: 'Studio in Deutschland (inkl. NISV)', stepId: 5 },
+  { key: 'company', name: 'Firmenname', stepId: 6, hasPlaceholder: true },
+  { key: 'phone', name: 'Telefon', stepId: 7, required: true, hasPlaceholder: true },
+  { key: 'email', name: 'E-Mail', stepId: 9, required: true, hasPlaceholder: true },
+  { key: 'message', name: 'Nachricht', stepId: 11 },
+];
+
+export const PREMIUM_PROFILE_FIELDS: BeratungFieldDef[] = [
+  { key: 'first_name', name: 'Vorname', stepId: 1, required: true },
+  { key: 'last_name', name: 'Nachname', stepId: 1, required: true },
+  { key: 'company', name: 'Firma', stepId: 1, hasPlaceholder: true },
+  { key: 'email', name: 'E-Mail', stepId: 1, required: true, hasPlaceholder: true },
+  { key: 'phone', name: 'Telefon', stepId: 1, required: true, hasPlaceholder: true },
+];
+
+export function profileFields(form: BeratungFormKey): BeratungFieldDef[] {
+  return form === 'premium' ? PREMIUM_PROFILE_FIELDS : STANDARD_PROFILE_FIELDS;
+}
+
+export function fieldOverride(
+  layout: BeratungFormLayout | null | undefined,
+  key: string,
+): BeratungFieldOverride {
+  return (layout?.fields?.[key] || {}) as BeratungFieldOverride;
+}
+
+/** Bezeichnung eines Feldes (mit Standardwert). */
+export function fieldLabel(
+  layout: BeratungFormLayout | null | undefined,
+  key: string,
+  fallback: string,
+): string {
+  const o = fieldOverride(layout, key);
+  return o.label?.trim() ? o.label : fallback;
+}
+
+/** Platzhalter eines Feldes (mit Standardwert). */
+export function fieldPlaceholder(
+  layout: BeratungFormLayout | null | undefined,
+  key: string,
+  fallback?: string,
+): string | undefined {
+  const o = fieldOverride(layout, key);
+  return o.placeholder?.trim() ? o.placeholder : fallback;
+}
+
+/** Sichtbarkeit eines Feldes – Pflichtfelder sind immer sichtbar. */
+export function isFieldVisible(
+  form: BeratungFormKey,
+  layout: BeratungFormLayout | null | undefined,
+  key: string,
+): boolean {
+  const def = profileFields(form).find((f) => f.key === key);
+  if (def?.required) return true;
+  return fieldOverride(layout, key).hidden !== true;
+}
