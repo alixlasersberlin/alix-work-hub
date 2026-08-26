@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
         .eq('accounting_region', region)
         .gt('overdue_balance', 0);
       if (scopedIds) accQ = accQ.in('tenant_id', scopedIds);
-      const { data: accounts } = await accQ;
+      if (onlyCustomerIds) accQ = accQ.in('customer_id', onlyCustomerIds);
       rSeen = accounts?.length ?? 0;
 
       for (const acc of accounts ?? []) {
