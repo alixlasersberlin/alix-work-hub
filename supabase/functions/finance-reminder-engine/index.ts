@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
     const today = new Date();
     const ymd = (d: Date) => d.toISOString().slice(0, 10);
     let seen = 0, created = 0, skipped = 0;
+    const skipReasons = { already_has_draft: 0, no_overdue_items: 0, no_next_level: 0, insert_failed: 0 };
     const perRegion: Record<string, { accounts_seen: number; drafts_created: number; skipped: number }> = {};
 
     for (const region of regions) {
@@ -58,7 +59,9 @@ Deno.serve(async (req) => {
         .select('id, customer_id, reminder_level, overdue_balance')
         .eq('accounting_region', region)
         .gt('overdue_balance', 0);
-      if (scopedIds) accQ = accQ.in('tenant_id', scopedIds);
+      // Mandantenneutrale Altbestände (tenant_id NULL) sind laut tenant-scope.ts
+      // ebenfalls zugelassen und dürfen nicht aus manuellen Läufen verschwinden.
+      if (scopedIds) accQ = accQ.or(`tenant_id.in.(${scopedIds.join(',')}),tenant_id.is.null`);
       if (onlyCustomerIds) accQ = accQ.in('customer_id', onlyCustomerIds);
       const { data: accounts } = await accQ;
       rSeen = accounts?.length ?? 0;
@@ -72,7 +75,7 @@ Deno.serve(async (req) => {
           .eq('accounting_region', region)
           .eq('status', 'Entwurf')
           .limit(1);
-        if (pending && pending.length > 0) { rSkipped++; continue; }
+        if (pending && pending.length > 0) { rSkipped++; skipReasons.already_has_draft++; continue; }
 
         // Get open invoices for this customer within the region
         const { data: txs } = await admin
@@ -86,11 +89,11 @@ Deno.serve(async (req) => {
           const days_overdue = due ? Math.max(0, Math.floor((today.getTime() - due.getTime()) / 86400000)) : 0;
           return { transaction_id: t.id, amount: Number(t.amount ?? 0), due_date: t.booking_date, days_overdue, invoice_number: extractInvoiceNumber(t.notes) };
         }).filter((it) => it.days_overdue > 0);
-        if (items.length === 0) { rSkipped++; continue; }
+        if (items.length === 0) { rSkipped++; skipReasons.no_overdue_items++; continue; }
 
         const maxOverdue = Math.max(...items.map((i) => i.days_overdue));
         const nextLevel = chooseLevel(levels, acc.reminder_level ?? 0, maxOverdue);
-        if (!nextLevel) { rSkipped++; continue; }
+        if (!nextLevel) { rSkipped++; skipReasons.no_next_level++; continue; }
 
         const amount = Number(acc.overdue_balance);
         const fee = Number(nextLevel.fee ?? 0);
@@ -113,7 +116,7 @@ Deno.serve(async (req) => {
           })
           .select('id')
           .single();
-        if (insErr || !rem) { rSkipped++; continue; }
+        if (insErr || !rem) { rSkipped++; skipReasons.insert_failed++; continue; }
 
         await admin.from('finance_reminder_items').insert(
           items.map((it) => ({
@@ -141,6 +144,7 @@ Deno.serve(async (req) => {
       accounts_seen: seen,
       drafts_created: created,
       skipped,
+      skip_reasons: skipReasons,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     return new Response(JSON.stringify({ success: false, error: String((e as Error).message ?? e) }), {
