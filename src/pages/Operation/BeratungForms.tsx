@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { ExternalLink, Copy, Eye, EyeOff, Loader2, Save, MessagesSquare, Code2, ArrowUp, ArrowDown, RotateCcw, GripVertical } from 'lucide-react';
+import { ExternalLink, Copy, Eye, EyeOff, Loader2, Save, MessagesSquare, Code2, ArrowUp, ArrowDown, RotateCcw, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/infinity/PageHeader';
 import {
   BERATUNG_FORMS_META,
@@ -24,6 +24,7 @@ import {
   loadBeratungLayout,
   saveBeratungLayout,
   stepDefs,
+  optionLists,
   defaultLayout,
   type BeratungLayoutConfig,
 } from '@/lib/beratung/formLayout';
@@ -61,6 +62,54 @@ export default function BeratungForms() {
         steps: { ...prev[form].steps, [String(id)]: { ...(prev[form].steps?.[String(id)] || {}), ...patch } },
       },
     }));
+
+  const [newOption, setNewOption] = useState<Record<string, string>>({});
+
+  const allOptions = (form: BeratungFormKey, key: string, defaults: string[]) => {
+    const oc = layout[form].options?.[key] || {};
+    const all = [...defaults, ...(oc.extra || []).filter((e) => !defaults.includes(e))];
+    const order = oc.order || [];
+    return [...order.filter((o) => all.includes(o)), ...all.filter((o) => !order.includes(o))];
+  };
+
+  const setOptionCfg = (
+    form: BeratungFormKey,
+    key: string,
+    patch: { order?: string[]; hidden?: string[]; extra?: string[] },
+  ) =>
+    setLayout((prev) => ({
+      ...prev,
+      [form]: {
+        ...prev[form],
+        options: {
+          ...(prev[form].options || {}),
+          [key]: { ...((prev[form].options || {})[key] || {}), ...patch },
+        },
+      },
+    }));
+
+  const moveOption = (form: BeratungFormKey, key: string, defaults: string[], value: string, dir: -1 | 1) => {
+    const order = allOptions(form, key, defaults);
+    const i = order.indexOf(value);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= order.length) return;
+    [order[i], order[j]] = [order[j], order[i]];
+    setOptionCfg(form, key, { order });
+  };
+
+  const addOption = (form: BeratungFormKey, key: string, defaults: string[]) => {
+    const k = `${form}:${key}`;
+    const value = (newOption[k] || '').trim();
+    if (!value) return;
+    const existing = allOptions(form, key, defaults);
+    if (existing.includes(value)) {
+      toast.error('Option existiert bereits');
+      return;
+    }
+    const oc = layout[form].options?.[key] || {};
+    setOptionCfg(form, key, { extra: [...(oc.extra || []), value], order: [...existing, value] });
+    setNewOption((p) => ({ ...p, [k]: '' }));
+  };
 
   const resetLayout = (form: BeratungFormKey) =>
     setLayout((prev) => ({ ...prev, [form]: defaultLayout(form) }));
