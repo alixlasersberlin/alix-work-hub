@@ -187,6 +187,11 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
     [seq, layout, t],
   );
   const [attempted, setAttempted] = useState<Record<number, boolean>>({});
+  /** Unterschritte: pro Schritt nur eine Frage. */
+  const SUB_COUNT: Record<number, number> = { 3: 4 };
+  const subTotal = SUB_COUNT[cur] ?? 1;
+  const [sub, setSub] = useState(0);
+  useEffect(() => { setSub(0); }, [cur]);
 
 
   const [submitting, setSubmitting] = useState(false);
@@ -198,7 +203,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [step]);
+  }, [step, sub]);
 
   const devices = useMemo(() => devicesForCategory(data.category), [data.category]);
 
@@ -242,12 +247,34 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       case 2:
         return !!data.category;
       case 3:
-        return !!data.delivery_preference && !!data.consultation_type && !errors.notes;
+        if (sub === 0) return !!data.delivery_preference;
+        if (sub === 1) return !!data.consultation_type;
+        if (sub === 2) return true;
+        return !errors.notes;
       case LAST_STEP:
         return data.consent_data && data.consent_contact && (publicMode && !captchaUnavailable ? !!captchaToken : true);
       default:
         return true;
     }
+  }
+
+  /** Weiter: erst Unterfrage, dann Schritt. */
+  function goNext() {
+    if (!canContinue()) { revealStepErrors(); return; }
+    if (sub < subTotal - 1) { setSub((s) => s + 1); return; }
+    setStep((s) => s + 1);
+  }
+
+  function goBack() {
+    if (sub > 0) { setSub((s) => s - 1); return; }
+    setStep((s) => Math.max(0, s - 1));
+  }
+
+  /** Antwort gegeben → automatisch zur nächsten Frage sliden. */
+  function autoAdvance() {
+    window.setTimeout(() => {
+      setSub((s) => (s < subTotal - 1 ? s + 1 : s));
+    }, 650);
   }
 
   /** Blockierter „Weiter“-Klick: alle Fehler des Schritts sichtbar machen. */
@@ -389,13 +416,13 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 {t.step_of(step, STEP_LABELS.length)} · {STEP_LABELS[step - 1]}
               </span>
               <span className="tabular-nums shrink-0">
-                {Math.round((step / STEP_LABELS.length) * 100)} %
+                {Math.round(((step - 1 + (sub + 1) / subTotal) / STEP_LABELS.length) * 100)} %
               </span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-slate-200/70 overflow-hidden">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-sky-500 to-sky-400 transition-[width] duration-500 ease-out"
-                style={{ width: `${(step / STEP_LABELS.length) * 100}%` }}
+                style={{ width: `${((step - 1 + (sub + 1) / subTotal) / STEP_LABELS.length) * 100}%` }}
                 role="progressbar"
                 aria-valuemin={0}
                 aria-valuemax={STEP_LABELS.length}
@@ -403,6 +430,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                 aria-label={t.progress_aria}
               />
             </div>
+
           </div>
 
           <div className="mx-auto max-w-4xl mt-3 sm:mt-4 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent" />
@@ -410,7 +438,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
       )}
 
       <main className="px-4 sm:px-6 md:px-10 pt-6 sm:pt-8 md:pt-12 pb-[calc(7.5rem+env(safe-area-inset-bottom))]">
-        <div className="mx-auto max-w-4xl">
+        <div key={`step-${step}`} className="mx-auto max-w-4xl animate-in fade-in slide-in-from-right-8 duration-500">
 
           {/* 0 — Intro */}
           {step === 0 && (
@@ -644,59 +672,69 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           {/* 3 — Bedarf */}
           {cur === 3 && (
             <Chapter title={so(3).title || t.c3_title} sub={so(3).sub ?? t.c3_sub(tv(t.categories, data.category))}>
-              <div className="space-y-8 sm:space-y-10">
-                <Group
-                  label={t.g_delivery}
-                  valid={!!data.delivery_preference}
-                  error={attempted[3] && !data.delivery_preference ? t.g_delivery_err : null}
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {deliveryOptions.map((d) => (
-                      <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) })}>
-                        {tv(t.delivery, d)}
-                      </Pill>
-                    ))}
-                  </div>
-                </Group>
-                <Group
-                  label={t.g_consultation}
-                  valid={!!data.consultation_type}
-                  error={attempted[3] && !data.consultation_type ? t.g_consultation_err : null}
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {consultationOptions.map((c) => (
-                      <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) })}>
-                        {tv(t.consultation, c)}
-                      </Pill>
-                    ))}
-                  </div>
-                </Group>
+              <div key={`sub-${sub}`} className="animate-in fade-in slide-in-from-right-8 duration-500">
+                {sub === 0 && (
+                  <Group
+                    label={t.g_delivery}
+                    valid={!!data.delivery_preference}
+                    error={attempted[3] && !data.delivery_preference ? t.g_delivery_err : null}
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {deliveryOptions.map((d) => (
+                        <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => { setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) }); autoAdvance(); }}>
+                          {tv(t.delivery, d)}
+                        </Pill>
+                      ))}
+                    </div>
+                  </Group>
+                )}
 
-                <Group label={t.g_additional}>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {additionalOptions.map((a) => (
-                      <Pill key={a} active={data.additional_interests.includes(a)} onClick={() => toggleAdditional(a)}>
-                        {tv(t.additional, a)}
-                      </Pill>
-                    ))}
-                  </div>
-                </Group>
-                <Group label={t.g_notes} error={showError('notes')}>
-                  <textarea
-                    rows={5}
-                    value={data.notes}
-                    maxLength={2100}
-                    aria-invalid={!!showError('notes')}
-                    onBlur={() => markTouched('notes')}
-                    onChange={(e) => update('notes', e.target.value)}
-                    className={cn(fieldCls, 'h-auto py-3 resize-none', showError('notes') && '!border-red-300 focus:!ring-red-200')}
-                  />
-                  <p className={cn('mt-1 text-[11px] text-right', data.notes.length > 2000 ? '!text-red-500' : '!text-slate-400')}>
-                    {data.notes.length}/2000
-                  </p>
-                </Group>
+                {sub === 1 && (
+                  <Group
+                    label={t.g_consultation}
+                    valid={!!data.consultation_type}
+                    error={attempted[3] && !data.consultation_type ? t.g_consultation_err : null}
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {consultationOptions.map((c) => (
+                        <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => { setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) }); autoAdvance(); }}>
+                          {tv(t.consultation, c)}
+                        </Pill>
+                      ))}
+                    </div>
+                  </Group>
+                )}
 
+                {sub === 2 && (
+                  <Group label={t.g_additional}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {additionalOptions.map((a) => (
+                        <Pill key={a} active={data.additional_interests.includes(a)} onClick={() => toggleAdditional(a)}>
+                          {tv(t.additional, a)}
+                        </Pill>
+                      ))}
+                    </div>
+                  </Group>
+                )}
+
+                {sub === 3 && (
+                  <Group label={t.g_notes} error={showError('notes')}>
+                    <textarea
+                      rows={5}
+                      value={data.notes}
+                      maxLength={2100}
+                      aria-invalid={!!showError('notes')}
+                      onBlur={() => markTouched('notes')}
+                      onChange={(e) => update('notes', e.target.value)}
+                      className={cn(fieldCls, 'h-auto py-3 resize-none', showError('notes') && '!border-red-300 focus:!ring-red-200')}
+                    />
+                    <p className={cn('mt-1 text-[11px] text-right', data.notes.length > 2000 ? '!text-red-500' : '!text-slate-400')}>
+                      {data.notes.length}/2000
+                    </p>
+                  </Group>
+                )}
               </div>
+
             </Chapter>
           )}
 
@@ -793,7 +831,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
           <div className="mx-auto max-w-4xl px-4 sm:px-6 md:px-10 py-3 sm:py-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))] flex items-center gap-2 sm:gap-3">
             <button
               type="button"
-              onClick={() => setStep((s) => Math.max(0, s - 1))}
+              onClick={goBack}
               disabled={submitting}
               className="h-13 min-h-[52px] px-4 sm:px-6 rounded-full border border-slate-200 bg-white !text-slate-600 text-[11px] sm:text-[12px] tracking-[0.16em] sm:tracking-[0.2em] uppercase whitespace-nowrap hover:text-slate-900 transition disabled:opacity-40"
             >
@@ -803,7 +841,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
             {step < lastSlot ? (
               <button
                 type="button"
-                onClick={() => (canContinue() ? setStep((s) => s + 1) : revealStepErrors())}
+                onClick={goNext}
                 aria-disabled={!canContinue()}
                 disabled={submitting}
                 className={cn(
