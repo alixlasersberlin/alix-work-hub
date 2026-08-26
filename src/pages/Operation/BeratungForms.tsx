@@ -422,6 +422,66 @@ export default function BeratungForms() {
                   })}
                 </div>
 
+                <Separator />
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <Label className="text-sm">Profildaten</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Feldbezeichnungen und Platzhalter anpassen, optionale Felder ausblenden.
+                      </p>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={() => setFieldsCfg(meta.key, {})}>
+                      <RotateCcw className="h-3 w-3 mr-1" /> Zurücksetzen
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {profileFields(meta.key).map((f) => {
+                      const fc = layout[meta.key].fields?.[f.key] || {};
+                      const hidden = !f.required && fc.hidden === true;
+                      return (
+                        <div
+                          key={f.key}
+                          className={`rounded-lg border p-3 space-y-2 ${hidden ? 'opacity-60 bg-muted/40' : 'bg-card'}`}
+                        >
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium">{f.name}</span>
+                            <Badge variant="outline" className="text-[10px]">Schritt {f.stepId}</Badge>
+                            <div className="ml-auto flex items-center gap-2">
+                              {f.required ? (
+                                <Badge variant="secondary" className="text-[10px]">Pflicht</Badge>
+                              ) : (
+                                <>
+                                  <Label className="text-[11px] text-muted-foreground">Sichtbar</Label>
+                                  <Switch
+                                    checked={!hidden}
+                                    onCheckedChange={(v) => setFieldCfg(meta.key, f.key, { hidden: !v })}
+                                  />
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <div className="grid gap-2 md:grid-cols-2">
+                            <Input
+                              value={fc.label ?? ''}
+                              placeholder="Bezeichnung (Standard beibehalten)"
+                              onChange={(e) => setFieldCfg(meta.key, f.key, { label: e.target.value || undefined })}
+                            />
+                            {f.hasPlaceholder && (
+                              <Input
+                                value={fc.placeholder ?? ''}
+                                placeholder="Platzhalter (Standard beibehalten)"
+                                onChange={(e) => setFieldCfg(meta.key, f.key, { placeholder: e.target.value || undefined })}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
 
                 <p className="text-xs text-muted-foreground">
                   Inhalte/Schritte: <code>{meta.component}</code> · Anfragen landen unter{' '}
