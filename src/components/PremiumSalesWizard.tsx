@@ -703,7 +703,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {deliveryOptions.map((d) => (
-                        <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => { setData({ ...data, delivery_preference: csvToggle(data.delivery_preference, d) }); autoAdvance(); }}>
+                        <Pill key={d} active={csvHas(data.delivery_preference, d)} onClick={() => { const v = csvToggle(data.delivery_preference, d); setData({ ...data, delivery_preference: v }); autoAdvance(!!v); }}>
                           {tv(t.delivery, d)}
                         </Pill>
                       ))}
@@ -719,7 +719,7 @@ export default function PremiumSalesWizard({ publicMode = true }: Props) {
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {consultationOptions.map((c) => (
-                        <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => { setData({ ...data, consultation_type: csvToggle(data.consultation_type, c) }); autoAdvance(); }}>
+                        <Pill key={c} active={csvHas(data.consultation_type, c)} onClick={() => { const v = csvToggle(data.consultation_type, c); setData({ ...data, consultation_type: v }); autoAdvance(!!v); }}>
                           {tv(t.consultation, c)}
                         </Pill>
                       ))}
