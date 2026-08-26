@@ -5,8 +5,8 @@ import alixLogo from '@/assets/alix-lasers-logo.png';
 
 const COMPANY_ADDRESS = [
   'Alix Lasers GmbH',
-  'Buchsbaumweg 53',
-  '12357 Berlin',
+  'Zeppelin Straße 3',
+  '12529 Berlin',
   'Deutschland',
 ];
 
